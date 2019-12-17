@@ -574,8 +574,8 @@ Only serializable values can be passed across the boundary.
 Serializable values are those which can be translated into a sequence of primitive data - numbers in Elements case.
 The following value types are serializable:
 * `num`
-* `struct` which can be reduced to only `num` instances - structures require mapping between host and Element types to match layout.
-* `List` which can be evaluated to only `num` instances - Lists will be evaluated to their elements when crossing the boundary.
+* `struct` instance containing only serializable fields - structures require mapping between host and Element types to match layout.
+* `List` which can be evaluated to only serializable elements - Lists will be evaluated to their elements when crossing the boundary.
 
 Hosts must have mappings for `struct` types declared in the prelude and may provide mappings for other structures.
 
