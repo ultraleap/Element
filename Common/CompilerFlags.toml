@@ -1,0 +1,6 @@
+[Debug]
+value = false
+
+[Verbosity]
+value = "Information"
+

@@ -1,0 +1,43 @@
+{
+    "name": "element-vscode",
+    "displayName": "Element language support",
+    "description": "Element language support",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.31.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "element",
+                "aliases": [
+                    "Element",
+                    "element"
+                ],
+                "extensions": [
+                    ".ele"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "element",
+                "scopeName": "source.ele",
+                "path": "./syntaxes/element.tmLanguage.json"
+            }
+        ]
+    },
+    "devDependencies": {
+        "eol-converter-cli": "latest",
+        "js-yaml": "latest"
+    },
+    "scripts": {
+        "build:js-yaml": "npx js-yaml syntaxes/element.tmLanguage.yaml > syntaxes/element.tmLanguage.json",
+        "build:eol": "npx eolConverter syntaxes/element.tmLanguage.json",
+        "build": "npm run build:js-yaml && npm run build:eol"
+    }
+}

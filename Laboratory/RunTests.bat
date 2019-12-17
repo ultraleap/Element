@@ -1,0 +1,1 @@
+dotnet test -v n -l trx -r LocalTemp/TestResults

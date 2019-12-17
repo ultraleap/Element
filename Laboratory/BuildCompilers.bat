@@ -1,0 +1,1 @@
+dotnet publish ../Alchemist --self-contained=false -o LocalTemp/Alchemist -v n

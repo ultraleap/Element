@@ -1,0 +1,92 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js">
+<link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+<link rel="stylesheet" href="https://gitcdn.xyz/repo/goessner/mdmath/master/css/texmath.css">
+<link rel="stylesheet" href="https://gitcdn.xyz/repo/goessner/mdmath/master/css/vscode-texmath.css">
+
+</head><body>
+<h1 id="element" data-line="0" class="code-line">Element</h1>
+<p data-line="1" class="code-line">Element is a minimal functional programming language. Element code can be interpreted or compiled to other formats. One of these formats is the <a href="/c:/Users/CraigJeffrey/Ultrahaptics/element/LMNT/Bytecode.md">bytecode format, LMNTIL</a>, for use in native and embedded applications.</p>
+<h3 id="element-language-features" data-line="3" class="code-line">Element Language Features</h3>
+<p data-line="4" class="code-line">This is a brief summary, see the <a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/Language/ElementReferenceManual.md">Element Reference Manual</a> for full details.</p>
+<ul>
+<li data-line="5" class="code-line">Single number data type</li>
+<li data-line="6" class="code-line">Structured types</li>
+<li data-line="7" class="code-line">Intrinsics (math intrinsics, collection intrinsics, control flow)</li>
+<li data-line="8" class="code-line">First class functions and local functions</li>
+</ul>
+<h3 id="element-libraries" data-line="10" class="code-line">Element Libraries</h3>
+<p data-line="11" class="code-line">Element includes a library of core functionality called <a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/Common/Prelude">Prelude</a>.</p>
+<p data-line="13" class="code-line">Element also comes with a <a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/Common/StandardLibrary">Standard Library</a>. New features will generally be implemented as part of the standard library rather than as language features.</p>
+<h3 id="host-libraries" data-line="15" class="code-line">Host Libraries</h3>
+<ul>
+<li data-line="16" class="code-line"><a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/Element.NET">Element.NET</a> - .NET Standard 2.0
+<ul>
+<li data-line="17" class="code-line">Element parser using <a href="https://github.com/picoe/Eto.Parse">Eto.Parse</a></li>
+<li data-line="18" class="code-line">Element interpreter using <a href="https://docs.microsoft.com/en-us/dotnet/api/system.linq.expressions.expression">LINQ Expressions</a></li>
+<li data-line="19" class="code-line">Rich target-platform agnostic Element introspection API</li>
+<li data-line="20" class="code-line">Element AoT compilation targets including:
+<ul>
+<li data-line="21" class="code-line">LMNTIL (Element Intermediate Language)</li>
+<li data-line="22" class="code-line">C</li>
+</ul>
+</li>
+</ul>
+</li>
+<li data-line="23" class="code-line"><a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/LMNT">LMNT</a> - C
+<ul>
+<li data-line="24" class="code-line">LMNTIL interpreter</li>
+<li data-line="25" class="code-line">JIT compiler using <a href="https://luajit.org/dynasm.html">DynASM</a>
+<ul>
+<li data-line="26" class="code-line">x86_64</li>
+<li data-line="27" class="code-line">ARMv7-M - in progress</li>
+<li data-line="28" class="code-line">ARMv7-A - planned</li>
+</ul>
+</li>
+</ul>
+</li>
+<li data-line="29" class="code-line"><a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/PyElement">PyElement</a> - Python
+<ul>
+<li data-line="30" class="code-line">Element parser using <a href="https://github.com/neogeny/TatSu">TatSu</a></li>
+<li data-line="31" class="code-line">Element interpreter using Python <a href="https://docs.python.org/3/library/functions.html">eval()</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="programs" data-line="33" class="code-line">Programs</h3>
+<ul>
+<li data-line="34" class="code-line"><a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/Alchemist">Alchemist</a> - .NET Core 2.1 CLI
+<ul>
+<li data-line="35" class="code-line">CLI for executing Element via a REPL or compiling to other targets such as LMNTIL</li>
+<li data-line="36" class="code-line">Uses <a href="http://element.net/">Element.NET</a></li>
+</ul>
+</li>
+<li data-line="37" class="code-line"><a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/Element.Unity">Element.Unity</a> - Unity
+<ul>
+<li data-line="38" class="code-line">Element Node Graph - allows visualization and modification of Element code using an interactive Node Graph</li>
+<li data-line="39" class="code-line">Element Interactive Workspace prototype - provides an environment for evaluating abitrary Element code and displaying all intermediate values</li>
+</ul>
+</li>
+<li data-line="40" class="code-line"><a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/Laboratory">Laboratory</a> - .NET Core 2.1 CLI
+<ul>
+<li data-line="41" class="code-line">Test runner using NUnit containing host compliance tests, prelude tests and standard library tests.</li>
+</ul>
+</li>
+</ul>
+<h3 id="integrations" data-line="43" class="code-line">Integrations</h3>
+<ul>
+<li data-line="44" class="code-line"><a href="vscode-resource:/c:/Users/CraigJeffrey/Ultrahaptics/element/element-vscode">VSCode Linter</a> - VSCode Extension
+<ul>
+<li data-line="45" class="code-line">Syntax highlighting for .ele files</li>
+<li data-line="46" class="code-line">Installation guide:
+<ul>
+<li data-line="47" class="code-line">Download or clone this repo</li>
+<li data-line="48" class="code-line">Extract <code>element-vscode</code> to <code>%UserProfile/.vscode/extensions</code></li>
+<li data-line="49" class="code-line">Restart VS Code and enjoy!</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</body></html>

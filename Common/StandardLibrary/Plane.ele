@@ -1,0 +1,39 @@
+struct Plane(normal:Vector3, distance:num)
+{
+    FromVertices(a:Vector3, b:Vector3, c:Vector3):Plane
+    {
+        ba = Vec.Sub(b, a);
+        ca = Vec.Sub(c, a);
+
+        n = V3.Cross(ba, ca);
+        normal = V3.Normalize(n);
+
+        d = negate(V3.Dot(normal, a));
+
+        return = Plane(normal, d);
+    }
+
+    SignedDistanceFromPoint(plane:Plane, point:Vector3):num
+    {
+        planeNormal = V3.Normalize(plane.normal);
+        closestPointOnPlane = Vec.Scale(planeNormal, plane.distance);
+        projectedPoint = Vec.Sub(point, closestPointOnPlane);
+        return = V3.Dot(projectedPoint, planeNormal);
+    }
+
+    Intersection(a:Plane, b:Plane):TLine
+    {
+        direction = V3.Cross(a.normal, b.normal);
+
+        perpendicularVector = V3.Cross(b.normal, direction);
+        denominator = V3.Dot(a.normal, perpendicularVector);
+        planeAPosition = Vec.Mul(a.normal, a.distance);
+        planeBPosition = Vec.Mul(b.normal, b.distance);
+
+        planePositionDifference = Vec.Sub(planeAPosition, planeBPosition);
+        t = div(Vector3.Dot(a.normal, planePositionDifference), denominator);
+        point = Vec.Add(planeBPosition, Vec.Scale(perpendicularVector, t));
+
+        return = TLine(direction, point);
+    }
+}

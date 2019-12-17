@@ -1,0 +1,85 @@
+#ifndef LMNT_ARCHIVE_H
+#define LMNT_ARCHIVE_H
+
+#include <stdint.h>
+#include "lmnt/common.h"
+#include "lmnt/opcodes.h"
+#include "lmnt/extcalls.h"
+
+typedef struct
+{
+    const char* data;
+    size_t size;
+} lmnt_archive;
+
+#pragma pack(push, 1)
+typedef struct
+{
+    char magic[4];
+    uint8_t version_major;
+    uint8_t version_minor;
+    uint8_t reserved0;
+    uint8_t reserved1;
+    uint32_t strings_length;
+    uint32_t defs_length;
+    uint32_t code_length;
+    uint32_t constants_length;
+} lmnt_archive_header;
+
+typedef uint16_t lmnt_defflags;
+enum
+{
+    LMNT_DEFFLAG_NONE      = 0x00,
+    LMNT_DEFFLAG_INTERFACE = 0x01,
+    LMNT_DEFFLAG_EXTERN    = 0x02,
+    LMNT_DEFFLAG_LAMBDA    = 0x04,
+};
+
+typedef struct
+{
+    uint16_t length;
+    lmnt_offset name; // string
+    lmnt_defflags flags;
+    lmnt_loffset code; // code
+    uint16_t stack_count_unaligned;
+    uint16_t stack_count_aligned;
+    uint16_t base_args_count;
+    uint16_t args_count;
+    uint16_t rvals_count;
+    uint8_t bases_count;
+} lmnt_def;
+
+typedef struct
+{
+    lmnt_opcode opcode;
+    lmnt_offset arg1; // various
+    lmnt_offset arg2; // various
+    lmnt_offset arg3; // various
+} lmnt_instruction;
+
+typedef struct
+{
+    lmnt_loffset instructions_count;
+} lmnt_code;
+#pragma pack(pop)
+
+lmnt_result lmnt_archive_init(lmnt_archive* archive, const char* data, size_t size);
+lmnt_result lmnt_archive_print(const lmnt_archive* archive);
+
+lmnt_result lmnt_get_constant(const lmnt_archive* archive, uint32_t offset, lmnt_value* value);
+lmnt_result lmnt_get_constants(const lmnt_archive* archive, uint32_t offset, const lmnt_value** value);
+lmnt_result lmnt_get_constants_count(const lmnt_archive* archive, lmnt_offset* value);
+
+int32_t lmnt_get_string(const lmnt_archive* archive, uint32_t offset, const char** ptr);
+
+lmnt_result lmnt_get_def(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_def** def);
+lmnt_result lmnt_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code, const lmnt_instruction** instructions);
+lmnt_result lmnt_find_def(const lmnt_archive* archive, const char* name, const lmnt_def** def);
+lmnt_result lmnt_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_loffset** bases);
+
+lmnt_result lmnt_get_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code);
+lmnt_result lmnt_get_code_instructions(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_instruction** instrs);
+
+lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count);
+
+#endif

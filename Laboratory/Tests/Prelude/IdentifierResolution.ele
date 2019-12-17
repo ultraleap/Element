@@ -1,0 +1,42 @@
+namespace A
+{
+    x = 5;
+    namespace A
+    {
+        x = 10;
+        namespace A
+        {
+            x = 15;
+            namespace A
+            {
+                x = 20;
+            }
+        }
+        
+        # Encounters local A first - result should be 15
+        a = A.x;
+        
+        # Finds A nested within local A - result should be 20
+        b = A.A.x;
+        
+        # Falls back to outer A and resolves to the nested A
+        c = A.A.A.x;
+    }
+}
+
+namespace X
+{
+    x = 5;
+    namespace Y
+    {
+        x = 10;
+        namespace Z
+        {
+            x = 15;
+        }
+        
+        a = X.x;
+        b = Y.x;
+        c = Z.x;
+    }
+}

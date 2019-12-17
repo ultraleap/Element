@@ -1,0 +1,142 @@
+
+$schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
+name: element
+patterns:
+  - {include: '#comments'}
+  - {include: '#block'}
+  - {include: '#assignment'}
+  - {include: '#namespace'}
+  - {include: '#type'}
+  - {include: '#statement'}
+repository:
+  comments:
+    patterns:
+      - name: comment.line.number-sign.ele
+        match: '#.*\n'
+  type_annotation:
+    patterns:
+      - name: meta.type.annotation.ele
+        begin: ':'
+        beginCaptures:
+          0: {name: keyword.operator.type.annotation.ele}
+        end: '\b(num)|(any)|([^\d\W][\w]*)\b'
+        endCaptures:
+          1: {name: keyword.type.ele}
+          2: {name: keyword.type.ele}
+          3: {name: entity.name.type.ele}
+  parameter_list:
+    patterns:
+      - {include: '#comments'}
+      - name: punctuation.separator.parameters.ele
+        match: ','
+      - {include: '#type_annotation'}
+      - name: variable.parameter.ele
+        match: '\b[^\d\W][\w]*\b'
+  function_definition:
+    patterns:
+      - name: meta.parameters.inputs.ele
+        begin: '\('
+        end: '\)'
+        beginCaptures:
+          0: {name: punctuation.definition.parameters.begin.ele}
+        endCaptures:
+          0: {name: punctuation.definition.parameters.end.ele}
+        patterns:
+          - {include: '#parameter_list'}
+      - name: meta.parameters.outputs.ele
+        begin: '->'
+        beginCaptures:
+          0: {name: keyword.operator.type.structure.ele}
+        end: '(?=;|\=|{)'
+        patterns:
+          - {include: '#parameter_list'}
+      - include: '#type_annotation'
+        name: meta.type.function.return
+  assignment:
+    patterns:
+      - begin: '(?:(return)|([^\d\W][\w]*))?\s*(=)'
+        end: ';'
+        endCaptures: 
+          0: {name: punctuation.terminator.statement.ele}
+        beginCaptures:
+          1: {name: keyword.control.return.ele}
+          2: {name: entity.name.variable.ele}
+          3: {name: keyword.operator.assignment.ele}
+        patterns:
+          - {include: '#expression'}
+          - {include: '#comments'}
+  namespace:
+    patterns:
+      - name: regions.namespace.declaration.ele
+        match: '\b([^\d\W][\w]*)\b\s*(?:$|(?=\{))'
+        captures:
+          1: {name: entity.name.type.namespace.ele}
+  type:
+    patterns:
+      - name: meta.interface.ele
+        begin: '\b[^\d\W][\w]*\b(?=.*;)(?!.*=)'
+        beginCaptures:
+          0: {name: entity.name.type.ele}
+        end: ';'
+        endCaptures:
+          0: {name: punctuation.terminator.interface.ele}
+        patterns:
+          - {include: '#function_definition'}
+  statement:
+    patterns:
+      - name: meta.function.ele
+        begin: '\b[^\d\W][\w]*\b'
+        beginCaptures:
+          0: {name: entity.name.function.ele}
+        end: '(?=\=|\{)|(\;)'
+        endCaptures:
+          1: {name: punctuation.terminator.statement.ele}
+        patterns:
+          - {include: '#function_definition'}
+  block:
+    patterns:
+      - name: meta.block.ele
+        begin: '\{'
+        beginCaptures:
+          0: {name: punctuation.definition.block.begin.ele}
+        end: '\}'
+        endCaptures:
+          0: {name: punctuation.definition.block.end.ele}
+        patterns:
+          - {include: $self}        
+  literal:
+    patterns:
+      - name: constant.numeric.ele
+        match: '[\-\+]?\d+(\.\d*)?([eE][\+\-]?\d+)?'
+  identifier:
+    patterns:
+      - name: variable.other.property.ele
+        match: '\b[^\d\W][\w]*\b'
+  call:
+    patterns:
+      - name: meta.function-call.ele
+        begin: '\b([^\d\W][\w]*)?\s*(\()'
+        end: '\)'
+        beginCaptures:
+          1: {name: entity.name.function.ele}
+          2: {name: punctuation.definition.parameters.begin.ele}
+        endCaptures:
+          0: {name: punctuation.definition.parameters.end.ele}
+        patterns:
+          - name: punctuation.separator.parameters.ele
+            match: ','
+          - {include: '#expression'}
+  member:
+    patterns:
+      - name: meta.property.ele
+        match: '\b([^\d\W][\w]*?)\s*(\.)'
+        captures: 
+          1: {name: variable.other.object.ele}
+          2: {name: punctuation.accessor.ele}
+  expression:
+    patterns:
+      - {include: '#literal'}
+      - {include: '#call'}
+      - {include: '#member'}
+      - {include: '#identifier'}
+scopeName: source.ele

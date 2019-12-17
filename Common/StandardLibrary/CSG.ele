@@ -1,0 +1,52 @@
+CSGPredicate2D(point:Vec2):num;
+Rect -> x:num, y:num, width:num, height:num;
+
+CSG
+{
+    Union(a:CSGPredicate2D, b:CSGPredicate2D):CSGPredicate2D
+    {
+        return(testPoint) = or(a(testPoint), b(testPoint));
+    }
+
+    Difference(a:CSGPredicate2D, b:CSGPredicate2D):CSGPredicate2D
+    {
+        return(testPoint) = and(a(testPoint), not(b(testPoint)));
+    }
+
+    Intersection(a:CSGPredicate2D, b:CSGPredicate2D):CSGPredicate2D
+    {
+        return(testPoint) = and(a(testPoint), b(testPoint));
+    }
+
+    Circle(centre:Vec2, circleRadius:num):CSGPredicate2D
+    {
+        return(testPoint:Vec2) =
+            lt(V2.Distance(testPoint, centre), circleRadius);
+    }
+
+    Ring(centre:Vec2, ringRadius:num, ringWidth:num):CSGPredicate2D =
+                CSG.Difference(CSG.Circle(centre, add(ringRadius, half(ringWidth))),
+                                CSG.Circle(centre, sub(ringRadius, half(ringWidth))));
+
+    Arc(centre:Vec2, arcRadius:num, startAngleDegrees:num, endAngleDegrees:num):CSGPredicate2D
+    {
+        return(testPoint)
+        {
+            angle = V2.Angle(centre, testPoint);
+            circle = CSG.Circle(centre, arcRadius);
+            return = and(circle(testPoint),
+                        and(gt(angle, startAngleDegrees),
+                            lt(angle, endAngleDegrees)));
+        }
+    }
+
+    Rectangle(rect:Rect):CSGPredicate2D
+    {
+        return(testPoint) =
+            and(
+                and(gt(testPoint.x, sub(rect.x, half(rect.width))),
+                    gt(testPoint.y, sub(rect.y, half(rect.height)))),
+                and(lt(testPoint.x, add(rect.x, half(rect.width))),
+                    lt(testPoint.y, add(rect.y, half(rect.height)))));
+    }
+}

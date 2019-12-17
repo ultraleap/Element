@@ -1,0 +1,60 @@
+levels = [ "Verbose", "Information", "Warning", "Error"]
+
+[ELE0000]
+name = "ZeroLengthArray"
+summary = "Cannot have a zero length array"
+level = "Error"
+
+[ELE0001]
+name = "SerializationError"
+summary = "An error occurred related to (de)serialization of a type"
+level = "Error"
+
+[ELE0002]
+name = "MultipleDefinitions"
+summary = "Cannot have multiple definitions of the same function or type"
+
+[ELE0003]
+name = "InvalidCompileTarget"
+summary = "Cannot compile the given identifier"
+level = "Error"
+
+[ELE0004]
+name = "IntrinsicNotImplemented"
+summary = "Compiler does not implement the given intrinsic"
+level = "Error"
+
+[ELE0005]
+name = "LocalShadowing"
+summary = "A local identifier shadows the same identifier defined in an outer scope"
+level = "Warning"
+
+[ELE0006]
+name = "ArgumentCountMismatch"
+summary = "Incorrect number of arguments supplied for function"
+level = "Error"
+
+[ELE0007]
+name = "IdentifierNotFound"
+summary = "Could not find the given identifier"
+level = "Error"
+
+[ELE0008]
+name = "ConstraintNotSatisfied"
+summary = "The constraint imposed by a type or interface has not been satisfied"
+level = "Error"
+
+[ELE0009]
+name = "ParseError"
+summary = ""
+level = "Error"
+
+[ELE0010]
+name = "InvalidBoundaryFunctionInterface"
+summary = "The interface for an Element function defined across the boundary is invalid"
+level = "Error"
+
+[ELE0011]
+name = "CircularCompilation"
+summary = "Circular dependency found during compilation - note that recusion is not supported"
+level = "Error"

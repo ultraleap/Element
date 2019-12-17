@@ -1,0 +1,37 @@
+/* A literal number including sign and decimal point, also including e notation */
+literal         ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
+/* Any string including most UTF8 characters but not exactly '_' */
+identifier      ::= '_'? [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
+unidentifier    ::= '_'
+terminal        ::= ';'
+listStart       ::= '('
+listEnd         ::= ')'
+scopeAccess     ::= '.' identifier
+
+type            ::= ':' identifier scopeAccess*
+port            ::= unidentifier | (identifier type?)
+portlist        ::= port (',' port)*
+body            ::= scope | binding terminal
+/* Portlist is optional in 2 situations:
+       Constants are nullary functions where parentheses are redundant
+       It is impossible to declare the interface of intrinsic variadic construct */
+declaration     ::= identifier (listStart portlist listEnd)?
+lambda          ::= unidentifier (listStart portlist listEnd) body
+
+/* Literals can be used for calling functions 
+   Expression list is optional so that references to constants/nullary functions don't require redundant parentheses */
+expression      ::= ((identifier | literal) (scopeAccess | (listStart exprlist listEnd))*)
+                    | lambda
+exprlist        ::= expression (',' expression)*
+binding         ::= '=' expression
+
+qualifier       ::= 'intrinsic'
+namespace       ::= 'namespace' identifier scope
+/* Function ending in a terminal is a function type */
+function        ::= qualifier? declaration type? (body | terminal)
+struct          ::= qualifier? 'struct' declaration (scope | terminal)
+
+element         ::= namespace | struct | function
+scope           ::= '{' element* '}'
+/* Any complete blob of element code potentially including 1 or many source files */
+grammar         ::= element*

@@ -1,0 +1,6 @@
+Factorial(a:num) : num
+{
+    return = for(Vec2(1, 1), condition, body).y;
+    condition(v) = leq(v.x, a);
+    body(v) = Vec2(add(v.x, 1), mul(v.y, v.x));
+}
