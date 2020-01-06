@@ -4,10 +4,7 @@ on: [push]
 
 jobs:
   build-alchemist:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v1
@@ -26,15 +23,11 @@ jobs:
           path: Alchemist/Build
 
   run-laboratory-tests:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+    runs-on: ubuntu-latest
 
     steps:
-      - run: |
-          cd Laboratory
-          dotnet test -v n -l trx -r Results
+      - name: Run laboratory
+        run: dotnet test Laboratory/Laboratory.csproj -v n -l trx -r Results
       - name: Upload artifact
         uses: actions/upload-artifact@v1.0.0
         with:
