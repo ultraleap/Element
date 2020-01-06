@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
@@ -26,8 +26,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
       - name: Run laboratory
-        run: dotnet test Laboratory/Laboratory.csproj -v n -l trx -r Results
+        run: |
+          cd Laboratory
+          dotnet test -v n -l trx -r Results
       - name: Upload artifact
         uses: actions/upload-artifact@v1.0.0
         with:
@@ -42,7 +46,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: Checkout submodules
         shell: bash
         run: git submodule update --init --force --recursive
