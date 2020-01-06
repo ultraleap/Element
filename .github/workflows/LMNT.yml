@@ -1,0 +1,29 @@
+name: LMNT
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v1
+    - name: Checkout submodules
+      uses: textbook/git-checkout-submodule-action@2.0.0
+    - run: cd LMNT
+           mkdir build
+           cd build
+           cmake ..
+           cmake --build . --config RelWithDebInfo
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+       # Artifact name
+       name: LMNT
+       # Directory containing files to upload
+       path: LMNT/build
