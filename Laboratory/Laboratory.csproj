@@ -56,12 +56,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Tests\Prelude\Array" />
-    <Folder Include="Tests\Prelude\Fold" />
-    <Folder Include="Tests\Prelude\Tuple" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Element.NET\Element.NET.csproj" />
   </ItemGroup>
 

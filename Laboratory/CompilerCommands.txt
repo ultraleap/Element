@@ -1,1 +1,1 @@
-../../../LocalTemp/Alchemist/Alchemist.exe
+../../../../Alchemist/Build/Alchemist.exe

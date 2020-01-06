@@ -1,1 +1,1 @@
-dotnet publish ../Alchemist --self-contained=false -o LocalTemp/Alchemist -v n
+dotnet publish ../Alchemist --self-contained=false -o ../Alchemist/Build -v n
