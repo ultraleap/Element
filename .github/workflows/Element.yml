@@ -27,6 +27,11 @@ jobs:
           path: Alchemist/Build
 
   run-laboratory-tests:
+    runs-on: ${{ matrix.os }}
+      strategy:
+        matrix:
+          os: [ubuntu-latest, windows-latest, macOS-latest]
+
      steps:
        - run: |
            cd Laboratory
