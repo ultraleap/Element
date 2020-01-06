@@ -4,7 +4,6 @@ on: [push]
 
 jobs:
   build-alchemist:
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -28,42 +27,41 @@ jobs:
 
   run-laboratory-tests:
     runs-on: ${{ matrix.os }}
-      strategy:
-        matrix:
-          os: [ubuntu-latest, windows-latest, macOS-latest]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
 
-     steps:
-       - run: |
-           cd Laboratory
-           dotnet test -v n -l trx -r Results
-       - name: Upload artifact
-         uses: actions/upload-artifact@v1.0.0
-         with:
-           name: Laboratory Results
-           path: Laboratory/Results
+    steps:
+      - run: |
+          cd Laboratory
+          dotnet test -v n -l trx -r Results
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: Laboratory Results
+          path: Laboratory/Results
 
   build-lmnt:
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v1
-    - name: Checkout submodules
-      shell: bash
-      run: git submodule update --init --force --recursive
-    - name: Build
-      run: |
-        cd LMNT
-        mkdir Build
-        cd Build
-        cmake ..
-        cmake --build . --config RelWithDebInfo
-    - name: Upload artifact
-      uses: actions/upload-artifact@v1.0.0
-      with:
-       name: LMNT
-       path: LMNT/Build
+      - name: Checkout repository
+        uses: actions/checkout@v1
+      - name: Checkout submodules
+        shell: bash
+        run: git submodule update --init --force --recursive
+      - name: Build
+        run: |
+          cd LMNT
+          mkdir Build
+          cd Build
+          cmake ..
+          cmake --build . --config RelWithDebInfo
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: LMNT
+          path: LMNT/Build
