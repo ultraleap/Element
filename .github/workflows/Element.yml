@@ -32,10 +32,10 @@ jobs:
            cd Laboratory
            dotnet test -v n -l trx -r Results
        - name: Upload artifact
-          uses: actions/upload-artifact@v1.0.0
-          with:
-            name: Laboratory Results
-            path: Laboratory/Results
+           uses: actions/upload-artifact@v1.0.0
+           with:
+             name: Laboratory Results
+             path: Laboratory/Results
 
   build-lmnt:
 
