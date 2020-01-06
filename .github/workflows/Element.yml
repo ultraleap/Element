@@ -31,15 +31,14 @@ jobs:
       - name: Run laboratory
         run: |
           cd Laboratory
-          dotnet test -v n -l trx -r Results
-          $? > exitcode
+          dotnet test -v n -l trx -r Results; echo "$?" > exitcode
       - name: Upload artifact
         uses: actions/upload-artifact@v1.0.0
         with:
           name: Laboratory Results
           path: Laboratory/Results
       - name: Marks failure when dotnet test exits in failure
-        run: exit (<exitcode)
+        run: cd Laboratory; exit (<exitcode)
 
 #  build-lmnt:
 #    runs-on: ${{ matrix.os }}
