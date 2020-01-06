@@ -25,9 +25,8 @@ jobs:
   run-laboratory-tests:
     runs-on: ubuntu-latest
 
-    continue-on-error: true
-
     steps:
+      continue-on-error: true
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Run laboratory
