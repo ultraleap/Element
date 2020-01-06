@@ -26,10 +26,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      continue-on-error: true
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Run laboratory
+        continue-on-error: true
         run: |
           cd Laboratory
           dotnet test -v n -l trx -r Results; echo "$?" > exitcode
