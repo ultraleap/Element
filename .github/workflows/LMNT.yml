@@ -16,11 +16,13 @@ jobs:
     - name: Checkout submodules
       shell: bash
       run: git submodule update --init --force --recursive
-    - run: cd LMNT
-           mkdir build
-           cd build
-           cmake ..
-           cmake --build . --config RelWithDebInfo
+    - name: Build
+      run: |
+        cd LMNT
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config RelWithDebInfo
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
       with:
