@@ -29,10 +29,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Run laboratory
-        continue-on-error: true
         run: |
           cd Laboratory
-          dotnet test -v n
+          dotnet test -v m
 
 #  build-lmnt:
 #    runs-on: ${{ matrix.os }}
