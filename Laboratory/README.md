@@ -25,14 +25,24 @@ When a compiler logs an error it **_must_** a message code as they are used in e
 All other information is considered metadata and the compiler may format it however desired and add it's own context to the message e.g. a stack trace.
 
 ## Test Conventions
-* Tests should be named after the feature or error case they test, e.g. "Parsing", "CyclicReference".
+* Tests are organized by the level of the compilation stage they test. Each level has individual conventions in addition to those mentioned here.
+  * [L0 - Syntax Parsing](L0-Syntax-Parsing)
+  * [L1 - Language Semantics](L1-Language-Semantics)
+  * [L2 - Prelude](L2-Prelude)
+  * [L3 - Standard Library](L3-Standard-Library)
+* Tests should be named after the feature or error case they test, e.g. "CyclicReference".
+* Each test involves calling an Element Host to perform some action. Two kinds of hosts exist:
+   * Self Host - laboratory performs the action using Element.NET.
+   * Process Host - laboratory calls into another process (usually a CLI) to perform the action.
+   This serves 2 purposes, testing the CLI application itself and allowing Laboratory to easily interop with hosts implemented in different languages.
+   See [writing a compliant compiler CLI](#writing-a-compliant-compiler-cli) below.
+* All tests are run for each host instance.
 * Tests are can rely on Element source files from Prelude, the Standard Library or in the Tests directory.
-* Tests are run using a command to invoke each compiler under test. See [writing a compliant compiler CLI](#writing-a-compliant-compiler-cli) below.
-* Several convention-based tests can be implemented as [compounds](Compounds.md).
+These are not included by default in most levels and must be included by passing a non-default HostContext to the Host.
 
-### Writing a compliant compiler CLI
-Compilers must provide a CLI to be testable in Laboratory and the command for invoking the compiler should be added to CompilerCommands.txt.
-Compliant CLIs must implement the following commands:
+### Writing a compliant host CLI
+Hosts must provide a CLI to be testable in Laboratory and the details for the CLI should be added to [ProcessHostConfigurations.toml](ProcessHostConfigurations.toml).
+A compliant CLIs must implement the following commands:
 
 #### Execute
 Compile and executes a function, returning the results of the functions evaluation. 

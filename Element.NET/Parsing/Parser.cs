@@ -44,56 +44,62 @@ namespace Element
 		private static readonly char[] _identifierAllowedCharacters = {'_'};
 		private const char _lineCommentCharacter = '#';
 
-		private static readonly Lazy<Grammar> _parser = new Lazy<Grammar>(() =>
+		private static Grammar MakeParser()
 		{
-			// Literals
-			var ws = Terminals.WhiteSpace.Repeat(0);
-			var comma = ws.Then(Terminals.Set(','), ws);
-			var subExpressionAccess = ws.Then(Terminals.Set('.'), ws);
-			var number = new NumberParser
-			{
-				AllowDecimal = true,
-				AllowExponent = true,
-				AllowSign = true,
-				ValueType = typeof(float)
-			};
+				// Literals
+				var ws = Terminals.WhiteSpace.Repeat(0);
+				var comma = ws.Then(Terminals.Set(','), ws);
+				var subExpressionAccess = ws.Then(Terminals.Set('.'), ws);
+				var number = new NumberParser
+				{
+					AllowDecimal = true,
+					AllowExponent = true,
+					AllowSign = true,
+					ValueType = typeof(float)
+				};
 
-			var identifier = Terminals.Letter.Or(Terminals.Set(_identifierAllowedCharacters))
-			                          .Then(Terminals.LetterOrDigit.Or(Terminals.Set(_identifierAllowedCharacters)).Repeat(0));
+				var identifier = Terminals.Letter.Or(Terminals.Set(_identifierAllowedCharacters))
+					.Then(Terminals.LetterOrDigit.Or(Terminals.Set(_identifierAllowedCharacters)).Repeat(0));
 
-			// Expressions
-			var expression = new UnaryParser();
-			var subExpression = expression.Named(ElementAST.SubExpressionRoot)
-			                              .Then(subExpressionAccess, identifier.Named(ElementAST.SubExpressionName));
-			var arguments = expression.Named(ElementAST.CallArgument).Repeat(0).SeparatedBy(comma);
-			var call = expression.Named(ElementAST.Callee)
-			                     .Then(ws, Terminals.Set('('), ws, arguments.Named(ElementAST.CallArguments), ws, Terminals.Set(')'));
-			expression.Inner = new AlternativeParser(
-				number.Named(ElementAST.NumberExpression),
-				identifier.Named(ElementAST.VariableExpression),
-				subExpression.Named(ElementAST.SubExpression),
-				call.Named(ElementAST.CallExpression)
+				// Expressions
+				var expression = new UnaryParser();
+				var subExpression = expression.Named(ElementAST.SubExpressionRoot)
+					.Then(subExpressionAccess, identifier.Named(ElementAST.SubExpressionName));
+				var arguments = expression.Named(ElementAST.CallArgument).Repeat(0).SeparatedBy(comma);
+				var call = expression.Named(ElementAST.Callee)
+					.Then(ws, Terminals.Set('('), ws, arguments.Named(ElementAST.CallArguments), ws,
+						Terminals.Set(')'));
+				expression.Inner = new AlternativeParser(
+					number.Named(ElementAST.NumberExpression),
+					identifier.Named(ElementAST.VariableExpression),
+					subExpression.Named(ElementAST.SubExpression),
+					call.Named(ElementAST.CallExpression)
 				);
 
-			// Functions
-			var portType = ws.Then(Terminals.Literal(":"), ws, identifier.Named(ElementAST.PortType)).Optional();
-			var port = identifier.Named(ElementAST.PortName).Then(portType).Named(ElementAST.Port);
-			var ports = port.Repeat(0).SeparatedBy(comma);
-			var fnInputs = Terminals.Set('(').Then(ws, ports.Named(ElementAST.FunctionInputs), ws, Terminals.Set(')')).Optional();
-			var fnOutputs = Terminals.Literal("->").Then(ws, ports.Named(ElementAST.FunctionOutputs)).Or(portType);
-			var fnSignature = identifier.Named(ElementAST.FunctionName).Then(ws, fnInputs, ws, fnOutputs, ws);
+				// Functions
+				var portType = ws.Then(Terminals.Literal(":"), ws, identifier.Named(ElementAST.PortType)).Optional();
+				var port = identifier.Named(ElementAST.PortName).Then(portType).Named(ElementAST.Port);
+				var ports = port.Repeat(0).SeparatedBy(comma);
+				var fnInputs = Terminals.Set('(')
+					.Then(ws, ports.Named(ElementAST.FunctionInputs), ws, Terminals.Set(')')).Optional();
+				var fnOutputs = Terminals.Literal("->").Then(ws, ports.Named(ElementAST.FunctionOutputs)).Or(portType);
+				var fnSignature = identifier.Named(ElementAST.FunctionName).Then(ws, fnInputs, ws, fnOutputs, ws);
 
-			// Statements
-			var statement = new UnaryParser();
-			var body = Terminals.Set('{').Then(ws, statement.Then(ws).Repeat(0).Named(ElementAST.FunctionBody), ws, Terminals.Set('}'));
-			var assign = Terminals.Set('=').Then(ws, expression.Named(ElementAST.AssignmentStatement), ws, Terminals.Set(';'));
-			statement.Inner = fnSignature.Then(body.Or(assign).Or(Terminals.Set(';').Named(ElementAST.TypeStatement))).Named(ElementAST.Statement);
+				// Statements
+				var statement = new UnaryParser();
+				var body = Terminals.Set('{').Then(ws, statement.Then(ws).Repeat(0).Named(ElementAST.FunctionBody), ws,
+					Terminals.Set('}'));
+				var assign = Terminals.Set('=').Then(ws, expression.Named(ElementAST.AssignmentStatement), ws,
+					Terminals.Set(';'));
+				statement.Inner = fnSignature
+					.Then(body.Or(assign).Or(Terminals.Set(';').Named(ElementAST.TypeStatement)))
+					.Named(ElementAST.Statement);
 
-			var start = ws.Then(statement, ws).Repeat(0);
-			start.Until = Terminals.End;
+				var start = ws.Then(statement, ws).Repeat(0);
+				start.Until = Terminals.End;
 
-			return new Grammar(start);
-		});
+				return new Grammar(start);
+		}
 
 		private static string Preprocess(string text)
 		{
@@ -116,7 +122,7 @@ namespace Element
 
 		private static GrammarMatch Parse(string text)
 		{
-			var match = _parser.Value.Match(Preprocess(text));
+			var match = MakeParser().Match(Preprocess(text));
 			if (!string.IsNullOrEmpty(match.ErrorMessage))
 			{
 				throw new Exception(match.ErrorMessage);
@@ -139,6 +145,7 @@ namespace Element
 		/// Parses the given text as Element code, adding each item to the GlobalScope
 		/// </summary>
 		/// <param name="globalScope">The globalScope to add the parsed items</param>
+		/// <param name="context"></param>
 		/// <param name="source">Where the source came from</param>
 		/// <param name="text">The source code</param>
 		public static void AddToGlobalScope(GlobalScope globalScope, CompilationContext context, string source, string text)

@@ -1,1 +1,0 @@
-dotnet publish ../Alchemist --self-contained=false -o ../Alchemist/Build -v n

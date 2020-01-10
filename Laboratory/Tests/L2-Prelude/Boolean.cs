@@ -1,13 +1,16 @@
-namespace Element.Laboratory
-{
-	using NUnit.Framework;
+using NUnit.Framework;
 
-	internal class Math : Laboratory.CompilerFixture
+namespace Laboratory.Tests
+{
+	internal class Boolean : HostFixture
 	{
-		public Math(Laboratory.ICommandInterface commandInterface) : base(commandInterface)
+		public Boolean(IHost host) : base(host) { }
+
+		private static HostContext BooleanContext => new HostContext
 		{
-			Context.IncludePrelude = true;
-		}
+			IncludePrelude = true
+		};
+
 
 		[
 			TestCase("bool", 0f, 0f),
@@ -22,7 +25,7 @@ namespace Element.Laboratory
 			TestCase("not", 1f, 0f),
 		]
 		public void UnaryOp(string function, float a, float expected) =>
-			Assert.That(Execute(function, a)[0], Is.EqualTo(expected));
+			Assert.That(_host.Execute(BooleanContext, function, a)[0], Is.EqualTo(expected));
 
 		[
 			TestCase("and", 0f, 0f, 0f),
@@ -79,6 +82,6 @@ namespace Element.Laboratory
 			TestCase("neq", 999.999f, 999.999f, 0f)
 		]
 		public void BinaryOp(string function, float a, float b, float expected) =>
-			Assert.That(Execute(function, a, b)[0], Is.EqualTo(expected));
+			Assert.That(_host.Execute(BooleanContext, function, a, b)[0], Is.EqualTo(expected));
 	}
 }

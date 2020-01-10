@@ -26,12 +26,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: Run laboratory
-        run: |
+      - uses: actions/checkout@v2
+      - run: |
           cd Laboratory
-          dotnet test -v m
+          dotnet test -v q --test-adapter-path:. --logger:nunit
+      - if: failure()
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: Laboratory Results
+          path: Laboratory/TestResults
+
 
 #  build-lmnt:
 #    runs-on: ${{ matrix.os }}

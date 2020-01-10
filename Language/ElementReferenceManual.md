@@ -82,7 +82,7 @@ Hosts are expected to validate syntax elements such that irrelevant syntax retur
 ## Basic Concepts
 ### Values
 A value is the basic unit of an Element program.
-Values can be declared by language constructs or returned as the result of expressions.
+Values can be declared using language constructs or returned as the result of expressions.
 Values can have one or many of the following characteristics in Element:
 * **Indexable** - can contain other values accessible via `.`, e.g. `foo` where `foo.bar` is valid.
 * **Callable** - can produce other values through parametrization, e.g. `foo` where `foo(parameter)` is valid.
@@ -560,7 +560,7 @@ All constraints can be checked during compilation with no type checking requirin
 Another important consequence of recursive analysis is that unreferenced values are not compiled.
 This is a double-edged sword as it improves compilation performance but allows semantic/validation errors in unreferenced code that parses successfully (such as type errors) to go undetected!
 
-Hosts must follow the error handling conventions defined in  
+Hosts must follow the error handling conventions defined in [Laboratory's readme](../Laboratory/README.md).
 
 ## Data Boundary
 Element has no facilities for dealing with storage/memory thus a host must be responsible for handling memory for an Element program.
@@ -587,12 +587,12 @@ They are the basic components which all Element programs are built up from.
 Intrinsics can be declared in source code using the `intrinsic` keyword.
 
 Intrinsics have a few special rules that differ from normal structs and functions:
-* Intrinsic functions are implemented by compilers.
+* Intrinsic functions are implemented by hosts.
 * Intrinsics can be variadic (types or functions with variable number of fields).
-Element does not directly support variadics however a few intrinsic constructs are variadic and can be referenced as long as their interfaces are satisfied.
+Element does not directly support variadic functions or types however a few intrinsic constructs are variadic and can be referenced as long as their interfaces are satisfied.
 * Intrinsic constructs may omit an interface as it may not be possible to describe in the language.
 * Intrinsic functions' interfaces in the host must match the interface declared in the source (when the source includes a declaration).
 
 ## Prelude
-Prelude is a base library of Element source code containing intrinsics and values considered as core functionality.
+Prelude is a base library of Element source code containing intrinsics and values implementing core functionality.
 The source for Prelude can be found [here](../Common/Prelude/Prelude.ele).
