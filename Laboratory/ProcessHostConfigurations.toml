@@ -6,6 +6,6 @@
 [Alchemist]
 enabled = true
 build-command = "dotnet publish Alchemist/Alchemist.csproj --self-contained=false -o Alchemist/Build -v n"
-executable-path = "Alchemist/Build/Alchemist.exe"
+executable-path = "Alchemist/Build/Alchemist"
 
 
