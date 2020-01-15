@@ -1,16 +1,22 @@
-namespace Element.Laboratory
-{
-	using System;
-	using System.Linq;
-	using NUnit.Framework;
+using System;
+using System.Linq;
+using NUnit.Framework;
 
+namespace Laboratory.Tests
+{
 	/// <summary>
-	/// Tests for math intrinsics.
+	/// Tests for num and associated functions
 	/// </summary>
-	internal class MathIntrinsics : Laboratory.CompilerFixture
+	internal class Number : HostFixture
 	{
-		public MathIntrinsics(Laboratory.ICommandInterface commandInterface)
-			: base(commandInterface) { }
+		public Number(IHost host) : base(host) { }
+
+		private static HostContext NumberContext => new HostContext
+		{
+			IncludePrelude = true
+		};
+
+		private float[] Execute(string function, params float[] args) => _host.Execute(NumberContext, function, args);
 
 		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
 		{

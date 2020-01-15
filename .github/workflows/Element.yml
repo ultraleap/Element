@@ -1,0 +1,65 @@
+name: Element
+
+on: [push]
+
+jobs:
+  build-alchemist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.0.101
+      - name: Build with dotnet
+        run: |
+          cd Alchemist
+          dotnet publish --self-contained=false -o Build -v n
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: Alchemist
+          path: Alchemist/Build
+
+  run-laboratory-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        run: |
+          cd Laboratory
+          dotnet test -v q --test-adapter-path:. --logger:nunit
+      - name: Uploaded test results on fail
+        if: failure()
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: Laboratory Results
+          path: Laboratory/TestResults
+
+
+#  build-lmnt:
+#    runs-on: ${{ matrix.os }}
+#    strategy:
+#      matrix:
+#        os: [ubuntu-latest, windows-latest, macOS-latest]
+#
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v2
+#      - name: Checkout submodules
+#        shell: bash
+#        run: git submodule update --init --force --recursive
+#      - name: Build
+#        run: |
+#          cd LMNT
+#          mkdir Build
+#          cd Build
+#          cmake ..
+#          cmake --build . --config RelWithDebInfo
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v1.0.0
+#        with:
+#          name: LMNT
+#          path: LMNT/Build

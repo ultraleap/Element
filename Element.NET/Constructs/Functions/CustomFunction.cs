@@ -8,7 +8,7 @@ namespace Element
 	/// <summary>
 	/// A user-defined Function (which may or may not have a body!)
 	/// </summary>
-	internal class CustomFunction : IntrospectionBase, IScope, IDebuggable
+	internal class CustomFunction : IntrospectionBase, IScope, IDebuggable, INamedFunction
 	{
 		public override string ToString() => $"{Parent}.{Name}";
 

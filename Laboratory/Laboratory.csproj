@@ -12,6 +12,7 @@
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="NUnit.Console" Version="3.10.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
+    <PackageReference Include="NunitXml.TestLogger" Version="2.1.41" />
   </ItemGroup>
   
   <ItemGroup>
@@ -21,9 +22,8 @@
     <Content Include="Tests\*.ele" Link="Tests\%(Filename)%(Extension)">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Remove="CompilerCommands.txt" />
-    <Content Include="CompilerCommands.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <Content Include="ProcessHostConfigurations.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   
@@ -53,12 +53,6 @@
 
   <ItemGroup>
     <DeployManifest Remove="obj\Debug\netcoreapp2.2\Laboratory.application" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Tests\Prelude\Array" />
-    <Folder Include="Tests\Prelude\Fold" />
-    <Folder Include="Tests\Prelude\Tuple" />
   </ItemGroup>
 
   <ItemGroup>
