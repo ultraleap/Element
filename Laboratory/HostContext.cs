@@ -11,7 +11,7 @@ namespace Laboratory
     /// </summary>
     internal class HostContext
     {
-        public bool IncludePrelude { get; set; }
+        public bool IncludePrelude { get; set; } = false;
         public string[] Packages { get; } = Array.Empty<string>();
         public MessageHandler MessageHandler { get; set; } = (messages, anyErrors) =>
         {

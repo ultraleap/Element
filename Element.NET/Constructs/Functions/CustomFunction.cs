@@ -112,7 +112,7 @@ namespace Element
 
 					return previous.Call(argList, context, MakeCallSite(exprAst));
 				default:
-					return context.LogError($"Unknown expression {exprAst}");
+					return context.LogError(9999, $"Unknown expression {exprAst}");
 			}
 		}
 
@@ -162,7 +162,7 @@ namespace Element
 
 			if (value == null)
 			{
-				return context.LogError("ELE0007", name);
+				return context.LogError(0007, name);
 			}
 
 			return value.ResolveReturns(context, null); // TODO: Keep variable information here?
@@ -201,7 +201,7 @@ namespace Element
 			}
 			else if (IsNamespace && !IsClass)
 			{
-				return context.LogError($"This is a Namespace, so it has no constructor");
+				return context.LogError(9999, $"This is a Namespace, so it has no constructor");
 			}
 
 			if (IsClass
@@ -235,7 +235,7 @@ namespace Element
 			var success = outputPort.Type.SatisfiedBy(outValue, context);
 			return success switch
 			{
-				false => context.LogError("ELE0008", $"Output `{outputPort}` was not satisfied by its value `{outValue}` (See previous errors)"),
+				false => context.LogError(0008, $"Output `{outputPort}` was not satisfied by its value `{outValue}` (See previous errors)"),
 				null => Error.Instance,
 				_ => outValue
 			};

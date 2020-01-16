@@ -57,3 +57,4 @@ Arguments (order shouldn't matter):
 Example: `execute -f add -a 1 5` should print `6`
 
 NOTE: An issue with Windows Terminal default encoding causes `∞` to be converted to `8` ([see stackoverflow](https://stackoverflow.com/questions/40907417/why-is-infinity-printed-as-8-in-the-windows-10-console)). To combat this, all `∞` should be converted to the text `Infinity`.
+

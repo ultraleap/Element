@@ -33,23 +33,31 @@ namespace Laboratory
             {
                 var tomlTable = (TomlTable) table;
 
-                TValue Get<TValue>(string key) => (TValue) tomlTable[key];
+                readonly TValue Get<TValue>(in string key) => (TValue) tomlTable[key];
                 _processHostInfos.Add(new ProcessHostInfo
-                {
-                    Name = name,
-                    Enabled = Get<bool>("enabled"),
-                    BuildCommand = Get<string>("build-command"),
-                    ExecutablePath = Path.Combine(Laboratory.ElementRootDirectory.Value, Get<string>("executable-path"))
-                });
+                (
+                    name,
+                    Get<bool>("enabled"),
+                    Get<string>("build-command"),
+                    Path.Combine(Laboratory.ElementRootDirectory.Value, Get<string>("executable-path"))
+                ));
             }
         }
 
-        private class ProcessHostInfo
+        private readonly struct ProcessHostInfo
         {
-            public string Name { get; set; }
-            public bool Enabled { get; set; }
-            public string BuildCommand { get; set; }
-            public string ExecutablePath { get; set; }
+            public ProcessHostInfo(in string name, bool enabled, in string buildCommand, in string executablePath)
+            {
+                Name = name;
+                Enabled = enabled;
+                BuildCommand = buildCommand;
+                ExecutablePath = executablePath;
+            }
+
+            public string Name { get; }
+            public bool Enabled { get; }
+            public string BuildCommand { get; }
+            public string ExecutablePath { get; }
         }
 
         private static readonly List<ProcessHostInfo> _processHostInfos = new List<ProcessHostInfo>();
@@ -57,44 +65,66 @@ namespace Laboratory
         /// <summary>
         /// Implements commands directly.
         /// </summary>
-        private class SelfHost : IHost
+        private readonly struct SelfHost : IHost
         {
             public override string ToString() => "Laboratory";
 
-            float[] IHost.Execute(HostContext context, string functionName, params float[] functionArgs)
+            private class CommandInstance
             {
-                var sourceContext = new SourceContext();
-                var compilationContext = new CompilationContext(logToConsole: false);
-
-                static FileInfo[] OpenPackage(string package) => new DirectoryInfo(package).GetFiles("*.ele", SearchOption.AllDirectories);
-                if (context.IncludePrelude) sourceContext.AddSourceFiles(OpenPackage("StandardLibrary"));
-                sourceContext.AddSourceFiles(context.Packages.SelectMany(OpenPackage));
-
-                var messages = new List<string>();
-                var anyErrors = false;
-
-                compilationContext.OnLog += msg => messages.Add(msg);
-                compilationContext.OnError += msg =>
+                public CommandInstance(in HostContext hostContext, SourceContext sourceContext = default, CompilationContext compilationContext = default)
                 {
-                    messages.Add(msg);
-                    anyErrors = true;
-                };
+                    SourceContext = sourceContext ??= new SourceContext();
+                    CompilationContext = compilationContext ??= new CompilationContext(logToConsole: false);
+                    HostContext = hostContext;
 
-                sourceContext.Recompile(compilationContext);
+                    static FileInfo[] OpenPackage(string package) => new DirectoryInfo(package).GetFiles("*.ele", SearchOption.AllDirectories);
+                    if (hostContext.IncludePrelude) sourceContext.AddSourceFiles(OpenPackage("Prelude"));
+                    sourceContext.AddSourceFiles(hostContext.Packages.SelectMany(OpenPackage));
 
-                var function = sourceContext.GlobalScope.GetFunction(functionName, compilationContext);
-                var result = function.EvaluateAndSerialize(functionArgs, compilationContext);
+                    compilationContext.OnLog += msg => Messages.Add(msg);
+                    compilationContext.OnError += msg =>
+                    {
+                        Messages.Add(msg);
+                        AnyErrors = true;
+                    };
 
-                context.MessageHandler(messages, anyErrors);
+                    sourceContext.Recompile(compilationContext);
+                }
 
-                return result;
+                private SourceContext SourceContext { get; }
+                private CompilationContext CompilationContext { get; }
+                private List<string> Messages { get; } =  new List<string>();
+                private bool AnyErrors { get; set; }
+                private HostContext HostContext { get; }
+
+                private void PrintAnyErrors() => HostContext.MessageHandler(Messages, AnyErrors);
+
+                public bool Parse(in FileInfo file)
+                {
+                    SourceContext.AddSourceFiles(new []{file});
+                    SourceContext.Recompile(CompilationContext);
+                    PrintAnyErrors();
+                    return AnyErrors;
+                }
+
+                public float[] Execute(in string functionName, params float[] functionArgs)
+                {
+                    var function = SourceContext.GlobalScope.GetFunction(functionName, CompilationContext);
+                    var result = function.EvaluateAndSerialize(functionArgs, CompilationContext);
+                    PrintAnyErrors();
+                    return result;
+                }
             }
+
+            bool IHost.Parse(HostContext hostContext, FileInfo file) => new CommandInstance(hostContext).Parse(file);
+
+            float[] IHost.Execute(HostContext hostContext, string functionName, params float[] functionArgs) => new CommandInstance(hostContext).Execute(functionName, functionArgs);
         }
 
         /// <summary>
         /// Implements commands by calling external process defined using a command string.
         /// </summary>
-        private class ProcessHost : IHost
+        private readonly struct ProcessHost : IHost
         {
             private static (List<string> Messages, bool AnyErrors) Run(Process process)
             {
@@ -190,17 +220,34 @@ namespace Laboratory
                 return messages;
             }
 
-            float[] IHost.Execute(HostContext context, string functionName, params float[] functionArgs)
+            private static StringBuilder BeginCommand(HostContext hostContext, string command)
             {
                 var processArgs = new StringBuilder();
-                processArgs.Append("execute");
-                var packages = context.Packages;
-                if (context.IncludePrelude || packages?.Length > 0)
+                processArgs.Append(command);
+                var packages = hostContext.Packages;
+                if (hostContext.IncludePrelude || packages?.Length > 0)
                 {
                     processArgs.Append(" -p ");
-                    if (context.IncludePrelude) processArgs.Append("StandardLibrary ");
+                    if (hostContext.IncludePrelude) processArgs.Append("Prelude ");
                     if (packages?.Length > 0) processArgs.AppendJoin(' ', packages);
                 }
+
+                return processArgs;
+            }
+
+            bool IHost.Parse(HostContext hostContext, FileInfo file)
+            {
+                var processArgs = BeginCommand(hostContext, "parse");
+
+                processArgs.Append(" -f ");
+                processArgs.Append(file.FullName);
+
+                return bool.Parse(RunHostProcess(hostContext, processArgs.ToString()).Last());
+            }
+
+            float[] IHost.Execute(HostContext hostContext, string functionName, params float[] functionArgs)
+            {
+                var processArgs = BeginCommand(hostContext, "execute");
 
                 processArgs.Append(" -f ");
                 processArgs.Append(functionName);
@@ -211,7 +258,7 @@ namespace Laboratory
                     processArgs.AppendJoin(' ', functionArgs);
                 }
 
-                return RunHostProcess(context, processArgs?.ToString()).Last().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                return RunHostProcess(hostContext, processArgs.ToString()).Last().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
             }
         }
     }

@@ -16,7 +16,7 @@ namespace Element
 		{
 			if (arguments.Length == 0)
 			{
-				return context.LogError("ELE2000");
+				return context.LogError(0013);
 			}
 
 			switch (name)
@@ -24,7 +24,7 @@ namespace Element
 				case "count": return new Constant(arguments.Length);
 				case "index": return new IndexFunction(arguments);
 				default:
-					return context.LogError($"No output named {name}");
+					return context.LogError(9999, $"No output named {name}");
 			}
 		}
 

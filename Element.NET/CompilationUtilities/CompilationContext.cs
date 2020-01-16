@@ -38,21 +38,21 @@ namespace Element
 		public void Push(CallSite callSite) => _callStack.Push(callSite);
 		public void Pop() => _callStack.Pop();
 
-		public IFunction LogError(string messageCode, string context = default) => LogImpl(messageCode, true, context);
-		public void Log(string messageCode, string context = default) => LogImpl(messageCode, false, context);
-		private IFunction LogImpl(string messageCode, bool appendStackTrace = false, string context = default)
+		public IFunction LogError(int messageCode, string context = default) => LogImpl(messageCode, true, context);
+		public void Log(string message) => LogImpl(null, false, message);
+		private IFunction LogImpl(int? messageCode, bool appendStackTrace = false, string context = default)
 		{
 			var sb = new StringBuilder();
 			string level;
-			if (!string.IsNullOrEmpty(messageCode) && _messageToml[messageCode] is TomlTable messageTable)
+			if (messageCode.HasValue && _messageToml[$"ELE{messageCode.Value}"] is TomlTable messageTable)
 			{
 				level = (string)messageTable["level"];
-				sb.Append(messageCode).Append(": ").Append(level).Append(" - ").Append((string)messageTable["name"]).AppendLine();
+				sb.Append("ELE").Append(messageCode).Append(": ").Append(level).Append(" - ").Append((string)messageTable["name"]).AppendLine();
 				sb.AppendLine((string)messageTable["summary"]);
 			}
 			else
 			{
-				throw new InternalCompilerException($"{messageCode} could not be found");
+				throw new InternalCompilerException($"ELE{messageCode} could not be found");
 			}
 			
 			var indexOfLevel = Array.IndexOf(_messageLevels, level);
@@ -76,7 +76,7 @@ namespace Element
 				
 				var message = sb.ToString();
 				var isError = Array.IndexOf(_messageLevels, "Error") >= indexOfLevel;
-				if(isError) OnError?.Invoke(message);
+				if (isError) OnError?.Invoke(message);
 				else OnLog?.Invoke(message);
 			}
 			

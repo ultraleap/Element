@@ -31,13 +31,13 @@ namespace Element
 
 			if (value.Inputs?.Length != 0)
 			{
-				info.LogError($"Cannot serialize {value} because it has inputs");
+				info.LogError(0001, $"Cannot serialize {value} because it has inputs");
 				return null;
 			}
 
 			if (value.Outputs == null)
 			{
-				info.LogError($"Cannot serialize {value} because it is not introspectable");
+				info.LogError(0001, $"Cannot serialize {value} because it is not introspectable");
 				return null;
 			}
 
@@ -88,13 +88,13 @@ namespace Element
 
 			if (value.Inputs?.Length != 0)
 			{
-				context.LogError($"Cannot serialize {value} because it has inputs");
+				context.LogError(0001, $"Cannot serialize {value} because it has inputs");
 				return;
 			}
 
 			if (value.Outputs == null)
 			{
-				context.LogError($"{value} doesn't have known outputs");
+				context.LogError(0001, $"{value} doesn't have known outputs");
 				return;
 			}
 
@@ -132,7 +132,7 @@ namespace Element
 
 			if (function?.Inputs == null)
 			{
-				context.LogError("ELE0001", $"Cannot deserialize `{function}` outputs because it's input ports have no defined type");
+				context.LogError(0001, $"Cannot deserialize `{function}` outputs because it's input ports have no defined type");
 			}
 
 			return new DeserializedStructure(function, data, new CompilationContext());
@@ -206,7 +206,7 @@ namespace Element
 			{
 				if (arguments.Length != inputs.Length)
 				{
-					info.LogError($"{function} Expected {inputs.Length} arguments but got {arguments.Length}");
+					info.LogError(0006, $"{function} Expected {inputs.Length} arguments but got {arguments.Length}");
 					success = false;
 				}
 				else

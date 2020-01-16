@@ -1,10 +1,5 @@
 levels = [ "Verbose", "Information", "Warning", "Error"]
 
-[ELE0000]
-name = "ZeroLengthArray"
-summary = "Cannot have a zero length array"
-level = "Error"
-
 [ELE0001]
 name = "SerializationError"
 summary = "An error occurred related to (de)serialization of a type"
@@ -12,7 +7,7 @@ level = "Error"
 
 [ELE0002]
 name = "MultipleDefinitions"
-summary = "Cannot have multiple definitions of the same function or type"
+summary = "Cannot have multiple definitions of the same value"
 
 [ELE0003]
 name = "InvalidCompileTarget"
@@ -21,7 +16,7 @@ level = "Error"
 
 [ELE0004]
 name = "IntrinsicNotImplemented"
-summary = "Compiler does not implement the given intrinsic"
+summary = "Compiler does not implement this intrinsic"
 level = "Error"
 
 [ELE0005]
@@ -46,7 +41,7 @@ level = "Error"
 
 [ELE0009]
 name = "ParseError"
-summary = ""
+summary = "Failed to parse source"
 level = "Error"
 
 [ELE0010]
@@ -57,4 +52,22 @@ level = "Error"
 [ELE0011]
 name = "CircularCompilation"
 summary = "Circular dependency found during compilation - note that recusion is not supported"
+level = "Error"
+
+[ELE0012]
+name = "BoundaryMapMissing"
+summary = "No boundary map found for type"
+level = "Error"
+
+[ELE0013]
+name = "ZeroLengthArray"
+summary = "Cannot have a zero length array"
+level = "Error"
+
+[ELE0014]
+name = ""
+
+[ELE9999]
+name = "UnknownError"
+summary = "An unknown error occurred"
 level = "Error"

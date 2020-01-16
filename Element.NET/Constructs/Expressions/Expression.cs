@@ -13,7 +13,7 @@ namespace Element
 		PortInfo[] IFunction.Outputs => Array.Empty<PortInfo>();
 		Expression IEvaluable.AsExpression(CompilationContext info) => this;
 
-		IFunction IFunction.CallInternal(IFunction[] arguments, string output, CompilationContext context) => context.LogError("Can't call a number");
+		IFunction IFunction.CallInternal(IFunction[] arguments, string output, CompilationContext context) => context.LogError(9999, "Can't call a number");
 
 		public abstract IEnumerable<Expression> Dependent { get; }
 

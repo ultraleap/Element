@@ -224,7 +224,7 @@ namespace Element.CLR
 			if (function == null) throw new ArgumentNullException(nameof(function));
 			if (function.Inputs == null || function.Outputs == null)
 			{
-				context.LogError("ELE0003", $"{function} cannot be compiled as it has no input/output ports defined");
+				context.LogError(0003, $"{function} cannot be compiled as it has no input/output ports defined");
 				return null;
 			}
 
@@ -242,7 +242,7 @@ namespace Element.CLR
 			// Read as "if method defines a non-void return type and we aren't using return type"
 			if (method.ReturnType != typeof(void) != usingReturnParameter)
 			{
-				context.LogError("ELE0010", $"{delegateType} must have either out parameters or a non-void return type and cannot have both");
+				context.LogError(0010, $"{delegateType} must have either out parameters or a non-void return type and cannot have both");
 				return null;
 			}
 
@@ -256,7 +256,7 @@ namespace Element.CLR
 			                        {
 				                        ParameterExpression p;
 				                        return (p = Array.Find(paramExpressions, i => i.Name == f.Name)) == null
-					                        ? context.LogError("ELE0010", $"Unable to bind {function}'s input {f} - could not find matching parameter name on delegate")
+					                        ? context.LogError(0010, $"Unable to bind {function}'s input {f} - could not find matching parameter name on delegate")
 					                        : boundaryMap.ToInput(p, boundaryMap, context);
 			                        })
 			                        .ToArray();
@@ -279,7 +279,7 @@ namespace Element.CLR
 				                  {
 					                  var port = output.Outputs.FirstOrDefault(p => p.Name == f.Name);
 					                  return string.IsNullOrEmpty(port.Name)
-						                         ? context.LogError("ELE0010", $"Unable to bind {delegateType}'s output {f} - could not find matching ")
+						                         ? context.LogError(0010, $"Unable to bind {delegateType}'s output {f} - could not find matching ")
 						                         : output.Call(port.Name, context);
 				                  })
 				                  .ToArray();
@@ -304,13 +304,13 @@ namespace Element.CLR
 				{
 					case Error _: return null;
 					case IType _:
-						context.LogError("ELE0003", "Cannot compile a type");
+						context.LogError(0003, "Cannot compile a type");
 						return null;
 				}
 
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == fn)
 				{
-					context.LogError("ELE0011", $"Circular dependency when compiling '{fn}'");
+					context.LogError(0011, $"Circular dependency when compiling '{fn}'");
 					return null;
 				}
 

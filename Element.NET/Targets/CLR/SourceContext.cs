@@ -43,6 +43,8 @@ namespace Element.CLR
 		public void Recompile(CompilationContext context)
 		{
 			GlobalScope = new GlobalScope();
+			if (_sourceFiles.Count < 1) return;
+
 			foreach (var file in _sourceFiles)
 			{
 				Parser.AddToGlobalScope(GlobalScope, context, file.Key, file.Value);

@@ -1,6 +1,7 @@
+using System.Linq;
+
 namespace Element
 {
-	using System;
 	using Eto.Parse;
 	using Eto.Parse.Parsers;
 
@@ -120,26 +121,20 @@ namespace Element
 			}
 		}
 
-		private static GrammarMatch Parse(string text)
+		private static GrammarMatch? Parse(CompilationContext context, string text)
 		{
 			var match = MakeParser().Match(Preprocess(text));
-			if (!string.IsNullOrEmpty(match.ErrorMessage))
-			{
-				throw new Exception(match.ErrorMessage);
-			}
-
-			return match;
+			if (string.IsNullOrEmpty(match.ErrorMessage)) return match;
+			context.LogError(0009, match.ErrorMessage);
+			return null;
 		}
 
-		private static IFunction ToFunction(IScope scope, Match match, CompilationContext context, string source)
-		{
-			if (match[ElementAST.FunctionBody] ? true : (match[ElementAST.AssignmentStatement] ? true : false))
-			{
-				return new CustomFunction(scope, match, null, context, source);
-			}
-
-			return new CustomType(scope, match, context, source);
-		}
+		private static IFunction ToFunction(IScope scope, Match match, CompilationContext context, string source) =>
+			match == null
+				? Error.Instance
+				: (match[ElementAST.FunctionBody] ? true : match[ElementAST.AssignmentStatement] ? true : false)
+					? (IFunction) new CustomFunction(scope, match, null, context, source)
+					: new CustomType(scope, match, context, source);
 
 		/// <summary>
 		/// Parses the given text as Element code, adding each item to the GlobalScope
@@ -150,9 +145,10 @@ namespace Element
 		/// <param name="text">The source code</param>
 		public static void AddToGlobalScope(GlobalScope globalScope, CompilationContext context, string source, string text)
 		{
-			foreach (var b in Parse(text).Matches)
+			var grammarMatch = Parse(context, text);
+			if (grammarMatch == null) return;
+			foreach (var func in grammarMatch.Matches.Select(b => ToFunction(globalScope, b, context, source)))
 			{
-				var func = ToFunction(globalScope, b, context, source);
 				if (func is INamedType type)
 				{
 					globalScope.AddType(type, context);
@@ -168,6 +164,7 @@ namespace Element
 		/// Parses the given text as Element code, adding each item to the GlobalScope
 		/// </summary>
 		/// <param name="globalScope">The globalScope to add the parsed items</param>
+		/// <param name="context"></param>
 		/// <param name="path">Path to the source file</param>
 		public static void AddToGlobalScope(GlobalScope globalScope, CompilationContext context, string path)
 		{
@@ -184,6 +181,6 @@ namespace Element
 		/// <param name="context">Compilation context to use for logging</param>
 		/// <returns>The parsed function</returns>
 		public static IFunction Parse(this IScope scope, string text, CompilationContext context)
-			=> ToFunction(scope, Parse(text).Matches[0], context, string.Empty);
+			=> ToFunction(scope, Parse(context, text)?.Matches[0], context, string.Empty);
 	}
 }
