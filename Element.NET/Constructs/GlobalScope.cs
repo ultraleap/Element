@@ -42,7 +42,7 @@ namespace Element
 		{
 			if (GetFunction(function.Name, context) != null)
 			{
-				context.LogError(0002, $"Duplicate function named {function.Name}");
+				context.LogError(2, $"Duplicate function named {function.Name}");
 			}
 
 			_functions.Add(function);
@@ -55,7 +55,7 @@ namespace Element
 		{
 			if (FindType(type.Name, context) != null)
 			{
-				context.LogError(0002, $"Duplicate type named {type.Name}");
+				context.LogError(2, $"Duplicate type named {type.Name}");
 			}
 
 			_types.Add(type);

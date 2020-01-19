@@ -33,7 +33,7 @@ namespace Laboratory
             {
                 var tomlTable = (TomlTable) table;
 
-                readonly TValue Get<TValue>(in string key) => (TValue) tomlTable[key];
+                TValue Get<TValue>(in string key) => (TValue) tomlTable[key];
                 _processHostInfos.Add(new ProcessHostInfo
                 (
                     name,
@@ -104,7 +104,7 @@ namespace Laboratory
                     SourceContext.AddSourceFiles(new []{file});
                     SourceContext.Recompile(CompilationContext);
                     PrintAnyErrors();
-                    return AnyErrors;
+                    return !AnyErrors;
                 }
 
                 public float[] Execute(in string functionName, params float[] functionArgs)

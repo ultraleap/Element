@@ -24,8 +24,7 @@ namespace Element
 		{
 			if (arguments.Length < 2)
 			{
-				// TODO: add message code
-				return context.LogError("", "memberwise requires at least 2 arguments");
+				return context.LogError(6, "memberwise requires at least 2 arguments");
 			}
 
 			if (arguments.Any(a => a is AnyType))
@@ -35,14 +34,12 @@ namespace Element
 
 			if (arguments.Skip(1).Any(a => a.Inputs?.Length != 0))
 			{
-				// TODO: add message code
-				return context.LogError("", "one or more memberwise arguments has inputs");
+				return context.LogError(14, "one or more memberwise arguments are functions");
 			}
 
 			if (arguments.Skip(1).Any(a => a.Outputs == null))
 			{
-				// TODO: add message code
-				return context.LogError("", "one or more memberwise arguments is non-introspectable");
+				return context.LogError(14, "one or more memberwise arguments is non-introspectable");
 			}
 
 			// TODO: Check all have same input signature?

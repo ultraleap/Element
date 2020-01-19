@@ -48,7 +48,7 @@ namespace Element
 			if (function == null) throw new ArgumentNullException(nameof(function));
 			if (function.Inputs?.Length != 0)
 			{
-				context.LogError($"{function} needs to be an array, but it has inputs");
+				context.LogError(9999, $"{function} needs to be an array, but it has inputs");
 				return Array.Empty<IFunction>();
 			}
 
@@ -58,7 +58,7 @@ namespace Element
 			var count = (countExpr as Constant)?.Value;
 			if (!count.HasValue)
 			{
-				context.LogError($"{function}'s count is not constant");
+				context.LogError(9999, $"{function}'s count is not constant");
 				return Array.Empty<IFunction>();
 			}
 

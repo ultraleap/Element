@@ -56,10 +56,10 @@ namespace Element
 			}
 			
 			var indexOfLevel = Array.IndexOf(_messageLevels, level);
-			if (indexOfLevel < 0) throw new InternalCompilerException($"Couldn't find {level} in message levels array");
+			if (indexOfLevel < 0) throw new InternalCompilerException($"\"{level}\" is not a valid message level");
 
 			var indexOfCurrentVerbosity = Array.IndexOf(_messageLevels, Verbosity);
-			if (indexOfCurrentVerbosity < 0) throw new InternalCompilerException($"Couldn't find {Verbosity} in message levels array");
+			if (indexOfCurrentVerbosity < 0) throw new InternalCompilerException($"\"{Verbosity}\" is not a valid message level");
 
 			if (indexOfLevel >= indexOfCurrentVerbosity)
 			{

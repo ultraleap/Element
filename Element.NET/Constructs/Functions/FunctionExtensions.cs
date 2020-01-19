@@ -31,13 +31,13 @@ namespace Element
 
 			if (value.Inputs?.Length != 0)
 			{
-				info.LogError(0001, $"Cannot serialize {value} because it has inputs");
+				info.LogError(1, $"Cannot serialize {value} because it has inputs");
 				return null;
 			}
 
 			if (value.Outputs == null)
 			{
-				info.LogError(0001, $"Cannot serialize {value} because it is not introspectable");
+				info.LogError(1, $"Cannot serialize {value} because it is not introspectable");
 				return null;
 			}
 
@@ -88,13 +88,13 @@ namespace Element
 
 			if (value.Inputs?.Length != 0)
 			{
-				context.LogError(0001, $"Cannot serialize {value} because it has inputs");
+				context.LogError(1, $"Cannot serialize {value} because it has inputs");
 				return;
 			}
 
 			if (value.Outputs == null)
 			{
-				context.LogError(0001, $"{value} doesn't have known outputs");
+				context.LogError(1, $"{value} doesn't have known outputs");
 				return;
 			}
 
@@ -132,7 +132,7 @@ namespace Element
 
 			if (function?.Inputs == null)
 			{
-				context.LogError(0001, $"Cannot deserialize `{function}` outputs because it's input ports have no defined type");
+				context.LogError(1, $"Cannot deserialize `{function}` outputs because it's input ports have no defined type");
 			}
 
 			return new DeserializedStructure(function, data, new CompilationContext());
@@ -206,7 +206,7 @@ namespace Element
 			{
 				if (arguments.Length != inputs.Length)
 				{
-					info.LogError(0006, $"{function} Expected {inputs.Length} arguments but got {arguments.Length}");
+					info.LogError(6, $"{function} Expected {inputs.Length} arguments but got {arguments.Length}");
 					success = false;
 				}
 				else
@@ -216,8 +216,7 @@ namespace Element
 						var arg = inputs[i].Type.SatisfiedBy(arguments[i], info);
 						if (arg == false)
 						{
-							info.LogError(
-								$"{function} Input {i} ({inputs[i]}) not satisfied by {arguments[i]} (see previous errors)");
+							info.LogError(14, $"{function} Input {i} ({inputs[i]}) not satisfied by {arguments[i]} (see previous errors)");
 						}
 						if (arg != true)
 						{
@@ -229,7 +228,7 @@ namespace Element
 
 			if (output != null && function.Outputs != null && Array.FindIndex(function.Outputs, p => p.Name == output) < 0)
 			{
-				info.LogError($"Couldn't find output `{output}` in {function}");
+				info.LogError(9999, $"Couldn't find output `{output}` in {function}");
 				success = false;
 			}
 
@@ -270,7 +269,7 @@ namespace Element
 			{
 				if (structure.Inputs.Length > 0)
 				{
-					context.LogError("ELE0001", $"Cannot deserialize {structure} because it has inputs");
+					context.LogError(1, $"Cannot deserialize {structure} because it has inputs");
 				}
 
 				Outputs = structure.Outputs;
@@ -553,7 +552,7 @@ namespace Element
 		}
 
 		/// <summary>
-		/// Invokes an action recursively on each Debug Value of a function. This can be used to draw a debug tree view
+		/// Invokes an action recursively on each intermediate value of a function.
 		/// </summary>
 		/// <param name="function"></param>
 		/// <param name="arguments"></param>
@@ -570,7 +569,7 @@ namespace Element
 
 			if (function.Inputs?.Length != arguments.Length)
 			{
-				info.LogError($"Can't do {function} because we have {arguments.Length} arguments");
+				info.LogError(6, $"Can't call {function} because we have {arguments.Length} arguments");
 			}
 
 			if (function.Inputs?.Length == arguments.Length && recursePredicate((name, function)))

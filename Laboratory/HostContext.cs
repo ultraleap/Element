@@ -11,9 +11,7 @@ namespace Laboratory
     /// </summary>
     internal class HostContext
     {
-        public bool IncludePrelude { get; set; } = false;
-        public string[] Packages { get; } = Array.Empty<string>();
-        public MessageHandler MessageHandler { get; set; } = (messages, anyErrors) =>
+        public static readonly MessageHandler PrintMessagesAndAssertNoErrors = (messages, anyErrors) =>
         {
             messages.PrintMessagesToTestContext("test output");
             if (anyErrors)
@@ -21,5 +19,14 @@ namespace Laboratory
                 Assert.Fail("Unexpected error - see below for error received.");
             }
         };
+        
+        public static readonly MessageHandler PrintMessages = (messages, anyErrors) =>
+        {
+            messages.PrintMessagesToTestContext("test output");
+        };
+        
+        public bool IncludePrelude { get; set; } = false;
+        public string[] Packages { get; } = Array.Empty<string>();
+        public MessageHandler MessageHandler { get; set; } = PrintMessagesAndAssertNoErrors;
     }
 }

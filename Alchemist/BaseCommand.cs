@@ -44,12 +44,12 @@ namespace Alchemist
 			return directoryInfo.GetFiles("*.ele", SearchOption.AllDirectories);
 		}
 
-		public int Execute()
+		public int Invoke()
 		{
 			InitializeContext();
-			return ExecuteImplementation();
+			return CommandImplementation();
 		}
 
-		protected abstract int ExecuteImplementation();
+		protected abstract int CommandImplementation();
 	}
 }

@@ -31,7 +31,7 @@ namespace Element
 				if (called.Outputs == null)
 				{
 					// TODO: Check this. What about Abort?
-					info.LogError($"Output of {value} is not introspectable");
+					info.LogError(14, $"Output of {value} is not introspectable");
 					return false;
 				}
 
@@ -54,7 +54,7 @@ namespace Element
 				{
 					var thisSuccess = o.Type.SatisfiedBy(val, info);
 					if (thisSuccess == false) {
-						info.LogError($"Output {o} not satisfied by {val}");
+						info.LogError(14, $"Output {o} not satisfied by {val}");
 						success = false;
 					}
 					else {

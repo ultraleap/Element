@@ -70,7 +70,7 @@ namespace Element.CLR
 				return retval.ToInput(parameter, rootTypeMap, context);
 			}
 
-			return context.LogError(0012, $"No {nameof(ICLRBoundaryMap)} found for CLR type {parameter.Type}");
+			return context.LogError(12, $"No {nameof(ICLRBoundaryMap)} found for CLR type {parameter.Type}");
 		}
 
 		public LinqExpression FromOutput(IFunction output, Type outputType,
@@ -82,7 +82,7 @@ namespace Element.CLR
 				return retval.FromOutput(output, outputType, compile, context);
 			}
 
-			context.LogError(0012, $"No {nameof(ICLRBoundaryMap)} found for CLR type {outputType}");
+			context.LogError(12, $"No {nameof(ICLRBoundaryMap)} found for CLR type {outputType}");
 			return null;
 		}
 	}

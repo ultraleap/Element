@@ -17,7 +17,7 @@ namespace Alchemist
                                                 .ToArray();
 
             return Parser.Default.ParseArguments(args, commandTypes)
-                         .MapResult((BaseCommand cmd) => cmd.Execute(), errors => 1);
+                         .MapResult((BaseCommand cmd) => cmd.Invoke(), errors => 1);
         }
     }
 }

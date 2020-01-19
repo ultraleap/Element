@@ -36,7 +36,7 @@ namespace Element
 
 			if (ret.Type == null)
 			{
-				info.LogError($"{this}: Type {m[ElementAST.PortType]} not found");
+				info.LogError(7, $"{this}: Type {m[ElementAST.PortType]} not found");
 				ret.Type = AnyType.Instance;
 			}
 

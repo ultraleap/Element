@@ -125,7 +125,7 @@ namespace Element
 		{
 			var match = MakeParser().Match(Preprocess(text));
 			if (string.IsNullOrEmpty(match.ErrorMessage)) return match;
-			context.LogError(0009, match.ErrorMessage);
+			context.LogError(9, match.ErrorMessage);
 			return null;
 		}
 

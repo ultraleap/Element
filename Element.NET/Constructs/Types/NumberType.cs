@@ -16,7 +16,7 @@ namespace Element
 		public string Name => "num";
 
 		IFunction IFunction.CallInternal(IFunction[] arguments, string output, CompilationContext context) =>
-			context.LogError($"Tried to call a leaf value");
+			context.LogError(9999, "Tried to call a leaf value");
 
 		bool? IType.SatisfiedBy(IFunction value, CompilationContext info) =>
 			value is Error ? (bool?)null : (value.Inputs?.Length == 0 && value.Outputs?.Length == 0);

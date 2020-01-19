@@ -16,7 +16,7 @@ namespace Element
 		{
 			if (arguments.Length == 0)
 			{
-				return context.LogError(0013);
+				return context.LogError(13);
 			}
 
 			switch (name)

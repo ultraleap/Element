@@ -162,7 +162,7 @@ namespace Element
 
 			if (value == null)
 			{
-				return context.LogError(0007, name);
+				return context.LogError(7, name);
 			}
 
 			return value.ResolveReturns(context, null); // TODO: Keep variable information here?
@@ -235,7 +235,7 @@ namespace Element
 			var success = outputPort.Type.SatisfiedBy(outValue, context);
 			return success switch
 			{
-				false => context.LogError(0008, $"Output `{outputPort}` was not satisfied by its value `{outValue}` (See previous errors)"),
+				false => context.LogError(8, $"Output `{outputPort}` was not satisfied by its value `{outValue}` (See previous errors)"),
 				null => Error.Instance,
 				_ => outValue
 			};

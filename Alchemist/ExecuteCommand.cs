@@ -16,7 +16,7 @@ namespace Alchemist
 
 		protected override CompilationContext _compilationContext { get; } = new CompilationContext();
 
-		protected override int ExecuteImplementation()
+		protected override int CommandImplementation()
 		{
 			var function = _sourceContext.GlobalScope.GetFunction(Function, _compilationContext);
 			if (function == null)

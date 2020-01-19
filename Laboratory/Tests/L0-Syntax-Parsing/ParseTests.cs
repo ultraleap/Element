@@ -25,6 +25,11 @@ namespace Laboratory.Tests
 
         [TestCaseSource(nameof(GenerateParseTestData))]
         public void ParseTest((FileInfo FileInfo, bool ExpectedToPass) info) =>
-            Assert.AreEqual(info.ExpectedToPass, _host.Parse(new HostContext(), info.FileInfo));
+            Assert.AreEqual(info.ExpectedToPass,
+                            _host.Parse(
+                                info.ExpectedToPass
+                                    ? new HostContext {MessageHandler = HostContext.PrintMessagesAndAssertNoErrors}
+                                    : new HostContext {MessageHandler = HostContext.PrintMessages},
+                                info.FileInfo));
     }
 }
