@@ -16,7 +16,7 @@ namespace Alchemist
 		[Option('a', "arguments", Required = false, HelpText = "Arguments to execute the function with as a flattened array of floats. Must be same length as function expects.")]
 		public IEnumerable<float> Arguments { get; set; }
 
-		protected override int CommandImplementation(HostContext context)
+		protected override int CommandImplementation(CompilationInput context)
 		{
 			var function = _sourceContext.GlobalScope.GetFunction(Function, _compilationContext);
 			if (function == null)
@@ -27,7 +27,7 @@ namespace Alchemist
 
 			var output = function.EvaluateAndSerialize(Arguments.ToArray(), _compilationContext);
 
-			var result = new HostCommand(context, new CompilationContext());
+			var result = new HostCommand(context, new CompilationContext{LogToConsole = false}).Execute(Function, Arguments.ToArray());
 
 			var asString = string.Join(", ", output).Replace("∞", "Infinity");
 			Alchemist.Log(asString);

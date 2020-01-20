@@ -19,6 +19,6 @@ namespace Element
 			context.LogError(9999, "Tried to call a leaf value");
 
 		bool? IType.SatisfiedBy(IFunction value, CompilationContext info) =>
-			value is CompileError ? (bool?)null : (value.Inputs?.Length == 0 && value.Outputs?.Length == 0);
+			value is CompilationError ? (bool?)null : (value.Inputs?.Length == 0 && value.Outputs?.Length == 0);
 	}
 }

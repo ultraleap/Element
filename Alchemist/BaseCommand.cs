@@ -4,7 +4,6 @@ namespace Alchemist
 	using System.IO;
 	using System.Linq;
 	using CommandLine;
-	using Element.CLR;
 
 	/// <summary>
 	/// Base class for writing Alchemist commands.

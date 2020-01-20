@@ -38,7 +38,7 @@ namespace Element
 		/// <summary>
 		/// Adds a function to the global scope
 		/// </summary>
-		public GlobalScope Add(IFunction value, CompilationContext context)
+		public CompilationContext Add(IFunction value, CompilationContext context)
 		{
 			switch (value)
 			{
@@ -74,7 +74,7 @@ namespace Element
 					throw new ArgumentOutOfRangeException(nameof(value));
 			}
 
-			return this;
+			return context;
 		}
 
 		/// <summary>

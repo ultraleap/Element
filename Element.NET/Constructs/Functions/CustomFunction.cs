@@ -222,7 +222,7 @@ namespace Element
 			if (this.CheckArguments(arguments, output, context) != null)
 			{				
 				context.Pop();
-				return CompileError.Instance;
+				return CompilationError.Instance;
 			}
 
 			context.Pop();
@@ -238,7 +238,7 @@ namespace Element
 			return success switch
 			{
 				false => context.LogError(8, $"Output `{outputPort}` was not satisfied by its value `{outValue}` (See previous errors)"),
-				null => CompileError.Instance,
+				null => CompilationError.Instance,
 				_ => outValue
 			};
 		}

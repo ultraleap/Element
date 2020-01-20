@@ -23,7 +23,7 @@ namespace Element
 		{
 			if (this.CheckArguments(arguments, output, context) != null)
 			{
-				return CompileError.Instance;
+				return CompilationError.Instance;
 			}
 
 			var aggregator = arguments[0];

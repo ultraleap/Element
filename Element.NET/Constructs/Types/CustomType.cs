@@ -48,7 +48,7 @@ namespace Element
 			foreach (var o in outPorts)
 			{
 				var val = value.Call(o.Name, info);
-				if (val is CompileError)
+				if (val is CompilationError)
 				{
 					success = null;
 				}

@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Element;
 using Element.CLR;
 using NUnit.Framework;
 using Tomlyn;
@@ -70,9 +71,9 @@ namespace Laboratory
         {
             public override string ToString() => "Laboratory";
 
-            Option IHost.Parse(HostContext hostContext, FileInfo file) => new HostCommand(hostContext).Parse(file);
+            CompilationResult<bool> IHost.Parse(CompilationInput compilationInput, FileInfo file) => new HostCommand(hostContext).Parse(file);
 
-            Option<float[]> IHost.Execute(HostContext hostContext, string functionName, params float[] functionArgs) => new HostCommand(hostContext).Execute(functionName, functionArgs).;
+            CompilationResult<float[]> IHost.Execute(CompilationInput compilationInput, string functionName, params float[] functionArgs) => new HostCommand(hostContext).Execute(functionName, functionArgs).;
         }
 
         /// <summary>
@@ -184,19 +185,17 @@ namespace Laboratory
                 return processArgs;
             }
 
-            Option IHost.Parse(HostContext hostContext, FileInfo file)
+            bool IHost.Parse(HostContext hostContext, FileInfo file)
             {
                 var processArgs = BeginCommand(hostContext, "parse");
 
                 processArgs.Append(" -f ");
                 processArgs.Append(file.FullName);
 
-                return bool.TryParse(RunHostProcess(hostContext, processArgs.ToString()), out var result)
-                    ? Optional.SomeWhen(result, "Parse error encountered, see log for details")
-                    : Optional.None("Failed to obtain parsing result from host process");
+                return bool.Parse(RunHostProcess(hostContext, processArgs.ToString()));
             }
 
-            Option<float[]> IHost.Execute(HostContext hostContext, string functionName, params float[] functionArgs)
+            float[] IHost.Execute(HostContext hostContext, string functionName, params float[] functionArgs)
             {
                 var processArgs = BeginCommand(hostContext, "execute");
 

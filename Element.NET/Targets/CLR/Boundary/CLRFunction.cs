@@ -202,24 +202,27 @@ namespace Element.CLR
 			}
 		}
 
-		public static TDelegate Compile<TDelegate>(this IFunction function,
-		                                           ICLRBoundaryMap translator = null,
-		                                           CompilationContext info = null) where TDelegate : Delegate?
-			=> (TDelegate)function.Compile(typeof(TDelegate), translator, info);
+		public static CompilationResult<TDelegate> Compile<TDelegate>(this IFunction function,
+		                                                              CompilationInput input,
+		                                                              ICLRBoundaryMap boundaryMap = null) where TDelegate : Delegate?
+		{
+			var result = function.Compile(typeof(TDelegate), input, boundaryMap);
+			return new CompilationResult<TDelegate>((TDelegate)result.Result, result.Context);
+		}
 
 		/// <summary>
 		/// Converts an Element function to a CLR function by matching similarly-named parameters
 		/// </summary>
 		/// <param name="function"></param>
 		/// <param name="delegateType"></param>
+		/// <param name="input"></param>
 		/// <param name="boundaryMap">Maps CLR types to Element types and vice-versa</param>
-		/// <param name="context">Configuration for the compiler</param>
 		/// <returns>Compiled delegate or null if failure</returns>
-		public static Delegate? Compile(this IFunction function, Type delegateType,
-		                               ICLRBoundaryMap boundaryMap = null,
-		                               CompilationContext context = null)
+		public static CompilationResult<Delegate?> Compile(this IFunction function, Type delegateType,
+		                                CompilationInput input,
+		                                ICLRBoundaryMap boundaryMap = default)
 		{
-			context ??= new CompilationContext();
+			var context = new CompilationContext(input);
 
 			if (function == null) throw new ArgumentNullException(nameof(function));
 			if (function.Inputs == null || function.Outputs == null)
@@ -302,7 +305,7 @@ namespace Element.CLR
 			{
 				switch (fn)
 				{
-					case CompileError _: return null;
+					case CompilationError _: return null;
 					case IType _:
 						context.LogError(3, "Cannot compile a type");
 						return null;
@@ -364,9 +367,10 @@ namespace Element.CLR
 			// Put everything into a single code block, and wrap it in the Delegate
 			var fnBody = LinqExpression.Block(data.Variables, data.Statements.Concat(finalOutputs));
 			//Console.WriteLine(fnBody.GetDebugView());
-			return LinqExpression.Lambda(delegateType, fnBody, false,
-				                  paramExpressions.Take(paramExpressions.Length - (usingReturnParameter ? 1 : 0)))
-			                  .Compile();
+			return new CompilationResult<Delegate?>(LinqExpression.Lambda(delegateType, fnBody, false,
+			                                                              paramExpressions.Take(
+				                                                              paramExpressions.Length - (usingReturnParameter ? 1 : 0)))
+			                                                      .Compile(), context);
 		}
 
 		public static string GetDebugView(this LinqExpression exp)

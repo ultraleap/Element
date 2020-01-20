@@ -12,7 +12,7 @@ namespace Alchemist
         [Option('f', "filename", Required = true, HelpText = "Element file to parse.")]
         public string Filename { get; set; }
 
-        protected override CompilationContext _compilationContext { get; } = new CompilationContext();
+        protected override CompilationContext CompilationContext { get; } = new CompilationContext();
 
         protected override  CommandImplementation()
         {

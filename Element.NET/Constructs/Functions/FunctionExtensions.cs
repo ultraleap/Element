@@ -14,7 +14,7 @@ namespace Element
 		/// <returns>The size of the structure in singles, or null if there was a problem</returns>
 		public static int? GetSize(this IFunction value, CompilationContext info)
 		{
-			if (value == CompileError.Instance)
+			if (value == CompilationError.Instance)
 			{
 				return null;
 			}
@@ -175,7 +175,7 @@ namespace Element
 
 			if (function.CheckArguments(arguments, null, context) != null)
 			{
-				return CompileError.Instance;
+				return CompilationError.Instance;
 			}
 
 			return new CalledFunction(function, arguments, callSite).ResolveReturns(context, callSite);
@@ -232,11 +232,11 @@ namespace Element
 				success = false;
 			}
 
-			if (arguments.Any(a => a is CompileError)) {
-				return CompileError.Instance;
+			if (arguments.Any(a => a is CompilationError)) {
+				return CompilationError.Instance;
 			}
 
-			return success ? null : CompileError.Instance;
+			return success ? null : CompilationError.Instance;
 		}
 
 		/// <summary>
@@ -327,7 +327,7 @@ namespace Element
 			{
 				if (this.CheckArguments(arguments, output, context) != null)
 				{
-					return CompileError.Instance;
+					return CompilationError.Instance;
 				}
 
 				if (!_cache.TryGetValue(output, out var found))
@@ -354,7 +354,7 @@ namespace Element
 
 				if (this.CheckArguments(arguments, null, context) != null)
 				{
-					return CompileError.Instance;
+					return CompilationError.Instance;
 				}
 
 				_debugCache.Add(name, found);
@@ -461,7 +461,7 @@ namespace Element
 				var completeArgs = new[] {_classInstance}.Concat(arguments).ToArray();
 				if (this.CheckArguments(arguments, output, context) != null)
 				{
-					return CompileError.Instance;
+					return CompilationError.Instance;
 				}
 
 				if (!_cache.TryGetValue(output, out var found))
@@ -492,7 +492,7 @@ namespace Element
 
 				if (this.CheckArguments(arguments, null, context) != null)
 				{
-					return CompileError.Instance;
+					return CompilationError.Instance;
 				}
 
 				if (Inputs.Length == 0) {
@@ -537,7 +537,7 @@ namespace Element
 			{
 				if (this.CheckArguments(arguments, output, context) != null)
 				{
-					return CompileError.Instance;
+					return CompilationError.Instance;
 				}
 
 				var value = surrogate.Call(arguments.Take(surrogate.Inputs.Length).ToArray(), context)
