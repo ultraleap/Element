@@ -38,27 +38,43 @@ namespace Element
 		/// <summary>
 		/// Adds a function to the global scope
 		/// </summary>
-		public void AddFunction(INamedFunction function, CompilationContext context)
+		public GlobalScope Add(IFunction value, CompilationContext context)
 		{
-			if (GetFunction(function.Name, context) != null)
+			switch (value)
 			{
-				context.LogError(2, $"Duplicate function named {function.Name}");
+				case null:
+					throw new ArgumentNullException(nameof(value));
+				case INamedFunction function:
+				{
+					if (GetFunction(function.Name, context) != null)
+					{
+						context.LogError(2, $"Duplicate function named {function.Name}");
+					}
+					else
+					{
+						_functions.Add(function);
+					}
+
+					break;
+				}
+				case INamedType type:
+				{
+					if (FindType(type.Name, context) != null)
+					{
+						context.LogError(2, $"Duplicate type named {type.Name}");
+					}
+					else
+					{
+						_types.Add(type);
+					}
+
+					break;
+				}
+				default:
+					throw new ArgumentOutOfRangeException(nameof(value));
 			}
 
-			_functions.Add(function);
-		}
-
-		/// <summary>
-		/// Adds a type to the global scope
-		/// </summary>
-		public void AddType(INamedType type, CompilationContext context)
-		{
-			if (FindType(type.Name, context) != null)
-			{
-				context.LogError(2, $"Duplicate type named {type.Name}");
-			}
-
-			_types.Add(type);
+			return this;
 		}
 
 		/// <summary>

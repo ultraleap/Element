@@ -13,6 +13,6 @@ namespace Element
 		IFunction IFunction.CallInternal(IFunction[] arguments, string output, CompilationContext context) => AnyType.Instance;
 
 		bool? IType.SatisfiedBy(IFunction value, CompilationContext info)
-			=> value is Error ? (bool?)null : (value == this || value.Inputs?.Length > 0);
+			=> value is CompileError ? (bool?)null : (value == this || value.Inputs?.Length > 0);
 	}
 }

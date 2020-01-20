@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Element.CLR;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
@@ -13,6 +14,8 @@ namespace Laboratory.Tests
 
 		private static HostContext NumberContext => new HostContext
 		{
+			MessageHandler = TestContext.WriteLine,
+			ErrorHandler = Assert.Fail,
 			IncludePrelude = true
 		};
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using Element.CLR;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
@@ -24,12 +25,19 @@ namespace Laboratory.Tests
         }
 
         [TestCaseSource(nameof(GenerateParseTestData))]
-        public void ParseTest((FileInfo FileInfo, bool ExpectedToPass) info) =>
-            Assert.AreEqual(info.ExpectedToPass,
-                            _host.Parse(
-                                info.ExpectedToPass
-                                    ? new HostContext {MessageHandler = HostContext.PrintMessagesAndAssertNoErrors}
-                                    : new HostContext {MessageHandler = HostContext.PrintMessages},
-                                info.FileInfo));
+        public void ParseTest((FileInfo FileInfo, bool ExpectedToPass) info)
+        {
+            var result = _host.Parse(info.ExpectedToPass
+                    ? DefaultHostContext // Will assert on error
+                    : new HostContext
+                    {
+                        MessageHandler = TestContext.WriteLine,
+                        ErrorHandler = err => PassIfMessageCodeFound(err, 9)
+                    },
+                info.FileInfo);
+
+            if(!info.ExpectedToPass && result.IsSuccessful)
+                Assert.Fail("Expected parsing to fail but no parse error was logged");
+        }
     }
 }

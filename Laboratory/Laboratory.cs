@@ -11,11 +11,8 @@ namespace Laboratory
 	/// </summary>
 	internal static class Laboratory
 	{
-		internal static void Check(this List<string> messages, string messageCode)
-		{
-			if (string.IsNullOrEmpty(messageCode)) throw new ArgumentNullException(nameof(messageCode));
-			Assert.True(messages.Any(m => m.StartsWith(messageCode)));
-		}
+		internal static bool ContainsMessageCode(this string message, int messageCode) =>
+			message.Contains($"ELE{messageCode}");
 
 		internal static void PrintMessagesToTestContext(this List<string> messages, string what)
 		{

@@ -1,7 +1,5 @@
 namespace Alchemist
 {
-	using System;
-	using Element;
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
@@ -16,40 +14,35 @@ namespace Alchemist
 		[Option('p', "packages", Required = false, HelpText = "Element packages to load into the context.")]
 		public IEnumerable<string> Packages { get; set; }
 
-		protected readonly SourceContext _sourceContext = new SourceContext();
-		protected abstract CompilationContext _compilationContext { get; }
 		private readonly string _currentWorkingDirectory = Directory.GetCurrentDirectory();
 
-		private void InitializeContext()
+		private HostContext InitializeHostContext()
 		{
 			Alchemist.Log($"Alchemist starting in directory \"{_currentWorkingDirectory}\"");
 
-			var workingDirectoryFiles = new DirectoryInfo(_currentWorkingDirectory).GetFiles("*.ele");
-			var packageFiles = Packages.SelectMany(GetPackageFiles);
-
-			_sourceContext.AddSourceFiles(workingDirectoryFiles.Concat(packageFiles));
-			_sourceContext.Recompile(_compilationContext);
+			return new HostContext
+			{
+				Packages = Packages.Select(GetPackageDirectories).Prepend(new DirectoryInfo(_currentWorkingDirectory)).ToList(),
+				IncludePrelude = true,
+				MessageHandler = Alchemist.Log,
+				ErrorHandler = Alchemist.LogError
+			};
 		}
 
-		// TODO(Craig): Make this more intelligent
-		private FileInfo[] GetPackageFiles(string package)
+		private static DirectoryInfo GetPackageDirectories(string package)
 		{
 			var directoryInfo = Directory.Exists(package) ? new DirectoryInfo(package) : null;
 			if (directoryInfo == null)
 			{
 				Alchemist.LogError($"Package directory \"{package}\" doesn't exist.");
-				return Array.Empty<FileInfo>();
+				return null;
 			}
 
-			return directoryInfo.GetFiles("*.ele", SearchOption.AllDirectories);
+			return directoryInfo;
 		}
 
-		public int Invoke()
-		{
-			InitializeContext();
-			return CommandImplementation();
-		}
+		public int Invoke() => CommandImplementation(InitializeHostContext());
 
-		protected abstract int CommandImplementation();
+		protected abstract int CommandImplementation(HostContext hostContext);
 	}
 }

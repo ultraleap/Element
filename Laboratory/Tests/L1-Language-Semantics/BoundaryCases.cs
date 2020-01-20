@@ -1,4 +1,5 @@
 using System.Linq;
+using Element.CLR;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
@@ -19,18 +20,20 @@ namespace Laboratory.Tests
 			var hasCorrectArgCount = function.Arity == argCount;
 			var context = new HostContext
 			{
-				MessageHandler = (messages, anyErrors) =>
+				MessageHandler = TestContext.WriteLine,
+				ErrorHandler = error =>
 				{
-					Assert.AreNotEqual(hasCorrectArgCount, anyErrors);
 					if (hasCorrectArgCount)
-						messages.Check("ELE0006");
+						Assert.Fail(error);
+					else
+						PassIfMessageCodeFound(error, 6);
 				}
 			};
 			
 			_host.Execute(context, function.Name, Enumerable.Range(0, argCount).Select(i => (float)i).ToArray());
 			
 			if (!hasCorrectArgCount)
-				Assert.Fail("Expected message code ELE0006 but execution succeeded");
+				Assert.Fail("Expected message code ELE6 but execution succeeded");
 		}
 	}
 }

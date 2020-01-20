@@ -31,7 +31,7 @@ namespace Element.CLR
 			{
 				if (this.CheckArguments(arguments, output, context) != null)
 				{
-					return Error.Instance;
+					return CompileError.Instance;
 				}
 
 				if (output == "count")

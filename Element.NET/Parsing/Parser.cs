@@ -1,4 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Ultimately;
 
 namespace Element
 {
@@ -121,57 +125,40 @@ namespace Element
 			}
 		}
 
-		private static GrammarMatch? Parse(CompilationContext context, string text)
+		private static Option<GrammarMatch> Parse(string text)
 		{
 			var match = MakeParser().Match(Preprocess(text));
-			if (string.IsNullOrEmpty(match.ErrorMessage)) return match;
-			context.LogError(9, match.ErrorMessage);
-			return null;
+			return string.IsNullOrEmpty(match.ErrorMessage)
+				? Optional.None<GrammarMatch>(match.ErrorMessage)
+				: Optional.Some(match);
 		}
 
-		private static IFunction ToFunction(IScope scope, Match match, CompilationContext context, string source) =>
-			match == null
-				? Error.Instance
-				: (match[ElementAST.FunctionBody] ? true : match[ElementAST.AssignmentStatement] ? true : false)
-					? (IFunction) new CustomFunction(scope, match, null, context, source)
-					: new CustomType(scope, match, context, source);
+		private static IFunction ToFunction(IScope scope, Match match, CompilationContext context, FileInfo source) =>
+			(match[ElementAST.FunctionBody] ? true : match[ElementAST.AssignmentStatement] ? true : false)
+				? (IFunction) new CustomFunction(scope, match, null, context, source)
+				: new CustomType(scope, match, context, source);
 
 		/// <summary>
-		/// Parses the given text as Element code, adding each item to the GlobalScope
+		/// Parses the given file as an Element source file, adding it's contents to the given global scope
 		/// </summary>
 		/// <param name="globalScope">The globalScope to add the parsed items</param>
 		/// <param name="context"></param>
-		/// <param name="source">Where the source came from</param>
-		/// <param name="text">The source code</param>
-		public static void AddToGlobalScope(GlobalScope globalScope, CompilationContext context, string source, string text)
-		{
-			var grammarMatch = Parse(context, text);
-			if (grammarMatch == null) return;
-			foreach (var func in grammarMatch.Matches.Select(b => ToFunction(globalScope, b, context, source)))
+		/// <param name="file">Source file</param>
+		public static GlobalScope ParseFile(this GlobalScope globalScope, CompilationContext context, FileInfo file) =>
+			Parse(File.ReadAllText(file.FullName)).Match(match => globalScope.Add(ToFunction(globalScope, match, context, file), context), error =>
 			{
-				if (func is INamedType type)
-				{
-					globalScope.AddType(type, context);
-				}
-				else
-				{
-					globalScope.AddFunction((INamedFunction)func, context);
-				}
-			}
-		}
+				context.LogError(9, error.Message);
+				return globalScope;
+			});
 
 		/// <summary>
-		/// Parses the given text as Element code, adding each item to the GlobalScope
+		/// Parses all the given files as Element source files into the global scope
 		/// </summary>
-		/// <param name="globalScope">The globalScope to add the parsed items</param>
+		/// <param name="globalScope">Global scope to add parsed file items into</param>
 		/// <param name="context"></param>
-		/// <param name="path">Path to the source file</param>
-		public static void AddToGlobalScope(GlobalScope globalScope, CompilationContext context, string path)
-		{
-			var text = System.IO.File.ReadAllText(path);
-			var source = System.IO.Path.GetFileName(path);
-			AddToGlobalScope(globalScope, context, source, text);
-		}
+		/// <param name="files"></param>
+		public static GlobalScope ParseFiles(this GlobalScope globalScope, CompilationContext context, IEnumerable<FileInfo> files) =>
+			files.Aggregate(globalScope, (scope, info) => scope.ParseFile(context, info));
 
 		/// <summary>
 		/// Parses the given text as a single Element function without adding it to a globalScope
@@ -180,7 +167,8 @@ namespace Element
 		/// <param name="text">The source code</param>
 		/// <param name="context">Compilation context to use for logging</param>
 		/// <returns>The parsed function</returns>
-		public static IFunction Parse(this IScope scope, string text, CompilationContext context)
-			=> ToFunction(scope, Parse(context, text)?.Matches[0], context, string.Empty);
+		public static IFunction Parse(this IScope scope, string text, CompilationContext context) =>
+			Parse(text).Match(match => ToFunction(scope, match.Matches[0], context, null),
+				error => context.LogError(9, error.Message));
 	}
 }

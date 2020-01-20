@@ -6,11 +6,12 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Element;
 using Element.CLR;
 using NUnit.Framework;
 using Tomlyn;
 using Tomlyn.Model;
+using Ultimately;
+using Ultimately.Reasons;
 
 namespace Laboratory
 {
@@ -69,56 +70,9 @@ namespace Laboratory
         {
             public override string ToString() => "Laboratory";
 
-            private class CommandInstance
-            {
-                public CommandInstance(in HostContext hostContext, SourceContext sourceContext = default, CompilationContext compilationContext = default)
-                {
-                    SourceContext = sourceContext ??= new SourceContext();
-                    CompilationContext = compilationContext ??= new CompilationContext(logToConsole: false);
-                    HostContext = hostContext;
+            Option IHost.Parse(HostContext hostContext, FileInfo file) => new HostCommand(hostContext).Parse(file);
 
-                    static FileInfo[] OpenPackage(string package) => new DirectoryInfo(package).GetFiles("*.ele", SearchOption.AllDirectories);
-                    if (hostContext.IncludePrelude) sourceContext.AddSourceFiles(OpenPackage("Prelude"));
-                    sourceContext.AddSourceFiles(hostContext.Packages.SelectMany(OpenPackage));
-
-                    compilationContext.OnLog += msg => Messages.Add(msg);
-                    compilationContext.OnError += msg =>
-                    {
-                        Messages.Add(msg);
-                        AnyErrors = true;
-                    };
-
-                    sourceContext.Recompile(compilationContext);
-                }
-
-                private SourceContext SourceContext { get; }
-                private CompilationContext CompilationContext { get; }
-                private List<string> Messages { get; } =  new List<string>();
-                private bool AnyErrors { get; set; }
-                private HostContext HostContext { get; }
-
-                private void PrintAnyErrors() => HostContext.MessageHandler(Messages, AnyErrors);
-
-                public bool Parse(in FileInfo file)
-                {
-                    SourceContext.AddSourceFiles(new []{file});
-                    SourceContext.Recompile(CompilationContext);
-                    PrintAnyErrors();
-                    return !AnyErrors;
-                }
-
-                public float[] Execute(in string functionName, params float[] functionArgs)
-                {
-                    var function = SourceContext.GlobalScope.GetFunction(functionName, CompilationContext);
-                    var result = function.EvaluateAndSerialize(functionArgs, CompilationContext);
-                    PrintAnyErrors();
-                    return result;
-                }
-            }
-
-            bool IHost.Parse(HostContext hostContext, FileInfo file) => new CommandInstance(hostContext).Parse(file);
-
-            float[] IHost.Execute(HostContext hostContext, string functionName, params float[] functionArgs) => new CommandInstance(hostContext).Execute(functionName, functionArgs);
+            Option<float[]> IHost.Execute(HostContext hostContext, string functionName, params float[] functionArgs) => new HostCommand(hostContext).Execute(functionName, functionArgs).;
         }
 
         /// <summary>
@@ -126,28 +80,19 @@ namespace Laboratory
         /// </summary>
         private readonly struct ProcessHost : IHost
         {
-            private static (List<string> Messages, bool AnyErrors) Run(Process process)
+            private static void Run(Process process, Action<string> onMessage, Action<string> onError)
             {
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
                 process.EnableRaisingEvents = true;
 
-                var messages = new List<string>();
-                var anyErrors = false;
-
-                process.OutputDataReceived += (_, eventArgs) => messages.Add(eventArgs.Data);
-                process.ErrorDataReceived += (_, eventArgs) =>
-                {
-                    messages.Add(eventArgs.Data);
-                    anyErrors = true;
-                };
+                process.OutputDataReceived += (_, eventArgs) => onMessage?.Invoke(eventArgs.Data);
+                process.ErrorDataReceived += (_, eventArgs) => onError?.Invoke(eventArgs.Data);
 
                 process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 process.WaitForExit();
-
-                return (messages, anyErrors);
             }
 
             static ProcessHost()
@@ -168,7 +113,9 @@ namespace Laboratory
                             }
                         };
 
-                        var (messages, _) = Run(process);
+                        var messages = new List<string>();
+                        void CacheMessage(string msg) => messages.Add(msg);
+                        Run(process, CacheMessage, CacheMessage);
 
                         if (process.ExitCode != 0)
                         {
@@ -190,11 +137,11 @@ namespace Laboratory
 
             private readonly ProcessHostInfo _info;
 
-            private List<string> RunHostProcess(HostContext context, string arguments)
+            private string RunHostProcess(HostContext context, string arguments)
             {
-                if (_hostBuildErrors.TryGetValue(_info, out var errorMessages))
+                if (_hostBuildErrors.TryGetValue(_info, out var messages))
                 {
-                    errorMessages.PrintMessagesToTestContext($"{_info.Name} build log");
+                    messages.PrintMessagesToTestContext($"{_info.Name} build log");
                     Assert.Fail($"{_info.Name} failed to build. See build log below.");
                 }
 
@@ -207,17 +154,19 @@ namespace Laboratory
                     }
                 };
 
-                var (messages, anyErrors) = Run(process);
+                var result = string.Empty;
+                Run(process, msg =>
+                {
+                    context.MessageHandler?.Invoke(msg);
+                    result = msg;
+                }, context.ErrorHandler);
 
                 if (process.ExitCode != 0)
                 {
-                    messages.PrintMessagesToTestContext($"{_info.Name} output");
-                    Assert.Fail($"{_info.Name} process quit with exit code '{0}'. See output below.", process.ExitCode);
+                    Assert.Fail($"{_info.Name} process quit with exit code '{process.ExitCode}'.");
                 }
 
-                context.MessageHandler(messages, anyErrors);
-
-                return messages;
+                return result;
             }
 
             private static StringBuilder BeginCommand(HostContext hostContext, string command)
@@ -225,27 +174,29 @@ namespace Laboratory
                 var processArgs = new StringBuilder();
                 processArgs.Append(command);
                 var packages = hostContext.Packages;
-                if (hostContext.IncludePrelude || packages?.Length > 0)
+                if (hostContext.IncludePrelude || packages.Count > 0)
                 {
                     processArgs.Append(" -p ");
                     if (hostContext.IncludePrelude) processArgs.Append("Prelude ");
-                    if (packages?.Length > 0) processArgs.AppendJoin(' ', packages);
+                    if (packages.Count > 0) processArgs.AppendJoin(' ', packages);
                 }
 
                 return processArgs;
             }
 
-            bool IHost.Parse(HostContext hostContext, FileInfo file)
+            Option IHost.Parse(HostContext hostContext, FileInfo file)
             {
                 var processArgs = BeginCommand(hostContext, "parse");
 
                 processArgs.Append(" -f ");
                 processArgs.Append(file.FullName);
 
-                return bool.Parse(RunHostProcess(hostContext, processArgs.ToString()).Last());
+                return bool.TryParse(RunHostProcess(hostContext, processArgs.ToString()), out var result)
+                    ? Optional.SomeWhen(result, "Parse error encountered, see log for details")
+                    : Optional.None("Failed to obtain parsing result from host process");
             }
 
-            float[] IHost.Execute(HostContext hostContext, string functionName, params float[] functionArgs)
+            Option<float[]> IHost.Execute(HostContext hostContext, string functionName, params float[] functionArgs)
             {
                 var processArgs = BeginCommand(hostContext, "execute");
 
@@ -258,7 +209,7 @@ namespace Laboratory
                     processArgs.AppendJoin(' ', functionArgs);
                 }
 
-                return RunHostProcess(hostContext, processArgs.ToString()).Last().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                return RunHostProcess(hostContext, processArgs.ToString()).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
             }
         }
     }

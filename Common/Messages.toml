@@ -1,76 +1,66 @@
-levels = [ "Verbose", "Information", "Warning", "Error"]
+# Message Levels in order of importance:
+    # Verbose - frequent information that can significantly slow performance when on
+    # Information - infrequent information generally useful to the user which doesn't impact performance
+    # Warning - any issues found that aren't significant enough to be considered an error
+    # Error - errors that don't prevent compilation
+    # Fatal - errors that require the compiler to immediately exit
 
 [ELE1]
 name = "SerializationError"
-summary = "An error occurred related to (de)serialization of a type"
 level = "Error"
 
 [ELE2]
 name = "MultipleDefinitions"
-summary = "Cannot have multiple definitions of the same value"
 level = "Error"
 
 [ELE3]
 name = "InvalidCompileTarget"
-summary = "Cannot compile the given identifier"
 level = "Error"
 
 [ELE4]
 name = "IntrinsicNotImplemented"
-summary = "Compiler does not implement this intrinsic"
 level = "Error"
 
 [ELE5]
 name = "LocalShadowing"
-summary = "A local identifier shadows the same identifier defined in an outer scope"
 level = "Warning"
 
 [ELE6]
 name = "ArgumentCountMismatch"
-summary = "Incorrect number of arguments supplied for function"
 level = "Error"
 
 [ELE7]
 name = "IdentifierNotFound"
-summary = "Could not find the given identifier"
 level = "Error"
 
 [ELE8]
 name = "ConstraintNotSatisfied"
-summary = "The constraint imposed by a type or interface has not been satisfied"
 level = "Error"
 
 [ELE9]
 name = "ParseError"
-summary = "Failed to parse source"
 level = "Error"
 
 [ELE10]
 name = "InvalidBoundaryFunctionInterface"
-summary = "The interface for an Element function defined across the boundary is invalid"
 level = "Error"
 
 [ELE11]
 name = "CircularCompilation"
-summary = "Circular dependency found during compilation - note that recusion is not supported"
 level = "Error"
 
 [ELE12]
 name = "BoundaryMapMissing"
-summary = "No boundary map found for type"
 level = "Error"
 
 [ELE13]
 name = "ZeroLengthArray"
-summary = "Cannot have a zero length array"
 level = "Error"
 
 [ELE14]
 name = "TypeError"
-summary = "Value does not satisfy the specified type"
 level = "Error"
 
 [ELE9999]
 name = "UnknownError"
-summary = "An unknown error occurred"
 level = "Error"

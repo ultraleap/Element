@@ -1,4 +1,5 @@
 using System.IO;
+using Element.CLR;
 
 namespace Alchemist
 {
@@ -13,12 +14,8 @@ namespace Alchemist
 
         protected override CompilationContext _compilationContext { get; } = new CompilationContext();
 
-        protected override int CommandImplementation()
+        protected override  CommandImplementation()
         {
-            _sourceContext.AddSourceFiles(new []{new FileInfo(Filename)});
-            _sourceContext.Recompile(_compilationContext);
-            
-            var asString = string.Join(", ", output).Replace("∞", "Infinity");
             Alchemist.Log(asString);
             return 0;
         }

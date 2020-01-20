@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace Element
 {
 	using System.Linq;
@@ -6,9 +8,9 @@ namespace Element
 	/// <summary>
 	/// A custom user-defined Type
 	/// </summary>
-	internal class CustomType : IntrospectionBase, INamedType
+	internal class CustomType : ValueBase, INamedType
 	{
-		public CustomType(IScope parent, Match ast, CompilationContext context, string source)
+		public CustomType(IScope parent, Match ast, CompilationContext context, FileInfo source)
 			: base(parent, ast, context, source) { }
 
 		public bool? SatisfiedBy(IFunction value, CompilationContext info)
@@ -46,7 +48,7 @@ namespace Element
 			foreach (var o in outPorts)
 			{
 				var val = value.Call(o.Name, info);
-				if (val is Error)
+				if (val is CompileError)
 				{
 					success = null;
 				}

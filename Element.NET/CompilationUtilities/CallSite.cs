@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace Element
 {
     /// <summary>
@@ -5,7 +7,7 @@ namespace Element
     /// </summary>
     public readonly struct CallSite
     {
-        public CallSite(IFunction function, string sourceFile, int line, int column)
+        public CallSite(IFunction function, FileInfo sourceFile, int line, int column)
         {
             Function = function;
             SourceFile = sourceFile;
@@ -13,11 +15,11 @@ namespace Element
             Column = column;
         }
             
-        public readonly string SourceFile;
+        public readonly FileInfo SourceFile;
         public readonly int Line;
         public readonly int Column;
         public readonly IFunction Function;
 
-        public override string ToString() => $"<{SourceFile}|{Line}:{Column}> {Function}";
+        public override string ToString() => $"<{SourceFile.Name}|{Line}:{Column}> {Function}";
     }
 }

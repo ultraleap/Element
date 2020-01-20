@@ -21,7 +21,7 @@ namespace Element
 		{
 			if (this.CheckArguments(arguments, output, context) != null)
 			{
-				return Error.Instance;
+				return CompileError.Instance;
 			}
 
 			var initial = arguments[0];

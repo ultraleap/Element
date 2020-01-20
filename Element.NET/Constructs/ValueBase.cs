@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace Element
 {
 	using System;
@@ -5,11 +7,11 @@ namespace Element
 	using Eto.Parse;
 
 	/// <summary>
-	/// Base class for introspectable items (i.e. functions and types)
+	/// Base class for Element values (i.e. functions and types)
 	/// </summary>
-	internal abstract class IntrospectionBase : IFunction, INamedItem
+	internal abstract class ValueBase : IFunction, INamedItem
 	{
-		protected IntrospectionBase(IScope parent, Match ast, CompilationContext context, string source)
+		protected ValueBase(IScope parent, Match ast, CompilationContext context, FileInfo source)
 		{
 			Source = source;
 			Parent = parent;
@@ -21,7 +23,7 @@ namespace Element
 		private readonly CompilationContext _context;
 		protected readonly IScope Parent;
 		protected readonly Match Ast;
-		protected readonly string Source;
+		protected readonly FileInfo Source;
 
 		public string Name { get; }
 		public override string ToString() => Name;

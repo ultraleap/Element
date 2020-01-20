@@ -1,3 +1,5 @@
+using Element.CLR;
+
 namespace Laboratory.Tests
 {
     internal class NumberLiterals : HostFixture

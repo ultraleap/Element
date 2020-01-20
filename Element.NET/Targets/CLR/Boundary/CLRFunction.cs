@@ -302,7 +302,7 @@ namespace Element.CLR
 			{
 				switch (fn)
 				{
-					case Error _: return null;
+					case CompileError _: return null;
 					case IType _:
 						context.LogError(3, "Cannot compile a type");
 						return null;

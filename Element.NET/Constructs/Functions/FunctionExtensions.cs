@@ -14,7 +14,7 @@ namespace Element
 		/// <returns>The size of the structure in singles, or null if there was a problem</returns>
 		public static int? GetSize(this IFunction value, CompilationContext info)
 		{
-			if (value == Error.Instance)
+			if (value == CompileError.Instance)
 			{
 				return null;
 			}
@@ -175,7 +175,7 @@ namespace Element
 
 			if (function.CheckArguments(arguments, null, context) != null)
 			{
-				return Error.Instance;
+				return CompileError.Instance;
 			}
 
 			return new CalledFunction(function, arguments, callSite).ResolveReturns(context, callSite);
@@ -232,11 +232,11 @@ namespace Element
 				success = false;
 			}
 
-			if (arguments.Any(a => a is Error)) {
-				return Error.Instance;
+			if (arguments.Any(a => a is CompileError)) {
+				return CompileError.Instance;
 			}
 
-			return success ? null : Error.Instance;
+			return success ? null : CompileError.Instance;
 		}
 
 		/// <summary>
@@ -327,7 +327,7 @@ namespace Element
 			{
 				if (this.CheckArguments(arguments, output, context) != null)
 				{
-					return Error.Instance;
+					return CompileError.Instance;
 				}
 
 				if (!_cache.TryGetValue(output, out var found))
@@ -354,7 +354,7 @@ namespace Element
 
 				if (this.CheckArguments(arguments, null, context) != null)
 				{
-					return Error.Instance;
+					return CompileError.Instance;
 				}
 
 				_debugCache.Add(name, found);
@@ -461,7 +461,7 @@ namespace Element
 				var completeArgs = new[] {_classInstance}.Concat(arguments).ToArray();
 				if (this.CheckArguments(arguments, output, context) != null)
 				{
-					return Error.Instance;
+					return CompileError.Instance;
 				}
 
 				if (!_cache.TryGetValue(output, out var found))
@@ -492,7 +492,7 @@ namespace Element
 
 				if (this.CheckArguments(arguments, null, context) != null)
 				{
-					return Error.Instance;
+					return CompileError.Instance;
 				}
 
 				if (Inputs.Length == 0) {
@@ -537,7 +537,7 @@ namespace Element
 			{
 				if (this.CheckArguments(arguments, output, context) != null)
 				{
-					return Error.Instance;
+					return CompileError.Instance;
 				}
 
 				var value = surrogate.Call(arguments.Take(surrogate.Inputs.Length).ToArray(), context)

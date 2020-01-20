@@ -1,3 +1,4 @@
+using Element.CLR;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
@@ -14,16 +15,12 @@ namespace Laboratory.Tests
 		{
 			var context = new HostContext
 			{
-				MessageHandler = (messages, anyErrors) =>
-				{
-					Assert.True(anyErrors);
-					messages.Check("ELE0000");
-					Assert.Pass();
-				}
+				MessageHandler = TestContext.WriteLine,
+				ErrorHandler = err => PassIfMessageCodeFound(err, 13)
 			};
 			_host.Execute(context, "array"); // No arguments
-			
-			Assert.Fail("Expected message code ELE0000 but execution succeeded");
+
+			Assert.Fail("Expected message code ELE13 but execution succeeded");
 		}
 	}
 }

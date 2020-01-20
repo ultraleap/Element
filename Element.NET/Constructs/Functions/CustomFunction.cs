@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace Element
 {
 	using System;
@@ -8,11 +10,11 @@ namespace Element
 	/// <summary>
 	/// A user-defined Function (which may or may not have a body!)
 	/// </summary>
-	internal class CustomFunction : IntrospectionBase, IScope, IDebuggable, INamedFunction
+	internal class CustomFunction : ValueBase, IScope, IDebuggable, INamedFunction
 	{
 		public override string ToString() => $"{Parent}.{Name}";
 
-		public CustomFunction(IScope parent, Match ast, CompilationStack? stack, CompilationContext context, string source)
+		public CustomFunction(IScope parent, Match ast, CompilationStack? stack, CompilationContext context, FileInfo source)
 			: base(parent, ast, context, source)
 		{
 			_capturedCompilationStack = stack;
@@ -220,7 +222,7 @@ namespace Element
 			if (this.CheckArguments(arguments, output, context) != null)
 			{				
 				context.Pop();
-				return Error.Instance;
+				return CompileError.Instance;
 			}
 
 			context.Pop();
@@ -236,7 +238,7 @@ namespace Element
 			return success switch
 			{
 				false => context.LogError(8, $"Output `{outputPort}` was not satisfied by its value `{outValue}` (See previous errors)"),
-				null => Error.Instance,
+				null => CompileError.Instance,
 				_ => outValue
 			};
 		}

@@ -15,24 +15,38 @@ namespace Element
 	/// </summary>
 	public class CompilationContext
 	{
-		public CompilationContext(string compilerflagsToml = "CompilerFlags.toml", bool logToConsole = true)
+		public CompilationContext(string compilerflagsToml = "CompilerFlags.toml")
 		{
 			_compilerFlags = Toml.Parse(File.ReadAllText(compilerflagsToml)).ToModel();
 			_callStack = new Stack<CallSite>();
-			if (logToConsole) this.StartLoggingToConsole();
 		}
 
 		private readonly TomlTable _compilerFlags;
 		private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
-		private static readonly string[] _messageLevels = ((TomlArray)_messageToml["levels"]).Select(i => (string)i).ToArray();
+		private static readonly Dictionary<int, TomlTable> _messageDetails = new Dictionary<int, TomlTable>();
+		private static TomlTable GetMessageCode(int messageCode)
+		{
+			if (_messageDetails.TryGetValue(messageCode, out var result))
+			{
+				return result;
+			}
+
+			if(_messageToml[$"ELE{messageCode}"] is TomlTable messageTable)
+			{
+				return _messageDetails[messageCode] = messageTable;
+			}
+
+			throw new InternalCompilerException($"ELE{messageCode} could not be found");
+		}
 
 		private TValue CompilerFlag<TValue>([CallerMemberName] string caller = default) => (TValue)((TomlTable)_compilerFlags[caller ?? throw new ArgumentNullException(nameof(caller))])["value"];
 
 		public bool Debug => CompilerFlag<bool>();
 		public string Verbosity => CompilerFlag<string>();
 
-		public event LogEvent OnLog;
-		public event LogEvent OnError;
+		public bool LogToConsole { get; set; } = true;
+
+		public readonly List<CompilerMessage> Messages = new List<CompilerMessage>();
 
 		private readonly Stack<CallSite> _callStack;
 		public void Push(CallSite callSite) => _callStack.Push(callSite);
@@ -42,20 +56,10 @@ namespace Element
 		public void Log(string message) => LogImpl(null, false, message);
 		private IFunction LogImpl(int? messageCode, bool appendStackTrace = false, string context = default)
 		{
-			var sb = new StringBuilder();
-			string level;
-			if (messageCode.HasValue && _messageToml[$"ELE{messageCode.Value}"] is TomlTable messageTable)
-			{
-				level = (string)messageTable["level"];
-				sb.Append("ELE").Append(messageCode).Append(": ").Append(level).Append(" - ").Append((string)messageTable["name"]).AppendLine();
-				sb.AppendLine((string)messageTable["summary"]);
-			}
-			else
-			{
-				throw new InternalCompilerException($"ELE{messageCode} could not be found");
-			}
-			
-			var indexOfLevel = Array.IndexOf(_messageLevels, level);
+			TomlTable messageDetails = null;
+			if (messageCode.HasValue) messageDetails = GetMessageCode(messageCode.Value);
+
+			var indexOfLevel = Enum.IndexOf(_messageLevels, level);
 			if (indexOfLevel < 0) throw new InternalCompilerException($"\"{level}\" is not a valid message level");
 
 			var indexOfCurrentVerbosity = Array.IndexOf(_messageLevels, Verbosity);
@@ -78,36 +82,53 @@ namespace Element
 				var isError = Array.IndexOf(_messageLevels, "Error") >= indexOfLevel;
 				if (isError) OnError?.Invoke(message);
 				else OnLog?.Invoke(message);
+
+				if (LogToConsole)
+				{
+					if (isError) Console.Error.WriteLine(message);
+					else Console.WriteLine(message);
+				}
 			}
 			
-			return Error.Instance;
+			return CompileError.Instance;
 		}
 	}
 
-	public delegate void LogEvent(string message);
+	public enum MessageLevel
+	{
+		Verbose,
+		Information,
+		Warning,
+		Error,
+		Fatal
+	}
+
+	public struct CompilerMessage
+	{
+		public CompilerMessage(string context, MessageLevel level)
+		{
+			Level = level;
+			TimesStamp = DateTime.Now;
+		}
+
+		private readonly StringBuilder _builder;
+
+		public override string ToString()
+		{
+			var builder = new StringBuilder();
+			builder.Append("ELE").Append(messageCode).Append(": ").Append(level).Append(" - ").Append((string)messageTable["name"]).AppendLine();
+			return _builder.ToString();
+		}
+
+		public int MessageCode { get; }
+		public Stack<CallSite> CallStack { get; }
+		public MessageLevel Level { get; }
+		public DateTime TimesStamp { get; }
+	}
 
 	public class InternalCompilerException : Exception
 	{
 		public InternalCompilerException(string message)
 			: base(message) { }
-	}
-
-	public static class LogToConsole
-	{
-		public static void StartLoggingToConsole(this CompilationContext context)
-		{
-			StopLoggingToConsole(context); // Prevent duplicate subscriptions
-			context.OnLog += LogToStdOut;
-			context.OnError += LogToStdErr;
-		}
-
-		public static void StopLoggingToConsole(this CompilationContext context)
-		{
-			context.OnLog -= LogToStdOut;
-			context.OnError -= LogToStdErr;
-		}
-
-		private static void LogToStdErr(string message) => Console.Error.WriteLine(message);
-		private static void LogToStdOut(string message) => Console.WriteLine(message);
 	}
 }
