@@ -1,3 +1,4 @@
+using Element;
 using Element.CLR;
 using NUnit.Framework;
 
@@ -7,12 +8,9 @@ namespace Laboratory.Tests
 	{
 		public Boolean(IHost host) : base(host) { }
 
-		private static HostContext BooleanContext => new HostContext
-		{
-			MessageHandler = TestContext.WriteLine,
-			ErrorHandler = Assert.Fail,
-			IncludePrelude = true
-		};
+		private static CompilationInput CompilationInput => new CompilationInput(false, false, null,
+			TestContext.WriteLine,
+			Assert.Fail);
 
 
 		[
@@ -28,7 +26,7 @@ namespace Laboratory.Tests
 			TestCase("not", 1f, 0f),
 		]
 		public void UnaryOp(string function, float a, float expected) =>
-			Assert.That(_host.Execute(BooleanContext, function, a)[0], Is.EqualTo(expected));
+			Assert.That(_host.Execute(CompilationInput, function, a)[0], Is.EqualTo(expected));
 
 		[
 			TestCase("and", 0f, 0f, 0f),
@@ -85,6 +83,6 @@ namespace Laboratory.Tests
 			TestCase("neq", 999.999f, 999.999f, 0f)
 		]
 		public void BinaryOp(string function, float a, float b, float expected) =>
-			Assert.That(_host.Execute(BooleanContext, function, a, b)[0], Is.EqualTo(expected));
+			Assert.That(_host.Execute(CompilationInput, function, a, b)[0], Is.EqualTo(expected));
 	}
 }

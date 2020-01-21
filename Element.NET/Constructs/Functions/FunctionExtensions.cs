@@ -135,7 +135,7 @@ namespace Element
 				context.LogError(1, $"Cannot deserialize `{function}` outputs because it's input ports have no defined type");
 			}
 
-			return new DeserializedStructure(function, data, new CompilationContext());
+			return new DeserializedStructure(function, data, context);
 		}
 
 		public static IFunction Call(this IFunction function, IFunction[] arguments, string output,
@@ -166,7 +166,7 @@ namespace Element
 			CompilationContext context, CallSite? callSite = null)
 		{
 			if (function == null) throw new ArgumentNullException(nameof(function));
-			if (!(context.Debug && !(function is IType))
+			if (!(context.Input.Debug && !(function is IType))
 				&& function.Outputs?.Length == 1
 				&& function.Outputs[0].Name == "return")
 			{
@@ -244,19 +244,19 @@ namespace Element
 		/// call these outputs until this is no longer the case. This avoids having to specify 'return' outputs
 		/// and suchlike in the source code.
 		/// </summary>
-		public static IFunction ResolveReturns(this IFunction function, CompilationContext info, CallSite? callSite)
+		public static IFunction ResolveReturns(this IFunction function, CompilationContext context, CallSite? callSite)
 		{
 			while (function?.Inputs?.Length == 0
 				&& function.Outputs?.Length == 1
 				&& function.Outputs[0].Name == "return")
 			{
-				if (info.Debug && !(function is IType))
+				if (context.Input.Debug && !(function is IType))
 				{
-					function = new ReturnWrapper(function, info, callSite);
+					function = new ReturnWrapper(function, context, callSite);
 				}
 				else
 				{
-					function = function.Call(function.Outputs[0].Name, info);
+					function = function.Call(function.Outputs[0].Name, context);
 				}
 			}
 
@@ -413,7 +413,7 @@ namespace Element
 		{
 			if (classInstance == null) throw new ArgumentNullException(nameof(classInstance));
 			if (memberFunction == null) throw new ArgumentNullException(nameof(memberFunction));
-			if (!(context.Debug) && memberFunction.Outputs?.Length == 1)
+			if (!context.Input.Debug && memberFunction.Outputs?.Length == 1)
 			{
 				return memberFunction.Call(new []{classInstance}, memberFunction.Outputs[0].Name, context, callSite);
 			}

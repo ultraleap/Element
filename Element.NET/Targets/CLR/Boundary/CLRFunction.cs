@@ -202,13 +202,10 @@ namespace Element.CLR
 			}
 		}
 
-		public static CompilationResult<TDelegate> Compile<TDelegate>(this IFunction function,
-		                                                              CompilationInput input,
-		                                                              ICLRBoundaryMap boundaryMap = null) where TDelegate : Delegate?
-		{
-			var result = function.Compile(typeof(TDelegate), input, boundaryMap);
-			return new CompilationResult<TDelegate>((TDelegate)result.Result, result.Context);
-		}
+		public static TDelegate Compile<TDelegate>(this IFunction function,
+			CompilationInput input,
+			ICLRBoundaryMap boundaryMap = null) where TDelegate : Delegate? =>
+			(TDelegate)function.Compile(typeof(TDelegate), input, boundaryMap);
 
 		/// <summary>
 		/// Converts an Element function to a CLR function by matching similarly-named parameters
@@ -218,9 +215,9 @@ namespace Element.CLR
 		/// <param name="input"></param>
 		/// <param name="boundaryMap">Maps CLR types to Element types and vice-versa</param>
 		/// <returns>Compiled delegate or null if failure</returns>
-		public static CompilationResult<Delegate?> Compile(this IFunction function, Type delegateType,
-		                                CompilationInput input,
-		                                ICLRBoundaryMap boundaryMap = default)
+		public static Delegate? Compile(this IFunction function, Type delegateType,
+			CompilationInput input,
+			ICLRBoundaryMap boundaryMap = default)
 		{
 			var context = new CompilationContext(input);
 
@@ -367,10 +364,10 @@ namespace Element.CLR
 			// Put everything into a single code block, and wrap it in the Delegate
 			var fnBody = LinqExpression.Block(data.Variables, data.Statements.Concat(finalOutputs));
 			//Console.WriteLine(fnBody.GetDebugView());
-			return new CompilationResult<Delegate?>(LinqExpression.Lambda(delegateType, fnBody, false,
-			                                                              paramExpressions.Take(
-				                                                              paramExpressions.Length - (usingReturnParameter ? 1 : 0)))
-			                                                      .Compile(), context);
+			return LinqExpression.Lambda(delegateType, fnBody, false,
+					paramExpressions.Take(
+						paramExpressions.Length - (usingReturnParameter ? 1 : 0)))
+				.Compile();
 		}
 
 		public static string GetDebugView(this LinqExpression exp)

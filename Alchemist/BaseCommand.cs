@@ -1,10 +1,11 @@
+using Element;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using CommandLine;
+
 namespace Alchemist
 {
-	using System.Collections.Generic;
-	using System.IO;
-	using System.Linq;
-	using CommandLine;
-
 	/// <summary>
 	/// Base class for writing Alchemist commands.
 	/// </summary>
@@ -13,20 +14,7 @@ namespace Alchemist
 		[Option('p', "packages", Required = false, HelpText = "Element packages to load into the context.")]
 		public IEnumerable<string> Packages { get; set; }
 
-		private readonly string _currentWorkingDirectory = Directory.GetCurrentDirectory();
-
-		private HostContext InitializeHostContext()
-		{
-			Alchemist.Log($"Alchemist starting in directory \"{_currentWorkingDirectory}\"");
-
-			return new HostContext
-			{
-				Packages = Packages.Select(GetPackageDirectories).Prepend(new DirectoryInfo(_currentWorkingDirectory)).ToList(),
-				IncludePrelude = true,
-				MessageHandler = Alchemist.Log,
-				ErrorHandler = Alchemist.LogError
-			};
-		}
+		private static readonly string _currentWorkingDirectory = Directory.GetCurrentDirectory();
 
 		private static DirectoryInfo GetPackageDirectories(string package)
 		{
@@ -40,8 +28,10 @@ namespace Alchemist
 			return directoryInfo;
 		}
 
-		public int Invoke() => CommandImplementation(InitializeHostContext());
+		public int Invoke() => CommandImplementation(new CompilationInput(true, true,
+			Packages.Select(GetPackageDirectories).Prepend(new DirectoryInfo(_currentWorkingDirectory)).ToList(),
+			Alchemist.Log, Alchemist.LogError));
 
-		protected abstract int CommandImplementation(HostContext hostContext);
+		protected abstract int CommandImplementation(CompilationInput input);
 	}
 }

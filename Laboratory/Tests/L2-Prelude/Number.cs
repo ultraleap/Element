@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Element;
 using Element.CLR;
 using NUnit.Framework;
 
@@ -12,14 +13,11 @@ namespace Laboratory.Tests
 	{
 		public Number(IHost host) : base(host) { }
 
-		private static HostContext NumberContext => new HostContext
-		{
-			MessageHandler = TestContext.WriteLine,
-			ErrorHandler = Assert.Fail,
-			IncludePrelude = true
-		};
+		private static CompilationInput CompilationInput => new CompilationInput(false, false, null,
+			TestContext.WriteLine,
+			Assert.Fail);
 
-		private float[] Execute(string function, params float[] args) => _host.Execute(NumberContext, function, args);
+		private float[] Execute(string function, params float[] args) => _host.Execute(CompilationInput, function, args);
 
 		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
 		{

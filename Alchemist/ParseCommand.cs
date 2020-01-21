@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Element.CLR;
 
 namespace Alchemist
@@ -9,14 +11,16 @@ namespace Alchemist
     [Verb("parse", HelpText = "Parse the given Element file or text.")]
     internal class ParseCommand : BaseCommand
     {
-        [Option('f', "filename", Required = true, HelpText = "Element file to parse.")]
-        public string Filename { get; set; }
+        [Option('f', "files", Required = true, HelpText = "Element files to parse.")]
+        public IEnumerable<string> Filenames { get; set; }
 
-        protected override CompilationContext CompilationContext { get; } = new CompilationContext();
-
-        protected override  CommandImplementation()
+        protected override int CommandImplementation(CompilationInput input)
         {
-            Alchemist.Log(asString);
+            var command = new HostCommand(input);
+            var parsed = command.Parse(Filenames.Select(name => new FileInfo(name)));
+
+            Alchemist.Log(parsed.ToString());
+
             return 0;
         }
     }

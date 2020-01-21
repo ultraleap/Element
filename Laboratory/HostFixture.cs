@@ -1,3 +1,4 @@
+using Element;
 using Element.CLR;
 using NUnit.Framework;
 
@@ -13,11 +14,8 @@ namespace Laboratory
 
         protected readonly IHost _host;
 
-        protected static HostContext DefaultHostContext => new HostContext
-        {
-            MessageHandler = TestContext.WriteLine,
-            ErrorHandler = Assert.Fail
-        };
+        protected static CompilationInput DefaultCompilationInput => new CompilationInput(false, true, null,
+            TestContext.WriteLine, Assert.Fail);
 
         protected static void PassIfMessageCodeFound(string message, int messageCode)
         {

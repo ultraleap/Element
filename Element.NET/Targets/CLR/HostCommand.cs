@@ -8,7 +8,7 @@ namespace Element.CLR
     {
         public HostCommand(CompilationInput compilationInput)
         {
-            CompilationContext =new CompilationContext(compilationInput);
+            CompilationContext = new CompilationContext(compilationInput);
             static FileInfo[] OpenPackage(DirectoryInfo package) => package.GetFiles("*.ele", SearchOption.AllDirectories);
 
             if (compilationInput.ExcludePrelude) SourceFiles.AddRange(OpenPackage(new DirectoryInfo("Prelude")));
@@ -16,18 +16,13 @@ namespace Element.CLR
         }
 
         private List<FileInfo> SourceFiles { get; } = new List<FileInfo>();
-        private CompilationContext CompilationContext { get; }
+        public CompilationContext CompilationContext { get; }
 
-        public CompilationResult<bool> Parse(in FileInfo file)
-        {
-            new GlobalScope().ParseFile(file, CompilationContext);
-            return CompilationContext.ToResult(CompilationContext.Messages.Any(m => m.Level >= MessageLevel.Error));
-        }
+        public bool Parse(in IEnumerable<FileInfo> files) => CompilationContext.ParseFiles(files).Messages.Any(m => m.Level >= MessageLevel.Error);
 
-        public CompilationResult<float[]> Execute(in string functionName, params float[] functionArgs) =>
-            CompilationContext.ToResult(
-                new GlobalScope().ParseFiles(SourceFiles, CompilationContext)
-                                 .GetFunction(functionName, CompilationContext)
-                                 .EvaluateAndSerialize(functionArgs, CompilationContext));
+        public float[] Execute(in string functionName, params float[] functionArgs) =>
+            CompilationContext.ParseFiles(SourceFiles).GlobalScope
+                .GetFunction(functionName, CompilationContext)
+                .EvaluateAndSerialize(functionArgs, CompilationContext);
     }
 }

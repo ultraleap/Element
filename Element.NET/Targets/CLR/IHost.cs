@@ -1,10 +1,11 @@
+using System.Collections.Generic;
 using System.IO;
 
 namespace Element.CLR
 {
     public interface IHost
     {
-        CompilationResult<bool> Parse(CompilationInput input, FileInfo file);
-        CompilationResult<float[]> Execute(CompilationInput input, string functionName, params float[] functionArgs);
+        bool ParseFiles(in CompilationInput input, in IEnumerable<FileInfo> file);
+        float[] Execute(in CompilationInput input, in string functionName, params float[] functionArgs);
     }
 }

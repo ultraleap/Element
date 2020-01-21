@@ -1,3 +1,4 @@
+using Element;
 using Element.CLR;
 using NUnit.Framework;
 
@@ -13,12 +14,11 @@ namespace Laboratory.Tests
 		[Test]
 		public void ZeroLengthArrayProducesError()
 		{
-			var context = new HostContext
-			{
-				MessageHandler = TestContext.WriteLine,
-				ErrorHandler = err => PassIfMessageCodeFound(err, 13)
-			};
-			_host.Execute(context, "array"); // No arguments
+			var input = new CompilationInput(false, false, null,
+			TestContext.WriteLine,
+			err => PassIfMessageCodeFound(err, 13));
+
+			_host.Execute(input, "array"); // No arguments
 
 			Assert.Fail("Expected message code ELE13 but execution succeeded");
 		}

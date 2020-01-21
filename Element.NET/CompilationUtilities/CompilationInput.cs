@@ -14,7 +14,7 @@ namespace Element
     {
         public bool LogToConsole { get; }
         public bool ExcludePrelude { get; }
-        public List<DirectoryInfo> Packages { get; }
+        public IReadOnlyList<DirectoryInfo> Packages { get; }
         public Action<string>? MessageHandler { get; }
         public Action<string>? ErrorHandler { get; }
 
@@ -24,7 +24,7 @@ namespace Element
         {
             LogToConsole = logToConsole;
             ExcludePrelude = excludePrelude;
-            Packages = packages;
+            Packages = packages ?? new List<DirectoryInfo>(0);
             MessageHandler = messageHandler;
             ErrorHandler = errorHandler;
         }

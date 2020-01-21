@@ -15,9 +15,8 @@ The convention for defining an error in  is a table defined in the format `ELE##
 The table then includes a name string, summary string and level string for the given error.
 Valid levels are listed at the top of [Messages.toml](../Common/Messages.toml).
 ```toml
-[ELE0000]
+[ELE13]
 name = "ZeroLengthArray"
-summary = "Cannot have a zero length array"
 level = "Error"
 ```
 When a compiler logs an error it **_must_** a message code as they are used in error case compliance tests.
@@ -58,3 +57,7 @@ Example: `execute -f add -a 1 5` should print `6`
 
 NOTE: An issue with Windows Terminal default encoding causes `∞` to be converted to `8` ([see stackoverflow](https://stackoverflow.com/questions/40907417/why-is-infinity-printed-as-8-in-the-windows-10-console)). To combat this, all `∞` should be converted to the text `Infinity`.
 
+#### Parse
+Parse a file, returning whether or not parsing was successful.
+
+`parse [] -f <files>...`

@@ -44,6 +44,9 @@ namespace Element
 			{
 				case null:
 					throw new ArgumentNullException(nameof(value));
+				case CompilationError _:
+					// no-op, the error details will already be logged to the context and we simply don't add it
+					break;
 				case INamedFunction function:
 				{
 					if (GetFunction(function.Name, context) != null)

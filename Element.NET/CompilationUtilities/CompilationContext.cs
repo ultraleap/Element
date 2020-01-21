@@ -1,7 +1,6 @@
 namespace Element
 {
 	using System;
-	using System.Text;
 	using System.Collections.Generic;
 	using System.IO;
 	using Tomlyn;
@@ -12,10 +11,12 @@ namespace Element
 	/// </summary>
 	public class CompilationContext
 	{
-		public CompilationContext(in CompilationInput compilationInput) => CompilationInput = compilationInput;
+		public CompilationContext(in CompilationInput compilationInput) => Input = compilationInput;
 
-		public CompilationInput CompilationInput { get; }
-		
+		public CompilationInput Input { get; }
+
+		public GlobalScope GlobalScope { get; } = new GlobalScope();
+
 		private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
 		private static readonly Dictionary<int, TomlTable> _messageDetails = new Dictionary<int, TomlTable>();
 
@@ -56,11 +57,11 @@ namespace Element
 				throw new InternalCompilerException($"\"{level}\" is not a valid message level");
 			}
 
-			if (level >= CompilationInput.Verbosity)
+			if (level >= Input.Verbosity)
 			{
 				var message = new CompilerMessage(messageCode.Value, (string)messageDetails["name"], level, context, _callStack, appendStackTrace);
 				_messages.Add(message);
-				if (CompilationInput.LogToConsole)
+				if (Input.LogToConsole)
 				{
 					if (MessageLevel.Error >= level) Console.Error.WriteLine(message);
 					else Console.WriteLine(message);
@@ -69,72 +70,5 @@ namespace Element
 			
 			return CompilationError.Instance;
 		}
-	}
-
-	internal static class CompilationExtensions
-	{
-		public static CompilationResult<TResult> ToResult<TResult>(this CompilationContext context, TResult result) =>
-			new CompilationResult<TResult>(result, context);
-		
-		public static Stack<T> Clone<T>(this Stack<T> original)
-		{
-			var arr = new T[original.Count];
-			original.CopyTo(arr, 0);
-			Array.Reverse(arr);
-			return new Stack<T>(arr);
-		}
-	}
-
-	public enum MessageLevel
-	{
-		Verbose,
-		Information,
-		Warning,
-		Error,
-		Fatal
-	}
-
-	public class CompilerMessage
-	{
-		public CompilerMessage(int? messageCode, string? name, MessageLevel? messageLevel, string context, Stack<CallSite> callStack, bool appendStackTrace)
-		{
-			Name = name;
-			Level = messageLevel;
-			CallStack = callStack.Clone();
-			_message = new Lazy<string>(() =>
-			{
-				var builder = new StringBuilder();
-				if (messageCode.HasValue)
-				{
-					builder.Append("ELE").Append(messageCode.Value).Append(": ").Append(Level).Append(" - ")
-					       .Append(Name).AppendLine();
-				}
-
-				builder.AppendLine(context);
-				builder.AppendLine();
-				if (appendStackTrace)
-				{
-					builder.AppendLine("Stack trace:");
-					foreach (var frame in CallStack)
-					{
-						builder.Append("    ").AppendLine(frame.ToString());
-					}
-				}
-				return builder.ToString();
-			});
-		}
-		private readonly Lazy<string> _message;
-
-		public string? Name { get; }
-		public MessageLevel? Level { get; }
-		public Stack<CallSite> CallStack { get; }
-
-		public override string ToString() => _message.Value;
-	}
-
-	public class InternalCompilerException : Exception
-	{
-		public InternalCompilerException(string message)
-			: base(message) { }
 	}
 }

@@ -11,16 +11,15 @@ namespace Element
 	{
 		public JObject JsonConfiguration { get; private set; }
 
-		public void ProvideArguments(IFunction function, float[] arguments)
+		public void ProvideArguments(IFunction function, float[] arguments, CompilationContext context)
 		{
 			if (function == null) { return; }
 
 			var idx = 0;
-			var info = new CompilationContext();
 			foreach (var input in function.Inputs)
 			{
 				JsonConfiguration.TryGetValue(input.Name, out var iValue);
-				RecursivelyEvaluate(arguments, input.Type, iValue, ref idx, info);
+				RecursivelyEvaluate(arguments, input.Type, iValue, ref idx, context);
 			}
 		}
 
@@ -43,22 +42,16 @@ namespace Element
 			return (true, null);
 		}
 
-		private static void RecursivelyEvaluate(float[] config, IFunction func, JToken value, ref int idx, CompilationContext info)
+		private static void RecursivelyEvaluate(float[] config, IFunction func, JToken value, ref int idx, CompilationContext context)
 		{
 			if (func.IsLeaf())
 			{
-				switch (value?.Type ?? JTokenType.None)
+				config[idx++] = (value?.Type ?? JTokenType.None) switch
 				{
-					case JTokenType.Float:
-						config[idx++] = (float)(double)value;
-						break;
-					case JTokenType.Integer:
-						config[idx++] = (int)value;
-						break;
-					default:
-						config[idx++] = 0;
-						break;
-				}
+					JTokenType.Float => (float) (double) value,
+					JTokenType.Integer => (int) value,
+					_ => 0
+				};
 			}
 			else
 			{
@@ -66,7 +59,7 @@ namespace Element
 				{
 					JToken cValue = null;
 					(value as JObject)?.TryGetValue(output.Name, out cValue);
-					RecursivelyEvaluate(config, func.Call(output.Name, info), cValue, ref idx, info);
+					RecursivelyEvaluate(config, func.Call(output.Name, context), cValue, ref idx, context);
 				}
 			}
 		}

@@ -123,18 +123,18 @@ namespace Element
 			}
 		}
 
-		private static CompilationContext Parse(this CompilationContext compilationContext, string text, out GrammarMatch match)
+		private static GrammarMatch Parse(this CompilationContext compilationContext, string text)
 		{
-			match = MakeParser().Match(Preprocess(text));
+			var match = MakeParser().Match(Preprocess(text));
 			if (!match.Success)
 			{
 				compilationContext.LogError(9, match.ErrorMessage);
 			}
 
-			return compilationContext;
+			return match;
 		}
 
-		private static IFunction ToFunction(this CompilationContext context, IScope scope, Match match, FileInfo source) =>
+		private static IFunction ToFunction(this Match match, IScope scope,  FileInfo source, CompilationContext context) =>
 			match.Success
 				? (match[ElementAST.FunctionBody] ? true : match[ElementAST.AssignmentStatement] ? true : false)
 					  ? (IFunction) new CustomFunction(scope, match, null, context, source)
@@ -144,23 +144,19 @@ namespace Element
 		/// <summary>
 		/// Parses the given file as an Element source file and adds it's contents to a global scope
 		/// </summary>
-		public static CompilationContext ParseFile(this CompilationContext context, FileInfo file, GlobalScope globalScope)
-		{
-			context.Parse(File.ReadAllText(file.FullName), out var match).ToFunction()
-			if (match.Success) globalScope.Add(context.ToFunction(globalScope, match, file), context);
-			return context;
-		}
+		public static CompilationContext ParseFile(this CompilationContext context, FileInfo file) =>
+			context.GlobalScope.Add(context.Parse(File.ReadAllText(file.FullName)).ToFunction(context.GlobalScope, file, context), context);
 
 		/// <summary>
 		/// Parses all the given files as Element source files into a global scope
 		/// </summary>
-		public static CompilationContext ParseFiles(this CompilationContext context, IEnumerable<FileInfo> files, GlobalScope globalScope) =>
-			files.Aggregate(context, (ctx, info) => ctx.ParseFile(info, globalScope));
+		public static CompilationContext ParseFiles(this CompilationContext context, IEnumerable<FileInfo> files) =>
+			files.Aggregate(context, (ctx, info) => ctx.ParseFile(info));
 
 		/// <summary>
 		/// Parses the given text as a single Element function using a scope without adding it to the scope
 		/// </summary>
-		public static IFunction Parse(this CompilationContext context, string text, IScope scope) =>
-			context.Parse(text, out var match).ToFunction(scope, match.Matches[0], null);
+		public static IFunction ParseText(this CompilationContext context, string text, IScope scope) =>
+			context.Parse(text).ToFunction(scope, null, context);
 	}
 }
