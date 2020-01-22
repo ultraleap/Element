@@ -15,24 +15,30 @@ namespace Element
         public bool LogToConsole { get; }
         public bool ExcludePrelude { get; }
         public IReadOnlyList<DirectoryInfo> Packages { get; }
-        public Action<string>? MessageHandler { get; }
-        public Action<string>? ErrorHandler { get; }
 
-        public CompilationInput(bool logToConsole, bool excludePrelude,
-                                List<DirectoryInfo> packages, Action<string>? messageHandler,
-                                Action<string>? errorHandler)
+        public CompilationInput(in bool logToConsole, in bool excludePrelude, in List<DirectoryInfo> packages, in string compilerFlagsToml = null)
         {
             LogToConsole = logToConsole;
             ExcludePrelude = excludePrelude;
             Packages = packages ?? new List<DirectoryInfo>(0);
-            MessageHandler = messageHandler;
-            ErrorHandler = errorHandler;
+            CompilerFlags = Toml.Parse(compilerFlagsToml ?? File.ReadAllText("CompilerFlags.toml")).ToModel();
         }
         
-        private static readonly TomlTable CompilerFlags = Toml.Parse(File.ReadAllText("CompilerFlags.toml")).ToModel();
-        private static TValue CompilerFlag<TValue>([CallerMemberName] string caller = default) => (TValue)((TomlTable)CompilerFlags[caller ?? throw new ArgumentNullException(nameof(caller))])["value"];
+        private readonly TomlTable CompilerFlags;
 
-        public bool Debug => CompilerFlag<bool>();
-        public MessageLevel Verbosity => (MessageLevel)Enum.Parse(typeof(MessageLevel), CompilerFlag<string>());
+        private TValue CompilerFlag<TValue>(TValue defaultValue, [CallerMemberName] string caller = default) =>
+            ((TomlTable) CompilerFlags[caller ?? throw new ArgumentNullException(nameof(caller))])
+                .TryGetValue("value", out var value) switch
+                {
+                    true => typeof(TValue) switch
+                    {
+                        { } enumType when enumType.IsEnum => Enum.TryParse(enumType, (string)value, out var enumValue) ? enumValue : defaultValue,
+                        _ => (TValue)value
+                    },
+                    false => defaultValue
+                };
+
+        public bool Debug => CompilerFlag(false);
+        public MessageLevel Verbosity => CompilerFlag(MessageLevel.Information);
     }
 }
