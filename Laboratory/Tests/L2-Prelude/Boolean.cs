@@ -1,17 +1,14 @@
+using System;
 using Element;
-using Element.CLR;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
 {
 	internal class Boolean : HostFixture
 	{
-		public Boolean(IHost host) : base(host) { }
+		public Boolean(Func<IHost> hostGenerator) : base(hostGenerator) { }
 
-		private static CompilationInput CompilationInput => new CompilationInput(false, false, null,
-			TestContext.WriteLine,
-			Assert.Fail);
-
+		private static CompilationInput CompilationInput => new CompilationInput(FailOnError);
 
 		[
 			TestCase("bool", 0f, 0f),
@@ -26,7 +23,7 @@ namespace Laboratory.Tests
 			TestCase("not", 1f, 0f),
 		]
 		public void UnaryOp(string function, float a, float expected) =>
-			Assert.That(_host.Execute(CompilationInput, function, a)[0], Is.EqualTo(expected));
+			Assert.That(HostGenerator().Execute(CompilationInput, function, a)[0], Is.EqualTo(expected));
 
 		[
 			TestCase("and", 0f, 0f, 0f),
@@ -83,6 +80,6 @@ namespace Laboratory.Tests
 			TestCase("neq", 999.999f, 999.999f, 0f)
 		]
 		public void BinaryOp(string function, float a, float b, float expected) =>
-			Assert.That(_host.Execute(CompilationInput, function, a, b)[0], Is.EqualTo(expected));
+			Assert.That(HostGenerator().Execute(CompilationInput, function, a, b)[0], Is.EqualTo(expected));
 	}
 }

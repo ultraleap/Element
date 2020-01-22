@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Element;
-using Element.CLR;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using Tomlyn;
 using Tomlyn.Model;
@@ -21,8 +21,8 @@ namespace Laboratory
     {
         public IEnumerator GetEnumerator() => _processHostInfos
             .Where(phi => phi.Enabled)
-            .Select(phi => (IHost) new ProcessHost(phi))
-            .Prepend(new SelfHost())
+            .Select(phi => (Func<IHost>)(() => (IHost) new ProcessHost(phi)))
+            .Prepend(() => new AtomicHost())
             .ToArray<object>()
             .GetEnumerator();
 
@@ -61,18 +61,6 @@ namespace Laboratory
         }
 
         private static readonly List<ProcessHostInfo> _processHostInfos = new List<ProcessHostInfo>();
-
-        /// <summary>
-        /// Implements commands directly.
-        /// </summary>
-        private readonly struct SelfHost : IHost
-        {
-            public override string ToString() => "Laboratory";
-
-            bool IHost.ParseFiles(in CompilationInput compilationInput, in IEnumerable<FileInfo> files) => new HostCommand(compilationInput).Parse(files);
-
-            float[] IHost.Execute(in CompilationInput compilationInput, in string functionName, params float[] functionArgs) => new HostCommand(compilationInput).Execute(functionName, functionArgs);
-        }
 
         /// <summary>
         /// Implements commands by calling external process defined using a command string.
@@ -128,6 +116,18 @@ namespace Laboratory
                 }
             }
 
+            private static bool TryParseJson<T>(string json, out T result)
+            {
+                var success = true;
+                var settings = new JsonSerializerSettings
+                {
+                    Error = (sender, args) => { success = false; args.ErrorContext.Handled = true; },
+                    MissingMemberHandling = MissingMemberHandling.Error
+                };
+                result = JsonConvert.DeserializeObject<T>(json, settings);
+                return success;
+            }
+
             private static readonly Dictionary<ProcessHostInfo, List<string>> _hostBuildErrors = new Dictionary<ProcessHostInfo, List<string>>();
 
             public ProcessHost(ProcessHostInfo info) => _info = info;
@@ -154,11 +154,19 @@ namespace Laboratory
                 };
 
                 var result = string.Empty;
+
+                void MessageHandler(string message)
+                {
+                    input.LogCallback(TryParseJson(message, out CompilerMessage compilerMessage)
+                        ? compilerMessage
+                        : new CompilerMessage(null, null, MessageLevel.Information, message, null));
+                }
+
                 Run(process, msg =>
                 {
-                    input.MessageHandler?.Invoke(msg);
+                    MessageHandler(msg);
                     result = msg;
-                }, input.ErrorHandler);
+                }, MessageHandler);
 
                 if (process.ExitCode != 0)
                 {
@@ -172,24 +180,17 @@ namespace Laboratory
             {
                 var processArgs = new StringBuilder();
                 processArgs.Append(command);
-                var packages = input.Packages;
-                if (!input.ExcludePrelude || packages.Count > 0)
-                {
-                    processArgs.Append(" -p ");
-                    if (!input.ExcludePrelude) processArgs.Append("Prelude ");
-                    if (packages.Count > 0) processArgs.AppendJoin(' ', packages);
-                }
+                processArgs.Append(" --logjson true ");
+                processArgs.Append($" --prelude {!input.ExcludePrelude} ");
+                if (input.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Packages);
 
                 return processArgs;
             }
 
-            bool IHost.ParseFiles(in CompilationInput input, in IEnumerable<FileInfo> files)
+            bool IHost.ParseFile(in CompilationInput input, in FileInfo file)
             {
                 var processArgs = BeginCommand(input, "parse");
-
-                processArgs.Append(" -f ");
-                processArgs.AppendJoin(' ', files);
-
+                processArgs.Append($" -f {file.FullName}");
                 return bool.Parse(RunHostProcess(input, processArgs.ToString()));
             }
 

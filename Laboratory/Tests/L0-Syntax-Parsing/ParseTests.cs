@@ -9,7 +9,7 @@ namespace Laboratory.Tests
 {
     internal class ParseTests : HostFixture
     {
-        public ParseTests(IHost host) : base(host) { }
+        public ParseTests(Func<IHost> hostGenerator) : base(hostGenerator) { }
 
         private static IEnumerable GenerateParseTestData()
         {
@@ -28,14 +28,13 @@ namespace Laboratory.Tests
         [TestCaseSource(nameof(GenerateParseTestData))]
         public void ParseTest((FileInfo FileInfo, bool ExpectedToPass) info)
         {
-            var result = _host.ParseFiles(info.ExpectedToPass
-                    ? DefaultCompilationInput // Will assert on error
-                    : new CompilationInput(false, true, null,
-                        TestContext.WriteLine,
-                        err => PassIfMessageCodeFound(err, 9)),
-                new[] {info.FileInfo});
+            var (fileInfo, expectedToPass) = info;
+            var result = HostGenerator().ParseFile(expectedToPass
+                    ? new CompilationInput(FailOnError)
+                    : new CompilationInput(ExpectMessageCode(9)),
+                fileInfo);
 
-            if(!info.ExpectedToPass && result)
+            if(!expectedToPass && result)
                 Assert.Fail("Expected parsing to fail but no parse error was logged");
         }
     }

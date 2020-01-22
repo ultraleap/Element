@@ -1,27 +1,16 @@
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using Element.CLR;
+using CommandLine;
+using Element;
 
 namespace Alchemist
 {
-    using CommandLine;
-    using Element;
-
-    [Verb("parse", HelpText = "Parse the given Element file or text.")]
-    internal class ParseCommand : BaseCommand
+    [Verb("parse-file", HelpText = "Parse the given Element file.")]
+    internal class ParseFileCommand : BaseCommand
     {
-        [Option('f', "files", Required = true, HelpText = "Element files to parse.")]
-        public IEnumerable<string> Filenames { get; set; }
+        [Option('f', "filename", Required = true, HelpText = "Element file to parse.")]
+        public string FileName { get; set; }
 
-        protected override int CommandImplementation(CompilationInput input)
-        {
-            var command = new HostCommand(input);
-            var parsed = command.Parse(Filenames.Select(name => new FileInfo(name)));
-
-            Alchemist.Log(parsed.ToString());
-
-            return 0;
-        }
+        protected override (int ExitCode, string Result) CommandImplementation(in CompilationInput compilationInput)
+            => (0, new AtomicHost().ParseFile(compilationInput, new FileInfo(FileName)).ToString());
     }
 }

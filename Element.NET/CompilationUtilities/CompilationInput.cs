@@ -12,27 +12,33 @@ namespace Element
     /// </summary>
     public readonly struct CompilationInput
     {
-        public bool LogToConsole { get; }
         public bool ExcludePrelude { get; }
         public IReadOnlyList<DirectoryInfo> Packages { get; }
+        public IReadOnlyList<FileInfo> ExtraSourceFiles { get; }
+        public Action<CompilerMessage>? LogCallback { get; }
 
-        public CompilationInput(in bool logToConsole, in bool excludePrelude, in List<DirectoryInfo> packages, in string compilerFlagsToml = null)
+        public CompilationInput(in Action<CompilerMessage>? logCallback,
+            in bool excludePrelude = false,
+            in List<DirectoryInfo> packages = null,
+            in IReadOnlyList<FileInfo> extraSourceFiles = null,
+            in string compilerFlagsToml = null)
         {
-            LogToConsole = logToConsole;
+            LogCallback = logCallback;
             ExcludePrelude = excludePrelude;
             Packages = packages ?? new List<DirectoryInfo>(0);
-            CompilerFlags = Toml.Parse(compilerFlagsToml ?? File.ReadAllText("CompilerFlags.toml")).ToModel();
+            ExtraSourceFiles = extraSourceFiles;
+            _compilerFlags = Toml.Parse(compilerFlagsToml ?? File.ReadAllText("CompilerFlags.toml")).ToModel();
         }
         
-        private readonly TomlTable CompilerFlags;
+        private readonly TomlTable _compilerFlags;
 
         private TValue CompilerFlag<TValue>(TValue defaultValue, [CallerMemberName] string caller = default) =>
-            ((TomlTable) CompilerFlags[caller ?? throw new ArgumentNullException(nameof(caller))])
+            ((TomlTable) _compilerFlags[caller ?? throw new ArgumentNullException(nameof(caller))])
                 .TryGetValue("value", out var value) switch
                 {
                     true => typeof(TValue) switch
                     {
-                        { } enumType when enumType.IsEnum => Enum.TryParse(enumType, (string)value, out var enumValue) ? enumValue : defaultValue,
+                        { } type when type.IsEnum => (TValue)Enum.Parse(type, (string)value),
                         _ => (TValue)value
                     },
                     false => defaultValue

@@ -1,44 +1,43 @@
-using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Element
 {
-    public class CompilerMessage
+    public readonly struct CompilerMessage
     {
-        public CompilerMessage(int? messageCode, string? name, MessageLevel? messageLevel, string context, Stack<CallSite> callStack, bool appendStackTrace)
+        public CompilerMessage(in int? messageCode, in string? name, in MessageLevel? messageLevel, in string context, in CallSite[] callStack)
         {
+            MessageCode = messageCode;
             Name = name;
             Level = messageLevel;
-            CallStack = callStack.Clone();
-            _message = new Lazy<string>(() =>
+            CallStack = callStack;
+
+            var builder = new StringBuilder();
+            if (messageCode.HasValue)
             {
-                var builder = new StringBuilder();
-                if (messageCode.HasValue)
-                {
-                    builder.Append("ELE").Append(messageCode.Value).Append(": ").Append(Level).Append(" - ")
-                        .Append(Name).AppendLine();
-                }
+                builder.Append("ELE").Append(messageCode.Value).Append(": ").Append(Level).Append(" - ")
+                    .Append(Name).AppendLine();
+            }
 
-                builder.AppendLine(context);
-                builder.AppendLine();
-                if (appendStackTrace)
+            builder.AppendLine(context);
+            builder.AppendLine(callStack.Length > 0 ? "Stack trace:" : "No stack trace");
+            if (callStack.Length > 0)
+            {
+                foreach (var frame in CallStack)
                 {
-                    builder.AppendLine("Stack trace:");
-                    foreach (var frame in CallStack)
-                    {
-                        builder.Append("    ").AppendLine(frame.ToString());
-                    }
+                    builder.Append("    ").AppendLine(frame.ToString());
                 }
-                return builder.ToString();
-            });
+            }
+
+            _message = builder.ToString();
         }
-        private readonly Lazy<string> _message;
+        private readonly string _message;
 
+        public int? MessageCode { get; }
         public string? Name { get; }
         public MessageLevel? Level { get; }
-        public Stack<CallSite> CallStack { get; }
+        public IReadOnlyCollection<CallSite> CallStack { get; }
 
-        public override string ToString() => _message.Value;
+        public override string ToString() => _message;
     }
 }

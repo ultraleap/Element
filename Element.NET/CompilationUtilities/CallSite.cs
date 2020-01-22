@@ -14,7 +14,7 @@ namespace Element
             Line = line;
             Column = column;
         }
-            
+
         public readonly FileInfo SourceFile;
         public readonly int Line;
         public readonly int Column;

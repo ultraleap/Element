@@ -1,5 +1,5 @@
+using System;
 using Element;
-using Element.CLR;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
@@ -9,17 +9,13 @@ namespace Laboratory.Tests
 	/// </summary>
 	internal class List : HostFixture
 	{
-		public List(IHost host) : base(host) { }
+		public List(Func<IHost> hostGenerator) : base(hostGenerator) { }
 
 		[Test]
 		public void ZeroLengthArrayProducesError()
 		{
-			var input = new CompilationInput(false, false, null,
-			TestContext.WriteLine,
-			err => PassIfMessageCodeFound(err, 13));
-
-			_host.Execute(input, "array"); // No arguments
-
+			var input = new CompilationInput(ExpectMessageCode(13));
+			HostGenerator().Execute(input, "array"); // No arguments
 			Assert.Fail("Expected message code ELE13 but execution succeeded");
 		}
 	}

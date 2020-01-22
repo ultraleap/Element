@@ -219,8 +219,7 @@ namespace Element.CLR
 			CompilationInput input,
 			ICLRBoundaryMap boundaryMap = default)
 		{
-			var context = new CompilationContext(input);
-
+			if (!CompilationContext.TryCreate(input, out var context)) return null;
 			if (function == null) throw new ArgumentNullException(nameof(function));
 			if (function.Inputs == null || function.Outputs == null)
 			{

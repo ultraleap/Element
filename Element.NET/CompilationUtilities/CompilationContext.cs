@@ -1,20 +1,33 @@
+using System.Linq;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Tomlyn;
+using Tomlyn.Model;
+
 namespace Element
 {
-	using System;
-	using System.Collections.Generic;
-	using System.IO;
-	using Tomlyn;
-	using Tomlyn.Model;
-
 	/// <summary>
 	/// Contains the status of the compilation process including call stack and logging messages.
 	/// </summary>
 	public class CompilationContext
 	{
-		public CompilationContext(in CompilationInput compilationInput) => Input = compilationInput;
+		private CompilationContext(in CompilationInput compilationInput)
+		{
+			Input = compilationInput;
+			LogCallback = compilationInput.LogCallback;
+		}
+
+		public static bool TryCreate(in CompilationInput compilationInput, out CompilationContext compilationContext) =>
+			(compilationContext = new CompilationContext(compilationInput))
+			.ParseFiles(compilationInput.Packages
+				.Prepend(compilationInput.ExcludePrelude ? null : new DirectoryInfo("Prelude"))
+				.SelectMany(directory => directory?.GetFiles("*.ele", SearchOption.AllDirectories))
+				.Concat(compilationInput.ExtraSourceFiles)
+				.ToArray())
+			.All(parseResult => parseResult.Success);
 
 		public CompilationInput Input { get; }
-
 		public GlobalScope GlobalScope { get; } = new GlobalScope();
 
 		private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
@@ -34,20 +47,20 @@ namespace Element
 
 			throw new InternalCompilerException($"ELE{messageCode} could not be found");
 		}
-		public IReadOnlyList<CompilerMessage> Messages => _messages.AsReadOnly();
-		private List<CompilerMessage> _messages { get; } = new List<CompilerMessage>();
+
+		private Action<CompilerMessage> LogCallback { get; }
 
 		private readonly Stack<CallSite> _callStack = new Stack<CallSite>();
 		public void Push(CallSite callSite) => _callStack.Push(callSite);
 		public void Pop() => _callStack.Pop();
 
-		public IFunction LogError(int messageCode, string context = default) => LogImpl(messageCode, true, context);
-		public void Log(string message) => LogImpl(null, false, message);
-		private IFunction LogImpl(int? messageCode, bool appendStackTrace = false, string context = default)
+		public IFunction LogError(int messageCode, string context = default) => LogImpl(messageCode, context);
+		public void Log(string message) => LogImpl(null, message);
+		private IFunction LogImpl(int? messageCode, string context = default)
 		{
 			if (!messageCode.HasValue)
 			{
-				_messages.Add(new CompilerMessage(null, null, null, context, _callStack, appendStackTrace));
+				LogCallback?.Invoke(new CompilerMessage(null, null, null, context, _callStack.ToArray()));
 				return CompilationError.Instance;
 			}
 			
@@ -59,13 +72,7 @@ namespace Element
 
 			if (level >= Input.Verbosity)
 			{
-				var message = new CompilerMessage(messageCode.Value, (string)messageDetails["name"], level, context, _callStack, appendStackTrace);
-				_messages.Add(message);
-				if (Input.LogToConsole)
-				{
-					if (MessageLevel.Error >= level) Console.Error.WriteLine(message);
-					else Console.WriteLine(message);
-				}
+				LogCallback?.Invoke(new CompilerMessage(messageCode.Value, (string)messageDetails["name"], level, context, _callStack.ToArray()));
 			}
 			
 			return CompilationError.Instance;

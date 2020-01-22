@@ -144,14 +144,14 @@ namespace Element
 		/// <summary>
 		/// Parses the given file as an Element source file and adds it's contents to a global scope
 		/// </summary>
-		public static CompilationContext ParseFile(this CompilationContext context, FileInfo file) =>
+		public static bool ParseFile(this CompilationContext context, FileInfo file) =>
 			context.GlobalScope.Add(context.Parse(File.ReadAllText(file.FullName)).ToFunction(context.GlobalScope, file, context), context);
 
 		/// <summary>
 		/// Parses all the given files as Element source files into a global scope
 		/// </summary>
-		public static CompilationContext ParseFiles(this CompilationContext context, IEnumerable<FileInfo> files) =>
-			files.Aggregate(context, (ctx, info) => ctx.ParseFile(info));
+		public static (bool Success, FileInfo FileInfo)[] ParseFiles(this CompilationContext context,
+			FileInfo[] files) => files.Select(file => (context.ParseFile(file), file)).ToArray();
 
 		/// <summary>
 		/// Parses the given text as a single Element function using a scope without adding it to the scope

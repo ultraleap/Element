@@ -1,9 +1,10 @@
-using Element.CLR;
+using System;
+using Element;
 
 namespace Laboratory.Tests
 {
     internal class NumberLiterals : HostFixture
     {
-        public NumberLiterals(IHost host) : base(host) { }
+        public NumberLiterals(Func<IHost> hostGenerator) : base(hostGenerator) { }
     }
 }

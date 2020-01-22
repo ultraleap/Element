@@ -36,17 +36,16 @@ namespace Element
 		}
 
 		/// <summary>
-		/// Adds a function to the global scope
+		/// Adds a value to the global scope
 		/// </summary>
-		public CompilationContext Add(IFunction value, CompilationContext context)
+		public bool Add(IFunction value, CompilationContext context)
 		{
 			switch (value)
 			{
 				case null:
 					throw new ArgumentNullException(nameof(value));
 				case CompilationError _:
-					// no-op, the error details will already be logged to the context and we simply don't add it
-					break;
+					return false;
 				case INamedFunction function:
 				{
 					if (GetFunction(function.Name, context) != null)
@@ -58,7 +57,7 @@ namespace Element
 						_functions.Add(function);
 					}
 
-					break;
+					return true;
 				}
 				case INamedType type:
 				{
@@ -71,13 +70,11 @@ namespace Element
 						_types.Add(type);
 					}
 
-					break;
+					return true;
 				}
 				default:
 					throw new ArgumentOutOfRangeException(nameof(value));
 			}
-
-			return context;
 		}
 
 		/// <summary>
