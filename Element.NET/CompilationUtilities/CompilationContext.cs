@@ -44,7 +44,7 @@ namespace Element
 		{
 			if (!messageCode.HasValue)
 			{
-				LogCallback?.Invoke(new CompilerMessage(null, null, null, context, _callStack.ToArray()));
+				LogCallback?.Invoke(new CompilerMessage(null, null, null, context, DateTime.Now, _callStack.ToArray()));
 				return CompilationError.Instance;
 			}
 			
@@ -61,7 +61,7 @@ namespace Element
 
 			if (level >= Input.Verbosity)
 			{
-				LogCallback?.Invoke(new CompilerMessage(messageCode.Value, (string)messageTable["name"], level, context, _callStack.ToArray()));
+				LogCallback?.Invoke(new CompilerMessage(messageCode.Value, (string)messageTable["name"], level, context, DateTime.Now, _callStack.ToArray()));
 			}
 			
 			return CompilationError.Instance;

@@ -1,28 +1,33 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Element
 {
-    public struct CompilerMessage
+    public readonly struct CompilerMessage
     {
-        public CompilerMessage(in string message, in MessageLevel? messageLevel = default) : this()
+        public CompilerMessage(in string message, in DateTime? timeStamp = default, in MessageLevel? messageLevel = default) : this()
         {
             _message = Context = message;
-            Level = messageLevel;
+            MessageLevel = messageLevel;
+            TimeStamp = timeStamp ?? DateTime.Now;
         }
 
-        public CompilerMessage(in int? messageCode, in string? name, in MessageLevel? messageLevel, in string? context, in CallSite[] callStack)
+        [JsonConstructor]
+        public CompilerMessage(in int? messageCode, in string? name, in MessageLevel? messageLevel, in string? context, in DateTime timeStamp, in IReadOnlyList<CallSite> callStack)
         {
             MessageCode = messageCode;
             Name = name;
             Context = context;
-            Level = messageLevel;
+            MessageLevel = messageLevel;
+            TimeStamp = timeStamp;
             CallStack = callStack;
 
             var builder = new StringBuilder();
             if (messageCode.HasValue)
             {
-                builder.Append("ELE").Append(messageCode.Value).Append(": ").Append(Level).Append(" - ")
+                builder.Append("ELE").Append(messageCode.Value).Append(": ").Append(MessageLevel).Append(" - ")
                     .Append(Name).AppendLine();
             }
 
@@ -30,8 +35,8 @@ namespace Element
             if (messageCode.HasValue)
             {
                 builder.AppendLine();
-                builder.AppendLine(callStack?.Length > 0 ? "Stack trace:" : "No stack trace");
-                if (callStack?.Length > 0)
+                builder.AppendLine(callStack?.Count > 0 ? "Stack trace:" : "No stack trace");
+                if (callStack?.Count > 0)
                 {
                     foreach (var frame in CallStack)
                     {
@@ -44,11 +49,12 @@ namespace Element
         }
         private readonly string _message;
 
-        public string Context { get; set; }
-        public int? MessageCode { get; set; }
-        public string? Name { get; set; }
-        public MessageLevel? Level { get; set; }
-        public IReadOnlyCollection<CallSite> CallStack { get; set; }
+        public string? Context { get; }
+        public int? MessageCode { get; }
+        public string? Name { get; }
+        public MessageLevel? MessageLevel { get; }
+        public IReadOnlyCollection<CallSite> CallStack { get; }
+        public DateTime TimeStamp { get; }
 
         public override string ToString() => _message;
     }

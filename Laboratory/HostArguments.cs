@@ -67,21 +67,6 @@ namespace Laboratory
         /// </summary>
         private readonly struct ProcessHost : IHost
         {
-            private static void RunUntilExitWithEvents(Process process, Action<string> onMessage, Action<string> onError)
-            {
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.EnableRaisingEvents = true;
-
-                process.OutputDataReceived += (_, eventArgs) => onMessage?.Invoke(eventArgs.Data);
-                process.ErrorDataReceived += (_, eventArgs) => onError?.Invoke(eventArgs.Data);
-
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                process.WaitForExit();
-            }
-
             static ProcessHost()
             {
                 // Perform build command for each enabled host - within static constructor so it's only performed once per test run
@@ -100,18 +85,18 @@ namespace Laboratory
                             }
                         };
 
-                        var messages = new List<string>();
-                        void CacheMessage(string msg) => messages.Add(msg);
-                        RunUntilExitWithEvents(process, CacheMessage, CacheMessage);
+                        process.StartInfo.RedirectStandardError = true;
+                        process.Start();
+                        process.WaitForExit();
 
                         if (process.ExitCode != 0)
                         {
-                            _hostBuildErrors.Add(info, messages);
+                            _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                         }
                     }
                     catch (Exception e)
                     {
-                        _hostBuildErrors.Add(info, new List<string>{e.ToString()});
+                        _hostBuildErrors.Add(info, e.ToString());
                     }
                 }
             }
@@ -138,7 +123,7 @@ namespace Laboratory
                 return success;
             }
 
-            private static readonly Dictionary<ProcessHostInfo, List<string>> _hostBuildErrors = new Dictionary<ProcessHostInfo, List<string>>();
+            private static readonly Dictionary<ProcessHostInfo, string> _hostBuildErrors = new Dictionary<ProcessHostInfo, string>();
 
             public ProcessHost(ProcessHostInfo info) => _info = info;
 
@@ -148,11 +133,9 @@ namespace Laboratory
 
             private string RunHostProcess(CompilationInput input, string arguments)
             {
-                if (_hostBuildErrors.TryGetValue(_info, out var messages))
+                if (_hostBuildErrors.TryGetValue(_info, out var buildError))
                 {
-                    Assert.Fail(messages
-                        .Aggregate(new StringBuilder($"{_info.Name} failed to build. See build log below.").AppendLine(),
-                            (builder, s) => builder.AppendLine(s)).ToString());
+                    Assert.Fail(buildError);
                 }
 
                 var process = new Process
@@ -164,21 +147,24 @@ namespace Laboratory
                     }
                 };
 
-                var compilerMessages = new List<string>();
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.Start();
+                process.WaitForExit();
 
-                void CacheCompilerMessage(string message)
+                var messages = new List<string>();
+                ReadStream(process.StandardOutput);
+                ReadStream(process.StandardError);
+                void ReadStream(StreamReader streamReader)
                 {
-                    if(!string.IsNullOrEmpty(message))
-                        compilerMessages.Add(message);
+                    while (!streamReader.EndOfStream) messages.Add(streamReader.ReadLine());
                 }
 
-                RunUntilExitWithEvents(process, CacheCompilerMessage, CacheCompilerMessage);
+                var compilerMessages = messages.Select(msg => TryParseJson(msg, out CompilerMessage compilerMessage)
+                    ? compilerMessage
+                    : new CompilerMessage(msg)).OrderBy(msg => msg.TimeStamp).ToArray();
 
-                var parsedMessages = compilerMessages.Select(msg =>
-                    TryParseJson(msg, out CompilerMessage compilerMessage)
-                        ? compilerMessage
-                        : new CompilerMessage(msg)).ToArray();
-                foreach (var msg in parsedMessages)
+                foreach (var msg in compilerMessages)
                 {
                     input.LogCallback(msg);
                 }
@@ -187,20 +173,17 @@ namespace Laboratory
                 {
                     Assert.Fail(compilerMessages
                         .Aggregate(new StringBuilder($"{_info.Name} process quit with exit code '{process.ExitCode}'.").AppendLine(),
-                            (builder, s) => builder.AppendLine(s)).ToString());
+                            (builder, s) => builder.AppendLine(s.ToString())).ToString());
                 }
 
-                return parsedMessages.Last().ToString();
+                return compilerMessages.Last().ToString();
             }
 
             private static StringBuilder BeginCommand(CompilationInput input, string command)
             {
                 var processArgs = new StringBuilder();
-                processArgs.Append(command);
-                processArgs.Append(" --logjson true ");
-                processArgs.Append($" --prelude {!input.ExcludePrelude} ");
+                processArgs.Append($"{command} --logjson True --prelude {!input.ExcludePrelude}");
                 if (input.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Packages);
-
                 return processArgs;
             }
 

@@ -16,7 +16,7 @@ namespace Laboratory
 
         protected static void FailOnError(CompilerMessage message)
         {
-            if (message.Level >= MessageLevel.Error)
+            if (message.MessageLevel >= MessageLevel.Error)
                 Assert.Fail(message.ToString());
         }
 

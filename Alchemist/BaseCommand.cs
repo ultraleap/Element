@@ -37,12 +37,12 @@ namespace Alchemist
 			return exitCode;
 		}
 
-		private void Log(string message, MessageLevel? level = default) => Log(new CompilerMessage(message, level));
+		private void Log(string message, MessageLevel? level = default) => Log(new CompilerMessage(message, DateTime.Now, level));
 
 		private void Log(CompilerMessage message)
 		{
 			var msg = LogMessagesAsJson ? JsonConvert.SerializeObject(message) : message.ToString();
-			if (message.Level >= MessageLevel.Error) Console.Error.Write(msg);
+			if (message.MessageLevel >= MessageLevel.Error) Console.Error.Write(msg);
 			else Console.Write(msg);
 		}
 
