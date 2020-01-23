@@ -1,4 +1,3 @@
-using System;
 using Element;
 using NUnit.Framework;
 
@@ -9,13 +8,13 @@ namespace Laboratory.Tests
 	/// </summary>
 	internal class List : HostFixture
 	{
-		public List(Func<IHost> hostGenerator) : base(hostGenerator) { }
+		public List(IHost host) : base(host) { }
 
 		[Test]
 		public void ZeroLengthArrayProducesError()
 		{
 			var input = new CompilationInput(ExpectMessageCode(13));
-			HostGenerator().Execute(input, "array"); // No arguments
+			_host.Execute(input, "array"); // No arguments
 			Assert.Fail("Expected message code ELE13 but execution succeeded");
 		}
 	}

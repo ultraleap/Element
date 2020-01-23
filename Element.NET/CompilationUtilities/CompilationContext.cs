@@ -1,5 +1,6 @@
 using System.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using Tomlyn;
@@ -31,22 +32,6 @@ namespace Element
 		public GlobalScope GlobalScope { get; } = new GlobalScope();
 
 		private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
-		private static readonly Dictionary<int, TomlTable> _messageDetails = new Dictionary<int, TomlTable>();
-
-		private static TomlTable GetMessageCode(int messageCode)
-		{
-			if (_messageDetails.TryGetValue(messageCode, out var result))
-			{
-				return result;
-			}
-
-			if(_messageToml[$"ELE{messageCode}"] is TomlTable messageTable)
-			{
-				return _messageDetails[messageCode] = messageTable;
-			}
-
-			throw new InternalCompilerException($"ELE{messageCode} could not be found");
-		}
 
 		private Action<CompilerMessage> LogCallback { get; }
 
@@ -64,15 +49,20 @@ namespace Element
 				return CompilationError.Instance;
 			}
 			
-			var messageDetails = GetMessageCode(messageCode.Value);
-			if (!Enum.TryParse((string)messageDetails["level"], out MessageLevel level))
+			if(!(_messageToml[$"ELE{messageCode}"] is TomlTable messageTable))
+			{
+				throw new InternalCompilerException($"ELE{messageCode} could not be found");
+			}
+
+
+			if (!Enum.TryParse((string)messageTable["level"], out MessageLevel level))
 			{
 				throw new InternalCompilerException($"\"{level}\" is not a valid message level");
 			}
 
 			if (level >= Input.Verbosity)
 			{
-				LogCallback?.Invoke(new CompilerMessage(messageCode.Value, (string)messageDetails["name"], level, context, _callStack.ToArray()));
+				LogCallback?.Invoke(new CompilerMessage(messageCode.Value, (string)messageTable["name"], level, context, _callStack.ToArray()));
 			}
 			
 			return CompilationError.Instance;

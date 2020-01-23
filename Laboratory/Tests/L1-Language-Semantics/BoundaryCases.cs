@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Element;
 using NUnit.Framework;
@@ -7,7 +6,7 @@ namespace Laboratory.Tests
 {
 	internal class BoundaryCases : HostFixture
 	{
-		public BoundaryCases(Func<IHost> hostGenerator) :base(hostGenerator) { }
+		public BoundaryCases(IHost host) :base(host) { }
 
 		private static (string Name, int Arity)[] _argCount =
 		{
@@ -21,7 +20,7 @@ namespace Laboratory.Tests
 			var hasCorrectArgCount = function.Arity == argCount;
 			var input = new CompilationInput(hasCorrectArgCount ? FailOnError : ExpectMessageCode(6));
 
-			HostGenerator().Execute(input, function.Name, Enumerable.Range(0, argCount).Select(i => (float)i).ToArray());
+			_host.Execute(input, function.Name, Enumerable.Range(0, argCount).Select(i => (float)i).ToArray());
 			
 			if (!hasCorrectArgCount)
 				Assert.Fail("Expected message code ELE6 but execution succeeded");

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using NUnit.Framework;
 
 namespace Laboratory
 {
@@ -11,20 +8,6 @@ namespace Laboratory
 	/// </summary>
 	internal static class Laboratory
 	{
-		internal static bool ContainsMessageCode(this string message, int messageCode) =>
-			message.Contains($"ELE{messageCode}");
-
-		internal static void PrintMessagesToTestContext(this List<string> messages, string what)
-		{
-			TestContext.WriteLine($"*** BEGIN: {what} ***");
-			foreach (var message in messages.Where(message => !string.IsNullOrEmpty(message)))
-			{
-				TestContext.WriteLine(message);
-			}
-
-			TestContext.WriteLine($"*** END: {what} ***");
-		}
-
 		internal const float FloatEpsilon = 1.19209e-7f;
 
 		internal static readonly Lazy<string> ElementRootDirectory = new Lazy<string>(() =>

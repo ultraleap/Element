@@ -2,14 +2,13 @@ using System;
 using System.Collections;
 using System.IO;
 using Element;
-using Element.CLR;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
 {
     internal class ParseTests : HostFixture
     {
-        public ParseTests(Func<IHost> hostGenerator) : base(hostGenerator) { }
+        public ParseTests(IHost host) : base(host) { }
 
         private static IEnumerable GenerateParseTestData()
         {
@@ -29,12 +28,12 @@ namespace Laboratory.Tests
         public void ParseTest((FileInfo FileInfo, bool ExpectedToPass) info)
         {
             var (fileInfo, expectedToPass) = info;
-            var result = HostGenerator().ParseFile(expectedToPass
+            var success = _host.ParseFile(expectedToPass
                     ? new CompilationInput(FailOnError)
                     : new CompilationInput(ExpectMessageCode(9)),
                 fileInfo);
 
-            if(!expectedToPass && result)
+            if(expectedToPass != success)
                 Assert.Fail("Expected parsing to fail but no parse error was logged");
         }
     }

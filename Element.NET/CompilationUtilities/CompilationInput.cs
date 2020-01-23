@@ -19,14 +19,14 @@ namespace Element
 
         public CompilationInput(in Action<CompilerMessage>? logCallback,
             in bool excludePrelude = false,
-            in List<DirectoryInfo> packages = null,
+            in IReadOnlyList<DirectoryInfo> packages = null,
             in IReadOnlyList<FileInfo> extraSourceFiles = null,
             in string compilerFlagsToml = null)
         {
             LogCallback = logCallback;
             ExcludePrelude = excludePrelude;
-            Packages = packages ?? new List<DirectoryInfo>(0);
-            ExtraSourceFiles = extraSourceFiles;
+            Packages = packages ?? Array.Empty<DirectoryInfo>();
+            ExtraSourceFiles = extraSourceFiles ?? Array.Empty<FileInfo>();
             _compilerFlags = Toml.Parse(compilerFlagsToml ?? File.ReadAllText("CompilerFlags.toml")).ToModel();
         }
         

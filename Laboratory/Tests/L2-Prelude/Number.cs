@@ -11,11 +11,11 @@ namespace Laboratory.Tests
 	/// </summary>
 	internal class Number : HostFixture
 	{
-		public Number(Func<IHost> hostGenerator) : base(hostGenerator) { }
+		public Number(IHost host) : base(host) { }
 
 		private static CompilationInput CompilationInput => new CompilationInput(FailOnError);
 
-		private float[] Execute(string function, params float[] args) => HostGenerator().Execute(CompilationInput, function, args);
+		private float[] Execute(string function, params float[] args) => _host.Execute(CompilationInput, function, args);
 
 		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
 		{

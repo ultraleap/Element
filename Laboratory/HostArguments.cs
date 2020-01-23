@@ -21,8 +21,8 @@ namespace Laboratory
     {
         public IEnumerator GetEnumerator() => _processHostInfos
             .Where(phi => phi.Enabled)
-            .Select(phi => (Func<IHost>)(() => (IHost) new ProcessHost(phi)))
-            .Prepend(() => new AtomicHost())
+            .Select(phi => (IHost) new ProcessHost(phi))
+            .Prepend(new AtomicHost())
             .ToArray<object>()
             .GetEnumerator();
 
@@ -67,7 +67,7 @@ namespace Laboratory
         /// </summary>
         private readonly struct ProcessHost : IHost
         {
-            private static void Run(Process process, Action<string> onMessage, Action<string> onError)
+            private static void RunUntilExitWithEvents(Process process, Action<string> onMessage, Action<string> onError)
             {
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
@@ -102,7 +102,7 @@ namespace Laboratory
 
                         var messages = new List<string>();
                         void CacheMessage(string msg) => messages.Add(msg);
-                        Run(process, CacheMessage, CacheMessage);
+                        RunUntilExitWithEvents(process, CacheMessage, CacheMessage);
 
                         if (process.ExitCode != 0)
                         {
@@ -140,8 +140,9 @@ namespace Laboratory
             {
                 if (_hostBuildErrors.TryGetValue(_info, out var messages))
                 {
-                    messages.PrintMessagesToTestContext($"{_info.Name} build log");
-                    Assert.Fail($"{_info.Name} failed to build. See build log below.");
+                    Assert.Fail(messages
+                        .Aggregate(new StringBuilder($"{_info.Name} failed to build. See build log below."),
+                            (builder, s) => builder.AppendLine(s)).ToString());
                 }
 
                 var process = new Process
@@ -154,19 +155,21 @@ namespace Laboratory
                 };
 
                 var result = string.Empty;
+                var compilerMessages = new List<string>();
 
-                void MessageHandler(string message)
+                void CacheCompilerMessage(string message)
                 {
-                    input.LogCallback(TryParseJson(message, out CompilerMessage compilerMessage)
-                        ? compilerMessage
-                        : new CompilerMessage(null, null, MessageLevel.Information, message, null));
+                    compilerMessages.Add(message);
                 }
 
-                Run(process, msg =>
+                RunUntilExitWithEvents(process, CacheCompilerMessage, CacheCompilerMessage);
+
+                foreach (var msg in compilerMessages)
                 {
-                    MessageHandler(msg);
-                    result = msg;
-                }, MessageHandler);
+                    input.LogCallback(TryParseJson(msg, out CompilerMessage compilerMessage)
+                        ? compilerMessage
+                        : new CompilerMessage(null, null, MessageLevel.Information, msg, null));
+                }
 
                 if (process.ExitCode != 0)
                 {

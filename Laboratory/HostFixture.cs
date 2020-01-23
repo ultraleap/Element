@@ -7,19 +7,17 @@ namespace Laboratory
     [TestFixtureSource(typeof(HostArguments)), Parallelizable(ParallelScope.All)]
     internal abstract class HostFixture
     {
-        protected HostFixture(Func<IHost> hostGenerator)
+        protected HostFixture(IHost host)
         {
-            HostGenerator = hostGenerator;
+            _host = host;
         }
 
-        protected readonly Func<IHost> HostGenerator;
+        protected readonly IHost _host;
 
         protected static void FailOnError(CompilerMessage message)
         {
             if (message.Level >= MessageLevel.Error)
                 Assert.Fail(message.ToString());
-            else
-                TestContext.WriteLine(message.ToString());
         }
 
         protected static Action<CompilerMessage> ExpectMessageCode(int messageCode) => message =>
