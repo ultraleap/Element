@@ -5,6 +5,10 @@
     # Error - errors that don't prevent compilation
     # Fatal - errors that require the compiler to immediately exit
 
+[ELE0]
+name = "Success"
+level = "Verbose"
+
 [ELE1]
 name = "SerializationError"
 level = "Error"

@@ -124,7 +124,17 @@ namespace Laboratory
                     Error = (sender, args) => { success = false; args.ErrorContext.Handled = true; },
                     MissingMemberHandling = MissingMemberHandling.Error
                 };
-                result = JsonConvert.DeserializeObject<T>(json, settings);
+
+                try
+                {
+                    result = JsonConvert.DeserializeObject<T>(json, settings);
+                }
+                catch
+                {
+                    result = default;
+                    success = false;
+                }
+
                 return success;
             }
 
@@ -141,7 +151,7 @@ namespace Laboratory
                 if (_hostBuildErrors.TryGetValue(_info, out var messages))
                 {
                     Assert.Fail(messages
-                        .Aggregate(new StringBuilder($"{_info.Name} failed to build. See build log below."),
+                        .Aggregate(new StringBuilder($"{_info.Name} failed to build. See build log below.").AppendLine(),
                             (builder, s) => builder.AppendLine(s)).ToString());
                 }
 
@@ -154,29 +164,33 @@ namespace Laboratory
                     }
                 };
 
-                var result = string.Empty;
                 var compilerMessages = new List<string>();
 
                 void CacheCompilerMessage(string message)
                 {
-                    compilerMessages.Add(message);
+                    if(!string.IsNullOrEmpty(message))
+                        compilerMessages.Add(message);
                 }
 
                 RunUntilExitWithEvents(process, CacheCompilerMessage, CacheCompilerMessage);
 
-                foreach (var msg in compilerMessages)
-                {
-                    input.LogCallback(TryParseJson(msg, out CompilerMessage compilerMessage)
+                var parsedMessages = compilerMessages.Select(msg =>
+                    TryParseJson(msg, out CompilerMessage compilerMessage)
                         ? compilerMessage
-                        : new CompilerMessage(null, null, MessageLevel.Information, msg, null));
+                        : new CompilerMessage(msg)).ToArray();
+                foreach (var msg in parsedMessages)
+                {
+                    input.LogCallback(msg);
                 }
 
                 if (process.ExitCode != 0)
                 {
-                    Assert.Fail($"{_info.Name} process quit with exit code '{process.ExitCode}'.");
+                    Assert.Fail(compilerMessages
+                        .Aggregate(new StringBuilder($"{_info.Name} process quit with exit code '{process.ExitCode}'.").AppendLine(),
+                            (builder, s) => builder.AppendLine(s)).ToString());
                 }
 
-                return result;
+                return parsedMessages.Last().ToString();
             }
 
             private static StringBuilder BeginCommand(CompilationInput input, string command)

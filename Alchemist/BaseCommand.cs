@@ -1,3 +1,4 @@
+using System;
 using Element;
 using System.Collections.Generic;
 using System.IO;
@@ -21,27 +22,28 @@ namespace Alchemist
 		[Option("logjson", Required = false, HelpText = "Serializes log messages structured as Json instead of plain string.")]
 		public bool LogMessagesAsJson { get; set; }
 
-		private static DirectoryInfo GetPackageDirectories(string package)
+		private DirectoryInfo GetPackageDirectories(string package)
 		{
 			var directoryInfo = Directory.Exists(package) ? new DirectoryInfo(package) : null;
 			if (directoryInfo != null) return directoryInfo;
-			Alchemist.LogError($"Package directory \"{package}\" doesn't exist.");
+			Log($"Package directory \"{package}\" doesn't exist.", MessageLevel.Error);
 			return null;
 		}
 
 		public int Invoke()
 		{
-			var (exitCode, result) = CommandImplementation(new CompilationInput(LogCallback, !IncludePrelude,
-				Packages.Select(GetPackageDirectories).ToList()));
-			Alchemist.Log(result);
+			var (exitCode, result) = CommandImplementation(new CompilationInput(Log, !IncludePrelude, Packages.Select(GetPackageDirectories).ToList()));
+			Log(result);
 			return exitCode;
 		}
 
-		private void LogCallback(CompilerMessage message)
+		private void Log(string message, MessageLevel? level = default) => Log(new CompilerMessage(message, level));
+
+		private void Log(CompilerMessage message)
 		{
-			var msg = LogMessagesAsJson ? message.ToString() : JsonConvert.SerializeObject(message);
-			if (message.Level >= MessageLevel.Error) Alchemist.LogError(msg);
-			else Alchemist.Log(msg);
+			var msg = LogMessagesAsJson ? JsonConvert.SerializeObject(message) : message.ToString();
+			if (message.Level >= MessageLevel.Error) Console.Error.Write(msg);
+			else Console.Write(msg);
 		}
 
 		protected abstract (int ExitCode, string Result) CommandImplementation(in CompilationInput input);

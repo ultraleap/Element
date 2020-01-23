@@ -4,8 +4,8 @@ using Element;
 
 namespace Alchemist
 {
-    [Verb("parse-file", HelpText = "Parse the given Element file.")]
-    internal class ParseFileCommand : BaseCommand
+    [Verb("parse", HelpText = "Parse the given Element file.")]
+    internal class ParseCommand : BaseCommand
     {
         [Option('f', "filename", Required = true, HelpText = "Element file to parse.")]
         public string FileName { get; set; }
