@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 namespace Element
@@ -12,7 +13,9 @@ namespace Element
 
         public float[] Execute(in CompilationInput compilationInput, in string functionName, params float[] functionArgs) =>
             CompilationContext.TryCreate(compilationInput, out var context)
-                ? context.GlobalScope.GetFunction(functionName, context).EvaluateAndSerialize(functionArgs, context)
-                : null;
+                ? context.GlobalScope.TryGetValue(functionName, context, out var result)
+                    ? new[] {((Literal)result).Value} // TODO: Don't cast to literal here!
+                    : Array.Empty<float>()
+                : Array.Empty<float>();
     }
 }

@@ -7,7 +7,7 @@ namespace Alchemist
     [Verb("parse", HelpText = "Parse the given Element file.")]
     internal class ParseCommand : BaseCommand
     {
-        [Option('f', "filename", Required = true, HelpText = "Element file to parse.")]
+        [Option('f', "filename", Required = false, HelpText = "Element file to parse.")]
         public string FileName { get; set; }
 
         protected override (int ExitCode, string Result) CommandImplementation(in CompilationInput compilationInput)

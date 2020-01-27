@@ -1,12 +1,11 @@
+/*using System;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using Eto.Parse;
 
 namespace Element
 {
-	using System;
-	using System.Linq;
-	using System.Collections.Generic;
-	using Eto.Parse;
-
 	/// <summary>
 	/// A user-defined Function (which may or may not have a body!)
 	/// </summary>
@@ -14,7 +13,7 @@ namespace Element
 	{
 		public override string ToString() => $"{Parent}.{Name}";
 
-		public CustomFunction(IScope parent, Match ast, CompilationStack? stack, CompilationContext context, FileInfo source)
+		public CustomFunction(IScope parent, Match ast, StackFrame? stack, CompilationContext context, FileInfo source)
 			: base(parent, ast, context, source)
 		{
 			_capturedCompilationStack = stack;
@@ -46,15 +45,15 @@ namespace Element
 		private readonly Dictionary<string, Match> _drivers;
 
 		// Capture the stack used when compiling this function to retain access to expressions defined in outer scopes if they are referenced locally
-		private readonly CompilationStack? _capturedCompilationStack;
+		private readonly StackFrame? _capturedCompilationStack;
 
 		/// <summary>
 		/// Compiles an expression 'list' (such as chained calls or member accesses)
 		/// </summary>
-		private IFunction CompileExpressionList(Match list, CompilationStack stack, CompilationContext context) =>
+		private IFunction CompileExpressionList(Match list, StackFrame stackFrame, CompilationContext context) =>
 			list.Matches.Count == 0
-				? CompileExpression(null, list, stack, context)
-				: list.Matches.Aggregate(default(IFunction), (current, exprAst) => CompileExpression(current, exprAst, stack, context));
+				? CompileExpression(null, list, stackFrame, context)
+				: list.Matches.Aggregate(default(IFunction), (current, exprAst) => CompileExpression(current, exprAst, stackFrame, context));
 
 		private CallSite MakeCallSite(Match match)
 		{
@@ -90,7 +89,7 @@ namespace Element
 		/// <summary>
 		/// Compiles a single expression (e.g. part of an expression list)
 		/// </summary>
-		private IFunction CompileExpression(IFunction? previous, Match exprAst, CompilationStack stack, CompilationContext context)
+		private IFunction CompileExpression(IFunction? previous, Match exprAst, StackFrame stackFrame, CompilationContext context)
 		{
 			switch (exprAst.Name)
 			{
@@ -98,7 +97,7 @@ namespace Element
 					return new Constant((float)exprAst.Value);
 				case ElementAST.VariableExpression:
 					context.Push(MakeCallSite(exprAst));
-					var variable = CompileFunction(exprAst.Text, stack, context);
+					var variable = CompileFunction(exprAst.Text, stackFrame, context);
 					context.Pop();
 					return variable;
 				case ElementAST.SubExpression:
@@ -109,7 +108,7 @@ namespace Element
 					var argList = new IFunction[args.Count];
 					for (var i = 0; i < argList.Length; i++)
 					{
-						argList[i] = CompileExpressionList(args[i], stack, context);
+						argList[i] = CompileExpressionList(args[i], stackFrame, context);
 					}
 
 					return previous.Call(argList, context, MakeCallSite(exprAst));
@@ -123,10 +122,13 @@ namespace Element
 
 		public string DebugName => Name;
 
-		public IFunction CompileFunction(string name, CompilationStack stack, CompilationContext context)
+		/// <summary>
+		/// Called when another value references this function to compile scoped functions.
+		/// </summary>
+		public IFunction CompileFunction(string name, StackFrame stackFrame, CompilationContext context)
 		{
 			// First try to get a cached/inputted value...
-			if (!stack.GetLocal(name, out var value))
+			if (!stackFrame.GetLocal(name, out var value))
 			{
 				// If that fails, look in the list of drivers:
 				if (_drivers != null)
@@ -140,24 +142,24 @@ namespace Element
 						}
 						else
 						{
-							value = new CustomFunction(this, statement, stack, context, Source);
+							value = new CustomFunction(this, statement, stackFrame, context, Source);
 						}
 
-						stack.Add(name, value);
+						stackFrame.Add(name, value);
 					}
 				}
 				// If there's no driver list (i.e. during an assignment), then the only output is 'return'
 				// Since there's no other drivers we can assume
 				else if (name == "return")
 				{
-					value = CompileExpressionList(_astAssign, stack, context);
-					stack.Add(name, value);
+					value = CompileExpressionList(_astAssign, stackFrame, context);
+					stackFrame.Add(name, value);
 				}
 			}
 
 			// Failing the above, try to find the value including parents in the stack
 			// if we still cannot find a value, try using the captured compilation stack
-			if (value == null && !stack.Get(name, out value) && _capturedCompilationStack != null)
+			if (value == null && !stackFrame.Get(name, out value) && _capturedCompilationStack != null)
 			{
 				value = Parent.CompileFunction(name, _capturedCompilationStack, context);
 			}
@@ -193,7 +195,7 @@ namespace Element
 		// If this function has no inputs, we can cache *all* our values here for all time
 		// (well, the lifetime of this object anyway.)
 		// NB this doesn't just include 'constants', local functions with no inputs can take advantage too!
-		private CompilationStack _cache;
+		private StackFrame _cache;
 
 		public override IFunction CallInternal(IFunction[] arguments, string output, CompilationContext context)
 		{
@@ -245,24 +247,24 @@ namespace Element
 
 		public IFunction CompileIntermediate(IFunction[] arguments, string name, CompilationContext context)
 		{
-			CompilationStack stack;
+			StackFrame stackFrame;
 			if (IsNamespace || Inputs.Length == 0)
 			{
-				stack = _cache ??= _capturedCompilationStack?.Push() ?? new CompilationStack();
+				stackFrame = _cache ??= _capturedCompilationStack?.Push() ?? new StackFrame();
 			}
 			else
 			{
-				stack = _capturedCompilationStack?.Push() ?? new CompilationStack();
+				stackFrame = _capturedCompilationStack?.Push() ?? new StackFrame();
 			}
 
 			var inputs = Inputs;
 			for (var i = 0; i < inputs.Length; i++)
 			{
-				stack.Add(inputs[i].Name, arguments[i]);
+				stackFrame.Add(inputs[i].Name, arguments[i]);
 			}
 
-			var output = CompileFunction(name, stack, context);
+			var output = CompileFunction(name, stackFrame, context);
 			return output;
 		}
 	}
-}
+}*/

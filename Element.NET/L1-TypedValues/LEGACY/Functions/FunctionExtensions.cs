@@ -603,6 +603,6 @@ namespace Element
 			}
 		}
 
-		public static bool IsNamespace(this IFunction func) => (func as CustomFunction)?.IsNamespace == true;
+		//public static bool IsNamespace(this IFunction func) => (func as CustomFunction)?.IsNamespace == true;
 	}
 }

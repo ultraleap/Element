@@ -13,8 +13,8 @@ namespace Alchemist
 	/// </summary>
 	internal abstract class BaseCommand
 	{
-		[Option("prelude", Default = true, HelpText = "Prelude functionality is included. Warning: Without Prelude only unverified compiler intrinsics will be available.")]
-		public bool IncludePrelude { get; set; }
+		[Option("no-prelude", HelpText = "Prelude functionality is included. Warning: Without Prelude only unverified compiler intrinsics will be available.")]
+		public bool ExcludePrelude { get; set; }
 
 		[Option("packages", Required = false, HelpText = "Element packages to load into the context.")]
 		public IEnumerable<string> Packages { get; set; }
@@ -30,9 +30,10 @@ namespace Alchemist
 			return null;
 		}
 
-		public int Invoke()
+		public int Invoke(string args)
 		{
-			var (exitCode, result) = CommandImplementation(new CompilationInput(Log, !IncludePrelude, Packages.Select(GetPackageDirectories).ToList()));
+			Log(args);
+			var (exitCode, result) = CommandImplementation(new CompilationInput(Log, ExcludePrelude, Packages.Select(GetPackageDirectories).ToList()));
 			Log(result);
 			return exitCode;
 		}

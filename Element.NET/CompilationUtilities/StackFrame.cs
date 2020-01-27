@@ -3,21 +3,21 @@ namespace Element
     using System.Collections.Generic;
 
     /// <summary>
-    /// Caches compilation results for compilation of a scope, holding a reference to the stack of a parent scope.
+    /// Caches compilation results for compilation of a scope, holding a reference to the stack frame of a parent scope.
     /// </summary>
-    public class CompilationStack
+    public class StackFrame
     {
         /// <summary>
         /// The stack frame a level above this one.
         /// </summary>
-        private CompilationStack? Parent { get; set; }
+        private StackFrame? Parent { get; set; }
 
         private readonly Dictionary<string, IFunction> _cache = new Dictionary<string, IFunction>();
 
         /// <summary>
         /// Creates a child stack frame.
         /// </summary>
-        public CompilationStack Push() => new CompilationStack {Parent = this};
+        public StackFrame Push() => new StackFrame {Parent = this};
 
         /// <summary>
         /// Adds an item to the stack (e.g. an input or cached value)

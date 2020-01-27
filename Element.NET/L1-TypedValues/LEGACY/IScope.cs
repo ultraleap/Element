@@ -12,10 +12,10 @@ namespace Element
 		/// Retrieves a Function value from the scope.
 		/// </summary>
 		/// <param name="name">The function name to compile</param>
-		/// <param name="stack">Stack to compile within</param>
+		/// <param name="stackFrame">Stack to compile within</param>
 		/// <param name="context">Where to log messages</param>
 		/// <returns>The compiled function or an error</returns>
-		IFunction CompileFunction(string name, CompilationStack stack, CompilationContext context);
+		IFunction CompileFunction(string name, StackFrame stackFrame, CompilationContext context);
 
 		/// <summary>
 		/// Retrieves a named Type from the scope or one of its parents.

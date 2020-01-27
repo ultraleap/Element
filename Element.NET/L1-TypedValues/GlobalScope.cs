@@ -1,22 +1,21 @@
+using System.Collections.Generic;
+
 namespace Element
 {
-	using System;
-	using System.Linq;
-	using System.Collections.Generic;
-
 	/// <summary>
 	/// The global scope, root of all other scopes
 	/// </summary>
-	public class GlobalScope : IScope
+	public class GlobalScope
 	{
-		private readonly List<INamedFunction> _functions;
-		private readonly List<INamedType> _types;
+		/*private readonly List<INamedFunction> _functions;
+		private readonly List<INamedType> _types;*/
+		private readonly Dictionary<string, IValue> _values;
 
 		public override string ToString() => "<global>";
 
 		public GlobalScope()
 		{
-			_types = new List<INamedType>
+			/*_types = new List<INamedType>
 			{
 				NumberType.Instance,
 				AnyType.Instance
@@ -32,15 +31,23 @@ namespace Element
 			_functions.AddRange(Enum.GetValues(typeof(Binary.Op))
 			                        .Cast<Binary.Op>()
 			                        .Select(o => new BinaryIntrinsic(o)));
-			_functions.AddRange(Enum.GetValues(typeof(Unary.Op)).Cast<Unary.Op>().Select(o => new UnaryIntrinsic(o)));
+			_functions.AddRange(Enum.GetValues(typeof(Unary.Op)).Cast<Unary.Op>().Select(o => new UnaryIntrinsic(o)));*/
+
+			_values = new Dictionary<string, IValue>();
 		}
 
-		/// <summary>
-		/// Adds a value to the global scope
-		/// </summary>
-		public bool Add(IFunction value, CompilationContext context)
+		public bool Add(IValue value, CompilationContext compilationContext)
 		{
-			switch (value)
+			if (_values.TryGetValue(value.Identifier, out var found))
+			{
+				compilationContext.LogError(2, $"Cannot add duplicate value '{value.Identifier}'");
+				return false;
+			}
+
+			_values.Add(value.Identifier, value);
+			return true;
+
+			/*switch (value)
 			{
 				case null:
 					throw new ArgumentNullException(nameof(value));
@@ -74,19 +81,23 @@ namespace Element
 				}
 				default:
 					throw new ArgumentOutOfRangeException(nameof(value));
-			}
+			}*/
 		}
 
 		/// <summary>
-		/// Retrieve a function from the context
+		/// Retrieve a value from the context
 		/// </summary>
-		public INamedFunction GetFunction(string name, CompilationContext context)
+		public bool TryGetValue(string name, CompilationContext context, out IValue value)
 		{
-			var stack = new CompilationStack();
+			if (_values.TryGetValue(name, out value)) return true;
+			context.LogError(7, $"Couldn't find {name}");
+			return false;
+
+			/*var stack = new CompilationStack();
 			if (name.Contains('.'))
 			{
 				var tokens = name.Split('.');
-				IFunction f = GetFunction(tokens[0], context);
+				IFunction f = GetValue(tokens[0], context);
 				for (var i = 1; i < tokens.Length; i++)
 				{
 					// Compiles tokens in order of tokens in order to resolve namespaces
@@ -106,17 +117,17 @@ namespace Element
 				}
 			}
 
-			return retval;
+			return retval;*/
 		}
 
-		public INamedType FindType(string name, CompilationContext context) => _types.Find(b => b.Name == name);
+		/*public INamedType FindType(string name, CompilationContext context) => _types.Find(b => b.Name == name);
 
 		/// <summary>
 		/// Compile a function using everything available in the global scope
 		/// </summary>
-		public IFunction CompileFunction(string name, CompilationStack stack, CompilationContext context) => GetFunction(name, context);
+		public IFunction CompileFunction(string name, CompilationStack stack, CompilationContext context) => GetValue(name, context);*/
 
-		/// <summary>
+		/*/// <summary>
 		/// Gets all functions in global scope and any namespaces which match the given filter.
 		/// </summary>
 		public (string Path, IFunction Function)[] GetAllFunctions(Predicate<IFunction> filter, CompilationContext context)
@@ -132,6 +143,6 @@ namespace Element
 			}
 
 			return _functions.ToArray().SelectMany(f => Recurse(f.Name, f)).ToArray();
-		}
+		}*/
 	}
 }
