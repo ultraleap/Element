@@ -19,6 +19,7 @@
 struct element_expression : public element_construct, public rtti_type<element_expression>
 {
     const std::vector<expression_shared_ptr>& dependents() const { return m_dependents; }
+    static const expression_const_shared_ptr unbound_arg;
 
 protected:
     element_expression(element_type_id t)
@@ -156,4 +157,10 @@ protected:
     }
 
     // virtual size_t group_size() const = 0;
+};
+
+struct element_unbound_arg : public element_expression
+{
+    DECLARE_TYPE_ID();
+    element_unbound_arg() : element_expression(type_id) {}
 };
