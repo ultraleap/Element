@@ -4,12 +4,15 @@
 #include <string>
 #include <cstdint>
 #include <cstdlib>
+#include <unordered_map>
+#include <utility>
 
 #include "element/interpreter.h"
 #include "ast/ast_internal.hpp"
 #include "ast/fwd.hpp"
 #include "construct.hpp"
 #include "ast/scope.hpp"
+#include "typeutil.hpp"
 
 
 struct element_type_constraint : public element_construct
@@ -22,6 +25,7 @@ public:
     // TODO: separate into "shape matches" and "type matches"
     virtual bool is_satisfied_by(const type_constraint_const_shared_ptr& other) const
     {
+        // TODO: anonymous type comparison
         return other.get() == this || other == element_type_constraint::any;
     }
 
@@ -71,6 +75,23 @@ protected:
 
 struct element_anonymous_type : public element_type
 {
+    static type_shared_ptr get(std::vector<port_info> inputs, std::vector<port_info> outputs)
+    {
+        // check cache first
+        const size_t inputs_size = inputs.size();
+        const size_t outputs_size = outputs.size();
+        auto it_pair = m_cache.equal_range(std::make_pair(inputs_size, outputs_size));
+        for (auto it = it_pair.first; it != it_pair.second; ++it) {
+            if (it->second->inputs() == inputs && it->second->outputs() == outputs)
+                return it->second;
+        }
+
+        auto t = std::shared_ptr<element_anonymous_type>(new element_anonymous_type(std::move(inputs), std::move(outputs)));
+        m_cache.emplace(std::make_pair(inputs_size, outputs_size), t);
+        return t;
+    }
+
+private:
     element_anonymous_type(std::vector<port_info> inputs, std::vector<port_info> outputs)
         : element_type("<anonymous>")
     {
@@ -78,4 +99,8 @@ struct element_anonymous_type : public element_type
         m_outputs = std::move(outputs);
         m_ports_cached = true;
     }
+
+    // Keeping a cache of anonymous types (matching on signature) allows us to use pointer-comparison for
+    // type matching while supporting disparate anonymous types
+    static std::unordered_multimap<std::pair<size_t, size_t>, type_shared_ptr, pair_hash> m_cache;
 };

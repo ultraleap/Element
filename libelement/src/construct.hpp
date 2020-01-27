@@ -21,6 +21,11 @@ struct port_info
 {
     std::string name;
     type_constraint_const_shared_ptr type;
+
+    bool operator==(const port_info& other) const
+    {
+        return name == other.name && type == other.type;
+    }
 };
 
 
