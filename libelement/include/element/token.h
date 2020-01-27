@@ -49,6 +49,7 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
 
 void element_tokeniser_print(const element_tokeniser_ctx* state);
 element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* input, const char* filename);
+element_result element_tokeniser_clear(element_tokeniser_ctx* state);
 
 #if defined(__cplusplus)
 }

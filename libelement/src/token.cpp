@@ -136,6 +136,18 @@ element_result element_tokeniser_delete(element_tokeniser_ctx* state)
     return ELEMENT_OK;
 }
 
+element_result element_tokeniser_clear(element_tokeniser_ctx* state)
+{
+    state->tokens.clear();
+    state->filename.clear();
+    state->input.clear();
+    state->line = 1;
+    state->col = 1;
+    state->pos = 0;
+    reset_token(state);
+    return ELEMENT_OK;
+}
+
 element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* cinput, const char* cfilename)
 {
     state->filename = cfilename;
