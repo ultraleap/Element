@@ -22,7 +22,7 @@ namespace Element
 			(compilationContext = new CompilationContext(compilationInput))
 			.ParseFiles(compilationInput.Packages
 				.Prepend(compilationInput.ExcludePrelude ? null : new DirectoryInfo("Prelude"))
-				.SelectMany(directory => directory?.GetFiles("*.ele", SearchOption.AllDirectories))
+				.SelectMany(directory => directory?.GetFiles("*.ele", SearchOption.AllDirectories) ?? Array.Empty<FileInfo>())
 				.Concat(compilationInput.ExtraSourceFiles)
 				.ToArray())
 			.All(parseResult => parseResult.Success);

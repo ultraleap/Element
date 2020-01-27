@@ -1,16 +1,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Eto.Parse;
+using Eto.Parse.Parsers;
 
 namespace Element
 {
-	using Eto.Parse;
-	using Eto.Parse.Parsers;
-
 	public static class ElementAST
 	{
 		// Expressions - the most basic components which everything else is composed by
-		public const string NumberExpression = "num";
+		public const string LiteralExpression = "lit";
 		public const string VariableExpression = "var";
 		public const string SubExpression = "sub";
 		public const string CallExpression = "call";
@@ -34,9 +33,17 @@ namespace Element
 		public const string FunctionBody = "body";
 
 		// Statement - all assignments and function declarations are statements
-		public const string AssignmentStatement = "assign";
+		public const string Binding = "bind";
 		public const string TypeStatement = "type";
-		public const string Statement = "statement";
+		public const string Declaration = "decl";
+	}
+
+	public static class SyntaxNodes
+	{
+		public const string Literal = "lit";
+		public const string Identifier = "id";
+		public const string Unidentifier = "_";
+		
 	}
 
 	/// <summary>
@@ -52,7 +59,7 @@ namespace Element
 				// Literals
 				var ws = Terminals.WhiteSpace.Repeat(0);
 				var comma = ws.Then(Terminals.Set(','), ws);
-				var subExpressionAccess = ws.Then(Terminals.Set('.'), ws);
+				var indexer = ws.Then(Terminals.Set('.'), ws);
 				var number = new NumberParser
 				{
 					AllowDecimal = true,
@@ -67,13 +74,13 @@ namespace Element
 				// Expressions
 				var expression = new UnaryParser();
 				var subExpression = expression.Named(ElementAST.SubExpressionRoot)
-					.Then(subExpressionAccess, identifier.Named(ElementAST.SubExpressionName));
+					.Then(indexer, identifier.Named(ElementAST.SubExpressionName));
 				var arguments = expression.Named(ElementAST.CallArgument).Repeat(0).SeparatedBy(comma);
 				var call = expression.Named(ElementAST.Callee)
 					.Then(ws, Terminals.Set('('), ws, arguments.Named(ElementAST.CallArguments), ws,
 						Terminals.Set(')'));
 				expression.Inner = new AlternativeParser(
-					number.Named(ElementAST.NumberExpression),
+					number.Named(ElementAST.LiteralExpression),
 					identifier.Named(ElementAST.VariableExpression),
 					subExpression.Named(ElementAST.SubExpression),
 					call.Named(ElementAST.CallExpression)
@@ -92,11 +99,11 @@ namespace Element
 				var statement = new UnaryParser();
 				var body = Terminals.Set('{').Then(ws, statement.Then(ws).Repeat(0).Named(ElementAST.FunctionBody), ws,
 					Terminals.Set('}'));
-				var assign = Terminals.Set('=').Then(ws, expression.Named(ElementAST.AssignmentStatement), ws,
+				var assign = Terminals.Set('=').Then(ws, expression.Named(ElementAST.Binding), ws,
 					Terminals.Set(';'));
 				statement.Inner = fnSignature
 					.Then(body.Or(assign).Or(Terminals.Set(';').Named(ElementAST.TypeStatement)))
-					.Named(ElementAST.Statement);
+					.Named(ElementAST.Declaration);
 
 				var start = ws.Then(statement, ws).Repeat(0);
 				start.Until = Terminals.End;
@@ -136,7 +143,7 @@ namespace Element
 
 		private static IFunction ToFunction(this Match match, IScope scope,  FileInfo source, CompilationContext context) =>
 			match.Success
-				? (match[ElementAST.FunctionBody] ? true : match[ElementAST.AssignmentStatement] ? true : false)
+				? (match[ElementAST.FunctionBody] ? true : match[ElementAST.Binding] ? true : false)
 					  ? (IFunction) new CustomFunction(scope, match, null, context, source)
 					  : new CustomType(scope, match, context, source)
 				: CompilationError.Instance;
@@ -150,8 +157,9 @@ namespace Element
 		/// <summary>
 		/// Parses all the given files as Element source files into a global scope
 		/// </summary>
-		public static (bool Success, FileInfo FileInfo)[] ParseFiles(this CompilationContext context,
-			FileInfo[] files) => files.Select(file => (context.ParseFile(file), file)).ToArray();
+		public static IEnumerable<(bool Success, FileInfo FileInfo)> ParseFiles(this CompilationContext context,
+		                                                                        IEnumerable<FileInfo> files) =>
+			files.Select(file => (context.ParseFile(file), file)).ToArray();
 
 		/// <summary>
 		/// Parses the given text as a single Element function using a scope without adding it to the scope

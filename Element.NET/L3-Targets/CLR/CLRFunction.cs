@@ -7,7 +7,6 @@ namespace Element.CLR
 	using System.Collections.Generic;
 	using System.Reflection;
 	using System;
-	using CLR;
 
 	public static class CLRFunction
 	{

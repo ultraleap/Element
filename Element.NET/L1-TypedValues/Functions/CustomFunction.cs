@@ -19,7 +19,7 @@ namespace Element
 		{
 			_capturedCompilationStack = stack;
 			_astBody = ast[ElementAST.FunctionBody];
-			_astAssign = ast[ElementAST.AssignmentStatement];
+			_astAssign = ast[ElementAST.Binding];
 			if (_astBody)
 			{
 				_drivers = ast[ElementAST.FunctionBody].Matches.ToDictionary(m => m[ElementAST.FunctionName].Text, m => m);
@@ -94,7 +94,7 @@ namespace Element
 		{
 			switch (exprAst.Name)
 			{
-				case ElementAST.NumberExpression:
+				case ElementAST.LiteralExpression:
 					return new Constant((float)exprAst.Value);
 				case ElementAST.VariableExpression:
 					context.Push(MakeCallSite(exprAst));

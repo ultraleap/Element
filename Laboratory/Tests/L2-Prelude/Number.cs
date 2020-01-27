@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using Element;
-using Element.CLR;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
@@ -32,7 +31,7 @@ namespace Laboratory.Tests
 		public void UnaryMathOpRandom([ValueSource(nameof(_unaryOpTestValues))]
 		                              (string ElementFunction, Func<float, float> CLRFunction) f,
 		                              [Random(-1.0e6f, 1.0e6f, 20)] float a) =>
-			Assert.That(Execute(f.ElementFunction, a)[0], Is.EqualTo(f.CLRFunction(a)).Within(Laboratory.FloatEpsilon));
+			Assert.That(Execute(f.ElementFunction, a)[0], FloatIsApproximately(f.CLRFunction(a)));
 
 		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] _binaryOpTestValues =
 		{
@@ -53,7 +52,7 @@ namespace Laboratory.Tests
 		                               (string ElementFunction, Func<float, float, float> CLRFunction) f,
 		                               [Random(-1.0e6f, 1.0e6f, 20)] float a,
 		                               [Random(-1.0e6f, 1.0e6f, 20)] float b) =>
-			Assert.That(Execute(f.ElementFunction, a, b)[0], Is.EqualTo(f.CLRFunction(a, b)).Within(Laboratory.FloatEpsilon));
+			Assert.That(Execute(f.ElementFunction, a, b)[0], FloatIsApproximately(f.CLRFunction(a, b)));
 
 		[
 			TestCase("ln", 0f, float.NegativeInfinity),
@@ -61,7 +60,7 @@ namespace Laboratory.Tests
 			TestCase("ln", MathF.E, 1f),
 		]
 		public void UnaryMathOp(string function, float a, float expected) =>
-			Assert.That(Execute(function, a)[0], Is.EqualTo(expected).Within(Laboratory.FloatEpsilon));
+			Assert.That(Execute(function, a)[0], FloatIsApproximately(expected));
 
 		[
 			// Add
@@ -133,7 +132,7 @@ namespace Laboratory.Tests
 			TestCaseSource(nameof(_logCaseData))
 		]
 		public void BinaryMathOps(string function, float a, float b, float expected) =>
-			Assert.That(Execute(function, a, b)[0], Is.EqualTo(expected).Within(Laboratory.FloatEpsilon));
+			Assert.That(Execute(function, a, b)[0], FloatIsApproximately(expected));
 
 		private static object[] _logCaseData = Enumerable.Range(1, 11)
 		                                                 .Select(i => new object[]

@@ -29,8 +29,8 @@ namespace Laboratory.Tests
         {
             var (fileInfo, expectedToPass) = info;
             var success = _host.ParseFile(expectedToPass
-                    ? new CompilationInput(FailOnError)
-                    : new CompilationInput(ExpectMessageCode(9)),
+                    ? new CompilationInput(FailOnError, true)
+                    : new CompilationInput(ExpectMessageCode(9), true),
                 fileInfo);
 
             if(expectedToPass != success)
