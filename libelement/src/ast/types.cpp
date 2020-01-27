@@ -7,6 +7,9 @@
 #include "ast/ast_indexes.hpp"
 
 
+std::unordered_multimap<std::pair<size_t, size_t>, type_shared_ptr, pair_hash> element_anonymous_type::m_cache;
+
+
 struct any_constraint : public element_type_constraint
 {
     bool is_satisfied_by(const type_constraint_const_shared_ptr& value) const override { return true; }

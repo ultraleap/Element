@@ -25,8 +25,28 @@ public:
     // TODO: separate into "shape matches" and "type matches"
     virtual bool is_satisfied_by(const type_constraint_const_shared_ptr& other) const
     {
-        // TODO: anonymous type comparison
         return other.get() == this || other == element_type_constraint::any;
+    }
+
+    bool is_same_shape_as(const type_constraint_const_shared_ptr& other) const
+    {
+        if (other.get() == this) return true;
+
+        const auto& i1 = inputs();
+        const auto& o1 = outputs();
+        const auto& i2 = other->inputs();
+        const auto& o2 = other->outputs();
+        if (i1.size() != i2.size() || o1.size() != o2.size())
+            return false;
+        for (size_t i = 0; i < i1.size(); ++i) {
+            if (!i1[i].type->is_same_shape_as(i2[i].type))
+                return false;
+        }
+        for (size_t i = 0; i < o1.size(); ++i) {
+            if (!o1[i].type->is_same_shape_as(o2[i].type))
+                return false;
+        }
+        return true;
     }
 
 protected:
@@ -89,6 +109,12 @@ struct element_anonymous_type : public element_type
         auto t = std::shared_ptr<element_anonymous_type>(new element_anonymous_type(std::move(inputs), std::move(outputs)));
         m_cache.emplace(std::make_pair(inputs_size, outputs_size), t);
         return t;
+    }
+
+    bool is_satisfied_by(const type_constraint_const_shared_ptr& other) const override
+    {
+        // for anonymous types, also allow shape matches
+        return element_type_constraint::is_satisfied_by(other) || is_same_shape_as(other);
     }
 
 private:
