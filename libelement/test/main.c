@@ -21,16 +21,26 @@ int main(int argc, char** argv)
 
     printf("Input\n\n%s\n", input);
 
-    clock_t start = clock();
-    const size_t iters = 10000;
+    element_tokeniser_ctx* tctx;
+    element_tokeniser_create(&tctx);
 
     element_interpreter_ctx* ictx;
     element_interpreter_create(&ictx);
 
-    element_interpreter_load_string(ictx, input, "<input>");
-    // element_interpreter_clear(ictx);
+    clock_t start = clock();
+    const size_t iters = 1000;
 
-    /*
+/*
+    for (size_t i = 0; i < iters; ++i) {
+        // element_interpreter_load_string(ictx, input, "<input>");
+        // element_interpreter_clear(ictx);
+
+        element_tokeniser_run(tctx, input, "<input>");
+        element_tokeniser_clear(tctx);
+    }
+*/
+
+
     for (size_t i = 0; i < iters; ++i) {
         for (int i = 1; i < argc; ++i) {
             // printf("%s: ", argv[i]);
@@ -48,13 +58,14 @@ int main(int argc, char** argv)
             // printf("OK\n");
         }
 
+        element_interpreter_load_string(ictx, input, "<input>");
         element_interpreter_clear(ictx);
     }
-    */
+
 
     clock_t end = clock();
-    double t = ((double)(end - start) / CLOCKS_PER_SEC) / iters;
-    printf("time (s): %lf\n", t);
+    double t = 1000000.0 * ((double)(end - start) / CLOCKS_PER_SEC) / iters;
+    printf("time (us): %lf\n", t);
 
     const element_function* fn;
     element_compiled_function* cfn;
