@@ -1,7 +1,6 @@
 #include "token_internal.hpp"
 
 #include <cctype>
-#include <cstring>
 #include <cassert>
 #include <cstdlib>
 #include <cstdio>
@@ -66,13 +65,13 @@ static element_result tokenise_number(const std::string& input, element_tokenise
     if (input[state->pos] == '-' || input[state->pos] == '+') {
         INCREMENT_TOKEN_LEN(state);
     }
-    assert(isdigit(input[state->pos]));
+    assert(element_isdigit(input[state->pos]));
     do {
         INCREMENT_TOKEN_LEN(state);
-    } while (isdigit(input[state->pos]));
+    } while (element_isdigit(input[state->pos]));
     if (input[state->pos] == '.') {
         INCREMENT_TOKEN_LEN(state);
-        while (isdigit(input[state->pos])) {
+        while (element_isdigit(input[state->pos])) {
             INCREMENT_TOKEN_LEN(state);
         }
     }
@@ -81,11 +80,11 @@ static element_result tokenise_number(const std::string& input, element_tokenise
         if (input[state->pos] == '-' || input[state->pos] == '+') {
             INCREMENT_TOKEN_LEN(state);
         }
-        if (!isdigit(input[state->pos]))
+        if (!element_isdigit(input[state->pos]))
             goto error;
         do {
             INCREMENT_TOKEN_LEN(state);
-        } while (isdigit(input[state->pos]));
+        } while (element_isdigit(input[state->pos]));
     }
     reset_token(state);
     return ELEMENT_OK;
@@ -103,9 +102,9 @@ static element_result tokenise_identifier(const std::string& input, element_toke
     if (input[state->pos] == '_') {
         INCREMENT_TOKEN_LEN(state);
     }
-    assert(isalpha(input[state->pos]));
+    assert(element_isalpha(input[state->pos]));
     INCREMENT_TOKEN_LEN(state);
-    while (isalnum(input[state->pos]) || input[state->pos] == '_') {
+    while (element_isalnum(input[state->pos]) || input[state->pos] == '_') {
         INCREMENT_TOKEN_LEN(state);
     }
 
@@ -183,7 +182,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
             ++state->pos;
         } else if (c == '-' || c == '+') {
             if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                if (isdigit(input[state->pos+1])) {
+                if (element_isdigit(input[state->pos+1])) {
                     ELEMENT_OK_OR_RETURN(tokenise_number(input, state));
                 } else {
                     goto error;
@@ -201,7 +200,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
             } else {
                 goto error;
             }
-        } else if (isdigit(c)) {
+        } else if (element_isdigit(c)) {
             if (state->cur_token.type == ELEMENT_TOK_NONE) {
                 ELEMENT_OK_OR_RETURN(tokenise_number(input, state));
             } else {
@@ -209,7 +208,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
             }
         } else if (c == '_') {
             if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                if (isalpha(input[state->pos + 1])) {
+                if (element_isalpha(input[state->pos + 1])) {
                     ELEMENT_OK_OR_RETURN(tokenise_identifier(input, state));
                 } else {
                     add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
@@ -217,7 +216,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
             } else {
                 goto error;
             }
-        } else if (isalpha(c)) {
+        } else if (element_isalpha(c)) {
             if (state->cur_token.type == ELEMENT_TOK_NONE) {
                 ELEMENT_OK_OR_RETURN(tokenise_identifier(input, state));
             } else {
