@@ -448,10 +448,10 @@ static element_result parse_function(element_tokeniser_ctx* tctx, size_t* tindex
     element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tctx, *tindex, body);
-    tokenlist_advance(tctx, tindex);
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         // interface
         bodynode->type = ELEMENT_AST_NODE_INTERFACE;
+        tokenlist_advance(tctx, tindex);
     } else {
         // real body of some sort
         return parse_body(tctx, tindex, bodynode);
