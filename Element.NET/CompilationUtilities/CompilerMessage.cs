@@ -15,7 +15,7 @@ namespace Element
         }
 
         [JsonConstructor]
-        public CompilerMessage(in int? messageCode, in string? name, in MessageLevel? messageLevel, in string? context, in DateTime timeStamp, in IReadOnlyList<CallSite> callStack)
+        public CompilerMessage(in int? messageCode, in string? name, in MessageLevel? messageLevel, in string? context, in DateTime timeStamp, in IReadOnlyList<TraceSite> callStack)
         {
             MessageCode = messageCode;
             Name = name;
@@ -38,9 +38,9 @@ namespace Element
                 builder.AppendLine(callStack?.Count > 0 ? "Stack trace:" : "No stack trace");
                 if (callStack?.Count > 0)
                 {
-                    foreach (var frame in CallStack)
+                    foreach (var site in CallStack)
                     {
-                        builder.Append("    ").AppendLine(frame.ToString());
+                        builder.Append("    ").AppendLine(site.ToString());
                     }
                 }
             }
@@ -53,7 +53,7 @@ namespace Element
         public int? MessageCode { get; }
         public string? Name { get; }
         public MessageLevel? MessageLevel { get; }
-        public IReadOnlyCollection<CallSite> CallStack { get; }
+        public IReadOnlyCollection<TraceSite> CallStack { get; }
         public DateTime TimeStamp { get; }
 
         public override string ToString() => _message;

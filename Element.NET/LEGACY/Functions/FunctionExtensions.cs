@@ -139,7 +139,7 @@ namespace Element
 		}
 
 		public static IFunction Call(this IFunction function, IFunction[] arguments, string output,
-			CompilationContext info, CallSite? callSite = null)
+			CompilationContext info, TraceSite? callSite = null)
 		{
 			if (function == null) throw new ArgumentNullException(nameof(function));
 			if (callSite.HasValue)
@@ -154,7 +154,7 @@ namespace Element
 		/// Calls a function with no arguments
 		/// </summary>
 		public static IFunction Call(this IFunction function, string output,
-			CompilationContext context, CallSite? callSite = null) =>
+			CompilationContext context, TraceSite? callSite = null) =>
 			function.Call(Array.Empty<IFunction>(), output, context, callSite);
 
 		/// <summary>
@@ -163,7 +163,7 @@ namespace Element
 		/// <returns>If the function has only one output it returns it, otherwise it returns a structure
 		/// with all the function's outputs.</returns>
 		public static IFunction Call(this IFunction function, IFunction[] arguments,
-			CompilationContext context, CallSite? callSite = null)
+			CompilationContext context, TraceSite? callSite = null)
 		{
 			if (function == null) throw new ArgumentNullException(nameof(function));
 			if (!(context.Input.Debug && !(function is IType))
@@ -244,7 +244,7 @@ namespace Element
 		/// call these outputs until this is no longer the case. This avoids having to specify 'return' outputs
 		/// and suchlike in the source code.
 		/// </summary>
-		public static IFunction ResolveReturns(this IFunction function, CompilationContext context, CallSite? callSite)
+		public static IFunction ResolveReturns(this IFunction function, CompilationContext context, TraceSite? callSite)
 		{
 			while (function?.Inputs?.Length == 0
 				&& function.Outputs?.Length == 1
@@ -291,7 +291,7 @@ namespace Element
 		/// </summary>
 		private class CalledFunction : IFunction, IEvaluable, IDebuggable
 		{
-			public CalledFunction(IFunction surrogate, IFunction[] args, CallSite? callSite)
+			public CalledFunction(IFunction surrogate, IFunction[] args, TraceSite? callSite)
 			{
 				if (surrogate is CalledFunction)
 				{
@@ -305,7 +305,7 @@ namespace Element
 
 			private readonly IFunction[] _args;
 			private readonly IFunction _surrogate;
-			private readonly CallSite? _callSite;
+			private readonly TraceSite? _callSite;
 
 			public override string ToString() => $"{_surrogate}()";
 			public PortInfo[] Inputs => Array.Empty<PortInfo>();
@@ -368,7 +368,7 @@ namespace Element
 		/// </summary>
 		private class ReturnWrapper : IFunction, IDebuggable, IEvaluable
 		{
-			public ReturnWrapper(IFunction surrogate, CompilationContext info, CallSite? callSite)
+			public ReturnWrapper(IFunction surrogate, CompilationContext info, TraceSite? callSite)
 			{
 				_callSite = callSite;
 				_surrogate = surrogate;
@@ -379,7 +379,7 @@ namespace Element
 
 			private readonly IFunction _surrogate;
 			private readonly IFunction _returnValue;
-			private readonly CallSite? _callSite;
+			private readonly TraceSite? _callSite;
 
 			public PortInfo[] Inputs => _returnValue.Inputs;
 			public PortInfo[] Outputs => _returnValue.Outputs;
@@ -409,7 +409,7 @@ namespace Element
 			}
 		}
 
-		public static IFunction AsMethod(this IFunction classInstance, IFunction memberFunction, CallSite? callSite, CompilationContext context)
+		public static IFunction AsMethod(this IFunction classInstance, IFunction memberFunction, TraceSite? callSite, CompilationContext context)
 		{
 			if (classInstance == null) throw new ArgumentNullException(nameof(classInstance));
 			if (memberFunction == null) throw new ArgumentNullException(nameof(memberFunction));
@@ -423,7 +423,7 @@ namespace Element
 
 		private class Method : IFunction, IEvaluable, IDebuggable
 		{
-			public Method(IFunction surrogate, IFunction classInstance, CallSite? callSite)
+			public Method(IFunction surrogate, IFunction classInstance, TraceSite? callSite)
 			{
 				if (surrogate is Method)
 				{
@@ -438,7 +438,7 @@ namespace Element
 
 			private readonly IFunction _classInstance;
 			private readonly IFunction _surrogate;
-			private readonly CallSite? _callSite;
+			private readonly TraceSite? _callSite;
 
 			public override string ToString() => $"{_classInstance}.[{_surrogate}]";
 			public PortInfo[] Inputs { get; }

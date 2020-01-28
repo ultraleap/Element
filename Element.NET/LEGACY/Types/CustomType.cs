@@ -1,4 +1,4 @@
-/*using System.IO;
+using System.IO;
 
 namespace Element
 {
@@ -73,4 +73,4 @@ namespace Element
 			return this.CheckArguments(arguments, output, context) ?? Outputs.First(p => p.Name == output).Type;
 		}
 	}
-}*/
+}

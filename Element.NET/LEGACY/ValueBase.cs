@@ -1,4 +1,4 @@
-/*using System.IO;
+using System.IO;
 
 namespace Element
 {
@@ -63,4 +63,4 @@ namespace Element
 				? ParsePorts(Ast[ElementAST.FunctionOutputs], _context)
 				: new[] {ParsePort(Ast, true, _context)};
 	}
-}*/
+}

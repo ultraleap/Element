@@ -31,7 +31,7 @@ body            ::= scope | expressionBody
 declaration     ::= identifier (listStart portlist listEnd)?
 lambda          ::= unidentifier (listStart portlist listEnd) body
 
-element         ::= namespace | struct | function
-scope           ::= '{' element* '}'
+item            ::= namespace | struct | function
+scope           ::= '{' item* '}'
 /* Any complete blob of element code potentially including 1 or many source files */
-grammar         ::= element*
+grammar         ::= item*

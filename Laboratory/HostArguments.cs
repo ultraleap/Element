@@ -207,6 +207,7 @@ namespace Laboratory
                 var processArgs = new StringBuilder();
                 processArgs.Append($"{command} --logjson {(input.ExcludePrelude ? "--no-prelude" : string.Empty)}");
                 if (input.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Packages);
+                if (input.ExtraSourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.ExtraSourceFiles);
                 return processArgs;
             }
 

@@ -5,19 +5,19 @@ namespace Element
     /// <summary>
     /// Caches compilation results for compilation of a scope, holding a reference to the stack frame of a parent scope.
     /// </summary>
-    public class StackFrame
+    public class CompilerStackFrame
     {
         /// <summary>
         /// The stack frame a level above this one.
         /// </summary>
-        private StackFrame? Parent { get; set; }
+        private CompilerStackFrame? Parent { get; set; }
 
         private readonly Dictionary<string, IFunction> _cache = new Dictionary<string, IFunction>();
 
         /// <summary>
         /// Creates a child stack frame.
         /// </summary>
-        public StackFrame Push() => new StackFrame {Parent = this};
+        public CompilerStackFrame Push() => new CompilerStackFrame {Parent = this};
 
         /// <summary>
         /// Adds an item to the stack (e.g. an input or cached value)

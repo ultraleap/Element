@@ -5,11 +5,11 @@ namespace Element
     /// <summary>
     /// Represents an instance of function usage.
     /// </summary>
-    public readonly struct CallSite
+    public readonly struct TraceSite
     {
-        public CallSite(IFunction function, FileInfo sourceFile, int line, int column)
+        public TraceSite(string what, FileInfo sourceFile, int line, int column)
         {
-            Function = function;
+            What = what;
             SourceFile = sourceFile;
             Line = line;
             Column = column;
@@ -18,8 +18,8 @@ namespace Element
         public readonly FileInfo SourceFile;
         public readonly int Line;
         public readonly int Column;
-        public readonly IFunction Function;
+        public readonly string What;
 
-        public override string ToString() => $"<{SourceFile.Name}|{Line}:{Column}> {Function}";
+        public override string ToString() => $"{What} in {SourceFile.FullName}:{Line},{Column}";
     }
 }

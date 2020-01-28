@@ -5,13 +5,20 @@ namespace Element
 	/// <summary>
 	/// The global scope, root of all other scopes
 	/// </summary>
-	public class GlobalScope
+	public class GlobalScope : ICompilationScope
 	{
 		/*private readonly List<INamedFunction> _functions;
 		private readonly List<INamedType> _types;*/
+		private readonly Dictionary<string, ParseMatch> _parseMatches;
 		private readonly Dictionary<string, IValue> _values;
 
 		public override string ToString() => "<global>";
+
+		public IValue Compile(string identifier, CompilationContext context)
+		{
+			TryGetValue(identifier, context, out var value);
+			return value;
+		}
 
 		public GlobalScope()
 		{
@@ -33,20 +40,24 @@ namespace Element
 			                        .Select(o => new BinaryIntrinsic(o)));
 			_functions.AddRange(Enum.GetValues(typeof(Unary.Op)).Cast<Unary.Op>().Select(o => new UnaryIntrinsic(o)));*/
 
+			_parseMatches = new Dictionary<string, ParseMatch>();
 			_values = new Dictionary<string, IValue>();
 		}
 
-		public bool Add(IValue value, CompilationContext compilationContext)
+		public bool AddParseMatch(string identifier, ParseMatch parseMatch, CompilationContext compilationContext)
 		{
-			if (_values.TryGetValue(value.Identifier, out var found))
+			if (_parseMatches.TryGetValue(identifier, out var found))
 			{
-				compilationContext.LogError(2, $"Cannot add duplicate value '{value.Identifier}'");
+				compilationContext.LogError(2, $"Cannot add duplicate identifier '{identifier}'");
 				return false;
 			}
 
-			_values.Add(value.Identifier, value);
+			_parseMatches.Add(identifier, parseMatch);
 			return true;
+		}
 
+		/*private bool Add(IValue value, CompilationContext compilationContext)
+		{
 			/*switch (value)
 			{
 				case null:
@@ -81,16 +92,22 @@ namespace Element
 				}
 				default:
 					throw new ArgumentOutOfRangeException(nameof(value));
-			}*/
-		}
+			}
+		}*/
 
 		/// <summary>
-		/// Retrieve a value from the context
+		/// Retrieve an identifiable IValue (via compiling it if necessary)
 		/// </summary>
 		public bool TryGetValue(string name, CompilationContext context, out IValue value)
 		{
 			if (_values.TryGetValue(name, out value)) return true;
-			context.LogError(7, $"Couldn't find {name}");
+			if (_parseMatches.TryGetValue(name, out var match))
+			{
+				_values.Add(name, value = match.Compile(this, context));
+				return true;
+			}
+
+			context.LogError(7, $"Couldn't find identifier '{name}'");
 			return false;
 
 			/*var stack = new CompilationStack();

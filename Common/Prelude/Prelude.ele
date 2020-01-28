@@ -192,7 +192,7 @@ struct List(at:Indexer, count:num)
     
     map(a:List, mapper:Unary):List = List(_(idx) = mapper(a.at(idx)), a.count);
 
-    zip(a:List, b:List, zipper:Binary):List = List(_(idx) = zipper(a.at(idx), b.at(idx)), a.count)
+    zip(a:List, b:List, zipper:Binary):List = List(_(idx) = zipper(a.at(idx), b.at(idx)), a.count);
 
     repeat(value, count:num):List = List(_(_) = value, count);
 

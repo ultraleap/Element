@@ -34,8 +34,8 @@ namespace Element
 
 		private Action<CompilerMessage> LogCallback { get; }
 
-		private readonly Stack<CallSite> _callStack = new Stack<CallSite>();
-		public void Push(CallSite callSite) => _callStack.Push(callSite);
+		private readonly Stack<TraceSite> _callStack = new Stack<TraceSite>();
+		public void Push(TraceSite traceSite) => _callStack.Push(traceSite);
 		public void Pop() => _callStack.Pop();
 
 		public IFunction LogError(int messageCode, string context = default) => LogImpl(messageCode, context);
