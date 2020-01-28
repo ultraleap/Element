@@ -111,12 +111,25 @@ static element_result compile_call(
 {
     if (bodynode->type == ELEMENT_AST_NODE_LITERAL) {
         expr = std::make_shared<element_constant>(bodynode->literal);
+        fnscope = scope->root()->lookup("num", false); // HACK?
         return ELEMENT_OK;
     }
 
+    std::vector<expression_shared_ptr> args;
+
     // scope is the current scope the outer call is happening in
     // fnscope tracks the current available scope of the nested call
-    // TODO: adjust for methods
+
+    if (bodynode->children.size() > ast_idx::call::parent && bodynode->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE) {
+        // we have a parent, compile it first
+        expression_shared_ptr parent_expr;
+        ELEMENT_OK_OR_RETURN(compile_call(ctx, scope, bodynode->children[ast_idx::call::parent].get(), fnscope, parent_expr, depth + 1));
+        args.push_back(std::move(parent_expr));
+    } else {
+        // we are the root
+        // TODO: check for methods
+    }
+
     fnscope = fnscope->lookup(bodynode->identifier, depth == 0);
     if (!fnscope) return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
 
@@ -124,13 +137,13 @@ static element_result compile_call(
 
     // TODO: check if we're doing partial application
 
-    std::vector<expression_shared_ptr> args;
     if (bodynode->children.size() > ast_idx::call::args && bodynode->children[ast_idx::call::args]->type == ELEMENT_AST_NODE_EXPRLIST) {
         // call with args
         const element_ast* callargs = bodynode->children[ast_idx::call::args].get();
-        args.resize(callargs->children.size());
-        for (size_t i = 0; i < args.size(); ++i)
-            ELEMENT_OK_OR_RETURN(compile_expression(ctx, scope, callargs->children[i].get(), args[i]));
+        const size_t existing_args = args.size();
+        args.resize(existing_args + callargs->children.size());
+        for (size_t i = 0; i < callargs->children.size(); ++i)
+            ELEMENT_OK_OR_RETURN(compile_expression(ctx, scope, callargs->children[i].get(), args[existing_args + i]));
     }
 
     assert(args.empty() || (fnscope->function() && fnscope->function()->inputs().size() >= args.size()));
