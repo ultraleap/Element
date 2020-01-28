@@ -26,6 +26,5 @@ namespace Laboratory.Tests
 
         [Test]
         public void EIsC() => AssertApproxEqual(CompilationInput, "e", "c");
-
     }
 }
