@@ -12,6 +12,3 @@ DEFINE_TYPE_ID(element_unary,       1U << 3);
 DEFINE_TYPE_ID(element_binary,      1U << 4);
 DEFINE_TYPE_ID(element_expr_group,  1U << 5);
 DEFINE_TYPE_ID(element_unbound_arg, 1U << 6);
-
-
-const expression_const_shared_ptr element_expression::unbound_arg = std::make_shared<element_unbound_arg>();

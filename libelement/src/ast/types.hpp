@@ -15,7 +15,13 @@
 #include "typeutil.hpp"
 
 
-struct element_type_constraint : public element_construct
+
+// TODO
+// HACK
+void update_scopes(const element_scope* names);
+
+
+struct element_type_constraint : public element_construct, public rtti_type<element_type_constraint>
 {
 public:
     static const type_constraint_const_shared_ptr any;
@@ -50,13 +56,18 @@ public:
     }
 
 protected:
-    element_type_constraint() = default;
+    element_type_constraint(element_type_id id)
+        : rtti_type(id)
+    {
+    }
 };
 
 
 struct element_type : public element_type_constraint
 {
 public:
+    DECLARE_TYPE_ID();
+
     static const type_const_shared_ptr num;  // the absolute unit
     static const type_const_shared_ptr unary;
     static const type_const_shared_ptr binary;
@@ -68,8 +79,8 @@ public:
     std::string name() const { return m_name; }
 
 protected:
-    element_type(std::string name)
-        : element_type_constraint()
+    element_type(element_type_id id, std::string name)
+        : element_type_constraint(id | type_id)
         , m_name(std::move(name))
     {
     }
@@ -79,13 +90,20 @@ protected:
 
 struct element_custom_type : public element_type
 {
-    element_custom_type(const element_scope* scope)
-        : element_type(scope->name)
+    DECLARE_TYPE_ID();
+
+    element_custom_type(const element_scope* scope, std::string name)
+        : element_type(type_id, std::move(name))
         , m_scope(scope)
     {
     }
 
-    const element_scope* scope() const { return m_scope; }
+    element_custom_type(const element_scope* scope)
+        : element_custom_type(scope, scope ? scope->name : "")
+    {
+    }
+
+    virtual const element_scope* scope() const { return m_scope; }
 
 protected:
     void generate_ports_cache() const override;
@@ -95,6 +113,8 @@ protected:
 
 struct element_anonymous_type : public element_type
 {
+    DECLARE_TYPE_ID();
+
     static type_shared_ptr get(std::vector<port_info> inputs, std::vector<port_info> outputs)
     {
         // check cache first
@@ -119,7 +139,7 @@ struct element_anonymous_type : public element_type
 
 private:
     element_anonymous_type(std::vector<port_info> inputs, std::vector<port_info> outputs)
-        : element_type("<anonymous>")
+        : element_type(type_id, "<anonymous>")
     {
         m_inputs = std::move(inputs);
         m_outputs = std::move(outputs);

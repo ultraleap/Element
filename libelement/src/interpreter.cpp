@@ -144,6 +144,9 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     ELEMENT_OK_OR_RETURN(merge_names(names, std::move(root), nullptr));
     trees.push_back(std::make_pair(filename, std::move(ast)));
 
+    // TODO: HACK
+    update_scopes(names.get());
+
     return ELEMENT_OK;
 }
 
