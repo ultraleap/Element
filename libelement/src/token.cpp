@@ -63,40 +63,44 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     assert(state->cur_token.type == ELEMENT_TOK_NONE);
     state->cur_token.type = ELEMENT_TOK_NUMBER;
     state->cur_token.tok_pos = state->pos;
+    const auto it_begin = it;
     uint32_t c = utf8::unchecked::next(it);
     if (c == '-' || c == '+') {
-        INCREMENT_TOKEN_LEN(state);
         c = utf8::unchecked::next(it);
     }
     assert(element_isdigit(c));
     do {
-        INCREMENT_TOKEN_LEN(state);
         c = utf8::unchecked::next(it);
     } while (element_isdigit(c));
     if (c == '.') {
-        INCREMENT_TOKEN_LEN(state);
-        c = utf8::unchecked::next(it);
-        while (element_isdigit(c)) {
-            INCREMENT_TOKEN_LEN(state);
-            c = utf8::unchecked::next(it);
+        c = utf8::unchecked::peek_next(it);
+        if (element_isdigit(c)) {
+            // number
+            while (element_isdigit(c)) {
+                c = utf8::unchecked::next(it);
+            }
+        } else {
+            // indexing into a literal, do nothing and let the cleanup back out
         }
     }
     if (c == 'e' || c == 'E') {
-        INCREMENT_TOKEN_LEN(state);
         c = utf8::unchecked::next(it);
         if (c == '-' || c == '+') {
-            INCREMENT_TOKEN_LEN(state);
             c = utf8::unchecked::next(it);
         }
         if (!element_isdigit(c))
             goto error;
         do {
-            INCREMENT_TOKEN_LEN(state);
             c = utf8::unchecked::next(it);
         } while (element_isdigit(c));
     }
     // row back to before the extra code point
     utf8::unchecked::advance(it, -1);
+    // determine length in bytes
+    const size_t len = std::distance(it_begin, it);
+    state->pos += (int)len;
+    state->col += (int)len;
+    state->cur_token.tok_len += (int)len;
     reset_token(state);
     return ELEMENT_OK;
 error:
@@ -112,19 +116,23 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
     assert(state->cur_token.type == ELEMENT_TOK_NONE);
     state->cur_token.type = ELEMENT_TOK_IDENTIFIER;
     state->cur_token.tok_pos = state->pos;
+    const auto it_begin = it;
     uint32_t c = utf8::unchecked::next(it);
     if (c == '_') {
-        INCREMENT_TOKEN_LEN(state);
+        c = utf8::unchecked::next(it);
     }
     assert(element_isalpha(c) || (c >= 0x00F0 && c <= 0xFFFF));
-    INCREMENT_TOKEN_LEN(state);
     c = utf8::unchecked::next(it);
     while (element_isalnum(c) || c == '_' || (c >= 0x00F0 && c <= 0xFFFF)) {
-        INCREMENT_TOKEN_LEN(state);
         c = utf8::unchecked::next(it);
     }
     // row back to before the extra code point
     utf8::unchecked::advance(it, -1);
+    // determine length in bytes
+    const size_t len = std::distance(it_begin, it);
+    state->pos += (int)len;
+    state->col += (int)len;
+    state->cur_token.tok_len += (int)len;
     reset_token(state);
     return ELEMENT_OK;
 }
@@ -181,6 +189,10 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         while (it != end) {
             c = utf8::unchecked::peek_next(it);
             if (element_isspace(c) || state->cur_token.post_pos >= 0) {
+                // calculate correct length
+                const auto it_before = it;
+                utf8::unchecked::advance(it, 1);
+                const size_t len = std::distance(it_before, it);
                 if (c == '\n') {
                     ++state->line;
                     state->col = 0;
@@ -189,19 +201,21 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     if (state->cur_token.tok_pos >= 0) {
                         if (state->cur_token.post_pos < 0)
                             state->cur_token.post_pos = state->pos;
-                        ++state->cur_token.post_len;
+                        state->cur_token.post_len += (int)len;
                     } else {
-                        ++state->cur_token.pre_len;
+                        state->cur_token.pre_len += (int)len;
                     }
                 }
-                ++state->pos;
-                utf8::unchecked::advance(it, 1);
+                state->pos += (int)len;
             } else if (c == '#') {
                 if (state->cur_token.post_pos < 0)
                     state->cur_token.post_pos = state->pos;
-                ++state->cur_token.post_len;
-                ++state->pos;
+                // calculate correct length
+                const auto it_before = it;
                 utf8::unchecked::advance(it, 1);
+                const size_t len = std::distance(it_before, it);
+                state->cur_token.post_len += (int)len;
+                state->pos += (int)len;
             } else if (c == '-' || c == '+') {
                 if (state->cur_token.type == ELEMENT_TOK_NONE) {
                     utf8::unchecked::advance(it, 1);
