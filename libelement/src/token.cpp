@@ -8,6 +8,18 @@
 
 #define INCREMENT_TOKEN_LEN(s) { ++((s)->pos); ++((s)->col); ++((s)->cur_token.tok_len); }
 
+// #define UTF8_UNCHECKED
+#if defined(UTF8_UNCHECKED)
+#define UTF8_PEEK_NEXT(it, end)  utf8::unchecked::peek_next(it)
+#define UTF8_NEXT(it, end)       utf8::unchecked::next(it)
+#define UTF8_ADVANCE(it, n, end) utf8::unchecked::advance(it, n)
+#else
+#define UTF8_PEEK_NEXT(it, end)  utf8::peek_next(it, end)
+#define UTF8_NEXT(it, end)       utf8::next(it, end)
+#define UTF8_ADVANCE(it, n, end) utf8::advance(it, n, end)
+#endif
+
+
 element_result element_tokeniser_get_filename(const element_tokeniser_ctx* state, const char** filename)
 {
     assert(state);
@@ -64,38 +76,38 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     state->cur_token.type = ELEMENT_TOK_NUMBER;
     state->cur_token.tok_pos = state->pos;
     const auto it_begin = it;
-    uint32_t c = utf8::unchecked::next(it);
+    uint32_t c = UTF8_NEXT(it, end);
     if (c == '-' || c == '+') {
-        c = utf8::unchecked::next(it);
+        c = UTF8_NEXT(it, end);
     }
     assert(element_isdigit(c));
     do {
-        c = utf8::unchecked::next(it);
+        c = UTF8_NEXT(it, end);
     } while (element_isdigit(c));
     if (c == '.') {
-        c = utf8::unchecked::peek_next(it);
+        c = UTF8_PEEK_NEXT(it, end);
         if (element_isdigit(c)) {
             // number
             while (element_isdigit(c)) {
-                c = utf8::unchecked::next(it);
+                c = UTF8_NEXT(it, end);
             }
         } else {
             // indexing into a literal, do nothing and let the cleanup back out
         }
     }
     if (c == 'e' || c == 'E') {
-        c = utf8::unchecked::next(it);
+        c = UTF8_NEXT(it, end);
         if (c == '-' || c == '+') {
-            c = utf8::unchecked::next(it);
+            c = UTF8_NEXT(it, end);
         }
         if (!element_isdigit(c))
             goto error;
         do {
-            c = utf8::unchecked::next(it);
+            c = UTF8_NEXT(it, end);
         } while (element_isdigit(c));
     }
     // row back to before the extra code point
-    utf8::unchecked::advance(it, -1);
+    UTF8_ADVANCE(it, -1, end);
     // determine length in bytes
     const size_t len = std::distance(it_begin, it);
     state->pos += (int)len;
@@ -117,17 +129,17 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
     state->cur_token.type = ELEMENT_TOK_IDENTIFIER;
     state->cur_token.tok_pos = state->pos;
     const auto it_begin = it;
-    uint32_t c = utf8::unchecked::next(it);
+    uint32_t c = UTF8_NEXT(it, end);
     if (c == '_') {
-        c = utf8::unchecked::next(it);
+        c = UTF8_NEXT(it, end);
     }
     assert(element_isalpha(c) || (c >= 0x00F0 && c <= 0xFFFF));
-    c = utf8::unchecked::next(it);
+    c = UTF8_NEXT(it, end);
     while (element_isalnum(c) || c == '_' || (c >= 0x00F0 && c <= 0xFFFF)) {
-        c = utf8::unchecked::next(it);
+        c = UTF8_NEXT(it, end);
     }
     // row back to before the extra code point
-    utf8::unchecked::advance(it, -1);
+    UTF8_ADVANCE(it, -1, end);
     // determine length in bytes
     const size_t len = std::distance(it_begin, it);
     state->pos += (int)len;
@@ -187,11 +199,11 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         auto end = state->input.end();
         uint32_t c;
         while (it != end) {
-            c = utf8::unchecked::peek_next(it);
+            c = UTF8_PEEK_NEXT(it, end);
             if (element_isspace(c) || state->cur_token.post_pos >= 0) {
                 // calculate correct length
                 const auto it_before = it;
-                utf8::unchecked::advance(it, 1);
+                UTF8_ADVANCE(it, 1, end);
                 const size_t len = std::distance(it_before, it);
                 if (c == '\n') {
                     ++state->line;
@@ -212,16 +224,16 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     state->cur_token.post_pos = state->pos;
                 // calculate correct length
                 const auto it_before = it;
-                utf8::unchecked::advance(it, 1);
+                UTF8_ADVANCE(it, 1, end);
                 const size_t len = std::distance(it_before, it);
                 state->cur_token.post_len += (int)len;
                 state->pos += (int)len;
             } else if (c == '-' || c == '+') {
                 if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                    utf8::unchecked::advance(it, 1);
-                    c = utf8::unchecked::peek_next(it);
+                    UTF8_ADVANCE(it, 1, end);
+                    c = UTF8_PEEK_NEXT(it, end);
                     if (element_isdigit(c)) {
-                        utf8::unchecked::advance(it, -1);
+                        UTF8_ADVANCE(it, -1, end);
                         ELEMENT_OK_OR_RETURN(tokenise_number(it, end, state));
                     } else {
                         goto error;
@@ -231,10 +243,10 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 }
             } else if (c == '=') {
                 if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                    utf8::unchecked::advance(it, 1);
-                    c = utf8::unchecked::peek_next(it);
+                    UTF8_ADVANCE(it, 1, end);
+                    c = UTF8_PEEK_NEXT(it, end);
                     if (c == '>') {
-                        utf8::unchecked::advance(it, 1);
+                        UTF8_ADVANCE(it, 1, end);
                         add_token(state, ELEMENT_TOK_ARROW, 2);
                     } else {
                         add_token(state, ELEMENT_TOK_EQUALS, 1);
@@ -250,10 +262,10 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 }
             } else if (c == '_') {
                 if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                    utf8::unchecked::advance(it, 1);
-                    c = utf8::unchecked::peek_next(it);
+                    UTF8_ADVANCE(it, 1, end);
+                    c = UTF8_PEEK_NEXT(it, end);
                     if (element_isalpha(c)) {
-                        utf8::unchecked::advance(it, -1);
+                        UTF8_ADVANCE(it, -1, end);
                         ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
                     } else {
                         add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
@@ -280,7 +292,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); break;
                 default:  goto error;
                 }
-                utf8::unchecked::advance(it, 1);
+                UTF8_ADVANCE(it, 1, end);
             }
         }
         return ELEMENT_OK;
