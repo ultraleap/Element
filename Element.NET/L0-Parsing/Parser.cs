@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using Eto.Parse;
-using Eto.Parse.Parsers;
+using Eto.Parse.Grammars;
 
 namespace Element
 {
@@ -38,39 +41,31 @@ namespace Element
         public const string Declaration = "decl";
     }
 
-    public static class SyntaxNodes
+    /// <summary>
+    /// Provides methods to convert text into Functions
+    /// </summary>
+    public static class Parser
     {
-        public const string Literal = "lit";
-        public const string Identifier = "id";
+        private static readonly char _lineCommentCharacter = '#';
 
-        public const string ExpressionBody = "exprbody";
-        public const string ItemIdentifier = "itemid";
+        private static string ElementEbnf { get; } = File.ReadAllText("Grammar.ebnf");
 
-        public const string Function = "fun";
-    }
+        private static Grammar ElementGrammar =>
+            new EbnfGrammar(EbnfStyle.W3c | EbnfStyle.WhitespaceSeparator)
+                .Build(ElementEbnf, "grammar");
 
-    public class ParseMatch
-    {
-        public ParseMatch(in Match match, in FileInfo sourceFile)
+        internal static (int Line, int Column, int LineCharacterIndex) CountLinesAndColumns(int index, string text)
         {
-            _match = match;
-            _sourceFile = sourceFile;
-        }
-
-        public bool HasCompiled { get; private set; }
-
-        private TraceSite MakeTraceSite(string what)
-        {
-            var text = ((Eto.Parse.Scanners.StringScanner) _match.Scanner).Value;
             var line = 1;
             var column = 1;
-            var index = _match.Index;
+            var lineCharacterIndex = 0;
             for (var i = 0; i < index; i++)
             {
                 if (text[i] == '\r')
                 {
                     line++;
                     column = 1;
+                    lineCharacterIndex = 0;
                     if (i + 1 < text.Length && text[i + 1] == '\n')
                     {
                         i++;
@@ -80,124 +75,23 @@ namespace Element
                 {
                     line++;
                     column = 1;
+                    lineCharacterIndex = 0;
                 }
                 else if (text[i] == '\t')
                 {
                     column += 4;
+                    lineCharacterIndex++;
                 }
                 else
                 {
                     column++;
+                    lineCharacterIndex++;
                 }
             }
 
-            return new TraceSite(what, _sourceFile, line, column);
+            return (line, column, lineCharacterIndex);
         }
 
-        public IValue Compile(ICompilationScope scope, CompilationContext compilationContext)
-        {
-            HasCompiled = true;
-            if (!_match.Success) return CompilationErr.Instance;
-
-            var itemIdentifier = _match[SyntaxNodes.ItemIdentifier].Text;
-            compilationContext.Push(MakeTraceSite(itemIdentifier));
-            var value = new Literal(itemIdentifier, _match[SyntaxNodes.ExpressionBody] switch
-            {
-                { } m when m[SyntaxNodes.Literal] is var lit && lit.Success => (float) lit.Value,
-                { } m when m[SyntaxNodes.Identifier] is var id && id.Success => ((Literal) scope.Compile(
-                    (string) id.Value, compilationContext)).Value
-            });
-            compilationContext.Pop();
-            return value;
-        }
-
-        private readonly Match _match;
-        private readonly FileInfo _sourceFile;
-    }
-
-    /// <summary>
-    /// Provides methods to convert text into Functions
-    /// </summary>
-    public static class Parser
-    {
-        private static readonly char[] _identifierAllowedCharacters = {'_'};
-        private const char _lineCommentCharacter = '#';
-
-        private static Grammar MakeParser()
-        {
-            var ws = Terminals.WhiteSpace.Repeat(0);
-            //var comma = ws.Then(Terminals.Set(','), ws);
-            //var indexer = Terminals.Set('.');
-            var terminal = Terminals.Set(';');
-            var literal = new NumberParser
-            {
-                AllowDecimal = true,
-                AllowExponent = true,
-                AllowSign = true,
-                ValueType = typeof(float)
-            };
-            var identifier = Terminals.Set('_').Optional()
-                .Then(Terminals.Letter.Or(Terminals.Set(_identifierAllowedCharacters)),
-                    Terminals.LetterOrDigit.Or(Terminals.Set(_identifierAllowedCharacters)).Repeat(0));
-
-            // Used to allow directly accessing an items (referring to item rule in ebnf) left hand side identifier without needing to descend into specific matches
-            var itemIdentifier = identifier.Named(SyntaxNodes.ItemIdentifier);
-
-            var expression = new UnaryParser
-            {
-                Inner = new AlternativeParser(
-                    literal.Named(SyntaxNodes.Literal),
-                    identifier.Named(SyntaxNodes.Identifier))
-            };
-
-            var expressionBody = ws.Then(Terminals.Set('='), ws, expression.Named(SyntaxNodes.ExpressionBody), ws,
-                terminal);
-            var declaration = itemIdentifier;
-
-            var function = declaration.Then(expressionBody).Named(SyntaxNodes.Function);
-
-            var item = function;
-
-
-            /*// Expressions
-            var expression = new UnaryParser();
-            var subExpression = expression.Named(ElementAST.SubExpressionRoot)
-                .Then(indexer, identifier.Named(ElementAST.SubExpressionName));
-            var arguments = expression.Named(ElementAST.CallArgument).Repeat(0).SeparatedBy(comma);
-            var call = expression.Named(ElementAST.Callee)
-                .Then(ws, Terminals.Set('('), ws, arguments.Named(ElementAST.CallArguments), ws,
-                    Terminals.Set(')'));
-            expression.Inner = new AlternativeParser(
-                number.Named(ElementAST.LiteralExpression),
-                identifier.Named(ElementAST.VariableExpression),
-                subExpression.Named(ElementAST.SubExpression),
-                call.Named(ElementAST.CallExpression)
-            );
-
-            // Functions
-            var portType = ws.Then(Terminals.Literal(":"), ws, identifier.Named(ElementAST.PortType)).Optional();
-            var port = identifier.Named(ElementAST.PortName).Then(portType).Named(ElementAST.Port);
-            var ports = port.Repeat(0).SeparatedBy(comma);
-            var fnInputs = Terminals.Set('(')
-                .Then(ws, ports.Named(ElementAST.FunctionInputs), ws, Terminals.Set(')')).Optional();
-            var fnOutputs = Terminals.Literal("->").Then(ws, ports.Named(ElementAST.FunctionOutputs)).Or(portType);
-            var fnSignature = identifier.Named(ElementAST.FunctionName).Then(ws, fnInputs, ws, fnOutputs, ws);
-
-            // Statements
-            var statement = new UnaryParser();
-            var body = Terminals.Set('{').Then(ws, statement.Then(ws).Repeat(0).Named(ElementAST.FunctionBody), ws,
-                Terminals.Set('}'));
-            var assign = Terminals.Set('=').Then(ws, expression.Named(ElementAST.Binding), ws,
-                Terminals.Set(';'));
-            statement.Inner = fnSignature
-                .Then(body.Or(assign).Or(Terminals.Set(';').Named(ElementAST.TypeStatement)))
-                .Named(ElementAST.Declaration);*/
-
-            var start = ws.Then(item.Optional(), ws).Repeat(0);
-            start.Until = Terminals.End;
-
-            return new Grammar(start);
-        }
 
         private static string Preprocess(string text)
         {
@@ -218,12 +112,46 @@ namespace Element
             }
         }
 
-        private static GrammarMatch Parse(this CompilationContext compilationContext, string text)
+        private static GrammarMatch Parse(this CompilationContext compilationContext, string text, string source = default)
         {
-            var match = MakeParser().Match(Preprocess(text));
+            var preprocessedText = Preprocess(text);
+            var match = ElementGrammar.Match(preprocessedText);
             if (!match.Success)
             {
-                compilationContext.LogError(9, match.ErrorMessage);
+                var builder = new StringBuilder();
+                var lines = Regex.Split(preprocessedText, "\r\n|\r|\n");
+
+
+                void AppendError(int index, int linesAroundError = 1)
+                {
+                    if (index < 1) return;
+                    var (line, column, lineCharacterIndex) = CountLinesAndColumns(index, preprocessedText);
+
+                    builder.AppendFormat("in {0}:{1},{2}", source ?? "<no source specified>", line, column);
+
+                    for (var i = 0; i < lines.Length; i++)
+                    {
+                        if (i < line && line - linesAroundError < i // before error line
+                            || i > line && line + linesAroundError < i) // after error line
+                        {
+                            builder.AppendLine(lines[i]);
+                        }
+                        else if (i == line)
+                        {
+                            var errorLine = lines[i];
+                            var str1 = errorLine.Substring(0, lineCharacterIndex);
+                            var str2 = errorLine.Substring(lineCharacterIndex);
+                            builder.AppendLine($"{str1}!>>>{str2}");
+                        }
+                    }
+                }
+                AppendError(match.ErrorIndex);
+                if(match.ChildErrorIndex != match.ErrorIndex) AppendError(match.ChildErrorIndex);
+
+                builder.AppendLine("Expected one of the following:");
+                builder.Append(string.Join("\n    ", match.Errors.Select(parser => parser.GetErrorMessage())));
+
+                compilationContext.LogError(9, builder.ToString());
             }
 
             return match;
@@ -233,9 +161,12 @@ namespace Element
         /// Parses the given file as an Element source file and adds it's contents to a global scope
         /// </summary>
         public static bool ParseFile(this CompilationContext context, FileInfo file) => context.Parse(
-            File.ReadAllText(file.FullName)).Matches.Aggregate(true,
-            (current, element) => current & context.GlobalScope.AddParseMatch(element[SyntaxNodes.ItemIdentifier].Text,
-                                      new ParseMatch(element, file), context));
+            File.ReadAllText(file.FullName), file.FullName).Matches.Aggregate(true,
+            (current, item) =>
+                current
+                && (!item.HasMatches // if we have no matches, do nothing
+                    || context.GlobalScope.AddParseMatch(item["identifier", true]?.Text,
+                        new ParseMatch(item, file), context)));
 
         /// <summary>
         /// Parses all the given files as Element source files into a global scope

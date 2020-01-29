@@ -32,17 +32,15 @@ namespace Element
             }
 
             builder.Append(context);
-            if (messageCode.HasValue)
+            if (messageCode.HasValue && callStack?.Count > 0)
             {
                 builder.AppendLine();
-                builder.AppendLine(callStack?.Count > 0 ? "Stack trace:" : "No stack trace");
-                if (callStack?.Count > 0)
+                builder.AppendLine("Element source trace:");
+                foreach (var site in CallStack)
                 {
-                    foreach (var site in CallStack)
-                    {
-                        builder.Append("    ").AppendLine(site.ToString());
-                    }
+                    builder.Append("    ").AppendLine(site.ToString());
                 }
+                builder.AppendLine();
             }
 
             _message = builder.ToString();

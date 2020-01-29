@@ -6,32 +6,32 @@ unidentifier    ::= '_'
 terminal        ::= ';'
 listStart       ::= '('
 listEnd         ::= ')'
-index           ::= '.' identifier
-
-qualifier       ::= 'intrinsic'
-type            ::= ':' identifier index*
-port            ::= unidentifier | (identifier type?)
-portlist        ::= port (',' port)*
 
 /* Literals can be indexed to call instance functions
    Expression list is optional so that constants/nullary functions don't require redundant parentheses */
-expression      ::= ((identifier | literal) (index | (listStart expressionList listEnd))*)
-                    | lambda
-expressionList  ::= expression (',' expression)*
-expressionBody  ::= ('=' expression terminal)
+expression      ::= ((identifier | literal) (indexExpression | callExpression)*) | lambda
+indexExpression ::= '.' identifier
+callExpression  ::= listStart expression (',' expression)* listEnd
 
-namespace       ::= 'namespace' identifier scope
-/* Function ending in a terminal is a function interface */
-function        ::= qualifier? declaration type? (body | terminal)
-struct          ::= qualifier? 'struct' declaration (scope | terminal)
-body            ::= scope | expressionBody
+qualifier       ::= 'intrinsic'
+type            ::= ':' identifier indexExpression*
+port            ::= unidentifier | (identifier type?)
+portList        ::= listStart port (',' port)* listEnd
+
 /* Portlist is optional in 2 situations:
        Constant nullary functions where parentheses are redundant
        Declaring interface of intrinsic variadic constructs is impossible (no syntax support for variadics) */
-declaration     ::= identifier (listStart portlist listEnd)?
-lambda          ::= unidentifier (listStart portlist listEnd) body
-
-item            ::= namespace | struct | function
+declaration     ::= identifier portList?
 scope           ::= '{' item* '}'
-/* Any complete blob of element code potentially including 1 or many source files */
+
+expressionBody  ::= '=' expression terminal
+functionBody    ::= scope | expressionBody
+lambda          ::= unidentifier portList functionBody
+function        ::= qualifier? declaration type? functionBody
+functionType    ::= qualifier? declaration type? terminal
+
+namespace       ::= 'namespace' identifier scope
+struct          ::= qualifier? 'struct' declaration (scope | terminal)
+
+item            ::= namespace | struct | function | functionType
 grammar         ::= item*
