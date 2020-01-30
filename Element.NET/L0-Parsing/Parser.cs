@@ -121,35 +121,27 @@ namespace Element
                 var builder = new StringBuilder();
                 var lines = Regex.Split(preprocessedText, "\r\n|\r|\n");
 
-
-                void AppendError(int index, int linesAroundError = 1)
+                void AppendError(int index)
                 {
-                    if (index < 1) return;
+                    if (index < 0) return;
                     var (line, column, lineCharacterIndex) = CountLinesAndColumns(index, preprocessedText);
 
-                    builder.AppendFormat("in {0}:{1},{2}", source ?? "<no source specified>", line, column);
-
-                    for (var i = 0; i < lines.Length; i++)
-                    {
-                        if (i < line && line - linesAroundError < i // before error line
-                            || i > line && line + linesAroundError < i) // after error line
-                        {
-                            builder.AppendLine(lines[i]);
-                        }
-                        else if (i == line)
-                        {
-                            var errorLine = lines[i];
-                            var str1 = errorLine.Substring(0, lineCharacterIndex);
-                            var str2 = errorLine.Substring(lineCharacterIndex);
-                            builder.AppendLine($"{str1}!>>>{str2}");
-                        }
-                    }
+                    builder.AppendFormat("    in {0}:{1},{2}", source ?? "<no source specified>", line, column);
+                    builder.AppendLine();
+                    builder.AppendLine();
+                    builder.AppendLine(lines[line - 1]);
+                    builder.AppendLine(new string(' ', lineCharacterIndex) + "^");
                 }
                 AppendError(match.ErrorIndex);
                 if(match.ChildErrorIndex != match.ErrorIndex) AppendError(match.ChildErrorIndex);
 
+                builder.AppendLine();
                 builder.AppendLine("Expected one of the following:");
-                builder.Append(string.Join("\n    ", match.Errors.Select(parser => parser.GetErrorMessage())));
+
+                foreach (var parser in match.Errors)
+                {
+                    builder.AppendLine($"    {parser.GetErrorMessage()}");
+                }
 
                 compilationContext.LogError(9, builder.ToString());
             }
