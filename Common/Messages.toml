@@ -65,6 +65,10 @@ level = "Error"
 name = "TypeError"
 level = "Error"
 
+[ELE15]
+name = "InvalidIdentifier"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

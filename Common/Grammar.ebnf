@@ -1,22 +1,18 @@
 /* A literal number including sign and decimal point, also including e notation */
 literal         ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
 /* Any string including most UTF8 characters but not exactly '_' */
-identifier      ::= '_'* [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
-unidentifier    ::= '_'
-terminal        ::= ';'
-listStart       ::= '('
-listEnd         ::= ')'
+identifier      ::= [_a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
 
 /* Literals can be indexed to call instance functions
    Expression list is optional so that constants/nullary functions don't require redundant parentheses */
 expression      ::= ((identifier | literal) (indexExpression | callExpression)*) | lambda
 indexExpression ::= '.' identifier
-callExpression  ::= listStart expression (',' expression)* listEnd
+callExpression  ::= '(' expression (',' expression)* ')'
 
 qualifier       ::= 'intrinsic'
 type            ::= ':' identifier indexExpression*
-port            ::= unidentifier | (identifier type?)
-portList        ::= listStart port (',' port)* listEnd
+port            ::= (identifier type?) | '_'
+portList        ::= '(' port (',' port)* ')'
 
 /* Portlist is optional in 2 situations:
        Constant nullary functions where parentheses are redundant
@@ -24,14 +20,12 @@ portList        ::= listStart port (',' port)* listEnd
 declaration     ::= identifier portList?
 scope           ::= '{' item* '}'
 
-expressionBody  ::= '=' expression terminal
-functionBody    ::= scope | expressionBody
-lambda          ::= unidentifier portList functionBody
-function        ::= qualifier? declaration type? functionBody
-functionType    ::= qualifier? declaration type? terminal
-
+expressionBody  ::= '=' expression ';'
+functionBody    ::= expressionBody | scope
+lambda          ::= '_' portList functionBody
+function        ::= qualifier? declaration type? (functionBody | ';')
+struct          ::= qualifier? 'struct' declaration (scope | ';')
 namespace       ::= 'namespace' identifier scope
-struct          ::= qualifier? 'struct' declaration (scope | terminal)
 
-item            ::= namespace | struct | function | functionType
+item            ::= function | struct | namespace
 grammar         ::= item*

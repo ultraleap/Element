@@ -25,7 +25,7 @@ namespace Element
             HasCompiled = true;
             if (!_match.Success) return CompilationErr.Instance;
 
-            var itemIdentifier = _match["declIdentifier"].Text;
+            var itemIdentifier = _match["identifier", true].Text;
             compilationContext.Push(MakeTraceSite(itemIdentifier));
             var value = new Literal(itemIdentifier, _match["expressionBody", true]["expression"] switch
             {

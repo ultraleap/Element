@@ -48,7 +48,19 @@ namespace Element
     {
         private static readonly char _lineCommentCharacter = '#';
 
-        private static string ElementEbnf { get; } = File.ReadAllText("Grammar.ebnf");
+        public static readonly string[] GloballyReservedIdentifiers =
+        {
+            "_",
+            "any",
+            "intrinsic",
+            "namespace",
+            "return",
+            "struct"
+        };
+
+        private static string ElementEbnf { get; } = File.ReadAllText("Grammar.ebnf").Replace(
+            @"[_a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*", 
+            @"[#x005F#x0061-#x007B#x0041-#x005B#x00F0-#xFFFF] [#x005F#x0061-#x007B#x0041-#x005B#x0030-#x003A#x00F0-#xFFFF]*"); // Workaround for https://github.com/picoe/Eto.Parse/issues/33
 
         private static Grammar ElementGrammar =>
             new EbnfGrammar(EbnfStyle.W3c | EbnfStyle.WhitespaceSeparator)

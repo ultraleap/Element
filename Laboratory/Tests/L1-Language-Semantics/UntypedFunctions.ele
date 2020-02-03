@@ -1,0 +1,17 @@
+intrinsic add(a, b);
+intrinsic sub(a, b);
+
+addThree(a, b, c) = add(a, add(b, c));
+
+subBTwice(a, b)
+{
+    first = sub(a, b);
+    return = sub(first, b);
+}
+
+a = add(5, 8);              # 13
+b = sub(3, 4);              # -1
+c = add(a, b);              # 12
+d = sub(add(c, b), 2);      # 9
+e = addThree(c, d, 1.5);    # 22.5
+f = subBTwice(e, b);        # 24.5

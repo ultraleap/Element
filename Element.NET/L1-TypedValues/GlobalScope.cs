@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Element
 {
@@ -7,8 +9,6 @@ namespace Element
 	/// </summary>
 	public class GlobalScope : ICompilationScope
 	{
-		/*private readonly List<INamedFunction> _functions;
-		private readonly List<INamedType> _types;*/
 		private readonly Dictionary<string, ParseMatch> _parseMatches;
 		private readonly Dictionary<string, IValue> _values;
 
@@ -46,6 +46,12 @@ namespace Element
 
 		public bool AddParseMatch(string identifier, ParseMatch parseMatch, CompilationContext compilationContext)
 		{
+			if (Parser.GloballyReservedIdentifiers.Any(reserved => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase)))
+			{
+				compilationContext.LogError(15, $"'{identifier}' is a reserved identifier");
+				return false;
+			}
+			
 			if (_parseMatches.TryGetValue(identifier, out var found))
 			{
 				compilationContext.LogError(2, $"Cannot add duplicate identifier '{identifier}'");
@@ -55,45 +61,6 @@ namespace Element
 			_parseMatches.Add(identifier, parseMatch);
 			return true;
 		}
-
-		/*private bool Add(IValue value, CompilationContext compilationContext)
-		{
-			/*switch (value)
-			{
-				case null:
-					throw new ArgumentNullException(nameof(value));
-				case CompilationError _:
-					return false;
-				case INamedFunction function:
-				{
-					if (GetFunction(function.Name, context) != null)
-					{
-						context.LogError(2, $"Duplicate function named {function.Name}");
-					}
-					else
-					{
-						_functions.Add(function);
-					}
-
-					return true;
-				}
-				case INamedType type:
-				{
-					if (FindType(type.Name, context) != null)
-					{
-						context.LogError(2, $"Duplicate type named {type.Name}");
-					}
-					else
-					{
-						_types.Add(type);
-					}
-
-					return true;
-				}
-				default:
-					throw new ArgumentOutOfRangeException(nameof(value));
-			}
-		}*/
 
 		/// <summary>
 		/// Retrieve an identifiable IValue (via compiling it if necessary)
