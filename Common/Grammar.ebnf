@@ -9,7 +9,7 @@ expression      ::= ((identifier | literal) (indexExpression | callExpression)*)
 indexExpression ::= '.' identifier
 callExpression  ::= '(' expression (',' expression)* ')'
 
-qualifier       ::= 'intrinsic'
+qualifier       ::= 'intrinsic'?
 type            ::= ':' identifier indexExpression*
 port            ::= (identifier type?) | '_'
 portList        ::= '(' port (',' port)* ')'
@@ -23,8 +23,8 @@ scope           ::= '{' item* '}'
 expressionBody  ::= '=' expression ';'
 functionBody    ::= expressionBody | scope
 lambda          ::= '_' portList functionBody
-function        ::= qualifier? declaration type? (functionBody | ';')
-struct          ::= qualifier? 'struct' declaration (scope | ';')
+function        ::= qualifier declaration type? (functionBody | ';')
+struct          ::= qualifier 'struct' declaration (scope | ';')
 namespace       ::= 'namespace' identifier scope
 
 item            ::= function | struct | namespace

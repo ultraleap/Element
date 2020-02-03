@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Eto.Parse;
 using Eto.Parse.Grammars;
+using Eto.Parse.Parsers;
 
 namespace Element
 {
@@ -62,9 +63,16 @@ namespace Element
             @"[_a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*", 
             @"[#x005F#x0061-#x007B#x0041-#x005B#x00F0-#xFFFF] [#x005F#x0061-#x007B#x0041-#x005B#x0030-#x003A#x00F0-#xFFFF]*"); // Workaround for https://github.com/picoe/Eto.Parse/issues/33
 
-        private static Grammar ElementGrammar =>
-            new EbnfGrammar(EbnfStyle.W3c | EbnfStyle.WhitespaceSeparator)
-                .Build(ElementEbnf, "grammar");
+        private static Eto.Parse.Grammar ElementGrammar
+        {
+            get
+            {
+                var elementGrammar = new EbnfGrammar(EbnfStyle.W3c | EbnfStyle.WhitespaceSeparator)
+                    .Build(ElementEbnf, "grammar");
+                ((RepeatParser)((SequenceParser)elementGrammar.Inner).Items[1]).Separator = Terminals.WhiteSpace;
+                return elementGrammar;
+            }
+        }
 
         internal static (int Line, int Column, int LineCharacterIndex) CountLinesAndColumns(int index, string text)
         {
@@ -124,53 +132,74 @@ namespace Element
             }
         }
 
-        private static GrammarMatch Parse(this CompilationContext compilationContext, string text, string source = default)
+        private static bool EtoParseFile(this CompilationContext context, FileInfo file)
         {
-            var preprocessedText = Preprocess(text);
-            var match = ElementGrammar.Match(preprocessedText);
-            if (!match.Success)
+            GrammarMatch Parse(string text, string source = default)
             {
-                var builder = new StringBuilder();
-                var lines = Regex.Split(preprocessedText, "\r\n|\r|\n");
-
-                void AppendError(int index)
+                var preprocessedText = Preprocess(text);
+                var match = ElementGrammar.Match(preprocessedText);
+                if (!match.Success)
                 {
-                    if (index < 0) return;
-                    var (line, column, lineCharacterIndex) = CountLinesAndColumns(index, preprocessedText);
+                    var builder = new StringBuilder();
+                    var lines = Regex.Split(preprocessedText, "\r\n|\r|\n");
 
-                    builder.AppendFormat("    in {0}:{1},{2}", source ?? "<no source specified>", line, column);
+                    void AppendError(int index)
+                    {
+                        if (index < 0) return;
+                        var (line, column, lineCharacterIndex) = CountLinesAndColumns(index, preprocessedText);
+
+                        builder.AppendFormat("    in {0}:{1},{2}", source ?? "<no source specified>", line, column);
+                        builder.AppendLine();
+                        builder.AppendLine();
+                        builder.AppendLine(lines[line - 1]);
+                        builder.AppendLine(new string(' ', lineCharacterIndex) + "^");
+                    }
+
+                    AppendError(match.ErrorIndex);
+                    if (match.ChildErrorIndex != match.ErrorIndex) AppendError(match.ChildErrorIndex);
+
                     builder.AppendLine();
-                    builder.AppendLine();
-                    builder.AppendLine(lines[line - 1]);
-                    builder.AppendLine(new string(' ', lineCharacterIndex) + "^");
-                }
-                AppendError(match.ErrorIndex);
-                if(match.ChildErrorIndex != match.ErrorIndex) AppendError(match.ChildErrorIndex);
+                    builder.AppendLine("Expected one of the following:");
 
-                builder.AppendLine();
-                builder.AppendLine("Expected one of the following:");
+                    foreach (var parser in match.Errors)
+                    {
+                        builder.AppendLine($"    {parser.GetErrorMessage()}");
+                    }
 
-                foreach (var parser in match.Errors)
-                {
-                    builder.AppendLine($"    {parser.GetErrorMessage()}");
+                    context.LogError(9, builder.ToString());
                 }
 
-                compilationContext.LogError(9, builder.ToString());
+                return match;
             }
 
-            return match;
+            return Parse(File.ReadAllText(file.FullName), file.FullName).Matches.Aggregate(true,
+                (current, item) =>
+                    current
+                    && (!item.HasMatches // if we have no matches, do nothing
+                        || context.GlobalScope.AddParseMatch(item["identifier", true]?.Text,
+                            new ParseMatch(item, file), context)));
+        }
+
+        private static bool LexicoParseFile(this CompilationContext context, FileInfo info)
+        {
+            try
+            {
+                var preprocessedText = Preprocess(File.ReadAllText(info.FullName));
+                Lexico.Parser.Parse<Element.AST.Grammar>(preprocessedText);
+            }
+            catch (Exception e)
+            {
+                context.LogError(9, e.ToString());
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
         /// Parses the given file as an Element source file and adds it's contents to a global scope
         /// </summary>
-        public static bool ParseFile(this CompilationContext context, FileInfo file) => context.Parse(
-            File.ReadAllText(file.FullName), file.FullName).Matches.Aggregate(true,
-            (current, item) =>
-                current
-                && (!item.HasMatches // if we have no matches, do nothing
-                    || context.GlobalScope.AddParseMatch(item["identifier", true]?.Text,
-                        new ParseMatch(item, file), context)));
+        public static bool ParseFile(this CompilationContext context, FileInfo file) => LexicoParseFile(context, file);
 
         /// <summary>
         /// Parses all the given files as Element source files into a global scope

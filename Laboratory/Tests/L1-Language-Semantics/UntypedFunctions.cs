@@ -12,6 +12,7 @@ namespace Laboratory.Tests
 
         private static CompilationInput CompilationInput => new CompilationInput(FailOnError, true, extraSourceFiles: SourceFiles);
 
+
         [Test]
         public void Add() => AssertApproxEqual(CompilationInput, "a", 13f);
         

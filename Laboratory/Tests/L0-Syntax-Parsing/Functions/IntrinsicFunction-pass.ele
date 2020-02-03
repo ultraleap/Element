@@ -1,2 +1,2 @@
-intrinsic function(a, b);
-intrinsic another(a, b);
+intrinsic function(g, h);
+intrinsic another(j, k);

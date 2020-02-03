@@ -25,7 +25,7 @@ namespace Element
             HasCompiled = true;
             if (!_match.Success) return CompilationErr.Instance;
 
-            var itemIdentifier = _match["identifier", true].Text;
+            /*var itemIdentifier = _match["identifier", true].Text;
             compilationContext.Push(MakeTraceSite(itemIdentifier));
             var value = new Literal(itemIdentifier, _match["expressionBody", true]["expression"] switch
             {
@@ -33,8 +33,9 @@ namespace Element
                 { } m when m["identifier"] is var id && id.Success => ((Literal) scope.Compile(
                     (string) id.Value, compilationContext)).Value
             });
-            compilationContext.Pop();
-            return value;
+            compilationContext.Pop();*/
+            //return value;
+            return null;
         }
 
         private readonly Match _match;

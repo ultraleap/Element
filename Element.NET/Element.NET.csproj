@@ -41,4 +41,7 @@
   <ItemGroup>
     <DeployManifest Remove="obj\Debug\netstandard2.0\Element.NET.application" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Lexico\Lexico\Lexico.csproj" />
+  </ItemGroup>
 </Project>
