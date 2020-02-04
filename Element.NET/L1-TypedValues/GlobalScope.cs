@@ -1,73 +1,79 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Element.AST;
+using Lexico;
 
 namespace Element
 {
-	/// <summary>
-	/// The global scope, root of all other scopes
-	/// </summary>
-	public class GlobalScope : ICompilationScope
-	{
-		private readonly Dictionary<string, ParseMatch> _parseMatches;
-		private readonly Dictionary<string, IValue> _values;
+    /// <summary>
+    /// The global scope, root of all other scopes
+    /// </summary>
+    [WhitespaceSurrounded, EOFAfter]
+    public class GlobalScope : ICompilationScope
+    {
+        [SequenceTerm, Optional] private List<Item> _items;
+        
+        private readonly Dictionary<string, Item> _identifierToItem = new Dictionary<string, Item>();
+        
+        public override string ToString() => "<global>";
+        
+        public IValue Compile(string identifier, CompilationContext context)
+        {
+	        if (string.IsNullOrEmpty(identifier))
+	        {
+		        context.LogError(15, "Cannot compile a null or empty identifier");
+		        return CompilationErr.Instance;
+	        }
+	        
+	        if(!ValidateIdentifier(identifier, context)) return CompilationErr.Instance;
 
-		public override string ToString() => "<global>";
+	        if (!_identifierToItem.TryGetValue(identifier, out var value))
+	        {
+		        _identifierToItem[identifier] = value = _items.Find(i => string.Equals(i.Name, identifier, StringComparison.CurrentCulture));
+	        }
 
-		public IValue Compile(string identifier, CompilationContext context)
-		{
-			TryGetValue(identifier, context, out var value);
-			return value;
-		}
+	        if (value == null)
+	        {
+		        context.LogError(7, $"Could not find '{identifier}' in {this}");
+		        return CompilationErr.Instance;
+	        }
 
-		public GlobalScope()
-		{
-			/*_types = new List<INamedType>
-			{
-				NumberType.Instance,
-				AnyType.Instance
-			};
-			_functions = new List<INamedFunction>
-			{
-				new ArrayIntrinsic(),
-				new FoldIntrinsic(),
-				new MemberwiseIntrinsic(),
-				new ForIntrinsic(),
-				new PersistIntrinsic()
-			};
-			_functions.AddRange(Enum.GetValues(typeof(Binary.Op))
-			                        .Cast<Binary.Op>()
-			                        .Select(o => new BinaryIntrinsic(o)));
-			_functions.AddRange(Enum.GetValues(typeof(Unary.Op)).Cast<Unary.Op>().Select(o => new UnaryIntrinsic(o)));*/
-
-			_parseMatches = new Dictionary<string, ParseMatch>();
-			_values = new Dictionary<string, IValue>();
-		}
-
-		public bool AddParseMatch(string identifier, ParseMatch parseMatch, CompilationContext compilationContext)
-		{
-			if (Parser.GloballyReservedIdentifiers.Any(reserved => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase)))
-			{
-				compilationContext.LogError(15, $"'{identifier}' is a reserved identifier");
-				return false;
-			}
+	        return value as IValue;
+        }
+        
+        public bool AddItem(string identifier, Item item, CompilationContext compilationContext)
+        {
+	        if (!ValidateIdentifier(identifier, compilationContext)) return false;
 			
-			if (_parseMatches.TryGetValue(identifier, out var found))
+			if (_identifierToItem.TryGetValue(identifier, out var found))
 			{
 				compilationContext.LogError(2, $"Cannot add duplicate identifier '{identifier}'");
 				return false;
 			}
 
-			_parseMatches.Add(identifier, parseMatch);
+			_identifierToItem.Add(identifier, item);
 			return true;
 		}
 
-		/// <summary>
+        private bool ValidateIdentifier(string identifier, CompilationContext compilationContext)
+        {
+	        if (Parser.GloballyReservedIdentifiers.Any(reserved => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase)))
+	        {
+		        compilationContext.LogError(15, $"'{identifier}' is a reserved identifier");
+		        return false;
+	        }
+
+	        return true;
+        }
+        
+
+		/*/// <summary>
 		/// Retrieve an identifiable IValue (via compiling it if necessary)
 		/// </summary>
 		public bool TryGetValue(string name, CompilationContext context, out IValue value)
 		{
-			if (_values.TryGetValue(name, out value)) return true;
+			if (_identifierToItem.TryGetValue(name, out var item)) return true;
 			if (_parseMatches.TryGetValue(name, out var match))
 			{
 				_values.Add(name, value = match.Compile(this, context));
@@ -101,8 +107,8 @@ namespace Element
 				}
 			}
 
-			return retval;*/
-		}
+			return retval;#1#
+		}*/
 
 		/*public INamedType FindType(string name, CompilationContext context) => _types.Find(b => b.Name == name);
 
@@ -128,5 +134,5 @@ namespace Element
 
 			return _functions.ToArray().SelectMany(f => Recurse(f.Name, f)).ToArray();
 		}*/
-	}
+    }
 }

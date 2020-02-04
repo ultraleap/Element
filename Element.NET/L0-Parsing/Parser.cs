@@ -1,12 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using Eto.Parse;
-using Eto.Parse.Grammars;
-using Eto.Parse.Parsers;
 
 namespace Element
 {
@@ -43,12 +38,10 @@ namespace Element
     }
 
     /// <summary>
-    /// Provides methods to convert text into Functions
+    /// Provides methods to convert text into 
     /// </summary>
     public static class Parser
     {
-        private static readonly char _lineCommentCharacter = '#';
-
         public static readonly string[] GloballyReservedIdentifiers =
         {
             "_",
@@ -58,21 +51,6 @@ namespace Element
             "return",
             "struct"
         };
-
-        private static string ElementEbnf { get; } = File.ReadAllText("Grammar.ebnf").Replace(
-            @"[_a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*", 
-            @"[#x005F#x0061-#x007B#x0041-#x005B#x00F0-#xFFFF] [#x005F#x0061-#x007B#x0041-#x005B#x0030-#x003A#x00F0-#xFFFF]*"); // Workaround for https://github.com/picoe/Eto.Parse/issues/33
-
-        private static Eto.Parse.Grammar ElementGrammar
-        {
-            get
-            {
-                var elementGrammar = new EbnfGrammar(EbnfStyle.W3c | EbnfStyle.WhitespaceSeparator)
-                    .Build(ElementEbnf, "grammar");
-                ((RepeatParser)((SequenceParser)elementGrammar.Inner).Items[1]).Separator = Terminals.WhiteSpace;
-                return elementGrammar;
-            }
-        }
 
         internal static (int Line, int Column, int LineCharacterIndex) CountLinesAndColumns(int index, string text)
         {
@@ -112,88 +90,27 @@ namespace Element
             return (line, column, lineCharacterIndex);
         }
 
-
-        private static string Preprocess(string text)
-        {
-            using var input = new StringReader(text);
-            using var output = new StringWriter();
-            while (true)
-            {
-                var line = input.ReadLine();
-                if (line != null)
-                {
-                    var lineCommentIdx = line.IndexOf(_lineCommentCharacter);
-                    output.WriteLine(lineCommentIdx >= 0 ? line.Substring(0, lineCommentIdx) : line);
-                }
-                else
-                {
-                    return output.ToString();
-                }
-            }
-        }
-
-        private static bool EtoParseFile(this CompilationContext context, FileInfo file)
-        {
-            GrammarMatch Parse(string text, string source = default)
-            {
-                var preprocessedText = Preprocess(text);
-                var match = ElementGrammar.Match(preprocessedText);
-                if (!match.Success)
-                {
-                    var builder = new StringBuilder();
-                    var lines = Regex.Split(preprocessedText, "\r\n|\r|\n");
-
-                    void AppendError(int index)
-                    {
-                        if (index < 0) return;
-                        var (line, column, lineCharacterIndex) = CountLinesAndColumns(index, preprocessedText);
-
-                        builder.AppendFormat("    in {0}:{1},{2}", source ?? "<no source specified>", line, column);
-                        builder.AppendLine();
-                        builder.AppendLine();
-                        builder.AppendLine(lines[line - 1]);
-                        builder.AppendLine(new string(' ', lineCharacterIndex) + "^");
-                    }
-
-                    AppendError(match.ErrorIndex);
-                    if (match.ChildErrorIndex != match.ErrorIndex) AppendError(match.ChildErrorIndex);
-
-                    builder.AppendLine();
-                    builder.AppendLine("Expected one of the following:");
-
-                    foreach (var parser in match.Errors)
-                    {
-                        builder.AppendLine($"    {parser.GetErrorMessage()}");
-                    }
-
-                    context.LogError(9, builder.ToString());
-                }
-
-                return match;
-            }
-
-            return Parse(File.ReadAllText(file.FullName), file.FullName).Matches.Aggregate(true,
-                (current, item) =>
-                    current
-                    && (!item.HasMatches // if we have no matches, do nothing
-                        || context.GlobalScope.AddParseMatch(item["identifier", true]?.Text,
-                            new ParseMatch(item, file), context)));
-        }
+        private static string Preprocess(string text) =>
+            Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
         private static bool LexicoParseFile(this CompilationContext context, FileInfo info)
         {
-            try
+            string traceOutput = null;
+            var success = Lexico.Parser.TryParse<GlobalScope>(Preprocess(File.ReadAllText(info.FullName)),
+                                                                      out var output,
+                                                                      trace => traceOutput = trace);
+            if (success)
             {
-                var preprocessedText = Preprocess(File.ReadAllText(info.FullName));
-                Lexico.Parser.Parse<Element.AST.Grammar>(preprocessedText);
+                if (!string.IsNullOrEmpty(traceOutput))
+                {
+                    context.Log(traceOutput);
+                }
             }
-            catch (Exception e)
+            else
             {
-                context.LogError(9, e.ToString());
-                return false;
+                context.LogError(9, traceOutput);
             }
-
-            return true;
+            return success;
         }
 
         /// <summary>

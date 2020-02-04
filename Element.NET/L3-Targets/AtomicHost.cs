@@ -14,9 +14,12 @@ namespace Element
 
         public float[] Execute(in CompilationInput compilationInput, in string functionName, params float[] functionArgs) =>
             CompilationContext.TryCreate(compilationInput, out var context)
-                ? context.GlobalScope.TryGetValue(functionName, context, out var result)
-                    ? new[] {((Literal)result).Value} // TODO: Don't cast to literal here!
-                    : Array.Empty<float>()
+                ? context.GlobalScope.Compile(functionName, context) switch
+                {
+                    CompilationErr _ => Array.Empty<float>(),
+                    Literal lit => new[] {(float)lit},
+                    var result => throw new NotImplementedException()
+                }
                 : Array.Empty<float>();
     }
 }

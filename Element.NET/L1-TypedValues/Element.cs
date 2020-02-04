@@ -7,44 +7,46 @@ using Lexico;
 namespace Element.AST
 {
     public interface IExpressionListStart {}
-    public interface IIntrinsic {}
-    public interface IBody {}
-    public interface IFunction {}
+    public interface IFunctionBody {}
+    public interface IValue {}
+    public interface ICallable {}
 
-    public class Literal : IExpressionListStart
+    public class Literal : IExpressionListStart, IValue
     {
-        private float value;
-        public float Value => value;
+        [SequenceTerm] private float _value;
+        public static implicit operator float(Literal l) => l._value;
+        public float Value => _value;
 
-        public override string ToString() => value.ToString(CultureInfo.CurrentCulture);
+        public override string ToString() => _value.ToString(CultureInfo.CurrentCulture);
     }
 
     public class Identifier : IExpressionListStart
     {
-        [Regex(@"[_\p{L}\p{Nl}][\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\p{Cf}]*")] private string value;
+        [SequenceTerm, Regex(@"[_\p{L}\p{Nl}][\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\p{Cf}]*")] private string _value;
 
-        public string Value => value;
+        public static implicit operator string(Identifier i) => i._value;
+        public string Value => _value;
 
-        public override string ToString() => value;
+        public override string ToString() => _value;
     }
 
     [WhitespaceSurrounded]
     struct ListSeparator
     {
-        [Literal(",")] private Unnamed __;
+        [SequenceTerm, Literal(",")] private Unnamed _;
     }
 
-    struct Terminal : IBody
+    struct Terminal : IFunctionBody
     {
-        [Literal(";")] private Unnamed __;
+        [SequenceTerm, Literal(";")] private Unnamed _;
     }
 
     [WhitespaceSurrounded]
     public abstract class ListOf<T>
     {
-        [Literal("(")] private Unnamed __open;
-        [SeparatedBy(typeof(ListSeparator))] private List<T> _list;
-        [Literal(")")] private Unnamed __close;
+        [SequenceTerm, Literal("(")] private Unnamed _open;
+        [SequenceTerm, SeparatedBy(typeof(ListSeparator))] protected List<T> _list;
+        [SequenceTerm, Literal(")")] private Unnamed _close;
     }
 
 
@@ -54,8 +56,8 @@ namespace Element.AST
     [WhitespaceSurrounded]
     public class Expression
     {
-        private IExpressionListStart _start;
-        [Optional] private List<CallExpression> _list;
+        [SequenceTerm] private IExpressionListStart _start;
+        [SequenceTerm, Optional] private List<CallExpression> _list;
     }
 
     public class CallExpression : ListOf<Expression> // CallExpression looks like a list due to using brackets
@@ -69,7 +71,7 @@ namespace Element.AST
     [WhitespaceSurrounded]
     public class Port
     {
-        private Identifier _portName;
+        [SequenceTerm] private Identifier _portName;
 
         public string PortName => _portName.Value;
 
@@ -79,50 +81,44 @@ namespace Element.AST
     [WhitespaceSurrounded]
     public class Declaration
     {
-        private Identifier _identifier;
-        [Optional] private PortList _portList;
+        [SequenceTerm] private Identifier _identifier;
+        [SequenceTerm, Optional] private PortList _portList;
+
+        public string Name => _identifier.Value;
+
+        public override string ToString() => Name;
     }
 
     [WhitespaceSurrounded]
-    public class Scope : IBody
+    public class Scope : IFunctionBody
     {
-        [Literal("{")] private Unnamed __open;
-        [Optional] private List<Item> _items;
-        [Literal("}")] private Unnamed __close;
+        [SequenceTerm, Literal("{")] private Unnamed _open;
+        [SequenceTerm, Optional] private List<Item> _items;
+        [SequenceTerm, Literal("}")] private Unnamed _close;
     }
 
     [WhitespaceSurrounded]
-    public class Binding : IBody
+    public class Binding : IFunctionBody
     {
-        [Literal("=")] private Unnamed _bind;
-        private Expression _expression;
-        private Terminal _terminal;
+        [SequenceTerm, Literal("=")] private Unnamed _bind;
+        [SequenceTerm] private Expression _expression;
+        [SequenceTerm] private Terminal _terminal;
     }
 
 
 
-    public class Function : Item, IFunction
+    public class Function : Item, ICallable, IValue
     {
-        private Declaration _declaration;
-        private IBody _body;
-    }
+        [SequenceTerm, Literal("intrinsic"), Optional] private Unnamed _;
+        [SequenceTerm] private Declaration _declaration;
+        [SequenceTerm] private IFunctionBody _functionBody;
 
-    public class IntrinsicFunction : Item, IFunction, IIntrinsic
-    {
-        [Literal("intrinsic")] private Unnamed __;
-        private Function _function;
-
-        public Function Function => _function;
-
-        public override string ToString() => _function.ToString();
+        public override string Name => _declaration.Name;
     }
 
     [WhitespaceSurrounded]
-    public abstract class Item { }
-
-    [WhitespaceSurrounded]
-    public class Grammar
+    public abstract class Item
     {
-        private List<Item> Items;
+        public abstract string? Name { get; }
     }
 }

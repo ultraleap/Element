@@ -1,8 +1,10 @@
+using Element.AST;
+
 namespace Element
 {
     public interface ICompilationScope
     {
-        bool AddParseMatch(string identifier, ParseMatch parseMatch, CompilationContext compilationContext);
+        bool AddItem(string identifier, Item item, CompilationContext compilationContext);
         IValue Compile(string identifier, CompilationContext context);
     }
 }

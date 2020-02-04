@@ -1,3 +1,5 @@
+using Element.AST;
+
 namespace Element
 {
     /// <summary>
@@ -9,7 +11,5 @@ namespace Element
         public static IValue Instance { get; } = new CompilationErr();
         private CompilationErr() { }
         public override string ToString() => "<error>";
-
-        public string Identifier => "<error>";
     }
 }

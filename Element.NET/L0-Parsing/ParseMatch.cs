@@ -1,4 +1,5 @@
 using System.IO;
+using Element.AST;
 using Eto.Parse;
 
 namespace Element
