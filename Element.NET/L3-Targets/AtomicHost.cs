@@ -12,14 +12,17 @@ namespace Element
         public bool ParseFile(in CompilationInput compilationInput, in FileInfo file) =>
             CompilationContext.TryCreate(compilationInput, out var context) && context.ParseFile(file);
 
-        public float[] Execute(in CompilationInput compilationInput, in string functionName, params float[] functionArgs) =>
+        public float[] Execute(in CompilationInput compilationInput, in string expression, params float[] functionArgs) =>
             CompilationContext.TryCreate(compilationInput, out var context)
-                ? context.GlobalScope.Compile(functionName, context) switch
-                {
-                    CompilationErr _ => Array.Empty<float>(),
-                    Literal lit => new[] {(float)lit},
-                    var result => throw new NotImplementedException()
-                }
+                ? context.Parse(expression, out AST.Expression expressionObject)
+                    ?
+                    context.Compile(expressionObject) switch
+                    {
+                        CompilationErr _ => Array.Empty<float>(),
+                        Literal lit => new[] {(float) lit},
+                        var result => throw new NotImplementedException()
+                    }
+                    : Array.Empty<float>()
                 : Array.Empty<float>();
     }
 }

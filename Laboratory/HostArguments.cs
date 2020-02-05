@@ -218,12 +218,12 @@ namespace Laboratory
                 return bool.Parse(RunHostProcess(input, processArgs.ToString()));
             }
 
-            float[] IHost.Execute(in CompilationInput input, in string functionName, params float[] functionArgs)
+            float[] IHost.Execute(in CompilationInput input, in string expression, params float[] functionArgs)
             {
                 var processArgs = BeginCommand(input, "execute");
 
                 processArgs.Append(" -f ");
-                processArgs.Append(functionName);
+                processArgs.Append(expression);
 
                 if (functionArgs?.Length > 0)
                 {

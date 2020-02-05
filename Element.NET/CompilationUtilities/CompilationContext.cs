@@ -2,6 +2,7 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Element.AST;
 using Tomlyn;
 using Tomlyn.Model;
 
@@ -16,25 +17,6 @@ namespace Element
 		{
 			Input = compilationInput;
 			LogCallback = compilationInput.LogCallback;
-			GlobalScope = new GlobalScope();
-			// TODO: Add intrinsics to the global scope
-			/*_types = new List<INamedType>
-            {
-                NumberType.Instance,
-                AnyType.Instance
-            };
-            _functions = new List<INamedFunction>
-            {
-                new ArrayIntrinsic(),
-                new FoldIntrinsic(),
-                new MemberwiseIntrinsic(),
-                new ForIntrinsic(),
-                new PersistIntrinsic()
-            };
-            _functions.AddRange(Enum.GetValues(typeof(Binary.Op))
-                                    .Cast<Binary.Op>()
-                                    .Select(o => new BinaryIntrinsic(o)));
-            _functions.AddRange(Enum.GetValues(typeof(Unary.Op)).Cast<Unary.Op>().Select(o => new UnaryIntrinsic(o)));*/
 		}
 
 		public static bool TryCreate(in CompilationInput compilationInput, out CompilationContext compilationContext) =>
@@ -47,7 +29,6 @@ namespace Element
 			.All(parseResult => parseResult.Success);
 
 		public CompilationInput Input { get; }
-		public GlobalScope GlobalScope { get; }
 
 		private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
 
@@ -85,5 +66,29 @@ namespace Element
 			
 			return CompilationError.Instance;
 		}
+
+		private readonly Dictionary<FileInfo, SourceScope> _rootScopes = new Dictionary<FileInfo, SourceScope>();
+
+		public SourceScope this[FileInfo file]
+		{
+			get => _rootScopes[file];
+			set => _rootScopes[file] = value;
+		}
+
+		public bool Validate()
+		{
+			foreach(var item in _rootScopes.Values.Select(scope => scope))
+		}
+
+		public IValue Compile(AST.Expression expression) =>
+			CompilationExtensions.Compile(expression, this, (identifier, context) =>
+			{
+				var item = _rootScopes.Values.Select(scope => scope[identifier, context]).SingleOrDefault(i => i != null);
+				if (item == null)
+				{
+					context.LogError(7, $"'{identifier}' not found");
+					return null;
+				}
+			});
 	}
 }

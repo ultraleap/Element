@@ -5,3 +5,8 @@ TestImplicitConversion(a:num):num
     AddAliased(n:num):TestAlias = add(n, 5);
     return = AddAliased(alias);
 }
+
+Voldemort(a)
+{
+	return struct CannotBeNamed(a);
+}

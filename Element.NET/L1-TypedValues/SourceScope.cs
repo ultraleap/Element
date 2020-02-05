@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Element.AST;
 using Lexico;
 
@@ -10,65 +9,80 @@ namespace Element
     /// The global scope, root of all other scopes
     /// </summary>
     [WhitespaceSurrounded, EOFAfter]
-    public class GlobalScope : ICompilationScope
+    public class SourceScope
     {
-        [SequenceTerm, Optional] private List<Item> _items;
+	    [Optional] private List<Item> _items;
         
-        private readonly Dictionary<string, Item> _identifierToItem = new Dictionary<string, Item>();
+        private readonly Dictionary<string, Item> _cache = new Dictionary<string, Item>();
+
+        /*public GlobalScope AddIntrinsics()
+        {
+	        // TODO: Add intrinsics to the global scope
+	        /*_types = new List<INamedType>
+            {
+                NumberType.Instance,
+                AnyType.Instance
+            };
+            _functions = new List<INamedFunction>
+            {
+                new ArrayIntrinsic(),
+                new FoldIntrinsic(),
+                new MemberwiseIntrinsic(),
+                new ForIntrinsic(),
+                new PersistIntrinsic()
+            };
+            _functions.AddRange(Enum.GetValues(typeof(Binary.Op))
+                                    .Cast<Binary.Op>()
+                                    .Select(o => new BinaryIntrinsic(o)));
+            _functions.AddRange(Enum.GetValues(typeof(Unary.Op)).Cast<Unary.Op>().Select(o => new UnaryIntrinsic(o)));#1#
+        }*/
         
         public override string ToString() => "<global>";
-        
-        public IValue Compile(string identifier, CompilationContext context)
+
+        public bool Validate(CompilationContext compilationContext)
         {
-	        if (string.IsNullOrEmpty(identifier))
+	        var success = true;
+	        foreach (var item in _items)
 	        {
-		        context.LogError(15, "Cannot compile a null or empty identifier");
-		        return CompilationErr.Instance;
-	        }
-	        
-	        if(!ValidateIdentifier(identifier, context)) return CompilationErr.Instance;
+		        if (!compilationContext.ValidateIdentifier(item.Identifier))
+		        {
+			        success = false;
+			        continue;
+		        }
 
-	        if (!_identifierToItem.TryGetValue(identifier, out var value))
-	        {
-		        _identifierToItem[identifier] = value = _items.Find(i => string.Equals(i.Name, identifier, StringComparison.CurrentCulture));
+		        if (_cache.ContainsKey(item.Identifier))
+		        {
+			        compilationContext.LogError(2, $"Cannot add duplicate identifier '{item.Identifier}'");
+			        success = false;
+		        }
+		        else
+		        {
+			        _cache[item.Identifier] = item;
+		        }
 	        }
 
-	        if (value == null)
-	        {
-		        context.LogError(7, $"Could not find '{identifier}' in {this}");
-		        return CompilationErr.Instance;
-	        }
-
-	        return value as IValue;
+	        return success;
         }
-        
-        public bool AddItem(string identifier, Item item, CompilationContext compilationContext)
-        {
-	        if (!ValidateIdentifier(identifier, compilationContext)) return false;
-			
-			if (_identifierToItem.TryGetValue(identifier, out var found))
-			{
-				compilationContext.LogError(2, $"Cannot add duplicate identifier '{identifier}'");
-				return false;
-			}
 
-			_identifierToItem.Add(identifier, item);
-			return true;
-		}
-
-        private bool ValidateIdentifier(string identifier, CompilationContext compilationContext)
+        public Item? this[Identifier id, CompilationContext compilationContext]
         {
-	        if (Parser.GloballyReservedIdentifiers.Any(reserved => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase)))
+	        get
 	        {
-		        compilationContext.LogError(15, $"'{identifier}' is a reserved identifier");
-		        return false;
+		        if (_cache.TryGetValue(id, out var item)) return item;
+		        item = _items.Find(i => string.Equals(i.Identifier, id, StringComparison.Ordinal));
+		        if (item != null)
+		        {
+			        _cache[id] = item; // Don't cache item if it hasn't been found!
+			        compilationContext.LogError(7, $"'{id}' not found in {this}");
+		        }
+		        return item;
 	        }
-
-	        return true;
         }
-        
 
-		/*/// <summary>
+
+
+
+        /*/// <summary>
 		/// Retrieve an identifiable IValue (via compiling it if necessary)
 		/// </summary>
 		public bool TryGetValue(string name, CompilationContext context, out IValue value)

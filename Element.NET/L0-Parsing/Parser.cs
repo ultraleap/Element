@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -90,15 +91,12 @@ namespace Element
             return (line, column, lineCharacterIndex);
         }
 
-        private static string Preprocess(string text) =>
-            Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
+        private static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
-        private static bool LexicoParseFile(this CompilationContext context, FileInfo info)
+        public static bool Parse<T>(this CompilationContext context, string text, out T output)
         {
             string traceOutput = null;
-            var success = Lexico.Parser.TryParse<GlobalScope>(Preprocess(File.ReadAllText(info.FullName)),
-                                                                      out var output,
-                                                                      trace => traceOutput = trace);
+            var success = Lexico.Parser.TryParse(text, out output, trace => traceOutput = trace);
             if (success)
             {
                 if (!string.IsNullOrEmpty(traceOutput))
@@ -113,22 +111,45 @@ namespace Element
             return success;
         }
 
-        /// <summary>
-        /// Parses the given file as an Element source file and adds it's contents to a global scope
-        /// </summary>
-        public static bool ParseFile(this CompilationContext context, FileInfo file) => LexicoParseFile(context, file);
+        public static bool ValidateIdentifier(this CompilationContext compilationContext, string identifier)
+        {
+            if (string.IsNullOrEmpty(identifier))
+            {
+                compilationContext.LogError(15, "Cannot compile a null or empty identifier");
+                return false;
+            }
+
+            if (GloballyReservedIdentifiers.Any(reserved => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase)))
+            {
+                compilationContext.LogError(15, $"'{identifier}' is a reserved identifier");
+                return false;
+            }
+
+            return true;
+        }
 
         /// <summary>
-        /// Parses all the given files as Element source files into a global scope
+        /// Parses the given file as an Element source file and adds it's contents to the compilation context
+        /// </summary>
+        public static bool ParseFile(this CompilationContext context, FileInfo file)
+        {
+            var success = context.Parse<SourceScope>(Preprocess(File.ReadAllText(file.FullName)), out var sourceScope);
+            success &= sourceScope.Validate(context);
+            if (success)
+            {
+                context[file] = sourceScope;
+            }
+
+            success &= context.Validate();
+
+            return success;
+        }
+
+        /// <summary>
+        /// Parses all the given files as Element source files into the compilation context
         /// </summary>
         public static IEnumerable<(bool Success, FileInfo FileInfo)> ParseFiles(this CompilationContext context,
             IEnumerable<FileInfo> files) =>
             files.Select(file => (context.ParseFile(file), file)).ToArray();
-
-        /*/// <summary>
-        /// Parses the given text as a single Element function using a scope without adding it to the scope
-        /// </summary>
-        public static IFunction ParseText(this CompilationContext context, string text, IScope scope) =>
-            context.Parse(text).ToFunction(scope, null, context);*/
     }
 }

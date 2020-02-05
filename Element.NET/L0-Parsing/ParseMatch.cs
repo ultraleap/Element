@@ -1,4 +1,4 @@
-using System.IO;
+/*using System.IO;
 using Element.AST;
 using Eto.Parse;
 
@@ -34,7 +34,7 @@ namespace Element
                 { } m when m["identifier"] is var id && id.Success => ((Literal) scope.Compile(
                     (string) id.Value, compilationContext)).Value
             });
-            compilationContext.Pop();*/
+            compilationContext.Pop();#1#
             //return value;
             return null;
         }
@@ -42,4 +42,4 @@ namespace Element
         private readonly Match _match;
         private readonly FileInfo _sourceFile;
     }
-}
+}*/
