@@ -9,11 +9,11 @@ namespace Element
 	/// <summary>
 	/// A user-defined Function (which may or may not have a body!)
 	/// </summary>
-	internal class CustomFunction : ValueBase, IScope, IDebuggable, INamedFunction
+	internal class CustomFunction : ValueBase, ICompilationScope, IDebuggable, INamedFunction
 	{
 		public override string ToString() => $"{Parent}.{Name}";
 
-		public CustomFunction(IScope parent, Match ast, CompilerStackFrame? stack, CompilationContext context, FileInfo source)
+		public CustomFunction(ICompilationScope parent, Match ast, CompilerStackFrame? stack, CompilationContext context, FileInfo source)
 			: base(parent, ast, context, source)
 		{
 			_capturedCompilationStack = stack;

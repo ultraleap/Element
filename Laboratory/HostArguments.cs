@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Element;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -69,7 +70,7 @@ namespace Laboratory
 
         private readonly struct ProcessHostInfo
         {
-            public ProcessHostInfo(in string name, bool enabled, in string buildCommand, in string executablePath)
+            public ProcessHostInfo(string name, bool enabled, string buildCommand, string executablePath)
             {
                 Name = name;
                 Enabled = enabled;
@@ -90,6 +91,29 @@ namespace Laboratory
         /// </summary>
         private readonly struct ProcessHost : IHost
         {
+            static List<string> Run(Process process)
+            {
+                var messages = new List<string>();
+                async Task ReadStream(Process proc, StreamReader streamReader)
+                {
+                    while (!proc.HasExited || !streamReader.EndOfStream)
+                    {
+                        var msg = await streamReader.ReadLineAsync();
+                        if(!string.IsNullOrEmpty(msg))
+                            messages.Add(msg);
+                    }
+                }
+
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.Start();
+                var readingStdOut = ReadStream(process, process.StandardOutput);
+                var readingStdErr = ReadStream(process, process.StandardError);
+                process.WaitForExit();
+                Task.WhenAll(readingStdOut, readingStdErr).Wait();
+                return messages;
+            }
+
             static ProcessHost()
             {
                 // Perform build command for each enabled host - within static constructor so it's only performed once per test run
@@ -170,18 +194,7 @@ namespace Laboratory
                     }
                 };
 
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.Start();
-                process.WaitForExit();
-
-                var messages = new List<string>();
-                ReadStream(process.StandardOutput);
-                ReadStream(process.StandardError);
-                void ReadStream(StreamReader streamReader)
-                {
-                    while (!streamReader.EndOfStream) messages.Add(streamReader.ReadLine());
-                }
+                var messages = Run(process);
 
                 var compilerMessages = messages.Select(msg => TryParseJson(msg, out CompilerMessage compilerMessage)
                     ? compilerMessage
@@ -189,7 +202,7 @@ namespace Laboratory
 
                 foreach (var msg in compilerMessages)
                 {
-                    input.LogCallback(msg);
+                    input.LogCallback?.Invoke(msg);
                 }
 
                 if (process.ExitCode != 0)
@@ -198,6 +211,8 @@ namespace Laboratory
                         .Aggregate(new StringBuilder($"{_info.Name} process quit with exit code '{process.ExitCode}'.").AppendLine(),
                             (builder, s) => builder.AppendLine(s.ToString())).ToString());
                 }
+
+                process.Close();
 
                 return compilerMessages.Last().ToString();
             }
@@ -211,24 +226,24 @@ namespace Laboratory
                 return processArgs;
             }
 
-            bool IHost.ParseFile(in CompilationInput input, in FileInfo file)
+            bool IHost.ParseFile(in CompilationInput input, FileInfo file)
             {
                 var processArgs = BeginCommand(input, "parse");
                 processArgs.Append($" -f {file.FullName}");
                 return bool.Parse(RunHostProcess(input, processArgs.ToString()));
             }
 
-            float[] IHost.Execute(in CompilationInput input, in string expression, params float[] functionArgs)
+            float[] IHost.Evaluate(in CompilationInput input, string expression, params float[] arguments)
             {
-                var processArgs = BeginCommand(input, "execute");
+                var processArgs = BeginCommand(input, "evaluate");
 
-                processArgs.Append(" -f ");
+                processArgs.Append(" -e ");
                 processArgs.Append(expression);
 
-                if (functionArgs?.Length > 0)
+                if (arguments?.Length > 0)
                 {
                     processArgs.Append(" -a ");
-                    processArgs.AppendJoin(' ', functionArgs);
+                    processArgs.AppendJoin(' ', arguments);
                 }
 
                 return RunHostProcess(input, processArgs.ToString()).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();

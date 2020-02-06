@@ -68,6 +68,8 @@ namespace Element
 		}
 
 		private readonly Dictionary<FileInfo, SourceScope> _rootScopes = new Dictionary<FileInfo, SourceScope>();
+		private readonly Dictionary<string, Item> _uncompiledCache = new Dictionary<string, Item>();
+		private readonly Dictionary<string, IValue> _compiledCache = new Dictionary<string, IValue>();
 
 		public SourceScope this[FileInfo file]
 		{
@@ -75,20 +77,36 @@ namespace Element
 			set => _rootScopes[file] = value;
 		}
 
-		public bool Validate()
-		{
-			foreach(var item in _rootScopes.Values.Select(scope => scope))
-		}
+		public bool Validate() => this.ValidateAndCache(_rootScopes.Values.SelectMany(s => s), _uncompiledCache);
 
 		public IValue Compile(AST.Expression expression) =>
-			CompilationExtensions.Compile(expression, this, (identifier, context) =>
+			this.Compile(expression, new CompilationFrame((identifier, context) =>
 			{
-				var item = _rootScopes.Values.Select(scope => scope[identifier, context]).SingleOrDefault(i => i != null);
-				if (item == null)
+				if(!_uncompiledCache.TryGetValue(identifier, out var item))
 				{
 					context.LogError(7, $"'{identifier}' not found");
 					return null;
 				}
-			});
+
+				return item;
+			}));
+
+        /*/// <summary>
+        /// Gets all functions in global scope and any namespaces which match the given filter.
+        /// </summary>
+        public (string Path, IFunction Function)[] GetAllFunctions(Predicate<IFunction> filter, CompilationContext context)
+        {
+	        IEnumerable<(string, IFunction)> Recurse(string path, IFunction func)
+	        {
+		        if (func.IsNamespace())
+		        {
+			        return func.Outputs.SelectMany(o => Recurse($"{path}.{o.Name}", func.Call(o.Name, context)));
+		        }
+
+		        return filter?.Invoke(func) == false ? Array.Empty<(string, IFunction)>() : new[] {(path, func)};
+	        }
+
+	        return _functions.ToArray().SelectMany(f => Recurse(f.Name, f)).ToArray();
+        }*/
 	}
 }

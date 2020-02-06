@@ -11,7 +11,7 @@ namespace Element
 	/// </summary>
 	internal abstract class ValueBase : IFunction, INamedItem
 	{
-		protected ValueBase(IScope parent, Match ast, CompilationContext context, FileInfo source)
+		protected ValueBase(ICompilationScope parent, Match ast, CompilationContext context, FileInfo source)
 		{
 			Source = source;
 			Parent = parent;
@@ -21,7 +21,7 @@ namespace Element
 		}
 
 		private readonly CompilationContext _context;
-		protected readonly IScope Parent;
+		protected readonly ICompilationScope Parent;
 		protected readonly Match Ast;
 		protected readonly FileInfo Source;
 

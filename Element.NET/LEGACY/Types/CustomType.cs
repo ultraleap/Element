@@ -10,7 +10,7 @@ namespace Element
 	/// </summary>
 	internal class CustomType : ValueBase, INamedType
 	{
-		public CustomType(IScope parent, Match ast, CompilationContext context, FileInfo source)
+		public CustomType(ICompilationScope parent, Match ast, CompilationContext context, FileInfo source)
 			: base(parent, ast, context, source) { }
 
 		public bool? SatisfiedBy(IFunction value, CompilationContext info)

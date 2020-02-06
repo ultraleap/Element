@@ -14,7 +14,7 @@ namespace Laboratory.Tests
 
 		private static CompilationInput CompilationInput => new CompilationInput(FailOnError);
 
-		private float[] Execute(string function, params float[] args) => _host.Execute(CompilationInput, function, args);
+		private float[] Execute(string function, params float[] args) => _host.Evaluate(CompilationInput, function, args);
 
 		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
 		{

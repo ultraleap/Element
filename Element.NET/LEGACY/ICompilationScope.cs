@@ -6,7 +6,7 @@ namespace Element
 	/// A scope could be a single file, group of files, or a function with a body.
 	/// Scopes have no inputs (beyond those already specified at a level above).
 	/// </summary>
-	public interface IScope
+	public interface ICompilationScope
 	{
 		/// <summary>
 		/// Retrieves a Function value from the scope.

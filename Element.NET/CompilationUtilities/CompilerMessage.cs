@@ -7,7 +7,7 @@ namespace Element
 {
     public readonly struct CompilerMessage
     {
-        public CompilerMessage(in string message, in DateTime? timeStamp = default, in MessageLevel? messageLevel = default) : this()
+        public CompilerMessage(string message, DateTime? timeStamp = default, MessageLevel? messageLevel = default) : this()
         {
             _message = Context = message;
             MessageLevel = messageLevel;
@@ -15,7 +15,7 @@ namespace Element
         }
 
         [JsonConstructor]
-        public CompilerMessage(in int? messageCode, in string? name, in MessageLevel? messageLevel, in string? context, in DateTime timeStamp, in IReadOnlyList<TraceSite> callStack)
+        public CompilerMessage(int? messageCode, string? name, MessageLevel? messageLevel, string? context, DateTime timeStamp, IReadOnlyList<TraceSite> callStack)
         {
             MessageCode = messageCode;
             Name = name;

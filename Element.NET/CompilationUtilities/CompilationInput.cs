@@ -17,11 +17,11 @@ namespace Element
         public IReadOnlyList<FileInfo> ExtraSourceFiles { get; }
         public Action<CompilerMessage>? LogCallback { get; }
 
-        public CompilationInput(in Action<CompilerMessage>? logCallback,
-            in bool excludePrelude = false,
-            in IReadOnlyList<DirectoryInfo> packages = null,
-            in IReadOnlyList<FileInfo> extraSourceFiles = null,
-            in string compilerFlagsToml = null)
+        public CompilationInput(Action<CompilerMessage>? logCallback,
+            bool excludePrelude = false,
+            IReadOnlyList<DirectoryInfo> packages = null,
+            IReadOnlyList<FileInfo> extraSourceFiles = null,
+            string compilerFlagsToml = null)
         {
             LogCallback = logCallback;
             ExcludePrelude = excludePrelude;

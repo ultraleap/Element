@@ -9,10 +9,10 @@ namespace Element
     /// </summary>
     public class AtomicHost : IHost
     {
-        public bool ParseFile(in CompilationInput compilationInput, in FileInfo file) =>
+        public bool ParseFile(in CompilationInput compilationInput, FileInfo file) =>
             CompilationContext.TryCreate(compilationInput, out var context) && context.ParseFile(file);
 
-        public float[] Execute(in CompilationInput compilationInput, in string expression, params float[] functionArgs) =>
+        public float[] Evaluate(in CompilationInput compilationInput, string expression, params float[] arguments) =>
             CompilationContext.TryCreate(compilationInput, out var context)
                 ? context.Parse(expression, out AST.Expression expressionObject)
                     ?
@@ -20,7 +20,7 @@ namespace Element
                     {
                         CompilationErr _ => Array.Empty<float>(),
                         Literal lit => new[] {(float) lit},
-                        var result => throw new NotImplementedException()
+                        var result => throw new NotImplementedException($"{result} evaluation not implemented")
                     }
                     : Array.Empty<float>()
                 : Array.Empty<float>();

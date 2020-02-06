@@ -22,7 +22,7 @@ namespace Laboratory.Tests
 			TestCase("not", 1f, 0f),
 		]
 		public void UnaryOp(string function, float a, float expected) =>
-			Assert.That(_host.Execute(CompilationInput, function, a)[0], Is.EqualTo(expected));
+			Assert.That(_host.Evaluate(CompilationInput, function, a)[0], Is.EqualTo(expected));
 
 		[
 			TestCase("and", 0f, 0f, 0f),
@@ -79,6 +79,6 @@ namespace Laboratory.Tests
 			TestCase("neq", 999.999f, 999.999f, 0f)
 		]
 		public void BinaryOp(string function, float a, float b, float expected) =>
-			Assert.That(_host.Execute(CompilationInput, function, a, b)[0], Is.EqualTo(expected));
+			Assert.That(_host.Evaluate(CompilationInput, function, a, b)[0], Is.EqualTo(expected));
 	}
 }

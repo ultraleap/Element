@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Lexico;
@@ -12,10 +11,15 @@ namespace Element.AST
     public interface IValue {}
     public interface ICallable
     {
-        IValue Call(in IValue[] arguments);
+        IValue Call(Expression[] arguments, CompilationFrame frame, CompilationContext compilationContext);
     }
 
-    public delegate Item? Indexer(Identifier identifier, CompilationContext compilationContext);
+    public interface IIndexable
+    {
+        Item? this[Identifier id, CompilationContext compilationContext] { get; }
+    }
+
+    public delegate IValue? Indexer(Identifier identifier, CompilationContext compilationContext);
 
     public class Literal : IExpressionListStart, IValue
     {
@@ -90,53 +94,64 @@ namespace Element.AST
     }
 
     [WhitespaceSurrounded]
-    public class Scope : IFunctionBody
+    public class Scope : IFunctionBody, IIndexable
     {
         [Literal("{")] private Unnamed _open;
-        [Optional] private List<Item> _items;
+        [Optional] private readonly List<Item> _items = new List<Item>();
         [Literal("}")] private Unnamed _close;
 
         private readonly Dictionary<string, Item> _cache = new Dictionary<string, Item>();
 
-        public Item? this[Identifier id, CompilationContext compilationContext]
-        {
-            get
-            {
-                if (_cache.TryGetValue(id, out var item)) return item;
-                item = _items.Find(i => string.Equals(i.Identifier, id, StringComparison.Ordinal));
-                if (item != null)
-                {
-                    _cache[id] = item; // Don't cache item if it hasn't been found!
-                    compilationContext.LogError(7, $"'{id}' not found in {this}");
-                }
-                return item;
-            }
-        }
+        public Item? this[Identifier id, CompilationContext compilationContext] => compilationContext.Index(id, _items, _cache);
     }
 
     [WhitespaceSurrounded]
     public class Binding : IFunctionBody
     {
         [Literal("=")] private Unnamed _bind;
-        [Term] private Expression _expression;
+        [field: Term] public Expression Expression { get; }
         [Term] private Terminal _terminal;
     }
 
 
 
-    public class Function : Item, ICallable
+    public class Function : Item, ICallable, IValue
     {
         [Literal("intrinsic"), Optional] private Unnamed _;
         [Term] private Declaration _declaration;
         [Term] private IFunctionBody _functionBody;
 
         public override Identifier Identifier => _declaration.Identifier;
+        public Port[] Inputs => _declaration.PortList?.List.ToArray();
 
-        public IValue Call(in IValue[] arguments) => _functionBody switch
+        public IValue Call(Expression[] arguments, CompilationFrame frame, CompilationContext compilationContext)
         {
-            Literal lit => lit,
-            _ => CompilationErr.Instance
-        };
+            var expectedArgCount = _declaration.PortList?.List.Count ?? 0; // No portlist means no arguments (nullary function)
+            if (arguments.Length != expectedArgCount)
+            {
+                compilationContext.LogError(6, $"Expected '{expectedArgCount}' arguments but got '{arguments.Length}'");
+                return CompilationErr.Instance;
+            }
+
+            // TODO: Argument type checking
+
+            var argumentsByIdentifier = new Dictionary<Identifier, IValue>();
+            if (Inputs != null)
+            {
+                for (var i = 0; i < expectedArgCount; i++)
+                {
+                    argumentsByIdentifier.Add(Inputs[i].Identifier, compilationContext.Compile(arguments[i], frame));
+                }
+            }
+
+            frame = frame.Push((identifier, context) => Inputs == null ? null : argumentsByIdentifier.TryGetValue(identifier, out var value) ? value : null);
+
+            return _functionBody switch
+            {
+                Binding binding => compilationContext.Compile(binding.Expression, frame),
+                _ => CompilationErr.Instance
+            };
+        }
     }
 
     [WhitespaceSurrounded]
