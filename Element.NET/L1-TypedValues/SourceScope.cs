@@ -19,7 +19,7 @@ namespace Element
         public IEnumerator<Item> GetEnumerator() => _items.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public override string ToString() => "<global>";
+        public override string ToString() => "SourceScope";
 
         public bool Validate(CompilationContext compilationContext) => compilationContext.ValidateScope(_items, _uncompiledCache);
 

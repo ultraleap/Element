@@ -51,7 +51,7 @@ namespace Element.AST
     struct ListSeparator
     {
         [Literal(",")] private Unnamed _;
-        public override string ToString() => ",";
+        public override string ToString() => ", ";
     }
 
     struct Terminal : IFunctionBody
@@ -133,6 +133,8 @@ namespace Element.AST
         [Literal("intrinsic"), Optional] private Unnamed _;
         [Term] private Declaration _declaration;
         [Term] private IFunctionBody _functionBody;
+
+        public override string ToString() => Identifier;
 
         public override Identifier Identifier => _declaration.Identifier;
         public Port[] Inputs => _declaration.PortList?.List.ToArray();
