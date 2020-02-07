@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Lexico;
 
 namespace Element
 {
@@ -95,18 +96,13 @@ namespace Element
 
         public static bool Parse<T>(this CompilationContext context, string text, out T output)
         {
-            string traceOutput = null;
-            var success = Lexico.Parser.TryParse(text, out output, trace => traceOutput = trace);
-            if (success)
+            var success = Lexico.Parser.TryParse(text, out output, new DelegateTextTrace(msg =>
             {
-                if (!string.IsNullOrEmpty(traceOutput))
-                {
-                    context.Log(traceOutput);
-                }
-            }
-            else
+                if (!string.IsNullOrEmpty(msg)) context.Log(msg);
+            }));
+            if (!success)
             {
-                context.LogError(9, traceOutput);
+                context.LogError(9, "Parsing failed, see previous parse trace messages for details.");
             }
             return success;
         }
@@ -140,7 +136,7 @@ namespace Element
                 context[file] = sourceScope;
             }
 
-            success &= context.Validate();
+            success &= context.ValidateRootScope();
 
             return success;
         }

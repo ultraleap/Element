@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Lexico;
@@ -8,8 +9,12 @@ namespace Element.AST
 {
     public interface IExpressionListStart {}
     public interface IFunctionBody {}
-    public interface IValue {}
-    public interface ICallable
+
+    public interface IValue
+    {
+        bool CanBeCached { get; }
+    }
+    public interface ICallable : IValue
     {
         IValue Call(Expression[] arguments, CompilationFrame frame, CompilationContext compilationContext);
     }
@@ -27,10 +32,14 @@ namespace Element.AST
         public float Value { get; }
         public static implicit operator float(Literal l) => l.Value;
         public override string ToString() => Value.ToString(CultureInfo.CurrentCulture);
+        public bool CanBeCached => true;
     }
 
     public class Identifier : IExpressionListStart
     {
+        public Identifier() {} // Need parameterless constructor for Lexico to construct instance
+        public Identifier(string value) {Value = value;}
+
         // https://stackoverflow.com/questions/4400348/match-c-sharp-unicode-identifier-using-regex
         [field: Regex(@"[_\p{L}\p{Nl}][\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\p{Cf}]*")]
         public string Value { get; }
@@ -42,11 +51,13 @@ namespace Element.AST
     struct ListSeparator
     {
         [Literal(",")] private Unnamed _;
+        public override string ToString() => ",";
     }
 
     struct Terminal : IFunctionBody
     {
         [Literal(";")] private Unnamed _;
+        public override string ToString() => ";";
     }
 
     [WhitespaceSurrounded]
@@ -55,6 +66,8 @@ namespace Element.AST
         [Literal("(")] private Unnamed _open;
         [field: SeparatedBy(typeof(ListSeparator))] public List<T> List { get; }
         [Literal(")")] private Unnamed _close;
+
+        public override string ToString() => $"({string.Join(", ", List)})";
     }
 
 
@@ -66,15 +79,13 @@ namespace Element.AST
     {
         [field: Term] public IExpressionListStart LitOrId { get; }
         [field: Optional] public List<CallExpression> CallExpressions { get; }
+
+        public override string ToString() => $"{LitOrId}{(CallExpressions != null ? string.Concat(CallExpressions) : string.Empty)}";
     }
 
-    public class CallExpression : ListOf<Expression> // CallExpression looks like a list due to using brackets
-    {
-    }
+    public class CallExpression : ListOf<Expression> { } // CallExpression looks like a list due to using brackets
 
-    public class PortList : ListOf<Port>
-    {
-    }
+    public class PortList : ListOf<Port> { }
 
     [WhitespaceSurrounded]
     public class Port
@@ -90,7 +101,7 @@ namespace Element.AST
         [field: Term] public Identifier Identifier { get; }
         [field: Optional] public PortList PortList { get; }
 
-        public override string ToString() => Identifier.Value;
+        public override string ToString() => $"{Identifier}{PortList}";
     }
 
     [WhitespaceSurrounded]
@@ -111,11 +122,13 @@ namespace Element.AST
         [Literal("=")] private Unnamed _bind;
         [field: Term] public Expression Expression { get; }
         [Term] private Terminal _terminal;
+
+        public override string ToString() => $"= {Expression}";
     }
 
 
 
-    public class Function : Item, ICallable, IValue
+    public class Function : Item, ICallable
     {
         [Literal("intrinsic"), Optional] private Unnamed _;
         [Term] private Declaration _declaration;
@@ -124,9 +137,11 @@ namespace Element.AST
         public override Identifier Identifier => _declaration.Identifier;
         public Port[] Inputs => _declaration.PortList?.List.ToArray();
 
+        private static Identifier ReturnIdentifier { get; } = new Identifier("return");
+
         public IValue Call(Expression[] arguments, CompilationFrame frame, CompilationContext compilationContext)
         {
-            var expectedArgCount = _declaration.PortList?.List.Count ?? 0; // No portlist means no arguments (nullary function)
+            var expectedArgCount = Inputs?.Length ?? 0; // No inputs means no arguments required (nullary function)
             if (arguments.Length != expectedArgCount)
             {
                 compilationContext.LogError(6, $"Expected '{expectedArgCount}' arguments but got '{arguments.Length}'");
@@ -135,23 +150,34 @@ namespace Element.AST
 
             // TODO: Argument type checking
 
-            var argumentsByIdentifier = new Dictionary<Identifier, IValue>();
+            var argumentsByIdentifier = new Dictionary<Identifier, Expression>();
             if (Inputs != null)
             {
                 for (var i = 0; i < expectedArgCount; i++)
                 {
-                    argumentsByIdentifier.Add(Inputs[i].Identifier, compilationContext.Compile(arguments[i], frame));
+                    argumentsByIdentifier.Add(Inputs[i].Identifier, arguments[i]);
                 }
             }
 
-            frame = frame.Push((identifier, context) => Inputs == null ? null : argumentsByIdentifier.TryGetValue(identifier, out var value) ? value : null);
+            IValue? ArgumentIndexer(Identifier identifier, CompilationContext context) => compilationContext.CompileExpression(argumentsByIdentifier[identifier], frame);
 
-            return _functionBody switch
-            {
-                Binding binding => compilationContext.Compile(binding.Expression, frame),
-                _ => CompilationErr.Instance
-            };
+            IValue CompileFunction(Function function, CompilationFrame functionFrame) =>
+                function._functionBody switch
+                {
+                    Binding binding => compilationContext.CompileExpression(binding.Expression, functionFrame.Push(ArgumentIndexer)),
+                    Scope scope => scope[ReturnIdentifier, compilationContext] switch
+                    {
+                        Function dependentFunction => CompileFunction(dependentFunction, functionFrame),
+                        null => compilationContext.LogError(7, $"'{ReturnIdentifier}' not found in function scope"),
+                        var nyi => throw new NotImplementedException(nyi.ToString())
+                    },
+                    _ => CompilationErr.Instance
+                };
+
+            return CompileFunction(this, frame);
         }
+
+        public bool CanBeCached => Inputs == null || Inputs.Length == 0;
     }
 
     [WhitespaceSurrounded]

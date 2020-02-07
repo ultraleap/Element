@@ -5,6 +5,7 @@ addThree(a, b, c) = add(a, add(b, c));
 
 subBTwice(a, b)
 {
+	heheIshadow(a, b) = add(a, b);
     first = sub(a, b);
     return = sub(first, b);
 }

@@ -16,7 +16,7 @@ namespace Element
             CompilationContext.TryCreate(compilationInput, out var context)
                 ? context.Parse(expression, out AST.Expression expressionObject)
                     ?
-                    context.Compile(expressionObject) switch
+                    context.CompileExpression(expressionObject) switch
                     {
                         CompilationErr _ => Array.Empty<float>(),
                         Literal lit => new[] {(float) lit},

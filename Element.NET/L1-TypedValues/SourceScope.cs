@@ -21,8 +21,8 @@ namespace Element
 
         public override string ToString() => "<global>";
 
-        public bool Validate(CompilationContext compilationContext) => compilationContext.ValidateAndCache(_items, _uncompiledCache);
+        public bool Validate(CompilationContext compilationContext) => compilationContext.ValidateScope(_items, _uncompiledCache);
 
-        //public Item? this[Identifier id, CompilationContext compilationContext] => compilationContext.Index(id, _items, _uncompiledCache);
+        public Item? this[Identifier id, CompilationContext compilationContext] => compilationContext.Index(id, _items, _uncompiledCache);
     }
 }
