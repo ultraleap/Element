@@ -16,18 +16,20 @@ namespace Element.AST
     }
     public interface ICallable : IValue
     {
-        IValue Call(Expression[] arguments, CompilationFrame frame, CompilationContext compilationContext);
+        IValue Call(Func<IValue>[] arguments, CompilationFrame frame, CompilationContext compilationContext);
+        Port[] Inputs { get; }
     }
 
-    public interface IIndexable
+    public interface IIndexable : IValue
     {
-        Item? this[Identifier id, CompilationContext compilationContext] { get; }
+        IValue? this[Identifier id, CompilationContext compilationContext] { get; }
     }
-
-    public delegate IValue? Indexer(Identifier identifier, CompilationContext compilationContext);
 
     public class Literal : IExpressionListStart, IValue
     {
+        public Literal() {} // Need parameterless constructor for Lexico to construct instance
+        public Literal(float value) {Value = value;}
+
         [field: Term]
         public float Value { get; }
         public static implicit operator float(Literal l) => l.Value;
@@ -78,7 +80,7 @@ namespace Element.AST
     public class Expression
     {
         [field: Term] public IExpressionListStart LitOrId { get; }
-        [field: Optional] public List<CallExpression> CallExpressions { get; }
+        [field: Optional] public List<CallExpression> CallExpressions { get; } = new List<CallExpression>();
 
         public override string ToString() => $"{LitOrId}{(CallExpressions != null ? string.Concat(CallExpressions) : string.Empty)}";
     }
@@ -90,7 +92,7 @@ namespace Element.AST
     [WhitespaceSurrounded]
     public class Port
     {
-        [field: Term] public Identifier Identifier { get; }
+        [field: Term] public Identifier Identifier { get; set; }
 
         public override string ToString() => Identifier.ToString();
     }
@@ -111,9 +113,12 @@ namespace Element.AST
         [Optional] private readonly List<Item> _items = new List<Item>();
         [Literal("}")] private Unnamed _close;
 
-        private readonly Dictionary<string, Item> _cache = new Dictionary<string, Item>();
+        private readonly Dictionary<string, Item> _itemCache = new Dictionary<string, Item>();
+        private readonly Dictionary<string, IValue> _valueCache = new Dictionary<string, IValue>();
 
-        public Item? this[Identifier id, CompilationContext compilationContext] => compilationContext.Index(id, _items, _cache);
+        public bool Validate(CompilationContext compilationContext) => compilationContext.ValidateScope(_items, _itemCache);
+        public IValue? this[Identifier id, CompilationContext compilationContext] => compilationContext.Index(id, _itemCache, _valueCache);
+        public bool CanBeCached => true;
     }
 
     [WhitespaceSurrounded]
@@ -137,46 +142,45 @@ namespace Element.AST
         public override string ToString() => Identifier;
 
         public override Identifier Identifier => _declaration.Identifier;
-        public Port[] Inputs => _declaration.PortList?.List.ToArray();
+        public Port[] Inputs => _declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
+        public bool IsIntrinsic => _functionBody is Terminal;
 
         private static Identifier ReturnIdentifier { get; } = new Identifier("return");
 
-        public IValue Call(Expression[] arguments, CompilationFrame frame, CompilationContext compilationContext)
+        public sealed class FunctionArguments : IIndexable
         {
-            var expectedArgCount = Inputs?.Length ?? 0; // No inputs means no arguments required (nullary function)
-            if (arguments.Length != expectedArgCount)
+            public FunctionArguments(Func<IValue>[] arguments, Port[] ports)
             {
-                compilationContext.LogError(6, $"Expected '{expectedArgCount}' arguments but got '{arguments.Length}'");
-                return CompilationErr.Instance;
-            }
-
-            // TODO: Argument type checking
-
-            var argumentsByIdentifier = new Dictionary<Identifier, Expression>();
-            if (Inputs != null)
-            {
-                for (var i = 0; i < expectedArgCount; i++)
+                for (var i = 0; i < ports?.Length; i++)
                 {
-                    argumentsByIdentifier.Add(Inputs[i].Identifier, arguments[i]);
+                    _argumentsByIdentifier.Add(ports[i].Identifier, arguments[i]);
                 }
             }
 
-            IValue? ArgumentIndexer(Identifier identifier, CompilationContext context) => compilationContext.CompileExpression(argumentsByIdentifier[identifier], frame);
+            private readonly Dictionary<Identifier, Func<IValue>> _argumentsByIdentifier = new Dictionary<Identifier, Func<IValue>>();
 
-            IValue CompileFunction(Function function, CompilationFrame functionFrame) =>
+            public bool CanBeCached => true;
+
+            public IValue? this[Identifier id, CompilationContext compilationContext] => _argumentsByIdentifier.TryGetValue(id, out var func) ? func?.Invoke() : null;
+        }
+
+
+        public IValue Call(Func<IValue>[] arguments, CompilationFrame frame, CompilationContext compilationContext)
+        {
+            IValue CompileFunction(Function function, CompilationFrame callSiteFrame) =>
                 function._functionBody switch
                 {
-                    Binding binding => compilationContext.CompileExpression(binding.Expression, functionFrame.Push(ArgumentIndexer)),
+                    Binding binding => compilationContext.CompileExpression(binding.Expression, callSiteFrame),
                     Scope scope => scope[ReturnIdentifier, compilationContext] switch
                     {
-                        Function dependentFunction => CompileFunction(dependentFunction, functionFrame),
+                        Function dependentFunction => CompileFunction(dependentFunction, callSiteFrame),
                         null => compilationContext.LogError(7, $"'{ReturnIdentifier}' not found in function scope"),
                         var nyi => throw new NotImplementedException(nyi.ToString())
                     },
                     _ => CompilationErr.Instance
                 };
 
-            return CompileFunction(this, frame);
+            return compilationContext.CheckArguments(arguments, Inputs) ? CompileFunction(this, frame) : CompilationErr.Instance;
         }
 
         public bool CanBeCached => Inputs == null || Inputs.Length == 0;

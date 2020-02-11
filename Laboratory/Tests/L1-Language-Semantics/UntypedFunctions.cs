@@ -17,18 +17,18 @@ namespace Laboratory.Tests
         public void Add() => AssertApproxEqual(CompilationInput, "a", 13f);
         
         [Test]
-        public void Sub() => AssertApproxEqual(CompilationInput, "b", -1f);
+        public void Sub() => AssertApproxEqual(CompilationInput, "b", -2.5f);
         
         [Test]
-        public void AddWithIdentifiers() => AssertApproxEqual(CompilationInput, "c", 12f);
+        public void AddWithIdentifiers() => AssertApproxEqual(CompilationInput, "c", 10.5f);
         
         [Test]
-        public void NestedCallExpression() => AssertApproxEqual(CompilationInput, "d", 9f);
+        public void NestedCallExpression() => AssertApproxEqual(CompilationInput, "d", 6f);
         
         [Test]
-        public void CustomExpressionBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "e", 22.5f);
+        public void CustomExpressionBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "e", 18f);
     
         [Test]
-        public void CustomScopeBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "e", 22.5f);
+        public void CustomScopeBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "f", 23f);
     }
 }

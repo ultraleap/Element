@@ -127,25 +127,34 @@ namespace Element
         /// <summary>
         /// Parses the given file as an Element source file and adds it's contents to the compilation context
         /// </summary>
-        public static bool ParseFile(this CompilationContext context, FileInfo file)
+        public static bool ParseFile(this CompilationContext context, FileInfo file) => ParseFile(context, file, true);
+
+
+        private static bool ParseFile(this CompilationContext context, FileInfo file, bool validate)
         {
             var success = context.Parse<SourceScope>(Preprocess(File.ReadAllText(file.FullName)), out var sourceScope);
-            success &= sourceScope.Validate(context);
             if (success)
             {
-                context[file] = sourceScope;
+                context.GlobalIndexer[file] = sourceScope;
+                if (validate)
+                {
+                    success &= context.GlobalIndexer.Validate(context);
+                }
             }
-
-            success &= context.ValidateRootScope();
 
             return success;
         }
 
+
         /// <summary>
         /// Parses all the given files as Element source files into the compilation context
         /// </summary>
-        public static IEnumerable<(bool Success, FileInfo FileInfo)> ParseFiles(this CompilationContext context,
-            IEnumerable<FileInfo> files) =>
-            files.Select(file => (context.ParseFile(file), file)).ToArray();
+        public static (bool OverallSuccess, IEnumerable<(bool Success, FileInfo FileInfo)> Results) ParseFiles(this CompilationContext context,
+            IEnumerable<FileInfo> files)
+        {
+            (bool Success, FileInfo File)[] fileResults = files.Select(file => (context.ParseFile(file, false), file)).ToArray();
+            var overallSuccess = fileResults.All(fr => fr.Success) && context.GlobalIndexer.Validate(context);
+            return (overallSuccess, fileResults);
+        }
     }
 }

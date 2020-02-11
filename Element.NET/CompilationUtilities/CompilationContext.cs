@@ -2,7 +2,6 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Element.AST;
 using Tomlyn;
 using Tomlyn.Model;
 
@@ -16,6 +15,7 @@ namespace Element
         private CompilationContext(in CompilationInput compilationInput)
         {
             Input = compilationInput;
+            GlobalIndexer = new GlobalIndexer();
             LogCallback = compilationInput.LogCallback;
         }
 
@@ -27,9 +27,11 @@ namespace Element
                     directory?.GetFiles("*.ele", SearchOption.AllDirectories) ?? Array.Empty<FileInfo>())
                 .Concat(compilationInput.ExtraSourceFiles)
                 .ToArray())
-            .All(parseResult => parseResult.Success);
+            .OverallSuccess;
 
         public CompilationInput Input { get; }
+
+        public GlobalIndexer GlobalIndexer { get; }
 
         private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
 
@@ -69,31 +71,6 @@ namespace Element
 
             return CompilationErr.Instance;
         }
-
-        private readonly Dictionary<FileInfo, SourceScope> _rootScopes = new Dictionary<FileInfo, SourceScope>();
-        private readonly Dictionary<string, Item> _uncompiledCache = new Dictionary<string, Item>();
-        private readonly Dictionary<string, IValue> _compiledCache = new Dictionary<string, IValue>();
-
-        public SourceScope this[FileInfo file]
-        {
-            get => _rootScopes[file];
-            set => _rootScopes[file] = value;
-        }
-
-        public bool ValidateRootScope() => this.ValidateScope(_rootScopes.Values.SelectMany(s => s), _uncompiledCache);
-
-        public IValue CompileExpression(AST.Expression expression) =>
-            this.CompileExpression(expression, new CompilationFrame((identifier, context) =>
-            {
-                if (!_compiledCache.TryGetValue(identifier, out var value))
-                {
-
-                    context.LogError(7, $"'{identifier}' not found");
-                    return null;
-                }
-
-                return value;
-            }));
 
         /*/// <summary>
         /// Gets all functions in global scope and any namespaces which match the given filter.

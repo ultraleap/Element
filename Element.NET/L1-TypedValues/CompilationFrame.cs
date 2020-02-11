@@ -7,34 +7,34 @@ namespace Element
     /// </summary>
     public class CompilationFrame
     {
-        public CompilationFrame(Indexer indexer) :this(indexer, null) { }
+        public CompilationFrame(IIndexable indexable) :this(indexable, null) { }
 
-        private CompilationFrame(Indexer indexer, CompilationFrame parent)
+        private CompilationFrame(IIndexable indexable, CompilationFrame parent)
         {
-            _indexer = indexer;
+            _indexable = indexable;
             _parent = parent;
         }
 
         private readonly CompilationFrame? _parent;
-        private readonly Indexer _indexer;
+        private readonly IIndexable _indexable;
 
         /// <summary>
         /// Push a child frame and return it.
         /// </summary>
-        public CompilationFrame Push(Indexer indexer) => new CompilationFrame(indexer, this);
+        public CompilationFrame Push(IIndexable indexer) => new CompilationFrame(indexer, this);
 
         /// <summary>
         /// Gets an item from this frame or a parent frame.
         /// </summary>
-        public bool Get(Identifier identifier, CompilationContext context, out IValue value) =>
-            GetLocal(identifier, context, out value) || (_parent?.Get(identifier, context, out value) ?? false);
+        public bool Get(Identifier identifier, CompilationContext context, out IValue? value) =>
+            GetLocal(identifier, context,  out value) || (_parent?.Get(identifier, context, out value) ?? false);
 
         /// <summary>
         /// Gets an item from this frame excluding parent frames
         /// </summary>
-        public bool GetLocal(Identifier identifier, CompilationContext context, out IValue value)
+        public bool GetLocal(Identifier identifier, CompilationContext context, out IValue? value)
         {
-            switch (_indexer?.Invoke(identifier, context))
+            switch (_indexable[identifier, context])
             {
                 case { } i:
                     value = i;

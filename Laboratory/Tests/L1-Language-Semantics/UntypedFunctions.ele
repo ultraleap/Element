@@ -11,8 +11,8 @@ subBTwice(a, b)
 }
 
 a = add(5, 8);              # 13
-b = sub(3, 4);              # -1
-c = add(a, b);              # 12
-d = sub(add(c, b), 2);      # 9
-e = addThree(c, d, 1.5);    # 22.5
-f = subBTwice(e, b);        # 24.5
+b = sub(3, 5.5);            # -2.5
+c = add(a, b);              # 10.5
+d = sub(add(c, b), 2);      # 6
+e = addThree(c, d, 1.5);    # 18
+f = subBTwice(e, b);        # 23

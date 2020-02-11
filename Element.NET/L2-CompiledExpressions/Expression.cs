@@ -1,3 +1,5 @@
+using Element.AST;
+
 namespace Element
 {
 	using System;
@@ -7,7 +9,7 @@ namespace Element
 	/// <summary>
 	/// Base class for all Element expressions
 	/// </summary>
-	public abstract class Expression : IEquatable<Expression>, IFunction, IEvaluable
+	public abstract class Expression : IEquatable<Expression>, IFunction, IEvaluable, IValue
 	{
 		PortInfo[] IFunction.Inputs => Array.Empty<PortInfo>();
 		PortInfo[] IFunction.Outputs => Array.Empty<PortInfo>();
@@ -32,5 +34,6 @@ namespace Element
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
 
 		public virtual bool Equals(Expression other) => other?.ToString() == ToString();
+		public bool CanBeCached => true;
 	}
 }
