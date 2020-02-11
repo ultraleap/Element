@@ -1,4 +1,4 @@
-using Element;
+/*using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
@@ -10,7 +10,7 @@ namespace Laboratory.Tests
 		private static CompilationInput CompilationInput => new CompilationInput(FailOnError);
 
 		[
-			TestCase("bool", 0f, 0f),
+			TestCase("bool(0)", 0f),
 			TestCase("bool", 1f, 1f),
 			TestCase("bool", 1.2f, 1f),
 			TestCase("bool", 9999f, 1f),
@@ -21,7 +21,7 @@ namespace Laboratory.Tests
 			TestCase("not", 0f, 1f),
 			TestCase("not", 1f, 0f),
 		]
-		public void UnaryOp(string function, float a, float expected) =>
+		public void UnaryOp(string expression, float expected) =>
 			Assert.That(_host.Evaluate(CompilationInput, function, a)[0], Is.EqualTo(expected));
 
 		[
@@ -81,4 +81,4 @@ namespace Laboratory.Tests
 		public void BinaryOp(string function, float a, float b, float expected) =>
 			Assert.That(_host.Evaluate(CompilationInput, function, a, b)[0], Is.EqualTo(expected));
 	}
-}
+}*/

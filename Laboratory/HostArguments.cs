@@ -233,18 +233,12 @@ namespace Laboratory
                 return bool.Parse(RunHostProcess(input, processArgs.ToString()));
             }
 
-            float[] IHost.Evaluate(in CompilationInput input, string expression, params float[] arguments)
+            float[] IHost.Evaluate(in CompilationInput input, string expression)
             {
                 var processArgs = BeginCommand(input, "evaluate");
 
                 processArgs.Append(" -e ");
                 processArgs.Append(expression);
-
-                if (arguments?.Length > 0)
-                {
-                    processArgs.Append(" -a ");
-                    processArgs.AppendJoin(' ', arguments);
-                }
 
                 return RunHostProcess(input, processArgs.ToString()).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
             }

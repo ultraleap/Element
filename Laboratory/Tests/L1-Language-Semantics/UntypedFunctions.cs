@@ -14,21 +14,21 @@ namespace Laboratory.Tests
 
 
         [Test]
-        public void Add() => AssertApproxEqual(CompilationInput, "a", 13f);
+        public void Add() => AssertApproxEqual(CompilationInput, "add(5, 8)", new []{13f});
         
         [Test]
-        public void Sub() => AssertApproxEqual(CompilationInput, "b", -2.5f);
+        public void Sub() => AssertApproxEqual(CompilationInput, "sub(3, 5.5)", new[]{-2.5f});
         
         [Test]
-        public void AddWithIdentifiers() => AssertApproxEqual(CompilationInput, "c", 10.5f);
+        public void AddWithIdentifiers() => AssertApproxEqual(CompilationInput, "add(pi, 6)",  new[]{9.14f});
         
         [Test]
-        public void NestedCallExpression() => AssertApproxEqual(CompilationInput, "d", 6f);
+        public void NestedCallExpression() => AssertApproxEqual(CompilationInput, "sub(add(pi, 2), 5)", new[]{0.14f});
         
         [Test]
-        public void CustomExpressionBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "e", 18f);
+        public void CustomExpressionBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "addThree(3.14, -9, pi)", new[]{-9f});
     
         [Test]
-        public void CustomScopeBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "f", 23f);
+        public void CustomScopeBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "subBTwice(pi, 2)", new[]{-0.86f});
     }
 }

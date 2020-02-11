@@ -12,7 +12,7 @@ namespace Element
         public bool ParseFile(in CompilationInput compilationInput, FileInfo file) =>
             CompilationContext.TryCreate(compilationInput, out var context) && context.ParseFile(file);
 
-        public float[] Evaluate(in CompilationInput compilationInput, string expression, params float[] arguments) =>
+        public float[] Evaluate(in CompilationInput compilationInput, string expression) =>
             CompilationContext.TryCreate(compilationInput, out var context)
                 ? context.Parse(expression, out AST.Expression expressionObject)
                     ?

@@ -20,7 +20,7 @@ namespace Laboratory.Tests
 			var hasCorrectArgCount = function.Arity == argCount;
 			var input = new CompilationInput(hasCorrectArgCount ? FailOnError : ExpectMessageCode(6));
 
-			_host.Evaluate(input, function.Name, Enumerable.Range(0, argCount).Select(i => (float)i).ToArray());
+			_host.Evaluate(input, $"{function.Name}({string.Join(',', Enumerable.Range(0, argCount).Select(i => (float)i))})");
 			
 			if (!hasCorrectArgCount)
 				Assert.Fail("Expected message code ELE6 but execution succeeded");

@@ -17,28 +17,39 @@ namespace Laboratory
         }
 
         protected readonly IHost _host;
+        
+        private const float FloatEpsilon = 1.19209e-5f;
+        private static Comparer<float> FloatComparer { get; } = Comparer<float>.Create((f, f1) => ApproximatelyEqualEpsilon(f, f1, FloatEpsilon) ? 0 : 1);
+        
+        // Taken from https://stackoverflow.com/questions/3874627/floating-point-comparison-functions-for-c-sharp
+        private static bool ApproximatelyEqualEpsilon(float a, float b, float epsilon)
+        {
+            const float floatNormal = (1 << 23) * float.Epsilon;
+            float absA = Math.Abs(a);
+            float absB = Math.Abs(b);
+            float diff = Math.Abs(a - b);
 
-        
-        
-        private const float FloatEpsilon = 1.19209e-7f;
-        protected static EqualConstraint FloatIsApproximately(object expected) => Is.EqualTo(expected).Within(FloatEpsilon);
-        protected static Comparer<float> FloatComparer { get; } = Comparer<float>.Create((f, f1) => MathF.Abs(f - f1) <= FloatEpsilon ? 0 : 1);
+            if (a == b)
+            {
+                // Shortcut, handles infinities
+                return true;
+            }
 
-        
-        
-        protected float EvaluateConstant(in CompilationInput compilationInput, string constantIdentifier) => _host.Evaluate(compilationInput, constantIdentifier).Single();
-        protected float[] EvaluateCall(in CompilationInput compilationInput, string identifier, params float[] arguments) => _host.Evaluate(compilationInput, identifier, arguments);
-        
-        
-        
-        protected void AssertApproxEqual(in CompilationInput compilationInput, string constantIdentifier, float constant) =>
-            Assert.That(EvaluateConstant(compilationInput, constantIdentifier), FloatIsApproximately(constant));
-        protected void AssertApproxEqual(in CompilationInput compilationInput, string constantIdentifier, string otherConstantIdentifer) =>
-            Assert.That(EvaluateConstant(compilationInput, constantIdentifier), FloatIsApproximately(EvaluateConstant(compilationInput, otherConstantIdentifer)));
-        protected void AssertApproxEqual(in CompilationInput compilationInput, string identifier, float[] arguments, float constant) =>
-            Assert.That(EvaluateCall(compilationInput, identifier, arguments).Single(), FloatIsApproximately(constant));
-        protected void AssertApproxEqual(in CompilationInput compilationInput, string identifier, float[] arguments, float[] expected) =>
-            CollectionAssert.AreEqual(EvaluateCall(compilationInput, identifier, arguments), expected, FloatComparer);
+            if (a == 0.0f || b == 0.0f || diff < floatNormal)
+            {    
+                // a or b is zero, or both are extremely close to it.
+                // relative error is less meaningful here
+                return diff < (epsilon * floatNormal);
+            }
+
+            // use relative error
+            return diff / Math.Min(absA + absB, float.MaxValue) < epsilon;
+        }
+      
+        protected void AssertApproxEqual(CompilationInput compilationInput, string expression, float[] expected) =>
+            CollectionAssert.AreEqual(_host.Evaluate(compilationInput, expression), expected, FloatComparer);
+        protected void AssertApproxEqual(CompilationInput compilationInput, string expression, string otherExpression) =>
+            CollectionAssert.AreEqual(_host.Evaluate(compilationInput, expression), _host.Evaluate(compilationInput, otherExpression), FloatComparer);
         
         
         

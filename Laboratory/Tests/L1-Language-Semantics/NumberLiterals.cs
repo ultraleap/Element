@@ -13,10 +13,10 @@ namespace Laboratory.Tests
         private static CompilationInput CompilationInput => new CompilationInput(FailOnError, true, extraSourceFiles: SourceFiles);
 
         [Test]
-        public void AIsPi() => AssertApproxEqual(CompilationInput, "a", 3.14f);
+        public void AIsPi() => AssertApproxEqual(CompilationInput, "a", new[]{3.14f});
         
         [Test]
-        public void BIsGoldenRatio() => AssertApproxEqual(CompilationInput, "b", 1.618f);
+        public void BIsGoldenRatio() => AssertApproxEqual(CompilationInput, "b", new[]{1.618f});
         
         [Test]
         public void CIsA() => AssertApproxEqual(CompilationInput, "c", "a");

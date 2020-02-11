@@ -14,7 +14,7 @@ namespace Laboratory.Tests
 		public void ZeroLengthArrayProducesError()
 		{
 			var input = new CompilationInput(ExpectMessageCode(13));
-			_host.Evaluate(input, "array"); // No arguments
+			_host.Evaluate(input, "list");
 			Assert.Fail("Expected message code ELE13 but execution succeeded");
 		}
 	}
