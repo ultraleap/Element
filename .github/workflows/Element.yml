@@ -46,7 +46,7 @@ jobs:
       - name: Run tests
         run: |
           cd Laboratory
-          dotnet test -v q --test-adapter-path:. --logger:nunit
+          dotnet test -v q --test-adapter-path:. --logger:trx
       - name: Uploaded test results on fail
         if: failure()
         uses: actions/upload-artifact@v1.0.0
