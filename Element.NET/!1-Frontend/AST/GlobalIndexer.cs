@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Element.AST;
 
-namespace Element
+namespace Element.AST
 {
-    public sealed class GlobalIndexer : Scope
+    public sealed class GlobalIndexer : ScopeBase
     {
         private readonly Dictionary<FileInfo, SourceScope> _rootScopes = new Dictionary<FileInfo, SourceScope>();
 

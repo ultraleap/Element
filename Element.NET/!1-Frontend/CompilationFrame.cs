@@ -34,7 +34,7 @@ namespace Element
         /// </summary>
         public bool GetLocal(Identifier identifier, CompilationContext context, out IValue? value)
         {
-            switch (_indexable[identifier, context])
+            switch (_indexable[identifier])
             {
                 case { } i:
                     value = i;

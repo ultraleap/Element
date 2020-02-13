@@ -1,9 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using Element.AST;
 using Lexico;
 
-namespace Element
+namespace Element.AST
 {
     /// <summary>
     /// The global scope, root of all other scopes

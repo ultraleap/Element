@@ -2,6 +2,7 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Element.AST;
 using Tomlyn;
 using Tomlyn.Model;
 
