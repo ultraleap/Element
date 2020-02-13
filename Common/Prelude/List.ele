@@ -4,7 +4,7 @@
 intrinsic list;
 
 # Represents a finite set of elements
-intrinsic struct List(at:Indexer, count:num)
+intrinsic struct List(at:Indexer, count:Num)
 {
     # fold summarizes a list
     # Invokes accumulator(total, element) with each element of the list, starting with initial as the total and returning a new total each iteration.
@@ -15,9 +15,9 @@ intrinsic struct List(at:Indexer, count:num)
 
     zip(a:List, b:List, zipper:Binary):List = List(_(idx) = zipper(a.at(idx), b.at(idx)), a.count);
 
-    repeat(value, count:num):List = List(_(_) = value, count);
+    repeat(value, count:Num):List = List(_(_) = value, count);
 
-    range(start:num, count:num):List = List(_(idx) = idx.add(start), count);
+    range(start:Num, count:Num):List = List(_(idx) = idx.add(start), count);
 
     concatenate(a:List, b:List):List
     {
@@ -26,16 +26,16 @@ intrinsic struct List(at:Indexer, count:num)
         return = List(indexer, count);
     }
 
-    take(a:List, amount:num):List = List(a.at, amount);
+    take(a:List, amount:Num):List = List(a.at, amount);
 
-    skip(a:List, amount:num):List
+    skip(a:List, amount:Num):List
     {
         count = a.count.sub(amount);
-        indexer(idx:num) = a.at(idx.add(amount));
+        indexer(idx:Num) = a.at(idx.add(amount));
         return = List(indexer, count);
     }
 
-    slice(a:List, start:num, count:num):List = List(_(idx) = a.at(idx.add(start)), count);
+    slice(a:List, start:Num, count:Num):List = List(_(idx) = a.at(idx.add(start)), count);
 
     filter(a:List, predicate:Predicate):List
     {
@@ -46,7 +46,7 @@ intrinsic struct List(at:Indexer, count:num)
 
     cycle(a:List):Stream = Stream(_(idx) = a.at(idx.mod(count)));
 
-    countWhere(a:List, predicate:Predicate):num = a.fold(0, _(current, next) = if(predicate(next), add(current, 1), current));
+    countWhere(a:List, predicate:Predicate):Num = a.fold(0, _(current, next) = if(predicate(next), add(current, 1), current));
 
     reverse(a:List):List = List(_(idx) = a.at(count.sub(idx).sub(1)), a.count);
 

@@ -1,87 +1,87 @@
-intrinsic struct num
+intrinsic struct Num
 {
     # Arithmetic functions
     # a + b
-    intrinsic add(a:num, b:num):num;
+    intrinsic add(a:Num, b:Num):Num;
     # a - b
-    intrinsic sub(a:num, b:num):num;
+    intrinsic sub(a:Num, b:Num):Num;
     # a * b
-    intrinsic mul(a:num, b:num):num;
+    intrinsic mul(a:Num, b:Num):Num;
     # a / b
-    intrinsic div(a:num, b:num):num;
+    intrinsic div(a:Num, b:Num):Num;
 
     # a ^ b
-    intrinsic pow(a:num, b:num):num;
+    intrinsic pow(a:Num, b:Num):Num;
     # a % b - rounds towards negative infinity
-    intrinsic rem(a:num, b:num):num;
+    intrinsic rem(a:Num, b:Num):Num;
 
-    # min(...):num;
+    # min(...):Num;
     # Finds the minimum in a variable amount of numbers
-    intrinsic min:num;
+    intrinsic min:Num;
 
-    # max(...):num;
+    # max(...):Num;
     # Finds the maximum in a variable amount of numbers
-    intrinsic max:num;
+    intrinsic max:Num;
 
     # |a| - absolute value function
-    intrinsic abs(a:num):num;
+    intrinsic abs(a:Num):Num;
 
     # ⌈a⌉ - smallest next integer
-    intrinsic ceil(a:num):num;
+    intrinsic ceil(a:Num):Num;
     # ⌊a⌋ - largest previous integer
-    intrinsic floor(a:num):num;
+    intrinsic floor(a:Num):Num;
 
     # Trigonometric functions
-    intrinsic sin(a:num):num;
-    intrinsic cos(a:num):num;
-    intrinsic tan(a:num):num;
+    intrinsic sin(a:Num):Num;
+    intrinsic cos(a:Num):Num;
+    intrinsic tan(a:Num):Num;
 
-    intrinsic asin(a:num):num;
-    intrinsic acos(a:num):num;
-    intrinsic atan(a:num):num;
+    intrinsic asin(a:Num):Num;
+    intrinsic acos(a:Num):Num;
+    intrinsic atan(a:Num):Num;
 
     # 2 argument arctangent function where a and b specify a cartesian coordinate
-    intrinsic atan2(a:num, b:num):num;
+    intrinsic atan2(a:Num, b:Num):Num;
 
-    degrees(a:num):num = a.mul(180.div(pi));
-    radians(a:num):num = a.mul(pi.div(180));
+    degrees(a:Num):Num = a.mul(180.div(pi));
+    radians(a:Num):Num = a.mul(pi.div(180));
 
 
     # Logarithmic functions
-    intrinsic ln(a:num):num;
-    intrinsic log(a:num, b:num):num;
+    intrinsic ln(a:Num):Num;
+    intrinsic log(a:Num, b:Num):Num;
 
     # Constants
     pi   = 3.14159265359;
     tau  = pi.mul(2);
     e    = 2.718281828459045;
 
-    sqr(a:num):num      = a.mul(a);
-    sqrt(a:num):num     = a.pow(0.5);
-    exp(a:num):num      = a.pow(e);
-    half(a:num):num     = mul(a, 0.5);
+    sqr(a:Num):Num      = a.mul(a);
+    sqrt(a:Num):Num     = a.pow(0.5);
+    exp(a:Num):Num      = a.pow(e);
+    half(a:Num):Num     = mul(a, 0.5);
 
     # remainder rounded towards 0
-    mod(a:num, b:num):num
+    mod(a:Num, b:Num):Num
     {
         c = a.rem(b);
         return = c.mul(b).lt(0).if(add(c, b), c);
     }
 
-    negate(a:num):num                   = 0.sub(a);
-    roundToZero(a:num):num              = a.sub(a.rem(1));
-    sign(n:num):num                     = n.leq(0).if(n.eq(0).if(-1, 0), 1);
-    dist(a:num, b:num):num              = a.sub(b).abs;
-    lerp(t:num, a:num, b:num):num       = a.add(t.mul(b.sub(a)));
-    clamp(a:num, min:num, max:num):num  = a.max(min).min(max);
+    negate(a:Num):Num                   = 0.sub(a);
+    roundToZero(a:Num):Num              = a.sub(a.rem(1));
+    sign(n:Num):Num                     = n.leq(0).if(n.eq(0).if(-1, 0), 1);
+    dist(a:Num, b:Num):Num              = a.sub(b).abs;
+    lerp(t:Num, a:Num, b:Num):Num       = a.add(t.mul(b.sub(a)));
+    clamp(a:Num, min:Num, max:Num):Num  = a.max(min).min(max);
 
     # Comparison functions
-    eq(a:num, b:num):Bool   = a.neq(b).negate;
-    neq(a:num, b:num):Bool  = a.sub(b).abs.to(Bool);
-    lt(a:num, b:num):Bool   = b.sub(a).to(Bool);
-    leq(a:num, b:num):Bool  = a.gt(b).negate;
-    gt(a:num, b:num):Bool   = a.sub(b).to(Bool);
-    geq(a:num, b:num):Bool  = a.lt(b).negate;
+    eq(a:Num, b:Num):Bool   = a.neq(b).negate;
+    neq(a:Num, b:Num):Bool  = a.sub(b).abs.to(Bool);
+    lt(a:Num, b:Num):Bool   = b.sub(a).to(Bool);
+    leq(a:Num, b:Num):Bool  = a.gt(b).negate;
+    gt(a:Num, b:Num):Bool   = a.sub(b).to(Bool);
+    geq(a:Num, b:Num):Bool  = a.lt(b).negate;
 
-    to(a:num, constructor:Unary) = constructor(a);
+    to(a:Num, constructor:Unary) = constructor(a);
 }

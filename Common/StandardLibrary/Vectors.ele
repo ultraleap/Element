@@ -1,24 +1,24 @@
 namespace Vector
 {
-    add(a, b) = memberwise(num.add, a, b);
-    sub(a, b) = memberwise(num.sub, a, b);
-    mul(a, b) = memberwise(num.mul, a, b);
-    div(a, b) = memberwise(num.div, a, b);
+    add(a, b) = memberwise(Num.add, a, b);
+    sub(a, b) = memberwise(Num.sub, a, b);
+    mul(a, b) = memberwise(Num.mul, a, b);
+    div(a, b) = memberwise(Num.div, a, b);
 
-    lerp(t:num, a, b) = memberwise(_(ax, bx) = num.lerp(t, ax, bx), a, b);
+    lerp(t:Num, a, b) = memberwise(_(ax, bx) = Num.lerp(t, ax, bx), a, b);
 
-    scale(v, scaleFactor:num) = map(_(component) = component.mul(scaleFactor), v);
+    scale(v, scaleFactor:Num) = map(_(component) = component.mul(scaleFactor), v);
 }
 
-struct Vector2(x:num, y:num)
+struct Vector2(x:Num, y:Num)
 {
-    Dot(a:Vec2, b:Vec2):num
+    Dot(a:Vec2, b:Vec2):Num
     {
         s = Vec.Mul(a, b);
         return = add(s.x, s.y);
     }
 
-    Angle(a:Vec2, b:Vec2):num
+    Angle(a:Vec2, b:Vec2):Num
     {
         angle = degrees(atan2(sub(b.y, a.y), sub(b.x, a.x)));
         return = if(lt(angle, 0), add(angle, 360), angle);
@@ -35,7 +35,7 @@ struct Vector2(x:num, y:num)
     Distance(a, b) = Magnitude(Vec.Sub(b, a));
 }
 
-struct Vector3(x:num, y:num, z:num)
+struct Vector3(x:Num, y:Num, z:Num)
 {
     Up = Vec3(0, 0, 1);
     Down = Vec3(0, 0, -1);
@@ -44,7 +44,7 @@ struct Vector3(x:num, y:num, z:num)
     Forward = Vec3(0, 1, 0);
     Back = Vec3(0, -1, 0);
 
-    Dot(a:Vec3, b:Vec3):num
+    Dot(a:Vec3, b:Vec3):Num
     {
         s = Vec.Mul(a, b);
         return = add(add(s.x, s.y), s.z);
@@ -80,9 +80,9 @@ struct Vector3(x:num, y:num, z:num)
     }
 }
 
-struct Vector3(x:num, y:num, z:num, w:num)
+struct Vector3(x:Num, y:Num, z:Num, w:Num)
 {
-    Dot(a:Vec4, b:Vec4):num
+    Dot(a:Vec4, b:Vec4):Num
     {
         s = Vec.Mul(a, b);
         return = add(add(s.x, s.y), add(s.z, s.w));
@@ -90,7 +90,7 @@ struct Vector3(x:num, y:num, z:num, w:num)
 
     Transform(vector:Vec4, matrix:Matrix4x4) : Vec4
     {
-        multiply(m):num = Dot(vector, m);
+        multiply(m):Num = Dot(vector, m);
         return = map(multiply, Matrix.Transpose(matrix));
     }
 }

@@ -4,7 +4,7 @@ intrinsic struct any;
 
 # Calls function by nominative argument matching the functions parameters with the supplied instances fields
 # Typically used with mapVariadic to cast an untyped variadic return back into a type instance, e.g.
-#   Vector3Add(a, b) = infer(Vector3, mapVariadic(num.add, a, b));
+#   Vector3Add(a, b) = infer(Vector3, mapVariadic(Num.add, a, b));
 intrinsic infer(function, instance);
 
 
@@ -20,8 +20,8 @@ intrinsic struct Tuple;
 # mapVariadic(function, ...)...;
 # Returns a structure of functions where each functions inputs are the variadic inputs scope accessed by the output expression.
 # The supplied function's arity must be equal to the number of variadic parameters, e.g.
-# mapVariadic(num.add, a) is invalid as num.add expects 2 parameters
-# mapVariadic(num.add, a, b).x is valid and evaluates to num.add(a.x, b.x)
+# mapVariadic(Num.add, a) is invalid as Num.add expects 2 parameters
+# mapVariadic(Num.add, a, b).x is valid and evaluates to Num.add(a.x, b.x)
 intrinsic memberwise;
 
 
@@ -36,7 +36,7 @@ Binary(a, b);
 # Any 3-arity (triadic) function
 Ternary(a, b, c);
 
-Indexer(i:num);
+Indexer(i:Num);
 Predicate(a):Bool;
 
 

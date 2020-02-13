@@ -1,5 +1,5 @@
 # Bool is guaranteed by a host to be refined to 1 or 0
-intrinsic struct Bool(n:num)
+intrinsic struct Bool(n:Num)
 {
     true = 1.to(Bool);
     false = 0.to(Bool);
