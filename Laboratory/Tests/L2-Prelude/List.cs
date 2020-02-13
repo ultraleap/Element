@@ -1,4 +1,4 @@
-using Element;
+/*using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
@@ -18,4 +18,4 @@ namespace Laboratory.Tests
 			Assert.Fail("Expected message code ELE13 but execution succeeded");
 		}
 	}
-}
+}*/
