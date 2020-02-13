@@ -45,14 +45,16 @@ namespace Element
     /// </summary>
     public static class Parser
     {
-        public static readonly string[] GloballyReservedIdentifiers =
+        public static Identifier ReturnIdentifier { get; } = new Identifier("return");
+        
+        public static readonly Identifier[] GloballyReservedIdentifiers =
         {
-            "_",
-            "any",
-            "intrinsic",
-            "namespace",
-            "return",
-            "struct"
+            new Identifier("_"),
+            new Identifier("any"),
+            new Identifier("intrinsic"),
+            new Identifier("namespace"),
+            ReturnIdentifier,
+            new Identifier("struct")
         };
 
         internal static (int Line, int Column, int LineCharacterIndex) CountLinesAndColumns(int index, string text)
@@ -113,7 +115,7 @@ namespace Element
             return success;
         }
 
-        public static bool ValidateIdentifier(this CompilationContext compilationContext, string identifier)
+        public static bool ValidateIdentifier(this CompilationContext compilationContext, Identifier identifier, List<Identifier> whitelist = null)
         {
             if (string.IsNullOrEmpty(identifier))
             {
@@ -121,7 +123,10 @@ namespace Element
                 return false;
             }
 
-            if (GloballyReservedIdentifiers.Any(reserved => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase)))
+            var reservedIdentifiers = whitelist == null
+                                          ? GloballyReservedIdentifiers
+                                          : GloballyReservedIdentifiers.Except(whitelist);
+            if (reservedIdentifiers.Any(reserved => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase)))
             {
                 compilationContext.LogError(15, $"'{identifier}' is a reserved identifier");
                 return false;
@@ -144,7 +149,7 @@ namespace Element
                 context.GlobalIndexer[file] = sourceScope;
                 if (validate)
                 {
-                    success &= context.GlobalIndexer.Validate(context);
+                    success &= context.GlobalIndexer.ValidateScope(context);
                 }
             }
 
@@ -159,7 +164,7 @@ namespace Element
             IEnumerable<FileInfo> files)
         {
             (bool Success, FileInfo File)[] fileResults = files.Select(file => (context.ParseFile(file, false), file)).ToArray();
-            var overallSuccess = fileResults.All(fr => fr.Success) && context.GlobalIndexer.Validate(context);
+            var overallSuccess = fileResults.All(fr => fr.Success) && context.GlobalIndexer.ValidateScope(context);
             return (overallSuccess, fileResults);
         }
     }

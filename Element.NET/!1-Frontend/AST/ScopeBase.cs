@@ -8,22 +8,25 @@ namespace Element.AST
         private readonly Dictionary<string, IValue> _valueCache = new Dictionary<string, IValue>();
         protected abstract IEnumerable<Item> ItemsToCacheOnValidate { get; }
             
-        public bool Validate(CompilationContext compilationContext)
+        public bool ValidateScope(CompilationContext compilationContext, List<Identifier> identifierWhitelist = null)
         {
             var success = true;
             foreach (var item in ItemsToCacheOnValidate)
             {
-                if (!compilationContext.ValidateIdentifier(item.Identifier))
+                if (!compilationContext.ValidateIdentifier(item.Identifier, identifierWhitelist))
                 {
                     success = false;
-                    continue;
                 }
                 
+                if (!item.Validate(compilationContext))
+                {
+                    success = false;
+                }
+
                 if (_itemCache.ContainsKey(item.Identifier))
                 {
                     compilationContext.LogError(2, $"Cannot add duplicate identifier '{item.Identifier}'");
                     success = false;
-                    continue;
                 }
 
                 _itemCache[item.Identifier] = item;

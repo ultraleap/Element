@@ -58,7 +58,7 @@ name = "BoundaryMapMissing"
 level = "Error"
 
 [ELE13]
-name = "ZeroLengthArray"
+name = "StructMissingPorts"
 level = "Error"
 
 [ELE14]
@@ -71,6 +71,10 @@ level = "Error"
 
 [ELE16]
 name = "InvalidExpression"
+level = "Error"
+
+[ELE17]
+name = "InvalidReturnType"
 level = "Error"
 
 [ELE9999]

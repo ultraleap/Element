@@ -6,5 +6,7 @@ namespace Element.AST
     {
         [Literal(":"), WhitespaceSurrounded] private Unnamed _;
         [field: Term] public Identifier Identifier { get; }
+
+        public bool Validate(CompilationContext compilationContext) => compilationContext.ValidateIdentifier(Identifier);
     }
 }

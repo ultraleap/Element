@@ -78,9 +78,13 @@ namespace Element
                 // 
                 previous = callable switch
                 {
-                    Function intrinsic when intrinsic.IsIntrinsic => Call(compilationContext.GlobalIndexer.GetIntrinsic(intrinsic.Identifier)),
+                    Function intrinsic when intrinsic.IsIntrinsic => compilationContext.GlobalIndexer.GetIntrinsic(intrinsic.Identifier) switch
+                    {
+                        ICallable intrinsicImpl => Call(intrinsicImpl),
+                        _ => compilationContext.LogError(4, $"No intrinsic named '{intrinsic.Identifier}' is implemented")
+                    },
                     Function f => Call(f),
-                    _ => throw new NotImplementedException($"Calling '{callable}' not yet implemented in CompileExpression")
+                    _ => throw new NotImplementedException($"Calling '{callable}' not yet implemented in {nameof(CompileExpression)}")
                 };
             }
             compilationContext.Pop();

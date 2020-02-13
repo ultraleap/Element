@@ -4,7 +4,7 @@ using Lexico;
 namespace Element.AST
 {
     [WhitespaceSurrounded]
-    public class Scope : ScopeBase, IFunctionBody
+    public class Scope : ScopeBase, IFunctionBody, IStructBody
     {
         [Literal("{")] private Unnamed _open;
         [Optional] private readonly List<Item> _items = new List<Item>();
