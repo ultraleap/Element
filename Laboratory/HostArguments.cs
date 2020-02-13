@@ -200,16 +200,18 @@ namespace Laboratory
                     ? compilerMessage
                     : new CompilerMessage(msg)).ToArray();
 
-                foreach (var msg in compilerMessages)
-                {
-                    input.LogCallback?.Invoke(msg);
-                }
-
                 if (process.ExitCode != 0)
                 {
                     Assert.Fail(compilerMessages
-                        .Aggregate(new StringBuilder($"{_info.Name} process quit with exit code '{process.ExitCode}'.").AppendLine(),
-                            (builder, s) => builder.AppendLine(s.ToString())).ToString());
+                        .Aggregate(new StringBuilder($"{_info.Name} process quit with exit code '{process.ExitCode}'.").AppendLine().AppendLine($"Beginning of {_info.Name} output"),
+                            (builder, s) => builder.Append("    ").AppendLine(s.ToString())).AppendLine($"End of {_info.Name} output").ToString());
+                }
+                else
+                {
+                    foreach (var msg in compilerMessages)
+                    {
+                        input.LogCallback?.Invoke(msg);
+                    }
                 }
 
                 process.Close();
@@ -229,7 +231,7 @@ namespace Laboratory
             bool IHost.ParseFile(in CompilationInput input, FileInfo file)
             {
                 var processArgs = BeginCommand(input, "parse");
-                processArgs.Append($" -f {file.FullName}");
+                processArgs.Append($" -f \"{file.FullName}\"");
                 return bool.Parse(RunHostProcess(input, processArgs.ToString()));
             }
 
@@ -238,7 +240,7 @@ namespace Laboratory
                 var processArgs = BeginCommand(input, "evaluate");
 
                 processArgs.Append(" -e ");
-                processArgs.Append(expression);
+                processArgs.Append($"\"{expression}\"");
 
                 return RunHostProcess(input, processArgs.ToString()).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
             }
