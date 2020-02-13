@@ -1,4 +1,4 @@
-using System.Linq;
+/*using System.Linq;
 using Element;
 using NUnit.Framework;
 
@@ -26,4 +26,4 @@ namespace Laboratory.Tests
 				Assert.Fail("Expected message code ELE6 but execution succeeded");
 		}
 	}
-}
+}*/

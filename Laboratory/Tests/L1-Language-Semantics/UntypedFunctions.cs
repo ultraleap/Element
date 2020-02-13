@@ -26,9 +26,6 @@ namespace Laboratory.Tests
         public void NestedCallExpression() => AssertApproxEqual(CompilationInput, "sub(add(pi, 2), 5)", new[]{0.14f});
         
         [Test]
-        public void CustomExpressionBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "addThree(3.14, -9, pi)", new[]{-9f});
-    
-        [Test]
-        public void CustomScopeBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "subBTwice(pi, 2)", new[]{-0.86f});
+        public void CustomExpressionBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "addThree(-3.14, -9, pi)", new[]{-9f});
     }
 }

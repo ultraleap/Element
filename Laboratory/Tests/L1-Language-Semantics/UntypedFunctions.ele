@@ -3,9 +3,3 @@ intrinsic sub(a, b);
 pi = 3.14;
 
 addThree(a, b, c) = add(a, add(b, c));
-
-subBTwice(a, b)
-{
-    first = sub(a, b);
-    return = sub(first, b);
-}

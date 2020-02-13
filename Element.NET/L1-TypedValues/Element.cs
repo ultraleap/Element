@@ -16,7 +16,7 @@ namespace Element.AST
     }
     public interface ICallable : IValue
     {
-        IValue Call(Func<IValue>[] arguments, CompilationFrame frame, CompilationContext compilationContext);
+        IValue Call(IValue[] arguments, CompilationFrame frame, CompilationContext compilationContext);
         Port[] Inputs { get; }
     }
 
@@ -47,6 +47,8 @@ namespace Element.AST
         public string Value { get; }
         public static implicit operator string(Identifier i) => i.Value;
         public override string ToString() => Value;
+        public override int GetHashCode() => Value.GetHashCode();
+        public override bool Equals(object obj) => obj?.Equals(Value) ?? (Value == null);
     }
 
     [WhitespaceSurrounded]
@@ -115,9 +117,56 @@ namespace Element.AST
 
         private readonly Dictionary<string, Item> _itemCache = new Dictionary<string, Item>();
         private readonly Dictionary<string, IValue> _valueCache = new Dictionary<string, IValue>();
+        protected virtual IEnumerable<Item> ItemsToCacheOnValidate => _items;
+            
+        public bool Validate(CompilationContext compilationContext)
+        {
+            var success = true;
+            foreach (var item in ItemsToCacheOnValidate)
+            {
+                if (!compilationContext.ValidateIdentifier(item.Identifier))
+                {
+                    success = false;
+                    continue;
+                }
 
-        public bool Validate(CompilationContext compilationContext) => compilationContext.ValidateScope(_items, _itemCache);
-        public IValue? this[Identifier id, CompilationContext compilationContext] => compilationContext.Index(id, _itemCache, _valueCache);
+                if (_itemCache.ContainsKey(item.Identifier))
+                {
+                    compilationContext.LogError(2, $"Cannot add duplicate identifier '{item.Identifier}'");
+                    success = false;
+                }
+                else
+                {
+                    _itemCache[item.Identifier] = item;
+                }
+            }
+
+            return success;
+        }
+
+        public IValue? this[Identifier id, CompilationContext compilationContext]
+        {
+            get
+            {
+                if (_valueCache.TryGetValue(id, out var value)) return value;
+                value = _itemCache.TryGetValue(id, out var item) switch
+                {
+                    true => item switch
+                    {
+                        IValue v => v,
+                        _ => throw new InternalCompilerException($"{item} is not an IValue")
+                    },
+                    false => compilationContext.LogError(7, $"'{id}' not found")
+                };
+                if (value != null && value.CanBeCached)
+                {
+                    _valueCache[id] = value;
+                }
+
+                return value;
+            }
+        }
+
         public bool CanBeCached => true;
     }
 
@@ -149,7 +198,7 @@ namespace Element.AST
 
         public sealed class FunctionArguments : IIndexable
         {
-            public FunctionArguments(Func<IValue>[] arguments, Port[] ports)
+            public FunctionArguments(IValue[] arguments, Port[] ports)
             {
                 for (var i = 0; i < ports?.Length; i++)
                 {
@@ -157,15 +206,18 @@ namespace Element.AST
                 }
             }
 
-            private readonly Dictionary<Identifier, Func<IValue>> _argumentsByIdentifier = new Dictionary<Identifier, Func<IValue>>();
+            private readonly Dictionary<Identifier, IValue> _argumentsByIdentifier = new Dictionary<Identifier, IValue>();
 
             public bool CanBeCached => true;
 
-            public IValue? this[Identifier id, CompilationContext compilationContext] => _argumentsByIdentifier.TryGetValue(id, out var func) ? func?.Invoke() : null;
+            public IValue? this[Identifier id, CompilationContext compilationContext]
+            {
+                get { return _argumentsByIdentifier.TryGetValue(id, out var arg) ? arg : null; }
+            }
         }
 
 
-        public IValue Call(Func<IValue>[] arguments, CompilationFrame frame, CompilationContext compilationContext)
+        public IValue Call(IValue[] arguments, CompilationFrame frame, CompilationContext compilationContext)
         {
             IValue CompileFunction(Function function, CompilationFrame callSiteFrame) =>
                 function._functionBody switch

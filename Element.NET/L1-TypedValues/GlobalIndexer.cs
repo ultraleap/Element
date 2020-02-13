@@ -6,13 +6,11 @@ using Element.AST;
 
 namespace Element
 {
-    public sealed class GlobalIndexer : IIndexable
+    public sealed class GlobalIndexer : Scope
     {
         private readonly Dictionary<FileInfo, SourceScope> _rootScopes = new Dictionary<FileInfo, SourceScope>();
-        private readonly Dictionary<string, Item> _items = new Dictionary<string, Item>();
-        private readonly Dictionary<string, IValue> _values = new Dictionary<string, IValue>();
 
-        private readonly Dictionary<string, ICallable> _intrinsicFunctions = new Dictionary<string, ICallable>();
+        private readonly Dictionary<Identifier, ICallable> _intrinsicFunctions = new Dictionary<Identifier, ICallable>();
 
         public GlobalIndexer()
         {
@@ -33,7 +31,7 @@ namespace Element
                 .Cast<Binary.Op>()
                 .Select(o => new BinaryIntrinsic(o)))
             {
-                _intrinsicFunctions.Add(fun.Name, fun);
+                _intrinsicFunctions.Add(fun.Identifier, fun);
             }
             //_functions.AddRange(Enum.GetValues(typeof(Unary.Op)).Cast<Unary.Op>().Select(o => new UnaryIntrinsic(o)));
         }
@@ -46,9 +44,6 @@ namespace Element
             set => _rootScopes[file] = value;
         }
 
-        public bool CanBeCached => true;
-        public bool Validate(CompilationContext context) => context.ValidateScope(_rootScopes.Values.SelectMany(s => s), _items);
-
-        public IValue? this[Identifier id, CompilationContext compilationContext] => compilationContext.Index(id, _items, _values);
+        protected override IEnumerable<Item> ItemsToCacheOnValidate => _rootScopes.Values.SelectMany(s => s);
     }
 }

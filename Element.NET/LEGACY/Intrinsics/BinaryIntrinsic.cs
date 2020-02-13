@@ -1,4 +1,3 @@
-using System;
 using Element.AST;
 
 namespace Element
@@ -11,10 +10,12 @@ namespace Element
 		public BinaryIntrinsic(Binary.Op operation)
 		{
 			Name = operation.ToString().ToLowerInvariant();
+			Identifier = new Identifier(Name);
 			Operation = operation;
 		}
 
-		public string Name { get; }
+		public string Name { get; } // TODO: Remove name in favor of Identifier
+		public Identifier Identifier { get; }
 		public Binary.Op Operation { get; }
 
 		public PortInfo[] Inputs { get; } =
@@ -24,9 +25,9 @@ namespace Element
 		};
 
 		Port[] ICallable.Inputs { get; } =
+			// TODO: Don't implement explicitly
 		{
-			// No type checking yet, only length checking so who cares what they are? :haHAA:
-			// TODO: Don't do this.
+			// TODO: Add type.
 			new Port {Identifier = new Identifier("a")},
 			new Port {Identifier = new Identifier("b")},
 		};
@@ -45,12 +46,9 @@ namespace Element
 		}
 
 		public bool CanBeCached => true;
-		public IValue Call(Func<IValue>[] arguments, CompilationFrame frame, CompilationContext compilationContext)
-		{
-			if (!compilationContext.CheckArguments(arguments, (this as ICallable).Inputs)) return CompilationErr.Instance;
-			var a = arguments[0]?.Invoke();
-			var b = arguments[1]?.Invoke();
-			return new Literal(Binary.Evaluate(Operation, a as Literal, b as Literal));
-		}
+		public IValue Call(IValue[] arguments, CompilationFrame frame, CompilationContext compilationContext) =>
+			compilationContext.CheckArguments(arguments, (this as ICallable).Inputs)
+				? new Literal(Binary.Evaluate(Operation, arguments[0] as Literal, arguments[1] as Literal))
+				: (IValue) CompilationErr.Instance;
 	}
 }

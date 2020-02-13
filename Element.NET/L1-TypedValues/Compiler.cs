@@ -26,14 +26,11 @@ namespace Element
 
             foreach (var callExpr in expression.CallExpressions)
             {
-                var arguments = callExpr.List.Select(argExpr =>
-                    (Func<IValue>) (() => compilationContext.CompileExpression(argExpr, frame))).ToArray();
+                var arguments = callExpr.List.Select(argExpr => compilationContext.CompileExpression(argExpr, frame)).ToArray();
 
-                IValue Call(ICallable callable)
-                {
-                    return callable.Call(arguments, frame.Push(new Function.FunctionArguments(arguments, callable.Inputs)),
-                        compilationContext);
-                }
+                IValue Call(ICallable callable) =>
+                    callable.Call(arguments, frame.Push(new Function.FunctionArguments(arguments, callable.Inputs)),
+                                  compilationContext);
 
                 previous = previous switch
                 {
@@ -59,52 +56,7 @@ namespace Element
             return previous;
         }
 
-        public static IValue? Index(this CompilationContext compilationContext, Identifier id, Dictionary<string, Item> items, Dictionary<string, IValue> cache)
-        {
-            if (cache.TryGetValue(id, out var value)) return value;
-            value = items.TryGetValue(id, out var item) switch
-            {
-                true => item switch
-                {
-                    IValue v => v,
-                    _ => throw new InternalCompilerException($"{item} is not an IValue")
-                },
-                false => compilationContext.LogError(7, $"'{id}' not found")
-            };
-            if (value != null && value.CanBeCached)
-            {
-                cache[id] = value;
-            }
-
-            return value;
-        }
-
-        public static bool ValidateScope(this CompilationContext compilationContext, IEnumerable<Item> items, Dictionary<string, Item> cache)
-        {
-            var success = true;
-            foreach (var item in items)
-            {
-                if (!compilationContext.ValidateIdentifier(item.Identifier))
-                {
-                    success = false;
-                    continue;
-                }
-
-                if (cache.ContainsKey(item.Identifier))
-                {
-                    compilationContext.LogError(2, $"Cannot add duplicate identifier '{item.Identifier}'");
-                    success = false;
-                }
-                else
-                {
-                    cache[item.Identifier] = item;
-                }
-            }
-
-            return success;
-        }
-
-        public static bool CheckArguments(this CompilationContext compilationContext, Func<IValue>[] arguments, Port[] inputs)
+        public static bool CheckArguments(this CompilationContext compilationContext, IValue[] arguments, Port[] inputs)
         {
             var argCount = arguments?.Length ?? 0;
             var expectedArgCount = inputs?.Length ?? 0; // No inputs means no arguments required (nullary function)
