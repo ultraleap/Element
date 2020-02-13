@@ -25,7 +25,7 @@ namespace Laboratory.Tests
                     "fail" => int.TryParse(match.Groups["value"].Value, out var code) ? code : _defaultFailingParseTestCode
                 };
 
-                yield return new TestCaseData((FileInfo: file, ExpectMessageCode: expectedMessageCode)).SetName(file.FullName.Split("L0-Syntax-Parsing\\")[1]);
+                yield return new TestCaseData((FileInfo: file, ExpectMessageCode: expectedMessageCode)).SetName(file.FullName.Split("L0-Syntax-Parsing")[1]);
             }
         }
 
