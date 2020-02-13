@@ -96,12 +96,17 @@ namespace Element
 
         public static bool Parse<T>(this CompilationContext context, string text, out T output)
         {
+            var parseTrace = new List<string>();
             var success = Lexico.Parser.TryParse(text, out output, new DelegateTextTrace(msg =>
             {
-                if (!string.IsNullOrEmpty(msg)) context.Log(msg);
+                if (!string.IsNullOrEmpty(msg)) parseTrace.Add(msg);
             }));
             if (!success)
             {
+                foreach (var msg in parseTrace)
+                {
+                    context.Log(msg);
+                }
                 context.LogError(9, "Parsing failed, see previous parse trace messages for details.");
             }
             return success;

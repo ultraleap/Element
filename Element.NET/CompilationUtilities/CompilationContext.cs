@@ -41,14 +41,14 @@ namespace Element
         public void Push(TraceSite traceSite) => _callStack.Push(traceSite);
         public void Pop() => _callStack.Pop();
 
-        public CompilationErr LogError(int messageCode, string context = default) => LogImpl(messageCode, context);
+        public CompilationErr LogError(int? messageCode, string context = default) => LogImpl(messageCode, context);
         public void Log(string message) => LogImpl(null, message);
 
         private CompilationErr LogImpl(int? messageCode, string context = default)
         {
             if (!messageCode.HasValue)
             {
-                LogCallback?.Invoke(new CompilerMessage(null, null, null, context, DateTime.Now, _callStack.ToArray()));
+                LogCallback?.Invoke(new CompilerMessage(null, null, null, context, _callStack.ToArray()));
                 return CompilationErr.Instance;
             }
 
@@ -66,7 +66,7 @@ namespace Element
             if (level >= Input.Verbosity)
             {
                 LogCallback?.Invoke(new CompilerMessage(messageCode.Value, (string) messageTable["name"], level,
-                    context, DateTime.Now, _callStack.ToArray()));
+                    context, _callStack.ToArray()));
             }
 
             return CompilationErr.Instance;

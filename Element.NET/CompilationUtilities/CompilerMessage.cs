@@ -7,21 +7,19 @@ namespace Element
 {
     public readonly struct CompilerMessage
     {
-        public CompilerMessage(string message, DateTime? timeStamp = default, MessageLevel? messageLevel = default) : this()
+        public CompilerMessage(string message, MessageLevel? messageLevel = default) : this()
         {
             _message = Context = message;
             MessageLevel = messageLevel;
-            TimeStamp = timeStamp ?? DateTime.Now;
         }
 
         [JsonConstructor]
-        public CompilerMessage(int? messageCode, string? name, MessageLevel? messageLevel, string? context, DateTime timeStamp, IReadOnlyList<TraceSite> callStack)
+        public CompilerMessage(int? messageCode, string? name, MessageLevel? messageLevel, string? context, IReadOnlyList<TraceSite> callStack)
         {
             MessageCode = messageCode;
             Name = name;
             Context = context;
             MessageLevel = messageLevel;
-            TimeStamp = timeStamp;
             CallStack = callStack;
 
             var builder = new StringBuilder();
@@ -52,7 +50,6 @@ namespace Element
         public string? Name { get; }
         public MessageLevel? MessageLevel { get; }
         public IReadOnlyCollection<TraceSite> CallStack { get; }
-        public DateTime TimeStamp { get; }
 
         public override string ToString() => _message;
     }

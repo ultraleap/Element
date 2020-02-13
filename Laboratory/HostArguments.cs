@@ -198,7 +198,7 @@ namespace Laboratory
 
                 var compilerMessages = messages.Select(msg => TryParseJson(msg, out CompilerMessage compilerMessage)
                     ? compilerMessage
-                    : new CompilerMessage(msg)).OrderBy(msg => msg.TimeStamp).ToArray();
+                    : new CompilerMessage(msg)).ToArray();
 
                 foreach (var msg in compilerMessages)
                 {

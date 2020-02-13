@@ -43,7 +43,7 @@ namespace Alchemist
 			return exitCode;
 		}
 
-		private void Log(string message, MessageLevel? level = default) => Log(new CompilerMessage(message, DateTime.Now, level));
+		private void Log(string message, MessageLevel? level = default) => Log(new CompilerMessage(message, level));
 
 		private void Log(CompilerMessage message)
 		{
