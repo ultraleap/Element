@@ -5,7 +5,7 @@ Refined types can be used in place of their base type.
 Example refined type implementation:
 
 ```
-struct Bool:num = base.abs.clamp(0, 1).ceil.to(Bool)
+struct Bool:Num = base.abs.clamp(0, 1).ceil.to(Bool)
 {
     true = Bool(1);
     false = Bool(0);
@@ -21,31 +21,31 @@ struct Bool:num = base.abs.clamp(0, 1).ceil.to(Bool)
 
 
 
-struct Radians:num
+struct Radians:Num
 {
-    intrinsic sin(a:Radians):num;
-    intrinsic cos(a:Radians):num;
-    intrinsic tan(a:Radians):num;
+    intrinsic sin(a:Radians):Num;
+    intrinsic cos(a:Radians):Num;
+    intrinsic tan(a:Radians):Num;
 
-    intrinsic asin(a:Radians):num;
-    intrinsic acos(a:Radians):num;
-    intrinsic atan(a:Radians):num;
+    intrinsic asin(a:Radians):Num;
+    intrinsic acos(a:Radians):Num;
+    intrinsic atan(a:Radians):Num;
 
-    toDegrees(a:Radians):Degrees = a.mul(180.div(num.pi));
+    toDegrees(a:Radians):Degrees = a.mul(180.div(Num.pi));
 }
 
 
 
-struct Degrees:num
+struct Degrees:Num
 {
-    sin(a:Degrees):num = a.toRadians.sin;
-    cos(a:Degrees):num = a.toRadians.cos;
-    tan(a:Degrees):num = a.toRadians.tan;
+    sin(a:Degrees):Num = a.toRadians.sin;
+    cos(a:Degrees):Num = a.toRadians.cos;
+    tan(a:Degrees):Num = a.toRadians.tan;
 
-    asin(a:Degrees):num = a.toRadians.asin;
-    acos(a:Degrees):num = a.toRadians.acos;
-    atan(a:Degrees):num = a.toRadians.atan;
+    asin(a:Degrees):Num = a.toRadians.asin;
+    acos(a:Degrees):Num = a.toRadians.acos;
+    atan(a:Degrees):Num = a.toRadians.atan;
 
-    toRadians(a:Degrees):Radians = a.mul(num.pi.div(180));
+    toRadians(a:Degrees):Radians = a.mul(Num.pi.div(180));
 }
 ```

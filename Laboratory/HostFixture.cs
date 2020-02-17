@@ -4,7 +4,6 @@ using System.Linq;
 using System.Collections.Generic;
 using Element;
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
 
 namespace Laboratory
 {
@@ -50,7 +49,13 @@ namespace Laboratory
             CollectionAssert.AreEqual(_host.Evaluate(compilationInput, expression), expected, FloatComparer);
         protected void AssertApproxEqual(CompilationInput compilationInput, string expression, string otherExpression) =>
             CollectionAssert.AreEqual(_host.Evaluate(compilationInput, expression), _host.Evaluate(compilationInput, otherExpression), FloatComparer);
-        
+
+        protected void EvaluateExpectingErrorCode(CompilationInput compilationInput, int messageCode, string expression)
+        {
+            var withNewCallback = new CompilationInput(ExpectMessageCode(messageCode, compilationInput.LogCallback), compilationInput.ExcludePrelude, compilationInput.Packages, compilationInput.ExtraSourceFiles);
+            _host.Evaluate(withNewCallback, expression);
+            Assert.Fail("Expected message code '{0}' but no errors were logged", messageCode);
+        }
         
         
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -67,10 +72,10 @@ namespace Laboratory
                 TestContext.WriteLine(message.ToString());
         }
 
-        protected static Action<CompilerMessage> ExpectMessageCode(int messageCode) => message =>
+        protected static Action<CompilerMessage> ExpectMessageCode(int messageCode, Action<CompilerMessage> fallback) => message =>
         {
             if (message.MessageCode == messageCode) Assert.Pass($"Received expected message code {messageCode}");
-            FailOnError(message);
+            fallback?.Invoke(message);
         };
 }
 }

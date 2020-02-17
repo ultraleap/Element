@@ -18,6 +18,8 @@ namespace Element.AST
         public bool IsIntrinsic => !string.IsNullOrEmpty(_intrinsic);
         public override string ToString() => _declaration.ToString();
 
+        private readonly List<Identifier> _functionIdWhitelist = new List<Identifier> {Parser.ReturnIdentifier};
+
         public override bool Validate(CompilationContext compilationContext)
         {
             var success = true;
@@ -29,7 +31,7 @@ namespace Element.AST
             
             if (_functionBody is Scope scope)
             {
-                success &= scope.ValidateScope(compilationContext, new List<Identifier>{Parser.ReturnIdentifier});
+                success &= scope.ValidateScope(compilationContext, _functionIdWhitelist);
             }
 
             return success;

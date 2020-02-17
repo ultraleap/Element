@@ -1,0 +1,2 @@
+d = foo(b)(c);
+e = bar(a)(b)(c)(foo);

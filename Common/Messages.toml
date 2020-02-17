@@ -3,7 +3,6 @@
     # Information - infrequent information generally useful to the user which doesn't impact performance
     # Warning - any issues found that aren't significant enough to be considered an error
     # Error - errors that don't prevent compilation
-    # Fatal - errors that require the compiler to immediately exit
 
 [ELE0]
 name = "Success"
@@ -75,6 +74,14 @@ level = "Error"
 
 [ELE17]
 name = "InvalidReturnType"
+level = "Error"
+
+[ELE18]
+name = "RedundantQualifier"
+level = "Warning"
+
+[ELE19]
+name = "AliasCannotHavePorts"
 level = "Error"
 
 [ELE9999]

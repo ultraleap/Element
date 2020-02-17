@@ -1,12 +1,6 @@
-TestImplicitConversion(a:num):num
-{
-    TestAlias:num;
-    alias = TestAlias(a);
-    AddAliased(n:num):TestAlias = add(n, 5);
-    return = AddAliased(alias);
-}
+struct NotNum(a);
+struct NumAlias:Num;
 
-Voldemort(a)
-{
-	return struct CannotBeNamed(a);
-}
+explicitAny(a:Any):Any = a;
+onlyNum(a:Num):Num = a;
+onlyNumAlias(a:NumAlias):NumAlias = a;

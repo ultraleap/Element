@@ -20,6 +20,6 @@ namespace Element
         public readonly int Column;
         public readonly string What;
 
-        public override string ToString() => $"{What} in {SourceFile.FullName}:{Line},{Column}";
+        public override string ToString() => $"{What} in {SourceFile?.FullName}:{Line},{Column}";
     }
 }

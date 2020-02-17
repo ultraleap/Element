@@ -1,0 +1,4 @@
+struct MyStruct(a);
+struct NestedStruct(m:MyStruct);
+struct Vector3(x:Num, y:Num, z:Num);
+pickSecond(a, b) = b;

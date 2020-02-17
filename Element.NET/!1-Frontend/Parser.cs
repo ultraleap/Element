@@ -45,12 +45,13 @@ namespace Element
     /// </summary>
     public static class Parser
     {
+        public static Identifier AnyTypeIdentifier { get; } = new Identifier("Any");
         public static Identifier ReturnIdentifier { get; } = new Identifier("return");
         
         public static readonly Identifier[] GloballyReservedIdentifiers =
         {
             new Identifier("_"),
-            new Identifier("any"),
+            AnyTypeIdentifier,
             new Identifier("intrinsic"),
             new Identifier("namespace"),
             ReturnIdentifier,
@@ -123,6 +124,7 @@ namespace Element
                 return false;
             }
 
+            // TODO: No LINQ here
             var reservedIdentifiers = whitelist == null
                                           ? GloballyReservedIdentifiers
                                           : GloballyReservedIdentifiers.Except(whitelist);

@@ -34,7 +34,7 @@ namespace Laboratory.Tests
         {
             var (fileInfo, expectedMessageCode) = info;
             var success = _host.ParseFile(expectedMessageCode.HasValue
-                    ? new CompilationInput(ExpectMessageCode(expectedMessageCode.Value), true)
+                    ? new CompilationInput(ExpectMessageCode(expectedMessageCode.Value, FailOnError), true)
                     : new CompilationInput(FailOnError, true),
                 fileInfo);
 

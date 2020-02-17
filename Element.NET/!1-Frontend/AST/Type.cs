@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Lexico;
 
 namespace Element.AST
@@ -7,6 +8,7 @@ namespace Element.AST
         [Literal(":"), WhitespaceSurrounded] private Unnamed _;
         [field: Term] public Identifier Identifier { get; }
 
-        public bool Validate(CompilationContext compilationContext) => compilationContext.ValidateIdentifier(Identifier);
+        private readonly List<Identifier> _typeIdWhitelist = new List<Identifier> {Parser.AnyTypeIdentifier};
+        public bool Validate(CompilationContext compilationContext) => compilationContext.ValidateIdentifier(Identifier, _typeIdWhitelist);
     }
 }
