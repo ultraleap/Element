@@ -4,9 +4,17 @@ namespace Element.AST
 {
     public abstract class ScopeBase : IIndexable
     {
-        private readonly Dictionary<string, Item> _itemCache = new Dictionary<string, Item>();
-        private readonly Dictionary<string, IValue> _valueCache = new Dictionary<string, IValue>();
+        private readonly Dictionary<Identifier, Item> _itemCache = new Dictionary<Identifier, Item>();
+        private readonly Dictionary<Identifier, IValue> _valueCache = new Dictionary<Identifier, IValue>();
         protected abstract IEnumerable<Item> ItemsToCacheOnValidate { get; }
+
+        protected void AddRangeToCache(IEnumerable<(Identifier, IValue)> values)
+        {
+            foreach (var (identifier, value) in values)
+            {
+                _valueCache.Add(identifier, value);
+            }
+        }
             
         public bool ValidateScope(CompilationContext compilationContext, List<Identifier> identifierWhitelist = null)
         {

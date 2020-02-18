@@ -59,8 +59,8 @@ namespace Laboratory
         
         
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());
-        protected static FileInfo GetTestFile(in string partialName) => TestDirectory.GetFiles($"*{partialName}*.*", SearchOption.AllDirectories).Single();
-        protected static FileInfo[] GetTestFiles(in string pattern) => TestDirectory.GetFiles(pattern, SearchOption.AllDirectories);
+        protected static FileInfo GetTestFile(string partialName) => TestDirectory.GetFiles("*.ele", SearchOption.AllDirectories).Single(file => file.Name.Contains(partialName));
+        protected static FileInfo[] GetTestFiles(string pattern) => TestDirectory.GetFiles(pattern, SearchOption.AllDirectories);
         
         
         

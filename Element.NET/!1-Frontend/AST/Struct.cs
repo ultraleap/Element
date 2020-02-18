@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Lexico;
 
 namespace Element.AST
@@ -48,10 +50,14 @@ namespace Element.AST
             return success;
         }
 
+        public IValue Call(CompilationFrame frame, CompilationContext compilationContext) =>
+            new StructInstance(Inputs.Select((port, index) => (port.Identifier, this.GetArgumentByIndex(index, frame, compilationContext))));
+    }
 
-        public IValue Call(CompilationFrame frame, CompilationContext compilationContext)
-        {
-            throw new NotImplementedException();
-        }
+    public sealed class StructInstance : ScopeBase
+    {
+        public StructInstance(IEnumerable<(Identifier Identifier, IValue Value)> members) => AddRangeToCache(members);
+
+        protected override IEnumerable<Item> ItemsToCacheOnValidate => Enumerable.Empty<Item>();
     }
 }

@@ -16,10 +16,12 @@ namespace Element
             CompilationContext.TryCreate(compilationInput, out var context)
                 ? context.Parse(expression, out AST.Expression expressionObject)
                     ?
-                    context.CompileExpression(expressionObject, new CompilationFrame(context.GlobalIndexer)) switch
+                    expressionObject.Resolve(new CompilationFrame(context.GlobalIndexer), context) switch
                     {
+                        // TODO: Replace with serialization
                         CompilationErr _ => Array.Empty<float>(),
                         Literal lit => new[] {(float) lit},
+                        StructInstance instance => Array.Empty<float>(), // HACK!
                         var result => throw new NotImplementedException($"{result} evaluation not implemented")
                     }
                     : Array.Empty<float>()

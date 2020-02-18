@@ -7,8 +7,6 @@ namespace Element.AST
     {
         [Literal(":"), WhitespaceSurrounded] private Unnamed _;
         [field: Term] public Identifier Identifier { get; }
-
-        private readonly List<Identifier> _typeIdWhitelist = new List<Identifier> {Parser.AnyTypeIdentifier};
-        public bool Validate(CompilationContext compilationContext) => compilationContext.ValidateIdentifier(Identifier, _typeIdWhitelist);
+        [field: Optional] public List<IndexingExpression> IndexingExpressions { get; } = new List<IndexingExpression>();
     }
 }

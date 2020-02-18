@@ -24,11 +24,6 @@ namespace Element.AST
         {
             var success = true;
 
-            if (_declaration.ReturnType != null)
-            {
-                success &= _declaration.ReturnType.Validate(compilationContext);
-            }
-            
             if (_functionBody is Scope scope)
             {
                 success &= scope.ValidateScope(compilationContext, _functionIdWhitelist);
@@ -43,7 +38,7 @@ namespace Element.AST
                 function._functionBody switch
                 {
                     // If a function is a binding (has expression body) we just compile the single expression
-                    Binding binding => compilationContext.CompileExpression(binding.Expression, callSiteFrame),
+                    Binding binding => binding.Expression.Resolve(callSiteFrame, compilationContext),
 
                     // If a function has a scope body we find the return value
                     Scope scope => scope[Parser.ReturnIdentifier] switch
