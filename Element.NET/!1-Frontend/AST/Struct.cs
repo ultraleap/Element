@@ -38,15 +38,16 @@ namespace Element.AST
                     success = false;
                 }
 
-                /*var aliasee = _declaration.Type.GetConstraint(frame, compilationContext);
+                var aliasee = _declaration.Type.FindConstraint(parent, compilationContext);
                 if (aliasee is Struct constraint)
                 {
-                    inputs = constraint.Inputs;
+                    _aliasedInputs = constraint.Inputs;
                 }
                 else
                 {
                     compilationContext.LogError(20, $"Cannot create alias of non-struct '{aliasee}'");
-                }*/
+                    success = false;
+                }
             }
             else
             {

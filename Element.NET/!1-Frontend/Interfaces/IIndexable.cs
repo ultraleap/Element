@@ -15,7 +15,7 @@ namespace Element.AST
         /// Gets the IConstraint that this type refers to.
         /// </summary>
         public static IValue? IndexRecursively(this IIndexable indexable, Identifier identifier) =>
-            indexable[identifier] ?? indexable.Parent.IndexRecursively(identifier);
+            indexable[identifier] ?? indexable.Parent?.IndexRecursively(identifier);
 
         public static IValue? ResolveIndexExpressions(this IIndexable indexable, Identifier identifier,
             List<IndexingExpression> indexingExpressions, CompilationContext compilationContext)
