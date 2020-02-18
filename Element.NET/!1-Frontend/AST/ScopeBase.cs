@@ -1,9 +1,17 @@
+using System;
 using System.Collections.Generic;
 
 namespace Element.AST
 {
     public abstract class ScopeBase : IIndexable
     {
+        public ScopeBase() {} // Parameterless constructor used by Lexico when constructing parse matches
+
+        protected ScopeBase(IIndexable? parent)
+        {
+            Parent = parent;
+        }
+
         private readonly Dictionary<Identifier, Item> _itemCache = new Dictionary<Identifier, Item>();
         private readonly Dictionary<Identifier, IValue> _valueCache = new Dictionary<Identifier, IValue>();
         protected abstract IEnumerable<Item> ItemsToCacheOnValidate { get; }
@@ -15,10 +23,17 @@ namespace Element.AST
                 _valueCache.Add(identifier, value);
             }
         }
+
+        public IIndexable? Parent { get; private set; }
             
-        public bool ValidateScope(CompilationContext compilationContext, List<Identifier> identifierWhitelist = null)
+        public bool ValidateScope(IIndexable parent, CompilationContext compilationContext, List<Identifier> identifierWhitelist = null)
         {
             var success = true;
+            if (!(this is GlobalScope)) // Global scope has no parent!
+            {
+                Parent = parent ?? throw new ArgumentNullException(nameof(parent));
+            }
+
             foreach (var item in ItemsToCacheOnValidate)
             {
                 if (!compilationContext.ValidateIdentifier(item.Identifier, identifierWhitelist))
@@ -26,7 +41,7 @@ namespace Element.AST
                     success = false;
                 }
                 
-                if (!item.Validate(compilationContext))
+                if (!item.Validate(this, compilationContext))
                 {
                     success = false;
                 }

@@ -6,6 +6,8 @@ namespace Element.AST
     public abstract class Item
     {
         public abstract Identifier Identifier { get; }
-        public abstract bool Validate(CompilationContext compilationContext);
+        public abstract bool Validate(IIndexable parent, CompilationContext compilationContext);
+
+        protected IIndexable Parent { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lexico;
 
 namespace Element.AST
@@ -20,31 +21,31 @@ namespace Element.AST
 
         private readonly List<Identifier> _functionIdWhitelist = new List<Identifier> {Parser.ReturnIdentifier};
 
-        public override bool Validate(CompilationContext compilationContext)
+        public override bool Validate(IIndexable parent, CompilationContext compilationContext)
         {
             var success = true;
-
+            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
             if (_functionBody is Scope scope)
             {
-                success &= scope.ValidateScope(compilationContext, _functionIdWhitelist);
+                success &= scope.ValidateScope(parent, compilationContext, _functionIdWhitelist);
             }
 
             return success;
         }
 
-        public IValue Call(CompilationFrame frame, CompilationContext compilationContext)
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
-            IValue CompileFunction(Function function, CompilationFrame callSiteFrame) =>
+            IValue CompileFunction(Function function, IIndexable parentScope) =>
                 function._functionBody switch
                 {
                     // If a function is a binding (has expression body) we just compile the single expression
-                    Binding binding => binding.Expression.Resolve(callSiteFrame, compilationContext),
+                    Binding binding => binding.Expression.ResolveExpression(parentScope, compilationContext),
 
                     // If a function has a scope body we find the return value
                     Scope scope => scope[Parser.ReturnIdentifier] switch
                     {
-                        // If the return value is a function, compile it 
-                        Function returnFunction => CompileFunction(returnFunction, callSiteFrame.Push(scope)),
+                        // If the return value is a function, compile it
+                        Function returnFunction => CompileFunction(returnFunction, parentScope),
                         null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
                         // TODO: Add support for returning other items as values - structs and namespaces
                         var nyi => throw new NotImplementedException(nyi.ToString())
@@ -52,7 +53,11 @@ namespace Element.AST
                     _ => CompilationErr.Instance
                 };
 
-            return CompileFunction(this, frame);
+            // If we have any arguments, push a new temporary scope with them
+            // else the parent scope for the function is simply the declaration's parent
+            return CompileFunction(this, arguments?.Length > 0
+                ? Parent.PushTemporaryScope(arguments.Select((arg, index) => (Inputs[index].Identifier, arg)))
+                : Parent);
         }
     }
 }

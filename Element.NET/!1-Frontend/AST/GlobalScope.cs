@@ -5,13 +5,13 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class GlobalIndexer : ScopeBase
+    public sealed class GlobalScope : ScopeBase
     {
         private readonly Dictionary<FileInfo, SourceScope> _rootScopes = new Dictionary<FileInfo, SourceScope>();
 
         private readonly Dictionary<Identifier, ICallable> _intrinsicFunctions = new Dictionary<Identifier, ICallable>();
 
-        public GlobalIndexer()
+        public GlobalScope()
         {
             /*_types = new List<INamedType>
             {

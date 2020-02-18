@@ -23,9 +23,7 @@ namespace Element.AST
 
         public bool CanBeCached => true;
 
-        public IValue Call(CompilationFrame frame, CompilationContext compilationContext) =>
-            new Literal(Binary.Evaluate(Operation, 
-                                        this.GetArgumentByIndex(0, frame, compilationContext) as Literal, 
-                                        this.GetArgumentByIndex(1, frame, compilationContext) as Literal));
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            new Literal(Binary.Evaluate(Operation, arguments[0] as Literal, arguments[1] as Literal));
     }
 }

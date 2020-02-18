@@ -20,7 +20,6 @@ namespace Element.AST
         public bool IsIntrinsic => !string.IsNullOrEmpty(_intrinsic);
         public bool IsAlias => _declaration.Type != null;
         public override string ToString() => _declaration.ToString();
-
         private Port[] _aliasedInputs { get; set; }
 
         public bool? MatchesConstraint(IValue value, Port port, CompilationContext compilationContext)
@@ -28,10 +27,9 @@ namespace Element.AST
             throw new NotImplementedException();
         }
 
-        public override bool Validate(CompilationContext compilationContext)
+        public override bool Validate(IIndexable parent, CompilationContext compilationContext)
         {
             var success = true;
-
             if (IsAlias)
             {
                 if (_declaration.PortList != null)
@@ -61,15 +59,14 @@ namespace Element.AST
 
             if (_structBody is Scope scope)
             {
-                success &= scope.ValidateScope(compilationContext);
+                success &= scope.ValidateScope(parent, compilationContext);
             }
 
             return success;
         }
 
-        public IValue Call(CompilationFrame frame, CompilationContext compilationContext) =>
-            new StructInstance(Inputs.Select((port, index) =>
-                (port.Identifier, this.GetArgumentByIndex(index, frame, compilationContext))));
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            new StructInstance(Inputs.Select((port, index) => (port.Identifier, arguments[index])));
     }
 
     public sealed class StructInstance : ScopeBase

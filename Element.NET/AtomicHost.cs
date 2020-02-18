@@ -16,7 +16,7 @@ namespace Element
             CompilationContext.TryCreate(compilationInput, out var context)
                 ? context.Parse(expression, out AST.Expression expressionObject)
                     ?
-                    expressionObject.Resolve(new CompilationFrame(context.GlobalIndexer), context) switch
+                    expressionObject.ResolveExpression(context.GlobalScope, context) switch
                     {
                         // TODO: Replace with serialization
                         CompilationErr _ => Array.Empty<float>(),

@@ -148,10 +148,10 @@ namespace Element
             var success = context.Parse<SourceScope>(Preprocess(File.ReadAllText(file.FullName)), out var sourceScope);
             if (success)
             {
-                context.GlobalIndexer[file] = sourceScope;
+                context.GlobalScope[file] = sourceScope;
                 if (validate)
                 {
-                    success &= context.GlobalIndexer.ValidateScope(context);
+                    success &= context.GlobalScope.ValidateScope(null, context);
                 }
             }
 
@@ -166,7 +166,7 @@ namespace Element
             IEnumerable<FileInfo> files)
         {
             (bool Success, FileInfo File)[] fileResults = files.Select(file => (context.ParseFile(file, false), file)).ToArray();
-            var overallSuccess = fileResults.All(fr => fr.Success) && context.GlobalIndexer.ValidateScope(context);
+            var overallSuccess = fileResults.All(fr => fr.Success) && context.GlobalScope.ValidateScope(null, context);
             return (overallSuccess, fileResults);
         }
     }

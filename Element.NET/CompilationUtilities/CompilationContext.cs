@@ -16,7 +16,7 @@ namespace Element
         private CompilationContext(in CompilationInput compilationInput)
         {
             Input = compilationInput;
-            GlobalIndexer = new GlobalIndexer();
+            GlobalScope = new GlobalScope();
             LogCallback = compilationInput.LogCallback;
         }
 
@@ -32,7 +32,7 @@ namespace Element
 
         public CompilationInput Input { get; }
 
-        public GlobalIndexer GlobalIndexer { get; }
+        public GlobalScope GlobalScope { get; }
 
         private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
 

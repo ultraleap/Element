@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lexico;
@@ -8,34 +9,17 @@ namespace Element.AST
 
     public interface ISubExpression
     {
-        IValue Resolve(IValue previous, CompilationFrame frame, CompilationContext compilationContext);
+        IValue ResolveSubExpression(IValue previous, IIndexable expressionScope, CompilationContext compilationContext);
     }
 
     public class CallExpression : ListOf<Expression>, ISubExpression
     {
-        private sealed class CallArguments : IIndexable
-        {
-            public CallArguments(IValue[] arguments, Port[] ports)
-            {
-                for (var i = 0; i < ports?.Length; i++)
-                {
-                    _argumentsByIdentifier.Add(ports[i].Identifier, arguments[i]);
-                }
-            }
-
-            private readonly Dictionary<Identifier, IValue> _argumentsByIdentifier = new Dictionary<Identifier, IValue>();
-
-            public bool CanBeCached => true;
-
-            public IValue? this[Identifier id] => _argumentsByIdentifier.TryGetValue(id, out var arg) ? arg : null;
-        }
-
-        public IValue Resolve(IValue previous, CompilationFrame frame, CompilationContext compilationContext)
+        public IValue ResolveSubExpression(IValue previous, IIndexable expressionScope, CompilationContext compilationContext)
         {
             if (!(previous is ICallable callable)) return compilationContext.LogError(16, $"{previous} is not callable");
 
             // Compile the arguments for this call expression
-            var arguments = List.Select(argExpr => argExpr.Resolve(frame, compilationContext)).ToArray();
+            var arguments = List.Select(argExpr => argExpr.ResolveExpression(expressionScope, compilationContext)).ToArray();
 
             // Check argument count is correct
             var expectedArgCount = callable.Inputs?.Length ?? 0; // No inputs means no arguments required (nullary function)
@@ -46,20 +30,16 @@ namespace Element.AST
 
             // TODO: Argument type checking
 
-            // Wraps arguments in a FunctionArguments compilation frame for the called function to access
-            IValue Call(ICallable c) => c.Call(frame.Push(new CallArguments(arguments, c.Inputs)), compilationContext);
-
             return callable switch
             {
-                Function intrinsic when intrinsic.IsIntrinsic => compilationContext.GlobalIndexer.GetIntrinsic(intrinsic.Identifier) switch
+                Function intrinsic when intrinsic.IsIntrinsic => compilationContext.GlobalScope.GetIntrinsic(intrinsic.Identifier) switch
                 {
-                    { } intrinsicImpl => Call(intrinsicImpl),
+                    { } intrinsicImpl => intrinsicImpl.Call(arguments, compilationContext),
                     _ => compilationContext.LogError(4, $"No intrinsic named '{intrinsic.Identifier}' is implemented")
                 },
-                _ => Call(callable)
+                _ => callable.Call(arguments, compilationContext)
             };
         }
-
     }
 
     public class IndexingExpression : ISubExpression
@@ -69,7 +49,7 @@ namespace Element.AST
 
         public override string ToString() => $".{Identifier}";
 
-        public IValue Resolve(IValue previous, CompilationFrame _, CompilationContext compilationContext) =>
+        public IValue ResolveSubExpression(IValue previous, IIndexable _, CompilationContext compilationContext) =>
             previous is IIndexable indexable
                 ? indexable[Identifier] switch
                 {
@@ -87,12 +67,12 @@ namespace Element.AST
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
-        public IValue Resolve(CompilationFrame frame, CompilationContext compilationContext)
+        public IValue ResolveExpression(IIndexable scope, CompilationContext compilationContext)
         {
             var previous = LitOrId switch
             {
                 // If the start of the list is an identifier, find the value that it identifies
-                Identifier id => frame.Get(id, compilationContext, out var value) ? value : compilationContext.LogError(7, $"Couldn't find '{id}' in a local or outer scope"),
+                Identifier id => scope.IndexRecursively(id) is { } value ? value : compilationContext.LogError(7, $"Couldn't find '{id}' in a local or outer scope"),
                 Literal lit => lit,
                 _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
             };
@@ -105,7 +85,7 @@ namespace Element.AST
             // Resolve Nullary (0-argument) functions
             previous = previous switch
             {
-                Function func when func.Inputs.Length == 0 => func.Call(frame, compilationContext),
+                Function func when func.Inputs.Length == 0 => func.Call(Array.Empty<IValue>(), compilationContext),
                 _ => previous
             };
 
@@ -113,7 +93,7 @@ namespace Element.AST
 
             foreach (var expr in Expressions)
             {
-                previous =  expr.Resolve(previous, frame, compilationContext);
+                previous =  expr.ResolveSubExpression(previous, scope, compilationContext);
             }
 
             compilationContext.Pop();
