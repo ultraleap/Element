@@ -69,7 +69,7 @@ namespace Element.AST
 
         public override string ToString() => $".{Identifier}";
 
-        public IValue Resolve(IValue previous, CompilationFrame frame, CompilationContext compilationContext) =>
+        public IValue Resolve(IValue previous, CompilationFrame _, CompilationContext compilationContext) =>
             previous is IIndexable indexable
                 ? indexable[Identifier] switch
                 {

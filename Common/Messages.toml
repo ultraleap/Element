@@ -84,6 +84,10 @@ level = "Warning"
 name = "AliasCannotHavePorts"
 level = "Error"
 
+[ELE20]
+name = "InvalidAlias"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

@@ -7,7 +7,7 @@ namespace Element.AST
 {
     public interface IStructBody {}
     
-    public class Struct : Item, ICallable
+    public class Struct : Item, ICallable, IConstraint
     {
         [Literal("intrinsic"), Optional] private string _intrinsic;
         [Literal("struct"), WhitespaceSurrounded] private Unnamed _;
@@ -15,11 +15,18 @@ namespace Element.AST
         [Term] private IStructBody _structBody;
 
         public override Identifier Identifier => _declaration.Identifier;
-        public Port[] Inputs => _declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
+        public Port[] Inputs => IsAlias ? _aliasedInputs : _declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
         public bool CanBeCached => true;
         public bool IsIntrinsic => !string.IsNullOrEmpty(_intrinsic);
-        public bool IsAlias => _declaration.ReturnType != null;
+        public bool IsAlias => _declaration.Type != null;
         public override string ToString() => _declaration.ToString();
+
+        private Port[] _aliasedInputs { get; set; }
+
+        public bool? MatchesConstraint(IValue value, Port port, CompilationContext compilationContext)
+        {
+            throw new NotImplementedException();
+        }
 
         public override bool Validate(CompilationContext compilationContext)
         {
@@ -27,11 +34,21 @@ namespace Element.AST
 
             if (IsAlias)
             {
-                if (Inputs.Length > 0)
+                if (_declaration.PortList != null)
                 {
                     compilationContext.LogError(19, $"Struct alias '{Identifier}' cannot have ports - remove either the ports or the alias type");
                     success = false;
                 }
+
+                /*var aliasee = _declaration.Type.GetConstraint(frame, compilationContext);
+                if (aliasee is Struct constraint)
+                {
+                    inputs = constraint.Inputs;
+                }
+                else
+                {
+                    compilationContext.LogError(20, $"Cannot create alias of non-struct '{aliasee}'");
+                }*/
             }
             else
             {
@@ -51,7 +68,8 @@ namespace Element.AST
         }
 
         public IValue Call(CompilationFrame frame, CompilationContext compilationContext) =>
-            new StructInstance(Inputs.Select((port, index) => (port.Identifier, this.GetArgumentByIndex(index, frame, compilationContext))));
+            new StructInstance(Inputs.Select((port, index) =>
+                (port.Identifier, this.GetArgumentByIndex(index, frame, compilationContext))));
     }
 
     public sealed class StructInstance : ScopeBase

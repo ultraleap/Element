@@ -7,7 +7,7 @@ namespace Element.AST
     {
         [field: Term] public Identifier Identifier { get; }
         [field: Optional] public PortList PortList { get; }
-        [field: Optional] public Type ReturnType { get; }
+        [field: Optional] public Type Type { get; }
 
         public override string ToString() => $"{Identifier}{PortList}";
     }
