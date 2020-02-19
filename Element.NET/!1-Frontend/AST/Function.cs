@@ -9,61 +9,73 @@ namespace Element.AST
 
     public abstract class CallableDeclaration<TBody> : Item
     {
-        [Literal("intrinsic"), Optional] private string _intrinsic;
+        [field: Literal("intrinsic"), Optional] public string Intrinsic { get; }
         [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] private Unnamed _;
-        [Term] private Declaration _declaration;
-        [Term] private TBody _body;
+        [field: Term] public Declaration Declaration { get; }
+        [field: Term] public TBody Body { get; }
 
         protected abstract string Qualifier { get; }
-    }
-    
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class Function : Item, ICallable
-    {
-        [Literal("intrinsic"), Optional] private string _intrinsic;
-        [Term] private Declaration _declaration;
-        [Term] private IFunctionBody _functionBody;
+        public Port[] Inputs => IsProxied ? ProxiedInputs : Declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
+        protected virtual bool IsProxied => IsIntrinsic;
+        protected Port[] ProxiedInputs { get; set; }
 
-        public override Identifier Identifier => _declaration.Identifier;
-        protected override DeclaredScope Child => _functionBody as Scope;
-        public Port[] Inputs => _declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
-        public bool CanBeCached => Inputs == null || Inputs.Length == 0;
-        public bool IsIntrinsic => !string.IsNullOrEmpty(_intrinsic);
-        public override string ToString() => _declaration.ToString();
+        public override Identifier Identifier => Declaration.Identifier;
+        protected override DeclaredScope Child => Body as Scope;
+        public bool IsIntrinsic => !string.IsNullOrEmpty(Intrinsic);
+        public override string ToString() => Declaration.ToString();
 
-        private readonly List<Identifier> _functionIdWhitelist = new List<Identifier> {Parser.ReturnIdentifier};
+        protected bool ValidateBody(CompilationContext compilationContext)
+        {
+            if (Body is Scope scope)
+            {
+                return scope.ValidateScope(compilationContext);
+            }
 
-        public override bool Validate(CompilationContext compilationContext)
+            return true;
+        }
+
+        protected bool ValidateIntrinsic(CompilationContext compilationContext)
         {
             var success = true;
-
             if (IsIntrinsic)
             {
-                success = GetImplementingIntrinsic(compilationContext);
-                switch (success)
+                switch (ImplementingIntrinsic)
                 {
                     case ICallable callable:
                         ProxiedInputs = callable.Inputs;
                         break;
                     case null: break; // Error already logged by GetImplementingIntrinsic
                     default:
-                        success = compilationContext.LogError(14, $"Found intrinsic '{FullPath}' but it is not callable");
+                        compilationContext.LogError(14, $"Found intrinsic '{FullPath}' but it is not callable");
+                        success = false;
                         break;
                 }
             }
 
-            if (_functionBody is Scope scope)
+            if (!IsIntrinsic && Inputs.Length < 1)
             {
-                success &= scope.ValidateScope(compilationContext, _functionIdWhitelist);
+                compilationContext.LogError(13, $"Non intrinsic '{FullPath}' must have ports");
+                success = false;
             }
 
             return success;
         }
+    }
+    
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class Function : CallableDeclaration<IFunctionBody>, ICallable
+    {
+        protected override string Qualifier { get; } = string.Empty; // Functions don't have a qualifier
+        public bool CanBeCached => Inputs == null || Inputs.Length == 0;
+
+        private readonly List<Identifier> _functionIdWhitelist = new List<Identifier> {Parser.ReturnIdentifier};
+
+        public override bool Validate(CompilationContext compilationContext) => ValidateIntrinsic(compilationContext) && ValidateBody(compilationContext);
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
             IValue CompileFunction(Function function, IScope parentScope) =>
-                function._functionBody switch
+                function.Body switch
                 {
                     // If a function is a binding (has expression body) we just compile the single expression
                     Binding binding => binding.Expression.ResolveExpression(parentScope, compilationContext),

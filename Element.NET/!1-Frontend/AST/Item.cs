@@ -49,13 +49,16 @@ namespace Element.AST
 
         private static readonly Dictionary<string, IValue> _intrinsics = new Dictionary<string, IValue>();
 
-        public IValue? GetImplementingIntrinsic(CompilationContext compilationContext)
+        public IValue? ImplementingIntrinsic
         {
-            lock (_intrinsics)
+            get
             {
-                return _intrinsics.TryGetValue(FullPath, out var implementingIntrinsic)
-                    ? implementingIntrinsic
-                    : compilationContext.LogError(4, $"Intrinsic '{FullPath}' not implemented");
+                lock (_intrinsics)
+                {
+                    return _intrinsics.TryGetValue(FullPath, out var implementingIntrinsic)
+                        ? implementingIntrinsic
+                        : null;
+                }
             }
         }
     }
