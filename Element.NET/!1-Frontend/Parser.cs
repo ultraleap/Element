@@ -149,9 +149,10 @@ namespace Element
             if (success)
             {
                 context.GlobalScope[file] = sourceScope;
+                context.GlobalScope.Initialize(null, null); // Global scope doesn't have a parent or declarer
                 if (validate)
                 {
-                    success &= context.GlobalScope.ValidateScope(null, context);
+                    success &= context.GlobalScope.ValidateScope(context);
                 }
             }
 
@@ -166,7 +167,7 @@ namespace Element
             IEnumerable<FileInfo> files)
         {
             (bool Success, FileInfo File)[] fileResults = files.Select(file => (context.ParseFile(file, false), file)).ToArray();
-            var overallSuccess = fileResults.All(fr => fr.Success) && context.GlobalScope.ValidateScope(null, context);
+            var overallSuccess = fileResults.All(fr => fr.Success) && context.GlobalScope.ValidateScope(context);
             return (overallSuccess, fileResults);
         }
     }

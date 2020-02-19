@@ -3,13 +3,16 @@ using Lexico;
 
 namespace Element.AST
 {
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class Type
     {
         [Literal(":"), WhitespaceSurrounded] private Unnamed _;
+        // ReSharper disable once UnassignedGetOnlyAutoProperty
         [field: Term] public Identifier Identifier { get; }
-        [field: Optional] public List<IndexingExpression> IndexingExpressions { get; } = new List<IndexingExpression>();
+        // ReSharper disable once UnassignedGetOnlyAutoProperty
+        [field: Optional] public List<IndexingExpression> IndexingExpressions { get; }
 
-        public IConstraint? FindConstraint(IIndexable scope, CompilationContext compilationContext)
+        public IConstraint? FindConstraint(IScope scope, CompilationContext compilationContext)
         {
             var value = scope.ResolveIndexExpressions(Identifier, IndexingExpressions, compilationContext);
             if (value is IConstraint constraint) return constraint;

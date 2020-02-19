@@ -4,6 +4,7 @@ namespace Element.AST
 {
     public class Identifier : IExpressionListStart
     {
+        // ReSharper disable once UnusedMember.Global
         public Identifier() {} // Need parameterless constructor for Lexico to construct instance
         public Identifier(string value) {Value = value;}
 

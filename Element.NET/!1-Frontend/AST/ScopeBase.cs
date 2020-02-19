@@ -3,36 +3,55 @@ using System.Collections.Generic;
 
 namespace Element.AST
 {
-    public abstract class ScopeBase : IIndexable
+    public abstract class ScopeBase : IScope
     {
-        public ScopeBase() {} // Parameterless constructor used by Lexico when constructing parse matches
-
-        protected ScopeBase(IIndexable? parent)
+        protected readonly Dictionary<Identifier, IValue> _valueCache = new Dictionary<Identifier, IValue>();
+        public IScope? Parent { get; protected set; }
+        public bool CanBeCached => true;
+        public IValue? this[Identifier id]
         {
-            Parent = parent;
-        }
-
-        private readonly Dictionary<Identifier, Item> _itemCache = new Dictionary<Identifier, Item>();
-        private readonly Dictionary<Identifier, IValue> _valueCache = new Dictionary<Identifier, IValue>();
-        protected abstract IEnumerable<Item> ItemsToCacheOnValidate { get; }
-
-        protected void AddRangeToCache(IEnumerable<(Identifier, IValue)> values)
-        {
-            foreach (var (identifier, value) in values)
+            get
             {
-                _valueCache.Add(identifier, value);
+                if (_valueCache.TryGetValue(id, out var value)) return value;
+                if (TryGetUncached(id, out value) && value.CanBeCached)
+                {
+                    _valueCache[id] = value;
+                }
+
+                return value;
             }
         }
 
-        public IIndexable? Parent { get; private set; }
-            
-        public bool ValidateScope(IIndexable parent, CompilationContext compilationContext, List<Identifier> identifierWhitelist = null)
+        protected virtual bool TryGetUncached(Identifier identifier, out IValue value)
         {
-            var success = true;
-            if (!(this is GlobalScope)) // Global scope has no parent!
+            value = default;
+            return false;
+        }
+    }
+
+    public abstract class DeclaredScope : ScopeBase, IIdentifiable
+    {
+        private readonly Dictionary<Identifier, Item> _itemCache = new Dictionary<Identifier, Item>();
+        protected abstract IEnumerable<Item> ItemsToCacheOnValidate { get; }
+        public Identifier Identifier { get; private set; }
+
+        public void Initialize(DeclaredScope parent, IIdentifiable declarer)
+        {
+            if (!(this is GlobalScope)) // Global scope has no parent or declarer!
             {
                 Parent = parent ?? throw new ArgumentNullException(nameof(parent));
+                Identifier = declarer?.Identifier ?? throw new ArgumentNullException(nameof(declarer));
             }
+
+            foreach (var item in ItemsToCacheOnValidate)
+            {
+                item.Initialize(this);
+            }
+        }
+
+        public bool ValidateScope(CompilationContext compilationContext, List<Identifier> identifierWhitelist = null)
+        {
+            var success = true;
 
             foreach (var item in ItemsToCacheOnValidate)
             {
@@ -40,8 +59,8 @@ namespace Element.AST
                 {
                     success = false;
                 }
-                
-                if (!item.Validate(this, compilationContext))
+
+                if (!item.Validate(compilationContext))
                 {
                     success = false;
                 }
@@ -58,29 +77,35 @@ namespace Element.AST
             return success;
         }
 
-        public IValue? this[Identifier id]
+        protected override bool TryGetUncached(Identifier identifier, out IValue value)
         {
-            get
+            var success = _itemCache.TryGetValue(identifier, out var item);
+            value = success switch
             {
-                if (_valueCache.TryGetValue(id, out var value)) return value;
-                value = _itemCache.TryGetValue(id, out var item) switch
+                true => item switch
                 {
-                    true => item switch
-                    {
-                        IValue v => v,
-                        _ => throw new InternalCompilerException($"{item} is not an IValue")
-                    },
-                    false => null // Didn't find so return null - this is not always an error! e.g. when looking through frames recursively
-                };
-                if (value != null && value.CanBeCached)
-                {
-                    _valueCache[id] = value;
-                }
+                    IValue v => v,
+                    _ => throw new InternalCompilerException($"{item} is not an IValue")
+                },
+                false => null // Didn't find so return null - this is not always an error! e.g. when looking through frames recursively
+            };
+            return success;
+        }
+    }
 
-                return value;
-            }
+    public abstract class TransientScope : ScopeBase
+    {
+        protected TransientScope(IScope? parent = null)
+        {
+            Parent = parent;
         }
 
-        public bool CanBeCached => true;
+        protected void AddRangeToCache(IEnumerable<(Identifier, IValue)> values)
+        {
+            foreach (var (identifier, value) in values)
+            {
+                _valueCache.Add(identifier, value);
+            }
+        }
     }
 }

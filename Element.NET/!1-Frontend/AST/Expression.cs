@@ -9,12 +9,12 @@ namespace Element.AST
 
     public interface ISubExpression
     {
-        IValue ResolveSubExpression(IValue previous, IIndexable expressionScope, CompilationContext compilationContext);
+        IValue ResolveSubExpression(IValue previous, IScope expressionScope, CompilationContext compilationContext);
     }
 
     public class CallExpression : ListOf<Expression>, ISubExpression
     {
-        public IValue ResolveSubExpression(IValue previous, IIndexable expressionScope, CompilationContext compilationContext)
+        public IValue ResolveSubExpression(IValue previous, IScope expressionScope, CompilationContext compilationContext)
         {
             if (!(previous is ICallable callable)) return compilationContext.LogError(16, $"{previous} is not callable");
 
@@ -32,10 +32,11 @@ namespace Element.AST
 
             return callable switch
             {
-                Function intrinsic when intrinsic.IsIntrinsic => compilationContext.GlobalScope.GetIntrinsic(intrinsic.Identifier) switch
+                Function intrinsic when intrinsic.IsIntrinsic => intrinsic.GetImplementingIntrinsic() switch
                 {
-                    { } intrinsicImpl => intrinsicImpl.Call(arguments, compilationContext),
-                    _ => compilationContext.LogError(4, $"No intrinsic named '{intrinsic.Identifier}' is implemented")
+                    ICallable intrinsicImpl => intrinsicImpl.Call(arguments, compilationContext),
+                    {} _ => compilationContext.LogError(14, $"Found intrinsic '{intrinsic.FullPath}' but it is not callable"),
+                    _ => compilationContext.LogError(4, $"No intrinsic '{intrinsic.FullPath}' is implemented")
                 },
                 _ => callable.Call(arguments, compilationContext)
             };
@@ -49,8 +50,8 @@ namespace Element.AST
 
         public override string ToString() => $".{Identifier}";
 
-        public IValue ResolveSubExpression(IValue previous, IIndexable _, CompilationContext compilationContext) =>
-            previous is IIndexable indexable
+        public IValue ResolveSubExpression(IValue previous, IScope _, CompilationContext compilationContext) =>
+            previous is IScope indexable
                 ? indexable[Identifier] switch
                 {
                     { } v => v,
@@ -67,7 +68,7 @@ namespace Element.AST
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
-        public IValue ResolveExpression(IIndexable scope, CompilationContext compilationContext)
+        public IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
         {
             var previous = LitOrId switch
             {

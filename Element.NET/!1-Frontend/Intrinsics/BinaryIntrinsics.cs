@@ -7,11 +7,11 @@ namespace Element.AST
     {
         public BinaryIntrinsic(Binary.Op operation)
         {
-            Identifier = new Identifier(operation.ToString().ToLowerInvariant());
+            FullPath = $"Num.{operation.ToString().ToLowerInvariant()}";
             Operation = operation;
         }
 
-        public Identifier Identifier { get; }
+        public string FullPath { get; }
         public Binary.Op Operation { get; }
 
         public Port[] Inputs { get; } =

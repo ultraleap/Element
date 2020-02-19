@@ -16,5 +16,6 @@ namespace Element.AST
         };
 
         //value is CompilationErr ? (bool?)null : (value.Inputs?.Length == 0 && value.Outputs?.Length == 0);
+        public bool CanBeCached => true;
     }
 }

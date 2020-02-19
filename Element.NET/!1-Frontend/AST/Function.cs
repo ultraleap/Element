@@ -7,6 +7,7 @@ namespace Element.AST
 {
     public interface IFunctionBody {}
     
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class Function : Item, ICallable
     {
         [Literal("intrinsic"), Optional] private string _intrinsic;
@@ -14,6 +15,7 @@ namespace Element.AST
         [Term] private IFunctionBody _functionBody;
 
         public override Identifier Identifier => _declaration.Identifier;
+        protected override DeclaredScope Child => _functionBody as Scope;
         public Port[] Inputs => _declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
         public bool CanBeCached => Inputs == null || Inputs.Length == 0;
         public bool IsIntrinsic => !string.IsNullOrEmpty(_intrinsic);
@@ -21,13 +23,12 @@ namespace Element.AST
 
         private readonly List<Identifier> _functionIdWhitelist = new List<Identifier> {Parser.ReturnIdentifier};
 
-        public override bool Validate(IIndexable parent, CompilationContext compilationContext)
+        public override bool Validate(CompilationContext compilationContext)
         {
             var success = true;
-            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
             if (_functionBody is Scope scope)
             {
-                success &= scope.ValidateScope(parent, compilationContext, _functionIdWhitelist);
+                success &= scope.ValidateScope(compilationContext, _functionIdWhitelist);
             }
 
             return success;
@@ -35,7 +36,7 @@ namespace Element.AST
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
-            IValue CompileFunction(Function function, IIndexable parentScope) =>
+            IValue CompileFunction(Function function, IScope parentScope) =>
                 function._functionBody switch
                 {
                     // If a function is a binding (has expression body) we just compile the single expression

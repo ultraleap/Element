@@ -9,5 +9,6 @@ namespace Element.AST
         private AnyType() { }
         public override string ToString() => "<any>";
         bool? IConstraint.MatchesConstraint(IValue value, Port port, CompilationContext compilationContext) => true;
+        public bool CanBeCached => true;
     }
 }

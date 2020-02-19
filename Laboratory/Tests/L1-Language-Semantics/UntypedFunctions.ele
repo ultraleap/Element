@@ -1,5 +1,9 @@
-intrinsic add(a, b);
-intrinsic sub(a, b);
+intrinsic struct Num
+{
+	intrinsic add(a, b);
+	intrinsic sub(a, b);
+}
+
 pi = 3.14;
 
-addThree(a, b, c) = add(a, add(b, c));
+addThree(a, b, c) = Num.add(a, Num.add(b, c));
