@@ -27,5 +27,9 @@ namespace Laboratory.Tests
         
         [Test]
         public void CustomExpressionBodiedFunctionCall() => AssertApproxEqual(CompilationInput, "addThree(-3.14, -9, pi)", new[]{-9f});
+
+        [TestCase("Num.add(1)")]
+        [TestCase("Num.add(1, 3, 5)")]
+        public void IncorrectArgCountFails(string expression) => EvaluateExpectingErrorCode(CompilationInput, 6, expression);
     }
 }

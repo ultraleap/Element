@@ -9,26 +9,27 @@ namespace Element.AST
 
     public abstract class CallableDeclaration<TBody> : Item
     {
-        [field: Literal("intrinsic"), Optional] public string Intrinsic { get; }
-        [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] private Unnamed _;
-        [field: Term] public Declaration Declaration { get; }
-        [field: Term] public TBody Body { get; }
+        [Literal("intrinsic"), Optional] protected string Intrinsic;
+        [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed _;
+        [Term] protected Declaration Declaration;
+        [Term] protected TBody Body;
 
-        protected abstract string Qualifier { get; }
         public Port[] Inputs => IsProxied ? ProxiedInputs : Declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
-        protected virtual bool IsProxied => IsIntrinsic;
-        protected Port[] ProxiedInputs { get; set; }
-
         public override Identifier Identifier => Declaration.Identifier;
-        protected override DeclaredScope Child => Body as Scope;
         public bool IsIntrinsic => !string.IsNullOrEmpty(Intrinsic);
         public override string ToString() => Declaration.ToString();
+        
+        protected abstract string Qualifier { get; }
+        protected virtual List<Identifier> ScopeIdentifierWhitelist { get; }
+        protected override DeclaredScope Child => Body as Scope;
+        protected virtual bool IsProxied => IsIntrinsic;
+        protected Port[] ProxiedInputs { get; set; }
 
         protected bool ValidateBody(CompilationContext compilationContext)
         {
             if (Body is Scope scope)
             {
-                return scope.ValidateScope(compilationContext);
+                return scope.ValidateScope(compilationContext, ScopeIdentifierWhitelist);
             }
 
             return true;
@@ -52,12 +53,6 @@ namespace Element.AST
                 }
             }
 
-            if (!IsIntrinsic && Inputs.Length < 1)
-            {
-                compilationContext.LogError(13, $"Non intrinsic '{FullPath}' must have ports");
-                success = false;
-            }
-
             return success;
         }
     }
@@ -66,9 +61,8 @@ namespace Element.AST
     public class Function : CallableDeclaration<IFunctionBody>, ICallable
     {
         protected override string Qualifier { get; } = string.Empty; // Functions don't have a qualifier
+        protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
         public bool CanBeCached => Inputs == null || Inputs.Length == 0;
-
-        private readonly List<Identifier> _functionIdWhitelist = new List<Identifier> {Parser.ReturnIdentifier};
 
         public override bool Validate(CompilationContext compilationContext) => ValidateIntrinsic(compilationContext) && ValidateBody(compilationContext);
 

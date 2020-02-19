@@ -51,6 +51,12 @@ namespace Element.AST
             else
             {
                 success &= ValidateIntrinsic(compilationContext);
+                
+                if (!IsIntrinsic && Inputs.Length < 1)
+                {
+                    compilationContext.LogError(13, $"Non intrinsic '{FullPath}' must have ports");
+                    success = false;
+                }
             }
 
             success &= ValidateBody(compilationContext);
