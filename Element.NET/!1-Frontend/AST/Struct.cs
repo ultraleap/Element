@@ -17,13 +17,12 @@ namespace Element.AST
 
         public override Identifier Identifier => _declaration.Identifier;
         protected override DeclaredScope Child => _structBody as Scope;
-        public Port[] Inputs => IsAlias ? AliasedInputs : _declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
+        public Port[] Inputs => (IsIntrinsic || IsAlias) ? ProxiedInputs : _declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
         public bool CanBeCached => true;
         public bool IsIntrinsic => !string.IsNullOrEmpty(_intrinsic);
-        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         public bool IsAlias => _declaration.Type != null;
         public override string ToString() => _declaration.ToString();
-        private Port[] AliasedInputs { get; set; }
+        private Port[] ProxiedInputs { get; set; }
 
         public bool? MatchesConstraint(IValue value, Port port, CompilationContext compilationContext)
         {
@@ -32,43 +31,59 @@ namespace Element.AST
 
         public override bool Validate(CompilationContext compilationContext)
         {
-            var success = true;
+            IValue success = null;
             if (IsAlias)
             {
+                if (IsIntrinsic)
+                {
+                    success = compilationContext.LogError(20, "Intrinsic struct cannot be an alias");
+                }
+
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (_declaration.PortList != null)
                 {
-                    compilationContext.LogError(19, $"Struct alias '{Identifier}' cannot have ports - remove either the ports or the alias type");
-                    success = false;
+                    success = compilationContext.LogError(19, $"Struct alias '{Identifier}' cannot have ports - remove either the ports or the alias type");
                 }
 
                 var aliasee = _declaration.Type.FindConstraint(Parent, compilationContext);
                 if (aliasee is Struct constraint)
                 {
-                    AliasedInputs = constraint.Inputs;
+                    ProxiedInputs = constraint.Inputs;
                 }
                 else
                 {
-                    compilationContext.LogError(20, $"Cannot create alias of non-struct '{aliasee}'");
-                    // ReSharper disable once RedundantAssignment
-                    success = false;
+                    success = compilationContext.LogError(20, $"Cannot create alias of non-struct '{aliasee}'");
                 }
             }
             else
             {
+                if (IsIntrinsic)
+                {
+                    success = GetImplementingIntrinsic(compilationContext);
+                    switch (success)
+                    {
+                        case ICallable callable:
+                            ProxiedInputs = callable.Inputs;
+                            break;
+                        case null: break; // Error already logged by GetImplementingIntrinsic
+                        default:
+                            success = compilationContext.LogError(14, $"Found intrinsic '{FullPath}' but it is not callable");
+                            break;
+                    }
+                }
+
                 if (!IsIntrinsic && Inputs.Length < 1)
                 {
-                    compilationContext.LogError(13, $"Non intrinsic struct '{Identifier}' must have ports");
-                    success = false;
+                    success = compilationContext.LogError(13, $"Non intrinsic struct '{Identifier}' must have ports");
                 }
             }
 
             if (_structBody is Scope scope)
             {
-                success &= scope.ValidateScope(compilationContext);
+                success = scope.ValidateScope(compilationContext) ? null : CompilationErr.Instance;
             }
 
-            return success;
+            return success != CompilationErr.Instance;
         }
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>

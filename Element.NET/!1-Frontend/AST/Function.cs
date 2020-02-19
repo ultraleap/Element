@@ -6,6 +6,16 @@ using Lexico;
 namespace Element.AST
 {
     public interface IFunctionBody {}
+
+    public abstract class CallableDeclaration<TBody> : Item
+    {
+        [Literal("intrinsic"), Optional] private string _intrinsic;
+        [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] private Unnamed _;
+        [Term] private Declaration _declaration;
+        [Term] private TBody _body;
+
+        protected abstract string Qualifier { get; }
+    }
     
     // ReSharper disable once ClassNeverInstantiated.Global
     public class Function : Item, ICallable
@@ -26,6 +36,22 @@ namespace Element.AST
         public override bool Validate(CompilationContext compilationContext)
         {
             var success = true;
+
+            if (IsIntrinsic)
+            {
+                success = GetImplementingIntrinsic(compilationContext);
+                switch (success)
+                {
+                    case ICallable callable:
+                        ProxiedInputs = callable.Inputs;
+                        break;
+                    case null: break; // Error already logged by GetImplementingIntrinsic
+                    default:
+                        success = compilationContext.LogError(14, $"Found intrinsic '{FullPath}' but it is not callable");
+                        break;
+                }
+            }
+
             if (_functionBody is Scope scope)
             {
                 success &= scope.ValidateScope(compilationContext, _functionIdWhitelist);

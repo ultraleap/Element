@@ -21,25 +21,33 @@ namespace Element.AST
             // Compile the arguments for this call expression
             var arguments = List.Select(argExpr => argExpr.ResolveExpression(expressionScope, compilationContext)).ToArray();
 
-            // Check argument count is correct
-            var expectedArgCount = callable.Inputs?.Length ?? 0; // No inputs means no arguments required (nullary function)
-            if (arguments.Length != expectedArgCount)
-            {
-                return compilationContext.LogError(6, $"Expected '{expectedArgCount}' arguments but got '{arguments.Length}'");
-            }
-
-            // TODO: Argument type checking
-
             return callable switch
             {
-                Function intrinsic when intrinsic.IsIntrinsic => intrinsic.GetImplementingIntrinsic() switch
+                Function intrinsic when intrinsic.IsIntrinsic => intrinsic.ImplementingIntrinsic switch
                 {
                     ICallable intrinsicImpl => intrinsicImpl.Call(arguments, compilationContext),
-                    {} _ => compilationContext.LogError(14, $"Found intrinsic '{intrinsic.FullPath}' but it is not callable"),
-                    _ => compilationContext.LogError(4, $"No intrinsic '{intrinsic.FullPath}' is implemented")
+                    {} => compilationContext.LogError(14, $"Found intrinsic '{intrinsic.FullPath}' but it is not callable"),
+                    _ => compilationContext.LogError(4, $"Intrinsic '{intrinsic.FullPath}' is not implemented")
                 },
                 _ => callable.Call(arguments, compilationContext)
             };
+        }
+    }
+
+    public static class CallExtensions
+    {
+        public static bool CheckArguments(this IValue[] arguments, Port[] ports, CompilationContext compilationContext)
+        {
+            // Check argument count is correct
+            var expectedArgCount = ports?.Length ?? 0; // No inputs means no arguments required (nullary function)
+            if (arguments.Length != expectedArgCount)
+            {
+                compilationContext.LogError(6, $"Expected '{expectedArgCount}' arguments but got '{arguments.Length}'");
+                return false;
+            }
+
+            // TODO: Argument type checking
+            return true;
         }
     }
 

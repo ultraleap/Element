@@ -1,3 +1,4 @@
+intrinsic struct Num;
 struct MyStruct(a);
 struct NestedStruct(m:MyStruct);
 struct Vector3(x:Num, y:Num, z:Num);

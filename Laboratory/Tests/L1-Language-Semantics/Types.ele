@@ -2,6 +2,8 @@ intrinsic struct Num;
 struct NotNum(a);
 struct NumAlias:Num;
 
+Predicate(a):Bool;
+
 explicitAny(a:Any):Any = a;
 onlyNum(a:Num):Num = a;
 onlyNumAlias(a:NumAlias):NumAlias = a;
