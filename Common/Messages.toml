@@ -57,7 +57,7 @@ name = "BoundaryMapMissing"
 level = "Error"
 
 [ELE13]
-name = "StructMissingPorts"
+name = "MissingPorts"
 level = "Error"
 
 [ELE14]
@@ -86,6 +86,10 @@ level = "Error"
 
 [ELE20]
 name = "InvalidAlias"
+level = "Error"
+
+[ELE21]
+name = "MissingFunctionBody"
 level = "Error"
 
 [ELE9999]

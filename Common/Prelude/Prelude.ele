@@ -1,7 +1,22 @@
-##### Polymorphism #####
-# Polymorphic type - defers type checking for instance until call sites
-intrinsic struct any;
+##### General Constraints #####
+# Anything at all!
+intrinsic Any;
 
+# Any 1-arity (monadic) function
+Unary(a);
+
+# Any 2-arity (dyadic) function
+Binary(a, b);
+
+# Any 3-arity (triadic) function
+Ternary(a, b, c);
+
+Indexer(i:Num);
+Predicate(a):Bool;
+
+
+
+##### Polymorphism #####
 # Calls function by nominative argument matching the functions parameters with the supplied instances fields
 # Typically used with memberwise to cast an untyped variadic return back into a type instance, e.g.
 #   Vector3Add(a, b) = infer(Vector3, memberwise(Num.add, a, b));
@@ -23,21 +38,6 @@ intrinsic struct Tuple;
 # memberwise(Num.add, a) is invalid as Num.add expects 2 parameters
 # memberwise(Num.add, a, b).x is valid and evaluates to Num.add(a.x, b.x)
 intrinsic memberwise;
-
-
-
-##### General Function Types #####
-# Any 1-arity (monadic) function
-Unary(a);
-
-# Any 2-arity (dyadic) function
-Binary(a, b);
-
-# Any 3-arity (triadic) function
-Ternary(a, b, c);
-
-Indexer(i:Num);
-Predicate(a):Bool;
 
 
 

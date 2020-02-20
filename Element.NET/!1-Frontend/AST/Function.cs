@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Element.AST
@@ -11,9 +12,20 @@ namespace Element.AST
     {
         protected override string Qualifier { get; } = string.Empty; // Functions don't have a qualifier
         protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
-        public bool CanBeCached => Inputs == null || Inputs.Length == 0;
+        public bool CanBeCached => IsNullary;
+        private bool IsNullary => DeclaredInputs == null || DeclaredInputs.Length == 0;
 
-        public override bool Validate(CompilationContext compilationContext) => ValidateIntrinsic(compilationContext) && ValidateBody(compilationContext);
+        public override bool Validate(CompilationContext compilationContext)
+        {
+            var success = ValidateIntrinsic(compilationContext) && ValidateScopeBody(compilationContext);
+            if (!IsIntrinsic && Body is Terminal)
+            {
+                compilationContext.LogError(21, $"Non intrinsic function '{FullPath}' must have a body");
+                success = false;
+            }
+
+            return success;
+        }
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
@@ -46,14 +58,17 @@ namespace Element.AST
             }
 
 
-            return arguments.ValidateArgumentCount(Inputs?.Length ?? 0, compilationContext)
-                   && arguments.ValidateArgumentConstraints(Inputs, FindConstraint, compilationContext)
+            return arguments.ValidateArgumentCount(DeclaredInputs?.Length ?? 0, compilationContext)
+                   && arguments.ValidateArgumentConstraints(DeclaredInputs, FindConstraint, compilationContext)
                 // If we have any arguments, push a new temporary scope with them
                 // else the parent scope for the function is simply the declaration's parent
                 ? CompileFunction(this, arguments?.Length > 0
-                    ? Parent.PushTemporaryScope(arguments.Select((arg, index) => (Inputs[index].Identifier, arg)))
+                    ? Parent.PushTemporaryScope(arguments.Select((arg, index) => (DeclaredInputs[index].Identifier, arg)))
                     : Parent)
                 : CompilationErr.Instance;
         }
+
+        public IValue? HandleNullary(CompilationContext compilationContext) =>
+            IsNullary ? Call(Array.Empty<IValue>(), compilationContext) : this;
     }
 }

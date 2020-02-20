@@ -49,15 +49,13 @@ namespace Element.AST
         public override Identifier Identifier => Declaration.Identifier;
         public override string ToString() => Declaration.ToString();
 
+        public Port[] DeclaredInputs => Declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
         protected bool IsIntrinsic => !string.IsNullOrEmpty(Intrinsic);
-        public Port[] Inputs => IsProxied ? ProxiedInputs : Declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
         protected abstract string Qualifier { get; }
         protected virtual List<Identifier> ScopeIdentifierWhitelist { get; }
         protected override DeclaredScope Child => Body as Scope;
-        protected virtual bool IsProxied => IsIntrinsic;
-        protected Port[] ProxiedInputs { get; set; }
 
-        protected bool ValidateBody(CompilationContext compilationContext)
+        protected bool ValidateScopeBody(CompilationContext compilationContext)
         {
             if (Body is Scope scope)
             {
@@ -70,19 +68,10 @@ namespace Element.AST
         protected bool ValidateIntrinsic(CompilationContext compilationContext)
         {
             var success = true;
-            if (IsIntrinsic)
+            if (IsIntrinsic && ImplementingIntrinsic == null)
             {
-                switch (ImplementingIntrinsic)
-                {
-                    case ICallable callable:
-                        ProxiedInputs = callable.Inputs;
-                        break;
-                    case null: break; // Error already logged by GetImplementingIntrinsic
-                    default:
-                        compilationContext.LogError(14, $"Found intrinsic '{FullPath}' but it is not callable");
-                        success = false;
-                        break;
-                }
+                compilationContext.LogError(4, $"Intrinsic '{FullPath}' not implemented");
+                success = false;
             }
 
             return success;
@@ -101,7 +90,7 @@ namespace Element.AST
                     return null; // If we found null it's because nothing was found, ResolveIndexExpression will have already logged an error
                 default:
                     // Last error case where we found something but it was not a type.
-                    compilationContext.LogError(16, $"'{value}' is not a type");
+                    compilationContext.LogError(16, $"'{value}' is not a constraint");
                     return null;
             }
         }

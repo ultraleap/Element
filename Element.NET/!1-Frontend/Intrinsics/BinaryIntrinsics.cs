@@ -14,16 +14,10 @@ namespace Element.AST
         public string FullPath { get; }
         public Binary.Op Operation { get; }
 
-        public Port[] Inputs { get; } =
-            {
-                // TODO: Add type.
-                new Port(new Identifier("a"), null),
-                new Port(new Identifier("b"), null),
-            };
-
         public bool CanBeCached => true;
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => arguments.ValidateArgumentCount(Inputs.Length, compilationContext)
+        // TODO: Add type checking
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => arguments.ValidateArgumentCount(2, compilationContext)
             ? (IValue) new Literal(Binary.Evaluate(Operation, arguments[0] as Literal, arguments[1] as Literal))
             : CompilationErr.Instance;
     }

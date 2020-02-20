@@ -46,7 +46,7 @@ namespace Element.AST
                 var arg = arguments[i];
                 var port = ports[i];
                 var constraint = findConstraint(port.Type, compilationContext);
-                if (constraint != null && !constraint.MatchesConstraint(arg))
+                if (constraint != null && !constraint.MatchesConstraint(arg, compilationContext))
                 {
                     compilationContext.LogError(8, $"Value given for port '{port.Identifier}' does not match '{constraint}' constraint");
                     success = false;
@@ -97,12 +97,10 @@ namespace Element.AST
 
             compilationContext.Push(new TraceSite(previous.ToString(), null, 0, 0));
 
-            // Resolve Nullary (0-argument) functions
-            previous = previous switch
+            if (previous is Function function)
             {
-                Function func when func.Inputs.Length == 0 => func.Call(Array.Empty<IValue>(), compilationContext),
-                _ => previous
-            };
+                previous = function.HandleNullary(compilationContext);
+            }
 
             // TODO: Handle lambdas
 

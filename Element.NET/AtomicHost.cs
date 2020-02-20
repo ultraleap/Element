@@ -18,11 +18,10 @@ namespace Element
                     ?
                     expressionObject.ResolveExpression(context.GlobalScope, context) switch
                     {
-                        // TODO: Replace with serialization
+                        // TODO: Add result type which deserializes structs into float array
                         CompilationErr _ => Array.Empty<float>(),
                         Literal lit => new[] {(float) lit},
-                        StructInstance instance => Array.Empty<float>(), // HACK!
-                        var result => throw new NotImplementedException($"{result} evaluation not implemented")
+                        _ => Array.Empty<float>()
                     }
                     : Array.Empty<float>()
                 : Array.Empty<float>();

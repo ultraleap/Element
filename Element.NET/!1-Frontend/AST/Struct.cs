@@ -4,18 +4,24 @@ using System.Linq;
 namespace Element.AST
 {
     public interface IStructBody {}
+
+    public interface ITypeIdentity
+    {
+        // TODO: Remove setter - find another way to handle setting type identity when aliasing primitive types
+        IConstraint Identity { get; set; }
+    }
     
     // ReSharper disable once UnusedType.Global
     public class Struct : CallableDeclaration<IStructBody>, ICallable, IConstraint, IScope
     {
         protected override string Qualifier { get; } = "struct";
-        protected override bool IsProxied => IsIntrinsic || IsAlias;
         public bool CanBeCached => true;
-        public bool IsAlias => Declaration.Type != null;
+        private bool IsAlias => Declaration.Type != null;
+        private Struct _aliasedType { get; set; }
 
-        public bool MatchesConstraint(IValue value) => value switch
+        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value switch
         {
-            StructInstance i when i.Type == this => true,
+            ITypeIdentity i when i.Identity == this => true,
             _ => false
         };
 
@@ -37,14 +43,14 @@ namespace Element.AST
                     success = false;
                 }
 
-                var aliasee = FindConstraint(Declaration.Type, compilationContext);
-                if (aliasee is Struct constraint)
+                var foundConstraint = FindConstraint(Declaration.Type, compilationContext);
+                if (foundConstraint is Struct aliased)
                 {
-                    ProxiedInputs = constraint.Inputs;
+                    _aliasedType = aliased;
                 }
                 else
                 {
-                    compilationContext.LogError(20, $"Cannot create alias of non-struct '{aliasee}'");
+                    compilationContext.LogError(20, $"Cannot create alias of non-struct '{foundConstraint}'");
                     success = false;
                 }
             }
@@ -52,34 +58,52 @@ namespace Element.AST
             {
                 success &= ValidateIntrinsic(compilationContext);
                 
-                if (!IsIntrinsic && Inputs.Length < 1)
+                if (!IsIntrinsic && DeclaredInputs.Length < 1)
                 {
                     compilationContext.LogError(13, $"Non intrinsic '{FullPath}' must have ports");
                     success = false;
                 }
             }
 
-            success &= ValidateBody(compilationContext);
+            success &= ValidateScopeBody(compilationContext);
 
 
             return success;
         }
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => new StructInstance(this, arguments);
+        private sealed class StructInstance : TransientScope, ITypeIdentity
+        {
+            public IConstraint Identity { get; set; }
+
+            public StructInstance(Struct identity, Port[] inputs, IEnumerable<IValue> memberValues)
+            {
+                Identity = identity;
+                AddRangeToCache(inputs.Zip(memberValues, (port, value) => (port.Identifier, value)));
+            }
+        }
+
+
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => Call(arguments, this, compilationContext);
+
+        private IValue Call(IValue[] arguments, Struct instanceType, CompilationContext compilationContext)
+        {
+            var result = (IsAlias, IsIntrinsic) switch
+            {
+                (true, _) => _aliasedType.Call(arguments, instanceType, compilationContext),
+                (_, true) => ImplementingIntrinsic switch
+                {
+                    ICallable constructor => constructor.Call(arguments, compilationContext),
+                    {} => compilationContext.LogError(14, $"Found intrinsic '{FullPath}' but it is not callable"),
+                    _ => compilationContext.LogError(4, $"Intrinsic '{FullPath}' is not implemented")
+                },
+                (_, _) => new StructInstance(instanceType, DeclaredInputs, arguments)
+            };
+            (result as ITypeIdentity).Identity = instanceType;
+            return result;
+        }
 
         public IValue? this[Identifier id] => Body is Scope scope ? scope[id] : null;
 
         IScope? IScope.Parent => Parent;
-    }
-
-    public sealed class StructInstance : TransientScope
-    {
-        public Struct Type { get; }
-
-        public StructInstance(Struct type, IEnumerable<IValue> memberValues)
-        {
-            Type = type;
-            AddRangeToCache(Type.Inputs.Zip(memberValues, (port, value) => (port.Identifier, value)));
-        }
     }
 }
