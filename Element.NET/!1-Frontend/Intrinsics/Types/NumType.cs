@@ -9,13 +9,12 @@ namespace Element.AST
         private NumType() { }
         public override string ToString() => "<number>";
 
-        public bool? MatchesConstraint(IValue value, Port port, CompilationContext compilationContext) => value switch
+        public bool MatchesConstraint(IValue value) => value switch
         {
             Literal _ => true,
+            StructInstance i when i.Type == Instance => true,
             _ => false
         };
-
-        //value is CompilationErr ? (bool?)null : (value.Inputs?.Length == 0 && value.Outputs?.Length == 0);
 
         public bool CanBeCached => true;
         public IValue Call(IValue[] arguments, CompilationContext compilationContext) => arguments[0] as Literal;

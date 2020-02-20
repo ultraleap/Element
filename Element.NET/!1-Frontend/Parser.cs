@@ -45,13 +45,11 @@ namespace Element
     /// </summary>
     public static class Parser
     {
-        public static Identifier AnyTypeIdentifier { get; } = new Identifier("Any");
         public static Identifier ReturnIdentifier { get; } = new Identifier("return");
         
         public static readonly Identifier[] GloballyReservedIdentifiers =
         {
             new Identifier("_"),
-            AnyTypeIdentifier,
             new Identifier("intrinsic"),
             new Identifier("namespace"),
             ReturnIdentifier,

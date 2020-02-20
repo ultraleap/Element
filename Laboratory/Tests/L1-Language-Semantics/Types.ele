@@ -1,3 +1,4 @@
+intrinsic struct Any;
 intrinsic struct Num;
 struct NotNum(a);
 struct NumAlias:Num;

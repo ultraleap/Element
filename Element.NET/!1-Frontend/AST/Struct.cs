@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,10 +13,11 @@ namespace Element.AST
         public bool CanBeCached => true;
         public bool IsAlias => Declaration.Type != null;
 
-        public bool? MatchesConstraint(IValue value, Port port, CompilationContext compilationContext)
+        public bool MatchesConstraint(IValue value) => value switch
         {
-            throw new NotImplementedException();
-        }
+            StructInstance i when i.Type == this => true,
+            _ => false
+        };
 
         public override bool Validate(CompilationContext compilationContext)
         {
@@ -37,7 +37,7 @@ namespace Element.AST
                     success = false;
                 }
 
-                var aliasee = Declaration.Type.FindConstraint(Parent, compilationContext);
+                var aliasee = FindConstraint(Declaration.Type, compilationContext);
                 if (aliasee is Struct constraint)
                 {
                     ProxiedInputs = constraint.Inputs;
@@ -65,8 +65,7 @@ namespace Element.AST
             return success;
         }
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            new StructInstance(Inputs.Select((port, index) => (port.Identifier, arguments[index])));
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => new StructInstance(this, arguments);
 
         public IValue? this[Identifier id] => Body is Scope scope ? scope[id] : null;
 
@@ -75,6 +74,12 @@ namespace Element.AST
 
     public sealed class StructInstance : TransientScope
     {
-        public StructInstance(IEnumerable<(Identifier Identifier, IValue Value)> members) => AddRangeToCache(members);
+        public Struct Type { get; }
+
+        public StructInstance(Struct type, IEnumerable<IValue> memberValues)
+        {
+            Type = type;
+            AddRangeToCache(Type.Inputs.Zip(memberValues, (port, value) => (port.Identifier, value)));
+        }
     }
 }

@@ -1,62 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Lexico;
 
 namespace Element.AST
 {
     public interface IFunctionBody {}
 
-    public abstract class CallableDeclaration<TBody> : Item
-    {
-        [Literal("intrinsic"), Optional] protected string Intrinsic;
-        [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed _;
-        [Term] protected Declaration Declaration;
-        [Term] protected TBody Body;
-
-        public Port[] Inputs => IsProxied ? ProxiedInputs : Declaration.PortList?.List.ToArray() ?? Array.Empty<Port>();
-        public override Identifier Identifier => Declaration.Identifier;
-        public bool IsIntrinsic => !string.IsNullOrEmpty(Intrinsic);
-        public override string ToString() => Declaration.ToString();
-        
-        protected abstract string Qualifier { get; }
-        protected virtual List<Identifier> ScopeIdentifierWhitelist { get; }
-        protected override DeclaredScope Child => Body as Scope;
-        protected virtual bool IsProxied => IsIntrinsic;
-        protected Port[] ProxiedInputs { get; set; }
-
-        protected bool ValidateBody(CompilationContext compilationContext)
-        {
-            if (Body is Scope scope)
-            {
-                return scope.ValidateScope(compilationContext, ScopeIdentifierWhitelist);
-            }
-
-            return true;
-        }
-
-        protected bool ValidateIntrinsic(CompilationContext compilationContext)
-        {
-            var success = true;
-            if (IsIntrinsic)
-            {
-                switch (ImplementingIntrinsic)
-                {
-                    case ICallable callable:
-                        ProxiedInputs = callable.Inputs;
-                        break;
-                    case null: break; // Error already logged by GetImplementingIntrinsic
-                    default:
-                        compilationContext.LogError(14, $"Found intrinsic '{FullPath}' but it is not callable");
-                        success = false;
-                        break;
-                }
-            }
-
-            return success;
-        }
-    }
-    
     // ReSharper disable once ClassNeverInstantiated.Global
     public class Function : CallableDeclaration<IFunctionBody>, ICallable
     {
@@ -86,11 +35,25 @@ namespace Element.AST
                     _ => CompilationErr.Instance
                 };
 
-            // If we have any arguments, push a new temporary scope with them
-            // else the parent scope for the function is simply the declaration's parent
-            return CompileFunction(this, arguments?.Length > 0
-                ? Parent.PushTemporaryScope(arguments.Select((arg, index) => (Inputs[index].Identifier, arg)))
-                : Parent);
+            if (IsIntrinsic)
+            {
+                return ImplementingIntrinsic switch
+                {
+                    ICallable intrinsic => intrinsic.Call(arguments, compilationContext),
+                    {} => compilationContext.LogError(14, $"Found intrinsic '{FullPath}' but it is not callable"),
+                    _ => compilationContext.LogError(4, $"Intrinsic '{FullPath}' is not implemented")
+                };
+            }
+
+
+            return arguments.ValidateArgumentCount(Inputs?.Length ?? 0, compilationContext)
+                   && arguments.ValidateArgumentConstraints(Inputs, FindConstraint, compilationContext)
+                // If we have any arguments, push a new temporary scope with them
+                // else the parent scope for the function is simply the declaration's parent
+                ? CompileFunction(this, arguments?.Length > 0
+                    ? Parent.PushTemporaryScope(arguments.Select((arg, index) => (Inputs[index].Identifier, arg)))
+                    : Parent)
+                : CompilationErr.Instance;
         }
     }
 }

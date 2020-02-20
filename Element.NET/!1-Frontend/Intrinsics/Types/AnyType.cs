@@ -8,7 +8,7 @@ namespace Element.AST
         public static IConstraint Instance { get; } = new AnyType();
         private AnyType() { }
         public override string ToString() => "<any>";
-        bool? IConstraint.MatchesConstraint(IValue value, Port port, CompilationContext compilationContext) => true;
+        bool IConstraint.MatchesConstraint(IValue value) => true;
         public bool CanBeCached => true;
     }
 }
