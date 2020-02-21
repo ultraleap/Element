@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Element.AST;
-using Tomlyn;
-using Tomlyn.Model;
 
 namespace Element
 {
@@ -34,7 +32,7 @@ namespace Element
 
         public GlobalScope GlobalScope { get; }
 
-        private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
+        
 
         private Action<CompilerMessage> LogCallback { get; }
 
@@ -49,25 +47,15 @@ namespace Element
         {
             if (!messageCode.HasValue)
             {
-                LogCallback?.Invoke(new CompilerMessage(null, null, null, context, _callStack.ToArray()));
+                LogCallback?.Invoke(new CompilerMessage(null, null, context, _callStack.ToArray()));
                 return CompilationErr.Instance;
             }
 
-            if (!(_messageToml[$"ELE{messageCode}"] is TomlTable messageTable))
-            {
-                throw new InternalCompilerException($"ELE{messageCode} could not be found");
-            }
-
-
-            if (!Enum.TryParse((string) messageTable["level"], out MessageLevel level))
-            {
-                throw new InternalCompilerException($"\"{level}\" is not a valid message level");
-            }
-
+            var level = CompilerMessage.GetMessageLevel(messageCode.Value);
+            
             if (level >= Input.Verbosity)
             {
-                LogCallback?.Invoke(new CompilerMessage(messageCode.Value, (string) messageTable["name"], level,
-                    context, _callStack.ToArray()));
+                LogCallback?.Invoke(new CompilerMessage(messageCode.Value, level, context, _callStack.ToArray()));
             }
 
             return CompilationErr.Instance;

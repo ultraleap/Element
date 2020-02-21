@@ -1,36 +1,47 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Newtonsoft.Json;
+using Tomlyn;
+using Tomlyn.Model;
 
 namespace Element
 {
     public readonly struct CompilerMessage
     {
-        public CompilerMessage(string message, MessageLevel? messageLevel = default) : this()
-        {
-            _message = Context = message;
-            MessageLevel = messageLevel;
-        }
+        private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
+
+        private static TomlTable GetMessageToml(int messageCode) =>
+            _messageToml[$"ELE{messageCode}"] is TomlTable messageTable
+                ? messageTable
+                : throw new InternalCompilerException($"ELE{messageCode} could not be found");
+
+        public static string GetMessageName(int messageCode) => (string) GetMessageToml(messageCode)["name"];
+
+        public static MessageLevel GetMessageLevel(int messageCode) =>
+            Enum.TryParse((string) GetMessageToml(messageCode)["level"], out MessageLevel level)
+                ? level
+                : throw new InternalCompilerException($"\"{level}\" is not a valid message level");
+
+        public CompilerMessage(string message, MessageLevel? messageLevel = null) : this(null, messageLevel, message, null){}
 
         [JsonConstructor]
-        public CompilerMessage(int? messageCode, string? name, MessageLevel? messageLevel, string? context, IReadOnlyList<TraceSite> callStack)
+        public CompilerMessage(int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? callStack)
         {
             MessageCode = messageCode;
-            Name = name;
+            MessageLevel = messageCode.HasValue ? GetMessageLevel(messageCode.Value) : messageLevel;
             Context = context;
-            MessageLevel = messageLevel;
-            CallStack = callStack;
+            CallStack = callStack ?? Array.Empty<TraceSite>();
 
             var builder = new StringBuilder();
             if (messageCode.HasValue)
             {
-                builder.Append("ELE").Append(messageCode.Value).Append(": ").Append(MessageLevel).Append(" - ")
-                    .Append(Name).AppendLine();
+                builder.Append("ELE").Append(MessageCode).Append(": ").Append(MessageLevel).Append(" - ").AppendLine(GetMessageName(messageCode.Value));
             }
 
-            builder.Append(context);
-            if (messageCode.HasValue && callStack?.Count > 0)
+            builder.Append(Context);
+            if (CallStack.Count > 0)
             {
                 builder.AppendLine();
                 builder.AppendLine("Element source trace:");
@@ -38,6 +49,7 @@ namespace Element
                 {
                     builder.Append("    ").AppendLine(site.ToString());
                 }
+
                 builder.AppendLine();
             }
 
@@ -45,10 +57,9 @@ namespace Element
         }
         private readonly string _message;
 
-        public string? Context { get; }
         public int? MessageCode { get; }
-        public string? Name { get; }
         public MessageLevel? MessageLevel { get; }
+        public string? Context { get; }
         public IReadOnlyCollection<TraceSite> CallStack { get; }
 
         public override string ToString() => _message;

@@ -17,14 +17,15 @@ portList        ::= '(' port (',' port)* ')'
 /* Portlist is optional in 2 situations:
        Constant nullary functions where parentheses are redundant
        Declaring interface of intrinsic variadic constructs is impossible (no syntax support for variadics) */
-declaration     ::= identifier portList?
+declaration     ::= identifier portList? type?
 scope           ::= '{' item* '}'
 
 expressionBody  ::= '=' expression ';'
 functionBody    ::= expressionBody | scope
 lambda          ::= '_' portList functionBody
-function        ::= qualifier declaration type? (functionBody | ';')
+function        ::= qualifier declaration (functionBody | ';')
 struct          ::= qualifier 'struct' declaration (scope | ';')
+constraint      ::= qualifier 'constraint' declaration ';'
 namespace       ::= 'namespace' identifier scope
 
 item            ::= function | struct | namespace

@@ -1,50 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
-using Tomlyn;
-using Tomlyn.Model;
 
 namespace Element
 {
     /// <summary>
-    /// Contain input data for compiler including configuration
+    /// Contain input data for compiler including files to compile and compiler flags
     /// </summary>
-    public readonly struct CompilationInput
+    public class CompilationInput // TODO: Change to record type when available
     {
-        public bool ExcludePrelude { get; }
-        public IReadOnlyList<DirectoryInfo> Packages { get; }
-        public IReadOnlyList<FileInfo> ExtraSourceFiles { get; }
-        public Action<CompilerMessage>? LogCallback { get; }
-
-        public CompilationInput(Action<CompilerMessage>? logCallback,
-            bool excludePrelude = false,
-            IReadOnlyList<DirectoryInfo> packages = null,
-            IReadOnlyList<FileInfo> extraSourceFiles = null,
-            string compilerFlagsToml = null)
+        public CompilationInput(Action<CompilerMessage>? logCallback)
         {
             LogCallback = logCallback;
-            ExcludePrelude = excludePrelude;
-            Packages = packages ?? Array.Empty<DirectoryInfo>();
-            ExtraSourceFiles = extraSourceFiles ?? Array.Empty<FileInfo>();
-            _compilerFlags = Toml.Parse(compilerFlagsToml ?? File.ReadAllText("CompilerFlags.toml")).ToModel();
         }
         
-        private readonly TomlTable _compilerFlags;
-
-        private TValue CompilerFlag<TValue>(TValue defaultValue, [CallerMemberName] string caller = default) =>
-            ((TomlTable) _compilerFlags[caller ?? throw new ArgumentNullException(nameof(caller))])
-                .TryGetValue("value", out var value) switch
-                {
-                    true => typeof(TValue) switch
-                    {
-                        { } type when type.IsEnum => (TValue)Enum.Parse(type, (string)value),
-                        _ => (TValue)value
-                    },
-                    false => defaultValue
-                };
-
-        public bool Debug => CompilerFlag(false);
-        public MessageLevel Verbosity => CompilerFlag(MessageLevel.Information);
+        public Action<CompilerMessage>? LogCallback { get; set; }
+        public bool ExcludePrelude { get; set; } = false;
+        public IReadOnlyList<DirectoryInfo> Packages { get; set; } = Array.Empty<DirectoryInfo>();
+        public IReadOnlyList<FileInfo> ExtraSourceFiles { get; set; } = Array.Empty<FileInfo>();
+        public bool Debug { get; set; } = false;
+        public bool SkipValidation { get; set; } = false;
+        public MessageLevel Verbosity { get; set; } = MessageLevel.Information;
     }
 }

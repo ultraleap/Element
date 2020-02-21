@@ -22,6 +22,9 @@
     <Content Include="Tests\**\*.ele" Link="%(RecursiveDir)%(Filename)%(Extension)">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Tests\**\*.toml" Link="%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="ProcessHostConfigurations.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

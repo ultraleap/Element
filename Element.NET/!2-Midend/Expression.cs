@@ -14,6 +14,7 @@ namespace Element
 		PortInfo[] IFunction.Inputs => Array.Empty<PortInfo>();
 		PortInfo[] IFunction.Outputs => Array.Empty<PortInfo>();
 		Expression IEvaluable.AsExpression(CompilationContext info) => this;
+		public IConstraint Identity { get; } = null; // TODO: Expression tree identity
 
 		IFunction IFunction.CallInternal(IFunction[] arguments, string output, CompilationContext context) => context.LogError(9999, "Can't call a number");
 
@@ -34,6 +35,5 @@ namespace Element
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
 
 		public virtual bool Equals(Expression other) => other?.ToString() == ToString();
-		public bool CanBeCached => true;
 	}
 }

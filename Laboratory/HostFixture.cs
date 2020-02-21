@@ -52,15 +52,15 @@ namespace Laboratory
 
         protected void EvaluateExpectingErrorCode(CompilationInput compilationInput, int messageCode, string expression)
         {
-            var withNewCallback = new CompilationInput(ExpectMessageCode(messageCode, compilationInput.LogCallback), compilationInput.ExcludePrelude, compilationInput.Packages, compilationInput.ExtraSourceFiles);
-            _host.Evaluate(withNewCallback, expression);
+            compilationInput.LogCallback = ExpectMessageCode(messageCode, compilationInput.LogCallback);
+            _host.Evaluate(compilationInput, expression);
             Assert.Fail("Expected message code '{0}' but no errors were logged", messageCode);
         }
         
         
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());
-        protected static FileInfo GetTestFile(string partialName) => TestDirectory.GetFiles("*.ele", SearchOption.AllDirectories).Single(file => file.Name.Contains(partialName));
-        protected static FileInfo[] GetTestFiles(string pattern) => TestDirectory.GetFiles(pattern, SearchOption.AllDirectories);
+        protected static FileInfo GetEleFile(string partialName) => GetFile("*.ele", partialName);
+        protected static FileInfo GetFile(string pattern, string partialName) => TestDirectory.GetFiles(pattern, SearchOption.AllDirectories).Single(file => file.Name.Contains(partialName));
         
         
         

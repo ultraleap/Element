@@ -9,10 +9,10 @@ namespace Element
     /// </summary>
     public class AtomicHost : IHost
     {
-        public bool ParseFile(in CompilationInput compilationInput, FileInfo file) =>
+        public bool ParseFile(CompilationInput compilationInput, FileInfo file) =>
             CompilationContext.TryCreate(compilationInput, out var context) && context.ParseFile(file);
 
-        public float[] Evaluate(in CompilationInput compilationInput, string expression) =>
+        public float[] Evaluate(CompilationInput compilationInput, string expression) =>
             CompilationContext.TryCreate(compilationInput, out var context)
                 ? context.Parse(expression, out AST.Expression expressionObject)
                     ?

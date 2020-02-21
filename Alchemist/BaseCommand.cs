@@ -13,7 +13,7 @@ namespace Alchemist
 	/// </summary>
 	internal abstract class BaseCommand
 	{
-		[Option("no-prelude", HelpText = "Prelude functionality is included. Warning: Without Prelude only unverified compiler intrinsics will be available.")]
+		[Option("no-prelude", Default = false, HelpText = "Prelude functionality is included. Warning: Without Prelude only unverified compiler intrinsics will be available.")]
 		public bool ExcludePrelude { get; set; }
 
 		[Option("packages", Required = false, HelpText = "Element packages to load into the context.")]
@@ -21,9 +21,17 @@ namespace Alchemist
 
 		[Option("source-files", Required = false, HelpText = "Extra individual source files to load into the context.")]
 		public IEnumerable<string> ExtraSourceFiles { get; set; }
+		
+		[Option("debug", Required = false, Default = false, HelpText = "Preserves debug information while compiling.")]
+		public bool Debug { get; set; }
+		
+		[Option("verbosity", Required = false, Default = MessageLevel.Information, HelpText = "Verbosity of compiler messages.")]
+		public MessageLevel Verbosity { get; set; }
 
-		[Option("logjson", Required = false, HelpText = "Serializes log messages structured as Json instead of plain string.")]
+		[Option("logjson", Required = false, Default = false, HelpText = "Serializes log messages structured as Json instead of plain string.")]
 		public bool LogMessagesAsJson { get; set; }
+		
+		protected abstract bool _skipValidation { get; }
 
 		private DirectoryInfo GetPackageDirectories(string package)
 		{
@@ -36,9 +44,15 @@ namespace Alchemist
 		public int Invoke(string args)
 		{
 			Log(args);
-			var (exitCode, result) = CommandImplementation(new CompilationInput(Log, ExcludePrelude,
-				Packages.Select(GetPackageDirectories).ToList(),
-				ExtraSourceFiles.Select(file => new FileInfo(file)).ToList()));
+			var (exitCode, result) = CommandImplementation(new CompilationInput(Log)
+			{
+				Debug = Debug,
+				SkipValidation = _skipValidation,
+				Verbosity = Verbosity,
+				ExcludePrelude = ExcludePrelude,
+				Packages = Packages.Select(GetPackageDirectories).ToList(),
+				ExtraSourceFiles = ExtraSourceFiles.Select(file => new FileInfo(file)).ToList()
+			});
 			Log(result);
 			return exitCode;
 		}

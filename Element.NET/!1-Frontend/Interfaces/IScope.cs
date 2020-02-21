@@ -3,35 +3,34 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public interface IScope : IValue
+    public interface IScopeItem { }
+    
+    public interface IScope
     {
-        IValue? this[Identifier id] { get; }
+        IScopeItem? this[Identifier id] { get; }
         IScope? Parent { get; }
     }
 
     public static class ScopeExtensions
     {
-        /// <summary>
-        /// Gets the IConstraint that this type refers to.
-        /// </summary>
-        public static IValue? IndexRecursively(this IScope scope, Identifier identifier) =>
+        public static IValue ToValue(this IScopeItem item, Identifier idIfNull, CompilationContext compilationContext) => item switch
+        {
+            IValue v => v,
+            {} notValue => compilationContext.LogError(16, $"'{notValue}' cannot be referenced in an expression as it is not a first class value"),
+            _ => compilationContext.LogError(7, $"Couldn't find '{idIfNull}' in a local or outer scope")
+        };
+        
+        public static IScopeItem? IndexRecursively(this IScope scope, Identifier identifier) =>
             scope[identifier] ?? scope.Parent?.IndexRecursively(identifier);
 
-        public static IValue? ResolveIndexExpressions(this IScope scope, Identifier identifier,
-            List<IndexingExpression> indexingExpressions, CompilationContext compilationContext)
+        public static IScopeItem? ResolveIndexExpressions(this IScope scope, Identifier identifier,
+                                                          List<IndexingExpression> indexingExpressions, CompilationContext compilationContext)
         {
             var value = scope.IndexRecursively(identifier);
-            if (value == null)
-            {
-                compilationContext.LogError(7, $"Couldn't find '{identifier}'");
-                return null;
-            }
-
             foreach (var indexingExpr in indexingExpressions ?? Enumerable.Empty<IndexingExpression>())
             {
-                value = indexingExpr.ResolveSubExpression(value, null, compilationContext);
+                value = indexingExpr.ResolveSubExpression(value.ToValue(identifier, compilationContext), null, compilationContext);
             }
-
             return value;
         }
 

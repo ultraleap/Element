@@ -4,7 +4,7 @@ namespace Element
 {
     public interface IHost
     {
-        bool ParseFile(in CompilationInput input, FileInfo file);
-        float[] Evaluate(in CompilationInput input, string expression);
+        bool ParseFile(CompilationInput input, FileInfo file);
+        float[] Evaluate(CompilationInput input, string expression);
     }
 }

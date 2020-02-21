@@ -1,7 +1,7 @@
 namespace Element.AST
 {
-    public interface IValue
+    public interface IValue : IScopeItem
     {
-        bool CanBeCached { get; }
+        IConstraint Identity { get; }
     }
 }

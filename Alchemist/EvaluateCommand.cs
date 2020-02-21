@@ -9,6 +9,8 @@ namespace Alchemist
 		[Option('e', "expression", Required = true, HelpText = "Expression to evaluate.")]
 		public string Expression { get; set; }
 
+		protected override bool _skipValidation { get; } = false; // Skipping validation during evaluate may cause indirect compiler errors
+
 		protected override (int ExitCode, string Result) CommandImplementation(in CompilationInput input) =>
 			(0, string.Join(", ", new AtomicHost().Evaluate(input, Expression))
 				.Replace("∞", "Infinity"));

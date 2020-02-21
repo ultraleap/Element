@@ -1,6 +1,6 @@
 namespace Element.AST
 {
-    public interface IIdentifiable
+    public interface IIdentifiable : IScopeItem
     {
         Identifier Identifier { get; }
     }

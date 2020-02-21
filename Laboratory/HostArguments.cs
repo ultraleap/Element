@@ -222,20 +222,23 @@ namespace Laboratory
             private static StringBuilder BeginCommand(CompilationInput input, string command)
             {
                 var processArgs = new StringBuilder();
-                processArgs.Append($"{command} --logjson {(input.ExcludePrelude ? "--no-prelude" : string.Empty)}");
+                processArgs.Append($"{command} --logjson");
+                if (input.ExcludePrelude) processArgs.Append(" --no-prelude ");
                 if (input.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Packages);
                 if (input.ExtraSourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.ExtraSourceFiles);
+                if (input.Debug) processArgs.Append(" --debug ");
+                if (input.SkipValidation) processArgs.Append(" --no-validation ");
                 return processArgs;
             }
 
-            bool IHost.ParseFile(in CompilationInput input, FileInfo file)
+            bool IHost.ParseFile(CompilationInput input, FileInfo file)
             {
                 var processArgs = BeginCommand(input, "parse");
                 processArgs.Append($" -f \"{file.FullName}\"");
                 return bool.Parse(RunHostProcess(input, processArgs.ToString()));
             }
 
-            float[] IHost.Evaluate(in CompilationInput input, string expression)
+            float[] IHost.Evaluate(CompilationInput input, string expression)
             {
                 var processArgs = BeginCommand(input, "evaluate");
 
