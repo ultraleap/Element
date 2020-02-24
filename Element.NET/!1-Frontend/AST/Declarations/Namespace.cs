@@ -1,6 +1,7 @@
 namespace Element.AST
 {
-    public class Namespace : DeclaredCallable<Intrinsic>, IValue, IScope
+    // ReSharper disable once UnusedType.Global
+    public class Namespace : DeclaredItem<Intrinsic>, IValue, IScope
     {
         public override bool Validate(CompilationContext compilationContext) => ValidateScopeBody(compilationContext);
         protected override string Qualifier { get; } = "namespace";

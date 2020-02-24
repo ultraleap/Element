@@ -4,11 +4,11 @@ using System.Linq;
 namespace Element.AST
 {
     // ReSharper disable once UnusedType.Global
-    public class Struct : DeclaredCallable<IntrinsicStruct>, IConstructor, IConstraint, IScope, IValue
+    public class Struct : DeclaredItem<IntrinsicStruct>, IConstructor, IConstraint, IScope, IValue
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
-        private bool IsAlias => Declaration.Type != null;
+        private bool IsAlias => Type != null;
         private Struct _aliasedType { get; set; }
 
         public IScopeItem? this[Identifier id] => Body is Scope scope ? scope[id] : null;
@@ -39,13 +39,13 @@ namespace Element.AST
                 }
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                if (Declaration.PortList != null)
+                if (PortList != null)
                 {
-                    compilationContext.LogError(19, $"Struct alias '{Identifier}' cannot have ports - remove either the ports or the alias type");
+                    compilationContext.LogError(19, $"Struct alias '{ParsedIdentifier}' cannot have ports - remove either the ports or the alias type");
                     success = false;
                 }
 
-                var foundConstraint = Declaration.Type.ResolveConstraint(Body as IScope ?? Parent, compilationContext);
+                var foundConstraint = Type.ResolveConstraint(Body as IScope ?? Parent, compilationContext);
                 if (foundConstraint is Struct aliased)
                 {
                     _aliasedType = aliased;

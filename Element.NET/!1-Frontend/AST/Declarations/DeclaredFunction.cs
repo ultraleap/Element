@@ -5,13 +5,13 @@ using System.Linq;
 namespace Element.AST
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class Function : DeclaredCallable<IntrinsicFunction>, IValue, ICallable
+    public class DeclaredFunction : DeclaredItem<IntrinsicFunction>, IValue, ICallable
     {
         protected override string Qualifier { get; } = string.Empty; // Functions don't have a qualifier
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
         protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
         private bool IsNullary => DeclaredInputs == null || DeclaredInputs.Length == 0;
-        public string TypeIdentity { get; } = null; // TODO: Add function identity
+        public string TypeIdentity { get; } = "<function>"; // Functions all share the same type identity. This is because functions are matched to function constraints by shape, not identity!
 
         public override bool Validate(CompilationContext compilationContext)
         {
@@ -36,7 +36,7 @@ namespace Element.AST
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
-            IValue CompileFunction(Function function, IScope parentScope) =>
+            IValue CompileFunction(DeclaredFunction function, IScope parentScope) =>
                 function.Body switch
                 {
                     // If a function is a binding (has expression body) we just compile the single expression
@@ -46,7 +46,7 @@ namespace Element.AST
                     Scope scope => scope[Parser.ReturnIdentifier] switch
                     {
                         // If the return value is a function, compile it
-                        Function returnFunction => CompileFunction(returnFunction, parentScope),
+                        DeclaredFunction returnFunction => CompileFunction(returnFunction, parentScope),
                         null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
                         // TODO: Add support for returning other items as values - structs and namespaces
                         var nyi => throw new NotImplementedException(nyi.ToString())
@@ -68,7 +68,7 @@ namespace Element.AST
         }
 
         public static void ResolveNullary(ref IValue value, CompilationContext compilationContext) =>
-            value = value is Function fn && fn.IsNullary
+            value = value is DeclaredFunction fn && fn.IsNullary
                         ? fn.Call(Array.Empty<IValue>(), compilationContext)
                         : value;
     }

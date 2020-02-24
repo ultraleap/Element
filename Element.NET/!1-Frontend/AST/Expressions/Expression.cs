@@ -33,7 +33,7 @@ namespace Element.AST
 
             compilationContext.Push(new TraceSite(previous.ToString(), null, 0, 0));
 
-            Function.ResolveNullary(ref previous, compilationContext);
+            DeclaredFunction.ResolveNullary(ref previous, compilationContext);
             
             // TODO: Handle lambdas
 
@@ -42,7 +42,7 @@ namespace Element.AST
                 previous =  expr.ResolveSubExpression(previous, scope, compilationContext);
             }
 
-            Function.ResolveNullary(ref previous, compilationContext);
+            DeclaredFunction.ResolveNullary(ref previous, compilationContext);
 
             compilationContext.Pop();
 

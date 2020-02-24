@@ -1,14 +1,14 @@
 namespace Element.AST
 {
     // ReSharper disable once UnusedType.Global
-    public class FunctionConstraint : DeclaredCallable<IntrinsicConstraint>, IConstraint
+    public class DeclaredConstraint : DeclaredItem<IntrinsicConstraint>, IConstraint
     {
         public override bool Validate(CompilationContext compilationContext)
         {
             var success = ValidateIntrinsic(compilationContext);
             if (!IsIntrinsic && DeclaredInputs.Length < 1)
             {
-                compilationContext.LogError(13, $"Non-intrinsic function constraint '{FullPath}' must have a port list");
+                compilationContext.LogError(13, $"Non-intrinsic constraint '{FullPath}' must have a port list");
                 success = false;
             }
 
