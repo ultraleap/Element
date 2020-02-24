@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 
 namespace Element.AST
@@ -30,21 +29,17 @@ namespace Element.AST
             return true;
         }
 
-        // TODO: Move validate functions to DeclaredCallable?
-        public static bool ValidateArgumentConstraints(this IValue[] arguments, Port[] ports,
-                                                       Func<Type, CompilationContext, IConstraint?> findConstraint,
-                                                       CompilationContext compilationContext)
+        public static bool ValidateArgumentConstraints(this IValue[] arguments, Port[] ports, IScope scope, CompilationContext compilationContext)
         {
             var success = true;
             for (var i = 0; i < ports.Length; i++)
             {
                 var arg = arguments[i];
                 var port = ports[i];
-                var constraint = findConstraint(port.Type, compilationContext);
+                var constraint = port.Type.ResolveConstraint(scope, compilationContext);
                 if (constraint != null && !constraint.MatchesConstraint(arg, compilationContext))
                 {
-                    compilationContext.LogError(
-                        8, $"Value given for port '{port.Identifier}' does not match '{constraint}' constraint");
+                    compilationContext.LogError(8, $"Value given for port '{port}' does not match '{constraint}' constraint");
                     success = false;
                 }
             }

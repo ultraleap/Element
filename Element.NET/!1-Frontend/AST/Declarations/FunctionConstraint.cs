@@ -1,7 +1,7 @@
 namespace Element.AST
 {
     // ReSharper disable once UnusedType.Global
-    public class FunctionConstraint : DeclaredCallable<Terminal, IntrinsicConstraint>, IConstraint
+    public class FunctionConstraint : DeclaredCallable<IntrinsicConstraint>, IConstraint
     {
         public override bool Validate(CompilationContext compilationContext)
         {
@@ -16,9 +16,10 @@ namespace Element.AST
         }
 
         protected override string Qualifier { get; } = "constraint";
+        protected override System.Type[] BodyAlternatives { get; } = {typeof(Terminal)};
         public bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
             IsIntrinsic
                 ? GetImplementingIntrinsic(compilationContext)?.MatchesConstraint(value, compilationContext) ?? false
-                : new[] {value}.ValidateArgumentConstraints(DeclaredInputs, FindConstraint, compilationContext);
+                : new[] {value}.ValidateArgumentConstraints(DeclaredInputs, Parent, compilationContext);
     }
 }

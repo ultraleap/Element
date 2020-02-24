@@ -3,7 +3,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded]
+    [WhitespaceSurrounded, MultiLine]
     public abstract class DeclaredItem : IIdentifiable
     {
         public abstract Identifier Identifier { get; }

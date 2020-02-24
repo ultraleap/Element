@@ -7,6 +7,6 @@ namespace Element.AST
 
     public interface IConstructor : ICallable
     {
-        IValue Call(IValue[] arguments, IConstraint instanceIdentity, CompilationContext compilationContext);
+        IValue Call(IValue[] arguments, string instanceTypeIdentity, CompilationContext compilationContext);
     }
 }

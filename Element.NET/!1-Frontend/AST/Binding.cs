@@ -4,7 +4,7 @@ namespace Element.AST
 {
     [WhitespaceSurrounded]
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class Binding : IFunctionBody
+    public class Binding
     {
         [Literal("=")] private Unnamed _bind;
         // ReSharper disable once UnassignedGetOnlyAutoProperty

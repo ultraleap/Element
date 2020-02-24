@@ -99,7 +99,7 @@ namespace Element
         public static bool Parse<T>(this CompilationContext context, string text, out T output)
         {
             var parseTrace = new List<string>();
-            var success = Lexico.Parser.TryParse(text, out output, new DelegateTextTrace(msg =>
+            var success = Lexico.Lexico.TryParse(text, out output, new DelegateTextTrace(msg =>
             {
                 if (!string.IsNullOrEmpty(msg)) parseTrace.Add(msg);
             }));

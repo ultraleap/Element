@@ -10,7 +10,7 @@ namespace Element.AST
         IValue ResolveSubExpression(IValue previous, IScope callSite, CompilationContext compilationContext);
     }
 
-    [WhitespaceSurrounded]
+    [WhitespaceSurrounded, MultiLine]
     public class Expression
     {
         [field: Term] public IExpressionListStart LitOrId { get; }
@@ -41,6 +41,8 @@ namespace Element.AST
             {
                 previous =  expr.ResolveSubExpression(previous, scope, compilationContext);
             }
+
+            Function.ResolveNullary(ref previous, compilationContext);
 
             compilationContext.Pop();
 

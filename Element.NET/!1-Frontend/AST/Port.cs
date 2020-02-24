@@ -2,7 +2,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded]
+    [WhitespaceSurrounded, MultiLine]
     public class Port
     {
         public Port() { }
@@ -16,7 +16,7 @@ namespace Element.AST
         [field: Term] public Identifier Identifier { get; }
         [field: Optional] public Type Type { get; }
 
-        public override string ToString() => Identifier;
+        public override string ToString() => $"{Identifier}{Type}";
     }
     
     public class PortList : ListOf<Port> { } // CallExpression looks like a list due to using brackets

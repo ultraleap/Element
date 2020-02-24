@@ -7,7 +7,7 @@ namespace Element.AST
     /// <summary>
     /// The global scope, root of all other scopes
     /// </summary>
-    [WhitespaceSurrounded, EOFAfter]
+    [WhitespaceSurrounded, MultiLine, TopLevel]
     public class SourceScope : IEnumerable<DeclaredItem>
     {
         [Optional] private readonly List<DeclaredItem> _items = new List<DeclaredItem>();

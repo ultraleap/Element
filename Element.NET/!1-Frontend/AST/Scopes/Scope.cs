@@ -3,9 +3,9 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded]
+    [WhitespaceSurrounded, MultiLine]
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class Scope : DeclaredScope, IFunctionBody, IStructBody
+    public class Scope : DeclaredScope
     {
         [Literal("{")] private Unnamed _open;
         [Optional] private readonly List<DeclaredItem> _items = new List<DeclaredItem>();

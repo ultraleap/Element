@@ -3,7 +3,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded]
+    [WhitespaceSurrounded, MultiLine]
     public abstract class ListOf<T>
     {
         [Literal("(")] private Unnamed _open;
@@ -13,7 +13,7 @@ namespace Element.AST
         public override string ToString() => $"({string.Join(", ", List)})";
     }
     
-    [WhitespaceSurrounded]
+    [WhitespaceSurrounded, MultiLine]
     struct ListSeparator
     {
         [Literal(",")] private Unnamed _;

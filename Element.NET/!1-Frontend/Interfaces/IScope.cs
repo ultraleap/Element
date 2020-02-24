@@ -22,25 +22,5 @@ namespace Element.AST
         
         public static IScopeItem? IndexRecursively(this IScope scope, Identifier identifier) =>
             scope[identifier] ?? scope.Parent?.IndexRecursively(identifier);
-
-        public static IScopeItem? ResolveIndexExpressions(this IScope scope, Identifier identifier,
-                                                          List<IndexingExpression> indexingExpressions, CompilationContext compilationContext)
-        {
-            var value = scope.IndexRecursively(identifier);
-            foreach (var indexingExpr in indexingExpressions ?? Enumerable.Empty<IndexingExpression>())
-            {
-                value = indexingExpr.ResolveSubExpression(value.ToValue(identifier, compilationContext), null, compilationContext);
-            }
-            return value;
-        }
-
-        public static IScope PushTemporaryScope(this IScope scope, IEnumerable<(Identifier, IValue)> pairs) => new TemporaryScope(scope, pairs);
-
-        private sealed class TemporaryScope : TransientScope
-        {
-            public TemporaryScope(IScope parent, IEnumerable<(Identifier Identifier, IValue Value)> members) :
-                base(parent) =>
-                AddRangeToCache(members);
-        }
     }
 }

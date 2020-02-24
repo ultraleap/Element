@@ -34,5 +34,17 @@ namespace Laboratory.Tests
         
         [Test]
         public void MemberConstraintsNotSatisfied() => EvaluateExpectingErrorCode(CompilationInput, 8, "Vector3(pickSecond, 5, 10)");
+
+        [Test]
+        public void AliasAsConstraint() => AssertApproxEqual(CompilationInput, "onlyNumAlias(NumAlias(9))", "9");
+
+        [Test]
+        public void AliasOfAliasAsConstraint() => AssertApproxEqual(CompilationInput, "onlyNumAliasAlias(NumAliasAlias(9))", "9");
+
+        [Test]
+        public void NoImplicitConversionFromAliasToBase() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNum(NumAlias(5))");
+
+        [Test]
+        public void NoImplicitConversionFromBaseToAlias() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNumAlias(5)");
     }
 }

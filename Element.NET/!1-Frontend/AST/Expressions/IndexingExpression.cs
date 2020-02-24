@@ -5,7 +5,7 @@ namespace Element.AST
     public class IndexingExpression : ISubExpression
     {
         [Literal(".")] private Unnamed _;
-        [field:Term] private Identifier Identifier { get; }
+        [field:Term] public Identifier Identifier { get; }
 
         public override string ToString() => $".{Identifier}";
 

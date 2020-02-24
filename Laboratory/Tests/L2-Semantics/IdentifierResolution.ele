@@ -13,13 +13,14 @@ namespace A
             }
         }
         
-        # Encounters local A first - result should be 15
+        # Local A -> x = 15
         a = A.x;
         
-        # Finds A nested within local A - result should be 20
+        # Local A -> nested A -> x = 20
         b = A.A.x;
         
-        # Falls back to outer A and resolves to the nested A
+        # Local A -> nested A -> error A not found
+        # Does not fall back! Matching is greedy.
         c = A.A.A.x;
     }
 }

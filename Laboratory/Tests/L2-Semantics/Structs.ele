@@ -1,5 +1,12 @@
 intrinsic struct Num;
+struct NumAlias:Num;
+struct NumAliasAlias:NumAlias;
+
 struct MyStruct(a);
 struct NestedStruct(m:MyStruct);
 struct Vector3(x:Num, y:Num, z:Num);
+
 pickSecond(a, b) = b;
+onlyNum(a:Num) = a;
+onlyNumAlias(a:NumAlias) = a;
+onlyNumAliasAlias(a:NumAliasAlias) = a;

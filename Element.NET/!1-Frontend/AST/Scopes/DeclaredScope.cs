@@ -40,14 +40,14 @@ namespace Element.AST
                     success = false;
                 }
 
-                if (_cache.ContainsKey(item.Identifier))
+                if (Contains(item.Identifier))
                 {
                     compilationContext.LogError(2, $"Cannot add duplicate identifier '{item.Identifier}'");
                     success = false;
                 }
                 else
                 {
-                    _cache[item.Identifier] = item;
+                    Add(item.Identifier, item);
                 }
             }
 

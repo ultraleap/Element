@@ -16,6 +16,6 @@ namespace Element
         PortInfo[] IFunction.Inputs => null;
         PortInfo[] IFunction.Outputs => null;
         IFunction IFunction.CallInternal(IFunction[] arguments, string output, CompilationContext context) => this;
-        public IConstraint Identity => Instance;
+        public string TypeIdentity => "<error>";
     }
 }

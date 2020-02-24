@@ -4,15 +4,14 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public interface IFunctionBody {}
-
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class Function : DeclaredCallable<IFunctionBody, IntrinsicFunction>, IValue, ICallable
+    public class Function : DeclaredCallable<IntrinsicFunction>, IValue, ICallable
     {
         protected override string Qualifier { get; } = string.Empty; // Functions don't have a qualifier
+        protected override System.Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
         protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
         private bool IsNullary => DeclaredInputs == null || DeclaredInputs.Length == 0;
-        public IConstraint Identity { get; } = null; // TODO: Add function identity
+        public string TypeIdentity { get; } = null; // TODO: Add function identity
 
         public override bool Validate(CompilationContext compilationContext)
         {
@@ -24,6 +23,15 @@ namespace Element.AST
             }
 
             return success;
+        }
+
+        private sealed class CallScope : ScopeBase
+        {
+            public CallScope(IScope parent, IEnumerable<(Identifier Identifier, IValue Value)> members)
+            {
+                Parent = parent;
+                AddRange(members);
+            }
         }
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext)
@@ -46,16 +54,17 @@ namespace Element.AST
                     _ => CompilationErr.Instance
                 };
 
-            return IsIntrinsic
-                       ? GetImplementingIntrinsic(compilationContext)?.Call(arguments, compilationContext)
-                       : arguments.ValidateArgumentCount(DeclaredInputs?.Length ?? 0, compilationContext)
-                         && arguments.ValidateArgumentConstraints(DeclaredInputs, FindConstraint, compilationContext)
-                           // If we have any arguments, push a new temporary scope with them
-                           // else the parent scope for the function is simply the declaration's parent
-                           ? CompileFunction(this, arguments?.Length > 0
-                                                       ? Parent.PushTemporaryScope(arguments.Select((arg, index) => (DeclaredInputs[index].Identifier, arg)))
-                                                       : Parent)
-                           : CompilationErr.Instance;
+            if (IsIntrinsic) return GetImplementingIntrinsic(compilationContext)?.Call(arguments, compilationContext);
+
+            var argumentsValid = arguments.ValidateArgumentCount(DeclaredInputs?.Length ?? 0, compilationContext)
+                                 && arguments.ValidateArgumentConstraints(DeclaredInputs, Body as IScope ?? Parent, compilationContext);
+            return argumentsValid
+                ? CompileFunction(this, arguments?.Length > 0
+                    // If we have any arguments for this function, push a call scope
+                    // else we  parent scope for the function is the declaration's parent
+                    ? (IScope) new CallScope(Parent, arguments.Select((arg, index) => (DeclaredInputs[index].Identifier, arg)))
+                    : Parent)
+                : CompilationErr.Instance;
         }
 
         public static void ResolveNullary(ref IValue value, CompilationContext compilationContext) =>

@@ -2,7 +2,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded]
+    [WhitespaceSurrounded, MultiLine]
     // ReSharper disable once ClassNeverInstantiated.Global
     public class Declaration
     {

@@ -1,0 +1,6 @@
+intrinsic constraint Any;
+intrinsic struct Num;
+struct NotNum(a);
+
+explicitAny(a:Any) = a;
+onlyNum(a:Num) = a;
