@@ -36,15 +36,27 @@ namespace Laboratory.Tests
         public void MemberConstraintsNotSatisfied() => EvaluateExpectingErrorCode(CompilationInput, 8, "Vector3(pickSecond, 5, 10)");
 
         [Test]
-        public void AliasAsConstraint() => AssertApproxEqual(CompilationInput, "onlyNumAlias(NumAlias(9))", "9");
+        public void AliasAsConstraint() => AssertApproxEqual(CompilationInput, "onlyNumNum(NumNum(9))", "9");
 
         [Test]
-        public void AliasOfAliasAsConstraint() => AssertApproxEqual(CompilationInput, "onlyNumAliasAlias(NumAliasAlias(9))", "9");
+        public void AliasOfAliasAsConstraint() => AssertApproxEqual(CompilationInput, "onlyNumNumNum(NumNumNum(9))", "9");
 
         [Test]
-        public void NoImplicitConversionFromAliasToBase() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNum(NumAlias(5))");
+        public void NoImplicitConversionFromAliasToBase() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNum(NumNum(5))");
 
         [Test]
-        public void NoImplicitConversionFromBaseToAlias() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNumAlias(5)");
+        public void NoImplicitConversionFromBaseToAlias() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNumNum(5)");
+
+        [Test]
+        public void IntrinsicInstanceFunction() => AssertApproxEqual(CompilationInput, "6.add(5)", "11");
+
+        [Test]
+        public void NonIntrinsicInstanceFunction() => AssertApproxEqual(CompilationInput, "6.addFive", "11");
+
+        [Test]
+        public void CustomStructInstanceFunction() => AssertApproxEqual(CompilationInput, "Vector3(5, 5, 5).add(Vector3(10, 10, 10))", "Vector3(15, 15, 15)");
+
+        [Test]
+        public void InstanceFunctionRequiresExplicitType() => EvaluateExpectingErrorCode(CompilationInput, 22, "5.addTen");
     }
 }

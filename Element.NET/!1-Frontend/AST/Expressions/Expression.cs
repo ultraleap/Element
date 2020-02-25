@@ -7,7 +7,7 @@ namespace Element.AST
 
     public interface ISubExpression
     {
-        IValue ResolveSubExpression(IValue previous, IScope callSite, CompilationContext compilationContext);
+        IValue ResolveSubExpression(IValue previous, IScope containingScope, CompilationContext compilationContext);
     }
 
     [WhitespaceSurrounded, MultiLine]
@@ -23,7 +23,7 @@ namespace Element.AST
             var previous = LitOrId switch
             {
                 // If the start of the list is an identifier, find the value that it identifies
-                Identifier id => scope.IndexRecursively(id).ToValue(id, compilationContext),
+                Identifier id => scope.IndexRecursively(id, compilationContext, out var containingScope).ToValue(id, containingScope, compilationContext),
                 Literal lit => lit,
                 _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
             };

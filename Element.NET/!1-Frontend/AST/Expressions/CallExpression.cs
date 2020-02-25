@@ -4,12 +4,12 @@ namespace Element.AST
 {
     public class CallExpression : ListOf<Expression>, ISubExpression
     {
-        public IValue ResolveSubExpression(IValue previous, IScope callSite, CompilationContext compilationContext)
+        public IValue ResolveSubExpression(IValue previous, IScope containingScope, CompilationContext compilationContext)
         {
             if (!(previous is ICallable callable)) return compilationContext.LogError(16, $"{previous} is not callable");
 
             // Compile the arguments for this call expression
-            var arguments = List.Select(argExpr => argExpr.ResolveExpression(callSite, compilationContext)).ToArray();
+            var arguments = List.Select(argExpr => argExpr.ResolveExpression(containingScope, compilationContext)).ToArray();
 
             return callable.Call(arguments, compilationContext);
         }

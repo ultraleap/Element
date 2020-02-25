@@ -1,36 +1,22 @@
-##### General Constraints #####
 # Anything at all!
-intrinsic Any;
+intrinsic constraint Any;
 
-# Any 1-arity (monadic) function
-Unary(a);
+# Arity-based function constraints
+constraint Unary(a);
+constraint Binary(a, b);
+constraint Ternary(a, b, c);
 
-# Any 2-arity (dyadic) function
-Binary(a, b);
-
-# Any 3-arity (triadic) function
-Ternary(a, b, c);
-
-Indexer(i:Num);
-Predicate(a):Bool;
+constraint Indexer(i:Num);
+constraint Predicate(a):Bool;
 
 
 
-##### Polymorphism #####
 # Calls function by nominative argument matching the functions parameters with the supplied instances fields
 # Typically used with memberwise to cast an untyped variadic return back into a type instance, e.g.
 #   Vector3Add(a, b) = infer(Vector3, memberwise(Num.add, a, b));
 intrinsic infer(function, instance);
 
 
-
-##### Variadics #####
-# struct Tuple(...);
-# Variadic structure of non-homogeneous fields
-# Tuple fields are positionally named itemN, e.g. a = Tuple(4, 20) is composed of a.item1 = 4 and a.item2 = 20
-# Tuples have special type identity - only tuples that are structurally identical compare equal
-# Structural identity is where the Tuples have the same arity and fields of the same type in the same order
-intrinsic struct Tuple;
 
 # memberwise(function, ...)...;
 # Returns a structure of functions where each functions inputs are the variadic inputs scope accessed by the output expression.
@@ -41,7 +27,6 @@ intrinsic memberwise;
 
 
 
-##### Guarantee-breaking Functions #####
 # Calls body repeatedly until condition is not met
 # WARNING: Usage of this function breaks halting guarantees
 # Body is a Unary function supplied with the output from the previous body starting with initial

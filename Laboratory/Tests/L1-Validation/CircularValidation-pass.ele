@@ -1,0 +1,5 @@
+intrinsic struct Num
+{
+	# Naively validating Num's items before allowing it to be referenced will cause validating this nested alias to fail finding it's parent
+	struct NestedAlias:Num;
+}

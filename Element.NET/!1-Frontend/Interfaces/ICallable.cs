@@ -5,8 +5,8 @@ namespace Element.AST
         IValue Call(IValue[] arguments, CompilationContext compilationContext);
     }
 
-    public interface IConstructor : ICallable
+    public interface IConstructor<in TInstanceType> : ICallable where TInstanceType : IType
     {
-        IValue Call(IValue[] arguments, string instanceTypeIdentity, CompilationContext compilationContext);
+        IValue Call(IValue[] arguments, TInstanceType instanceType, CompilationContext compilationContext);
     }
 }

@@ -4,26 +4,26 @@ using System.Linq;
 namespace Element.AST
 {
     // ReSharper disable once UnusedType.Global
-    public class Struct : DeclaredItem<IntrinsicStruct>, IConstructor, IConstraint, IScope, IValue
+    public class Struct : DeclaredItem<IntrinsicStruct>, IConstructor<Struct>, IConstraint, IScope, IValue, IType
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
-        private bool IsAlias => Type != null;
+        private bool IsAlias => DeclaredType != null;
         private Struct _aliasedType { get; set; }
 
-        public IScopeItem? this[Identifier id] => Body is Scope scope ? scope[id] : null;
+        public IScopeItem? this[Identifier id, CompilationContext compilationContext] => Body is Scope scope ? scope[id, compilationContext] : null;
 
         IScope? IScope.Parent => Parent;
 
-        // Struct identity is either:
-        //    The identity provided by the implementing intrinsic - this allows an intrinsic to control the identity of it's instances
-        //        For example, literals declared in source need to have the same type identity as those created using the Num constructor
-        //    This struct declaration - normal structs compare values identity reference with the struct declarations instance
-        public string TypeIdentity => IsIntrinsic ? GetImplementingIntrinsic(null).FullPath : FullPath;
+        // A structs type is either:
+        //    Provided by the implementing intrinsic - this allows an intrinsic to control type comparison of it's instances
+        //        For example, literals declared in source need to have the same type as those created using the Num constructor
+        //    This struct declaration - normal structs compare value types using a reference to the struct declarations instance
+        public IType Type => IsIntrinsic ? (IType)GetImplementingIntrinsic(null) : this;
 
         public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value switch
         {
-            { } v when v.TypeIdentity == TypeIdentity => true,
+            { } v when v.Type == Type => true,
             _ => false
         };
 
@@ -45,7 +45,7 @@ namespace Element.AST
                     success = false;
                 }
 
-                var foundConstraint = Type.ResolveConstraint(Body as IScope ?? Parent, compilationContext);
+                var foundConstraint = DeclaredType.ResolveConstraint(Body as IScope ?? Parent, compilationContext);
                 if (foundConstraint is Struct aliased)
                 {
                     _aliasedType = aliased;
@@ -62,7 +62,7 @@ namespace Element.AST
                 
                 if (!IsIntrinsic && DeclaredInputs.Length < 1)
                 {
-                    compilationContext.LogError(13, $"Non intrinsic '{FullPath}' must have ports");
+                    compilationContext.LogError(13, $"Non intrinsic '{Location}' must have ports");
                     success = false;
                 }
             }
@@ -75,26 +75,32 @@ namespace Element.AST
 
         private sealed class StructInstance : ScopeBase, IValue
         {
-            public string TypeIdentity { get; }
+            IType IValue.Type => DeclaringStruct;
+            private Struct DeclaringStruct { get; }
 
-            public StructInstance(string typeIdentity, Port[] inputs, IEnumerable<IValue> memberValues)
+            public override IScopeItem? this[Identifier id, CompilationContext compilationContext] =>
+                base[id, compilationContext]
+                ?? DeclaredFunction.ResolveAsInstanceFunction(id, this, DeclaringStruct, compilationContext);
+
+            public StructInstance(Struct declaringStruct, Port[] inputs, IEnumerable<IValue> memberValues)
             {
-                TypeIdentity = typeIdentity;
-                AddRange(inputs.Zip(memberValues, (port, value) => (port.Identifier, value)));
+                DeclaringStruct = declaringStruct;
+                SetRange(inputs.Zip(memberValues, (port, value) => (port.Identifier, value)));
             }
+
+            public override string Location => $"Instance of <{DeclaringStruct}>";
         }
 
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => Call(arguments, this, compilationContext);
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => Call(arguments, FullPath, compilationContext);
-
-        public IValue Call(IValue[] arguments, string instanceTypeIdentity, CompilationContext compilationContext) =>
+        public IValue Call(IValue[] arguments, Struct instanceType, CompilationContext compilationContext) =>
             (IsAlias, IsIntrinsic) switch
             {
-                (true, _) => _aliasedType.Call(arguments, instanceTypeIdentity, compilationContext),
-                (_, true) => GetImplementingIntrinsic(compilationContext)?.Call(arguments, instanceTypeIdentity, compilationContext),
+                (true, _) => _aliasedType.Call(arguments, instanceType, compilationContext),
+                (_, true) => GetImplementingIntrinsic(compilationContext)?.Call(arguments, instanceType, compilationContext),
                 (_, _) => arguments.ValidateArgumentCount(DeclaredInputs.Length, compilationContext)
                           && arguments.ValidateArgumentConstraints(DeclaredInputs, Body as IScope ?? Parent, compilationContext)
-                              ? (IValue)new StructInstance(instanceTypeIdentity, DeclaredInputs, arguments) : CompilationErr.Instance
+                              ? (IValue)new StructInstance(instanceType, DeclaredInputs, arguments) : CompilationErr.Instance
             };
     }
 }

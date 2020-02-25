@@ -3,17 +3,18 @@ using System.Collections.Generic;
 
 namespace Element.AST
 {
-    public abstract class DeclaredScope : ScopeBase, IIdentifiable
+    public abstract class DeclaredScope : ScopeBase
     {
         protected abstract IEnumerable<DeclaredItem> ItemsToCacheOnValidate { get; }
-        public Identifier Identifier { get; private set; }
+        public DeclaredItem Declarer { get; private set; }
+        public override string Location => Declarer.Location;
 
-        public void Initialize(DeclaredScope parent, IIdentifiable declarer)
+        public void Initialize(DeclaredScope parent, DeclaredItem declarer)
         {
             if (!(this is GlobalScope)) // Global scope has no parent or declarer!
             {
                 Parent = parent ?? throw new ArgumentNullException(nameof(parent));
-                Identifier = declarer?.Identifier ?? throw new ArgumentNullException(nameof(declarer));
+                Declarer = declarer ?? throw new ArgumentNullException(nameof(declarer));
             }
 
             foreach (var item in ItemsToCacheOnValidate)
@@ -30,6 +31,16 @@ namespace Element.AST
 
             foreach (var item in ItemsToCacheOnValidate)
             {
+                if (Contains(item.Identifier))
+                {
+                    compilationContext.LogError(2, $"Cannot add duplicate identifier '{item.Identifier}'");
+                    success = false;
+                }
+                else
+                {
+                    Set(item.Identifier, item);
+                }
+
                 if (!compilationContext.ValidateIdentifier(item.Identifier, identifierWhitelist))
                 {
                     success = false;
@@ -38,16 +49,6 @@ namespace Element.AST
                 if (!item.Validate(compilationContext))
                 {
                     success = false;
-                }
-
-                if (Contains(item.Identifier))
-                {
-                    compilationContext.LogError(2, $"Cannot add duplicate identifier '{item.Identifier}'");
-                    success = false;
-                }
-                else
-                {
-                    Add(item.Identifier, item);
                 }
             }
 

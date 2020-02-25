@@ -7,7 +7,7 @@ namespace Element.AST
     {
         private AnyConstraint() {}
         public static AnyConstraint Instance { get; } = new AnyConstraint();
-        public override string FullPath { get; } = "Any";
+        public override string Location { get; } = "Any";
         public override string ToString() => "<any>";
         public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => true;
     }

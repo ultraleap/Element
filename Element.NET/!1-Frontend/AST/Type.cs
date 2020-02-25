@@ -23,20 +23,23 @@ namespace Element.AST
         {
             if (startingScope == null) throw new ArgumentNullException(nameof(startingScope));
             if (type == null) return AnyConstraint.Instance;
-            var value = startingScope.IndexRecursively(type.Identifier);
+            var previous = startingScope.IndexRecursively(type.Identifier, compilationContext, out var foundValueIn);
             var currentIdentifier = type.Identifier;
+
             // ReSharper disable once ConstantNullCoalescingCondition
             foreach (var indexingExpr in type.IndexingExpressions ?? Enumerable.Empty<IndexingExpression>())
             {
                 currentIdentifier = indexingExpr.Identifier;
-                value = indexingExpr.ResolveSubExpression(value.ToValue(currentIdentifier, compilationContext), null, compilationContext);
+                var scopeToIndex = previous.ToValue(currentIdentifier, foundValueIn, compilationContext);
+                foundValueIn = scopeToIndex as IScope;
+                previous = indexingExpr.ResolveSubExpression(scopeToIndex, null, compilationContext);
             }
 
-            return value switch
+            return previous switch
             {
                 IConstraint constraint => constraint,
                 null => compilationContext.LogError(7, $"Couldn't find '{currentIdentifier}' in '{type}'"),
-                _ => compilationContext.LogError(16, $"'{value}' is not a constraint")
+                _ => compilationContext.LogError(16, $"'{previous}' is not a constraint")
             };
         }
     }

@@ -7,11 +7,11 @@ namespace Element.AST
     {
         public BinaryIntrinsic(Binary.Op operation)
         {
-            FullPath = $"Num.{operation.ToString().ToLowerInvariant()}";
+            Location = $"Num.{operation.ToString().ToLowerInvariant()}";
             Operation = operation;
         }
 
-        public override string FullPath { get; }
+        public override string Location { get; }
         public Binary.Op Operation { get; }
 
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>

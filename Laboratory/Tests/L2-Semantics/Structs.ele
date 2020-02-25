@@ -1,12 +1,25 @@
-intrinsic struct Num;
-struct NumAlias:Num;
-struct NumAliasAlias:NumAlias;
+intrinsic struct Num
+{
+	intrinsic add(a:Num, b:Num):Num;
+	addFive(a:Num) = 5.add(a);
+	addTen(a) = a.add(10); # Cannot be used as an instance function since first argument is not explicitly Num
+
+	struct NumNum:Num
+	{
+		addNumNum(a:NumNum, b:Num) = Num(a).add(b);
+	}
+}
+struct NumNum:Num;
+struct NumNumNum:NumNum;
 
 struct MyStruct(a);
 struct NestedStruct(m:MyStruct);
-struct Vector3(x:Num, y:Num, z:Num);
+struct Vector3(x:Num, y:Num, z:Num)
+{
+	add(a:Vector3, b:Vector3) = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z));
+}
 
 pickSecond(a, b) = b;
 onlyNum(a:Num) = a;
-onlyNumAlias(a:NumAlias) = a;
-onlyNumAliasAlias(a:NumAliasAlias) = a;
+onlyNumNum(a:NumNum) = a;
+onlyNumNumNum(a:NumNumNum) = a;

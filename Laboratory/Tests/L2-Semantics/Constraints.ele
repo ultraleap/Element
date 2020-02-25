@@ -4,3 +4,5 @@ struct NotNum(a);
 
 explicitAny(a:Any) = a;
 onlyNum(a:Num) = a;
+
+constraint Predicate(a):Bool;

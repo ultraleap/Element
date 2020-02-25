@@ -1,0 +1,2 @@
+intrinsic struct Num;
+intrinsic struct NumNum:Num;

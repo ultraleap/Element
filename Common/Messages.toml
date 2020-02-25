@@ -92,6 +92,10 @@ level = "Error"
 name = "MissingFunctionBody"
 level = "Error"
 
+[ELE22]
+name = "CannotBeUsedAsInstanceFunction"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

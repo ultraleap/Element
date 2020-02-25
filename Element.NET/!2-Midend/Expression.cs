@@ -14,7 +14,7 @@ namespace Element
 		PortInfo[] IFunction.Inputs => Array.Empty<PortInfo>();
 		PortInfo[] IFunction.Outputs => Array.Empty<PortInfo>();
 		Expression IEvaluable.AsExpression(CompilationContext info) => this;
-		public string TypeIdentity { get; } = null; // TODO: Expression tree identity
+		public AST.IType Type { get; } = null; // TODO: Expression tree identity
 
 		IFunction IFunction.CallInternal(IFunction[] arguments, string output, CompilationContext context) => context.LogError(9999, "Can't call a number");
 

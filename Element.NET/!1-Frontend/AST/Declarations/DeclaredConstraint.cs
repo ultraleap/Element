@@ -8,7 +8,7 @@ namespace Element.AST
             var success = ValidateIntrinsic(compilationContext);
             if (!IsIntrinsic && DeclaredInputs.Length < 1)
             {
-                compilationContext.LogError(13, $"Non-intrinsic constraint '{FullPath}' must have a port list");
+                compilationContext.LogError(13, $"Non-intrinsic constraint '{Location}' must have a port list");
                 success = false;
             }
 
