@@ -12,5 +12,6 @@ namespace Element.AST
         [Literal("}")] private Unnamed _close;
 
         protected override IEnumerable<DeclaredItem> ItemsToCacheOnValidate => _items;
+        public override string Location => Declarer.Location;
     }
 }

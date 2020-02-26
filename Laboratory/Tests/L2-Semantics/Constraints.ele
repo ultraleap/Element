@@ -1,6 +1,7 @@
 intrinsic constraint Any;
 intrinsic struct Num;
 struct NotNum(a);
+a = 5;
 
 explicitAny(a:Any) = a;
 onlyNum(a:Num) = a;

@@ -3,7 +3,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    public class Literal : IExpressionListStart, IValue
+    public class Literal : IExpressionListStart, IValue, ISerializable
     {
         public Literal() {} // Need parameterless constructor for Lexico to construct instance
         public Literal(float value) {Value = value;}
@@ -13,7 +13,12 @@ namespace Element.AST
         public static implicit operator float(Literal l) => l.Value;
         public override string ToString() => Value.ToString(CultureInfo.CurrentCulture);
         public IType Type { get; } = NumType.Instance;
-
-
+        public int SerializedSize => 1;
+        public bool Serialize(ref float[] array, ref int position)
+        {
+            array[position] = Value;
+            position++;
+            return true;
+        }
     }
 }

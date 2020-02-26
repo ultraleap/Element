@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using Element.AST;
 
@@ -12,18 +11,23 @@ namespace Element
         public bool ParseFile(CompilationInput compilationInput, FileInfo file) =>
             CompilationContext.TryCreate(compilationInput, out var context) && context.ParseFile(file);
 
-        public float[] Evaluate(CompilationInput compilationInput, string expression) =>
+        public (bool Success, float[] Result) Evaluate(CompilationInput compilationInput, string expression) =>
             CompilationContext.TryCreate(compilationInput, out var context)
                 ? context.Parse(expression, out AST.Expression expressionObject)
                     ?
                     expressionObject.ResolveExpression(context.GlobalScope, context) switch
                     {
-                        // TODO: Add result type which deserializes structs into float array
-                        CompilationErr _ => Array.Empty<float>(),
-                        Literal lit => new[] {(float) lit},
-                        _ => Array.Empty<float>()
+                        ISerializable serializable => (serializable.TrySerialize(out var result), result),
+                        _ => (false, null)
                     }
-                    : Array.Empty<float>()
-                : Array.Empty<float>();
+                    : (false, null)
+                : (false, null);
+
+        public (bool Success, string Result) Typeof(CompilationInput input, string expression) =>
+            CompilationContext.TryCreate(input, out var context)
+                ? context.Parse(expression, out AST.Expression expressionObject)
+                    ? (true, expressionObject.ResolveExpression(context.GlobalScope, context).Type.Name)
+                : (false, "<expression parse error>")
+            : (false, "<source parse error>");
     }
 }

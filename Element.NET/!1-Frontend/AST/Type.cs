@@ -21,8 +21,9 @@ namespace Element.AST
     {
         public static IConstraint? ResolveConstraint(this Type type, IScope startingScope, CompilationContext compilationContext)
         {
-            if (startingScope == null) throw new ArgumentNullException(nameof(startingScope));
             if (type == null) return AnyConstraint.Instance;
+            if (startingScope == null) throw new ArgumentNullException(nameof(startingScope));
+
             var previous = startingScope.IndexRecursively(type.Identifier, compilationContext, out var foundValueIn);
             var currentIdentifier = type.Identifier;
 

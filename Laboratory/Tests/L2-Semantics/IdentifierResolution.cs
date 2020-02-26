@@ -8,15 +8,15 @@ namespace Laboratory.Tests
         public IdentifierResolution(IHost host) :base(host, "IdentifierResolution") { }
 
         [
-            TestCase("A.A.a", 15f),
-            TestCase("A.A.b", 20f),
-            TestCase("X.Y.a", 5f),
-            TestCase("X.Y.b", 10f),
-            TestCase("X.Y.c", 15f),
+            TestCase("A.A.a", "15"),
+            TestCase("A.A.b", "20"),
+            TestCase("X.Y.a", "5"),
+            TestCase("X.Y.b", "10"),
+            TestCase("X.Y.c", "15"),
         ]
-        public void ResolvesCorrectLiteral(string expression, float literal) => AssertApproxEqual(CompilationInput, expression, new[]{literal});
+        public void ResolvesCorrectLiteral(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
 
         [Test]
-        public void ResolveResultingNullaryExpression() => AssertApproxEqual(CompilationInput, "A.x", new []{5f});
+        public void ResolveResultingNullaryExpression() => AssertApproxEqual(CompilationInput, "A.x", "5");
     }
 }

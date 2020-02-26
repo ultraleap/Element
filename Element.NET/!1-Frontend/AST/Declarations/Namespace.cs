@@ -7,8 +7,7 @@ namespace Element.AST
         protected override string Qualifier { get; } = "namespace";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope)};
 
-        private class NamespaceIdentity : IType {}
-        IType IValue.Type { get; } = new NamespaceIdentity();
+        IType IValue.Type { get; } = NamespaceType.Instance;
 
         public IScopeItem? this[Identifier id, CompilationContext compilationContext] => ((IScope) Body)[id, compilationContext];
 

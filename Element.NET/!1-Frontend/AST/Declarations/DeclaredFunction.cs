@@ -5,15 +5,14 @@ using System.Linq;
 namespace Element.AST
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class DeclaredFunction : DeclaredItem<IntrinsicFunction>, IValue, ICallable
+    public class DeclaredFunction : DeclaredItem<IntrinsicFunction>, IValue, IFunction
     {
         protected override string Qualifier { get; } = string.Empty; // Functions don't have a qualifier
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
         protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
-        public bool IsNullary => DeclaredInputs == null || DeclaredInputs.Length == 0;
-
-        private class FunctionIdentity : IType {}
-        IType IValue.Type { get; } = new FunctionIdentity(); // Functions all share the same type identity. This is because functions are matched to function constraints by shape rather than identity!
+        IType IValue.Type => FunctionType.Instance;
+        Port[] IFunction.Inputs => DeclaredInputs;
+        Type IFunction.Output => DeclaredType;
 
         public override bool Validate(CompilationContext compilationContext)
         {
@@ -71,57 +70,39 @@ namespace Element.AST
                 : CompilationErr.Instance;
         }
 
-        public static void ResolveNullary(ref IValue value, CompilationContext compilationContext) =>
-            value = value is DeclaredFunction fn && fn.IsNullary
-                        ? fn.Call(Array.Empty<IValue>(), compilationContext)
-                        : value;
-
-        private Func<TResult> PartialApplication<TInput, TResult>(TInput input, Func<TInput, TResult> func)
+        private class InstanceFunction : IFunction, IValue
         {
-            return () => func(input);
-        }
-
-        private class InstanceFunction : ICallable, IValue
-        {
-            public InstanceFunction(IValue value, DeclaredFunction function)
+            public InstanceFunction(IValue value, IFunction function)
             {
-                surrogate = function;
-                argument = value;
-                Type = (function as IValue).Type;
+                _surrogate = function;
+                _argument = value;
+                Inputs = _surrogate.Inputs.Skip(1).ToArray();
             }
 
-            private DeclaredFunction surrogate;
-            private IValue argument;
+            private readonly IFunction _surrogate;
+            private readonly IValue _argument;
 
-            public IType Type { get; }
+            public Port[] Inputs { get; }
+            public Type Output => _surrogate.Output;
+            IType IValue.Type => FunctionType.Instance;
 
             public IValue Call(IValue[] arguments, CompilationContext compilationContext)
             {
-                if (surrogate.IsNullary)
-                {
-                    // TODO: Error case if we've indexed a nullary function
-                    return CompilationErr.Instance;
-                    var call = surrogate.Call(arguments, compilationContext);
-                    ResolveNullary(ref call, compilationContext);
-                    return call;
-                }
+                // TODO: Argument validation - validation will be done by the surrogate call currently
 
-                var result = surrogate.Call(arguments.Prepend(argument).ToArray(), compilationContext);
-                ResolveNullary(ref result, compilationContext);
-                return result;
+                var result = _surrogate.Call(arguments.Prepend(_argument).ToArray(), compilationContext);
+                return result.ResolveNullaryFunction(compilationContext);
             }
         }
 
-        public static IValue ResolveAsInstanceFunction(Identifier instanceFunctionIdentifier, IValue structInstance, Struct type, CompilationContext compilationContext)
-        {
-            if (type[instanceFunctionIdentifier, compilationContext] is DeclaredFunction instanceFunction)
+        public static IValue ResolveAsInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, DeclaredStruct type, CompilationContext compilationContext) =>
+            type[instanceFunctionIdentifier, compilationContext] switch
             {
-                // TODO: Check instance function has correct first port
-                return new InstanceFunction(structInstance, instanceFunction);
-            }
-
-            // TODO: Error case
-            return CompilationErr.Instance;
-        }
+                DeclaredFunction instanceFunction when instanceFunction.IsNullary() => compilationContext.LogError(22, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
+                IFunction instanceFunction when instanceFunction.Inputs[0].Type.ResolveConstraint(type, compilationContext) == type => new InstanceFunction(instanceBeingIndexed, instanceFunction),
+                DeclaredItem notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction.Location}' is not a function"),
+                {} notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function"),
+                _ => compilationContext.LogError(7, $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{type}>")
+            };
     }
 }

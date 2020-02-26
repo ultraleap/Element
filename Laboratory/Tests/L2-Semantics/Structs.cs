@@ -8,10 +8,13 @@ namespace Laboratory.Tests
         public Structs(IHost host) : base(host, "Structs") { }
 
         [Test]
-        public void ConstructInstance() => _host.Evaluate(CompilationInput, "MyStruct(5)");
+        public void TypeofStruct() => AssertTypeof(CompilationInput, "MyStruct", "Struct");
+
+        [Test]
+        public void ConstructInstance() => AssertTypeof(CompilationInput, "MyStruct(5)", "MyStruct");
         
         [Test]
-        public void ConstructInstanceWithNestedStruct() => _host.Evaluate(CompilationInput, "NestedStruct(MyStruct(5))");
+        public void ConstructInstanceWithNestedStruct() => AssertTypeof(CompilationInput, "NestedStruct(MyStruct(5))", "NestedStruct");
 
         [Test]
         public void InstanceMemberAccess() => AssertApproxEqual(CompilationInput, "MyStruct(5).a", "5");
@@ -20,10 +23,10 @@ namespace Laboratory.Tests
         public void InvalidMemberAccess() => EvaluateExpectingErrorCode(CompilationInput, 7, "MyStruct(10).invalid");
 
         [Test]
-        public void FunctionAsMember() => _host.Evaluate(CompilationInput, "MyStruct(pickSecond)");
+        public void FunctionAsMember() => AssertTypeof(CompilationInput, "MyStruct(pickSecond)", "MyStruct");
 
         [Test]
-        public void ConstrainedMembers() => _host.Evaluate(CompilationInput, "Vector3(5, 10, 15)");
+        public void ConstrainedMembers() => AssertTypeof(CompilationInput, "Vector3(5, 10, 15)", "Vector3");
 
         [
             TestCase("Vector3(1)"),

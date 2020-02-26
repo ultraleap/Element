@@ -89,7 +89,7 @@ namespace Element.AST
             Child?.Initialize(parent, this);
         }
         protected DeclaredScope Parent { get; private set; }
-        protected DeclaredScope Child => Body as Scope;
+        protected DeclaredScope? Child => Body as Scope;
         public string Location => $"{(Parent is GlobalScope ? string.Empty : $"{Parent.Declarer}.")}{Identifier}";
     }
 

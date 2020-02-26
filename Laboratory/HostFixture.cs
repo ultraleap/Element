@@ -44,17 +44,34 @@ namespace Laboratory
             // use relative error
             return diff / Math.Min(absA + absB, float.MaxValue) < epsilon;
         }
-      
-        protected void AssertApproxEqual(CompilationInput compilationInput, string expression, float[] expected) =>
-            CollectionAssert.AreEqual(_host.Evaluate(compilationInput, expression), expected, FloatComparer);
-        protected void AssertApproxEqual(CompilationInput compilationInput, string expression, string otherExpression) =>
-            CollectionAssert.AreEqual(_host.Evaluate(compilationInput, expression), _host.Evaluate(compilationInput, otherExpression), FloatComparer);
+
+        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params string[] expressions)
+        {
+            var (controlSuccess, controlResult) = _host.Evaluate(compilationInput, controlExpression);
+            if (!controlSuccess) Assert.Fail($"'{controlExpression}' evaluation failed");
+            expressions.Aggregate(controlResult, (expected, expression) =>
+            {
+                var (success, result) = _host.Evaluate(compilationInput, expression);
+                if (!success) Assert.Fail($"'{expression}' evaluation failed");
+                CollectionAssert.AreEqual(expected, result, FloatComparer);
+                return expected;
+            });
+        }
+
+        protected void AssertTypeof(CompilationInput compilationInput, string expression, string typeStr)
+        {
+            var (success, result) = _host.Typeof(compilationInput, expression);
+            if (!success) Assert.Fail();
+            Assert.That(result, Is.EqualTo(typeStr));
+        }
 
         protected void EvaluateExpectingErrorCode(CompilationInput compilationInput, int messageCode, string expression)
         {
             compilationInput.LogCallback = ExpectMessageCode(messageCode, compilationInput.LogCallback);
-            _host.Evaluate(compilationInput, expression);
-            Assert.Fail("Expected message code '{0}' but no errors were logged", messageCode);
+            var (success, result) = _host.Evaluate(compilationInput, expression);
+            Assert.Fail(success
+                ? "Expected message code '{0}' but evaluation succeeded"
+                : "Expected message code '{0}' but got different error code", messageCode);
         }
         
         

@@ -12,5 +12,11 @@ namespace Laboratory.Tests
 
         [Test]
         public void NumFailsGivenNonNum() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNum(NotNum(5))");
+
+        [Test]
+        public void TypeofFunction() => AssertTypeof(CompilationInput, "onlyNum", "Function");
+
+        [TestCase("5"), TestCase("a")]
+        public void TypeofNumber(string expression) => AssertTypeof(CompilationInput, expression, "Num");
     }
 }

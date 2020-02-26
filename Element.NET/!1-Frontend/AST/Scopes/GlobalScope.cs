@@ -15,5 +15,6 @@ namespace Element.AST
         }
 
         protected override IEnumerable<DeclaredItem> ItemsToCacheOnValidate => _sourceScopes.Values.SelectMany(s => s);
+        public override string Location { get; } = "<global>";
     }
 }

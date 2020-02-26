@@ -1,7 +1,7 @@
 namespace Element.AST
 {
-    public interface IType
+    public interface IType : IConstraint
     {
-        
+        string Name { get; }
     }
 }

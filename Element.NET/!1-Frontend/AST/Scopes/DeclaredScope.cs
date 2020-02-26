@@ -7,7 +7,6 @@ namespace Element.AST
     {
         protected abstract IEnumerable<DeclaredItem> ItemsToCacheOnValidate { get; }
         public DeclaredItem Declarer { get; private set; }
-        public override string Location => Declarer.Location;
 
         public void Initialize(DeclaredScope parent, DeclaredItem declarer)
         {

@@ -8,10 +8,10 @@ namespace Laboratory.Tests
         public NumberLiterals(IHost host) : base(host, "NumberLiterals") { }
 
         [Test]
-        public void AIsPi() => AssertApproxEqual(CompilationInput, "a", new[]{3.14f});
+        public void AIsPi() => AssertApproxEqual(CompilationInput, "a", "3.14");
         
         [Test]
-        public void BIsGoldenRatio() => AssertApproxEqual(CompilationInput, "b", new[]{1.618f});
+        public void BIsGoldenRatio() => AssertApproxEqual(CompilationInput, "b", "1.618");
         
         [Test]
         public void CIsA() => AssertApproxEqual(CompilationInput, "c", "a");

@@ -231,22 +231,25 @@ namespace Laboratory
                 return processArgs;
             }
 
-            bool IHost.ParseFile(CompilationInput input, FileInfo file)
+            bool IHost.ParseFile(CompilationInput input, FileInfo file) =>
+                bool.Parse(RunHostProcess(input, BeginCommand(input, "parse").Append($" -f \"{file.FullName}\"").ToString()));
+
+            (bool Success, float[] Result) IHost.Evaluate(CompilationInput input, string expression)
             {
-                var processArgs = BeginCommand(input, "parse");
-                processArgs.Append($" -f \"{file.FullName}\"");
-                return bool.Parse(RunHostProcess(input, processArgs.ToString()));
+                var success = true;
+                var result = RunHostProcess(input, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString());
+                var values = result.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s =>
+                    {
+                        success &= float.TryParse(s, out var value);
+                        return value;
+                    })
+                    .ToArray();
+                return (success, values);
             }
 
-            float[] IHost.Evaluate(CompilationInput input, string expression)
-            {
-                var processArgs = BeginCommand(input, "evaluate");
-
-                processArgs.Append(" -e ");
-                processArgs.Append($"\"{expression}\"");
-
-                return RunHostProcess(input, processArgs.ToString()).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
-            }
+            (bool Success, string Result) IHost.Typeof(CompilationInput input, string expression) =>
+                (true, RunHostProcess(input, BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString()));
         }
     }
 }
