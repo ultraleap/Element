@@ -1,6 +1,6 @@
 namespace Element.AST
 {
-    // ReSharper disable once UnusedType.Global
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class Namespace : DeclaredItem, IValue, IScope
     {
         public override bool Validate(CompilationContext compilationContext) => ValidateScopeBody(compilationContext);

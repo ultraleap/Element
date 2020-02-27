@@ -8,11 +8,15 @@ namespace Element.AST
     /// The global scope, root of all other scopes
     /// </summary>
     [WhitespaceSurrounded, MultiLine, TopLevel]
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class SourceScope : IEnumerable<DeclaredItem>
     {
-        [Optional] private readonly List<DeclaredItem> _items = new List<DeclaredItem>();
+#pragma warning disable 649
+        // ReSharper disable once CollectionNeverUpdated.Local
+        [Optional] private List<DeclaredItem>? _items;
+#pragma warning restore 649
 
-        public IEnumerator<DeclaredItem> GetEnumerator() => _items.GetEnumerator();
+        public IEnumerator<DeclaredItem> GetEnumerator() => _items?.GetEnumerator() ?? EmptyEnumerator<DeclaredItem>.Instance;
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public override string ToString() => "SourceScope";

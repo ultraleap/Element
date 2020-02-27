@@ -2,10 +2,14 @@ using Lexico;
 
 namespace Element.AST
 {
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class IndexingExpression : ISubExpression
     {
+#pragma warning disable 169
         [Literal(".")] private Unnamed _;
-        [field: Term] public Identifier Identifier { get; }
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [field: Term] public Identifier Identifier { get; private set; }
+#pragma warning restore 169
 
         public override string ToString() => $".{Identifier}";
 

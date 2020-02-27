@@ -5,11 +5,13 @@ namespace Element.AST
 {
     public class Literal : IExpressionListStart, IValue, ISerializable
     {
-        public Literal() {} // Need parameterless constructor for Lexico to construct instance
+        // ReSharper disable once UnusedMember.Global - Used by Lexico to construct instances
+        public Literal() {}
         public Literal(float value) {Value = value;}
         public Literal(float value, IType instanceType) :this(value) {Type = instanceType;}
 
-        [field: Term] public float Value { get; }
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
+        [Term] public float Value { get; private set; }
         public static implicit operator float(Literal l) => l.Value;
         public override string ToString() => Value.ToString(CultureInfo.CurrentCulture);
         public IType Type { get; } = NumType.Instance;

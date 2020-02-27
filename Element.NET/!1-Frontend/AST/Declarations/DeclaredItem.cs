@@ -51,12 +51,19 @@ namespace Element.AST
     [WhitespaceSurrounded, MultiLine]
     public abstract class DeclaredItem : IScopeItem
     {
-        [Literal("intrinsic"), Optional] protected string Intrinsic;
+#pragma warning disable 649
+        // ReSharper disable once UnassignedField.Global
+        [Literal("intrinsic"), Optional] private string _intrinsic;
         [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed _;
+        // ReSharper disable once UnassignedField.Global
         [Term] protected Identifier ParsedIdentifier;
-        [Optional] protected PortList PortList;
-        [Optional] protected Type DeclaredType;
+        // ReSharper disable once UnassignedField.Global
+        [Optional] protected PortList? PortList;
+        // ReSharper disable once UnassignedField.Global
+        [Optional] protected Type? DeclaredType;
+        // ReSharper disable once UnassignedField.Global
         [IndirectAlternative(nameof(BodyAlternatives)), WhitespaceSurrounded, MultiLine] protected object Body;
+#pragma warning restore 649
 
         // ReSharper disable once UnusedMember.Global
         protected abstract string Qualifier { get; }
@@ -66,7 +73,7 @@ namespace Element.AST
         public override string ToString() => $"{Location}{PortList}{DeclaredType}";
 
         protected Port[] DeclaredInputs => PortList?.List.ToArray() ?? Array.Empty<Port>();
-        protected bool IsIntrinsic => !string.IsNullOrEmpty(Intrinsic);
+        protected bool IsIntrinsic => !string.IsNullOrEmpty(_intrinsic);
         protected virtual List<Identifier> ScopeIdentifierWhitelist { get; } = null;
 
 
@@ -85,7 +92,6 @@ namespace Element.AST
         public void Initialize(DeclaredScope parent)
         {
             Parent = parent ?? throw new ArgumentNullException(nameof(parent));
-            // ReSharper disable once ConstantConditionalAccessQualifier
             Child?.Initialize(parent, this);
         }
         protected DeclaredScope Parent { get; private set; }

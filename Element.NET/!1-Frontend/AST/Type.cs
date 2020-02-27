@@ -8,11 +8,13 @@ namespace Element.AST
     // ReSharper disable once ClassNeverInstantiated.Global
     public class Type
     {
+#pragma warning disable 169
         [Literal(":"), WhitespaceSurrounded, MultiLine] private Unnamed _;
-        // ReSharper disable once UnassignedGetOnlyAutoProperty
-        [field: Term] public Identifier Identifier { get; }
-        // ReSharper disable once UnassignedGetOnlyAutoProperty
-        [field: Optional] public List<IndexingExpression> IndexingExpressions { get; }
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [field: Term] public Identifier Identifier { get; private set; }
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [field: Optional] public List<IndexingExpression> IndexingExpressions { get; private set; }
+#pragma warning restore 169
 
         public override string ToString() => $":{Identifier}{(IndexingExpressions?.Count > 0 ? string.Join(string.Empty, IndexingExpressions) : string.Empty)}";
     }

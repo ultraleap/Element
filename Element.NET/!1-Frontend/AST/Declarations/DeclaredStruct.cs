@@ -1,16 +1,14 @@
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Element.AST
 {
-    // ReSharper disable once UnusedType.Global
     // ReSharper disable once ClassNeverInstantiated.Global
     public class DeclaredStruct : DeclaredItem<IntrinsicStruct>, IConstructor<DeclaredStruct>, IScope, IValue, IType
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
         private bool IsAlias => DeclaredType != null;
-        private DeclaredStruct _aliasedType { get; set; }
+        private DeclaredStruct _aliasedType;
 
         public IScopeItem? this[Identifier id, CompilationContext compilationContext] => Body is Scope scope ? scope[id, compilationContext] : null;
 
@@ -40,7 +38,6 @@ namespace Element.AST
                     success = false;
                 }
 
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (PortList != null)
                 {
                     compilationContext.LogError(19, $"Struct alias '{ParsedIdentifier}' cannot have ports - remove either the ports or the alias type");

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Lexico;
 
 namespace Element.AST
@@ -11,10 +12,13 @@ namespace Element.AST
     }
 
     [WhitespaceSurrounded, MultiLine]
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class Expression
     {
-        [field: Term] public IExpressionListStart LitOrId { get; }
-        [field: Optional] public List<ISubExpression> Expressions { get; } = new List<ISubExpression>();
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [field: Term] public IExpressionListStart LitOrId { get; private set; }
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [field: Optional] public List<ISubExpression> Expressions { get; private set; }
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
@@ -37,10 +41,8 @@ namespace Element.AST
             
             // TODO: Handle lambdas
 
-            foreach (var expr in Expressions)
-            {
-                previous =  expr.ResolveSubExpression(previous, scope, compilationContext);
-            }
+            // ReSharper disable once ConstantConditionalAccessQualifier
+            previous = Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current, scope, compilationContext));
 
             previous = previous.ResolveNullaryFunction(compilationContext);
 

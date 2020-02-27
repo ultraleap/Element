@@ -2,6 +2,7 @@ using System.Linq;
 
 namespace Element.AST
 {
+    // ReSharper disable once UnusedType.Global
     public class CallExpression : ListOf<Expression>, ISubExpression
     {
         public IValue ResolveSubExpression(IValue previous, IScope containingScope, CompilationContext compilationContext)
@@ -17,8 +18,7 @@ namespace Element.AST
 
     public static class CallExtensions
     {
-        public static bool ValidateArgumentCount(this IValue[] arguments, int expectedArgCount,
-                                                 CompilationContext compilationContext)
+        public static bool ValidateArgumentCount(this IValue[] arguments, int expectedArgCount, CompilationContext compilationContext)
         {
             if (arguments.Length != expectedArgCount)
             {

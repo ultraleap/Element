@@ -3,7 +3,11 @@ using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 using Element;
+using Element.AST;
+using Lexico;
 using NUnit.Framework;
+using Expression = Element.AST.Expression;
+using Type = System.Type;
 
 namespace Laboratory.Tests
 {
@@ -55,5 +59,42 @@ namespace Laboratory.Tests
         
         [TestCaseSource(nameof(GenerateValidationTestData))]
         public void ValidationTest((FileInfo FileInfo, int? ExpectedMessageCode) info) => RunTest(info, false);
+
+        private static IEnumerable PartialSyntaxTestData()
+        {
+            var data = new[]
+            {
+                (nameof(Identifier), "a", typeof(Identifier)),
+                (nameof(Literal), "5", typeof(Literal)),
+                (nameof(Terminal), ";", typeof(Terminal)),
+                (nameof(Binding), "= 5;", typeof(Binding)),
+                (nameof(Element.AST.Type), ":Foo.Bar", typeof(Element.AST.Type)),
+                (nameof(Expression), "a.b(c).d.e(5)", typeof(Expression)),
+                (nameof(CallExpression), "(5, a(10, c))", typeof(CallExpression)),
+                (nameof(IndexingExpression), ".identifier", typeof(IndexingExpression)),
+                ($"{nameof(DeclaredFunction)}-ExpressionBody", "a(a):Num = 5;", typeof(DeclaredFunction)),
+                ($"{nameof(DeclaredFunction)}-ScopeBody", "a(a):Num {return = 5;}", typeof(DeclaredFunction)),
+                ($"Intrinsic {nameof(DeclaredFunction)}", "intrinsic a(a):Num;", typeof(DeclaredFunction)),
+                ($"Intrinsic {nameof(DeclaredConstraint)}", "intrinsic constraint a;", typeof(DeclaredConstraint)),
+                (nameof(DeclaredConstraint), "constraint a(a):Num;", typeof(DeclaredConstraint)),
+                (nameof(DeclaredStruct), "struct a(a);", typeof(DeclaredStruct)),
+                ($"{nameof(DeclaredStruct)}-WithScope", "struct a(a) {}", typeof(DeclaredStruct)),
+                ($"Intrinsic {nameof(DeclaredStruct)}", "intrinsic struct a(a);", typeof(DeclaredStruct)),
+                (nameof(PortList), "(a:foo, b:bar)", typeof(PortList)),
+                (nameof(Namespace), "namespace foo {}", typeof(Namespace))
+            };
+            foreach (var item in data)
+            {
+                yield return new TestCaseData((item.Item2, item.Item3)).SetName($"Syntax-{item.Item1}");
+            }
+        }
+
+        // TODO: Make this test use host so that it can test process hosts!
+        [TestCaseSource(nameof(PartialSyntaxTestData))]
+        public void ParsePartialSyntaxItems((string text, Type syntaxItem) info)
+        {
+            if(!(_host is AtomicHost)) Assert.Inconclusive("Test only implemented for self host");
+            Assert.That(Lexico.Lexico.TryParse(info.text, info.syntaxItem, out _, new ConsoleTrace()), Is.True);
+        }
     }
 }

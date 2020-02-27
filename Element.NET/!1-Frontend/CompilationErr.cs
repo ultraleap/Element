@@ -4,7 +4,7 @@ namespace Element.AST
     /// A value that results from a failure during compilation. It will be accepted everywhere and generate no further
     /// errors, returning itself from each operation (the error is non-recoverable).
     /// </summary>
-    public sealed class CompilationErr : IValue, IConstraint, IFunction, IType, Element.IFunction
+    public sealed class CompilationErr : IValue, IFunction, IType, Element.IFunction
     {
         public static CompilationErr Instance { get; } = new CompilationErr();
         private CompilationErr() { }
