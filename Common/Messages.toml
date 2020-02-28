@@ -81,12 +81,11 @@ name = "RedundantQualifier"
 level = "Warning"
 
 [ELE19]
-name = "AliasCannotHavePorts"
+name = "StructCannotHaveReturnType"
 level = "Error"
 
 [ELE20]
-name = "InvalidAlias"
-level = "Error"
+
 
 [ELE21]
 name = "MissingFunctionBody"

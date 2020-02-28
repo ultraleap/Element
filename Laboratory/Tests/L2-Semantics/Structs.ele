@@ -4,13 +4,13 @@ intrinsic struct Num
 	addFive(a:Num) = 5.add(a);
 	addTen(a) = a.add(10); # Cannot be used as an instance function since first argument is not explicitly Num
 
-	struct NumNum:Num
+	struct NumNum(n:Num)
 	{
 		addNumNum(a:NumNum, b:Num) = Num(a).add(b);
 	}
 }
-struct NumNum:Num;
-struct NumNumNum:NumNum;
+struct NumNum(n:Num);
+struct NumNumNum(n:NumNum);
 
 struct MyStruct(a);
 struct NestedStruct(m:MyStruct);

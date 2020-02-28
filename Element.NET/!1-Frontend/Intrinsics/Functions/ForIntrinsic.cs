@@ -2,10 +2,12 @@ using System;
 
 namespace Element.AST
 {
-    public class ForIntrinsic : IntrinsicFunction
+    public class ForIntrinsic : IIntrinsic, ICallable
     {
-        public override string Location { get; } = "for";
-        public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
+        public string Location => "for";
+        public IType Type => FunctionType.Instance;
+
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
             throw new NotImplementedException();
             /*if (this.CheckArguments(arguments, output, context) != null)
@@ -27,7 +29,6 @@ namespace Element.AST
                 state => body.Call(new[] {initial.Deserialize(state, context)}, context).Serialize(context));
             return initial.Deserialize(Enumerable.Range(0, group.Size).Select(i => new ExpressionGroupElement(group, i)), context);
             */
-
         }
     }
 }

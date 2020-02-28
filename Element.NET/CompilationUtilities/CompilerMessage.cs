@@ -10,10 +10,10 @@ namespace Element
 {
     public readonly struct CompilerMessage
     {
-        private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
+        private static readonly TomlTable MessageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
 
         private static TomlTable GetMessageToml(int messageCode) =>
-            _messageToml[$"ELE{messageCode}"] is TomlTable messageTable
+            MessageToml[$"ELE{messageCode}"] is TomlTable messageTable
                 ? messageTable
                 : throw new InternalCompilerException($"ELE{messageCode} could not be found");
 

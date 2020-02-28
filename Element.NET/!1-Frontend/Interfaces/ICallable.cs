@@ -2,19 +2,14 @@ using System;
 
 namespace Element.AST
 {
-    public interface ICallable
+    public interface ICallable : IValue
     {
         IValue Call(IValue[] arguments, CompilationContext compilationContext);
     }
 
-    public interface IConstructor<in TInstanceType> : ICallable where TInstanceType : IType
-    {
-        IValue Call(IValue[] arguments, TInstanceType instanceType, CompilationContext compilationContext);
-    }
-
     public interface IFunction : ICallable
     {
-        Port[] Inputs { get; }
+        Port[]? Inputs { get; }
         Type Output { get; }
     }
 

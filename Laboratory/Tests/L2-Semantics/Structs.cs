@@ -8,7 +8,7 @@ namespace Laboratory.Tests
         public Structs(IHost host) : base(host, "Structs") { }
 
         [Test]
-        public void TypeofStruct() => AssertTypeof(CompilationInput, "MyStruct", "Struct");
+        public void TypeofStruct() => AssertTypeof(CompilationInput, "MyStruct", "Type");
 
         [Test]
         public void ConstructInstance() => AssertTypeof(CompilationInput, "MyStruct(5)", "MyStruct");
@@ -39,16 +39,7 @@ namespace Laboratory.Tests
         public void MemberConstraintsNotSatisfied() => EvaluateExpectingErrorCode(CompilationInput, 8, "Vector3(pickSecond, 5, 10)");
 
         [Test]
-        public void AliasAsConstraint() => AssertApproxEqual(CompilationInput, "onlyNumNum(NumNum(9))", "9");
-
-        [Test]
-        public void AliasOfAliasAsConstraint() => AssertApproxEqual(CompilationInput, "onlyNumNumNum(NumNumNum(9))", "9");
-
-        [Test]
-        public void NoImplicitConversionFromAliasToBase() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNum(NumNum(5))");
-
-        [Test]
-        public void NoImplicitConversionFromBaseToAlias() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNumNum(5)");
+        public void NoImplicitConversionBetweenStructs() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNum(NumNum(5))");
 
         [Test]
         public void IntrinsicInstanceFunction() => AssertApproxEqual(CompilationInput, "6.add(5)", "11");

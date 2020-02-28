@@ -16,8 +16,7 @@ namespace Element.AST
         public IValue ResolveSubExpression(IValue previous, IScope containingScope, CompilationContext compilationContext) =>
             previous switch
             {
-                Literal lit => DeclaredFunction.ResolveAsInstanceFunction(Identifier, lit, NumType.Instance.Declarer as DeclaredStruct, compilationContext),
-                IScope scope => scope[Identifier, compilationContext].ToValue(Identifier, scope, compilationContext),
+                IScope scope => scope[Identifier, compilationContext],
                 _ => compilationContext.LogError(16, $"'{previous}' is not indexable")
             };
     }

@@ -3,16 +3,21 @@ namespace Element.AST
     /// <summary>
     /// The type for a single number.
     /// </summary>
-    public sealed class NumType : IntrinsicStruct
+    public sealed class NumType : IIntrinsic, ICallable, IType
     {
         private NumType() { }
         public static NumType Instance { get; } = new NumType();
-        public override string Location { get; } = "Num";
+        public IType Type => TypeType.Instance;
+        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type is NumType;
+        public string Location => Name;
         public override string ToString() => "<number>";
-        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => Call(arguments, Instance, compilationContext);
-        public override IValue Call(IValue[] arguments, IType instanceType, CompilationContext compilationContext) =>
-            !arguments.ValidateArgumentCount(1, compilationContext) ? CompilationErr.Instance :
-            arguments[0] is Literal lit ? (IValue) new Literal(lit, instanceType) :
-            compilationContext.LogError(8, "Argument must be a number");
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            arguments.ValidateArguments(1, compilationContext)
+                ? arguments[0] is Literal lit
+                      ? (IValue) lit
+                      : compilationContext.LogError(8, "Argument must be a number")
+                : CompilationErr.Instance;
+
+        public string Name => "Num";
     }
 }

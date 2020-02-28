@@ -15,7 +15,7 @@ namespace Laboratory.Tests
     {
         public ParseAndValidationTests(IHost host) : base(host) { }
 
-        private const int _defaultFailingParseTestCode = 9;
+        private const int DefaultFailingParseTestCode = 9;
 
         private static IEnumerable GenerateTestData(string testKind, string directory, int? defaultExpectedErrorCode)
         {
@@ -30,7 +30,8 @@ namespace Laboratory.Tests
                     "fail" => int.TryParse(match.Groups["value"].Value, out var code)
                                   ? code
                                   : defaultExpectedErrorCode ??
-                                    throw new ArgumentNullException(nameof(defaultExpectedErrorCode), $"Error code must be specified explicitly for {testKind} tests")
+                                    throw new ArgumentNullException(nameof(defaultExpectedErrorCode), $"Error code must be specified explicitly for {testKind} tests"),
+                    _ => throw new ArgumentOutOfRangeException()
                 };
 
                 yield return new TestCaseData((FileInfo: file, ExpectMessageCode: expectedMessageCode)).SetName($"{testKind}{file.FullName.Split(directory)[1]}");
@@ -45,13 +46,13 @@ namespace Laboratory.Tests
                 ExcludePrelude = true,
                 SkipValidation = skipValidation
             };
-            var success = _host.ParseFile(compilationInput, fileInfo);
+            var success = Host.ParseFile(compilationInput, fileInfo);
 
             if (expectedMessageCode.HasValue && success)
                 Assert.Fail($"Expected error ELE{expectedMessageCode.Value} '{CompilerMessage.GetMessageName(expectedMessageCode.Value)}' but no error was logged");
         }
 
-        private static IEnumerable GenerateParseTestData() => GenerateTestData("Parse", "L0-Parsing", _defaultFailingParseTestCode);
+        private static IEnumerable GenerateParseTestData() => GenerateTestData("Parse", "L0-Parsing", DefaultFailingParseTestCode);
         private static IEnumerable GenerateValidationTestData() => GenerateTestData("Validation", "L1-Validation", null);
         
         [TestCaseSource(nameof(GenerateParseTestData))]
@@ -93,7 +94,7 @@ namespace Laboratory.Tests
         [TestCaseSource(nameof(PartialSyntaxTestData))]
         public void ParsePartialSyntaxItems((string text, Type syntaxItem) info)
         {
-            if(!(_host is AtomicHost)) Assert.Inconclusive("Test only implemented for self host");
+            if(!(Host is AtomicHost)) Assert.Inconclusive("Test only implemented for self host");
             Assert.That(Lexico.Lexico.TryParse(info.text, info.syntaxItem, out _, new ConsoleTrace()), Is.True);
         }
     }

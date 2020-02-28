@@ -1,2 +1,0 @@
-intrinsic constraint Any;
-struct AnyAlias:Any;

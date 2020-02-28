@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Lexico;
 
 namespace Element.AST
@@ -11,38 +9,24 @@ namespace Element.AST
 #pragma warning disable 169
         [Literal(":"), WhitespaceSurrounded, MultiLine] private Unnamed _;
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [field: Term] public Identifier Identifier { get; private set; }
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [field: Optional] public List<IndexingExpression> IndexingExpressions { get; private set; }
+        [field: Term] public Expression Expression { get; private set; }
 #pragma warning restore 169
 
-        public override string ToString() => $":{Identifier}{(IndexingExpressions?.Count > 0 ? string.Join(string.Empty, IndexingExpressions) : string.Empty)}";
+        public override string ToString() => $":{Expression}";
     }
 
     public static class TypeExtensions
     {
-        public static IConstraint? ResolveConstraint(this Type type, IScope startingScope, CompilationContext compilationContext)
+        public static IConstraint Resolve(this Type type, IScope startingScope, CompilationContext compilationContext)
         {
             if (type == null) return AnyConstraint.Instance;
             if (startingScope == null) throw new ArgumentNullException(nameof(startingScope));
 
-            var previous = startingScope.IndexRecursively(type.Identifier, compilationContext, out var foundValueIn);
-            var currentIdentifier = type.Identifier;
-
-            // ReSharper disable once ConstantNullCoalescingCondition
-            foreach (var indexingExpr in type.IndexingExpressions ?? Enumerable.Empty<IndexingExpression>())
-            {
-                currentIdentifier = indexingExpr.Identifier;
-                var scopeToIndex = previous.ToValue(currentIdentifier, foundValueIn, compilationContext);
-                foundValueIn = scopeToIndex as IScope;
-                previous = indexingExpr.ResolveSubExpression(scopeToIndex, null, compilationContext);
-            }
-
-            return previous switch
+            return type.Expression.ResolveExpression(startingScope, compilationContext) switch
             {
                 IConstraint constraint => constraint,
-                null => compilationContext.LogError(7, $"Couldn't find '{currentIdentifier}' in '{type}'"),
-                _ => compilationContext.LogError(16, $"'{previous}' is not a constraint")
+                {} notConstraint => compilationContext.LogError(16, $"'{notConstraint}' is not a constraint"),
+                null => throw new ArgumentOutOfRangeException()
             };
         }
     }

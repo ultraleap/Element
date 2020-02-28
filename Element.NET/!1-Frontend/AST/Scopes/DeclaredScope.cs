@@ -6,13 +6,15 @@ namespace Element.AST
     public abstract class DeclaredScope : ScopeBase
     {
         protected abstract IEnumerable<DeclaredItem> ItemsToCacheOnValidate { get; }
-        public DeclaredItem Declarer { get; private set; }
+        public DeclaredItem? Declarer { get; private set; }
+        
+        public override IValue? this[Identifier id, CompilationContext context] =>
+            IndexCache(id) ?? Declarer?.Parent[id, context];
 
-        public void Initialize(DeclaredScope parent, DeclaredItem declarer)
+        public void Initialize(DeclaredItem declarer)
         {
-            if (!(this is GlobalScope)) // Global scope has no parent or declarer!
+            if (!(this is GlobalScope)) // Global scope has no declarer
             {
-                Parent = parent ?? throw new ArgumentNullException(nameof(parent));
                 Declarer = declarer ?? throw new ArgumentNullException(nameof(declarer));
             }
 

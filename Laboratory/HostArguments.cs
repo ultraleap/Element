@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -20,7 +19,7 @@ namespace Laboratory
     /// </summary>
     internal class HostArguments : IEnumerable
     {
-        public IEnumerator GetEnumerator() => _processHostInfos
+        public IEnumerator GetEnumerator() => ProcessHostInfos
             .Where(phi => phi.Enabled)
             .Select(phi => (IHost) new ProcessHost(phi))
             .Prepend(new AtomicHost())
@@ -35,7 +34,7 @@ namespace Laboratory
                 var tomlTable = (TomlTable) table;
 
                 TValue Get<TValue>(in string key) => (TValue) tomlTable[key];
-                _processHostInfos.Add(new ProcessHostInfo
+                ProcessHostInfos.Add(new ProcessHostInfo
                 (
                     name,
                     Get<bool>("enabled"),
@@ -84,7 +83,7 @@ namespace Laboratory
             public string ExecutablePath { get; }
         }
 
-        private static readonly List<ProcessHostInfo> _processHostInfos = new List<ProcessHostInfo>();
+        private static readonly List<ProcessHostInfo> ProcessHostInfos = new List<ProcessHostInfo>();
 
         /// <summary>
         /// Implements commands by calling external process defined using a command string.
@@ -117,7 +116,7 @@ namespace Laboratory
             static ProcessHost()
             {
                 // Perform build command for each enabled host - within static constructor so it's only performed once per test run
-                foreach (var info in _processHostInfos.Where(info => info.Enabled))
+                foreach (var info in ProcessHostInfos.Where(info => info.Enabled))
                 {
                     try
                     {
@@ -138,12 +137,12 @@ namespace Laboratory
 
                         if (process.ExitCode != 0)
                         {
-                            _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
+                            HostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                         }
                     }
                     catch (Exception e)
                     {
-                        _hostBuildErrors.Add(info, e.ToString());
+                        HostBuildErrors.Add(info, e.ToString());
                     }
                 }
             }
@@ -170,7 +169,7 @@ namespace Laboratory
                 return success;
             }
 
-            private static readonly Dictionary<ProcessHostInfo, string> _hostBuildErrors = new Dictionary<ProcessHostInfo, string>();
+            private static readonly Dictionary<ProcessHostInfo, string> HostBuildErrors = new Dictionary<ProcessHostInfo, string>();
 
             public ProcessHost(ProcessHostInfo info) => _info = info;
 
@@ -180,7 +179,7 @@ namespace Laboratory
 
             private string RunHostProcess(CompilationInput input, string arguments)
             {
-                if (_hostBuildErrors.TryGetValue(_info, out var buildError))
+                if (HostBuildErrors.TryGetValue(_info, out var buildError))
                 {
                     Assert.Fail(buildError);
                 }

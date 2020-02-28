@@ -12,10 +12,10 @@ namespace Laboratory
     {
         protected HostFixture(IHost host)
         {
-            _host = host;
+            Host = host;
         }
 
-        protected readonly IHost _host;
+        protected readonly IHost Host;
         
         private const float FloatEpsilon = 1.19209e-5f;
         private static Comparer<float> FloatComparer { get; } = Comparer<float>.Create((f, f1) => ApproximatelyEqualEpsilon(f, f1, FloatEpsilon) ? 0 : 1);
@@ -28,6 +28,7 @@ namespace Laboratory
             float absB = Math.Abs(b);
             float diff = Math.Abs(a - b);
 
+            // ReSharper disable CompareOfFloatsByEqualityOperator
             if (a == b)
             {
                 // Shortcut, handles infinities
@@ -43,15 +44,16 @@ namespace Laboratory
 
             // use relative error
             return diff / Math.Min(absA + absB, float.MaxValue) < epsilon;
+            // ReSharper enable CompareOfFloatsByEqualityOperator
         }
 
         protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params string[] expressions)
         {
-            var (controlSuccess, controlResult) = _host.Evaluate(compilationInput, controlExpression);
+            var (controlSuccess, controlResult) = Host.Evaluate(compilationInput, controlExpression);
             if (!controlSuccess) Assert.Fail($"'{controlExpression}' evaluation failed");
             expressions.Aggregate(controlResult, (expected, expression) =>
             {
-                var (success, result) = _host.Evaluate(compilationInput, expression);
+                var (success, result) = Host.Evaluate(compilationInput, expression);
                 if (!success) Assert.Fail($"'{expression}' evaluation failed");
                 CollectionAssert.AreEqual(expected, result, FloatComparer);
                 return expected;
@@ -60,7 +62,7 @@ namespace Laboratory
 
         protected void AssertTypeof(CompilationInput compilationInput, string expression, string typeStr)
         {
-            var (success, result) = _host.Typeof(compilationInput, expression);
+            var (success, result) = Host.Typeof(compilationInput, expression);
             if (!success) Assert.Fail();
             Assert.That(result, Is.EqualTo(typeStr));
         }
@@ -68,7 +70,7 @@ namespace Laboratory
         protected void EvaluateExpectingErrorCode(CompilationInput compilationInput, int messageCode, string expression)
         {
             compilationInput.LogCallback = ExpectMessageCode(messageCode, compilationInput.LogCallback);
-            var (success, result) = _host.Evaluate(compilationInput, expression);
+            var (success, _) = Host.Evaluate(compilationInput, expression);
             Assert.Fail(success
                 ? "Expected message code '{0}' but evaluation succeeded"
                 : "Expected message code '{0}' but got different error code", messageCode);

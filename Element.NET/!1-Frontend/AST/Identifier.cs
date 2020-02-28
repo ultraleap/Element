@@ -14,6 +14,7 @@ namespace Element.AST
         private string Value { get; set; }
         public static implicit operator string(Identifier i) => i.Value;
         public override string ToString() => Value;
+        // ReSharper disable once NonReadonlyMemberInGetHashCode
         public override int GetHashCode() => Value.GetHashCode();
         public override bool Equals(object obj) => obj?.Equals(Value) ?? (Value == null);
     }

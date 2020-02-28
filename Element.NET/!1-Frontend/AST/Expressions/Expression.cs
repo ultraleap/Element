@@ -15,10 +15,10 @@ namespace Element.AST
     // ReSharper disable once ClassNeverInstantiated.Global
     public class Expression
     {
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [field: Term] public IExpressionListStart LitOrId { get; private set; }
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [field: Optional] public List<ISubExpression>? Expressions { get; private set; }
+        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        [field: Term] private IExpressionListStart LitOrId { get; set; }
+        [field: Optional] private List<ISubExpression>? Expressions { get; set; }
+        // ReSharper restore UnusedAutoPropertyAccessor.Local
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
@@ -27,13 +27,15 @@ namespace Element.AST
             var previous = LitOrId switch
             {
                 // If the start of the list is an identifier, find the value that it identifies
-                Identifier id => scope.IndexRecursively(id, compilationContext, out var containingScope).ToValue(id, containingScope, compilationContext),
+                Identifier id => scope[id, compilationContext] is {} v
+                                     ? v
+                                     : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
                 Literal lit => lit,
                 _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
             };
 
             // Early out if something failed above
-            if (previous is CompilationErr) return CompilationErr.Instance;
+            if (previous is CompilationErr err) return err;
 
             compilationContext.Push(new TraceSite(previous.ToString(), null, 0, 0));
             

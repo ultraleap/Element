@@ -1,6 +1,6 @@
 namespace Element.AST
 {
-    public interface IConstraint
+    public interface IConstraint : IValue
     {
         bool MatchesConstraint(IValue value, CompilationContext compilationContext);
     }
