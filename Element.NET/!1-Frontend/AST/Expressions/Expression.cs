@@ -18,7 +18,7 @@ namespace Element.AST
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         [field: Term] public IExpressionListStart LitOrId { get; private set; }
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [field: Optional] public List<ISubExpression> Expressions { get; private set; }
+        [field: Optional] public List<ISubExpression>? Expressions { get; private set; }
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
@@ -36,13 +36,10 @@ namespace Element.AST
             if (previous is CompilationErr) return CompilationErr.Instance;
 
             compilationContext.Push(new TraceSite(previous.ToString(), null, 0, 0));
-
-            previous = previous.ResolveNullaryFunction(compilationContext);
             
             // TODO: Handle lambdas
 
-            // ReSharper disable once ConstantConditionalAccessQualifier
-            previous = Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current, scope, compilationContext));
+            previous = Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current, scope, compilationContext)) ?? previous;
 
             previous = previous.ResolveNullaryFunction(compilationContext);
 

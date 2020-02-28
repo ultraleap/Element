@@ -28,5 +28,5 @@ struct          ::= qualifier 'struct' declaration (scope | ';')
 constraint      ::= qualifier 'constraint' declaration ';'
 namespace       ::= 'namespace' identifier scope
 
-item            ::= function | struct | namespace
+item            ::= function | struct | namespace | constraint
 grammar         ::= item*
