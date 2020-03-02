@@ -1,0 +1,4 @@
+voldemort(a) # returns a type that cannot be named, unused for now
+{
+	struct return(a);
+}

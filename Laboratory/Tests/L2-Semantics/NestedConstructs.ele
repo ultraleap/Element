@@ -17,6 +17,18 @@ addUsingLocalCapture(a:Num, b:Num)
 
 returnLocalStructInstance(a:Num)
 {
-	struct Vector2(x:Num, y:Num);
+	struct Vector2(x:Num, y:Num)
+	{
+		add(a:Vector2, b:Num) = Vector2(a.x.add(b), a.y.add(b));
+	}
 	return = Vector2(a, a);
+}
+
+addUsingLocalWithShadowing(a:Num, b:Num)
+{
+	localAdd(a, b)
+	{
+		return = a.add(b);
+	}
+	return = localAdd(a, b);
 }

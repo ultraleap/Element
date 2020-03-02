@@ -4,7 +4,7 @@ intrinsic struct Bool(n:Num)
     true = 1.to(Bool);
     false = 0.to(Bool);
 
-    if(condition:Bool, ifTrue, ifFalse) = array(ifFalse, ifTrue).at(condition.n).to(Bool);
+    if(condition:Bool, ifTrue, ifFalse) = list(ifFalse, ifTrue).at(condition.n);
 
     negate(a:Bool):Bool         = a.add(1).rem(2).to(Bool);
     and(a:Bool, b:Bool):Bool    = a.n.mul(b.n).to(Bool);

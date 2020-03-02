@@ -1,5 +1,0 @@
-voldemort(a) # returns a type that cannot be named
-{
-    # Note - returning a local declaration is impossible without scope body
-	struct return(a);
-}

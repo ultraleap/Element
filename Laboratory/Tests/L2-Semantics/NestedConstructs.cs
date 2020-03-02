@@ -11,12 +11,15 @@ namespace Laboratory.Tests
         public void AddUsingLocal() => AssertApproxEqual(CompilationInput, "addUsingLocal(6, 6)", "12");
 
         [Test]
-        public void AddUsingCaptured() => AssertApproxEqual(CompilationInput, "addUsingLocalCapture(6, 6)", "12");
+        public void AddUsingLocalWithCaptures() => AssertApproxEqual(CompilationInput, "addUsingLocalCapture(6, 6)", "12");
+
+        [Test]
+        public void AddUsingLocalWithShadowing() => AssertApproxEqual(CompilationInput, "addUsingLocalWithShadowing(6, 6)", "12");
 
         [Test]
         public void LocalStructInstance() => AssertTypeof(CompilationInput, "returnLocalStructInstance(5)", "Vector2");
 
         [Test]
-        public void IndirectlyRecursive() =>;
+        public void LocalStructInstanceFunction() => AssertApproxEqual(CompilationInput, "returnLocalStructInstance(5).add(10).x", "15");
     }
 }
