@@ -13,7 +13,7 @@ namespace Element.AST
 
         public override string ToString() => $".{Identifier}";
 
-        public IValue ResolveSubExpression(IValue previous, IScope containingScope, CompilationContext compilationContext) =>
+        public IValue ResolveSubExpression(IValue previous, IScope resolutionScope, CompilationContext compilationContext) =>
             previous switch
             {
                 IScope scope => scope[Identifier, compilationContext],

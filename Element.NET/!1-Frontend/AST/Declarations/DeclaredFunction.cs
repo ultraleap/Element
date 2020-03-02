@@ -4,20 +4,25 @@ using System.Linq;
 
 namespace Element.AST
 {
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class DeclaredFunction : DeclaredItem, IFunction
+    public abstract class DeclaredFunction : DeclaredItem, IFunction
     {
-        protected override string Qualifier { get; } = string.Empty; // Functions don't have a qualifier
+        protected override string Qualifier => string.Empty; // Functions don't have a qualifier
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
-        protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
         public override IType Type => FunctionType.Instance;
+        public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
         Port[] IFunction.Inputs => DeclaredInputs;
-        Type IFunction.Output => DeclaredType; 
+        Type IFunction.Output => DeclaredType;
+    }
+
+    public class ExtrinsicFunction : DeclaredFunction
+    {
+        protected override string IntrinsicQualifier => string.Empty;
+        protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
 
         public override bool Validate(CompilationContext compilationContext)
         {
-            var success = ValidateIntrinsic<ICallable>(compilationContext) && ValidateScopeBody(compilationContext);
-            if (!IsIntrinsic && Body is Terminal)
+            var success = ValidateScopeBody(compilationContext);
+            if (Body is Terminal)
             {
                 compilationContext.LogError(21, $"Non intrinsic function '{Location}' must have a body");
                 success = false;
@@ -26,23 +31,30 @@ namespace Element.AST
             return success;
         }
 
-        private sealed class CallScope : ScopeBase
+        private sealed class ArgumentCaptureScope : ScopeBase
         {
             private readonly IScope _parent;
 
-            public CallScope(IScope parent, IEnumerable<(Identifier Identifier, IValue Value)> members)
+            public ArgumentCaptureScope(IScope parent, IEnumerable<(Identifier Identifier, IValue Value)> members)
             {
                 _parent = parent;
                 SetRange(members);
             }
 
-            //public override string Location => $"Call to <{Parent.Location}>";
             public override IValue? this[Identifier id, CompilationContext context] => IndexCache(id) ?? _parent[id, context];
         }
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext)
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
-            IValue CompileFunction(DeclaredFunction function, IScope parentScope) =>
+            if (arguments?.Length > 0)
+            {
+                // If there are any arguments we need to interject a capture scope to store them
+                // The capture scope will be indexed before the parent scope when indexing a declared scope
+                // Thus the order of indexing for an item becomes "Child -> Captures -> Parent"
+                CaptureScope ??= new ArgumentCaptureScope(ParentScope, arguments.Select((arg, index) => (DeclaredInputs[index].Identifier, arg)));
+            }
+
+            IValue CompileFunction(ExtrinsicFunction function, IScope parentScope) =>
                 function.Body switch
                 {
                     // If a function is a binding (has expression body) we just compile the single expression
@@ -52,7 +64,7 @@ namespace Element.AST
                     Scope scope => scope[Parser.ReturnIdentifier, compilationContext] switch
                     {
                         // If the return value is a function, compile it
-                        DeclaredFunction returnFunction => CompileFunction(returnFunction, parentScope),
+                        ExtrinsicFunction returnFunction => CompileFunction(returnFunction, parentScope),
                         null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
                         // TODO: Add support for returning other items as values - structs and namespaces
                         var nyi => throw new NotImplementedException(nyi.ToString())
@@ -60,15 +72,30 @@ namespace Element.AST
                     _ => CompilationErr.Instance
                 };
 
-            if (IsIntrinsic) return IntrinsicCache.GetIntrinsic<ICallable>(Location, compilationContext)?.Call(arguments, compilationContext);
 
-            return arguments.ValidateArguments(DeclaredInputs, Body as IScope ?? Parent, compilationContext)
-                       ? CompileFunction(this, arguments?.Length > 0
-                                                   // If we have any arguments for this function, push a call scope
-                                                   // else we  parent scope for the function is the declaration's parent
-                                                   ? (IScope) new CallScope(Parent, arguments.Select((arg, index) => (DeclaredInputs[index].Identifier, arg)))
-                                                   : Parent)
+            var callScope = ChildScope ?? CaptureScope ?? ParentScope;
+            return arguments.ValidateArguments(DeclaredInputs, callScope, compilationContext)
+                       ? CompileFunction(this, callScope)
                        : CompilationErr.Instance;
         }
+    }
+
+    public class IntrinsicFunction : DeclaredFunction
+    {
+        protected override string IntrinsicQualifier => "intrinsic";
+        public override bool Validate(CompilationContext compilationContext)
+        {
+            var success = ImplementingIntrinsic<ICallable>(compilationContext) != null;
+            if (!(Body is Terminal))
+            {
+                compilationContext.LogError(20, $"Intrinsic function '{Location}' cannot have a body");
+                success = false;
+            }
+
+            return success;
+        }
+
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            ImplementingIntrinsic<ICallable>(compilationContext).Call(arguments, compilationContext);
     }
 }

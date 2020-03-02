@@ -85,7 +85,8 @@ name = "StructCannotHaveReturnType"
 level = "Error"
 
 [ELE20]
-
+name = "IntrinsicCannotHaveBody"
+level = "Error"
 
 [ELE21]
 name = "MissingFunctionBody"

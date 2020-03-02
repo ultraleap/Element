@@ -2,16 +2,17 @@ using System.Linq;
 
 namespace Element.AST
 {
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class DeclaredStruct : DeclaredItem, ICallable, IScope, IType
+    public abstract class DeclaredStruct : DeclaredItem, ICallable, IScope, IType
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
 
-        public IValue? this[Identifier id, CompilationContext compilationContext] => Child?[id, compilationContext];
+        public IValue? this[Identifier id, CompilationContext compilationContext] => ChildScope?[id, compilationContext];
         string IType.Name => Identifier;
         public override IType Type => TypeType.Instance;
-        
+        public abstract bool MatchesConstraint(IValue value, CompilationContext compilationContext);
+        public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
+
         public IValue ResolveInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, CompilationContext compilationContext) =>
             this[instanceFunctionIdentifier, compilationContext] switch
             {
@@ -22,18 +23,32 @@ namespace Element.AST
                 _ => compilationContext.LogError(7, $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>")
             };
 
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
-            IsIntrinsic
-                ? IntrinsicCache.GetIntrinsic<IConstraint>(Location, compilationContext)
-                                .MatchesConstraint(value, compilationContext)
-                : value.Type == this;
-        
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            IsIntrinsic
-                ? ImplementingIntrinsic<ICallable>(compilationContext).Call(arguments, compilationContext)
-                : arguments.ValidateArguments(DeclaredInputs, Body as IScope ?? Parent, compilationContext)
-                    ? (IValue) new StructInstance(this, DeclaredInputs, arguments)
-                    : CompilationErr.Instance;
+        private class InstanceFunction : IFunction
+        {
+            public InstanceFunction(IValue value, IFunction function)
+            {
+                _surrogate = function;
+                _argument = value;
+                Inputs = _surrogate.Inputs.Skip(1).ToArray();
+            }
+
+            private readonly IFunction _surrogate;
+            private readonly IValue _argument;
+
+            public Port[] Inputs { get; }
+            public Type Output => _surrogate.Output;
+            IType IValue.Type => FunctionType.Instance;
+
+            public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+                _surrogate.Call(arguments.Prepend(_argument).ToArray(), compilationContext)
+                    .ResolveNullaryFunction(compilationContext);
+        }
+    }
+
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class ExtrinsicStruct : DeclaredStruct
+    {
+        protected override string IntrinsicQualifier => string.Empty;
 
         public override bool Validate(CompilationContext compilationContext)
         {
@@ -43,13 +58,8 @@ namespace Element.AST
                 compilationContext.LogError(19, $"Struct '{ParsedIdentifier}' cannot have declared return type");
                 success = false;
             }
-            
-            // Intrinsic structs implement constraint resolution and a callable constructor
-            // They don't implement IScope, scope impl is still handled by DeclaredStruct
-            success &= ValidateIntrinsic<IConstraint>(compilationContext);
-            success &= ValidateIntrinsic<ICallable>(compilationContext);
-            
-            if (!IsIntrinsic && DeclaredInputs.Length < 1)
+
+            if (DeclaredInputs.Length < 1)
             {
                 compilationContext.LogError(13, $"Non intrinsic '{Location}' must have ports");
                 success = false;
@@ -61,16 +71,23 @@ namespace Element.AST
             return success;
         }
 
+        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == this;
+
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            arguments.ValidateArguments(DeclaredInputs, ChildScope ?? ParentScope, compilationContext)
+                ? (IValue) new StructInstance(this, DeclaredInputs, arguments)
+                : CompilationErr.Instance;
+
         private sealed class StructInstance : ScopeBase, IValue, ISerializable
         {
             IType IValue.Type => DeclaringStruct;
-            private DeclaredStruct DeclaringStruct { get; }
+            private ExtrinsicStruct DeclaringStruct { get; }
 
             public override IValue? this[Identifier id, CompilationContext compilationContext] =>
                 IndexCache(id)
                 ?? DeclaringStruct.ResolveInstanceFunction(id, this, compilationContext);
 
-            public StructInstance(DeclaredStruct declaringStruct, Port[] inputs, IValue[] memberValues)
+            public StructInstance(ExtrinsicStruct declaringStruct, Port[] inputs, IValue[] memberValues)
             {
                 DeclaringStruct = declaringStruct;
                 _isSerializable = true;
@@ -107,29 +124,35 @@ namespace Element.AST
                 return true;
             }
         }
+    }
 
-        private class InstanceFunction : IFunction
+    // ReSharper disable once UnusedType.Global
+    public class IntrinsicStruct : DeclaredStruct
+    {
+        protected override string IntrinsicQualifier => "intrinsic";
+
+        public override bool Validate(CompilationContext compilationContext)
         {
-            public InstanceFunction(IValue value, IFunction function)
+            var success = true;
+            if (DeclaredType != null)
             {
-                _surrogate = function;
-                _argument = value;
-                Inputs = _surrogate.Inputs.Skip(1).ToArray();
+                compilationContext.LogError(19, $"Struct '{ParsedIdentifier}' cannot have declared return type");
+                success = false;
             }
 
-            private readonly IFunction _surrogate;
-            private readonly IValue _argument;
+            // Intrinsic structs implement constraint resolution and a callable constructor
+            // They don't implement IScope, scope impl is still handled by DeclaredStruct
+            success &= ImplementingIntrinsic<IConstraint>(compilationContext) != null;
+            success &= ImplementingIntrinsic<ICallable>(compilationContext) != null;
+            success &= ValidateScopeBody(compilationContext);
 
-            public Port[] Inputs { get; }
-            public Type Output => _surrogate.Output;
-            IType IValue.Type => FunctionType.Instance;
-
-            public IValue Call(IValue[] arguments, CompilationContext compilationContext)
-            {
-                
-                var result = _surrogate.Call(arguments.Prepend(_argument).ToArray(), compilationContext);
-                return result.ResolveNullaryFunction(compilationContext);
-            }
+            return success;
         }
+
+        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
+            ImplementingIntrinsic<IConstraint>(compilationContext).MatchesConstraint(value, compilationContext);
+
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            ImplementingIntrinsic<ICallable>(compilationContext).Call(arguments, compilationContext);
     }
 }

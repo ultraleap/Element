@@ -73,16 +73,16 @@ namespace Laboratory.Tests
                 (nameof(Expression), "a.b(c).d.e(5)", typeof(Expression)),
                 (nameof(CallExpression), "(5, a(10, c))", typeof(CallExpression)),
                 (nameof(IndexingExpression), ".identifier", typeof(IndexingExpression)),
-                ($"{nameof(DeclaredFunction)}-ExpressionBody", "a(a):Num = 5;", typeof(DeclaredFunction)),
-                ($"{nameof(DeclaredFunction)}-ScopeBody", "a(a):Num {return = 5;}", typeof(DeclaredFunction)),
-                ($"Intrinsic {nameof(DeclaredFunction)}", "intrinsic a(a):Num;", typeof(DeclaredFunction)),
-                ($"Intrinsic {nameof(DeclaredConstraint)}", "intrinsic constraint a;", typeof(DeclaredConstraint)),
-                (nameof(DeclaredConstraint), "constraint a(a):Num;", typeof(DeclaredConstraint)),
-                (nameof(DeclaredStruct), "struct a(a);", typeof(DeclaredStruct)),
-                ($"{nameof(DeclaredStruct)}-WithScope", "struct a(a) {}", typeof(DeclaredStruct)),
-                ($"Intrinsic {nameof(DeclaredStruct)}", "intrinsic struct a(a);", typeof(DeclaredStruct)),
+                ($"{nameof(ExtrinsicFunction)}-ExpressionBody", "a(a):Num = 5;", typeof(ExtrinsicFunction)),
+                ($"{nameof(ExtrinsicFunction)}-ScopeBody", "a(a):Num {return = 5;}", typeof(ExtrinsicFunction)),
+                ($"{nameof(IntrinsicFunction)}", "intrinsic a(a):Num;", typeof(IntrinsicFunction)),
+                (nameof(ExtrinsicConstraint), "constraint a(a):Num;", typeof(ExtrinsicConstraint)),
+                ($"{nameof(IntrinsicConstraint)}", "intrinsic constraint a;", typeof(IntrinsicConstraint)),
+                (nameof(ExtrinsicStruct), "struct a(a);", typeof(ExtrinsicStruct)),
+                ($"{nameof(ExtrinsicStruct)}-WithScope", "struct a(a) {}", typeof(ExtrinsicStruct)),
+                ($"{nameof(IntrinsicStruct)}", "intrinsic struct a(a);", typeof(IntrinsicStruct)),
                 (nameof(PortList), "(a:foo, b:bar)", typeof(PortList)),
-                (nameof(Namespace), "namespace foo {}", typeof(Namespace))
+                (nameof(DeclaredNamespace), "namespace foo {}", typeof(DeclaredNamespace))
             };
             foreach (var item in data)
             {

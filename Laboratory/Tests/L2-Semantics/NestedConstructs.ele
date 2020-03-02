@@ -1,0 +1,22 @@
+intrinsic struct Num
+{
+	intrinsic add(a:Num, b:Num):Num;
+}
+
+addUsingLocal(a:Num, b:Num)
+{
+	localAdd(c:Num, d:Num) = c.add(d);
+	return = localAdd(a, b);
+}
+
+addUsingLocalCapture(a:Num, b:Num)
+{
+	localAdd(in:Num) = a.add(in);
+	return = localAdd(b);
+}
+
+returnLocalStructInstance(a:Num)
+{
+	struct Vector2(x:Num, y:Num);
+	return = Vector2(a, a);
+}

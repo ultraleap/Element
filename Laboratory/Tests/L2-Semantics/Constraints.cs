@@ -18,5 +18,11 @@ namespace Laboratory.Tests
 
         [TestCase("5"), TestCase("a")]
         public void TypeofNumber(string expression) => AssertTypeof(CompilationInput, expression, "Num");
+
+        [Test]
+        public void TypeofConstraint() => AssertTypeof(CompilationInput, "Any", "Constraint");
+
+        [Test]
+        public void TypeofNamespace() => AssertTypeof(CompilationInput, "MySpace", "Namespace");
     }
 }

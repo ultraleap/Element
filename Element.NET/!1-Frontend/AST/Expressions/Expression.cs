@@ -8,7 +8,7 @@ namespace Element.AST
 
     public interface ISubExpression
     {
-        IValue ResolveSubExpression(IValue previous, IScope containingScope, CompilationContext compilationContext);
+        IValue ResolveSubExpression(IValue previous, IScope resolutionScope, CompilationContext compilationContext);
     }
 
     [WhitespaceSurrounded, MultiLine]

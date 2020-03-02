@@ -7,3 +7,4 @@ explicitAny(a:Any) = a;
 onlyNum(a:Num) = a;
 
 constraint Predicate(a):Bool;
+namespace MySpace {}

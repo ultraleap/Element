@@ -58,8 +58,8 @@ namespace Element.AST
     {
 #pragma warning disable 649
         // ReSharper disable UnassignedField.Global
-        [Literal("intrinsic"), Optional] private string _intrinsic;
-        [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed _;
+        [IndirectLiteral(nameof(IntrinsicQualifier))] protected Unnamed _;
+        [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed __;
         [Term] protected Identifier ParsedIdentifier;
         [Optional] protected PortList? PortList;
         [Optional] protected Type? DeclaredType;
@@ -68,6 +68,7 @@ namespace Element.AST
 #pragma warning restore 649
 
         // ReSharper disable UnusedMember.Global
+        protected abstract string IntrinsicQualifier { get; }
         protected abstract string Qualifier { get; }
         protected abstract System.Type[] BodyAlternatives { get; }
         // ReSharper restore UnusedMember.Global
@@ -76,7 +77,6 @@ namespace Element.AST
         public override string ToString() => $"{Location}{PortList}{DeclaredType}";
 
         protected Port[]? DeclaredInputs => PortList?.List.ToArray() ?? Array.Empty<Port>();
-        protected bool IsIntrinsic => !string.IsNullOrEmpty(_intrinsic);
         protected virtual List<Identifier> ScopeIdentifierWhitelist { get; } = null;
      
         public abstract bool Validate(CompilationContext compilationContext);
@@ -84,28 +84,22 @@ namespace Element.AST
 
         public void Initialize(DeclaredScope parent)
         {
-            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
-            Child?.Initialize(this);
+            ParentScope = parent ?? throw new ArgumentNullException(nameof(parent));
+            ChildScope?.Initialize(this);
         }
-        public string Location => $"{(Parent is GlobalScope ? string.Empty : $"{Parent.Declarer}.")}{Identifier}";
-        public DeclaredScope Parent { get; private set; }
-        protected DeclaredScope? Child => Body as Scope;
+        public string Location => $"{(ParentScope is GlobalScope ? string.Empty : $"{ParentScope.Declarer}.")}{Identifier}";
+        protected DeclaredScope ParentScope { get; private set; }
+        protected IScope? CaptureScope { get; set; }
+        protected DeclaredScope? ChildScope => Body as Scope;
+
+        public IValue? IndexRecursively(Identifier id, CompilationContext compilationContext) =>
+            CaptureScope?[id, compilationContext] ?? ParentScope[id, compilationContext];
 
         protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(CompilationContext compilationContext)
             where TIntrinsic : class, IValue =>
             IntrinsicCache.GetIntrinsic<TIntrinsic>(Location, compilationContext);
-        
-        protected bool ValidateIntrinsic<TIntrinsic>(CompilationContext compilationContext)
-            where TIntrinsic : class, IValue
-        {
-            if (!IsIntrinsic) return true;
-            return ImplementingIntrinsic<TIntrinsic>(compilationContext) != null;
-        }
-        
-        protected bool ValidateScopeBody(CompilationContext compilationContext)
-        {
-            if (!(Body is Scope scope)) return true;
-            return scope.ValidateScope(compilationContext, ScopeIdentifierWhitelist);
-        }
+
+        protected bool ValidateScopeBody(CompilationContext compilationContext) =>
+            !(Body is Scope scope) || scope.ValidateScope(compilationContext, ScopeIdentifierWhitelist);
     }
 }

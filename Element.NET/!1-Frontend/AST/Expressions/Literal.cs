@@ -26,7 +26,7 @@ namespace Element.AST
             compilationContext.GlobalScope[new Identifier(Type.Name), compilationContext] switch
             {
                 DeclaredStruct declaredStruct => declaredStruct.ResolveInstanceFunction(id, this, compilationContext),
-                _ => compilationContext.LogError(4, $"Couldn't find instance function '{Type.Name}'")
+                _ => compilationContext.LogError(7, $"Couldn't find instance function '{Type.Name}'")
             };
     }
 }
