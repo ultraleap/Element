@@ -18,10 +18,11 @@ namespace Element.AST
                 {
                     AnyConstraint.Instance,
                     NumType.Instance,
+                    ListType.Instance,
                     new ForIntrinsic(),
-                    /*new ArrayIntrinsic(),
                     new FoldIntrinsic(),
-                    new MemberwiseIntrinsic(),
+                    new ListIntrinsic(),
+                    /*new MemberwiseIntrinsic(),
                     new PersistIntrinsic()*/
                 }.Concat(Enum.GetValues(typeof(Binary.Op))
                              .Cast<Binary.Op>()
@@ -76,7 +77,7 @@ namespace Element.AST
         public Identifier Identifier => ParsedIdentifier;
         public override string ToString() => $"{Location}{PortList}{DeclaredType}";
 
-        protected Port[]? DeclaredInputs => PortList?.List.ToArray() ?? Array.Empty<Port>();
+        public Port[]? DeclaredInputs => PortList?.List.ToArray() ?? Array.Empty<Port>();
         protected virtual List<Identifier> ScopeIdentifierWhitelist { get; } = null;
      
         public abstract bool Validate(CompilationContext compilationContext);

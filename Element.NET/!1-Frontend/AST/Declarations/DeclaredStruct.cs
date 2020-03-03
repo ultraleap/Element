@@ -77,52 +77,52 @@ namespace Element.AST
             arguments.ValidateArguments(DeclaredInputs, ChildScope ?? ParentScope, compilationContext)
                 ? (IValue) new StructInstance(this, DeclaredInputs, arguments)
                 : CompilationErr.Instance;
+    }
 
-        private sealed class StructInstance : ScopeBase, IValue, ISerializable
+    public sealed class StructInstance : ScopeBase, IValue, ISerializable
+    {
+        IType IValue.Type => DeclaringStruct;
+        private DeclaredStruct DeclaringStruct { get; }
+
+        public override IValue? this[Identifier id, CompilationContext compilationContext] =>
+            IndexCache(id)
+            ?? DeclaringStruct.ResolveInstanceFunction(id, this, compilationContext);
+
+        public StructInstance(DeclaredStruct declaringStruct, Port[] inputs, IValue[] memberValues)
         {
-            IType IValue.Type => DeclaringStruct;
-            private ExtrinsicStruct DeclaringStruct { get; }
-
-            public override IValue? this[Identifier id, CompilationContext compilationContext] =>
-                IndexCache(id)
-                ?? DeclaringStruct.ResolveInstanceFunction(id, this, compilationContext);
-
-            public StructInstance(ExtrinsicStruct declaringStruct, Port[] inputs, IValue[] memberValues)
+            DeclaringStruct = declaringStruct;
+            _isSerializable = true;
+            _members = new ISerializable[memberValues.Length];
+            for (var i = 0; i < memberValues.Length; i++)
             {
-                DeclaringStruct = declaringStruct;
-                _isSerializable = true;
-                _members = new ISerializable[memberValues.Length];
-                for (var i = 0; i < memberValues.Length; i++)
+                var value = memberValues[i];
+                if (value is ISerializable serializable)
                 {
-                    var value = memberValues[i];
-                    if (value is ISerializable serializable)
-                    {
-                        _members[i] = serializable;
-                        SerializedSize += serializable.SerializedSize;
-                        continue;
-                    }
-
-                    _isSerializable = false;
-                    break;
+                    _members[i] = serializable;
+                    SerializedSize += serializable.SerializedSize;
+                    continue;
                 }
 
-                SetRange(inputs.Zip(memberValues, (port, value) => (port.Identifier, value)));
+                _isSerializable = false;
+                break;
             }
 
-            private readonly bool _isSerializable;
-            private readonly ISerializable[] _members;
+            SetRange(inputs.Zip(memberValues, (port, value) => (port.Identifier, value)));
+        }
 
-            public int SerializedSize { get; }
-            public bool Serialize(ref float[] array, ref int position)
+        private readonly bool _isSerializable;
+        private readonly ISerializable[] _members;
+
+        public int SerializedSize { get; }
+        public bool Serialize(ref float[] array, ref int position)
+        {
+            if (!_isSerializable) return false;
+            foreach (var m in _members)
             {
-                if (!_isSerializable) return false;
-                foreach (var m in _members)
-                {
-                    m.Serialize(ref array, ref position);
-                }
-
-                return true;
+                m.Serialize(ref array, ref position);
             }
+
+            return true;
         }
     }
 

@@ -1,4 +1,32 @@
-voldemort(a) # returns a type that cannot be named, unused for now
+intrinsic struct Num
+{
+	intrinsic add(a, b);
+	intrinsic sub(a, b);
+    lt(a:Num, b:Num):Bool   = b.sub(a).to(Bool);
+}
+
+intrinsic struct Bool(n:Num)
+{
+	if(condition:Bool, ifTrue, ifFalse) = list(ifFalse, ifTrue).at(condition.n);
+}
+
+constraint Indexer(i:Num);
+constraint Binary(a, b);
+
+intrinsic list;
+intrinsic struct List(at:Indexer, count:Num)
+{
+	intrinsic fold(list:List, initial, accumulator:Binary);
+}
+
+add = Num.add;
+addFromInstanceFunction = 5.add;
+getAdd(a:Num) = a.add;
+sum(numbers:List) = numbers.fold(0, _(accum, element) = accum.add(element));
+
+voldemort(a)
 {
 	struct return(a);
 }
+
+recursiveSum(n:Num) = if(n.lt(1), n, n.add(recursiveSum(n.sub(1))));

@@ -1,4 +1,5 @@
 using Element;
+using NUnit.Framework;
 
 namespace Laboratory.Tests
 {
@@ -6,11 +7,22 @@ namespace Laboratory.Tests
     {
         public HighOrderConstructs(IHost host) : base(host, "HighOrderConstructs") { }
 
-        // Bind a function from indexing
-        // Bind a struct instance function
-        // Return a function - check using typeof
-        // Pass in a function - for, fold?
-        // Return a struct
-        // Check recursion (using an if to prevent stack overflow)
+        [Test]
+        public void BindFunctionViaIndexing() => AssertTypeof(CompilationInput, "add", "Function");
+
+        [Test]
+        public void BindInstanceFunctionViaIndexing() => AssertTypeof(CompilationInput, "addFromInstanceFunction", "Function");
+
+        [Test]
+        public void CallFunctionWithFunctionResult() => AssertTypeof(CompilationInput, "getAdd(0)", "Function");
+
+        [Test]
+        public void CallFunctionWithStructResult() => AssertTypeof(CompilationInput, "voldemort(5)", "Type");
+
+        [Test]
+        public void HighOrderFunctionSum() => AssertTypeof(CompilationInput, "sum(list(3, -5, 8, 20))", "26");
+
+        [Test]
+        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, 11, "recursiveSum(10)");
     }
 }
