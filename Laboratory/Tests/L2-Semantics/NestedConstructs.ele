@@ -15,6 +15,12 @@ addUsingLocalCapture(a:Num, b:Num)
 	return = localAdd(b);
 }
 
+addBTwice(a:Num, b:Num)
+{
+	localAdd(in:Num) = a.add(in);
+	return = localAdd(localAdd(b));
+}
+
 returnLocalStructInstance(a:Num)
 {
 	struct Vector2(x:Num, y:Num)

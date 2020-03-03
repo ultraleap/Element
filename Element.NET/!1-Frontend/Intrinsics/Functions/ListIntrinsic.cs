@@ -21,8 +21,8 @@ namespace Element.AST
 			{
 				// TODO check argument are homogenous
 				var validArgCount =  arguments.ValidateArguments(1, context);
-				if (!validArgCount) return null;
-				if (!(arguments[0] is Literal indexLiteral)) return null;
+				if (!validArgCount) return CompilationErr.Instance;
+				if (!(arguments[0] is Literal indexLiteral)) return context.LogError(8, "Argument must be a Num");
 				var index = (int)Math.Round(indexLiteral, MidpointRounding.AwayFromZero);
 				return _elements[index];
 			}

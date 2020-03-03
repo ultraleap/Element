@@ -3,7 +3,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    public class Literal : IExpressionListStart, ISerializable, IScope
+    public class Literal : IExpressionListStart, ISerializable, IScope, IValue
     {
         // ReSharper disable once UnusedMember.Global - Used by Lexico to construct instances
         public Literal() {}

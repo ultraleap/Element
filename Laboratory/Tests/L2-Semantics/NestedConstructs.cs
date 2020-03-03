@@ -14,6 +14,9 @@ namespace Laboratory.Tests
         public void AddUsingLocalWithCaptures() => AssertApproxEqual(CompilationInput, "addUsingLocalCapture(6, 6)", "12");
 
         [Test]
+        public void AddUsingLocalWithCapturesCalledMultipleTimes() => AssertApproxEqual(CompilationInput, "addBTwice(6, 6)", "18");
+
+        [Test]
         public void AddUsingLocalWithShadowing() => AssertApproxEqual(CompilationInput, "addUsingLocalWithShadowing(6, 6)", "12");
 
         [Test]

@@ -14,3 +14,5 @@ addFive(a, b, c, d, e)
 	abcd = Num.add(ab, cd);
 	return = Num.add(abcd, e);
 }
+
+recurse(a) = recurse(a);

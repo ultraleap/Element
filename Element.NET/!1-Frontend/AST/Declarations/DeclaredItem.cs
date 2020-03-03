@@ -18,6 +18,7 @@ namespace Element.AST
                 {
                     AnyConstraint.Instance,
                     NumType.Instance,
+                    BoolType.Instance,
                     ListType.Instance,
                     new ForIntrinsic(),
                     new FoldIntrinsic(),
@@ -75,9 +76,9 @@ namespace Element.AST
         // ReSharper restore UnusedMember.Global
         
         public Identifier Identifier => ParsedIdentifier;
-        public override string ToString() => $"{Location}{PortList}{DeclaredType}";
+        public override string ToString() => $"{Location}{DeclaredType}";
 
-        public Port[]? DeclaredInputs => PortList?.List.ToArray() ?? Array.Empty<Port>();
+        protected Port[]? DeclaredInputs => PortList?.List.ToArray() ?? Array.Empty<Port>();
         protected virtual List<Identifier> ScopeIdentifierWhitelist { get; } = null;
      
         public abstract bool Validate(CompilationContext compilationContext);

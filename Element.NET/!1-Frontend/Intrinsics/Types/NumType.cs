@@ -8,9 +8,9 @@ namespace Element.AST
         private NumType() { }
         public static NumType Instance { get; } = new NumType();
         public IType Type => TypeType.Instance;
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type is NumType;
+        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
+        public string Name => "Num";
         public string Location => Name;
-        public override string ToString() => "<number>";
         public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
             arguments.ValidateArguments(1, compilationContext)
                 ? arguments[0] is Literal lit
@@ -18,6 +18,5 @@ namespace Element.AST
                       : compilationContext.LogError(8, "Argument must be a number")
                 : CompilationErr.Instance;
 
-        public string Name => "Num";
     }
 }

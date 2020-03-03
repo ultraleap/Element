@@ -14,8 +14,10 @@ namespace Element.AST
         Type IFunction.Output => DeclaredType;
     }
 
-    public class ExtrinsicFunction : DeclaredFunction
+    public class ExtrinsicFunction : DeclaredFunction, ICompilableFunction
     {
+        private bool hasRecursed;
+
         protected override string IntrinsicQualifier => string.Empty;
         protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
 
@@ -31,21 +33,13 @@ namespace Element.AST
             return success;
         }
 
-        private sealed class ArgumentCaptureScope : ScopeBase
-        {
-            private readonly IScope _parent;
-
-            public ArgumentCaptureScope(IScope parent, IEnumerable<(Identifier Identifier, IValue Value)> members)
-            {
-                _parent = parent;
-                SetRange(members);
-            }
-
-            public override IValue? this[Identifier id, CompilationContext context] => IndexCache(id) ?? _parent[id, context];
-        }
-
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
+            if (hasRecursed)
+            {
+                return compilationContext.LogError(11, "Recursion is disallowed");
+            }
+
             if (arguments?.Length > 0)
             {
                 // If there are any arguments we need to interject a capture scope to store them
@@ -54,30 +48,34 @@ namespace Element.AST
                 CaptureScope ??= new ArgumentCaptureScope(ParentScope, arguments.Select((arg, index) => (DeclaredInputs[index].Identifier, arg)));
             }
 
-            IValue CompileFunction(ExtrinsicFunction function, IScope parentScope) =>
-                function.Body switch
-                {
-                    // If a function is a binding (has expression body) we just compile the single expression
-                    ExpressionBody expressionBody => expressionBody.Expression.ResolveExpression(parentScope, compilationContext),
-
-                    // If a function has a scope body we find the return value
-                    Scope scope => scope[Parser.ReturnIdentifier, compilationContext] switch
-                    {
-                        // If the return value is a function, compile it
-                        ExtrinsicFunction returnFunction => CompileFunction(returnFunction, parentScope),
-                        null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
-                        // TODO: Add support for returning other items as values - structs and namespaces
-                        var nyi => throw new NotImplementedException(nyi.ToString())
-                    },
-                    _ => CompilationErr.Instance
-                };
-
+            hasRecursed = true;
 
             var callScope = ChildScope ?? CaptureScope ?? ParentScope;
-            return arguments.ValidateArguments(DeclaredInputs, callScope, compilationContext)
-                       ? CompileFunction(this, callScope)
+            var result = arguments.ValidateArguments(DeclaredInputs, callScope, compilationContext)
+                       ? Compile(callScope, compilationContext)
                        : CompilationErr.Instance;
+
+            CaptureScope = null;
+            hasRecursed = false;
+
+            return result;
         }
+
+        public IValue Compile(IScope scope, CompilationContext compilationContext) =>
+            scope.CompileFunction(Body, compilationContext);
+    }
+
+    internal sealed class ArgumentCaptureScope : ScopeBase
+    {
+        private readonly IScope _parent;
+
+        public ArgumentCaptureScope(IScope parent, IEnumerable<(Identifier Identifier, IValue Value)> members)
+        {
+            _parent = parent;
+            SetRange(members);
+        }
+
+        public override IValue? this[Identifier id, CompilationContext context] => IndexCache(id) ?? _parent[id, context];
     }
 
     public class IntrinsicFunction : DeclaredFunction

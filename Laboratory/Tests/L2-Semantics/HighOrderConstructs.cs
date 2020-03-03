@@ -17,12 +17,6 @@ namespace Laboratory.Tests
         public void CallFunctionWithFunctionResult() => AssertTypeof(CompilationInput, "getAdd(0)", "Function");
 
         [Test]
-        public void CallFunctionWithStructResult() => AssertTypeof(CompilationInput, "voldemort(5)", "Type");
-
-        [Test]
-        public void HighOrderFunctionSum() => AssertTypeof(CompilationInput, "sum(list(3, -5, 8, 20))", "26");
-
-        [Test]
-        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, 11, "recursiveSum(10)");
+        public void HighOrderFunctionSum() => AssertApproxEqual(CompilationInput, "sum(list(3, -5, 8, 20))", "26");
     }
 }

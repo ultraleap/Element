@@ -6,6 +6,6 @@ namespace Element.AST
         public static NamespaceType Instance { get; } = new NamespaceType();
         public string Name => "Namespace";
         public IType Type => TypeType.Instance;
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value is DeclaredNamespace;
+        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
     }
 }

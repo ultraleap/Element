@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lexico;
@@ -54,6 +55,56 @@ namespace Element.AST
         }
     }
 
+    public class AnonymousFunction : ICompilableFunction
+    {
+
+        public AnonymousFunction(IScope scope, object body, PortList ports)
+        {
+            Scope = scope;
+            _body = body;
+            Inputs =  ports?.List.ToArray() ?? Array.Empty<Port>();
+        }
+
+        private bool hasRecursed;
+        private readonly object _body;
+        public IType Type { get; }
+        public IScope? Scope { get; set; }
+        private IScope? CaptureScope { get; set; }
+        public Port[]? Inputs { get; }
+        public Type Output { get; }
+
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext)
+        {
+            if (hasRecursed)
+            {
+                return compilationContext.LogError(11, "Recursion is disallowed");
+            }
+
+            if (arguments?.Length > 0)
+            {
+                // If there are any arguments we need to interject a capture scope to store them
+                // The capture scope will be indexed before the parent scope when indexing a declared scope
+                // Thus the order of indexing for an item becomes "Child -> Captures -> Parent"
+                CaptureScope ??= new ArgumentCaptureScope(Scope, arguments.Select((arg, index) => (Inputs[index].Identifier, arg)));
+            }
+
+            hasRecursed = true;
+
+            var callScope = CaptureScope ?? Scope;
+            var result = arguments.ValidateArguments(Inputs, callScope, compilationContext)
+                       ? Compile(callScope, compilationContext)
+                       : CompilationErr.Instance;
+
+            CaptureScope = null;
+            hasRecursed = false;
+
+            return result;
+        }
+
+        public IValue Compile(IScope scope, CompilationContext compilationContext) =>
+            scope.CompileFunction(_body, compilationContext);
+    }
+
     public class Lambda : Expression
     {
         [Literal("_")] public Unnamed _;
@@ -62,7 +113,7 @@ namespace Element.AST
 
         public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
         {
-            throw new System.NotImplementedException();
+            return new AnonymousFunction(scope, Body, _portList);
         }
     }
 }

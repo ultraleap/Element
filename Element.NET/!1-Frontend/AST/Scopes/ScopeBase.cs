@@ -4,7 +4,6 @@ namespace Element.AST
 {
     public abstract class ScopeBase : IScope
     {
-        public IType Type => ScopeType.Instance;
         public abstract IValue? this[Identifier id, CompilationContext context] { get; }
         protected IValue? IndexCache(Identifier id) => _cache.TryGetValue(id, out var value) ? value : null;
         private readonly Dictionary<Identifier, IValue> _cache = new Dictionary<Identifier, IValue>();
