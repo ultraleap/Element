@@ -7,7 +7,7 @@ namespace Element.AST
     public abstract class DeclaredFunction : DeclaredItem, IFunction
     {
         protected override string Qualifier => string.Empty; // Functions don't have a qualifier
-        protected override System.Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
+        protected override System.Type[] BodyAlternatives { get; } = {typeof(ExpressionBody), typeof(Scope), typeof(Terminal)};
         public override IType Type => FunctionType.Instance;
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
         Port[] IFunction.Inputs => DeclaredInputs;
@@ -58,7 +58,7 @@ namespace Element.AST
                 function.Body switch
                 {
                     // If a function is a binding (has expression body) we just compile the single expression
-                    Binding binding => binding.Expression.ResolveExpression(parentScope, compilationContext),
+                    ExpressionBody expressionBody => expressionBody.Expression.ResolveExpression(parentScope, compilationContext),
 
                     // If a function has a scope body we find the return value
                     Scope scope => scope[Parser.ReturnIdentifier, compilationContext] switch

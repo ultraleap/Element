@@ -13,7 +13,12 @@ namespace Element.AST
 
     [WhitespaceSurrounded, MultiLine]
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class Expression
+    public abstract class Expression
+    {
+        public abstract IValue ResolveExpression(IScope scope, CompilationContext compilationContext);
+    }
+
+    public class ExpressionChain : Expression
     {
         // ReSharper disable UnusedAutoPropertyAccessor.Local
         [field: Term] private IExpressionListStart LitOrId { get; set; }
@@ -22,14 +27,14 @@ namespace Element.AST
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
-        public IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
+        public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
         {
             var previous = LitOrId switch
             {
                 // If the start of the list is an identifier, find the value that it identifies
                 Identifier id => scope[id, compilationContext] is {} v
-                                     ? v
-                                     : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
+                    ? v
+                    : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
                 Literal lit => lit,
                 _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
             };
@@ -38,8 +43,6 @@ namespace Element.AST
             if (previous is CompilationErr err) return err;
 
             compilationContext.Push(new TraceSite(previous.ToString(), null, 0, 0));
-            
-            // TODO: Handle lambdas
 
             previous = Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current, scope, compilationContext)) ?? previous;
 
@@ -48,6 +51,18 @@ namespace Element.AST
             compilationContext.Pop();
 
             return previous;
+        }
+    }
+
+    public class Lambda : Expression
+    {
+        [Literal("_")] public Unnamed _;
+        [Term] public PortList _portList;
+        [Alternative(typeof(Binding), typeof(Scope)), WhitespaceSurrounded, MultiLine] protected object Body;
+
+        public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

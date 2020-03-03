@@ -10,7 +10,6 @@ namespace Element.AST
         [Literal("=")] private Unnamed _bind;
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         [field: Term] public Expression Expression { get; private set; }
-        [Term] private Terminal _terminal;
 #pragma warning restore 169
 
         public override string ToString() => $"= {Expression};";

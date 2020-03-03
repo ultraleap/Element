@@ -68,11 +68,13 @@ namespace Laboratory.Tests
                 (nameof(Identifier), "a", typeof(Identifier)),
                 (nameof(Literal), "5", typeof(Literal)),
                 (nameof(Terminal), ";", typeof(Terminal)),
-                (nameof(Binding), "= 5;", typeof(Binding)),
+                (nameof(Binding), "= 5", typeof(Binding)),
+                (nameof(ExpressionBody), "= 5;", typeof(ExpressionBody)),
                 (nameof(Element.AST.Type), ":Foo.Bar", typeof(Element.AST.Type)),
                 (nameof(Expression), "a.b(c).d.e(5)", typeof(Expression)),
                 (nameof(CallExpression), "(5, a(10, c))", typeof(CallExpression)),
                 (nameof(IndexingExpression), ".identifier", typeof(IndexingExpression)),
+                (nameof(Lambda), "_(_a) = 5", typeof(Lambda)),
                 ($"{nameof(ExtrinsicFunction)}-ExpressionBody", "a(a):Num = 5;", typeof(ExtrinsicFunction)),
                 ($"{nameof(ExtrinsicFunction)}-ScopeBody", "a(a):Num {return = 5;}", typeof(ExtrinsicFunction)),
                 ($"{nameof(IntrinsicFunction)}", "intrinsic a(a):Num;", typeof(IntrinsicFunction)),
@@ -82,7 +84,7 @@ namespace Laboratory.Tests
                 ($"{nameof(ExtrinsicStruct)}-WithScope", "struct a(a) {}", typeof(ExtrinsicStruct)),
                 ($"{nameof(IntrinsicStruct)}", "intrinsic struct a(a);", typeof(IntrinsicStruct)),
                 (nameof(PortList), "(a:foo, b:bar)", typeof(PortList)),
-                (nameof(DeclaredNamespace), "namespace foo {}", typeof(DeclaredNamespace))
+                (nameof(DeclaredNamespace), "namespace foo {}", typeof(DeclaredNamespace)),
             };
             foreach (var item in data)
             {
@@ -90,6 +92,7 @@ namespace Laboratory.Tests
             }
         }
 
+    // TODO: Force consuming the whole text in all of these parsers
         // TODO: Make this test use host so that it can test process hosts!
         [TestCaseSource(nameof(PartialSyntaxTestData))]
         public void ParsePartialSyntaxItems((string text, Type syntaxItem) info)

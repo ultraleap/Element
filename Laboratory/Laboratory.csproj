@@ -62,9 +62,4 @@
     <ProjectReference Include="..\Element.NET\Element.NET.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Remove="Tests\L1-Validation\Structs\IntrinsicStructCannotAlias-fail-20.ele" />
-    <None Remove="Tests\L1-Validation\Structs\CannotAliasNonStruct-fail-20.ele" />
-  </ItemGroup>
-
 </Project>
