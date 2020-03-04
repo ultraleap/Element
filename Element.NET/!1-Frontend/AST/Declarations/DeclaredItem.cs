@@ -90,36 +90,8 @@ namespace Element.AST
             ChildScope?.Initialize(this);
         }
         public string Location => $"{(ParentScope is GlobalScope ? string.Empty : $"{ParentScope.Declarer}.")}{Identifier}";
-        protected DeclaredScope ParentScope { get; private set; }
-        protected IScope? CaptureScope;
+        public DeclaredScope ParentScope { get; private set; }
         protected DeclaredScope? ChildScope => Body as Scope;
-
-        public IValue? IndexRecursively(Identifier id, CompilationContext compilationContext) =>
-            CaptureScope?[id, false, compilationContext] ?? ParentScope[id, true, compilationContext];
-
-        public IScope MakeCompositeCaptureScope()
-        {
-            var scopes = new List<IScope>
-            {
-                ChildScope,
-                CaptureScope,
-                ParentScope
-            };
-            void AddScopes(DeclaredItem item)
-            {
-                scopes.Add(item.CaptureScope);
-                scopes.Add(item.ParentScope);
-            }
-
-            var item = ParentScope.Declarer;
-            while (item != null)
-            {
-                AddScopes(item);
-                item = item.ParentScope.Declarer;
-            }
-
-            return new CompositeScope(scopes.Where(s => s != null));
-        }
 
         protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(CompilationContext compilationContext)
             where TIntrinsic : class, IValue =>
@@ -127,25 +99,5 @@ namespace Element.AST
 
         protected bool ValidateScopeBody(CompilationContext compilationContext) =>
             !(Body is Scope scope) || scope.ValidateScope(compilationContext, ScopeIdentifierWhitelist);
-
-        private class CompositeScope : IScope
-        {
-            private readonly IEnumerable<IScope> _scopes;
-
-            public CompositeScope(IEnumerable<IScope> scopes) => _scopes = scopes;
-
-            public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext]
-            {
-                get
-                {
-                    foreach (var scope in _scopes)
-                    {
-                        if (scope[id, false, compilationContext] is { } value) return value;
-                    }
-
-                    return null;
-                }
-            }
-        }
     }
 }

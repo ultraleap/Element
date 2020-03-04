@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Element.AST
 {
@@ -14,8 +16,6 @@ namespace Element.AST
 
     public class ExtrinsicFunction : DeclaredFunction, ICompilableFunction
     {
-        private bool hasRecursed;
-
         protected override string IntrinsicQualifier => string.Empty;
         protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
 
@@ -31,33 +31,46 @@ namespace Element.AST
             return success;
         }
 
+        private class FunctionInstance : ScopeBase, ICompilableFunction
+        {
+            public FunctionInstance(IValue[] arguments, IFunction declarer, IScope parent, Func<IScope, CompilationContext, IValue> compileFunc, Func<IValue[], IScope, CompilationContext, IValue> resolveFunc)
+            {
+                _arguments = arguments;
+                _parent = parent;
+                _compileFunc = compileFunc;
+                _resolveFunc = resolveFunc;
+                Inputs = declarer.Inputs.Skip(arguments.Length).ToArray();
+                Output = declarer.Output;
+                Type = declarer.Type;
+                SetRange(arguments.Select((arg, index) => (declarer.Inputs[index].Identifier, arg)));
+            }
+
+            private readonly IScope _parent;
+            private readonly IValue[] _arguments;
+            private readonly Func<IScope, CompilationContext, IValue> _compileFunc;
+            private readonly Func<IValue[], IScope, CompilationContext, IValue> _resolveFunc;
+            public IType Type { get; }
+            public Port[] Inputs { get; }
+            public Type Output { get; }
+
+            public IValue Compile(IScope scope, CompilationContext compilationContext) => _compileFunc(scope, compilationContext);
+
+            public IValue Call(IValue[] _, CompilationContext compilationContext) => _resolveFunc(_arguments, this, compilationContext);
+
+            public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
+                IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
+        }
+
+        private IValue Resolve(IValue[] arguments, IScope callScope, CompilationContext compilationContext) =>
+            this.ResolveCall(arguments, DeclaredInputs, callScope, compilationContext);
+
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            this.ResolveCall(arguments, ref CaptureScope, ref hasRecursed, DeclaredInputs, ChildScope, ParentScope, compilationContext);
+            arguments.Length > 0
+                ?  new FunctionInstance(arguments, this, ChildScope ?? ParentScope, Compile, Resolve)
+                : Resolve(arguments, ChildScope ?? ParentScope, compilationContext);
 
         public IValue Compile(IScope scope, CompilationContext compilationContext) =>
             scope.CompileFunction(Body, compilationContext);
-
-        public ICompilableFunction Clone(CompilationContext compilationContext)
-        {
-            //parentScope?!?
-            var scope = MakeCompositeCaptureScope();
-            return new AnonymousFunction(scope, Body, PortList, DeclaredType);
-            //throw new System.NotImplementedException();
-        }
-    }
-
-    internal sealed class ArgumentCaptureScope : ScopeBase
-    {
-        private readonly IScope _parent;
-
-        public ArgumentCaptureScope(IScope parent, IEnumerable<(Identifier Identifier, IValue Value)> members)
-        {
-            _parent = parent;
-            SetRange(members);
-        }
-
-        public override IValue? this[Identifier id, bool recurse, CompilationContext context] =>
-            IndexCache(id) ?? (recurse ? _parent[id, true, context] : null);
     }
 
     public class IntrinsicFunction : DeclaredFunction

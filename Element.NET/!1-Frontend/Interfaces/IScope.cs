@@ -19,7 +19,7 @@ namespace Element.AST
                 {
                     // If the return value is a nullary function, compile it
                     ICompilableFunction nullaryReturn when nullaryReturn.IsNullary() => nullaryReturn.Compile(parentScope, compilationContext),
-                    ICompilableFunction functionReturn => functionReturn.Clone(compilationContext),
+                    ICompilableFunction functionReturn => functionReturn,
                     null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
                     var nyi => throw new NotImplementedException(nyi.ToString())
                 },

@@ -9,7 +9,7 @@ namespace Element.AST
         public DeclaredItem? Declarer { get; private set; }
         
         public override IValue? this[Identifier id, bool recurse, CompilationContext context] =>
-            IndexCache(id) ?? (recurse ? Declarer?.IndexRecursively(id, context) : null);
+            IndexCache(id) ?? (recurse ? Declarer?.ParentScope[id, true, context] : null);
 
         public void Initialize(DeclaredItem declarer)
         {

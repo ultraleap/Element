@@ -92,8 +92,7 @@ namespace Element.AST
             IType IValue.Type => FunctionType.Instance;
 
             public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-                _surrogate.Call(arguments.Prepend(_argument).ToArray(), compilationContext)
-                    .ResolveNullaryFunction(compilationContext);
+                _surrogate.Call(arguments.Prepend(_argument).ToArray(), compilationContext);
         }
     }
 

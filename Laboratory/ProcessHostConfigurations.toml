@@ -4,7 +4,7 @@
 # Executable-path should be the relative path to the host accessible after building
 
 [Alchemist]
-enabled = true
+enabled = false
 build-command = "dotnet publish Alchemist/Alchemist.csproj --self-contained=false -o Alchemist/Build -v n"
 executable-path = "Alchemist/Build/Alchemist"
 
