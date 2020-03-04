@@ -11,7 +11,7 @@ namespace Element.AST
         private DeclaredStruct? _declaredStruct;
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            (_declaredStruct ??= compilationContext.GlobalScope[new Identifier(Location), compilationContext] as DeclaredStruct)
+            (_declaredStruct ??= compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] as DeclaredStruct)
             ?.CreateInstance(arguments, Instance)
             ?? compilationContext.LogError(7, $"Couldn't find '{Location}'");
 

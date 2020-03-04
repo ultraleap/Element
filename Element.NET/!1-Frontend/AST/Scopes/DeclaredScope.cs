@@ -8,8 +8,8 @@ namespace Element.AST
         protected abstract IEnumerable<DeclaredItem> ItemsToCacheOnValidate { get; }
         public DeclaredItem? Declarer { get; private set; }
         
-        public override IValue? this[Identifier id, CompilationContext context] =>
-            IndexCache(id) ?? Declarer?.IndexRecursively(id, context);
+        public override IValue? this[Identifier id, bool recurse, CompilationContext context] =>
+            IndexCache(id) ?? (recurse ? Declarer?.IndexRecursively(id, context) : null);
 
         public void Initialize(DeclaredItem declarer)
         {

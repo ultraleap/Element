@@ -3,7 +3,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    public class Literal : IExpressionListStart, ISerializable, IScope, IValue
+    public class Literal : ISerializable, IScope, IValue
     {
         // ReSharper disable once UnusedMember.Global - Used by Lexico to construct instances
         public Literal() {}
@@ -22,8 +22,8 @@ namespace Element.AST
             return true;
         }
 
-        public IValue? this[Identifier id, CompilationContext compilationContext] =>
-            compilationContext.GlobalScope[new Identifier(Type.Name), compilationContext] switch
+        public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
+            compilationContext.GlobalScope[new Identifier(Type.Name), false, compilationContext] switch
             {
                 DeclaredStruct declaredStruct => declaredStruct.ResolveInstanceFunction(id, this, compilationContext),
                 _ => compilationContext.LogError(7, $"Couldn't find instance function '{Type.Name}'")

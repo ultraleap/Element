@@ -7,14 +7,14 @@ namespace Element.AST
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
 
-        public IValue? this[Identifier id, CompilationContext compilationContext] => ChildScope?[id, compilationContext];
+        public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => ChildScope?[id, recurse, compilationContext];
         string IType.Name => Identifier;
         public override IType Type => TypeType.Instance;
         public abstract bool MatchesConstraint(IValue value, CompilationContext compilationContext);
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
 
         public IValue ResolveInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, CompilationContext compilationContext) =>
-            this[instanceFunctionIdentifier, compilationContext] switch
+            this[instanceFunctionIdentifier, false, compilationContext] switch
             {
                 DeclaredFunction instanceFunction when instanceFunction.IsNullary() => compilationContext.LogError(22, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
                 IFunction instanceFunction when instanceFunction.Inputs[0].Type.Resolve(this, compilationContext) == this => new InstanceFunction(instanceBeingIndexed, instanceFunction),
@@ -31,7 +31,7 @@ namespace Element.AST
             public IType Type { get; }
             private DeclaredStruct DeclaringStruct { get; }
 
-            public override IValue? this[Identifier id, CompilationContext compilationContext] =>
+            public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
                 IndexCache(id)
                 ?? DeclaringStruct.ResolveInstanceFunction(id, this, compilationContext);
 

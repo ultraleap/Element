@@ -17,6 +17,7 @@ namespace Element.AST
     public interface ICompilableFunction : IFunction
     {
         IValue Compile(IScope scope, CompilationContext compilationContext);
+        ICompilableFunction Clone(CompilationContext compilationContext);
     }
 
     public static class FunctionExtensions
@@ -29,7 +30,8 @@ namespace Element.AST
                 : value;
 
         public static IValue ResolveCall(this ICompilableFunction function, IValue[] arguments,
-            ref IScope captureScope, ref bool hasRecursed, Port[] inputs, IScope? childScope, IScope parentScope, CompilationContext compilationContext)
+            ref IScope captureScope, ref bool hasRecursed, Port[] inputs, IScope? childScope, IScope parentScope,
+            CompilationContext compilationContext)
         {
             if (hasRecursed) return compilationContext.LogError(11, "Recursion is disallowed");
 

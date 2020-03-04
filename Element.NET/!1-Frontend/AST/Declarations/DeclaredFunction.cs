@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Element.AST
 {
@@ -38,6 +36,14 @@ namespace Element.AST
 
         public IValue Compile(IScope scope, CompilationContext compilationContext) =>
             scope.CompileFunction(Body, compilationContext);
+
+        public ICompilableFunction Clone(CompilationContext compilationContext)
+        {
+            //parentScope?!?
+            var scope = MakeCompositeCaptureScope();
+            return new AnonymousFunction(scope, Body, PortList, DeclaredType);
+            //throw new System.NotImplementedException();
+        }
     }
 
     internal sealed class ArgumentCaptureScope : ScopeBase
@@ -50,7 +56,8 @@ namespace Element.AST
             SetRange(members);
         }
 
-        public override IValue? this[Identifier id, CompilationContext context] => IndexCache(id) ?? _parent[id, context];
+        public override IValue? this[Identifier id, bool recurse, CompilationContext context] =>
+            IndexCache(id) ?? (recurse ? _parent[id, true, context] : null);
     }
 
     public class IntrinsicFunction : DeclaredFunction

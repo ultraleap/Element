@@ -27,13 +27,13 @@ namespace Element.AST
 		{
 			if (listInstance == null) throw new ArgumentNullException(nameof(listInstance));
 
-			if (!(listInstance[_atIdentifier, context] is ICallable indexer))
+			if (!(listInstance[_atIdentifier, false, context] is ICallable indexer))
 			{
 				context.LogError(8, $"Couldn't get List.'{_atIdentifier}' from '{listInstance}'. Is '{listInstance}' a List?");
 				return null;
 			}
 
-			if (!(listInstance[_countIdentifier, context] is Literal count))
+			if (!(listInstance[_countIdentifier, false, context] is Literal count))
 			{
 				context.LogError(8, $"Couldn't get List.'{_countIdentifier}' from '{listInstance}'. Is '{listInstance}' a List?");
 				return null;

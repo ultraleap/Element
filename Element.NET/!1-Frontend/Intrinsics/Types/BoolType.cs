@@ -14,7 +14,7 @@ namespace Element.AST
         {
             var argsValid = arguments.ValidateArguments(Inputs, compilationContext.GlobalScope, compilationContext);
             if (!argsValid) return CompilationErr.Instance;
-            _declaredStruct ??= compilationContext.GlobalScope[new Identifier(Name), compilationContext] as DeclaredStruct;
+            _declaredStruct ??= compilationContext.GlobalScope[new Identifier(Name), false, compilationContext] as DeclaredStruct;
 
             var arg = (Literal)arguments[0];
             return _declaredStruct != null

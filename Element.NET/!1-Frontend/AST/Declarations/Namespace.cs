@@ -8,6 +8,6 @@ namespace Element.AST
         protected override string Qualifier { get; } = "namespace";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope)};
         public override IType Type => NamespaceType.Instance;
-        public IValue? this[Identifier id, CompilationContext compilationContext] => ChildScope[id, compilationContext];
+        public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => ChildScope[id, recurse, compilationContext];
     }
 }

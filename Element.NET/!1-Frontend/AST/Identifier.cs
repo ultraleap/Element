@@ -2,7 +2,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    public class Identifier : IExpressionListStart
+    public class Identifier
     {
         // ReSharper disable once UnusedMember.Global
         public Identifier() {} // Need parameterless constructor for Lexico to construct instance

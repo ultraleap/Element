@@ -4,11 +4,16 @@ using Lexico;
 
 namespace Element.AST
 {
+    public interface ISubExpression
+    {
+        IValue ResolveSubExpression(IValue previous, IScope resolutionScope, CompilationContext compilationContext);
+    }
+
     // ReSharper disable once UnusedType.Global
     public class ExpressionChain : Expression
     {
         // ReSharper disable UnusedAutoPropertyAccessor.Local
-        [field: Term] private IExpressionListStart LitOrId { get; set; }
+        [field: Alternative(typeof(Identifier), typeof(Literal))] private object LitOrId { get; set; }
         [field: Optional] private List<ISubExpression>? Expressions { get; set; }
         // ReSharper restore UnusedAutoPropertyAccessor.Local
 
@@ -19,7 +24,7 @@ namespace Element.AST
             var previous = LitOrId switch
             {
                 // If the start of the list is an identifier, find the value that it identifies
-                Identifier id => scope[id, compilationContext] is {} v
+                Identifier id => scope[id, true, compilationContext] is {} v
                     ? v
                     : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
                 Literal lit => lit,
@@ -31,8 +36,8 @@ namespace Element.AST
 
             compilationContext.Push(new TraceSite(previous.ToString(), null, 0, 0));
 
+            previous = previous.ResolveNullaryFunction(compilationContext);
             previous = Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current, scope, compilationContext)) ?? previous;
-
             previous = previous.ResolveNullaryFunction(compilationContext);
 
             compilationContext.Pop();
