@@ -16,4 +16,9 @@ intrinsic struct List(at:Indexer, count:Num)
 add = Num.add;
 addFromInstanceFunction = 5.add;
 getAdd(a:Num) = a.add;
+addAndGetSub(a:Num, b:Num)
+{
+	sum = a.add(b);
+	return(a:Num) = sum.sub(a);
+}
 sum(numbers:List) = numbers.fold(0, _(accum, element) = accum.add(element));

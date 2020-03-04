@@ -16,8 +16,8 @@ namespace Element.AST
 		}
 
 
-		private static readonly Identifier atIdentifier = new Identifier("at");
-		private static readonly Identifier countIdentifier = new Identifier("count");
+		private static readonly Identifier _atIdentifier = new Identifier("at");
+		private static readonly Identifier _countIdentifier = new Identifier("count");
 
 		/// <summary>
 		/// Converts an Element List instance to a fixed-size list of values by evaluating each index.
@@ -27,15 +27,15 @@ namespace Element.AST
 		{
 			if (listInstance == null) throw new ArgumentNullException(nameof(listInstance));
 
-			if (!(listInstance[atIdentifier, context] is ICallable indexer))
+			if (!(listInstance[_atIdentifier, context] is ICallable indexer))
 			{
-				context.LogError(8, $"Couldn't get List.'{atIdentifier}' from '{listInstance}'. Is '{listInstance}' a List?");
+				context.LogError(8, $"Couldn't get List.'{_atIdentifier}' from '{listInstance}'. Is '{listInstance}' a List?");
 				return null;
 			}
 
-			if (!(listInstance[countIdentifier, context] is Literal count))
+			if (!(listInstance[_countIdentifier, context] is Literal count))
 			{
-				context.LogError(8, $"Couldn't get List.'{countIdentifier}' from '{listInstance}'. Is '{listInstance}' a List?");
+				context.LogError(8, $"Couldn't get List.'{_countIdentifier}' from '{listInstance}'. Is '{listInstance}' a List?");
 				return null;
 			}
 

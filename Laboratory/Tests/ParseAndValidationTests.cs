@@ -92,7 +92,7 @@ namespace Laboratory.Tests
             }
         }
 
-    // TODO: Force consuming the whole text in all of these parsers
+        // TODO: Force consuming the whole text in all of these parsers
         // TODO: Make this test use host so that it can test process hosts!
         [TestCaseSource(nameof(PartialSyntaxTestData))]
         public void ParsePartialSyntaxItems((string text, Type syntaxItem) info)

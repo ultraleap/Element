@@ -33,33 +33,8 @@ namespace Element.AST
             return success;
         }
 
-        public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
-        {
-            if (hasRecursed)
-            {
-                return compilationContext.LogError(11, "Recursion is disallowed");
-            }
-
-            if (arguments?.Length > 0)
-            {
-                // If there are any arguments we need to interject a capture scope to store them
-                // The capture scope will be indexed before the parent scope when indexing a declared scope
-                // Thus the order of indexing for an item becomes "Child -> Captures -> Parent"
-                CaptureScope ??= new ArgumentCaptureScope(ParentScope, arguments.Select((arg, index) => (DeclaredInputs[index].Identifier, arg)));
-            }
-
-            hasRecursed = true;
-
-            var callScope = ChildScope ?? CaptureScope ?? ParentScope;
-            var result = arguments.ValidateArguments(DeclaredInputs, callScope, compilationContext)
-                       ? Compile(callScope, compilationContext)
-                       : CompilationErr.Instance;
-
-            CaptureScope = null;
-            hasRecursed = false;
-
-            return result;
-        }
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            this.ResolveCall(arguments, ref CaptureScope, ref hasRecursed, DeclaredInputs, ChildScope, ParentScope, compilationContext);
 
         public IValue Compile(IScope scope, CompilationContext compilationContext) =>
             scope.CompileFunction(Body, compilationContext);

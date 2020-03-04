@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace Element.AST
 {
@@ -27,20 +28,30 @@ namespace Element.AST
                 ? function.Call(Array.Empty<IValue>(), compilationContext)
                 : value;
 
-        public static IValue CompileFunction(this IScope parentScope, object body, CompilationContext compilationContext)  =>
-            body switch
+        public static IValue ResolveCall(this ICompilableFunction function, IValue[] arguments,
+            ref IScope captureScope, ref bool hasRecursed, Port[] inputs, IScope? childScope, IScope parentScope, CompilationContext compilationContext)
+        {
+            if (hasRecursed) return compilationContext.LogError(11, "Recursion is disallowed");
+
+            if (arguments?.Length > 0)
             {
-                // If a function is a binding (has expression body) we just compile the single expression
-                Binding binding => binding.Expression.ResolveExpression(parentScope, compilationContext),
-                // If a function has a scope body we find the return value
-                Scope scope => scope[Parser.ReturnIdentifier, compilationContext] switch
-                {
-                    // If the return value is a function, compile it
-                    ICompilableFunction returnFunction => returnFunction.Compile(parentScope, compilationContext),
-                    null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
-                    var nyi => throw new NotImplementedException(nyi.ToString())
-                },
-                _ => CompilationErr.Instance
-            };
+                // If there are any arguments we need to interject a capture scope to store them
+                // The capture scope will be indexed before the parent scope when indexing a declared scope
+                // Thus the order of indexing for an item becomes "Child -> Captures -> Parent"
+                captureScope ??= new ArgumentCaptureScope(parentScope, arguments.Select((arg, index) => (inputs[index].Identifier, arg)));
+            }
+
+            hasRecursed = true;
+
+            var callScope = childScope ?? captureScope ?? parentScope;
+            var result = arguments.ValidateArguments(inputs, callScope, compilationContext)
+                ? function.Compile(callScope, compilationContext)
+                : CompilationErr.Instance;
+
+            captureScope = null;
+            hasRecursed = false;
+
+            return result;
+        }
     }
 }

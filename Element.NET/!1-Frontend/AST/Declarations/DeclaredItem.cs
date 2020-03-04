@@ -91,7 +91,7 @@ namespace Element.AST
         }
         public string Location => $"{(ParentScope is GlobalScope ? string.Empty : $"{ParentScope.Declarer}.")}{Identifier}";
         protected DeclaredScope ParentScope { get; private set; }
-        protected IScope? CaptureScope { get; set; }
+        protected IScope? CaptureScope;
         protected DeclaredScope? ChildScope => Body as Scope;
 
         public IValue? IndexRecursively(Identifier id, CompilationContext compilationContext) =>

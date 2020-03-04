@@ -18,5 +18,8 @@ namespace Laboratory.Tests
 
         [Test]
         public void HighOrderFunctionSum() => AssertApproxEqual(CompilationInput, "sum(list(3, -5, 8, 20))", "26");
+
+        [Test]
+        public void CaptureLifetimeExtendsForReturnedFunction() => AssertApproxEqual(CompilationInput, "addAndGetSub(5, 10)(20)", "5");
     }
 }
