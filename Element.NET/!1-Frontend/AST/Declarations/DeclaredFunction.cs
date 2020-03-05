@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Element.AST
 {
@@ -30,53 +29,8 @@ namespace Element.AST
             return success;
         }
 
-        private class FunctionInstance : ScopeBase, ICompilableFunction
-        {
-            public FunctionInstance(IValue[] arguments, ICompilableFunction declarer, IScope parent, object body)
-            {
-                _arguments = arguments;
-                _declarer = declarer;
-                _parent = parent;
-                _body = body switch
-                {
-                    ExpressionBody b => b, // No need to clone expression bodies
-                    Scope scopeBody => scopeBody.Clone(this),
-                    _ => throw new InternalCompilerException("Cannot create function instance as function body type is not recognized")
-                };
-
-                Inputs = declarer.Inputs.Skip(arguments.Length).ToArray();
-                SetRange(arguments.Select((arg, index) => (declarer.Inputs[index].Identifier, arg)));
-            }
-
-            private readonly ICompilableFunction _declarer;
-            private readonly IScope _parent;
-            private readonly IValue[] _arguments;
-            private readonly object _body;
-            public IType Type => _declarer.Type;
-            public Port[] Inputs { get; }
-            public Type Output => _declarer.Output;
-
-            public IValue Compile(IScope scope, CompilationContext compilationContext) => scope.CompileFunction(_body, compilationContext);
-
-            public bool IsBeingCompiled
-            {
-                get => _declarer.IsBeingCompiled;
-                set => _declarer.IsBeingCompiled = value;
-            }
-
-            public IValue Call(IValue[] _, CompilationContext compilationContext) => this.ResolveCall(_arguments, _declarer.Inputs, this, compilationContext);
-
-            public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-                IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
-        }
-
-        private IValue Resolve(IValue[] arguments, IScope callScope, CompilationContext compilationContext) =>
-            this.ResolveCall(arguments, DeclaredInputs, callScope, compilationContext);
-
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            arguments.Length > 0
-                ?  new FunctionInstance(arguments, this, ChildScope ?? ParentScope, Body)
-                : Resolve(arguments, ChildScope ?? ParentScope, compilationContext);
+            this.ApplyArguments(arguments, DeclaredInputs, Body, ChildScope ?? ParentScope, compilationContext);
 
         public IValue Compile(IScope scope, CompilationContext compilationContext) =>
             scope.CompileFunction(Body, compilationContext);

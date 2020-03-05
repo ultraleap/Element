@@ -18,6 +18,7 @@ namespace Element.AST
             {
                 DeclaredFunction instanceFunction when instanceFunction.IsNullary() => compilationContext.LogError(22, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
                 IFunction instanceFunction when instanceFunction.Inputs[0].Type.Resolve(this, compilationContext) == this => new InstanceFunction(instanceBeingIndexed, instanceFunction),
+                IFunction function => compilationContext.LogError(22, $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function"),
                 Declaration notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction.Location}' is not a function"),
                 {} notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function"),
                 _ => compilationContext.LogError(7, $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>")
@@ -106,11 +107,11 @@ namespace Element.AST
             var success = true;
             if (DeclaredType != null)
             {
-                compilationContext.LogError(19, $"Struct '{ParsedIdentifier}' cannot have declared return type");
+                compilationContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
                 success = false;
             }
 
-            if (DeclaredInputs.Length < 1)
+            if (!HasDeclaredInputs)
             {
                 compilationContext.LogError(13, $"Non intrinsic '{Location}' must have ports");
                 success = false;
@@ -140,7 +141,7 @@ namespace Element.AST
             var success = true;
             if (DeclaredType != null)
             {
-                compilationContext.LogError(19, $"Struct '{ParsedIdentifier}' cannot have declared return type");
+                compilationContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
                 success = false;
             }
 

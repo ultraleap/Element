@@ -67,7 +67,7 @@ namespace Element.AST
         // ReSharper disable UnassignedField.Global
         [IndirectLiteral(nameof(IntrinsicQualifier))] protected Unnamed _;
         [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed __;
-        [Term] protected Identifier ParsedIdentifier;
+        [Term] public Identifier Identifier;
         [Optional] protected PortList? PortList;
         [Optional] protected Type? DeclaredType;
         [IndirectAlternative(nameof(BodyAlternatives)), WhitespaceSurrounded, MultiLine] protected object Body;
@@ -79,11 +79,13 @@ namespace Element.AST
         protected abstract string Qualifier { get; }
         protected abstract System.Type[] BodyAlternatives { get; }
         // ReSharper restore UnusedMember.Global
-        
-        public Identifier Identifier => ParsedIdentifier;
+
         public override string ToString() => $"{Location}{DeclaredType}";
 
-        protected Port[]? DeclaredInputs => PortList?.List.ToArray() ?? Array.Empty<Port>();
+        protected bool HasDeclaredInputs => DeclaredInputs?.Length > 0;
+        protected Port[]? DeclaredInputs => string.IsNullOrEmpty(IntrinsicQualifier)
+            ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's just
+            : PortList?.List.ToArray();
         protected virtual List<Identifier> ScopeIdentifierWhitelist { get; } = null;
 
         public Declaration Clone(IScope newParent)

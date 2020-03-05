@@ -36,9 +36,10 @@ namespace Element.AST
 
             compilationContext.Push(new TraceSite(previous.ToString(), null, 0, 0));
 
+            // Evaluate all expressions for this chain if there are any, making sure that the result is fully resolved if it returns a nullary.
             previous = previous.ResolveNullaryFunction(compilationContext);
-            previous = Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current, scope, compilationContext)) ?? previous;
-            previous = previous.ResolveNullaryFunction(compilationContext);
+            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current, scope, compilationContext)) ?? previous)
+                .ResolveNullaryFunction(compilationContext);
 
             compilationContext.Pop();
 

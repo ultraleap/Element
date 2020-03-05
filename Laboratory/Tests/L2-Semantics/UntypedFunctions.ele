@@ -9,9 +9,8 @@ pi = 3.14;
 addThree(a, b, c) = Num.add(a, Num.add(b, c));
 addFive(a, b, c, d, e)
 {
-	ab = Num.add(a, b);
 	cd = Num.add(c, d);
-	abcd = Num.add(ab, cd);
+	abcd = Num.add(Num.add(a, b), cd);
 	return = Num.add(abcd, e);
 }
 
