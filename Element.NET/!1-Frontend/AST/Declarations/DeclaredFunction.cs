@@ -1,13 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class DeclaredFunction : DeclaredItem, IFunction
+    public abstract class DeclaredFunction : Declaration, IFunction
     {
         protected override string Qualifier => string.Empty; // Functions don't have a qualifier
-        protected override System.Type[] BodyAlternatives { get; } = {typeof(ExpressionBody), typeof(Scope), typeof(Terminal)};
+        protected override System.Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
         public override IType Type => FunctionType.Instance;
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
         Port[] IFunction.Inputs => DeclaredInputs;
@@ -33,29 +32,39 @@ namespace Element.AST
 
         private class FunctionInstance : ScopeBase, ICompilableFunction
         {
-            public FunctionInstance(IValue[] arguments, IFunction declarer, IScope parent, Func<IScope, CompilationContext, IValue> compileFunc, Func<IValue[], IScope, CompilationContext, IValue> resolveFunc)
+            public FunctionInstance(IValue[] arguments, ICompilableFunction declarer, IScope parent, object body)
             {
                 _arguments = arguments;
+                _declarer = declarer;
                 _parent = parent;
-                _compileFunc = compileFunc;
-                _resolveFunc = resolveFunc;
+                _body = body switch
+                {
+                    ExpressionBody b => b, // No need to clone expression bodies
+                    Scope scopeBody => scopeBody.Clone(this),
+                    _ => throw new InternalCompilerException("Cannot create function instance as function body type is not recognized")
+                };
+
                 Inputs = declarer.Inputs.Skip(arguments.Length).ToArray();
-                Output = declarer.Output;
-                Type = declarer.Type;
                 SetRange(arguments.Select((arg, index) => (declarer.Inputs[index].Identifier, arg)));
             }
 
+            private readonly ICompilableFunction _declarer;
             private readonly IScope _parent;
             private readonly IValue[] _arguments;
-            private readonly Func<IScope, CompilationContext, IValue> _compileFunc;
-            private readonly Func<IValue[], IScope, CompilationContext, IValue> _resolveFunc;
-            public IType Type { get; }
+            private readonly object _body;
+            public IType Type => _declarer.Type;
             public Port[] Inputs { get; }
-            public Type Output { get; }
+            public Type Output => _declarer.Output;
 
-            public IValue Compile(IScope scope, CompilationContext compilationContext) => _compileFunc(scope, compilationContext);
+            public IValue Compile(IScope scope, CompilationContext compilationContext) => scope.CompileFunction(_body, compilationContext);
 
-            public IValue Call(IValue[] _, CompilationContext compilationContext) => _resolveFunc(_arguments, this, compilationContext);
+            public bool IsBeingCompiled
+            {
+                get => _declarer.IsBeingCompiled;
+                set => _declarer.IsBeingCompiled = value;
+            }
+
+            public IValue Call(IValue[] _, CompilationContext compilationContext) => this.ResolveCall(_arguments, _declarer.Inputs, this, compilationContext);
 
             public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
                 IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
@@ -66,11 +75,13 @@ namespace Element.AST
 
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
             arguments.Length > 0
-                ?  new FunctionInstance(arguments, this, ChildScope ?? ParentScope, Compile, Resolve)
+                ?  new FunctionInstance(arguments, this, ChildScope ?? ParentScope, Body)
                 : Resolve(arguments, ChildScope ?? ParentScope, compilationContext);
 
         public IValue Compile(IScope scope, CompilationContext compilationContext) =>
             scope.CompileFunction(Body, compilationContext);
+
+        public bool IsBeingCompiled { get; set; }
     }
 
     public class IntrinsicFunction : DeclaredFunction

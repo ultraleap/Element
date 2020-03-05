@@ -1,7 +1,7 @@
 namespace Element.AST
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class DeclaredNamespace : DeclaredItem, IScope
+    public class DeclaredNamespace : Declaration, IScope
     {
         public override bool Validate(CompilationContext compilationContext) => ValidateScopeBody(compilationContext);
         protected override string IntrinsicQualifier => string.Empty;

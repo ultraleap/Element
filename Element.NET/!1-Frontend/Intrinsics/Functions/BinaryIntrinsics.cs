@@ -16,7 +16,7 @@ namespace Element.AST
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
             arguments.ValidateArguments(2, compilationContext)
-                ? (IValue) new Literal(Binary.Evaluate(Operation, arguments[0] as Literal, arguments[1] as Literal))
+                ? (IValue) new Literal(Binary.Evaluate(Operation, (Literal)arguments[0], (Literal)arguments[1]))
                 : CompilationErr.Instance;
 
         public IType Type => FunctionType.Instance;

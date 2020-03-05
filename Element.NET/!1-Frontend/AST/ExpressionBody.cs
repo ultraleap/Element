@@ -2,10 +2,16 @@ using Lexico;
 
 namespace Element.AST
 {
-    public class ExpressionBody : Binding
+    [WhitespaceSurrounded]
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class ExpressionBody
     {
 #pragma warning disable 169
-        [Term] private Terminal _terminal;
+        [Literal("=")] private Unnamed _;
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [field: Term] public Expression Expression { get; private set; }
 #pragma warning restore 169
+
+        public override string ToString() => $"= {Expression};";
     }
 }

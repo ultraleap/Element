@@ -9,14 +9,14 @@ namespace Element.AST
     /// </summary>
     [WhitespaceSurrounded, MultiLine, TopLevel]
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class SourceScope : IEnumerable<DeclaredItem>
+    public class SourceScope : IEnumerable<Declaration>
     {
 #pragma warning disable 649
         // ReSharper disable once CollectionNeverUpdated.Local
-        [Optional] private List<DeclaredItem>? _items;
+        [Optional] private List<Declaration>? _items;
 #pragma warning restore 649
 
-        public IEnumerator<DeclaredItem> GetEnumerator() => _items?.GetEnumerator() ?? EmptyEnumerator<DeclaredItem>.Instance;
+        public IEnumerator<Declaration> GetEnumerator() => _items?.GetEnumerator() ?? EmptyEnumerator<Declaration>.Instance;
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public override string ToString() => "SourceScope";

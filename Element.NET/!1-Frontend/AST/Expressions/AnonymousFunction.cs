@@ -23,5 +23,7 @@ namespace Element.AST
 
         public IValue Compile(IScope scope, CompilationContext compilationContext) =>
             scope.CompileFunction(_body, compilationContext);
+
+        public bool IsBeingCompiled { get; set; }
     }
 }

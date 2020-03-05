@@ -2,10 +2,8 @@ using Lexico;
 
 namespace Element.AST
 {
-    public class Identifier
+    public struct Identifier
     {
-        // ReSharper disable once UnusedMember.Global
-        public Identifier() {} // Need parameterless constructor for Lexico to construct instance
         public Identifier(string value) {Value = value;}
 
         // https://stackoverflow.com/questions/4400348/match-c-sharp-unicode-identifier-using-regex

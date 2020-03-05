@@ -17,6 +17,7 @@ namespace Element.AST
     public interface ICompilableFunction : IFunction
     {
         IValue Compile(IScope scope, CompilationContext compilationContext);
+        bool IsBeingCompiled { get; set; }
     }
 
     public static class FunctionExtensions
@@ -27,20 +28,24 @@ namespace Element.AST
                 ? fn.Call(Array.Empty<IValue>(), compilationContext)
                 : value;
 
-        private static readonly HashSet<ICompilableFunction> _callSet = new HashSet<ICompilableFunction>();
         public static IValue ResolveCall(this ICompilableFunction function, IValue[] arguments, Port[] inputs, IScope callScope, CompilationContext compilationContext)
         {
-            if (_callSet.Contains(function)) return compilationContext.LogError(11, "Recursion is disallowed");
-            _callSet.Add(function);
+            if (function.IsBeingCompiled) return compilationContext.LogError(11, "Recursion is disallowed");
+            function.IsBeingCompiled = true;
 
-            var argsValid = !(arguments?.Length > 0) || arguments.ValidateArguments(inputs, callScope, compilationContext);
-
-            var result = argsValid
-                ? function.Compile(callScope, compilationContext)
-                : CompilationErr.Instance;
-
-            _callSet.Remove(function);
-            return result;
+            try
+            {
+                var argsValid = !(arguments?.Length > 0) ||
+                                arguments.ValidateArguments(inputs, callScope, compilationContext);
+                var result = argsValid
+                    ? function.Compile(callScope, compilationContext)
+                    : CompilationErr.Instance;
+                return result;
+            }
+            finally
+            {
+                function.IsBeingCompiled = false;
+            }
         }
     }
 }

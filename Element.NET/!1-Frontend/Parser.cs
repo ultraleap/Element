@@ -154,7 +154,7 @@ namespace Element
             if (success)
             {
                 context.GlobalScope[file] = sourceScope;
-                context.GlobalScope.Initialize(null); // Global scope doesn't have a declaring item
+                context.GlobalScope.InitializeItems();
                 if (validate)
                 {
                     success &= context.GlobalScope.ValidateScope(context);

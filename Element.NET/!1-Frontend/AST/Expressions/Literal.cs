@@ -3,10 +3,8 @@ using Lexico;
 
 namespace Element.AST
 {
-    public class Literal : ISerializable, IScope, IValue
+    public struct Literal : ISerializable, IScope, IValue
     {
-        // ReSharper disable once UnusedMember.Global - Used by Lexico to construct instances
-        public Literal() {}
         public Literal(float value) {Value = value;}
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local

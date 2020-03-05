@@ -9,6 +9,11 @@ namespace Element.AST
     {
         string Location { get; }
     }
+
+    public interface IDeclared
+    {
+        Declaration Declarer { get; }
+    }
     
     internal static class IntrinsicCache
     {
@@ -32,16 +37,16 @@ namespace Element.AST
                             .Cast<Unary.Op>()
                             .Select(o => new UnaryIntrinsic(o)))*/)
             {
-                Intrinsics.Add(intrinsic.Location, intrinsic);
+                _intrinsics.Add(intrinsic.Location, intrinsic);
             }
         }
 
-        private static readonly Dictionary<string, IValue> Intrinsics = new Dictionary<string, IValue>();
+        private static readonly Dictionary<string, IValue> _intrinsics = new Dictionary<string, IValue>();
 
         public static TIntrinsic? GetIntrinsic<TIntrinsic>(string fullPath, CompilationContext? compilationContext)
             where TIntrinsic : class, IValue
         {
-            switch (Intrinsics.TryGetValue(fullPath, out var intrinsic), intrinsic)
+            switch (_intrinsics.TryGetValue(fullPath, out var intrinsic), intrinsic)
             {
                 case (true, TIntrinsic t):
                     return t;
@@ -56,7 +61,7 @@ namespace Element.AST
     }
 
     [WhitespaceSurrounded, MultiLine]
-    public abstract class DeclaredItem : IValue
+    public abstract class Declaration : IValue
     {
 #pragma warning disable 649
         // ReSharper disable UnassignedField.Global
@@ -80,18 +85,31 @@ namespace Element.AST
 
         protected Port[]? DeclaredInputs => PortList?.List.ToArray() ?? Array.Empty<Port>();
         protected virtual List<Identifier> ScopeIdentifierWhitelist { get; } = null;
-     
+
+        public Declaration Clone(IScope newParent)
+        {
+            var clone = (Declaration)MemberwiseClone();
+            clone.Initialize(newParent);
+            return clone;
+        }
+
         public abstract bool Validate(CompilationContext compilationContext);
         public abstract IType Type { get; }
 
-        public void Initialize(DeclaredScope parent)
+        public void Initialize(IScope parent)
         {
             ParentScope = parent ?? throw new ArgumentNullException(nameof(parent));
             ChildScope?.Initialize(this);
         }
-        public string Location => $"{(ParentScope is GlobalScope ? string.Empty : $"{ParentScope.Declarer}.")}{Identifier}";
-        public DeclaredScope ParentScope { get; private set; }
-        protected DeclaredScope? ChildScope => Body as Scope;
+
+        public string Location => ParentScope switch
+        {
+            GlobalScope _ => Identifier,
+            IDeclared d => $"{d.Declarer}.{Identifier}",
+            _ => throw new InternalCompilerException("")
+        };
+        public IScope ParentScope { get; private set; }
+        protected Scope? ChildScope => Body as Scope;
 
         protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(CompilationContext compilationContext)
             where TIntrinsic : class, IValue =>

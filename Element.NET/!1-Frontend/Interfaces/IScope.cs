@@ -9,16 +9,15 @@ namespace Element.AST
 
     public static class ScopeExtensions
     {
-        public static IValue CompileFunction(this IScope parentScope, object body, CompilationContext compilationContext)  =>
+        public static IValue CompileFunction(this IScope callScope, object body, CompilationContext compilationContext)  =>
             body switch
             {
-                // If a function is a binding (has expression body) we just compile the single expression
-                Binding binding => binding.Expression.ResolveExpression(parentScope, compilationContext),
-                // If a function has a scope body we find the return value
-                Scope scope => scope[Parser.ReturnIdentifier, false, compilationContext] switch
+                // If a function has expression body we just compile the single expression using the call scope
+                ExpressionBody exprBody => exprBody.Expression.ResolveExpression(callScope, compilationContext),
+                // If a function has a scope body we need to find the return identifier
+                IScope scopeBody => scopeBody[Parser.ReturnIdentifier, false, compilationContext] switch
                 {
-                    // If the return value is a nullary function, compile it
-                    ICompilableFunction nullaryReturn when nullaryReturn.IsNullary() => nullaryReturn.Compile(parentScope, compilationContext),
+                    ICompilableFunction nullaryReturn when nullaryReturn.IsNullary() => nullaryReturn.Compile(scopeBody, compilationContext),
                     ICompilableFunction functionReturn => functionReturn,
                     null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
                     var nyi => throw new NotImplementedException(nyi.ToString())
