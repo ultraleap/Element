@@ -11,7 +11,8 @@ indexExpression ::= '.' identifier
 callExpression  ::= '(' expression (',' expression)* ')'
 
 qualifier       ::= 'intrinsic'?
-type            ::= ':' identifier indexExpression*
+/* Types are an expression for convenience - a valid type expression only contains identifiers and indexing expressions
+type            ::= ':' expression
 port            ::= (identifier type?) | unidentifier
 portList        ::= '(' port (',' port)* ')'
 
