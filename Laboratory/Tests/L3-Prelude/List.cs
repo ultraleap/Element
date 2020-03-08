@@ -17,5 +17,8 @@ namespace Laboratory.Tests
 			_host.Evaluate(input, "list");
 			Assert.Fail("Expected message code ELE13 but execution succeeded");
 		}
+		
+		// List (de)serializable
+		// List iteration
 	}
 }*/

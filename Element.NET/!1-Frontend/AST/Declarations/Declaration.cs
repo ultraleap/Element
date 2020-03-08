@@ -28,14 +28,15 @@ namespace Element.AST
                     new ForIntrinsic(),
                     new FoldIntrinsic(),
                     new ListIntrinsic(),
-                    /*new MemberwiseIntrinsic(),
-                    new PersistIntrinsic()*/
+                    new InferIntrinsic(),
+                    new MemberwiseIntrinsic(),
+                    new PersistIntrinsic()
                 }.Concat(Enum.GetValues(typeof(Binary.Op))
                              .Cast<Binary.Op>()
                              .Select(o => new BinaryIntrinsic(o)))
-                /*.Concat(Enum.GetValues(typeof(Unary.Op))
+                .Concat(Enum.GetValues(typeof(Unary.Op))
                             .Cast<Unary.Op>()
-                            .Select(o => new UnaryIntrinsic(o)))*/)
+                            .Select(o => new UnaryIntrinsic(o))))
             {
                 _intrinsics.Add(intrinsic.Location, intrinsic);
             }

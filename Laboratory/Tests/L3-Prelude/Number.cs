@@ -3,18 +3,14 @@ using System.Linq;
 using Element;
 using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory
 {
 	/// <summary>
 	/// Tests for num and associated functions
 	/// </summary>
-	internal class Number : HostFixture
+	internal class Number : PreludeFixture
 	{
 		public Number(IHost host) : base(host) { }
-
-		private static CompilationInput CompilationInput => new CompilationInput(FailOnError);
-
-		private float[] Execute(string function, params float[] args) => _host.Evaluate(CompilationInput, function, args);
 
 		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
 		{

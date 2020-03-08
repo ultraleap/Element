@@ -24,5 +24,8 @@ namespace Laboratory.Tests
 
         [Test]
         public void TypeofNamespace() => AssertTypeof(CompilationInput, "MySpace", "Namespace");
+
+        [Test]
+        public void ConstraintNotDeserializable() => EvaluateExpectingErrorCode(CompilationInput, 1, "Predicate");
     }
 }

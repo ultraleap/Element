@@ -1,4 +1,3 @@
-using System;
 using Lexico;
 
 namespace Element.AST
@@ -13,21 +12,5 @@ namespace Element.AST
 #pragma warning restore 169
 
         public override string ToString() => $":{Expression}";
-    }
-
-    public static class TypeExtensions
-    {
-        public static IConstraint Resolve(this Type type, IScope startingScope, CompilationContext compilationContext)
-        {
-            if (type == null) return AnyConstraint.Instance;
-            if (startingScope == null) throw new ArgumentNullException(nameof(startingScope));
-
-            return type.Expression.ResolveExpression(startingScope, compilationContext) switch
-            {
-                IConstraint constraint => constraint,
-                {} notConstraint => compilationContext.LogError(16, $"'{notConstraint}' is not a constraint"),
-                null => throw new ArgumentOutOfRangeException()
-            };
-        }
     }
 }

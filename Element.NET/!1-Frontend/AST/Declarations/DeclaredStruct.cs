@@ -17,7 +17,7 @@ namespace Element.AST
             this[instanceFunctionIdentifier, false, compilationContext] switch
             {
                 DeclaredFunction instanceFunction when instanceFunction.IsNullary() => compilationContext.LogError(22, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
-                IFunction instanceFunction when instanceFunction.Inputs[0].Type.Resolve(this, compilationContext) == this => new InstanceFunction(instanceBeingIndexed, instanceFunction),
+                IFunction instanceFunction when instanceFunction.Inputs[0].ResolveConstraint(this, compilationContext) == this => new InstanceFunction(instanceBeingIndexed, instanceFunction),
                 IFunction function => compilationContext.LogError(22, $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function"),
                 Declaration notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction.Location}' is not a function"),
                 {} notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function"),
@@ -56,7 +56,7 @@ namespace Element.AST
                     break;
                 }
 
-                SetRange(inputs.Zip(memberValues, (port, value) => (port.Identifier, value)));
+                SetRange(memberValues.WithoutDiscardedArguments(inputs));
             }
 
             private readonly bool _isSerializable;

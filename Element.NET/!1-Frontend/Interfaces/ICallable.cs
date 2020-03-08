@@ -76,7 +76,7 @@ namespace Element.AST
                 };
 
                 Inputs = declarer.Inputs.Skip(arguments.Length).ToArray();
-                SetRange(arguments.Select((arg, index) => (declarer.Inputs[index].Identifier, arg)));
+                SetRange(arguments.WithoutDiscardedArguments(declarer.Inputs));
             }
 
             private readonly ICompilableFunction _declarer;

@@ -5,7 +5,7 @@ namespace Laboratory.Tests
 {
     internal class HighOrderConstructs : SemanticsFixture
     {
-        public HighOrderConstructs(IHost host) : base(host, "HighOrderConstructs") { }
+        public HighOrderConstructs(IHost host) : base(host, "HighOrderFunctions") { }
 
         [Test]
         public void BindFunctionViaIndexing() => AssertTypeof(CompilationInput, "add", "Function");

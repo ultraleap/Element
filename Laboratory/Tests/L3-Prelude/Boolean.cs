@@ -1,84 +1,78 @@
-/*using Element;
+using Element;
 using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory
 {
-	internal class Boolean : HostFixture
+	internal class Boolean : PreludeFixture
 	{
 		public Boolean(IHost host) : base(host) { }
 
-		private static CompilationInput CompilationInput => new CompilationInput(FailOnError);
-
 		[
-			TestCase("bool(0)", 0f),
-			TestCase("bool", 1f, 1f),
-			TestCase("bool", 1.2f, 1f),
-			TestCase("bool", 9999f, 1f),
-			TestCase("bool", 0.1f, 1f),
-			TestCase("bool", -0.1f, 0f)
+			TestCase("Bool(0)", "false"),
+			TestCase("Bool(1)", "true"),
+			TestCase("Bool(1.2)", "true"),
+			TestCase("Bool(9999)", "true"),
+			TestCase("Bool(0.1)", "true"),
+			TestCase("Bool(-0.1)", "false")
 		]
 		[
-			TestCase("not", 0f, 1f),
-			TestCase("not", 1f, 0f),
-		]
-		public void UnaryOp(string expression, float expected) =>
-			Assert.That(_host.Evaluate(CompilationInput, function, a)[0], Is.EqualTo(expected));
-
-		[
-			TestCase("and", 0f, 0f, 0f),
-			TestCase("and", 0f, 1f, 0f),
-			TestCase("and", 1f, 0f, 0f),
-			TestCase("and", 1f, 1f, 1f)
+			TestCase("true.negate", "false"),
+			TestCase("false.negate", "true"),
 		]
 		[
-			TestCase("or", 0f, 0f, 0f),
-			TestCase("or", 0f, 1f, 1f),
-			TestCase("or", 1f, 0f, 1f),
-			TestCase("or", 1f, 1f, 1f)
+			TestCase("false.and(false)", "false"),
+			TestCase("false.and(true)", "false"),
+			TestCase("true.and(false)", "false"),
+			TestCase("true.and(true)", "true")
 		]
 		[
-			TestCase("xor", 0f, 0f, 0f),
-			TestCase("xor", 0f, 1f, 1f),
-			TestCase("xor", 1f, 0f, 1f),
-			TestCase("xor", 1f, 1f, 0f)
+			TestCase("false.or(false)", "false"),
+			TestCase("false.or(true)", "true"),
+			TestCase("true.or(false)", "true"),
+			TestCase("true.or(true)", "true")
 		]
 		[
-			TestCase("lt", 0f, 0f, 0f),
-			TestCase("lt", 0.2f, 0f, 0f),
-			TestCase("lt", -0.2f, 0f, 1f),
-			TestCase("lt", 1f, 2f, 1f)
+			TestCase("false.xor(false)", "false"),
+			TestCase("false.xor(true)", "true"),
+			TestCase("true.xor(false)", "true"),
+			TestCase("true.xor(true)", "false")
 		]
 		[
-			TestCase("gt", 0f, 0f, 0f),
-			TestCase("gt", 0.2f, 0f, 1f),
-			TestCase("gt", -0.2f, 0f, 0f),
-			TestCase("gt", 2f, 1f, 1f)
+			TestCase("0.lt(0)", "false"),
+			TestCase("0.2.lt(0)", "false"),
+			TestCase("-0.2.lt(0)", "true"),
+			TestCase("1.lt(2)", "true")
 		]
 		[
-			TestCase("leq", 0f, 0f, 1f),
-			TestCase("leq", 0.2f, 0f, 0f),
-			TestCase("leq", -0.2f, 0f, 1f),
-			TestCase("leq", 1f, 2f, 1f)
+			TestCase("0.gt(0)", "false"),
+			TestCase("0.2.gt(0)", "true"),
+			TestCase("-0.2.gt(0)", "false"),
+			TestCase("2.gt(1)", "true")
 		]
 		[
-			TestCase("geq", 0f, 0f, 1f),
-			TestCase("geq", 0.2f, 0f, 1f),
-			TestCase("geq", -0.2f, 0f, 0f),
-			TestCase("geq", 2f, 1f, 1f)
+			TestCase("0.leq(0)", "true"),
+			TestCase("0.2.leq(0)", "false"),
+			TestCase("-0.2.leq(0)", "true"),
+			TestCase("1.leq(2)", "true")
 		]
 		[
-			TestCase("eq", 0f, 0f, 1f),
-			TestCase("eq", 1f, 0f, 0f),
-			TestCase("eq", 0.1f, 0f, 0f),
-			TestCase("eq", 999.999f, 999.999f, 1f)
+			TestCase("0.geq(0)", "true"),
+			TestCase("0.2.geq(0)", "true"),
+			TestCase("-0.2.geq(0)", "false"),
+			TestCase("2.geq(1)", "true")
 		]
 		[
-			TestCase("neq", 0f, 0f, 0f),
-			TestCase("neq", 1f, 0f, 1f),
-			TestCase("neq", 0.1f, 0f, 1f),
-			TestCase("neq", 999.999f, 999.999f, 0f)
+			TestCase("0.eq(0)", "true"),
+			TestCase("1.eq(0)", "false"),
+			TestCase("0.1.eq(0)", "false"),
+			TestCase("999.999.eq(999.999)", "true")
 		]
-		public void BinaryOp(string function, float a, float b, float expected) =>
-			Assert.That(_host.Evaluate(CompilationInput, function, a, b)[0], Is.EqualTo(expected));
+		[
+			TestCase("0.neq(0)", "false"),
+			TestCase("1.neq(0)", "true"),
+			TestCase("0.1.neq(0)", "true"),
+			TestCase("999.999.neq(999.999)", "false")
+		]
+		public void Operations(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
 	}
-}*/
+}

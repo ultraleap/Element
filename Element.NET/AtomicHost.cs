@@ -18,7 +18,7 @@ namespace Element
                     expressionObject.ResolveExpression(context.GlobalScope, context) switch
                     {
                         ISerializable serializable => (serializable.TrySerialize(out var result), result),
-                        _ => (false, null)
+                        _ => (context.LogError(1, "Result not serializable") == CompilationErr.Instance, null)
                     }
                     : (false, null)
                 : (false, null);

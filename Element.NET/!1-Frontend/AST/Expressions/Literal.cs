@@ -5,13 +5,20 @@ namespace Element.AST
 {
     public struct Literal : ISerializable, IScope, IValue
     {
-        public Literal(float value) {Value = value;}
+        public Literal(float value, IType instanceType = default)
+        {
+            Value = value;
+            _type = instanceType;
+        }
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         [Term] public float Value { get; private set; }
         public static implicit operator float(Literal l) => l.Value;
         public override string ToString() => Value.ToString(CultureInfo.CurrentCulture);
-        public IType Type => NumType.Instance;
+
+        public IType Type => _type ?? NumType.Instance;
+        private readonly IType? _type;
+
         public int SerializedSize => 1;
         public bool Serialize(ref float[] array, ref int position)
         {

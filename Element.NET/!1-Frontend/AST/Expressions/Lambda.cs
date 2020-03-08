@@ -5,7 +5,7 @@ namespace Element.AST
     public class Lambda : Expression
     {
 #pragma warning disable 649, 169
-        [Literal("_")] private Unnamed _;
+        [Term] private Unidentifier _;
         [Term] private PortList _portList;
         [Optional] private Type? _type;
         [Alternative(typeof(ExpressionBody), typeof(Scope)), WhitespaceSurrounded, MultiLine] private object _body;

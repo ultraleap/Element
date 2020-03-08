@@ -66,6 +66,7 @@ namespace Laboratory.Tests
             var data = new[]
             {
                 (nameof(Identifier), "a", typeof(Identifier)),
+                (nameof(Unidentifier), "_", typeof(Unidentifier)),
                 (nameof(Literal), "5", typeof(Literal)),
                 (nameof(Terminal), ";", typeof(Terminal)),
                 (nameof(ExpressionBody), "= 5", typeof(ExpressionBody)),
@@ -83,6 +84,7 @@ namespace Laboratory.Tests
                 (nameof(ExtrinsicStruct), "struct a(a);", typeof(ExtrinsicStruct)),
                 ($"{nameof(ExtrinsicStruct)}-WithScope", "struct a(a) {}", typeof(ExtrinsicStruct)),
                 ($"{nameof(IntrinsicStruct)}", "intrinsic struct a(a);", typeof(IntrinsicStruct)),
+                (nameof(Port), "a:foo", typeof(Port)),
                 (nameof(PortList), "(a:foo, b:bar)", typeof(PortList)),
                 (nameof(DeclaredNamespace), "namespace foo {}", typeof(DeclaredNamespace)),
             };

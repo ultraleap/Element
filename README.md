@@ -13,11 +13,11 @@ Most content conforms to older undocumented conventions or is broken.***
 
 ## Element Language
 This is a brief summary, see the [Element Reference Manual](Language/ElementReferenceManual.md) for full details.
-* Single number data type `num`
+* Single number data type `Num`
 * Structured types using `struct`
 * First class functions and local functions
 * Intrinsics (math intrinsics, collection intrinsics, control flow)
-* Genericity via implicit interfaces with `any` type
+* Genericity via implicit interfaces with `Any` type
 
 ### Element Libraries
 Element includes a library of core functionality called [Prelude](Common/Prelude).
@@ -43,7 +43,7 @@ New features will generally be implemented as part of the standard library rathe
     * Element parser
     * Element function evaluation
     * AoT compilation to:
-        * [LMNTIL](LMNT/Bytecode.md)
+        * [LMNTIL](LMNT/Bytecode.md) - planned
 * [PyElement](PyElement) - Python
     * Element parser using [TatSu](https://github.com/neogeny/TatSu)
     * Element interpreter using Python [eval()](https://docs.python.org/3/library/functions.html)

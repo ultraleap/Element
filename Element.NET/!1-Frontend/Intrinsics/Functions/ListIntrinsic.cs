@@ -9,7 +9,7 @@ namespace Element.AST
 		public IValue Call(IValue[] arguments, CompilationContext context) =>
 			ListType.Instance.Call(new IValue[]{new IndexFunction(arguments), new Literal(arguments.Length), }, context);
 
-		public class IndexFunction : ICallable
+		private class IndexFunction : ICallable
 		{
 			public IType Type => FunctionType.Instance;
 			public IndexFunction(IValue[] elements) => _elements = elements;
