@@ -1,7 +1,7 @@
 using Element;
 using NUnit.Framework;
 
-namespace Laboratory
+namespace Laboratory.Tests
 {
     internal class Prelude : PreludeFixture
     {
@@ -9,10 +9,10 @@ namespace Laboratory
 
         [Test]
         // Evaluates an arbitrary expression since creating the prelude will be parsed implicitly when not excluded
-        public void Parse() => Host.Evaluate(new CompilationInput(FailOnError) {SkipValidation = true}, "3.14");
+        public void Parse() => Host.Evaluate(NonValidatedCompilationInput, "3.14");
         
         [Test]
         // Evaluates an arbitrary expression since creating the prelude will be parsed implicitly when not excluded
-        public void Validate() => Host.Evaluate(CompilationInput, "3.14");
+        public void Validate() => Host.Evaluate(ValidatedCompilationInput, "3.14");
     }
 }

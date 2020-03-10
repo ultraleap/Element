@@ -14,17 +14,19 @@ namespace Element.AST
             }
         }
 
-        public bool ValidateScope(CompilationContext compilationContext, List<Identifier> identifierWhitelist = null)
+        public bool ValidateScope(SourceContext sourceContext, Identifier[] identifierBlacklist = null, Identifier[] identifierWhitelist = null)
         {
-            if (compilationContext.Input.SkipValidation) return true;
+            if (sourceContext.SkipValidation) return true;
             
             var success = true;
 
             foreach (var item in ItemsToCacheOnValidate)
             {
+                if(item.HasBeenValidated) continue;
+
                 if (Contains(item.Identifier))
                 {
-                    compilationContext.LogError(2, $"Cannot add duplicate identifier '{item.Identifier}'");
+                    sourceContext.LogError(2, $"Cannot add duplicate identifier '{item.Identifier}'");
                     success = false;
                 }
                 else
@@ -32,15 +34,17 @@ namespace Element.AST
                     Set(item.Identifier, item);
                 }
 
-                if (!compilationContext.ValidateIdentifier(item.Identifier, identifierWhitelist))
+                if (!sourceContext.ValidateIdentifier(item.Identifier, identifierBlacklist, identifierWhitelist))
                 {
                     success = false;
                 }
 
-                if (!item.Validate(compilationContext))
+                if (!item.Validate(sourceContext))
                 {
                     success = false;
                 }
+
+                item.HasBeenValidated = true;
             }
 
             return success;

@@ -3,7 +3,7 @@ using System.Linq;
 using Element;
 using NUnit.Framework;
 
-namespace Laboratory
+namespace Laboratory.Tests
 {
 	/// <summary>
 	/// Tests for num and associated functions

@@ -1,7 +1,4 @@
-using System.Linq;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using Element.AST;
 
 namespace Element
@@ -9,74 +6,20 @@ namespace Element
     /// <summary>
     /// Contains the status of the compilation process including call stack and logging messages.
     /// </summary>
-    public class CompilationContext
+    public class CompilationContext : Context
     {
-        private CompilationContext(in CompilationInput compilationInput)
-        {
-            Input = compilationInput;
-            GlobalScope = new GlobalScope();
-            LogCallback = compilationInput.LogCallback;
-        }
+        public CompilationContext(GlobalScope globalScope, CompilationInput compilationInput) : base(globalScope, compilationInput) { }
+        private Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
+        private Stack<ICompilableFunction> FunctionStack { get; } = new Stack<ICompilableFunction>();
+        public void PushTrace(TraceSite traceSite) => TraceStack.Push(traceSite);
+        public void PopTrace() => TraceStack.Pop();
 
-        public static bool TryCreate(in CompilationInput compilationInput, out CompilationContext compilationContext) =>
-            (compilationContext = new CompilationContext(compilationInput))
-            .ParseFiles(compilationInput.Packages
-                .Prepend(compilationInput.ExcludePrelude ? null : new DirectoryInfo("Prelude"))
-                .SelectMany(directory =>
-                    directory?.GetFiles("*.ele", SearchOption.AllDirectories) ?? Array.Empty<FileInfo>())
-                .Concat(compilationInput.ExtraSourceFiles)
-                .ToArray())
-            .OverallSuccess;
+        public void PushFunction(ICompilableFunction function) => FunctionStack.Push(function);
+        public void PopFunction() => FunctionStack.Pop();
+        public bool ContainsFunction(ICompilableFunction function) => FunctionStack.Contains(function);
 
-        public CompilationInput Input { get; }
-
-        public GlobalScope GlobalScope { get; }
-
-        
-
-        private Action<CompilerMessage> LogCallback { get; }
-
-        private readonly Stack<TraceSite> _callStack = new Stack<TraceSite>();
-        public void Push(TraceSite traceSite) => _callStack.Push(traceSite);
-        public void Pop() => _callStack.Pop();
-
-        public CompilationErr LogError(int? messageCode, string context = default) => LogImpl(messageCode, context);
-        public void Log(string message) => LogImpl(null, message);
-
-        private CompilationErr LogImpl(int? messageCode, string context = default)
-        {
-            if (!messageCode.HasValue)
-            {
-                LogCallback?.Invoke(new CompilerMessage(null, null, context, _callStack.ToArray()));
-                return CompilationErr.Instance;
-            }
-
-            var level = CompilerMessage.GetMessageLevel(messageCode.Value);
-            
-            if (level >= Input.Verbosity)
-            {
-                LogCallback?.Invoke(new CompilerMessage(messageCode.Value, level, context, _callStack.ToArray()));
-            }
-
-            return CompilationErr.Instance;
-        }
-
-        /*/// <summary>
-        /// Gets all functions in global scope and any namespaces which match the given filter.
-        /// </summary>
-        public (string Path, IFunction Function)[] GetAllFunctions(Predicate<IFunction> filter, CompilationContext context)
-        {
-	        IEnumerable<(string, IFunction)> Recurse(string path, IFunction func)
-	        {
-		        if (func.IsNamespace())
-		        {
-			        return func.Outputs.SelectMany(o => Recurse($"{path}.{o.Name}", func.Call(o.Name, context)));
-		        }
-
-		        return filter?.Invoke(func) == false ? Array.Empty<(string, IFunction)>() : new[] {(path, func)};
-	        }
-
-	        return _functions.ToArray().SelectMany(f => Recurse(f.Name, f)).ToArray();
-        }*/
+        protected override CompilerMessage LogImpl(int? messageCode, string context = default) => !messageCode.HasValue
+            ? new CompilerMessage(null, null, context, TraceStack?.ToArray())
+            : new CompilerMessage(messageCode.Value, CompilerMessage.GetMessageLevel(messageCode.Value), context, TraceStack?.ToArray());
     }
 }

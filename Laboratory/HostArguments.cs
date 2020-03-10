@@ -21,7 +21,7 @@ namespace Laboratory
     {
         public IEnumerator GetEnumerator() => ProcessHostInfos
             .Where(phi => phi.Enabled)
-            .Select(phi => (IHost) new ProcessHost(phi))
+            .Select(phi => (IHost)new ProcessHost(phi))
             .Prepend(new AtomicHost())
             .ToArray<object>()
             .GetEnumerator();
@@ -39,12 +39,12 @@ namespace Laboratory
                     name,
                     Get<bool>("enabled"),
                     Get<string>("build-command"),
-                    Path.Combine(ElementRootDirectory.Value, Get<string>("executable-path"))
+                    Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path"))
                 ));
             }
         }
-        
-        private static readonly Lazy<string> ElementRootDirectory = new Lazy<string>(() =>
+
+        private static readonly Lazy<string> _elementRootDirectory = new Lazy<string>(() =>
         {
             var success = TryGetParent(new DirectoryInfo(Directory.GetCurrentDirectory()), "Element", out var rootDir);
             if (!success) throw new DirectoryNotFoundException("Couldn't find Element root directory");
@@ -67,7 +67,7 @@ namespace Laboratory
             }
         }
 
-        private readonly struct ProcessHostInfo
+        internal readonly struct ProcessHostInfo
         {
             public ProcessHostInfo(string name, bool enabled, string buildCommand, string executablePath)
             {
@@ -83,14 +83,14 @@ namespace Laboratory
             public string ExecutablePath { get; }
         }
 
-        private static readonly List<ProcessHostInfo> ProcessHostInfos = new List<ProcessHostInfo>();
+        internal static readonly List<ProcessHostInfo> ProcessHostInfos = new List<ProcessHostInfo>();
 
         /// <summary>
         /// Implements commands by calling external process defined using a command string.
         /// </summary>
         private readonly struct ProcessHost : IHost
         {
-            static List<string> Run(Process process)
+            private static List<string> Run(Process process)
             {
                 var messages = new List<string>();
                 async Task ReadStream(Process proc, StreamReader streamReader)
@@ -127,7 +127,7 @@ namespace Laboratory
                             {
                                 FileName = splitCommand[0],
                                 Arguments = splitCommand[1],
-                                WorkingDirectory = ElementRootDirectory.Value
+                                WorkingDirectory = _elementRootDirectory.Value
                             }
                         };
 
@@ -137,12 +137,12 @@ namespace Laboratory
 
                         if (process.ExitCode != 0)
                         {
-                            HostBuildErrors.Add(info, process.StandardError.ReadToEnd());
+                            _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                         }
                     }
                     catch (Exception e)
                     {
-                        HostBuildErrors.Add(info, e.ToString());
+                        _hostBuildErrors.Add(info, e.ToString());
                     }
                 }
             }
@@ -169,7 +169,7 @@ namespace Laboratory
                 return success;
             }
 
-            private static readonly Dictionary<ProcessHostInfo, string> HostBuildErrors = new Dictionary<ProcessHostInfo, string>();
+            private static readonly Dictionary<ProcessHostInfo, string> _hostBuildErrors = new Dictionary<ProcessHostInfo, string>();
 
             public ProcessHost(ProcessHostInfo info) => _info = info;
 
@@ -179,7 +179,7 @@ namespace Laboratory
 
             private string RunHostProcess(CompilationInput input, string arguments)
             {
-                if (HostBuildErrors.TryGetValue(_info, out var buildError))
+                if (_hostBuildErrors.TryGetValue(_info, out var buildError))
                 {
                     Assert.Fail(buildError);
                 }

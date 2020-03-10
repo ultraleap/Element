@@ -1,4 +1,5 @@
 using System.IO;
+using Element.AST;
 
 namespace Element
 {
@@ -7,7 +8,7 @@ namespace Element
     /// </summary>
     public readonly struct TraceSite
     {
-        public TraceSite(string what, FileInfo sourceFile, int line, int column)
+        public TraceSite(IValue what, FileInfo sourceFile, int line, int column)
         {
             What = what;
             SourceFile = sourceFile;
@@ -18,7 +19,7 @@ namespace Element
         public readonly FileInfo SourceFile;
         public readonly int Line;
         public readonly int Column;
-        public readonly string What;
+        public readonly IValue What;
 
         public override string ToString() => $"{What} in {SourceFile?.FullName}:{Line},{Column}";
     }

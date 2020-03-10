@@ -218,8 +218,10 @@ namespace Element.CLR
 			CompilationInput input,
 			ICLRBoundaryMap boundaryMap = default)
 		{
-			if (!CompilationContext.TryCreate(input, out var context)) return null;
+			if (!SourceContext.TryCreate(input, out var sourceContext)) return null;
 			if (function == null) throw new ArgumentNullException(nameof(function));
+
+			var context = sourceContext.MakeCompilationContext();
 			if (function.Inputs == null || function.Outputs == null)
 			{
 				context.LogError(3, $"{function} cannot be compiled as it has no input/output ports defined");

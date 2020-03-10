@@ -44,7 +44,7 @@ namespace Element.AST
 
         private static readonly Dictionary<string, IValue> _intrinsics = new Dictionary<string, IValue>();
 
-        public static TIntrinsic? GetIntrinsic<TIntrinsic>(string fullPath, CompilationContext? compilationContext)
+        public static TIntrinsic? GetIntrinsic<TIntrinsic>(string fullPath, Context context)
             where TIntrinsic : class, IValue
         {
             switch (_intrinsics.TryGetValue(fullPath, out var intrinsic), intrinsic)
@@ -52,10 +52,10 @@ namespace Element.AST
                 case (true, TIntrinsic t):
                     return t;
                 case (false, _):
-                    compilationContext?.LogError(4, $"Intrinsic '{fullPath}' is not implemented");
+                    context.LogError(4, $"Intrinsic '{fullPath}' is not implemented");
                     return null;
                 case (true, _):
-                    compilationContext?.LogError(14, $"Found intrinsic '{fullPath}' but it is not '{typeof(TIntrinsic)}'");
+                    context.LogError(14, $"Found intrinsic '{fullPath}' but it is not '{typeof(TIntrinsic)}'");
                     return null;
             }
         }
@@ -87,7 +87,8 @@ namespace Element.AST
         protected Port[]? DeclaredInputs => string.IsNullOrEmpty(IntrinsicQualifier)
             ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's just
             : PortList?.List.ToArray();
-        protected virtual List<Identifier> ScopeIdentifierWhitelist { get; } = null;
+        protected virtual Identifier[] ScopeIdentifierWhitelist { get; } = null;
+        protected virtual Identifier[] ScopeIdentifierBlacklist { get; } = null;
 
         public Declaration Clone(IScope newParent)
         {
@@ -96,7 +97,8 @@ namespace Element.AST
             return clone;
         }
 
-        public abstract bool Validate(CompilationContext compilationContext);
+        public abstract bool Validate(SourceContext sourceContext);
+        public bool HasBeenValidated { get; set; }
         public abstract IType Type { get; }
 
         public void Initialize(IScope parent)
@@ -114,11 +116,11 @@ namespace Element.AST
         public IScope ParentScope { get; private set; }
         protected Scope? ChildScope => Body as Scope;
 
-        protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(CompilationContext compilationContext)
+        protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(Context context)
             where TIntrinsic : class, IValue =>
-            IntrinsicCache.GetIntrinsic<TIntrinsic>(Location, compilationContext);
+            IntrinsicCache.GetIntrinsic<TIntrinsic>(Location, context);
 
-        protected bool ValidateScopeBody(CompilationContext compilationContext) =>
-            !(Body is Scope scope) || scope.ValidateScope(compilationContext, ScopeIdentifierWhitelist);
+        protected bool ValidateScopeBody(SourceContext sourceContext) =>
+            !(Body is Scope scope) || scope.ValidateScope(sourceContext, ScopeIdentifierBlacklist, ScopeIdentifierWhitelist);
     }
 }

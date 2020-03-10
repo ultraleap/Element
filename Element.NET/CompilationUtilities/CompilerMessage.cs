@@ -10,10 +10,10 @@ namespace Element
 {
     public readonly struct CompilerMessage
     {
-        private static readonly TomlTable MessageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
+        private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
 
         private static TomlTable GetMessageToml(int messageCode) =>
-            MessageToml[$"ELE{messageCode}"] is TomlTable messageTable
+            _messageToml[$"ELE{messageCode}"] is TomlTable messageTable
                 ? messageTable
                 : throw new InternalCompilerException($"ELE{messageCode} could not be found");
 
@@ -27,12 +27,12 @@ namespace Element
         public CompilerMessage(string message, MessageLevel? messageLevel = null) : this(null, messageLevel, message, null){}
 
         [JsonConstructor]
-        public CompilerMessage(int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? callStack)
+        public CompilerMessage(int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? traceStack)
         {
             MessageCode = messageCode;
             MessageLevel = messageCode.HasValue ? GetMessageLevel(messageCode.Value) : messageLevel;
             Context = context;
-            CallStack = callStack ?? Array.Empty<TraceSite>();
+            TraceStack = traceStack ?? Array.Empty<TraceSite>();
 
             var builder = new StringBuilder();
             if (messageCode.HasValue)
@@ -41,11 +41,11 @@ namespace Element
             }
 
             builder.Append(Context);
-            if (CallStack.Count > 0)
+            if (TraceStack.Count > 0)
             {
                 builder.AppendLine();
                 builder.AppendLine("Element source trace:");
-                foreach (var site in CallStack)
+                foreach (var site in TraceStack)
                 {
                     builder.Append("    ").AppendLine(site.ToString());
                 }
@@ -60,7 +60,7 @@ namespace Element
         public int? MessageCode { get; }
         public MessageLevel? MessageLevel { get; }
         public string? Context { get; }
-        public IReadOnlyCollection<TraceSite> CallStack { get; }
+        public IReadOnlyCollection<TraceSite> TraceStack { get; }
 
         public override string ToString() => _message;
     }

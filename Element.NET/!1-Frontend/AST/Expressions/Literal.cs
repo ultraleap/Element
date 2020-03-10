@@ -5,10 +5,10 @@ namespace Element.AST
 {
     public struct Literal : ISerializable, IScope, IValue
     {
-        public Literal(float value, IType instanceType = default)
+        public Literal(float value)
         {
             Value = value;
-            _type = instanceType;
+            _declaringStruct = null;
         }
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
@@ -16,8 +16,7 @@ namespace Element.AST
         public static implicit operator float(Literal l) => l.Value;
         public override string ToString() => Value.ToString(CultureInfo.CurrentCulture);
 
-        public IType Type => _type ?? NumType.Instance;
-        private readonly IType? _type;
+        public IType Type => NumType.Instance;
 
         public int SerializedSize => 1;
         public bool Serialize(ref float[] array, ref int position)
@@ -27,8 +26,10 @@ namespace Element.AST
             return true;
         }
 
+        private DeclaredStruct? _declaringStruct;
+
         public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-            compilationContext.GlobalScope[new Identifier(Type.Name), false, compilationContext] switch
+            (_declaringStruct ??= (DeclaredStruct)compilationContext.GlobalScope[new Identifier(Type.Name), false, compilationContext]) switch
             {
                 DeclaredStruct declaredStruct => declaredStruct.ResolveInstanceFunction(id, this, compilationContext),
                 _ => compilationContext.LogError(7, $"Couldn't find instance function '{Type.Name}'")

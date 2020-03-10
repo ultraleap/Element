@@ -18,7 +18,5 @@ namespace Element.AST
 
         public IEnumerator<Declaration> GetEnumerator() => _items?.GetEnumerator() ?? EmptyEnumerator<Declaration>.Instance;
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        public override string ToString() => "SourceScope";
     }
 }

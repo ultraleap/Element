@@ -76,12 +76,12 @@ intrinsic struct Num
     clamp(a:Num, min:Num, max:Num):Num  = a.max(min).min(max);
 
     # Comparison functions
-    eq(a:Num, b:Num):Bool   = a.neq(b).negate;
+    eq(a:Num, b:Num):Bool   = Bool.not(a.neq(b));
     neq(a:Num, b:Num):Bool  = a.sub(b).abs.to(Bool);
     lt(a:Num, b:Num):Bool   = b.sub(a).to(Bool);
-    leq(a:Num, b:Num):Bool  = a.gt(b).negate;
+    leq(a:Num, b:Num):Bool  = Bool.not(a.gt(b));
     gt(a:Num, b:Num):Bool   = a.sub(b).to(Bool);
-    geq(a:Num, b:Num):Bool  = a.lt(b).negate;
+    geq(a:Num, b:Num):Bool  = Bool.not(a.lt(b));
 
     to(a:Num, constructor:Unary) = constructor(a);
 }

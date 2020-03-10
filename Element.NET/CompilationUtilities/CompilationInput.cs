@@ -9,11 +9,7 @@ namespace Element
     /// </summary>
     public class CompilationInput // TODO: Change to record type when available
     {
-        public CompilationInput(Action<CompilerMessage>? logCallback)
-        {
-            LogCallback = logCallback;
-        }
-        
+        public CompilationInput(Action<CompilerMessage>? logCallback) { LogCallback = logCallback; }
         public Action<CompilerMessage>? LogCallback { get; set; }
         public bool ExcludePrelude { get; set; } = false;
         public IReadOnlyList<DirectoryInfo> Packages { get; set; } = Array.Empty<DirectoryInfo>();

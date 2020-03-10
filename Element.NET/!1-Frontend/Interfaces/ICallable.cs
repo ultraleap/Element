@@ -17,7 +17,7 @@ namespace Element.AST
     public interface ICompilableFunction : IFunction
     {
         IValue Compile(IScope scope, CompilationContext compilationContext);
-        bool IsBeingCompiled { get; set; }
+        ICompilableFunction Definition { get; }
     }
 
     public static class FunctionExtensions
@@ -30,7 +30,7 @@ namespace Element.AST
             {
                 var result = fn.Call(Array.Empty<IValue>(), compilationContext);
                 // ReSharper disable once PossibleUnintendedReferenceComparison
-                if (result == previous) break; // Don't infinite loop if a nullary just returns itself
+                if (result == previous) break; // Prevent infinite loop if a nullary just returns itself
                 previous = result;
             }
 
@@ -44,8 +44,8 @@ namespace Element.AST
 
         private static IValue ResolveCall(ICompilableFunction function, IValue[] arguments, Port[] inputs, IScope callScope, CompilationContext compilationContext)
         {
-            if (function.IsBeingCompiled) return compilationContext.LogError(11, "Recursion is disallowed");
-            function.IsBeingCompiled = true;
+            if (compilationContext.ContainsFunction(function.Definition)) return compilationContext.LogError(11, $"Multiple references to {function} in same call stack - Recursion is disallowed");
+            compilationContext.PushFunction(function.Definition);
 
             try
             {
@@ -57,16 +57,16 @@ namespace Element.AST
             }
             finally
             {
-                function.IsBeingCompiled = false;
+                compilationContext.PopFunction();
             }
         }
 
         private class FunctionInstance : ScopeBase, ICompilableFunction
         {
-            public FunctionInstance(IValue[] arguments, ICompilableFunction declarer, IScope parent, object body)
+            public FunctionInstance(IValue[] arguments, ICompilableFunction definition, IScope parent, object body)
             {
+                Definition = definition;
                 _arguments = arguments;
-                _declarer = declarer;
                 _parent = parent;
                 _body = body switch
                 {
@@ -75,27 +75,21 @@ namespace Element.AST
                     _ => throw new InternalCompilerException("Cannot create function instance as function body type is not recognized")
                 };
 
-                Inputs = declarer.Inputs.Skip(arguments.Length).ToArray();
-                SetRange(arguments.WithoutDiscardedArguments(declarer.Inputs));
+                Inputs = definition.Inputs.Skip(arguments.Length).ToArray();
+                SetRange(arguments.WithoutDiscardedArguments(definition.Inputs));
             }
 
-            private readonly ICompilableFunction _declarer;
             private readonly IScope _parent;
             private readonly IValue[] _arguments;
             private readonly object _body;
-            public IType Type => _declarer.Type;
+            public IType Type => Definition.Type;
             public Port[] Inputs { get; }
-            public Type Output => _declarer.Output;
+            public Type Output => Definition.Output;
 
             public IValue Compile(IScope scope, CompilationContext compilationContext) => scope.CompileFunction(_body, compilationContext);
+            public ICompilableFunction Definition { get; }
 
-            public bool IsBeingCompiled
-            {
-                get => _declarer.IsBeingCompiled;
-                set => _declarer.IsBeingCompiled = value;
-            }
-
-            public IValue Call(IValue[] _, CompilationContext compilationContext) => ResolveCall(this, _arguments, _declarer.Inputs, this, compilationContext);
+            public IValue Call(IValue[] _, CompilationContext compilationContext) => ResolveCall(this, _arguments, Definition.Inputs, this, compilationContext);
 
             public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
                 IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);

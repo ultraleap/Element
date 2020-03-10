@@ -43,17 +43,17 @@ namespace Element
     /// <summary>
     /// Provides methods to convert text into 
     /// </summary>
-    public static class Parser
+    internal static class Parser
     {
         public static Identifier ReturnIdentifier { get; } = new Identifier("return");
-        
+
         public static readonly Identifier[] GloballyReservedIdentifiers =
         {
             new Identifier("_"),
             new Identifier("intrinsic"),
             new Identifier("namespace"),
+            new Identifier("struct"),
             ReturnIdentifier,
-            new Identifier("struct")
         };
 
         internal static (int Line, int Column, int LineCharacterIndex) CountLinesAndColumns(int index, string text)
@@ -96,7 +96,7 @@ namespace Element
 
         private static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public static bool Parse<T>(this CompilationContext context, string text, out T output)
+        public static bool Parse<T>(this Context context, string text, out T output)
         {
             var parseTrace = new List<string>();
             var success = Lexico.Lexico.TryParse(text, out output, new DelegateTextTrace(msg =>
@@ -111,7 +111,7 @@ namespace Element
                 }
                 context.LogError(9, "Parsing failed, see previous parse trace messages for details.");
             }
-            else if (context.Input.Verbosity >= MessageLevel.Information)
+            else if (context.Verbosity >= MessageLevel.Information)
             {
                 foreach (var msg in parseTrace)
                 {
@@ -121,21 +121,20 @@ namespace Element
             return success;
         }
 
-        public static bool ValidateIdentifier(this CompilationContext compilationContext, Identifier identifier, List<Identifier> whitelist = null)
+        public static bool ValidateIdentifier(this SourceContext context, Identifier identifier, Identifier[] blacklist = null, Identifier[] whitelist = null)
         {
             if (string.IsNullOrEmpty(identifier))
             {
-                compilationContext.LogError(15, "Cannot compile a null or empty identifier");
+                context.LogError(15, "Null or empty identifier is invalid");
                 return false;
             }
 
-            // TODO: No LINQ here
-            var reservedIdentifiers = whitelist == null
-                                          ? GloballyReservedIdentifiers
-                                          : GloballyReservedIdentifiers.Except(whitelist);
-            if (reservedIdentifiers.Any(reserved => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase)))
+            bool Predicate(Identifier reserved) => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase);
+
+            if (GloballyReservedIdentifiers.Where(id => !(whitelist?.Contains(identifier) ?? false)).Any(Predicate)
+                || (blacklist?.Any(Predicate) ?? false))
             {
-                compilationContext.LogError(15, $"'{identifier}' is a reserved identifier");
+                context.LogError(15, $"'{identifier}' is a reserved identifier");
                 return false;
             }
 
@@ -143,12 +142,12 @@ namespace Element
         }
 
         /// <summary>
-        /// Parses the given file as an Element source file and adds it's contents to the compilation context
+        /// Parses the given file as an Element source file and adds it's contents to a source context
         /// </summary>
-        public static bool ParseFile(this CompilationContext context, FileInfo file) => ParseFile(context, file, true);
+        public static bool ParseFile(this SourceContext context, FileInfo file) => ParseFile(context, file, true);
 
 
-        private static bool ParseFile(this CompilationContext context, FileInfo file, bool validate)
+        private static bool ParseFile(this SourceContext context, FileInfo file, bool validate)
         {
             var success = context.Parse<SourceScope>(Preprocess(File.ReadAllText(file.FullName)), out var sourceScope);
             if (success)
@@ -168,10 +167,10 @@ namespace Element
         /// <summary>
         /// Parses all the given files as Element source files into the compilation context
         /// </summary>
-        public static (bool OverallSuccess, IEnumerable<(bool Success, FileInfo FileInfo)> Results) ParseFiles(this CompilationContext context,
+        public static (bool OverallSuccess, IEnumerable<(bool Success, FileInfo FileInfo)> Results) ParseFiles(this SourceContext context,
             IEnumerable<FileInfo> files)
         {
-            (bool Success, FileInfo File)[] fileResults = files.Select(file => (context.ParseFile(file, false), file)).ToArray();
+            (bool Success, FileInfo File)[] fileResults = files.Where(file => context.GlobalScope[file] == null).Select(file => (context.ParseFile(file, false), file)).ToArray();
             var overallSuccess = fileResults.All(fr => fr.Success) && context.GlobalScope.ValidateScope(context);
             return (overallSuccess, fileResults);
         }

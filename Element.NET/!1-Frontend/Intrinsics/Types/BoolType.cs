@@ -9,10 +9,19 @@ namespace Element.AST
         public string Name => "Bool";
         public string Location => Name;
         private Port[] Inputs { get; } = {new Port("a", NumType.Instance)};
+        private DeclaredStruct? _declaredStruct;
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            arguments.ValidateArguments(Inputs, compilationContext.GlobalScope, compilationContext)
-                ? (IValue)new Literal((Literal)arguments[0], Instance)
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext)
+        {
+            lock (Instance)
+            {
+                _declaredStruct ??= compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] as DeclaredStruct;
+            }
+
+            return arguments.ValidateArguments(Inputs, compilationContext.GlobalScope, compilationContext)
+                ? _declaredStruct?.CreateInstance(new IValue[] {new Literal((Literal) arguments[0] > 0f ? 1f : 0f)}, Instance)
+                  ?? compilationContext.LogError(7, $"Couldn't find '{Location}'")
                 : CompilationErr.Instance;
+        }
     }
 }

@@ -1,13 +1,13 @@
 # Bool is guaranteed by a host to be refined to 1 or 0
-intrinsic struct Bool
+intrinsic struct Bool(n:Num)
 {
-   if(condition:Bool, ifTrue, ifFalse) = list(ifFalse, ifTrue).at(condition);
+    if(condition:Bool, ifTrue, ifFalse) = list(ifFalse, ifTrue).at(condition.n);
 
-    negate(a:Bool):Bool         = a.add(1).rem(2).to(Bool);
-    and(a:Bool, b:Bool):Bool    = a.mul(b).to(Bool);
-    or(a:Bool, b:Bool):Bool     = a.add(b).sub(a.mul(b)).to(Bool);
-    xor(a:Bool, b:Bool):Bool    = a.add(b).rem(2).to(Bool);
-    xnor(a:Bool, b:Bool):Bool   = a.add(b).add(1).rem(2).to(Bool);
+    not(a:Bool):Bool         	= a.n.add(1).rem(2).to(Bool);
+    and(a:Bool, b:Bool):Bool    = a.n.mul(b.n).to(Bool);
+    or(a:Bool, b:Bool):Bool     = a.n.add(b.n).sub(a.n.mul(b.n)).to(Bool);
+    xor(a:Bool, b:Bool):Bool    = a.n.add(b.n).rem(2).to(Bool);
+    xnor(a:Bool, b:Bool):Bool   = a.n.add(b.n).add(1).rem(2).to(Bool);
 }
 
 true = 1.to(Bool);

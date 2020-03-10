@@ -1,7 +1,7 @@
 using Element;
 using NUnit.Framework;
 
-namespace Laboratory
+namespace Laboratory.Tests
 {
 	internal class Boolean : PreludeFixture
 	{
@@ -16,8 +16,8 @@ namespace Laboratory
 			TestCase("Bool(-0.1)", "false")
 		]
 		[
-			TestCase("true.negate", "false"),
-			TestCase("false.negate", "true"),
+			TestCase("Bool.not(true)", "false"),
+			TestCase("Bool.not(false)", "true"),
 		]
 		[
 			TestCase("false.and(false)", "false"),
@@ -73,6 +73,6 @@ namespace Laboratory
 			TestCase("0.1.neq(0)", "true"),
 			TestCase("999.999.neq(999.999)", "false")
 		]
-		public void Operations(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
+		public void Operations(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expression, expected);
 	}
 }

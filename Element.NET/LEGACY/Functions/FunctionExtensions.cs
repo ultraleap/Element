@@ -143,10 +143,10 @@ namespace Element
 		{
 			if (function == null) throw new ArgumentNullException(nameof(function));
 			if (callSite.HasValue)
-				info.Push(callSite.Value);
+				info.PushTrace(callSite.Value);
 			var retval = function.CallInternal(arguments, output, info);
 			if (callSite.HasValue)
-				info.Pop();
+				info.PopTrace();
 			return retval;
 		}
 
@@ -166,7 +166,7 @@ namespace Element
 			CompilationContext context, TraceSite? callSite = null)
 		{
 			if (function == null) throw new ArgumentNullException(nameof(function));
-			if (!(context.Input.Debug && !(function is IType))
+			if (!(/*context.Input.Debug &&*/ !(function is IType))
 				&& function.Outputs?.Length == 1
 				&& function.Outputs[0].Name == "return")
 			{
@@ -250,7 +250,7 @@ namespace Element
 				&& function.Outputs?.Length == 1
 				&& function.Outputs[0].Name == "return")
 			{
-				if (context.Input.Debug && !(function is IType))
+				if (/*context.Input.Debug &&*/ !(function is IType))
 				{
 					function = new ReturnWrapper(function, context, callSite);
 				}
@@ -413,7 +413,7 @@ namespace Element
 		{
 			if (classInstance == null) throw new ArgumentNullException(nameof(classInstance));
 			if (memberFunction == null) throw new ArgumentNullException(nameof(memberFunction));
-			if (!context.Input.Debug && memberFunction.Outputs?.Length == 1)
+			if (/*!context.Input.Debug &&*/ memberFunction.Outputs?.Length == 1)
 			{
 				return memberFunction.Call(new []{classInstance}, memberFunction.Outputs[0].Name, context, callSite);
 			}

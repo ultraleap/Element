@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Element.AST
 {
     public abstract class DeclaredFunction : Declaration, IFunction
@@ -15,14 +13,14 @@ namespace Element.AST
     public class ExtrinsicFunction : DeclaredFunction, ICompilableFunction
     {
         protected override string IntrinsicQualifier => string.Empty;
-        protected override List<Identifier> ScopeIdentifierWhitelist { get; } = new List<Identifier> {Parser.ReturnIdentifier};
+        protected override Identifier[] ScopeIdentifierWhitelist { get; } = {Parser.ReturnIdentifier};
 
-        public override bool Validate(CompilationContext compilationContext)
+        public override bool Validate(SourceContext sourceContext)
         {
-            var success = ValidateScopeBody(compilationContext);
+            var success = ValidateScopeBody(sourceContext);
             if (Body is Terminal)
             {
-                compilationContext.LogError(21, $"Non intrinsic function '{Location}' must have a body");
+                sourceContext.LogError(21, $"Non intrinsic function '{Location}' must have a body");
                 success = false;
             }
 
@@ -35,18 +33,18 @@ namespace Element.AST
         public IValue Compile(IScope scope, CompilationContext compilationContext) =>
             scope.CompileFunction(Body, compilationContext);
 
-        public bool IsBeingCompiled { get; set; }
+        public ICompilableFunction Definition => this;
     }
 
     public class IntrinsicFunction : DeclaredFunction
     {
         protected override string IntrinsicQualifier => "intrinsic";
-        public override bool Validate(CompilationContext compilationContext)
+        public override bool Validate(SourceContext sourceContext)
         {
-            var success = ImplementingIntrinsic<ICallable>(compilationContext) != null;
+            var success = ImplementingIntrinsic<ICallable>(sourceContext) != null;
             if (!(Body is Terminal))
             {
-                compilationContext.LogError(20, $"Intrinsic function '{Location}' cannot have a body");
+                sourceContext.LogError(20, $"Intrinsic function '{Location}' cannot have a body");
                 success = false;
             }
 

@@ -6,6 +6,7 @@ namespace Element.AST
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
+        protected override Identifier[] ScopeIdentifierBlacklist => new[]{Identifier};
 
         public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => ChildScope?[id, recurse, compilationContext];
         string IType.Name => Identifier;
@@ -102,22 +103,22 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier => string.Empty;
 
-        public override bool Validate(CompilationContext compilationContext)
+        public override bool Validate(SourceContext sourceContext)
         {
             var success = true;
             if (DeclaredType != null)
             {
-                compilationContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
+                sourceContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
                 success = false;
             }
 
             if (!HasDeclaredInputs)
             {
-                compilationContext.LogError(13, $"Non intrinsic '{Location}' must have ports");
+                sourceContext.LogError(13, $"Non intrinsic '{Location}' must have ports");
                 success = false;
             }
 
-            success &= ValidateScopeBody(compilationContext);
+            success &= ValidateScopeBody(sourceContext);
 
 
             return success;
@@ -136,20 +137,20 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier => "intrinsic";
 
-        public override bool Validate(CompilationContext compilationContext)
+        public override bool Validate(SourceContext sourceContext)
         {
             var success = true;
             if (DeclaredType != null)
             {
-                compilationContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
+                sourceContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
                 success = false;
             }
 
             // Intrinsic structs implement constraint resolution and a callable constructor
             // They don't implement IScope, scope impl is still handled by DeclaredStruct
-            success &= ImplementingIntrinsic<IConstraint>(compilationContext) != null;
-            success &= ImplementingIntrinsic<ICallable>(compilationContext) != null;
-            success &= ValidateScopeBody(compilationContext);
+            success &= ImplementingIntrinsic<IConstraint>(sourceContext) != null;
+            success &= ImplementingIntrinsic<ICallable>(sourceContext) != null;
+            success &= ValidateScopeBody(sourceContext);
 
             return success;
         }

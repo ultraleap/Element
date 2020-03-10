@@ -83,7 +83,7 @@ namespace Element
 				}
 			}
 			
-			return new TraceSite(ToString(), Source, line, column);
+			return new TraceSite(null, Source, line, column);
 		}
 
 		/// <summary>
@@ -96,9 +96,9 @@ namespace Element
 				case ElementAST.LiteralExpression:
 					return new Constant((float)exprAst.Value);
 				case ElementAST.VariableExpression:
-					context.Push(MakeCallSite(exprAst));
+					context.PushTrace(MakeCallSite(exprAst));
 					var variable = CompileFunction(exprAst.Text, compilerStackFrame, context);
-					context.Pop();
+					context.PopTrace();
 					return variable;
 				case ElementAST.SubExpression:
 					return previous.Call(exprAst[ElementAST.SubExpressionName].Text, context, MakeCallSite(exprAst));
@@ -220,14 +220,14 @@ namespace Element
 				}
 			}
 
-			context.Push(MakeCallSite(Ast));
+			context.PushTrace(MakeCallSite(Ast));
 			if (this.CheckArguments(arguments, output, context) != null)
 			{				
-				context.Pop();
+				context.PopTrace();
 				return CompilationError.Instance;
 			}
 
-			context.Pop();
+			context.PopTrace();
 
 			if (IsClass)
 			{

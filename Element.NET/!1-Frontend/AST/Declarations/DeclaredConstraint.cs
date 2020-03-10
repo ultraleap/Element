@@ -13,11 +13,11 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;
 
-        public override bool Validate(CompilationContext compilationContext)
+        public override bool Validate(SourceContext sourceContext)
         {
             if (!HasDeclaredInputs)
             {
-                compilationContext.LogError(13, $"Non-intrinsic constraint '{Location}' must have a port list");
+                sourceContext.LogError(13, $"Non-intrinsic constraint '{Location}' must have a port list");
                 return false;
             }
 
@@ -32,8 +32,8 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic";
 
-        public override bool Validate(CompilationContext compilationContext) =>
-            ImplementingIntrinsic<IConstraint>(compilationContext) != null;
+        public override bool Validate(SourceContext sourceContext) =>
+            ImplementingIntrinsic<IConstraint>(sourceContext) != null;
         public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
             ImplementingIntrinsic<IConstraint>(compilationContext)?.MatchesConstraint(value, compilationContext) ??
             false;

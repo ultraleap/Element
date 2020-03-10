@@ -6,12 +6,12 @@ namespace Element.AST
 {
     public sealed class GlobalScope : DeclaredScope
     {
-        private readonly Dictionary<FileInfo, SourceScope> _sourceScopes = new Dictionary<FileInfo, SourceScope>();
+        private readonly Dictionary<string, SourceScope> _sourceScopes = new Dictionary<string, SourceScope>();
 
         public SourceScope this[FileInfo file]
         {
-            get => _sourceScopes[file];
-            set => _sourceScopes[file] = value;
+            get => _sourceScopes.TryGetValue(file.FullName, out var found) ? found : null;
+            set => _sourceScopes[file.FullName] = value;
         }
 
         public override IValue? this[Identifier id, bool recurse, CompilationContext context] => IndexCache(id);
