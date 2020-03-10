@@ -36,7 +36,10 @@ namespace Element.AST
                              .Select(o => new BinaryIntrinsic(o)))
                 .Concat(Enum.GetValues(typeof(Unary.Op))
                             .Cast<Unary.Op>()
-                            .Select(o => new UnaryIntrinsic(o))))
+                            .Select(o => new UnaryIntrinsic(o)))
+                .Concat(Enum.GetValues(typeof(NumIntrinsicValues.Value))
+                            .Cast<NumIntrinsicValues.Value>()
+                            .Select(v => new NumIntrinsicValues(v))))
             {
                 _intrinsics.Add(intrinsic.Location, intrinsic);
             }

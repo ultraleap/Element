@@ -35,6 +35,8 @@ namespace Laboratory
                 return true;
             }
 
+            if (float.IsNaN(a) && float.IsNaN(b)) return true;
+
             if (a == 0.0f || b == 0.0f || diff < floatNormal)
             {    
                 // a or b is zero, or both are extremely close to it.
@@ -47,14 +49,20 @@ namespace Laboratory
             // ReSharper enable CompareOfFloatsByEqualityOperator
         }
 
-        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params string[] expressions)
-        {
-            var (controlSuccess, controlResult) = Host.Evaluate(compilationInput, controlExpression);
-            if (!controlSuccess) Assert.Fail($"'{controlExpression}' evaluation failed");
-            expressions.Aggregate(controlResult, (expected, expression) =>
+        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params string[] expressions) =>
+            AssertApproxEqual(compilationInput, controlExpression, expressions.Select(expression =>
             {
                 var (success, result) = Host.Evaluate(compilationInput, expression);
                 if (!success) Assert.Fail($"'{expression}' evaluation failed");
+                return result;
+            }).ToArray());
+
+        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params float[][] results)
+        {
+            var (controlSuccess, controlResult) = Host.Evaluate(compilationInput, controlExpression);
+            if (!controlSuccess) Assert.Fail($"'{controlExpression}' evaluation failed");
+            results.Aggregate(controlResult, (expected, result) =>
+            {
                 CollectionAssert.AreEqual(expected, result, FloatComparer);
                 return expected;
             });

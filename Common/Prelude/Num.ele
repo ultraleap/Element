@@ -52,6 +52,9 @@ intrinsic struct Num
     intrinsic log(a:Num, b:Num):Num;
 
     # Constants
+    intrinsic NaN;
+    intrinsic PositiveInfinity;
+    intrinsic NegativeInfinity;
     pi   = 3.14159265359;
     tau  = pi.mul(2);
     e    = 2.718281828459045;

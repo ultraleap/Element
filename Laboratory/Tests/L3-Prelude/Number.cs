@@ -1,4 +1,5 @@
-/*using System;
+using System;
+using System.Globalization;
 using System.Linq;
 using Element;
 using NUnit.Framework;
@@ -14,127 +15,129 @@ namespace Laboratory.Tests
 
 		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
 		{
-			("ln", MathF.Log),
-			("sin", MathF.Sin),
-			("cos", MathF.Cos),
-			("tan", MathF.Tan),
-			("asin", MathF.Asin),
-			("acos", MathF.Acos),
-			("atan", MathF.Atan),
+			("Num.ln({0})", MathF.Log),
+			("Num.sin({0})", MathF.Sin),
+			("Num.cos({0})", MathF.Cos),
+			("Num.tan({0})", MathF.Tan),
+			("Num.asin({0})", MathF.Asin),
+			("Num.acos({0})", MathF.Acos),
+			("Num.atan({0})", MathF.Atan),
 		};
 
 		[Test, Pairwise]
 		public void UnaryMathOpRandom([ValueSource(nameof(_unaryOpTestValues))]
-		                              (string ElementFunction, Func<float, float> CLRFunction) f,
-		                              [Random(-1.0e6f, 1.0e6f, 20)] float a) =>
-			Assert.That(Execute(f.ElementFunction, a)[0], FloatIsApproximately(f.CLRFunction(a)));
+		                              (string ElementFunction, Func<float, float> CLRFunction) functionPair,
+		                              [Random(-1.0e6f, 1.0e6f, 20)] float arg0) =>
+			AssertApproxEqual(ValidatedCompilationInput,
+				string.Format(functionPair.ElementFunction, arg0),
+				new[]{functionPair.CLRFunction(arg0)});
 
 		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] _binaryOpTestValues =
 		{
-			("add", (a, b) => a + b),
-			("sub", (a, b) => a - b),
-			("mul", (a, b) => a * b),
-			("div", (a, b) => a / b),
-			("rem", (a, b) => a % b),
-			("pow", MathF.Pow),
-			("min", MathF.Min),
-			("max", MathF.Max),
-			("log", MathF.Log),
-			("atan2", MathF.Atan2),
+			("Num.add({0}, {1})", (a, b) => a + b),
+			("Num.sub({0}, {1})", (a, b) => a - b),
+			("Num.mul({0}, {1})", (a, b) => a * b),
+			("Num.div({0}, {1})", (a, b) => a / b),
+			("Num.rem({0}, {1})", (a, b) => a % b),
+			("Num.pow({0}, {1})", MathF.Pow),
+			("Num.min({0}, {1})", MathF.Min),
+			("Num.max({0}, {1})", MathF.Max),
+			("Num.log({0}, {1})", MathF.Log),
+			("Num.atan2({0}, {1})", MathF.Atan2),
 		};
 
 		[Test, Pairwise]
 		public void BinaryMathOpRandom([ValueSource(nameof(_binaryOpTestValues))]
-		                               (string ElementFunction, Func<float, float, float> CLRFunction) f,
-		                               [Random(-1.0e6f, 1.0e6f, 20)] float a,
-		                               [Random(-1.0e6f, 1.0e6f, 20)] float b) =>
-			Assert.That(Execute(f.ElementFunction, a, b)[0], FloatIsApproximately(f.CLRFunction(a, b)));
+		                               (string ElementFunction, Func<float, float, float> CLRFunction) functionPair,
+		                               [Random(-1.0e6f, 1.0e6f, 20)] float arg0,
+		                               [Random(-1.0e6f, 1.0e6f, 20)] float arg1) =>
+			AssertApproxEqual(ValidatedCompilationInput,
+				string.Format(functionPair.ElementFunction, arg0, arg1),
+				new[]{functionPair.CLRFunction(arg0, arg1)});
 
 		[
-			TestCase("ln", 0f, float.NegativeInfinity),
-			TestCase("ln", 1f, 0f),
-			TestCase("ln", MathF.E, 1f),
+			TestCase("Num.ln(0)", "Num.NegativeInfinity"),
+			TestCase("Num.ln(1)", "0"),
+			TestCase("Num.ln(Num.e)", "1"),
 		]
-		public void UnaryMathOp(string function, float a, float expected) =>
-			Assert.That(Execute(function, a)[0], FloatIsApproximately(expected));
+		public void UnaryMathOp(string function, string expected) => AssertApproxEqual(ValidatedCompilationInput, function, expected);
 
 		[
 			// Add
-			TestCase("add", 0f, 0f, 0f),
-			TestCase("add", 2f, 3f, 5f),
-			TestCase("add", -1.5f, -1.5f, -3f),
-			TestCase("add", 1.5f, -1.5f, 0f),
+			TestCase("Num.add(0, 0)", "0"),
+			TestCase("Num.add(2, 3)", "5"),
+			TestCase("Num.add(-1.5, -1.5)", "-3"),
+			TestCase("Num.add(1.5, -1.5)", "0"),
 
 			// Sub
-			TestCase("sub", 0f, 0f, 0f),
-			TestCase("sub", 2f, 3f, -1f),
-			TestCase("sub", -1.5f, -1.5f, 0f),
-			TestCase("sub", 1.5f, -1.5f, 3f),
+			TestCase("Num.sub(0, 0)", "0"),
+			TestCase("Num.sub(2, 3)", "-1"),
+			TestCase("Num.sub(-1.5, -1.5)", "0"),
+			TestCase("Num.sub(1.5, -1.5)", "3"),
 
 			// Mul
-			TestCase("mul", 0f, 0f, 0f),
-			TestCase("mul", 10f, 0f, 0f),
-			TestCase("mul", -5f, 0f, 0f),
-			TestCase("mul", 2f, 3f, 6f),
-			TestCase("mul", -1.5f, -1.5f, 2.25f),
-			TestCase("mul", 1.5f, -1.5f, -2.25f),
+			TestCase("Num.mul(0, 0)", "0"),
+			TestCase("Num.mul(10, 0)", "0"),
+			TestCase("Num.mul(-5, 0)", "0"),
+			TestCase("Num.mul(2, 3)", "6"),
+			TestCase("Num.mul(-1.5, -1.5)", "2.25"),
+			TestCase("Num.mul(1.5, -1.5)", "-2.25"),
 
 			// Div
-			TestCase("div", 0f, 1f, 0f),
-			TestCase("div", 1f, 10f, 0.1f),
-			TestCase("div", -1f, -1f, 1f),
-			TestCase("div", 1f, 0.1f, 10f),
-			TestCase("div", 1f, 0f, float.PositiveInfinity),
+			TestCase("Num.div(0, 1)", "0"),
+			TestCase("Num.div(1, 10)", "0.1"),
+			TestCase("Num.div(-1, -1)", "1"),
+			TestCase("Num.div(1, 0.1)", "10"),
+			TestCase("Num.div(1, 0)", "Num.PositiveInfinity"),
 
 			// Rem
-			TestCase("rem", 5f, 1.5f, 0.5f),
-			TestCase("rem", 5f, 1.5f, 0.5f),
-			TestCase("rem", -5f, -1.5f, -0.5f),
-			TestCase("rem", -5f, -1.5f, -0.5f),
-			TestCase("rem", 5f, 3f, 2f),
-			TestCase("rem", 5f, -3f, 2f),
-			TestCase("rem", -5f, 3f, -2f),
-			TestCase("rem", -5f, -3f, -2f),
-			TestCase("rem", 5f, 0f, float.NaN),
-			TestCase("rem", 5f, -0f, float.NaN),
-			TestCase("rem", -5f, 0f, float.NaN),
-			TestCase("rem", -5f, -0f, float.NaN),
+			TestCase("Num.rem(5, 1.5)", "0.5"),
+			TestCase("Num.rem(5, -1.5)", "0.5"),
+			TestCase("Num.rem(-5, 1.5)", "-0.5"),
+			TestCase("Num.rem(-5, -1.5)", "-0.5"),
+			TestCase("Num.rem(5, 3)", "2"),
+			TestCase("Num.rem(5, -3)", "2"),
+			TestCase("Num.rem(-5, 3)", "-2"),
+			TestCase("Num.rem(-5, -3)", "-2"),
+			TestCase("Num.rem(5, 0)", "Num.NaN"),
+			TestCase("Num.rem(5, -0)", "Num.NaN"),
+			TestCase("Num.rem(-5, 0)", "Num.NaN"),
+			TestCase("Num.rem(-5, -0)", "Num.NaN"),
 
 			// Pow
-			TestCase("pow", -5f, -0f, 1f),
-			TestCase("pow", -5f, 1f, -5f),
-			TestCase("pow", 12f, 2f, 144f),
-			TestCase("pow", 5f, -2f, 0.04f),
-			TestCase("pow", 5f, 0, 1f),
-			TestCase("pow", 5f, -0f, 1f),
-			TestCase("pow", -5f, 0f, 1f),
-			TestCase("pow", -5f, -0f, 1f),
+			TestCase("Num.pow(-5, -0)", "1"),
+			TestCase("Num.pow(-5, 1)", "-5"),
+			TestCase("Num.pow(12, 2)", "144"),
+			TestCase("Num.pow(5, -2)", "0.04"),
+			TestCase("Num.pow(5, 0)", "1"),
+			TestCase("Num.pow(5, -0)", "1"),
+			TestCase("Num.pow(-5, 0)", "1"),
+			TestCase("Num.pow(-5, -0)", "1"),
 
 			// Min
-			TestCase("min", 5f, -2f, -2f),
-			TestCase("min", -4f, 25f, -4f),
-			TestCase("min", 25f, 150f, 25f),
-			TestCase("min", -140f, -2f, -140f),
+			TestCase("Num.min(5, -2)", "-2"),
+			TestCase("Num.min(-4, 25)", "-4"),
+			TestCase("Num.min(25, 150)", "25"),
+			TestCase("Num.min(-140, -2)", "-140"),
 
 			// Max
-			TestCase("max", 5f, -2f, 5f),
-			TestCase("max", -4f, 25f, 25f),
-			TestCase("max", 25f, 150f, 150f),
-			TestCase("max", -140f, -2f, -2f),
+			TestCase("Num.max(5, -2)", "5"),
+			TestCase("Num.max(-4, 25)", "25"),
+			TestCase("Num.max(25, 150)", "150"),
+			TestCase("Num.max(-140, -2)", "-2"),
 
 			// Log
-			TestCase("log", 0f, 10f, float.NegativeInfinity),
-			TestCase("log", 1f, 10f, 0f),
+			TestCase("Num.log(0, 10)", "Num.NegativeInfinity"),
+			TestCase("Num.log(1, 10)", "0"),
 			TestCaseSource(nameof(_logCaseData))
 		]
-		public void BinaryMathOps(string function, float a, float b, float expected) =>
-			Assert.That(Execute(function, a, b)[0], FloatIsApproximately(expected));
+		public void BinaryMathOps(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expression, expected);
 
 		private static object[] _logCaseData = Enumerable.Range(1, 11)
 		                                                 .Select(i => new object[]
 		                                                 {
-			                                                 "log", MathF.Pow(10f, i - 1), 10f, i - 1f
+			                                                 $"Num.log({ MathF.Pow(10f, i - 1)}, 10)", (i - 1f).ToString(CultureInfo.InvariantCulture)
 		                                                 })
 		                                                 .ToArray();
 	}
-}*/
+}
