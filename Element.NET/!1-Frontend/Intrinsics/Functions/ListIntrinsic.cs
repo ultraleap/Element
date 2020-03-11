@@ -2,10 +2,12 @@ using System;
 
 namespace Element.AST
 {
-	public class ListIntrinsic : IIntrinsic, ICallable
+	public class ListIntrinsic : IIntrinsic, IFunction
 	{
 		public IType Type => FunctionType.Instance;
 		public string Location => "list";
+		public Port[] Inputs { get; } = {Port.VariadicPort};
+		public Type Output { get; } = new Type(ListType.Instance);
 		public IValue Call(IValue[] arguments, CompilationContext context) =>
 			ListType.Instance.Call(new IValue[]{new IndexFunction(arguments), new Literal(arguments.Length), }, context);
 

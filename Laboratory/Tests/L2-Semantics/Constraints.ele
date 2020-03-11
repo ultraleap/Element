@@ -6,5 +6,8 @@ a = 5;
 explicitAny(a:Any) = a;
 onlyNum(a:Num) = a;
 
+returnsNum(a):Num = a;
+returnsNotNum(a):NotNum = a;
+
 constraint Predicate(a):Bool;
 namespace MySpace {}

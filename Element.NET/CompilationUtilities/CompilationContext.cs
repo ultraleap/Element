@@ -18,7 +18,7 @@ namespace Element
         public void PopFunction() => FunctionStack.Pop();
         public bool ContainsFunction(ICompilableFunction function) => FunctionStack.Contains(function);
 
-        protected override CompilerMessage LogImpl(int? messageCode, string context = default) => !messageCode.HasValue
+        protected override CompilerMessage MakeMessage(int? messageCode, string context = default) => !messageCode.HasValue
             ? new CompilerMessage(null, null, context, TraceStack?.ToArray())
             : new CompilerMessage(messageCode.Value, CompilerMessage.GetMessageLevel(messageCode.Value), context, TraceStack?.ToArray());
     }

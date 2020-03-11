@@ -10,8 +10,13 @@ namespace Element.AST
 
     public interface IFunction : ICallable
     {
-        Port[]? Inputs { get; }
-        Type Output { get; }
+        Port[] Inputs { get; }
+        Type? Output { get; }
+    }
+
+    public interface IResolvable
+    {
+        IValue Resolve(IScope scope);
     }
 
     public interface ICompilableFunction : IFunction
@@ -22,7 +27,7 @@ namespace Element.AST
 
     public static class FunctionExtensions
     {
-        public static bool IsNullary(this IFunction function) => function.Inputs?.Length == 0;
+        public static bool IsNullary(this IFunction function) => function.Inputs.Length == 0;
         public static IValue ResolveNullaryFunction(this IValue value, CompilationContext compilationContext)
         {
             var previous = value;
@@ -53,6 +58,8 @@ namespace Element.AST
                 var result = argsValid
                     ? function.Compile(callScope, compilationContext)
                     : CompilationErr.Instance;
+
+
                 return result;
             }
             finally
@@ -84,7 +91,7 @@ namespace Element.AST
             private readonly object _body;
             public IType Type => Definition.Type;
             public Port[] Inputs { get; }
-            public Type Output => Definition.Output;
+            public Type? Output => Definition.Output;
 
             public IValue Compile(IScope scope, CompilationContext compilationContext) => scope.CompileFunction(_body, compilationContext);
             public ICompilableFunction Definition { get; }

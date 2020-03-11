@@ -1,22 +1,20 @@
-using System;
-
 namespace Element.AST
 {
     public class AnonymousFunction : ICompilableFunction
     {
-        public AnonymousFunction(IScope callScope, object body, PortList ports, Type output)
+        public AnonymousFunction(IScope callScope, object body, PortList ports, Type? output)
         {
             _body = body;
             _callScope = callScope;
             Output = output;
-            Inputs =  ports?.List.ToArray() ?? Array.Empty<Port>();
+            Inputs =  ports.List.ToArray();
         }
 
         private readonly object _body;
         private readonly IScope? _callScope;
         public IType Type => FunctionType.Instance;
-        public Port[]? Inputs { get; }
-        public Type Output { get; }
+        public Port[] Inputs { get; }
+        public Type? Output { get; }
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
             this.ApplyArguments(arguments, Inputs, _body, _callScope, compilationContext);

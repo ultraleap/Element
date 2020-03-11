@@ -7,7 +7,7 @@ namespace Element.AST
         public override IType Type => FunctionType.Instance;
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
         Port[] IFunction.Inputs => DeclaredInputs;
-        Type IFunction.Output => DeclaredType;
+        Type? IFunction.Output => DeclaredType;
     }
 
     public class ExtrinsicFunction : DeclaredFunction, ICompilableFunction
@@ -17,7 +17,7 @@ namespace Element.AST
 
         public override bool Validate(SourceContext sourceContext)
         {
-            var success = ValidateScopeBody(sourceContext);
+            var success = base.Validate(sourceContext);
             if (Body is Terminal)
             {
                 sourceContext.LogError(21, $"Non intrinsic function '{Location}' must have a body");
@@ -41,7 +41,7 @@ namespace Element.AST
         protected override string IntrinsicQualifier => "intrinsic";
         public override bool Validate(SourceContext sourceContext)
         {
-            var success = ImplementingIntrinsic<ICallable>(sourceContext) != null;
+            var success = ImplementingIntrinsic<IFunction>(sourceContext) != null;
             if (!(Body is Terminal))
             {
                 sourceContext.LogError(20, $"Intrinsic function '{Location}' cannot have a body");

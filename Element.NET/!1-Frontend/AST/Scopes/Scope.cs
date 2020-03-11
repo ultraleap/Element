@@ -20,7 +20,7 @@ namespace Element.AST
         public Declaration Declarer { get; private set; }
 
         public override IValue? this[Identifier id, bool recurse, CompilationContext context] =>
-            IndexCache(id) ?? (recurse ? Declarer?.ParentScope[id, true, context] : null);
+            IndexCache(id) ?? (recurse ? Declarer.ParentScope[id, true, context] : null);
 
         public void Initialize(Declaration declarer)
         {

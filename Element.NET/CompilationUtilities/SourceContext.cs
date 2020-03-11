@@ -15,7 +15,7 @@ namespace Element
             return sourceContext.LoadPackagesAndExtraSourceFiles();
         }
 
-        protected override CompilerMessage LogImpl(int? messageCode, string context = default)=> !messageCode.HasValue
+        protected override CompilerMessage MakeMessage(int? messageCode, string context = default)=> !messageCode.HasValue
             ? new CompilerMessage(null, null, context, null)
             : new CompilerMessage(messageCode.Value, CompilerMessage.GetMessageLevel(messageCode.Value), context, null);
 

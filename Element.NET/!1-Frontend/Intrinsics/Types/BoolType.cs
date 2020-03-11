@@ -13,14 +13,21 @@ namespace Element.AST
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
-            lock (Instance)
+            if (_declaredStruct == null)
             {
-                _declaredStruct ??= compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] as DeclaredStruct;
+                lock (this)
+                {
+                    if (!(compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] is DeclaredStruct declaredStruct))
+                    {
+                        return compilationContext.LogError(7, $"Couldn't find '{Location}'");
+                    }
+
+                    _declaredStruct = declaredStruct;
+                }
             }
 
             return arguments.ValidateArguments(Inputs, compilationContext.GlobalScope, compilationContext)
-                ? _declaredStruct?.CreateInstance(new IValue[] {new Literal((Literal) arguments[0] > 0f ? 1f : 0f)}, Instance)
-                  ?? compilationContext.LogError(7, $"Couldn't find '{Location}'")
+                ? _declaredStruct.CreateInstance(new IValue[] {new Literal((Literal) arguments[0] > 0f ? 1f : 0f)}, Instance)
                 : CompilationErr.Instance;
         }
     }

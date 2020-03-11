@@ -89,7 +89,7 @@ namespace Element.AST
             private readonly IValue _argument;
 
             public Port[] Inputs { get; }
-            public Type Output => _surrogate.Output;
+            public Type? Output => _surrogate.Output;
 
             IType IValue.Type => FunctionType.Instance;
 
@@ -105,7 +105,8 @@ namespace Element.AST
 
         public override bool Validate(SourceContext sourceContext)
         {
-            var success = true;
+            var success = base.Validate(sourceContext);
+
             if (DeclaredType != null)
             {
                 sourceContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
@@ -117,9 +118,6 @@ namespace Element.AST
                 sourceContext.LogError(13, $"Non intrinsic '{Location}' must have ports");
                 success = false;
             }
-
-            success &= ValidateScopeBody(sourceContext);
-
 
             return success;
         }
@@ -139,7 +137,7 @@ namespace Element.AST
 
         public override bool Validate(SourceContext sourceContext)
         {
-            var success = true;
+            var success = base.Validate(sourceContext);
             if (DeclaredType != null)
             {
                 sourceContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
@@ -150,7 +148,6 @@ namespace Element.AST
             // They don't implement IScope, scope impl is still handled by DeclaredStruct
             success &= ImplementingIntrinsic<IConstraint>(sourceContext) != null;
             success &= ImplementingIntrinsic<ICallable>(sourceContext) != null;
-            success &= ValidateScopeBody(sourceContext);
 
             return success;
         }

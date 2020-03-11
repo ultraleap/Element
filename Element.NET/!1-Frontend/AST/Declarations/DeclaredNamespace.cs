@@ -3,7 +3,6 @@ namespace Element.AST
     // ReSharper disable once ClassNeverInstantiated.Global
     public class DeclaredNamespace : Declaration, IScope
     {
-        public override bool Validate(SourceContext sourceContext) => ValidateScopeBody(sourceContext);
         protected override string IntrinsicQualifier => string.Empty;
         protected override string Qualifier { get; } = "namespace";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope)};

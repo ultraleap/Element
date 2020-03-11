@@ -3,7 +3,7 @@ namespace Element.AST
     /// <summary>
     /// An intrinsic with 2 arguments and a single return.
     /// </summary>
-    internal class BinaryIntrinsic : IIntrinsic, ICallable
+    internal class BinaryIntrinsic : IIntrinsic, IFunction
     {
         public BinaryIntrinsic(Binary.Op operation)
         {
@@ -20,5 +20,7 @@ namespace Element.AST
                 : CompilationErr.Instance;
 
         public IType Type => FunctionType.Instance;
+        public Port[] Inputs { get; } = {new Port("a", NumType.Instance), new Port("b", NumType.Instance)};
+        public Type Output { get; } = new Type(NumType.Instance);
     }
 }

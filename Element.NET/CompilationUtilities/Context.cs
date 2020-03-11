@@ -18,7 +18,7 @@ namespace Element
 
         public CompilationErr LogError(int? messageCode, string context = default)
         {
-            var msg = LogImpl(messageCode, context);
+            var msg = MakeMessage(messageCode, context);
             if (!msg.MessageLevel.HasValue || msg.MessageLevel.Value >= CompilationInput.Verbosity)
             {
                 CompilationInput.LogCallback?.Invoke(msg);
@@ -29,12 +29,12 @@ namespace Element
 
         public void Log(string message)
         {
-            var msg = LogImpl(null, message);
+            var msg = MakeMessage(null, message);
             if (!msg.MessageLevel.HasValue || msg.MessageLevel.Value >= CompilationInput.Verbosity)
             {
                 CompilationInput.LogCallback?.Invoke(msg);
             }
         }
-        protected abstract CompilerMessage LogImpl(int? messageCode, string context = default);
+        protected abstract CompilerMessage MakeMessage(int? messageCode, string context = default);
     }
 }

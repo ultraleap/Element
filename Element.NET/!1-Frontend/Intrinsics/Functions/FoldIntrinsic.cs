@@ -3,10 +3,12 @@ using System.Linq;
 
 namespace Element.AST
 {
-	public class FoldIntrinsic : IIntrinsic, ICallable
+	public class FoldIntrinsic : IIntrinsic, IFunction
 	{
 		public IType Type => FunctionType.Instance;
 		public string Location => "List.fold";
+		public Port[] Inputs { get; } = {new Port(_atIdentifier, FunctionType.Instance), new Port(_countIdentifier, NumType.Instance)};
+		public Type? Output => null;
 		public IValue Call(IValue[] arguments, CompilationContext compilationContext)
 		{
 			var list = EvaluateArray(arguments[0] as IScope, compilationContext);

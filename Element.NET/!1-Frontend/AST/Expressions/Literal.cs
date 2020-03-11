@@ -5,11 +5,7 @@ namespace Element.AST
 {
     public struct Literal : ISerializable, IScope, IValue
     {
-        public Literal(float value)
-        {
-            Value = value;
-            _declaringStruct = null;
-        }
+        public Literal(float value) => Value = value;
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         [Term] public float Value { get; private set; }
@@ -26,13 +22,7 @@ namespace Element.AST
             return true;
         }
 
-        private DeclaredStruct? _declaringStruct;
-
         public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-            (_declaringStruct ??= (DeclaredStruct)compilationContext.GlobalScope[new Identifier(Type.Name), false, compilationContext]) switch
-            {
-                DeclaredStruct declaredStruct => declaredStruct.ResolveInstanceFunction(id, this, compilationContext),
-                _ => compilationContext.LogError(7, $"Couldn't find instance function '{Type.Name}'")
-            };
+            NumType.Instance.ResolveInstanceFunction(id, this, compilationContext);
     }
 }

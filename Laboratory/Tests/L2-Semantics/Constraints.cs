@@ -7,25 +7,32 @@ namespace Laboratory.Tests
     {
         public Constraints(IHost host) : base(host, "Constraints") { }
 
-        [Test]
-        public void ExplicitAnyAcceptsNum() => AssertApproxEqual(CompilationInput, "explicitAny(5)", "5");
+        [TestCase("explicitAny(5)")]
+        [TestCase("explicitAny(NotNum(5))")]
+        [TestCase("explicitAny(a)")]
+        public void ExplicitAny(string expression) => AssertApproxEqual(CompilationInput, expression, "5");
 
-        [Test]
-        public void NumFailsGivenNonNum() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNum(NotNum(5))");
+        [TestCase("onlyNum(NotNum(5))")]
+        [TestCase("returnsNum(NotNum(5))")]
+        [TestCase("returnsNotNum(5)")]
+        public void ConstraintNotSatisfied(string expression) => EvaluateExpectingErrorCode(CompilationInput, 8, expression);
 
-        [Test]
-        public void TypeofFunction() => AssertTypeof(CompilationInput, "onlyNum", "Function");
+        [TestCase("explicitAny", "Function")]
+        [TestCase("onlyNum", "Function")]
+        [TestCase("returnsNum", "Function")]
+        [TestCase("returnsNotNum", "Function")]
+        [TestCase("Predicate", "Constraint")]
+        [TestCase("Any", "Constraint")]
+        [TestCase("MySpace", "Namespace")]
+        [TestCase("5", "Num")]
+        [TestCase("a", "Num")]
+        public void TypeofIs(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
 
-        [TestCase("5"), TestCase("a")]
-        public void TypeofNumber(string expression) => AssertTypeof(CompilationInput, expression, "Num");
-
-        [Test]
-        public void TypeofConstraint() => AssertTypeof(CompilationInput, "Any", "Constraint");
-
-        [Test]
-        public void TypeofNamespace() => AssertTypeof(CompilationInput, "MySpace", "Namespace");
-
-        [Test]
-        public void ConstraintNotDeserializable() => EvaluateExpectingErrorCode(CompilationInput, 1, "Predicate");
+        [TestCase("MySpace")]
+        [TestCase("Predicate")]
+        [TestCase("Num")]
+        [TestCase("Any")]
+        [TestCase("onlyNum")]
+        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilationInput, 1, expression);
     }
 }
