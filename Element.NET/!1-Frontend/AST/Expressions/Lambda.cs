@@ -7,7 +7,7 @@ namespace Element.AST
 #pragma warning disable 649, 169
         [Term] private Unidentifier _;
         [Term] private PortList _portList;
-        [Optional] private Type? _type;
+        [Optional] private TypeAnnotation? _type;
         [Alternative(typeof(ExpressionBody), typeof(Scope)), WhitespaceSurrounded, MultiLine] private object _body;
 #pragma warning restore 649, 169
 

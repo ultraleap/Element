@@ -11,10 +11,10 @@ namespace Element.AST
         // ReSharper disable once MemberCanBePrivate.Global
         public Port() {}
 
-        public Port(string identifier, IConstraint constraint)
+        public Port(string identifier, TypeAnnotation type)
         {
             _identifier = new Identifier(identifier);
-            _type = constraint == null ? null : new Type(constraint);
+            _type = type;
         }
 
         public static Port VariadicPort { get; } = new Port();
@@ -22,7 +22,7 @@ namespace Element.AST
 #pragma warning disable 649
         // ReSharper disable FieldCanBeMadeReadOnly.Local
         [Alternative(typeof(Identifier), typeof(Unidentifier))] private object _identifier;
-        [Optional] private Type? _type;
+        [Optional] private TypeAnnotation? _type;
         // ReSharper restore FieldCanBeMadeReadOnly.Local
 #pragma warning restore 649
 
@@ -30,7 +30,7 @@ namespace Element.AST
         public IConstraint ResolveConstraint(IScope startingScope, CompilationContext compilationContext) =>
             (_type, startingScope) switch
             {
-                (Type t, IScope scope) => t.ResolveConstraint(scope, compilationContext),
+                (TypeAnnotation t, IScope scope) => t.ResolveConstraint(scope, compilationContext),
                 (null, _) => AnyConstraint.Instance,
                 (_, null) => throw new ArgumentNullException(nameof(startingScope))
             };

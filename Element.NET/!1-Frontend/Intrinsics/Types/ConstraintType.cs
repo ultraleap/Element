@@ -1,6 +1,6 @@
 namespace Element.AST
 {
-    public class ConstraintType : IType
+    public sealed class ConstraintType : IType
     {
         private ConstraintType() {}
         public static IType Instance { get; } = new ConstraintType();

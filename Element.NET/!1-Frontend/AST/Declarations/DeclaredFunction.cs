@@ -7,7 +7,7 @@ namespace Element.AST
         public override IType Type => FunctionType.Instance;
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
         Port[] IFunction.Inputs => DeclaredInputs;
-        Type? IFunction.Output => DeclaredType;
+        TypeAnnotation? IFunction.Output => DeclaredType;
     }
 
     public class ExtrinsicFunction : DeclaredFunction, ICompilableFunction
@@ -28,7 +28,7 @@ namespace Element.AST
         }
 
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            this.ApplyArguments(arguments, DeclaredInputs, Body, ChildScope ?? ParentScope, compilationContext);
+            this.ApplyArguments(arguments, DeclaredInputs, DeclaredType, Body, ChildScope ?? ParentScope, compilationContext);
 
         public IValue Compile(IScope scope, CompilationContext compilationContext) =>
             scope.CompileFunction(Body, compilationContext);

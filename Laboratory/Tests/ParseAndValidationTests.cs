@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Element;
 using Element.AST;
@@ -15,7 +16,7 @@ namespace Laboratory.Tests
     {
         public ParseAndValidationTests(IHost host) : base(host) { }
 
-        private const int DefaultFailingParseTestCode = 9;
+        private const int _defaultFailingParseTestCode = 9;
 
         private static IEnumerable GenerateTestData(string testKind, string directory, int? defaultExpectedErrorCode)
         {
@@ -41,7 +42,8 @@ namespace Laboratory.Tests
         private void RunTest((FileInfo FileInfo, int? ExpectedMessageCode) info, bool skipValidation)
         {
             var (fileInfo, expectedMessageCode) = info;
-            var compilationInput = new CompilationInput(expectedMessageCode.HasValue ? ExpectMessageCode(expectedMessageCode.Value, FailOnError) : FailOnError)
+            var errors = new System.Collections.Generic.List<CompilerMessage>();
+            var compilationInput = new CompilationInput(expectedMessageCode.HasValue ? ExpectMessageCode(expectedMessageCode.Value, errors) : FailOnError)
             {
                 ExcludePrelude = true,
                 SkipValidation = skipValidation
@@ -49,10 +51,20 @@ namespace Laboratory.Tests
             var success = Host.ParseFile(compilationInput, fileInfo);
 
             if (expectedMessageCode.HasValue && success)
-                Assert.Fail($"Expected error ELE{expectedMessageCode.Value} '{CompilerMessage.GetMessageName(expectedMessageCode.Value)}' but no error was logged");
+            {
+                if (errors.Count >= 0)
+                {
+                    Assert.Fail("Expected error ELE{0} '{1}' but got following error codes instead: {2}",
+                        expectedMessageCode.Value, CompilerMessage.GetMessageName(expectedMessageCode.Value),
+                        string.Join(",", errors.Select(err => err.MessageCode)));
+                } else {
+                    Assert.Fail("Expected error ELE{0} '{1}' but no error was logged", expectedMessageCode.Value,
+                        CompilerMessage.GetMessageName(expectedMessageCode.Value));
+                }
+            }
         }
 
-        private static IEnumerable GenerateParseTestData() => GenerateTestData("Parse", "L0-Parsing", DefaultFailingParseTestCode);
+        private static IEnumerable GenerateParseTestData() => GenerateTestData("Parse", "L0-Parsing", _defaultFailingParseTestCode);
         private static IEnumerable GenerateValidationTestData() => GenerateTestData("Validation", "L1-Validation", null);
         
         [TestCaseSource(nameof(GenerateParseTestData))]
@@ -71,7 +83,7 @@ namespace Laboratory.Tests
                 (nameof(Terminal), ";", typeof(Terminal)),
                 (nameof(ExpressionBody), "= 5", typeof(ExpressionBody)),
                 (nameof(Binding), "= 5;", typeof(Binding)),
-                (nameof(Element.AST.Type), ":Foo.Bar", typeof(Element.AST.Type)),
+                (nameof(TypeAnnotation), ":Foo.Bar", typeof(TypeAnnotation)),
                 (nameof(Expression), "a.b(c).d.e(5)", typeof(Expression)),
                 (nameof(CallExpression), "(5, a(10, c))", typeof(CallExpression)),
                 (nameof(IndexingExpression), ".identifier", typeof(IndexingExpression)),

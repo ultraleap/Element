@@ -2,7 +2,7 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class DeclaredStruct : Declaration, ICallable, IScope, IType
+    public abstract class DeclaredStruct : Declaration, IFunction, IScope, IType
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
@@ -11,19 +11,34 @@ namespace Element.AST
         public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => ChildScope?[id, recurse, compilationContext];
         string IType.Name => Identifier;
         public override IType Type => TypeType.Instance;
+        public Port[] Inputs => DeclaredInputs;
+        public TypeAnnotation Output => new TypeAnnotation(this);
         public abstract bool MatchesConstraint(IValue value, CompilationContext compilationContext);
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
 
-        public IValue ResolveInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, CompilationContext compilationContext) =>
-            this[instanceFunctionIdentifier, false, compilationContext] switch
+        public IValue ResolveInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, CompilationContext compilationContext)
+        {
+            switch (this[instanceFunctionIdentifier, false, compilationContext])
             {
-                DeclaredFunction instanceFunction when instanceFunction.IsNullary() => compilationContext.LogError(22, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
-                IFunction instanceFunction when instanceFunction.Inputs[0].ResolveConstraint(this, compilationContext) == this => new InstanceFunction(instanceBeingIndexed, instanceFunction),
-                IFunction function => compilationContext.LogError(22, $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function"),
-                Declaration notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction.Location}' is not a function"),
-                {} notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function"),
-                _ => compilationContext.LogError(7, $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>")
-            };
+                case DeclaredFunction instanceFunction when instanceFunction.IsNullary():
+                    return compilationContext.LogError(22,
+                        $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance");
+                case IFunction instanceFunction
+                    when instanceFunction.Inputs[0].ResolveConstraint(this, compilationContext) == this:
+                    return new InstanceFunction(instanceBeingIndexed, instanceFunction);
+                case IFunction function:
+                    return compilationContext.LogError(22,
+                        $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function");
+                case Declaration notInstanceFunction:
+                    return compilationContext.LogError(22, $"'{notInstanceFunction.Location}' is not a function");
+                case {} notInstanceFunction:
+                    return compilationContext.LogError(22,
+                        $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function");
+                default:
+                    return compilationContext.LogError(7,
+                        $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>");
+            }
+        }
 
         public IValue CreateInstance(IValue[] members, IType? instanceType = default) =>
             new StructInstance(this, DeclaredInputs, members, instanceType);
@@ -89,7 +104,7 @@ namespace Element.AST
             private readonly IValue _argument;
 
             public Port[] Inputs { get; }
-            public Type? Output => _surrogate.Output;
+            public TypeAnnotation? Output => _surrogate.Output;
 
             IType IValue.Type => FunctionType.Instance;
 
@@ -147,15 +162,12 @@ namespace Element.AST
             // Intrinsic structs implement constraint resolution and a callable constructor
             // They don't implement IScope, scope impl is still handled by DeclaredStruct
             success &= ImplementingIntrinsic<IConstraint>(sourceContext) != null;
-            success &= ImplementingIntrinsic<ICallable>(sourceContext) != null;
+            success &= ImplementingIntrinsic<IFunction>(sourceContext) != null;
 
             return success;
         }
 
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
-            ImplementingIntrinsic<IConstraint>(compilationContext).MatchesConstraint(value, compilationContext);
-
-        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            ImplementingIntrinsic<ICallable>(compilationContext).Call(arguments, compilationContext);
+        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(null).MatchesConstraint(value, compilationContext);
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => ImplementingIntrinsic<ICallable>(null).Call(arguments, compilationContext);
     }
 }

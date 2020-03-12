@@ -1,6 +1,8 @@
+using System;
+
 namespace Element.AST
 {
-    public class NumIntrinsicValues : IIntrinsic, ICallable
+    public class NullaryIntrinsics : IIntrinsic, IFunction
     {
         private readonly Value _value;
 
@@ -11,7 +13,7 @@ namespace Element.AST
             NegativeInfinity,
         }
 
-        public NumIntrinsicValues(Value value)
+        public NullaryIntrinsics(Value value)
         {
             Location = $"Num.{value.ToString()}";
             _value = value;
@@ -24,9 +26,11 @@ namespace Element.AST
             Value.NaN => float.NaN,
             Value.PositiveInfinity => float.PositiveInfinity,
             Value.NegativeInfinity => float.NegativeInfinity,
-            _ => throw new InternalCompilerException("Intrinsic num value case not handled")
+            _ => throw new InternalCompilerException("Intrinsic nullary case not handled")
         });
 
+        public Port[] Inputs { get; } = Array.Empty<Port>();
+        public TypeAnnotation Output { get; } = NumType.Annotation;
         public string Location { get; }
     }
 }

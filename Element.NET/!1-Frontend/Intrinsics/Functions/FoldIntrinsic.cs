@@ -7,8 +7,8 @@ namespace Element.AST
 	{
 		public IType Type => FunctionType.Instance;
 		public string Location => "List.fold";
-		public Port[] Inputs { get; } = {new Port(_atIdentifier, FunctionType.Instance), new Port(_countIdentifier, NumType.Instance)};
-		public Type? Output => null;
+		public Port[] Inputs { get; } = {new Port(_atIdentifier, FunctionType.Annotation), new Port(_countIdentifier, NumType.Annotation)};
+		public TypeAnnotation? Output => null;
 		public IValue Call(IValue[] arguments, CompilationContext compilationContext)
 		{
 			var list = EvaluateArray(arguments[0] as IScope, compilationContext);

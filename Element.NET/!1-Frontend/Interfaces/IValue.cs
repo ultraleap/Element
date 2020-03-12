@@ -35,7 +35,7 @@ namespace Element.AST
                 var constraint = port.ResolveConstraint(scope, compilationContext);
                 if (!constraint.MatchesConstraint(arg, compilationContext))
                 {
-                    compilationContext.LogError(8, $"Value given for port '{port}' does not match '{constraint}' constraint");
+                    compilationContext.LogError(8, $"Value '{arg}' given for port '{port}' does not match '{constraint}' constraint");
                     success = false;
                 }
             }

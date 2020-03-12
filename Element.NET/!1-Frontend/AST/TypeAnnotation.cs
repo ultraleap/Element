@@ -4,13 +4,13 @@ using Lexico;
 namespace Element.AST
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class Type
+    public class TypeAnnotation
     {
         private IConstraint? _constraint;
 
         // ReSharper disable once UnusedMember.Global - Used by Lexico when parsing
-        public Type() {}
-        public Type(IConstraint constraint) => _constraint = constraint;
+        public TypeAnnotation() {}
+        public TypeAnnotation(IConstraint constraint) => _constraint = constraint;
 
 #pragma warning disable 169
         [Literal(":"), WhitespaceSurrounded, MultiLine] private Unnamed _;

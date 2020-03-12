@@ -22,7 +22,7 @@ namespace Element.AST
 
             foreach (var item in ItemsToCacheOnValidate)
             {
-                if(item.HasBeenValidated) continue;
+                if (item.HasBeenValidated) continue;
 
                 if (Contains(item.Identifier))
                 {

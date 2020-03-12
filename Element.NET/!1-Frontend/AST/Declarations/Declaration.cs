@@ -14,7 +14,7 @@ namespace Element.AST
         [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed __;
         [Term] public Identifier Identifier;
         [Optional] protected PortList? PortList;
-        [Optional] protected Type? DeclaredType;
+        [Optional] protected TypeAnnotation? DeclaredType;
         [IndirectAlternative(nameof(BodyAlternatives)), WhitespaceSurrounded, MultiLine] protected object Body;
         // ReSharper restore UnassignedField.Global
 #pragma warning restore 649
@@ -22,7 +22,7 @@ namespace Element.AST
         // ReSharper disable UnusedMember.Global
         protected abstract string IntrinsicQualifier { get; }
         protected abstract string Qualifier { get; }
-        protected abstract System.Type[] BodyAlternatives { get; }
+        protected abstract Type[] BodyAlternatives { get; }
         // ReSharper restore UnusedMember.Global
 
         public override string ToString() => $"{Location}{DeclaredType}";
@@ -45,6 +45,25 @@ namespace Element.AST
         {
             var success = true;
             if (Body is Scope scope) success &= scope.ValidateScope(sourceContext, ScopeIdentifierBlacklist, ScopeIdentifierWhitelist);
+            if (PortList?.List.Count > 0)
+            {
+                var distinctPortIdentifiers = new HashSet<string>();
+                foreach (var port in PortList.List)
+                {
+                    if (!(port.Identifier is { } id)) continue;
+                    if (!distinctPortIdentifiers.Add(id))
+                    {
+                        sourceContext.LogError(2, $"Cannot add duplicate identifier '{id}'");
+                        success = false;
+                    }
+
+                    if (!sourceContext.ValidateIdentifier(id))
+                    {
+                        success = false;
+                    }
+                }
+            }
+
             return success;
         }
 
@@ -96,15 +115,15 @@ namespace Element.AST
                     new InferIntrinsic(),
                     new MemberwiseIntrinsic(),
                     new PersistIntrinsic()
-                }.Concat(Enum.GetValues(typeof(Binary.Op))
-                    .Cast<Binary.Op>()
-                    .Select(o => new BinaryIntrinsic(o)))
+                }.Concat(Enum.GetValues(typeof(NullaryIntrinsics.Value))
+                    .Cast<NullaryIntrinsics.Value>()
+                    .Select(v => new NullaryIntrinsics(v)))
                 .Concat(Enum.GetValues(typeof(Unary.Op))
                     .Cast<Unary.Op>()
                     .Select(o => new UnaryIntrinsic(o)))
-                .Concat(Enum.GetValues(typeof(NumIntrinsicValues.Value))
-                    .Cast<NumIntrinsicValues.Value>()
-                    .Select(v => new NumIntrinsicValues(v))))
+                .Concat(Enum.GetValues(typeof(Binary.Op))
+                    .Cast<Binary.Op>()
+                    .Select(o => new BinaryIntrinsic(o))))
             {
                 _intrinsics.Add(intrinsic.Location, intrinsic);
             }

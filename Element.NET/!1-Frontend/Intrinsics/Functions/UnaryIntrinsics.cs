@@ -1,6 +1,6 @@
 namespace Element.AST
 {
-    internal class UnaryIntrinsic : IIntrinsic, ICallable
+    internal class UnaryIntrinsic : IIntrinsic, IFunction
     {
         public UnaryIntrinsic(Unary.Op operation)
         {
@@ -17,5 +17,7 @@ namespace Element.AST
                 : CompilationErr.Instance;
 
         public IType Type => FunctionType.Instance;
+        public Port[] Inputs { get; } = {new Port("a", NumType.Annotation)};
+        public TypeAnnotation Output { get; } = NumType.Annotation;
     }
 }

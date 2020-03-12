@@ -111,7 +111,7 @@ namespace Element
                 }
                 context.LogError(9, "Parsing failed, see previous parse trace messages for details.");
             }
-            else if (context.Verbosity >= MessageLevel.Information)
+            else if (context.Verbosity >= MessageLevel.Verbose)
             {
                 foreach (var msg in parseTrace)
                 {

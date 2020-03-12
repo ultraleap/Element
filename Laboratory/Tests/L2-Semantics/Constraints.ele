@@ -9,5 +9,6 @@ onlyNum(a:Num) = a;
 returnsNum(a):Num = a;
 returnsNotNum(a):NotNum = a;
 
-constraint Predicate(a):Bool;
+constraint NumFunction(a):Num;
+
 namespace MySpace {}

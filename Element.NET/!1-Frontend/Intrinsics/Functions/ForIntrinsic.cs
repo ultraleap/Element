@@ -2,10 +2,21 @@ using System;
 
 namespace Element.AST
 {
-    public class ForIntrinsic : IIntrinsic, ICallable
+    public class ForIntrinsic : IIntrinsic, IFunction
     {
         public string Location => "for";
         public IType Type => FunctionType.Instance;
+        public Port[] Inputs { get; } =
+            {
+                new Port(_initialIdentifier, AnyConstraint.Annotation),
+                new Port(_conditionIdentifier, FunctionType.Annotation),
+                new Port(_bodyIdentifier, FunctionType.Annotation)
+            };
+        public TypeAnnotation Output { get; } = AnyConstraint.Annotation;
+
+        private static readonly Identifier _initialIdentifier = new Identifier("initial");
+        private static readonly Identifier _conditionIdentifier = new Identifier("condition");
+        private static readonly Identifier _bodyIdentifier = new Identifier("body");
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {

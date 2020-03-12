@@ -1,6 +1,6 @@
 namespace Element.AST
 {
-    public class TypeType : IType
+    public sealed class TypeType : IType
     {
         private TypeType() {}
         public static IType Instance { get; } = new TypeType();

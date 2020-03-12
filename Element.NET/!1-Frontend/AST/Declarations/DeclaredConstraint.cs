@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Element.AST
 {
     public abstract class DeclaredConstraint : Declaration, IConstraint
@@ -23,8 +25,28 @@ namespace Element.AST
 
             return true;
         }
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
-            new[] {value}.ValidateArguments(DeclaredInputs, ParentScope, compilationContext);
+
+        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext)
+        {
+            if (!(value is IFunction fn)) return false;
+            if (fn.Inputs.Length != DeclaredInputs.Length) return false;
+            var success = true;
+            bool CompareConstraints(IConstraint argumentConstraint, IConstraint matchingConstraint)
+            {
+                if (matchingConstraint == AnyConstraint.Instance) return true;
+                return matchingConstraint == argumentConstraint;
+            }
+
+            foreach (var (argumentPort, matchingPort) in fn.Inputs.Zip(DeclaredInputs, (argumentPort, matchingPort) => (argumentPort, matchingPort)))
+            {
+                success &= CompareConstraints(argumentPort.ResolveConstraint(ParentScope, compilationContext), matchingPort.ResolveConstraint(ParentScope, compilationContext));
+            }
+
+            success &= CompareConstraints(fn.Output?.ResolveConstraint(ParentScope, compilationContext) ?? AnyConstraint.Instance,
+                DeclaredType?.ResolveConstraint(ParentScope, compilationContext) ?? AnyConstraint.Instance);
+
+            return success;
+        }
     }
 
     // ReSharper disable once UnusedType.Global
@@ -32,10 +54,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic";
 
-        public override bool Validate(SourceContext sourceContext) =>
-            ImplementingIntrinsic<IConstraint>(sourceContext) != null;
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
-            ImplementingIntrinsic<IConstraint>(compilationContext)?.MatchesConstraint(value, compilationContext) ??
-            false;
+        public override bool Validate(SourceContext sourceContext) => ImplementingIntrinsic<IConstraint>(sourceContext) != null;
+        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(null).MatchesConstraint(value, compilationContext);
     }
 }

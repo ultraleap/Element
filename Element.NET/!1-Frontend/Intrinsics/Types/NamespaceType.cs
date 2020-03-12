@@ -1,6 +1,6 @@
 namespace Element.AST
 {
-    public class NamespaceType : IType
+    public sealed class NamespaceType : IType
     {
         private NamespaceType() {}
         public static NamespaceType Instance { get; } = new NamespaceType();

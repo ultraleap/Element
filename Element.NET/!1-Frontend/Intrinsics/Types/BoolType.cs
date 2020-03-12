@@ -1,14 +1,16 @@
 namespace Element.AST
 {
-    public class BoolType : IIntrinsic, ICallable, IType
+    public sealed class BoolType : IIntrinsic, IFunction, IType
     {
         private BoolType() {}
         public static BoolType Instance { get; } = new BoolType();
+        public static TypeAnnotation Annotation { get; } = new TypeAnnotation(Instance);
         public IType Type => TypeType.Instance;
         public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
         public string Name => "Bool";
         public string Location => Name;
-        private Port[] Inputs { get; } = {new Port("a", NumType.Instance)};
+        public Port[] Inputs { get; } = {new Port("a", NumType.Annotation)};
+        public TypeAnnotation Output => Annotation;
         private DeclaredStruct? _declaredStruct;
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext)
@@ -17,12 +19,16 @@ namespace Element.AST
             {
                 lock (this)
                 {
-                    if (!(compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] is DeclaredStruct declaredStruct))
+                    if (_declaredStruct == null)
                     {
-                        return compilationContext.LogError(7, $"Couldn't find '{Location}'");
-                    }
+                        if (!(compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] is
+                            DeclaredStruct declaredStruct))
+                        {
+                            return compilationContext.LogError(7, $"Couldn't find '{Location}'");
+                        }
 
-                    _declaredStruct = declaredStruct;
+                        _declaredStruct = declaredStruct;
+                    }
                 }
             }
 

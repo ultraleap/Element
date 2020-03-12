@@ -19,7 +19,7 @@ namespace Element
         public CompilationErr LogError(int? messageCode, string context = default)
         {
             var msg = MakeMessage(messageCode, context);
-            if (!msg.MessageLevel.HasValue || msg.MessageLevel.Value >= CompilationInput.Verbosity)
+            if (!msg.MessageLevel.HasValue || CompilationInput.Verbosity >= msg.MessageLevel.Value)
             {
                 CompilationInput.LogCallback?.Invoke(msg);
             }
@@ -30,7 +30,7 @@ namespace Element
         public void Log(string message)
         {
             var msg = MakeMessage(null, message);
-            if (!msg.MessageLevel.HasValue || msg.MessageLevel.Value >= CompilationInput.Verbosity)
+            if (!msg.MessageLevel.HasValue || CompilationInput.Verbosity >= msg.MessageLevel.Value)
             {
                 CompilationInput.LogCallback?.Invoke(msg);
             }

@@ -19,10 +19,10 @@ intrinsic infer(function, instance);
 
 
 # memberwise(function, ...)...;
-# Returns a structure of functions where each functions inputs are the variadic inputs scope accessed by the output expression.
+# Returns a mapping of functions which call the argument function with the passed variadic parameters.
 # The supplied function's arity must be equal to the number of variadic parameters, e.g.
 # memberwise(Num.add, a) is invalid as Num.add expects 2 parameters
-# memberwise(Num.add, a, b).x is valid and evaluates to Num.add(a.x, b.x)
+# memberwise(Num.add, a, b).x is valid and is equivalent to Num.add(a.x, b.x)
 intrinsic memberwise;
 
 

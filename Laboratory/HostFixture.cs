@@ -77,32 +77,31 @@ namespace Laboratory
 
         protected void EvaluateExpectingErrorCode(CompilationInput compilationInput, int messageCode, string expression)
         {
-            compilationInput.LogCallback = ExpectMessageCode(messageCode, compilationInput.LogCallback);
+            var errors = new List<CompilerMessage>();
+            compilationInput.LogCallback = ExpectMessageCode(messageCode, errors);
             var (success, _) = Host.Evaluate(compilationInput, expression);
-            Assert.Fail(success
-                ? "Expected message code '{0}' but evaluation succeeded"
-                : "Expected message code '{0}' but got different error code", messageCode);
+            if (success)
+            {
+                if (errors.Count > 0) Assert.Fail("Expected message code '{0}' but got following code(s): {1}", messageCode, string.Join(",", errors.Select(err => err.MessageCode)));
+                else Assert.Fail("Expected message code '{0}' but evaluation succeeded", messageCode);
+            }
         }
-        
-        
+
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());
         protected static FileInfo GetEleFile(string partialName) => GetFile("*.ele", partialName);
         protected static FileInfo GetFile(string pattern, string partialName) => TestDirectory.GetFiles(pattern, SearchOption.AllDirectories).Single(file => file.Name.Contains(partialName));
-        
-        
-        
+
         protected static void FailOnError(CompilerMessage message)
         {
-            if (message.MessageLevel >= MessageLevel.Error)
-                Assert.Fail(message.ToString());
-            else
-                TestContext.WriteLine(message.ToString());
+            if (message.MessageLevel >= MessageLevel.Error) Assert.Fail(message.ToString());
+            else TestContext.WriteLine(message.ToString());
         }
 
-        protected static Action<CompilerMessage> ExpectMessageCode(int messageCode, Action<CompilerMessage> fallback) => message =>
+        protected static Action<CompilerMessage> ExpectMessageCode(int messageCode, List<CompilerMessage> errorsReceived) => message =>
         {
             if (message.MessageCode == messageCode) Assert.Pass($"Received expected message code {messageCode}");
-            fallback?.Invoke(message);
+            if (message.MessageLevel >= MessageLevel.Error) errorsReceived.Add(message);
+            else TestContext.WriteLine(message.ToString());
         };
-}
+    }
 }

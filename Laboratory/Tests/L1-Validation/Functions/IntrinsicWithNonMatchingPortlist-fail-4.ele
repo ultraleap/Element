@@ -1,4 +1,0 @@
-intrinsic struct Num
-{
-	intrinsic add(a:Num, b:Num, c:Num);
-}

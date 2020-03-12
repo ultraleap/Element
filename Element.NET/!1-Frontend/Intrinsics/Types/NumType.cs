@@ -3,10 +3,14 @@ namespace Element.AST
     /// <summary>
     /// The type for a single number.
     /// </summary>
-    public sealed class NumType : IIntrinsic, ICallable, IType
+    public sealed class NumType : IIntrinsic, IFunction, IType
     {
         private NumType() { }
         public static NumType Instance { get; } = new NumType();
+        public static TypeAnnotation Annotation { get; } = new TypeAnnotation(Instance);
+
+        public Port[] Inputs { get; } = {new Port("a", Annotation)};
+        public TypeAnnotation Output => Annotation;
         public IType Type => TypeType.Instance;
         public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
         public string Name => "Num";
@@ -25,12 +29,16 @@ namespace Element.AST
             {
                 lock (this)
                 {
-                    if (!(compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] is DeclaredStruct declaredStruct))
+                    if (_declaredStruct == null)
                     {
-                        return compilationContext.LogError(7, $"Couldn't find '{Location}'");
-                    }
+                        if (!(compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] is
+                            DeclaredStruct declaredStruct))
+                        {
+                            return compilationContext.LogError(7, $"Couldn't find '{Location}'");
+                        }
 
-                    _declaredStruct = declaredStruct;
+                        _declaredStruct = declaredStruct;
+                    }
                 }
             }
 
