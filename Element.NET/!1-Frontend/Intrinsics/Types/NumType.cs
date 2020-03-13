@@ -22,27 +22,11 @@ namespace Element.AST
                       : compilationContext.LogError(8, "Argument must be a number")
                 : CompilationErr.Instance;
 
-        private DeclaredStruct? _declaredStruct;
-        public IValue? ResolveInstanceFunction(Identifier id, Literal instanceBeingIndexed, CompilationContext compilationContext)
-        {
-            if (_declaredStruct == null)
+        public IValue? ResolveInstanceFunction(Identifier id, Literal instanceBeingIndexed, CompilationContext compilationContext) =>
+            compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] switch
             {
-                lock (this)
-                {
-                    if (_declaredStruct == null)
-                    {
-                        if (!(compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] is
-                            DeclaredStruct declaredStruct))
-                        {
-                            return compilationContext.LogError(7, $"Couldn't find '{Location}'");
-                        }
-
-                        _declaredStruct = declaredStruct;
-                    }
-                }
-            }
-
-            return _declaredStruct.ResolveInstanceFunction(id, instanceBeingIndexed, compilationContext);
-        }
+                DeclaredStruct declaredStruct => declaredStruct.ResolveInstanceFunction(id, instanceBeingIndexed, compilationContext),
+                _ => compilationContext.LogError(7, $"Couldn't find '{Location}'")
+            };
     }
 }

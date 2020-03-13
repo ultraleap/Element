@@ -10,12 +10,13 @@ namespace Element.AST
 
         public string Location => "List";
         public string Name => Location;
-        private DeclaredStruct? _declaredStruct;
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            (_declaredStruct ??= compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] as DeclaredStruct)
-            ?.CreateInstance(arguments, Instance)
-            ?? compilationContext.LogError(7, $"Couldn't find '{Location}'");
+            compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] switch
+            {
+                DeclaredStruct declaredStruct => declaredStruct.CreateInstance(arguments, Instance),
+                _ => compilationContext.LogError(7, $"Couldn't find '{Location}'")
+            };
 
         public Port[] Inputs { get; } = {new Port("at", FunctionType.Annotation), new Port("count", NumType.Annotation)};
         public TypeAnnotation Output => Annotation;

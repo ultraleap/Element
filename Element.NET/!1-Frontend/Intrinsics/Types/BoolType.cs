@@ -11,30 +11,14 @@ namespace Element.AST
         public string Location => Name;
         public Port[] Inputs { get; } = {new Port("a", NumType.Annotation)};
         public TypeAnnotation Output => Annotation;
-        private DeclaredStruct? _declaredStruct;
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext)
-        {
-            if (_declaredStruct == null)
-            {
-                lock (this)
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            arguments.ValidateArguments(Inputs, compilationContext.GlobalScope, compilationContext)
+                ? compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] switch
                 {
-                    if (_declaredStruct == null)
-                    {
-                        if (!(compilationContext.GlobalScope[new Identifier(Location), false, compilationContext] is
-                            DeclaredStruct declaredStruct))
-                        {
-                            return compilationContext.LogError(7, $"Couldn't find '{Location}'");
-                        }
-
-                        _declaredStruct = declaredStruct;
-                    }
+                    DeclaredStruct declaredStruct => declaredStruct.CreateInstance(new IValue[] {new Literal((Literal) arguments[0] > 0f ? 1f : 0f)}, Instance),
+                    _ => compilationContext.LogError(7, $"Couldn't find '{Location}'")
                 }
-            }
-
-            return arguments.ValidateArguments(Inputs, compilationContext.GlobalScope, compilationContext)
-                ? _declaredStruct.CreateInstance(new IValue[] {new Literal((Literal) arguments[0] > 0f ? 1f : 0f)}, Instance)
                 : CompilationErr.Instance;
-        }
     }
 }
