@@ -230,8 +230,7 @@ namespace Laboratory
                 return processArgs;
             }
 
-            bool IHost.ParseFile(CompilationInput input, FileInfo file) =>
-                bool.Parse(RunHostProcess(input, BeginCommand(input, "parse").Append($" -f \"{file.FullName}\"").ToString()));
+            bool IHost.Parse(CompilationInput input) => bool.Parse(RunHostProcess(input, BeginCommand(input, "parse").ToString()));
 
             (bool Success, float[] Result) IHost.Evaluate(CompilationInput input, string expression)
             {

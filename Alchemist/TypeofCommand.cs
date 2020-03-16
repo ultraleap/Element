@@ -11,7 +11,7 @@ namespace Alchemist
 
         protected override bool _skipValidation => false;
 
-        protected override (int ExitCode, string Result) CommandImplementation(in CompilationInput input) =>
+        protected override (int ExitCode, string Result) CommandImplementation(CompilationInput input) =>
             (0, new AtomicHost().Typeof(input, Expression) switch
             {
                 (true, {} result) => result,

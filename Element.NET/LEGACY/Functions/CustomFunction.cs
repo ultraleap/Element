@@ -83,7 +83,8 @@ namespace Element
 				}
 			}
 			
-			return new TraceSite(null, Source, line, column);
+			//return new TraceSite(null, Source, line, column);
+			return new TraceSite();
 		}
 
 		/// <summary>

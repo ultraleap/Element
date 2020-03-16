@@ -19,7 +19,7 @@ namespace Element
 
         private readonly SourceContext _context;
 
-        public bool ParseFile(CompilationInput input, FileInfo file) => _context.ApplyExtraInput(input) && _context.ParseFile(file);
+        public bool Parse(CompilationInput input) => _context.ApplyExtraInput(input);
 
         public (bool Success, float[] Result) Evaluate(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)

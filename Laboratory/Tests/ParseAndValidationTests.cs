@@ -46,9 +46,10 @@ namespace Laboratory.Tests
             var compilationInput = new CompilationInput(expectedMessageCode.HasValue ? ExpectMessageCode(expectedMessageCode.Value, errors) : FailOnError)
             {
                 ExcludePrelude = true,
+                ExtraSourceFiles = new[]{fileInfo},
                 SkipValidation = skipValidation
             };
-            var success = Host.ParseFile(compilationInput, fileInfo);
+            var success = Host.Parse(compilationInput);
 
             if (expectedMessageCode.HasValue && success)
             {

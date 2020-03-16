@@ -11,7 +11,7 @@ namespace Alchemist
 
 		protected override bool _skipValidation { get; } = false; // Skipping validation during evaluate may cause indirect compiler errors
 
-		protected override (int ExitCode, string Result) CommandImplementation(in CompilationInput input) =>
+		protected override (int ExitCode, string Result) CommandImplementation(CompilationInput input) =>
 			(0, new AtomicHost().Evaluate(input, Expression) switch
 			{
 				(true, {} result) => string.Join(", ", result).Replace("∞", "Infinity"),

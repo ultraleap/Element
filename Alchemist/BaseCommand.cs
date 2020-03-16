@@ -66,6 +66,6 @@ namespace Alchemist
 			else Console.WriteLine(msg);
 		}
 
-		protected abstract (int ExitCode, string Result) CommandImplementation(in CompilationInput input);
+		protected abstract (int ExitCode, string Result) CommandImplementation(CompilationInput input);
 	}
 }
