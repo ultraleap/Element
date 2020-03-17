@@ -94,7 +94,7 @@ Name|Indexable|Callable|Constraint|Serializable|Example|Note
 ---|---|---|---|---|---|---
 `Num`|Yes|-|Yes|Yes|`3.14159`|Number literals behave the same as `struct` instances and can be indexed to access `Num` instance functions
 `Any`|-|-|Yes|-|-|Any is purely a Constraint and cannot have instances
-Function constraint|-|-|Yes|-|`constraint Predicate(a):Bool;`|-
+Function constraint|-|-|Yes|-|`constraint Predicate(a):Bool;`|^
 `struct` declaration|Yes|Yes|Yes|-|`struct Vector3(x:Num, y:Num, z:Num);`|Calling a struct creates an instance
 `struct` instance|Yes|-|-|Maybe|`a = Vector3(3, 6, 9);`|Can Index fields and instance functions, Serializable when all fields are, additionally List instances are Serializable when the Indexer only accesses Serializable elements
 `namespace`|Yes|-|-|-|`namespace MySpace { ... }`|-
@@ -103,14 +103,24 @@ Parameterized function|-|Yes|-|-|`sqr(a:Num):Num = a.mul(a);`|-
 Lambda function|-|Yes|-|-|`_(_):List = 5;`|-
 
 ### Expressions
-Expressions are used to define values in Element.
+Expressions are used build behaviour in Element.
 Expressions are composable and can reference other values or contain many expressions.
 An expression may be:
 * a `Num` literal, e.g. `5`
-* a function call (a.k.a. function application), e.g. `add(1)`
+* a call expression (a.k.a. function application), e.g. `add(1)`
 * an indexing expression, e.g. `vector.x`
 * a lambda, e.g. `_(a, b) = a.add(b)`
 * an expression list involving many expressions, e.g. `radians.mul(180.div(Num.pi))`
+
+The difference between an expression and a value is that expressions are not values themselves, they define/produce values.
+Some expressions define values directly:  
+* `5` defines a `Num` value
+* `_(a, b) = a.add(b)` defines a function
+
+Other expressions produce values:
+* Call expressions compute new values based on input
+* Indexing expressions reference existing values from elsewhere
+
 
 ### Identifiers & Bindings
 An identifier is a name given to a value to allow referencing it in expressions.
@@ -140,7 +150,7 @@ This is what makes Element declarative rather than imperative - bindings express
 `Num` values are:
 * Indexable - `Num` has no fields but does have instance functions defined on the `struct` declaration for `Num`.
 * Constraints - `Num` is a concrete Constraint which can be used to require that a value be a number.
-* Serializable - numbers are data and can be serialized across the host boundary.
+* Serializable - numbers are plain data and can be serialized across the host boundary.
 
 Numbers are definable as literals or returned as a result from a `Num` expression.
 Literal number values can be declared in the following forms:
@@ -472,13 +482,15 @@ Structures are a value grouping mechanism.
 Structures involve 2 distinct kinds of values, `struct` declarations and instances.
 
 ### Structure Declarations
-Possible groupings are defined using the `struct` qualifier followed by a parameter list defining the fields that a `struct` instance must have.
+Structures are defined using the `struct` qualifier followed by a parameter list defining the fields that a `struct` instance must have.  
 ```
 struct Complex(real:Num, imaginary:Num);
 ```
+A fields is simply a value in a structures group.
+`real` and `imaginary` are the fields for a `Complex` instance.
 
 `struct` declaration values are:
-* Callable - it is a constructor function for creating `struct` instances.
+* Callable - as a constructor function for creating `struct` instances.
 * Indexable - `struct` declarations can contain other values in an optional scope.
 * Constraints - `struct` declarations can be used to limit values to instances of the `struct`.
 
@@ -519,14 +531,14 @@ c = Complex.add(a, b);
 A `struct` instance is a value with a layout conforming to a specific `struct` declaration.
 
 `struct` instances are:
-* Indexable - provides access to fields and instance functions.
+* Indexable - provides access to struct members - members are fields and instance functions.
 * Serializable (sometimes) - when all fields are serializable, the instance is also serializable.
 
 #### Instance Functions
-Instance functions are functions defined within a `struct` declaration.
-* The first argument is either the `struct` declaration's type or `Any`.
+Instance functions are functions defined within a `struct` declaration's scope where:
+* The first argument is the `struct` declaration's type.
 * Instance functions are Indexable from `struct` instances.
-* Instance functions don't require the first parameter as it is implicitly the `struct` instance being Indexed.
+* Instance functions apply the first parameter as the `struct` instance being Indexed.
 ```
 # continuing from the example above...
 # add can be called as an instance function since it's first parameter is type Complex
@@ -543,14 +555,41 @@ Instance function calls can be chained allowing natural expressions which read l
 numbers = List.range(n, m)).filter(_(i) = even(i).and(i.rem(5).eq(0)));
 ```
 
-# Interacting with Host Environments
+## Intrinsics
+Intrinsics are functions and types which hosts must explicitly support.
+All Element programs are composed from intrinsics to perform tasks.
+Intrinsics can be declared in source code using the `intrinsic` keyword.
+
+Intrinsics have a few special rules that differ from normal structs and functions:
+* Intrinsic functions are implemented by hosts.
+* Intrinsics can be variadic (types or functions with variable number of fields).
+Element does not directly support variadic functions or types however a few intrinsic constructs are variadic and can be referenced as long as their interfaces are satisfied.
+* Intrinsics may omit an interface as it may not be possible to describe in the language (due to allowing variadics).
+
+# Prelude
+Prelude is a base library of Element source code containing intrinsics and values implementing core functionality.
+The source for Prelude can be found [here](../Common/Prelude/Prelude.ele).
+
+### Bool
+`Bool` is an intrinsic type implemented in the Prelude.
+`Bool` is not a primitive type, it is backed by a `Num`.
+When creating an instance of `Bool` using the constructor the compiler must refine the backing `Num` to 1 or 0, signifying `True` and `False` respectively.
+The formula for refinement is `value > 0 ? 1 : 0`, i.e. positive numbers are truthy, negative numbers and 0 are falsy.
+
+### List
+`List` is an intrinsic type implemented in the Prelude.
+`List(at:Indexer, count:Num)` is defined as an indexing function `constraint Indexer(i:Num)` and a numerical count.
+`List` has no special compiler support except that instances can be serializable when the return type of `at:Indexer` is serializable.
+`List` serialization is performed by evaluating all elements.
+
+# Host Environments
 An Element program exists in context of a hosting environment (host) for dealing with it.
-Hosts are programs/libraries providing facilities for parsing, validating, analysing, compiling and evaluating Element expressions directly (interpreting) or transforming them into another format for export or transport.
+Hosts are libraries or programs providing facilities for parsing, validating, analysing, compiling and evaluating Element source directly (interpreting) or transforming them into another format for export or transport.
 
 ## Top-level Functions
 An Element program is always a function (referred to as the top-level function) that takes inputs and returns outputs when the program is run.
 There is no notion of a "main" function - any function that meets data boundary criteria may be compiled by a host.
-Top-level functions must only have serializable value types on their interface.
+Top-level functions must only have serializable values on their interface.
 
 ## Compilation
 Compiling involves starting with the outputs and recursively analysing all dependencies.
@@ -559,7 +598,7 @@ Output values necessarily have concrete types that are checked against constrain
 All constraints can be checked during compilation with no type checking requiring deference until runtime.
 
 Another important consequence of recursive analysis is that unreferenced values are not compiled.
-This is a double-edged sword as it improves compilation performance but allows semantic/validation errors in unreferenced code that parses successfully (such as type errors) to go undetected!
+This is a double-edged sword as it improves compilation performance but allows errors in unreferenced code that parses successfully (such as type errors) to go undetected!
 
 Hosts must follow the error handling conventions defined in [Laboratory's readme](../Laboratory/README.md).
 
@@ -578,22 +617,6 @@ The following value types are serializable:
 * `struct` instance containing only serializable fields - structures require mapping between host and Element types to match layout.
 * `List` which can be evaluated to only serializable elements - Lists will be evaluated to their elements when crossing the boundary.
 
-Hosts must have mappings for `struct` types declared in the prelude and may provide mappings for other structures.
+Hosts must have member mappings for `struct` types declared in the prelude and may provide mappings for other structures.
 
 All concrete types in a `List` must be mappable for a `List` to be translatable.
-
-## Intrinsics
-Intrinsics are functions and types which hosts must provide.
-They are the basic components which all Element programs are built up from.
-Intrinsics can be declared in source code using the `intrinsic` keyword.
-
-Intrinsics have a few special rules that differ from normal structs and functions:
-* Intrinsic functions are implemented by hosts.
-* Intrinsics can be variadic (types or functions with variable number of fields).
-Element does not directly support variadic functions or types however a few intrinsic constructs are variadic and can be referenced as long as their interfaces are satisfied.
-* Intrinsic constructs may omit an interface as it may not be possible to describe in the language.
-* Intrinsic functions' interfaces in the host must match the interface declared in the source (when the source includes a declaration).
-
-## Prelude
-Prelude is a base library of Element source code containing intrinsics and values implementing core functionality.
-The source for Prelude can be found [here](../Common/Prelude/Prelude.ele).
