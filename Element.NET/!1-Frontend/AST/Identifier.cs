@@ -6,8 +6,7 @@ namespace Element.AST
     {
         public Identifier(string value) => Value = value;
 
-        // https://stackoverflow.com/questions/4400348/match-c-sharp-unicode-identifier-using-regex
-        [Regex(@"_?[\p{L}\p{Nl}][_\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\p{Cf}]*")]
+        [Regex(@"_?[a-zA-Z\u0080-\uFFFF][_a-zA-Z0-9\u0080-\uFFFF]*")]
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         public string Value { get; private set; }
         public static implicit operator string(Identifier i) => i.Value;

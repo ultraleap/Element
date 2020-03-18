@@ -1,7 +1,7 @@
 /* A literal number including sign and decimal point, also including e notation */
 literal         ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
 /* Any string including most UTF8 characters but not exactly '_' */
-identifier      ::= _? [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
+identifier      ::= _? [a-zA-Z#x0080-#xFFFF] [_a-zA-Z0-9#x0080-#xFFFF]*
 unidentifier    ::= '_'
 
 /* Literals can be indexed to call instance functions
