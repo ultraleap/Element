@@ -33,12 +33,23 @@ namespace Laboratory
             {
                 var tomlTable = (TomlTable) table;
 
-                TValue Get<TValue>(in string key) => (TValue) tomlTable[key];
+                TValue Get<TValue>(string key) => (TValue) tomlTable[key] switch
+                {
+                    TValue value => value,
+                    _ => default
+                };
+
+                TValue[] GetArray<TValue>(string key) => tomlTable[key] switch
+                {
+                    TomlArray array => array.Cast<TValue>().ToArray(),
+                    _ => default
+                };
+                
                 ProcessHostInfos.Add(new ProcessHostInfo
                 (
                     name,
                     Get<bool>("enabled"),
-                    Get<string>("build-command"),
+                    GetArray<string>("build-commands"),
                     Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path"))
                 ));
             }
@@ -69,17 +80,17 @@ namespace Laboratory
 
         internal readonly struct ProcessHostInfo
         {
-            public ProcessHostInfo(string name, bool enabled, string buildCommand, string executablePath)
+            public ProcessHostInfo(string name, bool enabled, string[] buildCommands, string executablePath)
             {
                 Name = name;
                 Enabled = enabled;
-                BuildCommand = buildCommand;
+                BuildCommands = buildCommands;
                 ExecutablePath = executablePath;
             }
 
             public string Name { get; }
             public bool Enabled { get; }
-            public string BuildCommand { get; }
+            public string[] BuildCommands { get; }
             public string ExecutablePath { get; }
         }
 
@@ -118,31 +129,33 @@ namespace Laboratory
                 // Perform build command for each enabled host - within static constructor so it's only performed once per test run
                 foreach (var info in ProcessHostInfos.Where(info => info.Enabled))
                 {
-                    try
-                    {
-                        var splitCommand = info.BuildCommand.Split(' ', 2);
-                        var process = new Process
+                    foreach(var command in info.BuildCommands) {
+                        try
                         {
-                            StartInfo = new ProcessStartInfo
+                            var splitCommand = command.Split(' ', 2);
+                            var process = new Process
                             {
-                                FileName = splitCommand[0],
-                                Arguments = splitCommand[1],
-                                WorkingDirectory = _elementRootDirectory.Value
+                                StartInfo = new ProcessStartInfo
+                                {
+                                    FileName = splitCommand[0],
+                                    Arguments = splitCommand[1],
+                                    WorkingDirectory = _elementRootDirectory.Value
+                                }
+                            };
+
+                            process.StartInfo.RedirectStandardError = true;
+                            process.Start();
+                            process.WaitForExit();
+
+                            if (process.ExitCode != 0)
+                            {
+                                _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                             }
-                        };
-
-                        process.StartInfo.RedirectStandardError = true;
-                        process.Start();
-                        process.WaitForExit();
-
-                        if (process.ExitCode != 0)
-                        {
-                            _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        _hostBuildErrors.Add(info, e.ToString());
+                        catch (Exception e)
+                        {
+                            _hostBuildErrors.Add(info, e.ToString());
+                        }
                     }
                 }
             }

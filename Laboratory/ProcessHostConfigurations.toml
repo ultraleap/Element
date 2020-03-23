@@ -5,7 +5,15 @@
 
 [Alchemist]
 enabled = false
-build-command = "dotnet publish Alchemist/Alchemist.csproj --self-contained=false -o Alchemist/Build -v n"
+build-commands = [
+    "dotnet publish Alchemist/Alchemist.csproj --self-contained=false -o Alchemist/Build -v n"
+]
 executable-path = "Alchemist/Build/Alchemist"
 
-
+[libelement_cli]
+enabled = true
+build-commands = [
+    "cmake -S ./libelement.CLI -B ./libelement.CLI/build",
+    "cmake --build ./libelement.CLI/build --config Release" 
+]
+executable-path = "libelement.CLI/bin/Release/libelement_cli"
