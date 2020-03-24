@@ -1,5 +1,3 @@
-using Element.AST;
-
 namespace Element
 {
     /// <summary>
@@ -7,7 +5,7 @@ namespace Element
     /// </summary>
     public readonly struct TraceSite
     {
-        public TraceSite(IValue what, string source, int line, int column)
+        public TraceSite(string what, string source, int line, int column)
         {
             What = what;
             Source = source;
@@ -15,7 +13,7 @@ namespace Element
             Column = column;
         }
 
-        public readonly IValue What;
+        public readonly string What;
         public readonly string Source;
         public readonly int Line;
         public readonly int Column;

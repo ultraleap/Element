@@ -5,7 +5,7 @@ namespace Laboratory
 {
     internal abstract class SemanticsFixture : HostFixture
     {
-        protected SemanticsFixture(IHost host, string sourceFileName) : base(host)
+        protected SemanticsFixture(string sourceFileName)
         {
             SourceFiles = new[] {GetEleFile(sourceFileName)};
         }

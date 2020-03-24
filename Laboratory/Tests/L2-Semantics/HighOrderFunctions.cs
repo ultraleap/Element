@@ -1,11 +1,10 @@
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
 {
     internal class HighOrderConstructs : SemanticsFixture
     {
-        public HighOrderConstructs(IHost host) : base(host, "HighOrderFunctions") { }
+        public HighOrderConstructs() : base("HighOrderFunctions") { }
 
         [Test]
         public void BindFunctionViaIndexing() => AssertTypeof(CompilationInput, "add", "Function");

@@ -23,10 +23,13 @@ level = "Error"
 Tests are organized by the level of the compilation stage they test. Each level has individual conventions in addition to the following:
 * Tests should be named after the feature or error case they test, e.g. "NestedCallExpression".
 * Each test involves calling an Element Host to perform some action. Two kinds of hosts exist:
-   * Self Host - laboratory performs the action using Element.NET directly from the test suite.
+   * Self Host - laboratory performs the action using Element.NET directly from the test suite. This is the default.
    * Process Host - laboratory calls into another process using commands to perform actions.
-     Details of all process hosts must be defined in [ProcessHostConfigurations.toml](ProcessHostConfigurations.toml).
-     These processes must conform to the CLI convention defined below.
+     To use a process host, create a .runsettings file with the following key/value pairs:
+     * name - the name of the process
+     * build-command - the command the test runner should run to build the process
+     * executable-path - the path to the executable to run to execute the process.
+     Arguments are provded per test and must conform to the CLI convention defined below.
 * All tests are run for each host instance.
 
 ### L0 - Parsing

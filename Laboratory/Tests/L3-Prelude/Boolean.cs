@@ -5,8 +5,6 @@ namespace Laboratory.Tests
 {
 	internal class Boolean : PreludeFixture
 	{
-		public Boolean(IHost host) : base(host) { }
-
 		[
 			TestCase("Bool(0)", "false"),
 			TestCase("Bool(1)", "true"),

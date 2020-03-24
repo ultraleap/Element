@@ -3,14 +3,6 @@ Element is a minimal functional programming language.
 Element code runs using a host which can interpret or compile it to other formats.
 One of these formats is the bytecode format, [LMNTIL (Element Intermediate Language)](LMNT/Bytecode.md), for use in native and embedded applications.
 
-### Overhaul
-***Content in this repository is currently undergoing large-scale overhaul.
-Most content conforms to older undocumented conventions or is broken.***
-* Language Reference Manual - Updated
-* Prelude - Updated (untested, no compiler has been updated yet)
-* Laboratory (Test Suite) - In progress
-* Almost everything else - Working using undocumented previous language version or broken
-
 ## Element Language
 This is a brief summary, see the [Element Reference Manual](Language/ElementReferenceManual.md) for full details.
 * Single number data type `Num`
@@ -18,6 +10,12 @@ This is a brief summary, see the [Element Reference Manual](Language/ElementRefe
 * First class functions and local functions
 * Intrinsics (math intrinsics, collection intrinsics, control flow)
 * Genericity via implicit interfaces with `Any` type
+
+Example:
+```
+sum(list) = list.fold(0, Num.add);
+factorial(n) = List.range(0, n).fold(1, Num.mul);
+```
 
 ### Element Libraries
 Element includes a library of core functionality called [Prelude](Common/Prelude).
@@ -31,7 +29,7 @@ New features will generally be implemented as part of the standard library rathe
     * Can test Element.NET directly or invoke other compilers via CLI convention
 
 ### Host Libraries
-* [Element.NET](Element.NET) - .NET Standard 2.0
+* [Element.NET](Element.NET) - .NET Standard 2.0 ![](https://github.com/ultraleap/Element/workflows/Element.NET.yml/badge.svg)
     * Element parser using [Eto.Parse](https://github.com/picoe/Eto.Parse)
     * Element function evaluation via:
         * Direct evaluation (slow)
@@ -55,7 +53,7 @@ New features will generally be implemented as part of the standard library rathe
         * ARMv7-A - planned
 
 ### Command Line Interfaces (CLIs)
-* [Alchemist](Alchemist) - .NET Core 2.1 using [Element.NET](Element.NET)
+* [Alchemist](Alchemist) - .NET Core 2.1 using [Element.NET](Element.NET) ![](https://github.com/ultraleap/Element/workflows/Alchemist.yml/badge.svg)
     * CLI for executing Element via a REPL or compiling to other targets
 
 ### Integrations/Tooling

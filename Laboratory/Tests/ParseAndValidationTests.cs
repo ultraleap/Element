@@ -14,8 +14,6 @@ namespace Laboratory.Tests
 {
     internal class ParseAndValidationTests : HostFixture
     {
-        public ParseAndValidationTests(IHost host) : base(host) { }
-
         private const int _defaultFailingParseTestCode = 9;
 
         private static IEnumerable GenerateTestData(string testKind, string directory, int? defaultExpectedErrorCode)

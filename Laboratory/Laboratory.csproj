@@ -25,7 +25,8 @@
     <Content Include="Tests\**\*.toml" Link="%(RecursiveDir)%(Filename)%(Extension)">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="ProcessHostConfigurations.toml">
+    <None Remove="Alchemist.runsettings" />
+    <Content Include="Alchemist.runsettings">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

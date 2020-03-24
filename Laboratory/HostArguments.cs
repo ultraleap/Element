@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,39 +8,28 @@ using System.Threading.Tasks;
 using Element;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using Tomlyn;
-using Tomlyn.Model;
 
 namespace Laboratory
 {
     /// <summary>
     /// Implements hosts types and enumerates hosts for host fixtures
     /// </summary>
-    internal class HostArguments : IEnumerable
+    internal class HostArguments
     {
-        public IEnumerator GetEnumerator() => ProcessHostInfos
-            .Where(phi => phi.Enabled)
-            .Select(phi => (IHost)new ProcessHost(phi))
-            .Prepend(new AtomicHost())
-            .ToArray<object>()
-            .GetEnumerator();
-
+        public static IHost MakeHost() => _processHostInfo != null
+                                            ? (IHost)new ProcessHost(_processHostInfo.Value)
+                                            : new AtomicHost();
+        
         static HostArguments()
         {
-            var processHosts = Toml.Parse(File.ReadAllText("ProcessHostConfigurations.toml")).ToModel();
-            foreach ((string name, object table) in processHosts)
-            {
-                var tomlTable = (TomlTable) table;
-
-                TValue Get<TValue>(in string key) => (TValue) tomlTable[key];
-                ProcessHostInfos.Add(new ProcessHostInfo
-                (
-                    name,
-                    Get<bool>("enabled"),
-                    Get<string>("build-command"),
-                    Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path"))
-                ));
-            }
+            static TValue Get<TValue>(string key) => TestContext.Parameters.Get<TValue>(key, default);
+            var name = Get<string>("name");
+            
+            _processHostInfo = string.IsNullOrEmpty(name)
+                                   ? (ProcessHostInfo?)null
+                                   : new ProcessHostInfo(name,
+                                                         Get<string>("build-command"),
+                                                         Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path")));
         }
 
         private static readonly Lazy<string> _elementRootDirectory = new Lazy<string>(() =>
@@ -67,23 +55,21 @@ namespace Laboratory
             }
         }
 
-        internal readonly struct ProcessHostInfo
+        private readonly struct ProcessHostInfo
         {
-            public ProcessHostInfo(string name, bool enabled, string buildCommand, string executablePath)
+            public ProcessHostInfo(string name, string buildCommand, string executablePath)
             {
                 Name = name;
-                Enabled = enabled;
                 BuildCommand = buildCommand;
                 ExecutablePath = executablePath;
             }
 
             public string Name { get; }
-            public bool Enabled { get; }
             public string BuildCommand { get; }
             public string ExecutablePath { get; }
         }
 
-        internal static readonly List<ProcessHostInfo> ProcessHostInfos = new List<ProcessHostInfo>();
+        private static readonly ProcessHostInfo? _processHostInfo;
 
         /// <summary>
         /// Implements commands by calling external process defined using a command string.
@@ -115,35 +101,35 @@ namespace Laboratory
 
             static ProcessHost()
             {
-                // Perform build command for each enabled host - within static constructor so it's only performed once per test run
-                foreach (var info in ProcessHostInfos.Where(info => info.Enabled))
+                if (!_processHostInfo.HasValue) return;
+
+                // Perform build command - within static constructor so it's only performed once per test run
+                var info = _processHostInfo.Value;
+                try
                 {
-                    try
+                    var splitCommand = info.BuildCommand.Split(' ', 2);
+                    var process = new Process
                     {
-                        var splitCommand = info.BuildCommand.Split(' ', 2);
-                        var process = new Process
+                        StartInfo = new ProcessStartInfo
                         {
-                            StartInfo = new ProcessStartInfo
-                            {
-                                FileName = splitCommand[0],
-                                Arguments = splitCommand[1],
-                                WorkingDirectory = _elementRootDirectory.Value
-                            }
-                        };
-
-                        process.StartInfo.RedirectStandardError = true;
-                        process.Start();
-                        process.WaitForExit();
-
-                        if (process.ExitCode != 0)
-                        {
-                            _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
+                            FileName = splitCommand[0],
+                            Arguments = splitCommand[1],
+                            WorkingDirectory = _elementRootDirectory.Value
                         }
-                    }
-                    catch (Exception e)
+                    };
+
+                    process.StartInfo.RedirectStandardError = true;
+                    process.Start();
+                    process.WaitForExit();
+
+                    if (process.ExitCode != 0)
                     {
-                        _hostBuildErrors.Add(info, e.ToString());
+                        _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                     }
+                }
+                catch (Exception e)
+                {
+                    _hostBuildErrors.Add(info, e.ToString());
                 }
             }
 

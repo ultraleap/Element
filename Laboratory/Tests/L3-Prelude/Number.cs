@@ -1,7 +1,6 @@
 using System;
 using System.Globalization;
 using System.Linq;
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
@@ -11,8 +10,6 @@ namespace Laboratory.Tests
 	/// </summary>
 	internal class Number : PreludeFixture
 	{
-		public Number(IHost host) : base(host) { }
-
 		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
 		{
 			("Num.ln({0})", MathF.Log),

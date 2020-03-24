@@ -1,11 +1,10 @@
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
 {
     internal class Constraints : SemanticsFixture
     {
-        public Constraints(IHost host) : base(host, "Constraints") { }
+        public Constraints() : base("Constraints") { }
 
         [TestCase("explicitAny(5)")]
         [TestCase("explicitAny(NotNum(5))")]

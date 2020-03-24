@@ -7,15 +7,10 @@ using NUnit.Framework;
 
 namespace Laboratory
 {
-    [TestFixtureSource(typeof(HostArguments)), Parallelizable(ParallelScope.All)]
+    [TestFixture, Parallelizable(ParallelScope.All)]
     internal abstract class HostFixture
     {
-        protected HostFixture(IHost host)
-        {
-            Host = host;
-        }
-
-        protected readonly IHost Host;
+        protected readonly IHost Host = HostArguments.MakeHost();
         
         private const float FloatEpsilon = 1.19209e-5f;
         private static Comparer<float> FloatComparer { get; } = Comparer<float>.Create((f, f1) => ApproximatelyEqualEpsilon(f, f1, FloatEpsilon) ? 0 : 1);
