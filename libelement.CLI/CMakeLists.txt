@@ -24,7 +24,8 @@ set(libelement_cli_sources
     "include/evaluate_command.hpp"
     "include/parse_command.hpp"
     "include/typeof_command.hpp"
-
+	
+    "src/compiler_message.cpp"
     "src/main.cpp"
 )
 
@@ -33,7 +34,14 @@ add_subdirectory("${DEPENDENCIES_DIR}/cli11") #TEMP
 
 add_executable(libelement_cli ${libelement_cli_sources})
 
+target_include_directories(libelement_cli PUBLIC "${ELEMENT_LIB_DIR}/include")
+target_include_directories(libelement_cli PUBLIC "${DEPENDENCIES_DIR}/rapidjson/include")
+target_include_directories(libelement_cli
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+)
+
 target_link_libraries(libelement_cli PRIVATE element)
 target_link_libraries(libelement_cli PRIVATE CLI11::CLI11) #TEMP 
-
-target_include_directories(libelement_cli PUBLIC "${ELEMENT_LIB_DIR}/include")
