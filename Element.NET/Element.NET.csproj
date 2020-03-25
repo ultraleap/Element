@@ -4,17 +4,21 @@
     <LangVersion>default</LangVersion>
     <NoWarn>NU1701</NoWarn>
     <Nullable>enable</Nullable>
+
+    <PackageId>Element.NET</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Ultraleap</Authors>
+    <Company>Ultraleap</Company>
+    <PackageDescription>C# compiler for the Element programming language.</PackageDescription>
+    <RepositoryUrl>https://github.com/ultraleap/Element</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Eto.Parse" Version="1.4.0" />
+    <PackageReference Include="Lexico" Version="1.0.0-alpha1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="Tomlyn" Version="0.1.1" />
   </ItemGroup>
-  <PropertyGroup>
-    <CodeAnalysisRuleSet>ProjectRules.ruleset</CodeAnalysisRuleSet>
-    <PublishDir>..\..\Element.Tooling\Element.Unity\Assets\Element.Unity\Core\Element.NET</PublishDir>
-  </PropertyGroup>
   <ItemGroup>
     <Content Include="..\Common\**" Link="%(RecursiveDir)%(Filename)%(Extension)">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -40,8 +44,5 @@
   </ItemGroup>
   <ItemGroup>
     <DeployManifest Remove="obj\Debug\netstandard2.0\Element.NET.application" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Lexico\Lexico\Lexico.csproj" />
   </ItemGroup>
 </Project>
