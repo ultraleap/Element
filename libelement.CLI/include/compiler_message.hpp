@@ -4,20 +4,9 @@
 #include <string>
 #include <optional>
 
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
+#include "message_codes.hpp"
 
 namespace cli {
-
-	enum class message_level : unsigned int {
-		FATAL = 0,
-		WARNING,
-		ERROR,
-		INFORMATION,
-		VERBOSE,
-		NONE = 0xFFFF
-	};
 
 	struct trace_site {
 
@@ -45,7 +34,6 @@ namespace cli {
 			: compiler_message(-1, message_level, message, std::vector<trace_site> {})
 		{
 		}
-
 
 		compiler_message(int message_code, message_level message_level, std::string context, std::vector<trace_site> trace_stack) 
 			: message_code{ message_code }, message_level{ message_level }, context{ context }, trace_stack{ trace_stack }
