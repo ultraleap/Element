@@ -4,9 +4,6 @@
 [submodule "Element.NET/Lexico"]
 	path = Lexico
 	url = git@github.com:hamish-milne/Lexico.git
-[submodule "libelement.CLI/dependencies/rapidjson"]
-	path = libelement.CLI/dependencies/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
 [submodule "libelement.CLI/dependencies/cli11"]
 	path = libelement.CLI/dependencies/cli11
 	url = https://github.com/CLIUtils/CLI11
