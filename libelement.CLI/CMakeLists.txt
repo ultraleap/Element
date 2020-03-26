@@ -7,8 +7,7 @@ project(libelement_cli
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set (ELEMENT_LIB_DIR "../libelement")
-set (DEPENDENCIES_DIR "dependencies")
-set (CLI11_DIR "${DEPENDENCIES_DIR}/cli11")
+set (DEPENDENCIES_DIR "../dependencies")
 
 find_package(RapidJSON)
 #find_package(CLI11 CONFIG REQUIRED) #TEMP Can't make this work as my CMake-foo is subpar, so will do the nastier add_subdirectory for now
@@ -30,7 +29,7 @@ set(libelement_cli_sources
 )
 
 add_subdirectory(${ELEMENT_LIB_DIR} "libelement")
-add_subdirectory("${DEPENDENCIES_DIR}/cli11") #TEMP 
+add_subdirectory("dependencies/cli11") #TEMP 
 
 add_executable(libelement_cli ${libelement_cli_sources})
 
