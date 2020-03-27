@@ -19,7 +19,8 @@ namespace cli {
 
 	struct message_code {
 
-		message_code(std::string name, std::string level) : name{ name }, level{ get_message_level(level) }
+		message_code(const std::string& name, const std::string& level) 
+			: name{ name }, level{ get_message_level(level) }
 		{
 		}
 
@@ -27,9 +28,9 @@ namespace cli {
 		message_level level;
 
 	private:
-		message_level get_message_level(std::string level) {
+		message_level get_message_level(const std::string& level) const {
 
-			std::map<std::string, message_level>::iterator it = map_message_level.find(level);
+			std::map<std::string, message_level>::const_iterator it = map_message_level.find(level);
 			if (it != map_message_level.end())
 				return it->second;
 
@@ -47,7 +48,7 @@ namespace cli {
  			const auto data = toml::parse(path);
 			const auto table = toml::get<toml::table>(data);
 
-			std::map<std::string, message_code>::iterator it = code_map.begin();
+			std::map<std::string, message_code>::const_iterator it = code_map.begin();
 			for (auto& item : table) {
 				auto& message = item.second;
 
@@ -58,15 +59,14 @@ namespace cli {
 			}
 		}
 
-		const message_code* get_code() const {
+		const message_code* const get_code(std::string code) const {
+
+			std::map<std::string, message_code>::const_iterator it = code_map.find(code);
+			if (it != code_map.end())
+				return &(it->second);
 
 			return nullptr;
 		}
-
-	private:
-		//message_code create_message_code(std::string data) {
-		//	return message_code(data, cli::message_level::ERROR);
-		//}
 
 	private:
 		std::map<std::string, message_code> code_map;
