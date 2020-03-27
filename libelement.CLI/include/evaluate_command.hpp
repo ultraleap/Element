@@ -1,10 +1,18 @@
 #pragma once
 
-#include "base_command.hpp"
+#include "command.hpp"
 
-class evaluate_command : public base_command
+class evaluate_command : public command
 {
+public:
+	evaluate_command()
+	{
+	}
+
 private:
 
 public:
+	 void command_implementation() override 
+	 {
+	 }
 };

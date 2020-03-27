@@ -1,10 +1,13 @@
 #pragma once
 
-#include "base_command.hpp"
+#include "command.hpp"
 
-class parse_command : public base_command
+class parse_command : public command
 {
 private:
 
 public:
+	void command_implementation() override
+	{
+	}
 };

@@ -1,10 +1,15 @@
 #pragma once
 
-#include "base_command.hpp"
+#include "command.hpp"
 
-class typeof_command : public base_command
+class typeof_command : public command
 {
+public:
+	typeof_command() {}
 private:
 
 public:
+	void command_implementation() override
+	{
+	}
 };

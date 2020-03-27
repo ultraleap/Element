@@ -23,7 +23,7 @@ configure_file("../Common/Messages.toml" "config/Messages.toml" COPYONLY)
 set(libelement_cli_sources
 
     "include/compiler_message.hpp"
-    "include/base_command.hpp"
+    "include/command.hpp"
     "include/evaluate_command.hpp"
     "include/parse_command.hpp"
     "include/typeof_command.hpp"
