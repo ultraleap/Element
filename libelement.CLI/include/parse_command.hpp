@@ -18,8 +18,8 @@ namespace cli
 		}
 
 	private:
-		const common_command_arguments common_arguments;
-		const parse_command_arguments arguments;
+		common_command_arguments common_arguments;
+		parse_command_arguments arguments;
 
 	public:
 		void execute() const override
@@ -34,7 +34,7 @@ namespace cli
 			auto command = app.add_subcommand("parse")->fallthrough();
 			command->add_option("no-validation", arguments->no_validation, "Expression to evaluate.")->required();
 
-			command->callback([callback, common_arguments, arguments]() { callback(std::move(parse_command(*common_arguments, *arguments))); });
+			command->callback([callback, common_arguments, arguments]() { callback(parse_command(*common_arguments, *arguments)); });
 		}
 	};
 }

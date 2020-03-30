@@ -18,8 +18,8 @@ namespace cli
 		}
 
 	private:
-		const common_command_arguments common_arguments;
-		const typeof_command_arguments arguments;
+		common_command_arguments common_arguments;
+		typeof_command_arguments arguments;
 
 	public:
 		void execute() const override
@@ -34,7 +34,7 @@ namespace cli
 			auto command = app.add_subcommand("typeof")->fallthrough();
 			command->add_option("-e,--expression", arguments->expression, "Expression to evaluate.")->required();
 
-			command->callback([callback, common_arguments, arguments]() { callback(std::move(typeof_command(*common_arguments, *arguments))); });
+			command->callback([callback, common_arguments, arguments]() { callback(typeof_command(*common_arguments, *arguments)); });
 		}
 	};
 }
