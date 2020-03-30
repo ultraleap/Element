@@ -2,7 +2,7 @@
 
 #include "command.hpp"
 
-struct parse_command_arguments : common_command_arguments {
+struct parse_command_arguments {
 	bool no_validation;
 };
 
@@ -15,19 +15,18 @@ public:
 	{
 	}
 
-	static void configure(CLI::App& app)
+	static void configure(CLI::App& app, std::shared_ptr<common_command_arguments> const& common_arguments)
 	{
 		auto arguments = std::make_shared<parse_command_arguments>();
-		command::configure(app, *arguments);
 
 		auto command = app.add_subcommand("parse")->fallthrough();
 		command->add_option("no-validation", arguments->no_validation, "Expression to evaluate.")->required();
 
-		command->callback([arguments]() { execute_command(*arguments); });
+		command->callback([common_arguments, arguments]() { execute_command(*common_arguments, *arguments); });
 	}
 
 private:
-	static void execute_command(parse_command_arguments const& opt) {
+	static void execute_command(common_command_arguments const& common_arguments, parse_command_arguments const& arguments) {
 
 		//Call into libelement
 

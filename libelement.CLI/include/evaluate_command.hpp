@@ -2,7 +2,7 @@
 
 #include "command.hpp"
 
-struct evaluate_command_arguments : common_command_arguments {
+struct evaluate_command_arguments {
 	std::string expression;
 };
 
@@ -13,19 +13,18 @@ public:
 	 {
 	 }
 
-	 static void configure(CLI::App& app)
+	 static void configure(CLI::App& app, std::shared_ptr<common_command_arguments> const& common_arguments)
 	 {
 		 auto arguments = std::make_shared<evaluate_command_arguments>();
-		 command::configure(app, *arguments);
 
 		 auto command = app.add_subcommand("evaluate")->fallthrough();
 		 command->add_option("-e,--expression", arguments->expression, "Expression to evaluate.")->required();
 
-		 command->callback([arguments]() { execute_command(*arguments); });
+		 command->callback([common_arguments, arguments]() { execute_command(*common_arguments, *arguments); });
 	 }
 
 private:
-	static void execute_command(evaluate_command_arguments const& opt) {
+	static void execute_command(common_command_arguments const& common_arguments, evaluate_command_arguments const& arguments) {
 
 		//Call into libelement
 

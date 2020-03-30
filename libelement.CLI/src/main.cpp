@@ -21,10 +21,6 @@ void std_err(const std::string& data)
 
 int main(int argc, char** argv)
 {
-
-	std::cout << std::filesystem::current_path() << std::endl;
-
-	//TEST: Toml parsing
 	auto message_codes = cli::message_codes("config/Messages.toml");
 
 	//Parse arguments and construct appropriate command
@@ -32,9 +28,12 @@ int main(int argc, char** argv)
 	app.set_help_all_flag("--help-all", "Expand all help");
 	app.require_subcommand(1, 1); //require exactly one subcommand
 
-	parse_command::configure(app);
-	evaluate_command::configure(app);
-	typeof_command::configure(app);
+
+	auto arguments = std::make_shared<common_command_arguments>();
+	command::configure(app, arguments);
+	parse_command::configure(app, arguments);
+	evaluate_command::configure(app, arguments);
+	typeof_command::configure(app, arguments);
 
 	CLI11_PARSE(app, argc, argv);
 }
