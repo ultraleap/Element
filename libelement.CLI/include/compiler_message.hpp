@@ -35,7 +35,7 @@ namespace cli {
 		{
 		}
 
-		compiler_message(int message_code, message_level message_level, std::string context, std::vector<trace_site> trace_stack) 
+		compiler_message(int message_code, message_level message_level, const std::string& context, const std::vector<trace_site>& trace_stack) 
 			: message_code{ message_code }, message_level{ message_level }, context{ context }, trace_stack{ trace_stack }
 		{
 		}
