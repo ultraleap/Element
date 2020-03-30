@@ -30,6 +30,7 @@ set(libelement_cli_sources
     "include/message_codes.hpp"
 	
     "src/compiler_message.cpp"
+    "src/command.cpp"
     "src/main.cpp"
     "src/message_codes.cpp"
 

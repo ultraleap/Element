@@ -1,37 +1,40 @@
 #pragma once
 
-#include <CLI/CLI.hpp>
-#include "command.hpp"
+#include <command.hpp>
+#include <compiler_message.hpp>
 
-struct typeof_command_arguments {
-	std::string expression;
-};
-
-class typeof_command : public command
+namespace cli
 {
-public:
-	void command_implementation() override
+	struct typeof_command_arguments {
+		std::string expression;
+	};
+
+	class typeof_command : public command
 	{
-	}
+	public:
+		typeof_command(const common_command_arguments& common_arguments, const typeof_command_arguments& arguments)
+			: common_arguments{ common_arguments }, arguments{ arguments }
+		{
+		}
 
-	static void configure(CLI::App& app, std::shared_ptr<common_command_arguments> const& common_arguments)
-	{
-		auto arguments = std::make_shared<typeof_command_arguments>();
+	private:
+		const common_command_arguments& common_arguments;
+		const typeof_command_arguments& arguments;
 
-		auto typeof_command = app.add_subcommand("typeof")->fallthrough();
-		typeof_command->add_option("-e,--expression", arguments->expression, "Expression to evaluate.")->required();
+	public:
+		void execute() const override
+		{
+			//Call into libelement
+		}
 
-		typeof_command->callback([common_arguments, arguments]() { execute_command(*common_arguments , *arguments); });
-	}
+		static void configure(CLI::App& app, const std::shared_ptr<common_command_arguments>& common_arguments, std::function<void(const command&)> callback)
+		{
+			auto arguments = std::make_shared<typeof_command_arguments>();
 
-private:
-	static void execute_command(common_command_arguments const& common_arguments, typeof_command_arguments const& arguments) {
+			auto command = app.add_subcommand("typeof")->fallthrough();
+			command->add_option("-e,--expression", arguments->expression, "Expression to evaluate.")->required();
 
-		//Call into libelement
-
-		//Parse command response into complier message and return to the appropriate streams
-		cli::compiler_message message(10, cli::message_level::ERROR, "typeof_command", std::vector<cli::trace_site>{});
-
-		std::cout << message.serialize();
-	}
-};
+			command->callback([callback, common_arguments, arguments]() { callback(std::move(*std::make_unique<typeof_command>(*common_arguments, *arguments))); });
+		}
+	};
+}
