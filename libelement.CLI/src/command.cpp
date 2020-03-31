@@ -5,7 +5,9 @@
 #include <evaluate_command.hpp>
 #include <typeof_command.hpp>
 
-void cli::command::configure(CLI::App& app, std::function<void(const command&)> callback)
+using namespace libelement::cli;
+
+void command::configure(CLI::App& app, std::function<void(const command&)> callback)
 {
 	auto arguments = std::make_shared<common_command_arguments>();
 	app.add_option("--no-prelude", arguments->no_prelude, "Prelude functionality is included. Warning: Without Prelude only unverified compiler intrinsics will be available.");

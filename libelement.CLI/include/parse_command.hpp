@@ -3,23 +3,24 @@
 #include <command.hpp>
 #include <compiler_message.hpp>
 
-namespace cli
+namespace libelement::cli
 {
-	struct parse_command_arguments {
+	struct parse_command_arguments
+	{
 		bool no_validation;
 	};
 
 	class parse_command : public command
 	{
+	private:
+		common_command_arguments common_arguments;
+		parse_command_arguments arguments;
+
 	public:
 		parse_command(common_command_arguments common_arguments, parse_command_arguments arguments)
 			: common_arguments{ std::move(common_arguments) }, arguments{ std::move(arguments) }
 		{
 		}
-
-	private:
-		common_command_arguments common_arguments;
-		parse_command_arguments arguments;
 
 	public:
 		void execute() const override

@@ -3,23 +3,24 @@
 #include <command.hpp>
 #include <compiler_message.hpp>
 
-namespace cli
+namespace libelement::cli
 {
-	struct typeof_command_arguments {
+	struct typeof_command_arguments 
+	{
 		std::string expression;
 	};
 
 	class typeof_command : public command
 	{
+	private:
+		common_command_arguments common_arguments;
+		typeof_command_arguments arguments;
+
 	public:
 		typeof_command(common_command_arguments common_arguments, typeof_command_arguments arguments)
 			: common_arguments{ std::move(common_arguments) }, arguments{ std::move(arguments) }
 		{
 		}
-
-	private:
-		common_command_arguments common_arguments;
-		typeof_command_arguments arguments;
 
 	public:
 		void execute() const override

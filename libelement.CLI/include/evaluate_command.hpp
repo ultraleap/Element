@@ -3,25 +3,26 @@
 #include <command.hpp>
 #include <compiler_message.hpp>
 
-namespace cli
+namespace libelement::cli
 {
-	struct evaluate_command_arguments {
+	struct evaluate_command_arguments 
+	{
 		std::string expression;
 	};
 
 	class evaluate_command : public command
 	{
+	private:
+		common_command_arguments common_arguments;
+		evaluate_command_arguments arguments;
+
 	public:
 		evaluate_command(common_command_arguments common_arguments, evaluate_command_arguments arguments)
 			: common_arguments{ std::move(common_arguments) }, arguments{ std::move(arguments) }
 		{
 		}
 
-	private:
-		common_command_arguments common_arguments;
-		evaluate_command_arguments arguments;
-
-	public:
+	public: 
 		void execute() const override
 		{
 			//Call into libelement

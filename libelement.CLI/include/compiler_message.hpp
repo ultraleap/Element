@@ -6,17 +6,17 @@
 
 #include "message_codes.hpp"
 
-namespace cli {
-
-	struct trace_site {
-
+namespace libelement::cli 
+{
+	struct trace_site 
+	{
 		std::string what;
 		std::string source;
 		int line;
 		int column;
 
-		std::string message() const {
-
+		std::string message() const 
+		{
 			return "";
 		}
 	};
