@@ -1,10 +1,9 @@
 #pragma once
 
 #include <string>
-#include<map>
+#include <map>
 
 #include <toml.hpp>
-#include <utility>
 
 namespace libelement::cli
 {
@@ -20,18 +19,21 @@ namespace libelement::cli
 
 	struct message_code
 	{
-		message_code(std::string name, const std::string& level) 
-			: name{std::move(name)}, level{ get_message_level(level) }
-		{
-		}
+		typedef const std::map<std::string, message_level>::const_iterator message_level_const_iterator;
 
+		std::string code;
 		std::string name;
 		message_level level;
+		
+		message_code(std::string code, std::string name, const std::string& level)
+			: code{ std::move(code) }, name{ std::move(name) }, level{ get_message_level(level) }
+		{
+		}
 
 	private:
 		static message_level get_message_level(const std::string& level)
 		{
-			const std::map<std::string, message_level>::const_iterator it = map_message_level.find(level);
+			message_level_const_iterator it = map_message_level.find(level);
 			if (it != map_message_level.end())
 				return it->second;
 
@@ -43,26 +45,25 @@ namespace libelement::cli
 
 	class message_codes 
 	{
+		typedef const std::map<std::string, message_code>::const_iterator message_code_const_iterator;
 	public:
 		message_codes(const std::string& path) 
 		{
- 			const auto& data = toml::parse(path);
-			const auto& table = toml::get<toml::table>(data);
+			auto data = toml::parse(path);
+			auto table = toml::get<toml::table>(data);
 
-			std::map<std::string, message_code>::const_iterator it = code_map.begin();
-			for (const auto& item : table) {
-				const auto& message = item.second;
-
-				const auto& name = toml::find<std::string>(message, "name");
-				const auto& level = toml::find<std::string>(message, "level");
-
-				code_map.insert(it, std::pair<std::string, message_code>(item.first, message_code(name, level)));
+			message_code_const_iterator it = code_map.begin();
+			for (const auto& item : table) 
+			{
+				auto name = toml::find<std::string>(item.second, "name");
+				auto level = toml::find<std::string>(item.second, "level");
+				code_map.insert(it, std::pair<std::string, message_code>(item.first, message_code(item.first, name, level)));
 			}
 		}
 
 		const message_code* get_code(const std::string& code) const
 		{
-			const auto& it = code_map.find(code);
+			message_code_const_iterator it = code_map.find(code);
 			if (it != code_map.end())
 				return &it->second;
 

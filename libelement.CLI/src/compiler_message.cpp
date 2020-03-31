@@ -16,7 +16,7 @@ std::string compiler_message::serialize()
 	writer.String(key_message_code);
 	writer.Int(message_code);
 	writer.String(key_message_level);
-	writer.Int(static_cast<int>(message_level));
+	writer.Int(static_cast<int>(level));
 	writer.String(key_context);
 	writer.String(context.c_str());
 	writer.String(key_trace_stack);

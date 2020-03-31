@@ -40,24 +40,23 @@ namespace libelement::cli
 		 static constexpr const char* const key_context { "Context" };
 		 static constexpr const char* const key_trace_stack { "TraceStack" };
 
-	public:
-		compiler_message(std::string message, message_level message_level)
-			: message_code{ -1 }, message_level{ message_level }, context{ std::move(message) }
-		{
-		}
-
-		compiler_message(const int message_code, message_level message_level, std::string context, std::vector<trace_site> trace_stack) 
-			: message_code{ message_code }, message_level{ message_level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
-		{
-		}
-
-	private:
 		int message_code;
-		message_level message_level;
+		message_level level;
 		std::string context;
 		std::vector<trace_site> trace_stack;
-
+		//inline static message_codes codes { message_codes("config/Messages.toml") };
+		
 	public:
+		compiler_message(std::string message, message_level level)
+			: message_code{ -1 }, level{ level }, context{ std::move(message) }
+		{
+		}
+
+		compiler_message(const int message_code, message_level level, std::string context, std::vector<trace_site> trace_stack)
+			: message_code{ message_code }, level{ level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
+		{
+		}
+		
 		std::string serialize();
 	};
 }

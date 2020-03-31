@@ -23,6 +23,8 @@ namespace libelement::cli
 		command() = default;
 		command(const command&) = delete;
 		command(command&&) = delete;
+		command& operator=(const command& other) = delete;
+		command& operator=(command&& other) = delete;
 		virtual ~command() = default;
 		virtual void execute() const = 0;
 

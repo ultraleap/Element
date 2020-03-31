@@ -20,8 +20,6 @@ void command_callback(const command& command) {
 
 int main(const int argc, char** argv)
 {
-	auto codes = message_codes("config/Messages.toml"); //not doing anything useful with this yet
-
 	//Parse arguments and construct appropriate command
 	CLI::App app{ "CLI interface for libelement" };
 	app.set_help_all_flag("--help-all", "Expand all help");
