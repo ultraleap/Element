@@ -10,19 +10,17 @@ namespace libelement::cli
 		std::string expression;
 	};
 
-	class evaluate_command : public command
+	class evaluate_command final : public command
 	{
-	private:
 		common_command_arguments common_arguments;
-		evaluate_command_arguments arguments;
+		evaluate_command_arguments custom_arguments;
 
 	public:
-		evaluate_command(common_command_arguments common_arguments, evaluate_command_arguments arguments)
-			: common_arguments{ std::move(common_arguments) }, arguments{ std::move(arguments) }
+		evaluate_command(common_command_arguments common_arguments, evaluate_command_arguments custom_arguments)
+			: common_arguments{ std::move(common_arguments) }, custom_arguments{ std::move(custom_arguments) }
 		{
 		}
 
-	public: 
 		void execute() const override
 		{
 			//Call into libelement

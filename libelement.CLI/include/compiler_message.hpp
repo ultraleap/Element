@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <string>
-#include <optional>
 
 #include "message_codes.hpp"
 
@@ -10,33 +9,45 @@ namespace libelement::cli
 {
 	struct trace_site 
 	{
-		std::string what;
-		std::string source;
-		int line;
-		int column;
+	private:
+		std::string message;
 
-		std::string message() const 
+	//public:
+	//	std::string what;
+	//	std::string source;
+	//	int line = 0;
+	//	int column = 0;
+
+	public:
+		trace_site(const std::string& what, const std::string& source, const int line, const int column)
+			//: what{ std::move(what) }, source{ std::move(source) }, line{ line }, column{ column }
 		{
-			return "";
+			std::stringstream ss;
+			ss << what << " in " << source << ":" << line << "," << column << std::endl;
+			message = ss.str();
+		}
+
+		const std::string& get_message() const 
+		{
+			return message; //$"{What} in {Source}:{Line},{Column}"
 		}
 	};
 
 	class compiler_message
 	{
-	private:
-		const char* key_message_code = "MessageCode";
-		const char* key_message_level = "MessageLevel";
-		const char* key_context = "Context";
-		const char* key_trace_stack = "TraceStack";
+		 static constexpr const char* const key_message_code { "MessageCode" };
+		 static constexpr const char* const key_message_level { "MessageLevel" };
+		 static constexpr const char* const key_context { "Context" };
+		 static constexpr const char* const key_trace_stack { "TraceStack" };
 
 	public:
 		compiler_message(std::string message, message_level message_level)
-			: compiler_message(-1, message_level, message, std::vector<trace_site> {})
+			: message_code{ -1 }, message_level{ message_level }, context{ std::move(message) }
 		{
 		}
 
-		compiler_message(int message_code, message_level message_level, const std::string& context, const std::vector<trace_site>& trace_stack) 
-			: message_code{ message_code }, message_level{ message_level }, context{ context }, trace_stack{ trace_stack }
+		compiler_message(const int message_code, message_level message_level, std::string context, std::vector<trace_site> trace_stack) 
+			: message_code{ message_code }, message_level{ message_level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
 		{
 		}
 
@@ -47,6 +58,6 @@ namespace libelement::cli
 		std::vector<trace_site> trace_stack;
 
 	public:
-		const std::string serialize();
+		std::string serialize();
 	};
 }

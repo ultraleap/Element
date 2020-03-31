@@ -18,7 +18,7 @@ void command_callback(const command& command) {
 	std::cout << message.serialize();
 }
 
-int main(int argc, char** argv)
+int main(const int argc, char** argv)
 {
 	auto codes = message_codes("config/Messages.toml"); //not doing anything useful with this yet
 

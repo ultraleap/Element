@@ -10,19 +10,17 @@ namespace libelement::cli
 		bool no_validation;
 	};
 
-	class parse_command : public command
+	class parse_command final : public command
 	{
-	private:
 		common_command_arguments common_arguments;
-		parse_command_arguments arguments;
+		parse_command_arguments custom_arguments;
 
 	public:
-		parse_command(common_command_arguments common_arguments, parse_command_arguments arguments)
-			: common_arguments{ std::move(common_arguments) }, arguments{ std::move(arguments) }
+		parse_command(common_command_arguments common_arguments, parse_command_arguments custom_arguments)
+			: common_arguments{ std::move(common_arguments) }, custom_arguments{ std::move(custom_arguments) }
 		{
 		}
 
-	public:
 		void execute() const override
 		{
 			//Call into libelement

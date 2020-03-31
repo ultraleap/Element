@@ -1,7 +1,6 @@
 #pragma once
 
 #include <command.hpp>
-#include <compiler_message.hpp>
 
 namespace libelement::cli
 {
@@ -10,19 +9,17 @@ namespace libelement::cli
 		std::string expression;
 	};
 
-	class typeof_command : public command
+	class typeof_command final : public command
 	{
-	private:
 		common_command_arguments common_arguments;
-		typeof_command_arguments arguments;
+		typeof_command_arguments custom_arguments;
 
 	public:
-		typeof_command(common_command_arguments common_arguments, typeof_command_arguments arguments)
-			: common_arguments{ std::move(common_arguments) }, arguments{ std::move(arguments) }
+		typeof_command(common_command_arguments common_arguments, typeof_command_arguments custom_arguments)
+			: common_arguments{ std::move(common_arguments) }, custom_arguments{ std::move(custom_arguments) }
 		{
 		}
 
-	public:
 		void execute() const override
 		{
 			//Call into libelement
