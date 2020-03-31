@@ -30,7 +30,7 @@ namespace Element.AST
         });
 
         public Port[] Inputs { get; } = Array.Empty<Port>();
-        public TypeAnnotation Output { get; } = NumType.Annotation;
+        public Port Output { get; } = Port.ReturnPort(NumType.Instance);
         public string Location { get; }
     }
 }

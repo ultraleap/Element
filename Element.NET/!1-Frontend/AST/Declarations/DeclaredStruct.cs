@@ -1,95 +1,38 @@
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class DeclaredStruct : Declaration, IFunction, IScope, IType
+    public abstract class DeclaredStruct : Declaration, IFunction, IScope, IEnumerable<IValue>, IType
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
         protected override Identifier[] ScopeIdentifierBlacklist => new[]{Identifier};
 
         public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => ChildScope?[id, recurse, compilationContext];
+        public IEnumerator<IValue> GetEnumerator() => ChildScope?.GetEnumerator() ?? Enumerable.Empty<IValue>().GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         string IType.Name => Identifier;
+        public abstract ISerializer? Serializer { get; }
         public override IType Type => TypeType.Instance;
         public Port[] Inputs => DeclaredInputs;
-        public TypeAnnotation Output => new TypeAnnotation(this);
+        public Port Output => Port.ReturnPort(this);
         public abstract bool MatchesConstraint(IValue value, CompilationContext compilationContext);
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
 
-        public IValue ResolveInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, CompilationContext compilationContext)
-        {
-            switch (this[instanceFunctionIdentifier, false, compilationContext])
+        public IValue ResolveInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, CompilationContext compilationContext) =>
+            this[instanceFunctionIdentifier, false, compilationContext] switch
             {
-                case DeclaredFunction instanceFunction when instanceFunction.IsNullary():
-                    return compilationContext.LogError(22,
-                        $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance");
-                case IFunction instanceFunction
-                    when instanceFunction.Inputs[0].ResolveConstraint(this, compilationContext) == this:
-                    return new InstanceFunction(instanceBeingIndexed, instanceFunction);
-                case IFunction function:
-                    return compilationContext.LogError(22,
-                        $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function");
-                case Declaration notInstanceFunction:
-                    return compilationContext.LogError(22, $"'{notInstanceFunction.Location}' is not a function");
-                case {} notInstanceFunction:
-                    return compilationContext.LogError(22,
-                        $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function");
-                default:
-                    return compilationContext.LogError(7,
-                        $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>");
-            }
-        }
+                DeclaredFunction instanceFunction when instanceFunction.IsNullary() => (IValue)compilationContext.LogError(22, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"), IFunction instanceFunction when instanceFunction.Inputs[0].ResolveConstraint(compilationContext) == this => new InstanceFunction(instanceBeingIndexed, instanceFunction),
+                IFunction function => compilationContext.LogError(22, $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function"),
+                Declaration notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction.Location}' is not a function"),
+                {} notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function"),
+                _ => compilationContext.LogError(7, $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>")
+            };
 
         public IValue CreateInstance(IValue[] members, IType? instanceType = default) =>
             new StructInstance(this, DeclaredInputs, members, instanceType);
-
-        private sealed class StructInstance : ScopeBase, IValue, ISerializable
-        {
-            public IType Type { get; }
-            private DeclaredStruct DeclaringStruct { get; }
-
-            public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-                IndexCache(id)
-                ?? DeclaringStruct.ResolveInstanceFunction(id, this, compilationContext);
-
-            public StructInstance(DeclaredStruct declaringStruct, Port[] inputs, IValue[] memberValues, IType? instanceType = default)
-            {
-                DeclaringStruct = declaringStruct;
-                Type = instanceType ?? declaringStruct;
-                _isSerializable = true;
-                _members = new ISerializable[memberValues.Length];
-                for (var i = 0; i < memberValues.Length; i++)
-                {
-                    var value = memberValues[i];
-                    if (value is ISerializable serializable)
-                    {
-                        _members[i] = serializable;
-                        SerializedSize += serializable.SerializedSize;
-                        continue;
-                    }
-
-                    _isSerializable = false;
-                    break;
-                }
-
-                SetRange(memberValues.WithoutDiscardedArguments(inputs));
-            }
-
-            private readonly bool _isSerializable;
-            private readonly ISerializable[] _members;
-
-            public int SerializedSize { get; }
-            public bool Serialize(ref float[] array, ref int position)
-            {
-                if (!_isSerializable) return false;
-                foreach (var m in _members)
-                {
-                    m.Serialize(ref array, ref position);
-                }
-
-                return true;
-            }
-        }
 
         private class InstanceFunction : IFunction
         {
@@ -104,12 +47,44 @@ namespace Element.AST
             private readonly IValue _argument;
 
             public Port[] Inputs { get; }
-            public TypeAnnotation? Output => _surrogate.Output;
+            public Port Output => _surrogate.Output;
 
             IType IValue.Type => FunctionType.Instance;
 
             public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
                 _surrogate.Call(arguments.Prepend(_argument).ToArray(), compilationContext);
+        }
+    }
+    
+    public sealed class StructInstance : ScopeBase, IValue
+    {
+        public IType Type { get; }
+        public bool IsSerializable { get; }
+        public int SerializedSize { get; }
+        private DeclaredStruct DeclaringStruct { get; }
+
+        public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
+            IndexCache(id)
+            ?? DeclaringStruct.ResolveInstanceFunction(id, this, compilationContext);
+
+        public StructInstance(DeclaredStruct declaringStruct, Port[] inputs, IValue[] memberValues, IType? instanceType = default)
+        {
+            DeclaringStruct = declaringStruct;
+            Type = instanceType ?? declaringStruct;
+            SetRange(memberValues.WithoutDiscardedArguments(inputs));
+
+            IsSerializable = true;
+            foreach (var member in this)
+            {
+                if (!member.TryGetSerializableSize(out var memberSize))
+                {
+                    IsSerializable = false;
+                    SerializedSize = 0;
+                    break;
+                }
+
+                SerializedSize += memberSize;
+            }
         }
     }
 
@@ -118,7 +93,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier => string.Empty;
 
-        public override bool Validate(SourceContext sourceContext)
+        internal override bool Validate(SourceContext sourceContext)
         {
             var success = base.Validate(sourceContext);
 
@@ -137,6 +112,26 @@ namespace Element.AST
             return success;
         }
 
+        public override ISerializer? Serializer => StructSerializerInstance;
+        public static ISerializer StructSerializerInstance { get; } = new StructSerializer();
+
+        private class StructSerializer : ISerializer
+        {
+            public int SerializedSize(IValue value) => value is StructInstance instance ? instance.SerializedSize : 0;
+
+            public bool Serialize(IValue value, ref float[] array, ref int position)
+            {
+                if (!(value is StructInstance instance) || !instance.IsSerializable) return false;
+                var success = true;
+                foreach (var member in instance)
+                {
+                    success &= member.Type.Serializer.Serialize(member, ref array, ref position);
+                }
+
+                return success;
+            }
+        }
+
         public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == this;
 
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
@@ -150,7 +145,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier => "intrinsic";
 
-        public override bool Validate(SourceContext sourceContext)
+        internal override bool Validate(SourceContext sourceContext)
         {
             var success = base.Validate(sourceContext);
             if (DeclaredType != null)
@@ -161,12 +156,13 @@ namespace Element.AST
 
             // Intrinsic structs implement constraint resolution and a callable constructor
             // They don't implement IScope, scope impl is still handled by DeclaredStruct
-            success &= ImplementingIntrinsic<IConstraint>(sourceContext) != null;
+            success &= ImplementingIntrinsic<IType>(sourceContext) != null;
             success &= ImplementingIntrinsic<IFunction>(sourceContext) != null;
 
             return success;
         }
 
+        public override ISerializer? Serializer => ImplementingIntrinsic<IType>(null).Serializer;
         public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(null).MatchesConstraint(value, compilationContext);
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => ImplementingIntrinsic<ICallable>(null).Call(arguments, compilationContext);
     }

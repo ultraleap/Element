@@ -1,8 +1,9 @@
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Element.AST
 {
-    public abstract class ScopeBase : IScope
+    public abstract class ScopeBase : IScope, IEnumerable<IValue>
     {
         public abstract IValue? this[Identifier id, bool recurse, CompilationContext context] { get; }
         protected IValue? IndexCache(Identifier id) => _cache.TryGetValue(id, out var value) ? value : null;
@@ -16,5 +17,8 @@ namespace Element.AST
                 Set(identifier, value);
             }
         }
+
+        public IEnumerator<IValue> GetEnumerator() => _cache.Values.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

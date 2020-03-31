@@ -12,9 +12,10 @@ namespace Element.AST
         private CompilationErr() { }
         public override string ToString() => "<error>";
         public string Name { get; } = "<error>";
+        public ISerializer? Serializer => null;
         public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => false;
         Port[] IFunction.Inputs { get; } = Array.Empty<Port>();
-        TypeAnnotation? IFunction.Output => null;
+        Port IFunction.Output => null;
         IValue ICallable.Call(IValue[] arguments, CompilationContext compilationContext) => this;
         IType IValue.Type => Instance;
 

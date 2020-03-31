@@ -1,6 +1,6 @@
 namespace Element.AST
 {
-    public interface IDeclared
+    internal interface IDeclared
     {
         Declaration Declarer { get; }
     }

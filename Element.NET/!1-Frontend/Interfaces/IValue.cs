@@ -32,7 +32,7 @@ namespace Element.AST
             {
                 var arg = arguments[i];
                 var port = ports[i];
-                var constraint = port.ResolveConstraint(scope, compilationContext);
+                var constraint = port.ResolveConstraint(compilationContext);
                 if (!constraint.MatchesConstraint(arg, compilationContext))
                 {
                     compilationContext.LogError(8, $"Value '{arg}' given for port '{port}' does not match '{constraint}' constraint");
@@ -46,5 +46,25 @@ namespace Element.AST
         public static IEnumerable<(Identifier Identifier, IValue Value)> WithoutDiscardedArguments(this IValue[] arguments, Port[] ports) =>
             ports.Where(port => port.Identifier.HasValue)
                  .Select((port, idx) => (port.Identifier.Value, arguments[idx]));
+
+        public static bool TryGetSerializableSize(this IValue value, out int size)
+        {
+            var serializedSize = value.Type.Serializer?.SerializedSize(value);
+            size = serializedSize.GetValueOrDefault();
+            return serializedSize.HasValue && size != 0;
+        }
+
+        public static bool TrySerialize(this IValue value, out float[] serialized)
+        {
+            if (!value.TryGetSerializableSize(out var size))
+            {
+                serialized = null;
+                return false;
+            }
+            
+            serialized = new float[size];
+            var position = 0;
+            return value.Type.Serializer.Serialize(value, ref serialized, ref position);
+        }
     }
 }

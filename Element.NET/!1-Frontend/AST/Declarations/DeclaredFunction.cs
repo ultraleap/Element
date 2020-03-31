@@ -7,7 +7,7 @@ namespace Element.AST
         public override IType Type => FunctionType.Instance;
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
         Port[] IFunction.Inputs => DeclaredInputs;
-        TypeAnnotation? IFunction.Output => DeclaredType;
+        Port IFunction.Output => DeclaredOutput;
     }
 
     public class ExtrinsicFunction : DeclaredFunction, ICompilableFunction
@@ -15,7 +15,7 @@ namespace Element.AST
         protected override string IntrinsicQualifier => string.Empty;
         protected override Identifier[] ScopeIdentifierWhitelist { get; } = {Parser.ReturnIdentifier};
 
-        public override bool Validate(SourceContext sourceContext)
+        internal override bool Validate(SourceContext sourceContext)
         {
             var success = base.Validate(sourceContext);
             if (Body is Terminal)
@@ -28,7 +28,7 @@ namespace Element.AST
         }
 
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            this.ApplyArguments(arguments, DeclaredInputs, DeclaredType, Body, ChildScope ?? ParentScope, compilationContext);
+            this.ApplyArguments(arguments, DeclaredInputs, DeclaredOutput, Body, ChildScope ?? ParentScope, compilationContext);
 
         public IValue Compile(IScope scope, CompilationContext compilationContext) =>
             scope.CompileFunction(Body, compilationContext);
@@ -39,7 +39,8 @@ namespace Element.AST
     public class IntrinsicFunction : DeclaredFunction
     {
         protected override string IntrinsicQualifier => "intrinsic";
-        public override bool Validate(SourceContext sourceContext)
+
+        internal override bool Validate(SourceContext sourceContext)
         {
             var success = ImplementingIntrinsic<IFunction>(sourceContext) != null;
             if (!(Body is Terminal))

@@ -7,5 +7,6 @@ namespace Element.AST
         public IType Type => this;
         public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
         public string Name => "Type";
+        public ISerializer? Serializer => null;
     }
 }

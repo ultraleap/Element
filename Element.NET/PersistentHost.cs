@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Element.AST;
 
 namespace Element
@@ -24,11 +23,9 @@ namespace Element
         public (bool Success, float[] Result) Evaluate(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
                 ? _context.Parse(expression, out AST.Expression expressionObject)
-                    ? expressionObject.ResolveExpression(_context.GlobalScope, _context.MakeCompilationContext()) switch
-                    {
-                        ISerializable serializable => (serializable.TrySerialize(out var result), result),
-                        _ => (_context.LogError(1, "Result not serializable") == CompilationErr.Instance, null)
-                    }
+                    ? expressionObject.ResolveExpression(_context.GlobalScope, _context.MakeCompilationContext()).TrySerialize(out var result)
+                          ? (true, result)
+                          : (_context.LogError(1, "Result not serializable") == CompilationErr.Instance, null)
                     : (false, null)
                 : (false, null);
 

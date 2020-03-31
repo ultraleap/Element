@@ -7,7 +7,7 @@ namespace Element.AST
 		public IType Type => FunctionType.Instance;
 		public string Location => "list";
 		public Port[] Inputs { get; } = {Port.VariadicPort};
-		public TypeAnnotation Output { get; } = new TypeAnnotation(ListType.Instance);
+		public Port Output { get; } = Port.ReturnPort(ListType.Instance);
 		public IValue Call(IValue[] arguments, CompilationContext context) =>
 			ListType.Instance.Call(new IValue[]{new IndexFunction(arguments), new Literal(arguments.Length), }, context);
 

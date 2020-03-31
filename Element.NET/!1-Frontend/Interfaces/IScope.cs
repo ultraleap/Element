@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Element.AST
 {
@@ -24,5 +25,34 @@ namespace Element.AST
                 },
                 _ => CompilationErr.Instance
             };
+        
+        /// <summary>
+        /// Enumerates all values in the given scope returning those matching the given filter and recursing into any child scopes that match the recurse predicate.
+        /// </summary>
+        public static List<IValue> EnumerateValues(this IEnumerable<IValue> scope, Predicate<IValue> filter)
+        {
+            var results = new List<IValue>();
+            void RecurseValue(IValue value)
+            {
+                if (filter(value)) results.Add(value);
+                
+                if (value is Declaration declaration
+                    && declaration.ChildScope != null)
+                {
+                    RecurseMultipleValues(declaration.ChildScope);
+                }
+            }
+
+            void RecurseMultipleValues(IEnumerable<IValue> values)
+            {
+                foreach (var v in values)
+                {
+                    RecurseValue(v);
+                }
+            }
+
+            RecurseMultipleValues(scope);
+            return results;
+        }
     }
 }

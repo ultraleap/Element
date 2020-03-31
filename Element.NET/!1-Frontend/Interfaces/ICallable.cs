@@ -11,7 +11,7 @@ namespace Element.AST
     public interface IFunction : ICallable
     {
         Port[] Inputs { get; }
-        TypeAnnotation? Output { get; }
+        Port Output { get; }
     }
 
     public interface ICompilableFunction : IFunction
@@ -37,14 +37,14 @@ namespace Element.AST
             return previous;
         }
 
-        public static IValue ApplyArguments(this ICompilableFunction function, IValue[] arguments, Port[] inputs, TypeAnnotation returnType, object body, IScope callScope, CompilationContext compilationContext) =>
+        public static IValue ApplyArguments(this ICompilableFunction function, IValue[] arguments, Port[] inputs, Port returnPort, object body, IScope callScope, CompilationContext compilationContext) =>
             !(arguments.Length > 0) || arguments.ValidateArguments(inputs, callScope, compilationContext)
                 ? arguments.Length > 0
                       ? new AppliedFunction(arguments, function, callScope, body).ResolveNullaryFunction(compilationContext)
-                      : ResolveCall(function, callScope, returnType, compilationContext)
+                      : ResolveCall(function, callScope, returnPort, compilationContext)
                 : CompilationErr.Instance;
 
-        private static IValue ResolveCall(ICompilableFunction function, IScope callScope, TypeAnnotation returnType, CompilationContext compilationContext)
+        private static IValue ResolveCall(ICompilableFunction function, IScope callScope, Port returnPort, CompilationContext compilationContext)
         {
             if (compilationContext.ContainsFunction(function.Definition)) return compilationContext.LogError(11, $"Multiple references to {function} in same call stack - Recursion is disallowed");
             compilationContext.PushFunction(function.Definition);
@@ -52,9 +52,9 @@ namespace Element.AST
             try
             {
                 var result = function.Compile(callScope, compilationContext);
-                var resultConstraint = returnType?.ResolveConstraint(callScope, compilationContext) ?? AnyConstraint.Instance;
-                return !resultConstraint.MatchesConstraint(result, compilationContext)
-                           ? compilationContext.LogError(8, $"Result '{result}' for function '{function.Definition}' does not match '{returnType}' constraint")
+                var returnConstraint = returnPort.ResolveConstraint(compilationContext);
+                return !returnConstraint.MatchesConstraint(result, compilationContext)
+                           ? compilationContext.LogError(8, $"Result '{result}' for function '{function.Definition}' does not match '{returnConstraint}' constraint")
                            : result;
             }
             finally
@@ -84,7 +84,7 @@ namespace Element.AST
             private readonly object _body;
             public IType Type => Definition.Type;
             public Port[] Inputs { get; }
-            public TypeAnnotation? Output => Definition.Output;
+            public Port Output => Definition.Output;
 
             public IValue Compile(IScope scope, CompilationContext compilationContext) => scope.CompileFunction(_body, compilationContext);
             public ICompilableFunction Definition { get; }

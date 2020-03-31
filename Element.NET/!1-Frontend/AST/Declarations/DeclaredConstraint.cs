@@ -15,7 +15,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;
 
-        public override bool Validate(SourceContext sourceContext)
+        internal override bool Validate(SourceContext sourceContext)
         {
             if (!HasDeclaredInputs)
             {
@@ -39,11 +39,10 @@ namespace Element.AST
 
             foreach (var (argumentPort, matchingPort) in fn.Inputs.Zip(DeclaredInputs, (argumentPort, matchingPort) => (argumentPort, matchingPort)))
             {
-                success &= CompareConstraints(argumentPort.ResolveConstraint(ParentScope, compilationContext), matchingPort.ResolveConstraint(ParentScope, compilationContext));
+                success &= CompareConstraints(argumentPort.ResolveConstraint(compilationContext), matchingPort.ResolveConstraint(compilationContext));
             }
 
-            success &= CompareConstraints(fn.Output?.ResolveConstraint(ParentScope, compilationContext) ?? AnyConstraint.Instance,
-                DeclaredType?.ResolveConstraint(ParentScope, compilationContext) ?? AnyConstraint.Instance);
+            success &= CompareConstraints(fn.Output.ResolveConstraint(compilationContext), DeclaredOutput.ResolveConstraint(compilationContext));
 
             return success;
         }
@@ -54,7 +53,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic";
 
-        public override bool Validate(SourceContext sourceContext) => ImplementingIntrinsic<IConstraint>(sourceContext) != null;
+        internal override bool Validate(SourceContext sourceContext) => ImplementingIntrinsic<IConstraint>(sourceContext) != null;
         public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(null).MatchesConstraint(value, compilationContext);
     }
 }

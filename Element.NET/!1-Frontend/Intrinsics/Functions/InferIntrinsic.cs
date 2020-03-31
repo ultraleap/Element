@@ -7,8 +7,8 @@ namespace Element.AST
         {
             throw new System.NotImplementedException();
         }
-        public Port[] Inputs { get; } = {new Port("function", FunctionType.Annotation), new Port("instance", AnyConstraint.Annotation)};
-        public TypeAnnotation Output { get; } = AnyConstraint.Annotation;
+        public Port[] Inputs { get; } = {new Port("function", FunctionType.Instance), new Port("instance", AnyConstraint.Instance)};
+        public Port? Output => null;
 
         public string Location => "infer";
     }

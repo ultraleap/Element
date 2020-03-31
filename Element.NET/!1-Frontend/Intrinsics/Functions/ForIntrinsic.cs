@@ -8,11 +8,12 @@ namespace Element.AST
         public IType Type => FunctionType.Instance;
         public Port[] Inputs { get; } =
             {
-                new Port(_initialIdentifier, AnyConstraint.Annotation),
-                new Port(_conditionIdentifier, FunctionType.Annotation),
-                new Port(_bodyIdentifier, FunctionType.Annotation)
+                new Port(_initialIdentifier, AnyConstraint.Instance),
+                new Port(_conditionIdentifier, FunctionType.Instance),
+                new Port(_bodyIdentifier, FunctionType.Instance)
             };
-        public TypeAnnotation Output { get; } = AnyConstraint.Annotation;
+
+        public Port Output => null;
 
         private static readonly Identifier _initialIdentifier = new Identifier("initial");
         private static readonly Identifier _conditionIdentifier = new Identifier("condition");

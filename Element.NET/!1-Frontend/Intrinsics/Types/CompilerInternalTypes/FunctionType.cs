@@ -4,8 +4,8 @@ namespace Element.AST
     {
         private FunctionType() {}
         public static IType Instance { get; } = new FunctionType();
-        public static TypeAnnotation Annotation { get; } = new TypeAnnotation(Instance);
         public string Name => "Function";
+        public ISerializer? Serializer => null;
         public IType Type => TypeType.Instance;
         public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
     }

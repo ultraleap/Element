@@ -51,23 +51,5 @@ namespace Element
                     .OverallSuccess;
             }
         }
-
-        /*/// <summary>
-        /// Gets all functions in global scope and any namespaces which match the given filter.
-        /// </summary>
-        public (string Path, IFunction Function)[] GetAllFunctions(Predicate<IFunction> filter, CompilationContext context)
-        {
-	        IEnumerable<(string, IFunction)> Recurse(string path, IFunction func)
-	        {
-		        if (func.IsNamespace())
-		        {
-			        return func.Outputs.SelectMany(o => Recurse($"{path}.{o.Name}", func.Call(o.Name, context)));
-		        }
-
-		        return filter?.Invoke(func) == false ? Array.Empty<(string, IFunction)>() : new[] {(path, func)};
-	        }
-
-	        return _functions.ToArray().SelectMany(f => Recurse(f.Name, f)).ToArray();
-        }*/
     }
 }

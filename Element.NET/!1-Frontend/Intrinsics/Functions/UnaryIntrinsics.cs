@@ -17,7 +17,7 @@ namespace Element.AST
                 : CompilationErr.Instance;
 
         public IType Type => FunctionType.Instance;
-        public Port[] Inputs { get; } = {new Port("a", NumType.Annotation)};
-        public TypeAnnotation Output { get; } = NumType.Annotation;
+        public Port[] Inputs { get; } = {new Port("a", NumType.Instance)};
+        public Port Output { get; } = Port.ReturnPort(NumType.Instance);
     }
 }
