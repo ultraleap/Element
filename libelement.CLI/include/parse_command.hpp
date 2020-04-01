@@ -23,7 +23,7 @@ namespace libelement::cli
 
 		void execute() const override
 		{
-			//Call into libelement
+			//call into libelement
 		}
 
 		static void configure(CLI::App& app, const std::shared_ptr<common_command_arguments>& common_arguments, std::function<void(const command&)> callback)

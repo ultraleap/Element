@@ -33,14 +33,21 @@ namespace libelement::cli
 	private:
 		static message_level get_message_level(const std::string& level)
 		{
+			static std::map<std::string, message_level> map_message_level =
+			{
+				{"Fatal", message_level::FATAL},
+				{"Warning", message_level::WARNING},
+				{"Error", message_level::ERROR},
+				{"Information", message_level::INFORMATION},
+				{"Verbose", message_level::VERBOSE}
+			};
+			
 			message_level_const_iterator it = map_message_level.find(level);
 			if (it != map_message_level.end())
 				return it->second;
 
 			return message_level::UNKNOWN;
 		}
-
-		static std::map<std::string, message_level> map_message_level;
 	};
 
 	class message_codes 
@@ -48,7 +55,7 @@ namespace libelement::cli
 		typedef const std::map<std::string, message_code>::const_iterator message_code_const_iterator;
 	public:
 		message_codes(const std::string& path) 
-		{
+		{			
 			auto data = toml::parse(path);
 			auto table = toml::get<toml::table>(data);
 

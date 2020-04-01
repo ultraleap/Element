@@ -10,9 +10,10 @@ using namespace libelement::cli;
 
 void command_callback(const command& command) {
 
+	//callback in case we need access to the command for some compiler_message generation shenanigans
 	command.execute();
 
-	//Parse command response into complier message and return to the appropriate streams
+	//parse command response into complier message and return to the appropriate streams
 	compiler_message message(10, message_level::ERROR, "parse_command", std::vector<trace_site>{});
 
 	std::cout << message.serialize();
@@ -20,10 +21,10 @@ void command_callback(const command& command) {
 
 int main(const int argc, char** argv)
 {
-	//Parse arguments and construct appropriate command
+	//parse arguments and construct exactly one required command
 	CLI::App app{ "CLI interface for libelement" };
 	app.set_help_all_flag("--help-all", "Expand all help");
-	app.require_subcommand(1, 1); //require exactly one subcommand
+	app.require_subcommand(1, 1);
 
 	command::configure(app, command_callback);
 

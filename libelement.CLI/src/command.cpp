@@ -17,7 +17,7 @@ void command::configure(CLI::App& app, std::function<void(const command&)> callb
 	app.add_option("--verbosity", arguments->verbosity, "Verbosity of compiler messages.");
 	app.add_option("--logjson", arguments->log_json, "Serializes log messages structured as Json instead of plain string.");
 
-	//don't like this, fix!
+	//not a big fan of this but it works, so leaving it for now
 	parse_command::configure(app, arguments, callback);
 	evaluate_command::configure(app, arguments, callback);
 	typeof_command::configure(app, arguments, callback);

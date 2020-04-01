@@ -28,11 +28,11 @@ set(libelement_cli_sources
     "include/parse_command.hpp"
     "include/typeof_command.hpp"
     "include/message_codes.hpp"
+    "include/compilation_input.hpp"
 	
     "src/compiler_message.cpp"
     "src/command.cpp"
     "src/main.cpp"
-    "src/message_codes.cpp"
 
 	"config/Messages.toml"
 )
