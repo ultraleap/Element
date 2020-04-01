@@ -46,7 +46,7 @@ namespace libelement::cli
 		std::vector<trace_site> trace_stack;
 
 		//this is nasty, static initialisation that performs file reading, reconsider if it proves problematic
-		inline static message_codes codes { message_codes("config/Messages.toml") };
+		//inline static message_codes codes { message_codes("config/Messages.toml") };
 		
 	public:
 		compiler_message(std::string message, message_level level)

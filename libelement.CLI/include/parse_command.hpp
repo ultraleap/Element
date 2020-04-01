@@ -33,7 +33,7 @@ namespace libelement::cli
 			const auto arguments = std::make_shared<parse_command_arguments>();
 
 			const auto command = app.add_subcommand("parse")->fallthrough();
-			command->add_option("no-validation", arguments->no_validation, "Expression to evaluate.")->required();
+			command->add_flag("--no-validation", arguments->no_validation, "Expression to evaluate.");
 
 			command->callback([callback, common_arguments, arguments]() { callback(parse_command(*common_arguments, *arguments)); });
 		}

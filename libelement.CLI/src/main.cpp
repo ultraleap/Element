@@ -3,7 +3,6 @@
 #include <CLI/CLI.hpp>
 
 #include <compiler_message.hpp>
-#include <compilation_input.hpp>
 #include <command.hpp>
 #include <toml.hpp>
 
@@ -14,8 +13,8 @@ void command_callback(const command& command) {
 	//callback in case we need access to the command for some compiler_message generation shenanigans
 	auto input = compilation_input(command.get_common_arguments());
 	auto response = command.execute(input);
-	std::cout << response.serialize();
-}
+	std::cout << response.serialize() << std::endl << std::flush;
+} 
 
 int main(const int argc, char** argv)
 {
