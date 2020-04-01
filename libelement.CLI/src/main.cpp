@@ -3,6 +3,7 @@
 #include <CLI/CLI.hpp>
 
 #include <compiler_message.hpp>
+#include <compilation_input.hpp>
 #include <command.hpp>
 #include <toml.hpp>
 
@@ -11,12 +12,9 @@ using namespace libelement::cli;
 void command_callback(const command& command) {
 
 	//callback in case we need access to the command for some compiler_message generation shenanigans
-	command.execute();
-
-	//parse command response into complier message and return to the appropriate streams
-	compiler_message message(10, message_level::ERROR, "parse_command", std::vector<trace_site>{});
-
-	std::cout << message.serialize();
+	auto input = compilation_input(command.get_common_arguments());
+	auto response = command.execute(input);
+	std::cout << response.serialize();
 }
 
 int main(const int argc, char** argv)

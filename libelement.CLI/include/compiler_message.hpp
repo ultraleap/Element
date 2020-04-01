@@ -59,6 +59,6 @@ namespace libelement::cli
 		{
 		}
 		
-		std::string serialize();
+		std::string serialize() const;
 	};
 }

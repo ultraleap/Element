@@ -12,21 +12,23 @@ namespace libelement::cli
 
 	class typeof_command final : public command
 	{
-		common_command_arguments common_arguments;
 		typeof_command_arguments custom_arguments;
 
 	public:
 		typeof_command(common_command_arguments common_arguments, typeof_command_arguments custom_arguments)
-			: common_arguments{ std::move(common_arguments) }, custom_arguments{ std::move(custom_arguments) }
+			: command(common_arguments), custom_arguments{ std::move(custom_arguments) }
 		{
 		}
 
-		void execute() const override
+		compiler_message execute(const compilation_input& input) const override
 		{
 			//call into libelement
+
+			//default move constructor should trigger on return value assignment, right?
+			return compiler_message(10, message_level::ERROR, "typeof_command", std::vector<trace_site>{});
 		}
 
-		static void configure(CLI::App& app, const std::shared_ptr<common_command_arguments>& common_arguments, std::function<void(const command&)> callback)
+		static void configure(CLI::App& app, const std::shared_ptr<common_command_arguments>& common_arguments, command::callback callback)
 		{
 			const auto arguments = std::make_shared<typeof_command_arguments>();
 

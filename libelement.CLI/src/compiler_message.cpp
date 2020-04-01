@@ -6,7 +6,7 @@
 
 using namespace libelement::cli;
 
-std::string compiler_message::serialize()
+std::string compiler_message::serialize() const
 {
 
 	rapidjson::StringBuffer buffer;
