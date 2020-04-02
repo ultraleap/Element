@@ -27,9 +27,10 @@ namespace Laboratory
             
             _processHostInfo = string.IsNullOrEmpty(name)
                                    ? (ProcessHostInfo?)null
-                                   : new ProcessHostInfo(name,
-                                                         Get<string>("build-command"),
-                                                         Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path")));
+                                   : new ProcessHostInfo(name, 
+                                       new []{Get<string>("build-command") ,Get<string>("additional-build-command")},
+                                       Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path")), 
+                                       Get<string>("working-directory"));
         }
 
         private static readonly Lazy<string> _elementRootDirectory = new Lazy<string>(() =>
@@ -57,16 +58,18 @@ namespace Laboratory
 
         private readonly struct ProcessHostInfo
         {
-            public ProcessHostInfo(string name, string buildCommand, string executablePath)
+            public ProcessHostInfo(string name, string[] buildCommands, string executablePath, string workingDirectory)
             {
                 Name = name;
                 BuildCommands = buildCommands;
                 ExecutablePath = executablePath;
+                WorkingDirectory = workingDirectory;
             }
 
             public string Name { get; }
             public string[] BuildCommands { get; }
             public string ExecutablePath { get; }
+            public string WorkingDirectory { get; }
         }
 
         private static readonly ProcessHostInfo? _processHostInfo;
@@ -107,24 +110,27 @@ namespace Laboratory
                 var info = _processHostInfo.Value;
                 try
                 {
-                    var splitCommand = info.BuildCommand.Split(' ', 2);
-                    var process = new Process
+                    foreach(var command in info.BuildCommands.Where(s => !string.IsNullOrWhiteSpace(s)))
                     {
-                        StartInfo = new ProcessStartInfo
+                        var splitCommand = command.Split(' ', 2);
+                        var process = new Process
                         {
-                            FileName = splitCommand[0],
-                            Arguments = splitCommand[1],
-                            WorkingDirectory = _elementRootDirectory.Value
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = splitCommand[0],
+                                Arguments = splitCommand[1],
+                                WorkingDirectory = _elementRootDirectory.Value
+                            }
+                        };
+
+                        process.StartInfo.RedirectStandardError = true;
+                        process.Start();
+                        process.WaitForExit();
+
+                        if (process.ExitCode != 0)
+                        {
+                            _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                         }
-                    };
-
-                    process.StartInfo.RedirectStandardError = true;
-                    process.Start();
-                    process.WaitForExit();
-
-                    if (process.ExitCode != 0)
-                    {
-                        _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                     }
                 }
                 catch (Exception e)
@@ -146,7 +152,7 @@ namespace Laboratory
                 {
                     result = JsonConvert.DeserializeObject<T>(json, settings);
                 }
-                catch
+                catch(Exception e)
                 {
                     result = default;
                     success = false;
@@ -175,7 +181,8 @@ namespace Laboratory
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = _info.ExecutablePath,
-                        Arguments = arguments
+                        Arguments = arguments,
+                        WorkingDirectory = Path.Combine(_elementRootDirectory.Value, _info.WorkingDirectory)
                     }
                 };
 

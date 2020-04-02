@@ -75,11 +75,11 @@ namespace Laboratory
             var errors = new List<CompilerMessage>();
             compilationInput.LogCallback = ExpectMessageCode(messageCode, errors);
             var (success, _) = Host.Evaluate(compilationInput, expression);
-            if (success)
-            {
-                if (errors.Count > 0) Assert.Fail("Expected message code '{0}' but got following code(s): {1}", messageCode, string.Join(",", errors.Select(err => err.MessageCode)));
-                else Assert.Fail("Expected message code '{0}' but evaluation succeeded", messageCode);
-            }
+            
+            if (errors.Count > 0) Assert.Fail("Expected message code '{0}' but got following code(s): {1}", messageCode, string.Join(",", errors.Select(err => err.MessageCode)));
+            if (success) Assert.Fail("Expected message code '{0}' but evaluation succeeded", messageCode);
+            
+            Assert.Fail("Expected message code '{0}', but success was false and no errors were received", messageCode);
         }
 
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());
