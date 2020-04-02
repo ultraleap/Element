@@ -5,7 +5,7 @@ namespace Laboratory.Tests
 {
     internal class Structs : SemanticsFixture
     {
-        public Structs(IHost host) : base(host, "Structs") { }
+        public Structs() : base("Structs") { }
 
         [Test]
         public void TypeofStruct() => AssertTypeof(CompilationInput, "MyStruct", "Type");

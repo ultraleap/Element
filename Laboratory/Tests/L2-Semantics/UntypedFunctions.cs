@@ -1,11 +1,10 @@
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
 {
     internal class UntypedFunctions : SemanticsFixture
     {
-        public UntypedFunctions(IHost host) : base(host, "UntypedFunctions") { }
+        public UntypedFunctions() : base("UntypedFunctions") { }
 
         [Test]
         public void Add() => AssertApproxEqual(CompilationInput, "Num.add(5, 8)", "13");

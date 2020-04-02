@@ -1,9 +1,6 @@
 [submodule "Element/LMNT/thirdparty/dynasm"]
 	path = LMNT/dependencies/dynasm
 	url = https://github.com/Esvandiary/DynASM
-[submodule "Element.NET/Lexico"]
-	path = Lexico
-	url = git@github.com:hamish-milne/Lexico.git
 [submodule "libelement.CLI/dependencies/cli11"]
 	path = libelement.CLI/dependencies/cli11
 	url = https://github.com/CLIUtils/CLI11

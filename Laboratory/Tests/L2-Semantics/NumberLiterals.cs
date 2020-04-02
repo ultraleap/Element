@@ -1,11 +1,10 @@
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
 {
     internal class NumberLiterals : SemanticsFixture
     {
-        public NumberLiterals(IHost host) : base(host, "NumberLiterals") { }
+        public NumberLiterals() : base("NumberLiterals") { }
 
         [Test]
         public void AIsPi() => AssertApproxEqual(CompilationInput, "a", "3.14");

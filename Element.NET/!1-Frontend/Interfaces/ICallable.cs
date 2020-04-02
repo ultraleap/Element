@@ -38,29 +38,24 @@ namespace Element.AST
         }
 
         public static IValue ApplyArguments(this ICompilableFunction function, IValue[] arguments, Port[] inputs, TypeAnnotation returnType, object body, IScope callScope, CompilationContext compilationContext) =>
-            arguments.Length > 0
-                ? new AppliedFunction(arguments, function, callScope, body).ResolveNullaryFunction(compilationContext)
-                : ResolveCall(function, arguments, inputs, callScope, returnType, compilationContext);
+            !(arguments.Length > 0) || arguments.ValidateArguments(inputs, callScope, compilationContext)
+                ? arguments.Length > 0
+                      ? new AppliedFunction(arguments, function, callScope, body).ResolveNullaryFunction(compilationContext)
+                      : ResolveCall(function, callScope, returnType, compilationContext)
+                : CompilationErr.Instance;
 
-        private static IValue ResolveCall(ICompilableFunction function, IValue[] arguments, Port[] inputs, IScope callScope, TypeAnnotation returnType, CompilationContext compilationContext)
+        private static IValue ResolveCall(ICompilableFunction function, IScope callScope, TypeAnnotation returnType, CompilationContext compilationContext)
         {
             if (compilationContext.ContainsFunction(function.Definition)) return compilationContext.LogError(11, $"Multiple references to {function} in same call stack - Recursion is disallowed");
             compilationContext.PushFunction(function.Definition);
 
             try
             {
-                var argsValid = !(arguments?.Length > 0) || arguments.ValidateArguments(inputs, callScope, compilationContext);
-                var result = argsValid
-                    ? function.Compile(callScope, compilationContext)
-                    : CompilationErr.Instance;
-
+                var result = function.Compile(callScope, compilationContext);
                 var resultConstraint = returnType?.ResolveConstraint(callScope, compilationContext) ?? AnyConstraint.Instance;
-                if (!resultConstraint.MatchesConstraint(result, compilationContext))
-                {
-                    return compilationContext.LogError(8, $"Result '{result}' for function '{function.Definition}' does not match '{returnType}' constraint");
-                }
-
-                return result;
+                return !resultConstraint.MatchesConstraint(result, compilationContext)
+                           ? compilationContext.LogError(8, $"Result '{result}' for function '{function.Definition}' does not match '{returnType}' constraint")
+                           : result;
             }
             finally
             {
@@ -73,7 +68,6 @@ namespace Element.AST
             public AppliedFunction(IValue[] arguments, ICompilableFunction definition, IScope parent, object body)
             {
                 Definition = definition;
-                _arguments = arguments;
                 _parent = parent;
                 _body = body switch
                 {
@@ -87,7 +81,6 @@ namespace Element.AST
             }
 
             private readonly IScope _parent;
-            private readonly IValue[] _arguments;
             private readonly object _body;
             public IType Type => Definition.Type;
             public Port[] Inputs { get; }
@@ -96,7 +89,7 @@ namespace Element.AST
             public IValue Compile(IScope scope, CompilationContext compilationContext) => scope.CompileFunction(_body, compilationContext);
             public ICompilableFunction Definition { get; }
 
-            public IValue Call(IValue[] _, CompilationContext compilationContext) => ResolveCall(this, _arguments, Definition.Inputs, this, Output, compilationContext);
+            public IValue Call(IValue[] _, CompilationContext compilationContext) => ResolveCall(this, this, Output, compilationContext);
 
             public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
                 IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);

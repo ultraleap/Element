@@ -1,11 +1,10 @@
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
 {
     internal class IdentifierResolution : SemanticsFixture
     {
-        public IdentifierResolution(IHost host) :base(host, "IdentifierResolution") { }
+        public IdentifierResolution() :base("IdentifierResolution") { }
 
         [
             TestCase("A.A.a", "15"),

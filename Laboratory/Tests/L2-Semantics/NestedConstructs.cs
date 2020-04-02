@@ -1,11 +1,10 @@
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests
 {
     internal class NestedConstructs : SemanticsFixture
     {
-        public NestedConstructs(IHost host) : base(host, "NestedConstructs") { }
+        public NestedConstructs() : base("NestedConstructs") { }
 
         [Test]
         public void AddUsingLocal() => AssertApproxEqual(CompilationInput, "addUsingLocal(6, 6)", "12");
