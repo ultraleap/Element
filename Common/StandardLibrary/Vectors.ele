@@ -12,85 +12,88 @@ namespace Vector
 
 struct Vector2(x:Num, y:Num)
 {
-    Dot(a:Vec2, b:Vec2):Num
+    Dot(a:Vector2, b:Vector2):Num
     {
-        s = Vec.Mul(a, b);
-        return = add(s.x, s.y);
+        s = Vector2(a.x.mul(b.x), a.y.mul(b.y));
+        return = s.x.add(s.y);
     }
 
-    Angle(a:Vec2, b:Vec2):Num
+    Angle(a:Vector2, b:Vector2):Num
     {
         angle = degrees(atan2(sub(b.y, a.y), sub(b.x, a.x)));
         return = if(lt(angle, 0), add(angle, 360), angle);
     }
 
-    Magnitude(v) = sqrt(Dot(v, v));
+    Magnitude(v:Vector2):Num = Num.sqrt(v.Dot(v));
 
-    Normalize(v)
+    Normalize(a:Vector2):Vector2
     {
-        mapper(x) = div(x, Magnitude(v));
-        return = map(mapper, v);
+       len = Magnitude(a);
+       return = Vector2(a.x.div(len), a.y.div(len));
+       
+       #return = v.div(Magnitude(v));
+       #return = map(mapper, v);
     }
 
-    Distance(a, b) = Magnitude(Vec.Sub(b, a));
+    Distance(a:Vector2, b:Vector2) = Magnitude(Vector.sub(b, a));
 }
 
-struct Vector3(x:Num, y:Num, z:Num)
-{
-    Up = Vec3(0, 0, 1);
-    Down = Vec3(0, 0, -1);
-    Right = Vec3(1, 0, 0);
-    Left = Vec3(-1, 0, 0);
-    Forward = Vec3(0, 1, 0);
-    Back = Vec3(0, -1, 0);
-
-    Dot(a:Vec3, b:Vec3):Num
-    {
-        s = Vec.Mul(a, b);
-        return = add(add(s.x, s.y), s.z);
-    }
-
-    Cross(a:Vec3, b:Vec3) =
-        Vec3(
-            sub(mul(a.y, b.z), mul(a.z, b.y)),
-            sub(mul(a.z, b.x), mul(a.x, b.z)),
-            sub(mul(a.x, b.y), mul(a.y, b.x))
-        );
-
-    Magnitude(v) = sqrt(Dot(v, v));
-
-    Normalize(v)
-    {
-        mapper(x) = div(x, Magnitude(v));
-        return = map(mapper, v);
-    }
-
-    Distance(a, b) = Magnitude(Vec.Sub(b, a));
-
-    TransformPosition(vec:Vec3, matrix:Matrix4x4):Vec3
-    {
-        result = V4.Transform(Vec4(vec.x, vec.y, vec.z, 1), matrix);
-        return = Vec3(result.x, result.y, result.z);
-    }
-
-    TransformDirection(vec:Vec3, matrix:Matrix4x4):Vec3
-    {
-        result = V4.Transform(Vec4(vec.x, vec.y, vec.z, 0), matrix);
-        return = Vec3(result.x, result.y, result.z);
-    }
-}
-
-struct Vector3(x:Num, y:Num, z:Num, w:Num)
-{
-    Dot(a:Vec4, b:Vec4):Num
-    {
-        s = Vec.Mul(a, b);
-        return = add(add(s.x, s.y), add(s.z, s.w));
-    }
-
-    Transform(vector:Vec4, matrix:Matrix4x4) : Vec4
-    {
-        multiply(m):Num = Dot(vector, m);
-        return = map(multiply, Matrix.Transpose(matrix));
-    }
-}
+#struct Vector3(x:Num, y:Num, z:Num)
+#{
+#    Up = Vec3(0, 0, 1);
+#    Down = Vec3(0, 0, -1);
+#    Right = Vec3(1, 0, 0);
+#    Left = Vec3(-1, 0, 0);
+#    Forward = Vec3(0, 1, 0);
+#    Back = Vec3(0, -1, 0);
+#
+#    Dot(a:Vector3, b:Vector3):Num
+#    {
+#        s = Vector.mul(a, b);
+#        return = add(add(s.x, s.y), s.z);
+#    }
+#
+#    Cross(a:Vector3, b:Vector3) =
+#        Vector3(
+#            sub(mul(a.y, b.z), mul(a.z, b.y)),
+#            sub(mul(a.z, b.x), mul(a.x, b.z)),
+#            sub(mul(a.x, b.y), mul(a.y, b.x))
+#        );
+#
+#    Magnitude(v) = sqrt(Dot(v, v));
+#
+#    Normalize(v)
+#    {
+#        mapper(x) = div(x, Magnitude(v));
+#        return = map(mapper, v);
+#    }
+#
+#    Distance(a, b) = Magnitude(Vector.sub(b, a));
+#
+#    TransformPosition(vec:Vector3, matrix:Matrix4x4):Vector3
+#    {
+#        result = V4.Transform(Vector4(vec.x, vec.y, vec.z, 1), matrix);
+#        return = Vector3(result.x, result.y, result.z);
+#    }
+#
+#    TransformDirection(vec:Vec3, matrix:Matrix4x4):Vector3
+#    {
+#        result = V4.Transform(Vector4(vec.x, vec.y, vec.z, 0), matrix);
+#        return = Vec3(result.x, result.y, result.z);
+#    }
+#}
+#
+#struct Vector4(x:Num, y:Num, z:Num, w:Num)
+#{
+#    Dot(a:Vector4, b:Vector4):Num
+#    {
+#        s = Vector.mul(a, b);
+#        return = add(add(s.x, s.y), add(s.z, s.w));
+#    }
+#
+#    Transform(vector:Vector4, matrix:Matrix4x4):Vector4
+#    {
+#        multiply(m):Num = Dot(vector, m);
+#        return = map(multiply, Matrix.Transpose(matrix));
+#    }
+#}

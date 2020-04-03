@@ -9,6 +9,7 @@ namespace Laboratory.Tests
         {
             Packages = new[] { new DirectoryInfo("StandardLibrary") },
         };
+        
         protected CompilationInput NonValidatedCompilationInput { get; } = new CompilationInput(FailOnError)
         {
             Packages = new[] { new DirectoryInfo("StandardLibrary") },

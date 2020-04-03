@@ -42,10 +42,12 @@ namespace Element
         {
             lock (_syncRoot)
             {
+                //SearchOption.AllDirectories temporarily switched to SearchOption.TopDirectoryOnly,
+                //so that I can move files still to be updated to a subdirectory
                 return this.ParseFiles(CompilationInput.Packages
                         .Prepend(CompilationInput.ExcludePrelude ? null : new DirectoryInfo("Prelude"))
                         .SelectMany(directory =>
-                            directory?.GetFiles("*.ele", SearchOption.AllDirectories) ?? Array.Empty<FileInfo>())
+                            directory?.GetFiles("*.ele", SearchOption.TopDirectoryOnly) ?? Array.Empty<FileInfo>())
                         .Concat(CompilationInput.ExtraSourceFiles)
                         .ToArray())
                     .OverallSuccess;

@@ -2,7 +2,7 @@
 
 namespace Laboratory.Tests
 {
-    class StandardLibrary : StandardLibraryFixture
+    internal class StandardLibrary : StandardLibraryFixture
     {
         [Test]
         // Evaluates an arbitrary expression since creating the prelude will be parsed implicitly when not excluded
