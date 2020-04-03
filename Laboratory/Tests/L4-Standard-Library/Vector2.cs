@@ -20,6 +20,18 @@ namespace Laboratory.Tests
             TestCase("Vector2(1, 1).Normalize", "Vector2(0.707106769, 0.707106769)"),
             TestCase("Vector2(3, 4).Normalize", "Vector2(0.6, 0.8)"),
         ]
+        [
+            TestCase("Vector2(0, 0).Distance(Vector2(0, 0))", "0"),
+            TestCase("Vector2(0, 0).Distance(Vector2(3, 4))", "5"),
+        ]
+        [
+            TestCase("Vector2(0, 0).Angle(Vector2(0, 0))", "Num.NaN"),
+            TestCase("Vector2(0, 1).Angle(Vector2(0, 1))", "0"),
+            TestCase("Vector2(0, 1).Angle(Vector2(1, 1))", "45"),
+            TestCase("Vector2(0, 1).Angle(Vector2(-1, 1))", "45"),
+            TestCase("Vector2(0, 1).Angle(Vector2(1, -1))", "135"),
+            TestCase("Vector2(0, 1).Angle(Vector2(-1, -1))", "135"),
+        ]
         public void Operations(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expression, expected);
         
         // [

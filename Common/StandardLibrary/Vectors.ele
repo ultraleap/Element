@@ -18,13 +18,8 @@ struct Vector2(x:Num, y:Num)
         return = s.x.add(s.y);
     }
 
-    Angle(a:Vector2, b:Vector2):Num
-    {
-        angle = degrees(atan2(sub(b.y, a.y), sub(b.x, a.x)));
-        return = if(lt(angle, 0), add(angle, 360), angle);
-    }
-
     Magnitude(v:Vector2):Num = Num.sqrt(v.Dot(v));
+    Distance(a:Vector2, b:Vector2):Num = Magnitude(Vector2(a.x.sub(b.x), a.y.sub(b.y)));
 
     Normalize(a:Vector2):Vector2
     {
@@ -34,8 +29,16 @@ struct Vector2(x:Num, y:Num)
        #return = v.div(Magnitude(v));
        #return = map(mapper, v);
     }
-
-    Distance(a:Vector2, b:Vector2) = Magnitude(Vector.sub(b, a));
+  
+    Angle(a:Vector2, b:Vector2):Num = Num.degrees(Num.acos(a.Dot(b).div(a.Magnitude.mul(b.Magnitude))));  
+#   Angle(a:Vector2, b:Vector2):Num
+#   {
+#       angle = degrees(atan2(sub(b.y, a.y), sub(b.x, a.x)));
+#       return = if(lt(angle, 0), add(angle, 360), angle);
+#   }
+   
+    #Reflect
+    #Perpendicular
 }
 
 #struct Vector3(x:Num, y:Num, z:Num)
