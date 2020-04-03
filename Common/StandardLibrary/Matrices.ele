@@ -1,3 +1,4 @@
+#represents a 4x4 homogeneous coordinate matrix for representing affine transformations
 struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
 {
     transpose(m:Matrix4x4):Matrix4x4 = Matrix4x4(
