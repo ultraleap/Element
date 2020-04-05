@@ -10,40 +10,23 @@ namespace Element.AST
 
     public static class ScopeExtensions
     {
-        public static IValue CompileFunction(this IScope callScope, object body, CompilationContext compilationContext)  =>
-            body switch
-            {
-                // If a function has expression body we just compile the single expression using the call scope
-                ExpressionBody exprBody => exprBody.Expression.ResolveExpression(callScope, compilationContext),
-                // If a function has a scope body we need to find the return identifier
-                IScope scopeBody => scopeBody[Parser.ReturnIdentifier, false, compilationContext] switch
-                {
-                    ICompilableFunction nullaryReturn when nullaryReturn.IsNullary() => nullaryReturn.Compile(scopeBody, compilationContext),
-                    ICompilableFunction functionReturn => functionReturn,
-                    null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
-                    var nyi => throw new NotImplementedException(nyi.ToString())
-                },
-                _ => CompilationErr.Instance
-            };
-        
         /// <summary>
-        /// Enumerates all values in the given scope returning those matching the given filter and recursing into any child scopes that match the recurse predicate.
+        /// Enumerates all values in the given scope returning those matching the given filter.
         /// </summary>
-        public static List<IValue> EnumerateValues(this IEnumerable<IValue> scope, Predicate<IValue> filter)
+        public static List<Declaration> EnumerateDeclarations(this IEnumerable<Declaration> scope, Predicate<Declaration> filter)
         {
-            var results = new List<IValue>();
-            void RecurseValue(IValue value)
+            var results = new List<Declaration>();
+            void RecurseValue(Declaration declaration)
             {
-                if (filter(value)) results.Add(value);
+                if (filter(declaration)) results.Add(declaration);
                 
-                if (value is Declaration declaration
-                    && declaration.ChildScope != null)
+                if (declaration.ChildScope != null)
                 {
                     RecurseMultipleValues(declaration.ChildScope);
                 }
             }
 
-            void RecurseMultipleValues(IEnumerable<IValue> values)
+            void RecurseMultipleValues(IEnumerable<Declaration> values)
             {
                 foreach (var v in values)
                 {

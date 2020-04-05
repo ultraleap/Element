@@ -4,14 +4,9 @@ namespace Element
 {
     public abstract class Context
     {
-        protected Context(GlobalScope globalScope, CompilationInput compilationInput)
-        {
-            GlobalScope = globalScope;
-            CompilationInput = compilationInput;
-        }
+        protected Context(CompilationInput compilationInput) => CompilationInput = compilationInput;
 
-        public GlobalScope GlobalScope { get; }
-        protected CompilationInput CompilationInput { get; }
+        protected internal CompilationInput CompilationInput { get; }
         public MessageLevel Verbosity => CompilationInput.Verbosity;
         public bool Debug => CompilationInput.Debug;
         public bool SkipValidation => CompilationInput.SkipValidation;
@@ -35,6 +30,7 @@ namespace Element
                 CompilationInput.LogCallback?.Invoke(msg);
             }
         }
+        
         protected abstract CompilerMessage MakeMessage(int? messageCode, string context = default);
     }
 }

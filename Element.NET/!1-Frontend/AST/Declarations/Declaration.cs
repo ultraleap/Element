@@ -30,7 +30,7 @@ namespace Element.AST
         protected bool HasDeclaredInputs => DeclaredInputs.Length > 0;
         protected Port[] DeclaredInputs => string.IsNullOrEmpty(IntrinsicQualifier)
             ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
-            : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunction>(null)?.Inputs;
+            : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs;
         protected Port DeclaredOutput { get; private set; }
         protected virtual Identifier[] ScopeIdentifierWhitelist { get; } = null;
         protected virtual Identifier[] ScopeIdentifierBlacklist { get; } = null;
@@ -94,7 +94,7 @@ namespace Element.AST
         public Scope? ChildScope => Body as Scope;
 
         protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(Context? context)
-            where TIntrinsic : class, IValue
+            where TIntrinsic : class
         {
             switch (_intrinsics.TryGetValue(Location, out var intrinsic), intrinsic)
             {

@@ -2,16 +2,19 @@ namespace Element.AST
 {
     public abstract class IntrinsicType<TType> : IIntrinsic, IFunction, IType where TType : IntrinsicType<TType>, new()
     {
-        protected IntrinsicType() {}
         public static TType Instance { get; } = new TType();
-        
-        public IType Type => TypeType.Instance;
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
-        public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
-        public string Location => Name;
+
+        IType IValue.Type => TypeType.Instance;
+        bool IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
+        public virtual IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>(this)
+                              ?.CreateInstance(RefineArguments(arguments), Instance);
+        protected virtual IValue[] RefineArguments(IValue[] arguments) => arguments;
+        string IIntrinsic.Location => Name;
         public abstract Port[] Inputs { get; }
-        public Port Output { get; } = Port.ReturnPort(Instance);
+        Port IFunctionSignature.Output { get; } = Port.ReturnPort(Instance);
+        IFunctionSignature IFunctionSignature.GetDefinition(CompilationContext compilationContext) =>
+            compilationContext.GetIntrinsicsDeclaration<IntrinsicStructDeclaration>(Instance);
         public abstract string Name { get; }
-        public abstract ISerializer? Serializer { get; }
     }
 }

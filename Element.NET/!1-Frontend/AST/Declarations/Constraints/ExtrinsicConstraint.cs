@@ -2,14 +2,6 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class DeclaredConstraint : Declaration, IConstraint
-    {
-        protected override string Qualifier { get; } = "constraint";
-        protected override System.Type[] BodyAlternatives { get; } = {typeof(Terminal)};
-        public override IType Type => ConstraintType.Instance;
-        public abstract bool MatchesConstraint(IValue value, CompilationContext compilationContext);
-    }
-
     // ReSharper disable once UnusedType.Global
     public class ExtrinsicConstraint : DeclaredConstraint
     {
@@ -28,7 +20,7 @@ namespace Element.AST
 
         public override bool MatchesConstraint(IValue value, CompilationContext compilationContext)
         {
-            if (!(value is IFunction fn)) return false;
+            if (!(value is IFunctionSignature fn)) return false;
             if (fn.Inputs.Length != DeclaredInputs.Length) return false;
             var success = true;
             bool CompareConstraints(IConstraint argumentConstraint, IConstraint matchingConstraint)
@@ -46,14 +38,5 @@ namespace Element.AST
 
             return success;
         }
-    }
-
-    // ReSharper disable once UnusedType.Global
-    public class IntrinsicConstraint : DeclaredConstraint
-    {
-        protected override string IntrinsicQualifier { get; } = "intrinsic";
-
-        internal override bool Validate(SourceContext sourceContext) => ImplementingIntrinsic<IConstraint>(sourceContext) != null;
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(null).MatchesConstraint(value, compilationContext);
     }
 }

@@ -1,16 +1,52 @@
 using System;
 using System.Collections.Generic;
 using Element.AST;
+using LExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
 {
-    public delegate System.Linq.Expressions.Expression? ConvertFunction(IValue value, Type outputType, CompilationContext context);
+    public delegate System.Linq.Expressions.Expression? ConvertFunction(IValue value, Type outputType, Context context);
     
     public interface IBoundaryConverter
     {
-        IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext compilationContext);
-        System.Linq.Expressions.Expression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext compilationContext);
+        IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, Context compilationContext);
+        System.Linq.Expressions.Expression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, Context compilationContext);
     }
+
+    public class NumberConverter : IBoundaryConverter
+    {
+        private NumberConverter(){}
+        public static NumberConverter Instance { get; } = new NumberConverter();
+        public IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, Context compilationContext) =>
+            new NumberExpression(parameter.Type switch
+            {
+                {} t when t == typeof(bool) => LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)),
+                _ => LExpression.Convert(parameter, typeof(float))
+            });
+
+        public System.Linq.Expressions.Expression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
+                                                                 Context compilationContext) =>
+            (outputType, convertFunction(value, typeof(float), compilationContext)) switch
+            {
+                (_, {} result) when result.Type == outputType => result, // Correct type from convert, return directly
+                ({} t, {} result) when t == typeof(bool) => LExpression.LessThanOrEqual(result, LExpression.Constant(0f)),
+                (_, {} result) => LExpression.Convert(result, outputType),
+                (_, _) => null
+            };
+
+        private class NumberExpression : Expression, ICLRExpression
+        {
+            public NumberExpression(LExpression parameter) => Parameter = parameter;
+            public LExpression Parameter { get; }
+            public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
+            public LExpression Compile(Func<Expression, LExpression> compileOther) => Parameter;
+            protected override string ToStringInternal() => Parameter.ToString();
+            public override bool Equals(Expression other) => other == this;
+            public override int GetHashCode() => Parameter.GetHashCode();
+        }
+    }
+    
+    
     
     public class BoundaryConverter : Dictionary<Type, IBoundaryConverter>, IBoundaryConverter
     {
@@ -22,11 +58,11 @@ namespace Element.CLR
             var rect = new Input1D(new Map {{"x", "X"}, {"y", "Y"}, {"width", "Width"}, {"height", "Height"}});*/
             return new Dictionary<Type, IBoundaryConverter>
             {
-                {typeof(float), SingleInput.Instance},
-                {typeof(int), SingleInput.Instance},
-                {typeof(double), SingleInput.Instance},
-                {typeof(long), SingleInput.Instance},
-                {typeof(bool), SingleInput.Instance},
+                {typeof(float), NumberConverter.Instance},
+                {typeof(int), NumberConverter.Instance},
+                {typeof(double), NumberConverter.Instance},
+                {typeof(long), NumberConverter.Instance},
+                {typeof(bool), NumberConverter.Instance},
                 /*{typeof(Vector2), vector2},
                 {typeof(Point), vector2},
                 {typeof(PointF), vector2},
@@ -55,7 +91,7 @@ namespace Element.CLR
             };
         }
 
-        public IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext compilationContext)
+        public IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, Context compilationContext)
         {
             if (TryGetValue(parameter.Type, out var retval))
             {
@@ -68,7 +104,7 @@ namespace Element.CLR
         }
 
         public System.Linq.Expressions.Expression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
-                                                                 CompilationContext compilationContext)
+                                                                 Context compilationContext)
         {
             // TODO: Detect circular
             if (TryGetValue(outputType, out var output))
@@ -80,6 +116,4 @@ namespace Element.CLR
             return null;
         }
     }
-    
-    
 }

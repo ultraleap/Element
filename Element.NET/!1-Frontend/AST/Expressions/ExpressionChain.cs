@@ -13,7 +13,7 @@ namespace Element.AST
     public class ExpressionChain : Expression
     {
         // ReSharper disable UnusedAutoPropertyAccessor.Local
-        [field: Alternative(typeof(Identifier), typeof(Literal))] private object LitOrId { get; set; }
+        [field: Alternative(typeof(Identifier), typeof(Constant))] private object LitOrId { get; set; }
         [field: Optional] private List<ISubExpression>? Expressions { get; set; }
         // ReSharper restore UnusedAutoPropertyAccessor.Local
 
@@ -27,7 +27,7 @@ namespace Element.AST
                 Identifier id => scope[id, true, compilationContext] is {} v
                     ? (IValue) v
                     : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
-                Literal lit => lit,
+                Constant constant => constant,
                 _ => throw new InternalCompilerException(
                     "Trying to compile expression that doesn't start with literal or identifier - should be impossible")
             };

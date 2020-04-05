@@ -54,13 +54,10 @@ namespace Element
 		protected override string ToStringInternal() => $"{Operation}({OpA}, {OpB})";
 		public override int GetHashCode() => (int)Operation ^ OpA.GetHashCode() ^ OpB.GetHashCode();
 
-		public override bool Equals(Expression other)
-		{
-			if (this == other) return true;
-			return other is Binary bOther
-				&& bOther.Operation == Operation
-				&& bOther.OpA.Equals(OpA)
-				&& bOther.OpB.Equals(OpB);
-		}
+		public override bool Equals(Expression other) =>
+			this == other || other is Binary bOther
+			&& bOther.Operation == Operation
+			&& bOther.OpA.Equals(OpA)
+			&& bOther.OpB.Equals(OpB);
 	}
 }

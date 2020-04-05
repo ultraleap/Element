@@ -1,23 +1,17 @@
 namespace Element.AST
 {
-    internal class UnaryIntrinsic : IIntrinsic, IFunction
+    internal class UnaryIntrinsic : IntrinsicFunction
     {
         public UnaryIntrinsic(Unary.Op operation)
-        {
-            Location = $"Num.{operation.ToString().ToLowerInvariant()}";
+            : base($"Num.{operation.ToString().ToLowerInvariant()}",
+                new[]
+                {
+                    new Port("a", NumType.Instance)
+                }, Port.ReturnPort(NumType.Instance)) =>
             Operation = operation;
-        }
-
-        public string Location { get; }
+        
         public Unary.Op Operation { get; }
 
-        public IValue Call(IValue[] arguments, CompilationContext context) =>
-            arguments.ValidateArguments(1, context)
-                ? (IValue) new Literal(Unary.Evaluate(Operation, (Literal)arguments[0]))
-                : CompilationErr.Instance;
-
-        public IType Type => FunctionType.Instance;
-        public Port[] Inputs { get; } = {new Port("a", NumType.Instance)};
-        public Port Output { get; } = Port.ReturnPort(NumType.Instance);
+        public override IValue Call(IValue[] arguments, CompilationContext _) => new Unary(Operation, arguments[0] as Element.Expression);
     }
 }

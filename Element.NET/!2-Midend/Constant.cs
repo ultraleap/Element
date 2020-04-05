@@ -1,3 +1,5 @@
+/*using System.Globalization;
+
 namespace Element
 {
 	using System;
@@ -13,11 +15,12 @@ namespace Element
 
 		public Constant(float value) => Value = value;
 
+		public override AST.IType Type { get; }
 		public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
 		public float Value { get; }
 
-		protected override string ToStringInternal() => Value.ToString();
+		protected override string ToStringInternal() => Value.ToString(CultureInfo.CurrentCulture);
 		public override int GetHashCode() => Value.GetHashCode();
 		public override bool Equals(Expression other) => (other as Constant)?.Value == Value;
 	}
-}
+}*/

@@ -2,24 +2,23 @@ using System;
 
 namespace Element.AST
 {
-    public class ForIntrinsic : IIntrinsic, IFunction
+    public sealed class ForIntrinsic : IntrinsicFunction
     {
-        public string Location => "for";
-        public IType Type => FunctionType.Instance;
-        public Port[] Inputs { get; } =
-            {
-                new Port(_initialIdentifier, AnyConstraint.Instance),
-                new Port(_conditionIdentifier, FunctionType.Instance),
-                new Port(_bodyIdentifier, FunctionType.Instance)
-            };
-
-        public Port Output => null;
+        public ForIntrinsic()
+            : base("for",
+                   new[]
+                   {
+                       new Port(_initialIdentifier, AnyConstraint.Instance),
+                       new Port(_conditionIdentifier, FunctionType.Instance),
+                       new Port(_bodyIdentifier, FunctionType.Instance)
+                   }, Port.ReturnPort(AnyConstraint.Instance))
+        { }
 
         private static readonly Identifier _initialIdentifier = new Identifier("initial");
         private static readonly Identifier _conditionIdentifier = new Identifier("condition");
         private static readonly Identifier _bodyIdentifier = new Identifier("body");
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext)
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
             throw new NotImplementedException();
             /*if (this.CheckArguments(arguments, output, context) != null)

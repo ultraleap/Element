@@ -2,32 +2,33 @@ using System;
 
 namespace Element.AST
 {
-	public class ListIntrinsic : IIntrinsic, IFunction
+	public class ListIntrinsic : IntrinsicFunction
 	{
-		public IType Type => FunctionType.Instance;
-		public string Location => "list";
-		public Port[] Inputs { get; } = {Port.VariadicPort};
-		public Port Output { get; } = Port.ReturnPort(ListType.Instance);
-		public IValue Call(IValue[] arguments, CompilationContext context) =>
-			ListType.Instance.Call(new IValue[]{new IndexFunction(arguments), new Literal(arguments.Length), }, context);
+		public ListIntrinsic()
+			: base("list",
+			       new[] {Port.VariadicPort},
+			       Port.ReturnPort(ListType.Instance))
+		{ }
+		
+		public override IValue Call(IValue[] arguments, CompilationContext context) =>
+			ListType.Instance.ResolveCall(new IValue[]{new IndexFunction(arguments), new Constant(arguments.Length)}, null, false, context);
 
-		private class IndexFunction : ICallable
+		private class IndexFunction : IFunction
 		{
-			public IType Type => FunctionType.Instance;
+			private readonly IValue[] _elements;
+
 			public IndexFunction(IValue[] elements) => _elements = elements;
+
+			IType IValue.Type => FunctionType.Instance;
+			Port[] IFunctionSignature.Inputs { get; } = {new Port("i", NumType.Instance)};
+			Port IFunctionSignature.Output { get; } = Port.ReturnPort(AnyConstraint.Instance);
+			IFunctionSignature IFunctionSignature.GetDefinition(CompilationContext compilationContext) => this;
 
 			public override string ToString() => "<list index function>";
 
-			private readonly IValue[] _elements;
-			public IValue Call(IValue[] arguments, CompilationContext context)
-			{
-				// TODO check argument are homogenous
-				var validArgCount =  arguments.ValidateArguments(1, context);
-				if (!validArgCount) return CompilationErr.Instance;
-				if (!(arguments[0] is Literal indexLiteral)) return context.LogError(8, "Argument must be a Num");
-				var index = (int)Math.Round(indexLiteral, MidpointRounding.AwayFromZero);
-				return _elements[index];
-			}
+			IValue IFunction.Call(IValue[] arguments, CompilationContext context) =>
+				// TODO: check argument are homogenous
+				_elements[(int)Math.Round(arguments[0] as Constant, MidpointRounding.AwayFromZero)];
 		}
 
 		/*private class Indexer : ICallable

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Element.AST
 {
-    public abstract class DeclaredScope : ScopeBase
+    public abstract class DeclaredScope : ScopeBase<Declaration>
     {
         protected abstract IEnumerable<Declaration> ItemsToCacheOnValidate { get; }
 

@@ -24,11 +24,11 @@ namespace Element.AST
 
         public override string ToString() => $":{Expression}";
 
-        public IConstraint? ResolveConstraint(CompilationContext? compilationContext) =>
+        public IConstraint? ResolveConstraint(CompilationContext compilationContext) =>
             _constraint ?? Expression.ResolveExpression(_declaringScope, compilationContext) switch
             {
                 IConstraint constraint => _constraint = constraint,
-                {} notConstraint => compilationContext?.LogError(16, $"'{notConstraint}' is not a constraint"),
+                {} notConstraint => compilationContext.LogError(16, $"'{notConstraint}' is not a constraint"),
                 _ => throw new ArgumentOutOfRangeException()
             };
     }

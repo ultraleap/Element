@@ -1,3 +1,5 @@
+using Element.AST;
+
 namespace Element.CLR
 {
 	using System.Linq;
@@ -221,7 +223,7 @@ namespace Element.CLR
 			if (!SourceContext.TryCreate(input, out var sourceContext)) return null;
 			if (function == null) throw new ArgumentNullException(nameof(function));
 
-			var context = sourceContext.MakeCompilationContext();
+			sourceContext.MakeCompilationContext(out var context);
 			if (function.Inputs == null || function.Outputs == null)
 			{
 				context.LogError(3, $"{function} cannot be compiled as it has no input/output ports defined");

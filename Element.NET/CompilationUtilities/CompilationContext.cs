@@ -8,18 +8,24 @@ namespace Element
     /// </summary>
     public class CompilationContext : Context
     {
-        public CompilationContext(GlobalScope globalScope, CompilationInput compilationInput) : base(globalScope, compilationInput) { }
+        public CompilationContext(SourceContext sourceContext) :base(sourceContext.CompilationInput) =>
+            SourceContext = sourceContext;
+        
+        public SourceContext SourceContext { get; }
         private Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
-        private Stack<ICompilableFunction> FunctionStack { get; } = new Stack<ICompilableFunction>();
+        private Stack<AST.IFunctionSignature> FunctionStack { get; } = new Stack<AST.IFunctionSignature>();
         public void PushTrace(TraceSite traceSite) => TraceStack.Push(traceSite);
         public void PopTrace() => TraceStack.Pop();
 
-        public void PushFunction(ICompilableFunction function) => FunctionStack.Push(function);
+        public void PushFunction(AST.IFunctionSignature functionSignature) => FunctionStack.Push(functionSignature);
         public void PopFunction() => FunctionStack.Pop();
-        public bool ContainsFunction(ICompilableFunction function) => FunctionStack.Contains(function);
+        public bool ContainsFunction(AST.IFunctionSignature functionSignature) => FunctionStack.Contains(functionSignature);
+
+        public TDeclaration? GetIntrinsicsDeclaration<TDeclaration>(IIntrinsic intrinsic) where TDeclaration : Declaration =>
+            SourceContext.GetIntrinsicsDeclaration<TDeclaration>(intrinsic, this);
 
         protected override CompilerMessage MakeMessage(int? messageCode, string context = default) => !messageCode.HasValue
-            ? new CompilerMessage(null, null, context, TraceStack?.ToArray())
-            : new CompilerMessage(messageCode.Value, CompilerMessage.GetMessageLevel(messageCode.Value), context, TraceStack?.ToArray());
+                                                                                                          ? new CompilerMessage(null, null, context, TraceStack?.ToArray())
+                                                                                                          : new CompilerMessage(messageCode.Value, CompilerMessage.GetMessageLevel(messageCode.Value), context, TraceStack?.ToArray());
     }
 }

@@ -2,7 +2,7 @@ using System;
 
 namespace Element.AST
 {
-    public class NullaryIntrinsics : IIntrinsic, IFunction
+    public class NullaryIntrinsics : IntrinsicFunction
     {
         private readonly Value _value;
 
@@ -14,23 +14,15 @@ namespace Element.AST
         }
 
         public NullaryIntrinsics(Value value)
-        {
-            Location = $"Num.{value.ToString()}";
+            : base($"Num.{value.ToString()}", Array.Empty<Port>(), Port.ReturnPort(NumType.Instance)) =>
             _value = value;
-        }
 
-        public IType Type => FunctionType.Instance;
-
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => new Literal(_value switch
+        public override IValue Call(IValue[] _, CompilationContext __) => new Constant(_value switch
         {
             Value.NaN => float.NaN,
             Value.PositiveInfinity => float.PositiveInfinity,
             Value.NegativeInfinity => float.NegativeInfinity,
             _ => throw new InternalCompilerException("Intrinsic nullary case not handled")
         });
-
-        public Port[] Inputs { get; } = Array.Empty<Port>();
-        public Port Output { get; } = Port.ReturnPort(NumType.Instance);
-        public string Location { get; }
     }
 }

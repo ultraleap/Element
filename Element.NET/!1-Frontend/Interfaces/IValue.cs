@@ -10,61 +10,74 @@ namespace Element.AST
 
     public static class ValueExtensions
     {
-        public static bool ValidateArguments(this IValue[] arguments, int count, CompilationContext compilationContext)
+        public static IEnumerable<(Identifier Identifier, IValue Value)> WithoutDiscardedArguments(this IEnumerable<IValue> arguments, IEnumerable<Port> ports) =>
+            ports.Zip(arguments, (port, value) => (Port: port, Value: value))
+                 .Where(pair => pair.Port.Identifier.HasValue)
+                 .Select(pair => (pair.Port.Identifier.Value, pair.Value));
+
+        public static int? GetSerializedSize(this IValue value, CompilationContext compilationContext) => value switch
         {
-            if (arguments.Length != count)
-            {
-                compilationContext.LogError(6, $"Expected '{count}' arguments but got '{arguments.Length}'");
-                return false;
-            }
-
-            return true;
-        }
-
-        public static bool ValidateArguments(this IValue[] arguments, Port[] ports, IScope scope, CompilationContext compilationContext) =>
-            ValidateArguments(arguments, ports.Length, compilationContext)
-            && ValidateConstraints(arguments, ports, scope, compilationContext);
-
-        private static bool ValidateConstraints(IValue[] arguments, Port[] ports, IScope scope, CompilationContext compilationContext)
+            Element.Expression _ => 1,
+            StructInstance structInstance when structInstance.Type == ListType.Instance => ListType.GetListCount(structInstance, compilationContext),
+            IEnumerable<IValue> values => values.Select(v => v.GetSerializedSize(compilationContext)).Aggregate((int?)0, (a, b) => a == null || b == null ? null : a + b),
+            _ => compilationContext.LogError(1, $"'{value}' is not serializable").Return((int?)null)
+        };
+        
+        public static bool TrySerialize(this IValue value, out Element.Expression[] serialized, CompilationContext compilationContext)
         {
-            var success = true;
-            for (var i = 0; i < ports.Length; i++)
-            {
-                var arg = arguments[i];
-                var port = ports[i];
-                var constraint = port.ResolveConstraint(compilationContext);
-                if (!constraint.MatchesConstraint(arg, compilationContext))
-                {
-                    compilationContext.LogError(8, $"Value '{arg}' given for port '{port}' does not match '{constraint}' constraint");
-                    success = false;
-                }
-            }
-
-            return success;
-        }
-
-        public static IEnumerable<(Identifier Identifier, IValue Value)> WithoutDiscardedArguments(this IValue[] arguments, Port[] ports) =>
-            ports.Where(port => port.Identifier.HasValue)
-                 .Select((port, idx) => (port.Identifier.Value, arguments[idx]));
-
-        public static bool TryGetSerializableSize(this IValue value, out int size)
-        {
-            var serializedSize = value.Type.Serializer?.SerializedSize(value);
-            size = serializedSize.GetValueOrDefault();
-            return serializedSize.HasValue && size != 0;
-        }
-
-        public static bool TrySerialize(this IValue value, out float[] serialized)
-        {
-            if (!value.TryGetSerializableSize(out var size))
+            var size = value.GetSerializedSize(compilationContext);
+            if (!size.HasValue || size == 0)
             {
                 serialized = null;
                 return false;
             }
             
-            serialized = new float[size];
+            serialized = new Element.Expression[size.Value];
             var position = 0;
-            return value.Type.Serializer.Serialize(value, ref serialized, ref position);
+
+            bool Serialize(object serializable, Element.Expression[] output)
+            {
+                switch(serializable)
+                {
+                    case Element.Expression expr:
+                        output[position++] = expr;
+                        return true;
+                    case StructInstance structInstance when structInstance.Type == ListType.Instance:
+                        return Serialize(ListType.EvaluateElements(structInstance, compilationContext), output);
+                    case IEnumerable<IValue> values:
+                        return values.Aggregate(true, (current, element) => current & Serialize(element, output));
+                    default:
+                        compilationContext.LogError(1, $"'{serializable}' is not serializable");
+                        return false;
+                };
+            }
+
+            return Serialize(value, serialized);
+        }
+
+        public static bool TrySerialize(this IValue value, out float[] serialized, CompilationContext compilationContext)
+        {
+            if (!value.TrySerialize(out Element.Expression[] expressions, compilationContext))
+            {
+                serialized = null;
+                return false;
+            }
+
+            serialized = new float[expressions.Length];
+            var position = 0;
+            var success = true;
+            foreach (var expr in expressions)
+            {
+                if (expr is Constant constant) serialized[position++] = constant.Value;
+                else
+                {
+                    compilationContext.LogError(1, $"Non-constant expression '{expr}' cannot be serialized");
+                    position++;
+                    success = false;
+                }
+            }
+
+            return success;
         }
     }
 }

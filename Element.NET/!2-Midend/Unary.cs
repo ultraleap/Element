@@ -50,11 +50,9 @@ namespace Element
 		public override IEnumerable<Expression> Dependent => new[] {Operand};
 		protected override string ToStringInternal() => $"{Operation}({Operand})";
 		public override int GetHashCode() => (int)Operation ^ Operand.GetHashCode();
-
-		public override bool Equals(Expression other)
-		{
-			if (this == other) return true;
-			return other is Unary bOther && bOther.Operation == Operation && bOther.Operand.Equals(Operand);
-		}
+		public override bool Equals(Expression other) =>
+			this == other || other is Unary bOther
+			&& bOther.Operation == Operation
+			&& bOther.Operand.Equals(Operand);
 	}
 }

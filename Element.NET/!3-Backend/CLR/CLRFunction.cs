@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using ElementExpression = Element.Expression;
 using LinqExpression = System.Linq.Expressions.Expression;
 
@@ -8,16 +7,16 @@ namespace Element.CLR
 {
     public static partial class CLRFunction
     {
-        public static Delegate? Compile(this AST.IFunction function, Type delegateType, SourceContext sourceContext)
+        public static Delegate? Compile(this AST.IFunctionSignature functionSignature, Type delegateType, SourceContext sourceContext)
         {
-            if (function == null) throw new ArgumentNullException(nameof(function));
+            if (functionSignature == null) throw new ArgumentNullException(nameof(functionSignature));
             if (delegateType == null) throw new ArgumentNullException(nameof(delegateType));
             if (sourceContext == null) throw new ArgumentNullException(nameof(sourceContext));
 
-            var context = sourceContext.MakeCompilationContext();
+            sourceContext.MakeCompilationContext(out var context);
 
             // Check inputs/outputs are boundary-compatible
-            var isNullary = function.Inputs.Length < 1;
+            var isNullary = functionSignature.Inputs.Length < 1;
 
             // Check return type/single out parameter of delegate
             var method = delegateType.GetMethod(nameof(Action.Invoke));
@@ -32,7 +31,7 @@ namespace Element.CLR
             // Create parameter expressions
             var parameterExpressions = delegateParameters.Select(p => LinqExpression.Parameter(p.ParameterType, p.Name)).ToArray();
 
-            // Match function inputs to parameter expressions
+            /*// Match function inputs to parameter expressions
             var arguments = function.Inputs.Select(f =>
                                     {
                                         ParameterExpression p;
@@ -43,9 +42,9 @@ namespace Element.CLR
                                     .ToArray();
 
             // Reduce function to expressions (invoke mid-compiler)
-            var output = function.Call(arguments, context);
+            var output = function.Call(arguments, context);*/
 
-            // TODO: Compile to linq expressions
+            // TODO: Compile to linq expressions 
 
             // Compile delegate
 

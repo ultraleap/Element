@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using Element.AST;
 using Eto.Parse;
 
 namespace Element

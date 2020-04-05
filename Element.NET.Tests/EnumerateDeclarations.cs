@@ -1,9 +1,10 @@
+using System;
 using Element.AST;
 using NUnit.Framework;
 
 namespace Element.NET.Tests
 {
-    public class EnumerateValuesTests
+    public class EnumerateDeclarations
     {
         protected static void FailOnError(CompilerMessage message)
         {
@@ -15,7 +16,7 @@ namespace Element.NET.Tests
         public void EnumerateAll()
         { 
             Assert.True(SourceContext.TryCreate(new CompilationInput(FailOnError), out var sourceContext));
-            var results = sourceContext.GlobalScope.EnumerateValues(_ => true);
+            var results = sourceContext.GlobalScope.EnumerateDeclarations(_ => true);
             CollectionAssert.IsNotEmpty(results);
         }
 
@@ -26,8 +27,9 @@ namespace Element.NET.Tests
         public void EnumerateByName(string nameContains)
         {
             Assert.True(SourceContext.TryCreate(new CompilationInput(FailOnError), out var sourceContext));
-            var results = sourceContext.GlobalScope.EnumerateValues(_ => true);
+            var results = sourceContext.GlobalScope.EnumerateDeclarations(v => v.Location.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
             CollectionAssert.IsNotEmpty(results);
+            // TODO: Actually check collection contents are correct
         }
 
         private static readonly IIntrinsic[] _types =
@@ -41,10 +43,13 @@ namespace Element.NET.Tests
         public void EnumerateByReturnType(IIntrinsic type)
         {
             Assert.True(SourceContext.TryCreate(new CompilationInput(FailOnError), out var sourceContext));
-            var compilationContext = sourceContext.MakeCompilationContext();
-            bool Filter(IValue v) => v is AST.IFunction fn && fn.Output.ResolveConstraint(compilationContext) == type.GetDeclaration<DeclaredStruct>(compilationContext);
-            var results = sourceContext.GlobalScope.EnumerateValues(Filter);
+            sourceContext.MakeCompilationContext(out var compilationContext);
+            bool Filter(IValue v) => v is AST.IFunctionSignature fn && fn.Output.ResolveConstraint(compilationContext) == compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>(type);
+            var results = sourceContext.GlobalScope.EnumerateDeclarations(Filter);
             CollectionAssert.IsNotEmpty(results);
+            // TODO: Actually check collection contents are correct
         }
+        
+        // Test case: don't recurse into function scopes! Returning intermediates would be dumb!
     }
 }
