@@ -12,6 +12,11 @@
 
 struct Vector2(x:Num, y:Num)
 {
+#    Right = Vector2(1, 0);
+#    Left = Vector2(-1, 0);
+#    Up = Vector2(0, 1);    #Not sure what to do here, names contradict with Vector3 definitions of up/down 
+#    Down = Vector2(0, -1); #Not sure what to do here, names contradict with Vector3 definitions of up/down
+
     #vector properties
     MagnitudeSquared(v:Vector2):Num = v.Dot(v);
     Magnitude(v:Vector2):Num = Num.sqrt(v.MagnitudeSquared);
@@ -54,6 +59,65 @@ struct Vector2(x:Num, y:Num)
     }
     
     Reflect(l:Vector2, n:Vector2):Vector2
+    {
+        dot = n.Dot(l);
+        s = 2.mul(dot);
+        t = n.Mul(s);
+        return = t.Sub(l);
+    }
+}
+
+struct Vector3(x:Num, y:Num, z:Num)
+{
+    Up = Vector3(0, 0, 1);
+    Down = Vector3(0, 0, -1);
+    Right = Vector3(1, 0, 0);
+    Left = Vector3(-1, 0, 0);
+    Forward = Vector3(0, 1, 0);
+    Back = Vector3(0, -1, 0);
+
+    #vector properties
+    MagnitudeSquared(v:Vector3):Num = v.Dot(v);
+    Magnitude(v:Vector3):Num = Num.sqrt(v.MagnitudeSquared);
+
+    #operations
+    Opposite(v:Vector3):Vector3 = Vector3(0.sub(v.x), 0.sub(v.y), 0.sub(v.z));
+    
+    Normalize(v:Vector3):Vector3
+    {
+       len = Magnitude(v);
+       return = v.Div(len);
+    }
+    
+    #scalar operations
+    Mul(a:Vector3, b:Num):Vector3 = Vector3(a.x.mul(b), a.y.mul(b), a.z.mul(b));
+    Div(a:Vector3, b:Num):Vector3 = a.Mul(1.div(b));
+    
+    #vector operations
+    Add(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z));
+    Sub(a:Vector3, b:Vector3):Vector3 = a.Add(Opposite(b));
+    
+    Dot(a:Vector3, b:Vector3):Num
+    {
+        s = Vector3(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z));
+        return = s.x.add(s.y).add(s.z);
+    }
+        
+    Distance(a:Vector3, b:Vector3):Num 
+    {
+       diff = a.Sub(b);
+       return = diff.Magnitude;
+    }
+
+    Angle(a:Vector3, b:Vector3):Num 
+    {
+        dot = a.Dot(b);
+        mag = a.Magnitude.mul(b.Magnitude);
+        theta = Num.acos(dot.div(mag));
+        return = Num.degrees(theta);  
+    }
+    
+    Reflect(l:Vector3, n:Vector3):Vector3
     {
         dot = n.Dot(l);
         s = 2.mul(dot);
