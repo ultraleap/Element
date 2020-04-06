@@ -57,37 +57,36 @@ namespace Laboratory.Tests
 			TestCase("Num.ln(1)", "0"),
 			TestCase("Num.ln(Num.e)", "1"),
 		]
-		public void UnaryMathOp(string function, string expected) => AssertApproxEqual(ValidatedCompilationInput, function, expected);
+		public void UnaryMathOp(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 
-		[
-			// Add
+		[   // Add
 			TestCase("Num.add(0, 0)", "0"),
 			TestCase("Num.add(2, 3)", "5"),
 			TestCase("Num.add(-1.5, -1.5)", "-3"),
 			TestCase("Num.add(1.5, -1.5)", "0"),
-
-			// Sub
+		]
+		[   // Sub
 			TestCase("Num.sub(0, 0)", "0"),
 			TestCase("Num.sub(2, 3)", "-1"),
 			TestCase("Num.sub(-1.5, -1.5)", "0"),
 			TestCase("Num.sub(1.5, -1.5)", "3"),
-
-			// Mul
+		]
+		[   // Mul
 			TestCase("Num.mul(0, 0)", "0"),
 			TestCase("Num.mul(10, 0)", "0"),
 			TestCase("Num.mul(-5, 0)", "0"),
 			TestCase("Num.mul(2, 3)", "6"),
 			TestCase("Num.mul(-1.5, -1.5)", "2.25"),
 			TestCase("Num.mul(1.5, -1.5)", "-2.25"),
-
-			// Div
+		]
+		[   // Div
 			TestCase("Num.div(0, 1)", "0"),
 			TestCase("Num.div(1, 10)", "0.1"),
 			TestCase("Num.div(-1, -1)", "1"),
 			TestCase("Num.div(1, 0.1)", "10"),
 			TestCase("Num.div(1, 0)", "Num.PositiveInfinity"),
-
-			// Rem
+		]
+		[   // Rem
 			TestCase("Num.rem(5, 1.5)", "0.5"),
 			TestCase("Num.rem(5, -1.5)", "0.5"),
 			TestCase("Num.rem(-5, 1.5)", "-0.5"),
@@ -100,8 +99,8 @@ namespace Laboratory.Tests
 			TestCase("Num.rem(5, -0)", "Num.NaN"),
 			TestCase("Num.rem(-5, 0)", "Num.NaN"),
 			TestCase("Num.rem(-5, -0)", "Num.NaN"),
-
-			// Pow
+		]
+		[   // Pow
 			TestCase("Num.pow(-5, -0)", "1"),
 			TestCase("Num.pow(-5, 1)", "-5"),
 			TestCase("Num.pow(12, 2)", "144"),
@@ -110,25 +109,33 @@ namespace Laboratory.Tests
 			TestCase("Num.pow(5, -0)", "1"),
 			TestCase("Num.pow(-5, 0)", "1"),
 			TestCase("Num.pow(-5, -0)", "1"),
-
-			// Min
+		]
+		[   // Min
 			TestCase("Num.min(5, -2)", "-2"),
 			TestCase("Num.min(-4, 25)", "-4"),
 			TestCase("Num.min(25, 150)", "25"),
 			TestCase("Num.min(-140, -2)", "-140"),
-
-			// Max
+		]
+		[   // Max
 			TestCase("Num.max(5, -2)", "5"),
 			TestCase("Num.max(-4, 25)", "25"),
 			TestCase("Num.max(25, 150)", "150"),
 			TestCase("Num.max(-140, -2)", "-2"),
-
-			// Log
+		]
+		[   // Log
 			TestCase("Num.log(0, 10)", "Num.NegativeInfinity"),
 			TestCase("Num.log(1, 10)", "0"),
 			TestCaseSource(nameof(_logCaseData))
 		]
-		public void BinaryMathOps(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expression, expected);
+		public void BinaryMathOps(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[   // Clamp
+			TestCase("Num.clamp(5, 0, 10)", "5"),
+			TestCase("Num.clamp(5, -10, 0)", "0"),
+			TestCase("Num.clamp(5, 10, 20)", "10"),
+			TestCaseSource(nameof(_logCaseData))
+		]
+		public void TernaryMathOps(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 
 		private static object[] _logCaseData = Enumerable.Range(1, 11)
 		                                                 .Select(i => new object[]

@@ -5,6 +5,14 @@ namespace Laboratory.Tests
     internal class Vector2 : StandardLibraryFixture
     {
         [
+            TestCase("Vector2.Zero", "Vector2(0, 0)"),
+            TestCase("Vector2.One", "Vector2(1, 1)"),
+            //TestCase("Vector2.Up", "Vector3(0, 1)"),
+            //TestCase("Vector2.Down", "Vector3(0, -1)"),
+            //TestCase("Vector2.Right", "Vector3(1, 0)"),
+            //TestCase("Vector2.Left", "Vector3(-1, 0)"),
+        ]
+        [
             TestCase("Vector2(0, 0).MagnitudeSquared", "0"),
             TestCase("Vector2(1, 0).MagnitudeSquared", "1"),
             TestCase("Vector2(3, 4).MagnitudeSquared", "25"),
@@ -32,14 +40,6 @@ namespace Laboratory.Tests
             TestCase("Vector2(2, 4).Mul(0.5)", "Vector2(1, 2)"),
             TestCase("Vector2(2, 4).Mul(-2)", "Vector2(-4, -8)"),
             TestCase("Vector2(2, 4).Mul(-0.5)", "Vector2(-1, -2)"),
-            TestCase("Vector2(-2, 4).Mul(2)", "Vector2(-4, 8)"),
-            TestCase("Vector2(-2, 4).Mul(0.5)", "Vector2(-1, 2)"),
-            TestCase("Vector2(-2, 4).Mul(-2)", "Vector2(4, -8)"),
-            TestCase("Vector2(-2, 4).Mul(-0.5)", "Vector2(1, -2)"),
-            TestCase("Vector2(2, -4).Mul(2)", "Vector2(4, -8)"),
-            TestCase("Vector2(2, -4).Mul(0.5)", "Vector2(1, -2)"),
-            TestCase("Vector2(2, -4).Mul(-2)", "Vector2(-4, 8)"),
-            TestCase("Vector2(2, -4).Mul(-0.5)", "Vector2(-1, 2)"),
             TestCase("Vector2(-2, -4).Mul(2)", "Vector2(-4, -8)"),
             TestCase("Vector2(-2, -4).Mul(0.5)", "Vector2(-1, -2)"),
             TestCase("Vector2(-2, -4).Mul(-2)", "Vector2(4, 8)"),
@@ -52,14 +52,6 @@ namespace Laboratory.Tests
             TestCase("Vector2(2, 4).Div(0.5)", "Vector2(4, 8)"),
             TestCase("Vector2(2, 4).Div(-2)", "Vector2(-1, -2)"),
             TestCase("Vector2(2, 4).Div(-0.5)", "Vector2(-4, -8)"),
-            TestCase("Vector2(-2, 4).Div(2)", "Vector2(-1, 2)"),
-            TestCase("Vector2(-2, 4).Div(0.5)", "Vector2(-4, 8)"),
-            TestCase("Vector2(-2, 4).Div(-2)", "Vector2(1, -2)"),
-            TestCase("Vector2(-2, 4).Div(-0.5)", "Vector2(4, -8)"),
-            TestCase("Vector2(2, -4).Div(2)", "Vector2(1, -2)"),
-            TestCase("Vector2(2, -4).Div(0.5)", "Vector2(4, -8)"),
-            TestCase("Vector2(2, -4).Div(-2)", "Vector2(-1, 2)"),
-            TestCase("Vector2(2, -4).Div(-0.5)", "Vector2(-4, 8)"),
             TestCase("Vector2(-2, -4).Div(2)", "Vector2(-1, -2)"),
             TestCase("Vector2(-2, -4).Div(0.5)", "Vector2(-4, -8)"),
             TestCase("Vector2(-2, -4).Div(-2)", "Vector2(1, 2)"),
@@ -67,11 +59,13 @@ namespace Laboratory.Tests
         ]
         [
             TestCase("Vector2(0, 0).Add(Vector2(0, 0))", "Vector2(0, 0)"),
+            TestCase("Vector2(1, 2).Add(Vector2(0, 0))", "Vector2(1, 2)"),
             TestCase("Vector2(1, 2).Add(Vector2(2, 1))", "Vector2(3, 3)"),
             TestCase("Vector2(1, 2).Add(Vector2(-2, -1))", "Vector2(-1, 1)"),
         ]
         [
             TestCase("Vector2(0, 0).Sub(Vector2(0, 0))", "Vector2(0, 0)"),
+            TestCase("Vector2(1, 2).Sub(Vector2(0, 0))", "Vector2(1, 2)"),
             TestCase("Vector2(1, 2).Sub(Vector2(2, 1))", "Vector2(-1, 1)"),
             TestCase("Vector2(1, 2).Sub(Vector2(-2, -1))", "Vector2(3, 3)"),
         ]
@@ -104,6 +98,6 @@ namespace Laboratory.Tests
             TestCase("Vector2(-1, -1).Reflect(Vector2(1, 0))", "Vector2(-1, 1)"),
         ]
         public void Operations(string expression, string expected) =>
-            AssertApproxEqual(ValidatedCompilationInput, expression, expected);
+            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
     }
 }
