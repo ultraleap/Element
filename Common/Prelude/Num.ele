@@ -32,19 +32,19 @@ intrinsic struct Num
     intrinsic floor(a:Num):Num;
 
     # Trigonometric functions
-    intrinsic sin(a:Num):Num;
-    intrinsic cos(a:Num):Num;
-    intrinsic tan(a:Num):Num;
+    intrinsic sin(theta:Num):Num;
+    intrinsic cos(theta:Num):Num;
+    intrinsic tan(theta:Num):Num;
 
-    intrinsic asin(a:Num):Num;
-    intrinsic acos(a:Num):Num;
-    intrinsic atan(a:Num):Num;
+    intrinsic asin(theta:Num):Num;
+    intrinsic acos(theta:Num):Num;
+    intrinsic atan(theta:Num):Num;
 
     # 2 argument arctangent function where a and b specify a cartesian coordinate
-    intrinsic atan2(a:Num, b:Num):Num;
+    intrinsic atan2(y:Num, x:Num):Num;
 
-    degrees(a:Num):Num = a.mul(180.div(pi));
-    radians(a:Num):Num = a.mul(pi.div(180));
+    degrees(theta:Num):Num = theta.mul(180.div(pi));
+    radians(theta:Num):Num = theta.mul(pi.div(180));
 
 
     # Logarithmic functions
@@ -59,10 +59,11 @@ intrinsic struct Num
     tau  = pi.mul(2);
     e    = 2.718281828459045;
 
-    sqr(a:Num):Num      = a.mul(a);
-    sqrt(a:Num):Num     = a.pow(0.5);
-    exp(a:Num):Num      = a.pow(e);
-    half(a:Num):Num     = mul(a, 0.5);
+    sqr(a:Num):Num          = a.mul(a);
+    sqrt(a:Num):Num         = a.pow(0.5);
+    half(a:Num):Num         = mul(a, 0.5);
+    
+    exp(a:Num, e:Num):Num   = a.pow(e);
 
     # remainder rounded towards 0
     mod(a:Num, b:Num):Num
@@ -73,7 +74,7 @@ intrinsic struct Num
 
     negate(a:Num):Num                   = 0.sub(a);
     roundToZero(a:Num):Num              = a.sub(a.rem(1));
-    sign(n:Num):Num                     = n.leq(0).if(n.eq(0).if(-1, 0), 1);
+    sign(n:Num):Num                     = n.leq(0).if(n.eq(0).if(0, -1), 1);
     dist(a:Num, b:Num):Num              = a.sub(b).abs;
     lerp(t:Num, a:Num, b:Num):Num       = a.add(t.mul(b.sub(a)));
     clamp(a:Num, min:Num, max:Num):Num  = a.max(min).min(max);
