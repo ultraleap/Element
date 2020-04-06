@@ -1,44 +1,65 @@
-namespace Vector
-{
-    add(a, b) = memberwise(Num.add, a, b);
-    sub(a, b) = memberwise(Num.sub, a, b);
-    mul(a, b) = memberwise(Num.mul, a, b);
-    div(a, b) = memberwise(Num.div, a, b);
-
-    lerp(t:Num, a, b) = memberwise(_(ax, bx) = Num.lerp(t, ax, bx), a, b);
-
-    scale(v, scaleFactor:Num) = map(_(component) = component.mul(scaleFactor), v);
-}
+#namespace Vector
+#{
+#    add(a, b) = memberwise(Num.add, a, b);
+#    sub(a, b) = memberwise(Num.sub, a, b);
+#    mul(a, b) = memberwise(Num.mul, a, b);
+#    div(a, b) = memberwise(Num.div, a, b);
+#
+#    lerp(t:Num, a, b) = memberwise(_(ax, bx) = Num.lerp(t, ax, bx), a, b);
+#
+#    scale(v, scaleFactor:Num) = map(_(component) = component.mul(scaleFactor), v);
+#}
 
 struct Vector2(x:Num, y:Num)
 {
+    #vector properties
+    MagnitudeSquared(v:Vector2):Num = v.Dot(v);
+    Magnitude(v:Vector2):Num = Num.sqrt(v.MagnitudeSquared);
+
+    #operations
+    Opposite(v:Vector2):Vector2 = Vector2(0.sub(v.x), 0.sub(v.y));
+    
+    Normalize(v:Vector2):Vector2
+    {
+       len = Magnitude(v);
+       return = v.Div(len);
+    }
+    
+    #scalar operations
+    Mul(a:Vector2, b:Num):Vector2 = Vector2(a.x.mul(b), a.y.mul(b));
+    Div(a:Vector2, b:Num):Vector2 = a.Mul(1.div(b));
+    
+    #vector operations
+    Add(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.add(b.x), a.y.add(b.y));
+    Sub(a:Vector2, b:Vector2):Vector2 = a.Add(Opposite(b));
+    
     Dot(a:Vector2, b:Vector2):Num
     {
         s = Vector2(a.x.mul(b.x), a.y.mul(b.y));
         return = s.x.add(s.y);
     }
-
-    Magnitude(v:Vector2):Num = Num.sqrt(v.Dot(v));
-    Distance(a:Vector2, b:Vector2):Num = Magnitude(Vector2(a.x.sub(b.x), a.y.sub(b.y)));
-
-    Normalize(a:Vector2):Vector2
+        
+    Distance(a:Vector2, b:Vector2):Num 
     {
-       len = Magnitude(a);
-       return = Vector2(a.x.div(len), a.y.div(len));
-       
-       #return = v.div(Magnitude(v));
-       #return = map(mapper, v);
+       diff = a.Sub(b);
+       return = diff.Magnitude;
     }
-  
-    Angle(a:Vector2, b:Vector2):Num = Num.degrees(Num.acos(a.Dot(b).div(a.Magnitude.mul(b.Magnitude))));  
-#   Angle(a:Vector2, b:Vector2):Num
-#   {
-#       angle = degrees(atan2(sub(b.y, a.y), sub(b.x, a.x)));
-#       return = if(lt(angle, 0), add(angle, 360), angle);
-#   }
-   
-    #Reflect
-    #Perpendicular
+
+    Angle(a:Vector2, b:Vector2):Num 
+    {
+        dot = a.Dot(b);
+        mag = a.Magnitude.mul(b.Magnitude);
+        theta = Num.acos(dot.div(mag));
+        return = Num.degrees(theta);  
+    }
+    
+    Reflect(l:Vector2, n:Vector2):Vector2
+    {
+        dot = n.Dot(l);
+        s = 2.mul(dot);
+        t = n.Mul(s);
+        return = t.Sub(l);
+    }
 }
 
 #struct Vector3(x:Num, y:Num, z:Num)
