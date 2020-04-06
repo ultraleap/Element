@@ -102,8 +102,8 @@ namespace Laboratory.Tests
         [
             TestCase("Vector3(0, 0, 0).Cross(Vector3(0, 0, 0))", "Vector3(0, 0, 0)"),
             TestCase("Vector3(1, 1, 1).Cross(Vector3(1, 1, 1))", "Vector3(0, 0, 0)"),
-            TestCase("Vector3(1, 1, 1).Cross(Vector3(1, 1, 0))", "Vector3(0, 0, 0)"),
-            TestCase("Vector3(3, 4, 5).Cross(Vector3(1, 0, 0))", "Vector3(0, 0, 0)"),
+            TestCase("Vector3(1, 1, 1).Cross(Vector3(1, 1, 0))", "Vector3(-1, 1, 0)"),
+            TestCase("Vector3(3, 4, 5).Cross(Vector3(1, 0, 0))", "Vector3(0, 5, -4)"),
         ]
         public void Operations(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);

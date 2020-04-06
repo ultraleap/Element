@@ -7,10 +7,10 @@ namespace Laboratory.Tests
         [
             TestCase("Vector2.Zero", "Vector2(0, 0)"),
             TestCase("Vector2.One", "Vector2(1, 1)"),
-            //TestCase("Vector2.Up", "Vector3(0, 1)"),
-            //TestCase("Vector2.Down", "Vector3(0, -1)"),
             //TestCase("Vector2.Right", "Vector3(1, 0)"),
             //TestCase("Vector2.Left", "Vector3(-1, 0)"),
+            //TestCase("Vector2.Up", "Vector3(0, 1)"),
+            //TestCase("Vector2.Down", "Vector3(0, -1)"),
         ]
         [
             TestCase("Vector2(0, 0).MagnitudeSquared", "0"),
