@@ -38,18 +38,22 @@ namespace Element.AST
         }
 
         public static IValue ResolveCall(this IFunctionSignature functionSignature, IValue[] arguments, IScope callScope, bool allowPartialApplication,
-                                         CompilationContext compilationContext) =>
-            CheckArguments(functionSignature, arguments, allowPartialApplication, compilationContext)
-                ? (functionSignature switch
-                {
-                    // When there's no arguments we can just resolve immediately
-                    IFunctionWithBody functionWithBody when arguments.Length > 0 => new AppliedFunctionWithBody(arguments, functionWithBody, callScope),
-                    IFunctionWithBody functionWithBody => functionWithBody.ResolveReturn(functionWithBody.ResolveFunctionBody(callScope, compilationContext), compilationContext),
-                    IFunction callable when arguments.Length > 0 => new AppliedFunction(arguments, callable, callScope),
-                    IFunction callable => functionSignature.ResolveReturn(() => callable.Call(arguments, compilationContext), compilationContext),
-                    _ => throw new InternalCompilerException($"{functionSignature} function type not resolvable")
-                }).ResolveNullaryFunction(compilationContext)
-                : CompilationErr.Instance;
+                                         CompilationContext compilationContext)
+        {
+            // If we're resolving a partially applied function then we need to remember to use it's scope
+            if (functionSignature is AppliedFunction appliedFunction) callScope = appliedFunction;
+            return CheckArguments(functionSignature, arguments, allowPartialApplication, compilationContext)
+                       ? (functionSignature switch
+                             {
+                                 // When there's no arguments we can just resolve immediately
+                                 IFunctionWithBody functionWithBody when arguments.Length > 0 => new AppliedFunctionWithBody(arguments, functionWithBody, callScope),
+                                 IFunctionWithBody functionWithBody => functionWithBody.ResolveReturn(functionWithBody.ResolveFunctionBody(callScope, compilationContext), compilationContext),
+                                 IFunction callable when arguments.Length > 0 => new AppliedFunction(arguments, callable, callScope),
+                                 IFunction callable => functionSignature.ResolveReturn(() => callable.Call(arguments, compilationContext), compilationContext),
+                                 _ => throw new InternalCompilerException($"{functionSignature} function type not resolvable")
+                             }).ResolveNullaryFunction(compilationContext)
+                       : CompilationErr.Instance;
+        }
 
         private static bool CheckArguments(IFunctionSignature functionSignature, IValue[] arguments, bool allowPartialApplication, CompilationContext compilationContext)
         {
