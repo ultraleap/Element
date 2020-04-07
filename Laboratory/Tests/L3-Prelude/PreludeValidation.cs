@@ -1,8 +1,8 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.Prelude
 {
-    internal class StandardLibrary : StandardLibraryFixture
+    internal class Validation : PreludeFixture
     {
         [Test]
         // Evaluates an arbitrary expression since creating the prelude will be parsed implicitly when not excluded

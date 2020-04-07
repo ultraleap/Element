@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.Semantics
 {
     internal class IdentifierResolution : SemanticsFixture
     {

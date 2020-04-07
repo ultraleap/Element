@@ -21,54 +21,54 @@ struct Vector2(x:Num, y:Num)
 #    Down = Vector2(0, -1); #Not sure what to do here, axis contradicts Vector3 definitions of up/down
 
     #vector properties
-    MagnitudeSquared(v:Vector2):Num = v.Dot(v);
-    Magnitude(v:Vector2):Num = Num.sqrt(v.MagnitudeSquared);
+    magnitudeSquared(v:Vector2):Num = v.dot(v);
+    magnitude(v:Vector2):Num = Num.sqrt(v.magnitudeSquared);
 
     #operations
-    Opposite(v:Vector2):Vector2 = Zero.Sub(v);
+    opposite(v:Vector2):Vector2 = Zero.sub(v);
     
-    Normalize(v:Vector2):Vector2
+    normalize(v:Vector2):Vector2
     {
        #return zero vector if len = 0
-       len = Magnitude(v);
-       return = v.Div(len);
+       len = magnitude(v);
+       return = v.div(len);
     }
     
     #scalar operations
-    Mul(a:Vector2, b:Num):Vector2 = Vector2(a.x.mul(b), a.y.mul(b));
-    Div(a:Vector2, b:Num):Vector2 = Vector2(a.x.div(b), a.y.div(b));
+    mul(a:Vector2, b:Num):Vector2 = Vector2(a.x.mul(b), a.y.mul(b));
+    div(a:Vector2, b:Num):Vector2 = Vector2(a.x.div(b), a.y.div(b));
     
     #vector operations
-    Add(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.add(b.x), a.y.add(b.y));
-    Sub(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.sub(b.x), a.y.sub(b.y));
+    add(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.add(b.x), a.y.add(b.y));
+    sub(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.sub(b.x), a.y.sub(b.y));
     
-    Dot(a:Vector2, b:Vector2):Num
+    dot(a:Vector2, b:Vector2):Num
     {
         s = Vector2(a.x.mul(b.x), a.y.mul(b.y));
         return = s.x.add(s.y);
     }
         
-    Distance(a:Vector2, b:Vector2):Num 
+    distance(a:Vector2, b:Vector2):Num 
     {
-       diff = a.Sub(b);
-       return = diff.Magnitude;
+       diff = a.sub(b);
+       return = diff.magnitude;
     }
 
-    Angle(a:Vector2, b:Vector2):Num 
+    angle(a:Vector2, b:Vector2):Num 
     {
-        dot = a.Dot(b);
-        mag = a.Magnitude.mul(b.Magnitude);
+        dot = a.dot(b);
+        mag = a.magnitude.mul(b.magnitude);
         clamped = dot.div(mag).clamp(-1, 1);
         theta = Num.acos(clamped);
         return = Num.degrees(theta);  
     }
     
-    Reflect(l:Vector2, n:Vector2):Vector2
+    reflect(l:Vector2, n:Vector2):Vector2
     {
-        dot = n.Dot(l);
+        dot = n.dot(l);
         s = 2.mul(dot);
-        t = n.Mul(s);
-        return = t.Sub(l);
+        t = n.mul(s);
+        return = t.sub(l);
     }
 }
 
@@ -85,57 +85,57 @@ struct Vector3(x:Num, y:Num, z:Num)
     Down = Vector3(0, 0, -1);
 
     #vector properties
-    MagnitudeSquared(v:Vector3):Num = v.Dot(v);
-    Magnitude(v:Vector3):Num = Num.sqrt(v.MagnitudeSquared);
+    magnitudeSquared(v:Vector3):Num = v.dot(v);
+    magnitude(v:Vector3):Num = Num.sqrt(v.magnitudeSquared);
     
     #operations
-    Opposite(v:Vector3):Vector3 = Zero.Sub(v);
+    opposite(v:Vector3):Vector3 = Zero.sub(v);
     
-    Normalize(v:Vector3):Vector3
+    normalize(v:Vector3):Vector3
     {
        #return zero vector if len = 0
-       len = Magnitude(v);
-       return = v.Div(len);
+       len = magnitude(v);
+       return = v.div(len);
     }
     
     #scalar operations
-    Mul(a:Vector3, b:Num):Vector3 = Vector3(a.x.mul(b), a.y.mul(b), a.z.mul(b));
-    Div(a:Vector3, b:Num):Vector3 = Vector3(a.x.div(b), a.y.div(b), a.z.div(b));
+    mul(a:Vector3, b:Num):Vector3 = Vector3(a.x.mul(b), a.y.mul(b), a.z.mul(b));
+    div(a:Vector3, b:Num):Vector3 = Vector3(a.x.div(b), a.y.div(b), a.z.div(b));
     
     #vector operations
-    Add(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z));
-    Sub(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.sub(b.x), a.y.sub(b.y), a.z.sub(b.z));
+    add(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z));
+    sub(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.sub(b.x), a.y.sub(b.y), a.z.sub(b.z));
     
-    Dot(a:Vector3, b:Vector3):Num
+    dot(a:Vector3, b:Vector3):Num
     {
         s = Vector3(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z));
         return = s.x.add(s.y).add(s.z);
     }
         
-    Distance(a:Vector3, b:Vector3):Num 
+    distance(a:Vector3, b:Vector3):Num 
     {
-       diff = a.Sub(b);
-       return = diff.Magnitude;
+       diff = a.sub(b);
+       return = diff.magnitude;
     }
 
-    Angle(a:Vector3, b:Vector3):Num 
+    angle(a:Vector3, b:Vector3):Num 
     {
-        dot = a.Dot(b);
-        mag = a.Magnitude.mul(b.Magnitude);
+        dot = a.dot(b);
+        mag = a.magnitude.mul(b.magnitude);
         clamped = Num.clamp(dot.div(mag), -1, 1);
         theta = Num.acos(clamped);
         return = Num.degrees(theta);  
     }
         
-    Reflect(l:Vector3, n:Vector3):Vector3
+    reflect(l:Vector3, n:Vector3):Vector3
     {
-        dot = n.Dot(l);
+        dot = n.dot(l);
         s = 2.mul(dot);
-        t = n.Mul(s);
-        return = t.Sub(l);
+        t = n.mul(s);
+        return = t.sub(l);
     }
     
-    Cross(a:Vector3, b:Vector3) 
+    cross(a:Vector3, b:Vector3) 
     {
         ay_bz = a.y.mul(b.z);
         az_by = a.z.mul(b.y);
@@ -147,13 +147,13 @@ struct Vector3(x:Num, y:Num, z:Num)
         return = Vector3(ay_bz.sub(az_by), az_bx.sub(ax_bz), az_by.sub(ay_bx));
     }
 
-#    TransformPosition(a:Vector3, matrix:Matrix4x4):Vector3
+#    transformPosition(a:Vector3, matrix:Matrix4x4):Vector3
 #    {
 #        result = V4.Transform(Vector4(a.x, a.y, a.z, 1), matrix);
 #        return = Vector3(result.x, result.y, result.z);
 #    }
 #
-#    TransformDirection(a:Vec3, matrix:Matrix4x4):Vector3
+#    transformDirection(a:Vec3, matrix:Matrix4x4):Vector3
 #    {
 #        result = V4.Transform(Vector4(a.x, a.y, a.z, 0), matrix);
 #        return = Vec3(result.x, result.y, result.z);

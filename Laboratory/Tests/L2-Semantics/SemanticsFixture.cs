@@ -1,7 +1,8 @@
 using System.IO;
 using Element;
+using Laboratory;
 
-namespace Laboratory
+namespace Laboratory.Tests.Semantics
 {
     internal abstract class SemanticsFixture : HostFixture
     {

@@ -1,7 +1,7 @@
 using Element;
 using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.Semantics
 {
     internal class Structs : SemanticsFixture
     {
