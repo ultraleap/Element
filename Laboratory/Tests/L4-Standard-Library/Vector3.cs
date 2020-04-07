@@ -33,8 +33,8 @@ namespace Laboratory.Tests.StandardLibrary
         ]
         [
             TestCase("Vector3(0, 0, 0).normalize", "Vector3(Num.NaN, Num.NaN, Num.NaN)"),
-            TestCase("Vector3(1, 1, 1).normalize", "Vector3(0.57735026919, 0.57735026919, 0.57735026919)"),
-            TestCase("Vector3(1, 2, 2).normalize", "Vector3(0.33333333333, 0.66666666666, 0.66666666666)"),
+            TestCase("Vector3(1, 1, 1).normalize", "Vector3(1.div(3.sqrt), 1.div(3.sqrt), 1.div(3.sqrt))"),
+            TestCase("Vector3(1, 2, 2).normalize", "Vector3(1.div(3), 2.div(3), 2.div(3))"),
         ]
         [
             TestCase("Vector3(2, 4, 8).mul(0)", "Vector3(0, 0, 0)"),

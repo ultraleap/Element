@@ -1,32 +1,32 @@
-ElementLogo(size:Vec2, fragmentCoordinate:Vec2):Vec4
-{
-    centrePos = Vec2(half(size.x), half(size.y));
-
-    length = min(size.x, size.y);
-
-    ringRadius = mul(length, 0.4);
-    ringHalfWidth = mul(length, 0.02);
-
-    dotDirectionFromCentre = V2.Normalize(Vec2(1, .8));
-    dotCentre = Vec.Add(centrePos, Vec.Scale(dotDirectionFromCentre, ringRadius));
-    dotRadius = mul(length, 0.08);
-
-    eWidth = mul(length, 0.04);
-    eArcRadius = mul(length, 0.2);
-
-    ringFn = CSG.Difference(CSG.Circle(centrePos, add(ringRadius, ringHalfWidth)),
-                            CSG.Circle(centrePos, sub(ringRadius, ringHalfWidth)));
-
-    dotFn = CSG.Circle(dotCentre, dotRadius);
-
-    eBar = CSG.Intersection(CSG.Rectangle(Rect(centrePos.x, centrePos.y, size.x, eWidth)),
-                            CSG.Circle(centrePos, eArcRadius));
-    eArcRing = CSG.Difference(CSG.Arc(centrePos, eArcRadius, 0, 315),
-                            CSG.Circle(centrePos, sub(eArcRadius, eWidth)));
-    eFn = CSG.Union(eBar, eArcRing);
-
-    logoPredicate = CSG.Union(ringFn, CSG.Union(dotFn, eFn));
-
-    isIn = bool(logoPredicate(fragmentCoordinate));
-    return = if(isIn, Vec4(div(234, 255), div(118, 255), 0, 1), Vec4(0, 0, 0, 0));
-}
+#ElementLogo(size:Vec2, fragmentCoordinate:Vec2):Vec4
+#{
+#    centrePos = Vec2(half(size.x), half(size.y));
+#
+#    length = min(size.x, size.y);
+#
+#    ringRadius = mul(length, 0.4);
+#    ringHalfWidth = mul(length, 0.02);
+#
+#    dotDirectionFromCentre = V2.Normalize(Vec2(1, .8));
+#    dotCentre = Vec.Add(centrePos, Vec.Scale(dotDirectionFromCentre, ringRadius));
+#    dotRadius = mul(length, 0.08);
+#
+#    eWidth = mul(length, 0.04);
+#    eArcRadius = mul(length, 0.2);
+#
+#    ringFn = CSG.Difference(CSG.Circle(centrePos, add(ringRadius, ringHalfWidth)),
+#                            CSG.Circle(centrePos, sub(ringRadius, ringHalfWidth)));
+#
+#    dotFn = CSG.Circle(dotCentre, dotRadius);
+#
+#    eBar = CSG.Intersection(CSG.Rectangle(Rect(centrePos.x, centrePos.y, size.x, eWidth)),
+#                            CSG.Circle(centrePos, eArcRadius));
+#    eArcRing = CSG.Difference(CSG.Arc(centrePos, eArcRadius, 0, 315),
+#                            CSG.Circle(centrePos, sub(eArcRadius, eWidth)));
+#    eFn = CSG.Union(eBar, eArcRing);
+#
+#    logoPredicate = CSG.Union(ringFn, CSG.Union(dotFn, eFn));
+#
+#    isIn = bool(logoPredicate(fragmentCoordinate));
+#    return = if(isIn, Vec4(div(234, 255), div(118, 255), 0, 1), Vec4(0, 0, 0, 0));
+#}
