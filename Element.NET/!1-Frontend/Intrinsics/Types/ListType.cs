@@ -48,7 +48,7 @@ namespace Element.AST
             }
             
             return Enumerable.Range(0, count.Value)
-                             .Select(i => indexer.ResolveCall(new IValue[] {new Constant(i)}, null, false, context))
+                             .Select(i => indexer.ResolveCall(new IValue[] {new Constant(i)}, false, context))
                              .ToArray();
         }
     }

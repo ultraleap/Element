@@ -28,9 +28,7 @@ namespace Element.AST
         public override string ToString() => $"{Location}{DeclaredType}";
 
         protected bool HasDeclaredInputs => DeclaredInputs.Length > 0;
-        protected Port[] DeclaredInputs => string.IsNullOrEmpty(IntrinsicQualifier)
-            ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
-            : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs;
+        protected Port[] DeclaredInputs { get; private set; }
         protected Port DeclaredOutput { get; private set; }
         protected virtual Identifier[] ScopeIdentifierWhitelist { get; } = null;
         protected virtual Identifier[] ScopeIdentifierBlacklist { get; } = null;
@@ -75,13 +73,16 @@ namespace Element.AST
         {
             ParentScope = parent ?? throw new ArgumentNullException(nameof(parent));
             ChildScope?.Initialize(this);
-            
-            DeclaredType?.Initialize(ChildScope ?? ParentScope);
+            DeclaredType?.Initialize(this);
+            DeclaredInputs = string.IsNullOrEmpty(IntrinsicQualifier)
+                                 ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
+                                 : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs;
             DeclaredOutput = Port.ReturnPort(DeclaredType);
             foreach (var port in PortList?.List ?? Enumerable.Empty<Port>())
             {
-                port.Initialize(ChildScope ?? ParentScope);
+                port.Initialize(this);
             }
+            (Body as ExpressionBody)?.Expression.Initialize(this);
         }
 
         public string Location => ParentScope switch

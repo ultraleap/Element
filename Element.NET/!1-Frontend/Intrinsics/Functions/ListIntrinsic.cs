@@ -11,7 +11,7 @@ namespace Element.AST
 		{ }
 		
 		public override IValue Call(IValue[] arguments, CompilationContext context) =>
-			ListType.Instance.ResolveCall(new IValue[]{new IndexFunction(arguments), new Constant(arguments.Length)}, null, false, context);
+			ListType.Instance.ResolveCall(new IValue[]{new IndexFunction(arguments), new Constant(arguments.Length)}, false, context);
 
 		private class IndexFunction : IFunction
 		{

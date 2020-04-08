@@ -22,7 +22,7 @@ namespace Element.AST
             _cachedConstraint = constraint;
         }
         
-        internal void Initialize(IScope declaringScope) => _type?.Initialize(declaringScope);
+        internal void Initialize(Declaration declarer) => _type?.Initialize(declarer);
 
         public static Port VariadicPort { get; } = new Port();
         public static Port ReturnPort(TypeAnnotation? annotation) => new Port("return", annotation);
@@ -49,11 +49,11 @@ namespace Element.AST
     // ReSharper disable once ClassNeverInstantiated.Global
     public class PortList : ListOf<Port> // CallExpression uses ListOf because it looks like a list due to using brackets
     {
-        public void Initialize(IScope declaringScope)
+        public void Initialize(Declaration declarer)
         {
             foreach (var port in List)
             {
-                port.Initialize(declaringScope);
+                port.Initialize(declarer);
             }
         }
     }

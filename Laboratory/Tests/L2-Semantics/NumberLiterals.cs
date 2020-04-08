@@ -20,5 +20,8 @@ namespace Laboratory.Tests
 
         [Test]
         public void EIsC() => AssertApproxEqual(CompilationInput, "e", "c");
+
+        [Test]
+        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, 11, "f");
     }
 }

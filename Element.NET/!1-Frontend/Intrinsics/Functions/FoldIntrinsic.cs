@@ -19,7 +19,7 @@ namespace Element.AST
 			var list = ListType.EvaluateElements(arguments[0] as StructInstance, compilationContext);
 			var workingValue = arguments[1];
 			var aggregator = (IFunctionSignature)arguments[2];
-			return list.Aggregate(workingValue, (current, e) => aggregator.ResolveCall(new[] {current, e}, null, false, compilationContext));
+			return list.Aggregate(workingValue, (current, e) => aggregator.ResolveCall(new[] {current, e}, false, compilationContext));
 		}
 	}
 }

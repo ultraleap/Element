@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Element.AST;
 
 namespace Element
@@ -24,7 +23,7 @@ namespace Element
         public (bool Success, float[] Result) Evaluate(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
                 ? _context.Parse(expression, out AST.Expression expressionObject)
-                    ? expressionObject.ResolveExpression(_context.GlobalScope, _context.MakeCompilationContext(out var compilationContext))
+                    ? expressionObject.ResolveExpression(_context.MakeCompilationContext(out var compilationContext))
                                       .TrySerialize(out float[] result, compilationContext)
                           ? (true, result)
                           : (_context.LogError(1, "Result not serializable") == CompilationErr.Instance, null)
@@ -34,7 +33,7 @@ namespace Element
         public (bool Success, string Result) Typeof(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
                 ? _context.Parse(expression, out AST.Expression expressionObject)
-                    ? (true, expressionObject.ResolveExpression(_context.GlobalScope, _context.MakeCompilationContext(out _)).Type.Name)
+                    ? (true, expressionObject.ResolveExpression(_context.MakeCompilationContext(out _)).Type.Name)
                     : (false, "<expression parse error>")
                 : (false, "<compilation input error>");
     }

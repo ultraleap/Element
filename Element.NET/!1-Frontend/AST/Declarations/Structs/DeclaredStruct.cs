@@ -25,7 +25,7 @@ namespace Element.AST
             this[instanceFunctionIdentifier, false, compilationContext] switch
             {
                 DeclaredFunction instanceFunction when instanceFunction.IsNullary() => (IValue)compilationContext.LogError(22, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
-                IFunctionSignature function when function.Inputs[0].ResolveConstraint(compilationContext) == this => function.ResolveCall(new[]{instanceBeingIndexed}, this, true, compilationContext),
+                IFunctionSignature function when function.Inputs[0].ResolveConstraint(compilationContext) == this => function.ResolveCall(new[]{instanceBeingIndexed}, true, compilationContext),
                 IFunctionSignature function => compilationContext.LogError(22, $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function"),
                 Declaration notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction.Location}' is not a function"),
                 {} notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function"),

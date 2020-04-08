@@ -13,11 +13,10 @@ namespace Element.AST
 
         public override string ToString() => $".{Identifier}";
 
-        public IValue ResolveSubExpression(IValue previous, IScope resolutionScope, CompilationContext compilationContext) =>
-            previous switch
-            {
-                IScope scope => scope[Identifier, false, compilationContext],
-                _ => compilationContext.LogError(16, $"'{previous}' is not indexable")
-            };
+        void ISubExpression.Initialize(Declaration declaration) { } // No-op
+        IValue ISubExpression.ResolveSubExpression(IValue previous, CompilationContext compilationContext) =>
+            previous is IScope scope
+                ? scope[Identifier, false, compilationContext]
+                : compilationContext.LogError(16, $"'{previous}' is not indexable");
     }
 }

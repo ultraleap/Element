@@ -6,7 +6,8 @@ namespace Element.AST
 {
     public interface ISubExpression
     {
-        IValue ResolveSubExpression(IValue previous, IScope resolutionScope, CompilationContext compilationContext);
+        void Initialize(Declaration declaration);
+        IValue ResolveSubExpression(IValue previous, CompilationContext compilationContext);
     }
 
     // ReSharper disable once UnusedType.Global
@@ -19,17 +20,25 @@ namespace Element.AST
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
-        public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
+        public override void Initialize(Declaration declaration)
+        {
+            Declarer = declaration;
+            foreach (var expr in Expressions ?? Enumerable.Empty<ISubExpression>())
+            {
+                expr.Initialize(declaration);
+            }
+        }
+
+        public override IValue ResolveExpression(CompilationContext compilationContext)
         {
             var previous = LitOrId switch
             {
                 // If the start of the list is an identifier, find the value that it identifies
-                Identifier id => scope[id, true, compilationContext] is {} v
-                    ? (IValue) v
-                    : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
+                Identifier id => (Declarer?.ChildScope ?? Declarer?.ParentScope ?? compilationContext.SourceContext.GlobalScope)[id, true, compilationContext] is { } v
+                                     ? v
+                                     : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
                 Constant constant => constant,
-                _ => throw new InternalCompilerException(
-                    "Trying to compile expression that doesn't start with literal or identifier - should be impossible")
+                _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
             };
 
             // Early out if something failed above
@@ -38,7 +47,7 @@ namespace Element.AST
             compilationContext.PushTrace(new TraceSite(previous.ToString(), null, 0, 0));
 
             // Evaluate all expressions for this chain if there are any, making sure that the result is fully resolved if it returns a nullary.
-            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.ResolveNullaryFunction(compilationContext), scope, compilationContext))
+            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.ResolveNullaryFunction(compilationContext), compilationContext))
                         ?? previous)
                 .ResolveNullaryFunction(compilationContext);
 

@@ -4,7 +4,7 @@ namespace Element.AST
 {
     [WhitespaceSurrounded]
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class ExpressionBody
+    public class ExpressionBody : IDeclared
     {
 #pragma warning disable 169
         [Literal("=")] private Unnamed _;
@@ -13,5 +13,6 @@ namespace Element.AST
 #pragma warning restore 169
 
         public override string ToString() => $"= {Expression};";
+        public Declaration Declarer => Expression.Declarer;
     }
 }
