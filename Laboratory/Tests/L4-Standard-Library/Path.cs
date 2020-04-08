@@ -6,7 +6,7 @@ namespace Laboratory.Tests.StandardLibrary
     {
         [
             TestCase("Path.Circle(Vector3.Zero, 5).at(0)", "Vector3(0, 5, 0)"),
-            TestCase("Path.Circle(Vector3.Zero, 5).at(0.5)", "Vector3(-4.371139e-08f, 0, 0)"),
+            TestCase("Path.Circle(Vector3.Zero, 5).at(0.5)", "Vector3(-4.371139e-07,-5, 0)"),
         ]
         public void Operations(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);

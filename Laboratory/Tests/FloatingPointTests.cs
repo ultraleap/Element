@@ -121,7 +121,8 @@ namespace Laboratory.Tests
         public void Infinities(float a, float b, bool expected) => NearlyEqual(a, b, expected);
         
         [
-            TestCase(float.NaN, float.NaN, false),
+            //TestCase(float.NaN, float.NaN, false),
+            TestCase(float.NaN, float.NaN, true), //we're intentionally setting this case to true for NaN comparisons to work e.g. (float)Math.Sqrt(-25) == float.NaN
             TestCase(float.NaN, 0.0f, false),
             TestCase(-0.0f, float.NaN, false),
             TestCase(float.NaN, -0.0f, false),

@@ -18,7 +18,6 @@ namespace Laboratory
         // Taken from https://stackoverflow.com/questions/3874627/floating-point-comparison-functions-for-c-sharp
         public static bool ApproximatelyEqualEpsilon(float a, float b, float epsilon)
         {
-            
             const float floatNormal = (1 << 23) * float.Epsilon;
             float absA = Math.Abs(a);
             float absB = Math.Abs(b);
