@@ -5,10 +5,8 @@ namespace Laboratory.Tests
     [TestFixture, Parallelizable(ParallelScope.All)]
     internal class FloatingPointTests
     {
-        private const float Epsilon = 0.00001f;
-        
         public void NearlyEqual(float a, float b, bool expected) =>
-            Assert.That(HostFixture.ApproximatelyEqualEpsilon(a, b, Epsilon), Is.EqualTo(expected));
+            Assert.That(HostFixture.ApproximatelyEqualEpsilon(a, b, HostFixture.FloatEpsilon), Is.EqualTo(expected));
 
         public void NearlyEqual(float a, float b, float epsilon, bool expected) =>
             Assert.That(HostFixture.ApproximatelyEqualEpsilon(a, b, epsilon), Is.EqualTo(expected));
@@ -77,6 +75,16 @@ namespace Laboratory.Tests
             TestCase(-0.00000001f, 0.0f, false),
             TestCase(0.0f, -0.00000001f, false),
         ]
+        [
+            TestCase(0.0f, 4.371139e-08f, true), //(float)Math.Cos(90f*3.14159265359f/180f)
+            TestCase(4.371139e-08f, 0.0f, true),
+            TestCase(0.0f, -4.371139e-08f,true),
+            TestCase(-4.371139e-08f, 0.0f,true),
+            TestCase(0.0f, 8.742278e-08f, true), //(float)Math.Sin(180f*3.14159265359f/180f)
+            TestCase(8.742278e-08f, 0.0f, true),
+            TestCase(0.0f, -8.742278e-08f,true),
+            TestCase(-8.742278e-08f, 0.0f,true),
+        ]
         public void Zero(float a, float b, bool expected) => NearlyEqual(a, b, expected);
         
         [
@@ -112,27 +120,26 @@ namespace Laboratory.Tests
         ]
         public void Infinities(float a, float b, bool expected) => NearlyEqual(a, b, expected);
         
-        // //If I include these, nearly all tests break...
-        //  [
-        //      TestCase(float.NaN, float.NaN, false),
-        //      TestCase(float.NaN, 0.0f, false),
-        //      TestCase(-0.0f, float.NaN, false),
-        //      TestCase(float.NaN, -0.0f, false),
-        //      TestCase(0.0f, float.NaN, false),
-        //      TestCase(float.NaN, float.PositiveInfinity, false),
-        //      TestCase(float.PositiveInfinity, float.NaN, false),
-        //      TestCase(float.NaN, float.NegativeInfinity, false),
-        //      TestCase(float.NegativeInfinity, float.NaN, false),
-        //      TestCase(float.NaN, float.MaxValue, false),
-        //      TestCase(float.MaxValue, float.NaN,  false),
-        //      TestCase(float.NaN, -float.MaxValue, false),
-        //      TestCase(-float.MaxValue, float.NaN,  false),
-        //      TestCase(float.NaN, float.Epsilon, false),
-        //      TestCase(float.Epsilon, float.NaN,  false),
-        //      TestCase(float.NaN, -float.Epsilon, false),
-        //      TestCase(-float.Epsilon, float.NaN,  false),
-        //  ]
-        //  public void NaN(float a, float b, bool expected) => NearlyEqual(a, b, expected);
+        [
+            TestCase(float.NaN, float.NaN, false),
+            TestCase(float.NaN, 0.0f, false),
+            TestCase(-0.0f, float.NaN, false),
+            TestCase(float.NaN, -0.0f, false),
+            TestCase(0.0f, float.NaN, false),
+            TestCase(float.NaN, float.PositiveInfinity, false),
+            TestCase(float.PositiveInfinity, float.NaN, false),
+            TestCase(float.NaN, float.NegativeInfinity, false),
+            TestCase(float.NegativeInfinity, float.NaN, false),
+            TestCase(float.NaN, float.MaxValue, false),
+            TestCase(float.MaxValue, float.NaN,  false),
+            TestCase(float.NaN, -float.MaxValue, false),
+            TestCase(-float.MaxValue, float.NaN,  false),
+            TestCase(float.NaN, float.Epsilon, false),
+            TestCase(float.Epsilon, float.NaN,  false),
+            TestCase(float.NaN, -float.Epsilon, false),
+            TestCase(-float.Epsilon, float.NaN,  false),
+        ]
+        public void NotNumber(float a, float b, bool expected) => NearlyEqual(a, b, expected);
         
         [   
             TestCase(1.000000001f, -1.0f,  false),

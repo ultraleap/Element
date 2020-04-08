@@ -12,7 +12,7 @@ namespace Laboratory
     {
         protected readonly IHost Host = HostArguments.MakeHost();
         
-        private const float FloatEpsilon = 1.19209e-5f;
+        public const float FloatEpsilon = 1.19209e-5f;
         private static Comparer<float> FloatComparer { get; } = Comparer<float>.Create((f, f1) => ApproximatelyEqualEpsilon(f, f1, FloatEpsilon) ? 0 : 1);
         
         // Taken from https://stackoverflow.com/questions/3874627/floating-point-comparison-functions-for-c-sharp
