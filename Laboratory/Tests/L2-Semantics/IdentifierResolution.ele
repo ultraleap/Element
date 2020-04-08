@@ -1,3 +1,7 @@
+namespace Empty
+{
+}
+
 namespace A
 {
     x = 5;
