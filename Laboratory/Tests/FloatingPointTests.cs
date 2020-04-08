@@ -120,17 +120,17 @@ namespace Laboratory.Tests
         //      TestCase(float.NaN, -0.0f, false),
         //      TestCase(0.0f, float.NaN, false),
         //      TestCase(float.NaN, float.PositiveInfinity, false),
-        //      TestCase(float.PositiveInfinity,float.NaN, false),
+        //      TestCase(float.PositiveInfinity, float.NaN, false),
         //      TestCase(float.NaN, float.NegativeInfinity, false),
-        //      TestCase(float.NegativeInfinity,float.NaN, false),
+        //      TestCase(float.NegativeInfinity, float.NaN, false),
         //      TestCase(float.NaN, float.MaxValue, false),
-        //      TestCase(float.MaxValue,float.NaN,  false),
+        //      TestCase(float.MaxValue, float.NaN,  false),
         //      TestCase(float.NaN, -float.MaxValue, false),
-        //      TestCase(-float.MaxValue,float.NaN,  false),
-        //      TestCase(float.NaN, float.MinValue, false),
-        //      TestCase(float.MinValue,float.NaN,  false),
-        //      TestCase(float.NaN, -float.MinValue, false),
-        //      TestCase(-float.MinValue,float.NaN,  false),
+        //      TestCase(-float.MaxValue, float.NaN,  false),
+        //      TestCase(float.NaN, float.Epsilon, false),
+        //      TestCase(float.Epsilon, float.NaN,  false),
+        //      TestCase(float.NaN, -float.Epsilon, false),
+        //      TestCase(-float.Epsilon, float.NaN,  false),
         //  ]
         //  public void NaN(float a, float b, bool expected) => NearlyEqual(a, b, expected);
         
@@ -139,25 +139,25 @@ namespace Laboratory.Tests
             TestCase(-1.0f, 1.000000001f, false),
             TestCase(-1.000000001f, 1.0f,  false),
             TestCase(1.0f, -1.000000001f,  false),
-            TestCase(10 * float.MinValue, 10 * -float.MinValue,  true),
-            TestCase(10000 * float.MinValue, 10000 * -float.MinValue,  false),
+            TestCase(10 * float.Epsilon, 10 * -float.Epsilon,  true),
+            TestCase(10000 * float.Epsilon, 10000 * -float.Epsilon,  false),
         ]
         public void Opposite(float a, float b, bool expected) => NearlyEqual(a, b, expected);
         
         [   
-            TestCase(float.MinValue, float.MinValue,  true),
-            TestCase(float.MinValue, -float.MinValue, true),
-            TestCase(-float.MinValue, float.MinValue,  true),
-            TestCase(float.MinValue, 0,  true),
-            TestCase(0, float.MinValue,  true),
-            TestCase(-float.MinValue, 0,  true),
-            TestCase(0, -float.MinValue,  true),
+            TestCase(float.Epsilon, float.Epsilon,  true),
+            TestCase(float.Epsilon, -float.Epsilon, true),
+            TestCase(-float.Epsilon, float.Epsilon,  true),
+            TestCase(float.Epsilon, 0,  true),
+            TestCase(0, float.Epsilon,  true),
+            TestCase(-float.Epsilon, 0,  true),
+            TestCase(0, -float.Epsilon,  true),
         ]
         [   
-            TestCase(0.000000001f, -float.MinValue,  false),
-            TestCase(0.000000001f, float.MinValue, false),
-            TestCase(float.MinValue, 0.000000001f,  false),
-            TestCase(-float.MinValue, 0.000000001f,  false),
+            TestCase(0.000000001f, -float.Epsilon,  false),
+            TestCase(0.000000001f, float.Epsilon, false),
+            TestCase(float.Epsilon, 0.000000001f,  false),
+            TestCase(-float.Epsilon, 0.000000001f,  false),
         ]
         public void Ulp(float a, float b, bool expected) => NearlyEqual(a, b, expected); //ulp? ultra-low precision?
     }
