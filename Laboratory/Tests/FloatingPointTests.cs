@@ -75,16 +75,16 @@ namespace Laboratory.Tests
             TestCase(-0.00000001f, 0.0f, false),
             TestCase(0.0f, -0.00000001f, false),
         ]
-        [
-            TestCase(0.0f, 4.371139e-08f, true), //(float)Math.Cos(90f*3.14159265359f/180f)
-            TestCase(4.371139e-08f, 0.0f, true),
-            TestCase(0.0f, -4.371139e-08f,true),
-            TestCase(-4.371139e-08f, 0.0f,true),
-            TestCase(0.0f, 8.742278e-08f, true), //(float)Math.Sin(180f*3.14159265359f/180f)
-            TestCase(8.742278e-08f, 0.0f, true),
-            TestCase(0.0f, -8.742278e-08f,true),
-            TestCase(-8.742278e-08f, 0.0f,true),
-        ]
+        // [
+        //     TestCase(0.0f, 4.371139e-08f, true), //(float)Math.Cos(90f*3.14159265359f/180f)
+        //     TestCase(4.371139e-08f, 0.0f, true),
+        //     TestCase(0.0f, -4.371139e-08f,true),
+        //     TestCase(-4.371139e-08f, 0.0f,true),
+        //     TestCase(0.0f, 8.742278e-08f, true), //(float)Math.Sin(180f*3.14159265359f/180f)
+        //     TestCase(8.742278e-08f, 0.0f, true),
+        //     TestCase(0.0f, -8.742278e-08f,true),
+        //     TestCase(-8.742278e-08f, 0.0f,true),
+        // ]
         public void Zero(float a, float b, bool expected) => NearlyEqual(a, b, expected);
         
         [

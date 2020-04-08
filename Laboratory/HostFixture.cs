@@ -31,7 +31,7 @@ namespace Laboratory
                 return true;
             }
             
-            if (float.IsNaN(a) && float.IsNaN(b)) return false;
+            if (float.IsNaN(a) && float.IsNaN(b)) return true;
 
             if (a == 0.0f || b == 0.0f || diff < floatNormal)
             {    

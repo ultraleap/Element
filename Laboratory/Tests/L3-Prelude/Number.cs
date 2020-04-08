@@ -69,17 +69,17 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.ln(Num.e)", "1"),
 		]	
 		[   //sin
-			TestCase("Num.sin(-180.radians)", "0"),
+			TestCase("Num.sin(-180.radians)", "8.74227766E-08f"),
 			TestCase("Num.sin(-90.radians)", "-1"),
 			TestCase("Num.sin(0.radians)", "0"),
 			TestCase("Num.sin(90.radians)", "1"),
-			TestCase("Num.sin(180.radians)", "0"),
+			TestCase("Num.sin(180.radians)", "-8.74227766E-08f"),
 		]
 		[   //cos
 			TestCase("Num.cos(-180.radians)", "-1"),
-			TestCase("Num.cos(-90.radians)", "0"),
+			TestCase("Num.cos(-90.radians)", "-4.371139e-08f"),
 			TestCase("Num.cos(0.radians)", "1"),
-			TestCase("Num.cos(90.radians)", "0"),
+			TestCase("Num.cos(90.radians)", "-4.371139e-08f"),
 			TestCase("Num.cos(180.radians)", "-1"),
 		]
 		[   //tan
