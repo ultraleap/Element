@@ -16,8 +16,10 @@ namespace Laboratory
         private static Comparer<float> FloatComparer { get; } = Comparer<float>.Create((f, f1) => ApproximatelyEqualEpsilon(f, f1, FloatEpsilon) ? 0 : 1);
         
         // Taken from https://stackoverflow.com/questions/3874627/floating-point-comparison-functions-for-c-sharp
-        private static bool ApproximatelyEqualEpsilon(float a, float b, float epsilon)
+        public static bool ApproximatelyEqualEpsilon(float a, float b, float epsilon)
         {
+            //if (float.IsNaN(a) || float.IsNaN(b)) return false;
+            
             const float floatNormal = (1 << 23) * float.Epsilon;
             float absA = Math.Abs(a);
             float absB = Math.Abs(b);
