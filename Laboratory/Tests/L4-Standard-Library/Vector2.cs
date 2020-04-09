@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.IO;
+using NUnit.Framework;
 
 namespace Laboratory.Tests.StandardLibrary
 {
@@ -20,8 +21,8 @@ namespace Laboratory.Tests.StandardLibrary
             TestCase("Vector2(1, 0).magnitudeSquared", "1"),
             TestCase("Vector2(3, 4).magnitudeSquared", "25"),
         ]
-        public void MagnitudeSquared(string expression, string expected) =>
-            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+         public void MagnitudeSquared(string expression, string expected) =>
+             AssertApproxEqual(ValidatedCompilationInput, expected, expression);
         
         [
             TestCase("Vector2(0, 0).magnitude", "0"),
@@ -44,7 +45,7 @@ namespace Laboratory.Tests.StandardLibrary
         [
             TestCase("Vector2(0, 0).normalize", "Vector2(Num.NaN, Num.NaN)"),
             TestCase("Vector2(1, 1).normalize", "Vector2(1.div(2.sqrt), 1.div(2.sqrt))"),
-            TestCase("Vector2(3, 4).normalize", "Vector2(3.div(5), 3.div(5))"),
+            TestCase("Vector2(3, 4).normalize", "Vector2(3.div(5), 4.div(5))"),
         ]
         public void Normalize(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);

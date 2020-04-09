@@ -76,24 +76,24 @@ namespace Laboratory.Tests.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
-			TestCase("Num.sin(-180.radians)", "8.74227766E-08f"),
+			TestCase("Num.sin(-180.radians)", "0"),
 			TestCase("Num.sin(-90.radians)", "-1"),
 			TestCase("Num.sin(0.radians)", "0"),
 			TestCase("Num.sin(90.radians)", "1"),
-			TestCase("Num.sin(180.radians)", "-8.74227766E-08f"),
+			TestCase("Num.sin(180.radians)", "0"),
 		]
 		public void Sine(string expression, string expected) =>
-			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+			AssertApproxEqualRelaxed(ValidatedCompilationInput, expected, expression);
 		
 		[
 			TestCase("Num.cos(-180.radians)", "-1"),
-			TestCase("Num.cos(-90.radians)", "-4.371139e-08f"),
+			TestCase("Num.cos(-90.radians)", "0"),
 			TestCase("Num.cos(0.radians)", "1"),
-			TestCase("Num.cos(90.radians)", "-4.371139e-08f"),
+			TestCase("Num.cos(90.radians)", "0"),
 			TestCase("Num.cos(180.radians)", "-1"),
 		]
 		public void Cosine(string expression, string expected) =>
-			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+			AssertApproxEqualRelaxed(ValidatedCompilationInput, expected, expression);
 		
 		[
 			TestCase("Num.tan(-45.radians)", "-1"),
