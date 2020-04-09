@@ -14,7 +14,7 @@ namespace Laboratory
     /// <summary>
     /// Implements hosts types and enumerates hosts for host fixtures
     /// </summary>
-    internal class HostArguments
+    internal static class HostArguments
     {
         public static IHost MakeHost() => _processHostInfo != null
                                             ? (IHost)new ProcessHost(_processHostInfo.Value)

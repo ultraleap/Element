@@ -1,3 +1,5 @@
+using Element.AST;
+
 namespace Element
 {
 	using System;
@@ -186,7 +188,7 @@ namespace Element
 		/// </summary>
 		public static bool IsLeaf(this IFunction function) => function.Inputs?.Length == 0 && function.Outputs?.Length == 0;
 
-		public static Expression AsExpression(this IFunction function, CompilationContext info) =>
+		public static Expression? AsExpression(this IFunction function, CompilationContext info) =>
 			(function as IEvaluable)?.AsExpression(info);
 
 		/// <summary>

@@ -1,3 +1,5 @@
+using Element.AST;
+
 namespace Element
 {
 	using System.Linq;
@@ -12,7 +14,6 @@ namespace Element
 		/// <summary>
 		/// Optimizes an array of expressions in-place
 		/// </summary>
-		/// <param name="input"></param>
 		public static void Optimize(Expression[] input,
 			Dictionary<Expression, Expression> cache = null)
 		{
@@ -25,12 +26,10 @@ namespace Element
 		/// <summary>
 		/// Optimizes a single expression, returning a new one
 		/// </summary>
-		/// <param name="input"></param>
-		/// <returns></returns>
 		public static Expression Optimize(Expression input,
 			Dictionary<Expression, Expression> cache = null)
 		{
-			cache = cache ?? new Dictionary<Expression, Expression>();
+			cache ??= new Dictionary<Expression, Expression>();
 			if (!cache.TryGetValue(input, out var retval)) {
 				cache.Add(input, retval = OptimizeInternal(input, cache));
 			}
@@ -42,7 +41,7 @@ namespace Element
 		{
 			switch (input)
 			{
-				case Constant c: break;
+				case Constant _: break;
 				case Unary u1:
 					var u1a = Optimize(u1.Operand, cache);
 					var u = u1a.Equals(u1.Operand) ? u1 : new Unary(u1.Operation, u1a);
@@ -129,25 +128,16 @@ namespace Element
 		}
 
 		public static ExpressionGroup OptimizeGroup(ExpressionGroup group,
-			Dictionary<Expression, Expression> cache = null)
-		{
-			switch (group)
+			Dictionary<Expression, Expression> cache = null) =>
+			group switch
 			{
 				// TODO: Cut out state values that aren't used
 				// TODO: Nested scopes properly
-				case Persist p:
-					return new Persist(
-						p.State.Select(s => Optimize(s.InitialValue, cache)),
-						_ => p.NewValue.Select(e => Optimize(e, cache))
-					);
-				case Loop l:
-					return new Loop(
-						l.State.Select(s => Optimize(s.InitialValue, cache)),
-						_ => Optimize(l.Condition, cache),
-						_ => l.Body.Select(e => Optimize(e, cache))
-					);
-			}
-			return group;
-		}
+				Persist p => new Persist(p.State.Select(s => Optimize(s.InitialValue, cache)),
+				                         _ => p.NewValue.Select(e => Optimize(e, cache))),
+				Loop l => new Loop(l.State.Select(s => Optimize(s.InitialValue, cache)),
+				                   _ => Optimize(l.Condition, cache), _ => l.Body.Select(e => Optimize(e, cache))),
+				_ => group
+			};
 	}
 }

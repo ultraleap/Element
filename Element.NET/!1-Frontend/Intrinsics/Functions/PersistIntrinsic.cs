@@ -1,15 +1,18 @@
 namespace Element.AST
 {
-    public class PersistIntrinsic : IIntrinsic, IFunction
+    public class PersistIntrinsic : IntrinsicFunction
     {
-        public IType Type => FunctionType.Instance;
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext)
+        public PersistIntrinsic()
+            : base("persist", new[]
+            {
+                new Port("initial", AnyConstraint.Instance),
+                new Port("body", FunctionType.Instance)
+            }, Port.ReturnPort(AnyConstraint.Instance))
+        { }
+
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
             throw new System.NotImplementedException();
         }
-        public Port[] Inputs { get; } = {new Port("initial", AnyConstraint.Annotation), new Port("body", FunctionType.Annotation)};
-        public TypeAnnotation Output { get; } = AnyConstraint.Annotation;
-
-        public string Location => "persist";
     }
 }

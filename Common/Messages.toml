@@ -53,7 +53,7 @@ name = "CircularCompilation"
 level = "Error"
 
 [ELE12]
-name = "BoundaryMapMissing"
+name = "BoundaryConverterMissing"
 level = "Error"
 
 [ELE13]

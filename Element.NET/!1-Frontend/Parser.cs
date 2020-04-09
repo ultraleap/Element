@@ -96,27 +96,21 @@ namespace Element
 
         private static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public static bool Parse<T>(this Context context, string text, out T output)
+        public static bool Parse<T>(this SourceContext context, string text, out T output)
         {
-            var parseTrace = new List<string>();
-            var success = Lexico.Lexico.TryParse(text, out output, new DelegateTextTrace(msg =>
-            {
-                if (!string.IsNullOrEmpty(msg)) parseTrace.Add(msg);
-            }));
+            var success = Lexico.Lexico.TryParse(text, out output);
             if (!success)
             {
+                var parseTrace = new List<string>();
+                Lexico.Lexico.TryParse<T>(text, out _, new DelegateTextTrace(msg =>
+                {
+                    if (!string.IsNullOrEmpty(msg)) parseTrace.Add(msg);
+                }));
                 foreach (var msg in parseTrace)
                 {
                     context.Log(msg);
                 }
                 context.LogError(9, "Parsing failed, see previous parse trace messages for details.");
-            }
-            else if (context.Verbosity >= MessageLevel.Verbose)
-            {
-                foreach (var msg in parseTrace)
-                {
-                    context.Log(msg);
-                }
             }
             return success;
         }
@@ -140,12 +134,6 @@ namespace Element
 
             return true;
         }
-
-        /// <summary>
-        /// Parses the given file as an Element source file and adds it's contents to a source context
-        /// </summary>
-        public static bool ParseFile(this SourceContext context, FileInfo file) => ParseFile(context, file, true);
-
 
         private static bool ParseFile(this SourceContext context, FileInfo file, bool validate)
         {

@@ -6,14 +6,14 @@ namespace Element.AST
 {
     public interface ISubExpression
     {
-        IValue ResolveSubExpression(IValue previous, IScope resolutionScope, CompilationContext compilationContext);
+        IValue ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext);
     }
 
     // ReSharper disable once UnusedType.Global
     public class ExpressionChain : Expression
     {
         // ReSharper disable UnusedAutoPropertyAccessor.Local
-        [field: Alternative(typeof(Identifier), typeof(Literal))] private object LitOrId { get; set; }
+        [field: Alternative(typeof(Identifier), typeof(Constant))] private object LitOrId { get; set; }
         [field: Optional] private List<ISubExpression>? Expressions { get; set; }
         // ReSharper restore UnusedAutoPropertyAccessor.Local
 
@@ -24,12 +24,11 @@ namespace Element.AST
             var previous = LitOrId switch
             {
                 // If the start of the list is an identifier, find the value that it identifies
-                Identifier id => scope[id, true, compilationContext] is {} v
-                    ? (IValue) v
-                    : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
-                Literal lit => lit,
-                _ => throw new InternalCompilerException(
-                    "Trying to compile expression that doesn't start with literal or identifier - should be impossible")
+                Identifier id => scope?[id, true, compilationContext] is { } v
+                                     ? v
+                                     : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
+                Constant constant => constant,
+                _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
             };
 
             // Early out if something failed above

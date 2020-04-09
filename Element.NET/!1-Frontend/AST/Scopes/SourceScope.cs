@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Lexico;
 
 namespace Element.AST
@@ -16,7 +17,7 @@ namespace Element.AST
         [Optional] private List<Declaration>? _items;
 #pragma warning restore 649
 
-        public IEnumerator<Declaration> GetEnumerator() => _items?.GetEnumerator() ?? EmptyEnumerator<Declaration>.Instance;
+        public IEnumerator<Declaration> GetEnumerator() => _items?.GetEnumerator() ?? Enumerable.Empty<Declaration>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

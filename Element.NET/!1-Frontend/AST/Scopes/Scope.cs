@@ -10,17 +10,15 @@ namespace Element.AST
     public class Scope : DeclaredScope, IDeclared
     {
 #pragma warning disable 649, 169
-        [Literal("{")] private Unnamed _open;
-        [Optional] private List<Declaration>? _items;
-        [Literal("}")] private Unnamed _close;
+        [SurroundBy("{", "}"), Optional] private List<Declaration>? _items;
 #pragma warning restore 649, 169
 
         protected override IEnumerable<Declaration> ItemsToCacheOnValidate => _items ?? Enumerable.Empty<Declaration>();
 
         public Declaration Declarer { get; private set; }
 
-        public override IValue? this[Identifier id, bool recurse, CompilationContext context] =>
-            IndexCache(id) ?? (recurse ? Declarer.ParentScope[id, true, context] : null);
+        public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
+            IndexCache(id) ?? (recurse ? Declarer.ParentScope[id, true, compilationContext] : null);
 
         public void Initialize(Declaration declarer)
         {
@@ -28,7 +26,7 @@ namespace Element.AST
             InitializeItems();
         }
 
-        private class ClonedScope : ScopeBase, IDeclared
+        private class ClonedScope : ScopeBase<Declaration>, IDeclared
         {
             private readonly IScope _parentScope;
 
@@ -36,11 +34,11 @@ namespace Element.AST
             {
                 Declarer = declarer;
                 _parentScope = parentScope;
-                SetRange(items.Select(item => (item.Identifier, (IValue)item.Clone(this))));
+                SetRange(items.Select(item => (item.Identifier, item.Clone(this))));
             }
 
-            public override IValue? this[Identifier id, bool recurse, CompilationContext context] =>
-                IndexCache(id) ?? (recurse ? _parentScope[id, true, context] : null);
+            public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
+                IndexCache(id) ?? (recurse ? _parentScope[id, true, compilationContext] : null);
 
             public Declaration Declarer { get; }
         }

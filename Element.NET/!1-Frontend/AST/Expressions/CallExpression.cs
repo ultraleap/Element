@@ -5,14 +5,9 @@ namespace Element.AST
     // ReSharper disable once UnusedType.Global
     public class CallExpression : ListOf<Expression>, ISubExpression
     {
-        public IValue ResolveSubExpression(IValue previous, IScope resolutionScope, CompilationContext compilationContext)
-        {
-            if (!(previous is ICallable callable)) return compilationContext.LogError(16, $"{previous} is not callable");
-
-            // Compile the arguments for this call expression
-            var arguments = List.Select(argExpr => argExpr.ResolveExpression(resolutionScope, compilationContext)).ToArray();
-
-            return callable.Call(arguments, compilationContext);
-        }
+        IValue ISubExpression.ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext) =>
+            previous is IFunctionSignature function
+                ? function.ResolveCall(List.Select(argExpr => argExpr.ResolveExpression(scope, compilationContext)).ToArray(), false, compilationContext)
+                : compilationContext.LogError(16, $"{previous} cannot be called - it is not a function");
     }
 }
