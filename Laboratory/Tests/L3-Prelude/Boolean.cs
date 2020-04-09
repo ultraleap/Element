@@ -1,7 +1,7 @@
 using Element;
 using NUnit.Framework;
 
-namespace Laboratory.Tests.Prelude
+namespace Laboratory.Tests.L3.Prelude
 {
 	internal class Boolean : PreludeFixture
 	{

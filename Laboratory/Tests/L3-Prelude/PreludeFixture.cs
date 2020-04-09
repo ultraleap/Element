@@ -1,6 +1,6 @@
 using Element;
 
-namespace Laboratory.Tests.Prelude
+namespace Laboratory.Tests.L3.Prelude
 {
     internal abstract class PreludeFixture : HostFixture
     {

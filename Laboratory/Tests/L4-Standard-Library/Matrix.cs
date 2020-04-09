@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace Laboratory.Tests.StandardLibrary
+namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Matrix : StandardLibraryFixture
     {

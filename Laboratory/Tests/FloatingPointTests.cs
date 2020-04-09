@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.Other
 {
     [TestFixture, Parallelizable(ParallelScope.All)]
     internal class FloatingPointTests

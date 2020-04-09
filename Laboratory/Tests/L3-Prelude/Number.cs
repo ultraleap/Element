@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Linq;
 using NUnit.Framework;
 
-namespace Laboratory.Tests.Prelude
+namespace Laboratory.Tests.L3.Prelude
 {
 	/// <summary>
 	/// Tests for num and associated functions
@@ -396,11 +396,11 @@ namespace Laboratory.Tests.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
-			TestCase("Num.lerp(-1, 0, 1)", "-0.25"), //extrapolation
+			TestCase("Num.lerp(-0.25, 0, 1)", "-0.25"), //extrapolation
 			TestCase("Num.lerp(0, 0, 1)", "0"),
 			TestCase("Num.lerp(0.5, 0, 1)", "0.5"),
 			TestCase("Num.lerp(1, 0, 1)", "1"),
-			TestCase("Num.lerp(2, 0, 1)", "1.25"), //extrapolation
+			TestCase("Num.lerp(1.25, 0, 1)", "1.25"), //extrapolation
 		]
 		public void Lerp(string expression, string expected) => 
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);

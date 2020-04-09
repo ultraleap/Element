@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Element;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal abstract class StandardLibraryFixture : HostFixture
     {

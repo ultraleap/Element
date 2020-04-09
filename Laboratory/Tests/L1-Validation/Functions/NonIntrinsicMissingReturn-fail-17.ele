@@ -1,0 +1,4 @@
+missingReturn(a:Num):Num
+{
+    0;
+}
