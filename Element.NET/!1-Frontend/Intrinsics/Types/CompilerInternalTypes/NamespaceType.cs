@@ -4,8 +4,8 @@ namespace Element.AST
     {
         private NamespaceType() {}
         public static NamespaceType Instance { get; } = new NamespaceType();
-        public string Name => "Namespace";
-        public IType Type => TypeType.Instance;
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
+        string IType.Name => "Namespace";
+        IType IValue.Type => TypeType.Instance;
+        bool IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
     }
 }

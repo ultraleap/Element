@@ -6,15 +6,13 @@ namespace Element.AST
     public class IndexingExpression : ISubExpression
     {
 #pragma warning disable 169
-        [Literal(".")] private Unnamed _;
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [field: Term] private Identifier Identifier { get; set; }
+        [field: Term, Prefix(".")] private Identifier Identifier { get; set; }
 #pragma warning restore 169
 
         public override string ToString() => $".{Identifier}";
 
-        void ISubExpression.Initialize(Declaration declaration) { } // No-op
-        IValue ISubExpression.ResolveSubExpression(IValue previous, CompilationContext compilationContext) =>
+        IValue ISubExpression.ResolveSubExpression(IValue previous, IScope _, CompilationContext compilationContext) =>
             previous is IScope scope
                 ? scope[Identifier, false, compilationContext]
                 : compilationContext.LogError(16, $"'{previous}' is not indexable");

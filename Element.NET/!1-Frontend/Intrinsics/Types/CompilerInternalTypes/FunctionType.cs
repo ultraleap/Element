@@ -4,8 +4,8 @@ namespace Element.AST
     {
         private FunctionType() {}
         public static IType Instance { get; } = new FunctionType();
-        public string Name => "Function";
-        public IType Type => TypeType.Instance;
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
+        string IType.Name => "Function";
+        IType IValue.Type => TypeType.Instance;
+        bool IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) => value.Type == Instance;
     }
 }

@@ -22,8 +22,6 @@ namespace Element.AST
             _cachedConstraint = constraint;
         }
         
-        internal void Initialize(Declaration declarer) => _type?.Initialize(declarer);
-
         public static Port VariadicPort { get; } = new Port();
         public static Port ReturnPort(TypeAnnotation? annotation) => new Port("return", annotation);
         public static Port ReturnPort(IConstraint constraint) => new Port("return", constraint);
@@ -38,9 +36,9 @@ namespace Element.AST
         public Identifier? Identifier => _identifier is Identifier id ? (Identifier?)id : null;
         private IConstraint? _cachedConstraint;
 
-        public IConstraint ResolveConstraint(CompilationContext compilationContext) =>
+        public IConstraint ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
             _cachedConstraint ?? (_type != null
-                                      ? _cachedConstraint = _type.ResolveConstraint(compilationContext)
+                                      ? _cachedConstraint = _type.ResolveConstraint(scope, compilationContext)
                                       : AnyConstraint.Instance);
 
         public override string ToString() => $"{_identifier}{_type}";
@@ -48,13 +46,5 @@ namespace Element.AST
     
     // ReSharper disable once ClassNeverInstantiated.Global
     public class PortList : ListOf<Port> // CallExpression uses ListOf because it looks like a list due to using brackets
-    {
-        public void Initialize(Declaration declarer)
-        {
-            foreach (var port in List)
-            {
-                port.Initialize(declarer);
-            }
-        }
-    }
+    { }
 }

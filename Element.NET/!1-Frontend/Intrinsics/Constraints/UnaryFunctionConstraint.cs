@@ -8,9 +8,10 @@ namespace Element.AST
         private UnaryFunctionConstraint() { }
 
         public static UnaryFunctionConstraint Instance { get; } = new UnaryFunctionConstraint();
+
         public override string ToString() => "Unary";
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
+        bool IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) =>
             value is IFunctionSignature fn && fn.Inputs.Length == 1;
-        public IType Type => ConstraintType.Instance;
+        IType IValue.Type => ConstraintType.Instance;
     }
 }

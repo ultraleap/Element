@@ -11,10 +11,9 @@ namespace Element.AST
                               ?.CreateInstance(RefineArguments(arguments), Instance);
         protected virtual IValue[] RefineArguments(IValue[] arguments) => arguments;
         string IIntrinsic.Location => Name;
+        public abstract string Name { get; }
         public abstract Port[] Inputs { get; }
         Port IFunctionSignature.Output { get; } = Port.ReturnPort(Instance);
-        IFunctionSignature IFunctionSignature.GetDefinition(CompilationContext compilationContext) =>
-            compilationContext.GetIntrinsicsDeclaration<IntrinsicStructDeclaration>(Instance);
-        public abstract string Name { get; }
+        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => compilationContext.GetIntrinsicsDeclaration<IntrinsicStructDeclaration>(Instance);
     }
 }

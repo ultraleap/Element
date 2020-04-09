@@ -6,8 +6,7 @@ namespace Element.AST
 {
     public interface ISubExpression
     {
-        void Initialize(Declaration declaration);
-        IValue ResolveSubExpression(IValue previous, CompilationContext compilationContext);
+        IValue ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext);
     }
 
     // ReSharper disable once UnusedType.Global
@@ -20,21 +19,12 @@ namespace Element.AST
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
-        public override void Initialize(Declaration declaration)
-        {
-            Declarer = declaration;
-            foreach (var expr in Expressions ?? Enumerable.Empty<ISubExpression>())
-            {
-                expr.Initialize(declaration);
-            }
-        }
-
-        public override IValue ResolveExpression(CompilationContext compilationContext)
+        public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
         {
             var previous = LitOrId switch
             {
                 // If the start of the list is an identifier, find the value that it identifies
-                Identifier id => (Declarer?.ChildScope ?? Declarer?.ParentScope ?? compilationContext.SourceContext.GlobalScope)[id, true, compilationContext] is { } v
+                Identifier id => scope?[id, true, compilationContext] is { } v
                                      ? v
                                      : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
                 Constant constant => constant,
@@ -47,7 +37,7 @@ namespace Element.AST
             compilationContext.PushTrace(new TraceSite(previous.ToString(), null, 0, 0));
 
             // Evaluate all expressions for this chain if there are any, making sure that the result is fully resolved if it returns a nullary.
-            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.ResolveNullaryFunction(compilationContext), compilationContext))
+            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.ResolveNullaryFunction(compilationContext), scope, compilationContext))
                         ?? previous)
                 .ResolveNullaryFunction(compilationContext);
 

@@ -73,16 +73,10 @@ namespace Element.AST
         {
             ParentScope = parent ?? throw new ArgumentNullException(nameof(parent));
             ChildScope?.Initialize(this);
-            DeclaredType?.Initialize(this);
             DeclaredInputs = string.IsNullOrEmpty(IntrinsicQualifier)
                                  ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
                                  : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs;
             DeclaredOutput = Port.ReturnPort(DeclaredType);
-            foreach (var port in PortList?.List ?? Enumerable.Empty<Port>())
-            {
-                port.Initialize(this);
-            }
-            (Body as ExpressionBody)?.Expression.Initialize(this);
         }
 
         public string Location => ParentScope switch

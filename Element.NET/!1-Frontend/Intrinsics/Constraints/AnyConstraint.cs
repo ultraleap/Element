@@ -7,9 +7,9 @@ namespace Element.AST
     {
         private AnyConstraint() {}
         public static AnyConstraint Instance { get; } = new AnyConstraint();
-        public string Location => "Any";
         public override string ToString() => "<any>";
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => true;
-        public IType Type => ConstraintType.Instance;
+        string IIntrinsic.Location => "Any";
+        bool IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) => true;
+        IType IValue.Type => ConstraintType.Instance;
     }
 }

@@ -22,7 +22,7 @@ namespace Element.AST
 			IType IValue.Type => FunctionType.Instance;
 			Port[] IFunctionSignature.Inputs { get; } = {new Port("i", NumType.Instance)};
 			Port IFunctionSignature.Output { get; } = Port.ReturnPort(AnyConstraint.Instance);
-			IFunctionSignature IFunctionSignature.GetDefinition(CompilationContext compilationContext) => this;
+			IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
 
 			public override string ToString() => "<list index function>";
 

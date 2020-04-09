@@ -10,12 +10,12 @@ namespace Element.AST
     {
         public static CompilationErr Instance { get; } = new CompilationErr();
         private CompilationErr() { }
+        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
         public override string ToString() => "<error>";
-        public string Name { get; } = "<error>";
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => false;
+        string IType.Name => "<error>";
+        bool IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) => false;
         Port[] IFunctionSignature.Inputs { get; } = Array.Empty<Port>();
         Port IFunctionSignature.Output => null;
-        public IFunctionSignature GetDefinition(CompilationContext _) => this;
         IType IValue.Type => Instance;
 
         

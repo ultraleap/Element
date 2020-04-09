@@ -17,6 +17,6 @@ namespace Element.AST
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
         Port[] IFunctionSignature.Inputs => _inputs;
         Port IFunctionSignature.Output => _output;
-        IFunctionSignature IFunctionSignature.GetDefinition(CompilationContext context) => context.GetIntrinsicsDeclaration<IntrinsicFunctionDeclaration>(this);
+        public IFunctionSignature GetDefinition(CompilationContext compilationContext) => compilationContext.GetIntrinsicsDeclaration<IntrinsicFunctionDeclaration>(this);
     }
 }

@@ -8,9 +8,8 @@ namespace Element.AST
         private BinaryFunctionConstraint() {}
         public static BinaryFunctionConstraint Instance { get; } = new BinaryFunctionConstraint();
         public override string ToString() => "Binary";
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
+        bool IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) =>
             value is IFunctionSignature fn && fn.Inputs.Length == 2;
-        public IType Type => ConstraintType.Instance;
-        public int? SerializableSize => null;
+        IType IValue.Type => ConstraintType.Instance;
     }
 }

@@ -44,7 +44,7 @@ namespace Element.NET.Tests
         {
             Assert.True(SourceContext.TryCreate(new CompilationInput(FailOnError), out var sourceContext));
             sourceContext.MakeCompilationContext(out var compilationContext);
-            bool Filter(IValue v) => v is AST.IFunctionSignature fn && fn.Output.ResolveConstraint(compilationContext) == compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>(type);
+            bool Filter(IValue v) => v is IFunctionSignature fn && fn.Output.ResolveConstraint(sourceContext.GlobalScope, compilationContext) == compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>(type);
             var results = sourceContext.GlobalScope.EnumerateDeclarations(Filter);
             CollectionAssert.IsNotEmpty(results);
             // TODO: Actually check collection contents are correct

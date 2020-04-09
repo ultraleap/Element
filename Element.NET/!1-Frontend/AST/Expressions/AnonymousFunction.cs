@@ -2,7 +2,7 @@ namespace Element.AST
 {
     public class AnonymousFunction : IFunctionWithBody
     {
-        public AnonymousFunction(Declaration declarer, object body, PortList inputs, Port output)
+        public AnonymousFunction(object body, PortList inputs, Port output)
         {
             Body = body;
             Output = output;

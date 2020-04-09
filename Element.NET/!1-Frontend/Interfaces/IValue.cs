@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,10 +11,27 @@ namespace Element.AST
 
     public static class ValueExtensions
     {
-        public static IEnumerable<(Identifier Identifier, IValue Value)> WithoutDiscardedArguments(this IEnumerable<IValue> arguments, IEnumerable<Port> ports) =>
-            ports.Zip(arguments, (port, value) => (Port: port, Value: value))
-                 .Where(pair => pair.Port.Identifier.HasValue)
-                 .Select(pair => (pair.Port.Identifier.Value, pair.Value));
+        public static IEnumerable<(Identifier Identifier, IValue Value)> WithoutDiscardedArguments(this IValue[] arguments, Port[] ports)
+        {
+            var result = new List<(Identifier Identifier, IValue Value)>();
+            var variadicArgNumber = 0;
+            for (var i = 0; i < Math.Max(arguments.Length, ports.Length); i++)
+            {
+                var arg = i < arguments.Length ? arguments[i] : null;
+                var port = i < ports.Length ? ports[i] : null;
+                if (port == Port.VariadicPort || variadicArgNumber > 0)
+                {
+                    result.Add((new Identifier($"<vararg#{variadicArgNumber}>"), arg));
+                    variadicArgNumber++;
+                }
+                else if ((port?.Identifier.HasValue ?? false) && arg != null)
+                {
+                    result.Add((port.Identifier.Value, arg));
+                }
+            }
+
+            return result;
+        }
 
         public static int? GetSerializedSize(this IValue value, CompilationContext compilationContext) => value switch
         {

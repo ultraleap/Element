@@ -7,6 +7,6 @@ namespace Element.AST
         public override IType Type => FunctionType.Instance;
         Port[] IFunctionSignature.Inputs => DeclaredInputs;
         Port IFunctionSignature.Output => DeclaredOutput;
-        IFunctionSignature IFunctionSignature.GetDefinition(CompilationContext compilationContext) => this;
+        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
     }
 }
