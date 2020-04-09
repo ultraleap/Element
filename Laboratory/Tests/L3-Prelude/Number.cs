@@ -10,6 +10,8 @@ namespace Laboratory.Tests.Prelude
 	/// </summary>
 	internal class Number : PreludeFixture
 	{
+		#region Random
+		
 		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
 		{
 			("Num.ln({0})", MathF.Log),
@@ -52,7 +54,9 @@ namespace Laboratory.Tests.Prelude
 				string.Format(functionPair.ElementFunction, arg0, arg1),
 				new[]{functionPair.CLRFunction(arg0, arg1)});
 		
-		[   //constants
+		#endregion
+		
+		[
 			TestCase("Num.NaN", "Num.NaN"),
 			TestCase("Num.PositiveInfinity", "Num.PositiveInfinity"),
 			TestCase("Num.NegativeInfinity", "Num.NegativeInfinity"),
@@ -63,68 +67,104 @@ namespace Laboratory.Tests.Prelude
 		public void Constants(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
-		[   //ln
+		[
 			TestCase("Num.ln(0)", "Num.NegativeInfinity"),
 			TestCase("Num.ln(1)", "0"),
 			TestCase("Num.ln(Num.e)", "1"),
 		]	
-		[   //sin
+		public void NaturalLog(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.sin(-180.radians)", "8.74227766E-08f"),
 			TestCase("Num.sin(-90.radians)", "-1"),
 			TestCase("Num.sin(0.radians)", "0"),
 			TestCase("Num.sin(90.radians)", "1"),
 			TestCase("Num.sin(180.radians)", "-8.74227766E-08f"),
 		]
-		[   //cos
+		public void Sine(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.cos(-180.radians)", "-1"),
 			TestCase("Num.cos(-90.radians)", "-4.371139e-08f"),
 			TestCase("Num.cos(0.radians)", "1"),
 			TestCase("Num.cos(90.radians)", "-4.371139e-08f"),
 			TestCase("Num.cos(180.radians)", "-1"),
 		]
-		[   //tan
+		public void Cosine(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.tan(-45.radians)", "-1"),
 			TestCase("Num.tan(0.radians)", "0"),
 			TestCase("Num.tan(45.radians)", "1"),
 		]
-		[   //asin
+		public void Tangent(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.asin(-1).degrees", "-90"),
 			TestCase("Num.asin(0).degrees", "0"),
 			TestCase("Num.asin(1).degrees", "90"),
 		]
-		[   //acos
+		public void Arcsine(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.acos(-1).degrees", "180"),
 			TestCase("Num.acos(0).degrees", "90"),
 			TestCase("Num.acos(1).degrees", "0"),
 		]
-		[   //atan
+		public void Arccosine(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.atan(-1).degrees", "-45"),
 			TestCase("Num.atan(0).degrees", "0"),
 			TestCase("Num.atan(1).degrees", "45"),
 		]
-		[   //degrees/radians
+		public void Arctangent(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("180.radians", "Num.pi"),
 			TestCase("Num.pi.degrees", "180")
 		]
-		[   //sqr
+		public void AngleConversions(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.sqr(5)", "25"),
 			TestCase("Num.sqr(-5)", "25")
 		]
-		[   //sqrt
+		public void Square(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.sqrt(25)", "5"),
 			TestCase("Num.sqrt(-25)", "Num.NaN")
 		]
-		[   //half
+		public void SquareRoot(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.half(0)", "0"),
 			TestCase("Num.half(10)", "5"),
 			TestCase("Num.half(-10)", "-5")
 		]
-		[   //negate
+		public void Half(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.negate(0)", "0"),
 			TestCase("Num.negate(1)", "-1"),
 			TestCase("Num.negate(-1)", "1")
 		]
-		[   //negate
+		public void Negate(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.roundToZero(0)", "0"),
 			TestCase("Num.roundToZero(-1.5)", "-1"),
 			TestCase("Num.roundToZero(-1.25)", "-1"),
@@ -133,14 +173,18 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.roundToZero(1.25)", "1"),
 			TestCase("Num.roundToZero(1.5)", "1"),
 		]
+		public void Rounding(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
 		[   //sign
 			TestCase("Num.sign(-1)", "-1"),
 			TestCase("Num.sign(0)", "0"),
 			TestCase("Num.sign(1)", "1"),
 		]
-		public void UnaryMathOp(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expected, expression);
-
-		[   //add
+		public void Sign(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.add(0, 0)", "0"),
 			TestCase("Num.add(0, 1)", "1"),
 			TestCase("Num.add(1, 0)", "1"),
@@ -148,7 +192,10 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.add(-1.5, -1.5)", "-3"),
 			TestCase("Num.add(1.5, -1.5)", "0"),
 		]
-		[   //sub
+		public void Add(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.sub(0, 0)", "0"),
 			TestCase("Num.sub(0, 1)", "-1"),
 			TestCase("Num.sub(1, 0)", "1"),
@@ -156,7 +203,10 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.sub(-1.5, -1.5)", "0"),
 			TestCase("Num.sub(1.5, -1.5)", "3"),
 		]
-		[   //mul
+		public void Subtract(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.mul(0, 0)", "0"),
 			TestCase("Num.mul(0, 1)", "0"),
 			TestCase("Num.mul(1, 0)", "0"),
@@ -165,7 +215,10 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.mul(-1.5, -1.5)", "2.25"),
 			TestCase("Num.mul(1.5, -1.5)", "-2.25"),
 		]
-		[   //div
+		public void Multiply(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.div(0, 0)", "Num.NaN"),
 			TestCase("Num.div(0, 1)", "0"),
 			TestCase("Num.div(1, 0)", "Num.PositiveInfinity"),
@@ -173,7 +226,10 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.div(-1, -1)", "1"),
 			TestCase("Num.div(1, 0.1)", "10"),
 		]
-		[   //rem
+		public void Divide(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.rem(0, 0)", "Num.NaN"),
 			TestCase("Num.rem(0, 1)", "0"),
 			TestCase("Num.rem(1, 0)", "Num.NaN"),
@@ -190,7 +246,10 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.rem(-5, 0)", "Num.NaN"),
 			TestCase("Num.rem(-5, -0)", "Num.NaN"),
 		]
-		[   //pow
+		public void Remainder(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.pow(0, 0)", "1"),
 			TestCase("Num.pow(0, 1)", "0"),
 			TestCase("Num.pow(1, 0)", "1"),
@@ -203,6 +262,9 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.pow(-5, 0)", "1"),
 			TestCase("Num.pow(-5, -0)", "1"),
 		]
+		public void Power(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
 		[   //min
 			TestCase("Num.min(0, 0)", "0"),
 			TestCase("Num.min(0, 1)", "0"),
@@ -212,7 +274,10 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.min(25, 150)", "25"),
 			TestCase("Num.min(-140, -2)", "-140"),
 		]
-		[   //max
+		public void Minimum(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.max(0, 0)", "0"),
 			TestCase("Num.max(0, 1)", "1"),
 			TestCase("Num.max(1, 0)", "1"),
@@ -221,14 +286,30 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.max(25, 150)", "150"),
 			TestCase("Num.max(-140, -2)", "-2"),
 		]
-		[   //log
+		public void Maximum(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		private static object GenerateLogData(int index)
+		{
+			static string Expression(int index) => $"Num.log({MathF.Pow(10f, index - 1)}, 10)";
+			static string Expected(int index) => (index - 1f).ToString(CultureInfo.InvariantCulture);
+			
+			return new object[] {Expression(index),Expected(index)};
+		}
+
+		private static object[] _logCaseData = 
+			Enumerable.Range(1, 10).Select(GenerateLogData).ToArray();
+		
+		[
 			TestCase("Num.log(0, 0)", "Num.NaN"),
 			TestCase("Num.log(0, 10)", "Num.NegativeInfinity"),
 			TestCase("Num.log(10, 0)", "Num.NaN"),
-			TestCase("Num.log(1, 10)", "0"),
 			TestCaseSource(nameof(_logCaseData))
 		]
-		[   //exp
+		public void Log(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.exp(0, 0)", "1"),
 			TestCase("Num.exp(2, 0)", "1"),
 			TestCase("Num.exp(0, 2)", "0"),
@@ -236,14 +317,20 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.exp(2, 2)", "4"),
 			TestCase("Num.exp(1, -2)", "1"),
 		]
-		[   //mod
+		public void Exponent(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.mod(0, 0)", "Num.NaN"),
 			TestCase("Num.mod(2, 0)", "Num.NaN"),
 			TestCase("Num.mod(0, 2)", "0"),
 			TestCase("Num.mod(5, 2)", "1"),
 			TestCase("Num.mod(5, -2)", "-1"),
 		]
-		[   //atan2
+		public void Modulo(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.atan2(0, 0).degrees", "0"),
 			TestCase("Num.atan2(1, 0).degrees", "90"),
 			TestCase("Num.atan2(0, 1).degrees", "0"),
@@ -254,58 +341,76 @@ namespace Laboratory.Tests.Prelude
 			TestCase("Num.atan2(-0.707106769, 0.707106769).degrees", "-45"),
 			TestCase("Num.atan2(-0.707106769, -0.707106769).degrees", "-135"),
 		]
-		[   //dist
+		public void Atan2(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.dist(0, 10)", "10"),
 			TestCase("Num.dist(0, -10)", "10"),
 		]
-		[   //eq
+		public void Distance(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.eq(1, 1)", "true"),
 			TestCase("Num.eq(0, 1)", "false"),
 		]
-		[   //eq
+		public void Equal(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.neq(1, 1)", "false"),
 			TestCase("Num.neq(0, 1)", "true"),
 		]
-		[   //lt
+		public void NotEqual(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
+		[
 			TestCase("Num.lt(0, 1)", "true"),
 			TestCase("Num.lt(1, 0)", "false"),
 		]
+		public void LessThan(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
 		[   //leq
 			TestCase("Num.leq(0, 1)", "true"),
 			TestCase("Num.leq(1, 1)", "true"),
 			TestCase("Num.leq(1, 0)", "false"),
 		]
+		public void LessThanOrEqual(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
 		[   //lt
 			TestCase("Num.gt(0, 1)", "false"),
 			TestCase("Num.gt(1, 0)", "true"),
 		]
+		public void GreaterThan(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		
 		[   //geq
 			TestCase("Num.geq(0, 1)", "false"),
 			TestCase("Num.geq(1, 1)", "true"),
 			TestCase("Num.geq(1, 0)", "true"),
 		]
-		public void BinaryMathOps(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		public void GreaterThanOrEqual(string expression, string expected) =>
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
-		[   //lerp
+		[
 			TestCase("Num.lerp(-1, 0, 1)", "0"), //not covering lerping out-of-bounds
 			TestCase("Num.lerp(0, 0, 1)", "0"),
 			TestCase("Num.lerp(0.5, 0, 1)", "0.5"),
 			TestCase("Num.lerp(1, 0, 1)", "1"),
 			TestCase("Num.lerp(2, 0, 1)", "1"), //not covering lerping out-of-bounds
 		]
+		public void Lerp(string expression, string expected) => 
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+
 		[   //clamp
 			TestCase("Num.clamp(5, 0, 10)", "5"),
 			TestCase("Num.clamp(5, -10, 0)", "0"),
 			TestCase("Num.clamp(5, 10, 20)", "10"),
-			TestCaseSource(nameof(_logCaseData))
 		]
-		public void TernaryMathOps(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expected, expression);
-
-		private static object[] _logCaseData = Enumerable.Range(1, 11)
-		                                                 .Select(i => new object[]
-		                                                 {
-			                                                 $"Num.log({ MathF.Pow(10f, i - 1)}, 10)", (i - 1f).ToString(CultureInfo.InvariantCulture)
-		                                                 })
-		                                                 .ToArray();
+		public void Clamp(string expression, string expected) => 
+			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 	}
 }
