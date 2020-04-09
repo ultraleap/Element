@@ -21,11 +21,11 @@ namespace Laboratory.Tests.StandardLibrary
 
         //TEST
         [
-            TestCase("Path.RepeatingLine(Vector3.Zero, Vector3(10, 20, 30)).at(-0.5)", "Vector3(5, 7.5, 15)"),
+            TestCase("Path.RepeatingLine(Vector3.Zero, Vector3(10, 20, 30)).at(-0.5)", "Vector3(5, 10, 15)"),
             TestCase("Path.RepeatingLine(Vector3.Zero, Vector3(10, 20, 30)).at(0)", "Vector3(0, 0, 0)"),
-            TestCase("Path.RepeatingLine(Vector3.Zero, Vector3(10, 20, 30)).at(0.5)", "Vector3(5, 7.5, 15)"),
-            TestCase("Path.RepeatingLine(Vector3.Zero, Vector3(10, 20, 30)).at(1)", "Vector3(10, 20, 30)"),
-            TestCase("Path.RepeatingLine(Vector3.Zero, Vector3(10, 20, 30)).at(1.5)", "Vector3(5, 7.5, 15)"),
+            TestCase("Path.RepeatingLine(Vector3.Zero, Vector3(10, 20, 30)).at(0.5)", "Vector3(5, 10, 15)"),
+            TestCase("Path.RepeatingLine(Vector3.Zero, Vector3(10, 20, 30)).at(1)", "Vector3(0, 0, 0)"),
+            TestCase("Path.RepeatingLine(Vector3.Zero, Vector3(10, 20, 30)).at(1.5)", "Vector3(5, 10, 15)"),
         ]
         public void EvaluateRepeatingLinePath(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);
@@ -44,7 +44,6 @@ namespace Laboratory.Tests.StandardLibrary
 
         //TEST
         [
-            //TestCase("Path.Rectangle(10, 10).at(-0.125)", "Vector3(-10, -5, 0)"),
             TestCase("Path.Rectangle(10, 10).at(0)", "Vector3(-5, -5, 0)"),
             TestCase("Path.Rectangle(10, 10).at(0.125)", "Vector3(0, -5, 0)"),
             TestCase("Path.Rectangle(10, 10).at(0.25)", "Vector3(5, -5, 0)"),
@@ -54,7 +53,8 @@ namespace Laboratory.Tests.StandardLibrary
             TestCase("Path.Rectangle(10, 10).at(0.75)", "Vector3(-5, 5, 0)"),
             TestCase("Path.Rectangle(10, 10).at(0.875)", "Vector3(-5, 0, 0)"),
             TestCase("Path.Rectangle(10, 10).at(1)", "Vector3(-5, -5, 0)"),
-            //TestCase("Path.Rectangle(10, 10).at(1.125)", "Vector3(0, -5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(1.125)", "Vector3(5, -5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-1.125)", "Vector3(5, -5, 0)"),
         ]
         public void EvaluateRectanglePath(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);
@@ -111,11 +111,11 @@ namespace Laboratory.Tests.StandardLibrary
         
         //TEST
         [
-            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).at(-0.5)", "Vector3(0, 0, 0)"),
-            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).at(0)", "Vector3(0, 0, 0)"),
-            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).at(0.5)", "Vector3(5, 7.5, 15)"),
-            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).at(1)", "Vector3(10, 20, 30)"),
-            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).at(1.5)", "Vector3(10, 20, 30)"),
+            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).atBounded(-0.5)", "Vector3(0, 0, 0)"),
+            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).atBounded(0)", "Vector3(0, 0, 0)"),
+            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).atBounded(0.5)", "Vector3(5, 10, 15)"),
+            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).atBounded(1)", "Vector3(10, 20, 30)"),
+            TestCase("BoundedPath.Line(Vector3.Zero, Vector3(10, 20, 30)).atBounded(1.5)", "Vector3(10, 20, 30)"),
         ]
         public void EvaluateLinePath(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);

@@ -396,11 +396,11 @@ namespace Laboratory.Tests.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
-			TestCase("Num.lerp(-1, 0, 1)", "0"), //not covering lerping out-of-bounds
+			TestCase("Num.lerp(-1, 0, 1)", "-0.25"), //extrapolation
 			TestCase("Num.lerp(0, 0, 1)", "0"),
 			TestCase("Num.lerp(0.5, 0, 1)", "0.5"),
 			TestCase("Num.lerp(1, 0, 1)", "1"),
-			TestCase("Num.lerp(2, 0, 1)", "1"), //not covering lerping out-of-bounds
+			TestCase("Num.lerp(2, 0, 1)", "1.25"), //extrapolation
 		]
 		public void Lerp(string expression, string expected) => 
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);

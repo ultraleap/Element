@@ -76,8 +76,9 @@ intrinsic struct Num
     roundToZero(a:Num):Num              = a.sub(a.rem(1));
     sign(n:Num):Num                     = n.leq(0).if(n.eq(0).if(0, -1), 1);
     dist(a:Num, b:Num):Num              = a.sub(b).abs;
-    lerp(t:Num, a:Num, b:Num):Num       = t.lt(0).if(a, t.gt(1).if(b, a.add(t.mul(b.sub(a)))));
+    lerp(t:Num, a:Num, b:Num):Num       = a.add(t.mul(b.sub(a))); #t.lt(0).if(a, t.gt(1).if(b, a.add(t.mul(b.sub(a)))));
     clamp(a:Num, min:Num, max:Num):Num  = a.max(min).min(max);
+    
 
     # Comparison functions
     eq(a:Num, b:Num):Bool   = Bool.not(a.neq(b));
