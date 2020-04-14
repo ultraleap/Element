@@ -185,7 +185,7 @@ namespace Element.AST
                 Body = functionWithBody.Body switch
                 {
                     ExpressionBody exprBody => exprBody,
-                    Scope scopeBody => scopeBody.Clone(this),
+                    IScope scopeBody => scopeBody.Clone(this),
                     _ => throw new InternalCompilerException("Cannot create function instance as function body type is not recognized")
                 };
             }
