@@ -46,7 +46,7 @@ struct Vector2(x:Num, y:Num)
     
     dot(a:Vector2, b:Vector2):Num
     {
-        s = Vector2(a.x.mul(b.x), a.y.mul(b.y)); #a.componentwiseMul(b);
+        s = a.componentwiseMul(b); #Vector2(a.x.mul(b.x), a.y.mul(b.y)); #Forcing previous errors
         return = s.x.add(s.y);
     }
         
@@ -117,7 +117,7 @@ struct Vector3(x:Num, y:Num, z:Num)
     
     dot(a:Vector3, b:Vector3):Num
     {
-        s = Vector3(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z)); #a.componentwiseMul(b);
+        s = a.componentwiseMul(b); #Vector3(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z)); #Forcing previous errors
         return = s.x.add(s.y).add(s.z);
     }
         
@@ -205,7 +205,7 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
     
     dot(a:Vector4, b:Vector4):Num
     {
-        s = Vector4(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z), a.w.mul(b.w)); #a.componentwiseMul(b);
+        s = a.componentwiseMul(b); #Vector4(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z), a.w.mul(b.w)); #Forcing previous errors
         return = s.x.add(s.y).add(s.z).add(s.w);
     }
     
