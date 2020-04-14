@@ -1,7 +1,0 @@
-struct Vector2(x:Num)
- { 
-     missingReturn(a:Vector2, b:Vector2):Num 
-     {
-        Num.min(a.x, b.x);
-     }
- }

@@ -50,7 +50,7 @@ namespace Laboratory.Tests
 
             if (success)
             {
-                Assert.Fail("Expected error ELE{0} '{1} but succeeded",
+                Assert.Fail("Expected error ELE{0} '{1}' but succeeded",
                     expectedMessageCode.Value, CompilerMessage.GetMessageName(expectedMessageCode.Value));
             }
             else

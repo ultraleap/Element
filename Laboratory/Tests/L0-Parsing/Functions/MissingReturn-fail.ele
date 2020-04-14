@@ -1,0 +1,9 @@
+intrinsic struct Num
+{
+	intrinsic add(a:Num, b:Num);
+}
+
+func(a:Num, b:Num):Num
+{
+    Num.add(a, b);
+}

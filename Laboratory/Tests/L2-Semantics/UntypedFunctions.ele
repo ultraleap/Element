@@ -15,3 +15,8 @@ addFive(a, b, c, d, e)
 }
 
 recurse(a) = recurse(a);
+
+invalidReturn(a:Num, b:Num):Num 
+{
+   a = Num.add(a.x, b.x);
+}

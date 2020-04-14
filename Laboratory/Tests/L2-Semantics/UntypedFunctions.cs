@@ -30,5 +30,8 @@ namespace Laboratory.Tests.L2.Semantics
 
         [Test]
         public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, 11, "recurse(5)");
+        
+        [Test]
+        public void InvalidReturn() => EvaluateExpectingErrorCode(CompilationInput, 8, "invalidReturn(5, 5)");
     }
 }
