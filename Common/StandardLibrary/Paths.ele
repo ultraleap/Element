@@ -128,7 +128,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
     #Paths
 	Line(endpointA:Vector3, endpointB:Vector3):BoundedPath
 	{
-		at(u:Num):Vector3 = Vector3.lerp(u, endpointA, endpointB);
+		at(u:Num):Vector3 = Vector3.lerp(u.clamp(0,1), endpointA, endpointB);
 		length = Vector3.distance(endpointA, endpointB);
 		return = BoundedPath(at, length);
 	}
