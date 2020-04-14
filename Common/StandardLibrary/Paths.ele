@@ -136,14 +136,19 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 	#Modifiers
 	PingPong(path:BoundedPath):Path
 	{
-		at(u:Num):Vector3 = path.atBounded(Num.abs(Num.sub(Num.rem(u, 2), 1)));
-		length = Num.mul(path.length, 2);
+		at(u:Num):Vector3 = path.atBounded(u.abs.add(1).rem(2).sub(1).abs);
+		length = path.length.mul(2);
 		return = Path(at, length);
 	}
 
 	Repeat(path:BoundedPath):Path
 	{
-		at(u:Num):Vector3 = path.atBounded(Num.rem(u.abs, 1));
+		at(u:Num):Vector3
+		{
+		    #not mirrored about x = 0, but repeating sawtooth irrespective of +ve or -ve interpolant u
+		    t = Bool.if(u.lt(0), u.rem(1).add(1), u.rem(1));
+		    return = path.atBounded(t);
+		}
 		return = Path(at, path.length);
 	}
 
