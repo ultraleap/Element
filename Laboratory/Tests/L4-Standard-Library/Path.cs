@@ -58,6 +58,17 @@ namespace Laboratory.Tests.L4.StandardLibrary
 
         //TEST
         [
+            TestCase("Path.Rectangle(10, 10).at(-1.125)", "Vector3(-5, 0, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-1)", "Vector3(-5, -5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-0.875)", "Vector3(0, -5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-0.75)", "Vector3(5, -5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-0.625)", "Vector3(5, 0, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-0.45)", "Vector3(3, 5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-0.5)", "Vector3(5, 5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-0.55)", "Vector3(5, 3, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-0.375)", "Vector3(0, 5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-0.25)", "Vector3(-5, 5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(-0.125)", "Vector3(-5, 0, 0)"),
             TestCase("Path.Rectangle(10, 10).at(0)", "Vector3(-5, -5, 0)"),
             TestCase("Path.Rectangle(10, 10).at(0.125)", "Vector3(0, -5, 0)"),
             TestCase("Path.Rectangle(10, 10).at(0.25)", "Vector3(5, -5, 0)"),
@@ -67,8 +78,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             TestCase("Path.Rectangle(10, 10).at(0.75)", "Vector3(-5, 5, 0)"),
             TestCase("Path.Rectangle(10, 10).at(0.875)", "Vector3(-5, 0, 0)"),
             TestCase("Path.Rectangle(10, 10).at(1)", "Vector3(-5, -5, 0)"),
-            TestCase("Path.Rectangle(10, 10).at(1.125)", "Vector3(5, -5, 0)"),
-            TestCase("Path.Rectangle(10, 10).at(-1.125)", "Vector3(5, -5, 0)"),
+            TestCase("Path.Rectangle(10, 10).at(1.125)", "Vector3(0, -5, 0)"),
         ]
         public void EvaluateRectanglePath(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);

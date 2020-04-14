@@ -30,12 +30,15 @@ struct Path(at:PathFunc, length:Num)
 	{
 		at(u:Num):Vector3
 		{
-			u1 = Num.mul(width.add(height), u.mul(2).rem(1));
+            t = Bool.if(u.lt(0), u.rem(1).add(1).abs, u.rem(1));
+            u1 = Num.mul(width.add(height), t.mul(2).rem(1));
+			
 			pos = Bool.if(u1.lt(width),
 				Vector3(u1, 0, 0),
 				Vector3(width, u1.sub(width), 0)
 			);
-			return = Bool.if(u.rem(1).lt(0.5),
+			
+			return = Bool.if(t.rem(1).lt(0.5),
 				pos,
 				Vector3.add(Vector3(0, 0, 0).sub(pos), Vector3(width, height, 0))
 			);
