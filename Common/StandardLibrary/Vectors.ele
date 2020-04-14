@@ -62,7 +62,7 @@ struct Vector2(x:Num, y:Num)
         mag = a.magnitude.mul(b.magnitude);
         clamped = dot.div(mag).clamp(-1, 1);
         theta = Num.acos(clamped);
-        return = Num.degrees(theta);  
+        return = Num.degrees(theta);
     }
     
     reflect(l:Vector2, n:Vector2):Vector2
