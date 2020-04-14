@@ -143,7 +143,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 
 	Repeat(path:BoundedPath):Path
 	{
-		at(u:Num):Vector3 = path.atBounded(Num.rem(u, 1));
+		at(u:Num):Vector3 = path.atBounded(Num.rem(u.abs, 1));
 		return = Path(at, path.length);
 	}
 
