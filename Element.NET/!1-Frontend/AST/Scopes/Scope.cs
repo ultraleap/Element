@@ -10,7 +10,7 @@ namespace Element.AST
     public class Scope : DeclaredScope, IDeclared
     {
 #pragma warning disable 649, 169
-        [SurroundBy("{", "}"), Optional] private List<Declaration>? _items;
+        [SurroundBy("{", "}"), WhitespaceSurrounded, Optional] private List<Declaration>? _items;
 #pragma warning restore 649, 169
 
         protected override IEnumerable<Declaration> ItemsToCacheOnValidate => _items ?? Enumerable.Empty<Declaration>();

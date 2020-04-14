@@ -15,13 +15,11 @@ intrinsic struct Num
     # a % b - rounds towards negative infinity
     intrinsic rem(a:Num, b:Num):Num;
 
-    # min(...):Num;
-    # Finds the minimum in a variable amount of numbers
-    intrinsic min:Num;
+    # Finds the minimum of 2 numbers
+    intrinsic min(a:Num, b:Num):Num;
 
-    # max(...):Num;
-    # Finds the maximum in a variable amount of numbers
-    intrinsic max:Num;
+    # Finds the maximum of 2 numbers
+    intrinsic max(a:Num, b:Num):Num;
 
     # |a| - absolute value function
     intrinsic abs(a:Num):Num;
