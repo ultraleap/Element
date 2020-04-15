@@ -67,5 +67,5 @@ New features will generally be implemented as part of the standard library rathe
     * Syntax highlighting for .ele files
     * Installation guide:
         * Download or clone this repo
-        * Extract `element-vscode` to `%UserProfile/.vscode/extensions`
+        * Extract `element-vscode` to `%UserProfile%/.vscode/extensions`
         * Restart VS Code and enjoy!
