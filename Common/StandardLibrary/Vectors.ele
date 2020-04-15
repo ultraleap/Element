@@ -159,15 +159,15 @@ struct Vector3(x:Num, y:Num, z:Num)
 
     transformPosition(a:Vector3, matrix:Matrix4x4):Vector3
     {
-        result = Vector4.Transform(Vector4(a.x, a.y, a.z, 1), matrix);
+        result = Vector4.Transform(Vector4.position(a), matrix);
         return = Vector3(result.x, result.y, result.z);
     }
 
-#    transformDirection(a:Vec3, matrix:Matrix4x4):Vector3
-#    {
-#        result = V4.Transform(Vector4(a.x, a.y, a.z, 0), matrix);
-#        return = Vec3(result.x, result.y, result.z);
-#    }
+    transformDirection(a:Vec3, matrix:Matrix4x4):Vector3
+    {
+        result = Vector4.Transform(Vector4.direction(a), matrix);
+        return = Vector3(result.x, result.y, result.z);
+    }
 }
 
 struct Vector4(x:Num, y:Num, z:Num, w:Num)
