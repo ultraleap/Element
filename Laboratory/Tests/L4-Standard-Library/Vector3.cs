@@ -148,13 +148,13 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);
                 
         [
-            TestCase("Vector3.lerp(-0.25, Vector3(0, 0, 0), Vector3(1, 1, 1))", "Vector3(-0.25, -0.25, -0.25)"), //extrapolation
-            TestCase("Vector3.lerp(0, Vector3(0, 0, 0), Vector3(1, 1, 1))", "Vector3(0, 0, 0)"),
-            TestCase("Vector3.lerp(0.25, Vector3(0, 0, 0), Vector3(1, 1, 1))", "Vector3(0.25, 0.25, 0.25)"),
-            TestCase("Vector3.lerp(0.5, Vector3(0, 0, 0), Vector3(1, 1, 1))", "Vector3(0.5, 0.5, 0.5)"),
-            TestCase("Vector3.lerp(0.75, Vector3(0, 0, 0), Vector3(1, 1, 1))", "Vector3(0.75, 0.75, 0.75)"),
-            TestCase("Vector3.lerp(1, Vector3(0, 0, 0), Vector3(1, 1, 1))", "Vector3(1, 1, 1)"),
-            TestCase("Vector3.lerp(1.25, Vector3(0, 0, 0), Vector3(1, 1, 1))", "Vector3(1.25, 1.25, 1.25)"), //extrapolation
+            TestCase("Vector3.lerp(-0.25, Vector3.Zero, Vector3.One)", "Vector3(-0.25, -0.25, -0.25)"), //extrapolation
+            TestCase("Vector3.lerp(0,     Vector3.Zero, Vector3.One)", "Vector3(0, 0, 0)"),
+            TestCase("Vector3.lerp(0.25,  Vector3.Zero, Vector3.One)", "Vector3(0.25, 0.25, 0.25)"),
+            TestCase("Vector3.lerp(0.5,   Vector3.Zero, Vector3.One)", "Vector3(0.5, 0.5, 0.5)"),
+            TestCase("Vector3.lerp(0.75,  Vector3.Zero, Vector3.One)", "Vector3(0.75, 0.75, 0.75)"),
+            TestCase("Vector3.lerp(1,     Vector3.Zero, Vector3.One)", "Vector3(1, 1, 1)"),
+            TestCase("Vector3.lerp(1.25,  Vector3.Zero, Vector3.One)", "Vector3(1.25, 1.25, 1.25)"), //extrapolation
         ]
         public void LinearInterpolation(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);

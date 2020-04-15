@@ -100,5 +100,17 @@ namespace Laboratory.Tests.L4.StandardLibrary
         ]
         public void Operations(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+            
+        [
+            TestCase("Vector4.lerp(-0.25, Vector4.Zero, Vector4.One)", "Vector4(-0.25, -0.25, -0.25, -0.25)"), //extrapolation
+            TestCase("Vector4.lerp(0,     Vector4.Zero, Vector4.One)", "Vector4(0, 0, 0, 0)"),
+            TestCase("Vector4.lerp(0.25,  Vector4.Zero, Vector4.One)", "Vector4(0.25, 0.25, 0.25, 0.25)"),
+            TestCase("Vector4.lerp(0.5,   Vector4.Zero, Vector4.One)", "Vector4(0.5, 0.5, 0.5, 0.5)"),
+            TestCase("Vector4.lerp(0.75,  Vector4.Zero, Vector4.One)", "Vector4(0.75, 0.75, 0.75, 0.75)"),
+            TestCase("Vector4.lerp(1,     Vector4.Zero, Vector4.One)", "Vector4(1, 1, 1, 1)"),
+            TestCase("Vector4.lerp(1.25,  Vector4.Zero, Vector4.One)", "Vector4(1.25, 1.25, 1.25, 1.25)"), //extrapolation
+        ]
+        public void LinearInterpolation(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
     }
 }

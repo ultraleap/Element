@@ -157,12 +157,12 @@ struct Vector3(x:Num, y:Num, z:Num)
         return = Vector3(ay_bz.sub(az_by), az_bx.sub(ax_bz), az_by.sub(ay_bx));
     }
 
-#    transformPosition(a:Vector3, matrix:Matrix4x4):Vector3
-#    {
-#        result = V4.Transform(Vector4(a.x, a.y, a.z, 1), matrix);
-#        return = Vector3(result.x, result.y, result.z);
-#    }
-#
+    transformPosition(a:Vector3, matrix:Matrix4x4):Vector3
+    {
+        result = Vector4.Transform(Vector4(a.x, a.y, a.z, 1), matrix);
+        return = Vector3(result.x, result.y, result.z);
+    }
+
 #    transformDirection(a:Vec3, matrix:Matrix4x4):Vector3
 #    {
 #        result = V4.Transform(Vector4(a.x, a.y, a.z, 0), matrix);
@@ -203,14 +203,17 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
         return = s.x.add(s.y).add(s.z).add(s.w);
     }
     
-#    lerp(t:Num, a:Vector4, b:Vector4) 
-#    {
-#        return = Vector4(t.lerp(a.x, b.x), t.lerp(a.y, b.y), t.lerp(a.z, b.z), t.lerp(a.w, b.w));
-#    }
-#
-#    transform(vector:Vector4, matrix:Matrix4x4):Vector4
-#    {
-#        multiply(m):Num = Dot(vector, m);
-#        return = map(multiply, Matrix.Transpose(matrix));
-#    }
+    direction(v:Vector3) = Vector4(position.x, position.y, position.z, 0);
+    point(v:Vector3) = Vector4(position.x, position.y, position.z, 1);
+    
+    lerp(t:Num, a:Vector4, b:Vector4) 
+    {
+        return = Vector4(t.lerp(a.x, b.x), t.lerp(a.y, b.y), t.lerp(a.z, b.z), t.lerp(a.w, b.w));
+    }
+
+    transform(vector:Vector4, matrix:Matrix4x4):Vector4
+    {
+        multiply(m:Vector4):Num = vector.Dot(m);
+        return = Num.map(multiply, Matrix.Transpose(matrix));
+    }
 }
