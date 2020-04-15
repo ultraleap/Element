@@ -37,7 +37,7 @@ set(libelement_cli_sources
 )
 
 add_subdirectory(${ELEMENT_LIB_DIR} "libelement")
-add_subdirectory("dependencies/cli11") 
+add_subdirectory("dependencies/cli11" EXCLUDE_FROM_ALL) 
 
 add_executable(${CMAKE_PROJECT_NAME} ${libelement_cli_sources})
 
@@ -58,5 +58,4 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE CLI11::CLI11)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11)
