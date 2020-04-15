@@ -1,6 +1,5 @@
 using System.IO;
 using Element;
-using Laboratory;
 
 namespace Laboratory.Tests.L2.Semantics
 {
