@@ -1,9 +1,0 @@
-struct Complex(real:Num, imaginary:Num)
-{
-    add(a:Complex, b:Complex):Complex = Complex(a.real.add(b.real), a.imaginary.add(b.imaginary));
-    mul(a:Complex, b:Complex):Complex = Complex(
-            a.real.mul(b.real).sub(a.imaginary.mul(b.imaginary)),
-            a.real.mul(b.imaginary).add(a.imaginary.mul(b.real))
-        );
-    norm(c:Complex):Num = c.real.mul(c.real).add(c.imaginary.mul(c.imaginary));
-}
