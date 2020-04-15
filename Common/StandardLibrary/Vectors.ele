@@ -39,14 +39,12 @@ struct Vector2(x:Num, y:Num)
     div(a:Vector2, b:Num):Vector2 = Vector2(a.x.div(b), a.y.div(b));
     
     #vector operations
-    #componentwiseMul(a:Vector2, b:Num):Vector4 = Vector2(a.x.mul(b.x), a.y.mul(b.y));
-    
     add(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.add(b.x), a.y.add(b.y));
     sub(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.sub(b.x), a.y.sub(b.y));
     
     dot(a:Vector2, b:Vector2):Num
     {
-        s = a.componentwiseMul(b); #Vector2(a.x.mul(b.x), a.y.mul(b.y)); #Forcing previous errors
+        s = Vector2(a.x.mul(b.x), a.y.mul(b.y));
         return = s.x.add(s.y);
     }
         
@@ -62,7 +60,7 @@ struct Vector2(x:Num, y:Num)
         mag = a.magnitude.mul(b.magnitude);
         clamped = dot.div(mag).clamp(-1, 1);
         theta = Num.acos(clamped);
-        return = Num.degrees(theta);  
+        return = Num.degrees(theta);
     }
     
     reflect(l:Vector2, n:Vector2):Vector2
@@ -110,14 +108,12 @@ struct Vector3(x:Num, y:Num, z:Num)
     div(a:Vector3, b:Num):Vector3 = Vector3(a.x.div(b), a.y.div(b), a.z.div(b));
     
     #vector operations
-    componentwiseMul(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z));
-    
     add(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z));
     sub(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.sub(b.x), a.y.sub(b.y), a.z.sub(b.z));
     
     dot(a:Vector3, b:Vector3):Num
     {
-        s = a.componentwiseMul(b); #Vector3(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z)); #Forcing previous errors
+        s = Vector3(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z));
         return = s.x.add(s.y).add(s.z);
     }
         
@@ -198,14 +194,12 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
     div(a:Vector4, b:Num):Vector4 = Vector4(a.x.div(b), a.y.div(b), a.z.div(b), a.w.div(b));
     
     #vector operations
-    #componentwiseMul(a:Vector4, b:Num):Vector4 = Vector4(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z), a.w.mul(b.w));
-    
     add(a:Vector4, b:Vector4):Vector4 = Vector4(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z), a.w.add(b.w));
     sub(a:Vector4, b:Vector4):Vector4 = Vector4(a.x.sub(b.x), a.y.sub(b.y), a.z.sub(b.z), a.w.sub(b.w));
     
     dot(a:Vector4, b:Vector4):Num
     {
-        s = a.componentwiseMul(b); #Vector4(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z), a.w.mul(b.w)); #Forcing previous errors
+        s = Vector4(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z), a.w.mul(b.w));
         return = s.x.add(s.y).add(s.z).add(s.w);
     }
     

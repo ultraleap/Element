@@ -43,24 +43,30 @@ namespace Laboratory.Tests
                 ExtraSourceFiles = new[]{fileInfo},
                 SkipValidation = skipValidation
             };
+            
             var success = Host.Parse(compilationInput);
 
-            if (expectedMessageCode.HasValue && success)
+            if (!expectedMessageCode.HasValue) return; //Handled by FailOnError
+
+            if (success)
+            {
+                Assert.Fail("Expected error ELE{0} '{1}' but succeeded",
+                    expectedMessageCode.Value, CompilerMessage.GetMessageName(expectedMessageCode.Value));
+            }
+            else
             {
                 if (errors.Count >= 0)
                 {
                     Assert.Fail("Expected error ELE{0} '{1}' but got following error codes instead: {2}",
                         expectedMessageCode.Value, CompilerMessage.GetMessageName(expectedMessageCode.Value),
                         string.Join(",", errors.Select(err => err.MessageCode)));
-                } else {
+                }
+                else
+                {
                     Assert.Fail("Expected error ELE{0} '{1}' but no error was logged", expectedMessageCode.Value,
                         CompilerMessage.GetMessageName(expectedMessageCode.Value));
                 }
             }
         }
-        
-
-
-
     }
 }
