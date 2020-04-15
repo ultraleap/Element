@@ -119,11 +119,11 @@ struct Path(at:PathFunc, length:Num)
         return = Path(at, path.length);
     }
 
-#   Transform(path:Path, matrix:Matrix4x4):Path
-#   {
-#       at(u:Num):Vector3 = Vector3.TransformPosition(path.at(u), matrix);
-#       return = Path(at, path.length);
-#   } 
+   Transform(path:Path, matrix:Matrix4x4):Path
+   {
+       at(u:Num):Vector3 = Vector3.transformPosition(path.at(u), matrix);
+       return = Path(at, path.length);
+   } 
 }
 
 struct BoundedPath(atBounded:PathFunc, length:Num)

@@ -98,7 +98,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             TestCase("Vector4(1, 3, 7, 9).dot(Vector4(2, 5, 4, 5))", "90"),
             TestCase("Vector4(1, 3, 7, 9).dot(Vector4(-2, -5, -4, -5))", "-90"),
         ]
-        public void Operations(string expression, string expected) =>
+        public void DotProduct(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);
             
         [
@@ -111,6 +111,24 @@ namespace Laboratory.Tests.L4.StandardLibrary
             TestCase("Vector4.lerp(1.25,  Vector4.Zero, Vector4.One)", "Vector4(1.25, 1.25, 1.25, 1.25)"), //extrapolation
         ]
         public void LinearInterpolation(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+        
+        [
+            TestCase("Vector4.direction(Vector3(1, 1, 1))", "Vector4(1, 1, 1, 0)"),
+        ]
+        public void Direction(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+        
+        [
+            TestCase("Vector4.position(Vector3(1, 1, 1))", "Vector4(1, 1, 1, 1)")
+        ]
+        public void Position(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+        
+        [
+            TestCase("Vector4(1, 1, 1, 1).transform(Matrix4x4.Identity)", "Vector4(1, 1, 1, 1)")
+        ]
+        public void Transform(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilationInput, expected, expression);
     }
 }

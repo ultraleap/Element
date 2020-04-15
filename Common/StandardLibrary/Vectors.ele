@@ -203,8 +203,8 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
         return = s.x.add(s.y).add(s.z).add(s.w);
     }
     
-    direction(v:Vector3) = Vector4(position.x, position.y, position.z, 0);
-    point(v:Vector3) = Vector4(position.x, position.y, position.z, 1);
+    direction(v:Vector3):Vector4 = Vector4(v.x, v.y, v.z, 0);
+    position(v:Vector3):Vector4 = Vector4(v.x, v.y, v.z, 1);
     
     lerp(t:Num, a:Vector4, b:Vector4) 
     {
@@ -213,7 +213,12 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
 
     transform(vector:Vector4, matrix:Matrix4x4):Vector4
     {
-        multiply(m:Vector4):Num = vector.Dot(m);
-        return = Num.map(multiply, Matrix.Transpose(matrix));
+        multiply(m:Vector4):Num = vector.dot(m);
+        x = multiply(matrix.x);
+        y = multiply(matrix.y);
+        z = multiply(matrix.z);
+        w = multiply(matrix.w);
+        return = Vector4(x, y, z, w);
+        #return = memberwise(multiply, Matrix4x4.transpose(matrix));
     }
 }
