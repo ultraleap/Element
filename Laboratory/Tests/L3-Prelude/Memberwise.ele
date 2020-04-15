@@ -1,0 +1,4 @@
+struct Vector3(x, y, z)
+{
+    mul(a:Vector3, b:Vector3) = memberwise(Num.mul, a, b);
+}
