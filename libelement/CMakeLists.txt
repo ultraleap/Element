@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.8)
 
+# For VS
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 project(element)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -47,6 +50,13 @@ set(element_sources
 )
 
 add_library(element STATIC ${element_sources})
+
+# For VS
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${element_sources})
+
+# Don't rely on compiler extensions
+set_property(TARGET element PROPERTY CMAKE_CXX_EXTENSIONS OFF)
+
 target_include_directories(element
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
@@ -60,7 +70,6 @@ target_include_directories(element
 if (UNIX)
     target_link_libraries(element PRIVATE "m")
 endif ()
-
 
 if (BUILD_TESTING)
     add_executable(element_test_app
