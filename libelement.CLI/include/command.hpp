@@ -27,8 +27,8 @@ namespace libelement::cli
 		common_command_arguments common_arguments;
 
 	public:
-		compilation_input(common_command_arguments common_arguments)
-			: common_arguments{ std::move(common_arguments) }
+		compilation_input(common_command_arguments arguments)
+			: common_arguments{ std::move(arguments) }
 		{
 			common_arguments.source_files = select(common_arguments.source_files, file_exists);
 			common_arguments.packages = select(common_arguments.packages, directory_exists);
