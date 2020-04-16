@@ -1,9 +1,9 @@
 #include <CLI/CLI.hpp>
 
-#include <command.hpp>
-#include <parse_command.hpp>
-#include <evaluate_command.hpp>
-#include <typeof_command.hpp>
+#include "command.hpp"
+#include "parse_command.hpp"
+#include "evaluate_command.hpp"
+#include "typeof_command.hpp"
 
 using namespace libelement::cli;
 

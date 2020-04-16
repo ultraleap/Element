@@ -1,7 +1,11 @@
 #pragma once
 
-#include <command.hpp>
-#include <compiler_message.hpp>
+#include "element/token.h"
+#include "element/ast.h"
+#include "element/interpreter.h"
+
+#include "command.hpp"
+#include "compiler_message.hpp"
 
 namespace libelement::cli
 {
@@ -22,10 +26,19 @@ namespace libelement::cli
 
 		compiler_message execute(const compilation_input& input) const override
 		{
-			//call into libelement
+			std::vector<trace_site> what_to_put_in_here{};
 
-			//default move constructor should trigger on return value assignment, right?
-			return compiler_message(10, message_level::ERROR, "typeof_command", std::vector<trace_site>{});
+			//call into libelement
+			const element_function* fn;
+			element_compiled_function* cfn;
+			element_value outputs[1];
+
+			//what do I do here as we don't know the function by name
+			element_interpreter_get_function(ictx, "Tomato", &fn);
+			element_interpreter_compile_function(ictx, fn, &cfn, nullptr);
+			auto result = element_interpreter_evaluate_function(ictx, cfn, nullptr, 1, outputs, 1, nullptr);
+
+			return generate_response(result, outputs[0], what_to_put_in_here);
 		}
 
 		static void configure(CLI::App& app, const std::shared_ptr<common_command_arguments>& common_arguments, command::callback callback)
