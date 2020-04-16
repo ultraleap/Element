@@ -34,6 +34,7 @@ namespace Element.AST
                 return func.ResolveCall(funcArgs, false, compilationContext);
             }
 
+            // TODO: Needs to return anonymous scope, not a struct instance! This currently only works when the function outputs the same type as the inputs, e.g. (Vec3, Vec3) -> Vec3
             if (type is DeclaredStruct declaredStruct)
             {
                 /*return declaredStruct.CreateInstance(Enumerable.Range(0, ((IFunctionSignature)declaredStruct).Inputs.Length)

@@ -53,7 +53,7 @@ namespace Element.AST
             serialized = new Element.Expression[size.Value];
             var position = 0;
 
-            bool Serialize(object serializable, Element.Expression[] output)
+            bool AsExpression(object serializable, Element.Expression[] output)
             {
                 switch(serializable)
                 {
@@ -61,16 +61,16 @@ namespace Element.AST
                         output[position++] = expr;
                         return true;
                     case StructInstance structInstance when structInstance.Type == ListType.Instance:
-                        return Serialize(ListType.EvaluateElements(structInstance, compilationContext), output);
+                        return AsExpression(ListType.EvaluateElements(structInstance, compilationContext), output);
                     case IEnumerable<IValue> values:
-                        return values.Aggregate(true, (current, element) => current & Serialize(element, output));
+                        return values.Aggregate(true, (current, element) => current & AsExpression(element, output));
                     default:
                         compilationContext.LogError(1, $"'{serializable}' is not serializable");
                         return false;
                 };
             }
 
-            return Serialize(value, serialized);
+            return AsExpression(value, serialized);
         }
 
         public static bool TrySerialize(this IValue value, out float[] serialized, CompilationContext compilationContext)

@@ -45,7 +45,7 @@ name = "ParseError"
 level = "Error"
 
 [ELE10]
-name = "InvalidBoundaryFunctionInterface"
+name = "InvalidBoundaryFunction"
 level = "Error"
 
 [ELE11]

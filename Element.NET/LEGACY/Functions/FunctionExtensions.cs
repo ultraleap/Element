@@ -199,8 +199,8 @@ namespace Element
 		/// <param name="output">The proposed output</param>
 		/// <param name="info">The place to log messages on failure</param>
 		/// <returns>Null on success, or Abort on failure (this allows using the null-coalesce operator)</returns>
-		public static IFunction CheckArguments(this IFunction function, IFunction[] arguments, string output,
-		                                       CompilationContext info)
+		public static IFunction? CheckArguments(this IFunction function, IFunction[] arguments, string output,
+		                                        CompilationContext info)
 		{
 			var success = true;
 			var inputs = function.Inputs;
