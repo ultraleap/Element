@@ -144,6 +144,9 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     ELEMENT_OK_OR_RETURN(merge_names(names, std::move(root), nullptr));
     trees.push_back(std::make_pair(filename, std::move(ast)));
 
+    // TODO: HACK
+    update_scopes(names.get());
+
     return ELEMENT_OK;
 }
 
@@ -158,31 +161,6 @@ element_result element_interpreter_ctx::clear()
     trees.clear();
     names.reset();
     ast_names.clear();
-
-    // TODO: temporary hack to get intrinsics in
-    std::string input = " \
-    num; \
-    add(a:num, b:num):num; \
-    acos(a:num); \
-    asin(a:num); \
-    atan(a:num); \
-    atan2(a:num, b : num); \
-    ceil(a:num); \
-    cos(a:num); \
-    div(a:num, b:num); \
-    floor(a:num); \
-    ln(a:num):num; \
-    log(a:num, b:num):num; \
-    max(a:num, b:num):num; \
-    min(a:num, b:num):num; \
-    mul(a:num, b:num):num; \
-    pow(a:num, b:num):num; \
-    rem(a:num, b:num):num; \
-    sin(a:num):num; \
-    sub(a:num, b:num):num; \
-    tan(a:num):num; \
-    ";
-    load(input.c_str());
 
     return ELEMENT_OK;
 }

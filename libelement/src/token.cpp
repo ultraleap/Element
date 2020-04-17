@@ -1,12 +1,24 @@
 #include "token_internal.hpp"
 
 #include <cctype>
-#include <cstring>
 #include <cassert>
 #include <cstdlib>
 #include <cstdio>
+#include "utf8.h"
 
 #define INCREMENT_TOKEN_LEN(s) { ++((s)->pos); ++((s)->col); ++((s)->cur_token.tok_len); }
+
+// #define UTF8_UNCHECKED
+#if defined(UTF8_UNCHECKED)
+#define UTF8_PEEK_NEXT(it, end)  utf8::unchecked::peek_next(it)
+#define UTF8_NEXT(it, end)       utf8::unchecked::next(it)
+#define UTF8_ADVANCE(it, n, end) utf8::unchecked::advance(it, n)
+#else
+#define UTF8_PEEK_NEXT(it, end)  utf8::peek_next(it, end)
+#define UTF8_NEXT(it, end)       utf8::next(it, end)
+#define UTF8_ADVANCE(it, n, end) utf8::advance(it, n, end)
+#endif
+
 
 element_result element_tokeniser_get_filename(const element_tokeniser_ctx* state, const char** filename)
 {
@@ -58,57 +70,81 @@ static void reset_token(element_tokeniser_ctx* state)
 }
 
 // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
-static element_result tokenise_number(const std::string& input, element_tokeniser_ctx* state)
+static element_result tokenise_number(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
 {
     assert(state->cur_token.type == ELEMENT_TOK_NONE);
     state->cur_token.type = ELEMENT_TOK_NUMBER;
     state->cur_token.tok_pos = state->pos;
-    if (input[state->pos] == '-' || input[state->pos] == '+') {
-        INCREMENT_TOKEN_LEN(state);
+    const auto it_begin = it;
+    uint32_t c = UTF8_NEXT(it, end);
+    if (c == '-' || c == '+') {
+        c = UTF8_NEXT(it, end);
     }
-    assert(isdigit(input[state->pos]));
+    assert(element_isdigit(c));
     do {
-        INCREMENT_TOKEN_LEN(state);
-    } while (isdigit(input[state->pos]));
-    if (input[state->pos] == '.') {
-        INCREMENT_TOKEN_LEN(state);
-        while (isdigit(input[state->pos])) {
-            INCREMENT_TOKEN_LEN(state);
+        c = UTF8_NEXT(it, end);
+    } while (element_isdigit(c));
+    if (c == '.') {
+        c = UTF8_PEEK_NEXT(it, end);
+        if (element_isdigit(c)) {
+            // number
+            while (element_isdigit(c)) {
+                c = UTF8_NEXT(it, end);
+            }
+        } else {
+            // indexing into a literal, do nothing and let the cleanup back out
         }
     }
-    if (input[state->pos] == 'e' || input[state->pos] == 'E') {
-        INCREMENT_TOKEN_LEN(state);
-        if (input[state->pos] == '-' || input[state->pos] == '+') {
-            INCREMENT_TOKEN_LEN(state);
+    if (c == 'e' || c == 'E') {
+        c = UTF8_NEXT(it, end);
+        if (c == '-' || c == '+') {
+            c = UTF8_NEXT(it, end);
         }
-        if (!isdigit(input[state->pos]))
+        if (!element_isdigit(c))
             goto error;
         do {
-            INCREMENT_TOKEN_LEN(state);
-        } while (isdigit(input[state->pos]));
+            c = UTF8_NEXT(it, end);
+        } while (element_isdigit(c));
     }
+    // row back to before the extra code point
+    UTF8_ADVANCE(it, -1, end);
+    // determine length in bytes
+    const size_t len = std::distance(it_begin, it);
+    state->pos += (int)len;
+    state->col += (int)len;
+    state->cur_token.tok_len += (int)len;
     reset_token(state);
     return ELEMENT_OK;
 error:
     return ELEMENT_ERROR_INVALID_ARCHIVE;
 }
 
+static inline bool isid_alpha(uint32_t c) { return element_isalpha(c) || (c >= 0x00F0 && c <= 0xFFFF); }
+static inline bool isid_alnum(uint32_t c) { return element_isalnum(c) || (c >= 0x00F0 && c <= 0xFFFF); }
+
 // identifier ::= '_'? [a-zA-Z\u00F0-\uFFFF] [_a-zA-Z0-9\u00F0-\uFFFF]*
-static element_result tokenise_identifier(const std::string& input, element_tokeniser_ctx* state)
+static element_result tokenise_identifier(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
 {
     assert(state->cur_token.type == ELEMENT_TOK_NONE);
     state->cur_token.type = ELEMENT_TOK_IDENTIFIER;
     state->cur_token.tok_pos = state->pos;
-    // TODO: allow \u00F0-\uFFFF
-    if (input[state->pos] == '_') {
-        INCREMENT_TOKEN_LEN(state);
+    const auto it_begin = it;
+    uint32_t c = UTF8_NEXT(it, end);
+    if (c == '_') {
+        c = UTF8_NEXT(it, end);
     }
-    assert(isalpha(input[state->pos]));
-    INCREMENT_TOKEN_LEN(state);
-    while (isalnum(input[state->pos]) || input[state->pos] == '_') {
-        INCREMENT_TOKEN_LEN(state);
+    assert(element_isalpha(c) || (c >= 0x00F0 && c <= 0xFFFF));
+    c = UTF8_NEXT(it, end);
+    while (element_isalnum(c) || c == '_' || (c >= 0x00F0 && c <= 0xFFFF)) {
+        c = UTF8_NEXT(it, end);
     }
-
+    // row back to before the extra code point
+    UTF8_ADVANCE(it, -1, end);
+    // determine length in bytes
+    const size_t len = std::distance(it_begin, it);
+    state->pos += (int)len;
+    state->col += (int)len;
+    state->cur_token.tok_len += (int)len;
     reset_token(state);
     return ELEMENT_OK;
 }
@@ -136,6 +172,18 @@ element_result element_tokeniser_delete(element_tokeniser_ctx* state)
     return ELEMENT_OK;
 }
 
+element_result element_tokeniser_clear(element_tokeniser_ctx* state)
+{
+    state->tokens.clear();
+    state->filename.clear();
+    state->input.clear();
+    state->line = 1;
+    state->col = 1;
+    state->pos = 0;
+    reset_token(state);
+    return ELEMENT_OK;
+}
+
 element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* cinput, const char* cfilename)
 {
     state->filename = cfilename;
@@ -145,88 +193,114 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
     state->col = 1;
     reset_token(state);
 
-    const std::string& input = state->input;
-    char c;
-    while (input[state->pos] != '\0') {
-        c = input[state->pos];
-        if (isspace(c) || state->cur_token.post_pos >= 0) {
-            if (c == '\n') {
-                ++state->line;
-                state->col = 0;
-                reset_token(state);
-            } else {
-                if (state->cur_token.tok_pos >= 0) {
-                    if (state->cur_token.post_pos < 0)
-                        state->cur_token.post_pos = state->pos;
-                    ++state->cur_token.post_len;
+    try
+    {
+        auto it = state->input.begin();
+        auto end = state->input.end();
+        uint32_t c;
+        while (it != end) {
+            c = UTF8_PEEK_NEXT(it, end);
+            if (element_isspace(c) || state->cur_token.post_pos >= 0) {
+                // calculate correct length
+                const auto it_before = it;
+                UTF8_ADVANCE(it, 1, end);
+                const size_t len = std::distance(it_before, it);
+                if (c == '\n') {
+                    ++state->line;
+                    state->col = 0;
+                    reset_token(state);
                 } else {
-                    ++state->cur_token.pre_len;
+                    if (state->cur_token.tok_pos >= 0) {
+                        if (state->cur_token.post_pos < 0)
+                            state->cur_token.post_pos = state->pos;
+                        state->cur_token.post_len += (int)len;
+                    } else {
+                        state->cur_token.pre_len += (int)len;
+                    }
                 }
-            }
-            ++state->pos;
-        } else if (c == '#') {
-            if (state->cur_token.post_pos < 0)
-                state->cur_token.post_pos = state->pos;
-            ++state->cur_token.post_len;
-            ++state->pos;
-        } else if (c == '-' || c == '+') {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                if (isdigit(input[state->pos+1])) {
-                    ELEMENT_OK_OR_RETURN(tokenise_number(input, state));
+                state->pos += (int)len;
+            } else if (c == '#') {
+                if (state->cur_token.post_pos < 0)
+                    state->cur_token.post_pos = state->pos;
+                // calculate correct length
+                const auto it_before = it;
+                UTF8_ADVANCE(it, 1, end);
+                const size_t len = std::distance(it_before, it);
+                state->cur_token.post_len += (int)len;
+                state->pos += (int)len;
+            } else if (c == '-' || c == '+') {
+                if (state->cur_token.type == ELEMENT_TOK_NONE) {
+                    UTF8_ADVANCE(it, 1, end);
+                    c = UTF8_PEEK_NEXT(it, end);
+                    if (element_isdigit(c)) {
+                        UTF8_ADVANCE(it, -1, end);
+                        ELEMENT_OK_OR_RETURN(tokenise_number(it, end, state));
+                    } else {
+                        goto error;
+                    }
+                } else {
+                    goto error;
+                }
+            } else if (c == '=') {
+                if (state->cur_token.type == ELEMENT_TOK_NONE) {
+                    UTF8_ADVANCE(it, 1, end);
+                    c = UTF8_PEEK_NEXT(it, end);
+                    if (c == '>') {
+                        UTF8_ADVANCE(it, 1, end);
+                        add_token(state, ELEMENT_TOK_ARROW, 2);
+                    } else {
+                        add_token(state, ELEMENT_TOK_EQUALS, 1);
+                    }
+                } else {
+                    goto error;
+                }
+            } else if (element_isdigit(c)) {
+                if (state->cur_token.type == ELEMENT_TOK_NONE) {
+                    ELEMENT_OK_OR_RETURN(tokenise_number(it, end, state));
+                } else {
+                    goto error;
+                }
+            } else if (c == '_') {
+                if (state->cur_token.type == ELEMENT_TOK_NONE) {
+                    UTF8_ADVANCE(it, 1, end);
+                    c = UTF8_PEEK_NEXT(it, end);
+                    if (element_isalpha(c)) {
+                        UTF8_ADVANCE(it, -1, end);
+                        ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
+                    } else {
+                        add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
+                    }
+                } else {
+                    goto error;
+                }
+            } else if (element_isalpha(c)) {
+                if (state->cur_token.type == ELEMENT_TOK_NONE) {
+                    ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
                 } else {
                     goto error;
                 }
             } else {
-                goto error;
-            }
-        } else if (c == '=') {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                if (input[state->pos+1] == '>') {
-                    add_token(state, ELEMENT_TOK_ARROW, 2);
-                } else {
-                    add_token(state, ELEMENT_TOK_EQUALS, 1);
+                switch (c) {
+                case '.': add_token(state, ELEMENT_TOK_DOT, 1); break;
+                case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); break;
+                case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); break;
+                case ';': add_token(state, ELEMENT_TOK_SEMICOLON, 1); break;
+                case ',': add_token(state, ELEMENT_TOK_COMMA, 1); break;
+                case ':': add_token(state, ELEMENT_TOK_COLON, 1); break;
+                case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); break;
+                case '}': add_token(state, ELEMENT_TOK_BRACER, 1); break;
+                case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); break;
+                default:  goto error;
                 }
-            } else {
-                goto error;
-            }
-        } else if (isdigit(c)) {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                ELEMENT_OK_OR_RETURN(tokenise_number(input, state));
-            } else {
-                goto error;
-            }
-        } else if (c == '_') {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                if (isalpha(input[state->pos + 1])) {
-                    ELEMENT_OK_OR_RETURN(tokenise_identifier(input, state));
-                } else {
-                    add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
-                }
-            } else {
-                goto error;
-            }
-        } else if (isalpha(c)) {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                ELEMENT_OK_OR_RETURN(tokenise_identifier(input, state));
-            } else {
-                goto error;
-            }
-        } else {
-            switch (input[state->pos]) {
-            case '.': add_token(state, ELEMENT_TOK_DOT, 1); break;
-            case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); break;
-            case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); break;
-            case ';': add_token(state, ELEMENT_TOK_SEMICOLON, 1); break;
-            case ',': add_token(state, ELEMENT_TOK_COMMA, 1); break;
-            case ':': add_token(state, ELEMENT_TOK_COLON, 1); break;
-            case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); break;
-            case '}': add_token(state, ELEMENT_TOK_BRACER, 1); break;
-            case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); break;
-            default: goto error;
+                UTF8_ADVANCE(it, 1, end);
             }
         }
+        return ELEMENT_OK;
     }
-    return ELEMENT_OK;
+    catch (...)
+    {
+        goto error;
+    }
 
 error:
     return ELEMENT_ERROR_INVALID_ARCHIVE;

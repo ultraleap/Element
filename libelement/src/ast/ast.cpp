@@ -210,6 +210,9 @@ static element_result parse_port(element_tokeniser_ctx* tctx, size_t* tindex, el
     ast->type = ELEMENT_AST_NODE_PORT;
     if (tok->type == ELEMENT_TOK_IDENTIFIER) {
         ELEMENT_OK_OR_RETURN(parse_identifier(tctx, tindex, ast, true));
+    } else {
+        // no name, advance
+        tokenlist_advance(tctx, tindex);
     }
 
     GET_TOKEN(tctx, *tindex, tok);
@@ -226,7 +229,7 @@ static element_result parse_portlist(element_tokeniser_ctx* tctx, size_t* tindex
 {
     const element_token* tok;
     GET_TOKEN(tctx, *tindex, tok);
-    assert(tok->type == ELEMENT_TOK_IDENTIFIER);
+    assert(tok->type == ELEMENT_TOK_IDENTIFIER || tok->type == ELEMENT_TOK_UNDERSCORE);
     ast->type = ELEMENT_AST_NODE_PORTLIST;
     do
     {
@@ -238,7 +241,7 @@ static element_result parse_portlist(element_tokeniser_ctx* tctx, size_t* tindex
 }
 
 static element_result parse_expression(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast);
-static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast);
+static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, bool expr_requires_semi);
 
 // exprlist ::= expression (',' expression)*
 static element_result parse_exprlist(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
@@ -323,7 +326,7 @@ static element_result parse_lambda(element_tokeniser_ctx* tctx, size_t* tindex, 
         return ELEMENT_ERROR_INVALID_OPERATION;
     tokenlist_advance(tctx, tindex);
     element_ast* body = ast_new_child(ast);
-    ELEMENT_OK_OR_RETURN(parse_body(tctx, tindex, body));
+    ELEMENT_OK_OR_RETURN(parse_body(tctx, tindex, body, false));
     return ELEMENT_OK;
 }
 
@@ -413,7 +416,7 @@ static element_result parse_scope(element_tokeniser_ctx* tctx, size_t* tindex, e
     return ELEMENT_OK;
 }
 
-static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, bool expr_expects_semi)
 {
     const element_token* token;
     GET_TOKEN(tctx, *tindex, token);
@@ -423,9 +426,14 @@ static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, el
     } else if (token->type == ELEMENT_TOK_EQUALS) {
         tokenlist_advance(tctx, tindex);
         ELEMENT_OK_OR_RETURN(parse_expression(tctx, tindex, ast));
-        GET_TOKEN(tctx, *tindex, token);
-        assert(token->type == ELEMENT_TOK_SEMICOLON);
-        tokenlist_advance(tctx, tindex);
+        if (expr_expects_semi) {
+            GET_TOKEN(tctx, *tindex, token);
+            if (token->type == ELEMENT_TOK_SEMICOLON) {
+                tokenlist_advance(tctx, tindex);
+            } else {
+                return ELEMENT_ERROR_INVALID_ARCHIVE;
+            }
+        }
     } else {
         assert(false);
         return ELEMENT_ERROR_INVALID_ARCHIVE;
@@ -448,13 +456,13 @@ static element_result parse_function(element_tokeniser_ctx* tctx, size_t* tindex
     element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tctx, *tindex, body);
-    tokenlist_advance(tctx, tindex);
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         // interface
         bodynode->type = ELEMENT_AST_NODE_INTERFACE;
+        tokenlist_advance(tctx, tindex);
     } else {
         // real body of some sort
-        return parse_body(tctx, tindex, bodynode);
+        ELEMENT_OK_OR_RETURN(parse_body(tctx, tindex, bodynode, true));
     }
     return ELEMENT_OK;
 }
@@ -519,6 +527,7 @@ static element_result parse_item(element_tokeniser_ctx* tctx, size_t* tindex, el
         ELEMENT_OK_OR_RETURN(parse_qualifiers(tctx, tindex, &flags));
         GET_TOKEN(tctx, *tindex, token);
         if (tctx->text(token) == "struct") {
+            tokenlist_advance(tctx, tindex);
             ELEMENT_OK_OR_RETURN(parse_struct(tctx, tindex, ast, flags));
         } else {
             ELEMENT_OK_OR_RETURN(parse_function(tctx, tindex, ast, flags));
