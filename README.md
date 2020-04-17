@@ -32,7 +32,7 @@ New features will generally be implemented as part of the standard library rathe
 
 ### Host Libraries
 * [Element.NET](Element.NET) - .NET Standard 2.0
-    * Element parser using [Eto.Parse](https://github.com/picoe/Eto.Parse)
+    * Element parser using [Lexico](https://github.com/hamish-milne/Lexico)
     * Element function evaluation via:
         * Direct evaluation (slow)
         * Compilation to CLR Function using [LINQ Expressions](https://docs.microsoft.com/en-us/dotnet/api/system.linq.expressions.expression) (very fast)
@@ -56,6 +56,8 @@ New features will generally be implemented as part of the standard library rathe
 
 ### Command Line Interfaces (CLIs)
 * [Alchemist](Alchemist) - .NET Core 2.1 using [Element.NET](Element.NET)
+    * CLI for executing Element via a REPL or compiling to other targets
+* [libelement.CLI](libelement.CLI) - C++ using [libelement](libelement)
     * CLI for executing Element via a REPL or compiling to other targets
 
 ### Integrations/Tooling
