@@ -14,7 +14,7 @@ std::string compiler_message::serialize() const
 
 	writer.StartObject();
 	writer.String(key_message_code);
-	writer.Int(message_code);
+	writer.Int(static_cast<int>(message_code));
 	writer.String(key_message_level);
 	writer.Int(static_cast<int>(level));
 	writer.String(key_context);

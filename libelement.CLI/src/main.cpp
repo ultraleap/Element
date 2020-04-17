@@ -13,10 +13,11 @@ void command_callback(const command& command) {
 	//callback in case we need access to the command for some compiler_message generation shenanigans
 	auto input = compilation_input(command.get_common_arguments());
 
-	auto initialised = command.initialise(input);
-	if (!initialised)
+	auto result = command.parse(input);
+	if (!result)
 	{
-		std::cerr << "Failed to initialise" << std::endl;
+		auto parse_response = compiler_message(message::PARSE_ERROR, message_level::INFORMATION, "parsing failed");
+		std::cout << parse_response.serialize() << std::endl;
 		return;
 	}
 

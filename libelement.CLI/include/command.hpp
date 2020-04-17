@@ -114,34 +114,31 @@ namespace libelement::cli
 			return common_arguments;
 		}
 
-		bool initialise(const compilation_input& input) const
+		element_result parse(const compilation_input& input) const
 		{
-			load_source_files(input);
-			//load packages etc
-			return true;
+			return load_source_files(input);
 		}
-
-		using callback = std::function<void(const command&)>;
 
 		virtual compiler_message execute(const compilation_input& input) const = 0;
 
+		using callback = std::function<void(const command&)>;
 		static void configure(CLI::App& app, command::callback callback);
 
-	protected:
-		compiler_message generate_response(element_result result, element_value value, std::vector<trace_site>& trace_site) const
+		compiler_message generate_response(element_result result, element_value value, const std::vector<trace_site>& trace_site = std::vector<libelement::cli::trace_site>()) const
 		{
 			switch (result)
 			{
 			case ELEMENT_OK:
-				return compiler_message(0, message_level::INFORMATION, std::to_string(value), trace_site);
+				return compiler_message(message::SUCCESS, message_level::INFORMATION, std::to_string(value), trace_site);
 			default:
-				return compiler_message(10, message_level::ERROR, "ERROR", trace_site);
+				return compiler_message(message::UNKNOWN_ERROR, message_level::ERROR, std::to_string(value), trace_site);
 			}
 		}
 
 	private:
-		void load_source_files(const compilation_input& input) const
+		element_result load_source_files(const compilation_input& input) const
 		{
+			element_result result = ELEMENT_OK;
 			for (auto& file : input.get_source_files())
 			{
 				std::string buffer;
@@ -152,9 +149,15 @@ namespace libelement::cli
 				f.seekg(0);
 				f.read(buffer.data(), buffer.size());
 
-				element_interpreter_load_string(ictx, buffer.c_str(), file.c_str());
+				result = element_interpreter_load_string(ictx, buffer.c_str(), file.c_str());
 				element_interpreter_clear(ictx);
+
+				//early return
+				if (result != ELEMENT_OK)
+					return result;
 			}
+
+			return result;
 		}
 	};
 }

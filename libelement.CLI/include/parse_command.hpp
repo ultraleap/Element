@@ -22,10 +22,7 @@ namespace libelement::cli
 
 		compiler_message execute(const compilation_input& input) const override
 		{
-			//call into libelement
-
-			//default move constructor should trigger on return value assignment, right?
-			return compiler_message(10, message_level::ERROR, "parse_command", std::vector<trace_site>{});
+			return compiler_message(message::SUCCESS, message_level::INFORMATION, "libelement parsed successfully");
 		}
 
 		static void configure(CLI::App& app, const std::shared_ptr<common_command_arguments>& common_arguments, command::callback callback)

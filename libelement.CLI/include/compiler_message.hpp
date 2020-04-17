@@ -40,7 +40,7 @@ namespace libelement::cli
 		 static constexpr const char* const key_context { "Context" };
 		 static constexpr const char* const key_trace_stack { "TraceStack" };
 
-		int message_code;
+		message message_code;
 		message_level level;
 		std::string context;
 		std::vector<trace_site> trace_stack;
@@ -50,12 +50,12 @@ namespace libelement::cli
 		
 	public:
 		compiler_message(std::string message, message_level level)
-			: message_code{ -1 }, level{ level }, context{ std::move(message) }
+			: message_code{ message::SUCCESS }, level{ level }, context{ std::move(message) }
 		{
 		}
 
-		compiler_message(const int message_code, message_level level, std::string context, std::vector<trace_site> trace_stack)
-			: message_code{ message_code }, level{ level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
+		compiler_message(message message, message_level level, std::string context, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+			: message_code{ message }, level{ level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
 		{
 		}
 		
