@@ -162,6 +162,29 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     return ELEMENT_OK;
 }
 
+element_result element_interpreter_ctx::load_file(const std::string& file)
+{
+    printf("loading valid file: %s\n", file.c_str()); //todo: proper logging
+    std::string buffer;
+
+    std::ifstream f(file);
+    f.seekg(0, std::ios::end);
+    buffer.resize(f.tellg());
+    f.seekg(0);
+    f.read(buffer.data(), buffer.size());
+
+    printf("contents of %s:\n%s\n", file.c_str(), buffer.c_str()); //todo: proper logging
+    element_result result = load(buffer.c_str(), file.c_str());
+    if (result != ELEMENT_OK) {
+        printf("could not load file %s. element_result = %d\n", file.c_str(), result); //todo: proper logging
+    }
+    else {
+        printf("successfully loaded file %s\n", file.c_str()); //todo: proper logging
+    }
+
+    return result;
+}
+
 element_result element_interpreter_ctx::load_files(const std::vector<std::string>& files)
 {
     element_result ret = ELEMENT_OK;
@@ -175,23 +198,38 @@ element_result element_interpreter_ctx::load_files(const std::vector<std::string
             continue; //todo: error handling
         }
 
-        printf("loading valid file: %s\n", filename.c_str()); //todo: proper logging
-        std::string buffer;
+        element_result result = load_file(filename);
+        if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
+            ret = result;
+    }
 
-        std::ifstream f(filename);
-        f.seekg(0, std::ios::end);
-        buffer.resize(f.tellg());
-        f.seekg(0);
-        f.read(buffer.data(), buffer.size());
+    return ret;
+}
 
-        printf("contents of %s:\n%s\n", filename.c_str(), buffer.c_str()); //todo: proper logging
-        auto result = load(buffer.c_str(), filename.c_str());
-        if (result != ELEMENT_OK) {
-            printf("could not load file %s. element_result = %d\n", filename.c_str(), result); //todo: proper logging
-            if (ret == ELEMENT_OK)
+element_result element_interpreter_ctx::load_package(const std::string& package)
+{
+    if (!directory_exists(package))
+    {
+        auto abs = std::filesystem::absolute(std::filesystem::path(package)).string();
+        printf("package %s does not exist at path %s\n", package.c_str(), abs.c_str()); //todo: proper logging
+        return ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
+    }
+
+    element_result ret = ELEMENT_OK;
+
+    for (const auto& file : std::filesystem::recursive_directory_iterator(package)) {
+        auto filename = file.path().string();
+        printf("found file %s in %s\n", filename.c_str(), package.c_str()); //todo: proper logging
+        auto extension = file.path().extension().string();
+        if (extension == ".ele")
+        {
+            element_result result = load_file(file.path().string());
+            if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
                 ret = result;
-        } else {
-            printf("successfully loaded file %s\n", filename.c_str()); //todo: proper logging
+        }
+        else
+        {
+            printf("extension was %s instead of '.ele'\n", extension.c_str()); //todo: proper logging
         }
     }
 
@@ -200,7 +238,7 @@ element_result element_interpreter_ctx::load_files(const std::vector<std::string
 
 element_result element_interpreter_ctx::load_packages(const std::vector<std::string>& packages)
 {
-    std::vector<std::string> files;
+    element_result ret = ELEMENT_OK;
 
     for (const auto& package : packages) {
         if (!directory_exists(package)) {
@@ -211,18 +249,38 @@ element_result element_interpreter_ctx::load_packages(const std::vector<std::str
             continue; //todo: error handling
         }
 
-        for (const auto& file : std::filesystem::recursive_directory_iterator(package)) {
-            auto filename = file.path().string();
-            printf("found file %s in %s\n", filename.c_str(), package.c_str()); //todo: proper logging
-            auto extension = file.path().extension().string();
-            if (extension == ".ele")
-                files.push_back(file.path().string());
-            else
-                printf("extension was %s instead of '.ele'\n", extension.c_str()); //todo: proper logging
-        }
+        element_result result = load_package(package);
+        if (result != ELEMENT_OK && ret != ELEMENT_OK) //todo: only returns first error
+            ret = result;
     }
 
-    return load_files(files);
+    return ret;
+}
+
+element_result element_interpreter_ctx::load_prelude()
+{
+    if (prelude_loaded)
+        return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
+
+    element_result result = load_package("Prelude");
+    if (result == ELEMENT_OK)
+        return result;
+
+    auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
+    printf("could not find prelude at %s\n", abs.c_str()); //todo: proper logging
+
+    result = load_package("../../Common/Prelude");
+    abs = std::filesystem::absolute(std::filesystem::path("../../Common/Prelude")).string();
+    if (result == ELEMENT_OK)
+    {
+        printf("loaded prelude from backup location %s\n", abs.c_str()); //todo: proper logging
+    }
+    else
+    {
+        printf("failed to load prelude from backup location %s\n", abs.c_str()); //todo: proper logging
+    }
+
+    return result;
 }
 
 element_interpreter_ctx::element_interpreter_ctx()
@@ -258,6 +316,12 @@ element_result element_interpreter_load_string(element_interpreter_ctx* ctx, con
     return ctx->load(string, filename);
 }
 
+element_result element_interpreter_load_file(element_interpreter_ctx* ctx, const char* file)
+{
+    assert(ctx);
+    return ctx->load_file(file);
+}
+
 element_result element_interpreter_load_files(element_interpreter_ctx* ctx, const char** files, int files_count)
 {
     assert(ctx);
@@ -271,17 +335,31 @@ element_result element_interpreter_load_files(element_interpreter_ctx* ctx, cons
     return ctx->load_files(actual_files);
 }
 
+
+element_result element_interpreter_load_package(element_interpreter_ctx* ctx, const char* package)
+{
+    assert(ctx);
+    printf("load_package %s\n", package); //todo: proper logging
+    return ctx->load_package(package);
+}
+
 element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, const char** packages, int packages_count)
 {
     assert(ctx);
 
     std::vector<std::string> actual_packages;
     for (int i = 0; i < packages_count; ++i) {
-        printf("load_package %s\n", packages[i]); //todo: proper logging
+        printf("load_packages %s\n", packages[i]); //todo: proper logging
         actual_packages.push_back(packages[i]);
     }
 
     return ctx->load_packages(actual_packages);
+}
+
+element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx)
+{
+    assert(ctx);
+    return ctx->load_prelude();
 }
 
 element_result element_interpreter_clear(element_interpreter_ctx* ctx)
