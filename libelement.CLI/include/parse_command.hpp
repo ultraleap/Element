@@ -33,7 +33,15 @@ namespace libelement::cli
 
 		compiler_message execute(const compilation_input& input) const override
 		{
-			return compiler_message(as_string());
+			element_result result = ELEMENT_OK;
+			result = setup(input);
+
+			if (result != ELEMENT_OK)
+			{
+				return generate_response("False");
+			}
+
+			return generate_response("True");
 		}
 
 		std::string as_string() const override

@@ -30,10 +30,19 @@ namespace libelement::cli
 
 		compiler_message execute(const compilation_input& input) const override
 		{
-			//call into libelement
+			element_result result = ELEMENT_OK;
+			result = setup(input);
 
-			//default move constructor should trigger on return value assignment, right?
-			return compiler_message(message::UNKNOWN_ERROR, message_level::ERROR, "typeof_command");
+			if (result != ELEMENT_OK)
+			{
+				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+			}
+
+			//call into libelement
+			element_value outputs[1]{ 0 };
+			std::vector<trace_site> trace_site;
+
+			return generate_response(result, outputs[0], trace_site);
 		}
 
 		std::string as_string() const override

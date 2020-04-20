@@ -148,11 +148,6 @@ namespace libelement::cli
 			return common_arguments;
 		}
 
-		element_result parse(const compilation_input& input) const
-		{
-			return load_source_files(input);
-		}
-
 		virtual compiler_message execute(const compilation_input& input) const = 0;
 		virtual std::string as_string() const = 0;
 
@@ -168,6 +163,17 @@ namespace libelement::cli
 			default:
 				return compiler_message(message::UNKNOWN_ERROR, message_level::ERROR, std::to_string(value), trace_site);
 			}
+		}
+
+		compiler_message generate_response(std::string message, std::optional<message_level> level = std::nullopt) const
+		{
+			return compiler_message(message, level);
+		}
+
+	protected:
+		element_result setup(const compilation_input& input) const
+		{
+			return load_source_files(input);
 		}
 
 	private:

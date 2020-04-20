@@ -50,12 +50,12 @@ namespace libelement::cli
 		inline static message_codes codes { message_codes("config/Messages.toml") };
 		
 	public:
-		compiler_message(std::string message)
-			: context{ std::move(message) }
+		compiler_message(std::string message, std::optional<message_level> message_level = std::nullopt)
+			: message_code{ std::nullopt }, level{ message_level }, context{ std::move(message) },  trace_stack{ }
 		{
 		}
 
-		compiler_message(message message, message_level level, std::string context, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+		compiler_message(message message, message_level level, std::string context = nullptr, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 			: message_code{ message }, level{ level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
 		{
 		}

@@ -33,8 +33,13 @@ namespace libelement::cli
 
 		compiler_message execute(const compilation_input& input) const override
 		{
-			std::vector<trace_site> what_to_put_in_here{};
+			element_result result = ELEMENT_OK;
+			result = setup(input);
 
+			if (result != ELEMENT_OK)
+			{
+				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+			}
 
 			////call into libelement
 			//const element_function* fn;
@@ -46,10 +51,10 @@ namespace libelement::cli
 			//element_interpreter_compile_function(ictx, fn, &cfn, nullptr);
 			//auto result = element_interpreter_evaluate_function(ictx, cfn, nullptr, 1, outputs, 1, nullptr);
 
-			element_result result = 0;
-			element_value outputs[1];
+			element_value outputs[1] { 0 };
+			std::vector<trace_site> trace_site{};
 
-			return generate_response(result, outputs[0], what_to_put_in_here);
+			return generate_response(result, outputs[0], trace_site);
 		}
 
 		std::string as_string() const override
