@@ -10,6 +10,29 @@
 
 int main(int argc, char** argv)
 {
+    //todo: good location for these + copy on build
+    char* packages[] = {
+        "../test/packages/test/"
+    };
+
+    char* files[] = {
+        "../test/test.ele",
+        "../test/test - Copy.ele"
+    };
+
+    element_interpreter_ctx* ictx;
+    element_interpreter_create(&ictx);
+
+    element_result result = element_interpreter_load_files(ictx, files, 1);
+    element_interpreter_load_packages(ictx, packages, 1);
+
+    element_interpreter_delete(ictx);
+
+    return 0;
+
+    //Old Code
+    /*
+
     const char* input =
         "Potato1(n:num) : num { return = thing.otherthing; } \n"
         "Potato2(n:num) : num { return = thing(x).otherthing; } \n"
@@ -28,7 +51,7 @@ int main(int argc, char** argv)
     element_interpreter_create(&ictx);
 
     clock_t start = clock();
-    const size_t iters = 100;
+    const size_t iters = 100;*/
 
 /*
     for (size_t i = 0; i < iters; ++i) {
@@ -40,8 +63,7 @@ int main(int argc, char** argv)
     }
 */
 
-
-    for (size_t i = 0; i < iters; ++i) {
+    /*for (size_t i = 0; i < iters; ++i) {
         for (int j = 1; j < argc; ++j) {
             // printf("%s: ", argv[i]);
 
@@ -70,8 +92,8 @@ int main(int argc, char** argv)
     double t = 1000000.0 * ((double)(end - start) / CLOCKS_PER_SEC) / iters;
     printf("time (us): %lf\n", t);
 
-    const element_function* fn;
-    element_compiled_function* cfn;
+    const element_function* fn = NULL;
+    element_compiled_function* cfn = NULL;
     element_value inputs[2] = { 3.0, 4.0 };
     element_value outputs[1];
     element_interpreter_get_function(ictx, "num.add", &fn);
@@ -100,5 +122,5 @@ int main(int argc, char** argv)
     element_interpreter_delete(ictx);
     
     getchar();
-    return 0;
+    return 0;*/
 }
