@@ -39,8 +39,11 @@ element_result element_interpreter_create(element_interpreter_ctx** ctx);
 void element_interpreter_delete(element_interpreter_ctx* ctx);
 
 element_result element_interpreter_load_string(element_interpreter_ctx* ctx, const char* string, const char* filename);
+element_result element_interpreter_load_file(element_interpreter_ctx* ctx, const char* file);
 element_result element_interpreter_load_files(element_interpreter_ctx* ctx, const char** files, int files_count);
+element_result element_interpreter_load_package(element_interpreter_ctx* ctx, const char* package);
 element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, const char** packages, int packages_count);
+element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx);
 
 element_result element_interpreter_clear(element_interpreter_ctx* ctx);
 

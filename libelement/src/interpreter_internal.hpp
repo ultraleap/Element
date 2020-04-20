@@ -40,10 +40,14 @@ struct element_interpreter_ctx
     std::vector<std::pair<std::string, ast_unique_ptr>> trees;
     scope_unique_ptr names;
     std::unordered_map<const element_ast*, const element_scope*> ast_names;
+    bool prelude_loaded = false;
 
     element_result load(const char* str, const char* filename = "<input>");
+    element_result load_file(const std::string& file);
     element_result load_files(const std::vector<std::string>& files);
+    element_result load_package(const std::string& package);
     element_result load_packages(const std::vector<std::string>& packages);
+    element_result load_prelude();
     element_result clear();
 };
 
