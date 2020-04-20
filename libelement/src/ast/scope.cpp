@@ -50,11 +50,11 @@ element_item_type element_scope::item_type() const
         return ELEMENT_ITEM_ROOT;
     case ELEMENT_AST_NODE_FUNCTION:
         assert(node->children.size() > ast_idx::fn::body);
-        return (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_INTERFACE)
-            ? ELEMENT_ITEM_INTERFACE
+        return (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_CONSTRAINT)
+            ? ELEMENT_ITEM_CONSTRAINT
             : ELEMENT_ITEM_FUNCTION;
     case ELEMENT_AST_NODE_STRUCT:
-        return ELEMENT_ITEM_TYPE;
+        return ELEMENT_ITEM_STRUCT;
     case ELEMENT_AST_NODE_NAMESPACE:
         return ELEMENT_ITEM_NAMESPACE;
     default:

@@ -16,7 +16,7 @@
 #include "MemoryPool.h"
 
 static std::unordered_set<std::string> qualifiers {"intrinsic", "extern", "static"};
-static std::unordered_set<std::string> constructs {"struct", "namespace"};
+static std::unordered_set<std::string> constructs {"struct", "namespace", "constraint"};
 static std::unordered_set<std::string> reserved_args {};
 
 static element_result check_reserved_words(const std::string& text, bool allow_reserved_arg)
@@ -416,7 +416,7 @@ static element_result parse_scope(element_tokeniser_ctx* tctx, size_t* tindex, e
     return ELEMENT_OK;
 }
 
-static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, bool expr_expects_semi)
+static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, bool expr_requires_semi)
 {
     const element_token* token;
     GET_TOKEN(tctx, *tindex, token);
@@ -426,7 +426,7 @@ static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, el
     } else if (token->type == ELEMENT_TOK_EQUALS) {
         tokenlist_advance(tctx, tindex);
         ELEMENT_OK_OR_RETURN(parse_expression(tctx, tindex, ast));
-        if (expr_expects_semi) {
+        if (expr_requires_semi) {
             GET_TOKEN(tctx, *tindex, token);
             if (token->type == ELEMENT_TOK_SEMICOLON) {
                 tokenlist_advance(tctx, tindex);
@@ -447,23 +447,26 @@ static element_result parse_function(element_tokeniser_ctx* tctx, size_t* tindex
 {
     const element_token* token;
     GET_TOKEN(tctx, *tindex, token);
-
+    
     ast->type = ELEMENT_AST_NODE_FUNCTION;
     element_ast* decl = ast_new_child(ast);
     ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, true));
     decl->flags = declflags;
 
-    element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tctx, *tindex, body);
     if (body->type == ELEMENT_TOK_SEMICOLON) {
-        // interface
-        bodynode->type = ELEMENT_AST_NODE_INTERFACE;
-        tokenlist_advance(tctx, tindex);
+        //bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
+        if (declflags & ELEMENT_AST_FLAG_DECL_INTRINSIC)
+            tokenlist_advance(tctx, tindex);
+        else
+            return ELEMENT_ERROR_INVALID_ARCHIVE; //todo: more specific error code/logging
     } else {
+        element_ast* bodynode = ast_new_child(ast);
         // real body of some sort
         ELEMENT_OK_OR_RETURN(parse_body(tctx, tindex, bodynode, true));
     }
+
     return ELEMENT_OK;
 }
 
@@ -485,13 +488,33 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
     tokenlist_advance(tctx, tindex);
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         // interface
-        bodynode->type = ELEMENT_AST_NODE_INTERFACE;
+        bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
     } else if (body->type == ELEMENT_TOK_BRACEL) {
         // scope (struct body)
         ELEMENT_OK_OR_RETURN(parse_scope(tctx, tindex, bodynode));
     } else {
         return ELEMENT_ERROR_INVALID_ARCHIVE;
     }
+    return ELEMENT_OK;
+}
+
+static element_result parse_constraint(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, element_ast_flags declflags)
+{
+    const element_token* token;
+    GET_TOKEN(tctx, *tindex, token);
+
+    ast->type = ELEMENT_AST_NODE_CONSTRAINT;
+    element_ast* decl = ast_new_child(ast);
+    ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, true));
+    decl->flags = declflags;
+
+    const element_token* body;
+    GET_TOKEN(tctx, *tindex, body);
+    if (body->type == ELEMENT_TOK_SEMICOLON)
+        tokenlist_advance(tctx, tindex);
+    else
+        return ELEMENT_ERROR_INVALID_ARCHIVE; //todo: specific error code
+
     return ELEMENT_OK;
 }
 
@@ -529,6 +552,8 @@ static element_result parse_item(element_tokeniser_ctx* tctx, size_t* tindex, el
         if (tctx->text(token) == "struct") {
             tokenlist_advance(tctx, tindex);
             ELEMENT_OK_OR_RETURN(parse_struct(tctx, tindex, ast, flags));
+        } else if (tctx->text(token) == "constraint") {
+            ELEMENT_OK_OR_RETURN(parse_constraint(tctx, tindex, ast, flags));
         } else {
             ELEMENT_OK_OR_RETURN(parse_function(tctx, tindex, ast, flags));
         }
@@ -600,7 +625,7 @@ static element_result ast_print_depth(element_ast* ast, int depth)
             PRINTCASE(ELEMENT_AST_NODE_FUNCTION);
             PRINTCASE(ELEMENT_AST_NODE_STRUCT);
             PRINTCASE(ELEMENT_AST_NODE_SCOPE);
-            PRINTCASE(ELEMENT_AST_NODE_INTERFACE);
+            PRINTCASE(ELEMENT_AST_NODE_CONSTRAINT);
             PRINTCASE(ELEMENT_AST_NODE_EXPRESSION);
             PRINTCASE(ELEMENT_AST_NODE_EXPRLIST);
             PRINTCASE(ELEMENT_AST_NODE_PORTLIST);

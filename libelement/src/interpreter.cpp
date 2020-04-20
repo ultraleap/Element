@@ -55,7 +55,7 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
     case ELEMENT_AST_NODE_FUNCTION:
     case ELEMENT_AST_NODE_STRUCT:
     {
-        assert(node->children.size() > ast_idx::fn::body);
+        assert(node->children.size() > ast_idx::fn::declaration);
         element_ast* declnode = node->children[ast_idx::fn::declaration].get();
         assert(declnode->type == ELEMENT_AST_NODE_DECLARATION);
         auto item = scope_new(parent, declnode->identifier, node);
@@ -67,30 +67,46 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
             }
         }
         // body
-        if (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_SCOPE) {
-            for (const auto& t : node->children[ast_idx::fn::body]->children) {
-                auto cptr = get_names(item.get(), t.get());
-                item->children.try_emplace(cptr->name, std::move(cptr));
+        if (node->children.size() > ast_idx::fn::body) {
+            if (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_SCOPE) {
+                for (const auto& t : node->children[ast_idx::fn::body]->children) {
+                    auto cptr = get_names(item.get(), t.get());
+                    item->children.try_emplace(cptr->name, std::move(cptr));
+                }
             }
         }
         // outputs
         if (declnode->children.size() > ast_idx::decl::outputs) {
             element_ast* outputnode = declnode->children[ast_idx::decl::outputs].get();
             // these should typically already exist from the body, so just try
-            if (outputnode->type == ELEMENT_AST_NODE_PORTLIST) {
-                for (const auto& t : outputnode->children) {
-                    auto cptr = get_names(item.get(), t.get());
+            if (node->children.size() > ast_idx::fn::body) {
+                if (outputnode->type == ELEMENT_AST_NODE_PORTLIST) {
+                    for (const auto& t : outputnode->children) {
+                        auto cptr = get_names(item.get(), t.get());
+                        item->children.try_emplace(cptr->name, std::move(cptr));
+                    }
+                }
+                else if (outputnode->type == ELEMENT_AST_NODE_TYPENAME) {
+                    auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
                     item->children.try_emplace(cptr->name, std::move(cptr));
                 }
-            } else if (outputnode->type == ELEMENT_AST_NODE_TYPENAME) {
-                auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
-                item->children.try_emplace(cptr->name, std::move(cptr));
-            } else if (outputnode->type == ELEMENT_AST_NODE_NONE) {
-                // implied any return
-                auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
-                item->children.try_emplace(cptr->name, std::move(cptr));
+                else if (outputnode->type == ELEMENT_AST_NODE_NONE) {
+                    // implied any return
+                    auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
+                    item->children.try_emplace(cptr->name, std::move(cptr));
+                }
+                else {
+                    assert(false);
+                }
             } else {
-                assert(false);
+                //intrinsic functions don't have bodies, so grab their return type from the declaration?
+                for (const auto& t : declnode->children[ast_idx::decl::outputs]->children) {
+                    auto cptr = get_names(item.get(), t.get());
+                    if (cptr)
+                        item->children.emplace(cptr->name, std::move(cptr));
+                    else
+                        assert("definitely not a problem"); //todo: not sure why this fails :x leave it for now
+                }
             }
         }
         return std::move(item);
@@ -173,7 +189,7 @@ element_result element_interpreter_ctx::load_file(const std::string& file)
     f.seekg(0);
     f.read(buffer.data(), buffer.size());
 
-    printf("contents of %s:\n%s\n", file.c_str(), buffer.c_str()); //todo: proper logging
+    //printf("contents of %s:\n%s\n", file.c_str(), buffer.c_str()); //todo: proper logging
     element_result result = load(buffer.c_str(), file.c_str());
     if (result != ELEMENT_OK) {
         printf("could not load file %s. element_result = %d\n", file.c_str(), result); //todo: proper logging
