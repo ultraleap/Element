@@ -33,7 +33,6 @@ CREATE_CAST_CONVENIENCE_FUNCTIONS(function)
 #undef CREATE_CAST_CONVENIENCE_FUNCTIONS
 #undef LIBELEMENT_CONCAT
 
-
 struct element_interpreter_ctx
 {
     element_interpreter_ctx();
@@ -43,6 +42,8 @@ struct element_interpreter_ctx
     std::unordered_map<const element_ast*, const element_scope*> ast_names;
 
     element_result load(const char* str, const char* filename = "<input>");
+    element_result load_files(const std::vector<std::string>& files);
+    element_result load_packages(const std::vector<std::string>& packages);
     element_result clear();
 };
 

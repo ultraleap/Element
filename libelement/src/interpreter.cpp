@@ -7,6 +7,18 @@
 #include <algorithm>
 #include <functional>
 #include <cassert>
+#include <filesystem>
+#include <fstream>
+
+bool file_exists(const std::string& file)
+{
+    return std::filesystem::exists(file) && std::filesystem::is_regular_file(file);
+}
+
+bool directory_exists(const std::string& directory)
+{
+    return std::filesystem::exists(directory) && std::filesystem::is_directory(directory);
+}
 
 
 static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
@@ -150,6 +162,69 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     return ELEMENT_OK;
 }
 
+element_result element_interpreter_ctx::load_files(const std::vector<std::string>& files)
+{
+    element_result ret = ELEMENT_OK;
+
+    for (const auto& filename : files) {
+        if (!file_exists(filename)) {
+            auto abs = std::filesystem::absolute(std::filesystem::path(filename)).string();
+            printf("file %s was not found at path %s\n",
+                filename.c_str(),
+                abs.c_str()); //todo: proper logging
+            continue; //todo: error handling
+        }
+
+        printf("loading valid file: %s\n", filename.c_str()); //todo: proper logging
+        std::string buffer;
+
+        std::ifstream f(filename);
+        f.seekg(0, std::ios::end);
+        buffer.resize(f.tellg());
+        f.seekg(0);
+        f.read(buffer.data(), buffer.size());
+
+        printf("contents of %s:\n%s\n", filename.c_str(), buffer.c_str()); //todo: proper logging
+        auto result = load(buffer.c_str(), filename.c_str());
+        if (result != ELEMENT_OK) {
+            printf("could not load file %s. element_result = %d\n", filename.c_str(), result); //todo: proper logging
+            if (ret == ELEMENT_OK)
+                ret = result;
+        } else {
+            printf("successfully loaded file %s\n", filename.c_str()); //todo: proper logging
+        }
+    }
+
+    return ret;
+}
+
+element_result element_interpreter_ctx::load_packages(const std::vector<std::string>& packages)
+{
+    std::vector<std::string> files;
+
+    for (const auto& package : packages) {
+        if (!directory_exists(package)) {
+            auto abs = std::filesystem::absolute(std::filesystem::path(package)).string();
+            printf("package %s was not found at location %s\n",
+                package.c_str(),
+                abs.c_str()); //todo: proper logging
+            continue; //todo: error handling
+        }
+
+        for (const auto& file : std::filesystem::recursive_directory_iterator(package)) {
+            auto filename = file.path().string();
+            printf("found file %s in %s\n", filename.c_str(), package.c_str()); //todo: proper logging
+            auto extension = file.path().extension().string();
+            if (extension == ".ele")
+                files.push_back(file.path().string());
+            else
+                printf("extension was %s instead of '.ele'\n", extension.c_str()); //todo: proper logging
+        }
+    }
+
+    return load_files(files);
+}
+
 element_interpreter_ctx::element_interpreter_ctx()
 {
     // TODO: hack, remove
@@ -181,6 +256,32 @@ element_result element_interpreter_load_string(element_interpreter_ctx* ctx, con
 {
     assert(ctx);
     return ctx->load(string, filename);
+}
+
+element_result element_interpreter_load_files(element_interpreter_ctx* ctx, const char** files, int files_count)
+{
+    assert(ctx);
+
+    std::vector<std::string> actual_files;
+    for (int i = 0; i < files_count; ++i) {
+        printf("load_file %s\n", files[i]); //todo: proper logging
+        actual_files.push_back(files[i]);
+    }
+
+    return ctx->load_files(actual_files);
+}
+
+element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, const char** packages, int packages_count)
+{
+    assert(ctx);
+
+    std::vector<std::string> actual_packages;
+    for (int i = 0; i < packages_count; ++i) {
+        printf("load_package %s\n", packages[i]); //todo: proper logging
+        actual_packages.push_back(packages[i]);
+    }
+
+    return ctx->load_packages(actual_packages);
 }
 
 element_result element_interpreter_clear(element_interpreter_ctx* ctx)
