@@ -12,6 +12,13 @@ namespace libelement::cli
 	struct evaluate_command_arguments 
 	{
 		std::string expression;
+
+		std::string as_string() const
+		{
+			std::stringstream ss;
+			ss << "--expression " << expression << " ";
+			return ss.str();
+		}
 	};
 
 	class evaluate_command final : public command
@@ -43,6 +50,13 @@ namespace libelement::cli
 			element_value outputs[1];
 
 			return generate_response(result, outputs[0], what_to_put_in_here);
+		}
+
+		std::string as_string() const override
+		{
+			std::stringstream ss;
+			ss << custom_arguments.as_string() << " " << common_arguments.as_string();
+			return ss.str();
 		}
 
 		static void configure(CLI::App& app, const std::shared_ptr<common_command_arguments>& common_arguments, command::callback callback)

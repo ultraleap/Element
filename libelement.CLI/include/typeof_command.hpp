@@ -9,6 +9,13 @@ namespace libelement::cli
 	struct typeof_command_arguments 
 	{
 		std::string expression;
+
+		std::string as_string() const
+		{
+			std::stringstream ss;
+			ss << "--expression " << expression << " ";
+			return ss.str();
+		}
 	};
 
 	class typeof_command final : public command
@@ -27,6 +34,13 @@ namespace libelement::cli
 
 			//default move constructor should trigger on return value assignment, right?
 			return compiler_message(message::UNKNOWN_ERROR, message_level::ERROR, "typeof_command");
+		}
+
+		std::string as_string() const override
+		{
+			std::stringstream ss;
+			ss << custom_arguments.as_string() << " " << common_arguments.as_string();
+			return ss.str();
 		}
 
 		static void configure(CLI::App& app, const std::shared_ptr<common_command_arguments>& common_arguments, command::callback callback)

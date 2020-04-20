@@ -14,11 +14,46 @@ namespace libelement::cli
 	struct common_command_arguments
 	{
 		bool no_prelude = false;
+		bool debug = false;
+		bool log_json = false;
+		std::string verbosity;
 		std::vector<std::string> packages{};
 		std::vector<std::string> source_files{};
-		bool debug = false;
-		std::string verbosity;
-		bool log_json = false;
+
+		std::string as_string() const 
+		{
+			std::stringstream ss;
+			
+			if (no_prelude)
+				ss << "--no-prelude ";
+
+			if (debug)
+				ss << "--debug ";
+
+			if (log_json)
+				ss << "--log-json ";
+
+			if (!verbosity.empty())
+				ss << "--verbosity " << verbosity << " ";
+
+			if (!packages.empty()) 
+			{
+				ss << "--packages ";
+
+				for (const auto& package : packages) 
+					ss << package << " ";
+			}
+
+			if (!source_files.empty())
+			{
+				ss << "--source-files ";
+
+				for (const auto& source_file : source_files)
+					ss << source_file << " ";
+			}
+
+			return ss.str();
+		}
 	};
 
 	//not sure if this is required, depends on how we choose to pipe information into libelement
@@ -85,9 +120,8 @@ namespace libelement::cli
 
 	class command
 	{
-		common_command_arguments common_arguments;
-
 	protected:
+		common_command_arguments common_arguments;
 		element_interpreter_ctx* ictx;
 
 	public:
@@ -120,6 +154,7 @@ namespace libelement::cli
 		}
 
 		virtual compiler_message execute(const compilation_input& input) const = 0;
+		virtual std::string as_string() const = 0;
 
 		using callback = std::function<void(const command&)>;
 		static void configure(CLI::App& app, command::callback callback);

@@ -16,13 +16,15 @@ void command_callback(const command& command) {
 	auto result = command.parse(input);
 	if (!result)
 	{
-		auto parse_response = compiler_message(message::PARSE_ERROR, message_level::INFORMATION, "parsing failed");
+		auto parse_response = compiler_message(command.as_string());
 		std::cout << parse_response.serialize() << std::endl;
+		std::cout << compiler_message("False").serialize() << std::endl;
 		return;
 	}
 
 	auto response = command.execute(input); //is input still needed at this point if we perform setup in initialise?
 	std::cout << response.serialize() << std::endl;
+	std::cout << compiler_message("True").serialize() << std::endl;
 } 
 
 int main(const int argc, char** argv)

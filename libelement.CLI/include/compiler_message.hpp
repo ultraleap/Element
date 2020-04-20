@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <optional>
 
 #include "message_codes.hpp"
 
@@ -40,8 +41,8 @@ namespace libelement::cli
 		 static constexpr const char* const key_context { "Context" };
 		 static constexpr const char* const key_trace_stack { "TraceStack" };
 
-		message message_code;
-		message_level level;
+		std::optional<message> message_code;
+		std::optional<message_level> level;
 		std::string context;
 		std::vector<trace_site> trace_stack;
 
@@ -49,8 +50,8 @@ namespace libelement::cli
 		inline static message_codes codes { message_codes("config/Messages.toml") };
 		
 	public:
-		compiler_message(std::string message, message_level level)
-			: message_code{ message::SUCCESS }, level{ level }, context{ std::move(message) }
+		compiler_message(std::string message)
+			: context{ std::move(message) }
 		{
 		}
 
