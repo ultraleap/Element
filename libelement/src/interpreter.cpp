@@ -98,15 +98,6 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
                 else {
                     assert(false);
                 }
-            } else {
-                //intrinsic functions don't have bodies, so grab their return type from the declaration?
-                for (const auto& t : declnode->children[ast_idx::decl::outputs]->children) {
-                    auto cptr = get_names(item.get(), t.get());
-                    if (cptr)
-                        item->children.emplace(cptr->name, std::move(cptr));
-                    else
-                        assert("definitely not a problem"); //todo: not sure why this fails :x leave it for now
-                }
             }
         }
         return std::move(item);

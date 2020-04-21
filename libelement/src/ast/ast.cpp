@@ -453,16 +453,16 @@ static element_result parse_function(element_tokeniser_ctx* tctx, size_t* tindex
     ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, true));
     decl->flags = declflags;
 
+    element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tctx, *tindex, body);
     if (body->type == ELEMENT_TOK_SEMICOLON) {
-        //bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
+        bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
         if (declflags & ELEMENT_AST_FLAG_DECL_INTRINSIC)
             tokenlist_advance(tctx, tindex);
         else
             return ELEMENT_ERROR_INVALID_ARCHIVE; //todo: more specific error code/logging
     } else {
-        element_ast* bodynode = ast_new_child(ast);
         // real body of some sort
         ELEMENT_OK_OR_RETURN(parse_body(tctx, tindex, bodynode, true));
     }
@@ -510,10 +510,13 @@ static element_result parse_constraint(element_tokeniser_ctx* tctx, size_t* tind
 
     const element_token* body;
     GET_TOKEN(tctx, *tindex, body);
-    if (body->type == ELEMENT_TOK_SEMICOLON)
+    if (body->type == ELEMENT_TOK_SEMICOLON) {
+        ast->type = ELEMENT_AST_NODE_CONSTRAINT;
         tokenlist_advance(tctx, tindex);
-    else
+    }
+    else {
         return ELEMENT_ERROR_INVALID_ARCHIVE; //todo: specific error code
+    }
 
     return ELEMENT_OK;
 }
