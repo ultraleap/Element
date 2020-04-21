@@ -8,6 +8,17 @@ namespace libelement::cli
 	struct parse_command_arguments
 	{
 		bool no_validation;
+
+		std::string as_string() const
+		{
+			std::stringstream ss;
+			ss << "--parse ";
+
+			if (no_validation)
+				ss << "--no-validation ";
+
+			return ss.str();
+		}
 	};
 
 	class parse_command final : public command
@@ -22,10 +33,22 @@ namespace libelement::cli
 
 		compiler_message execute(const compilation_input& input) const override
 		{
-			//call into libelement
+			element_result result = ELEMENT_OK;
+			result = setup(input);
 
-			//default move constructor should trigger on return value assignment, right?
-			return compiler_message(10, message_level::ERROR, "parse_command", std::vector<trace_site>{});
+			if (result != ELEMENT_OK)
+			{
+				return generate_response("False");
+			}
+
+			return generate_response("True");
+		}
+
+		std::string as_string() const override
+		{
+			std::stringstream ss;
+			ss << custom_arguments.as_string() << " " << common_arguments.as_string();
+			return ss.str();
 		}
 
 		static void configure(CLI::App& app, const std::shared_ptr<common_command_arguments>& common_arguments, command::callback callback)

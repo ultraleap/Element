@@ -14,11 +14,46 @@ namespace libelement::cli
 	struct common_command_arguments
 	{
 		bool no_prelude = false;
+		bool debug = false;
+		bool log_json = false;
+		std::string verbosity;
 		std::vector<std::string> packages{};
 		std::vector<std::string> source_files{};
-		bool debug = false;
-		std::string verbosity;
-		bool log_json = false;
+
+		std::string as_string() const 
+		{
+			std::stringstream ss;
+			
+			if (no_prelude)
+				ss << "--no-prelude ";
+
+			if (debug)
+				ss << "--debug ";
+
+			if (log_json)
+				ss << "--log-json ";
+
+			if (!verbosity.empty())
+				ss << "--verbosity " << verbosity << " ";
+
+			if (!packages.empty()) 
+			{
+				ss << "--packages ";
+
+				for (const auto& package : packages) 
+					ss << package << " ";
+			}
+
+			if (!source_files.empty())
+			{
+				ss << "--source-files ";
+
+				for (const auto& source_file : source_files)
+					ss << source_file << " ";
+			}
+
+			return ss.str();
+		}
 	};
 
 	//not sure if this is required, depends on how we choose to pipe information into libelement
@@ -85,9 +120,8 @@ namespace libelement::cli
 
 	class command
 	{
-		common_command_arguments common_arguments;
-
 	protected:
+		common_command_arguments common_arguments;
 		element_interpreter_ctx* ictx;
 
 	public:
@@ -114,34 +148,38 @@ namespace libelement::cli
 			return common_arguments;
 		}
 
-		bool initialise(const compilation_input& input) const
-		{
-			load_source_files(input);
-			//load packages etc
-			return true;
-		}
+		virtual compiler_message execute(const compilation_input& input) const = 0;
+		virtual std::string as_string() const = 0;
 
 		using callback = std::function<void(const command&)>;
-
-		virtual compiler_message execute(const compilation_input& input) const = 0;
-
 		static void configure(CLI::App& app, command::callback callback);
 
-	protected:
-		compiler_message generate_response(element_result result, element_value value, std::vector<trace_site>& trace_site) const
+		compiler_message generate_response(element_result result, element_value value, const std::vector<trace_site>& trace_site = std::vector<libelement::cli::trace_site>()) const
 		{
 			switch (result)
 			{
 			case ELEMENT_OK:
-				return compiler_message(0, message_level::INFORMATION, std::to_string(value), trace_site);
+				return compiler_message(message::SUCCESS, message_level::INFORMATION, std::to_string(value), trace_site);
 			default:
-				return compiler_message(10, message_level::ERROR, "ERROR", trace_site);
+				return compiler_message(message::UNKNOWN_ERROR, message_level::ERROR, std::to_string(value), trace_site);
 			}
 		}
 
-	private:
-		void load_source_files(const compilation_input& input) const
+		compiler_message generate_response(std::string message, std::optional<message_level> level = std::nullopt) const
 		{
+			return compiler_message(message, level);
+		}
+
+	protected:
+		element_result setup(const compilation_input& input) const
+		{
+			return load_source_files(input);
+		}
+
+	private:
+		element_result load_source_files(const compilation_input& input) const
+		{
+			element_result result = ELEMENT_OK;
 			for (auto& file : input.get_source_files())
 			{
 				std::string buffer;
@@ -152,9 +190,15 @@ namespace libelement::cli
 				f.seekg(0);
 				f.read(buffer.data(), buffer.size());
 
-				element_interpreter_load_string(ictx, buffer.c_str(), file.c_str());
+				result = element_interpreter_load_string(ictx, buffer.c_str(), file.c_str());
 				element_interpreter_clear(ictx);
+
+				//early return
+				if (result != ELEMENT_OK)
+					return result;
 			}
+
+			return result;
 		}
 	};
 }

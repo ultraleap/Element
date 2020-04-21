@@ -13,10 +13,16 @@ std::string compiler_message::serialize() const
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
 	writer.StartObject();
-	writer.String(key_message_code);
-	writer.Int(message_code);
-	writer.String(key_message_level);
-	writer.Int(static_cast<int>(level));
+	if (message_code.has_value()) 
+	{
+		writer.String(key_message_code);
+		writer.Int(static_cast<int>(message_code.value()));
+	}
+	if (level.has_value()) 
+	{
+		writer.String(key_message_level);
+		writer.Int(static_cast<int>(level.value()));
+	}
 	writer.String(key_context);
 	writer.String(context.c_str());
 	writer.String(key_trace_stack);

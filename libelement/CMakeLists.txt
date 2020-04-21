@@ -72,6 +72,13 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${element_sources})
 # Don't rely on compiler extensions
 set_property(TARGET element PROPERTY CMAKE_CXX_EXTENSIONS OFF)
 
+add_custom_command (
+	TARGET element POST_BUILD 
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+	"${CMAKE_CURRENT_SOURCE_DIR}/../Common"
+	"${CMAKE_SOURCE_DIR}/$<CONFIGURATION>")
+
+message(${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONFIGURATION})
 target_include_directories(element
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"

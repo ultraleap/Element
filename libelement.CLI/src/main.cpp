@@ -8,18 +8,14 @@
 
 using namespace libelement::cli;
 
-void command_callback(const command& command) {
+void command_callback(const command& command) 
+{
+	//feedback request
+	auto request = compiler_message(command.as_string());
+	std::cout << request.serialize() << std::endl;
 
 	//callback in case we need access to the command for some compiler_message generation shenanigans
 	auto input = compilation_input(command.get_common_arguments());
-
-	auto initialised = command.initialise(input);
-	if (!initialised)
-	{
-		std::cerr << "Failed to initialise" << std::endl;
-		return;
-	}
-
 	auto response = command.execute(input); //is input still needed at this point if we perform setup in initialise?
 	std::cout << response.serialize() << std::endl;
 } 

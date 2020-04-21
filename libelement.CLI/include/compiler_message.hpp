@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <optional>
 
 #include "message_codes.hpp"
 
@@ -40,22 +41,22 @@ namespace libelement::cli
 		 static constexpr const char* const key_context { "Context" };
 		 static constexpr const char* const key_trace_stack { "TraceStack" };
 
-		int message_code;
-		message_level level;
+		std::optional<message> message_code;
+		std::optional<message_level> level;
 		std::string context;
 		std::vector<trace_site> trace_stack;
 
 		//this is nasty, static initialisation that performs file reading, reconsider if it proves problematic
-		inline static message_codes codes { message_codes("config/Messages.toml") };
+		inline static message_codes codes { message_codes("Messages.toml") };
 		
 	public:
-		compiler_message(std::string message, message_level level)
-			: message_code{ -1 }, level{ level }, context{ std::move(message) }
+		compiler_message(std::string message, std::optional<message_level> message_level = std::nullopt)
+			: message_code{ std::nullopt }, level{ message_level }, context{ std::move(message) },  trace_stack{ }
 		{
 		}
 
-		compiler_message(const int message_code, message_level level, std::string context, std::vector<trace_site> trace_stack)
-			: message_code{ message_code }, level{ level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
+		compiler_message(message message, message_level level, std::string context = nullptr, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+			: message_code{ message }, level{ level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
 		{
 		}
 		
