@@ -69,7 +69,12 @@ namespace Element.AST
                 
                 var callScope = functionSignature switch
                 {
+                    // If the signature is an applied function we want to use it as the call scope. More arguments are filled by subsequent applications until full application.
                     AppliedFunctionBase appliedFunction => appliedFunction,
+                    
+                    AnonymousFunction anonymousFunction => anonymousFunction.Parent,
+                    
+                    // If the signature is a function with a body then we can use the body 
                     IFunctionWithBody functionWithBody when functionWithBody.Body is IDeclared declared => declared.Declarer.ChildScope ?? declared.Declarer.ParentScope,
                     Declaration declaration => declaration.ChildScope ?? declaration.ParentScope,
                     _ => compilationContext.SourceContext.GlobalScope

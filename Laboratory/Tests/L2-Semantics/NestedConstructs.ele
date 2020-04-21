@@ -15,6 +15,13 @@ addUsingLocalCapture(a:Num, b:Num)
 	return = localAdd(b);
 }
 
+addUsingLocalCaptureAsFirstClassFunction(a:Num, b:Num)
+{
+	localAdd(in:Num) = a.add(in);
+	adder = localAdd;
+	return = adder(b);
+}
+
 addBTwice(a:Num, b:Num)
 {
 	localAdd(in:Num) = a.add(in);
@@ -37,4 +44,10 @@ addUsingLocalWithShadowing(a:Num, b:Num)
 		return = a.add(b);
 	}
 	return = localAdd(a, b);
+}
+
+addUsingLambdaWithCapture(a:Num, b:Num)
+{
+    adder = _(a) = a.add(b);
+    return = adder(a);
 }

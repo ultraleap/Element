@@ -37,9 +37,6 @@ namespace Element.AST
             // TODO: Needs to return anonymous scope, not a struct instance! This currently only works when the function outputs the same type as the inputs, e.g. (Vec3, Vec3) -> Vec3
             if (type is DeclaredStruct declaredStruct)
             {
-                /*return declaredStruct.CreateInstance(Enumerable.Range(0, ((IFunctionSignature)declaredStruct).Inputs.Length)
-                                                               .Select(i => new Mapping(func, funcArgs))
-                                                               .ToArray());*/
                 return declaredStruct.CreateInstance(((IFunctionSignature)declaredStruct).Inputs
                                                                .Select(p => func.ResolveCall(funcArgs.Cast<StructInstance>()
                                                                                                      .Select(inst => inst[p.Identifier.Value, false, compilationContext])
@@ -49,25 +46,5 @@ namespace Element.AST
 
             return compilationContext.LogError(14, "Arguments to memberwise must be constants or struct instances");
         }
-
-        /*private class Mapping : IFunction
-        {
-            private readonly IFunctionSignature _function;
-            private readonly IValue[] _elements;
-
-            public Mapping(IFunctionSignature function, IValue[] elements)
-            {
-                _function = function;
-                _elements = elements;
-            }
-
-            IType IValue.Type => FunctionType.Instance;
-            IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
-            Port[] IFunctionSignature.Inputs { get; } = Array.Empty<Port>();
-            Port IFunctionSignature.Output => Port.ReturnPort(AnyConstraint.Instance);
-
-            IValue IFunction.Call(IValue[] arguments, CompilationContext compilationContext) =>
-                _function.ResolveCall(_elements, false, compilationContext);
-        }*/
     }
 }

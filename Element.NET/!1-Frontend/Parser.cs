@@ -94,7 +94,7 @@ namespace Element
             return (line, column, lineCharacterIndex);
         }
 
-        private static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
+        public static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
         public static bool Parse<T>(this SourceContext context, string text, out T output)
         {
@@ -133,34 +133,6 @@ namespace Element
             }
 
             return true;
-        }
-
-        private static bool ParseFile(this SourceContext context, FileInfo file, bool validate)
-        {
-            var success = context.Parse<SourceScope>(Preprocess(File.ReadAllText(file.FullName)), out var sourceScope);
-            if (success)
-            {
-                context.GlobalScope[file] = sourceScope;
-                context.GlobalScope.InitializeItems();
-                if (validate)
-                {
-                    success &= context.GlobalScope.ValidateScope(context);
-                }
-            }
-
-            return success;
-        }
-
-
-        /// <summary>
-        /// Parses all the given files as Element source files into the compilation context
-        /// </summary>
-        public static (bool OverallSuccess, IEnumerable<(bool Success, FileInfo FileInfo)> Results) ParseFiles(this SourceContext context,
-            IEnumerable<FileInfo> files)
-        {
-            (bool Success, FileInfo File)[] fileResults = files.Where(file => context.GlobalScope[file] == null).Select(file => (context.ParseFile(file, false), file)).ToArray();
-            var overallSuccess = fileResults.All(fr => fr.Success) && context.GlobalScope.ValidateScope(context);
-            return (overallSuccess, fileResults);
         }
     }
 }

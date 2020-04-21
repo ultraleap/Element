@@ -36,7 +36,11 @@ namespace Element.AST
         public static int? GetSerializedSize(this IValue value, CompilationContext compilationContext) => value switch
         {
             Element.Expression _ => 1,
-            StructInstance structInstance when structInstance.Type == ListType.Instance => ListType.GetListCount(structInstance, compilationContext),
+            StructInstance structInstance when structInstance.Type == ListType.Instance => ListType.GetListCount(structInstance, compilationContext) switch
+            {
+                (ListType.CountType t, int count) when t == ListType.CountType.Constant => count,
+                _ => compilationContext.LogError(1, "List instance is not serializable - lists must have a constant count to be serializable").Return((int?)null)
+            },
             IEnumerable<IValue> values => values.Select(v => v.GetSerializedSize(compilationContext)).Aggregate((int?)0, (a, b) => a == null || b == null ? null : a + b),
             _ => compilationContext.LogError(1, $"'{value}' is not serializable").Return((int?)null)
         };

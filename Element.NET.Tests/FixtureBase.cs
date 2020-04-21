@@ -10,7 +10,17 @@ namespace Element.NET.Tests
             else TestContext.WriteLine(message.ToString());
         }
 
-        protected SourceContext? MakeSourceContext(CompilationInput compilationInput = default) =>
-            SourceContext.TryCreate(compilationInput ?? new CompilationInput(FailOnError), out var sourceContext) ? sourceContext : null;
+        protected static SourceContext? MakeSourceContext(CompilationInput compilationInput = default, string extraSource = default)
+        {
+            var result = SourceContext.TryCreate(compilationInput ?? new CompilationInput(FailOnError), out var sourceContext)
+                       ? sourceContext
+                       : null;
+            if (!string.IsNullOrEmpty(extraSource))
+            {
+                result?.LoadElementSourceString("TestSource", extraSource);
+            }
+
+            return result;
+        }
     }
 }

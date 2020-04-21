@@ -5,6 +5,13 @@ namespace Element.AST
 {
     public sealed class ListType : IntrinsicType<ListType>
     {
+        public enum CountType
+        {
+            Invalid,
+            Constant,
+            Dynamic,
+        }
+        
         public override string Name => "List";
         
         private static readonly Identifier _indexerId = new Identifier("at");
@@ -12,22 +19,23 @@ namespace Element.AST
 
         public override Port[] Inputs { get; } = {new Port(_indexerId, FunctionType.Instance), new Port(_countId, NumType.Instance)};
 
-        public static int? GetListCount(StructInstance listInstance, CompilationContext context)
+        public static (CountType CountType, int Count) GetListCount(StructInstance listInstance, CompilationContext context)
         {
             if (listInstance == null) throw new ArgumentNullException(nameof(listInstance));
             if (listInstance.Type != Instance)
             {
-                context.LogError(8, "Struct instance must be a list to evaluate elements.");
-                return null;
-            }
-            
-            if (!(listInstance[_countId, false, context] is Constant count))
-            {
-                context.LogError(8, $"Couldn't get List.'{_countId}' from '{listInstance}'. Count must be a constant to evaluate elements.");
-                return null;
+                context.LogError(8, "Struct instance is not a list");
+                return (CountType.Invalid, -1);
             }
 
-            return (int)count;
+            return listInstance[_countId, false, context] switch
+            {
+                Constant c => (CountType.Constant, (int)c),
+                Element.Expression expr => (CountType.Dynamic, -1), // Can't get count for a non-constant expression
+                _ => context
+                     .LogError(8, $"Couldn't get List.'{_countId}' from '{listInstance}'. Count must be a num expression.")
+                     .Return((CountType.Invalid, -1))
+            };
         }
         
         /// <summary>
@@ -38,18 +46,27 @@ namespace Element.AST
         {
             if (listInstance == null) throw new ArgumentNullException(nameof(listInstance));
 
-            var count = GetListCount(listInstance, context);
-            if (!count.HasValue) return Array.Empty<IValue>();
-            
-            if (!(listInstance[_indexerId, false, context] is IFunctionSignature indexer))
+            var (countType, count) = GetListCount(listInstance, context);
+
+            switch (countType)
             {
-                context.LogError(8, $"Couldn't get List.'{_indexerId}' from '{listInstance}'.");
-                return Array.Empty<IValue>();
-            }
+                case CountType.Invalid: return Array.Empty<IValue>();
+                case CountType.Constant:
+                    if (!(listInstance[_indexerId, false, context] is IFunctionSignature indexer))
+                    {
+                        context.LogError(8, $"Couldn't get List.'{_indexerId}' from '{listInstance}'.");
+                        return Array.Empty<IValue>();
+                    }
             
-            return Enumerable.Range(0, count.Value)
-                             .Select(i => indexer.ResolveCall(new IValue[] {new Constant(i)}, false, context))
-                             .ToArray();
+                    return Enumerable.Range(0, count)
+                                     .Select(i => indexer.ResolveCall(new IValue[] {new Constant(i)}, false, context))
+                                     .ToArray();
+                case CountType.Dynamic:
+                    context.LogError(8, "Count must be a constant expression when performing fold.");
+                    return Array.Empty<IValue>();
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
     }
 }
