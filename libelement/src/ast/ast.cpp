@@ -15,7 +15,7 @@
 #include "token_internal.hpp"
 #include "MemoryPool.h"
 
-static std::unordered_set<std::string> qualifiers {"intrinsic", "extern", "static"};
+static std::unordered_set<std::string> qualifiers {"intrinsic"};
 static std::unordered_set<std::string> constructs {"struct", "namespace", "constraint"};
 static std::unordered_set<std::string> reserved_args {};
 
@@ -556,6 +556,7 @@ static element_result parse_item(element_tokeniser_ctx* tctx, size_t* tindex, el
             tokenlist_advance(tctx, tindex);
             ELEMENT_OK_OR_RETURN(parse_struct(tctx, tindex, ast, flags));
         } else if (tctx->text(token) == "constraint") {
+            tokenlist_advance(tctx, tindex);
             ELEMENT_OK_OR_RETURN(parse_constraint(tctx, tindex, ast, flags));
         } else {
             ELEMENT_OK_OR_RETURN(parse_function(tctx, tindex, ast, flags));

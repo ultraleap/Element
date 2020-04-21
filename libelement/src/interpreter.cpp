@@ -53,6 +53,7 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
         return std::move(item);
     }
     case ELEMENT_AST_NODE_FUNCTION:
+    case ELEMENT_AST_NODE_CONSTRAINT:
     case ELEMENT_AST_NODE_STRUCT:
     {
         assert(node->children.size() > ast_idx::fn::declaration);
@@ -273,8 +274,10 @@ element_result element_interpreter_ctx::load_prelude()
     if (result == ELEMENT_OK)
         return result;
 
-    auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
-    printf("could not find prelude at %s\n", abs.c_str()); //todo: proper logging
+    if (result == ELEMENT_ERROR_DIRECTORY_NOT_FOUND) {
+        auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
+        printf("could not find prelude at %s\n", abs.c_str()); //todo: proper logging
+    }
 
     //result = load_package("../../Common/Prelude");
     //abs = std::filesystem::absolute(std::filesystem::path("../../Common/Prelude")).string();
