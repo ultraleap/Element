@@ -276,16 +276,16 @@ element_result element_interpreter_ctx::load_prelude()
     auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
     printf("could not find prelude at %s\n", abs.c_str()); //todo: proper logging
 
-    result = load_package("../../Common/Prelude");
-    abs = std::filesystem::absolute(std::filesystem::path("../../Common/Prelude")).string();
-    if (result == ELEMENT_OK)
-    {
-        printf("loaded prelude from backup location %s\n", abs.c_str()); //todo: proper logging
-    }
-    else
-    {
-        printf("failed to load prelude from backup location %s\n", abs.c_str()); //todo: proper logging
-    }
+    //result = load_package("../../Common/Prelude");
+    //abs = std::filesystem::absolute(std::filesystem::path("../../Common/Prelude")).string();
+    //if (result == ELEMENT_OK)
+    //{
+    //    printf("loaded prelude from backup location %s\n", abs.c_str()); //todo: proper logging
+    //}
+    //else
+    //{
+    //    printf("failed to load prelude from backup location %s\n", abs.c_str()); //todo: proper logging
+    //}
 
     return result;
 }

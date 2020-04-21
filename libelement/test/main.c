@@ -11,21 +11,21 @@
 int main(int argc, char** argv)
 {
     //todo: good location for these + copy on build
-    char* packages[] = {
-        "../test/packages/test/"
-    };
+    //char* packages[] = {
+    //    "../test/packages/test/"
+    //};
 
-    char* files[] = {
-        "../test/test.ele",
-        "../test/test - Copy.ele"
-    };
+    //char* files[] = {
+    //    "../test/test.ele",
+    //    "../test/test - Copy.ele"
+    //};
 
     element_interpreter_ctx* ictx;
     element_interpreter_create(&ictx);
     element_interpreter_load_prelude(ictx);
 
-    element_result result = element_interpreter_load_files(ictx, files, 1);
-    element_interpreter_load_packages(ictx, packages, 1);
+    //element_result result = element_interpreter_load_files(ictx, files, 1);
+    //element_interpreter_load_packages(ictx, packages, 1);
 
     element_interpreter_delete(ictx);
 

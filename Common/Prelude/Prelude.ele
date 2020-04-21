@@ -1,14 +1,15 @@
-# Anything at all!
-intrinsic constraint Any;
-
-# Arity-based function constraints
-constraint Unary(a);
-constraint Binary(a, b);
-constraint Ternary(a, b, c);
-
-constraint Indexer(i:Num);
-constraint Predicate(a):Bool;
-
+##TEMPORARILY REMOVED
+## Anything at all!
+#intrinsic constraint Any;
+#
+## Arity-based function constraints
+#constraint Unary(a);
+#constraint Binary(a, b);
+#constraint Ternary(a, b, c);
+#
+#constraint Indexer(i:Num);
+#constraint Predicate(a):Bool;
+##/TEMPORARILY REMOVED
 
 
 # Calls function by nominative argument matching the functions parameters with the supplied instances fields

@@ -76,9 +76,8 @@ add_custom_command (
 	TARGET element POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	"${CMAKE_CURRENT_SOURCE_DIR}/../Common"
-	"${CMAKE_SOURCE_DIR}/$<CONFIGURATION>")
+	"${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
-message(${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONFIGURATION})
 target_include_directories(element
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
@@ -98,4 +97,7 @@ if (BUILD_TESTING)
     add_executable(element_test_app
         "test/main.c")
     target_link_libraries(element_test_app PRIVATE element)
+
+    set_target_properties(element_test_app PROPERTIES
+        VS_DEBUGGER_WORKING_DIRECTORY       "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 endif ()
