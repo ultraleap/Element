@@ -173,32 +173,25 @@ namespace libelement::cli
 	protected:
 		element_result setup(const compilation_input& input) const
 		{
-			return load_source_files(input);
+			if (!input.get_no_prelude()) {
+				ELEMENT_OK_OR_RETURN(element_interpreter_load_prelude(ictx));
+			}
+
+			auto source_files = convert(input.get_source_files());
+			ELEMENT_OK_OR_RETURN(element_interpreter_load_files(ictx, &source_files[0], static_cast<int>(source_files.size())));
+
+			return ELEMENT_OK;
 		}
 
 	private:
-		element_result load_source_files(const compilation_input& input) const
-		{
-			element_result result = ELEMENT_OK;
-			for (auto& file : input.get_source_files())
-			{
-				std::string buffer;
+		std::vector<const char*> convert(const std::vector<std::string>& input) const {
+			std::vector<const char*> output;
+			output.reserve(input.size());
 
-				std::ifstream f(file);
-				f.seekg(0, std::ios::end);
-				buffer.resize(f.tellg());
-				f.seekg(0);
-				f.read(buffer.data(), buffer.size());
+			for (size_t i = 0; i < input.size(); ++i)
+				output.push_back(input[i].c_str());
 
-				result = element_interpreter_load_string(ictx, buffer.c_str(), file.c_str());
-				element_interpreter_clear(ictx);
-
-				//early return
-				if (result != ELEMENT_OK)
-					return result;
-			}
-
-			return result;
+			return output;
 		}
 	};
 }
