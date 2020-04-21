@@ -30,3 +30,4 @@ inline bool element_isalpha(uint32_t c) { return unsigned((c&(~(1<<5))) - 'A') <
 inline bool element_isdigit(uint32_t c) { return unsigned(c - '0') <= '9' - '0'; }
 inline bool element_isalnum(uint32_t c) { return element_isalpha(c) || element_isdigit(c); }
 inline bool element_isspace(uint32_t c) { return c == ' ' || (c >= 0x09 && c <= 0x0D); }
+inline bool element_iseol(uint32_t c) { return c == '\n'; }

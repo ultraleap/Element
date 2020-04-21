@@ -20,7 +20,7 @@ function_const_shared_ptr element_function::get_builtin(const std::string& name)
     // Important: this must NOT be made as part of normal static initialisation, as it depends on other static objects
     static std::unordered_map<std::string, function_const_shared_ptr> builtins{
         // types
-        { "num",   std::make_shared<element_type_ctor>(element_type::num)                },
+        { "Num",   std::make_shared<element_type_ctor>(element_type::num)                },
         // functions
         MAKE_BINARY(add),
         MAKE_UNARY (acos),
