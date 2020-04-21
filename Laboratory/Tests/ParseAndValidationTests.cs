@@ -51,7 +51,7 @@ namespace Laboratory.Tests
 
             if (expectedMessageCode.HasValue && success)
             {
-                if (errors.Count >= 0)
+                if (errors.Count > 0)
                 {
                     Assert.Fail("Expected error ELE{0} '{1}' but got following error codes instead: {2}",
                         expectedMessageCode.Value, CompilerMessage.GetMessageName(expectedMessageCode.Value),
