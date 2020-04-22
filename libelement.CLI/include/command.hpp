@@ -178,7 +178,10 @@ namespace libelement::cli
 			}
 
 			auto source_files = convert(input.get_source_files());
-			ELEMENT_OK_OR_RETURN(element_interpreter_load_files(ictx, &source_files[0], static_cast<int>(source_files.size())));
+			auto source_file_count = static_cast<int>(source_files.size());
+			if (source_file_count > 0) {
+				ELEMENT_OK_OR_RETURN(element_interpreter_load_files(ictx, &source_files[0], source_file_count));
+			}
 
 			return ELEMENT_OK;
 		}

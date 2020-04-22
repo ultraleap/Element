@@ -35,24 +35,32 @@ namespace libelement::cli
 		{
 			element_result result = ELEMENT_OK;
 			result = setup(input);
-
 			if (result != ELEMENT_OK)
-			{
 				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
-			}
 
-			////call into libelement
-			//const element_function* fn;
-			//element_compiled_function* cfn;
-			//element_value outputs[1];
-
-			////what do I do here as we don't know the function by name
-			//element_interpreter_get_function(ictx, "Tomato", &fn);
-			//element_interpreter_compile_function(ictx, fn, &cfn, nullptr);
-			//auto result = element_interpreter_evaluate_function(ictx, cfn, nullptr, 1, outputs, 1, nullptr);
-
-			element_value outputs[1] { 0 };
+			//call into libelement
+			const element_function* fn;
+			element_compiled_function* cfn;
+			element_value outputs[1];
 			std::vector<trace_site> trace_site{};
+
+			//Not handling error responses propertly yet
+			auto evaluate = "evaluate = " + custom_arguments.expression + ";";
+			result = element_interpreter_load_string(ictx, evaluate.c_str(), "<input>");
+			if (result != ELEMENT_OK)
+				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+
+			result = element_interpreter_get_function(ictx, "evaluate", &fn);
+			if (result != ELEMENT_OK)
+				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+
+			result = element_interpreter_compile_function(ictx, fn, &cfn, nullptr);
+			if (result != ELEMENT_OK)
+				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+
+			result = element_interpreter_evaluate_function(ictx, cfn, nullptr, 1, outputs, 1, nullptr);
+			if (result != ELEMENT_OK)
+				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
 
 			return generate_response(result, outputs[0], trace_site);
 		}

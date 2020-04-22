@@ -55,7 +55,7 @@ namespace libelement::cli
 		{
 		}
 
-		compiler_message(message message, message_level level, std::string context = nullptr, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+		compiler_message(message message, message_level level, std::string context = std::string(), std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 			: message_code{ message }, level{ level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
 		{
 		}
