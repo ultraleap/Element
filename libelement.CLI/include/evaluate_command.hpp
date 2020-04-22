@@ -45,8 +45,12 @@ namespace libelement::cli
 			std::vector<trace_site> trace_site{};
 
 			//Not handling error responses propertly yet
-			auto evaluate = "evaluate = " + custom_arguments.expression + ";";
+			auto evaluate = "evaluate(a) = " + custom_arguments.expression + ";";
 			result = element_interpreter_load_string(ictx, evaluate.c_str(), "<input>");
+			if (result != ELEMENT_OK)
+				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+
+			result = element_interpreter_print_ast(ictx, "<input>");
 			if (result != ELEMENT_OK)
 				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
 

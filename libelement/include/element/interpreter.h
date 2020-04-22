@@ -44,6 +44,7 @@ element_result element_interpreter_load_files(element_interpreter_ctx* ctx, cons
 element_result element_interpreter_load_package(element_interpreter_ctx* ctx, const char* package);
 element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, const char** packages, int packages_count);
 element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx);
+element_result element_interpreter_print_ast(element_interpreter_ctx* ctx, const char* name);
 
 element_result element_interpreter_clear(element_interpreter_ctx* ctx);
 

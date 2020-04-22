@@ -49,6 +49,7 @@ struct element_interpreter_ctx
     element_result load_packages(const std::vector<std::string>& packages);
     element_result load_prelude();
     element_result clear();
+    element_result print_ast(const std::string& name = "<input>");
 };
 
 struct element_compiled_function
