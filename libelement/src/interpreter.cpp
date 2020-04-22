@@ -271,8 +271,10 @@ element_result element_interpreter_ctx::load_prelude()
         return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
 
     element_result result = load_package("Prelude");
-    if (result == ELEMENT_OK)
+    if (result == ELEMENT_OK) {
+        prelude_loaded = true;
         return result;
+    }
 
     if (result == ELEMENT_ERROR_DIRECTORY_NOT_FOUND) {
         auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
