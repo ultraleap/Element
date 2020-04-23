@@ -11,15 +11,21 @@ using ast_unique_ptr = std::unique_ptr<element_ast, void(*)(element_ast*)>;
 
 struct element_ast
 {
+
     element_ast_node_type type;
     std::string identifier;
     union {
-        element_value literal;   // active for AST_NODE_LITERAL
+        element_value literal = 0;   // active for AST_NODE_LITERAL
         element_ast_flags flags; // active for all other node types
     };
-    element_ast* parent;
+    element_ast* parent = nullptr;
     std::vector<ast_unique_ptr> children;
     // TODO: track source token?
+
+    bool has_flag(element_ast_flags flag) const 
+    {
+        return (flags & flag) == flag;
+    }
 
     element_ast* find_child(std::function<bool(const element_ast* elem)> fn)
     {

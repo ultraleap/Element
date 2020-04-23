@@ -34,7 +34,9 @@ typedef enum
 typedef uint32_t element_ast_flags;
 // decl flags
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_INTRINSIC = (1U << 1);
-static const element_ast_flags ELEMENT_AST_FLAG_DECL_EXTERN    = (1U << 2);
+static const element_ast_flags ELEMENT_AST_FLAG_DECL_EXTERN = (1U << 2);
+static const element_ast_flags ELEMENT_AST_FLAG_DECL_EMPTY_INPUT = (1U << 3);
+static const element_ast_flags ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN = (1U << 4);
 
 typedef struct element_ast_node element_ast_node;
 typedef struct element_ast element_ast;

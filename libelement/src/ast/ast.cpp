@@ -231,6 +231,7 @@ static element_result parse_portlist(element_tokeniser_ctx* tctx, size_t* tindex
     GET_TOKEN(tctx, *tindex, tok);
     assert(tok->type == ELEMENT_TOK_IDENTIFIER || tok->type == ELEMENT_TOK_UNDERSCORE);
     ast->type = ELEMENT_AST_NODE_PORTLIST;
+    ast->flags = 0;
     do
     {
         element_ast* port = ast_new_child(ast);
@@ -384,6 +385,10 @@ static element_result parse_declaration(element_tokeniser_ctx* tctx, size_t* tin
         assert(tok->type == ELEMENT_TOK_BRACKETR);
         TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, tok);
     }
+    else {
+        args->flags |= ELEMENT_AST_FLAG_DECL_EMPTY_INPUT;
+    }
+
     if (find_return_type && tok->type == ELEMENT_TOK_COLON) {
         // output type
         tokenlist_advance(tctx, tindex);
@@ -391,7 +396,8 @@ static element_result parse_declaration(element_tokeniser_ctx* tctx, size_t* tin
         ELEMENT_OK_OR_RETURN(parse_typename(tctx, tindex, type));
     } else {
         // implied any output
-        ast_new_child(ast, ELEMENT_AST_NODE_NONE);
+        element_ast* ret = ast_new_child(ast, ELEMENT_AST_NODE_NONE);
+        ret->flags = ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN;
     }
     return ELEMENT_OK;
 }
@@ -614,22 +620,33 @@ static element_result ast_print_depth(element_ast* ast, int depth)
     } else if (ast->type == ELEMENT_AST_NODE_IDENTIFIER) {
         printf("IDENTIFIER: %s", ast->identifier.c_str());
     } else if (ast->type == ELEMENT_AST_NODE_DECLARATION) {
-        printf("DECLARATION: %s", ast->identifier.c_str());
+        auto intrinsic = ast->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+        intrinsic
+            ? printf("INTRINSIC DECLARATION: %s", ast->identifier.c_str())
+            : printf("DECLARATION: %s", ast->identifier.c_str());
     } else if (ast->type == ELEMENT_AST_NODE_NAMESPACE) {
         printf("NAMESPACE: %s", ast->identifier.c_str());
     } else if (ast->type == ELEMENT_AST_NODE_CALL) {
         printf("CALL: %s", ast->identifier.c_str());
     } else if (ast->type == ELEMENT_AST_NODE_PORT) {
         printf("PORT: %s", ast->identifier.c_str());
-    } else {
+    }
+    else if (ast->type == ELEMENT_AST_NODE_NONE) {
+        if (ast->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT))
+            printf("EMPTY INPUT");
+        else if (ast->has_flag(ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN))
+            printf("IMPLICIT RETURN");
+        else
+            printf("NONE");
+    }
+    else {
         char* c;
         switch (ast->type) {
-            PRINTCASE(ELEMENT_AST_NODE_NONE);
             PRINTCASE(ELEMENT_AST_NODE_ROOT);
-            PRINTCASE(ELEMENT_AST_NODE_FUNCTION);
-            PRINTCASE(ELEMENT_AST_NODE_STRUCT);
             PRINTCASE(ELEMENT_AST_NODE_SCOPE);
             PRINTCASE(ELEMENT_AST_NODE_CONSTRAINT);
+            PRINTCASE(ELEMENT_AST_NODE_FUNCTION);
+            PRINTCASE(ELEMENT_AST_NODE_STRUCT);
             PRINTCASE(ELEMENT_AST_NODE_EXPRESSION);
             PRINTCASE(ELEMENT_AST_NODE_EXPRLIST);
             PRINTCASE(ELEMENT_AST_NODE_PORTLIST);
