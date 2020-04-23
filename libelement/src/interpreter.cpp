@@ -172,7 +172,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 
 element_result element_interpreter_ctx::load_file(const std::string& file)
 {
-    printf("loading valid file: %s\n", file.c_str()); //todo: proper logging
+    //printf("loading valid file: %s\n", file.c_str()); //todo: proper logging
     std::string buffer;
 
     std::ifstream f(file);
@@ -186,9 +186,9 @@ element_result element_interpreter_ctx::load_file(const std::string& file)
     if (result != ELEMENT_OK) {
         printf("could not load file %s. element_result = %d\n", file.c_str(), result); //todo: proper logging
     }
-    else {
-        printf("successfully loaded file %s\n", file.c_str()); //todo: proper logging
-    }
+    //else {
+    //    printf("successfully loaded file %s\n", file.c_str()); //todo: proper logging
+    //}
 
     return result;
 }
@@ -227,7 +227,7 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
 
     for (const auto& file : std::filesystem::recursive_directory_iterator(package)) {
         auto filename = file.path().string();
-        printf("found file %s in %s\n", filename.c_str(), package.c_str()); //todo: proper logging
+        //printf("found file %s in %s\n", filename.c_str(), package.c_str()); //todo: proper logging
         auto extension = file.path().extension().string();
         if (extension == ".ele")
         {
