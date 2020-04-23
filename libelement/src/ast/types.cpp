@@ -41,7 +41,7 @@ static const element_scope* num_scope = nullptr;
 // the prelude includes a definition for num, so it should be based on custom_type (and updated later)
 struct num_type : public element_custom_type
 {
-    num_type() : element_custom_type(nullptr, "num") { m_ports_cached = true; }
+    num_type() : element_custom_type(nullptr, "Num") { m_ports_cached = true; }
     size_t get_size() const override { return 1; }
     bool is_serializable() const override { return true; } // TODO
     bool is_satisfied_by(const type_constraint_const_shared_ptr& v) const override { return v->inputs().empty() && v->outputs().empty(); }
@@ -53,7 +53,7 @@ protected:
 
 void update_scopes(const element_scope* names)
 {
-    num_scope = names->lookup("num", false);
+    num_scope = names->lookup("Num", false);
 }
 
 

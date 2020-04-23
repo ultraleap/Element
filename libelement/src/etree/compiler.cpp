@@ -131,7 +131,7 @@ static element_result compile_call(
 {
     if (bodynode->type == ELEMENT_AST_NODE_LITERAL) {
         expr = std::make_shared<element_constant>(bodynode->literal);
-        fnscope = scope->root()->lookup("num", false); // HACK?
+        fnscope = scope->root()->lookup("Num", false); // HACK?
         return ELEMENT_OK;
     }
 
