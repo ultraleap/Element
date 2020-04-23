@@ -2,10 +2,10 @@ namespace Element
 {
     public enum MessageLevel
     {
-        Fatal,
+        Verbose,
+        Information,
         Warning,
         Error,
-        Information,
-        Verbose,
+        Fatal,
     }
 }

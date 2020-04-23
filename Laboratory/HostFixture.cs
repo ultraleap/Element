@@ -103,8 +103,10 @@ namespace Laboratory
 
         protected static void FailOnError(CompilerMessage message)
         {
-            if (message.MessageLevel >= MessageLevel.Error && message.MessageCode != 0) Assert.Fail(message.ToString());
-            else TestContext.WriteLine(message.ToString());
+            if (message.MessageLevel >= MessageLevel.Error && message.MessageCode != 0) 
+                Assert.Fail(message.ToString());
+            else 
+                TestContext.WriteLine(message.ToString());
         }
 
         protected static Action<CompilerMessage> ExpectMessageCode(int messageCode, List<CompilerMessage> errorsReceived) => message =>

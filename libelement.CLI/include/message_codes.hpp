@@ -9,11 +9,11 @@ namespace libelement::cli
 {
 	enum class message_level : unsigned int
 	{
-		FATAL = 0,
+		VERBOSE = 0,
+		INFORMATION,
 		WARNING,
 		ERROR,
-		INFORMATION,
-		VERBOSE,
+		FATAL,
 		UNKNOWN = 0xFFFF
 	};
 
