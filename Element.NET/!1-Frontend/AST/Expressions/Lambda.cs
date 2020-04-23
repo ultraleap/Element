@@ -11,7 +11,6 @@ namespace Element.AST
         [Alternative(typeof(ExpressionBody), typeof(Scope)), WhitespaceSurrounded, MultiLine] private object _body;
 #pragma warning restore 649, 169
 
-        public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext) =>
-            new AnonymousFunction(scope, _body, _portList, _type);
+        public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext) => new AnonymousFunction(_body, _portList, Port.ReturnPort(_type));
     }
 }

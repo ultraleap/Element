@@ -2,20 +2,12 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class DeclaredConstraint : Declaration, IConstraint
-    {
-        protected override string Qualifier { get; } = "constraint";
-        protected override System.Type[] BodyAlternatives { get; } = {typeof(Terminal)};
-        public override IType Type => ConstraintType.Instance;
-        public abstract bool MatchesConstraint(IValue value, CompilationContext compilationContext);
-    }
-
     // ReSharper disable once UnusedType.Global
     public class ExtrinsicConstraint : DeclaredConstraint
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;
 
-        public override bool Validate(SourceContext sourceContext)
+        internal override bool Validate(SourceContext sourceContext)
         {
             if (!HasDeclaredInputs)
             {
@@ -28,7 +20,7 @@ namespace Element.AST
 
         public override bool MatchesConstraint(IValue value, CompilationContext compilationContext)
         {
-            if (!(value is IFunction fn)) return false;
+            if (!(value is IFunctionSignature fn)) return false;
             if (fn.Inputs.Length != DeclaredInputs.Length) return false;
             var success = true;
             bool CompareConstraints(IConstraint argumentConstraint, IConstraint matchingConstraint)
@@ -42,19 +34,9 @@ namespace Element.AST
                 success &= CompareConstraints(argumentPort.ResolveConstraint(ParentScope, compilationContext), matchingPort.ResolveConstraint(ParentScope, compilationContext));
             }
 
-            success &= CompareConstraints(fn.Output?.ResolveConstraint(ParentScope, compilationContext) ?? AnyConstraint.Instance,
-                DeclaredType?.ResolveConstraint(ParentScope, compilationContext) ?? AnyConstraint.Instance);
+            success &= CompareConstraints(fn.Output.ResolveConstraint(ParentScope, compilationContext), DeclaredOutput.ResolveConstraint(ParentScope, compilationContext));
 
             return success;
         }
-    }
-
-    // ReSharper disable once UnusedType.Global
-    public class IntrinsicConstraint : DeclaredConstraint
-    {
-        protected override string IntrinsicQualifier { get; } = "intrinsic";
-
-        public override bool Validate(SourceContext sourceContext) => ImplementingIntrinsic<IConstraint>(sourceContext) != null;
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(null).MatchesConstraint(value, compilationContext);
     }
 }

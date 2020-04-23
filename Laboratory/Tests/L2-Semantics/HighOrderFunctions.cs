@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.L2.Semantics
 {
     internal class HighOrderConstructs : SemanticsFixture
     {

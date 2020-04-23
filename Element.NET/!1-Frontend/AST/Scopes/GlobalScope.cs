@@ -14,7 +14,7 @@ namespace Element.AST
             set => _sourceScopes[file.FullName] = value;
         }
 
-        public override IValue? this[Identifier id, bool recurse, CompilationContext context] => IndexCache(id);
+        public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => IndexCache(id);
 
         protected override IEnumerable<Declaration> ItemsToCacheOnValidate => _sourceScopes.Values.SelectMany(s => s);
     }

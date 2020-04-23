@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
@@ -12,11 +13,12 @@ namespace Laboratory
     {
         protected readonly IHost Host = HostArguments.MakeHost();
         
-        private const float FloatEpsilon = 1.19209e-5f;
+        public const float FloatEpsilon = 1.19209e-5f;
         private static Comparer<float> FloatComparer { get; } = Comparer<float>.Create((f, f1) => ApproximatelyEqualEpsilon(f, f1, FloatEpsilon) ? 0 : 1);
-        
+        private static Comparer<float> RelaxedFloatComparer { get; } = Comparer<float>.Create((f, f1) => Math.Abs(f - f1) < FloatEpsilon ? 0 : 1);
+
         // Taken from https://stackoverflow.com/questions/3874627/floating-point-comparison-functions-for-c-sharp
-        private static bool ApproximatelyEqualEpsilon(float a, float b, float epsilon)
+        public static bool ApproximatelyEqualEpsilon(float a, float b, float epsilon)
         {
             const float floatNormal = (1 << 23) * float.Epsilon;
             float absA = Math.Abs(a);
@@ -29,7 +31,7 @@ namespace Laboratory
                 // Shortcut, handles infinities
                 return true;
             }
-
+            
             if (float.IsNaN(a) && float.IsNaN(b)) return true;
 
             if (a == 0.0f || b == 0.0f || diff < floatNormal)
@@ -45,7 +47,7 @@ namespace Laboratory
         }
 
         protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params string[] expressions) =>
-            AssertApproxEqual(compilationInput, controlExpression, expressions.Select(expression =>
+            AssertApproxEqual(compilationInput, controlExpression, FloatComparer, expressions.Select(expression =>
             {
                 var (success, result) = Host.Evaluate(compilationInput, expression);
                 if (!success) Assert.Fail($"'{expression}' evaluation failed");
@@ -54,14 +56,27 @@ namespace Laboratory
 
         protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params float[][] results)
         {
+            AssertApproxEqual(compilationInput, controlExpression, FloatComparer, results);
+        }
+        
+        private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params float[][] results)
+        {
             var (controlSuccess, controlResult) = Host.Evaluate(compilationInput, controlExpression);
             if (!controlSuccess) Assert.Fail($"'{controlExpression}' evaluation failed");
             results.Aggregate(controlResult, (expected, result) =>
             {
-                CollectionAssert.AreEqual(expected, result, FloatComparer);
+                CollectionAssert.AreEqual(expected, result, comparer);
                 return expected;
             });
         }
+        
+        protected void AssertApproxEqualRelaxed(CompilationInput compilationInput, string controlExpression, params string[] expressions) =>
+            AssertApproxEqual(compilationInput, controlExpression, RelaxedFloatComparer, expressions.Select(expression =>
+            {
+                var (success, result) = Host.Evaluate(compilationInput, expression);
+                if (!success) Assert.Fail($"'{expression}' evaluation failed");
+                return result;
+            }).ToArray());
 
         protected void AssertTypeof(CompilationInput compilationInput, string expression, string typeStr)
         {

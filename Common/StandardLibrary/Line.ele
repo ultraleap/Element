@@ -1,8 +1,21 @@
-struct Line(direction:Vector3, offset:Vector3)
+#http://geomalgorithms.com/a02-_lines.html
+
+struct Line2(direction:Vector2, offset:Vector2)
 {
-    distanceFromPoint(line:Line, point:Vector3):Num
+    distanceFromPoint(line:Line2, point:Vector2):Num
     {
-        fromPointToPointOnLine = point.sub(line.offset);
-        return = fromPointToPointOnLine.dot(line.direction);
+        w = point.sub(line.offset);
+        l = line.direction.normalize;
+        return = w.sub(l.mul(w.dot(l))).magnitude;
+    }
+}
+
+struct Line3(direction:Vector3, offset:Vector3)
+{
+    distanceFromPoint(line:Line3, point:Vector3):Num
+    {
+        w = point.sub(line.offset);
+        l = line.direction.normalize;
+        return = w.sub(l.mul(w.dot(l))).magnitude;
     }
 }

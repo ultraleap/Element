@@ -1,7 +1,7 @@
 # list(...):List;
 # Creates a literal List from the parameters
 # Elements must be homogeneous
-intrinsic list;
+intrinsic list:List;
 
 # Represents a finite set of elements
 intrinsic struct List(at:Indexer, count:Num)

@@ -1,8 +1,8 @@
 using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.L3.Prelude
 {
-    internal class Prelude : PreludeFixture
+    internal class Validation : PreludeFixture
     {
         [Test]
         // Evaluates an arbitrary expression since creating the prelude will be parsed implicitly when not excluded

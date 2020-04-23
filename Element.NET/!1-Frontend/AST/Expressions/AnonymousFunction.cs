@@ -1,27 +1,19 @@
 namespace Element.AST
 {
-    public class AnonymousFunction : ICompilableFunction
+    public class AnonymousFunction : IFunctionWithBody
     {
-        public AnonymousFunction(IScope callScope, object body, PortList ports, TypeAnnotation? output)
+        public AnonymousFunction(object body, PortList inputs, Port output)
         {
-            _body = body;
-            _callScope = callScope;
+            Body = body;
             Output = output;
-            Inputs =  ports.List.ToArray();
+            Inputs =  inputs.List.ToArray();
         }
 
-        private readonly object _body;
-        private readonly IScope? _callScope;
         public IType Type => FunctionType.Instance;
         public Port[] Inputs { get; }
-        public TypeAnnotation? Output { get; }
+        public Port Output { get; }
+        public IFunctionSignature GetDefinition(CompilationContext _) => this;
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            this.ApplyArguments(arguments, Inputs, Output, _body, _callScope, compilationContext);
-
-        public IValue Compile(IScope scope, CompilationContext compilationContext) =>
-            scope.CompileFunction(_body, compilationContext);
-
-        public ICompilableFunction Definition => this;
+        public object Body { get; }
     }
 }

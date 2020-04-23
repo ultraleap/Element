@@ -1,96 +1,224 @@
-namespace Vector
-{
-    add(a, b) = memberwise(Num.add, a, b);
-    sub(a, b) = memberwise(Num.sub, a, b);
-    mul(a, b) = memberwise(Num.mul, a, b);
-    div(a, b) = memberwise(Num.div, a, b);
-
-    lerp(t:Num, a, b) = memberwise(_(ax, bx) = Num.lerp(t, ax, bx), a, b);
-
-    scale(v, scaleFactor:Num) = map(_(component) = component.mul(scaleFactor), v);
-}
+#namespace Vector
+#{
+#    add(a, b) = memberwise(Num.add, a, b);
+#    sub(a, b) = memberwise(Num.sub, a, b);
+#    mul(a, b) = memberwise(Num.mul, a, b);
+#    div(a, b) = memberwise(Num.div, a, b);
+#
+#    lerp(t:Num, a, b) = memberwise(_(ax, bx) = Num.lerp(t, ax, bx), a, b);
+#
+#    scale(v, scaleFactor:Num) = map(_(component) = component.mul(scaleFactor), v);
+#}
 
 struct Vector2(x:Num, y:Num)
-{
-    Dot(a:Vec2, b:Vec2):Num
+{   
+     Zero = Vector2(0, 0);
+     One = Vector2(1, 1);
+     
+#    Right = Vector2(1, 0);
+#    Left = Vector2(-1, 0);
+#    Up = Vector2(0, 1);    #Not sure what to do here, axis contradicts Vector3 definitions of up/down 
+#    Down = Vector2(0, -1); #Not sure what to do here, axis contradicts Vector3 definitions of up/down
+
+    #vector properties
+    magnitudeSquared(v:Vector2):Num = v.dot(v);
+    magnitude(v:Vector2):Num = Num.sqrt(v.magnitudeSquared);
+
+    #operations
+    opposite(v:Vector2):Vector2 = Zero.sub(v);
+    
+    normalize(v:Vector2):Vector2
     {
-        s = Vec.Mul(a, b);
-        return = add(s.x, s.y);
+       #return zero vector if len = 0
+       len = magnitude(v);
+       return = v.div(len);
+    }
+    
+    #scalar operations
+    mul(a:Vector2, b:Num):Vector2 = Vector2(a.x.mul(b), a.y.mul(b));
+    div(a:Vector2, b:Num):Vector2 = Vector2(a.x.div(b), a.y.div(b));
+    
+    #vector operations
+    add(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.add(b.x), a.y.add(b.y));
+    sub(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.sub(b.x), a.y.sub(b.y));
+    
+    dot(a:Vector2, b:Vector2):Num
+    {
+        s = Vector2(a.x.mul(b.x), a.y.mul(b.y));
+        return = s.x.add(s.y);
+    }
+        
+    distance(a:Vector2, b:Vector2):Num 
+    {
+       diff = a.sub(b);
+       return = diff.magnitude;
     }
 
-    Angle(a:Vec2, b:Vec2):Num
+    angle(a:Vector2, b:Vector2):Num 
     {
-        angle = degrees(atan2(sub(b.y, a.y), sub(b.x, a.x)));
-        return = if(lt(angle, 0), add(angle, 360), angle);
+        dot = a.dot(b);
+        mag = a.magnitude.mul(b.magnitude);
+        clamped = dot.div(mag).clamp(-1, 1);
+        theta = Num.acos(clamped);
+        return = Num.degrees(theta);
     }
-
-    Magnitude(v) = sqrt(Dot(v, v));
-
-    Normalize(v)
+    
+    reflect(l:Vector2, n:Vector2):Vector2
     {
-        mapper(x) = div(x, Magnitude(v));
-        return = map(mapper, v);
+        dot = n.dot(l);
+        s = 2.mul(dot);
+        t = n.mul(s);
+        return = t.sub(l);
     }
-
-    Distance(a, b) = Magnitude(Vec.Sub(b, a));
+    
+    lerp(t:Num, a:Vector2, b:Vector2) 
+    {
+        return = Vector2(t.lerp(a.x, b.x), t.lerp(a.y, b.y));
+    }
 }
 
 struct Vector3(x:Num, y:Num, z:Num)
 {
-    Up = Vec3(0, 0, 1);
-    Down = Vec3(0, 0, -1);
-    Right = Vec3(1, 0, 0);
-    Left = Vec3(-1, 0, 0);
-    Forward = Vec3(0, 1, 0);
-    Back = Vec3(0, -1, 0);
+    Zero = Vector3(0, 0, 0);
+    One = Vector3(1, 1, 1);
+    
+    Right = Vector3(1, 0, 0);
+    Left = Vector3(-1, 0, 0);
+    Forward = Vector3(0, 1, 0);
+    Back = Vector3(0, -1, 0);
+    Up = Vector3(0, 0, 1);
+    Down = Vector3(0, 0, -1);
 
-    Dot(a:Vec3, b:Vec3):Num
+    #vector properties
+    magnitudeSquared(v:Vector3):Num = v.dot(v);
+    magnitude(v:Vector3):Num = Num.sqrt(v.magnitudeSquared);
+    
+    #operations
+    opposite(v:Vector3):Vector3 = Zero.sub(v);
+    
+    normalize(v:Vector3):Vector3
     {
-        s = Vec.Mul(a, b);
-        return = add(add(s.x, s.y), s.z);
+       #return zero vector if len = 0
+       len = magnitude(v);
+       return = v.div(len);
+    }
+    
+    #scalar operations
+    mul(a:Vector3, b:Num):Vector3 = Vector3(a.x.mul(b), a.y.mul(b), a.z.mul(b));
+    div(a:Vector3, b:Num):Vector3 = Vector3(a.x.div(b), a.y.div(b), a.z.div(b));
+    
+    #vector operations
+    add(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z));
+    sub(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.sub(b.x), a.y.sub(b.y), a.z.sub(b.z));
+    
+    dot(a:Vector3, b:Vector3):Num
+    {
+        s = Vector3(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z));
+        return = s.x.add(s.y).add(s.z);
+    }
+        
+    distance(a:Vector3, b:Vector3):Num 
+    {
+       diff = a.sub(b);
+       return = diff.magnitude;
     }
 
-    Cross(a:Vec3, b:Vec3) =
-        Vec3(
-            sub(mul(a.y, b.z), mul(a.z, b.y)),
-            sub(mul(a.z, b.x), mul(a.x, b.z)),
-            sub(mul(a.x, b.y), mul(a.y, b.x))
-        );
-
-    Magnitude(v) = sqrt(Dot(v, v));
-
-    Normalize(v)
+    angle(a:Vector3, b:Vector3):Num 
     {
-        mapper(x) = div(x, Magnitude(v));
-        return = map(mapper, v);
+        dot = a.dot(b);
+        mag = a.magnitude.mul(b.magnitude);
+        clamped = Num.clamp(dot.div(mag), -1, 1);
+        theta = Num.acos(clamped);
+        return = Num.degrees(theta);  
+    }
+        
+    reflect(l:Vector3, n:Vector3):Vector3
+    {
+        dot = n.dot(l);
+        s = 2.mul(dot);
+        t = n.mul(s);
+        return = t.sub(l);
+    }
+    
+    lerp(t:Num, a:Vector3, b:Vector3) 
+    {
+        return = Vector3(t.lerp(a.x, b.x), t.lerp(a.y, b.y), t.lerp(a.z, b.z));
+    }
+    
+    cross(a:Vector3, b:Vector3) 
+    {
+        ay_bz = a.y.mul(b.z);
+        az_by = a.z.mul(b.y);
+        az_bx = a.z.mul(b.x);
+        ax_bz = a.x.mul(b.z);
+        ax_by = a.x.mul(b.y);
+        ay_bx = a.y.mul(b.x);
+       
+        return = Vector3(ay_bz.sub(az_by), az_bx.sub(ax_bz), az_by.sub(ay_bx));
     }
 
-    Distance(a, b) = Magnitude(Vec.Sub(b, a));
-
-    TransformPosition(vec:Vec3, matrix:Matrix4x4):Vec3
+    transformPosition(a:Vector3, matrix:Matrix4x4):Vector3
     {
-        result = V4.Transform(Vec4(vec.x, vec.y, vec.z, 1), matrix);
-        return = Vec3(result.x, result.y, result.z);
+        result = Vector4.transform(Vector4.position(a), matrix);
+        return = Vector3(result.x, result.y, result.z);
     }
 
-    TransformDirection(vec:Vec3, matrix:Matrix4x4):Vec3
+    transformDirection(a:Vec3, matrix:Matrix4x4):Vector3
     {
-        result = V4.Transform(Vec4(vec.x, vec.y, vec.z, 0), matrix);
-        return = Vec3(result.x, result.y, result.z);
+        result = Vector4.transform(Vector4.direction(a), matrix);
+        return = Vector3(result.x, result.y, result.z);
     }
 }
 
-struct Vector3(x:Num, y:Num, z:Num, w:Num)
+struct Vector4(x:Num, y:Num, z:Num, w:Num)
 {
-    Dot(a:Vec4, b:Vec4):Num
+    Zero = Vector4(0, 0, 0, 0);
+    One = Vector4(1, 1, 1, 1);
+    
+    #vector properties
+    magnitudeSquared(v:Vector4):Num = v.dot(v);
+    magnitude(v:Vector4):Num = Num.sqrt(v.magnitudeSquared);
+
+    #operations
+    opposite(v:Vector4):Vector4 = Zero.sub(v);
+    
+    normalize(v:Vector4):Vector4
     {
-        s = Vec.Mul(a, b);
-        return = add(add(s.x, s.y), add(s.z, s.w));
+       #return zero vector if len = 0
+       len = magnitude(v);
+       return = v.div(len);
+    }
+    
+    #scalar operations
+    mul(a:Vector4, b:Num):Vector4 = Vector4(a.x.mul(b), a.y.mul(b), a.z.mul(b), a.w.mul(b));
+    div(a:Vector4, b:Num):Vector4 = Vector4(a.x.div(b), a.y.div(b), a.z.div(b), a.w.div(b));
+    
+    #vector operations
+    add(a:Vector4, b:Vector4):Vector4 = Vector4(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z), a.w.add(b.w));
+    sub(a:Vector4, b:Vector4):Vector4 = Vector4(a.x.sub(b.x), a.y.sub(b.y), a.z.sub(b.z), a.w.sub(b.w));
+    
+    dot(a:Vector4, b:Vector4):Num
+    {
+        s = Vector4(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z), a.w.mul(b.w));
+        return = s.x.add(s.y).add(s.z).add(s.w);
+    }
+    
+    direction(v:Vector3):Vector4 = Vector4(v.x, v.y, v.z, 0);
+    position(v:Vector3):Vector4 = Vector4(v.x, v.y, v.z, 1);
+    
+    lerp(t:Num, a:Vector4, b:Vector4) 
+    {
+        return = Vector4(t.lerp(a.x, b.x), t.lerp(a.y, b.y), t.lerp(a.z, b.z), t.lerp(a.w, b.w));
     }
 
-    Transform(vector:Vec4, matrix:Matrix4x4) : Vec4
+    transform(vector:Vector4, matrix:Matrix4x4):Vector4
     {
-        multiply(m):Num = Dot(vector, m);
-        return = map(multiply, Matrix.Transpose(matrix));
+        multiply(m:Vector4):Num = vector.dot(m);
+        x = multiply(matrix.x);
+        y = multiply(matrix.y);
+        z = multiply(matrix.z);
+        w = multiply(matrix.w);
+        return = Vector4(x, y, z, w);
+        #return = memberwise(multiply, Matrix4x4.transpose(matrix));
     }
 }

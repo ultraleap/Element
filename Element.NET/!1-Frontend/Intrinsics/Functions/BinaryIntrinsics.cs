@@ -3,24 +3,21 @@ namespace Element.AST
     /// <summary>
     /// An intrinsic with 2 arguments and a single return.
     /// </summary>
-    internal class BinaryIntrinsic : IIntrinsic, IFunction
+    public sealed class BinaryIntrinsic : IntrinsicFunction
     {
         public BinaryIntrinsic(Binary.Op operation)
-        {
-            Location = $"Num.{operation.ToString().ToLowerInvariant()}";
+            : base($"Num.{operation.ToString().ToLowerInvariant()}",
+                   new[]
+                   {
+                       new Port("a", NumType.Instance),
+                       new Port("b", NumType.Instance)
+                   },
+                   Port.ReturnPort(NumType.Instance)) =>
             Operation = operation;
-        }
 
-        public string Location { get; }
         public Binary.Op Operation { get; }
 
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            arguments.ValidateArguments(2, compilationContext)
-                ? (IValue) new Literal(Binary.Evaluate(Operation, (Literal)arguments[0], (Literal)arguments[1]))
-                : CompilationErr.Instance;
-
-        public IType Type => FunctionType.Instance;
-        public Port[] Inputs { get; } = {new Port("a", NumType.Annotation), new Port("b", NumType.Annotation)};
-        public TypeAnnotation Output { get; } = NumType.Annotation;
+        public override IValue Call(IValue[] arguments, CompilationContext _) =>
+            new Binary(Operation, arguments[0] as Element.Expression, arguments[1] as Element.Expression);
     }
 }

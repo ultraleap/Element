@@ -28,20 +28,19 @@ namespace Element.AST
         public override string ToString() => $"{Location}{DeclaredType}";
 
         protected bool HasDeclaredInputs => DeclaredInputs.Length > 0;
-        protected Port[] DeclaredInputs => string.IsNullOrEmpty(IntrinsicQualifier)
-            ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
-            : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunction>(null)?.Inputs;
+        protected Port[] DeclaredInputs { get; private set; }
+        protected Port DeclaredOutput { get; private set; }
         protected virtual Identifier[] ScopeIdentifierWhitelist { get; } = null;
         protected virtual Identifier[] ScopeIdentifierBlacklist { get; } = null;
 
-        public Declaration Clone(IScope newParent)
+        internal Declaration Clone(IScope newParent)
         {
             var clone = (Declaration)MemberwiseClone();
             clone.Initialize(newParent);
             return clone;
         }
 
-        public virtual bool Validate(SourceContext sourceContext)
+        internal virtual bool Validate(SourceContext sourceContext)
         {
             var success = true;
             if (Body is Scope scope) success &= scope.ValidateScope(sourceContext, ScopeIdentifierBlacklist, ScopeIdentifierWhitelist);
@@ -70,10 +69,14 @@ namespace Element.AST
         public bool HasBeenValidated { get; set; }
         public abstract IType Type { get; }
 
-        public void Initialize(IScope parent)
+        internal void Initialize(IScope parent)
         {
             ParentScope = parent ?? throw new ArgumentNullException(nameof(parent));
             ChildScope?.Initialize(this);
+            DeclaredInputs = string.IsNullOrEmpty(IntrinsicQualifier)
+                                 ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
+                                 : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs;
+            DeclaredOutput = Port.ReturnPort(DeclaredType);
         }
 
         public string Location => ParentScope switch
@@ -83,10 +86,10 @@ namespace Element.AST
             _ => throw new InternalCompilerException("Couldn't construct location of declaration")
         };
         public IScope ParentScope { get; private set; }
-        protected Scope? ChildScope => Body as Scope;
+        public Scope? ChildScope => Body as Scope;
 
         protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(Context? context)
-            where TIntrinsic : class, IValue
+            where TIntrinsic : class
         {
             switch (_intrinsics.TryGetValue(Location, out var intrinsic), intrinsic)
             {

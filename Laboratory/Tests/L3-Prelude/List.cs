@@ -1,7 +1,7 @@
 /*using Element;
 using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.L3.Prelude
 {
 	/// <summary>
 	/// Tests for List and associated functions
