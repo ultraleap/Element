@@ -50,19 +50,19 @@ namespace libelement::cli
 			if (result != ELEMENT_OK)
 				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
 
-			std::cout << std::endl << std::endl;
+			//std::cout << std::endl << std::endl;
 
-			result = element_interpreter_print_ast(ictx, "Prelude\\Num.ele");
-			if (result != ELEMENT_OK)
-				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+			//result = element_interpreter_print_ast(ictx, "Prelude\\Num.ele");
+			//if (result != ELEMENT_OK)
+			//	return compiler_message(message::PARSE_ERROR, message_level::ERROR);
 
-			std::cout << std::endl << std::endl;
+			//std::cout << std::endl << std::endl;
 
-			result = element_interpreter_print_ast(ictx, "<input>");
-			if (result != ELEMENT_OK)
-				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+			//result = element_interpreter_print_ast(ictx, "<input>");
+			//if (result != ELEMENT_OK)
+			//	return compiler_message(message::PARSE_ERROR, message_level::ERROR);
 
-			std::cout << std::endl << std::endl;
+			//std::cout << std::endl << std::endl;
 
 			result = element_interpreter_get_function(ictx, "evaluate", &fn);
 			if (result != ELEMENT_OK)
