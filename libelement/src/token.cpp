@@ -81,6 +81,18 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         c = UTF8_NEXT(it, end);
     }
     assert(element_isdigit(c));
+
+    //early out on eol terminal
+    c = UTF8_PEEK_NEXT(it, end);
+    if (c == ';') {
+        const size_t len = std::distance(it_begin, it);
+        state->pos += (int)len;
+        state->col += (int)len;
+        state->cur_token.tok_len += (int)len;
+        reset_token(state);
+        return ELEMENT_OK;
+    }
+
     do {
         c = UTF8_NEXT(it, end);
     } while (element_isdigit(c));
