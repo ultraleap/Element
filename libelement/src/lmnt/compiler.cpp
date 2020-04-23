@@ -64,7 +64,8 @@ struct compiler_ctx
 
 element_result buf_raw_write_and_update(char* b, size_t bsize, size_t& i, const void* d, size_t dsize)
 {
-    if (i + dsize > bsize) return ELEMENT_ERROR_INVALID_OPERATION;
+    if (i + dsize > bsize) 
+        return ELEMENT_ERROR_INVALID_OPERATION;
     std::memcpy(b + i, d, dsize);
     i += dsize;
     return ELEMENT_OK;

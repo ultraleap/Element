@@ -86,7 +86,8 @@ static element_result compile_custom_fn_scope(
     expression_shared_ptr& expr)
 {
     const element_ast* node = scope->node; // FUNCTION
-    if (node->type != ELEMENT_AST_NODE_FUNCTION || node->children.size() <= ast_idx::fn::body)
+    if (node->type != ELEMENT_AST_NODE_FUNCTION 
+        || node->children.size() <= ast_idx::fn::body)
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
 
     assert(scope->function() && scope->function()->inputs().size() >= inputs.size());
@@ -98,7 +99,10 @@ static element_result compile_custom_fn_scope(
 
     // find output
     const element_scope* output = scope->lookup("return", false);
-    return output ? compile_expression(ctx, output, output->node, expr) : ELEMENT_ERROR_INVALID_OPERATION;
+    if (output)
+        return compile_expression(ctx, output, output->node, expr);
+
+    return ELEMENT_ERROR_INVALID_OPERATION;
 }
 
 
@@ -148,7 +152,8 @@ static element_result compile_call(
         assert(bodynode->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_CALL || bodynode->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_LITERAL);
         ELEMENT_OK_OR_RETURN(compile_call(ctx, scope, bodynode->children[ast_idx::call::parent].get(), fnscope, parent));
         // TODO: check better, return error
-        if (!parent) return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
+        if (!parent)
+            return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
     }
     const element_scope* parent_fnscope = fnscope;
 
@@ -157,8 +162,6 @@ static element_result compile_call(
     fnscope = fnscope->lookup(bodynode->identifier, !has_parent);
     if (!fnscope)
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
-
-    // TODO: apply resolve_returns behaviour
 
     // TODO: check if we're doing partial application
 
@@ -217,7 +220,11 @@ static element_result compile_call(
             expr = generate_intrinsic_expression(fnscope->function()->as<element_intrinsic>(), args);
             if (!expr)
                 return ELEMENT_ERROR_INVALID_OPERATION;
-        } else {
+        }
+        else if (fnscope->function() && fnscope->function()->is<element_type_ctor>()) {
+            expr = std::shared_ptr<element_structure>(new element_structure({}));
+        }
+        else {
             ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, fnscope, args, expr));
             auto btype = fnscope->function()->type();
             auto type = btype ? btype->output("return")->type : nullptr;

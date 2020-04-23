@@ -159,7 +159,7 @@ namespace libelement::cli
 			switch (result)
 			{
 			case ELEMENT_OK:
-				return compiler_message(message::SUCCESS, message_level::INFORMATION, std::to_string(value), trace_site);
+				return compiler_message(message_level::INFORMATION, std::to_string(value), trace_site);
 			default:
 				return compiler_message(message::UNKNOWN_ERROR, message_level::ERROR, std::to_string(value), trace_site);
 			}
