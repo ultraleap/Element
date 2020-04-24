@@ -16,7 +16,7 @@ namespace libelement::cli
 		bool no_prelude = false;
 		bool debug = false;
 		bool log_json = false;
-		std::string verbosity;
+		message_level verbosity = message_level::INFORMATION;
 		std::vector<std::string> packages{};
 		std::vector<std::string> source_files{};
 
@@ -31,10 +31,10 @@ namespace libelement::cli
 				ss << "--debug ";
 
 			if (log_json)
-				ss << "--log-json ";
+				ss << "--logjson ";
 
-			if (!verbosity.empty())
-				ss << "--verbosity " << verbosity << " ";
+			if (verbosity != message_level::UNKNOWN)
+				ss << "--verbosity " << static_cast<int>(verbosity) << " ";
 
 			if (!packages.empty()) 
 			{
@@ -89,7 +89,7 @@ namespace libelement::cli
 			return common_arguments.debug;
 		}
 
-		const std::string get_verbosity() const
+		const message_level get_verbosity() const
 		{
 			return common_arguments.verbosity;
 		}
@@ -154,20 +154,20 @@ namespace libelement::cli
 		using callback = std::function<void(const command&)>;
 		static void configure(CLI::App& app, command::callback callback);
 
-		compiler_message generate_response(element_result result, element_value value, const std::vector<trace_site>& trace_site = std::vector<libelement::cli::trace_site>()) const
+		compiler_message generate_response(element_result result, element_value value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>()) const
+		{
+			return generate_response(result, std::to_string(value), trace_stack);
+		}
+
+		compiler_message generate_response(element_result result, std::string value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>()) const
 		{
 			switch (result)
 			{
 			case ELEMENT_OK:
-				return compiler_message(message_level::INFORMATION, std::to_string(value), trace_site);
+				return compiler_message(value, trace_stack);
 			default:
-				return compiler_message(message::UNKNOWN_ERROR, message_level::ERROR, std::to_string(value), trace_site);
+				return compiler_message(message_type::UNKNOWN_ERROR, value, trace_stack);
 			}
-		}
-
-		compiler_message generate_response(std::string message, std::optional<message_level> level = std::nullopt) const
-		{
-			return compiler_message(message, level);
 		}
 
 	protected:

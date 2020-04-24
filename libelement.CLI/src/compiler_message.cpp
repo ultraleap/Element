@@ -13,10 +13,10 @@ std::string compiler_message::serialize() const
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
 	writer.StartObject();
-	if (message_code.has_value()) 
+	if (type.has_value()) 
 	{
 		writer.String(key_message_code);
-		writer.Int(static_cast<int>(message_code.value()));
+		writer.Int(static_cast<int>(type.value()));
 	}
 	if (level.has_value()) 
 	{

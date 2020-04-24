@@ -17,7 +17,7 @@ namespace libelement::cli
 		UNKNOWN = 0xFFFF
 	};
 
-	enum class message : unsigned int
+	enum class message_type : unsigned int
 	{
 		SUCCESS = 0,
 		SERIALIZATION_ERROR = 1,
@@ -49,12 +49,12 @@ namespace libelement::cli
 	{
 		typedef const std::map<std::string, message_level>::const_iterator message_level_const_iterator;
 
-		std::string code;
+		message_type type;
 		std::string name;
 		message_level level;
 		
-		message_code(std::string code, std::string name, const std::string& level)
-			: code{ std::move(code) }, name{ std::move(name) }, level{ get_message_level(level) }
+		message_code(message_type type, std::string name, const std::string& level)
+			: type{ std::move(type) }, name{ std::move(name) }, level{ get_message_level(level) }
 		{
 		}
 
@@ -80,7 +80,7 @@ namespace libelement::cli
 
 	class message_codes 
 	{
-		typedef const std::map<std::string, message_code>::const_iterator message_code_const_iterator;
+		typedef const std::map<message_type, message_code>::const_iterator message_code_const_iterator;
 	public:
 		message_codes(const std::string& path) 
 		{			
@@ -92,20 +92,30 @@ namespace libelement::cli
 			{
 				auto name = toml::find<std::string>(item.second, "name");
 				auto level = toml::find<std::string>(item.second, "level");
-				code_map.insert(it, std::pair<std::string, message_code>(item.first, message_code(item.first, name, level)));
+				auto index = static_cast<message_type>(std::stoi(item.first.substr(3)));
+				code_map.insert(it, std::pair<message_type, message_code>(index, message_code(index, name, level)));
 			}
 		}
 
-		const message_code* get_code(const std::string& code) const
+		const message_code* get_code(message_type type) const
 		{
-			message_code_const_iterator it = code_map.find(code);
+			message_code_const_iterator it = code_map.find(type);
 			if (it != code_map.end())
 				return &it->second;
 
 			return nullptr;
 		}
 
+		const message_level get_level(message_type type) const
+		{
+			const message_code* message_code = get_code(type);
+			if (message_code == nullptr)
+				return message_level::UNKNOWN;
+
+			return message_code->level;
+		}
+
 	private:
-		std::map<std::string, message_code> code_map;
+		std::map<message_type, message_code> code_map;
 	};
 }

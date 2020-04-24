@@ -16,7 +16,7 @@ namespace libelement::cli
 		std::string as_string() const
 		{
 			std::stringstream ss;
-			ss << "--expression " << expression << " ";
+			ss << "expression " << expression << " ";
 			return ss.str();
 		}
 	};
@@ -36,7 +36,7 @@ namespace libelement::cli
 			element_result result = ELEMENT_OK;
 			result = setup(input);
 			if (result != ELEMENT_OK)
-				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+				return compiler_message(message_type::PARSE_ERROR, "Failed to setup context");
 
 			//call into libelement
 			const element_function* fn;
@@ -48,7 +48,7 @@ namespace libelement::cli
 			auto evaluate = "evaluate = " + custom_arguments.expression + ";";
 			result = element_interpreter_load_string(ictx, evaluate.c_str(), "<input>");
 			if (result != ELEMENT_OK)
-				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+				return compiler_message(message_type::PARSE_ERROR, "Failed to parse: " + evaluate);
 
 			//std::cout << std::endl << std::endl;
 
@@ -66,15 +66,15 @@ namespace libelement::cli
 
 			result = element_interpreter_get_function(ictx, "evaluate", &fn);
 			if (result != ELEMENT_OK)
-				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+				return compiler_message(message_type::UNKNOWN_ERROR, "Failed to find: " + evaluate);
 
 			result = element_interpreter_compile_function(ictx, fn, &cfn, nullptr);
 			if (result != ELEMENT_OK)
-				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+				return compiler_message(message_type::UNKNOWN_ERROR, "Failed to compile: " + evaluate);
 
 			result = element_interpreter_evaluate_function(ictx, cfn, nullptr, 1, outputs, 1, nullptr);
 			if (result != ELEMENT_OK)
-				return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+				return compiler_message(message_type::UNKNOWN_ERROR, "Failed to evaluate: " + evaluate);
 
 			return generate_response(result, outputs[0], trace_site);
 		}

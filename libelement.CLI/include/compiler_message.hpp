@@ -41,7 +41,7 @@ namespace libelement::cli
 		 static constexpr const char* const key_context { "Context" };
 		 static constexpr const char* const key_trace_stack { "TraceStack" };
 
-		std::optional<message> message_code;
+		std::optional<message_type> type;
 		std::optional<message_level> level;
 		std::string context;
 		std::vector<trace_site> trace_stack;
@@ -50,19 +50,19 @@ namespace libelement::cli
 		inline static message_codes codes { message_codes("Messages.toml") };
 		
 	public:
-		compiler_message(std::string message, std::optional<message_level> message_level = std::nullopt)
-			: message_code{ std::nullopt }, level{ message_level }, context{ std::move(message) },  trace_stack{ }
+		compiler_message(std::string message, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+			: type{ std::nullopt }, level{ std::nullopt }, context{ std::move(message) }, trace_stack{ std::move(trace_stack) }
 		{
 		}
 
-		compiler_message(message_level level, std::string context = std::string(), std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
-			: message_code{ std::nullopt }, level{ level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
+		compiler_message(message_type type, std::string message, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+			: type{ type }, level{ codes.get_level(type) }, context{ std::move(message) }, trace_stack{ std::move(trace_stack) }
 		{
 		}
 
-		compiler_message(message message, message_level level, std::string context = std::string(), std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
-			: message_code{ message }, level{ level }, context{ std::move(context) }, trace_stack{ std::move(trace_stack) }
+		message_level get_level() const 
 		{
+			return level.has_value() ? level.value() : message_level::UNKNOWN;
 		}
 		
 		std::string serialize() const;

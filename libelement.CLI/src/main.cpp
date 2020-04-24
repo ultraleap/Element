@@ -16,7 +16,7 @@ void command_callback(const command& command)
 
 	//callback in case we need access to the command for some compiler_message generation shenanigans
 	auto input = compilation_input(command.get_common_arguments());
-	auto response = command.execute(input); //is input still needed at this point if we perform setup in initialise?
+	auto response = command.execute(input);
 	std::cout << response.serialize() << std::endl;
 } 
 

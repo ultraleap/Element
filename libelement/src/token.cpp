@@ -317,7 +317,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         return ELEMENT_OK;
     }
     catch (...)
-    {
+    { 
         goto error;
     }
 

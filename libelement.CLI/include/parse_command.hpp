@@ -12,7 +12,7 @@ namespace libelement::cli
 		std::string as_string() const
 		{
 			std::stringstream ss;
-			ss << "--parse ";
+			ss << "parse ";
 
 			if (no_validation)
 				ss << "--no-validation ";
@@ -38,10 +38,10 @@ namespace libelement::cli
 
 			if (result != ELEMENT_OK)
 			{
-				return generate_response("False");
+				return compiler_message(message_type::PARSE_ERROR, "False");
 			}
 
-			return generate_response("True");
+			return compiler_message("True");
 		}
 
 		std::string as_string() const override
