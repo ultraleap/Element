@@ -29,5 +29,14 @@ namespace Laboratory.Tests.L2.Semantics
 
         [Test]
         public void ClosureWithinAnonymousFunction() => AssertApproxEqual(CompilationInput, "13", "addUsingLambdaWithCapture(5, 8)");
+        
+        [Test]
+        public void DeepClosureWithinAnonymousFunction() => AssertApproxEqual(CompilationInput, "19", "deepNestedLambdaWithCapture(5, 8, 6)");
+        
+        [Test]
+        public void AddUsingDeepNestedCapture() => AssertApproxEqual(CompilationInput, "13", "addUsingDeepNestedCapture(5, 8)");
+        
+        [Test]
+        public void AddUsingDeepNestedCaptureWithLambda() => AssertApproxEqual(CompilationInput, "13", "addUsingDeepNestedCaptureWithLambda(5, 8)");
     }
 }

@@ -352,45 +352,45 @@ namespace Laboratory.Tests.L3.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
-			TestCase("Num.eq(1, 1)", "true"),
-			TestCase("Num.eq(0, 1)", "false"),
+			TestCase("Num.eq(1, 1)", "True"),
+			TestCase("Num.eq(0, 1)", "False"),
 		]
 		public void Equal(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
-			TestCase("Num.neq(1, 1)", "false"),
-			TestCase("Num.neq(0, 1)", "true"),
+			TestCase("Num.neq(1, 1)", "False"),
+			TestCase("Num.neq(0, 1)", "True"),
 		]
 		public void NotEqual(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
-			TestCase("Num.lt(0, 1)", "true"),
-			TestCase("Num.lt(1, 0)", "false"),
+			TestCase("Num.lt(0, 1)", "True"),
+			TestCase("Num.lt(1, 0)", "False"),
 		]
 		public void LessThan(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[   //leq
-			TestCase("Num.leq(0, 1)", "true"),
-			TestCase("Num.leq(1, 1)", "true"),
-			TestCase("Num.leq(1, 0)", "false"),
+			TestCase("Num.leq(0, 1)", "True"),
+			TestCase("Num.leq(1, 1)", "True"),
+			TestCase("Num.leq(1, 0)", "False"),
 		]
 		public void LessThanOrEqual(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[   //lt
-			TestCase("Num.gt(0, 1)", "false"),
-			TestCase("Num.gt(1, 0)", "true"),
+			TestCase("Num.gt(0, 1)", "False"),
+			TestCase("Num.gt(1, 0)", "True"),
 		]
 		public void GreaterThan(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[   //geq
-			TestCase("Num.geq(0, 1)", "false"),
-			TestCase("Num.geq(1, 1)", "true"),
-			TestCase("Num.geq(1, 0)", "true"),
+			TestCase("Num.geq(0, 1)", "False"),
+			TestCase("Num.geq(1, 1)", "True"),
+			TestCase("Num.geq(1, 0)", "True"),
 		]
 		public void GreaterThanOrEqual(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);

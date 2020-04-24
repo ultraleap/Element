@@ -71,67 +71,25 @@ namespace Element.AST
 
         internal void Initialize(IScope parent)
         {
-            ParentScope = parent ?? throw new ArgumentNullException(nameof(parent));
-            ChildScope?.Initialize(this);
+            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
+            Child?.Initialize(this);
             DeclaredInputs = string.IsNullOrEmpty(IntrinsicQualifier)
                                  ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
                                  : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs;
             DeclaredOutput = Port.ReturnPort(DeclaredType);
         }
 
-        public string Location => ParentScope switch
+        public string Location => Parent switch
         {
             GlobalScope _ => Identifier,
             IDeclared d => $"{d.Declarer.Identifier.Value}.{Identifier.Value}",
             _ => throw new InternalCompilerException("Couldn't construct location of declaration")
         };
-        public IScope ParentScope { get; private set; }
-        public Scope? ChildScope => Body as Scope;
+        public Scope? Child => Body as Scope;
+        public IScope Parent { get; private set; }
 
         protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(Context? context)
-            where TIntrinsic : class
-        {
-            switch (_intrinsics.TryGetValue(Location, out var intrinsic), intrinsic)
-            {
-                case (true, TIntrinsic t):
-                    return t;
-                case (false, _):
-                    context?.LogError(4, $"Intrinsic '{Location}' is not implemented");
-                    return null;
-                case (true, _):
-                    context?.LogError(14, $"Found intrinsic '{Location}' but it is not '{typeof(TIntrinsic)}'");
-                    return null;
-            }
-        }
-
-        static Declaration()
-        {
-            foreach (var intrinsic in new IIntrinsic[]
-                {
-                    AnyConstraint.Instance,
-                    NumType.Instance,
-                    BoolType.Instance,
-                    ListType.Instance,
-                    new ForIntrinsic(),
-                    new FoldIntrinsic(),
-                    new ListIntrinsic(),
-                    new InferIntrinsic(),
-                    new MemberwiseIntrinsic(),
-                    new PersistIntrinsic()
-                }.Concat(Enum.GetValues(typeof(NullaryIntrinsics.Value))
-                    .Cast<NullaryIntrinsics.Value>()
-                    .Select(v => new NullaryIntrinsics(v)))
-                .Concat(Enum.GetValues(typeof(Unary.Op))
-                    .Cast<Unary.Op>()
-                    .Select(o => new UnaryIntrinsic(o)))
-                .Concat(Enum.GetValues(typeof(Binary.Op))
-                    .Cast<Binary.Op>()
-                    .Select(o => new BinaryIntrinsic(o))))
-            {
-                _intrinsics.Add(intrinsic.Location, intrinsic);
-            }
-        }
-
-        private static readonly Dictionary<string, IValue> _intrinsics = new Dictionary<string, IValue>();
+            where TIntrinsic : class, IValue
+            => IntrinsicCache.GetByLocation<TIntrinsic>(Location, context);
     }
 }

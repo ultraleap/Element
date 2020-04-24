@@ -4,14 +4,15 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class DeclaredStruct : Declaration, IFunction, IScope, IEnumerable<IValue>, IType
+    public abstract class DeclaredStruct : Declaration, IFunction, IScope, IType
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
         protected override Identifier[] ScopeIdentifierBlacklist => new[]{Identifier};
 
-        public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => (ChildScope ?? ParentScope)[id, recurse, compilationContext];
-        public IEnumerator<IValue> GetEnumerator() => ChildScope?.GetEnumerator() ?? Enumerable.Empty<IValue>().GetEnumerator();
+        public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => (Child ?? Parent)[id, recurse, compilationContext];
+        public int Count => Child?.Count ?? 0;
+        public IEnumerator<IValue> GetEnumerator() => Child?.GetEnumerator() ?? Enumerable.Empty<IValue>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         string IType.Name => Identifier;
         public override IType Type => TypeType.Instance;

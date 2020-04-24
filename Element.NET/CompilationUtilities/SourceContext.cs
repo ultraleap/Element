@@ -30,7 +30,7 @@ namespace Element
                     foreach (var id in intrinsic.Location.Split('.'))
                     {
                         declaration = currentScope?[new Identifier(id), false, compilationContext] as Declaration;
-                        currentScope = declaration?.ChildScope;
+                        currentScope = declaration?.Child;
                     }
 
                     _cachedIntrinsicDeclarations[intrinsic] = declaration;

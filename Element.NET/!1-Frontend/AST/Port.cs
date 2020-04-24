@@ -10,15 +10,19 @@ namespace Element.AST
         // ReSharper disable once MemberCanBePrivate.Global
         public Port() {}
 
-        public Port(string identifier, TypeAnnotation? typeAnnotation)
+        public Port(string identifier, TypeAnnotation? typeAnnotation) :this(new Identifier(identifier), typeAnnotation) { }
+        
+        public Port(Identifier identifier, TypeAnnotation? typeAnnotation)
         {
             _identifier = new Identifier(identifier);
             _type = typeAnnotation;
         }
         
-        public Port(string identifier, IConstraint constraint)
+        public Port(string identifier, IConstraint constraint) :this(new Identifier(identifier), constraint) { }
+        
+        public Port(Identifier identifier, IConstraint constraint)
         {
-            _identifier = new Identifier(identifier);
+            _identifier = identifier;
             _cachedConstraint = constraint;
         }
         

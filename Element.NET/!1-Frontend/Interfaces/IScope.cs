@@ -4,49 +4,52 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public interface IScope
+    public interface IIndexable
     {
         IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] { get; }
     }
 
+    public interface IScope : IIndexable, IReadOnlyCollection<IValue> { }
+
     public static class ScopeExtensions
     {
-        private class ClonedScope : ScopeBase<Declaration>, IDeclared
+        private class ClonedScope : ScopeBase, IDeclared
         {
-            private readonly IScope _parentScope;
+            private readonly IScope _parent;
 
-            public ClonedScope(Declaration declarer, IEnumerable<Declaration> items, IScope parentScope)
+            public ClonedScope(Declaration declarer, IEnumerable<Declaration> items, IScope parent)
             {
                 Declarer = declarer;
-                _parentScope = parentScope;
-                SetRange(items.Select(item => (item.Identifier, item.Clone(this))));
+                _parent = parent;
+                SetRange(items.Select(item => (item.Identifier, (IValue)item.Clone(this))));
             }
 
             public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-                IndexCache(id) ?? (recurse ? _parentScope[id, true, compilationContext] : null);
+                IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
 
             public Declaration Declarer { get; }
         }
 
-        public static IScope Clone(this IScope scope, IScope parent) => new ClonedScope((scope as IDeclared)?.Declarer, scope as IEnumerable<Declaration>, parent);
+        public static IScope Clone(this IScope scope, Declaration declarer, IScope parent)=>
+            new ClonedScope(declarer, scope.Cast<Declaration>(), parent);
         
         /// <summary>
         /// Enumerates all values in the given scope returning those matching the given filter.
         /// </summary>
-        public static List<Declaration> EnumerateDeclarations(this IEnumerable<Declaration> scope, Predicate<Declaration> filter)
+        public static List<TValue> EnumerateValues<TValue>(this IScope scope, Predicate<TValue> filter) where TValue : IValue
         {
-            var results = new List<Declaration>();
-            void RecurseValue(Declaration declaration)
+            var results = new List<TValue>();
+            void RecurseValue(IValue value)
             {
-                if (filter(declaration)) results.Add(declaration);
+                if (value is TValue tval && filter(tval)) results.Add(tval);
                 
-                if (declaration.ChildScope != null)
+                if (value is Declaration decl && decl.Child != null)
                 {
-                    RecurseMultipleValues(declaration.ChildScope);
+                    RecurseMultipleValues(decl.Child);
                 }
             }
 
-            void RecurseMultipleValues(IEnumerable<Declaration> values)
+            void RecurseMultipleValues(IEnumerable<IValue> values)
             {
                 foreach (var v in values)
                 {

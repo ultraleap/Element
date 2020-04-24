@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using Element.AST;
 using LExpression = System.Linq.Expressions.Expression;
 
@@ -21,11 +22,11 @@ namespace Element.CLR
         public static NumberConverter Instance { get; } = new NumberConverter();
 
         public IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext compilationContext) =>
-            new NumberExpression(parameter.Type switch
-            {
-                {} t when t == typeof(bool) => LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)),
-                _ => LExpression.Convert(parameter, typeof(float))
-            });
+            parameter.Type switch
+        {
+            {} t when t == typeof(bool) => new NumberExpression(LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)), BoolType.Instance),
+            _ => new NumberExpression(LExpression.Convert(parameter, typeof(float)))
+        };
 
         public System.Linq.Expressions.Expression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
                                                                  CompilationContext compilationContext) =>
@@ -39,13 +40,26 @@ namespace Element.CLR
 
         private class NumberExpression : Expression, ICLRExpression
         {
-            public NumberExpression(LExpression parameter) => Parameter = parameter;
+            public NumberExpression(LExpression parameter, AST.IType? typeOverride = default)
+                : base(typeOverride) =>
+                Parameter = parameter;
+
             public LExpression Parameter { get; }
             public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
             public LExpression Compile(Func<Expression, LExpression> compileOther) => Parameter;
             protected override string ToStringInternal() => Parameter.ToString();
             public override bool Equals(Expression other) => other == this;
-            public override int GetHashCode() => Parameter.GetHashCode();
+            public override int GetHashCode() => new {Parameter, InstanceTypeOverride}.GetHashCode();
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Struct)]
+    public class ElementStructTemplateAttribute : Attribute
+    {
+        public string ElementTypeExpression { get; }
+        public ElementStructTemplateAttribute(string elementTypeExpression)
+        {
+            ElementTypeExpression = elementTypeExpression;
         }
     }
 
@@ -69,7 +83,7 @@ namespace Element.CLR
         public IValue LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext compilationContext)
         {
             var result = compilationContext.SourceContext.EvaluateExpression(_elementTypeExpression, out _);
-            if(result == CompilationErr.Instance)
+            if (result == CompilationErr.Instance)
             {
                 return CompilationErr.Instance;
             }
@@ -133,7 +147,6 @@ namespace Element.CLR
         public BoundaryConverter(IDictionary<Type, IBoundaryConverter> mappings) : base(mappings) { }
         public static Dictionary<Type, IBoundaryConverter> CreateDefault()
         {
-            var vector2 = new StructConverter("Vector2", new Dictionary<string, string>{{"x", "X"}, {"y", "Y"}});
             //var rect = new Input1D(new Map {{"x", "X"}, {"y", "Y"}, {"width", "Width"}, {"height", "Height"}});
             return new Dictionary<Type, IBoundaryConverter>
             {
@@ -142,7 +155,9 @@ namespace Element.CLR
                 {typeof(double), NumberConverter.Instance},
                 {typeof(long), NumberConverter.Instance},
                 {typeof(bool), NumberConverter.Instance},
-                {typeof(Vector2), vector2},
+                {typeof(Vector2), new StructConverter("Vector2", new Dictionary<string, string>{{"x", "X"}, {"y", "Y"}})},
+                {typeof(Vector3), new StructConverter("Vector3", new Dictionary<string, string>{{"x", "X"}, {"y", "Y"}, {"z", "Z"}})},
+                
                 /*{typeof(Point), vector2},
                 {typeof(PointF), vector2},
                 {typeof(Vector3), new Input1D(new Map {{"x", "X"}, {"y", "Y"}, {"z", "Z"}})},
@@ -170,14 +185,25 @@ namespace Element.CLR
             };
         }
 
+        private bool TryAddStructConverter(Type clrStructType, out IBoundaryConverter boundaryConverter)
+        {
+            if (clrStructType.GetCustomAttribute<ElementStructTemplateAttribute>() is {} attr)
+            {
+                Add(clrStructType, boundaryConverter = new StructConverter(attr.ElementTypeExpression, clrStructType));
+                return true;
+            }
+
+            boundaryConverter = null;
+            return false;
+        }
+
         public IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext compilationContext)
         {
-            if (TryGetValue(parameter.Type, out var retval))
+            if (TryGetValue(parameter.Type, out var retval)
+                || TryAddStructConverter(parameter.Type, out retval))
             {
                 return retval.LinqToElement(parameter, root, compilationContext);
             }
-            
-            // TODO: Generate converters
 
             return compilationContext.LogError(12, $"No {nameof(IBoundaryConverter)} for CLR type '{parameter.Type}'");
         }
@@ -186,7 +212,8 @@ namespace Element.CLR
                                                                  CompilationContext compilationContext)
         {
             // TODO: Detect circular
-            if (TryGetValue(outputType, out var output))
+            if (TryGetValue(outputType, out var output)
+                || TryAddStructConverter(outputType, out output))
             {
                 return output.ElementToLinq(value, outputType, convertFunction, compilationContext);
             }

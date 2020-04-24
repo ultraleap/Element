@@ -12,15 +12,18 @@ namespace Element.NET.Tests
 @"struct Vector3(x:Num, y:Num, z:Num)
 {
     add(a:Vector3, b:Vector3) = memberwise(Num.add, a, b);
-}";
+}
+struct MyCustomElementStruct(floatField:Num, vector3Field:Vector3);
+";
         
-        private class MyCustomElementStruct
+        [ElementStructTemplate("MyCustomElementStruct")]
+        private struct MyCustomElementStruct
         {
             public float floatField;
             public Vector3 vector3Field;
         }
         
-        private delegate float InvalidDelegate(object obj);
+        private delegate float InvalidDelegate(object a);
         private delegate float Constant();
         private delegate float UnaryOp(float a);
         private delegate float BinaryOp(float a, float b);
@@ -62,7 +65,7 @@ namespace Element.NET.Tests
         {
             var shouldBeNull = _sourceContext.Compile<InvalidDelegate>("Num.sqr");
             Assert.Null(shouldBeNull);
-            // TODO: Expect InvalidBoundaryFunction error code (ELE10)
+            // TODO: Expect InvalidBoundaryFunction error code (ELE12)
         }
 
         [Test]
@@ -76,7 +79,7 @@ namespace Element.NET.Tests
         [Test]
         public void IntermediateStructVectorAdd()
         {
-            var fn = _sourceContext.Compile<BinaryOp>("_(a:Num, b:Num):Num = Vector3(a, a, a).add(Vector3(b, b, b))");
+            var fn = _sourceContext.Compile<BinaryOp>("_(a:Num, b:Num):Num = Vector3(a, a, a).add(Vector3(b, b, b)).x");
             var result = fn(5f, 10f);
             Assert.AreEqual(15f, result);
         }
@@ -96,6 +99,14 @@ namespace Element.NET.Tests
             var result = fn(5f, new Vector3(10f));
             Assert.AreEqual(5f, result.floatField);
             Assert.AreEqual(10f, result.vector3Field.X);
+        }
+
+        [Test]
+        public void FactorialUsingFor()
+        {
+            var fn = _sourceContext.Compile<UnaryOp>("_(a:Num):Num = for(Tuple(a, 1), _(tup):Bool = tup.varg0.gt(0), _(tup) = Tuple(tup.varg0.sub(1), tup.varg1.mul(tup.varg0))).varg1");
+            var result = fn(5);
+            Assert.AreEqual(120, result);
         }
     }
 }

@@ -30,7 +30,8 @@ namespace Element
 			Dictionary<Expression, Expression> cache = null)
 		{
 			cache ??= new Dictionary<Expression, Expression>();
-			if (!cache.TryGetValue(input, out var retval)) {
+			if (!cache.TryGetValue(input, out var retval))
+			{
 				cache.Add(input, retval = OptimizeInternal(input, cache));
 			}
 			return retval;
@@ -47,7 +48,7 @@ namespace Element
 					var u = u1a.Equals(u1.Operand) ? u1 : new Unary(u1.Operation, u1a);
 					if (u.Operand is Constant c1)
 					{
-						return new Constant(Unary.Evaluate(u.Operation, c1.Value));
+						return Unary.Evaluate(u.Operation, c1.Value);
 					}
 					return u;
 				case Binary b1:
@@ -58,7 +59,7 @@ namespace Element
 					var cB = (b.OpB as Constant)?.Value;
 					if (cA.HasValue && cB.HasValue)
 					{
-						return new Constant(Binary.Evaluate(b.Operation, cA.Value, cB.Value));
+						return Binary.Evaluate(b.Operation, cA.Value, cB.Value);
 					}
 					switch (b.Operation)
 					{

@@ -8,9 +8,16 @@ namespace Element
 	/// <summary>
 	/// Base class for all Element expressions
 	/// </summary>
-	public abstract class Expression : IEquatable<Expression>, IValue, IFunction, IEvaluable
+	public abstract class Expression : IEquatable<Expression>, IValue, IIndexable, IFunction, IEvaluable
 	{
+		protected Expression(AST.IType? instanceTypeOverride = default) => InstanceTypeOverride = instanceTypeOverride;
+		
 		public AST.IType Type => NumType.Instance;
+
+		/// <summary>
+		/// The source type of the expression for instance indexing purposes
+		/// </summary>
+		public readonly AST.IType? InstanceTypeOverride;
 
 		public abstract IEnumerable<Expression> Dependent { get; }
 
@@ -27,6 +34,10 @@ namespace Element
 		public override int GetHashCode() => ToString().GetHashCode();
 		public IEnumerable<Expression> AllDependent => Dependent.SelectMany(d => new[] {d}.Concat(d.AllDependent));
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
+		
+		public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
+			compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>((InstanceTypeOverride ?? AllDependent.FirstOrDefault(d => d.InstanceTypeOverride != null)?.InstanceTypeOverride ?? Type) as IIntrinsic)
+			                  ?.ResolveInstanceFunction(id, this, compilationContext);
 		
 		
 		

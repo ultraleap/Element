@@ -1,3 +1,5 @@
+using Element.AST;
+
 namespace Element
 {
 	using System;
@@ -10,6 +12,17 @@ namespace Element
 	{
 		public enum Op
 		{
+			// Bool
+			And,
+			Or,
+			Eq,
+			NEq,
+			Lt,
+			LEq,
+			Gt,
+			GEq,
+			
+			// Num
 			Add,
 			Sub,
 			Mul,
@@ -22,23 +35,35 @@ namespace Element
 			Atan2,
 		}
 
-		public static float Evaluate(Op op, float a, float b) =>
+		public static Constant Evaluate(Op op, float a, float b) =>
 			op switch
 			{
-				Op.Add => (a + b),
-				Op.Sub => (a - b),
-				Op.Mul => (a * b),
-				Op.Div => (a / b),
-				Op.Rem => (a % b),
-				Op.Pow => (float) Math.Pow(a, b),
-				Op.Min => Math.Min(a, b),
-				Op.Max => Math.Max(a, b),
-				Op.Log => (float) Math.Log(a, b),
-				Op.Atan2 => (float) Math.Atan2(a, b),
-				_ => throw new ArgumentOutOfRangeException()
+				Op.And => a * b > 0f ? Constant.True : Constant.False,
+				Op.Or => (a + b) - (a * b) > 0f ? Constant.True : Constant.False,
+				Op.Eq => Unary.Evaluate(Unary.Op.Not, Evaluate(Op.NEq, a, b).Value),
+				Op.NEq => Math.Abs(a - b) > 0f ? Constant.True : Constant.False,
+				Op.Lt => b - a > 0f ? Constant.True : Constant.False,
+				Op.Gt => a - b > 0f ? Constant.True : Constant.False,
+				Op.LEq => Unary.Evaluate(Unary.Op.Not, Evaluate(Op.Gt, a, b).Value),
+				Op.GEq => Unary.Evaluate(Unary.Op.Not, Evaluate(Op.Lt, a, b).Value),
+				_ => new Constant(op switch
+				{
+					Op.Add => (a + b),
+					Op.Sub => (a - b),
+					Op.Mul => (a * b),
+					Op.Div => (a / b),
+					Op.Rem => (a % b),
+					Op.Pow => (float) Math.Pow(a, b),
+					Op.Min => Math.Min(a, b),
+					Op.Max => Math.Max(a, b),
+					Op.Log => (float) Math.Log(a, b),
+					Op.Atan2 => (float) Math.Atan2(a, b),
+					_ => throw new ArgumentOutOfRangeException(nameof(op), op, null)
+				})
 			};
 
 		public Binary(Op operation, Expression opA, Expression opB)
+			: base(AST.BinaryIntrinsic.OperationOverrides.TryGetValue(operation, out var details) ? details.Return : default)
 		{
 			Operation = operation;
 			OpA = opA ?? throw new ArgumentNullException(nameof(opA));

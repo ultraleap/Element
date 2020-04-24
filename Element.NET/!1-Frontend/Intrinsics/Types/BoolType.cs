@@ -1,9 +1,21 @@
 namespace Element.AST
 {
-    public sealed class BoolType : IntrinsicType<BoolType>
+    public sealed class BoolType : IntrinsicType
     {
+        public static BoolType Instance { get; } = new BoolType();
+        protected override IntrinsicType _instance => Instance;
         public override string Name => "Bool";
         public override Port[] Inputs { get; } = {new Port("a", NumType.Instance)};
-        protected override IValue[] RefineArguments(IValue[] arguments) => new IValue[] {new Constant((Constant)arguments[0] > 0f ? 1f : 0f)};
+
+        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
+            value is Element.Expression expr && expr.InstanceTypeOverride == Instance;
+
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+            IntrinsicCache.GetByLocation<IFunctionSignature>("Bool.if", compilationContext).ResolveCall(new IValue[]
+            {
+                new Binary(Binary.Op.Gt, arguments[0] as Element.Expression, Constant.Zero),
+                Constant.True,
+                Constant.False
+            }, false, compilationContext);
     }
 }

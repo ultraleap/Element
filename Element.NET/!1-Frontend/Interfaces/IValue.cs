@@ -21,7 +21,7 @@ namespace Element.AST
                 var port = i < ports.Length ? ports[i] : null;
                 if (port == Port.VariadicPort || variadicArgNumber > 0)
                 {
-                    result.Add((new Identifier($"<vararg#{variadicArgNumber}>"), arg));
+                    result.Add((new Identifier($"varg{variadicArgNumber}"), arg));
                     variadicArgNumber++;
                 }
                 else if ((port?.Identifier.HasValue ?? false) && arg != null)
@@ -36,6 +36,7 @@ namespace Element.AST
         public static int? GetSerializedSize(this IValue value, CompilationContext compilationContext) => value switch
         {
             Element.Expression _ => 1,
+            IFunctionSignature fn when fn.IsNullary() => fn.ResolveNullaryFunction(compilationContext).GetSerializedSize(compilationContext),
             StructInstance structInstance when structInstance.Type == ListType.Instance => ListType.GetListCount(structInstance, compilationContext) switch
             {
                 (ListType.CountType t, int count) when t == ListType.CountType.Constant => count,
@@ -44,17 +45,16 @@ namespace Element.AST
             IEnumerable<IValue> values => values.Select(v => v.GetSerializedSize(compilationContext)).Aggregate((int?)0, (a, b) => a == null || b == null ? null : a + b),
             _ => compilationContext.LogError(1, $"'{value}' is not serializable").Return((int?)null)
         };
-        
-        public static bool TrySerialize(this IValue value, out Element.Expression[] serialized, CompilationContext compilationContext)
+
+        public static Element.Expression[] Serialize(this IValue value, CompilationContext compilationContext)
         {
             var size = value.GetSerializedSize(compilationContext);
             if (!size.HasValue || size == 0)
             {
-                serialized = null;
-                return false;
+                return Array.Empty<Element.Expression>();
             }
             
-            serialized = new Element.Expression[size.Value];
+            var serialized = new Element.Expression[size.Value];
             var position = 0;
 
             bool AsExpression(object serializable, Element.Expression[] output)
@@ -64,6 +64,8 @@ namespace Element.AST
                     case Element.Expression expr:
                         output[position++] = expr;
                         return true;
+                    case IFunctionSignature fn when fn.IsNullary():
+                        return AsExpression(fn.ResolveNullaryFunction(compilationContext), output);
                     case StructInstance structInstance when structInstance.Type == ListType.Instance:
                         return AsExpression(ListType.EvaluateElements(structInstance, compilationContext), output);
                     case IEnumerable<IValue> values:
@@ -74,8 +76,11 @@ namespace Element.AST
                 };
             }
 
-            return AsExpression(value, serialized);
+            return AsExpression(value, serialized) ? serialized : Array.Empty<Element.Expression>();
         }
+
+        public static bool TrySerialize(this IValue value, out Element.Expression[] serialized, CompilationContext compilationContext)
+            => (serialized = value.Serialize(compilationContext)).Length > 0;
 
         public static bool TrySerialize(this IValue value, out float[] serialized, CompilationContext compilationContext)
         {
@@ -101,5 +106,16 @@ namespace Element.AST
 
             return success;
         }
+        
+        public static IValue Deserialize(this IType type, IEnumerable<Element.Expression> expressions, CompilationContext compilationContext) =>
+            type switch
+            {
+                {} t when t == ListType.Instance => ListType.Instance.MakeList(expressions.ToArray(), compilationContext),
+                IntrinsicType t  => t.Call(expressions.ToArray(), compilationContext),
+                _ => compilationContext.LogError(1, $"'{type}' cannot be deserialized")
+            };
+        
+        public static bool TryDeserialize(this IType type, IEnumerable<Element.Expression> expressions, out IValue value, CompilationContext compilationContext) =>
+            (value = type.Deserialize(expressions, compilationContext)) != CompilationErr.Instance;
     }
 }

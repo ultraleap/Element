@@ -13,13 +13,13 @@ namespace Element
         
         public SourceContext SourceContext { get; }
         private Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
-        private Stack<AST.IFunctionSignature> FunctionStack { get; } = new Stack<AST.IFunctionSignature>();
+        private Stack<IFunctionSignature> FunctionStack { get; } = new Stack<IFunctionSignature>();
         public void PushTrace(TraceSite traceSite) => TraceStack.Push(traceSite);
         public void PopTrace() => TraceStack.Pop();
 
-        public void PushFunction(AST.IFunctionSignature functionSignature) => FunctionStack.Push(functionSignature);
+        public void PushFunction(IFunctionSignature functionSignature) => FunctionStack.Push(functionSignature);
         public void PopFunction() => FunctionStack.Pop();
-        public bool ContainsFunction(AST.IFunctionSignature functionSignature) => FunctionStack.Contains(functionSignature);
+        public bool ContainsFunction(IFunctionSignature functionSignature) => FunctionStack.Contains(functionSignature);
 
         public TDeclaration? GetIntrinsicsDeclaration<TDeclaration>(IIntrinsic intrinsic) where TDeclaration : Declaration =>
             SourceContext.GetIntrinsicsDeclaration<TDeclaration>(intrinsic, this);

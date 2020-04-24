@@ -6,6 +6,7 @@ namespace Element.AST
 {
     public interface ISubExpression
     {
+        void Initialize(Declaration declaration);
         IValue ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext);
     }
 
@@ -18,6 +19,15 @@ namespace Element.AST
         // ReSharper restore UnusedAutoPropertyAccessor.Local
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
+        
+        public override void Initialize(Declaration declaration)
+        {
+            Declarer = declaration;
+            foreach (var expr in Expressions ?? Enumerable.Empty<ISubExpression>())
+            {
+                expr.Initialize(declaration);
+            }
+        }
 
         public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
         {
@@ -36,6 +46,7 @@ namespace Element.AST
 
             compilationContext.PushTrace(new TraceSite(previous.ToString(), null, 0, 0));
 
+            previous = previous.ResolveNullaryFunction(compilationContext);
             // Evaluate all expressions for this chain if there are any, making sure that the result is fully resolved if it returns a nullary.
             previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.ResolveNullaryFunction(compilationContext), scope, compilationContext))
                         ?? previous)

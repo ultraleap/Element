@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Element.AST
 {
@@ -6,20 +8,21 @@ namespace Element.AST
     /// A value that results from a failure during compilation. It will be accepted everywhere and generate no further
     /// errors, returning itself from each operation (the error is non-recoverable).
     /// </summary>
-    public sealed class CompilationErr : IFunctionSignature, IType, Element.IFunction
+    public sealed class CompilationErr : Element.Expression, IFunctionSignature, IType, Element.IFunction
     {
         public static CompilationErr Instance { get; } = new CompilationErr();
         private CompilationErr() { }
         IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
-        public override string ToString() => "<error>";
+        protected override string ToStringInternal() => "<error>";
+
         string IType.Name => "<error>";
         bool IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) => false;
         Port[] IFunctionSignature.Inputs { get; } = Array.Empty<Port>();
         Port IFunctionSignature.Output => null;
         IType IValue.Type => Instance;
+        public override IEnumerable<Element.Expression> Dependent => Enumerable.Empty<Element.Expression>();
 
-        
-        
+
         // TODO: Delete these
         PortInfo[] Element.IFunction.Inputs { get; } = null;
         PortInfo[] Element.IFunction.Outputs { get; } = null;

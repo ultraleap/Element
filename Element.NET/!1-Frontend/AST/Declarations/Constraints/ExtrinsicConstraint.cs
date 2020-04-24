@@ -31,10 +31,10 @@ namespace Element.AST
 
             foreach (var (argumentPort, matchingPort) in fn.Inputs.Zip(DeclaredInputs, (argumentPort, matchingPort) => (argumentPort, matchingPort)))
             {
-                success &= CompareConstraints(argumentPort.ResolveConstraint(ParentScope, compilationContext), matchingPort.ResolveConstraint(ParentScope, compilationContext));
+                success &= CompareConstraints(argumentPort.ResolveConstraint(Parent, compilationContext), matchingPort.ResolveConstraint(Parent, compilationContext));
             }
 
-            success &= CompareConstraints(fn.Output.ResolveConstraint(ParentScope, compilationContext), DeclaredOutput.ResolveConstraint(ParentScope, compilationContext));
+            success &= CompareConstraints(fn.Output.ResolveConstraint(Parent, compilationContext), DeclaredOutput.ResolveConstraint(Parent, compilationContext));
 
             return success;
         }

@@ -12,9 +12,10 @@ namespace Element.AST
 
         public override string ToString() => $".{Identifier}";
 
+        void ISubExpression.Initialize(Declaration declaration) { } // No-op
         IValue ISubExpression.ResolveSubExpression(IValue previous, IScope _, CompilationContext compilationContext) =>
-            previous is IScope scope
-                ? scope[Identifier, false, compilationContext]
+            previous is IIndexable indexable
+                ? indexable[Identifier, false, compilationContext]
                 : compilationContext.LogError(16, $"'{previous}' is not indexable");
     }
 }

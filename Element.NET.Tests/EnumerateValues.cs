@@ -4,13 +4,13 @@ using NUnit.Framework;
 
 namespace Element.NET.Tests
 {
-    public class EnumerateDeclarations : FixtureBase
+    public class EnumerateValues : FixtureBase
     {
         [Test]
         public void EnumerateAll()
         {
             var sourceContext = MakeSourceContext();
-            var results = sourceContext.GlobalScope.EnumerateDeclarations(_ => true);
+            var results = sourceContext.GlobalScope.EnumerateValues<IValue>(_ => true);
             CollectionAssert.IsNotEmpty(results);
         }
 
@@ -21,7 +21,7 @@ namespace Element.NET.Tests
         public void EnumerateByName(string nameContains)
         {
             var sourceContext = MakeSourceContext();
-            var results = sourceContext.GlobalScope.EnumerateDeclarations(v => v.Location.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
+            var results = sourceContext.GlobalScope.EnumerateValues<Declaration>(v => v.Location.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
             CollectionAssert.IsNotEmpty(results);
             // TODO: Actually check collection contents are correct
         }
@@ -31,6 +31,7 @@ namespace Element.NET.Tests
             NumType.Instance,
             BoolType.Instance,
             ListType.Instance,
+            TupleType.Instance,
         };
         
         [TestCaseSource(nameof(_types))]
@@ -39,7 +40,7 @@ namespace Element.NET.Tests
             var sourceContext = MakeSourceContext();
             sourceContext.MakeCompilationContext(out var compilationContext);
             bool Filter(IValue v) => v is IFunctionSignature fn && fn.Output.ResolveConstraint(sourceContext.GlobalScope, compilationContext) == compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>(type);
-            var results = sourceContext.GlobalScope.EnumerateDeclarations(Filter);
+            var results = sourceContext.GlobalScope.EnumerateValues<Declaration>(Filter);
             CollectionAssert.IsNotEmpty(results);
             // TODO: Actually check collection contents are correct
         }

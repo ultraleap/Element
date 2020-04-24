@@ -79,12 +79,12 @@ intrinsic struct Num
     
 
     # Comparison functions
-    eq(a:Num, b:Num):Bool   = Bool.not(a.neq(b));
-    neq(a:Num, b:Num):Bool  = a.sub(b).abs.to(Bool);
-    lt(a:Num, b:Num):Bool   = b.sub(a).to(Bool);
-    leq(a:Num, b:Num):Bool  = Bool.not(a.gt(b));
-    gt(a:Num, b:Num):Bool   = a.sub(b).to(Bool);
-    geq(a:Num, b:Num):Bool  = Bool.not(a.lt(b));
+    intrinsic eq(a:Num, b:Num):Bool;
+    intrinsic neq(a:Num, b:Num):Bool;
+    intrinsic lt(a:Num, b:Num):Bool;
+    intrinsic leq(a:Num, b:Num):Bool;
+    intrinsic gt(a:Num, b:Num):Bool;
+    intrinsic geq(a:Num, b:Num):Bool;
 
     to(a:Num, constructor:Unary) = constructor(a);
 }
