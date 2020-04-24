@@ -236,10 +236,13 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     state->cur_token.post_pos = state->pos;
                 // calculate correct length
                 const auto it_before = it;
-                while (!element_iseol(c)) {
+                while (!element_iseol(c) && it != end) {
                     c = UTF8_NEXT(it, end);
                 }
-                UTF8_ADVANCE(it, -1, end); //move back so that previous if condition can handle newline on next iteration
+
+                if (it != end) {
+                    UTF8_ADVANCE(it, -1, end); //move back so that previous if condition can handle newline on next iteration
+                }
 
                 const size_t len = std::distance(it_before, it);
                 state->cur_token.post_len += (int)len;
