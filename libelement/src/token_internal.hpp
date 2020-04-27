@@ -21,6 +21,12 @@ struct element_tokeniser_ctx
     {
         tokens.reserve(512);
         cur_token.type = ELEMENT_TOK_NONE;
+        cur_token.post_pos = -1;
+        cur_token.post_len = -1;
+        cur_token.tok_pos = -1;
+        cur_token.tok_len = -1;
+        cur_token.pre_pos = -1;
+        cur_token.pre_len = -1;
     }
 };
 
