@@ -79,36 +79,42 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     const auto it_begin = it;
     uint32_t c = UTF8_PEEK_NEXT(it, end);
     if (c == '-' || c == '+') {
-        c = UTF8_NEXT(it, end);
+        UTF8_ADVANCE(it, 1, end);
+        c = UTF8_PEEK_NEXT(it, end);
     }
     assert(element_isdigit(c));
 
     while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
-        UTF8_ADVANCE(it, 1, end);
+        c = UTF8_NEXT(it, end);
 
+    c = UTF8_PEEK_NEXT(it, end);
     if (c == '.') {
+        UTF8_ADVANCE(it, 1, end);
         c = UTF8_PEEK_NEXT(it, end);
         if (element_isdigit(c)) {
             // number
             while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
-                UTF8_ADVANCE(it, 1, end);
+                c = UTF8_NEXT(it, end);
         } 
         else {
             // indexing into a literal, do nothing and let the cleanup back out
         }
     }
 
+    c = UTF8_PEEK_NEXT(it, end);
     if (c == 'e' || c == 'E') {
-        c = UTF8_NEXT(it, end);
+        UTF8_ADVANCE(it, 1, end);
+        c = UTF8_PEEK_NEXT(it, end);
         if (c == '-' || c == '+') {
-            c = UTF8_NEXT(it, end);
+            UTF8_ADVANCE(it, 1, end);
+            c = UTF8_PEEK_NEXT(it, end);
         }
 
         if (!element_isdigit(c))
             return ELEMENT_ERROR_INVALID_ARCHIVE;
 
         while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
-            UTF8_ADVANCE(it, 1, end);
+            c = UTF8_NEXT(it, end);
     }
 
     // determine length in bytes
@@ -159,7 +165,7 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
     assert(isid_alpha(c));
 
     while (isid_alnum(UTF8_PEEK_NEXT(it, end))) {
-        UTF8_ADVANCE(it, 1, end);
+        c = UTF8_NEXT(it, end);
     }
 
     // determine length in bytes
