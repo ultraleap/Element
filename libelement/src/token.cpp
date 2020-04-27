@@ -72,11 +72,12 @@ static void reset_token(element_tokeniser_ctx* state)
 // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
 static element_result tokenise_number(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
 {
+    //TODO: Go through this in detail, also, waaaaaaaaaaaaaaaaaaaaay too long for parsing a number
     assert(state->cur_token.type == ELEMENT_TOK_NONE);
     state->cur_token.type = ELEMENT_TOK_NUMBER;
     state->cur_token.tok_pos = state->pos;
     const auto it_begin = it;
-    uint32_t c = UTF8_NEXT(it, end);
+    uint32_t c = UTF8_PEEK_NEXT(it, end);
     if (c == '-' || c == '+') {
         c = UTF8_NEXT(it, end);
     }
@@ -119,7 +120,7 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         } while (element_isdigit(c));
     }
     // row back to before the extra code point
-    UTF8_ADVANCE(it, -1, end);
+    UTF8_ADVANCE(it, -1, end); //TODO: REMOVE ME!
     // determine length in bytes
     const size_t len = std::distance(it_begin, it);
     state->pos += (int)len;
@@ -133,6 +134,7 @@ error:
 
 static element_result tokenise_comment(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
 {
+    //TODO: Go through this in detail
     auto c = UTF8_PEEK_NEXT(it, end);
 
     if (state->cur_token.post_pos < 0)
@@ -143,8 +145,9 @@ static element_result tokenise_comment(std::string::iterator& it, const std::str
         c = UTF8_NEXT(it, end);
     }
 
-    if (it != end) {
-        UTF8_ADVANCE(it, -1, end); //move back so that previous if condition can handle newline on next iteration
+    if (it != end) { 
+        //move back so that previous if condition can handle newline on next iteration
+        UTF8_ADVANCE(it, -1, end); //TODO: REMOVE ME!
     }
 
     const size_t len = std::distance(it_before, it);
@@ -160,11 +163,12 @@ static element_result tokenise_comment(std::string::iterator& it, const std::str
 // identifier ::= '_'? [a-zA-Z\u00F0-\uFFFF] [_a-zA-Z0-9\u00F0-\uFFFF]*
 static element_result tokenise_identifier(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
 {
+    //TODO: Go through this in detail
     assert(state->cur_token.type == ELEMENT_TOK_NONE);
     state->cur_token.type = ELEMENT_TOK_IDENTIFIER;
     state->cur_token.tok_pos = state->pos;
     const auto it_begin = it;
-    uint32_t c = UTF8_NEXT(it, end);
+    uint32_t c = UTF8_PEEK_NEXT(it, end);
     if (c == '_') {
         c = UTF8_NEXT(it, end);
     }
@@ -174,7 +178,7 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
         c = UTF8_NEXT(it, end);
     }
     // row back to before the extra code point
-    UTF8_ADVANCE(it, -1, end);
+    UTF8_ADVANCE(it, -1, end); //TODO: REMOVE ME!
     // determine length in bytes
     const size_t len = std::distance(it_begin, it);
     state->pos += (int)len;
@@ -236,7 +240,6 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         uint32_t line;
         while (it != end) 
         {
-
             c = UTF8_NEXT(it, end);
             switch (c) 
             {
