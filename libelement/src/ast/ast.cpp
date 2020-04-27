@@ -550,6 +550,10 @@ static element_result parse_item(element_tokeniser_ctx* tctx, size_t* tindex, el
     const element_token* token;
     GET_TOKEN(tctx, *tindex, token);
 
+    //A sole underscore was used as an identifier
+    if (token->type == ELEMENT_TOK_UNDERSCORE)
+        return ELEMENT_ERROR_INVALID_ARCHIVE;
+
     // either a qualifier, 'struct', 'namespace' or a name; either way...
     assert(token->type == ELEMENT_TOK_IDENTIFIER);
 
