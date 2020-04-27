@@ -295,6 +295,12 @@ element_result element_interpreter_ctx::load_prelude()
     return result;
 }
 
+element_result element_interpreter_ctx::set_log_callback(void (*log_callback)(const element_log_message* const))
+{
+    ///TODO
+    return ELEMENT_OK;
+}
+
 element_interpreter_ctx::element_interpreter_ctx()
 {
     // TODO: hack, remove
@@ -386,6 +392,12 @@ element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx)
 {
     assert(ctx);
     return ctx->load_prelude();
+}
+
+element_result element_interpreter_set_log_callback(element_interpreter_ctx* ctx, void (*log_callback)(const element_log_message* const))
+{
+    assert(ctx);
+    return ctx->set_log_callback(log_callback);
 }
 
 element_result element_interpreter_clear(element_interpreter_ctx* ctx)
