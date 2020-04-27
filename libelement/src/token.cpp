@@ -244,7 +244,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 case '#': tokenise_comment(it, end, state); break;
                 case '_': {
                     auto next = UTF8_PEEK_NEXT(it + 1, end);
-                    if (element_isalpha(next)) {
+                    if (isid_alpha(next)) {
                         ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
                     }
                     else {
@@ -253,7 +253,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     }
                 }
                 default: {
-                    if (element_isalpha(c)) {
+                    if (isid_alpha(c)) {
                         ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
                     }
                     else if (element_isdigit(c) || c == '-' || c == '+') {
