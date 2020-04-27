@@ -83,44 +83,34 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     }
     assert(element_isdigit(c));
 
-    //early out on eol terminal
-    c = UTF8_PEEK_NEXT(it, end);
-    if (c == ';') {
-        const size_t len = std::distance(it_begin, it);
-        state->pos += (int)len;
-        state->col += (int)len;
-        state->cur_token.tok_len += (int)len;
-        reset_token(state);
-        return ELEMENT_OK;
-    }
+    while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
+        UTF8_ADVANCE(it, 1, end);
 
-    do {
-        c = UTF8_NEXT(it, end);
-    } while (element_isdigit(c));
     if (c == '.') {
         c = UTF8_PEEK_NEXT(it, end);
         if (element_isdigit(c)) {
             // number
-            while (element_isdigit(c)) {
-                c = UTF8_NEXT(it, end);
-            }
-        } else {
+            while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
+                UTF8_ADVANCE(it, 1, end);
+        } 
+        else {
             // indexing into a literal, do nothing and let the cleanup back out
         }
     }
+
     if (c == 'e' || c == 'E') {
         c = UTF8_NEXT(it, end);
         if (c == '-' || c == '+') {
             c = UTF8_NEXT(it, end);
         }
+
         if (!element_isdigit(c))
-            goto error;
-        do {
-            c = UTF8_NEXT(it, end);
-        } while (element_isdigit(c));
+            return ELEMENT_ERROR_INVALID_ARCHIVE;
+
+        while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
+            UTF8_ADVANCE(it, 1, end);
     }
-    // row back to before the extra code point
-    UTF8_ADVANCE(it, -1, end); //TODO: REMOVE ME!
+
     // determine length in bytes
     const size_t len = std::distance(it_begin, it);
     state->pos += (int)len;
@@ -128,8 +118,6 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     state->cur_token.tok_len += (int)len;
     reset_token(state);
     return ELEMENT_OK;
-error:
-    return ELEMENT_ERROR_INVALID_ARCHIVE;
 }
 
 static element_result tokenise_comment(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
@@ -143,11 +131,6 @@ static element_result tokenise_comment(std::string::iterator& it, const std::str
     const auto it_before = it;
     while (!element_iseol(c) && it != end) {
         c = UTF8_NEXT(it, end);
-    }
-
-    if (it != end) { 
-        //move back so that previous if condition can handle newline on next iteration
-        UTF8_ADVANCE(it, -1, end); //TODO: REMOVE ME!
     }
 
     const size_t len = std::distance(it_before, it);
@@ -168,8 +151,14 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
     state->cur_token.type = ELEMENT_TOK_IDENTIFIER;
     state->cur_token.tok_pos = state->pos;
     const auto it_begin = it;
+    uint32_t c = UTF8_PEEK_NEXT(it, end);
+    if (c == '_') {
+        c = UTF8_NEXT(it, end);
+    }
 
-    while (isid_alpha(UTF8_PEEK_NEXT(it, end))) {
+    assert(isid_alpha(c));
+
+    while (isid_alnum(UTF8_PEEK_NEXT(it, end))) {
         UTF8_ADVANCE(it, 1, end);
     }
 
@@ -267,11 +256,13 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     else if (element_iseol(c)) {
                         ++state->line;
                         state->col = 0;
+                        state->pos += 1;
                         reset_token(state); 
                         UTF8_ADVANCE(it, 1, end);
                     }
                     else if (element_isspace(c)) {
                         //just eat it!
+                        state->pos += 1;
                         UTF8_ADVANCE(it, 1, end);
                     }
                 }
