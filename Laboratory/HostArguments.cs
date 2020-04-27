@@ -5,7 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Element;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -73,6 +75,15 @@ namespace Laboratory
         }
 
         private static readonly ProcessHostInfo? _processHostInfo;
+        static async Task ReadStream(List<string> messages, Process proc, StreamReader streamReader)
+        {
+            while (!proc.HasExited || !streamReader.EndOfStream)
+            {
+                var msg = await streamReader.ReadLineAsync();
+                if (!string.IsNullOrEmpty(msg))
+                    messages.Add(msg);
+            }
+        }
 
         /// <summary>
         /// Implements commands by calling external process defined using a command string.
@@ -82,21 +93,12 @@ namespace Laboratory
             private static List<string> Run(Process process)
             {
                 var messages = new List<string>();
-                async Task ReadStream(Process proc, StreamReader streamReader)
-                {
-                    while (!proc.HasExited || !streamReader.EndOfStream)
-                    {
-                        var msg = await streamReader.ReadLineAsync();
-                        if(!string.IsNullOrEmpty(msg))
-                            messages.Add(msg);
-                    }
-                }
 
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
                 process.Start();
-                var readingStdOut = ReadStream(process, process.StandardOutput);
-                var readingStdErr = ReadStream(process, process.StandardError);
+                var readingStdOut = ReadStream(messages, process, process.StandardOutput);
+                var readingStdErr = ReadStream(messages, process, process.StandardError);
                 process.WaitForExit();
                 Task.WhenAll(readingStdOut, readingStdErr).Wait();
                 return messages;
@@ -108,6 +110,7 @@ namespace Laboratory
 
                 // Perform build command - within static constructor so it's only performed once per test run
                 var info = _processHostInfo.Value;
+                var messages = new List<string>();
                 try
                 {
                     foreach(var command in info.BuildCommands.Where(s => !string.IsNullOrWhiteSpace(s)))
@@ -124,18 +127,22 @@ namespace Laboratory
                         };
 
                         process.StartInfo.RedirectStandardError = true;
+                        process.StartInfo.RedirectStandardOutput = true;
                         process.Start();
+                        var readingStdOut = ReadStream(messages, process, process.StandardOutput);
+                        var readingStdErr = ReadStream(messages, process, process.StandardError);
                         process.WaitForExit();
 
                         if (process.ExitCode != 0)
                         {
-                            _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
+                            Task.WhenAll(readingStdOut, readingStdErr).Wait();
+                            _hostBuildErrors.Add(info, messages);
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    _hostBuildErrors.Add(info, e.ToString());
+                    _hostBuildErrors.Add(info, messages);
                 }
             }
 
@@ -161,7 +168,7 @@ namespace Laboratory
                 return success;
             }
 
-            private static readonly Dictionary<ProcessHostInfo, string> _hostBuildErrors = new Dictionary<ProcessHostInfo, string>();
+            private static readonly Dictionary<ProcessHostInfo, List<string>> _hostBuildErrors = new Dictionary<ProcessHostInfo, List<string>>();
 
             public ProcessHost(ProcessHostInfo info) => _info = info;
 
@@ -173,7 +180,7 @@ namespace Laboratory
             {
                 if (_hostBuildErrors.TryGetValue(_info, out var buildError))
                 {
-                    Assert.Fail(buildError);
+                    Assert.Fail(string.Join("\n", buildError));
                 }
 
                 var process = new Process
