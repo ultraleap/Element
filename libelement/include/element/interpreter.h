@@ -30,6 +30,13 @@ typedef struct element_evaluator_options
     bool dummy;
 } element_evaluator_options;
 
+typedef struct element_log_message {
+
+    int row;
+    int column;
+    int line;
+    const char* message;
+} element_log_message;
 
 typedef struct element_interpreter_ctx element_interpreter_ctx;
 typedef struct element_function element_function;
@@ -44,6 +51,9 @@ element_result element_interpreter_load_files(element_interpreter_ctx* ctx, cons
 element_result element_interpreter_load_package(element_interpreter_ctx* ctx, const char* package);
 element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, const char** packages, int packages_count);
 element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx);
+element_result element_interpreter_set_log_callback (element_interpreter_ctx* ctx, void (*log_callback)(const element_log_message* const));
+
+//TEMPORARY
 element_result element_interpreter_print_ast(element_interpreter_ctx* ctx, const char* name);
 
 element_result element_interpreter_clear(element_interpreter_ctx* ctx);

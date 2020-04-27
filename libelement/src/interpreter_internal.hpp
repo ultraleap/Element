@@ -48,6 +48,7 @@ struct element_interpreter_ctx
     element_result load_package(const std::string& package);
     element_result load_packages(const std::vector<std::string>& packages);
     element_result load_prelude();
+    element_result set_log_callback(void (*log_callback)(const element_log_message* const));
     element_result clear();
     element_result print_ast(const std::string& name = "<input>");
 };
