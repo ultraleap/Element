@@ -241,7 +241,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); UTF8_ADVANCE(it, 1, end); break;
                 case '}': add_token(state, ELEMENT_TOK_BRACER, 1); UTF8_ADVANCE(it, 1, end); break;
                 case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); UTF8_ADVANCE(it, 1, end); break;
-                case '#': tokenise_comment(it, end, state); UTF8_ADVANCE(it, 1, end); break;
+                case '#': tokenise_comment(it, end, state); break;
                 case '_': {
                     auto next = UTF8_PEEK_NEXT(it + 1, end);
                     if (element_isalpha(next)) {
