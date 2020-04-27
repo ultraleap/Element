@@ -69,6 +69,7 @@ static void reset_token(element_tokeniser_ctx* state)
     state->cur_token.post_len = 0;
 }
 
+
 // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
 static element_result tokenise_number(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
 {
@@ -89,10 +90,11 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
 
     c = UTF8_PEEK_NEXT(it, end);
     if (c == '.') {
-        UTF8_ADVANCE(it, 1, end);
-        c = UTF8_PEEK_NEXT(it, end);
-        if (element_isdigit(c)) {
+
+        auto c_next = UTF8_PEEK_NEXT(it + 1, end);
+        if (element_isdigit(c_next)) {
             // number
+            UTF8_ADVANCE(it, 1, end);
             while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
                 c = UTF8_NEXT(it, end);
         } 
@@ -251,6 +253,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
                         UTF8_ADVANCE(it, 1, end);
                     }
+                    break;
                 }
                 default: {
                     if (isid_alpha(c)) {
