@@ -3,6 +3,7 @@
 #include "etree/compiler.hpp"
 #include "etree/evaluator.hpp"
 #include "ast/ast_indexes.hpp"
+#include "token_internal.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -153,6 +154,9 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
     auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(raw_tctx, element_tokeniser_delete);
     ELEMENT_OK_OR_RETURN(element_tokeniser_run(raw_tctx, str, filename));
+
+    if (raw_tctx->tokens.empty())
+        return ELEMENT_OK;
 
     element_ast* raw_ast = NULL;
     ELEMENT_OK_OR_RETURN(element_ast_build(raw_tctx, &raw_ast));

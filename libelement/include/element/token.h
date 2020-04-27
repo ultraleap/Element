@@ -27,13 +27,13 @@ typedef enum
 
 typedef struct
 {
-    element_token_type type;
-    int pre_pos;
-    int pre_len;
-    int tok_pos;
-    int tok_len;
-    int post_pos;
-    int post_len;
+    element_token_type type = ELEMENT_TOK_NONE;
+    int pre_pos = -1;
+    int pre_len = -1;
+    int tok_pos = -1;
+    int tok_len = -1;
+    int post_pos = -1;
+    int post_len = -1;
 } element_token;
 
 
