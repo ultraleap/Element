@@ -530,6 +530,8 @@ static element_result parse_constraint(element_tokeniser_ctx* tctx, size_t* tind
 // namespace ::= 'namespace' identifier scope
 static element_result parse_namespace(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
 {
+    tokenlist_advance(tctx, tindex);
+
     const element_token* token;
     GET_TOKEN(tctx, *tindex, token);
 
