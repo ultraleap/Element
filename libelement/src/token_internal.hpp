@@ -30,7 +30,6 @@ struct element_tokeniser_ctx
     }
 };
 
-
 // replacements for C stdlib functions which rely on slow locale stuff
 inline bool element_isalpha(uint32_t c) { return unsigned((c&(~(1<<5))) - 'A') <= 'Z' - 'A'; }
 inline bool element_isdigit(uint32_t c) { return unsigned(c - '0') <= '9' - '0'; }

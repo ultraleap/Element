@@ -335,7 +335,7 @@ static element_result parse_lambda(element_tokeniser_ctx* tctx, size_t* tindex, 
 static element_result parse_expression(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tctx, *tindex, token); //TODO: JM - CommentInline-fail.ele
     assert(token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_UNDERSCORE || token->type == ELEMENT_TOK_NUMBER);
     if (token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_NUMBER)
         return parse_call(tctx, tindex, ast);

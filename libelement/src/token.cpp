@@ -6,7 +6,7 @@
 #include <cstdio>
 #include "utf8.h"
 
-#define INCREMENT_TOKEN_LEN(s) { ++((s)->pos); ++((s)->col); ++((s)->cur_token.tok_len); }
+//#define INCREMENT_TOKEN_LEN(s) { ++((s)->pos); ++((s)->col); ++((s)->cur_token.tok_len); }
 
 // #define UTF8_UNCHECKED
 #if defined(UTF8_UNCHECKED)
@@ -131,8 +131,31 @@ error:
     return ELEMENT_ERROR_INVALID_ARCHIVE;
 }
 
-static inline bool isid_alpha(uint32_t c) { return element_isalpha(c) || (c >= 0x00F0 && c <= 0xFFFF); }
-static inline bool isid_alnum(uint32_t c) { return element_isalnum(c) || (c >= 0x00F0 && c <= 0xFFFF); }
+static element_result tokenise_comment(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
+{
+    auto c = UTF8_PEEK_NEXT(it, end);
+
+    if (state->cur_token.post_pos < 0)
+        state->cur_token.post_pos = state->pos;
+    // calculate correct length
+    const auto it_before = it;
+    while (!element_iseol(c) && it != end) {
+        c = UTF8_NEXT(it, end);
+    }
+
+    if (it != end) {
+        UTF8_ADVANCE(it, -1, end); //move back so that previous if condition can handle newline on next iteration
+    }
+
+    const size_t len = std::distance(it_before, it);
+    state->cur_token.post_len += (int)len;
+    state->pos += (int)len;
+
+    return ELEMENT_OK;
+}
+
+//static inline bool isid_alpha(uint32_t c) { return element_isalpha(c) || (c >= 0x00F0 && c <= 0xFFFF); }
+//static inline bool isid_alnum(uint32_t c) { return element_isalnum(c) || (c >= 0x00F0 && c <= 0xFFFF); }
 
 // identifier ::= '_'? [a-zA-Z\u00F0-\uFFFF] [_a-zA-Z0-9\u00F0-\uFFFF]*
 static element_result tokenise_identifier(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
@@ -210,96 +233,13 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         auto it = state->input.begin();
         auto end = state->input.end();
         uint32_t c;
-        while (it != end) {
-            c = UTF8_PEEK_NEXT(it, end);
-            if (element_isspace(c) || state->cur_token.post_pos >= 0) {
-                // calculate correct length
-                const auto it_before = it;
-                UTF8_ADVANCE(it, 1, end);
-                const size_t len = std::distance(it_before, it);
-                if (c == '\n') {
-                    ++state->line;
-                    state->col = 0;
-                    reset_token(state);
-                } else {
-                    if (state->cur_token.tok_pos >= 0) {
-                        if (state->cur_token.post_pos < 0)
-                            state->cur_token.post_pos = state->pos;
-                        state->cur_token.post_len += (int)len;
-                    } else {
-                        state->cur_token.pre_len += (int)len;
-                    }
-                }
-                state->pos += (int)len;
-            } else if (c == '#') {
-                if (state->cur_token.post_pos < 0)
-                    state->cur_token.post_pos = state->pos;
-                // calculate correct length
-                const auto it_before = it;
-                while (!element_iseol(c) && it != end) {
-                    c = UTF8_NEXT(it, end);
-                }
+        uint32_t line;
+        while (it != end) 
+        {
 
-                if (it != end) {
-                    UTF8_ADVANCE(it, -1, end); //move back so that previous if condition can handle newline on next iteration
-                }
-
-                const size_t len = std::distance(it_before, it);
-                state->cur_token.post_len += (int)len;
-                state->pos += (int)len;
-            } else if (c == '-' || c == '+') {
-                if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                    UTF8_ADVANCE(it, 1, end);
-                    c = UTF8_PEEK_NEXT(it, end);
-                    if (element_isdigit(c)) {
-                        UTF8_ADVANCE(it, -1, end);
-                        ELEMENT_OK_OR_RETURN(tokenise_number(it, end, state));
-                    } else {
-                        goto error;
-                    }
-                } else {
-                    goto error;
-                }
-            } else if (c == '=') {
-                if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                    UTF8_ADVANCE(it, 1, end);
-                    c = UTF8_PEEK_NEXT(it, end);
-                    if (c == '>') {
-                        UTF8_ADVANCE(it, 1, end);
-                        add_token(state, ELEMENT_TOK_ARROW, 2);
-                    } else {
-                        add_token(state, ELEMENT_TOK_EQUALS, 1);
-                    }
-                } else {
-                    goto error;
-                }
-            } else if (element_isdigit(c)) {
-                if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                    ELEMENT_OK_OR_RETURN(tokenise_number(it, end, state));
-                } else {
-                    goto error;
-                }
-            } else if (c == '_') {
-                if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                    UTF8_ADVANCE(it, 1, end);
-                    c = UTF8_PEEK_NEXT(it, end);
-                    if (element_isalpha(c)) {
-                        UTF8_ADVANCE(it, -1, end);
-                        ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
-                    } else {
-                        add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
-                    }
-                } else {
-                    goto error;
-                }
-            } else if (element_isalpha(c)) {
-                if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                    ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
-                } else {
-                    goto error;
-                }
-            } else {
-                switch (c) {
+            c = UTF8_NEXT(it, end);
+            switch (c) 
+            {
                 case '.': add_token(state, ELEMENT_TOK_DOT, 1); break;
                 case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); break;
                 case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); break;
@@ -309,20 +249,40 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); break;
                 case '}': add_token(state, ELEMENT_TOK_BRACER, 1); break;
                 case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); break;
-                default:  goto error;
+                case '#': tokenise_comment(it, end, state); break;
+                case '_': {
+                    auto next = UTF8_PEEK_NEXT(it, end);
+                    if (element_isalpha(next)) {
+                        ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
+                    }
+                    else {
+                        add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
+                    }
                 }
-                UTF8_ADVANCE(it, 1, end);
+                default: {
+                    if (element_isalpha(c)) {
+                        ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
+                    }
+                    else if (element_isdigit(c) || c == '-' || c == '+') {
+                        ELEMENT_OK_OR_RETURN(tokenise_number(it, end, state));
+                    }
+                    else if (element_iseol(c)) {
+                        ++state->line;
+                        state->col = 0;
+                        reset_token(state);
+                    }
+                    else if (element_isspace(c)) {
+                        //just eat it!
+                    }
+                }
             }
         }
         return ELEMENT_OK;
     }
     catch (...)
-    { 
-        goto error;
+    {
+        return ELEMENT_ERROR_INVALID_ARCHIVE;
     }
-
-error:
-    return ELEMENT_ERROR_INVALID_ARCHIVE;
 }
 
 #define PRINTCASE(a) case a: c = #a; break;
@@ -339,7 +299,6 @@ void element_tokeniser_print(const element_tokeniser_ctx* state)
             PRINTCASE(ELEMENT_TOK_BRACKETL);
             PRINTCASE(ELEMENT_TOK_BRACKETR);
             PRINTCASE(ELEMENT_TOK_SEMICOLON);
-            PRINTCASE(ELEMENT_TOK_ARROW);
             PRINTCASE(ELEMENT_TOK_COLON);
             PRINTCASE(ELEMENT_TOK_COMMA);
             PRINTCASE(ELEMENT_TOK_BRACEL);
