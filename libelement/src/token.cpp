@@ -157,8 +157,8 @@ static element_result tokenise_comment(std::string::iterator& it, const std::str
     return ELEMENT_OK;
 }
 
-//static inline bool isid_alpha(uint32_t c) { return element_isalpha(c) || (c >= 0x00F0 && c <= 0xFFFF); }
-//static inline bool isid_alnum(uint32_t c) { return element_isalnum(c) || (c >= 0x00F0 && c <= 0xFFFF); }
+static inline bool isid_alpha(uint32_t c) { return element_isalpha(c) || c == '_' || (c >= 0x00F0 && c <= 0xFFFF); }
+static inline bool isid_alnum(uint32_t c) { return element_isalnum(c) || (c >= 0x00F0 && c <= 0xFFFF); }
 
 // identifier ::= '_'? [a-zA-Z\u00F0-\uFFFF] [_a-zA-Z0-9\u00F0-\uFFFF]*
 static element_result tokenise_identifier(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
@@ -168,17 +168,11 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
     state->cur_token.type = ELEMENT_TOK_IDENTIFIER;
     state->cur_token.tok_pos = state->pos;
     const auto it_begin = it;
-    uint32_t c = UTF8_PEEK_NEXT(it, end);
-    if (c == '_') {
-        c = UTF8_NEXT(it, end);
+
+    while (isid_alpha(UTF8_PEEK_NEXT(it, end))) {
+        UTF8_ADVANCE(it, 1, end);
     }
-    assert(element_isalpha(c) || (c >= 0x00F0 && c <= 0xFFFF));
-    c = UTF8_NEXT(it, end);
-    while (element_isalnum(c) || c == '_' || (c >= 0x00F0 && c <= 0xFFFF)) {
-        c = UTF8_NEXT(it, end);
-    }
-    // row back to before the extra code point
-    UTF8_ADVANCE(it, -1, end); //TODO: REMOVE ME!
+
     // determine length in bytes
     const size_t len = std::distance(it_begin, it);
     state->pos += (int)len;
@@ -240,26 +234,27 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         uint32_t line;
         while (it != end) 
         {
-            c = UTF8_NEXT(it, end);
+            c = UTF8_PEEK_NEXT(it, end);
             switch (c) 
             {
-                case '.': add_token(state, ELEMENT_TOK_DOT, 1); break;
-                case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); break;
-                case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); break;
-                case ';': add_token(state, ELEMENT_TOK_SEMICOLON, 1); break;
-                case ',': add_token(state, ELEMENT_TOK_COMMA, 1); break;
-                case ':': add_token(state, ELEMENT_TOK_COLON, 1); break;
-                case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); break;
-                case '}': add_token(state, ELEMENT_TOK_BRACER, 1); break;
-                case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); break;
-                case '#': tokenise_comment(it, end, state); break;
+                case '.': add_token(state, ELEMENT_TOK_DOT, 1); UTF8_ADVANCE(it, 1, end); break;
+                case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); UTF8_ADVANCE(it, 1, end); break;
+                case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); UTF8_ADVANCE(it, 1, end); break;
+                case ';': add_token(state, ELEMENT_TOK_SEMICOLON, 1); UTF8_ADVANCE(it, 1, end); break;
+                case ',': add_token(state, ELEMENT_TOK_COMMA, 1); UTF8_ADVANCE(it, 1, end); break;
+                case ':': add_token(state, ELEMENT_TOK_COLON, 1); UTF8_ADVANCE(it, 1, end); break;
+                case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); UTF8_ADVANCE(it, 1, end); break;
+                case '}': add_token(state, ELEMENT_TOK_BRACER, 1); UTF8_ADVANCE(it, 1, end); break;
+                case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); UTF8_ADVANCE(it, 1, end); break;
+                case '#': tokenise_comment(it, end, state); UTF8_ADVANCE(it, 1, end); break;
                 case '_': {
-                    auto next = UTF8_PEEK_NEXT(it, end);
+                    auto next = UTF8_PEEK_NEXT(it + 1, end);
                     if (element_isalpha(next)) {
                         ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
                     }
                     else {
                         add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
+                        UTF8_ADVANCE(it, 1, end);
                     }
                 }
                 default: {
@@ -272,10 +267,12 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     else if (element_iseol(c)) {
                         ++state->line;
                         state->col = 0;
-                        reset_token(state);
+                        reset_token(state); 
+                        UTF8_ADVANCE(it, 1, end);
                     }
                     else if (element_isspace(c)) {
                         //just eat it!
+                        UTF8_ADVANCE(it, 1, end);
                     }
                 }
             }
