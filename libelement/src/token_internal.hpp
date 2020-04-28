@@ -5,6 +5,8 @@
 
 #include "element/token.h"
 
+struct element_interpreter_ctx;
+
 struct element_tokeniser_ctx
 {
     std::string filename;
@@ -14,6 +16,7 @@ struct element_tokeniser_ctx
     int col = 1;
     element_token cur_token;
     std::vector<element_token> tokens;
+    element_interpreter_ctx* interpreter = nullptr;
 
     std::string text(const element_token* t) const
     { 

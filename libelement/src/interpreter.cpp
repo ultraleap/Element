@@ -175,6 +175,10 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     element_tokeniser_ctx* raw_tctx;
     ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(element_tokeniser_create(&raw_tctx), "element_tokeniser_create", str, filename))
 
+    //todo: not great having it here, but also don't want logging to be static.
+    //logging should be on a specific object that the interpreter owns, but that the tokenizer has reference to
+    raw_tctx->interpreter = this;
+
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
     auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(raw_tctx, element_tokeniser_delete);
 
@@ -321,15 +325,25 @@ element_result element_interpreter_ctx::set_log_callback(void (*callback)(const 
     return ELEMENT_OK;
 }
 
-void element_interpreter_ctx::log(int code, const std::string& message)
+void element_interpreter_ctx::log(element_result code, const std::string& message)
 {
-    //what about line, column and also stack trace?
-    //need to handle error levels too, log levels currently only exist in compiler_message
     assert(log_callback);
+
     auto log = element_log_message();
     log.message = message.c_str();
-    log.code = code;
+    log.message_code = code;
+    log.line = -1;
+    log.column = -1;
+    log.length = -1;
+    log.related_log_message = nullptr;
+
     log_callback(&log);
+}
+
+void element_interpreter_ctx::log(const element_log_message& message)
+{
+    assert(log_callback);
+    log_callback(&message);
 }
 
 element_interpreter_ctx::element_interpreter_ctx()

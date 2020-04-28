@@ -31,10 +31,18 @@ typedef struct element_evaluator_options
 } element_evaluator_options;
 
 typedef struct element_log_message {
-    int code;
+    // determines which values in this struct will be relevant
+    element_result message_code;
+    // the first character of the source file which the message is relevant, or -1
     int column;
+    // the length of the relevant part of the source file (starting from the column), or -1
+    int length;
+    // the line in which the error occured, or -1
     int line;
+    // description of the error
     const char* message;
+    // a separate but related log message. e.g. a callstack for cascading errors, or null
+    element_log_message* related_log_message;
 } element_log_message;
 
 typedef struct element_interpreter_ctx element_interpreter_ctx;

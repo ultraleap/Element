@@ -63,7 +63,7 @@ namespace libelement::cli
 		}
 
 		compiler_message(message_level level, const element_log_message* const error)
-			: level{ level }, type{ static_cast<message_type>(error->code) }, context { error->message }
+			: level{ level }, type{ static_cast<message_type>(error->message_code) }, context { error->message }
 		{
 			//TODO
 			//set trace_stack based on expression_cache frame list?

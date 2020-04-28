@@ -6,6 +6,10 @@
 #include <cstdio>
 #include "utf8.h"
 
+#include <fmt/format.h>
+
+#include "interpreter_internal.hpp"
+
 //#define INCREMENT_TOKEN_LEN(s) { ++((s)->pos); ++((s)->col); ++((s)->cur_token.tok_len); }
 
 // #define UTF8_UNCHECKED
@@ -48,8 +52,33 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
 {
     assert(state);
     assert(token);
-    if (index >= state->tokens.size())
-        return ELEMENT_ERROR_INVALID_OPERATION;
+    if (index >= state->tokens.size()) {
+        if (state->interpreter)
+        {
+            auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens.\n at line {}, column {}\n\n",
+                    index, state->tokens.size(), state->line, state->col);
+
+            /*todo: add as separate log messages for debug info?
+            for (unsigned int i = 0; i < state->tokens.size(); ++i)
+            {
+                const auto& t = state->tokens[i];
+                msg += fmt::format("Token {}.\n\tType: {}\n\tText: {}\n",
+                    i, t.type, (t.tok_pos > 0 ? state->text(&t) : "invalid"));
+            }*/
+
+            element_log_message log;
+            log.message_code = TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
+            log.message = msg.c_str();
+            log.line = state->line;
+            log.column = state->col;
+            log.length = -1;
+            log.related_log_message = nullptr;
+            
+            state->interpreter->log(log);
+        }
+
+        return TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
+    }
     *token = &state->tokens[index];
     return ELEMENT_OK;
 }
