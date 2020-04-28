@@ -90,8 +90,10 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
 
     c = UTF8_PEEK_NEXT(it, end);
     if (c == '.') {
+        auto it_next = it;
+        UTF8_NEXT(it_next, end);
 
-        auto c_next = UTF8_PEEK_NEXT(it + 1, end);
+        auto c_next = UTF8_PEEK_NEXT(it_next, end);
         if (element_isdigit(c_next)) {
             // number
             UTF8_ADVANCE(it, 1, end);
