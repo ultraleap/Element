@@ -26,6 +26,9 @@ struct element_tokeniser_ctx
 
     void log(int message_code, const std::string& message) const
     {
+        if (!log_callback)
+            return;
+
         element_log_message log;
         log.message_code = message_code;
         log.message = message.c_str();
@@ -41,6 +44,10 @@ struct element_tokeniser_ctx
     {
         assert(log.stage == ELEMENT_STAGE_TOKENISER);
         assert(log.message);
+
+        if (!log_callback)
+            return;
+
         log_callback(&log);
     }
 

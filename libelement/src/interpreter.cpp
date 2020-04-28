@@ -324,7 +324,8 @@ void element_interpreter_ctx::set_log_callback(LogCallback callback)
 
 void element_interpreter_ctx::log(element_result code, const std::string& message)
 {
-    assert(log_callback);
+    if (!log_callback)
+        return;
 
     auto log = element_log_message();
     log.message = message.c_str();
@@ -340,7 +341,9 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
 
 void element_interpreter_ctx::log(const element_log_message& message)
 {
-    assert(log_callback);
+    if (!log_callback)
+        return;
+
     log_callback(&message);
 }
 

@@ -55,16 +55,8 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
     if (index >= state->tokens.size()) {
         if (state->log_callback)
         {
-            auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens.\n at line {}, column {}\n\n",
-                    index, state->tokens.size(), state->line, state->col);
-
-            /*todo: add as separate log messages for debug info?
-            for (unsigned int i = 0; i < state->tokens.size(); ++i)
-            {
-                const auto& t = state->tokens[i];
-                msg += fmt::format("Token {}.\n\tType: {}\n\tText: {}\n",
-                    i, t.type, (t.tok_pos > 0 ? state->text(&t) : "invalid"));
-            }*/
+            auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens",
+                    index, state->tokens.size());
 
             element_log_message log;
             log.message_code = TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
@@ -136,22 +128,38 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
             while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
                 c = UTF8_NEXT(it, end);
         } 
-        else {
+        else if (element_isalpha(c_next)) {
             // indexing into a literal, do nothing and let the cleanup back out
+        } else {
+            const auto it_rhs_start = it_next;
+            UTF8_NEXT(it_next, end);
+            state->log(TODO_ELEMENT_ERROR_PARSE,
+                fmt::format("Found {} which was thought to be a number being indexed, "
+                    "but encountered invalid character '{}' on the right hand side of '.'",
+                    std::string(it_begin, it), std::string(it_rhs_start, it_next)));
+            return TODO_ELEMENT_ERROR_PARSE;
         }
     }
 
     c = UTF8_PEEK_NEXT(it, end);
     if (c == 'e' || c == 'E') {
+        auto it_prev_character = it;
         UTF8_NEXT(it, end);
         c = UTF8_PEEK_NEXT(it, end);
+
         if (c == '-' || c == '+') {
+            it_prev_character = it;
             UTF8_NEXT(it, end);
             c = UTF8_PEEK_NEXT(it, end);
         }
 
-        if (!element_isdigit(c))
-            return ELEMENT_ERROR_INVALID_ARCHIVE;
+        if (!element_isdigit(c)) {
+            state->log(TODO_ELEMENT_ERROR_PARSE,
+                fmt::format("Found {} which was thought to be a number in scientific notation, "
+                    "but encountered invalid character '{}' instead of the exponent number", 
+                    std::string(it_begin, it), std::string(it_prev_character, it)));
+            return TODO_ELEMENT_ERROR_PARSE;
+        }
 
         while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
             c = UTF8_NEXT(it, end);
@@ -320,17 +328,28 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         UTF8_NEXT(it, end);
                     }
                     else {
-                        //shouldn't ever hit here, but in case we do...
-                        return ELEMENT_ERROR_INVALID_ARCHIVE;
+                        state->log(TODO_ELEMENT_ERROR_PARSE,
+                            fmt::format("Reached unexpected state", c));
+                        return TODO_ELEMENT_ERROR_PARSE;
                     }
                 }
             }
         }
         return ELEMENT_OK;
     }
+    catch (std::exception& e)
+    {
+        state->log(TODO_ELEMENT_ERROR_EXCEPTION,
+            fmt::format("Exception occured: {}", e.what()));
+
+        return TODO_ELEMENT_ERROR_EXCEPTION;
+    }
     catch (...)
     {
-        return ELEMENT_ERROR_INVALID_ARCHIVE;
+        state->log(TODO_ELEMENT_ERROR_EXCEPTION,
+            fmt::format("Exception occured"));
+
+        return TODO_ELEMENT_ERROR_EXCEPTION;
     }
 }
 
