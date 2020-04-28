@@ -276,6 +276,10 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         state->pos += 1;
                         UTF8_NEXT(it, end);
                     }
+                    else {
+                        //shouldn't ever hit here, but in case we do...
+                        return ELEMENT_ERROR_INVALID_ARCHIVE;
+                    }
                 }
             }
         }
