@@ -133,16 +133,23 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
 static element_result tokenise_comment(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
 {
     //TODO: Go through this in detail
-    auto c = UTF8_PEEK_NEXT(it, end);
-
     if (state->cur_token.post_pos < 0)
         state->cur_token.post_pos = state->pos;
-    // calculate correct length
+
+    //consume all characters until end of file or end of line
     const auto it_before = it;
-    while (!element_iseol(c) && it != end) {
-        c = UTF8_NEXT(it, end);
+    try
+    {
+        while (!element_iseol(UTF8_PEEK_NEXT(it, end))) { //will throw at EOF
+            UTF8_NEXT(it, end);
+        }
+    }
+    catch (...)
+    {
+        //we probably hit EOF. not the nicest way of handling this issue
     }
 
+    // calculate correct length
     const size_t len = std::distance(it_before, it);
     state->cur_token.post_len += (int)len;
     state->pos += (int)len;
