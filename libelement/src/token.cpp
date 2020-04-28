@@ -80,7 +80,7 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     const auto it_begin = it;
     uint32_t c = UTF8_PEEK_NEXT(it, end);
     if (c == '-' || c == '+') {
-        UTF8_ADVANCE(it, 1, end);
+        UTF8_NEXT(it, end);
         c = UTF8_PEEK_NEXT(it, end);
     }
     assert(element_isdigit(c));
@@ -96,7 +96,7 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         auto c_next = UTF8_PEEK_NEXT(it_next, end);
         if (element_isdigit(c_next)) {
             // number
-            UTF8_ADVANCE(it, 1, end);
+            UTF8_NEXT(it, end);
             while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
                 c = UTF8_NEXT(it, end);
         } 
@@ -107,10 +107,10 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
 
     c = UTF8_PEEK_NEXT(it, end);
     if (c == 'e' || c == 'E') {
-        UTF8_ADVANCE(it, 1, end);
+        UTF8_NEXT(it, end);
         c = UTF8_PEEK_NEXT(it, end);
         if (c == '-' || c == '+') {
-            UTF8_ADVANCE(it, 1, end);
+            UTF8_NEXT(it, end);
             c = UTF8_PEEK_NEXT(it, end);
         }
 
@@ -236,15 +236,15 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
             c = UTF8_PEEK_NEXT(it, end);
             switch (c) 
             {
-                case '.': add_token(state, ELEMENT_TOK_DOT, 1); UTF8_ADVANCE(it, 1, end); break;
-                case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); UTF8_ADVANCE(it, 1, end); break;
-                case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); UTF8_ADVANCE(it, 1, end); break;
-                case ';': add_token(state, ELEMENT_TOK_SEMICOLON, 1); UTF8_ADVANCE(it, 1, end); break;
-                case ',': add_token(state, ELEMENT_TOK_COMMA, 1); UTF8_ADVANCE(it, 1, end); break;
-                case ':': add_token(state, ELEMENT_TOK_COLON, 1); UTF8_ADVANCE(it, 1, end); break;
-                case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); UTF8_ADVANCE(it, 1, end); break;
-                case '}': add_token(state, ELEMENT_TOK_BRACER, 1); UTF8_ADVANCE(it, 1, end); break;
-                case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); UTF8_ADVANCE(it, 1, end); break;
+                case '.': add_token(state, ELEMENT_TOK_DOT, 1); UTF8_NEXT(it, end); break;
+                case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); UTF8_NEXT(it, end); break;
+                case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); UTF8_NEXT(it, end); break;
+                case ';': add_token(state, ELEMENT_TOK_SEMICOLON, 1); UTF8_NEXT(it, end); break;
+                case ',': add_token(state, ELEMENT_TOK_COMMA, 1); UTF8_NEXT(it, end); break;
+                case ':': add_token(state, ELEMENT_TOK_COLON, 1); UTF8_NEXT(it, end); break;
+                case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); UTF8_NEXT(it, end); break;
+                case '}': add_token(state, ELEMENT_TOK_BRACER, 1); UTF8_NEXT(it, end); break;
+                case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); UTF8_NEXT(it, end); break;
                 case '#': tokenise_comment(it, end, state); break;
                 case '_': {
                     auto next = UTF8_PEEK_NEXT(it + 1, end);
@@ -253,7 +253,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     }
                     else {
                         add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
-                        UTF8_ADVANCE(it, 1, end);
+                        UTF8_NEXT(it, end);
                     }
                     break;
                 }
@@ -269,12 +269,12 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         state->col = 0;
                         state->pos += 1;
                         reset_token(state); 
-                        UTF8_ADVANCE(it, 1, end);
+                        UTF8_NEXT(it, end);
                     }
                     else if (element_isspace(c)) {
                         //just eat it!
                         state->pos += 1;
-                        UTF8_ADVANCE(it, 1, end);
+                        UTF8_NEXT(it, end);
                     }
                 }
             }
