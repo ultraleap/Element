@@ -38,6 +38,9 @@ static int tokenlist_advance(element_tokeniser_ctx* tctx, size_t* tindex)
     ELEMENT_OK_OR_RETURN(element_tokeniser_get_token_count(tctx, &tcount));
 
     ++(*tindex);
+    if (*tindex >= tcount)
+        return false;
+
     // TODO: do something with these, we might need them later to preserve formatting...
     const element_token* tok;
     GET_TOKEN(tctx, *tindex, tok);
