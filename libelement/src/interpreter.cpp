@@ -299,10 +299,17 @@ element_result element_interpreter_ctx::load_prelude()
     return result;
 }
 
-element_result element_interpreter_ctx::set_log_callback(void (*log_callback)(const element_log_message* const))
+element_result element_interpreter_ctx::set_log_callback(void (*callback)(const element_log_message* const))
 {
-    ///TODO
+    log_callback = callback;
     return ELEMENT_OK;
+}
+
+
+void element_interpreter_ctx::log(const element_log_message* const log_message)
+{
+    assert(log_callback);
+    log_callback(log_message);
 }
 
 element_interpreter_ctx::element_interpreter_ctx()

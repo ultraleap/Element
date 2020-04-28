@@ -41,6 +41,7 @@ struct element_interpreter_ctx
     scope_unique_ptr names;
     std::unordered_map<const element_ast*, const element_scope*> ast_names;
     bool prelude_loaded = false;
+    std::function<void(const element_log_message* const)> log_callback;
 
     element_result load(const char* str, const char* filename = "<input>");
     element_result load_file(const std::string& file);
@@ -48,9 +49,10 @@ struct element_interpreter_ctx
     element_result load_package(const std::string& package);
     element_result load_packages(const std::vector<std::string>& packages);
     element_result load_prelude();
-    element_result set_log_callback(void (*log_callback)(const element_log_message* const));
     element_result clear();
     element_result print_ast(const std::string& name = "<input>");
+    element_result set_log_callback(void (*log_callback)(const element_log_message* const));
+    void log(const element_log_message* const log_message);
 };
 
 struct element_compiled_function
