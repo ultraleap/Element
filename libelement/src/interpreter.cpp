@@ -300,11 +300,14 @@ element_result element_interpreter_ctx::set_log_callback(void (*callback)(const 
     return ELEMENT_OK;
 }
 
-
-void element_interpreter_ctx::log(const element_log_message* const log_message)
+void element_interpreter_ctx::log(const std::string& message)
 {
+    //what about line, column and also stack trace?
+    //need to handle error levels too, log levels currently only exist in compiler_message
     assert(log_callback);
-    log_callback(log_message);
+    auto log = element_log_message();
+    log.message = message.c_str();
+    log_callback(&log);
 }
 
 element_interpreter_ctx::element_interpreter_ctx()

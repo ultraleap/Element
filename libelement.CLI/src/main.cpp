@@ -10,12 +10,14 @@ using namespace libelement::cli;
 
 void log_callback(const element_log_message* const message)
 {
-	auto log = compiler_message(message);
+	//errors for now
+	auto log = compiler_message(message_level::ERROR, message);
 	std::cout << log.serialize() << std::endl;
 }
 
 void command_callback(const command& command) 
 {
+	//set a log callback, so that when we get errors, messages are logged
 	command.set_log_callback(log_callback);
 
 	//feedback request

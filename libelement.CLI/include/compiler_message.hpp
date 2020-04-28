@@ -62,9 +62,13 @@ namespace libelement::cli
 		{
 		}
 
-		compiler_message(const element_log_message* const message)
+		compiler_message(message_level level, const element_log_message* const error)
+			: level{ level }
 		{
 			//TODO
+			//set type based on something
+			//set conext based on error->message
+			//set trace_stack based on expression_cache frame list?
 		}
 
 		message_level get_level() const 
