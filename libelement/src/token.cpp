@@ -281,7 +281,6 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         auto it = state->input.begin();
         auto end = state->input.end();
         uint32_t c;
-        uint32_t line;
         while (it != end) 
         {
             c = UTF8_PEEK_NEXT(it, end);
@@ -328,8 +327,11 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         UTF8_NEXT(it, end);
                     }
                     else {
+                        const auto begin_it = it;
+                        UTF8_NEXT(it, end);
                         state->log(TODO_ELEMENT_ERROR_PARSE,
-                            fmt::format("Reached unexpected state", c));
+                            fmt::format("Reached unexpected state when encoutering character '{}'",
+                                std::string(begin_it, it)));
                         return TODO_ELEMENT_ERROR_PARSE;
                     }
                 }
@@ -344,7 +346,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
 
         return TODO_ELEMENT_ERROR_EXCEPTION;
     }
-    catch (...)
+    catch (...) //potentially EOF when last source character is UTF?
     {
         state->log(TODO_ELEMENT_ERROR_EXCEPTION,
             fmt::format("Exception occured"));
