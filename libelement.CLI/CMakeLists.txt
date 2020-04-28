@@ -11,7 +11,7 @@ set(DEPENDENCIES_DIR "../dependencies")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 find_package(RapidJSON)
-#find_package(CLI11)
+add_subdirectory("dependencies" EXCLUDE_FROM_ALL) 
 
 set(libelement_cli_sources
 
@@ -28,7 +28,6 @@ set(libelement_cli_sources
 )
 
 add_subdirectory(${ELEMENT_LIB_DIR} "libelement")
-add_subdirectory("dependencies/cli11" EXCLUDE_FROM_ALL) 
 
 add_executable(${CMAKE_PROJECT_NAME} ${libelement_cli_sources})
 
@@ -41,14 +40,15 @@ add_custom_command (
 	"${CMAKE_SOURCE_DIR}/../Common"
 	"${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC "${ELEMENT_LIB_DIR}/include")
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC "${DEPENDENCIES_DIR}/rapidjson/include")
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC "${DEPENDENCIES_DIR}/toml11")
 target_include_directories(${CMAKE_PROJECT_NAME}
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${DEPENDENCIES_DIR}/toml11"
+        "${DEPENDENCIES_DIR}/rapidjson/include"
+        "${ELEMENT_LIB_DIR}/include"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11 fmt::fmt-header-only)

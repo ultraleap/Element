@@ -49,20 +49,7 @@ set(element_sources
     "include/element/lmnt.h"
 )
 
-
-include(FetchContent)
-FetchContent_Declare(
-    utfcpp
-    GIT_REPOSITORY https://github.com/nemtrif/utfcpp
-    GIT_TAG v3.1
-)
-FetchContent_GetProperties(utfcpp)
-if (NOT utfcpp_POPULATED)
-    FetchContent_Populate(utfcpp)
-    add_library(utf8cpp INTERFACE)
-    target_include_directories(utf8cpp INTERFACE "${utfcpp_SOURCE_DIR}/source")
-endif ()
-
+add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
 
 add_library(element STATIC ${element_sources})
 
@@ -72,6 +59,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${element_sources})
 # Don't rely on compiler extensions
 set_property(TARGET element PROPERTY CMAKE_CXX_EXTENSIONS OFF)
 
+# Copy prelude alongside built library
 add_custom_command (
 	TARGET element POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -86,8 +74,9 @@ target_include_directories(element
         "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/memorypool"
         # TODO: this, much nicer
         "${CMAKE_CURRENT_SOURCE_DIR}/../LMNT/include"
+        "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
 )
-target_link_libraries(element PRIVATE utf8cpp)
+target_link_libraries(element PRIVATE utf8cpp fmt::fmt-header-only)
 
 if (UNIX)
     target_link_libraries(element PRIVATE "m")
