@@ -30,6 +30,8 @@ typedef struct element_evaluator_options
     bool dummy;
 } element_evaluator_options;
 
+struct element_log_message;
+
 typedef struct element_log_message {
     // determines which values in this struct will be relevant
     element_result message_code;
