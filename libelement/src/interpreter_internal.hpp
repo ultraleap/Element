@@ -35,13 +35,15 @@ CREATE_CAST_CONVENIENCE_FUNCTIONS(function)
 
 struct element_interpreter_ctx
 {
+    using LogCallback = void (*)(const element_log_message* const);
+
     element_interpreter_ctx();
 
     std::vector<std::pair<std::string, ast_unique_ptr>> trees;
     scope_unique_ptr names;
     std::unordered_map<const element_ast*, const element_scope*> ast_names;
     bool prelude_loaded = false;
-    std::function<void(const element_log_message* const)> log_callback;
+    LogCallback log_callback = nullptr;
 
     element_result load(const char* str, const char* filename = "<input>");
     element_result load_file(const std::string& file);
@@ -51,7 +53,7 @@ struct element_interpreter_ctx
     element_result load_prelude();
     element_result clear();
     element_result print_ast(const std::string& name = "<input>");
-    element_result set_log_callback(void (*log_callback)(const element_log_message* const));
+    void set_log_callback(LogCallback callback);
     void log(int message_code, const std::string& message);
     void log(const element_log_message& message);
     element_result TEMPORARY_LOG_MESSAGE(element_result result, std::string function, std::string content, std::string filename);

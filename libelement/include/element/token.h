@@ -46,6 +46,8 @@ element_result element_tokeniser_get_input(const element_tokeniser_ctx* state, c
 element_result element_tokeniser_get_token_count(const element_tokeniser_ctx* state, size_t* count);
 element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, const size_t index, const element_token** token);
 
+void element_tokeniser_set_log_callback(element_tokeniser_ctx* state, void (*log_callback)(const element_log_message*));
+
 void element_tokeniser_print(const element_tokeniser_ctx* state);
 element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* input, const char* filename);
 element_result element_tokeniser_clear(element_tokeniser_ctx* state);

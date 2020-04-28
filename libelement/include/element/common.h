@@ -74,6 +74,36 @@ enum
 
 typedef int32_t element_result;
 
+enum
+{
+    ELEMENT_STAGE_INVALID = -1,
+    ELEMENT_STAGE_MISC,
+    ELEMENT_STAGE_TOKENISER,
+    ELEMENT_STAGE_PARSER,
+    ELEMENT_STAGE_COMPILER,
+    ELEMENT_STAGE_EVALUATOR
+};
+
+typedef int32_t element_stage;
+
+typedef struct element_log_message element_log_message;
+
+struct element_log_message {
+    // determines which values in this struct will be relevant
+    element_result message_code;
+    // the first character of the source file which the message is relevant, or -1
+    int column;
+    // the length of the relevant part of the source file (starting from the column), or -1
+    int length;
+    // the line in which the error occured, or -1
+    int line;
+    // which stage of libelement emitted this message
+    element_stage stage;
+    // description of the error
+    const char* message;
+    // separate but related log messages. e.g. a callstack for cascading errors, or null
+    element_log_message* related_log_message;
+};
 
 #define ELEMENT_OK_OR_RETURN(t) \
 { \

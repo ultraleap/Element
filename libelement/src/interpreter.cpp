@@ -175,9 +175,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     element_tokeniser_ctx* raw_tctx;
     ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(element_tokeniser_create(&raw_tctx), "element_tokeniser_create", str, filename))
 
-    //todo: not great having it here, but also don't want logging to be static.
-    //logging should be on a specific object that the interpreter owns, but that the tokenizer has reference to
-    raw_tctx->interpreter = this;
+    raw_tctx->log_callback = log_callback;
 
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
     auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(raw_tctx, element_tokeniser_delete);
@@ -319,10 +317,9 @@ element_result element_interpreter_ctx::load_prelude()
     return result;
 }
 
-element_result element_interpreter_ctx::set_log_callback(void (*callback)(const element_log_message* const))
+void element_interpreter_ctx::set_log_callback(LogCallback callback)
 {
     log_callback = callback;
-    return ELEMENT_OK;
 }
 
 void element_interpreter_ctx::log(element_result code, const std::string& message)
@@ -335,6 +332,7 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
     log.line = -1;
     log.column = -1;
     log.length = -1;
+    log.stage = ELEMENT_STAGE_PARSER;
     log.related_log_message = nullptr;
 
     log_callback(&log);
@@ -439,10 +437,10 @@ element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx)
     return ctx->load_prelude();
 }
 
-element_result element_interpreter_set_log_callback(element_interpreter_ctx* ctx, void (*log_callback)(const element_log_message* const))
+void element_interpreter_set_log_callback(element_interpreter_ctx* ctx, void (*log_callback)(const element_log_message* const))
 {
     assert(ctx);
-    return ctx->set_log_callback(log_callback);
+    ctx->set_log_callback(log_callback);
 }
 
 element_result element_interpreter_clear(element_interpreter_ctx* ctx)

@@ -30,23 +30,6 @@ typedef struct element_evaluator_options
     bool dummy;
 } element_evaluator_options;
 
-typedef struct element_log_message element_log_message;
-
-struct element_log_message {
-    // determines which values in this struct will be relevant
-    element_result message_code;
-    // the first character of the source file which the message is relevant, or -1
-    int column;
-    // the length of the relevant part of the source file (starting from the column), or -1
-    int length;
-    // the line in which the error occured, or -1
-    int line;
-    // description of the error
-    const char* message;
-    // separate but related log messages. e.g. a callstack for cascading errors, or null
-    element_log_message* related_log_message;
-};
-
 typedef struct element_interpreter_ctx element_interpreter_ctx;
 typedef struct element_function element_function;
 typedef struct element_compiled_function element_compiled_function;
@@ -60,7 +43,7 @@ element_result element_interpreter_load_files(element_interpreter_ctx* ctx, cons
 element_result element_interpreter_load_package(element_interpreter_ctx* ctx, const char* package);
 element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, const char** packages, int packages_count);
 element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx);
-element_result element_interpreter_set_log_callback (element_interpreter_ctx* ctx, void (*log_callback)(const element_log_message* const));
+void element_interpreter_set_log_callback (element_interpreter_ctx* ctx, void (*log_callback)(const element_log_message*));
 
 //TEMPORARY
 element_result element_interpreter_print_ast(element_interpreter_ctx* ctx, const char* name);

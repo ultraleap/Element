@@ -1,26 +1,52 @@
 #pragma once
 
+#include <cassert>
 #include <string>
 #include <vector>
 
 #include "element/token.h"
 
-struct element_interpreter_ctx;
-
 struct element_tokeniser_ctx
 {
+    using LogCallback = void (*)(const element_log_message* const);
+
     std::string filename;
     std::string input;
-    int pos = 0;
+    int pos = 0; //position in the source file
     int line = 1;
-    int col = 1;
+    int col = 1; //position in the line
     element_token cur_token;
     std::vector<element_token> tokens;
-    element_interpreter_ctx* interpreter = nullptr;
+    LogCallback log_callback;
 
     std::string text(const element_token* t) const
     { 
         return input.substr(t->tok_pos, t->tok_len); 
+    }
+
+    void log(int message_code, const std::string& message) const
+    {
+        element_log_message log;
+        log.message_code = message_code;
+        log.message = message.c_str();
+        log.line = line;
+        log.column = col;
+        log.length = -1;
+        log.stage = ELEMENT_STAGE_TOKENISER;
+
+        log_callback(&log);
+    }
+
+    void log(const element_log_message& log) const
+    {
+        assert(log.stage == ELEMENT_STAGE_TOKENISER);
+        assert(log.message);
+        log_callback(&log);
+    }
+
+    void set_log_callback(LogCallback callback)
+    {
+        log_callback = callback;
     }
 
     element_tokeniser_ctx()

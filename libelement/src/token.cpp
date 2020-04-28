@@ -53,7 +53,7 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
     assert(state);
     assert(token);
     if (index >= state->tokens.size()) {
-        if (state->interpreter)
+        if (state->log_callback)
         {
             auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens.\n at line {}, column {}\n\n",
                     index, state->tokens.size(), state->line, state->col);
@@ -72,15 +72,22 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
             log.line = state->line;
             log.column = state->col;
             log.length = -1;
+            log.stage = ELEMENT_STAGE_TOKENISER;
             log.related_log_message = nullptr;
             
-            state->interpreter->log(log);
+            state->log(log);
         }
 
         return TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
     }
     *token = &state->tokens[index];
     return ELEMENT_OK;
+}
+
+void element_tokeniser_set_log_callback(element_tokeniser_ctx* state, void (*log_callback)(const element_log_message*))
+{
+    assert(log_callback);
+    state->log_callback = log_callback;
 }
 
 static void reset_token(element_tokeniser_ctx* state)
