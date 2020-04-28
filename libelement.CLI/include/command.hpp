@@ -152,6 +152,7 @@ namespace libelement::cli
 		virtual std::string as_string() const = 0;
 
 		using callback = std::function<void(const command&)>;
+		using log_callback = void (*)(const element_log_message* const);
 		static void configure(CLI::App& app, command::callback callback);
 
 		compiler_message generate_response(element_result result, element_value value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>()) const
@@ -168,6 +169,11 @@ namespace libelement::cli
 			default:
 				return compiler_message(message_type::UNKNOWN_ERROR, value, trace_stack);
 			}
+		}
+
+		void set_log_callback(command::log_callback log_callback) const {
+
+			element_interpreter_set_log_callback(ictx, log_callback);
 		}
 
 	protected:

@@ -8,8 +8,16 @@
 
 using namespace libelement::cli;
 
+void log_callback(const element_log_message* const message)
+{
+	auto log = compiler_message(message);
+	std::cout << log.serialize() << std::endl;
+}
+
 void command_callback(const command& command) 
 {
+	command.set_log_callback(log_callback);
+
 	//feedback request
 	auto request = compiler_message(command.as_string());
 	std::cout << request.serialize() << std::endl;

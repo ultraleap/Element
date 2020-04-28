@@ -60,6 +60,11 @@ namespace libelement::cli
 		{
 		}
 
+		compiler_message(const element_log_message* const message)
+		{
+			//TODO
+		}
+
 		message_level get_level() const 
 		{
 			return level.has_value() ? level.value() : message_level::UNKNOWN;
