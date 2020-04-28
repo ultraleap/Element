@@ -259,6 +259,10 @@ static element_result parse_exprlist(element_tokeniser_ctx* tctx, size_t* tindex
             GET_TOKEN(tctx, *tindex, token);
         } while (token->type == ELEMENT_TOK_COMMA && tokenlist_advance(tctx, tindex));
     }
+    else {
+        //not really sure what these errors mean...
+        return ELEMENT_ERROR_INVALID_ARCHIVE;
+    }
     assert(token->type == ELEMENT_TOK_BRACKETR);
     tokenlist_advance(tctx, tindex);
     return ELEMENT_OK;
