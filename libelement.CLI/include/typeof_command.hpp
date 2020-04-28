@@ -13,7 +13,7 @@ namespace libelement::cli
 		std::string as_string() const
 		{
 			std::stringstream ss;
-			ss << "expression " << expression << " ";
+			ss << "evaluate --expression " << expression << " ";
 			return ss.str();
 		}
 	};
