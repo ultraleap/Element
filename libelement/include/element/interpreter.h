@@ -31,8 +31,6 @@ typedef struct element_evaluator_options
 } element_evaluator_options;
 
 typedef struct element_log_message {
-
-    int row;
     int column;
     int line;
     const char* message;

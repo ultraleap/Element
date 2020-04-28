@@ -4,6 +4,8 @@
 #include <string>
 #include <optional>
 
+#include "element/interpreter.h"
+
 #include "message_codes.hpp"
 
 namespace libelement::cli 
