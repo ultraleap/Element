@@ -162,6 +162,10 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     if (raw_tctx->tokens.empty())
         return ELEMENT_OK;
 
+    log(14, "TYPE_ERROR");
+    //log(15, "INVALID_ERROR");
+    log(16, "INVALID_EXPRESSION");
+
     element_ast* raw_ast = NULL;
     ELEMENT_OK_OR_RETURN(element_ast_build(raw_tctx, &raw_ast));
     // element_ast_print(raw_ast);
@@ -197,8 +201,8 @@ element_result element_interpreter_ctx::load_file(const std::string& file)
 
     element_result result = load(buffer.c_str(), file.c_str());
     if (result != ELEMENT_OK) {
-        std::cout << fmt::format("interpreter failed to parse file {}. element_result = {}\n", 
-            file, result); //todo: proper logging
+        //std::cout << fmt::format("interpreter failed to parse file {}. element_result = {}\n", 
+        //    file, result); //todo: proper logging
     }
 
     return result;
@@ -300,13 +304,14 @@ element_result element_interpreter_ctx::set_log_callback(void (*callback)(const 
     return ELEMENT_OK;
 }
 
-void element_interpreter_ctx::log(const std::string& message)
+void element_interpreter_ctx::log(int code, const std::string& message)
 {
     //what about line, column and also stack trace?
     //need to handle error levels too, log levels currently only exist in compiler_message
     assert(log_callback);
     auto log = element_log_message();
     log.message = message.c_str();
+    log.code = code;
     log_callback(&log);
 }
 

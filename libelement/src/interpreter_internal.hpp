@@ -52,7 +52,7 @@ struct element_interpreter_ctx
     element_result clear();
     element_result print_ast(const std::string& name = "<input>");
     element_result set_log_callback(void (*log_callback)(const element_log_message* const));
-    void log(const std::string& message);
+    void log(int code, const std::string& message);
 };
 
 struct element_compiled_function

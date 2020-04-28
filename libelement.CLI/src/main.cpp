@@ -11,7 +11,7 @@ using namespace libelement::cli;
 void log_callback(const element_log_message* const message)
 {
 	//errors for now
-	auto log = compiler_message(message_level::ERROR, message);
+	auto log = compiler_message(message_level::ERROR, message); 
 	std::cout << log.serialize() << std::endl;
 }
 
@@ -27,7 +27,7 @@ void command_callback(const command& command)
 	//callback in case we need access to the command for some compiler_message generation shenanigans
 	auto input = compilation_input(command.get_common_arguments());
 	auto response = command.execute(input);
-	std::cout << response.serialize() << std::endl;
+	//std::cout << response.serialize() << std::endl;
 } 
 
 int main(const int argc, char** argv)

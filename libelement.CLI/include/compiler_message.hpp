@@ -63,8 +63,9 @@ namespace libelement::cli
 		}
 
 		compiler_message(message_level level, const element_log_message* const error)
-			: level{ level }
+			:level { level }
 		{
+			type = static_cast<message_type>(error->code);
 			//TODO
 			//set type based on something
 			//set conext based on error->message
