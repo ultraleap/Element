@@ -335,7 +335,7 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
     log.line = -1;
     log.column = -1;
     log.length = -1;
-    //log.related_log_message = nullptr;
+    log.related_log_message = nullptr;
 
     log_callback(&log);
 }

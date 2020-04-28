@@ -30,10 +30,9 @@ typedef struct element_evaluator_options
     bool dummy;
 } element_evaluator_options;
 
-//todo: figure out why this forward declaration doesn't work
-//struct element_log_message;
+typedef struct element_log_message element_log_message;
 
-typedef struct element_log_message {
+struct element_log_message {
     // determines which values in this struct will be relevant
     element_result message_code;
     // the first character of the source file which the message is relevant, or -1
@@ -45,8 +44,8 @@ typedef struct element_log_message {
     // description of the error
     const char* message;
     // separate but related log messages. e.g. a callstack for cascading errors, or null
-    //element_log_message* related_log_message;
-} element_log_message;
+    element_log_message* related_log_message;
+};
 
 typedef struct element_interpreter_ctx element_interpreter_ctx;
 typedef struct element_function element_function;

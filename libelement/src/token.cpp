@@ -72,7 +72,7 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
             log.line = state->line;
             log.column = state->col;
             log.length = -1;
-            //log.related_log_message = nullptr;
+            log.related_log_message = nullptr;
             
             state->interpreter->log(log);
         }
