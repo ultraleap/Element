@@ -38,7 +38,7 @@ namespace libelement::cli
 
 			if (result != ELEMENT_OK)
 			{
-				return compiler_message(message_type::PARSE_ERROR, "False");
+				return compiler_message("False");
 			}
 
 			return compiler_message("True");

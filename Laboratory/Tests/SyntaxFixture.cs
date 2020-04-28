@@ -57,9 +57,10 @@ namespace Laboratory.Tests
             {
                 if (errors.Count >= 0)
                 {
-                    Assert.Fail("Expected error ELE{0} '{1}' but got following error codes instead: {2}",
+                    Assert.Fail("Expected error ELE{0} '{1}' but got following error codes instead: {2}\n{3}",
                         expectedMessageCode.Value, CompilerMessage.GetMessageName(expectedMessageCode.Value),
-                        string.Join(",", errors.Select(err => err.MessageCode)));
+                        string.Join(",", errors.Select(err => err.MessageCode)),
+                        string.Join("\n", errors.Select(err => err.ToString())));
                 }
                 else
                 {

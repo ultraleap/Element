@@ -53,6 +53,7 @@ struct element_interpreter_ctx
     element_result print_ast(const std::string& name = "<input>");
     element_result set_log_callback(void (*log_callback)(const element_log_message* const));
     void log(int code, const std::string& message);
+    element_result TEMPORARY_LOG_MESSAGE(element_result result, std::string function, std::string content, std::string filename);
 };
 
 struct element_compiled_function

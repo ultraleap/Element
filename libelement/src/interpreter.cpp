@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include <fmt/format.h>
 
@@ -151,29 +152,45 @@ static element_result merge_names(scope_unique_ptr& a, scope_unique_ptr b, const
     return ELEMENT_OK;
 }
 
+element_result element_interpreter_ctx::TEMPORARY_LOG_MESSAGE(element_result result, std::string function, std::string str, std::string filename)
+{
+    if (result != ELEMENT_OK) 
+    {
+        std::stringstream ss;
+
+        ss << "PARSE_ERROR" << std::endl;
+        ss << "element_result: " << result << std::endl;
+        ss << "function:" << function << std::endl;
+        ss << "file: " << filename << std::endl;
+        ss << "content: " << str << std::endl;
+
+        log(9, ss.str());
+    }
+    return result;
+}
+
 element_result element_interpreter_ctx::load(const char* str, const char* filename)
 {
+    element_result result;
     element_tokeniser_ctx* raw_tctx;
-    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&raw_tctx));
+    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(element_tokeniser_create(&raw_tctx), "element_tokeniser_create", str, filename))
+
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
     auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(raw_tctx, element_tokeniser_delete);
-    ELEMENT_OK_OR_RETURN(element_tokeniser_run(raw_tctx, str, filename));
 
+    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(element_tokeniser_run(raw_tctx, str, filename), "element_tokeniser_run", str, filename))
     if (raw_tctx->tokens.empty())
         return ELEMENT_OK;
 
-    log(14, "TYPE_ERROR");
-    //log(15, "INVALID_ERROR");
-    log(16, "INVALID_EXPRESSION");
-
     element_ast* raw_ast = NULL;
-    ELEMENT_OK_OR_RETURN(element_ast_build(raw_tctx, &raw_ast));
+    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(element_ast_build(raw_tctx, &raw_ast), "element_ast_build", str, filename))
+
     // element_ast_print(raw_ast);
     auto ast = ast_unique_ptr(raw_ast, element_ast_delete);
-
     scope_unique_ptr root = get_names(nullptr, raw_ast);
-    ELEMENT_OK_OR_RETURN(add_ast_names(ast_names, root.get()));
-    ELEMENT_OK_OR_RETURN(merge_names(names, std::move(root), nullptr));
+    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(add_ast_names(ast_names, root.get()), "add_ast_names", str, filename))
+    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(merge_names(names, std::move(root), nullptr), "merge_names", str, filename))
+
     trees.push_back(std::make_pair(filename, std::move(ast)));
 
     // TODO: HACK
@@ -374,7 +391,7 @@ element_result element_interpreter_load_files(element_interpreter_ctx* ctx, cons
 
     std::vector<std::string> actual_files;
     for (int i = 0; i < files_count; ++i) {
-        std::cout << fmt::format("load_file {}\n", files[i]); //todo: proper logging
+        //std::cout << fmt::format("load_file {}\n", files[i]); //todo: proper logging
         actual_files.push_back(files[i]);
     }
 
@@ -385,7 +402,7 @@ element_result element_interpreter_load_files(element_interpreter_ctx* ctx, cons
 element_result element_interpreter_load_package(element_interpreter_ctx* ctx, const char* package)
 {
     assert(ctx);
-    std::cout << fmt::format("load_package {}\n", package); //todo: proper logging
+    //std::cout << fmt::format("load_package {}\n", package); //todo: proper logging
     return ctx->load_package(package);
 }
 
@@ -395,7 +412,7 @@ element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, c
 
     std::vector<std::string> actual_packages;
     for (int i = 0; i < packages_count; ++i) {
-        std::cout << fmt::format("load_packages {}\n", packages[i]); //todo: proper logging
+        //std::cout << fmt::format("load_packages {}\n", packages[i]); //todo: proper logging
         actual_packages.push_back(packages[i]);
     }
 
