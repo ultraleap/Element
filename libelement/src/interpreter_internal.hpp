@@ -56,7 +56,6 @@ struct element_interpreter_ctx
     void set_log_callback(LogCallback callback);
     void log(int message_code, const std::string& message);
     void log(const element_log_message& message);
-    element_result TEMPORARY_LOG_MESSAGE(element_result result, std::string function, std::string content, std::string filename);
 };
 
 struct element_compiled_function

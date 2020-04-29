@@ -152,45 +152,32 @@ static element_result merge_names(scope_unique_ptr& a, scope_unique_ptr b, const
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_ctx::TEMPORARY_LOG_MESSAGE(element_result result, std::string function, std::string str, std::string filename)
-{
-    if (result != ELEMENT_OK) 
-    {
-        std::stringstream ss;
-
-        ss << "PARSE_ERROR" << std::endl;
-        ss << "element_result: " << result << std::endl;
-        ss << "function:" << function << std::endl;
-        ss << "file: " << filename << std::endl;
-        ss << "content: " << str << std::endl;
-
-        log(9, ss.str());
-    }
-    return result;
-}
-
 element_result element_interpreter_ctx::load(const char* str, const char* filename)
 {
     element_tokeniser_ctx* raw_tctx;
-    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(element_tokeniser_create(&raw_tctx), "element_tokeniser_create", str, filename))
+    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&raw_tctx))
 
     raw_tctx->log_callback = log_callback;
 
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
     auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(raw_tctx, element_tokeniser_delete);
 
-    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(element_tokeniser_run(raw_tctx, str, filename), "element_tokeniser_run", str, filename))
+    ELEMENT_OK_OR_RETURN(element_tokeniser_run(raw_tctx, str, filename))
     if (raw_tctx->tokens.empty())
         return ELEMENT_OK;
 
     element_ast* raw_ast = NULL;
-    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(element_ast_build(raw_tctx, &raw_ast), "element_ast_build", str, filename))
+    auto result = element_ast_build(raw_tctx, &raw_ast);
+    if (result != ELEMENT_OK) {
+        log(result, std::string("element_ast_build failed"));
+        return result;
+    }
 
     // element_ast_print(raw_ast);
     auto ast = ast_unique_ptr(raw_ast, element_ast_delete);
     scope_unique_ptr root = get_names(nullptr, raw_ast);
-    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(add_ast_names(ast_names, root.get()), "add_ast_names", str, filename))
-    ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(merge_names(names, std::move(root), nullptr), "merge_names", str, filename))
+    ELEMENT_OK_OR_RETURN(add_ast_names(ast_names, root.get()))
+    ELEMENT_OK_OR_RETURN(merge_names(names, std::move(root), nullptr))
 
     trees.push_back(std::make_pair(filename, std::move(ast)));
 
@@ -333,6 +320,7 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
     log.column = -1;
     log.length = -1;
     log.stage = ELEMENT_STAGE_PARSER;
+    log.filename = nullptr;
     log.related_log_message = nullptr;
 
     log_callback(&log);

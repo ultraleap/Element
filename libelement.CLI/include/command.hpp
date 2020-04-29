@@ -16,7 +16,7 @@ namespace libelement::cli
 		bool no_prelude = false;
 		bool debug = false;
 		bool log_json = false;
-		message_level verbosity = message_level::INFORMATION;
+		message_level verbosity = message_level::Information;
 		std::vector<std::string> packages{};
 		std::vector<std::string> source_files{};
 
@@ -33,7 +33,7 @@ namespace libelement::cli
 			if (log_json)
 				ss << "--logjson ";
 
-			if (verbosity != message_level::UNKNOWN)
+			if (verbosity != message_level::Unknown)
 				ss << "--verbosity " << static_cast<int>(verbosity) << " ";
 
 			if (!packages.empty()) 

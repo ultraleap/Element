@@ -103,6 +103,8 @@ struct element_log_message {
     element_stage stage;
     // description of the error
     const char* message;
+    // filename
+    const char* filename;
     // separate but related log messages. e.g. a callstack for cascading errors, or null
     element_log_message* related_log_message;
 };

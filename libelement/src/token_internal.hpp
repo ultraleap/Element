@@ -36,6 +36,26 @@ struct element_tokeniser_ctx
         log.column = col;
         log.length = -1;
         log.stage = ELEMENT_STAGE_TOKENISER;
+        log.filename = filename.c_str();
+        log.related_log_message = nullptr;
+
+        log_callback(&log);
+    }
+
+    void log(int message_code, const std::string& message, int length, element_log_message* related_message) const
+    {
+        if (!log_callback)
+            return;
+
+        element_log_message log;
+        log.message_code = message_code;
+        log.message = message.c_str();
+        log.line = line;
+        log.column = col;
+        log.length = length;
+        log.stage = ELEMENT_STAGE_TOKENISER;
+        log.filename = filename.c_str();
+        log.related_log_message = related_message;
 
         log_callback(&log);
     }

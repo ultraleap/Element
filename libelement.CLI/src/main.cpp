@@ -2,6 +2,8 @@
 
 #include <CLI/CLI.hpp>
 #include <toml.hpp>
+#include <fmt/format.h>
+#include <element/common.h>
 
 #include "compiler_message.hpp"
 #include "command.hpp"
@@ -10,8 +12,31 @@ using namespace libelement::cli;
 
 void log_callback(const element_log_message* const message)
 {
-	//errors for now
-	auto log = compiler_message(message_level::ERROR, message); 
+	element_result message_code = message->message_code;
+
+	std::string msg_type;
+	switch (message->stage)
+	{
+	    case ELEMENT_STAGE_INVALID: msg_type = "libelement in invalid state\n"; break;
+	    case ELEMENT_STAGE_MISC: msg_type = "Misc Message\n"; break;
+		case ELEMENT_STAGE_TOKENISER: msg_type = "Tokeniser Message\n"; message_code = TODO_ELEMENT_ERROR_PARSE; break;
+	    case ELEMENT_STAGE_PARSER: msg_type = "Parser Message\n"; message_code = TODO_ELEMENT_ERROR_PARSE; break;
+		case ELEMENT_STAGE_COMPILER: msg_type = "Compiler Message\n"; break;
+		case ELEMENT_STAGE_EVALUATOR: msg_type = "Evaluator Message\n"; break;
+		default: msg_type = "Unknown Message\n"; break;
+	}
+
+	std::string msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}\nline {} column {} length {}\n",
+		message->message_code, message->filename ? message->filename : "", message->line, message->column, message->length);
+	element_log_message message_info;
+	message_info.message = msg_info.c_str();
+
+	//todo: hack to force parse errors
+	auto log_info = compiler_message(static_cast<message_type>(message_code), &message_info);
+	std::cout << log_info.serialize() << std::endl;
+
+	//todo: hack to force parse errors
+	auto log = compiler_message(static_cast<message_type>(message_code), message);
 	std::cout << log.serialize() << std::endl;
 }
 

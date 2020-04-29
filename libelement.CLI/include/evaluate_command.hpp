@@ -55,13 +55,13 @@ namespace libelement::cli
 
 			//result = element_interpreter_print_ast(ictx, "Prelude\\Num.ele");
 			//if (result != ELEMENT_OK)
-			//	return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+			//	return compiler_message(message::PARSE_ERROR, message_level::Error);
 
 			//std::cout << std::endl << std::endl;
 
 			//result = element_interpreter_print_ast(ictx, "<input>");
 			//if (result != ELEMENT_OK)
-			//	return compiler_message(message::PARSE_ERROR, message_level::ERROR);
+			//	return compiler_message(message::PARSE_ERROR, message_level::Error);
 
 			//std::cout << std::endl << std::endl;
 

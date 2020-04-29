@@ -62,8 +62,8 @@ namespace libelement::cli
 		{
 		}
 
-		compiler_message(message_level level, const element_log_message* const error)
-			: level{ level }, type{ static_cast<message_type>(error->message_code) }, context { error->message }
+		compiler_message(message_type type, const element_log_message* const error)
+			: level{ codes.get_level(type) }, type{ type }, context { error->message }
 		{
 			//TODO
 			//set trace_stack based on expression_cache frame list?
@@ -71,7 +71,7 @@ namespace libelement::cli
 
 		message_level get_level() const 
 		{
-			return level.has_value() ? level.value() : message_level::UNKNOWN;
+			return level.has_value() ? level.value() : message_level::Unknown;
 		}
 		
 		std::string serialize() const;

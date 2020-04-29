@@ -9,12 +9,12 @@ namespace libelement::cli
 {
 	enum class message_level : unsigned int
 	{
-		VERBOSE = 0,
-		INFORMATION,
-		WARNING,
-		ERROR,
-		FATAL,
-		UNKNOWN = 0xFFFF
+		Verbose = 0,
+		Information,
+		Warning,
+		Error,
+		Fatal,
+		Unknown = 0xFFFF
 	};
 
 	enum class message_type : unsigned int
@@ -63,18 +63,18 @@ namespace libelement::cli
 		{
 			static std::map<std::string, message_level> map_message_level =
 			{
-				{"Fatal", message_level::FATAL},
-				{"Warning", message_level::WARNING},
-				{"Error", message_level::ERROR},
-				{"Information", message_level::INFORMATION},
-				{"Verbose", message_level::VERBOSE}
+				{"Fatal", message_level::Fatal},
+				{"Warning", message_level::Warning},
+				{"Error", message_level::Error},
+				{"Information", message_level::Information},
+				{"Verbose", message_level::Verbose}
 			};
 			
 			message_level_const_iterator it = map_message_level.find(level);
 			if (it != map_message_level.end())
 				return it->second;
 
-			return message_level::UNKNOWN;
+			return message_level::Unknown;
 		}
 	};
 
@@ -110,7 +110,7 @@ namespace libelement::cli
 		{
 			const message_code* message_code = get_code(type);
 			if (message_code == nullptr)
-				return message_level::UNKNOWN;
+				return message_level::Unknown;
 
 			return message_code->level;
 		}
