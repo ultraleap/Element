@@ -169,15 +169,24 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     element_ast* raw_ast = NULL;
     auto result = element_ast_build(raw_tctx, &raw_ast);
     if (result != ELEMENT_OK) {
-        log(result, std::string("element_ast_build failed"));
+        log(result, std::string("element_ast_build failed"), filename);
         return result;
     }
 
     // element_ast_print(raw_ast);
     auto ast = ast_unique_ptr(raw_ast, element_ast_delete);
     scope_unique_ptr root = get_names(nullptr, raw_ast);
-    ELEMENT_OK_OR_RETURN(add_ast_names(ast_names, root.get()))
-    ELEMENT_OK_OR_RETURN(merge_names(names, std::move(root), nullptr))
+    result = add_ast_names(ast_names, root.get());
+    if (result != ELEMENT_OK) {
+        log(result, std::string("add_ast_names failed"), filename);
+        return result;
+    }
+
+    result = merge_names(names, std::move(root), nullptr);
+    if (result != ELEMENT_OK) {
+        log(result, std::string("merge_names failed"), filename);
+        return result;
+    }
 
     trees.push_back(std::make_pair(filename, std::move(ast)));
 
@@ -308,7 +317,7 @@ void element_interpreter_ctx::set_log_callback(LogCallback callback)
     log_callback = callback;
 }
 
-void element_interpreter_ctx::log(element_result code, const std::string& message)
+void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename)
 {
     if (!log_callback)
         return;
@@ -320,7 +329,7 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
     log.column = -1;
     log.length = -1;
     log.stage = ELEMENT_STAGE_PARSER;
-    log.filename = nullptr;
+    log.filename = filename.c_str();
     log.related_log_message = nullptr;
 
     log_callback(&log);

@@ -54,7 +54,7 @@ struct element_interpreter_ctx
     element_result clear();
     element_result print_ast(const std::string& name = "<input>");
     void set_log_callback(LogCallback callback);
-    void log(int message_code, const std::string& message);
+    void log(int message_code, const std::string& message, const std::string& filename = std::string());
     void log(const element_log_message& message);
 };
 

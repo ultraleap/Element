@@ -28,15 +28,11 @@ void log_callback(const element_log_message* const message)
 
 	std::string msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}\nline {} column {} length {}\n",
 		message->message_code, message->filename ? message->filename : "", message->line, message->column, message->length);
-	element_log_message message_info;
-	message_info.message = msg_info.c_str();
+
+	std::string message_with_info = msg_info + message->message;
 
 	//todo: hack to force parse errors
-	auto log_info = compiler_message(static_cast<message_type>(message_code), &message_info);
-	std::cout << log_info.serialize() << std::endl;
-
-	//todo: hack to force parse errors
-	auto log = compiler_message(static_cast<message_type>(message_code), message);
+	auto log = compiler_message(static_cast<message_type>(message_code), message_with_info);
 	std::cout << log.serialize() << std::endl;
 }
 
