@@ -53,14 +53,11 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
     assert(state);
     assert(token);
     if (index >= state->tokens.size()) {
-        if (state->log_callback)
-        {
-            auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens",
-                    index, state->tokens.size());
-        
-            state->log(TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
-        }
 
+        auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens",
+            index, state->tokens.size());
+        
+        state->log(TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
         return TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
     }
     *token = &state->tokens[index];
@@ -127,6 +124,7 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
                 fmt::format("Found {} which was thought to be a number being indexed, "
                     "but encountered invalid character '{}' on the right hand side of '.'",
                     std::string(it_begin, it), std::string(it_rhs_start, it_next)));
+
             return TODO_ELEMENT_ERROR_PARSE;
         }
     }
@@ -289,7 +287,14 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 case '_': {
                     auto next = UTF8_PEEK_NEXT(it + 1, end);
                     if (isid_alpha(next)) {
-                        ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
+                        const auto begin_it = it;
+                        auto result = tokenise_identifier(it, end, state);
+                        if (result != ELEMENT_OK) {
+                            state->log(TODO_ELEMENT_ERROR_PARSE,
+                                fmt::format("Failed to parse identifier '{}'",
+                                    std::string(begin_it, it)));
+                            return result;
+                        }
                     }
                     else {
                         add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
@@ -299,10 +304,24 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 }
                 default: {
                     if (isid_alpha(c)) {
-                        ELEMENT_OK_OR_RETURN(tokenise_identifier(it, end, state));
+                        const auto begin_it = it;
+                        auto result = tokenise_identifier(it, end, state);
+                        if (result != ELEMENT_OK) {
+                            state->log(TODO_ELEMENT_ERROR_PARSE,
+                                fmt::format("Failed to parse identifier '{}'",
+                                    std::string(begin_it, it)));
+                            return result;
+                        }
                     }
                     else if (element_isdigit(c) || c == '-' || c == '+') {
-                        ELEMENT_OK_OR_RETURN(tokenise_number(it, end, state));
+                        const auto begin_it = it;
+                        auto result = tokenise_number(it, end, state);
+                        if (result != ELEMENT_OK) {
+                            state->log(TODO_ELEMENT_ERROR_PARSE,
+                                fmt::format("Failed to parse number '{}'",
+                                    std::string(begin_it, it)));
+                            return result;
+                        }
                     }
                     else if (element_iseol(c)) {
                         ++state->line;
