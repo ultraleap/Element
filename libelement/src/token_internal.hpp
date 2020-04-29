@@ -24,7 +24,7 @@ struct element_tokeniser_ctx
         return input.substr(t->tok_pos, t->tok_len); 
     }
 
-    void log(int message_code, const std::string& message) const
+    void log(int message_code, const std::string& message, message_stage stage = message_stage::ELEMENT_STAGE_TOKENISER) const
     {
         if (!log_callback)
             return;
@@ -35,7 +35,7 @@ struct element_tokeniser_ctx
         log.line = line;
         log.column = col;
         log.length = -1;
-        log.stage = ELEMENT_STAGE_TOKENISER;
+        log.stage = stage;
         log.filename = filename.c_str();
         log.related_log_message = nullptr;
 

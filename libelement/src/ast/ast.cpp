@@ -10,6 +10,8 @@
 #include <memory>
 #include <unordered_set>
 
+#include <fmt/format.h>
+
 #include "ast/ast_internal.hpp"
 #include "ast/ast_indexes.hpp"
 #include "token_internal.hpp"
@@ -212,7 +214,13 @@ static element_result parse_port(element_tokeniser_ctx* tctx, size_t* tindex, el
     assert(tok->type == ELEMENT_TOK_IDENTIFIER || tok->type == ELEMENT_TOK_UNDERSCORE);
     ast->type = ELEMENT_AST_NODE_PORT;
     if (tok->type == ELEMENT_TOK_IDENTIFIER) {
-        ELEMENT_OK_OR_RETURN(parse_identifier(tctx, tindex, ast, true));
+	    const auto result = parse_identifier(tctx, tindex, ast, true);
+    	if(result != ELEMENT_OK)
+    	{
+	        const auto message = fmt::format("invalid identifier '{}'", ast->identifier);
+            tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, message, message_stage::ELEMENT_STAGE_PARSER);
+            return result;
+    	}
     } else {
         // no name, advance
         tokenlist_advance(tctx, tindex);
