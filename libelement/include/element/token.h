@@ -35,9 +35,10 @@ typedef struct
     int post_len;
 
     //for debug/logging
+
     int line;
     int line_start_position; //the position at which the line starts in the input string
-    int column; //the position in the line where the token starts    
+    int column; //the position in the line where the token starts (starting from 1, not 0)
 } element_token;
 
 

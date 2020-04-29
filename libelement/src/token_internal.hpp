@@ -14,14 +14,15 @@ struct element_tokeniser_ctx
     std::string input;
     int pos = 0; //position in the source file
     int line = 1;
-    int col = 1; //position in the line
+    int line_start_position = 0;
+    int col = 1; //position in the line (starting from 1)
     element_token cur_token;
     std::vector<element_token> tokens;
     LogCallback log_callback;
 
     std::string text(const element_token* t) const
     { 
-        return input.substr(t->tok_pos, t->tok_len); 
+        return input.substr(t->tok_pos, t->tok_len);
     }
 
     void log(int message_code, const std::string& message, message_stage stage = message_stage::ELEMENT_STAGE_TOKENISER) const

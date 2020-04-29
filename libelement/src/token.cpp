@@ -78,11 +78,16 @@ static void reset_token(element_tokeniser_ctx* state)
         state->cur_token.pre_pos = -1;
         state->cur_token.pre_len = 0;
     }
+
     state->cur_token.type = ELEMENT_TOK_NONE;
     state->cur_token.tok_pos = -1;
     state->cur_token.tok_len = 0;
     state->cur_token.post_pos = -1;
     state->cur_token.post_len = 0;
+
+    state->cur_token.line = -1;
+    state->cur_token.column = -1;
+    state->cur_token.line_start_position = -1;
 }
 
 // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
@@ -92,6 +97,10 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     assert(state->cur_token.type == ELEMENT_TOK_NONE);
     state->cur_token.type = ELEMENT_TOK_NUMBER;
     state->cur_token.tok_pos = state->pos;
+    state->cur_token.line = state->line;
+    state->cur_token.line_start_position = state->line_start_position;
+    state->cur_token.column = state->col;
+
     const auto it_begin = it;
     uint32_t c = UTF8_PEEK_NEXT(it, end);
     if (c == '-' || c == '+') {
@@ -199,6 +208,9 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
     assert(state->cur_token.type == ELEMENT_TOK_NONE);
     state->cur_token.type = ELEMENT_TOK_IDENTIFIER;
     state->cur_token.tok_pos = state->pos;
+    state->cur_token.line = state->line;
+    state->cur_token.line_start_position = state->line_start_position;
+    state->cur_token.column = state->col;
     const auto it_begin = it;
     uint32_t c = UTF8_PEEK_NEXT(it, end);
     if (c == '_') {
@@ -226,6 +238,9 @@ static void add_token(element_tokeniser_ctx* state, element_token_type t, int n)
     state->cur_token.type = t;
     state->cur_token.tok_pos = state->pos;
     state->cur_token.tok_len = n;
+    state->cur_token.line = state->line;
+    state->cur_token.line_start_position = state->line_start_position;
+    state->cur_token.column = state->col;
     state->pos += n;
     reset_token(state);
 }
@@ -249,6 +264,7 @@ element_result element_tokeniser_clear(element_tokeniser_ctx* state)
     state->filename.clear();
     state->input.clear();
     state->line = 1;
+    state->line_start_position = 0;
     state->col = 1;
     state->pos = 0;
     reset_token(state);
@@ -327,7 +343,8 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         ++state->line;
                         state->col = 0;
                         state->pos += 1;
-                        reset_token(state); 
+                        state->line_start_position = state->pos;
+                        reset_token(state);
                         UTF8_NEXT(it, end);
                     }
                     else if (element_isspace(c)) {
