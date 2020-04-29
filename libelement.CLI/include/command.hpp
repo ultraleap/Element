@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -69,7 +70,7 @@ namespace libelement::cli
 			common_arguments.packages = select(common_arguments.packages, directory_exists);
 		}
 
-		const bool get_no_prelude() const
+		bool get_no_prelude() const
 		{
 			return common_arguments.no_prelude;
 		}
@@ -84,17 +85,17 @@ namespace libelement::cli
 			return common_arguments.packages;
 		}
 
-		const bool get_debug() const
+		bool get_debug() const
 		{
 			return common_arguments.debug;
 		}
 
-		const message_level get_verbosity() const
+		message_level get_verbosity() const
 		{
 			return common_arguments.verbosity;
 		}
 
-		const bool get_log_json() const
+		bool get_log_json() const
 		{
 			return common_arguments.log_json;
 		}
@@ -142,7 +143,6 @@ namespace libelement::cli
 		command& operator=(const command& other) = delete;
 		command& operator=(command&& other) = delete;
 
-	public:
 		common_command_arguments get_common_arguments() const 
 		{
 			return common_arguments;
@@ -160,7 +160,13 @@ namespace libelement::cli
 			return generate_response(result, std::to_string(value), trace_stack);
 		}
 
-		compiler_message generate_response(element_result result, std::string value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>()) const
+		void set_log_callback(command::log_callback log_callback) const {
+
+			element_interpreter_set_log_callback(ictx, log_callback);
+		}
+
+	private:
+		static compiler_message generate_response(element_result result, std::string value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 		{
 			switch (result)
 			{
@@ -169,11 +175,6 @@ namespace libelement::cli
 			default:
 				return compiler_message(message_type::UNKNOWN_ERROR, value, trace_stack);
 			}
-		}
-
-		void set_log_callback(command::log_callback log_callback) const {
-
-			element_interpreter_set_log_callback(ictx, log_callback);
 		}
 
 	protected:

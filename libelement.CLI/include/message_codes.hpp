@@ -54,7 +54,7 @@ namespace libelement::cli
 		message_level level;
 		
 		message_code(message_type type, std::string name, const std::string& level)
-			: type{ std::move(type) }, name{ std::move(name) }, level{ get_message_level(level) }
+			: type{ type }, name{ std::move(name) }, level{ get_message_level(level) }
 		{
 		}
 
@@ -106,7 +106,7 @@ namespace libelement::cli
 			return nullptr;
 		}
 
-		const message_level get_level(message_type type) const
+		message_level get_level(message_type type) const
 		{
 			const message_code* message_code = get_code(type);
 			if (message_code == nullptr)

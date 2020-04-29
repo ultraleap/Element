@@ -12,7 +12,7 @@ using namespace libelement::cli;
 
 void log_callback(const element_log_message* const message)
 {
-	element_result message_code = message->message_code;
+	auto message_code = message->message_code;
 
 	std::string msg_type;
 	switch (message->stage)
@@ -26,8 +26,8 @@ void log_callback(const element_log_message* const message)
 		default: msg_type = "Unknown Message\n"; break;
 	}
 
-	std::string msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}\nline {} column {} length {}\n",
-		message->message_code, message->filename ? message->filename : "", message->line, message->column, message->length);
+	auto msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}\nline {} column {} length {}\n",
+	                                       message->message_code, message->filename ? message->filename : "", message->line, message->column, message->length);
 	element_log_message message_info;
 	message_info.message = msg_info.c_str();
 
@@ -46,12 +46,12 @@ void command_callback(const command& command)
 	command.set_log_callback(log_callback);
 
 	//feedback request
-	auto request = compiler_message(command.as_string());
+	const auto request = compiler_message(command.as_string());
 	std::cout << request.serialize() << std::endl;
 
 	//callback in case we need access to the command for some compiler_message generation shenanigans
-	auto input = compilation_input(command.get_common_arguments());
-	auto response = command.execute(input);
+	const auto input = compilation_input(command.get_common_arguments());
+	const auto response = command.execute(input);
 	std::cout << response.serialize() << std::endl;
 } 
 

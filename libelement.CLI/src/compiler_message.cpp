@@ -1,10 +1,14 @@
-#include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
 #include "compiler_message.hpp"
 
 using namespace libelement::cli;
+
+message_level compiler_message::get_level() const
+{
+	return level.has_value() ? level.value() : message_level::Unknown;
+}
 
 std::string compiler_message::serialize() const
 {

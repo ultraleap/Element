@@ -37,7 +37,7 @@ namespace libelement::cli
 
 			//call into libelement
 			element_value outputs[1]{ 0 };
-			std::vector<trace_site> trace_site;
+			const std::vector<trace_site> trace_site;
 
 			return generate_response(result, outputs[0], trace_site);
 		}

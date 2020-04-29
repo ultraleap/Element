@@ -1,7 +1,6 @@
 #pragma once
 
 #include "element/token.h"
-#include "element/ast.h"
 #include "element/interpreter.h"
 
 #include "command.hpp"
@@ -33,8 +32,7 @@ namespace libelement::cli
 
 		compiler_message execute(const compilation_input& input) const override
 		{
-			element_result result = ELEMENT_OK;
-			result = setup(input);
+			auto result = setup(input);
 			if (result != ELEMENT_OK)
 				return compiler_message("Failed to setup context");
 
@@ -42,28 +40,14 @@ namespace libelement::cli
 			const element_function* fn;
 			element_compiled_function* cfn;
 			element_value outputs[1];
-			std::vector<trace_site> trace_site{};
+			const std::vector<trace_site> trace_site{};
 
-			//Not handling error responses propertly yet
-			auto evaluate = "evaluate = " + custom_arguments.expression + ";";
+			//Not handling error responses properly yet
+			const auto evaluate = "evaluate = " + custom_arguments.expression + ";";
 			result = element_interpreter_load_string(ictx, evaluate.c_str(), "<input>");
 			if (result != ELEMENT_OK) {
 				return compiler_message("Failed to parse: " + evaluate);
 			}
-
-			//std::cout << std::endl << std::endl;
-
-			//result = element_interpreter_print_ast(ictx, "Prelude\\Num.ele");
-			//if (result != ELEMENT_OK)
-			//	return compiler_message(message::PARSE_ERROR, message_level::Error);
-
-			//std::cout << std::endl << std::endl;
-
-			//result = element_interpreter_print_ast(ictx, "<input>");
-			//if (result != ELEMENT_OK)
-			//	return compiler_message(message::PARSE_ERROR, message_level::Error);
-
-			//std::cout << std::endl << std::endl;
 
 			result = element_interpreter_get_function(ictx, "evaluate", &fn);
 			if (result != ELEMENT_OK)
