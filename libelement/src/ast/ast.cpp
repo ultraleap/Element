@@ -28,6 +28,11 @@ static element_result check_reserved_words(const std::string& text, bool allow_r
         : ELEMENT_ERROR_INVALID_ARCHIVE; // TODO: errcode
 }
 
+static bool has_flag(element_ast_flags flags, element_ast_flags flag)
+{
+    return (flags & flag) == flag;
+}
+
 //
 // Token helpers
 //
@@ -505,13 +510,14 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
     const element_token* body;
     GET_TOKEN(tctx, *tindex, body);
     tokenlist_advance(tctx, tindex);
-    if (body->type == ELEMENT_TOK_SEMICOLON) {
+    if (body->type == ELEMENT_TOK_SEMICOLON && has_flag(declflags, ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
         // interface
         bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
     } else if (body->type == ELEMENT_TOK_BRACEL) {
         // scope (struct body)
         ELEMENT_OK_OR_RETURN(parse_scope(tctx, tindex, bodynode));
     } else {
+        tctx->log(TODO_ELEMENT_ERROR_MISSING_PORTS, "non-intrinsic struct must has a portlist", message_stage::ELEMENT_STAGE_PARSER);
         return ELEMENT_ERROR_INVALID_ARCHIVE;
     }
     return ELEMENT_OK;
