@@ -361,8 +361,6 @@ static element_result parse_qualifiers(element_tokeniser_ctx* tctx, size_t* tind
         std::string id = tctx->text(tok);
         if (id == "intrinsic")
             *flags |= ELEMENT_AST_FLAG_DECL_INTRINSIC;
-        else if (id == "extern")
-            *flags |= ELEMENT_AST_FLAG_DECL_EXTERN;
         else
             break;
         
