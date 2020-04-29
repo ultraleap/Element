@@ -501,24 +501,41 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
     const element_token* token;
     GET_TOKEN(tctx, *tindex, token);
 
+	if(token->type == ELEMENT_TOK_EQUALS)
+	{
+        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' before a struct declaration", message_stage::ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_PARSE;
+	}
+
     ast->type = ELEMENT_AST_NODE_STRUCT;
     element_ast* decl = ast_new_child(ast);
     ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, false));
     decl->flags = declflags;
 
+    auto is_intrinsic = has_flag(declflags, ELEMENT_AST_FLAG_DECL_INTRINSIC);
+    auto has_portlist = decl->children[0]->type == ELEMENT_AST_NODE_PORTLIST;
+
     element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tctx, *tindex, body);
     tokenlist_advance(tctx, tindex);
-    if (body->type == ELEMENT_TOK_SEMICOLON && has_flag(declflags, ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
+    if (body->type == ELEMENT_TOK_SEMICOLON) {
+        if(!is_intrinsic && !has_portlist)
+        {
+            tctx->log(TODO_ELEMENT_ERROR_MISSING_PORTS, "non-intrinsic struct must has a portlist", message_stage::ELEMENT_STAGE_PARSER);
+            return TODO_ELEMENT_ERROR_PARSE;
+        }
+    	
         // interface
         bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
     } else if (body->type == ELEMENT_TOK_BRACEL) {
         // scope (struct body)
         ELEMENT_OK_OR_RETURN(parse_scope(tctx, tindex, bodynode));
-    } else {
-        tctx->log(TODO_ELEMENT_ERROR_MISSING_PORTS, "non-intrinsic struct must has a portlist", message_stage::ELEMENT_STAGE_PARSER);
-        return ELEMENT_ERROR_INVALID_ARCHIVE;
+    }
+    else
+    {
+        tctx->log(TODO_ELEMENT_ERROR_UNKNOWN, "unknown error in parse_struct", message_stage::ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_PARSE;
     }
     return ELEMENT_OK;
 }
