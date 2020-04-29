@@ -330,7 +330,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         }
         return ELEMENT_OK;
     }
-    catch (std::exception& e)
+    catch (const std::exception& e)
     {
         state->log(TODO_ELEMENT_ERROR_EXCEPTION,
             fmt::format("Exception occured: {}", e.what()));
