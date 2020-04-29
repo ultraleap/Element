@@ -528,7 +528,7 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
 
 	if(token->type == ELEMENT_TOK_EQUALS)
 	{
-        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' before a struct declaration", message_stage::ELEMENT_STAGE_PARSER);
+        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' after a struct without an identifier", message_stage::ELEMENT_STAGE_PARSER);
         return TODO_ELEMENT_ERROR_PARSE;
 	}
 
@@ -573,6 +573,12 @@ static element_result parse_constraint(element_tokeniser_ctx* tctx, size_t* tind
     const element_token* token;
     GET_TOKEN(tctx, *tindex, token);
 
+    if (token->type == ELEMENT_TOK_EQUALS)
+    {
+        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' after a constraint without an identifier", message_stage::ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_PARSE;
+    }
+
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_CONSTRAINT;
     element_ast* decl = ast_new_child(ast);
@@ -600,6 +606,12 @@ static element_result parse_namespace(element_tokeniser_ctx* tctx, size_t* tinde
 
     const element_token* token;
     GET_TOKEN(tctx, *tindex, token);
+
+    if (token->type == ELEMENT_TOK_EQUALS)
+    {
+        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' after a namespace without an identifier", message_stage::ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_PARSE;
+    }
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_NAMESPACE;
