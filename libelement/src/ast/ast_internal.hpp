@@ -1,11 +1,12 @@
 #pragma once
 
-#include "element/ast.h"
-
 #include <vector>
 #include <string>
 #include <memory>
 #include <functional>
+
+#include "element/ast.h"
+#include "element/token.h"
 
 using ast_unique_ptr = std::unique_ptr<element_ast, void(*)(element_ast*)>;
 
@@ -20,7 +21,7 @@ struct element_ast
     };
     element_ast* parent = nullptr;
     std::vector<ast_unique_ptr> children;
-    // TODO: track source token?
+    const element_token* nearest_token = nullptr;
 
     bool has_flag(element_ast_flags flag) const 
     {
