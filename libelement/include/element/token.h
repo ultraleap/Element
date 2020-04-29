@@ -27,12 +27,17 @@ typedef enum
 typedef struct
 {
     element_token_type type;
-    int pre_pos;
+    int pre_pos; //unsure
     int pre_len;
-    int tok_pos;
+    int tok_pos; //the position in the input string where the token starts
     int tok_len;
-    int post_pos;
+    int post_pos; //unsure
     int post_len;
+
+    //for debug/logging
+    int line;
+    int line_start_position; //the position at which the line starts in the input string
+    int column; //the position in the line where the token starts    
 } element_token;
 
 
