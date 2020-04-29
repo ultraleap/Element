@@ -57,17 +57,8 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
         {
             auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens",
                     index, state->tokens.size());
-
-            element_log_message log;
-            log.message_code = TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
-            log.message = msg.c_str();
-            log.line = state->line;
-            log.column = state->col;
-            log.length = -1;
-            log.stage = ELEMENT_STAGE_TOKENISER;
-            log.related_log_message = nullptr;
-            
-            state->log(log);
+        
+            state->log(TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
         }
 
         return TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
@@ -330,7 +321,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         const auto begin_it = it;
                         UTF8_NEXT(it, end);
                         state->log(TODO_ELEMENT_ERROR_PARSE,
-                            fmt::format("Reached unexpected state when encoutering character '{}'",
+                            fmt::format("Reached unexpected state when encountering character '{}'",
                                 std::string(begin_it, it)));
                         return TODO_ELEMENT_ERROR_PARSE;
                     }

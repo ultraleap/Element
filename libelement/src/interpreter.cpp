@@ -171,7 +171,6 @@ element_result element_interpreter_ctx::TEMPORARY_LOG_MESSAGE(element_result res
 
 element_result element_interpreter_ctx::load(const char* str, const char* filename)
 {
-    element_result result;
     element_tokeniser_ctx* raw_tctx;
     ELEMENT_OK_OR_RETURN(TEMPORARY_LOG_MESSAGE(element_tokeniser_create(&raw_tctx), "element_tokeniser_create", str, filename))
 
