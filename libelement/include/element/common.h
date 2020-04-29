@@ -18,7 +18,7 @@ typedef struct
 
 
 // Possible enum values for element_result
-enum
+typedef enum message_code_legacy
 {
     ELEMENT_OK = 0,
     ELEMENT_INTERRUPTED = -1,
@@ -37,9 +37,9 @@ enum
     ELEMENT_ERROR_PRELUDE_ALREADY_LOADED = -100,
     ELEMENT_ERROR_DIRECTORY_NOT_FOUND = -101,
     ELEMENT_ERROR_FILE_NOT_FOUND = -102,
-};
+} message_code_legacy;
 
-enum
+typedef enum message_code
 {
     //todo:: use fun column selection to remove todo prefix once we've moved all the errors over okay
     TODO_ELEMENT_OK = 0,
@@ -72,11 +72,11 @@ enum
     TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY = 21,
     TODO_ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION = 22,
     TODO_ELEMENT_ERROR_UNKNOWN = 9999,
-};
+} message_code;
 
 typedef int32_t element_result;
 
-enum
+typedef enum message_stage
 {
     ELEMENT_STAGE_INVALID = -1,
     ELEMENT_STAGE_MISC,
@@ -84,7 +84,7 @@ enum
     ELEMENT_STAGE_PARSER,
     ELEMENT_STAGE_COMPILER,
     ELEMENT_STAGE_EVALUATOR
-};
+} message_stage;
 
 typedef int32_t element_stage;
 

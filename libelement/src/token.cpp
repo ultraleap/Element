@@ -88,7 +88,6 @@ static void reset_token(element_tokeniser_ctx* state)
     state->cur_token.post_len = 0;
 }
 
-
 // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
 static element_result tokenise_number(std::string::iterator& it, const std::string::iterator& end, element_tokeniser_ctx* state)
 {
