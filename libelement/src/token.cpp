@@ -330,7 +330,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         const auto begin_it = it;
                         UTF8_NEXT(it, end);
                         state->log(TODO_ELEMENT_ERROR_PARSE,
-                            fmt::format("Reached unexpected state when encoutering character '{}'",
+                            fmt::format("Reached unexpected state when encountering character '{}'",
                                 std::string(begin_it, it)));
                         return TODO_ELEMENT_ERROR_PARSE;
                     }
@@ -339,7 +339,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         }
         return ELEMENT_OK;
     }
-    catch (std::exception& e)
+    catch (const std::exception& e)
     {
         state->log(TODO_ELEMENT_ERROR_EXCEPTION,
             fmt::format("Exception occured: {}", e.what()));
