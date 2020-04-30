@@ -256,7 +256,26 @@ static element_result parse_portlist(element_tokeniser_ctx* tctx, size_t* tindex
         GET_TOKEN(tctx, *tindex, tok);
         port->nearest_token = tok;
     } while (tok->type == ELEMENT_TOK_COMMA && tokenlist_advance(tctx, tindex));
-    return ELEMENT_OK;
+
+    auto result = TODO_ELEMENT_OK;
+
+    // ensure port identifiers are all unique
+    for (unsigned int i = 0; i < ast->children.size(); ++i)
+    {
+        for (unsigned int j = i; j < ast->children.size(); ++j)
+        {
+            if (i != j &&  // not the same port
+                ast->children[i]->identifier == ast->children[j]->identifier)
+            {
+                tctx->log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS, 
+                    fmt::format("Parameter {} and {} in the port list of function '{}' have the same identifier '{}'",
+                        i, j, tctx->text(ast->parent->nearest_token), ast->children[i]->identifier));
+                result = TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
+            }
+        }
+    }
+
+    return result;
 }
 
 static element_result parse_expression(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast);
