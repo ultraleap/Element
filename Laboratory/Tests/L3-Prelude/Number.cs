@@ -76,6 +76,7 @@ namespace Laboratory.Tests.L3.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
+			TestCase("Num.sin(0)", "0"),
 			TestCase("Num.sin(-180.radians)", "0"),
 			TestCase("Num.sin(-90.radians)", "-1"),
 			TestCase("Num.sin(0.radians)", "0"),
@@ -86,6 +87,7 @@ namespace Laboratory.Tests.L3.Prelude
 			AssertApproxEqualRelaxed(ValidatedCompilationInput, expected, expression);
 		
 		[
+			TestCase("Num.cos(0)", "1"),
 			TestCase("Num.cos(-180.radians)", "-1"),
 			TestCase("Num.cos(-90.radians)", "0"),
 			TestCase("Num.cos(0.radians)", "1"),
@@ -96,6 +98,7 @@ namespace Laboratory.Tests.L3.Prelude
 			AssertApproxEqualRelaxed(ValidatedCompilationInput, expected, expression);
 		
 		[
+			TestCase("Num.tan(0)", "0"),
 			TestCase("Num.tan(-45.radians)", "-1"),
 			TestCase("Num.tan(0.radians)", "0"),
 			TestCase("Num.tan(45.radians)", "1"),
@@ -104,6 +107,7 @@ namespace Laboratory.Tests.L3.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
+			TestCase("Num.asin(0)", "0"),
 			TestCase("Num.asin(-1).degrees", "-90"),
 			TestCase("Num.asin(0).degrees", "0"),
 			TestCase("Num.asin(1).degrees", "90"),
@@ -112,6 +116,7 @@ namespace Laboratory.Tests.L3.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
+			TestCase("Num.acos(0)", "90"),
 			TestCase("Num.acos(-1).degrees", "180"),
 			TestCase("Num.acos(0).degrees", "90"),
 			TestCase("Num.acos(1).degrees", "0"),
@@ -120,6 +125,7 @@ namespace Laboratory.Tests.L3.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
+			TestCase("Num.atan(0)", "0"),
 			TestCase("Num.atan(-1).degrees", "-45"),
 			TestCase("Num.atan(0).degrees", "0"),
 			TestCase("Num.atan(1).degrees", "45"),
@@ -331,6 +337,7 @@ namespace Laboratory.Tests.L3.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
+			TestCase("Num.atan2(0, 0)", "0"),
 			TestCase("Num.atan2(0, 0).degrees", "0"),
 			TestCase("Num.atan2(1, 0).degrees", "90"),
 			TestCase("Num.atan2(0, 1).degrees", "0"),
