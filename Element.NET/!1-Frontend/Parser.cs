@@ -96,7 +96,7 @@ namespace Element
 
         public static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public static bool Parse<T>(this SourceContext context, string text, out T output)
+        public static bool Parse<T>(this Context context, string text, out T output)
         {
             var success = Lexico.Lexico.TryParse(text, out output);
             if (!success)
@@ -115,7 +115,7 @@ namespace Element
             return success;
         }
 
-        public static bool ValidateIdentifier(this SourceContext context, Identifier identifier, Identifier[] blacklist = null, Identifier[] whitelist = null)
+        public static bool ValidateIdentifier(this Context context, Identifier identifier, Identifier[] blacklist = null, Identifier[] whitelist = null)
         {
             if (string.IsNullOrEmpty(identifier))
             {

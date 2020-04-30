@@ -10,7 +10,7 @@ namespace Element.AST
                    new[]
                    {
                        new Port(_initialIdentifier, AnyConstraint.Instance),
-                       new Port(_conditionIdentifier, FunctionType.Instance),
+                       new Port(_conditionIdentifier, PredicateFunctionConstraint.Instance),
                        new Port(_bodyIdentifier, FunctionType.Instance)
                    }, Port.ReturnPort(AnyConstraint.Instance))
         { }
@@ -30,9 +30,9 @@ namespace Element.AST
             var condition = arguments[1] as IFunctionSignature;
             var body = arguments[2] as IFunctionSignature;
             var group = new Loop(initialSerialized,
-                state => condition.ResolveCall(new[]{initial.Type.Deserialize(state, compilationContext)}, false, compilationContext) as Element.Expression ?? CompilationErr.Instance,
-                state => body.ResolveCall(new[]{initial.Type.Deserialize(state, compilationContext)}, false, compilationContext).Serialize(compilationContext));
-            return initial.Type.Deserialize(Enumerable.Range(0, group.Size).Select(i => new ExpressionGroupElement(group, i)), compilationContext);
+                state => condition.ResolveCall(new[]{initial.Deserialize(state, compilationContext)}, false, compilationContext) as Element.Expression ?? CompilationErr.Instance,
+                state => body.ResolveCall(new[]{initial.Deserialize(state, compilationContext)}, false, compilationContext).Serialize(compilationContext));
+            return initial.Deserialize(Enumerable.Range(0, group.Size).Select(i => new ExpressionGroupElement(group, i)), compilationContext);
         }
     }
 }

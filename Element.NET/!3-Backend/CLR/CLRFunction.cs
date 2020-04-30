@@ -11,21 +11,52 @@ namespace Element.CLR
 {
     public static partial class CLRFunction
     {
-	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> BinaryOps =
+	    private static readonly Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>> _linqUnaryOps =
+		    new Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>>
+		    {
+			    {Unary.Op.Not, LinqExpression.Not}
+		    };
+	    
+	    private static readonly Dictionary<Unary.Op, MethodInfo> _unaryMethodOps = new Dictionary<Unary.Op, MethodInfo>
+	    {
+		    {Unary.Op.Ln, ((Func<double, double>)Math.Log).Method},
+		    {Unary.Op.Sin, ((Func<double, double>)Math.Sin).Method},
+		    {Unary.Op.ASin, ((Func<double, double>)Math.Asin).Method},
+	    };
+	    
+	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryArithmeticOps =
 			new Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>>
 			{
 				{Binary.Op.Add, LinqExpression.Add},
 				{Binary.Op.Sub, LinqExpression.Subtract},
 				{Binary.Op.Mul, LinqExpression.Multiply},
 				{Binary.Op.Div, LinqExpression.Divide},
-				{Binary.Op.Rem, LinqExpression.Modulo}
+				{Binary.Op.Rem, LinqExpression.Modulo},
+				{Binary.Op.Pow, LinqExpression.Power},
 			};
-
-		private static readonly Dictionary<Unary.Op, MethodInfo> MethodOps = new Dictionary<Unary.Op, MethodInfo>
+	    
+	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryComparisonOps =
+			new Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>>
+			{
+				{Binary.Op.Eq, LinqExpression.Equal},
+				{Binary.Op.NEq, LinqExpression.NotEqual},
+				{Binary.Op.Lt, LinqExpression.LessThan},
+				{Binary.Op.LEq, LinqExpression.LessThanOrEqual},
+				{Binary.Op.Gt, LinqExpression.GreaterThan},
+				{Binary.Op.GEq, LinqExpression.GreaterThanOrEqual}
+			};
+	    
+	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryLogicalOps =
+			new Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>>
+			{
+				{Binary.Op.And, LinqExpression.AndAlso},
+				{Binary.Op.Or, LinqExpression.OrElse},
+			};
+	    
+	    private static readonly Dictionary<Binary.Op, MethodInfo> _binaryMethodOps = new Dictionary<Binary.Op, MethodInfo>
 		{
-			{Unary.Op.Ln, ((Func<double, double>)Math.Log).Method},
-			{Unary.Op.Sin, ((Func<double, double>)Math.Sin).Method},
-			{Unary.Op.ASin, ((Func<double, double>)Math.Asin).Method},
+			{Binary.Op.Log, ((Func<double, double, double>)Math.Log).Method},
+			{Binary.Op.Atan2, ((Func<double, double, double>)Math.Atan2).Method}
 		};
 
 		private struct CompilationData
@@ -51,28 +82,52 @@ namespace Element.CLR
 					return s.Compile(e => Compile(e, data));
 				case Constant c:
 					return LinqExpression.Constant(c.Value);
-				case Binary b:
-					var ea = Compile(b.OpA, data);
-					var eb = Compile(b.OpB, data);
-					if (b.Operation == Binary.Op.Pow)
-					{
-						var o = LinqExpression.Call(typeof(Math).GetMethod(nameof(Math.Pow)),
-							LinqExpression.Convert(ea, typeof(double)), LinqExpression.Convert(eb, typeof(double)));
-						return LinqExpression.Convert(o, typeof(float));
-					}
-
-					if (b.Operation == Binary.Op.Atan2)
-					{
-						var o = LinqExpression.Call(typeof(Math).GetMethod(nameof(Math.Atan2)),
-							LinqExpression.Convert(ea, typeof(double)), LinqExpression.Convert(eb, typeof(double)));
-						return LinqExpression.Convert(o, typeof(float));
-					}
-
-					return BinaryOps[b.Operation](ea, eb);
 				case Unary u:
-					var input = Compile(u.Operand, data);
-					var output = LinqExpression.Call(MethodOps[u.Operation], LinqExpression.Convert(input, typeof(double)));
-					return LinqExpression.Convert(output, typeof(float));
+					var ua = Compile(u.Operand, data);
+					if (_unaryMethodOps.TryGetValue(u.Operation, out var unaryMethod))
+					{
+						var methodExpr = LinqExpression.Call(unaryMethod, LinqExpression.Convert(ua, typeof(double)));
+						return LinqExpression.Convert(methodExpr, typeof(float));
+					}
+
+
+					if (_linqUnaryOps.TryGetValue(u.Operation, out var linqUnaryOp))
+					{
+						return linqUnaryOp(ua);
+					}
+
+					break;
+				case Binary b:
+					var ba = Compile(b.OpA, data);
+					var bb = Compile(b.OpB, data);
+
+					if (_binaryMethodOps.TryGetValue(b.Operation, out var binaryMethod))
+					{
+						var methodExpr = LinqExpression.Call(binaryMethod,
+						                                     LinqExpression.Convert(ba, typeof(double)),
+						                                     LinqExpression.Convert(bb, typeof(double)));
+						return LinqExpression.Convert(methodExpr, typeof(float));
+					}
+
+					if (_linqBinaryArithmeticOps.TryGetValue(b.Operation, out var linqBinaryOp))
+					{
+						return linqBinaryOp(ba, bb);
+					}
+					
+					if (_linqBinaryComparisonOps.TryGetValue(b.Operation, out linqBinaryOp))
+					{
+						return LinqExpression.Condition(linqBinaryOp(ba, bb), LinqExpression.Constant(1f), LinqExpression.Constant(0f));
+					}
+					
+					if (_linqBinaryLogicalOps.TryGetValue(b.Operation, out linqBinaryOp))
+					{
+						static LinqExpression ToBool(LinqExpression numExpr) => LinqExpression.Condition(LinqExpression.LessThan(numExpr, LinqExpression.Constant(1f)),
+						                                                                                 LinqExpression.Constant(false),
+						                                                                                 LinqExpression.Constant(true));
+						return LinqExpression.Condition(linqBinaryOp(ToBool(ba), ToBool(bb)), LinqExpression.Constant(1f), LinqExpression.Constant(0f));
+					}
+
+					break;
 				case CachedExpression v:
 					if (!data.Cache.TryGetValue(v, out var varExpr))
 					{
@@ -271,7 +326,7 @@ namespace Element.CLR
             
             // Compile delegate
             var detectCircular = new Stack<IValue>();
-            LinqExpression? CompileFunction(IValue value, Type outputType, CompilationContext context)
+            LinqExpression? ConvertFunction(IValue value, Type outputType, CompilationContext context)
 			{
 				switch (value)
 				{
@@ -295,7 +350,7 @@ namespace Element.CLR
 					value = expr;
 					return outputType == typeof(float)
 						? Compile(expr, data)
-						: boundaryConverter.ElementToLinq(value, outputType, CompileFunction, context);
+						: boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context);
 				}
 
 				if (outputType == typeof(float))
@@ -304,12 +359,12 @@ namespace Element.CLR
 				}
 
 				detectCircular.Push(value);
-				var retval = boundaryConverter.ElementToLinq(value, outputType, CompileFunction, context);
+				var retval = boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context);
 				detectCircular.Pop();
 				return retval;
 			}
 
-            var outputExpression = boundaryConverter.ElementToLinq(reducedExpression, returnExpression.Type, CompileFunction, context);
+            var outputExpression = boundaryConverter.ElementToLinq(reducedExpression, returnExpression.Type, ConvertFunction, context);
             var outputAssign = LinqExpression.Assign(returnExpression, outputExpression);
             
 	        data.Variables.Add(returnExpression);

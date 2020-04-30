@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -8,17 +9,25 @@ namespace Element.NET.Tests
 {
     public class Compile : FixtureBase
     {
-        private string CompileSource = 
-@"struct Vector3(x:Num, y:Num, z:Num)
+        private const string _compileSource = @"struct Vector3(x:Num, y:Num, z:Num)
 {
     add(a:Vector3, b:Vector3) = memberwise(Num.add, a, b);
 }
 struct MyCustomElementStruct(floatField:Num, vector3Field:Vector3);
+struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vector3Field:Vector3);
 ";
-        
+
         [ElementStructTemplate("MyCustomElementStruct")]
         private struct MyCustomElementStruct
         {
+            public float floatField;
+            public Vector3 vector3Field;
+        }
+        
+        [ElementStructTemplate("CustomNestedStruct")]
+        private struct CustomNestedStruct
+        {
+            public MyCustomElementStruct structField;
             public float floatField;
             public Vector3 vector3Field;
         }
@@ -32,7 +41,7 @@ struct MyCustomElementStruct(floatField:Num, vector3Field:Vector3);
 
         private delegate MyCustomElementStruct CustomStructDelegate(float f, Vector3 v3);
 
-        private SourceContext _sourceContext => MakeSourceContext(extraSource: CompileSource);
+        private static SourceContext _sourceContext => MakeSourceContext(extraSource: _compileSource);
         
         [Test]
         public void ConstantPi()
@@ -101,12 +110,27 @@ struct MyCustomElementStruct(floatField:Num, vector3Field:Vector3);
             Assert.AreEqual(10f, result.vector3Field.X);
         }
 
-        [Test]
-        public void FactorialUsingFor()
+        private static readonly (float, float)[] _factorialArguments =
+        {
+            (0f, 1f),
+            (1f, 1f),
+            (2f, 2f),
+            (3f, 6f),
+            (4f, 24f),
+            (5f, 120f),
+            (6f, 720f),
+            (7f, 5040f),
+            (8f, 40320f),
+            (9f, 362880f),
+            (10f, 3628800f),
+            (11f, 39916800f),
+        };
+
+        [TestCaseSource(nameof(_factorialArguments))]
+        public void FactorialUsingFor((float fac, float result) f)
         {
             var fn = _sourceContext.Compile<UnaryOp>("_(a:Num):Num = for(Tuple(a, 1), _(tup):Bool = tup.varg0.gt(0), _(tup) = Tuple(tup.varg0.sub(1), tup.varg1.mul(tup.varg0))).varg1");
-            var result = fn(5);
-            Assert.AreEqual(120, result);
+            Assert.AreEqual(f.result, fn(f.fac));
         }
     }
 }

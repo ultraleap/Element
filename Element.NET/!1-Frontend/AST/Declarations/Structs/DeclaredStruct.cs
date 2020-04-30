@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class DeclaredStruct : Declaration, IFunction, IScope, IType
+    public abstract class DeclaredStruct : Declaration, IFunction, IScope, ISerializableType
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
@@ -34,5 +34,14 @@ namespace Element.AST
 
         public IValue CreateInstance(IValue[] members, IType? instanceType = default) => new StructInstance(this, DeclaredInputs, members, instanceType);
         IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
+
+        public int Size(IValue instance, CompilationContext compilationContext) =>
+            (instance as IEnumerable<IValue>).GetSerializedSize(compilationContext);
+
+        public bool Serialize(IValue instance, ref Element.Expression[] serialized, ref int position, CompilationContext compilationContext) =>
+            (instance as IEnumerable<IValue>).Serialize(ref serialized, ref position, compilationContext);
+
+        public IValue Deserialize(IEnumerable<Element.Expression> expressions, CompilationContext compilationContext) =>
+            CreateInstance(expressions.ToArray());
     }
 }

@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class ListType : IntrinsicType
+    public sealed class ListType : SerializableIntrinsicType
     {
         private static readonly Identifier _indexerId = new Identifier("at");
         private static readonly Identifier _countId = new Identifier("count");
@@ -12,7 +13,7 @@ namespace Element.AST
         {
             Invalid,
             Constant,
-            Dynamic,
+            Dynamic
         }
         
         public static ListType Instance { get; } = new ListType();
@@ -25,7 +26,23 @@ namespace Element.AST
             elements.All(e => e.Type == elements[0].Type)
                 ? this.ResolveCall(new IValue[]{new IndexFunction(elements), new Constant(elements.Length)}, false, compilationContext)
                 : compilationContext.LogError(8, "List elements must all be of the same type");
-        
+
+        public override int Size(IValue instance, CompilationContext compilationContext) =>
+            GetListCount(instance as StructInstance, compilationContext) switch
+            {
+                (CountType t, int count) when t == CountType.Constant => count,
+                _ => compilationContext.LogError(1, "List instance is not serializable - lists must have a constant count to be serializable")
+                                       .Return(0)
+            };
+
+        public override bool Serialize(IValue instance, ref Element.Expression[] serialized, ref int position, CompilationContext compilationContext) =>
+            instance is StructInstance listInstance
+            && EvaluateElements(listInstance, compilationContext)
+                .Serialize(ref serialized, ref position, compilationContext);
+
+        public override IValue Deserialize(IEnumerable<Element.Expression> expressions, CompilationContext compilationContext) =>
+            MakeList(expressions.ToArray(), compilationContext);
+
         private class IndexFunction : IFunction
         {
             private readonly IValue[] _elements;
@@ -95,25 +112,41 @@ namespace Element.AST
         public static IValue[] EvaluateElements(StructInstance listInstance, CompilationContext context)
         {
             if (listInstance == null) throw new ArgumentNullException(nameof(listInstance));
+            if (listInstance.Type != Instance)
+            {
+                context.LogError(8, "Struct instance is not a list");
+                return Array.Empty<IValue>();
+            }
 
             var (countType, count) = GetListCount(listInstance, context);
+            return EvaluateElements(listInstance, countType, count, context);
+        }
 
+        public static IValue[] EvaluateElements(StructInstance listInstance, CountType countType, int count, CompilationContext compilationContext)
+        {
+            if (listInstance == null) throw new ArgumentNullException(nameof(listInstance));
+            if (listInstance.Type != Instance)
+            {
+                compilationContext.LogError(8, "Struct instance is not a list");
+                return Array.Empty<IValue>();
+            }
+            
             switch (countType)
             {
-                case CountType.Invalid: return Array.Empty<IValue>();
+                case CountType.Invalid:
+                    throw new InternalCompilerException("List count type is invalid");
                 case CountType.Constant:
-                    if (!(listInstance[_indexerId, false, context] is IFunctionSignature indexer))
+                    if (!(listInstance[_indexerId, false, compilationContext] is IFunctionSignature indexer))
                     {
-                        context.LogError(8, $"Couldn't get List.'{_indexerId}' from '{listInstance}'.");
+                        compilationContext.LogError(8, $"Couldn't get List.'{_indexerId}' from '{listInstance}'.");
                         return Array.Empty<IValue>();
                     }
             
                     return Enumerable.Range(0, count)
-                                     .Select(i => indexer.ResolveCall(new IValue[] {new Constant(i)}, false, context))
+                                     .Select(i => indexer.ResolveCall(new IValue[] {new Constant(i)}, false, compilationContext))
                                      .ToArray();
                 case CountType.Dynamic:
-                    // TODO: Should emit loop expression to perform fold at runtime
-                    throw new NotImplementedException();
+                    throw new InternalCompilerException("Cannot evaluate a dynamic lists elements at compile time");
                 default:
                     throw new ArgumentOutOfRangeException();
             }

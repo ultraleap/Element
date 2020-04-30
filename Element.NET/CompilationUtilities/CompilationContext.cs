@@ -28,4 +28,10 @@ namespace Element
                                                                                                           ? new CompilerMessage(null, null, context, TraceStack?.ToArray())
                                                                                                           : new CompilerMessage(messageCode.Value, CompilerMessage.GetMessageLevel(messageCode.Value), context, TraceStack?.ToArray());
     }
+
+    public static class CompilationContextExtensions
+    {
+        public static TDeclaration? GetIntrinsicsDeclaration<TDeclaration>(this IIntrinsic intrinsic, CompilationContext compilationContext) where TDeclaration : Declaration =>
+            compilationContext.GetIntrinsicsDeclaration<TDeclaration>(intrinsic);
+    }
 }

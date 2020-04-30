@@ -12,7 +12,7 @@ namespace Element
 	{
 		protected Expression(AST.IType? instanceTypeOverride = default) => InstanceTypeOverride = instanceTypeOverride;
 		
-		public AST.IType Type => NumType.Instance;
+		public virtual AST.IType Type => InstanceTypeOverride ?? NumType.Instance;
 
 		/// <summary>
 		/// The source type of the expression for instance indexing purposes
@@ -36,7 +36,7 @@ namespace Element
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
 		
 		public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-			compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>((InstanceTypeOverride ?? AllDependent.FirstOrDefault(d => d.InstanceTypeOverride != null)?.InstanceTypeOverride ?? Type) as IIntrinsic)
+			compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>((InstanceTypeOverride ?? Type) as IIntrinsic)
 			                  ?.ResolveInstanceFunction(id, this, compilationContext);
 		
 		

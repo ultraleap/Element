@@ -27,19 +27,6 @@ namespace Element.AST
     public static class FunctionExtensions
     {
         public static bool IsNullary(this IFunctionSignature functionSignature) => functionSignature.Inputs.Length == 0;
-        public static IValue ResolveNullaryFunction(this IValue value, CompilationContext compilationContext)
-        {
-            var previous = value;
-            while (previous is IFunctionSignature fn && fn.IsNullary())
-            {
-                var result = fn.ResolveCall(Array.Empty<IValue>(), false, compilationContext);
-                // ReSharper disable once PossibleUnintendedReferenceComparison
-                if (result == previous) break; // Prevent infinite loop if a nullary just returns itself
-                previous = result;
-            }
-
-            return previous;
-        }
 
         public static IValue ResolveCall(this IFunctionSignature functionSignature, IValue[] arguments, bool allowPartialApplication,
                                          CompilationContext compilationContext)
@@ -80,8 +67,8 @@ namespace Element.AST
                     _ => compilationContext.SourceContext.GlobalScope
                 };
 
-                // Fully resolve arguments in the event that any of them were temporary nullary functions
-                arguments = arguments.Select(arg => arg.ResolveNullaryFunction(compilationContext)).ToArray();
+                // Fully resolve arguments
+                arguments = arguments.Select(arg => arg.FullyResolveValue(compilationContext)).ToArray();
                 
                 return CheckArguments(functionSignature, arguments, callScope, allowPartialApplication, compilationContext)
                            ? (functionSignature switch
@@ -92,7 +79,7 @@ namespace Element.AST
                                IFunction function when arguments.Length > 0 => new AppliedFunction(arguments, function, callScope),
                                IFunction function => functionSignature.ResolveReturn(callScope, function.Call(arguments, compilationContext), compilationContext),
                                _ => throw new InternalCompilerException($"{functionSignature} function type not resolvable")
-                           }).ResolveNullaryFunction(compilationContext)
+                           }).FullyResolveValue(compilationContext)
                            : CompilationErr.Instance;
             }
             finally
@@ -135,11 +122,7 @@ namespace Element.AST
 
         private static IValue ResolveReturn(this IFunctionSignature functionSignature, IScope callScope, IValue result, CompilationContext compilationContext)
         {
-            var fullyResolvedResult = result.ResolveNullaryFunction(compilationContext) switch
-            {
-                Element.Expression expr => (IValue)ConstantFolding.Optimize(expr),
-                _ => result
-            };
+            var fullyResolvedResult = result.FullyResolveValue(compilationContext);
             var returnConstraint = functionSignature.Output.ResolveConstraint(callScope, compilationContext);
             return returnConstraint.MatchesConstraint(fullyResolvedResult, compilationContext)
                        ? fullyResolvedResult

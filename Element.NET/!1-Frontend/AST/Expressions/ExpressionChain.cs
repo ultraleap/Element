@@ -46,11 +46,11 @@ namespace Element.AST
 
             compilationContext.PushTrace(new TraceSite(previous.ToString(), null, 0, 0));
 
-            previous = previous.ResolveNullaryFunction(compilationContext);
+            previous = previous.FullyResolveValue(compilationContext);
             // Evaluate all expressions for this chain if there are any, making sure that the result is fully resolved if it returns a nullary.
-            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.ResolveNullaryFunction(compilationContext), scope, compilationContext))
+            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.FullyResolveValue(compilationContext), scope, compilationContext))
                         ?? previous)
-                .ResolveNullaryFunction(compilationContext);
+                .FullyResolveValue(compilationContext);
 
             compilationContext.PopTrace();
 

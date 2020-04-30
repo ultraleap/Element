@@ -1,4 +1,3 @@
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L3.Prelude
@@ -71,6 +70,6 @@ namespace Laboratory.Tests.L3.Prelude
 			TestCase("0.1.neq(0)", "True"),
 			TestCase("999.999.neq(999.999)", "False")
 		]
-		public void Operations(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expression, expected);
+		public void Operations(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 	}
 }
