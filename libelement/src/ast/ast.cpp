@@ -651,8 +651,12 @@ static element_result parse_item(element_tokeniser_ctx* tctx, size_t* tindex, el
     ast->nearest_token = token;
 
     //A sole underscore was used as an identifier
-    if (token->type == ELEMENT_TOK_UNDERSCORE)
-        return ELEMENT_ERROR_INVALID_ARCHIVE;
+    if (token->type == ELEMENT_TOK_UNDERSCORE) {
+        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+            fmt::format("Invalid identifier '{}'", tctx->text(token)),
+            ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
+    }
 
     // either a qualifier, 'struct', 'namespace' or a name; either way...
     assert(token->type == ELEMENT_TOK_IDENTIFIER);
