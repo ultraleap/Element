@@ -18,7 +18,7 @@
 #include "MemoryPool.h"
 
 static std::unordered_set<std::string> qualifiers {"intrinsic"};
-static std::unordered_set<std::string> constructs {"struct", "namespace", "constraint"};
+static std::unordered_set<std::string> constructs {"struct", "namespace", "constraint", "return"};
 static std::unordered_set<std::string> reserved_args {};
 
 static element_result check_reserved_words(const std::string& text, bool allow_reserved_arg)
@@ -186,7 +186,15 @@ static element_result parse_identifier(element_tokeniser_ctx* tctx, size_t* tind
     ast->nearest_token = token;
     ast->identifier.assign(tctx->text(token));
     tokenlist_advance(tctx, tindex);
-    return check_reserved_words(ast->identifier, allow_reserved_args);
+
+    auto result = check_reserved_words(ast->identifier, allow_reserved_args);
+    if (result != ELEMENT_OK) {
+        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, 
+            fmt::format("Invalid identifier '{}'", ast->identifier),
+            ELEMENT_STAGE_PARSER);
+    }
+
+    return result;
 }
 
 // type ::= ':' identifier ('.' identifier)*
