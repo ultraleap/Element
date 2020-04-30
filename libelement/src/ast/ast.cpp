@@ -192,6 +192,7 @@ static element_result parse_identifier(element_tokeniser_ctx* tctx, size_t* tind
         tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, 
             fmt::format("Invalid identifier '{}'", ast->identifier),
             ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     return result;
@@ -205,16 +206,27 @@ static element_result parse_typename(element_tokeniser_ctx* tctx, size_t* tindex
     assert(tok->type == ELEMENT_TOK_IDENTIFIER);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_TYPENAME;
+
+    element_result result = TODO_ELEMENT_OK;
+
     while (tok->type == ELEMENT_TOK_IDENTIFIER) {
         element_ast* child = ast_new_child(ast);
         child->type = ELEMENT_AST_NODE_IDENTIFIER;
-        ELEMENT_OK_OR_RETURN(parse_identifier(tctx, tindex, child));
+
+        const auto identifier_result = parse_identifier(tctx, tindex, child);
+        if (identifier_result != ELEMENT_OK)
+        {
+            if (result == TODO_ELEMENT_OK)
+                result = identifier_result;
+        }
+
         GET_TOKEN(tctx, *tindex, tok);
         child->nearest_token = tok;
         if (tok->type == ELEMENT_TOK_DOT)
             TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, tok);
     }
-    return ELEMENT_OK;
+
+    return result;
 }
 
 // port ::= (identifier | unidentifier) type?
@@ -226,13 +238,7 @@ static element_result parse_port(element_tokeniser_ctx* tctx, size_t* tindex, el
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_PORT;
     if (tok->type == ELEMENT_TOK_IDENTIFIER) {
-	    const auto result = parse_identifier(tctx, tindex, ast, true);
-    	if(result != ELEMENT_OK)
-    	{
-	        const auto message = fmt::format("invalid identifier '{}'", ast->identifier);
-            tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, message, message_stage::ELEMENT_STAGE_PARSER);
-            return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
-    	}
+	    ELEMENT_OK_OR_RETURN(parse_identifier(tctx, tindex, ast, true));
     } else {
         // no name, advance
         tokenlist_advance(tctx, tindex);
@@ -409,13 +415,28 @@ static element_result parse_qualifiers(element_tokeniser_ctx* tctx, size_t* tind
     const element_token* tok;
     GET_TOKEN(tctx, *tindex, tok);
 
+    // keep track of previous flags so we can check there are no duplicates
+    std::vector<element_ast_flags> qualifier_flags;
+
     while (tok->type == ELEMENT_TOK_IDENTIFIER) {
         std::string id = tctx->text(tok);
-        if (id == "intrinsic")
+        if (id == "intrinsic") {
+            bool found_duplicate_intrinsic = false;
+            for (element_ast_flags flag : qualifier_flags) {
+                if (flag == ELEMENT_AST_FLAG_DECL_INTRINSIC)
+                    found_duplicate_intrinsic = true;
+            }
+
+            //rather than log an error in here, let's assume the next thing to handle this token will give a useful error message
+            if (found_duplicate_intrinsic)
+                break;
+
             *flags |= ELEMENT_AST_FLAG_DECL_INTRINSIC;
-        else
+            qualifier_flags.push_back(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+        } else {
             break;
-        
+        }
+
         TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, tok);
     }
 
