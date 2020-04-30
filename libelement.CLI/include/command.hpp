@@ -157,7 +157,7 @@ namespace libelement::cli
 
 		compiler_message generate_response(element_result result, element_value value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>()) const
 		{
-			return generate_response(result, std::to_string(value), trace_stack);
+			return generate_response(result, std::isnan(value) ? "NaN" : std::to_string(value), trace_stack);
 		}
 
 		void set_log_callback(command::log_callback log_callback) const {
