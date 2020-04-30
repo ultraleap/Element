@@ -1,0 +1,2 @@
+intrinsic struct Num; # Validation occurs just after parsing and it will fail if Num is not declared
+struct NumAlias:Num;

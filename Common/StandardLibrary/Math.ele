@@ -1,4 +1,4 @@
-random(seed:num):num
+random(seed:Num):Num
 {
     A=53;
     B=104717;
@@ -13,7 +13,7 @@ random(seed:num):num
     return = div(rem(t4, E), E);
 }
 
-ellipse(a:num, b:num):num
+ellipse(a:Num, b:Num):Num
 {
     l = div(a, b);
     x = div(mul(l, pi), add(l, 1));

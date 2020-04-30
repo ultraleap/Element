@@ -1,60 +1,101 @@
-levels = [ "Verbose", "Information", "Warning", "Error"]
+# Message Levels in order of importance:
+    # Verbose - frequent information that can significantly slow performance when on
+    # Information - infrequent information generally useful to the user which doesn't impact performance
+    # Warning - any issues found that aren't significant enough to be considered an error
+    # Error - errors that don't prevent compilation
 
-[ELE0000]
-name = "ZeroLengthArray"
-summary = "Cannot have a zero length array"
-level = "Error"
+[ELE0]
+name = "Success"
+level = "Verbose"
 
-[ELE0001]
+[ELE1]
 name = "SerializationError"
-summary = "An error occurred related to (de)serialization of a type"
 level = "Error"
 
-[ELE0002]
+[ELE2]
 name = "MultipleDefinitions"
-summary = "Cannot have multiple definitions of the same function or type"
+level = "Error"
 
-[ELE0003]
+[ELE3]
 name = "InvalidCompileTarget"
-summary = "Cannot compile the given identifier"
 level = "Error"
 
-[ELE0004]
+[ELE4]
 name = "IntrinsicNotImplemented"
-summary = "Compiler does not implement the given intrinsic"
 level = "Error"
 
-[ELE0005]
+[ELE5]
 name = "LocalShadowing"
-summary = "A local identifier shadows the same identifier defined in an outer scope"
 level = "Warning"
 
-[ELE0006]
+[ELE6]
 name = "ArgumentCountMismatch"
-summary = "Incorrect number of arguments supplied for function"
 level = "Error"
 
-[ELE0007]
+[ELE7]
 name = "IdentifierNotFound"
-summary = "Could not find the given identifier"
 level = "Error"
 
-[ELE0008]
+[ELE8]
 name = "ConstraintNotSatisfied"
-summary = "The constraint imposed by a type or interface has not been satisfied"
 level = "Error"
 
-[ELE0009]
+[ELE9]
 name = "ParseError"
-summary = ""
 level = "Error"
 
-[ELE0010]
+[ELE10]
 name = "InvalidBoundaryFunctionInterface"
-summary = "The interface for an Element function defined across the boundary is invalid"
 level = "Error"
 
-[ELE0011]
+[ELE11]
 name = "CircularCompilation"
-summary = "Circular dependency found during compilation - note that recusion is not supported"
+level = "Error"
+
+[ELE12]
+name = "BoundaryMapMissing"
+level = "Error"
+
+[ELE13]
+name = "MissingPorts"
+level = "Error"
+
+[ELE14]
+name = "TypeError"
+level = "Error"
+
+[ELE15]
+name = "InvalidIdentifier"
+level = "Error"
+
+[ELE16]
+name = "InvalidExpression"
+level = "Error"
+
+[ELE17]
+name = "InvalidReturnType"
+level = "Error"
+
+[ELE18]
+name = "RedundantQualifier"
+level = "Warning"
+
+[ELE19]
+name = "StructCannotHaveReturnType"
+level = "Error"
+
+[ELE20]
+name = "IntrinsicCannotHaveBody"
+level = "Error"
+
+[ELE21]
+name = "MissingFunctionBody"
+level = "Error"
+
+[ELE22]
+name = "CannotBeUsedAsInstanceFunction"
+level = "Error"
+
+[ELE9999]
+name = "UnknownError"
 level = "Error"

@@ -1,7 +1,0 @@
-TestImplicitConversion(a:num):num
-{
-    TestAlias:num;
-    alias = TestAlias(a);
-    AddAliased(n:num):TestAlias = add(n, 5);
-    return = AddAliased(alias);
-}

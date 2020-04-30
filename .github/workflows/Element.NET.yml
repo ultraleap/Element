@@ -1,0 +1,50 @@
+name: Element.NET
+
+on: [push]
+
+jobs:
+  build-element:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.0.101
+      - name: Build with dotnet
+        run: |
+          cd Element.NET
+          dotnet build
+
+  run-laboratory-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Run tests
+        run: |
+          cd Laboratory
+          dotnet test -v q --test-adapter-path:. --logger:trx
+      - name: Uploaded test results on fail
+        if: failure()
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: Element.NET Results
+          path: Laboratory/TestResults

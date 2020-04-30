@@ -12,7 +12,7 @@ Its primary goals are:
         * Note that memory management is implementation defined.
     * **No runtime errors**.
         * Compiled Element will run to completion and produce a result (assuming the host is well-formed and the function halts).
-    * **Halting**. (Except when using `for`)
+    * **Halting**. (Except when using `for` with non-constant exit condition)
         * Element is guaranteed to execute in a predictable time and take a fixed amount of resources.
         * `for` introduces dynamic loops and hence the halting problem.
     * **Pure**. (Except when using `persist`)
@@ -48,7 +48,6 @@ Identifiers are case-sensitive however reserved identifiers exclude mixed case, 
 Reserved identifiers:
 ```
 _
-any
 intrinsic
 namespace
 return
@@ -56,7 +55,7 @@ struct
 ```
 
 `struct` identifiers are also reserved within their local scope.
-Nested scopes in structs do not have this restriction and will shadow the constructor - this is not recommended.
+Nested scopes in structs do not have this restriction and will shadow the constructor although doing so is not recommended.
 ```
 struct MyStruct
 {
@@ -77,7 +76,7 @@ Hosts may deal with these however they wish provided the language grammar remain
 
 The grammar is not an exact specification of valid Element code.
 For example, reserved keywords are not mentioned in the grammar.
-Hosts are expected to validate syntax elements such that irrelevant syntax returns an error.
+Hosts are expected to validate syntax elements after parsing to discover and report these errors.
 
 ## Basic Concepts
 ### Values
@@ -86,32 +85,42 @@ Values can be declared using language constructs or returned as the result of ex
 Values can have one or many of the following characteristics in Element:
 * **Indexable** - can contain other values accessible via `.`, e.g. `foo` where `foo.bar` is valid.
 * **Callable** - can produce other values through parametrization, e.g. `foo` where `foo(parameter)` is valid.
-* **Constraint** - can accept or reject other values based on some predicate, e.g. `any` which accepts any value or `num` which accepts only numbers.
+* **Constraint** - can accept or reject other values based on some predicate, e.g. `Any` which accepts any value or `Num` which accepts only numbers.
 * **Serializable** - can be dealt with at the host boundary.
 
 The kinds of values found in Element:
 
 Name|Indexable|Callable|Constraint|Serializable|Example|Note
 ---|---|---|---|---|---|---
-`num`|Yes| |Yes|Yes|`3.14159`|Literals behave the same as `struct` instances and can be indexed to access `num` instance functions
-`any`| | |Yes| | |Any is purely a Constraint and cannot have instances
-Function constraint| | |Yes| |`Predicate(a):Bool;`|
-`struct` declaration|Yes|Yes|Yes| |`struct Vector3(x:num, y:num, z:num);`|Calling a struct creates an instance
-`struct` instance|Yes| | |Maybe|`a = Vector3(3, 6, 9);`|Can Index fields and instance functions, Serializable when all fields are, additionally List instances are Serializable when the Indexer only accesses Serializable elements
-`namespace`|Yes| | | |`namespace MySpace { ... }`
-Constant function| | | |Maybe|`tau = pi.mul(2);`|A function with no inputs and its result are equivalent - Serializability depends on the return value
-Parameterized function| |Yes| | |`sqr(a:num):num = a.mul(a);`|
-Lambda function| |Yes| | |`_(_):List = value, count;`
+`Num`|Yes|-|Yes|Yes|`3.14159`|Number literals behave the same as `struct` instances and can be indexed to access `Num` instance functions
+`Any`|-|-|Yes|-|-|Any is purely a Constraint and cannot have instances
+Function constraint|-|-|Yes|-|`constraint Predicate(a):Bool;`|^
+`struct` declaration|Yes|Yes|Yes|-|`struct Vector3(x:Num, y:Num, z:Num);`|Calling a struct creates an instance
+`struct` instance|Yes|-|-|Maybe|`a = Vector3(3, 6, 9);`|Can Index fields and instance functions, Serializable when all fields are, additionally List instances are Serializable when the Indexer only accesses Serializable elements
+`namespace`|Yes|-|-|-|`namespace MySpace { ... }`|-
+Constant function|-|-|-|Maybe|`tau = pi.mul(2);`|A function with no inputs and its result are equivalent - Serializability depends on the return value
+Parameterized function|-|Yes|-|-|`sqr(a:Num):Num = a.mul(a);`|-
+Lambda function|-|Yes|-|-|`_(_):List = 5;`|-
 
 ### Expressions
-Expressions are used to define values in Element.
+Expressions are used build behaviour in Element.
 Expressions are composable and can reference other values or contain many expressions.
 An expression may be:
-* a `num` literal, e.g. `5`
-* a function call (a.k.a. function application), e.g. `add(1)`
+* a `Num` literal, e.g. `5`
+* a call expression (a.k.a. function application), e.g. `add(1)`
 * an indexing expression, e.g. `vector.x`
 * a lambda, e.g. `_(a, b) = a.add(b)`
-* an expression list involving many expressions, e.g. `radians.mul(180.div(num.pi))`
+* an expression list involving many expressions, e.g. `radians.mul(180.div(Num.pi))`
+
+The difference between an expression and a value is that expressions are not values themselves, they define/produce values.
+Some expressions define values directly:  
+* `5` defines a `Num` value
+* `_(a, b) = a.add(b)` defines a function
+
+Other expressions produce values:
+* Call expressions compute new values based on input
+* Indexing expressions reference existing values from elsewhere
+
 
 ### Identifiers & Bindings
 An identifier is a name given to a value to allow referencing it in expressions.
@@ -128,22 +137,22 @@ x = 5;
 y = x.add(1);
 
 # binds z to an expression list involving nested expressions which converts radians to degrees
-z = radians.mul(180.div(num.pi));
+z = radians.mul(180.div(Num.pi));
 ```
 
 Note that binding an expression does not directly cause a compiler to generate instructions for storing its value.
 When performing analysis a host will optimize away all non-intrinsic bindings leaving only those which require storage instructions.
-This is what makes Element declarative rather than imperative - we express to the compiler what is desired rather than exactly what to do.
+This is what makes Element declarative rather than imperative - bindings express to the compiler what is desired rather than exactly what to do.
 
 ## Numbers
-`num` is the only primitive data type in Element, representing real numbers.
+`Num` is the only primitive data type in Element, representing real numbers.
 
-`num` values are:
-* Indexable - `num` has no fields but does have instance functions like any other `struct` instance.
-* Constraints - `num` is a concrete Constraint which can be used to require that a value be a number.
-* Serializable - numbers are data and can be serialized across the host boundary.
+`Num` values are:
+* Indexable - `Num` has no fields but does have instance functions defined on the `struct` declaration for `Num`.
+* Constraints - `Num` is a concrete Constraint which can be used to require that a value be a number.
+* Serializable - numbers are plain data and can be serialized across the host boundary.
 
-Numbers are definable as literals or returned as a result from a `num` expression.
+Numbers are definable as literals or returned as a result from a `Num` expression.
 Literal number values can be declared in the following forms:
 ```
 integer notation:     0        5        -10        +15
@@ -155,10 +164,10 @@ b = a.add(+10.3).mul(-5);
 ```
 Many intrinsic functions are constrained to operate on numbers:
 ```
-add(a:num, b:num):num; # Performs addition
-sub(a:num, b:num):num; # Performs subtraction
-div(a:num, b:num):num; # Performs division
-mul(a:num, b:num):num; # Performs multiplication
+add(a:Num, b:Num):Num; # Performs addition
+sub(a:Num, b:Num):Num; # Performs subtraction
+div(a:Num, b:Num):Num; # Performs division
+mul(a:Num, b:Num):Num; # Performs multiplication
 ```
 
 ## Namespaces
@@ -182,8 +191,9 @@ Expressions can access identifiers defined in outer scopes implicitly.
 The root scope is known as the global scope as its identifiers can be accessed from anywhere.
 
 Identifier resolution rules are as follows:
-1. Local identifier, including function arguments when in a function's scope
-2. Outer scoped identifier, recursively until global scope
+1. Local identifiers in scope containing the expression being resolved
+2. Function arguments when in a function's scope
+3. Outer scoped identifiers, repeating 1 and 2 recursively until global scope
 
 Identifier resolution is distinct from Indexing.
 Indexing is an expression `.` for accessing contents of a value - values have their own Indexing rules.
@@ -201,13 +211,13 @@ namespace Foo
         x = 15;
     }
 
-    # Does not identify a local x, recurses to global scope and finds x, resolving to 5
+    # Does not identify a local x within Foo, recurses to global scope and finds x, resolving to 5
     a = x;
     
-    # Immediately identifies the Bar defined in this scope indexing x within it, resolving to 15
+    # Immediately identifies the Bar defined in Foo, indexing x within it, resolving to 15
     b = Bar.x;
 
-    # Invalid, indentifies local Bar but indexing a nested y within fails
+    # Error, indentifies local Bar but indexing a nested y within fails
     c = Bar.y;
 
     # Identifies y locally, resolving to 10
@@ -269,7 +279,7 @@ A function's interface includes a parameter list and a return type.
 The function body defines one or many expressions which relate the parameters to the return value.
 ```
 # degrees is a function that coverts radians to degrees
-degrees(radians) = radians.mul(180.div(num.pi));
+degrees(radians) = radians.mul(180.div(Num.pi));
 
 # lerp is a function that performs linear interpolation, returning t amount along a to b
 lerp(t, a, b) = a.add(t.mul(b.sub(a)));
@@ -278,7 +288,7 @@ lerp(t, a, b) = a.add(t.mul(b.sub(a)));
 Calling functions binds the resulting value, these locations are known as call sites.
 ```
 # binds deg to pi radians, resulting in 180
-deg = degrees(num.pi);
+deg = degrees(Num.pi);
 ```
 
 Functions can define a scope to declare intermediate expressions for calculating the result.
@@ -297,10 +307,10 @@ mod(a, b)
 Function scopes cannot be Indexed externally, their values are hidden as implementation details.
 The only way to return a value from a function is via its result.
 ```
-# Invalid, mod is a function which can only be called or referenced in an expression
+# Error, mod is a function which can only be called or referenced in an expression
 a = mod.c;
 
-# Invalid, calling mod results in a number which does not contain value c when indexed
+# Error, calling mod results in a number which does not contain value c when indexed
 b = 5.mod(4).c;
 ```
 
@@ -309,7 +319,7 @@ As with other identifiers, function identifiers must be unique, function overloa
 # Valid, foo is bound and identifies a function with 2 parameters
 foo(a, b) = ...;
 
-# Invalid, foo is already a bound identifier in this scope
+# Error, foo is already a bound identifier in this scope
 foo(a, b, c) = ...;
 ```
 
@@ -334,7 +344,7 @@ a = halfAlong(10, 20);
 ### Recursion
 Since cyclic references are illegal, recursion is also disallowed.
 A function may not reference itself directly or indirectly.
-The alternative to recursion is iteration using the `for` intrinsic.
+Iteration is available as an alternative via the `for` intrinsic.
 ```
 factorial(a)
 {
@@ -348,7 +358,7 @@ A function scope can contain any other values, e.g. other functions.
 ```
 scaleAndSumNumbers(a, b, c, scale)
 {
-    # scale is defined only within scaleAndSumNumbers
+    # doScale is defined only within scaleAndSumNumbers
     doScale(number) = number.mul(scale);
     sa = doScale(a);
     sb = doScale(b);
@@ -376,7 +386,8 @@ myFunction(a, b)
 ### Unidentifier
 It is sometimes useful to avoid binding an identifier for an expression when it is unused or only required once.
 In these cases the unidentifier `_` can be used:
-* Lambdas (anonymous/unidentified functions) - relevant when defining single-use functions within another expression
+
+Lambdas (anonymous/unidentified functions) - relevant when defining single-use functions within another expression
 ```
 # binds an unidentified function to the last argument of fold
 # sum is all array elements added together
@@ -386,7 +397,7 @@ sum = array(1, 2, 3).fold(0, _(accum, element) = accum.add(element));
 # equivalent to the makeAdder function in the High Order Functions example above
 makeAdder(amountToAdd) = _(a) = a.add(amountToAdd);
 ```
-* Unused arguments - relevant when a function's interface demands arguments that are unused in the body
+Unused arguments - relevant when a function's interface demands arguments that are unused in the body
 ```
 repeat(value, count)
 {
@@ -402,10 +413,10 @@ Element is statically typed; all expressions have an associated type which is ch
 Types are Constraints used to limit what values a function can accept and return.
 Types are declared using `:` after a parameter's identifier or, for return types, after the function parameter list.
 
-Type annotations are optional - when no type is given, `any` is implied.
+Type annotations are optional - when no type is given, `Any` is implied.
 ```
-# to calls the given Unary function to turn a num into any other type
-to(a:num, constructor:Unary) = constructor(a);
+# to calls the given Unary function to turn a Num into any other type
+to(a:Num, constructor:Unary) = constructor(a);
 ```
 
 ### Higher Order Types
@@ -414,11 +425,11 @@ This would allow parameterized types - the implications of which have not been f
 ```
 List(t)
 {
-    tIndexer(idx:num):t;
-    struct return(at:tIndexer, count:num);
+    tIndexer(idx:Num):t;
+    struct return(at:tIndexer, count:Num);
 }
 
-sum(a:List(num)) = a.fold(0, (accum, element) = accum.add(element));
+sum(a:List(Num)) = a.fold(0, (accum, element) = accum.add(element));
 ```
 A [proposal](../Language/Proposals/TypeFunctions.md) exists for allowing this behaviour.
 
@@ -429,23 +440,23 @@ Constraints are used as type annotations for Callable values and other Constrain
 ### Concreteness
 Constraints can be concrete or non-concrete (polymorphic).
 
-A concrete constraint is one which matches only one type of value, e.g. `num` or `struct Vector3(x:num, y:num, z:num);`.
+A concrete constraint is one which matches only one type of value, e.g. `Num` or `struct Vector3(x:Num, y:Num, z:Num);`.
 
-Non-concrete constraints are polymorphic - they allow more generalized expressions where many types of values are interchangeable, e.g. `any` or `Predicate(a):Bool;`
+Non-concrete constraints are polymorphic - they allow more generalized expressions where many types of values are interchangeable, e.g. `Any` or `Predicate(a):Bool;`
 
 ### Any
-The `any` constraint allows any value to be dealt with and can be thought of as the absence of a constraint.
+The `Any` constraint allows any value to be dealt with and can be thought of as the absence of a constraint.
 Since this constraint is guaranteed to pass, it is possible to write generic code where the passed value's constraint is an implicit interface of all the locations the value is referenced.
 ```
 # a is of type any
-# call sites of even must pass a value which can Index an instance function rem(a, b:num)
-# which in turn must return a value which can Index an instance function eq(a, b:num):Bool
+# call sites of even must pass a value which can Index an instance function rem(a, b:Num)
+# which in turn must return a value which can Index an instance function eq(a, b:Num):Bool
 # in order to pass type checking
 even(a):Bool = a.rem(2).eq(0);
 
-# Changing a to type num requires that a be of exactly type num
+# Changing a to type Num requires that a be of exactly type Num
 # This is more explicit but less flexible as there could be other types which can satisfy type checking of the generic version
-even(a:num):Bool = a.rem(2).eq(0);
+even(a:Num):Bool = a.rem(2).eq(0);
 ```
 
 ### Function Constraint (a.k.a. Function Type or Function Interface)
@@ -459,7 +470,7 @@ any(list:List, pred:Predicate):Bool
     = list.fold(Bool.false, _(accum, element) = accum.or(pred(element))); 
 
 # The interface of even matches Predicate
-even(a:num):Bool = a.rem(2).eq(0);
+even(a:Num):Bool = a.rem(2).eq(0);
 
 # Thus we can call any, passing the function even as an instance of Predicate
 anyEven = any(array(1, 3, 5), even);
@@ -471,13 +482,15 @@ Structures are a value grouping mechanism.
 Structures involve 2 distinct kinds of values, `struct` declarations and instances.
 
 ### Structure Declarations
-Possible groupings are defined using the `struct` qualifier followed by a parameter list defining the fields that a `struct` instance must have.
+Structures are defined using the `struct` qualifier followed by a parameter list defining the fields that a `struct` instance must have.  
 ```
-struct Complex(real:num, imaginary:num);
+struct Complex(real:Num, imaginary:Num);
 ```
+A fields is simply a value in a structures group.
+`real` and `imaginary` are the fields for a `Complex` instance.
 
 `struct` declaration values are:
-* Callable - it is a constructor function for creating `struct` instances.
+* Callable - as a constructor function for creating `struct` instances.
 * Indexable - `struct` declarations can contain other values in an optional scope.
 * Constraints - `struct` declarations can be used to limit values to instances of the `struct`.
 
@@ -489,7 +502,7 @@ myComplex = Complex(5, 10);
 
 Note that the `struct` declaration's identifier is reserved within the structures scope (but not nested ones).
 ```
-struct Complex(real:num, imaginary:num)
+struct Complex(real:Num, imaginary:Num)
 {
     # adds two complex numbers together, resulting in another complex
     # the implementation must use the Complex constructor to create the result
@@ -518,14 +531,14 @@ c = Complex.add(a, b);
 A `struct` instance is a value with a layout conforming to a specific `struct` declaration.
 
 `struct` instances are:
-* Indexable - provides access to fields and instance functions.
+* Indexable - provides access to struct members - members are fields and instance functions.
 * Serializable (sometimes) - when all fields are serializable, the instance is also serializable.
 
 #### Instance Functions
-Instance functions are functions defined within a `struct` declaration.
-* The first argument is either the `struct` declaration's type or `any`.
+Instance functions are functions defined within a `struct` declaration's scope where:
+* The first argument is the `struct` declaration's type.
 * Instance functions are Indexable from `struct` instances.
-* Instance functions don't require the first parameter as it is implicitly the `struct` instance being Indexed.
+* Instance functions apply the first parameter as the `struct` instance being Indexed.
 ```
 # continuing from the example above...
 # add can be called as an instance function since it's first parameter is type Complex
@@ -542,14 +555,41 @@ Instance function calls can be chained allowing natural expressions which read l
 numbers = List.range(n, m)).filter(_(i) = even(i).and(i.rem(5).eq(0)));
 ```
 
-# Interacting with Host Environments
+## Intrinsics
+Intrinsics are functions and types which hosts must explicitly support.
+All Element programs are composed from intrinsics to perform tasks.
+Intrinsics can be declared in source code using the `intrinsic` keyword.
+
+Intrinsics have a few special rules that differ from normal structs and functions:
+* Intrinsic functions are implemented by hosts.
+* Intrinsics can be variadic (types or functions with variable number of fields).
+Element does not directly support variadic functions or types however a few intrinsic constructs are variadic and can be referenced as long as their interfaces are satisfied.
+* Intrinsics may omit an interface as it may not be possible to describe in the language (due to allowing variadics).
+
+# Prelude
+Prelude is a base library of Element source code containing intrinsics and values implementing core functionality.
+The source for Prelude can be found [here](../Common/Prelude/Prelude.ele).
+
+### Bool
+`Bool` is an intrinsic type implemented in the Prelude.
+`Bool` is not a primitive type, it is backed by a `Num`.
+When creating an instance of `Bool` using the constructor the compiler must refine the backing `Num` to 1 or 0, signifying `True` and `False` respectively.
+The formula for refinement is `value > 0 ? 1 : 0`, i.e. positive numbers are truthy, negative numbers and 0 are falsy.
+
+### List
+`List` is an intrinsic type implemented in the Prelude.
+`List(at:Indexer, count:Num)` is defined as an indexing function `constraint Indexer(i:Num)` and a numerical count.
+`List` has no special compiler support except that instances can be serializable when the return type of `at:Indexer` is serializable.
+`List` serialization is performed by evaluating all elements.
+
+# Host Environments
 An Element program exists in context of a hosting environment (host) for dealing with it.
-Hosts are programs/libraries providing facilities for parsing, validating, analysing, compiling and evaluating Element expressions directly (interpreting) or transforming them into another format for export or transport.
+Hosts are libraries or programs providing facilities for parsing, validating, analysing, compiling and evaluating Element source directly (interpreting) or transforming them into another format for export or transport.
 
 ## Top-level Functions
 An Element program is always a function (referred to as the top-level function) that takes inputs and returns outputs when the program is run.
 There is no notion of a "main" function - any function that meets data boundary criteria may be compiled by a host.
-Top-level functions must only have serializable value types on their interface.
+Top-level functions must only have serializable values on their interface.
 
 ## Compilation
 Compiling involves starting with the outputs and recursively analysing all dependencies.
@@ -558,7 +598,7 @@ Output values necessarily have concrete types that are checked against constrain
 All constraints can be checked during compilation with no type checking requiring deference until runtime.
 
 Another important consequence of recursive analysis is that unreferenced values are not compiled.
-This is a double-edged sword as it improves compilation performance but allows semantic/validation errors in unreferenced code that parses successfully (such as type errors) to go undetected!
+This is a double-edged sword as it improves compilation performance but allows errors in unreferenced code that parses successfully (such as type errors) to go undetected!
 
 Hosts must follow the error handling conventions defined in [Laboratory's readme](../Laboratory/README.md).
 
@@ -573,26 +613,10 @@ This happens in two situations:
 Only serializable values can be passed across the boundary.
 Serializable values are those which can be translated into a sequence of primitive data - numbers in Elements case.
 The following value types are serializable:
-* `num`
+* `Num`
 * `struct` instance containing only serializable fields - structures require mapping between host and Element types to match layout.
 * `List` which can be evaluated to only serializable elements - Lists will be evaluated to their elements when crossing the boundary.
 
-Hosts must have mappings for `struct` types declared in the prelude and may provide mappings for other structures.
+Hosts must have member mappings for `struct` types declared in the prelude and may provide mappings for other structures.
 
 All concrete types in a `List` must be mappable for a `List` to be translatable.
-
-## Intrinsics
-Intrinsics are functions and types which hosts must provide.
-They are the basic components which all Element programs are built up from.
-Intrinsics can be declared in source code using the `intrinsic` keyword.
-
-Intrinsics have a few special rules that differ from normal structs and functions:
-* Intrinsic functions are implemented by hosts.
-* Intrinsics can be variadic (types or functions with variable number of fields).
-Element does not directly support variadic functions or types however a few intrinsic constructs are variadic and can be referenced as long as their interfaces are satisfied.
-* Intrinsic constructs may omit an interface as it may not be possible to describe in the language.
-* Intrinsic functions' interfaces in the host must match the interface declared in the source (when the source includes a declaration).
-
-## Prelude
-Prelude is a base library of Element source code containing intrinsics and values implementing core functionality.
-The source for Prelude can be found [here](../Common/Prelude/Prelude.ele).

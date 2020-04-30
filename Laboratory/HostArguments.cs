@@ -1,158 +1,161 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Element;
-using Element.CLR;
+using Newtonsoft.Json;
 using NUnit.Framework;
-using Tomlyn;
-using Tomlyn.Model;
 
 namespace Laboratory
 {
     /// <summary>
     /// Implements hosts types and enumerates hosts for host fixtures
     /// </summary>
-    internal class HostArguments : IEnumerable
+    internal class HostArguments
     {
-        public IEnumerator GetEnumerator() => _processHostInfos
-            .Where(phi => phi.Enabled)
-            .Select(phi => (IHost) new ProcessHost(phi))
-            .Prepend(new SelfHost())
-            .ToArray<object>()
-            .GetEnumerator();
-
+        public static IHost MakeHost() => _processHostInfo != null
+                                            ? (IHost)new ProcessHost(_processHostInfo.Value)
+                                            : new AtomicHost();
+        
         static HostArguments()
         {
-            var processHosts = Toml.Parse(File.ReadAllText("ProcessHostConfigurations.toml")).ToModel();
-            foreach ((string name, object table) in processHosts)
-            {
-                var tomlTable = (TomlTable) table;
+            static TValue Get<TValue>(string key) => TestContext.Parameters.Get<TValue>(key, default);
+            var name = Get<string>("name");
+            
+            _processHostInfo = string.IsNullOrEmpty(name)
+                                   ? (ProcessHostInfo?)null
+                                   : new ProcessHostInfo(name,
+                                                         Get<string>("build-command"),
+                                                         Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path")));
+        }
 
-                TValue Get<TValue>(string key) => (TValue) tomlTable[key];
-                _processHostInfos.Add(new ProcessHostInfo
+        private static readonly Lazy<string> _elementRootDirectory = new Lazy<string>(() =>
+        {
+            var success = TryGetParent(new DirectoryInfo(Directory.GetCurrentDirectory()), "Element", out var rootDir);
+            if (!success) throw new DirectoryNotFoundException("Couldn't find Element root directory");
+            return rootDir.FullName;
+        });
+
+        private static bool TryGetParent(DirectoryInfo directory, string parentName, out DirectoryInfo parent)
+        {
+            parent = null;
+            while (true)
+            {
+                if (directory.Parent == null) return false;
+                if (string.Equals(directory.Parent.Name, parentName, StringComparison.OrdinalIgnoreCase))
                 {
-                    Name = name,
-                    Enabled = Get<bool>("enabled"),
-                    BuildCommand = Get<string>("build-command"),
-                    ExecutablePath = Path.Combine(Laboratory.ElementRootDirectory.Value, Get<string>("executable-path"))
-                });
+                    parent = directory.Parent;
+                    return true;
+                }
+
+                directory = directory.Parent;
             }
         }
 
-        private class ProcessHostInfo
+        private readonly struct ProcessHostInfo
         {
-            public string Name { get; set; }
-            public bool Enabled { get; set; }
-            public string BuildCommand { get; set; }
-            public string ExecutablePath { get; set; }
-        }
-
-        private static readonly List<ProcessHostInfo> _processHostInfos = new List<ProcessHostInfo>();
-
-        /// <summary>
-        /// Implements commands directly.
-        /// </summary>
-        private class SelfHost : IHost
-        {
-            public override string ToString() => "Laboratory";
-
-            float[] IHost.Execute(HostContext context, string functionName, params float[] functionArgs)
+            public ProcessHostInfo(string name, string buildCommand, string executablePath)
             {
-                var sourceContext = new SourceContext();
-                var compilationContext = new CompilationContext(logToConsole: false);
-
-                static FileInfo[] OpenPackage(string package) => new DirectoryInfo(package).GetFiles("*.ele", SearchOption.AllDirectories);
-                if (context.IncludePrelude) sourceContext.AddSourceFiles(OpenPackage("StandardLibrary"));
-                sourceContext.AddSourceFiles(context.Packages.SelectMany(OpenPackage));
-
-                var messages = new List<string>();
-                var anyErrors = false;
-
-                compilationContext.OnLog += msg => messages.Add(msg);
-                compilationContext.OnError += msg =>
-                {
-                    messages.Add(msg);
-                    anyErrors = true;
-                };
-
-                sourceContext.Recompile(compilationContext);
-
-                var function = sourceContext.GlobalScope.GetFunction(functionName, compilationContext);
-                var result = function.EvaluateAndSerialize(functionArgs, compilationContext);
-
-                context.MessageHandler(messages, anyErrors);
-
-                return result;
+                Name = name;
+                BuildCommand = buildCommand;
+                ExecutablePath = executablePath;
             }
+
+            public string Name { get; }
+            public string BuildCommand { get; }
+            public string ExecutablePath { get; }
         }
+
+        private static readonly ProcessHostInfo? _processHostInfo;
 
         /// <summary>
         /// Implements commands by calling external process defined using a command string.
         /// </summary>
-        private class ProcessHost : IHost
+        private readonly struct ProcessHost : IHost
         {
-            private static (List<string> Messages, bool AnyErrors) Run(Process process)
+            private static List<string> Run(Process process)
             {
+                var messages = new List<string>();
+                async Task ReadStream(Process proc, StreamReader streamReader)
+                {
+                    while (!proc.HasExited || !streamReader.EndOfStream)
+                    {
+                        var msg = await streamReader.ReadLineAsync();
+                        if(!string.IsNullOrEmpty(msg))
+                            messages.Add(msg);
+                    }
+                }
+
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
-                process.EnableRaisingEvents = true;
-
-                var messages = new List<string>();
-                var anyErrors = false;
-
-                process.OutputDataReceived += (_, eventArgs) => messages.Add(eventArgs.Data);
-                process.ErrorDataReceived += (_, eventArgs) =>
-                {
-                    messages.Add(eventArgs.Data);
-                    anyErrors = true;
-                };
-
                 process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
+                var readingStdOut = ReadStream(process, process.StandardOutput);
+                var readingStdErr = ReadStream(process, process.StandardError);
                 process.WaitForExit();
-
-                return (messages, anyErrors);
+                Task.WhenAll(readingStdOut, readingStdErr).Wait();
+                return messages;
             }
 
             static ProcessHost()
             {
-                // Perform build command for each enabled host - within static constructor so it's only performed once per test run
-                foreach (var info in _processHostInfos.Where(info => info.Enabled))
+                if (!_processHostInfo.HasValue) return;
+
+                // Perform build command - within static constructor so it's only performed once per test run
+                var info = _processHostInfo.Value;
+                try
                 {
-                    try
+                    var splitCommand = info.BuildCommand.Split(' ', 2);
+                    var process = new Process
                     {
-                        var splitCommand = info.BuildCommand.Split(' ', 2);
-                        var process = new Process
+                        StartInfo = new ProcessStartInfo
                         {
-                            StartInfo = new ProcessStartInfo
-                            {
-                                FileName = splitCommand[0],
-                                Arguments = splitCommand[1],
-                                WorkingDirectory = Laboratory.ElementRootDirectory.Value
-                            }
-                        };
-
-                        var (messages, _) = Run(process);
-
-                        if (process.ExitCode != 0)
-                        {
-                            _hostBuildErrors.Add(info, messages);
+                            FileName = splitCommand[0],
+                            Arguments = splitCommand[1],
+                            WorkingDirectory = _elementRootDirectory.Value
                         }
-                    }
-                    catch (Exception e)
+                    };
+
+                    process.StartInfo.RedirectStandardError = true;
+                    process.Start();
+                    process.WaitForExit();
+
+                    if (process.ExitCode != 0)
                     {
-                        _hostBuildErrors.Add(info, new List<string>{e.ToString()});
+                        _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                     }
+                }
+                catch (Exception e)
+                {
+                    _hostBuildErrors.Add(info, e.ToString());
                 }
             }
 
-            private static readonly Dictionary<ProcessHostInfo, List<string>> _hostBuildErrors = new Dictionary<ProcessHostInfo, List<string>>();
+            private static bool TryParseJson<T>(string json, out T result)
+            {
+                var success = true;
+                var settings = new JsonSerializerSettings
+                {
+                    Error = (sender, args) => { success = false; args.ErrorContext.Handled = true; },
+                    MissingMemberHandling = MissingMemberHandling.Error
+                };
+
+                try
+                {
+                    result = JsonConvert.DeserializeObject<T>(json, settings);
+                }
+                catch
+                {
+                    result = default;
+                    success = false;
+                }
+
+                return success;
+            }
+
+            private static readonly Dictionary<ProcessHostInfo, string> _hostBuildErrors = new Dictionary<ProcessHostInfo, string>();
 
             public ProcessHost(ProcessHostInfo info) => _info = info;
 
@@ -160,12 +163,11 @@ namespace Laboratory
 
             private readonly ProcessHostInfo _info;
 
-            private List<string> RunHostProcess(HostContext context, string arguments)
+            private string RunHostProcess(CompilationInput input, string arguments)
             {
-                if (_hostBuildErrors.TryGetValue(_info, out var errorMessages))
+                if (_hostBuildErrors.TryGetValue(_info, out var buildError))
                 {
-                    errorMessages.PrintMessagesToTestContext($"{_info.Name} build log");
-                    Assert.Fail($"{_info.Name} failed to build. See build log below.");
+                    Assert.Fail(buildError);
                 }
 
                 var process = new Process
@@ -177,42 +179,61 @@ namespace Laboratory
                     }
                 };
 
-                var (messages, anyErrors) = Run(process);
+                var messages = Run(process);
+
+                var compilerMessages = messages.Select(msg => TryParseJson(msg, out CompilerMessage compilerMessage)
+                    ? compilerMessage
+                    : new CompilerMessage(msg)).ToArray();
 
                 if (process.ExitCode != 0)
                 {
-                    messages.PrintMessagesToTestContext($"{_info.Name} output");
-                    Assert.Fail($"{_info.Name} process quit with exit code '{0}'. See output below.", process.ExitCode);
+                    Assert.Fail(compilerMessages
+                        .Aggregate(new StringBuilder($"{_info.Name} process quit with exit code '{process.ExitCode}'.").AppendLine().AppendLine($"Beginning of {_info.Name} output"),
+                            (builder, s) => builder.Append("    ").AppendLine(s.ToString())).AppendLine($"End of {_info.Name} output").ToString());
+                }
+                else
+                {
+                    foreach (var msg in compilerMessages)
+                    {
+                        input.LogCallback?.Invoke(msg);
+                    }
                 }
 
-                context.MessageHandler(messages, anyErrors);
+                process.Close();
 
-                return messages;
+                return compilerMessages.Last().ToString();
             }
 
-            float[] IHost.Execute(HostContext context, string functionName, params float[] functionArgs)
+            private static StringBuilder BeginCommand(CompilationInput input, string command)
             {
                 var processArgs = new StringBuilder();
-                processArgs.Append("execute");
-                var packages = context.Packages;
-                if (context.IncludePrelude || packages?.Length > 0)
-                {
-                    processArgs.Append(" -p ");
-                    if (context.IncludePrelude) processArgs.Append("StandardLibrary ");
-                    if (packages?.Length > 0) processArgs.AppendJoin(' ', packages);
-                }
-
-                processArgs.Append(" -f ");
-                processArgs.Append(functionName);
-
-                if (functionArgs?.Length > 0)
-                {
-                    processArgs.Append(" -a ");
-                    processArgs.AppendJoin(' ', functionArgs);
-                }
-
-                return RunHostProcess(context, processArgs?.ToString()).Last().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                processArgs.Append($"{command} --logjson");
+                if (input.ExcludePrelude) processArgs.Append(" --no-prelude ");
+                if (input.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Packages);
+                if (input.ExtraSourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.ExtraSourceFiles);
+                if (input.Debug) processArgs.Append(" --debug ");
+                if (input.SkipValidation) processArgs.Append(" --no-validation ");
+                return processArgs;
             }
+
+            bool IHost.Parse(CompilationInput input) => bool.Parse(RunHostProcess(input, BeginCommand(input, "parse").ToString()));
+
+            (bool Success, float[] Result) IHost.Evaluate(CompilationInput input, string expression)
+            {
+                var success = true;
+                var result = RunHostProcess(input, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString());
+                var values = result.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s =>
+                    {
+                        success &= float.TryParse(s, out var value);
+                        return value;
+                    })
+                    .ToArray();
+                return (success, values);
+            }
+
+            (bool Success, string Result) IHost.Typeof(CompilationInput input, string expression) =>
+                (true, RunHostProcess(input, BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString()));
         }
     }
 }

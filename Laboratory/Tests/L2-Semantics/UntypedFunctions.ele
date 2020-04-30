@@ -1,0 +1,17 @@
+intrinsic struct Num
+{
+	intrinsic add(a, b);
+	intrinsic sub(a, b);
+}
+
+pi = 3.14;
+
+addThree(a, b, c) = Num.add(a, Num.add(b, c));
+addFive(a, b, c, d, e)
+{
+	cd = Num.add(c, d);
+	abcd = Num.add(Num.add(a, b), cd);
+	return = Num.add(abcd, e);
+}
+
+recurse(a) = recurse(a);

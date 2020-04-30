@@ -1,37 +1,35 @@
 /* A literal number including sign and decimal point, also including e notation */
 literal         ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
 /* Any string including most UTF8 characters but not exactly '_' */
-identifier      ::= '_'? [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
+identifier      ::= _? [a-zA-Z#x0080-#xFFFF] [_a-zA-Z0-9#x0080-#xFFFF]*
 unidentifier    ::= '_'
-terminal        ::= ';'
-listStart       ::= '('
-listEnd         ::= ')'
-scopeAccess     ::= '.' identifier
 
-type            ::= ':' identifier scopeAccess*
-port            ::= unidentifier | (identifier type?)
-portlist        ::= port (',' port)*
-body            ::= scope | binding terminal
+/* Literals can be indexed to call instance functions
+   Expression list is optional so that constants/nullary functions don't require redundant parentheses */
+expression      ::= ((identifier | literal) (indexExpression | callExpression)*) | lambda
+indexExpression ::= '.' identifier
+callExpression  ::= '(' expression (',' expression)* ')'
+
+qualifier       ::= 'intrinsic'?
+/* Types are an expression for convenience - a valid type expression only contains identifiers and indexing expressions
+type            ::= ':' expression
+port            ::= (identifier type?) | unidentifier
+portList        ::= '(' port (',' port)* ')'
+
 /* Portlist is optional in 2 situations:
-       Constants are nullary functions where parentheses are redundant
-       It is impossible to declare the interface of intrinsic variadic construct */
-declaration     ::= identifier (listStart portlist listEnd)?
-lambda          ::= unidentifier (listStart portlist listEnd) body
-
-/* Literals can be used for calling functions 
-   Expression list is optional so that references to constants/nullary functions don't require redundant parentheses */
-expression      ::= ((identifier | literal) (scopeAccess | (listStart exprlist listEnd))*)
-                    | lambda
-exprlist        ::= expression (',' expression)*
+       Constant nullary functions where parentheses are redundant
+       Declaring interface of intrinsic variadic constructs is impossible (no syntax support for variadics) */
+declaration     ::= identifier portList? type?
+scope           ::= '{' item* '}'
 binding         ::= '=' expression
 
-qualifier       ::= 'intrinsic'
+expressionBody  ::= binding ';'
+functionBody    ::= expressionBody | scope
+lambda          ::= unidentifier portList functionBody
+function        ::= qualifier declaration (functionBody | ';')
+struct          ::= qualifier 'struct' declaration (scope | ';')
+constraint      ::= qualifier 'constraint' declaration ';'
 namespace       ::= 'namespace' identifier scope
-/* Function ending in a terminal is a function type */
-function        ::= qualifier? declaration type? (body | terminal)
-struct          ::= qualifier? 'struct' declaration (scope | terminal)
 
-element         ::= namespace | struct | function
-scope           ::= '{' element* '}'
-/* Any complete blob of element code potentially including 1 or many source files */
-grammar         ::= element*
+item            ::= function | struct | namespace | constraint
+grammar         ::= item*

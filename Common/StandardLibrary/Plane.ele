@@ -1,4 +1,4 @@
-struct Plane(normal:Vector3, distance:num)
+struct Plane(normal:Vector3, distance:Num)
 {
     FromVertices(a:Vector3, b:Vector3, c:Vector3):Plane
     {
@@ -13,7 +13,7 @@ struct Plane(normal:Vector3, distance:num)
         return = Plane(normal, d);
     }
 
-    SignedDistanceFromPoint(plane:Plane, point:Vector3):num
+    SignedDistanceFromPoint(plane:Plane, point:Vector3):Num
     {
         planeNormal = V3.Normalize(plane.normal);
         closestPointOnPlane = Vec.Scale(planeNormal, plane.distance);

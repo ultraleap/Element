@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!-- Parameters used by tests at runtime -->
+  <TestRunParameters>
+    <Parameter name="name" value="Alchemist" />
+    <Parameter name="build-command" value="dotnet publish Alchemist/Alchemist.csproj --self-contained=false -o Alchemist/Build -v n" />
+    <Parameter name="executable-path" value="Alchemist/Build/Alchemist" />
+  </TestRunParameters>
+
+</RunSettings>

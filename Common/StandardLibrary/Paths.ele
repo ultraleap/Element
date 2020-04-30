@@ -1,53 +1,53 @@
-PathFunc(u:num) :Vec3;
-Path -> at : PathFunc, length:num;
-BoundedPath -> atBounded : PathFunc, length:num;
+PathFunc(u:Num) :Vec3;
+Path -> at : PathFunc, length:Num;
+BoundedPath -> atBounded : PathFunc, length:Num;
 
-PathIndexer(i:num) : BoundedPath;
-PathArray -> count:num, index:PathIndexer;
+PathIndexer(i:Num) : BoundedPath;
+PathArray -> count:Num, index:PathIndexer;
 
-Vec3Indexer(i:num) : Vec3;
-Vec3Array -> count:num, index:Vec3Indexer;
+Vec3Indexer(i:Num) : Vec3;
+Vec3Array -> count:Num, index:Vec3Indexer;
 
 Segment -> a:Vec3, b:Vec3;
-SegmentIndexer(i:num) : Segment;
-SegmentArray -> count:num, index:SegmentIndexer;
+SegmentIndexer(i:Num) : Segment;
+SegmentArray -> count:Num, index:SegmentIndexer;
 
 Paths
 {
 	PingPong(path:BoundedPath) : Path
 	{
-		at(u:num) = path.atBounded(abs(sub(rem(u, 2), 1)));
+		at(u:Num) = path.atBounded(abs(sub(rem(u, 2), 1)));
 		length = mul(path.length, 2);
 		return = Path(at, length);
 	}
 
 	Repeat(path:BoundedPath) : Path
 	{
-		at(u:num) = path.atBounded(rem(u, 1));
+		at(u:Num) = path.atBounded(rem(u, 1));
 		return = Path(at, path.length);
 	}
 
 	Easing(path:BoundedPath) : Path
 	{
-		at(u:num) = path.atBounded(div(sub(1, cos(mul(pi, u))), 2));
+		at(u:Num) = path.atBounded(div(sub(1, cos(mul(pi, u))), 2));
 		return = Path(at, path.length);
 	}
 
-	WithBounds(path:Path, start:num, end:num) : BoundedPath
+	WithBounds(path:Path, start:Num, end:Num) : BoundedPath
 	{
 		segment = sub(end, start);
-		at(u:num) = path.at(mul(add(u, start), segment));
+		at(u:Num) = path.at(mul(add(u, start), segment));
 		return = BoundedPath(at, mul(path.length, segment));
 	}
 
-	PathSegment(path:BoundedPath, start:num, end:num) : BoundedPath
+	PathSegment(path:BoundedPath, start:Num, end:Num) : BoundedPath
 	{
 		segment = sub(end, start);
-		at(u:num) = path.atBounded(mul(add(u, start), segment));
+		at(u:Num) = path.atBounded(mul(add(u, start), segment));
 		return = BoundedPath(at, mul(path.length, segment));
 	}
 
-	LineBetween(a:Path, aPeriod:num, b:Path, bPeriod:num, time:num) : Path
+	LineBetween(a:Path, aPeriod:Num, b:Path, bPeriod:Num, time:Num) : Path
 	{
 		pointA = a.at(rem(div(time, aPeriod), 1));
 		pointB = b.at(rem(div(time, bPeriod), 1));
@@ -56,7 +56,7 @@ Paths
 
 	Concatenate(a:Path, b:Path) : Path
 	{
-		at(u:num) = if(lt(u, 0.5), a.at(mul(u, 2)), b.at(mul(u, 2)));
+		at(u:Num) = if(lt(u, 0.5), a.at(mul(u, 2)), b.at(mul(u, 2)));
 		length = add(a.length, b.length);
 		return = Path(at, length);
 	}
@@ -66,7 +66,7 @@ Paths
 		pathLength(p:BoundedPath) = p.length;
 		length = aggregate(add, Array.Select(pathArray, pathLength), 0);
 		return = BoundedPath(at, length);
-		at(u:num)
+		at(u:Num)
 		{
 			adjustedU = mul(u, pathArray.count);
 			currentPath = pathArray.index(adjustedU);
@@ -75,40 +75,40 @@ Paths
 		}
 	}
 
-	Animate(brush:Path, trajectory:Path, duration:num, time:num) : Path
+	Animate(brush:Path, trajectory:Path, duration:Num, time:Num) : Path
 	{
 		offset = trajectory.at(div(time, duration));
-		pathEval(u:num):Vec3 = Vec.Add(brush.at(u), offset);
+		pathEval(u:Num):Vec3 = Vec.Add(brush.at(u), offset);
 		return = Path(pathEval, brush.length);
 	}
 
-	Offset(path:Path, amount:num) : Path
+	Offset(path:Path, amount:Num) : Path
 	{
-		at(u:num) = path.at(rem(add(u, amount), 1));
+		at(u:Num) = path.at(rem(add(u, amount), 1));
 		return = Path(at, path.length);
 	}
 
 	Reverse(path:Path) : Path
 	{
-		at(u:num) = path.at(sub(1, u));
+		at(u:Num) = path.at(sub(1, u));
 		return = Path(at, path.length);
 	}
 
 	Translate(path:Path, position:Vec3) : Path
 	{
-		at(u:num) = Vec.Add(position, path.at(u));
+		at(u:Num) = Vec.Add(position, path.at(u));
 		return = Path(at, path.length);
 	}
 
 	Transform(path:Path, matrix:Matrix4x4) : Path
 	{
-		at(u:num) = V3.TransformPosition(path.at(u), matrix);
+		at(u:Num) = V3.TransformPosition(path.at(u), matrix);
 		return = Path(at, path.length);
 	}
 
-	Circle(position:Vec3, radius:num) : Path
+	Circle(position:Vec3, radius:Num) : Path
 	{
-		at(u:num) = Vec.Add(position, Vec3(
+		at(u:Num) = Vec.Add(position, Vec3(
 			mul(sin(mul(u, tau)), radius),
 			mul(cos(mul(u, tau)), radius),
 			0
@@ -119,7 +119,7 @@ Paths
 
 	Line(endpointA:Vec3, endpointB:Vec3) : BoundedPath
 	{
-		at(u:num) = Vec.Lerp(u, endpointA, endpointB);
+		at(u:Num) = Vec.Lerp(u, endpointA, endpointB);
 		length = V3.Distance(endpointA, endpointB);
 		return = BoundedPath(at, length);
 	}
@@ -134,9 +134,9 @@ Paths
 		return = PingPong(Line(endpointA, endpointB));
 	}
 
-	Rectangle(width:num, height:num) : Path
+	Rectangle(width:Num, height:Num) : Path
 	{
-		at(u:num)
+		at(u:Num)
 		{
 			u1 = mul(add(width, height), rem(mul(u, 2), 1));
 			pos = if(lt(u1, width),
@@ -153,7 +153,7 @@ Paths
 
 	Lissajous(size:Vec2, frequency:Vec2, delta:Vec2) : Path
 	{
-		at(u:num)
+		at(u:Num)
 		{
 			t = Vec2(u, u);
 			v = Vec.Mul(size, zip(cos, Vec.Sub(Vec.Mul(frequency, t), delta)));
@@ -163,10 +163,10 @@ Paths
 		return = Path(at, mul(div(2, pi), ellipse(l.x, l.y)));
 	}
 
-	Rose(diameter:num, n:num, d:num, frequency:num) : Path
+	Rose(diameter:Num, n:Num, d:Num, frequency:Num) : Path
 	{
 		k = div(n, d);
-		at(u:num)
+		at(u:Num)
 		{
 			ut = mul(u, tau);
 			r = mul(diameter, cos(mul(ut, k)));
@@ -181,7 +181,7 @@ Paths
 
 	PolyLineSimple(points:Vec3Array) : BoundedPath
 	{
-		segment(i:num) = Segment(points.index(i), points.index(add(i, 1)));
+		segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)));
 		segments = TArray(sub(points.count, 1), segment);
 		return = PolySegmentSimple(segments);
 	}
@@ -191,7 +191,7 @@ Paths
 		segmentLength(s:Segment) = V3.Distance(s.a, s.b);
 		totalLength = aggregate(add, Array.Select(segments, segmentLength), 0);
 
-		at(u:num)
+		at(u:Num)
 		{
 			adjustedU = mul(u, segments.count);
 			target = segments.index(adjustedU);
@@ -202,7 +202,7 @@ Paths
 
 	PolyLine(points:Vec3Array) : BoundedPath
 	{
-		segment(i:num) = Segment(points.index(i), points.index(add(i, 1)));
+		segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)));
 		segments = TArray(sub(points.count, 1), segment);
 		return = PolySegment(segments);
 	}
@@ -212,10 +212,10 @@ Paths
 		segmentLength(s:Segment) = V3.Distance(s.a, s.b);
 		totalLength = aggregate(add, Array.Select(segments, segmentLength), 0);
 
-		at(u:num)
+		at(u:Num)
 		{
 			adjustedU = mul(u, totalLength);
-			SegmentIteration -> s:Segment, distance:num, continue:num;
+			SegmentIteration -> s:Segment, distance:Num, continue:Num;
 			segmentFinder(current:SegmentIteration, next:Segment) : SegmentIteration =
 				if (current.continue,
 					if(lt(current.distance, segmentLength(next)),
