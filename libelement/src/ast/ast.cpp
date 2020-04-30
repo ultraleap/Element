@@ -525,8 +525,10 @@ static element_result parse_function(element_tokeniser_ctx* tctx, size_t* tindex
             tokenlist_advance(tctx, tindex);
         }
         else {
-            //todo: more specific error code/logging
-            return ELEMENT_ERROR_INVALID_ARCHIVE;
+
+            tctx->log(TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY, 
+                "Non-intrinsic functions must declare a body");
+            return TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY;
         }
     } else {
         // real body of some sort
