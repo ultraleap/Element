@@ -18,7 +18,7 @@
 #include "MemoryPool.h"
 
 static std::unordered_set<std::string> qualifiers {"intrinsic"};
-static std::unordered_set<std::string> constructs {"struct", "namespace", "constraint", "return"};
+static std::unordered_set<std::string> constructs{ "struct", "namespace", "constraint"};
 static std::unordered_set<std::string> reserved_args {};
 
 static element_result check_reserved_words(const std::string& text, bool allow_reserved_arg)
