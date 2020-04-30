@@ -45,9 +45,10 @@ typedef enum message_code
     TODO_ELEMENT_OK = 0,
 
     //errors specific to libelement should be negative for now, but ideally covered in the Messages.toml
-    
+
     TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END = -1,
     TODO_ELEMENT_ERROR_EXCEPTION = -2,
+    TODO_ELEMENT_ERROR_CONSTRAINT_HAS_BODY = -3,
 
     TODO_ELEMENT_ERROR_SERIALISATION = 1,
     TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS = 2,

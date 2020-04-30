@@ -479,6 +479,9 @@ static element_result parse_declaration(element_tokeniser_ctx* tctx, size_t* tin
             ELEMENT_OK_OR_RETURN(parse_typename(tctx, tindex, type));
         }
         else {
+            tctx->log(TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE, 
+                    "A struct cannot have a return type",
+                    ELEMENT_STAGE_PARSER);
             return TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE;
         }
     }
@@ -593,23 +596,21 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_STRUCT;
     element_ast* decl = ast_new_child(ast);
-    auto result = parse_declaration(tctx, tindex, decl, false);
-    if (result != ELEMENT_OK) 
-    {
-        if (result == TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE)
-        {
-            tctx->log(TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE,
-                "Struct cannot have a return type", message_stage::ELEMENT_STAGE_PARSER);
-            return TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE;
-        }
-    	
-        return result;
-    }
-	
     decl->flags = declflags;
 
-    auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-    auto has_portlist = decl->children[0]->type == ELEMENT_AST_NODE_PORTLIST;
+    ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, false))
+
+    const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+    const auto has_portlist = !decl->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
+
+    //todo: ask craig
+    if (!is_intrinsic && !has_portlist)
+    {
+        tctx->log(TODO_ELEMENT_ERROR_MISSING_PORTS,
+            fmt::format("Portlist for struct '{}' is required as it is not intrinsic",
+                tctx->text(ast->nearest_token)), ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_MISSING_PORTS;
+    }
 
     element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
@@ -617,21 +618,15 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
     bodynode->nearest_token = body;
     tokenlist_advance(tctx, tindex);
     if (body->type == ELEMENT_TOK_SEMICOLON) {
-        if(!is_intrinsic && !has_portlist)
-        {
-            tctx->log(TODO_ELEMENT_ERROR_MISSING_PORTS, "non-intrinsic struct must has a portlist", message_stage::ELEMENT_STAGE_PARSER);
-            return TODO_ELEMENT_ERROR_MISSING_PORTS;
-        }
-    	
-        // interface
+        // constraint
         bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
     } else if (body->type == ELEMENT_TOK_BRACEL) {
         // scope (struct body)
         ELEMENT_OK_OR_RETURN(parse_scope(tctx, tindex, bodynode));
-    }
-    else
-    {
-        tctx->log(TODO_ELEMENT_ERROR_UNKNOWN, "unknown error in parse_struct", message_stage::ELEMENT_STAGE_PARSER);
+    } else {
+        tctx->log(TODO_ELEMENT_ERROR_UNKNOWN, 
+            "unknown error in parse_struct",
+            ELEMENT_STAGE_PARSER);
         return TODO_ELEMENT_ERROR_UNKNOWN;
     }
     return ELEMENT_OK;
@@ -639,31 +634,57 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
 
 static element_result parse_constraint(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, element_ast_flags declflags)
 {
-    //TODO: this function is WIP/broken/do not trust it
     const element_token* token;
     GET_TOKEN(tctx, *tindex, token);
 
     if (token->type == ELEMENT_TOK_EQUALS)
     {
-        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' after a constraint without an identifier", message_stage::ELEMENT_STAGE_PARSER);
+        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+            "invalid identifier found, cannot use '=' after a constraint without an identifier", message_stage::ELEMENT_STAGE_PARSER);
         return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_CONSTRAINT;
     element_ast* decl = ast_new_child(ast);
-    ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, true));
     decl->flags = declflags;
 
+    // cosntraints can have return types
+    ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, true))
+
+    const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+    const auto has_portlist = !decl->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
+
+    //todo: ask craigPortlist for struct 
+    if (!is_intrinsic && !has_portlist)
+    {
+        tctx->log(TODO_ELEMENT_ERROR_MISSING_PORTS,
+            fmt::format("Portlist for constraint '{}' is required as it is not intrinsic",
+                tctx->text(ast->nearest_token)), ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_MISSING_PORTS;
+    }
+
+    element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tctx, *tindex, body);
+    bodynode->nearest_token = body;
+    tokenlist_advance(tctx, tindex);
+
     if (body->type == ELEMENT_TOK_SEMICOLON) {
-        ast->nearest_token = body;
-        ast->type = ELEMENT_AST_NODE_CONSTRAINT;
-        tokenlist_advance(tctx, tindex);
+        bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
     }
-    else {
-        return ELEMENT_ERROR_INVALID_ARCHIVE; //todo: specific error code
+    else if (body->type == ELEMENT_TOK_BRACEL) {
+        tctx->log(TODO_ELEMENT_ERROR_CONSTRAINT_HAS_BODY, 
+            fmt::format("a body was found for constraint '{}', but constraints cannot have bodies", ast->identifier),
+            ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_CONSTRAINT_HAS_BODY;
+    }
+    else
+    {
+        tctx->log(TODO_ELEMENT_ERROR_UNKNOWN, 
+            "unknown error parsing constraint",
+            ELEMENT_STAGE_PARSER);
+        return TODO_ELEMENT_ERROR_UNKNOWN;
     }
 
     return ELEMENT_OK;
