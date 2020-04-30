@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using NUnit.Framework;
@@ -31,25 +32,37 @@ namespace Laboratory.Tests.L3.Prelude
 				string.Format(functionPair.ElementFunction, arg0),
 				new[]{functionPair.CLRFunction(arg0)});
 
-		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] _binaryOpTestValues =
+		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] BinaryOpMap =
 		{
 			("Num.add({0}, {1})", (a, b) => a + b),
 			("Num.sub({0}, {1})", (a, b) => a - b),
 			("Num.mul({0}, {1})", (a, b) => a * b),
 			("Num.div({0}, {1})", (a, b) => a / b),
 			("Num.rem({0}, {1})", (a, b) => a % b),
-			("Num.pow({0}, {1})", MathF.Pow),
 			("Num.min({0}, {1})", MathF.Min),
 			("Num.max({0}, {1})", MathF.Max),
-			("Num.log({0}, {1})", MathF.Log),
 			("Num.atan2({0}, {1})", MathF.Atan2),
+		};
+		[Test, Pairwise]
+		public void BinaryMathOpRandom([ValueSource(nameof(BinaryOpMap))]
+			(string ElementFunction, Func<float, float, float> CLRFunction) functionPair,
+			[Random(-1.0e6f, 1.0e6f, 20)] float arg0,
+			[Random(-1.0e6f, 1.0e6f, 20)] float arg1) =>
+			AssertApproxEqual(ValidatedCompilationInput,
+				string.Format(functionPair.ElementFunction, arg0, arg1),
+				new[]{functionPair.CLRFunction(arg0, arg1)});
+		
+		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] AdditionalBinaryOpMap =
+		{
+			("Num.pow({0}, {1})", MathF.Pow),
+			("Num.log({0}, {1})", MathF.Log),
 		};
 
 		[Test, Pairwise]
-		public void BinaryMathOpRandom([ValueSource(nameof(_binaryOpTestValues))]
+		public void AdditionalBinaryMathOpRandom([ValueSource(nameof(AdditionalBinaryOpMap))]
 		                               (string ElementFunction, Func<float, float, float> CLRFunction) functionPair,
-		                               [Random(-1.0e6f, 1.0e6f, 20)] float arg0,
-		                               [Random(-1.0e6f, 1.0e6f, 20)] float arg1) =>
+		                               [Random(2f, 10f, 10)] float arg0,
+		                               [Random(2f, 10f, 10)] float arg1) =>
 			AssertApproxEqual(ValidatedCompilationInput,
 				string.Format(functionPair.ElementFunction, arg0, arg1),
 				new[]{functionPair.CLRFunction(arg0, arg1)});
@@ -295,22 +308,18 @@ namespace Laboratory.Tests.L3.Prelude
 		public void Maximum(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
-		private static object GenerateLogData(int index)
-		{
-			static string Expression(int index) => $"Num.log({MathF.Pow(10f, index - 1)}, 10)";
-			static string Expected(int index) => (index - 1f).ToString(CultureInfo.InvariantCulture);
-			
-			return new object[] {Expression(index),Expected(index)};
-		}
+		private static object GenerateLogData(int index, int baseValue) 
+			=> new object[] {$"Num.log({MathF.Pow(baseValue, index - 1)}, {baseValue})", $"{(index - 1)}"};
 
-		private static object[] _logCaseData = 
-			Enumerable.Range(1, 10).Select(GenerateLogData).ToArray();
+		private static IEnumerable<object> LogCaseData =
+			Enumerable.Range(1, 10)
+				.SelectMany(index => Enumerable.Range(2, 9) .Select(baseValue => GenerateLogData(index, baseValue)));
 		
 		[
 			TestCase("Num.log(0, 0)", "Num.NaN"),
 			TestCase("Num.log(0, 10)", "Num.NegativeInfinity"),
 			TestCase("Num.log(10, 0)", "Num.NaN"),
-			TestCaseSource(nameof(_logCaseData))
+			TestCaseSource(nameof(LogCaseData))
 		]
 		public void Log(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
