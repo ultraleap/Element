@@ -168,7 +168,8 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 
     element_ast* raw_ast = NULL;
     auto result = element_ast_build(raw_tctx, &raw_ast);
-    if (result != ELEMENT_OK) {
+    //todo: hacky message to help with unit tests until we add logging for all error cases
+    if (result < ELEMENT_OK) {
         log(result, std::string("element_ast_build failed"), filename);
         return result;
     }
@@ -177,13 +178,15 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     auto ast = ast_unique_ptr(raw_ast, element_ast_delete);
     scope_unique_ptr root = get_names(nullptr, raw_ast);
     result = add_ast_names(ast_names, root.get());
-    if (result != ELEMENT_OK) {
+    //todo: hacky message to help with unit tests until we add logging for all error cases
+    if (result < ELEMENT_OK) {
         log(result, std::string("add_ast_names failed"), filename);
         return result;
     }
 
     result = merge_names(names, std::move(root), nullptr);
-    if (result != ELEMENT_OK) {
+    //todo: hacky message to help with unit tests until we add logging for all error cases
+    if (result < ELEMENT_OK) {
         log(result, std::string("merge_names failed"), filename);
         return result;
     }
