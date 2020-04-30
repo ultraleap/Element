@@ -171,8 +171,8 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     //todo: hacky message to help with unit tests until we add logging for all error cases
     if (result < ELEMENT_OK) {
         log(result, std::string("element_ast_build failed"), filename);
-        return result;
     }
+    ELEMENT_OK_OR_RETURN(result)
 
     // element_ast_print(raw_ast);
     auto ast = ast_unique_ptr(raw_ast, element_ast_delete);
@@ -181,15 +181,15 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     //todo: hacky message to help with unit tests until we add logging for all error cases
     if (result < ELEMENT_OK) {
         log(result, std::string("add_ast_names failed"), filename);
-        return result;
     }
+    ELEMENT_OK_OR_RETURN(result)
 
     result = merge_names(names, std::move(root), nullptr);
     //todo: hacky message to help with unit tests until we add logging for all error cases
     if (result < ELEMENT_OK) {
         log(result, std::string("merge_names failed"), filename);
-        return result;
     }
+    ELEMENT_OK_OR_RETURN(result)
 
     trees.push_back(std::make_pair(filename, std::move(ast)));
 
