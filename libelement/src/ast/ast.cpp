@@ -223,7 +223,7 @@ static element_result parse_port(element_tokeniser_ctx* tctx, size_t* tindex, el
     	{
 	        const auto message = fmt::format("invalid identifier '{}'", ast->identifier);
             tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, message, message_stage::ELEMENT_STAGE_PARSER);
-            return result;
+            return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
     	}
     } else {
         // no name, advance
@@ -299,7 +299,7 @@ static element_result parse_exprlist(element_tokeniser_ctx* tctx, size_t* tindex
         } while (token->type == ELEMENT_TOK_COMMA && tokenlist_advance(tctx, tindex));
     }
     else {
-        //not really sure what these errors mean...
+        //todo: not really sure what these errors mean...
         return ELEMENT_ERROR_INVALID_ARCHIVE;
     }
     assert(token->type == ELEMENT_TOK_BRACKETR);
@@ -548,7 +548,7 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
 	if(token->type == ELEMENT_TOK_EQUALS)
 	{
         tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' after a struct without an identifier", message_stage::ELEMENT_STAGE_PARSER);
-        return TODO_ELEMENT_ERROR_PARSE;
+        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
 	}
 
     ast->nearest_token = token;
@@ -569,7 +569,7 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
         if(!is_intrinsic && !has_portlist)
         {
             tctx->log(TODO_ELEMENT_ERROR_MISSING_PORTS, "non-intrinsic struct must has a portlist", message_stage::ELEMENT_STAGE_PARSER);
-            return TODO_ELEMENT_ERROR_PARSE;
+            return TODO_ELEMENT_ERROR_MISSING_PORTS;
         }
     	
         // interface
@@ -581,7 +581,7 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
     else
     {
         tctx->log(TODO_ELEMENT_ERROR_UNKNOWN, "unknown error in parse_struct", message_stage::ELEMENT_STAGE_PARSER);
-        return TODO_ELEMENT_ERROR_PARSE;
+        return TODO_ELEMENT_ERROR_UNKNOWN;
     }
     return ELEMENT_OK;
 }
@@ -595,7 +595,7 @@ static element_result parse_constraint(element_tokeniser_ctx* tctx, size_t* tind
     if (token->type == ELEMENT_TOK_EQUALS)
     {
         tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' after a constraint without an identifier", message_stage::ELEMENT_STAGE_PARSER);
-        return TODO_ELEMENT_ERROR_PARSE;
+        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     ast->nearest_token = token;
@@ -629,7 +629,7 @@ static element_result parse_namespace(element_tokeniser_ctx* tctx, size_t* tinde
     if (token->type == ELEMENT_TOK_EQUALS)
     {
         tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' after a namespace without an identifier", message_stage::ELEMENT_STAGE_PARSER);
-        return TODO_ELEMENT_ERROR_PARSE;
+        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     ast->nearest_token = token;
