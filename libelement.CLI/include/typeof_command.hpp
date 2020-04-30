@@ -33,7 +33,7 @@ namespace libelement::cli
 			element_result result = ELEMENT_OK;
 			result = setup(input);
 			if (result != ELEMENT_OK)
-				return compiler_message("Failed to setup context");
+				return compiler_message(message_type::PARSE_ERROR,"Failed to setup context");
 
 			//call into libelement
 			element_value outputs[1]{ 0 };

@@ -521,7 +521,7 @@ static element_result parse_function(element_tokeniser_ctx* tctx, size_t* tindex
     bodynode->nearest_token = body;
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
-        if (declflags & ELEMENT_AST_FLAG_DECL_INTRINSIC) {
+        if (decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
             tokenlist_advance(tctx, tindex);
         }
         else {
