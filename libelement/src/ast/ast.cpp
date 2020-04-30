@@ -448,18 +448,28 @@ static element_result parse_declaration(element_tokeniser_ctx* tctx, size_t* tin
         args->flags |= ELEMENT_AST_FLAG_DECL_EMPTY_INPUT;
     }
 
-    if (find_return_type && tok->type == ELEMENT_TOK_COLON) {
-        // output type
-        tokenlist_advance(tctx, tindex);
-        element_ast* type = ast_new_child(ast);
-        type->nearest_token = tok;
-        ELEMENT_OK_OR_RETURN(parse_typename(tctx, tindex, type));
-    } else {
+    auto has_return = tok->type == ELEMENT_TOK_COLON;
+    if (has_return) {
+        if (find_return_type) {
+            // output type
+            tokenlist_advance(tctx, tindex);
+            element_ast* type = ast_new_child(ast);
+            type->nearest_token = tok;
+            ELEMENT_OK_OR_RETURN(parse_typename(tctx, tindex, type));
+        }
+        else {
+            return TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE;
+        }
+    }
+    else
+    {
         // implied any output
         element_ast* ret = ast_new_child(ast, ELEMENT_AST_NODE_NONE);
         ret->nearest_token = tok;
-        ret->flags = ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN;
+        ret->flags = ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN;	    
     }
+
+	
     return ELEMENT_OK;
 }
 
@@ -533,7 +543,6 @@ static element_result parse_function(element_tokeniser_ctx* tctx, size_t* tindex
             tokenlist_advance(tctx, tindex);
         }
         else {
-
             tctx->log(TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY, 
                 "Non-intrinsic functions must declare a body");
             return TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY;
@@ -555,14 +564,27 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
 
 	if(token->type == ELEMENT_TOK_EQUALS)
 	{
-        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' after a struct without an identifier", message_stage::ELEMENT_STAGE_PARSER);
+        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, 
+            "invalid identifier found, cannot use '=' after a struct without an identifier", message_stage::ELEMENT_STAGE_PARSER);
         return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
 	}
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_STRUCT;
     element_ast* decl = ast_new_child(ast);
-    ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, false));
+    auto result = parse_declaration(tctx, tindex, decl, false);
+    if (result != ELEMENT_OK) 
+    {
+        if (result == TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE)
+        {
+            tctx->log(TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE,
+                "Struct cannot have a return type", message_stage::ELEMENT_STAGE_PARSER);
+            return TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE;
+        }
+    	
+        return result;
+    }
+	
     decl->flags = declflags;
 
     auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
