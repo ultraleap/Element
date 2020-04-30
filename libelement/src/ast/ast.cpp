@@ -28,11 +28,6 @@ static element_result check_reserved_words(const std::string& text, bool allow_r
         : ELEMENT_ERROR_INVALID_ARCHIVE; // TODO: errcode
 }
 
-static bool has_flag(element_ast_flags flags, element_ast_flags flag)
-{
-    return (flags & flag) == flag;
-}
-
 //
 // Token helpers
 //
@@ -507,10 +502,13 @@ static element_result parse_function(element_tokeniser_ctx* tctx, size_t* tindex
     bodynode->nearest_token = body;
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
-        if (declflags & ELEMENT_AST_FLAG_DECL_INTRINSIC)
+        if (declflags & ELEMENT_AST_FLAG_DECL_INTRINSIC) {
             tokenlist_advance(tctx, tindex);
-        else
-            return ELEMENT_ERROR_INVALID_ARCHIVE; //todo: more specific error code/logging
+        }
+        else {
+            //todo: more specific error code/logging
+            return ELEMENT_ERROR_INVALID_ARCHIVE;
+        }
     } else {
         // real body of some sort
         ELEMENT_OK_OR_RETURN(parse_body(tctx, tindex, bodynode, true));
@@ -538,7 +536,7 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
     ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, false));
     decl->flags = declflags;
 
-    auto is_intrinsic = has_flag(declflags, ELEMENT_AST_FLAG_DECL_INTRINSIC);
+    auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
     auto has_portlist = decl->children[0]->type == ELEMENT_AST_NODE_PORTLIST;
 
     element_ast* bodynode = ast_new_child(ast);
