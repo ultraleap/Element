@@ -92,3 +92,56 @@ inline bool ast_node_has_literal(const element_ast* n)
 {
     return n->type == ELEMENT_AST_NODE_LITERAL;
 }
+
+struct element_parser_ctx
+{
+    using LogCallback = void (*)(const element_log_message* const);
+
+    LogCallback log_callback = nullptr;
+    element_tokeniser_ctx* tokeniser = nullptr;
+    element_ast* root = nullptr;
+
+    // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
+    element_result parse_literal(size_t* tindex, element_ast* ast);
+    // identifier ::= '_'? [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
+    element_result parse_identifier(size_t* tindex, element_ast* ast, bool allow_reserved_args = false);
+    // type ::= ':' identifier ('.' identifier)*
+    element_result parse_typename(size_t* tindex, element_ast* ast);
+    // port ::= (identifier | unidentifier) type?
+    element_result parse_port(size_t* tindex, element_ast* ast);
+    // portlist ::= port (',' port)*
+    element_result parse_portlist(size_t* tindex, element_ast* ast);
+    // exprlist ::= expression (',' expression)*
+    element_result parse_exprlist(size_t* tindex, element_ast* ast);
+    // call ::= (identifier | literal) ('(' exprlist ')' | '.' identifier)*
+    element_result parse_call(size_t* tindex, element_ast* ast);
+    // lambda ::= unidentifier '(' portlist ')' body
+    element_result parse_lambda(size_t* tindex, element_ast* ast);
+    // expression ::= call | lambda
+    element_result parse_expression(size_t* tindex, element_ast* ast);
+    // qualifier ::= 'intrinsic' | 'extern'
+    element_result parse_qualifiers(size_t* tindex, element_ast_flags* flags);
+    // declaration ::= identifier ('(' portlist ')')?
+    // note that we also grab an optional type on the end at AST level for simplicity
+    element_result parse_declaration(size_t* tindex, element_ast* ast, bool find_return_type);
+    // scope ::= '{' item* '}'
+    element_result parse_scope(size_t* tindex, element_ast* ast);
+    element_result parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semi);
+    // function ::= qualifier* declaration type? (scope | statement | interface)
+    // note qualifiers parsed further out and passed in
+    element_result parse_function(size_t* tindex, element_ast* ast, element_ast_flags declflags);
+    // struct ::= qualifier* 'struct' declaration (scope | interface)
+    // note qualifiers parsed further out and passed in
+    element_result parse_struct(size_t* tindex, element_ast* ast, element_ast_flags declflags);
+    element_result parse_constraint(size_t* tindex, element_ast* ast, element_ast_flags declflags);
+    // namespace ::= 'namespace' identifier scope
+    element_result parse_namespace(size_t* tindex, element_ast* ast);
+    // item ::= namespace | struct | function
+    element_result parse_item(size_t* tindex, element_ast* ast);
+    // start : /^/ (<item>)* /$/;
+    element_result parse(size_t* tindex, element_ast* ast);
+    element_result ast_build();
+
+    void log(int message_code, const std::string& message) const;
+    void log(const element_log_message& message) const;
+};

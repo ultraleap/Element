@@ -166,8 +166,11 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     if (raw_tctx->tokens.empty())
         return ELEMENT_OK;
 
-    element_ast* raw_ast = NULL;
-    auto result = element_ast_build(raw_tctx, &raw_ast);
+    element_parser_ctx parser;
+    parser.tokeniser = raw_tctx;
+    parser.log_callback = log_callback;
+
+    auto result = parser.ast_build();
     //todo: hacky message to help with unit tests until we add logging for all error cases
     if (result < ELEMENT_OK) {
         log(result, std::string("element_ast_build failed"), filename);
@@ -175,8 +178,8 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     ELEMENT_OK_OR_RETURN(result)
 
     // element_ast_print(raw_ast);
-    auto ast = ast_unique_ptr(raw_ast, element_ast_delete);
-    scope_unique_ptr root = get_names(nullptr, raw_ast);
+    auto ast = ast_unique_ptr(parser.root, element_ast_delete);
+    scope_unique_ptr root = get_names(nullptr, parser.root);
     result = add_ast_names(ast_names, root.get());
     //todo: hacky message to help with unit tests until we add logging for all error cases
     if (result < ELEMENT_OK) {

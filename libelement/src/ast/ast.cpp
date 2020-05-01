@@ -165,44 +165,40 @@ static element_ast* ast_new_child(element_ast* parent, element_ast_node_type typ
     return cr;
 }
 
-// literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
-static element_result parse_literal(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_literal(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
     assert(token->type == ELEMENT_TOK_NUMBER);
     ast->type = ELEMENT_AST_NODE_LITERAL;
-    ast->literal = std::stof(tctx->text(token));
-    tokenlist_advance(tctx, tindex);
+    ast->literal = std::stof(tokeniser->text(token));
+    tokenlist_advance(tokeniser, tindex);
     return ELEMENT_OK;
 }
 
-// identifier ::= '_'? [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
-static element_result parse_identifier(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, bool allow_reserved_args = false)
+element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast* ast, bool allow_reserved_args)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
     assert(token->type == ELEMENT_TOK_IDENTIFIER);
     ast->nearest_token = token;
-    ast->identifier.assign(tctx->text(token));
-    tokenlist_advance(tctx, tindex);
+    ast->identifier.assign(tokeniser->text(token));
+    tokenlist_advance(tokeniser, tindex);
 
     auto result = check_reserved_words(ast->identifier, allow_reserved_args);
     if (result != ELEMENT_OK) {
-        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, 
-            fmt::format("Invalid identifier '{}'", ast->identifier),
-            ELEMENT_STAGE_PARSER);
+        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+            fmt::format("Invalid identifier '{}'", ast->identifier));
         return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     return result;
 }
 
-// type ::= ':' identifier ('.' identifier)*
-static element_result parse_typename(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* ast)
 {
     const element_token* tok;
-    GET_TOKEN(tctx, *tindex, tok);
+    GET_TOKEN(tokeniser, *tindex, tok);
     assert(tok->type == ELEMENT_TOK_IDENTIFIER);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_TYPENAME;
@@ -213,52 +209,50 @@ static element_result parse_typename(element_tokeniser_ctx* tctx, size_t* tindex
         element_ast* child = ast_new_child(ast);
         child->type = ELEMENT_AST_NODE_IDENTIFIER;
 
-        const auto identifier_result = parse_identifier(tctx, tindex, child);
+        const auto identifier_result = parse_identifier(tindex, child);
         if (identifier_result != ELEMENT_OK)
         {
             if (result == TODO_ELEMENT_OK)
                 result = identifier_result;
         }
 
-        GET_TOKEN(tctx, *tindex, tok);
+        GET_TOKEN(tokeniser, *tindex, tok);
         child->nearest_token = tok;
         if (tok->type == ELEMENT_TOK_DOT)
-            TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, tok);
+            TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
     }
 
     return result;
 }
 
-// port ::= (identifier | unidentifier) type?
-static element_result parse_port(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_port(size_t* tindex, element_ast* ast)
 {
     const element_token* tok;
-    GET_TOKEN(tctx, *tindex, tok);
+    GET_TOKEN(tokeniser, *tindex, tok);
     assert(tok->type == ELEMENT_TOK_IDENTIFIER || tok->type == ELEMENT_TOK_UNDERSCORE);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_PORT;
     if (tok->type == ELEMENT_TOK_IDENTIFIER) {
-	    ELEMENT_OK_OR_RETURN(parse_identifier(tctx, tindex, ast, true));
+	    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, true));
     } else {
         // no name, advance
-        tokenlist_advance(tctx, tindex);
+        tokenlist_advance(tokeniser, tindex);
     }
 
-    GET_TOKEN(tctx, *tindex, tok);
+    GET_TOKEN(tokeniser, *tindex, tok);
     if (tok->type == ELEMENT_TOK_COLON) {
-        tokenlist_advance(tctx, tindex);
+        tokenlist_advance(tokeniser, tindex);
         element_ast* type = ast_new_child(ast);
         type->nearest_token = tok;
-        ELEMENT_OK_OR_RETURN(parse_typename(tctx, tindex, type));
+        ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
     }
     return ELEMENT_OK;
 }
 
-// portlist ::= port (',' port)*
-static element_result parse_portlist(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_portlist(size_t* tindex, element_ast* ast)
 {
     const element_token* tok;
-    GET_TOKEN(tctx, *tindex, tok);
+    GET_TOKEN(tokeniser, *tindex, tok);
     assert(tok->type == ELEMENT_TOK_IDENTIFIER || tok->type == ELEMENT_TOK_UNDERSCORE);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_PORTLIST;
@@ -266,10 +260,10 @@ static element_result parse_portlist(element_tokeniser_ctx* tctx, size_t* tindex
     do
     {
         element_ast* port = ast_new_child(ast);
-        ELEMENT_OK_OR_RETURN(parse_port(tctx, tindex, port));
-        GET_TOKEN(tctx, *tindex, tok);
+        ELEMENT_OK_OR_RETURN(parse_port(tindex, port));
+        GET_TOKEN(tokeniser, *tindex, tok);
         port->nearest_token = tok;
-    } while (tok->type == ELEMENT_TOK_COMMA && tokenlist_advance(tctx, tindex));
+    } while (tok->type == ELEMENT_TOK_COMMA && tokenlist_advance(tokeniser, tindex));
 
     auto result = TODO_ELEMENT_OK;
 
@@ -281,9 +275,9 @@ static element_result parse_portlist(element_tokeniser_ctx* tctx, size_t* tindex
             if (i != j &&  // not the same port
                 ast->children[i]->identifier == ast->children[j]->identifier)
             {
-                tctx->log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS, 
+                log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS, 
                     fmt::format("Parameter {} and {} in the port list of function '{}' have the same identifier '{}'",
-                        i, j, tctx->text(ast->parent->nearest_token), ast->children[i]->identifier));
+                        i, j, tokeniser->text(ast->parent->nearest_token), ast->children[i]->identifier));
                 result = TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
             }
         }
@@ -292,54 +286,49 @@ static element_result parse_portlist(element_tokeniser_ctx* tctx, size_t* tindex
     return result;
 }
 
-static element_result parse_expression(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast);
-static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, bool expr_requires_semi);
-
-// exprlist ::= expression (',' expression)*
-static element_result parse_exprlist(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_exprlist(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
     assert(token->type == ELEMENT_TOK_BRACKETL);
-    TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, token);
+    TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, token);
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_EXPRLIST;
     if (token->type != ELEMENT_TOK_BRACKETR) {
         do {
             element_ast* eid = ast_new_child(ast);
-            ELEMENT_OK_OR_RETURN(parse_expression(tctx, tindex, eid));
-            GET_TOKEN(tctx, *tindex, token);
+            ELEMENT_OK_OR_RETURN(parse_expression(tindex, eid));
+            GET_TOKEN(tokeniser, *tindex, token);
             eid->nearest_token = token;
-        } while (token->type == ELEMENT_TOK_COMMA && tokenlist_advance(tctx, tindex));
+        } while (token->type == ELEMENT_TOK_COMMA && tokenlist_advance(tokeniser, tindex));
     }
     else {
         //todo: not really sure what these errors mean...
         return ELEMENT_ERROR_INVALID_ARCHIVE;
     }
     assert(token->type == ELEMENT_TOK_BRACKETR);
-    tokenlist_advance(tctx, tindex);
+    tokenlist_advance(tokeniser, tindex);
     return ELEMENT_OK;
 }
 
-// call ::= (identifier | literal) ('(' exprlist ')' | '.' identifier)*
-static element_result parse_call(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
     assert(token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_NUMBER);
     // get identifier
     ast_unique_ptr root = ast_new(nullptr, ELEMENT_AST_NODE_CALL);
     root->nearest_token = token;
     if (token->type == ELEMENT_TOK_IDENTIFIER) {
-        ELEMENT_OK_OR_RETURN(parse_identifier(tctx, tindex, root.get()));
+        ELEMENT_OK_OR_RETURN(parse_identifier(tindex, root.get()));
     } else if (token->type == ELEMENT_TOK_NUMBER) {
         // this will change root's type to LITERAL
-        ELEMENT_OK_OR_RETURN(parse_literal(tctx, tindex, root.get()));
+        ELEMENT_OK_OR_RETURN(parse_literal(tindex, root.get()));
     } else {
         assert(false);
         return ELEMENT_ERROR_INVALID_ARCHIVE; // TODO: error code
     }
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
 
     while (token->type == ELEMENT_TOK_DOT || token->type == ELEMENT_TOK_BRACKETL) {
         if (token->type == ELEMENT_TOK_BRACKETL) {
@@ -354,72 +343,69 @@ static element_result parse_call(element_tokeniser_ctx* tctx, size_t* tindex, el
             // parse args
             element_ast* cid = ast_new_child(root.get());
             cid->nearest_token = token;
-            ELEMENT_OK_OR_RETURN(parse_exprlist(tctx, tindex, cid));
+            ELEMENT_OK_OR_RETURN(parse_exprlist(tindex, cid));
         } else if (token->type == ELEMENT_TOK_DOT) {
             // member field access
             ast_unique_ptr callroot = ast_new(nullptr, ELEMENT_AST_NODE_CALL);
             // move existing root into left side of new one
             ast_add_child(callroot.get(), std::move(root));
-            tokenlist_advance(tctx, tindex);
-            ELEMENT_OK_OR_RETURN(parse_identifier(tctx, tindex, callroot.get()));
+            tokenlist_advance(tokeniser, tindex);
+            ELEMENT_OK_OR_RETURN(parse_identifier(tindex, callroot.get()));
             root = std::move(callroot);
         }
-        GET_TOKEN(tctx, *tindex, token);
+        GET_TOKEN(tokeniser, *tindex, token);
     }
-    ast_move(root.get(), ast, 0);
+    ast_move(root.get(), ast, false);
     return ELEMENT_OK;
 }
 
-// lambda ::= unidentifier '(' portlist ')' body
-static element_result parse_lambda(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_lambda(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
     assert(token->type == ELEMENT_TOK_UNDERSCORE);
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_LAMBDA;
 
-    TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, token);
+    TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, token);
     if (token->type != ELEMENT_TOK_BRACKETL)
         return ELEMENT_ERROR_INVALID_OPERATION;
-    tokenlist_advance(tctx, tindex);
+    tokenlist_advance(tokeniser, tindex);
     element_ast* ports = ast_new_child(ast);
-    ELEMENT_OK_OR_RETURN(parse_portlist(tctx, tindex, ports));
-    GET_TOKEN(tctx, *tindex, token);
+    ELEMENT_OK_OR_RETURN(parse_portlist(tindex, ports));
+    GET_TOKEN(tokeniser, *tindex, token);
     if (token->type != ELEMENT_TOK_BRACKETR)
         return ELEMENT_ERROR_INVALID_OPERATION;
-    tokenlist_advance(tctx, tindex);
+    tokenlist_advance(tokeniser, tindex);
     element_ast* body = ast_new_child(ast);
     body->nearest_token = token;
-    ELEMENT_OK_OR_RETURN(parse_body(tctx, tindex, body, false));
+    ELEMENT_OK_OR_RETURN(parse_body(tindex, body, false));
     return ELEMENT_OK;
 }
 
-// expression ::= call | lambda
-static element_result parse_expression(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_expression(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token); //TODO: JM - CommentInline-fail.ele
+    GET_TOKEN(tokeniser, *tindex, token); //TODO: JM - CommentInline-fail.ele
     assert(token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_UNDERSCORE || token->type == ELEMENT_TOK_NUMBER);
     ast->nearest_token = token;
     if (token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_NUMBER)
-        return parse_call(tctx, tindex, ast);
+        return parse_call(tindex, ast);
     if (token->type == ELEMENT_TOK_UNDERSCORE)
-        return parse_lambda(tctx, tindex, ast);
+        return parse_lambda(tindex, ast);
     return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code...
 }
 
-// qualifier ::= 'intrinsic' | 'extern'
-static element_result parse_qualifiers(element_tokeniser_ctx* tctx, size_t* tindex, element_ast_flags* flags)
+element_result element_parser_ctx::parse_qualifiers(size_t* tindex, element_ast_flags* flags)
 {
     const element_token* tok;
-    GET_TOKEN(tctx, *tindex, tok);
+    GET_TOKEN(tokeniser, *tindex, tok);
 
     // keep track of previous flags so we can check there are no duplicates
     std::vector<element_ast_flags> qualifier_flags;
 
     while (tok->type == ELEMENT_TOK_IDENTIFIER) {
-        std::string id = tctx->text(tok);
+        std::string id = tokeniser->text(tok);
         if (id == "intrinsic") {
             bool found_duplicate_intrinsic = false;
             for (element_ast_flags flag : qualifier_flags) {
@@ -437,33 +423,31 @@ static element_result parse_qualifiers(element_tokeniser_ctx* tctx, size_t* tind
             break;
         }
 
-        TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, tok);
+        TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
     }
 
     return ELEMENT_OK;
 }
 
-// declaration ::= identifier ('(' portlist ')')?
-// note that we also grab an optional type on the end at AST level for simplicity
-static element_result parse_declaration(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, bool find_return_type)
+element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast* ast, bool find_return_type)
 {
     const element_token* tok;
-    GET_TOKEN(tctx, *tindex, tok);
+    GET_TOKEN(tokeniser, *tindex, tok);
     assert(tok->type == ELEMENT_TOK_IDENTIFIER);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_DECLARATION;
-    ELEMENT_OK_OR_RETURN(parse_identifier(tctx, tindex, ast));
-    GET_TOKEN(tctx, *tindex, tok);
+    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast));
+    GET_TOKEN(tokeniser, *tindex, tok);
     // always create the args node, even if it ends up being none/empty
     element_ast* args = ast_new_child(ast, ELEMENT_AST_NODE_NONE);
     args->nearest_token = tok;
     if (tok->type == ELEMENT_TOK_BRACKETL) {
         // argument list
-        tokenlist_advance(tctx, tindex);
-        ELEMENT_OK_OR_RETURN(parse_portlist(tctx, tindex, args));
-        GET_TOKEN(tctx, *tindex, tok);
+        tokenlist_advance(tokeniser, tindex);
+        ELEMENT_OK_OR_RETURN(parse_portlist(tindex, args));
+        GET_TOKEN(tokeniser, *tindex, tok);
         assert(tok->type == ELEMENT_TOK_BRACKETR);
-        TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, tok);
+        TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
     }
     else {
         args->flags |= ELEMENT_AST_FLAG_DECL_EMPTY_INPUT;
@@ -473,15 +457,14 @@ static element_result parse_declaration(element_tokeniser_ctx* tctx, size_t* tin
     if (has_return) {
         if (find_return_type) {
             // output type
-            tokenlist_advance(tctx, tindex);
+            tokenlist_advance(tokeniser, tindex);
             element_ast* type = ast_new_child(ast);
             type->nearest_token = tok;
-            ELEMENT_OK_OR_RETURN(parse_typename(tctx, tindex, type));
+            ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
         }
         else {
-            tctx->log(TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE, 
-                    "A struct cannot have a return type",
-                    ELEMENT_STAGE_PARSER);
+            log(TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE, 
+                    "A struct cannot have a return type");
             return TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE;
         }
     }
@@ -497,42 +480,39 @@ static element_result parse_declaration(element_tokeniser_ctx* tctx, size_t* tin
     return ELEMENT_OK;
 }
 
-static element_result parse_item(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast);
-
-// scope ::= '{' item* '}'
-static element_result parse_scope(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_scope(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
     if (token->type == ELEMENT_TOK_BRACEL)
-        TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, token);
+        TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, token);
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_SCOPE;
     while (token->type != ELEMENT_TOK_BRACER) {
         element_ast* item = ast_new_child(ast);
         item->nearest_token = token;
-        ELEMENT_OK_OR_RETURN(parse_item(tctx, tindex, item));
-        GET_TOKEN(tctx, *tindex, token);
+        ELEMENT_OK_OR_RETURN(parse_item(tindex, item));
+        GET_TOKEN(tokeniser, *tindex, token);
     }
-    tokenlist_advance(tctx, tindex);
+    tokenlist_advance(tokeniser, tindex);
     return ELEMENT_OK;
 }
 
-static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, bool expr_requires_semi)
+element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semi)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
     if (token->type == ELEMENT_TOK_BRACEL) {
         // scope (function body)
-        ELEMENT_OK_OR_RETURN(parse_scope(tctx, tindex, ast));
+        ELEMENT_OK_OR_RETURN(parse_scope(tindex, ast));
     } else if (token->type == ELEMENT_TOK_EQUALS) {
-        tokenlist_advance(tctx, tindex);
-        ELEMENT_OK_OR_RETURN(parse_expression(tctx, tindex, ast));
+        tokenlist_advance(tokeniser, tindex);
+        ELEMENT_OK_OR_RETURN(parse_expression(tindex, ast));
         if (expr_requires_semi) {
-            GET_TOKEN(tctx, *tindex, token);
+            GET_TOKEN(tokeniser, *tindex, token);
             if (token->type == ELEMENT_TOK_SEMICOLON) {
-                tokenlist_advance(tctx, tindex);
+                tokenlist_advance(tokeniser, tindex);
             } else {
                 return ELEMENT_ERROR_INVALID_ARCHIVE;
             }
@@ -544,52 +524,48 @@ static element_result parse_body(element_tokeniser_ctx* tctx, size_t* tindex, el
     return ELEMENT_OK;
 }
 
-// function ::= qualifier* declaration type? (scope | statement | interface)
-// note qualifiers parsed further out and passed in
-static element_result parse_function(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, element_ast_flags declflags)
+element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* ast, element_ast_flags declflags)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_FUNCTION;
     element_ast* decl = ast_new_child(ast);
-    ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, true));
+    ELEMENT_OK_OR_RETURN(parse_declaration(tindex, decl, true));
     decl->flags = declflags;
 
     element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
-    GET_TOKEN(tctx, *tindex, body);
+    GET_TOKEN(tokeniser, *tindex, body);
     bodynode->nearest_token = body;
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
         if (decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
-            tokenlist_advance(tctx, tindex);
+            tokenlist_advance(tokeniser, tindex);
         }
         else {
-            tctx->log(TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY, 
+            log(TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY, 
                 "Non-intrinsic functions must declare a body");
             return TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY;
         }
     } else {
         // real body of some sort
-        ELEMENT_OK_OR_RETURN(parse_body(tctx, tindex, bodynode, true));
+        ELEMENT_OK_OR_RETURN(parse_body(tindex, bodynode, true));
     }
 
     return ELEMENT_OK;
 }
 
-// struct ::= qualifier* 'struct' declaration (scope | interface)
-// note qualifiers parsed further out and passed in
-static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, element_ast_flags declflags)
+element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast, element_ast_flags declflags)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
 
 	if(token->type == ELEMENT_TOK_EQUALS)
 	{
-        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, 
-            "invalid identifier found, cannot use '=' after a struct without an identifier", message_stage::ELEMENT_STAGE_PARSER);
+        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, 
+            "invalid identifier found, cannot use '=' after a struct without an identifier");
         return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
 	}
 
@@ -598,7 +574,7 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
     element_ast* decl = ast_new_child(ast);
     decl->flags = declflags;
 
-    ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, false))
+    ELEMENT_OK_OR_RETURN(parse_declaration(tindex, decl, false))
 
     const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
     const auto has_portlist = !decl->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
@@ -606,41 +582,40 @@ static element_result parse_struct(element_tokeniser_ctx* tctx, size_t* tindex, 
     //todo: ask craig
     if (!is_intrinsic && !has_portlist)
     {
-        tctx->log(TODO_ELEMENT_ERROR_MISSING_PORTS,
+        log(TODO_ELEMENT_ERROR_MISSING_PORTS,
             fmt::format("Portlist for struct '{}' is required as it is not intrinsic",
-                tctx->text(ast->nearest_token)), ELEMENT_STAGE_PARSER);
+                tokeniser->text(ast->nearest_token)));
         return TODO_ELEMENT_ERROR_MISSING_PORTS;
     }
 
     element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
-    GET_TOKEN(tctx, *tindex, body);
+    GET_TOKEN(tokeniser, *tindex, body);
     bodynode->nearest_token = body;
-    tokenlist_advance(tctx, tindex);
+    tokenlist_advance(tokeniser, tindex);
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         // constraint
         bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
     } else if (body->type == ELEMENT_TOK_BRACEL) {
         // scope (struct body)
-        ELEMENT_OK_OR_RETURN(parse_scope(tctx, tindex, bodynode));
+        ELEMENT_OK_OR_RETURN(parse_scope(tindex, bodynode));
     } else {
-        tctx->log(TODO_ELEMENT_ERROR_UNKNOWN, 
-            "unknown error in parse_struct",
-            ELEMENT_STAGE_PARSER);
+        log(TODO_ELEMENT_ERROR_UNKNOWN, 
+            "unknown error in parse_struct");
         return TODO_ELEMENT_ERROR_UNKNOWN;
     }
     return ELEMENT_OK;
 }
 
-static element_result parse_constraint(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast, element_ast_flags declflags)
+element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast* ast, element_ast_flags declflags)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
 
     if (token->type == ELEMENT_TOK_EQUALS)
     {
-        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
-            "invalid identifier found, cannot use '=' after a constraint without an identifier", message_stage::ELEMENT_STAGE_PARSER);
+        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+            "invalid identifier found, cannot use '=' after a constraint without an identifier");
         return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
@@ -650,7 +625,7 @@ static element_result parse_constraint(element_tokeniser_ctx* tctx, size_t* tind
     decl->flags = declflags;
 
     // cosntraints can have return types
-    ELEMENT_OK_OR_RETURN(parse_declaration(tctx, tindex, decl, true))
+    ELEMENT_OK_OR_RETURN(parse_declaration(tindex, decl, true))
 
     const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
     const auto has_portlist = !decl->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
@@ -658,132 +633,126 @@ static element_result parse_constraint(element_tokeniser_ctx* tctx, size_t* tind
     //todo: ask craigPortlist for struct 
     if (!is_intrinsic && !has_portlist)
     {
-        tctx->log(TODO_ELEMENT_ERROR_MISSING_PORTS,
+        log(TODO_ELEMENT_ERROR_MISSING_PORTS,
             fmt::format("Portlist for constraint '{}' is required as it is not intrinsic",
-                tctx->text(ast->nearest_token)), ELEMENT_STAGE_PARSER);
+                tokeniser->text(ast->nearest_token)));
         return TODO_ELEMENT_ERROR_MISSING_PORTS;
     }
 
     element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
-    GET_TOKEN(tctx, *tindex, body);
+    GET_TOKEN(tokeniser, *tindex, body);
     bodynode->nearest_token = body;
-    tokenlist_advance(tctx, tindex);
+    tokenlist_advance(tokeniser, tindex);
 
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
     }
     else if (body->type == ELEMENT_TOK_BRACEL) {
-        tctx->log(TODO_ELEMENT_ERROR_CONSTRAINT_HAS_BODY, 
-            fmt::format("a body was found for constraint '{}', but constraints cannot have bodies", ast->identifier),
-            ELEMENT_STAGE_PARSER);
+        log(TODO_ELEMENT_ERROR_CONSTRAINT_HAS_BODY, 
+            fmt::format("a body was found for constraint '{}', but constraints cannot have bodies", 
+                ast->identifier));
         return TODO_ELEMENT_ERROR_CONSTRAINT_HAS_BODY;
-    }
-    else
-    {
-        tctx->log(TODO_ELEMENT_ERROR_UNKNOWN, 
-            "unknown error parsing constraint",
-            ELEMENT_STAGE_PARSER);
+    } else {
+        log(TODO_ELEMENT_ERROR_UNKNOWN, 
+            "unknown error parsing constraint");
         return TODO_ELEMENT_ERROR_UNKNOWN;
     }
 
     return ELEMENT_OK;
 }
 
-// namespace ::= 'namespace' identifier scope
-static element_result parse_namespace(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_namespace(size_t* tindex, element_ast* ast)
 {
-    tokenlist_advance(tctx, tindex);
+    tokenlist_advance(tokeniser, tindex);
 
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
 
     if (token->type == ELEMENT_TOK_EQUALS)
     {
-        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, "invalid identifier found, cannot use '=' after a namespace without an identifier", message_stage::ELEMENT_STAGE_PARSER);
+        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+            "invalid identifier found, cannot use '=' after a namespace without an identifier");
         return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_NAMESPACE;
-    ELEMENT_OK_OR_RETURN(parse_identifier(tctx, tindex, ast));
+    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast));
 
     element_ast* scope = ast_new_child(ast);
-    ELEMENT_OK_OR_RETURN(parse_scope(tctx, tindex, scope));
+    ELEMENT_OK_OR_RETURN(parse_scope(tindex, scope));
 
     return ELEMENT_OK;
 }
 
-// item ::= namespace | struct | function
-static element_result parse_item(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
-    GET_TOKEN(tctx, *tindex, token);
+    GET_TOKEN(tokeniser, *tindex, token);
 
     ast->nearest_token = token;
 
     //A sole underscore was used as an identifier
     if (token->type == ELEMENT_TOK_UNDERSCORE) {
-        tctx->log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
-            fmt::format("Invalid identifier '{}'", tctx->text(token)),
-            ELEMENT_STAGE_PARSER);
+        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+            fmt::format("Invalid identifier '{}'", tokeniser->text(token)));
         return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     // either a qualifier, 'struct', 'namespace' or a name; either way...
     assert(token->type == ELEMENT_TOK_IDENTIFIER);
 
-    if (tctx->text(token) == "namespace") {
-        ELEMENT_OK_OR_RETURN(parse_namespace(tctx, tindex, ast));
+    if (tokeniser->text(token) == "namespace") {
+        ELEMENT_OK_OR_RETURN(parse_namespace(tindex, ast));
     } else {
         element_ast_flags flags = 0;
         // parse qualifiers
-        ELEMENT_OK_OR_RETURN(parse_qualifiers(tctx, tindex, &flags));
-        GET_TOKEN(tctx, *tindex, token);
+        ELEMENT_OK_OR_RETURN(parse_qualifiers(tindex, &flags));
+        GET_TOKEN(tokeniser, *tindex, token);
         ast->nearest_token = token;
-        if (tctx->text(token) == "struct") {
-            tokenlist_advance(tctx, tindex);
-            ELEMENT_OK_OR_RETURN(parse_struct(tctx, tindex, ast, flags));
-        } else if (tctx->text(token) == "constraint") {
-            tokenlist_advance(tctx, tindex);
-            ELEMENT_OK_OR_RETURN(parse_constraint(tctx, tindex, ast, flags));
+        if (tokeniser->text(token) == "struct") {
+            tokenlist_advance(tokeniser, tindex);
+            ELEMENT_OK_OR_RETURN(parse_struct(tindex, ast, flags));
+        } else if (tokeniser->text(token) == "constraint") {
+            tokenlist_advance(tokeniser, tindex);
+            ELEMENT_OK_OR_RETURN(parse_constraint(tindex, ast, flags));
         } else {
-            ELEMENT_OK_OR_RETURN(parse_function(tctx, tindex, ast, flags));
+            ELEMENT_OK_OR_RETURN(parse_function(tindex, ast, flags));
         }
     }
     return ELEMENT_OK;
 }
 
-// start : /^/ (<item>)* /$/;
-static element_result parse(element_tokeniser_ctx* tctx, size_t* tindex, element_ast* ast)
+element_result element_parser_ctx::parse(size_t* tindex, element_ast* ast)
 {
     size_t tcount;
     const element_token* tok;
-    GET_TOKEN_COUNT(tctx, tcount);
-    GET_TOKEN(tctx, *tindex, tok);
+    GET_TOKEN_COUNT(tokeniser, tcount);
+    GET_TOKEN(tokeniser, *tindex, tok);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_ROOT;
     if (*tindex < tcount && tok->type == ELEMENT_TOK_NONE)
-        TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, tok);
+        TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
     while (*tindex < tcount) {
         element_ast* item = ast_new_child(ast);
-        ELEMENT_OK_OR_RETURN(parse_item(tctx, tindex, item));
+        ELEMENT_OK_OR_RETURN(parse_item(tindex, item));
         if (*tindex < tcount && tok->type == ELEMENT_TOK_NONE)
-            TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, tok);
+            TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
     }
     return ELEMENT_OK;
 }
 
 
-element_result element_ast_build(element_tokeniser_ctx* tctx, element_ast** ast)
+element_result element_parser_ctx::ast_build()
 {
     // don't use ast_new here, as we need to return this pointer to the user
-    *ast = new element_ast(nullptr);
+    root = new element_ast(nullptr);
     size_t tindex = 0;
-    element_result r = parse(tctx, &tindex, *ast);
+    element_result r = parse(&tindex, root);
     if (r != ELEMENT_OK) {
-        element_ast_delete(*ast);
-        *ast = nullptr;
+        element_ast_delete(root);
+        root = nullptr;
     }
     return r;
 }
@@ -889,4 +858,30 @@ element_ast::walk_step element_ast::walk(const element_ast::const_walker& fn) co
     default:
         return s;
     }
+}
+
+void element_parser_ctx::log(int message_code, const std::string& message) const
+{
+    if (!log_callback)
+        return;
+
+    auto log = element_log_message();
+    log.message = message.c_str();
+    log.message_code = message_code;
+    log.line = -1;
+    log.column = -1;
+    log.length = -1;
+    log.stage = ELEMENT_STAGE_PARSER;
+    log.filename = nullptr;
+    log.related_log_message = nullptr;
+
+    log_callback(&log);
+}
+
+void element_parser_ctx::log(const element_log_message& message) const
+{
+    if (!log_callback)
+        return;
+
+    log_callback(&message);
 }
