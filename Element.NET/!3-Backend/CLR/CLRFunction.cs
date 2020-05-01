@@ -344,13 +344,15 @@ namespace Element.CLR
 
 				if(value.TrySerialize(out Expression[] expressions, context))
 				{
-					var expr = expressions.Single();
-					expr = ConstantFolding.Optimize(expr, data.ConstantCache);
-					expr = CommonSubexpressionExtraction.OptimizeSingle(data.CSECache, expr);
-					value = expr;
-					return outputType == typeof(float)
-						? Compile(expr, data)
-						: boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context);
+					if (expressions.Length == 1 && outputType == typeof(float))
+					{
+						var expr = expressions.Single();
+						expr = ConstantFolding.Optimize(expr, data.ConstantCache);
+						expr = CommonSubexpressionExtraction.OptimizeSingle(data.CSECache, expr);
+						return Compile(expr, data);
+					}
+
+					return boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context);
 				}
 
 				if (outputType == typeof(float))

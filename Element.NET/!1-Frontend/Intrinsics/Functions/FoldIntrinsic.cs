@@ -39,6 +39,7 @@ namespace Element.AST
 			var aggregator = (IFunctionSignature)arguments[2];
 			
 
+			// TODO: Simplify dynamic fold to a loop expression
 			// Source implementation for a dynamic fold
 			// _(list:List, initial, aggregator:Binary) = for(Tuple(0, initial),
 			//			_(tup):Bool = tup.varg0.lt(count),
