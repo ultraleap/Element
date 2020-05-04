@@ -148,6 +148,7 @@ struct element_parser_ctx
 private:
     element_result validate_type(element_ast* ast);
     element_result validate_portlist(element_ast* ast);
+    element_result validate_struct(element_ast* ast);
     element_result validate_scope(element_ast* ast);
 
 public:

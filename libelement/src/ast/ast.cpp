@@ -756,6 +756,10 @@ element_result element_parser_ctx::validate_type(element_ast* ast)
     {
     case ELEMENT_AST_NODE_PORTLIST:
         return validate_portlist(ast);
+
+    case ELEMENT_AST_NODE_STRUCT:
+        return validate_struct(ast);
+    	
     case ELEMENT_AST_NODE_ROOT:
     case ELEMENT_AST_NODE_SCOPE:
         return validate_scope(ast);
@@ -794,36 +798,57 @@ element_result element_parser_ctx::validate_portlist(element_ast* ast)
     return result;
 }
 
+element_result element_parser_ctx::validate_struct(element_ast* ast)
+{
+    element_result result = ELEMENT_OK;
+    assert(ast->children.size() > ast_idx::fn::declaration);
+    if (ast->children.size() > ast_idx::fn::body) 
+    {
+        auto* decl = ast->children[ast_idx::fn::declaration].get();
+        assert(decl->type == ELEMENT_AST_NODE_DECLARATION);
+    	
+        auto identifier = decl->identifier;
+        auto* body = ast->children[ast_idx::fn::body].get();
+        assert(body->type == ELEMENT_AST_NODE_SCOPE);
+    	
+        for (auto& child : body->children) {
+        	
+            assert(child->children.size() > ast_idx::fn::declaration);
+            auto* child_decl = child->children[ast_idx::fn::declaration].get();
+            assert(child_decl->type == ELEMENT_AST_NODE_DECLARATION);
+        	
+            if (identifier == child_decl->identifier)
+            {
+                log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+                    fmt::format("Struct identifier '{}' detected in scope '{}'",
+                        ast->identifier, ast->identifier));
+                result = TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
+            }
+        }
+    }
+
+    return result;
+}
+
 element_result element_parser_ctx::validate_scope(element_ast* ast)
 {
     element_result result = ELEMENT_OK;
-	
-    //clean up this horrible nested loop
-    for (auto i = 0; i < ast->children.size(); ++i)
-    {
-        for (auto j = i; j < ast->children.size(); ++j)
-        {
-            //only test different identifiers
-            if (i == j)
-                continue;
-        	
-            if (ast->children[i]->type != ELEMENT_AST_NODE_FUNCTION 
-                || ast->children[j]->type != ELEMENT_AST_NODE_FUNCTION)
-	            continue;
 
-            if(ast->children[i]->children.size() <= ast_idx::fn::declaration 
-                || ast->children[j]->children.size() <= ast_idx::fn::declaration)
-	            continue;
-        	
-            if(ast->children[i]->children[ast_idx::fn::declaration]->identifier == 
-	            ast->children[j]->children[ast_idx::fn::declaration]->identifier)
-            {
-	            log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
-	                fmt::format("Duplicate declaration '{}' detected in scope '{}'",
-	                            ast->children[i]->children[ast_idx::fn::declaration]->identifier, 
-	                            ast->identifier));
-	            result = TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
-            }
+    std::vector<std::string> names;
+    for (auto& child : ast->children) {
+
+        auto* child_decl = child->children[ast_idx::fn::declaration].get();
+        auto child_identifier = child_decl->identifier;
+        auto it = std::find(names.begin(), names.end(), child_identifier);
+    	if(it != names.end())
+    	{
+            log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
+                fmt::format("Duplicate declaration '{}' detected in scope", child_identifier));
+            result = TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
+    	}
+        else
+        {
+            names.push_back(child_decl->identifier);
         }
     }
 	
