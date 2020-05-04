@@ -7,6 +7,7 @@ namespace Element.AST
     public interface ISubExpression
     {
         void Initialize(Declaration declaration);
+        bool Validate(SourceContext sourceContext);
         IValue ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext);
     }
 
@@ -28,6 +29,9 @@ namespace Element.AST
                 expr.Initialize(declaration);
             }
         }
+        
+        public override bool Validate(SourceContext sourceContext) =>
+            Expressions?.Aggregate(true, (current, expr) => current & expr.Validate(sourceContext)) ?? true;
 
         public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
         {

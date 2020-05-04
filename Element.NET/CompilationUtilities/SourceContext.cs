@@ -47,9 +47,12 @@ namespace Element
         
         public IValue EvaluateExpression(string expression, out CompilationContext compilationContext)
         {
-            compilationContext = null;
-            return this.Parse(expression, out AST.Expression expressionObject)
-                       ? expressionObject.ResolveExpression(GlobalScope, MakeCompilationContext(out compilationContext))
+            compilationContext = MakeCompilationContext(out compilationContext);
+            var success = this.Parse(expression, out AST.Expression expressionObject);
+            expressionObject.InitializeUsingStubDeclaration(compilationContext);
+            success &= expressionObject.Validate(this);
+            return success
+                       ? expressionObject.ResolveExpression(GlobalScope, compilationContext)
                        : CompilationErr.Instance;
         }
 

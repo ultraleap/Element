@@ -12,7 +12,10 @@ namespace Element.AST
                 expr.Initialize(declaration);
             }
         }
-        
+
+        public bool Validate(SourceContext sourceContext) =>
+            List.Aggregate(true, (current, expr) => current & expr.Validate(sourceContext));
+
         IValue ISubExpression.ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext) =>
             previous is IFunctionSignature function
                 ? function.ResolveCall(List.Select(argExpr => argExpr.ResolveExpression(scope, compilationContext)).ToArray(), false, compilationContext)

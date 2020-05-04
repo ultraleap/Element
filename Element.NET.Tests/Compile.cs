@@ -110,6 +110,18 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
             Assert.AreEqual(10f, result.vector3Field.X);
         }
 
+        [Test]
+        public void CustomStructOperations()
+        {
+            var fn = _sourceContext.Compile<CustomStructDelegate>(
+@"_(f:Num, v3:Vector3):MyCustomElementStruct
+{
+    fsqr = f.sqr;
+    vadded = v3.add(Vector3(fsqr, fsqr, fsqr));
+    return = MyCustomElementStruct(fsqr, vadded);
+}");
+        }
+
         private static readonly (float, float)[] _factorialArguments =
         {
             (0f, 1f),

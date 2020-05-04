@@ -22,10 +22,15 @@ namespace Element.AST
                     break;
             }
         }
-        
-        public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
-        {
-            return new AnonymousFunction(scope, _body, _portList, Port.ReturnPort(_type));
-        }
+        public override bool Validate(SourceContext sourceContext) =>
+            _body switch
+            {
+                ExpressionBody b => b.Expression.Validate(sourceContext),
+                Scope s => s.ValidateScope(sourceContext, identifierWhitelist: new[] {Parser.ReturnIdentifier}),
+                _ => false
+            };
+
+        public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext) =>
+            new AnonymousFunction(scope, _body, _portList, Port.ReturnPort(_type));
     }
 }

@@ -12,7 +12,10 @@ namespace Element.AST
 
         public override string ToString() => $".{Identifier}";
 
-        void ISubExpression.Initialize(Declaration declaration) { } // No-op
+        void ISubExpression.Initialize(Declaration declaration) { }
+
+        public bool Validate(SourceContext sourceContext) => sourceContext.ValidateIdentifier(Identifier);
+        // No-op
         IValue ISubExpression.ResolveSubExpression(IValue previous, IScope _, CompilationContext compilationContext) =>
             previous is IIndexable indexable
                 ? indexable[Identifier, false, compilationContext]

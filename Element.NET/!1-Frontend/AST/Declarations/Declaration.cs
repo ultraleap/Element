@@ -32,6 +32,22 @@ namespace Element.AST
         protected virtual Identifier[] ScopeIdentifierWhitelist { get; } = null;
         protected virtual Identifier[] ScopeIdentifierBlacklist { get; } = null;
 
+        private sealed class StubDeclaration : Declaration
+        {
+            protected override string IntrinsicQualifier => string.Empty;
+            protected override string Qualifier => string.Empty;
+            protected override Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
+            public override IType Type => FunctionType.Instance;
+        }
+
+        public static Declaration MakeStubDeclaration(Identifier id, object body, CompilationContext compilationContext) =>
+            new StubDeclaration
+            {
+                Identifier = id,
+                Body = body,
+                Parent = compilationContext.SourceContext.GlobalScope,
+            };
+
         internal Declaration Clone(IScope newParent)
         {
             var clone = (Declaration)MemberwiseClone();
@@ -42,7 +58,15 @@ namespace Element.AST
         internal virtual bool Validate(SourceContext sourceContext)
         {
             var success = true;
-            if (Body is Scope scope) success &= scope.ValidateScope(sourceContext, ScopeIdentifierBlacklist, ScopeIdentifierWhitelist);
+            switch (Body)
+            {
+                case Scope scope:
+                    success &= scope.ValidateScope(sourceContext, ScopeIdentifierBlacklist, ScopeIdentifierWhitelist);
+                    break;
+                case ExpressionBody expressionBody:
+                    success &= expressionBody.Expression.Validate(sourceContext);
+                    break;
+            }
             if (PortList?.List.Count > 0)
             {
                 var distinctPortIdentifiers = new HashSet<string>();
@@ -76,6 +100,7 @@ namespace Element.AST
                                  ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
                                  : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs;
             DeclaredOutput = Port.ReturnPort(DeclaredType);
+            if (Body is ExpressionBody expressionBody) expressionBody.Expression.Initialize(this);
         }
 
         public string Location => Parent switch
