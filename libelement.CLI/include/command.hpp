@@ -180,21 +180,30 @@ namespace libelement::cli
 	protected:
 		element_result setup(const compilation_input& input) const
 		{
+			element_result result = ELEMENT_OK;
 			if (!input.get_no_prelude()) {
-				ELEMENT_OK_OR_RETURN(element_interpreter_load_prelude(ictx));
+				result = element_interpreter_load_prelude(ictx);
+				if (result != ELEMENT_OK) {
+					return result;
+				}
 			}
 
 			auto source_files = convert(input.get_source_files());
 			auto source_file_count = static_cast<int>(source_files.size());
 			if (source_file_count > 0) {
-				ELEMENT_OK_OR_RETURN(element_interpreter_load_files(ictx, &source_files[0], source_file_count));
+				
+				result = element_interpreter_load_files(ictx, &source_files[0], source_file_count);
+				if (result != ELEMENT_OK) {
+					return result;
+				}
 			}
 
 			return ELEMENT_OK;
 		}
 
-	private:
-		std::vector<const char*> convert(const std::vector<std::string>& input) const {
+	protected:
+		static std::vector<const char*> convert(const std::vector<std::string>& input)
+		{
 			std::vector<const char*> output;
 			output.reserve(input.size());
 

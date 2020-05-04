@@ -728,29 +728,41 @@ element_result element_parser_ctx::parse(size_t* tindex, element_ast* ast)
 
 element_result element_parser_ctx::validate(element_ast* ast)
 {
+    element_result result = ELEMENT_OK;
+    result = validate_type(ast);
+	if(result != ELEMENT_OK)
+        return result;
+	
 	const auto length = ast->children.size();
     if (length == 0)
-        return ELEMENT_OK;
-	
-    element_result result = ELEMENT_OK;
+        return result;
+
 	for(auto i = 0; i < length; i++)
 	{
 		//special case validation
 		auto* const child = ast->children[i].get();
-		switch(child->type)
-		{
-	        case ELEMENT_AST_NODE_PORTLIST: result = validate_portlist(child); break;
-	        case ELEMENT_AST_NODE_SCOPE: result = validate_scope(child); break;
-            default: break;
-		}
-
-		//recursive validation
 		const auto validate_result = validate(child);
         if (result == ELEMENT_OK)
             result = validate_result;
 	}
 	
     return result;
+}
+
+element_result element_parser_ctx::validate_type(element_ast* ast)
+{
+    element_result result = ELEMENT_OK;
+    switch (ast->type)
+    {
+    case ELEMENT_AST_NODE_PORTLIST:
+        return validate_portlist(ast);
+    case ELEMENT_AST_NODE_ROOT:
+    case ELEMENT_AST_NODE_SCOPE:
+        return validate_scope(ast);
+    default: break;
+    }
+
+    return ELEMENT_OK;
 }
 
 element_result element_parser_ctx::validate_portlist(element_ast* ast)
@@ -784,7 +796,37 @@ element_result element_parser_ctx::validate_portlist(element_ast* ast)
 
 element_result element_parser_ctx::validate_scope(element_ast* ast)
 {
-    //TODO
+    element_result result = ELEMENT_OK;
+	
+    //clean up this horrible nested loop
+    for (auto i = 0; i < ast->children.size(); ++i)
+    {
+        for (auto j = i; j < ast->children.size(); ++j)
+        {
+            //only test different identifiers
+            if (i == j)
+                continue;
+        	
+            if (ast->children[i]->type != ELEMENT_AST_NODE_FUNCTION 
+                || ast->children[j]->type != ELEMENT_AST_NODE_FUNCTION)
+	            continue;
+
+            if(ast->children[i]->children.size() <= ast_idx::fn::declaration 
+                || ast->children[j]->children.size() <= ast_idx::fn::declaration)
+	            continue;
+        	
+            if(ast->children[i]->children[ast_idx::fn::declaration]->identifier == 
+	            ast->children[j]->children[ast_idx::fn::declaration]->identifier)
+            {
+	            log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
+	                fmt::format("Duplicate declaration '{}' detected in scope '{}'",
+	                            ast->children[i]->children[ast_idx::fn::declaration]->identifier, 
+	                            ast->identifier));
+	            result = TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
+            }
+        }
+    }
+	
     return ELEMENT_OK;
 }
 
@@ -793,14 +835,15 @@ element_result element_parser_ctx::ast_build()
     // don't use ast_new here, as we need to return this pointer to the user
     root = new element_ast(nullptr);
     size_t index = 0;
-    auto r = parse(&index, root);
-    if (r != ELEMENT_OK) {
+    auto result = parse(&index, root);
+    if (result != ELEMENT_OK) {
         element_ast_delete(root);
         root = nullptr;
+        return result;
     }
 
-    r = validate(root);
-    return r;
+    result = validate(root);
+    return result;
 }
 
 void element_ast_delete(element_ast* ast)

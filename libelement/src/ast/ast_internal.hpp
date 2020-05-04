@@ -144,9 +144,13 @@ struct element_parser_ctx
 
 	//TODO: Move to another class as this one is already disgustingly large
     element_result validate(element_ast* ast);
+
+private:
+    element_result validate_type(element_ast* ast);
     element_result validate_portlist(element_ast* ast);
     element_result validate_scope(element_ast* ast);
 
+public:
     void log(int message_code, const std::string& message) const;
     void log(const element_log_message& message) const;
 };
