@@ -266,23 +266,6 @@ element_result element_parser_ctx::parse_portlist(size_t* tindex, element_ast* a
     } while (tok->type == ELEMENT_TOK_COMMA && tokenlist_advance(tokeniser, tindex));
 
     auto result = TODO_ELEMENT_OK;
-
-    // ensure port identifiers are all unique
-    for (unsigned int i = 0; i < ast->children.size(); ++i)
-    {
-        for (unsigned int j = i; j < ast->children.size(); ++j)
-        {
-            if (i != j &&  // not the same port
-                ast->children[i]->identifier == ast->children[j]->identifier)
-            {
-                log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS, 
-                    fmt::format("Parameter {} and {} in the port list of function '{}' have the same identifier '{}'",
-                        i, j, tokeniser->text(ast->parent->nearest_token), ast->children[i]->identifier));
-                result = TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
-            }
-        }
-    }
-
     return result;
 }
 
@@ -583,7 +566,7 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
     if (!is_intrinsic && !has_portlist)
     {
         log(TODO_ELEMENT_ERROR_MISSING_PORTS,
-            fmt::format("Portlist for struct '{}' is required as it is not intrinsic",
+            fmt::format("Port list for struct '{}' is required as it is not intrinsic",
                 tokeniser->text(ast->nearest_token)));
         return TODO_ELEMENT_ERROR_MISSING_PORTS;
     }
@@ -630,11 +613,11 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
     const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
     const auto has_portlist = !decl->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
 
-    //todo: ask craigPortlist for struct 
+    //todo: ask craig, port list for struct 
     if (!is_intrinsic && !has_portlist)
     {
         log(TODO_ELEMENT_ERROR_MISSING_PORTS,
-            fmt::format("Portlist for constraint '{}' is required as it is not intrinsic",
+            fmt::format("Port list for constraint '{}' is required as it is not intrinsic",
                 tokeniser->text(ast->nearest_token)));
         return TODO_ELEMENT_ERROR_MISSING_PORTS;
     }
@@ -743,17 +726,80 @@ element_result element_parser_ctx::parse(size_t* tindex, element_ast* ast)
     return ELEMENT_OK;
 }
 
+element_result element_parser_ctx::validate(element_ast* ast)
+{
+	const auto length = ast->children.size();
+    if (length == 0)
+        return ELEMENT_OK;
+	
+    element_result result = ELEMENT_OK;
+	for(auto i = 0; i < length; i++)
+	{
+		//special case validation
+		auto* const child = ast->children[i].get();
+		switch(child->type)
+		{
+	        case ELEMENT_AST_NODE_PORTLIST: result = validate_portlist(child); break;
+	        case ELEMENT_AST_NODE_SCOPE: result = validate_scope(child); break;
+            default: break;
+		}
+
+		//recursive validation
+		const auto validate_result = validate(child);
+        if (result == ELEMENT_OK)
+            result = validate_result;
+	}
+	
+    return result;
+}
+
+element_result element_parser_ctx::validate_portlist(element_ast* ast)
+{
+    const auto length = ast->children.size();
+    if (length == 0) {
+
+        log(TODO_ELEMENT_ERROR_MISSING_PORTS, fmt::format("Port list cannot be empty"));
+        return TODO_ELEMENT_ERROR_MISSING_PORTS;
+    }
+
+    // ensure port identifiers are all unique
+    element_result result = ELEMENT_OK;
+    for (unsigned int i = 0; i < ast->children.size(); ++i)
+    {
+        for (unsigned int j = i; j < ast->children.size(); ++j)
+        {
+            if (i != j &&  // not the same port
+                ast->children[i]->identifier == ast->children[j]->identifier)
+            {
+                log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
+                    fmt::format("Parameter {} and {} in the port list of function '{}' have the same identifier '{}'",
+                        i, j, ast->parent->identifier, ast->children[i]->identifier));
+                result = TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
+            }
+        }
+    }
+
+    return result;
+}
+
+element_result element_parser_ctx::validate_scope(element_ast* ast)
+{
+    //TODO
+    return ELEMENT_OK;
+}
 
 element_result element_parser_ctx::ast_build()
 {
     // don't use ast_new here, as we need to return this pointer to the user
     root = new element_ast(nullptr);
-    size_t tindex = 0;
-    element_result r = parse(&tindex, root);
+    size_t index = 0;
+    auto r = parse(&index, root);
     if (r != ELEMENT_OK) {
         element_ast_delete(root);
         root = nullptr;
     }
+
+    r = validate(root);
     return r;
 }
 
@@ -820,7 +866,6 @@ element_result element_ast_print(element_ast* ast)
 {
     return ast_print_depth(ast, 0);
 }
-
 
 element_ast::walk_step element_ast::walk(const element_ast::walker& fn)
 {
