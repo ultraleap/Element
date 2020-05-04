@@ -371,7 +371,7 @@ element_result element_interpreter_ctx::print_ast(const std::string& name)
         [&name](const std::pair<std::string, ast_unique_ptr>& element) { return element.first == name; });
 
     if (it == trees.end()) {
-        return ELEMENT_ERROR_NOT_FOUND;
+        return ELEMENT_OK;
     }
 
     element_ast* ast = it->second.get();
