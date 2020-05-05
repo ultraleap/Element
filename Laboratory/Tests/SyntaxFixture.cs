@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -19,25 +20,32 @@ namespace Laboratory.Tests
             {
                 var match = Regex.Match(Path.GetFileNameWithoutExtension(file.Name), @"(?<condition>(pass|fail){1})(?:-(?<value>\d+))?");
                 if (!match.Success) continue;
-                var expectedMessageCode = match.Groups["condition"].Value switch
+                var expectedResult = match.Groups["condition"].Value switch
                 {
-                    "pass" => (int?) null,
-                    "fail" => int.TryParse(match.Groups["value"].Value, out var code)
-                                  ? code
-                                  : defaultExpectedErrorCode ??
-                                    throw new ArgumentNullException(nameof(defaultExpectedErrorCode), $"Error code must be specified explicitly for {testKind} tests"),
+                    "pass" => true,
+                    "fail" => false,
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-                yield return new TestCaseData((FileInfo: file, ExpectMessageCode: expectedMessageCode)).SetName($"{testKind}{file.FullName.Split(directory)[1]}");
+                var expectedMessageCode = expectedResult
+                    ? (int?) null
+                    : int.TryParse(match.Groups["value"].Value, out var code)
+                        ? code
+                        : defaultExpectedErrorCode ??
+                          throw new ArgumentNullException(nameof(defaultExpectedErrorCode),
+                              $"Error code must be specified explicitly for {testKind} tests");
+  
+                yield return new TestCaseData((file, expectedMessageCode)).SetName($"{testKind}{file.FullName.Split(directory)[1]}");
             }
         }
         
-        protected void RunTest((FileInfo FileInfo, int? ExpectedMessageCode) info, bool skipValidation)
+        public void SyntaxTest((FileInfo, int?) info, bool skipValidation)
         {
-            var (fileInfo, expectedMessageCode) = info;
-            var errors = new System.Collections.Generic.List<CompilerMessage>();
-            var compilationInput = new CompilationInput(expectedMessageCode.HasValue ? ExpectMessageCode(expectedMessageCode.Value, errors) : FailOnError)
+            var (fileInfo, messageCode) = info;
+            var expectingError = messageCode.HasValue;
+            
+            var messages = new List<CompilerMessage>();
+            var compilationInput = new CompilationInput(CacheMessage(messages))
             {
                 ExcludePrelude = true,
                 ExtraSourceFiles = new[]{fileInfo},
@@ -45,29 +53,10 @@ namespace Laboratory.Tests
             };
             
             var success = Host.Parse(compilationInput);
-
-            if (!expectedMessageCode.HasValue) return; //Handled by FailOnError
-
-            if (success)
-            {
-                Assert.Fail("Expected error ELE{0} '{1}' but succeeded",
-                    expectedMessageCode.Value, CompilerMessage.GetMessageName(expectedMessageCode.Value));
-            }
+            if(expectingError)
+                ExpectingError(messages, success, messageCode.Value);
             else
-            {
-                if (errors.Count >= 0)
-                {
-                    Assert.Fail("Expected error ELE{0} '{1}' but got following error codes instead: {2}\n{3}",
-                        expectedMessageCode.Value, CompilerMessage.GetMessageName(expectedMessageCode.Value),
-                        string.Join(",", errors.Select(err => err.MessageCode)),
-                        string.Join("\n", errors.Select(err => err.ToString())));
-                }
-                else
-                {
-                    Assert.Fail("Expected error ELE{0} '{1}' but no error was logged", expectedMessageCode.Value,
-                        CompilerMessage.GetMessageName(expectedMessageCode.Value));
-                }
-            }
+                ExpectingSuccess(messages, success);
         }
     }
 }

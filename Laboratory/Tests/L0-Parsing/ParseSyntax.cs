@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using Element;
 using Element.AST;
@@ -40,14 +41,14 @@ namespace Laboratory.Tests.L0.Parsing
                 (nameof(PortList), "(a:foo, b:bar)", typeof(PortList)),
                 (nameof(DeclaredNamespace), "namespace foo {}", typeof(DeclaredNamespace)),
             };
-            foreach (var item in data)
+            foreach (var (name, partial, type) in data)
             {
-                yield return new TestCaseData((item.Item2, item.Item3)).SetName($"Syntax-{item.Item1}");
+                yield return new TestCaseData((partial, type)).SetName($"Syntax-{name}");
             }
         }
-        
+
         [TestCaseSource(nameof(GenerateParseTestData))]
-        public void Parse((FileInfo FileInfo, int? ExpectedMessageCode) info) => RunTest(info, true);
+        public void Parse((FileInfo fileInfo, int? messageCode) info) => SyntaxTest(info, true);
         
         // TODO: Force consuming the whole text in all of these parsers
         // TODO: Make this test use host so that it can test process hosts!
