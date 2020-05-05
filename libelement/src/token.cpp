@@ -109,8 +109,11 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     }
     assert(element_isdigit(c));
 
-    while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
+    while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
         c = UTF8_NEXT(it, end);
+
+    if (it == end)
+        return ELEMENT_ERROR_CONSUMED_ALL_INPUT;
 
     c = UTF8_PEEK_NEXT(it, end);
     if (c == '.') {
@@ -121,7 +124,7 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         if (element_isdigit(c_next)) {
             // number
             UTF8_NEXT(it, end);
-            while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
+            while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
                 c = UTF8_NEXT(it, end);
         } 
         else if (element_isalpha(c_next)) {
@@ -158,7 +161,7 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
             return ELEMENT_ERROR_PARSE;
         }
 
-        while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
+        while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
             c = UTF8_NEXT(it, end);
     }
 
@@ -181,7 +184,7 @@ static element_result tokenise_comment(std::string::iterator& it, const std::str
     const auto it_before = it;
     try
     {
-        while (!element_iseol(UTF8_PEEK_NEXT(it, end))) { //will throw at EOF
+        while (it != end && !element_iseol(UTF8_PEEK_NEXT(it, end))) { //will throw at EOF
             UTF8_NEXT(it, end);
         }
     }
@@ -219,7 +222,7 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
 
     assert(isid_alpha(c));
 
-    while (isid_alnum(UTF8_PEEK_NEXT(it, end))) {
+    while (it != end && isid_alnum(UTF8_PEEK_NEXT(it, end))) {
         c = UTF8_NEXT(it, end);
     }
 
@@ -306,10 +309,10 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         const auto begin_it = it;
                         auto result = tokenise_identifier(it, end, state);
                         if (result != ELEMENT_OK) {
-                            state->log(ELEMENT_ERROR_PARSE,
+                            state->log(result,
                                 fmt::format("Failed to parse identifier '{}'",
                                     std::string(begin_it, it)));
-                            return ELEMENT_ERROR_PARSE;
+                            return result;
                         }
                     }
                     else {
@@ -323,20 +326,20 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         const auto begin_it = it;
                         auto result = tokenise_identifier(it, end, state);
                         if (result != ELEMENT_OK) {
-                            state->log(ELEMENT_ERROR_PARSE,
+                            state->log(result,
                                 fmt::format("Failed to parse identifier '{}'",
                                     std::string(begin_it, it)));
-                            return ELEMENT_ERROR_PARSE;
+                            return result;
                         }
                     }
                     else if (element_isdigit(c) || c == '-' || c == '+') {
                         const auto begin_it = it;
                         auto result = tokenise_number(it, end, state);
                         if (result != ELEMENT_OK) {
-                            state->log(ELEMENT_ERROR_PARSE,
+                            state->log(result,
                                 fmt::format("Failed to parse number '{}'",
                                     std::string(begin_it, it)));
-                            return ELEMENT_ERROR_PARSE;
+                            return result;
                         }
                     }
                     else if (element_iseol(c)) {

@@ -676,7 +676,7 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
     ast->nearest_token = token;
 
     //A sole underscore was used as an identifier
-    if (token->type == ELEMENT_TOK_UNDERSCORE) {
+    if (token->type == ELEMENT_TOK_UNDERSCORE || token->type == ELEMENT_TOK_SEMICOLON) {
         log(ELEMENT_ERROR_INVALID_IDENTIFIER,
             fmt::format("Invalid identifier '{}'", tokeniser->text(token)));
         return ELEMENT_ERROR_INVALID_IDENTIFIER;
@@ -836,6 +836,9 @@ element_result element_parser_ctx::validate_scope(element_ast* ast)
     std::vector<std::string> names;
     for (auto& child : ast->children) {
 
+        if (child->type != ELEMENT_AST_NODE_FUNCTION)
+            continue; //TODO: Handle other types
+    	
         auto* child_decl = child->children[ast_idx::fn::declaration].get();
         auto child_identifier = child_decl->identifier;
         auto it = std::find(names.begin(), names.end(), child_identifier);

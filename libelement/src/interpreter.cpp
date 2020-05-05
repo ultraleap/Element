@@ -169,7 +169,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     element_parser_ctx parser;
     parser.tokeniser = raw_tctx;
     parser.log_callback = log_callback;
-
+     
     auto result = parser.ast_build();
     //todo: hacky message to help with unit tests until we add logging for all error cases
     if (result < ELEMENT_OK) {

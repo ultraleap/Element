@@ -69,6 +69,7 @@ typedef enum message_type
     ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END = -200,
     ELEMENT_ERROR_EXCEPTION = -201,
     ELEMENT_ERROR_CONSTRAINT_HAS_BODY = -202,
+    ELEMENT_ERROR_CONSUMED_ALL_INPUT = -203,
 } message_type;
 
 typedef int32_t element_result;
