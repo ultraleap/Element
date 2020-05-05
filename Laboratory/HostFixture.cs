@@ -52,8 +52,8 @@ namespace Laboratory
                 var messages = new List<CompilerMessage>();
                 compilationInput.LogCallback = CacheMessage(messages);
                 var (success, result) = Host.Evaluate(compilationInput, expression);
-                //HERE
-                //if (!success) Assert.Fail($"'{expression}' evaluation failed");
+                ExpectingSuccess(messages, success);
+                
                 return result;
             }).ToArray());
 
@@ -66,9 +66,9 @@ namespace Laboratory
         {
             var messages = new List<CompilerMessage>();
             compilationInput.LogCallback = CacheMessage(messages);
-            var (controlSuccess, controlResult) = Host.Evaluate(compilationInput, controlExpression);
-            //HERE
-            //if (!controlSuccess) Assert.Fail($"'{controlExpression}' evaluation failed");
+            var (success, controlResult) = Host.Evaluate(compilationInput, controlExpression);
+            ExpectingSuccess(messages, success);
+            
             results.Aggregate(controlResult, (expected, result) =>
             {
                 CollectionAssert.AreEqual(expected, result, comparer);
@@ -84,16 +84,18 @@ namespace Laboratory
                 var messages = new List<CompilerMessage>();
                 compilationInput.LogCallback = CacheMessage(messages);
                 var (success, result) = Host.Evaluate(compilationInput, expression);
-                //HERE
-                //if (!success) Assert.Fail($"'{expression}' evaluation failed");
+                ExpectingSuccess(messages, success);
+                
                 return result;
             }).ToArray());
 
         protected void AssertTypeof(CompilationInput compilationInput, string expression, string typeStr)
         {
             var (success, result) = Host.Typeof(compilationInput, expression);
-            //if (!success) Assert.Fail();
-            //Assert.That(result, Is.EqualTo(typeStr));
+            if (!success) 
+                Assert.Fail();
+            
+            Assert.That(result, Is.EqualTo(typeStr));
         }
 
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());
