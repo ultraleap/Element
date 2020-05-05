@@ -151,7 +151,7 @@ namespace Laboratory
             var hasErrors = errors.Any();
             
             if (hasErrors) 
-                Assert.Fail("Expected failure and got following code(s): {0}", 
+                Assert.Fail("Expected success and got following code(s): {0}", 
                     string.Join(",", errors.Select(err => err.MessageCode)));
             
             if(success)
