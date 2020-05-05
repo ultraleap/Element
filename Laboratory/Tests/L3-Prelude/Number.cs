@@ -129,7 +129,7 @@ namespace Laboratory.Tests.L3.Prelude
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);
 		
 		[
-			TestCase("Num.acos(0)", "90"),
+			TestCase("Num.acos(0)", "Num.pi.div(2)"),
 			TestCase("Num.acos(-1).degrees", "180"),
 			TestCase("Num.acos(0).degrees", "90"),
 			TestCase("Num.acos(1).degrees", "0"),
