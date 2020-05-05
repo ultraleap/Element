@@ -41,9 +41,9 @@ namespace Laboratory.Tests.L0.Parsing
                 (nameof(PortList), "(a:foo, b:bar)", typeof(PortList)),
                 (nameof(DeclaredNamespace), "namespace foo {}", typeof(DeclaredNamespace)),
             };
-            foreach (var (name, partial, type) in data)
+            foreach (var (name, partialExpression, type) in data)
             {
-                yield return new TestCaseData((partial, type)).SetName($"Syntax-{name}");
+                yield return new TestCaseData((partialExpression, type)).SetName($"Syntax-{name}");
             }
         }
 
