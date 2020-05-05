@@ -173,7 +173,7 @@ namespace libelement::cli
 			case ELEMENT_OK:
 				return compiler_message(value, trace_stack);
 			default:
-				return compiler_message(message_type::UNKNOWN_ERROR, value, trace_stack);
+				return compiler_message(ELEMENT_ERROR_UNKNOWN, value, trace_stack);
 			}
 		}
 

@@ -187,9 +187,9 @@ element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast*
 
     auto result = check_reserved_words(ast->identifier, allow_reserved_args);
     if (result != ELEMENT_OK) {
-        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
             fmt::format("Invalid identifier '{}'", ast->identifier));
-        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
+        return ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     return result;
@@ -203,7 +203,7 @@ element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* a
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_TYPENAME;
 
-    element_result result = TODO_ELEMENT_OK;
+    element_result result = ELEMENT_OK;
 
     while (tok->type == ELEMENT_TOK_IDENTIFIER) {
         element_ast* child = ast_new_child(ast);
@@ -212,7 +212,7 @@ element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* a
         const auto identifier_result = parse_identifier(tindex, child);
         if (identifier_result != ELEMENT_OK)
         {
-            if (result == TODO_ELEMENT_OK)
+            if (result == ELEMENT_OK)
                 result = identifier_result;
         }
 
@@ -265,8 +265,7 @@ element_result element_parser_ctx::parse_portlist(size_t* tindex, element_ast* a
         port->nearest_token = tok;
     } while (tok->type == ELEMENT_TOK_COMMA && tokenlist_advance(tokeniser, tindex));
 
-    auto result = TODO_ELEMENT_OK;
-    return result;
+    return ELEMENT_OK;
 }
 
 element_result element_parser_ctx::parse_exprlist(size_t* tindex, element_ast* ast)
@@ -446,9 +445,9 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
             ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
         }
         else {
-            log(TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE, 
+            log(ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE, 
                     "A struct cannot have a return type");
-            return TODO_ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE;
+            return ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE;
         }
     }
     else
@@ -528,9 +527,9 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
             tokenlist_advance(tokeniser, tindex);
         }
         else {
-            log(TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY, 
+            log(ELEMENT_ERROR_MISSING_FUNCTION_BODY, 
                 "Non-intrinsic functions must declare a body");
-            return TODO_ELEMENT_ERROR_MISSING_FUNCTION_BODY;
+            return ELEMENT_ERROR_MISSING_FUNCTION_BODY;
         }
     } else {
         // real body of some sort
@@ -547,9 +546,9 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
 
 	if(token->type == ELEMENT_TOK_EQUALS)
 	{
-        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER, 
+        log(ELEMENT_ERROR_INVALID_IDENTIFIER, 
             "invalid identifier found, cannot use '=' after a struct without an identifier");
-        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
+        return ELEMENT_ERROR_INVALID_IDENTIFIER;
 	}
 
     ast->nearest_token = token;
@@ -565,10 +564,10 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
     //todo: ask craig
     if (!is_intrinsic && !has_portlist)
     {
-        log(TODO_ELEMENT_ERROR_MISSING_PORTS,
+        log(ELEMENT_ERROR_MISSING_PORTS,
             fmt::format("Port list for struct '{}' is required as it is not intrinsic",
                 tokeniser->text(ast->nearest_token)));
-        return TODO_ELEMENT_ERROR_MISSING_PORTS;
+        return ELEMENT_ERROR_MISSING_PORTS;
     }
 
     element_ast* bodynode = ast_new_child(ast);
@@ -583,9 +582,9 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
         // scope (struct body)
         ELEMENT_OK_OR_RETURN(parse_scope(tindex, bodynode));
     } else {
-        log(TODO_ELEMENT_ERROR_UNKNOWN, 
+        log(ELEMENT_ERROR_UNKNOWN, 
             "unknown error in parse_struct");
-        return TODO_ELEMENT_ERROR_UNKNOWN;
+        return ELEMENT_ERROR_UNKNOWN;
     }
     return ELEMENT_OK;
 }
@@ -597,9 +596,9 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
 
     if (token->type == ELEMENT_TOK_EQUALS)
     {
-        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
             "invalid identifier found, cannot use '=' after a constraint without an identifier");
-        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
+        return ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     ast->nearest_token = token;
@@ -616,10 +615,10 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
     //todo: ask craig, port list for struct 
     if (!is_intrinsic && !has_portlist)
     {
-        log(TODO_ELEMENT_ERROR_MISSING_PORTS,
+        log(ELEMENT_ERROR_MISSING_PORTS,
             fmt::format("Port list for constraint '{}' is required as it is not intrinsic",
                 tokeniser->text(ast->nearest_token)));
-        return TODO_ELEMENT_ERROR_MISSING_PORTS;
+        return ELEMENT_ERROR_MISSING_PORTS;
     }
 
     element_ast* bodynode = ast_new_child(ast);
@@ -632,14 +631,14 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
         bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
     }
     else if (body->type == ELEMENT_TOK_BRACEL) {
-        log(TODO_ELEMENT_ERROR_CONSTRAINT_HAS_BODY, 
+        log(ELEMENT_ERROR_CONSTRAINT_HAS_BODY, 
             fmt::format("a body was found for constraint '{}', but constraints cannot have bodies", 
                 ast->identifier));
-        return TODO_ELEMENT_ERROR_CONSTRAINT_HAS_BODY;
+        return ELEMENT_ERROR_CONSTRAINT_HAS_BODY;
     } else {
-        log(TODO_ELEMENT_ERROR_UNKNOWN, 
+        log(ELEMENT_ERROR_UNKNOWN, 
             "unknown error parsing constraint");
-        return TODO_ELEMENT_ERROR_UNKNOWN;
+        return ELEMENT_ERROR_UNKNOWN;
     }
 
     return ELEMENT_OK;
@@ -654,9 +653,9 @@ element_result element_parser_ctx::parse_namespace(size_t* tindex, element_ast* 
 
     if (token->type == ELEMENT_TOK_EQUALS)
     {
-        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
             "invalid identifier found, cannot use '=' after a namespace without an identifier");
-        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
+        return ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     ast->nearest_token = token;
@@ -678,9 +677,9 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
 
     //A sole underscore was used as an identifier
     if (token->type == ELEMENT_TOK_UNDERSCORE) {
-        log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
             fmt::format("Invalid identifier '{}'", tokeniser->text(token)));
-        return TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
+        return ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
 
     // either a qualifier, 'struct', 'namespace' or a name; either way...
@@ -774,8 +773,8 @@ element_result element_parser_ctx::validate_portlist(element_ast* ast)
     const auto length = ast->children.size();
     if (length == 0) {
 
-        log(TODO_ELEMENT_ERROR_MISSING_PORTS, fmt::format("Port list cannot be empty"));
-        return TODO_ELEMENT_ERROR_MISSING_PORTS;
+        log(ELEMENT_ERROR_MISSING_PORTS, fmt::format("Port list cannot be empty"));
+        return ELEMENT_ERROR_MISSING_PORTS;
     }
 
     // ensure port identifiers are all unique
@@ -787,10 +786,10 @@ element_result element_parser_ctx::validate_portlist(element_ast* ast)
             if (i != j &&  // not the same port
                 ast->children[i]->identifier == ast->children[j]->identifier)
             {
-                log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
+                log(ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
                     fmt::format("Parameter {} and {} in the port list of function '{}' have the same identifier '{}'",
                         i, j, ast->parent->identifier, ast->children[i]->identifier));
-                result = TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
+                result = ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
             }
         }
     }
@@ -819,10 +818,10 @@ element_result element_parser_ctx::validate_struct(element_ast* ast)
         	
             if (identifier == child_decl->identifier)
             {
-                log(TODO_ELEMENT_ERROR_INVALID_IDENTIFIER,
+                log(ELEMENT_ERROR_INVALID_IDENTIFIER,
                     fmt::format("Struct identifier '{}' detected in scope '{}'",
                         ast->identifier, ast->identifier));
-                result = TODO_ELEMENT_ERROR_INVALID_IDENTIFIER;
+                result = ELEMENT_ERROR_INVALID_IDENTIFIER;
             }
         }
     }
@@ -842,9 +841,9 @@ element_result element_parser_ctx::validate_scope(element_ast* ast)
         auto it = std::find(names.begin(), names.end(), child_identifier);
     	if(it != names.end())
     	{
-            log(TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
+            log(ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
                 fmt::format("Duplicate declaration '{}' detected in scope", child_identifier));
-            result = TODO_ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
+            result = ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
     	}
         else
         {

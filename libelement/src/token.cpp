@@ -57,8 +57,8 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
         auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens",
             index, state->tokens.size());
         
-        state->log(TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
-        return TODO_ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
+        state->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
+        return ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
     }
     *token = &state->tokens[index];
     return ELEMENT_OK;
@@ -129,12 +129,12 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         } else {
             const auto it_rhs_start = it_next;
             UTF8_NEXT(it_next, end);
-            state->log(TODO_ELEMENT_ERROR_PARSE,
+            state->log(ELEMENT_ERROR_PARSE,
                 fmt::format("Found {} which was thought to be a number being indexed, "
                     "but encountered invalid character '{}' on the right hand side of '.'",
                     std::string(it_begin, it), std::string(it_rhs_start, it_next)));
 
-            return TODO_ELEMENT_ERROR_PARSE;
+            return ELEMENT_ERROR_PARSE;
         }
     }
 
@@ -151,11 +151,11 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         }
 
         if (!element_isdigit(c)) {
-            state->log(TODO_ELEMENT_ERROR_PARSE,
+            state->log(ELEMENT_ERROR_PARSE,
                 fmt::format("Found {} which was thought to be a number in scientific notation, "
                     "but encountered invalid character '{}' instead of the exponent number", 
                     std::string(it_begin, it), std::string(it_prev_character, it)));
-            return TODO_ELEMENT_ERROR_PARSE;
+            return ELEMENT_ERROR_PARSE;
         }
 
         while (element_isdigit(UTF8_PEEK_NEXT(it, end)))
@@ -306,10 +306,10 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         const auto begin_it = it;
                         auto result = tokenise_identifier(it, end, state);
                         if (result != ELEMENT_OK) {
-                            state->log(TODO_ELEMENT_ERROR_PARSE,
+                            state->log(ELEMENT_ERROR_PARSE,
                                 fmt::format("Failed to parse identifier '{}'",
                                     std::string(begin_it, it)));
-                            return result;
+                            return ELEMENT_ERROR_PARSE;
                         }
                     }
                     else {
@@ -323,20 +323,20 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         const auto begin_it = it;
                         auto result = tokenise_identifier(it, end, state);
                         if (result != ELEMENT_OK) {
-                            state->log(TODO_ELEMENT_ERROR_PARSE,
+                            state->log(ELEMENT_ERROR_PARSE,
                                 fmt::format("Failed to parse identifier '{}'",
                                     std::string(begin_it, it)));
-                            return result;
+                            return ELEMENT_ERROR_PARSE;
                         }
                     }
                     else if (element_isdigit(c) || c == '-' || c == '+') {
                         const auto begin_it = it;
                         auto result = tokenise_number(it, end, state);
                         if (result != ELEMENT_OK) {
-                            state->log(TODO_ELEMENT_ERROR_PARSE,
+                            state->log(ELEMENT_ERROR_PARSE,
                                 fmt::format("Failed to parse number '{}'",
                                     std::string(begin_it, it)));
-                            return result;
+                            return ELEMENT_ERROR_PARSE;
                         }
                     }
                     else if (element_iseol(c)) {
@@ -355,10 +355,10 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     else {
                         const auto begin_it = it;
                         UTF8_NEXT(it, end);
-                        state->log(TODO_ELEMENT_ERROR_PARSE,
+                        state->log(ELEMENT_ERROR_PARSE,
                             fmt::format("Reached unexpected state when encountering character '{}'",
                                 std::string(begin_it, it)));
-                        return TODO_ELEMENT_ERROR_PARSE;
+                        return ELEMENT_ERROR_PARSE;
                     }
                 }
             }
@@ -367,17 +367,17 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
     }
     catch (const std::exception& e)
     {
-        state->log(TODO_ELEMENT_ERROR_EXCEPTION,
+        state->log(ELEMENT_ERROR_EXCEPTION,
             fmt::format("Exception occured: {}", e.what()));
 
-        return TODO_ELEMENT_ERROR_EXCEPTION;
+        return ELEMENT_ERROR_EXCEPTION;
     }
     catch (...) //potentially EOF when last source character is UTF?
     {
-        state->log(TODO_ELEMENT_ERROR_EXCEPTION,
+        state->log(ELEMENT_ERROR_EXCEPTION,
             fmt::format("Exception occured"));
 
-        return TODO_ELEMENT_ERROR_EXCEPTION;
+        return ELEMENT_ERROR_EXCEPTION;
     }
 }
 
