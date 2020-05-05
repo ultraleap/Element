@@ -29,6 +29,7 @@
     <Content Include="Alchemist.runsettings">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Remove="Tests\L3-Prelude\For.ele" />
   </ItemGroup>
   
   <ItemGroup>
@@ -61,6 +62,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Element.NET\Element.NET.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Tests\L3-Prelude">
+      <Link>L3-Prelude</Link>
+    </Folder>
   </ItemGroup>
 
 </Project>

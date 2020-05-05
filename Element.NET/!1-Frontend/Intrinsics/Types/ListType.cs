@@ -57,17 +57,20 @@ namespace Element.AST
             public override string ToString() => "<list index function>";
 
             IValue IFunction.Call(IValue[] arguments, CompilationContext context) =>
-                Indexer.Create(arguments[0], _elements);
+                ListElement.Create(arguments[0], _elements);
         }
 
-        private class Indexer : IFunction
+        private class ListElement : IFunction, IIndexable
         {
             public static IValue Create(IValue index, IValue[] elements) =>
-                index is Element.Expression indexExpr && elements.All(e => e is Element.Expression)
-                    ? (IValue) new Mux(indexExpr, elements.Cast<Element.Expression>())
-                    : new Indexer(index, elements);
+                index switch
+                {
+                    Element.Expression indexExpr when elements.All(e => e is Element.Expression) => (IValue) new Mux(indexExpr, elements.Cast<Element.Expression>()),
+                    Constant constantIndex => elements[(int)constantIndex.Value],
+                    _ => new ListElement(index, elements)
+                };
 
-            private Indexer(IValue index, IValue[] elements)
+            private ListElement(IValue index, IValue[] elements)
             {
                 _index = index;
                 _elements = elements;
@@ -78,12 +81,19 @@ namespace Element.AST
             public override string ToString() => "<list element>";
             private readonly IValue _index;
             private readonly IValue[] _elements;
+            
+            IValue IFunction.Call(IValue[] arguments, CompilationContext context) =>
+                _elements[0] is IFunctionSignature
+                    ? Create(_index, _elements.Select(e => ((IFunctionSignature)e).ResolveCall(arguments, false, context)).ToArray())
+                    : context.LogError(16, "List element is not a function - it cannot be called");
 
-            IValue IFunction.Call(IValue[] arguments, CompilationContext context) => Create(_index, _elements);
-
-            public IType Type => FunctionType.Instance;
-            public Port[] Inputs { get; } = Array.Empty<Port>();
-            public Port Output { get; } = Port.ReturnPort(AnyConstraint.Instance);
+            public IType Type => _elements[0].Type;
+            public Port[] Inputs => _elements[0] is IFunctionSignature fn ? fn.Inputs : new[]{Port.VariadicPort};
+            public Port Output => _elements[0] is IFunctionSignature fn ? fn.Output : Port.ReturnPort(AnyConstraint.Instance);
+            public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
+                _elements[0] is IIndexable
+                    ? Create(_index, _elements.Select(e => ((IIndexable)e)[id, recurse, compilationContext]).ToArray())
+                    : compilationContext.LogError(16, "List element is not indexable");
         }
 
         public static (CountType CountType, int Count) GetListCount(StructInstance listInstance, CompilationContext context)
