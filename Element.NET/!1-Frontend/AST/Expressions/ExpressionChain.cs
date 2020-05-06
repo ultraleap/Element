@@ -46,7 +46,7 @@ namespace Element.AST
             };
 
             // Early out if something failed above
-            if (previous is CompilationErr err) return err;
+            if (previous is CompilationError err) return err;
 
             compilationContext.PushTrace(new TraceSite(previous.ToString(), null, 0, 0));
 

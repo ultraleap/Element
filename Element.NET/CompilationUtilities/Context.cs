@@ -11,7 +11,7 @@ namespace Element
         public bool Debug => CompilationInput.Debug;
         public bool SkipValidation => CompilationInput.SkipValidation;
 
-        public CompilationErr LogError(int? messageCode, string context = default)
+        public CompilationError LogError(int? messageCode, string context = default)
         {
             var msg = MakeMessage(messageCode, context);
             if (!msg.MessageLevel.HasValue || CompilationInput.Verbosity >= msg.MessageLevel.Value)
@@ -19,7 +19,7 @@ namespace Element
                 CompilationInput.LogCallback?.Invoke(msg);
             }
 
-            return CompilationErr.Instance;
+            return CompilationError.Instance;
         }
 
         public void Log(string message)

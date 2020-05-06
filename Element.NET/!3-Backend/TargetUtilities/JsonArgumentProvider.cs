@@ -1,9 +1,10 @@
+using Element.AST;
+using System;
+using System.IO;
+using Newtonsoft.Json.Linq;
+
 namespace Element
 {
-	using System;
-	using System.IO;
-	using Newtonsoft.Json.Linq;
-
 	/// <summary>
 	/// Provides function arguments from a JObject loaded from file or a json string.
 	/// </summary>
@@ -18,8 +19,13 @@ namespace Element
 			var idx = 0;
 			foreach (var input in function.Inputs)
 			{
-				JsonConfiguration.TryGetValue(input.Name, out var iValue);
-				RecursivelyEvaluate(arguments, input.Type, iValue, ref idx, context);
+				if (!input.Identifier.HasValue)
+				{
+					context.LogError(10, "Function has port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
+					return;
+				}
+				JsonConfiguration.TryGetValue(input.Identifier, out var iValue);
+				RecursivelyEvaluate(arguments, input.Identifier, input.ResolveConstraint(context) as IType, iValue, ref idx, context);
 			}
 		}
 
@@ -42,25 +48,37 @@ namespace Element
 			return (true, null);
 		}
 
-		private static void RecursivelyEvaluate(float[] config, IFunction func, JToken value, ref int idx, CompilationContext context)
+		private static void RecursivelyEvaluate(float[] argumentArray, string name, IType type, JToken value, ref int idx, CompilationContext context)
 		{
-			if (func.IsLeaf())
+			if (type == NumType.Instance)
 			{
-				config[idx++] = (value?.Type ?? JTokenType.None) switch
+				argumentArray[idx++] = (value?.Type ?? JTokenType.None) switch
 				{
 					JTokenType.Float => (float) (double) value,
 					JTokenType.Integer => (int) value,
-					_ => 0
+					_ => context.LogError(18, $"Expected float or integer token for element Num parameter '{name}'").Return(0)
 				};
+			}
+			else if (type == BoolType.Instance)
+			{
+				argumentArray[idx++] = (value?.Type ?? JTokenType.None) switch
+				{
+					JTokenType.Boolean => (bool)value ? 1f : 0f,
+					_ => context.LogError(18, $"Expected boolean token for element Bool parameter '{name}'").Return(0)
+				};
+			}
+			else if (type is DeclaredStruct declaredStruct)
+			{
+				JToken cValue = null;
+				(value as JObject)?.TryGetValue(name, out cValue);
+				foreach (var field in declaredStruct.Fields)
+				{
+					RecursivelyEvaluate(argumentArray, field.Identifier, field.ResolveConstraint(declaredStruct, context) as IType, cValue, ref idx, context);
+				}
 			}
 			else
 			{
-				foreach (var output in func.Outputs)
-				{
-					JToken cValue = null;
-					(value as JObject)?.TryGetValue(output.Name, out cValue);
-					RecursivelyEvaluate(config, func.Call(output.Name, context), cValue, ref idx, context);
-				}
+				context.LogError(18, $"Element type '{type}' is not supported for JSON argument provisioning");
 			}
 		}
 	}

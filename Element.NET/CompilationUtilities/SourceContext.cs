@@ -53,7 +53,7 @@ namespace Element
             success &= expressionObject.Validate(this);
             return success
                        ? expressionObject.ResolveExpression(GlobalScope, compilationContext)
-                       : CompilationErr.Instance;
+                       : CompilationError.Instance;
         }
 
         public bool LoadElementSourceString(string sourceName, string elementSource) => LoadElementSourceString(sourceName, elementSource, true);

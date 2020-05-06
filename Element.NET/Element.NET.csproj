@@ -14,7 +14,6 @@
     <Description>C# compiler for the Element embedded programming language.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Eto.Parse" Version="1.4.0" />
     <PackageReference Include="Lexico" Version="1.0.0-alpha1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />

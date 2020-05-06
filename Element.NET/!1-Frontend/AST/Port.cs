@@ -40,6 +40,9 @@ namespace Element.AST
         public Identifier? Identifier => _identifier is Identifier id ? (Identifier?)id : null;
         private IConstraint? _cachedConstraint;
 
+        public IConstraint ResolveConstraint(CompilationContext compilationContext) =>
+            ResolveConstraint(compilationContext.SourceContext.GlobalScope, compilationContext);
+        
         public IConstraint ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
             _cachedConstraint ?? (_type != null
                                       ? _cachedConstraint = _type.ResolveConstraint(scope, compilationContext)

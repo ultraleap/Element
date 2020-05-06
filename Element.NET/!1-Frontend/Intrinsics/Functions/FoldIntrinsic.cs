@@ -69,7 +69,7 @@ namespace Element.AST
 				                                                    .Aggregate(workingValue, (current, e) => aggregator.ResolveCall(new[] {current, e}, false, compilationContext)),
 				(ListType.CountType.Dynamic, _) => ((StructInstance) IntrinsicCache.GetByLocation<IFunctionSignature>("for", compilationContext)
 				                                                                   .ResolveCall(CreateDynamicFoldArguments(), false, compilationContext))[1],
-				_ => CompilationErr.Instance
+				_ => CompilationError.Instance
 			};
 		}
 	}

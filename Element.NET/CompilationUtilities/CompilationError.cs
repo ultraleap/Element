@@ -8,10 +8,10 @@ namespace Element.AST
     /// A value that results from a failure during compilation. It will be accepted everywhere and generate no further
     /// errors, returning itself from each operation (the error is non-recoverable).
     /// </summary>
-    public sealed class CompilationErr : Element.Expression, IFunctionSignature, IType, Element.IFunction
+    public sealed class CompilationError : Element.Expression, IFunctionSignature, IType
     {
-        public static CompilationErr Instance { get; } = new CompilationErr();
-        private CompilationErr() { }
+        public static CompilationError Instance { get; } = new CompilationError();
+        private CompilationError() { }
         IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
         protected override string ToStringInternal() => "<error>";
 
@@ -21,11 +21,5 @@ namespace Element.AST
         Port IFunctionSignature.Output => null;
         IType IValue.Type => Instance;
         public override IEnumerable<Element.Expression> Dependent => Enumerable.Empty<Element.Expression>();
-
-
-        // TODO: Delete these
-        PortInfo[] Element.IFunction.Inputs { get; } = null;
-        PortInfo[] Element.IFunction.Outputs { get; } = null;
-        public Element.IFunction CallInternal(Element.IFunction[] arguments, string output, CompilationContext context) => this;
     }
 }

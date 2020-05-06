@@ -25,14 +25,14 @@ namespace Element
                 ? _context.EvaluateExpression(expression, out var compilationContext)
                           .TrySerialize(out float[] result, compilationContext)
                       ? (true, result)
-                      : (_context.LogError(1, "Result not serializable") == CompilationErr.Instance, null)
+                      : (_context.LogError(1, "Result not serializable") == CompilationError.Instance, null)
                 : (false, null);
 
         public (bool Success, string Result) Typeof(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
                 ? _context.EvaluateExpression(expression, out _) switch
                 {
-                    CompilationErr err => (false, err.ToString()),
+                    CompilationError err => (false, err.ToString()),
                     { } result => (true, result.Type.Name),
                     _ => (false, "<error>")
                 }

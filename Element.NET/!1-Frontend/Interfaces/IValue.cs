@@ -129,6 +129,6 @@ namespace Element.AST
                 : compilationContext.LogError(1, $"'{value}' of type '{value.Type}' cannot be deserialized");
         
         public static bool TryDeserialize(this IType type, IEnumerable<Element.Expression> expressions, out IValue value, CompilationContext compilationContext) =>
-            (value = type.Deserialize(expressions, compilationContext)) != CompilationErr.Instance;
+            (value = type.Deserialize(expressions, compilationContext)) != CompilationError.Instance;
     }
 }

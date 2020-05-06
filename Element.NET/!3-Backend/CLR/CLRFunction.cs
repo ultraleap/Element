@@ -9,7 +9,7 @@ using LinqExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
 {
-    public static partial class CLRFunction
+    public static class CLRFunction
     {
 	    private static readonly Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>> _linqUnaryOps =
 		    new Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>>
@@ -330,7 +330,7 @@ namespace Element.CLR
 			{
 				switch (value)
 				{
-					case CompilationErr _: return null;
+					case CompilationError _: return null;
 					case IConstraint c:
 						context.LogError(3, $"Cannot compile a <{c.Type}>: {c}");
 						return null;

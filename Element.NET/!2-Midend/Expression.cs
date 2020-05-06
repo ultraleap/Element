@@ -1,23 +1,23 @@
-using Element.AST;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using Element.AST;
 
 namespace Element
 {
 	/// <summary>
 	/// Base class for all Element expressions
 	/// </summary>
-	public abstract class Expression : IEquatable<Expression>, IValue, IIndexable, IFunction, IEvaluable
+	public abstract class Expression : IEquatable<Expression>, IValue, IIndexable
 	{
-		protected Expression(AST.IType? instanceTypeOverride = default) => InstanceTypeOverride = instanceTypeOverride;
+		protected Expression(IType? instanceTypeOverride = default) => InstanceTypeOverride = instanceTypeOverride;
 		
-		public virtual AST.IType Type => InstanceTypeOverride ?? NumType.Instance;
+		public virtual IType Type => InstanceTypeOverride ?? NumType.Instance;
 
 		/// <summary>
 		/// The source type of the expression for instance indexing purposes
 		/// </summary>
-		public readonly AST.IType? InstanceTypeOverride;
+		public readonly IType? InstanceTypeOverride;
 
 		public abstract IEnumerable<Expression> Dependent { get; }
 
@@ -38,13 +38,5 @@ namespace Element
 		public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
 			compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>((InstanceTypeOverride ?? Type) as IIntrinsic)
 			                  ?.ResolveInstanceFunction(id, this, compilationContext);
-		
-		
-		
-		// TODO: Remove these
-		PortInfo[] IFunction.Inputs => Array.Empty<PortInfo>();
-		PortInfo[] IFunction.Outputs => Array.Empty<PortInfo>();
-		Expression IEvaluable.AsExpression(CompilationContext info) => this;
-		IFunction IFunction.CallInternal(IFunction[] arguments, string output, CompilationContext context) => context.LogError(9999, "Can't call a number");
 	}
 }

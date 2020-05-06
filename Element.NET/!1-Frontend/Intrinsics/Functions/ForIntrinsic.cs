@@ -24,13 +24,13 @@ namespace Element.AST
             var initial = arguments[0];
             if (!initial.TrySerialize(out Element.Expression[] initialSerialized, compilationContext))
             {
-                return CompilationErr.Instance;
+                return CompilationError.Instance;
             }
             
             var condition = arguments[1] as IFunctionSignature;
             var body = arguments[2] as IFunctionSignature;
             var group = new Loop(initialSerialized,
-                state => condition.ResolveCall(new[]{initial.Deserialize(state, compilationContext)}, false, compilationContext) as Element.Expression ?? CompilationErr.Instance,
+                state => condition.ResolveCall(new[]{initial.Deserialize(state, compilationContext)}, false, compilationContext) as Element.Expression ?? CompilationError.Instance,
                 state => body.ResolveCall(new[]{initial.Deserialize(state, compilationContext)}, false, compilationContext).Serialize(compilationContext));
             return initial.Deserialize(Enumerable.Range(0, group.Size).Select(i => new ExpressionGroupElement(group, i)), compilationContext);
         }

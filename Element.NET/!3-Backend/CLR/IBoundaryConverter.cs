@@ -83,9 +83,9 @@ namespace Element.CLR
         public IValue LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext compilationContext)
         {
             var result = compilationContext.SourceContext.EvaluateExpression(_elementTypeExpression, out _);
-            if (result == CompilationErr.Instance)
+            if (result == CompilationError.Instance)
             {
-                return CompilationErr.Instance;
+                return CompilationError.Instance;
             }
 
             if (!(result is DeclaredStruct declaredStruct))

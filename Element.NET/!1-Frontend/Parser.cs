@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Element.AST;
@@ -8,38 +7,6 @@ using Lexico;
 
 namespace Element
 {
-    public static class ElementAST
-    {
-        // Expressions - the most basic components which everything else is composed by
-        public const string LiteralExpression = "lit";
-        public const string VariableExpression = "var";
-        public const string SubExpression = "sub";
-        public const string CallExpression = "call";
-
-        // Expression-specific ElementAST elements
-        public const string SubExpressionRoot = "subroot";
-        public const string SubExpressionName = "subname";
-        public const string Callee = "callee";
-        public const string CallArguments = "args";
-        public const string CallArgument = "arg";
-
-        // Ports - defines syntax for a particular input or output from a function
-        public const string Port = "port";
-        public const string PortType = "porttype";
-        public const string PortName = "portname";
-
-        // Functions - all components for a function
-        public const string FunctionName = "name";
-        public const string FunctionInputs = "inputs";
-        public const string FunctionOutputs = "outputs";
-        public const string FunctionBody = "body";
-
-        // Statement - all assignments and function declarations are statements
-        public const string Binding = "bind";
-        public const string TypeStatement = "type";
-        public const string Declaration = "decl";
-    }
-
     /// <summary>
     /// Provides methods to convert text into 
     /// </summary>

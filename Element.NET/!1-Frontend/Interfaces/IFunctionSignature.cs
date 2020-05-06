@@ -31,7 +31,7 @@ namespace Element.AST
         public static IValue ResolveCall(this IFunctionSignature functionSignature, IValue[] arguments, bool allowPartialApplication,
                                          CompilationContext compilationContext)
         {
-            if (functionSignature == CompilationErr.Instance) return functionSignature;
+            if (functionSignature == CompilationError.Instance) return functionSignature;
             var definition = functionSignature.GetDefinition(compilationContext);
             if (compilationContext.ContainsFunction(definition) && !(functionSignature is AppliedFunctionBase)) return compilationContext.LogError(11, $"Multiple references to {functionSignature} in same call stack - Recursion is disallowed");
             compilationContext.PushFunction(definition);
@@ -80,7 +80,7 @@ namespace Element.AST
                                IFunction function => functionSignature.ResolveReturn(callScope, function.Call(arguments, compilationContext), compilationContext),
                                _ => throw new InternalCompilerException($"{functionSignature} function type not resolvable")
                            }).FullyResolveValue(compilationContext)
-                           : CompilationErr.Instance;
+                           : CompilationError.Instance;
             }
             finally
             {

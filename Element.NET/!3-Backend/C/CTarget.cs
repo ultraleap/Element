@@ -1,4 +1,4 @@
-using Element.AST;
+/*using Element.AST;
 
 namespace Element
 {
@@ -184,4 +184,4 @@ namespace Element
 			return sb.ToString();
 		}
 	}
-}
+}*/
