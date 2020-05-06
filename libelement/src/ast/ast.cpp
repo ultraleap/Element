@@ -423,19 +423,13 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_DECLARATION;
 
-    //If a function declaration identifier in another functions scope is "return" then that's valid, otherwise not
     bool function_declaration = false;
     if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION)
         function_declaration = true;
 
-    bool in_function_scope = false;
-    if (ast->parent->parent && ast->parent->parent->type == ELEMENT_AST_NODE_SCOPE &&
-        ast->parent->parent->parent && ast->parent->parent->parent->type == ELEMENT_AST_NODE_FUNCTION)
-    {
-        in_function_scope = true;
-    }
+    //If a function declaration identifier in another functions scope is "return" then that's valid, otherwise not
+    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, function_declaration && ast_node_in_function_scope(ast->parent)));
 
-    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, function_declaration && in_function_scope));
     GET_TOKEN(tokeniser, *tindex, tok);
     // always create the args node, even if it ends up being none/empty
     element_ast* args = ast_new_child(ast, ELEMENT_AST_NODE_NONE);

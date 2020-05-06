@@ -93,6 +93,12 @@ inline bool ast_node_has_literal(const element_ast* n)
     return n->type == ELEMENT_AST_NODE_LITERAL;
 }
 
+inline bool ast_node_in_function_scope(const element_ast* n)
+{
+    return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE &&
+        n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_FUNCTION);
+}
+
 struct element_parser_ctx
 {
     using LogCallback = void (*)(const element_log_message* const);
