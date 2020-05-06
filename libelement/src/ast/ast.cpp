@@ -998,7 +998,7 @@ element_ast::walk_step element_ast::walk(const element_ast::const_walker& fn) co
     }
 }
 
-void element_parser_ctx::log(int message_code, const std::string& message) const
+void element_parser_ctx::log(int message_code, const std::string& message, const element_ast* nearest_ast) const
 {
     if (!log_callback)
         return;
@@ -1009,9 +1009,22 @@ void element_parser_ctx::log(int message_code, const std::string& message) const
     log.line = -1;
     log.column = -1;
     log.length = -1;
+
+    if (nearest_ast && nearest_ast->nearest_token)
+    {
+        log.line = nearest_ast->nearest_token->line;
+        log.column = nearest_ast->nearest_token->column;
+        log.length = nearest_ast->nearest_token->tok_len;
+    }
+
     log.stage = ELEMENT_STAGE_PARSER;
-    log.filename = nullptr;
-    log.related_log_message = nullptr;
+    log.filename = tokeniser->filename.c_str();
+
+    element_log_message ast_log = log;
+    std::string msg = ast_to_string(root, 0);
+    ast_log.message = msg.c_str();
+
+    log.related_log_message = &ast_log;
 
     log_callback(&log);
 }

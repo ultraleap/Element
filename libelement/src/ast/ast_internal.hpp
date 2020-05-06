@@ -158,6 +158,6 @@ private:
     element_result validate_scope(element_ast* ast);
 
 public:
-    void log(int message_code, const std::string& message) const;
+    void log(int message_code, const std::string& message, const element_ast* nearest_ast = nullptr) const;
     void log(const element_log_message& message) const;
 };

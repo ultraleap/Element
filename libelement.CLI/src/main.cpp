@@ -34,6 +34,10 @@ void log_callback(const element_log_message* const message)
 	//todo: hack to force parse errors
 	auto log = compiler_message(static_cast<message_type>(message_code), message_with_info);
 	std::cout << log.serialize() << std::endl;
+
+	//todo: might want to do this differently in the future
+	if (message->related_log_message)
+	    log_callback(message->related_log_message);
 }
 
 void command_callback(const command& command) 
