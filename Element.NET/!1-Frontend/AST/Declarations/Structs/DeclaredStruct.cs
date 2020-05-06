@@ -10,6 +10,7 @@ namespace Element.AST
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
         protected override Identifier[] ScopeIdentifierBlacklist => new[]{Identifier};
 
+        public Port[] Fields => DeclaredInputs;
         public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => (Child ?? Parent)[id, recurse, compilationContext];
         public int Count => Child?.Count ?? 0;
         public IEnumerator<IValue> GetEnumerator() => Child?.GetEnumerator() ?? Enumerable.Empty<IValue>().GetEnumerator();

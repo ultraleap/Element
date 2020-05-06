@@ -22,6 +22,10 @@ namespace Element.CLR
 		    {Unary.Op.Ln, ((Func<double, double>)Math.Log).Method},
 		    {Unary.Op.Sin, ((Func<double, double>)Math.Sin).Method},
 		    {Unary.Op.ASin, ((Func<double, double>)Math.Asin).Method},
+		    {Unary.Op.Cos, ((Func<double, double>)Math.Cos).Method},
+		    {Unary.Op.ACos, ((Func<double, double>)Math.Acos).Method},
+		    {Unary.Op.Tan, ((Func<double, double>)Math.Tan).Method},
+		    {Unary.Op.ATan, ((Func<double, double>)Math.Atan).Method},
 	    };
 	    
 	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryArithmeticOps =
