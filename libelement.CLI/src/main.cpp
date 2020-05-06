@@ -19,8 +19,8 @@ void log_callback(const element_log_message* const message)
 	{
 	    case ELEMENT_STAGE_INVALID: msg_type = "libelement in invalid state\n"; break;
 	    case ELEMENT_STAGE_MISC: msg_type = "Misc Message\n"; break;
-		case ELEMENT_STAGE_TOKENISER: msg_type = "Tokeniser Message\n"; message_code = message_code < 0 ? ELEMENT_ERROR_PARSE : message_code; break;
-	    case ELEMENT_STAGE_PARSER: msg_type = "Parser Message\n"; message_code = message_code < 0 ? ELEMENT_ERROR_PARSE : message_code;  break;
+		case ELEMENT_STAGE_TOKENISER: msg_type = "Tokeniser Message\n"; break;
+	    case ELEMENT_STAGE_PARSER: msg_type = "Parser Message\n"; break;
 		case ELEMENT_STAGE_COMPILER: msg_type = "Compiler Message\n"; break;
 		case ELEMENT_STAGE_EVALUATOR: msg_type = "Evaluator Message\n"; break;
 		default: msg_type = "Unknown Message\n"; break;

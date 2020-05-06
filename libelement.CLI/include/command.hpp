@@ -183,7 +183,12 @@ namespace libelement::cli
 			element_result result = ELEMENT_OK;
 			if (!input.get_no_prelude()) {
 				result = element_interpreter_load_prelude(ictx);
-				if (result != ELEMENT_OK) {
+				if (result != ELEMENT_OK) 
+				{
+					//TODO: Better solution for this? Forces a parse error on any file load error
+					auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "Parsing failed");
+					std::cout << parse_error.serialize() << std::endl;
+					
 					return result;
 				}
 			}
@@ -193,7 +198,12 @@ namespace libelement::cli
 			if (source_file_count > 0) {
 				
 				result = element_interpreter_load_files(ictx, &source_files[0], source_file_count);
-				if (result != ELEMENT_OK) {
+				if (result != ELEMENT_OK) 
+				{
+					//TODO: Better solution for this? Forces a parse error on any file load error
+					auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "Parsing failed");
+					std::cout << parse_error.serialize() << std::endl;
+					
 					return result;
 				}
 			}
