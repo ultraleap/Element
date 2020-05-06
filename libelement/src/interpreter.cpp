@@ -177,7 +177,6 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     }
     ELEMENT_OK_OR_RETURN(result)
 
-    // element_ast_print(raw_ast);
     auto ast = ast_unique_ptr(parser.root, element_ast_delete);
     scope_unique_ptr root = get_names(nullptr, parser.root);
     result = add_ast_names(ast_names, root.get());

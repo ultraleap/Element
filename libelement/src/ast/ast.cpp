@@ -1,6 +1,8 @@
 #include "element/ast.h"
 #include "element/token.h"
 
+#include <fmt/format.h>
+
 #include <vector>
 #include <string>
 #include <cstdlib>
@@ -9,6 +11,7 @@
 #include <cassert>
 #include <memory>
 #include <unordered_set>
+#include <iostream>
 
 #include <fmt/format.h>
 
@@ -892,34 +895,38 @@ void element_ast_delete(element_ast* ast)
 }
 
 #define PRINTCASE(a) case a: c = #a; break;
-static element_result ast_print_depth(element_ast* ast, int depth)
+static std::string ast_to_string(element_ast* ast, int depth)
 {
-    for (int i = 0; i < depth; ++i) printf("  ");
+    std::string string;
+
+    for (int i = 0; i < depth; ++i)
+        string += "  ";
+
     if (ast->type == ELEMENT_AST_NODE_LITERAL) {
-        printf("LITERAL: %f", ast->literal);
+        string += fmt::format("LITERAL: {}", ast->literal);
     } else if (ast->type == ELEMENT_AST_NODE_IDENTIFIER) {
-        printf("IDENTIFIER: %s", ast->identifier.c_str());
+        string += fmt::format("IDENTIFIER: {}", ast->identifier);
     } else if (ast->type == ELEMENT_AST_NODE_DECLARATION) {
-        auto intrinsic = ast->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+        const auto intrinsic = ast->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
         intrinsic
-            ? printf("INTRINSIC DECLARATION: %s", ast->identifier.c_str())
-            : printf("DECLARATION: %s", ast->identifier.c_str());
+            ? string += fmt::format("INTRINSIC DECLARATION: {}", ast->identifier)
+            : string += fmt::format("DECLARATION: {}", ast->identifier);
     } else if (ast->type == ELEMENT_AST_NODE_NAMESPACE) {
-        printf("NAMESPACE: %s", ast->identifier.c_str());
+        string += fmt::format("NAMESPACE: {}", ast->identifier);
     } else if (ast->type == ELEMENT_AST_NODE_CALL) {
-        printf("CALL: %s", ast->identifier.c_str());
+        string += fmt::format("CALL: {}", ast->identifier);
     } else if (ast->type == ELEMENT_AST_NODE_PORT) {
-        printf("PORT: %s", ast->identifier.c_str());
-    }
-    else if (ast->type == ELEMENT_AST_NODE_NONE) {
+        string += fmt::format("PORT: {}", ast->identifier);
+    } else if (ast->type == ELEMENT_AST_NODE_NONE) {
         if (ast->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT))
-            printf("EMPTY INPUT");
+            string += "EMPTY INPUT";
         else if (ast->has_flag(ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN))
-            printf("IMPLICIT RETURN");
+            string += "IMPLICIT RETURN";
+        else if (ast->flags == 0)
+            string += "NONE";
         else
-            printf("NONE");
-    }
-    else {
+            string += "UNKNOWN FLAGS";
+    } else {
         char* c;
         switch (ast->type) {
             PRINTCASE(ELEMENT_AST_NODE_ROOT);
@@ -934,18 +941,23 @@ static element_result ast_print_depth(element_ast* ast, int depth)
             PRINTCASE(ELEMENT_AST_NODE_LAMBDA);
             default: c = "ELEMENT_AST_NODE_<UNKNOWN>"; break;
         }
-        printf("%s", c + strlen("ELEMENT_AST_NODE_"));
+
+        //Offset pointer by length of prefix to cutoff prefix
+        string += fmt::format("{}", c + strlen("ELEMENT_AST_NODE_"));
     }
-    printf("\n");
+
+    string += "\n";
 
     for (const auto& child : ast->children)
-        ast_print_depth(child.get(), depth + 1);
-    return ELEMENT_OK;
+        string += ast_to_string(child.get(), depth + 1);
+
+    return string;
 }
 
 element_result element_ast_print(element_ast* ast)
 {
-    return ast_print_depth(ast, 0);
+    std::cout << ast_to_string(ast, 0);
+    return ELEMENT_OK;
 }
 
 element_ast::walk_step element_ast::walk(const element_ast::walker& fn)
