@@ -347,6 +347,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         state->col = 0;
                         state->pos += 1;
                         state->line_start_position = state->pos;
+                        state->line_number_to_line_pos[state->line] = state->line_start_position;
                         reset_token(state);
                         UTF8_NEXT(it, end);
                     }
@@ -410,4 +411,35 @@ void element_tokeniser_print(const element_tokeniser_ctx* state)
             buf = state->input.substr(t.tok_pos, t.tok_len);
         printf("%-10s  %s\n", c + strlen("ELEMENT_TOK_"), buf.c_str());
     }
+}
+
+void advance_to_end_of_line(std::string::const_iterator& it, const std::string::const_iterator& end)
+{
+    try
+    {
+        do
+        {
+            UTF8_NEXT(it, end);
+        } while (it != end && !element_iseol(UTF8_PEEK_NEXT(it, end)));
+    }
+    catch (...)
+    {
+        //exceptions are thrown for just about any utf issue, ignore them
+    }
+}
+
+std::string element_tokeniser_ctx::text_on_line(int line) const
+{
+    //lines start at 1, arrays at 0
+    line--;
+
+    if (line < 0 || line > line_number_to_line_pos.size())
+        return "invalid line";
+
+    const auto start_pos = line_number_to_line_pos[line];
+    const auto start_it = input.begin() + start_pos;
+    auto end_it = start_it;
+    advance_to_end_of_line(end_it, input.end());
+
+    return std::string(start_it, end_it);
 }

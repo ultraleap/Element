@@ -1027,23 +1027,40 @@ void element_parser_ctx::log(int message_code, const std::string& message, const
     log.line = -1;
     log.column = -1;
     log.length = -1;
+    log.stage = ELEMENT_STAGE_PARSER;
+    log.filename = tokeniser->filename.c_str();
+    log.related_log_message = nullptr;
 
+    std::string new_log_message;
     if (nearest_ast && nearest_ast->nearest_token)
     {
         log.line = nearest_ast->nearest_token->line;
         log.column = nearest_ast->nearest_token->column;
         log.length = nearest_ast->nearest_token->tok_len;
+
+        if (log.line > 0)
+        {
+            std::string source_line = tokeniser->text_on_line(log.line) + "\n";
+
+            //todo: doesn't handle UTF8 I'm guessing
+            if (log.column >= 0)
+            {
+                for (int i = 0; i < log.column - 1; ++i)
+                    source_line += " ";
+
+                source_line += "^";
+
+                for (int i = 0; i < log.length - 1; ++i)
+                    source_line += "^";
+            }
+
+            new_log_message = message + "\n\n" + source_line;
+            log.message = new_log_message.c_str();
+        }
     }
 
-    log.stage = ELEMENT_STAGE_PARSER;
-    log.filename = tokeniser->filename.c_str();
-
-    element_log_message ast_log = log;
-    const std::string msg = ast_to_string(root, 0, nearest_ast);
-    ast_log.message = msg.c_str();
-
-    log.related_log_message = &ast_log;
-
+    new_log_message += "\n\n" + ast_to_string(root, 0, nearest_ast);
+    log.message = new_log_message.c_str();
     log_callback(&log);
 }
 

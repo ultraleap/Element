@@ -3,6 +3,7 @@
 #include <cassert>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "element/token.h"
 
@@ -19,11 +20,14 @@ struct element_tokeniser_ctx
     element_token cur_token;
     std::vector<element_token> tokens;
     LogCallback log_callback;
+    std::vector<int> line_number_to_line_pos {0};
 
     std::string text(const element_token* t) const
     { 
         return input.substr(t->tok_pos, t->tok_len);
     }
+
+    std::string text_on_line(int line) const;
 
     void log(int message_code, const std::string& message) const
     {
