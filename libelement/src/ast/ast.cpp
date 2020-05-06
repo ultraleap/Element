@@ -19,11 +19,15 @@
 
 static std::unordered_set<std::string> qualifiers {"intrinsic"};
 static std::unordered_set<std::string> constructs{ "struct", "namespace", "constraint"};
-static std::unordered_set<std::string> reserved_args {};
+static std::unordered_set<std::string> reserved_args{};
+static std::unordered_set<std::string> reserved_names {"return"};
 
-static element_result check_reserved_words(const std::string& text, bool allow_reserved_arg)
+static element_result check_reserved_words(const std::string& text, bool allow_reserved_arg, bool allow_reserved_names)
 {
-    return (qualifiers.count(text) == 0 && constructs.count(text) == 0 && (allow_reserved_arg || reserved_args.count(text) == 0))
+    return (qualifiers.count(text) == 0 &&
+        constructs.count(text) == 0 &&
+        (allow_reserved_arg || reserved_args.count(text) == 0) &&
+        (allow_reserved_names || reserved_names.count(text) == 0))
         ? ELEMENT_OK
         : ELEMENT_ERROR_INVALID_ARCHIVE; // TODO: errcode
 }
@@ -176,7 +180,7 @@ element_result element_parser_ctx::parse_literal(size_t* tindex, element_ast* as
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast* ast, bool allow_reserved_args)
+element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast* ast, bool allow_reserved_args, bool allow_reserved_names)
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
@@ -185,7 +189,7 @@ element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast*
     ast->identifier.assign(tokeniser->text(token));
     tokenlist_advance(tokeniser, tindex);
 
-    auto result = check_reserved_words(ast->identifier, allow_reserved_args);
+    auto result = check_reserved_words(ast->identifier, allow_reserved_args, allow_reserved_names);
     if (result != ELEMENT_OK) {
         log(ELEMENT_ERROR_INVALID_IDENTIFIER,
             fmt::format("Invalid identifier '{}'", ast->identifier));
@@ -418,7 +422,20 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
     assert(tok->type == ELEMENT_TOK_IDENTIFIER);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_DECLARATION;
-    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast));
+
+    //If a function declaration identifier in another functions scope is "return" then that's valid, otherwise not
+    bool function_declaration = false;
+    if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION)
+        function_declaration = true;
+
+    bool in_function_scope = false;
+    if (ast->parent->parent && ast->parent->parent->type == ELEMENT_AST_NODE_SCOPE &&
+        ast->parent->parent->parent && ast->parent->parent->parent->type == ELEMENT_AST_NODE_FUNCTION)
+    {
+        in_function_scope = true;
+    }
+
+    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, function_declaration && in_function_scope));
     GET_TOKEN(tokeniser, *tindex, tok);
     // always create the args node, even if it ends up being none/empty
     element_ast* args = ast_new_child(ast, ELEMENT_AST_NODE_NONE);

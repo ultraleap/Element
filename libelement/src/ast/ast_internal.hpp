@@ -104,7 +104,7 @@ struct element_parser_ctx
     // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
     element_result parse_literal(size_t* tindex, element_ast* ast);
     // identifier ::= '_'? [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
-    element_result parse_identifier(size_t* tindex, element_ast* ast, bool allow_reserved_args = false);
+    element_result parse_identifier(size_t* tindex, element_ast* ast, bool allow_reserved_args = false, bool allow_reserved_names = false);
     // type ::= ':' identifier ('.' identifier)*
     element_result parse_typename(size_t* tindex, element_ast* ast);
     // port ::= (identifier | unidentifier) type?
