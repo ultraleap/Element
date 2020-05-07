@@ -134,15 +134,15 @@ namespace Laboratory
             
             if (success) 
                 Assert.Fail("Expected error ELE{0} '{1}' but succeeded",
-                    messageCode, CompilerMessage.GetMessageName(messageCode));
+                    messageCode, CompilerMessage.TryGetMessageName(messageCode, out var name) ? name : "?");
 
             if (hasErrors) 
                 Assert.Fail("Expected error ELE{0} '{1}' but got following error codes instead: {2}",
-                    messageCode, CompilerMessage.GetMessageName(messageCode),
+                    messageCode, CompilerMessage.TryGetMessageName(messageCode, out var name) ? name : "?",
                     string.Join(", ", errors.Select(err => err.MessageCode)));
             
             Assert.Fail("Expected message code {0} '{1}', but success was false and no errors were received", messageCode,
-                    CompilerMessage.GetMessageName(messageCode));
+                CompilerMessage.TryGetMessageName(messageCode, out var msg) ? msg : "?");
         }
         
         protected static void ExpectingSuccess(List<CompilerMessage> messages, bool success)

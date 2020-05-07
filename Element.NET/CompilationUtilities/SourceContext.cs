@@ -47,7 +47,7 @@ namespace Element
 
         protected override CompilerMessage MakeMessage(int? messageCode, string context = default)=> !messageCode.HasValue
             ? new CompilerMessage(null, null, context, null)
-            : new CompilerMessage(messageCode.Value, CompilerMessage.GetMessageLevel(messageCode.Value), context, null);
+            : new CompilerMessage(messageCode.Value, CompilerMessage.TryGetMessageLevel(messageCode.Value, out var level) ? level : MessageLevel.Information, context, null);
 
         private static readonly LambdaEqualityComparer<DirectoryInfo> _directoryComparer = new LambdaEqualityComparer<DirectoryInfo>((a, b) => a.FullName == b.FullName, info => info.GetHashCode());
         private static readonly LambdaEqualityComparer<FileInfo> _fileComparer = new LambdaEqualityComparer<FileInfo>((a, b) => a.FullName == b.FullName, info => info.GetHashCode());
