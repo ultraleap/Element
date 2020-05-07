@@ -113,7 +113,7 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         c = UTF8_NEXT(it, end);
 
     if (it == end)
-        return ELEMENT_ERROR_CONSUMED_ALL_INPUT;
+        return ELEMENT_OK;
 
     c = UTF8_PEEK_NEXT(it, end);
     if (c == '.') {

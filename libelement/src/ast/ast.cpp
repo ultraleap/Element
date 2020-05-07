@@ -369,7 +369,6 @@ element_result element_parser_ctx::parse_lambda(size_t* tindex, element_ast* ast
     tokenlist_advance(tokeniser, tindex);
 
     GET_TOKEN(tokeniser, *tindex, token);
-
     auto has_return = token->type == ELEMENT_TOK_COLON;
     if (has_return) 
     {
