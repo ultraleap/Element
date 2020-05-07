@@ -10,19 +10,19 @@ namespace Laboratory.Tests.L3.Prelude
 	{
 		[Test]
 		public void IndexListWithStructuredElements() =>
-			AssertApproxEqual(CompilationInput, "5", "List.repeat(Vector3(5, 5, 5), 3).at(2).z");
+			AssertApproxEqual(ValidatedCompilationInput, "5", "List.repeat(Vector3(5, 5, 5), 3).at(2).z");
 		
 		[Test]
 		public void IndexLiteralList() =>
-			AssertApproxEqual(CompilationInput, "Vector3(5, 5, 5)", "list(Vector3(5, 5, 5)).at(0)");
+			AssertApproxEqual(ValidatedCompilationInput, "Vector3(5, 5, 5)", "list(Vector3(5, 5, 5)).at(0)");
 		
 		[Test]
 		public void IndexLiteralListWithStructuredElements() =>
-			AssertApproxEqual(CompilationInput, "5", "list(Vector3(5, 5, 5)).at(0).z");
+			AssertApproxEqual(ValidatedCompilationInput, "5", "list(Vector3(5, 5, 5)).at(0).z");
 		
 		[Test]
 		public void SerializeListElement() =>
-			AssertApproxEqual(CompilationInput, "Vector3(5, 5, 5)", "List.repeat(Vector3(5, 5, 5), 3).at(2)");
+			AssertApproxEqual(ValidatedCompilationInput, "Vector3(5, 5, 5)", "List.repeat(Vector3(5, 5, 5), 3).at(2)");
 
 		private static readonly (float, float)[] _factorialArguments =
 		{
@@ -42,10 +42,10 @@ namespace Laboratory.Tests.L3.Prelude
 		
 		[TestCaseSource(nameof(_factorialArguments))]
 		public void FactorialUsingForWithVector2((float factorial, float expectedResult) f) =>
-			AssertApproxEqual(CompilationInput, f.expectedResult.ToString(), $"factorial({f.factorial.ToString()})");
+			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(), $"factorial({f.factorial.ToString()})");
 		
 		[TestCaseSource(nameof(_factorialArguments))]
 		public void FactorialUsingForWithTupleAndLambdas((float factorial, float expectedResult) f) =>
-			AssertApproxEqual(CompilationInput, f.expectedResult.ToString(), $"factorialUsingTuple({f.factorial.ToString()})");
+			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(), $"factorialUsingTuple({f.factorial.ToString()})");
 	}
 }
