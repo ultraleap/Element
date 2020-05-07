@@ -18,7 +18,7 @@ namespace Element.AST
         public Declaration Declarer { get; private set; }
 
         public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-            IndexCache(id) ?? (recurse ? Declarer.ParentScope[id, true, compilationContext] : null);
+            IndexCache(id) ?? (recurse ? Declarer.Parent[id, true, compilationContext] : null);
 
         public void Initialize(Declaration declarer)
         {

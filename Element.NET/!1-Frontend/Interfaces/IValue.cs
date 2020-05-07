@@ -11,6 +11,24 @@ namespace Element.AST
 
     public static class ValueExtensions
     {
+        public static IValue FullyResolveValue(this IValue value, CompilationContext compilationContext)
+        {
+            var previous = value;
+            while (previous is IFunctionSignature fn && fn.IsNullary())
+            {
+                var result = fn.ResolveCall(Array.Empty<IValue>(), false, compilationContext);
+                // ReSharper disable once PossibleUnintendedReferenceComparison
+                if (result == previous) break; // Prevent infinite loop if a nullary just returns itself
+                previous = result;
+            }
+
+            return previous  switch
+            {
+                Element.Expression expr => (IValue)ConstantFolding.Optimize(expr),
+                _ => previous
+            };
+        }
+        
         public static IEnumerable<(Identifier Identifier, IValue Value)> WithoutDiscardedArguments(this IValue[] arguments, Port[] ports)
         {
             var result = new List<(Identifier Identifier, IValue Value)>();
@@ -21,7 +39,7 @@ namespace Element.AST
                 var port = i < ports.Length ? ports[i] : null;
                 if (port == Port.VariadicPort || variadicArgNumber > 0)
                 {
-                    result.Add((new Identifier($"<vararg#{variadicArgNumber}>"), arg));
+                    result.Add((new Identifier($"varg{variadicArgNumber}"), arg));
                     variadicArgNumber++;
                 }
                 else if ((port?.Identifier.HasValue ?? false) && arg != null)
@@ -33,45 +51,52 @@ namespace Element.AST
             return result;
         }
 
-        public static int? GetSerializedSize(this IValue value, CompilationContext compilationContext) => value switch
+        public static int GetSerializedSize(this IValue value, CompilationContext compilationContext) => value switch
         {
-            Element.Expression _ => 1,
-            StructInstance structInstance when structInstance.Type == ListType.Instance => ListType.GetListCount(structInstance, compilationContext),
-            IEnumerable<IValue> values => values.Select(v => v.GetSerializedSize(compilationContext)).Aggregate((int?)0, (a, b) => a == null || b == null ? null : a + b),
-            _ => compilationContext.LogError(1, $"'{value}' is not serializable").Return((int?)null)
+            { } when value.Type is ISerializableType t => t.Size(value, compilationContext),
+            IFunctionSignature fn when fn.IsNullary() => fn.FullyResolveValue(compilationContext).GetSerializedSize(compilationContext),
+            _ => compilationContext.LogError(1, $"'{value}' of type '{value.Type}' is not serializable").Return(-1)
         };
-        
-        public static bool TrySerialize(this IValue value, out Element.Expression[] serialized, CompilationContext compilationContext)
+
+        internal static int GetSerializedSize(this IEnumerable<IValue> values, CompilationContext compilationContext)
+        {
+            var sizes = values.Select(v => v.GetSerializedSize(compilationContext)).ToArray();
+            return sizes.Any(i => i <= 0) ? -1 : sizes.Sum();
+        }
+
+        public static Element.Expression[] Serialize(this IValue value, CompilationContext compilationContext)
         {
             var size = value.GetSerializedSize(compilationContext);
-            if (!size.HasValue || size == 0)
+            if (size <= 0)
             {
-                serialized = null;
-                return false;
+                return Array.Empty<Element.Expression>();
             }
             
-            serialized = new Element.Expression[size.Value];
+            var serialized = new Element.Expression[size];
             var position = 0;
 
-            bool Serialize(object serializable, Element.Expression[] output)
-            {
-                switch(serializable)
-                {
-                    case Element.Expression expr:
-                        output[position++] = expr;
-                        return true;
-                    case StructInstance structInstance when structInstance.Type == ListType.Instance:
-                        return Serialize(ListType.EvaluateElements(structInstance, compilationContext), output);
-                    case IEnumerable<IValue> values:
-                        return values.Aggregate(true, (current, element) => current & Serialize(element, output));
-                    default:
-                        compilationContext.LogError(1, $"'{serializable}' is not serializable");
-                        return false;
-                };
-            }
-
-            return Serialize(value, serialized);
+            return value.Serialize(ref serialized, ref position, compilationContext)
+                       ? serialized
+                       : Array.Empty<Element.Expression>();
         }
+
+        internal static bool Serialize(this IValue value, ref Element.Expression[] serialized, ref int position, CompilationContext compilationContext)=>
+            value switch
+            {
+                {} when value.Type is ISerializableType t => t.Serialize(value, ref serialized, ref position, compilationContext),
+                IFunctionSignature fn when fn.IsNullary() => fn.FullyResolveValue(compilationContext).Serialize(ref serialized, ref position, compilationContext),
+                _ => compilationContext.LogError(1, $"'{value}' of type '{value.Type}' is not serializable").Return(false)
+            };
+        
+        internal static bool Serialize(this IEnumerable<IValue> values, ref Element.Expression[] serialized, ref int position, CompilationContext compilationContext)
+        {
+            var result = true;
+            foreach (var value in values) result &= value.Serialize(ref serialized, ref position, compilationContext);
+            return result;
+        }
+
+        public static bool TrySerialize(this IValue value, out Element.Expression[] serialized, CompilationContext compilationContext)
+            => (serialized = value.Serialize(compilationContext)).Length > 0;
 
         public static bool TrySerialize(this IValue value, out float[] serialized, CompilationContext compilationContext)
         {
@@ -97,5 +122,13 @@ namespace Element.AST
 
             return success;
         }
+
+        public static IValue Deserialize(this IValue value, IEnumerable<Element.Expression> expressions, CompilationContext compilationContext) =>
+            value.Type is ISerializableType type
+                ? type.Deserialize(expressions, compilationContext)
+                : compilationContext.LogError(1, $"'{value}' of type '{value.Type}' cannot be deserialized");
+        
+        public static bool TryDeserialize(this IType type, IEnumerable<Element.Expression> expressions, out IValue value, CompilationContext compilationContext) =>
+            (value = type.Deserialize(expressions, compilationContext)) != CompilationError.Instance;
     }
 }

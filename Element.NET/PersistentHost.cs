@@ -22,19 +22,20 @@ namespace Element
 
         public (bool Success, float[] Result) Evaluate(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
-                ? _context.Parse(expression, out AST.Expression expressionObject)
-                    ? expressionObject.ResolveExpression(_context.GlobalScope, _context.MakeCompilationContext(out var compilationContext))
-                                      .TrySerialize(out float[] result, compilationContext)
-                          ? (true, result)
-                          : (_context.LogError(1, "Result not serializable") == CompilationErr.Instance, null)
-                    : (false, null)
+                ? _context.EvaluateExpression(expression, out var compilationContext)
+                          .TrySerialize(out float[] result, compilationContext)
+                      ? (true, result)
+                      : (_context.LogError(1, "Result not serializable") == CompilationError.Instance, null)
                 : (false, null);
 
         public (bool Success, string Result) Typeof(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
-                ? _context.Parse(expression, out AST.Expression expressionObject)
-                    ? (true, expressionObject.ResolveExpression(_context.GlobalScope, _context.MakeCompilationContext(out _)).Type.Name)
-                    : (false, "<expression parse error>")
+                ? _context.EvaluateExpression(expression, out _) switch
+                {
+                    CompilationError err => (false, err.ToString()),
+                    { } result => (true, result.Type.Name),
+                    _ => (false, "<error>")
+                }
                 : (false, "<compilation input error>");
     }
 }

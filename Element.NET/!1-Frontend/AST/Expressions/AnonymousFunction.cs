@@ -2,9 +2,10 @@ namespace Element.AST
 {
     public class AnonymousFunction : IFunctionWithBody
     {
-        public AnonymousFunction(object body, PortList inputs, Port output)
+        public AnonymousFunction(IScope parent, object body, PortList inputs, Port output)
         {
             Body = body;
+            Parent = parent;
             Output = output;
             Inputs =  inputs.List.ToArray();
         }
@@ -14,6 +15,7 @@ namespace Element.AST
         public Port Output { get; }
         public IFunctionSignature GetDefinition(CompilationContext _) => this;
 
+        public IScope Parent { get; }
         public object Body { get; }
     }
 }

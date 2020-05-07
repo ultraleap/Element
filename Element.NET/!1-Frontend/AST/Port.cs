@@ -10,15 +10,19 @@ namespace Element.AST
         // ReSharper disable once MemberCanBePrivate.Global
         public Port() {}
 
-        public Port(string identifier, TypeAnnotation? typeAnnotation)
+        public Port(string identifier, TypeAnnotation? typeAnnotation) :this(new Identifier(identifier), typeAnnotation) { }
+        
+        public Port(Identifier identifier, TypeAnnotation? typeAnnotation)
         {
             _identifier = new Identifier(identifier);
             _type = typeAnnotation;
         }
         
-        public Port(string identifier, IConstraint constraint)
+        public Port(string identifier, IConstraint constraint) :this(new Identifier(identifier), constraint) { }
+        
+        public Port(Identifier identifier, IConstraint constraint)
         {
-            _identifier = new Identifier(identifier);
+            _identifier = identifier;
             _cachedConstraint = constraint;
         }
         
@@ -36,6 +40,9 @@ namespace Element.AST
         public Identifier? Identifier => _identifier is Identifier id ? (Identifier?)id : null;
         private IConstraint? _cachedConstraint;
 
+        public IConstraint ResolveConstraint(CompilationContext compilationContext) =>
+            ResolveConstraint(compilationContext.SourceContext.GlobalScope, compilationContext);
+        
         public IConstraint ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
             _cachedConstraint ?? (_type != null
                                       ? _cachedConstraint = _type.ResolveConstraint(scope, compilationContext)

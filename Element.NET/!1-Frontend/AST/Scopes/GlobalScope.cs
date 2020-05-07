@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace Element.AST
@@ -8,10 +7,10 @@ namespace Element.AST
     {
         private readonly Dictionary<string, SourceScope> _sourceScopes = new Dictionary<string, SourceScope>();
 
-        public SourceScope this[FileInfo file]
+        public SourceScope this[string source]
         {
-            get => _sourceScopes.TryGetValue(file.FullName, out var found) ? found : null;
-            set => _sourceScopes[file.FullName] = value;
+            get => _sourceScopes.TryGetValue(source, out var found) ? found : null;
+            set => _sourceScopes[source] = value;
         }
 
         public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => IndexCache(id);

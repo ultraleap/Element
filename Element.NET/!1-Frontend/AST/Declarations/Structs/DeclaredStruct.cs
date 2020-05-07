@@ -4,14 +4,16 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class DeclaredStruct : Declaration, IFunction, IScope, IEnumerable<IValue>, IType
+    public abstract class DeclaredStruct : Declaration, IFunction, IScope, ISerializableType
     {
         protected override string Qualifier { get; } = "struct";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
         protected override Identifier[] ScopeIdentifierBlacklist => new[]{Identifier};
 
-        public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => (ChildScope ?? ParentScope)[id, recurse, compilationContext];
-        public IEnumerator<IValue> GetEnumerator() => ChildScope?.GetEnumerator() ?? Enumerable.Empty<IValue>().GetEnumerator();
+        public Port[] Fields => DeclaredInputs;
+        public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => (Child ?? Parent)[id, recurse, compilationContext];
+        public int Count => Child?.Count ?? 0;
+        public IEnumerator<IValue> GetEnumerator() => Child?.GetEnumerator() ?? Enumerable.Empty<IValue>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         string IType.Name => Identifier;
         public override IType Type => TypeType.Instance;
@@ -33,5 +35,14 @@ namespace Element.AST
 
         public IValue CreateInstance(IValue[] members, IType? instanceType = default) => new StructInstance(this, DeclaredInputs, members, instanceType);
         IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
+
+        public int Size(IValue instance, CompilationContext compilationContext) =>
+            (instance as IEnumerable<IValue>).GetSerializedSize(compilationContext);
+
+        public bool Serialize(IValue instance, ref Element.Expression[] serialized, ref int position, CompilationContext compilationContext) =>
+            (instance as IEnumerable<IValue>).Serialize(ref serialized, ref position, compilationContext);
+
+        public IValue Deserialize(IEnumerable<Element.Expression> expressions, CompilationContext compilationContext) =>
+            CreateInstance(expressions.ToArray());
     }
 }

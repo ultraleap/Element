@@ -45,7 +45,7 @@ name = "ParseError"
 level = "Error"
 
 [ELE10]
-name = "InvalidBoundaryFunctionInterface"
+name = "InvalidBoundaryFunction"
 level = "Error"
 
 [ELE11]
@@ -77,8 +77,8 @@ name = "InvalidReturnType"
 level = "Error"
 
 [ELE18]
-name = "RedundantQualifier"
-level = "Warning"
+name = "InvalidBoundaryData"
+level = "Error"
 
 [ELE19]
 name = "StructCannotHaveReturnType"

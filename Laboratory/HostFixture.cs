@@ -57,11 +57,9 @@ namespace Laboratory
                 return result;
             }).ToArray());
 
-        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params float[][] results)
-        {
+        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params float[][] results) =>
             AssertApproxEqual(compilationInput, controlExpression, FloatComparer, results);
-        }
-        
+
         private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params float[][] results)
         {
             var messages = new List<CompilerMessage>();

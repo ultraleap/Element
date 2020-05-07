@@ -30,7 +30,7 @@ namespace Element
                     foreach (var id in intrinsic.Location.Split('.'))
                     {
                         declaration = currentScope?[new Identifier(id), false, compilationContext] as Declaration;
-                        currentScope = declaration?.ChildScope;
+                        currentScope = declaration?.Child;
                     }
 
                     _cachedIntrinsicDeclarations[intrinsic] = declaration;
@@ -43,6 +43,51 @@ namespace Element
                     _ => LogError(7, $"Couldn't find '{intrinsic.Location}'")
                 } as TDeclaration;
             }
+        }
+        
+        public IValue EvaluateExpression(string expression, out CompilationContext compilationContext)
+        {
+            compilationContext = MakeCompilationContext(out compilationContext);
+            var success = this.Parse(expression, out AST.Expression expressionObject);
+            expressionObject.InitializeUsingStubDeclaration(compilationContext);
+            success &= expressionObject.Validate(this);
+            return success
+                       ? expressionObject.ResolveExpression(GlobalScope, compilationContext)
+                       : CompilationError.Instance;
+        }
+
+        public bool LoadElementSourceString(string sourceName, string elementSource) => LoadElementSourceString(sourceName, elementSource, true);
+        
+        public bool LoadElementSourceFile(FileInfo file) => LoadElementSourceFile(file, true);
+
+        private bool LoadElementSourceFile(FileInfo file, bool validate) =>
+            LoadElementSourceString(file.FullName, Parser.Preprocess(File.ReadAllText(file.FullName)), validate);
+
+        private bool LoadElementSourceString(string sourceName, string sourceString, bool validate)
+        {
+            var success = this.Parse<SourceScope>(sourceString, out var sourceScope);
+            if (success)
+            {
+                GlobalScope[sourceName] = sourceScope;
+                GlobalScope.InitializeItems();
+                if (validate)
+                {
+                    success &= GlobalScope.ValidateScope(this);
+                }
+            }
+
+            return success;
+        }
+
+
+        /// <summary>
+        /// Parses all the given files as Element source files into the source context
+        /// </summary>
+        public (bool OverallSuccess, IEnumerable<(bool Success, FileInfo FileInfo)> Results) LoadElementSourceFiles(IEnumerable<FileInfo> files)
+        {
+            (bool Success, FileInfo File)[] fileResults = files.Where(file => GlobalScope[file.FullName] == null).Select(file => (LoadElementSourceFile(file, false), file)).ToArray();
+            var overallSuccess = fileResults.All(fr => fr.Success) && GlobalScope.ValidateScope(this);
+            return (overallSuccess, fileResults);
         }
 
         protected override CompilerMessage MakeMessage(int? messageCode, string context = default)=> !messageCode.HasValue
@@ -73,10 +118,9 @@ namespace Element
             lock (_syncRoot)
             {
                 _cachedIntrinsicDeclarations.Clear();
-                return this.ParseFiles(CompilationInput.Packages
+                return LoadElementSourceFiles(CompilationInput.Packages
                         .Prepend(CompilationInput.ExcludePrelude ? null : new DirectoryInfo("Prelude"))
-                        .SelectMany(directory =>
-                            directory?.GetFiles("*.ele", SearchOption.TopDirectoryOnly) ?? Array.Empty<FileInfo>())
+                        .SelectMany(directory => directory?.GetFiles("*.ele", SearchOption.TopDirectoryOnly) ?? Array.Empty<FileInfo>())
                         .Concat(CompilationInput.ExtraSourceFiles)
                         .ToArray())
                     .OverallSuccess;

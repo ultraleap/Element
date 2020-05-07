@@ -1,3 +1,5 @@
+using Element.AST;
+
 namespace Element
 {
 	using System;
@@ -10,6 +12,10 @@ namespace Element
 	{
 		public enum Op
 		{
+			// Bool
+			Not,
+			
+			// Num
 			Sin,
 			Cos,
 			Tan,
@@ -22,8 +28,10 @@ namespace Element
 			Floor
 		}
 
-		public static float Evaluate(Op op, float a) =>
-			op switch
+		public static Constant Evaluate(Op op, float a) => op switch
+		{
+			Op.Not => (a + 1f) % 2f > 0f ? Constant.True : Constant.False,
+			_ => new Constant(op switch
 			{
 				Op.Sin => (float) Math.Sin(a),
 				Op.Cos => (float) Math.Cos(a),
@@ -36,9 +44,11 @@ namespace Element
 				Op.Ceil => (float) Math.Ceiling(a),
 				Op.Floor => (float) Math.Floor(a),
 				_ => throw new ArgumentOutOfRangeException()
-			};
+			})
+		};
 
 		public Unary(Op operation, Expression operand)
+			: base(AST.UnaryIntrinsic.OperationOverrides.TryGetValue(operation, out var details) ? details.Return : default)
 		{
 			Operation = operation;
 			Operand = operand ?? throw new ArgumentNullException(nameof(operand));

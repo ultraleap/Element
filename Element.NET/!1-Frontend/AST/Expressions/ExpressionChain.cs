@@ -6,6 +6,8 @@ namespace Element.AST
 {
     public interface ISubExpression
     {
+        void Initialize(Declaration declaration);
+        bool Validate(SourceContext sourceContext);
         IValue ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext);
     }
 
@@ -18,6 +20,18 @@ namespace Element.AST
         // ReSharper restore UnusedAutoPropertyAccessor.Local
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
+        
+        public override void Initialize(Declaration declaration)
+        {
+            Declarer = declaration;
+            foreach (var expr in Expressions ?? Enumerable.Empty<ISubExpression>())
+            {
+                expr.Initialize(declaration);
+            }
+        }
+        
+        public override bool Validate(SourceContext sourceContext) =>
+            Expressions?.Aggregate(true, (current, expr) => current & expr.Validate(sourceContext)) ?? true;
 
         public override IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
         {
@@ -32,14 +46,15 @@ namespace Element.AST
             };
 
             // Early out if something failed above
-            if (previous is CompilationErr err) return err;
+            if (previous is CompilationError err) return err;
 
             compilationContext.PushTrace(new TraceSite(previous.ToString(), null, 0, 0));
 
+            previous = previous.FullyResolveValue(compilationContext);
             // Evaluate all expressions for this chain if there are any, making sure that the result is fully resolved if it returns a nullary.
-            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.ResolveNullaryFunction(compilationContext), scope, compilationContext))
+            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.FullyResolveValue(compilationContext), scope, compilationContext))
                         ?? previous)
-                .ResolveNullaryFunction(compilationContext);
+                .FullyResolveValue(compilationContext);
 
             compilationContext.PopTrace();
 

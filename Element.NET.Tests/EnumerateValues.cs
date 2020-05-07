@@ -4,19 +4,13 @@ using NUnit.Framework;
 
 namespace Element.NET.Tests
 {
-    public class EnumerateDeclarations
+    public class EnumerateValues : FixtureBase
     {
-        protected static void FailOnError(CompilerMessage message)
-        {
-            if (message.MessageLevel >= MessageLevel.Error) Assert.Fail(message.ToString());
-            else TestContext.WriteLine(message.ToString());
-        }
-        
         [Test]
         public void EnumerateAll()
-        { 
-            Assert.True(SourceContext.TryCreate(new CompilationInput(FailOnError), out var sourceContext));
-            var results = sourceContext.GlobalScope.EnumerateDeclarations(_ => true);
+        {
+            var sourceContext = MakeSourceContext();
+            var results = sourceContext.GlobalScope.EnumerateValues<IValue>(_ => true);
             CollectionAssert.IsNotEmpty(results);
         }
 
@@ -26,8 +20,8 @@ namespace Element.NET.Tests
         ]
         public void EnumerateByName(string nameContains)
         {
-            Assert.True(SourceContext.TryCreate(new CompilationInput(FailOnError), out var sourceContext));
-            var results = sourceContext.GlobalScope.EnumerateDeclarations(v => v.Location.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
+            var sourceContext = MakeSourceContext();
+            var results = sourceContext.GlobalScope.EnumerateValues<Declaration>(v => v.Location.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
             CollectionAssert.IsNotEmpty(results);
             // TODO: Actually check collection contents are correct
         }
@@ -37,15 +31,16 @@ namespace Element.NET.Tests
             NumType.Instance,
             BoolType.Instance,
             ListType.Instance,
+            TupleType.Instance,
         };
         
         [TestCaseSource(nameof(_types))]
         public void EnumerateByReturnType(IIntrinsic type)
         {
-            Assert.True(SourceContext.TryCreate(new CompilationInput(FailOnError), out var sourceContext));
+            var sourceContext = MakeSourceContext();
             sourceContext.MakeCompilationContext(out var compilationContext);
             bool Filter(IValue v) => v is IFunctionSignature fn && fn.Output.ResolveConstraint(sourceContext.GlobalScope, compilationContext) == compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>(type);
-            var results = sourceContext.GlobalScope.EnumerateDeclarations(Filter);
+            var results = sourceContext.GlobalScope.EnumerateValues<Declaration>(Filter);
             CollectionAssert.IsNotEmpty(results);
             // TODO: Actually check collection contents are correct
         }

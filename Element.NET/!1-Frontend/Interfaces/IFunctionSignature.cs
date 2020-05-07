@@ -27,23 +27,11 @@ namespace Element.AST
     public static class FunctionExtensions
     {
         public static bool IsNullary(this IFunctionSignature functionSignature) => functionSignature.Inputs.Length == 0;
-        public static IValue ResolveNullaryFunction(this IValue value, CompilationContext compilationContext)
-        {
-            var previous = value;
-            while (previous is IFunctionSignature fn && fn.IsNullary())
-            {
-                var result = fn.ResolveCall(Array.Empty<IValue>(), false, compilationContext);
-                // ReSharper disable once PossibleUnintendedReferenceComparison
-                if (result == previous) break; // Prevent infinite loop if a nullary just returns itself
-                previous = result;
-            }
-
-            return previous;
-        }
 
         public static IValue ResolveCall(this IFunctionSignature functionSignature, IValue[] arguments, bool allowPartialApplication,
                                          CompilationContext compilationContext)
         {
+            if (functionSignature == CompilationError.Instance) return functionSignature;
             var definition = functionSignature.GetDefinition(compilationContext);
             if (compilationContext.ContainsFunction(definition) && !(functionSignature is AppliedFunctionBase)) return compilationContext.LogError(11, $"Multiple references to {functionSignature} in same call stack - Recursion is disallowed");
             compilationContext.PushFunction(definition);
@@ -64,28 +52,35 @@ namespace Element.AST
                             null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
                             var nyi => throw new NotImplementedException(nyi.ToString())
                         },
-                        _ => CompilationErr.Instance
+                        _ => throw new InternalCompilerException("Function body type unrecognized")
                     };
                 
                 var callScope = functionSignature switch
                 {
+                    // If the signature is an applied function we want to use it as the call scope. More arguments are filled by subsequent applications until full application.
                     AppliedFunctionBase appliedFunction => appliedFunction,
-                    IFunctionWithBody functionWithBody when functionWithBody.Body is IDeclared declared => declared.Declarer.ChildScope ?? declared.Declarer.ParentScope,
-                    Declaration declaration => declaration.ChildScope ?? declaration.ParentScope,
+                    // Anonymous functions are special cased since they are an expression
+                    AnonymousFunction anonymousFunction => anonymousFunction.Parent,
+                    // If the signature is a function with a body then we use the bodies parent
+                    IFunctionWithBody functionWithBody when functionWithBody.Body is Scope scope => scope.Declarer.Parent,
+                    Declaration declaration => declaration.Parent,
                     _ => compilationContext.SourceContext.GlobalScope
                 };
+
+                // Fully resolve arguments
+                arguments = arguments.Select(arg => arg.FullyResolveValue(compilationContext)).ToArray();
                 
                 return CheckArguments(functionSignature, arguments, callScope, allowPartialApplication, compilationContext)
                            ? (functionSignature switch
-                                 {
-                                     // When there's no arguments we can just resolve immediately
-                                     IFunctionWithBody functionWithBody when arguments.Length > 0 => new AppliedFunctionWithBody(arguments, functionWithBody, callScope),
-                                     IFunctionWithBody functionWithBody => functionWithBody.ResolveReturn(callScope, ResolveFunctionBody(functionWithBody.Body, callScope, compilationContext), compilationContext),
-                                     IFunction function when arguments.Length > 0 => new AppliedFunction(arguments, function, callScope),
-                                     IFunction function => functionSignature.ResolveReturn(callScope, function.Call(arguments, compilationContext), compilationContext),
-                                     _ => throw new InternalCompilerException($"{functionSignature} function type not resolvable")
-                                 }).ResolveNullaryFunction(compilationContext)
-                           : CompilationErr.Instance;
+                           {
+                               // When there's no arguments we can just resolve immediately
+                               IFunctionWithBody functionWithBody when arguments.Length > 0 => new AppliedFunctionWithBody(arguments, functionWithBody, callScope),
+                               IFunctionWithBody functionWithBody => functionWithBody.ResolveReturn(callScope, ResolveFunctionBody(functionWithBody.Body, callScope, compilationContext), compilationContext),
+                               IFunction function when arguments.Length > 0 => new AppliedFunction(arguments, function, callScope),
+                               IFunction function => functionSignature.ResolveReturn(callScope, function.Call(arguments, compilationContext), compilationContext),
+                               _ => throw new InternalCompilerException($"{functionSignature} function type not resolvable")
+                           }).FullyResolveValue(compilationContext)
+                           : CompilationError.Instance;
             }
             finally
             {
@@ -127,17 +122,14 @@ namespace Element.AST
 
         private static IValue ResolveReturn(this IFunctionSignature functionSignature, IScope callScope, IValue result, CompilationContext compilationContext)
         {
+            var fullyResolvedResult = result.FullyResolveValue(compilationContext);
             var returnConstraint = functionSignature.Output.ResolveConstraint(callScope, compilationContext);
-            return !returnConstraint.MatchesConstraint(result, compilationContext)
-                       ? compilationContext.LogError(8, $"Result '{result}' for function '{functionSignature.GetDefinition(compilationContext)}' does not match '{returnConstraint}' constraint")
-                       : result switch
-                       {
-                           Element.Expression expr => (IValue)ConstantFolding.Optimize(expr),
-                           _ => result
-                       };
+            return returnConstraint.MatchesConstraint(fullyResolvedResult, compilationContext)
+                       ? fullyResolvedResult
+                       : compilationContext.LogError(8, $"Result '{fullyResolvedResult}' for function '{functionSignature.GetDefinition(compilationContext)}' does not match '{returnConstraint}' constraint");
         }
         
-        private abstract class AppliedFunctionBase : ScopeBase<IValue>, IFunctionSignature
+        private abstract class AppliedFunctionBase : ScopeBase, IFunctionSignature
         {
             protected AppliedFunctionBase(IValue[] arguments, IFunctionSignature definition, IScope parent)
             {
@@ -185,7 +177,11 @@ namespace Element.AST
                 Body = functionWithBody.Body switch
                 {
                     ExpressionBody exprBody => exprBody,
-                    IScope scopeBody => scopeBody.Clone(this),
+                    IScope scopeBody => scopeBody switch
+                    {
+                        IDeclared declared => scopeBody.Clone(declared.Declarer, this),
+                        _ => throw new InternalCompilerException("Cannot clone non-declared scope")
+                    },
                     _ => throw new InternalCompilerException("Cannot create function instance as function body type is not recognized")
                 };
             }

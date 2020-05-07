@@ -1,4 +1,3 @@
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L3.Prelude
@@ -6,71 +5,97 @@ namespace Laboratory.Tests.L3.Prelude
 	internal class Boolean : PreludeFixture
 	{
 		[
-			TestCase("Bool(0)", "false"),
-			TestCase("Bool(1)", "true"),
-			TestCase("Bool(1.2)", "true"),
-			TestCase("Bool(9999)", "true"),
-			TestCase("Bool(0.1)", "true"),
-			TestCase("Bool(-0.1)", "false")
+			TestCase("Bool(0)", "False"),
+			TestCase("Bool(1)", "True"),
+			TestCase("Bool(1.2)", "True"),
+			TestCase("Bool(9999)", "True"),
+			TestCase("Bool(0.1)", "True"),
+			TestCase("Bool(-0.1)", "False")
 		]
+		public void Construct(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("Bool.not(true)", "false"),
-			TestCase("Bool.not(false)", "true"),
+			TestCase("Bool.not(True)", "False"),
+			TestCase("Bool.not(False)", "True"),
 		]
+		public void Not(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("false.and(false)", "false"),
-			TestCase("false.and(true)", "false"),
-			TestCase("true.and(false)", "false"),
-			TestCase("true.and(true)", "true")
+			TestCase("False.and(False)", "False"),
+			TestCase("False.and(True)", "False"),
+			TestCase("True.and(False)", "False"),
+			TestCase("True.and(True)", "True")
 		]
+		public void And(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("false.or(false)", "false"),
-			TestCase("false.or(true)", "true"),
-			TestCase("true.or(false)", "true"),
-			TestCase("true.or(true)", "true")
+			TestCase("False.or(False)", "False"),
+			TestCase("False.or(True)", "True"),
+			TestCase("True.or(False)", "True"),
+			TestCase("True.or(True)", "True")
 		]
+		public void Or(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("false.xor(false)", "false"),
-			TestCase("false.xor(true)", "true"),
-			TestCase("true.xor(false)", "true"),
-			TestCase("true.xor(true)", "false")
+			TestCase("False.xor(False)", "False"),
+			TestCase("False.xor(True)", "True"),
+			TestCase("True.xor(False)", "True"),
+			TestCase("True.xor(True)", "False")
 		]
+		public void Xor(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("0.lt(0)", "false"),
-			TestCase("0.2.lt(0)", "false"),
-			TestCase("-0.2.lt(0)", "true"),
-			TestCase("1.lt(2)", "true")
+			TestCase("0.lt(0)", "False"),
+			TestCase("0.2.lt(0)", "False"),
+			TestCase("-0.2.lt(0)", "True"),
+			TestCase("1.lt(2)", "True")
 		]
+		public void LessThan(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("0.gt(0)", "false"),
-			TestCase("0.2.gt(0)", "true"),
-			TestCase("-0.2.gt(0)", "false"),
-			TestCase("2.gt(1)", "true")
+			TestCase("0.gt(0)", "False"),
+			TestCase("0.2.gt(0)", "True"),
+			TestCase("-0.2.gt(0)", "False"),
+			TestCase("2.gt(1)", "True")
 		]
+		public void GreaterThan(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("0.leq(0)", "true"),
-			TestCase("0.2.leq(0)", "false"),
-			TestCase("-0.2.leq(0)", "true"),
-			TestCase("1.leq(2)", "true")
+			TestCase("0.leq(0)", "True"),
+			TestCase("0.2.leq(0)", "False"),
+			TestCase("-0.2.leq(0)", "True"),
+			TestCase("1.leq(2)", "True")
 		]
+		public void LessThanOrEqual(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("0.geq(0)", "true"),
-			TestCase("0.2.geq(0)", "true"),
-			TestCase("-0.2.geq(0)", "false"),
-			TestCase("2.geq(1)", "true")
+			TestCase("0.geq(0)", "True"),
+			TestCase("0.2.geq(0)", "True"),
+			TestCase("-0.2.geq(0)", "False"),
+			TestCase("2.geq(1)", "True")
 		]
+		public void GreaterLessThanOrEqual(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("0.eq(0)", "true"),
-			TestCase("1.eq(0)", "false"),
-			TestCase("0.1.eq(0)", "false"),
-			TestCase("999.999.eq(999.999)", "true")
+			TestCase("0.eq(0)", "True"),
+			TestCase("1.eq(0)", "False"),
+			TestCase("0.1.eq(0)", "False"),
+			TestCase("999.999.eq(999.999)", "True")
 		]
+		public void Equal(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
 		[
-			TestCase("0.neq(0)", "false"),
-			TestCase("1.neq(0)", "true"),
-			TestCase("0.1.neq(0)", "true"),
-			TestCase("999.999.neq(999.999)", "false")
+			TestCase("0.neq(0)", "False"),
+			TestCase("1.neq(0)", "True"),
+			TestCase("0.1.neq(0)", "True"),
+			TestCase("999.999.neq(999.999)", "False")
 		]
-		public void Operations(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expression, expected);
+		public void NotEqual(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
+		
+		[
+			TestCase("Bool.if(True, 1, 0)", "1"),
+			TestCase("Bool.if(False, 1, 0)", "0"),
+		]
+		public void If(string expression, string expected) => AssertApproxEqual(CompilationInput, expected, expression);
 	}
 }

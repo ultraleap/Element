@@ -1,16 +1,23 @@
-using Element.AST;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using Element.AST;
 
 namespace Element
 {
 	/// <summary>
 	/// Base class for all Element expressions
 	/// </summary>
-	public abstract class Expression : IEquatable<Expression>, IValue, IFunction, IEvaluable
+	public abstract class Expression : IEquatable<Expression>, IValue, IIndexable
 	{
-		public AST.IType Type => NumType.Instance;
+		protected Expression(IType? instanceTypeOverride = default) => InstanceTypeOverride = instanceTypeOverride;
+		
+		public virtual IType Type => InstanceTypeOverride ?? NumType.Instance;
+
+		/// <summary>
+		/// The source type of the expression for instance indexing purposes
+		/// </summary>
+		public readonly IType? InstanceTypeOverride;
 
 		public abstract IEnumerable<Expression> Dependent { get; }
 
@@ -28,12 +35,8 @@ namespace Element
 		public IEnumerable<Expression> AllDependent => Dependent.SelectMany(d => new[] {d}.Concat(d.AllDependent));
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
 		
-		
-		
-		// TODO: Remove these
-		PortInfo[] IFunction.Inputs => Array.Empty<PortInfo>();
-		PortInfo[] IFunction.Outputs => Array.Empty<PortInfo>();
-		Expression IEvaluable.AsExpression(CompilationContext info) => this;
-		IFunction IFunction.CallInternal(IFunction[] arguments, string output, CompilationContext context) => context.LogError(9999, "Can't call a number");
+		public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
+			compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>((InstanceTypeOverride ?? Type) as IIntrinsic)
+			                  ?.ResolveInstanceFunction(id, this, compilationContext);
 	}
 }

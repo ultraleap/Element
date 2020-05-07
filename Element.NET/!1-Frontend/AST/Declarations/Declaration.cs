@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Lexico;
 
 namespace Element.AST
@@ -33,6 +32,22 @@ namespace Element.AST
         protected virtual Identifier[] ScopeIdentifierWhitelist { get; } = null;
         protected virtual Identifier[] ScopeIdentifierBlacklist { get; } = null;
 
+        private sealed class StubDeclaration : Declaration
+        {
+            protected override string IntrinsicQualifier => string.Empty;
+            protected override string Qualifier => string.Empty;
+            protected override Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
+            public override IType Type => FunctionType.Instance;
+        }
+
+        public static Declaration MakeStubDeclaration(Identifier id, object body, CompilationContext compilationContext) =>
+            new StubDeclaration
+            {
+                Identifier = id,
+                Body = body,
+                Parent = compilationContext.SourceContext.GlobalScope,
+            };
+
         internal Declaration Clone(IScope newParent)
         {
             var clone = (Declaration)MemberwiseClone();
@@ -43,7 +58,15 @@ namespace Element.AST
         internal virtual bool Validate(SourceContext sourceContext)
         {
             var success = true;
-            if (Body is Scope scope) success &= scope.ValidateScope(sourceContext, ScopeIdentifierBlacklist, ScopeIdentifierWhitelist);
+            switch (Body)
+            {
+                case Scope scope:
+                    success &= scope.ValidateScope(sourceContext, ScopeIdentifierBlacklist, ScopeIdentifierWhitelist);
+                    break;
+                case ExpressionBody expressionBody:
+                    success &= expressionBody.Expression.Validate(sourceContext);
+                    break;
+            }
             if (PortList?.List.Count > 0)
             {
                 var distinctPortIdentifiers = new HashSet<string>();
@@ -71,67 +94,26 @@ namespace Element.AST
 
         internal void Initialize(IScope parent)
         {
-            ParentScope = parent ?? throw new ArgumentNullException(nameof(parent));
-            ChildScope?.Initialize(this);
+            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
+            Child?.Initialize(this);
             DeclaredInputs = string.IsNullOrEmpty(IntrinsicQualifier)
                                  ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
                                  : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs;
             DeclaredOutput = Port.ReturnPort(DeclaredType);
+            if (Body is ExpressionBody expressionBody) expressionBody.Expression.Initialize(this);
         }
 
-        public string Location => ParentScope switch
+        public string Location => Parent switch
         {
             GlobalScope _ => Identifier,
             IDeclared d => $"{d.Declarer.Identifier.Value}.{Identifier.Value}",
             _ => throw new InternalCompilerException("Couldn't construct location of declaration")
         };
-        public IScope ParentScope { get; private set; }
-        public Scope? ChildScope => Body as Scope;
+        public Scope? Child => Body as Scope;
+        public IScope Parent { get; private set; }
 
         protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(Context? context)
-            where TIntrinsic : class
-        {
-            switch (_intrinsics.TryGetValue(Location, out var intrinsic), intrinsic)
-            {
-                case (true, TIntrinsic t):
-                    return t;
-                case (false, _):
-                    context?.LogError(4, $"Intrinsic '{Location}' is not implemented");
-                    return null;
-                case (true, _):
-                    context?.LogError(14, $"Found intrinsic '{Location}' but it is not '{typeof(TIntrinsic)}'");
-                    return null;
-            }
-        }
-
-        static Declaration()
-        {
-            foreach (var intrinsic in new IIntrinsic[]
-                {
-                    AnyConstraint.Instance,
-                    NumType.Instance,
-                    BoolType.Instance,
-                    ListType.Instance,
-                    new ForIntrinsic(),
-                    new FoldIntrinsic(),
-                    new ListIntrinsic(),
-                    new InferIntrinsic(),
-                    new MemberwiseIntrinsic(),
-                    new PersistIntrinsic()
-                }.Concat(Enum.GetValues(typeof(NullaryIntrinsics.Value))
-                    .Cast<NullaryIntrinsics.Value>()
-                    .Select(v => new NullaryIntrinsics(v)))
-                .Concat(Enum.GetValues(typeof(Unary.Op))
-                    .Cast<Unary.Op>()
-                    .Select(o => new UnaryIntrinsic(o)))
-                .Concat(Enum.GetValues(typeof(Binary.Op))
-                    .Cast<Binary.Op>()
-                    .Select(o => new BinaryIntrinsic(o))))
-            {
-                _intrinsics.Add(intrinsic.Location, intrinsic);
-            }
-        }
-
-        private static readonly Dictionary<string, IValue> _intrinsics = new Dictionary<string, IValue>();
+            where TIntrinsic : class, IValue
+            => IntrinsicCache.GetByLocation<TIntrinsic>(Location, context);
     }
 }

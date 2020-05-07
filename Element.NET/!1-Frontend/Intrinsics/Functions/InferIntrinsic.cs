@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Element.AST
 {
     public class InferIntrinsic : IntrinsicFunction
@@ -13,7 +15,10 @@ namespace Element.AST
 
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
-            throw new System.NotImplementedException();
+            var fn = (IFunctionSignature) arguments[0];
+            if (!(arguments[1] is IIndexable instance)) return compilationContext.LogError(8, "Instance passed to infer must be an indexable value");
+            var fnArgs = fn.Inputs.Select(p => instance[p.Identifier.Value, false, compilationContext]).ToArray();
+            return fn.ResolveCall(fnArgs, false, compilationContext);
         }
     }
 }
