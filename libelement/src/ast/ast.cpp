@@ -367,6 +367,18 @@ element_result element_parser_ctx::parse_lambda(size_t* tindex, element_ast* ast
     if (token->type != ELEMENT_TOK_BRACKETR)
         return ELEMENT_ERROR_INVALID_OPERATION;
     tokenlist_advance(tokeniser, tindex);
+
+    GET_TOKEN(tokeniser, *tindex, token);
+
+    auto has_return = token->type == ELEMENT_TOK_COLON;
+    if (has_return) 
+    {
+        tokenlist_advance(tokeniser, tindex);
+        element_ast* type = ast_new_child(ast);
+        type->nearest_token = token;
+        ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
+    }
+
     element_ast* body = ast_new_child(ast);
     body->nearest_token = token;
     ELEMENT_OK_OR_RETURN(parse_body(tindex, body, false));
@@ -835,21 +847,23 @@ element_result element_parser_ctx::validate_struct(element_ast* ast)
     	
         auto identifier = decl->identifier;
         auto* body = ast->children[ast_idx::fn::body].get();
-        assert(body->type == ELEMENT_AST_NODE_SCOPE);
     	
-        for (auto& child : body->children) {
-        	
-            assert(child->children.size() > ast_idx::fn::declaration);
-            auto* child_decl = child->children[ast_idx::fn::declaration].get();
-            assert(child_decl->type == ELEMENT_AST_NODE_DECLARATION);
-        	
-            if (identifier == child_decl->identifier)
+        if (body->type == ELEMENT_AST_NODE_SCOPE) 
+        {
+            for (auto& child : body->children) 
             {
-                log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-                    fmt::format("Struct identifier '{}' detected in scope '{}'",
-                        ast->identifier, ast->identifier),
-                    ast);
-                result = ELEMENT_ERROR_INVALID_IDENTIFIER;
+                assert(child->children.size() > ast_idx::fn::declaration);
+                auto* child_decl = child->children[ast_idx::fn::declaration].get();
+                assert(child_decl->type == ELEMENT_AST_NODE_DECLARATION);
+
+                if (identifier == child_decl->identifier)
+                {
+                    log(ELEMENT_ERROR_INVALID_IDENTIFIER,
+                        fmt::format("Struct identifier '{}' detected in scope '{}'",
+                            ast->identifier, ast->identifier),
+                        ast);
+                    result = ELEMENT_ERROR_INVALID_IDENTIFIER;
+                }
             }
         }
     }
