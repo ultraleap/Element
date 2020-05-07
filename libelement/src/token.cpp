@@ -347,7 +347,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                         state->col = 0;
                         state->pos += 1;
                         state->line_start_position = state->pos;
-                        state->line_number_to_line_pos[state->line] = state->line_start_position;
+                        state->line_number_to_line_pos.push_back(state->line_start_position);
                         reset_token(state);
                         UTF8_NEXT(it, end);
                     }
