@@ -26,7 +26,6 @@ bool directory_exists(const std::string& directory)
     return std::filesystem::exists(directory) && std::filesystem::is_directory(directory);
 }
 
-
 static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
 {
     switch (node->type) {
@@ -176,6 +175,10 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
         log(result, std::string("element_ast_build failed"), filename);
     }
     ELEMENT_OK_OR_RETURN(result)
+	
+    if (options.debug) {
+        parser.log(ELEMENT_OK, std::string("debug output"));
+    }
 
     auto ast = ast_unique_ptr(parser.root, element_ast_delete);
     scope_unique_ptr root = get_names(nullptr, parser.root);
@@ -378,9 +381,10 @@ element_result element_interpreter_ctx::print_ast(const std::string& name)
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_create(element_interpreter_ctx** ctx)
+element_result element_interpreter_create(element_interpreter_ctx** ctx, bool debug)
 {
     *ctx = new element_interpreter_ctx();
+    (*ctx)->options.debug = debug;
     return ELEMENT_OK;
 }
 

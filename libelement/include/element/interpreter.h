@@ -34,7 +34,7 @@ typedef struct element_interpreter_ctx element_interpreter_ctx;
 typedef struct element_function element_function;
 typedef struct element_compiled_function element_compiled_function;
 
-element_result element_interpreter_create(element_interpreter_ctx** ctx);
+element_result element_interpreter_create(element_interpreter_ctx** ctx, bool debug);
 void element_interpreter_delete(element_interpreter_ctx* ctx);
 
 element_result element_interpreter_load_string(element_interpreter_ctx* ctx, const char* string, const char* filename);

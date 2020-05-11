@@ -129,7 +129,7 @@ namespace libelement::cli
 		command(common_command_arguments common_arguments)
 			: common_arguments{ std::move(common_arguments) }
 		{
-			element_interpreter_create(&ictx);
+			element_interpreter_create(&ictx, common_arguments.debug);
 		}
 
 		virtual ~command() {
