@@ -153,21 +153,21 @@ static element_result merge_names(scope_unique_ptr& a, scope_unique_ptr b, const
 
 element_result element_interpreter_ctx::load(const char* str, const char* filename)
 {
-    element_tokeniser_ctx* raw_tctx;
-    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&raw_tctx))
+    element_tokeniser_ctx* tokeniser;
+    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
 
-    raw_tctx->log_callback = log_callback;
+    tokeniser->logger = logger;
 
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
-    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(raw_tctx, element_tokeniser_delete);
+    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(tokeniser, element_tokeniser_delete);
 
-    ELEMENT_OK_OR_RETURN(element_tokeniser_run(raw_tctx, str, filename))
-    if (raw_tctx->tokens.empty())
+    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, filename))
+    if (tokeniser->tokens.empty())
         return ELEMENT_OK;
 
     element_parser_ctx parser;
-    parser.tokeniser = raw_tctx;
-    parser.log_callback = log_callback;
+    parser.tokeniser = tokeniser;
+    parser.logger = logger;
      
     auto result = parser.ast_build();
     //todo: hacky message to help with unit tests until we add logging for all error cases
@@ -322,33 +322,16 @@ element_result element_interpreter_ctx::load_prelude()
 
 void element_interpreter_ctx::set_log_callback(LogCallback callback)
 {
-    log_callback = callback;
+    logger = std::make_shared<element_log_ctx>();
+    logger->callback = callback;
 }
 
 void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename)
 {
-    if (!log_callback)
+    if (logger == nullptr)
         return;
 
-    auto log = element_log_message();
-    log.message = message.c_str();
-    log.message_code = code;
-    log.line = -1;
-    log.column = -1;
-    log.length = -1;
-    log.stage = ELEMENT_STAGE_PARSER;
-    log.filename = filename.c_str();
-    log.related_log_message = nullptr;
-
-    log_callback(&log);
-}
-
-void element_interpreter_ctx::log(const element_log_message& message)
-{
-    if (!log_callback)
-        return;
-
-    log_callback(&message);
+	logger->log(*this, code, message, filename);
 }
 
 element_interpreter_ctx::element_interpreter_ctx()

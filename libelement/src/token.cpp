@@ -66,8 +66,9 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
 
 void element_tokeniser_set_log_callback(element_tokeniser_ctx* state, void (*log_callback)(const element_log_message*))
 {
+    assert(state);
     assert(log_callback);
-    state->log_callback = log_callback;
+    state->set_log_callback(log_callback);
 }
 
 static void reset_token(element_tokeniser_ctx* state)

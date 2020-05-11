@@ -922,69 +922,6 @@ void element_ast_delete(element_ast* ast)
     delete ast;
 }
 
-#define PRINTCASE(a) case a: c = #a; break;
-static std::string ast_to_string(element_ast* ast, int depth, const element_ast* ast_to_mark = nullptr)
-{
-    std::string string;
-
-    for (int i = 0; i < depth; ++i)
-        string += "  ";
-
-    if (ast->type == ELEMENT_AST_NODE_LITERAL) {
-        string += fmt::format("LITERAL: {}", ast->literal);
-    } else if (ast->type == ELEMENT_AST_NODE_IDENTIFIER) {
-        string += fmt::format("IDENTIFIER: {}", ast->identifier);
-    } else if (ast->type == ELEMENT_AST_NODE_DECLARATION) {
-        const auto intrinsic = ast->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-        intrinsic
-            ? string += fmt::format("INTRINSIC DECLARATION: {}", ast->identifier)
-            : string += fmt::format("DECLARATION: {}", ast->identifier);
-    } else if (ast->type == ELEMENT_AST_NODE_NAMESPACE) {
-        string += fmt::format("NAMESPACE: {}", ast->identifier);
-    } else if (ast->type == ELEMENT_AST_NODE_CALL) {
-        string += fmt::format("CALL: {}", ast->identifier);
-    } else if (ast->type == ELEMENT_AST_NODE_PORT) {
-        string += fmt::format("PORT: {}", ast->identifier);
-    } else if (ast->type == ELEMENT_AST_NODE_NONE) {
-        if (ast->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT))
-            string += "EMPTY INPUT";
-        else if (ast->has_flag(ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN))
-            string += "IMPLICIT RETURN";
-        else if (ast->flags == 0)
-            string += "NONE";
-        else
-            string += "UNKNOWN FLAGS";
-    } else {
-        char* c;
-        switch (ast->type) {
-            PRINTCASE(ELEMENT_AST_NODE_ROOT);
-            PRINTCASE(ELEMENT_AST_NODE_SCOPE);
-            PRINTCASE(ELEMENT_AST_NODE_CONSTRAINT);
-            PRINTCASE(ELEMENT_AST_NODE_FUNCTION);
-            PRINTCASE(ELEMENT_AST_NODE_STRUCT);
-            PRINTCASE(ELEMENT_AST_NODE_EXPRESSION);
-            PRINTCASE(ELEMENT_AST_NODE_EXPRLIST);
-            PRINTCASE(ELEMENT_AST_NODE_PORTLIST);
-            PRINTCASE(ELEMENT_AST_NODE_TYPENAME);
-            PRINTCASE(ELEMENT_AST_NODE_LAMBDA);
-            default: c = "ELEMENT_AST_NODE_<UNKNOWN>"; break;
-        }
-
-        //Offset pointer by length of prefix to cutoff prefix
-        string += fmt::format("{}", c + strlen("ELEMENT_AST_NODE_"));
-    }
-
-    if (ast_to_mark && ast_to_mark == ast)
-        string += " <--- Here";
-
-    string += "\n";
-
-    for (const auto& child : ast->children)
-        string += ast_to_string(child.get(), depth + 1, ast_to_mark);
-
-    return string;
-}
-
 element_result element_ast_print(element_ast* ast)
 {
     std::cout << ast_to_string(ast, 0);
@@ -1031,56 +968,8 @@ element_ast::walk_step element_ast::walk(const element_ast::const_walker& fn) co
 
 void element_parser_ctx::log(int message_code, const std::string& message, const element_ast* nearest_ast) const
 {
-    if (!log_callback)
+    if (logger == nullptr)
         return;
 
-    auto log = element_log_message();
-    log.message = message.c_str();
-    log.message_code = message_code;
-    log.line = -1;
-    log.column = -1;
-    log.length = -1;
-    log.stage = ELEMENT_STAGE_PARSER;
-    log.filename = tokeniser->filename.c_str();
-    log.related_log_message = nullptr;
-
-    std::string new_log_message;
-    if (nearest_ast && nearest_ast->nearest_token)
-    {
-        log.line = nearest_ast->nearest_token->line;
-        log.column = nearest_ast->nearest_token->column;
-        log.length = nearest_ast->nearest_token->tok_len;
-
-        if (log.line > 0)
-        {
-            std::string source_line = tokeniser->text_on_line(log.line) + "\n";
-
-            //todo: doesn't handle UTF8 I'm guessing
-            if (log.column >= 0)
-            {
-                for (int i = 0; i < log.column - 1; ++i)
-                    source_line += " ";
-
-                source_line += "^";
-
-                for (int i = 0; i < log.length - 1; ++i)
-                    source_line += "^";
-            }
-
-            new_log_message = message + "\n\n" + source_line;
-            log.message = new_log_message.c_str();
-        }
-    }
-
-    new_log_message += "\n\n" + ast_to_string(root, 0, nearest_ast);
-    log.message = new_log_message.c_str();
-    log_callback(&log);
-}
-
-void element_parser_ctx::log(const element_log_message& message) const
-{
-    if (!log_callback)
-        return;
-
-    log_callback(&message);
+    logger->log(*this, message_code, message, nearest_ast);
 }

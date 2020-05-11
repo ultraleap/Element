@@ -12,6 +12,7 @@ set(element_sources
     "src/interpreter.cpp"
     "src/construct.cpp"
     "src/construct.hpp"
+    "src/common.cpp"
 
     "src/common_internal.hpp"
     "src/interpreter_internal.hpp"

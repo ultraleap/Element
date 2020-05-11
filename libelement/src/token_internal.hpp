@@ -3,14 +3,15 @@
 #include <cassert>
 #include <string>
 #include <vector>
+#include <memory>
 #include <unordered_map>
 
 #include "element/token.h"
+#include "common_internal.hpp"
 
 struct element_tokeniser_ctx
 {
-    using LogCallback = void (*)(const element_log_message* const);
-
+    std::shared_ptr<element_log_ctx> logger = nullptr;
     std::string filename;
     std::string input;
     int pos = 0; //position in the source file
@@ -19,7 +20,6 @@ struct element_tokeniser_ctx
     int col = 1; //position in the line (starting from 1)
     element_token cur_token;
     std::vector<element_token> tokens;
-    LogCallback log_callback;
     std::vector<int> line_number_to_line_pos {0};
 
     std::string text(const element_token* t) const
@@ -31,54 +31,24 @@ struct element_tokeniser_ctx
 
     void log(int message_code, const std::string& message) const
     {
-        if (!log_callback)
+        if (logger == nullptr)
             return;
 
-        element_log_message log;
-        log.message_code = message_code;
-        log.message = message.c_str();
-        log.line = line;
-        log.column = col;
-        log.length = -1;
-        log.stage = ELEMENT_STAGE_TOKENISER;
-        log.filename = filename.c_str();
-        log.related_log_message = nullptr;
-
-        log_callback(&log);
+        logger->log(*this, message_code, message);
     }
 
     void log(int message_code, const std::string& message, int length, element_log_message* related_message) const
     {
-        if (!log_callback)
+        if (logger == nullptr)
             return;
 
-        element_log_message log;
-        log.message_code = message_code;
-        log.message = message.c_str();
-        log.line = line;
-        log.column = col;
-        log.length = length;
-        log.stage = ELEMENT_STAGE_TOKENISER;
-        log.filename = filename.c_str();
-        log.related_log_message = related_message;
-
-        log_callback(&log);
-    }
-
-    void log(const element_log_message& log) const
-    {
-        assert(log.stage == ELEMENT_STAGE_TOKENISER);
-        assert(log.message);
-
-        if (!log_callback)
-            return;
-
-        log_callback(&log);
+        logger->log(*this, message_code, message, length, related_message);
     }
 
     void set_log_callback(LogCallback callback)
     {
-        log_callback = callback;
+        logger = std::make_shared<element_log_ctx>();
+        logger->callback = callback;
     }
 
     element_tokeniser_ctx()

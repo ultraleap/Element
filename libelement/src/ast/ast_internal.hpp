@@ -5,6 +5,8 @@
 #include <memory>
 #include <functional>
 
+
+#include "common_internal.hpp"
 #include "element/ast.h"
 #include "element/token.h"
 
@@ -101,9 +103,7 @@ inline bool ast_node_in_function_scope(const element_ast* n)
 
 struct element_parser_ctx
 {
-    using LogCallback = void (*)(const element_log_message* const);
-
-    LogCallback log_callback = nullptr;
+    std::shared_ptr<element_log_ctx> logger = nullptr;
     element_tokeniser_ctx* tokeniser = nullptr;
     element_ast* root = nullptr;
 
@@ -159,5 +159,4 @@ private:
 
 public:
     void log(int message_code, const std::string& message, const element_ast* nearest_ast = nullptr) const;
-    void log(const element_log_message& message) const;
 };
