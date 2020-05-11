@@ -262,7 +262,7 @@ element_result element_parser_ctx::parse_portlist(size_t* tindex, element_ast* a
     const element_token* tok;
     GET_TOKEN(tokeniser, *tindex, tok);
     assert(tok->type == ELEMENT_TOK_IDENTIFIER || tok->type == ELEMENT_TOK_UNDERSCORE);
-    ast->nearest_token = tok;
+    element_tokeniser_get_token(tokeniser, *tindex-1, &ast->nearest_token); //the previous token is the bracket
     ast->type = ELEMENT_AST_NODE_PORTLIST;
     ast->flags = 0;
     do
@@ -270,7 +270,6 @@ element_result element_parser_ctx::parse_portlist(size_t* tindex, element_ast* a
         element_ast* port = ast_new_child(ast);
         ELEMENT_OK_OR_RETURN(parse_port(tindex, port));
         GET_TOKEN(tokeniser, *tindex, tok);
-        port->nearest_token = tok;
     } while (tok->type == ELEMENT_TOK_COMMA && tokenlist_advance(tokeniser, tindex));
 
     return ELEMENT_OK;
@@ -826,7 +825,7 @@ element_result element_parser_ctx::validate_portlist(element_ast* ast)
                 log(ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
                     fmt::format("Parameter {} and {} in the port list of function '{}' have the same identifier '{}'",
                         i, j, ast->parent->identifier, ast->children[i]->identifier),
-                    ast);
+                    ast->children[i].get());
                 result = ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
             }
         }

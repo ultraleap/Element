@@ -4,8 +4,8 @@
   <TestRunParameters>
     <Parameter name="name" value="libelement_cli" />
     <Parameter name="build-command" value="cmake -S ./libelement.CLI -B ./libelement.CLI/build" />
-    <Parameter name="additional-build-command" value="cmake --build ./libelement.CLI/build --config Release" />
-    <Parameter name="executable-path" value="libelement.CLI/build/Release/libelement_cli" />
-    <Parameter name="working-directory"  value="libelement.CLI/build/Release" />
+    <Parameter name="additional-build-command" value="cmake --build ./libelement.CLI/build --config Debug" />
+    <Parameter name="executable-path" value="libelement.CLI/build/Debug/libelement_cli" />
+    <Parameter name="working-directory"  value="libelement.CLI/build/Debug" />
   </TestRunParameters>
 </RunSettings>

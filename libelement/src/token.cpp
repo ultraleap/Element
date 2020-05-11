@@ -198,6 +198,7 @@ static element_result tokenise_comment(std::string::iterator& it, const std::str
     const size_t len = std::distance(it_before, it);
     state->cur_token.post_len += (int)len;
     state->pos += (int)len;
+    state->col += (int)len;
 
     return ELEMENT_OK;
 }
@@ -246,6 +247,7 @@ static void add_token(element_tokeniser_ctx* state, element_token_type t, int n)
     state->cur_token.line_start_position = state->line_start_position;
     state->cur_token.column = state->col;
     state->pos += n;
+    state->col += n;
     reset_token(state);
 }
 
@@ -345,7 +347,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     }
                     else if (element_iseol(c)) {
                         ++state->line;
-                        state->col = 0;
+                        state->col = 1;
                         state->pos += 1;
                         state->line_start_position = state->pos;
                         state->line_number_to_line_pos.push_back(state->line_start_position);
@@ -355,6 +357,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     else if (element_isspace(c)) {
                         //just eat it!
                         state->pos += 1;
+                        state->col += 1;
                         UTF8_NEXT(it, end);
                     }
                     else {
