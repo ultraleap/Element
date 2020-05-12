@@ -105,6 +105,7 @@ void element_log_ctx::log(const element_interpreter_ctx& context, element_result
     msg.column = -1;
     msg.length = -1;
     msg.stage = ELEMENT_STAGE_PARSER;
+    msg.filename = filename.c_str();
     msg.related_log_message = nullptr;
 	
     log(msg);
@@ -123,19 +124,16 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     msg.related_log_message = nullptr;
 
     std::string new_log_message;
-    if (nearest_ast && nearest_ast->nearest_token)
-    {
+    if (nearest_ast && nearest_ast->nearest_token) {
         msg.line = nearest_ast->nearest_token->line;
         msg.column = nearest_ast->nearest_token->column;
         msg.length = nearest_ast->nearest_token->tok_len;
 
-        if (msg.line > 0)
-        {
+        if (msg.line > 0) {
             std::string source_line = context.tokeniser->text_on_line(msg.line) + "\n";
 
             //todo: doesn't handle UTF8 I'm guessing
-            if (msg.column >= 0)
-            {
+            if (msg.column >= 0) {
                 for (int i = 0; i < msg.column - 1; ++i)
                     source_line += " ";
 
@@ -145,11 +143,13 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
                     source_line += "^";
             }
 
-            new_log_message = message + "\n\n" + source_line;
+            new_log_message = "\n\n" + source_line + " " + message;
         }
+    } else {
+        new_log_message = message;
     }
 
-    new_log_message += message + "\n\n" + ast_to_string(context.root, 0, nearest_ast);
+    new_log_message += "\n\n" + ast_to_string(context.root, 0, nearest_ast);
     msg.message = new_log_message.c_str();
 	
     log(msg);

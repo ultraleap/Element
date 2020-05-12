@@ -177,7 +177,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     ELEMENT_OK_OR_RETURN(result)
 	
     if (options.debug) {
-        parser.log(ELEMENT_OK, std::string("debug output"));
+        parser.log(ELEMENT_OK);
     }
 
     auto ast = ast_unique_ptr(parser.root, element_ast_delete);
