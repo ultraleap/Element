@@ -521,7 +521,7 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
             }
         }
     } else {
-        assert(false);
+        //assert(false);
         return ELEMENT_ERROR_INVALID_ARCHIVE;
     }
     return ELEMENT_OK;
@@ -714,7 +714,13 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
     }
 
     // either a qualifier, 'struct', 'namespace' or a name; either way...
-    assert(token->type == ELEMENT_TOK_IDENTIFIER);
+	if(token->type != ELEMENT_TOK_IDENTIFIER)
+	{
+        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
+            fmt::format("Expected identifier, but received invalid token '{}'", tokeniser->text(token)),
+            ast);
+        return ELEMENT_ERROR_INVALID_IDENTIFIER;
+	}
 
     if (tokeniser->text(token) == "namespace") {
         ELEMENT_OK_OR_RETURN(parse_namespace(tindex, ast));
