@@ -5,15 +5,10 @@
 
 #include <vector>
 #include <string>
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
 #include <cassert>
 #include <memory>
 #include <unordered_set>
 #include <iostream>
-
-#include <fmt/format.h>
 
 #include "ast/ast_internal.hpp"
 #include "ast/ast_indexes.hpp"

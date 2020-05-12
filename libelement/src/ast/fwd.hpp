@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include "common_internal.hpp"
 
 struct element_scope;

@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <vector>
 #include <cstdint>
-#include <cstdlib>
 
 #include "element/interpreter.h"
 #include "ast_internal.hpp"

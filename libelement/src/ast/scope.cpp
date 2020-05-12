@@ -1,6 +1,5 @@
 #include "ast/scope.hpp"
 
-#include <algorithm>
 #include <functional>
 #include <cassert>
 #include "common_internal.hpp"

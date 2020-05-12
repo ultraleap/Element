@@ -14,7 +14,6 @@ using ast_unique_ptr = std::unique_ptr<element_ast, void(*)(element_ast*)>;
 
 struct element_ast
 {
-
     element_ast_node_type type;
     std::string identifier;
     union {

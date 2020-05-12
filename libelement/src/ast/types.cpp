@@ -1,6 +1,5 @@
 #include "ast/types.hpp"
 
-#include <algorithm>
 #include <functional>
 #include <cassert>
 #include "interpreter_internal.hpp"
