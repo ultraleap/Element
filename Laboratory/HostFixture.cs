@@ -93,6 +93,8 @@ namespace Laboratory
                 if (errors.Count > 0) Assert.Fail("Expected message code '{0}' but got following code(s): {1}", messageCode, string.Join(",", errors.Select(err => err.MessageCode)));
                 else Assert.Fail("Expected message code '{0}' but evaluation succeeded", messageCode);
             }
+            
+            Assert.Fail("Expected message code '{0}' but no errors were logged", messageCode);
         }
 
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());

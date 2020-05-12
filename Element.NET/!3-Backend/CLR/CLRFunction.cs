@@ -261,20 +261,23 @@ namespace Element.CLR
 			}
 		}
 		
-		public static TDelegate Compile<TDelegate>(this SourceContext sourceContext, string functionExpression,
-		                                           IBoundaryConverter boundaryConverter = default)
-			where TDelegate : Delegate? =>
-			sourceContext.EvaluateExpression(functionExpression, out _) is { } val
-				? (TDelegate)sourceContext.Compile(val, typeof(TDelegate), boundaryConverter)
-				: null;
-		
-		public static TDelegate Compile<TDelegate>(this SourceContext sourceContext, IValue value,
-		                                            IBoundaryConverter boundaryConverter = default)
-			where TDelegate : Delegate? =>
-			(TDelegate)sourceContext.Compile(value, typeof(TDelegate), boundaryConverter);
+		public static (TDelegate?, CompilationContext) Compile<TDelegate>(this SourceContext sourceContext, string functionExpression,
+		                                                                  IBoundaryConverter boundaryConverter = default)
+			where TDelegate : Delegate =>
+			sourceContext.EvaluateExpression(functionExpression, out var exprContext) is { } val
+				? Compile<TDelegate>(sourceContext, val, boundaryConverter)
+				: (null, exprContext);
 
-		private static Delegate? Compile(this SourceContext sourceContext, IValue value,
-		                                 Type delegateType, IBoundaryConverter boundaryConverter = default)
+		public static (TDelegate?, CompilationContext) Compile<TDelegate>(this SourceContext sourceContext, IValue value,
+		                                                                  IBoundaryConverter boundaryConverter = default)
+			where TDelegate : Delegate
+		{
+			var (@delegate, context) = sourceContext.Compile(value, typeof(TDelegate), boundaryConverter);
+			return ((TDelegate?)@delegate, context);
+		}
+
+		private static (Delegate?, CompilationContext) Compile(this SourceContext sourceContext, IValue value,
+		                                                       Type delegateType, IBoundaryConverter boundaryConverter = default)
         {
             if (sourceContext == null) throw new ArgumentNullException(nameof(sourceContext));
             if (value == null) throw new ArgumentNullException(nameof(value));
@@ -288,7 +291,7 @@ namespace Element.CLR
             if (method == null)
             {
 	            context.LogError(10, $"{delegateType} did not have invoke method");
-	            return null;
+	            return (null, context);
             }
             
             var delegateParameters = method.GetParameters();
@@ -296,7 +299,13 @@ namespace Element.CLR
             if (delegateParameters.Any(p => p.IsOut) || method.ReturnType == typeof(void))
             {
                 context.LogError(10, $"{delegateType} cannot have out parameters and must have non-void return type");
-                return null;
+                return (null, context);
+            }
+
+            if (value is IFunctionSignature fn && fn.Inputs.Length != delegateParameters.Length)
+            {
+	            context.LogError(10, "Mismatch in number of parameters between delegate type and the function being compiled");
+	            return (null, context);
             }
 
             // Create parameter expressions
@@ -306,11 +315,11 @@ namespace Element.CLR
             var reducedExpression = value switch
             {
 	            IFunctionSignature functionSignature => functionSignature.ResolveCall(
-		            functionSignature.Inputs.Select(f =>
+		            functionSignature.Inputs.Select((f, idx) =>
 		                             {
-			                             ParameterExpression p;
-			                             return (p = Array.Find(parameterExpressions, i => i.Name == f.Identifier)) == null
-				                                    ? context.LogError(10, $"Unable to bind {functionSignature}'s input {f} - could not find matching parameter name on delegate")
+			                             var p = parameterExpressions[idx];
+			                             return p == null
+				                                    ? context.LogError(10, $"Unable to bind {functionSignature}'s input {f} - there is a mismatch in number of ports")
 				                                    : boundaryConverter.LinqToElement(p, boundaryConverter, context);
 		                             }).ToArray(), false, context),
 	            Expression expr => expr,
@@ -378,7 +387,7 @@ namespace Element.CLR
 
 			// Put everything into a single code block, and wrap it in the Delegate
 			var fnBody = LinqExpression.Block(data.Variables, data.Statements);
-			return LinqExpression.Lambda(delegateType, fnBody, false, parameterExpressions).Compile();
+			return (LinqExpression.Lambda(delegateType, fnBody, false, parameterExpressions).Compile(), context);
         }
     }
 }

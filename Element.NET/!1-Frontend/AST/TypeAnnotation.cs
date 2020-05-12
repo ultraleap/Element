@@ -17,7 +17,7 @@ namespace Element.AST
 
         public override string ToString() => $":{Expression}";
 
-        public IConstraint? ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
+        public IConstraint ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
             _constraint ?? Expression.ResolveExpression(scope, compilationContext) switch
             {
                 IConstraint constraint => _constraint = constraint,

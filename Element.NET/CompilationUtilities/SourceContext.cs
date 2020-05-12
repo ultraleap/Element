@@ -56,6 +56,15 @@ namespace Element
                        : CompilationError.Instance;
         }
 
+        public TValue EvaluateExpressionAs<TValue>(string expression, out CompilationContext compilationContext)
+            where TValue : IValue
+        {
+            var result = EvaluateExpression(expression, out compilationContext);
+            if (result is TValue value) return value;
+            compilationContext.LogError(16, $"'{result}' is not a '{typeof(TValue)}'");
+            return default!;
+        }
+
         public bool LoadElementSourceString(string sourceName, string elementSource) => LoadElementSourceString(sourceName, elementSource, true);
         
         public bool LoadElementSourceFile(FileInfo file) => LoadElementSourceFile(file, true);

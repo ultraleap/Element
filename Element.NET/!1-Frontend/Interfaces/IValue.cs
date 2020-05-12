@@ -22,9 +22,9 @@ namespace Element.AST
                 previous = result;
             }
 
-            return previous  switch
+            return previous switch
             {
-                Element.Expression expr => (IValue)ConstantFolding.Optimize(expr),
+                Element.Expression expr => ConstantFolding.Optimize(expr),
                 _ => previous
             };
         }
@@ -33,10 +33,14 @@ namespace Element.AST
         {
             var result = new List<(Identifier Identifier, IValue Value)>();
             var variadicArgNumber = 0;
-            for (var i = 0; i < Math.Max(arguments.Length, ports.Length); i++)
+            
+            // Keeps iterating until we've checked all arguments that we can
+            // There can be more arguments than ports if the function is variadic
+            for (var i = 0; i < arguments.Length; i++)
             {
-                var arg = i < arguments.Length ? arguments[i] : null;
+                var arg = arguments[i];
                 var port = i < ports.Length ? ports[i] : null;
+                // port can be null if we are checking a variadic function
                 if (port == Port.VariadicPort || variadicArgNumber > 0)
                 {
                     result.Add((new Identifier($"varg{variadicArgNumber}"), arg));

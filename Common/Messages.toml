@@ -53,7 +53,7 @@ name = "CircularCompilation"
 level = "Error"
 
 [ELE12]
-name = "BoundaryConverterMissing"
+name = "MissingBoundaryConverter"
 level = "Error"
 
 [ELE13]
@@ -94,6 +94,10 @@ level = "Error"
 
 [ELE22]
 name = "CannotBeUsedAsInstanceFunction"
+level = "Error"
+
+[ELE23]
+name = "FunctionCannotBeUncurried"
 level = "Error"
 
 [ELE9999]

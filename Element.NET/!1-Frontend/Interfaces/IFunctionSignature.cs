@@ -190,5 +190,52 @@ namespace Element.AST
 
             public object Body { get; }
         }
+
+        public static IFunctionSignature Uncurry(this IFunctionSignature a, IFunctionSignature b,
+                                                 Context context) =>
+            UncurriedFunction.Create(a, b, context);
+            
+
+        private class UncurriedFunction : IFunction
+        {
+            private readonly IFunctionSignature _a;
+            private readonly IFunctionSignature _b;
+
+            private UncurriedFunction(IFunctionSignature a, IFunctionSignature b)
+            {
+                _a = a;
+                _b = b;
+                var inputCount = 0;
+                Inputs = _a.Inputs.Concat(_b.Inputs.Skip(1)).Select(p => p.CloneWithNewId(new Identifier($"arg{inputCount++}"))).ToArray();
+                Output = _b.Output;
+            }
+            
+            public static IFunctionSignature Create(IFunctionSignature a, IFunctionSignature b, Context context)
+            {
+                if (b.Inputs.Length < 1)
+                {
+                    return context.LogError(23, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
+                }
+
+                if (a.Inputs.Any(p => p == Port.VariadicPort))
+                {
+                    return context.LogError(23, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
+                }
+                
+                return new UncurriedFunction(a, b);
+            }
+
+            IType IValue.Type => FunctionType.Instance;
+            IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
+            public Port[] Inputs { get; }
+            public Port Output { get; }
+            public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+                _b.ResolveCall(
+                    // Skip arguments meant for function a
+                    arguments.Skip(_a.Inputs.Length)
+                             .Prepend(_a.ResolveCall(arguments.Take(_a.Inputs.Length).ToArray(), false, compilationContext))
+                             .ToArray(),
+                    false, compilationContext);
+        }
     }
 }

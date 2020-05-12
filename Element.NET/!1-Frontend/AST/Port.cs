@@ -48,6 +48,13 @@ namespace Element.AST
                                       ? _cachedConstraint = _type.ResolveConstraint(scope, compilationContext)
                                       : AnyConstraint.Instance);
 
+        public Port CloneWithNewId(Identifier id)
+        {
+            var clone = (Port)MemberwiseClone();
+            clone._identifier = id;
+            return clone;
+        }
+
         public override string ToString() => $"{_identifier}{_type}";
     }
     

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -46,41 +45,63 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         [Test]
         public void ConstantPi()
         {
-            var pi = _sourceContext.Compile<Constant>("Num.pi");
+            var (pi, _) = _sourceContext.Compile<Constant>("Num.pi");
             Assert.AreEqual(3.14159265359f, pi());
         }
         
         [Test]
         public void BinaryAdd()
         {
-            var add = _sourceContext.Compile<BinaryOp>("Num.add");
+            var (add, _) = _sourceContext.Compile<BinaryOp>("Num.add");
             Assert.AreEqual(11f, add(3f, 8f));
         }
 
         [Test]
-        public void ListWithStaticCount() => Assert.AreEqual(20f, _sourceContext.Compile<Constant>("List.repeat(4, 5).fold(0, Num.add)")());
+        public void CompileBinaryAsUnaryFails()
+        {
+            DoExpectingMessageCode(10, src =>
+            {
+                var (fn, _) = src.Compile<UnaryOp>("Num.add");
+                return fn != null;
+            });
+        }
+        
+        [Test]
+        public void CompileUnaryAsBinaryFails()
+        {
+            DoExpectingMessageCode(10, src =>
+            {
+                var (fn, _) = src.Compile<BinaryOp>("Num.sqr");
+                return fn != null;
+            });
+        }
+
+        [Test]
+        public void ListWithStaticCount() => Assert.AreEqual(20f, _sourceContext.Compile<Constant>("List.repeat(4, 5).fold(0, Num.add)").Item1());
 
         private static readonly int[] _dynamicListCounts = Enumerable.Repeat(1, 20).ToArray();
 
         [TestCaseSource(nameof(_dynamicListCounts))]
         public void ListWithDynamicCount(int count)
         {
-            var dynamicList = _sourceContext.Compile<UnaryOp>("_(a:Num):Num = List.repeat(1, a).fold(0, Num.add)");
+            var (dynamicList, _) = _sourceContext.Compile<UnaryOp>("_(a:Num):Num = List.repeat(1, a).fold(0, Num.add)");
             Assert.AreEqual(count, dynamicList(count));
         }
 
         [Test]
         public void NoObjectBoundaryConverter()
         {
-            var shouldBeNull = _sourceContext.Compile<InvalidDelegate>("Num.sqr");
-            Assert.Null(shouldBeNull);
-            // TODO: Expect InvalidBoundaryFunction error code (ELE12)
+            DoExpectingMessageCode(12, src =>
+            {
+                var (fn, _) = src.Compile<InvalidDelegate>("Num.sqr");
+                return fn != null;
+            });
         }
 
         [Test]
         public void TopLevelList()
         {
-            var fn = _sourceContext.Compile<IndexArray>("_(list:List, idx:Num):Num = list.at(idx)");
+            var (fn, _) = _sourceContext.Compile<IndexArray>("_(list:List, idx:Num):Num = list.at(idx)");
             var thirdElement = fn(new List<float> {1f, 4f, 7f, -3f}, 3);
             Assert.AreEqual(7f, thirdElement);
         }
@@ -88,7 +109,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         [Test]
         public void IntermediateStructVectorAdd()
         {
-            var fn = _sourceContext.Compile<BinaryOp>("_(a:Num, b:Num):Num = Vector3(a, a, a).add(Vector3(b, b, b)).x");
+            var (fn, _) = _sourceContext.Compile<BinaryOp>("_(a:Num, b:Num):Num = Vector3(a, a, a).add(Vector3(b, b, b)).x");
             var result = fn(5f, 10f);
             Assert.AreEqual(15f, result);
         }
@@ -96,7 +117,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         [Test]
         public void StructVectorAdd()
         {
-            var fn = _sourceContext.Compile<VectorOperation>("Vector3.add");
+            var (fn, _) = _sourceContext.Compile<VectorOperation>("Vector3.add");
             var result = fn(new Vector3(5f), new Vector3(10f));
             Assert.AreEqual(15f, result.X);
         }
@@ -104,7 +125,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         [Test]
         public void MakeCustomStructInstance()
         {
-            var fn = _sourceContext.Compile<CustomStructDelegate>("_(f:Num, v3:Vector3):MyCustomElementStruct = MyCustomElementStruct(f, v3)");
+            var (fn, _) = _sourceContext.Compile<CustomStructDelegate>("_(f:Num, v3:Vector3):MyCustomElementStruct = MyCustomElementStruct(f, v3)");
             var result = fn(5f, new Vector3(10f));
             Assert.AreEqual(5f, result.floatField);
             Assert.AreEqual(10f, result.vector3Field.X);
@@ -113,13 +134,18 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         [Test]
         public void CustomStructOperations()
         {
-            var fn = _sourceContext.Compile<CustomStructDelegate>(
+            var (fn, _) = _sourceContext.Compile<CustomStructDelegate>(
 @"_(f:Num, v3:Vector3):MyCustomElementStruct
 {
     fsqr = f.sqr;
     vadded = v3.add(Vector3(fsqr, fsqr, fsqr));
     return = MyCustomElementStruct(fsqr, vadded);
 }");
+            var result = fn(5f, new Vector3(3f, 6f, -10f));
+            Assert.AreEqual(25f, result.floatField);
+            Assert.AreEqual(28f, result.vector3Field.X);
+            Assert.AreEqual(31f, result.vector3Field.Y);
+            Assert.AreEqual(15f, result.vector3Field.Z);
         }
 
         private static readonly (float, float)[] _factorialArguments =
@@ -141,7 +167,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         [TestCaseSource(nameof(_factorialArguments))]
         public void FactorialUsingFor((float fac, float result) f)
         {
-            var fn = _sourceContext.Compile<UnaryOp>("_(a:Num):Num = for(Tuple(a, 1), _(tup):Bool = tup.varg0.gt(0), _(tup) = Tuple(tup.varg0.sub(1), tup.varg1.mul(tup.varg0))).varg1");
+            var (fn, _) = _sourceContext.Compile<UnaryOp>("_(a:Num):Num = for(Tuple(a, 1), _(tup):Bool = tup.varg0.gt(0), _(tup) = Tuple(tup.varg0.sub(1), tup.varg1.mul(tup.varg0))).varg1");
             Assert.AreEqual(f.result, fn(f.fac));
         }
     }

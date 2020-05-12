@@ -8,7 +8,7 @@ namespace Element.AST
     public abstract class ScopeBase : IScope
     {
         public abstract IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] { get; }
-        protected IValue? IndexCache(int index) => (IValue)_cache[index];
+        protected IValue IndexCache(int index) => (IValue)_cache[index];
         protected IValue? IndexCache(Identifier id) => Contains(id) ? (IValue)_cache[id] : null;
         private readonly OrderedDictionary _cache = new OrderedDictionary();
         protected bool Contains(Identifier id) => _cache.Contains(id);
