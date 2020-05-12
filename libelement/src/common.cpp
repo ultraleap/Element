@@ -146,11 +146,10 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
             }
 
             new_log_message = message + "\n\n" + source_line;
-            msg.message = new_log_message.c_str();
         }
     }
 
-    new_log_message += "\n\n" + ast_to_string(context.root, 0, nearest_ast);
+    new_log_message += message + "\n\n" + ast_to_string(context.root, 0, nearest_ast);
     msg.message = new_log_message.c_str();
 	
     log(msg);

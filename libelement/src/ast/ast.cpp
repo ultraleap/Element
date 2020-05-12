@@ -521,8 +521,11 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
             }
         }
     } else {
-        //assert(false);
-        return ELEMENT_ERROR_INVALID_ARCHIVE;
+        if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION) {
+            log(ELEMENT_ERROR_MISSING_FUNCTION_BODY, "Expecting function body, but none was found", nullptr);
+            return ELEMENT_ERROR_MISSING_FUNCTION_BODY;
+        }
+        return ELEMENT_ERROR_UNKNOWN;
     }
     return ELEMENT_OK;
 }
