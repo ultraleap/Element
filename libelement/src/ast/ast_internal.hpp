@@ -30,46 +30,45 @@ struct element_ast
         return (flags & flag) == flag;
     }
 
-    element_ast* find_child(std::function<bool(const element_ast* elem)> fn)
-    {
-        for (const auto& t : children) {
-            if (fn(t.get()))
-                return t.get();
-        }
-        return nullptr;
-    }
+    //element_ast* find_child(std::function<bool(const element_ast* elem)> fn)
+    //{
+    //    for (const auto& t : children) {
+    //        if (fn(t.get()))
+    //            return t.get();
+    //    }
+    //    return nullptr;
+    //}
 
-    element_ast* first_child_of_type(element_ast_node_type type) const
-    {
-        for (const auto& t : children) {
-            if (t->type == type)
-                return t.get();
-        }
-        return nullptr;
-    }
+    //element_ast* first_child_of_type(element_ast_node_type type) const
+    //{
+    //    for (const auto& t : children) {
+    //        if (t->type == type)
+    //            return t.get();
+    //    }
+    //    return nullptr;
+    //}
 
-    template <size_t N>
-    element_ast* nth_parent()
-    {
-        element_ast* p = this;
-        for (size_t i = 0; i < N; ++i) {
-            if (!p) break;
-            p = p->parent;
-        }
-        return p;
-    }
+    //template <size_t N>
+    //element_ast* nth_parent()
+    //{
+    //    element_ast* p = this;
+    //    for (size_t i = 0; i < N; ++i) {
+    //        if (!p) break;
+    //        p = p->parent;
+    //    }
+    //    return p;
+    //}
 
-    template <size_t N>
-    const element_ast* nth_parent() const
-    {
-        const element_ast* p = this;
-        for (size_t i = 0; i < N; ++i) {
-            if (!p) break;
-            p = p->parent;
-        }
-        return p;
-    }
-
+    //template <size_t N>
+    //const element_ast* nth_parent() const
+    //{
+    //    const element_ast* p = this;
+    //    for (size_t i = 0; i < N; ++i) {
+    //        if (!p) break;
+    //        p = p->parent;
+    //    }
+    //    return p;
+    //}
 
     enum class walk_step { stop, step_in, next, step_out };
     using walker = std::function<walk_step(element_ast*)>;
