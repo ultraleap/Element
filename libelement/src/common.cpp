@@ -9,6 +9,50 @@
 #include <fmt/format.h>
 
 #define PRINTCASE(a) case a: c = #a; break;
+std::string tokens_to_string(const element_tokeniser_ctx* tokeniser)
+{
+    std::string string;
+
+	for(const auto& token : tokeniser->tokens)
+	{
+        std::string c;
+        switch (token.type)
+        {
+            PRINTCASE(ELEMENT_TOK_NONE);
+            PRINTCASE(ELEMENT_TOK_NUMBER);
+            PRINTCASE(ELEMENT_TOK_IDENTIFIER);
+            PRINTCASE(ELEMENT_TOK_UNDERSCORE);
+            PRINTCASE(ELEMENT_TOK_DOT);
+            PRINTCASE(ELEMENT_TOK_BRACKETL);
+            PRINTCASE(ELEMENT_TOK_BRACKETR);
+            PRINTCASE(ELEMENT_TOK_SEMICOLON);
+            PRINTCASE(ELEMENT_TOK_COLON);
+            PRINTCASE(ELEMENT_TOK_COMMA);
+            PRINTCASE(ELEMENT_TOK_BRACEL);
+            PRINTCASE(ELEMENT_TOK_BRACER);
+            PRINTCASE(ELEMENT_TOK_EQUALS);
+			default: c = "";
+        }
+		
+        string += c;
+
+		if(token.tok_pos >= 0 && token.tok_len >= 0)
+		{
+            auto chunks = c.length() / 4;
+            for(auto i = chunks; chunks < 6; chunks++)
+                string += "\t";
+
+            auto text = tokeniser->text(&token);
+            string += text;
+		}
+		
+        string += "\n";
+	}
+
+	
+    return string;
+}
+
 std::string ast_to_string(element_ast* ast, int depth, const element_ast* ast_to_mark)
 {
     std::string string;
@@ -150,6 +194,10 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     }
 
     new_log_message += "\n\n" + ast_to_string(context.root, 0, nearest_ast);
+
+    if (context.tokeniser != nullptr)
+        new_log_message += "\n\n" + tokens_to_string(context.tokeniser);
+	
     msg.message = new_log_message.c_str();
 	
     log(msg);
