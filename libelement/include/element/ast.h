@@ -19,7 +19,7 @@ typedef enum
     ELEMENT_AST_NODE_NAMESPACE,
     ELEMENT_AST_NODE_DECLARATION,
     ELEMENT_AST_NODE_SCOPE,
-    ELEMENT_AST_NODE_INTERFACE,
+    ELEMENT_AST_NODE_CONSTRAINT,
     ELEMENT_AST_NODE_EXPRESSION,
     ELEMENT_AST_NODE_EXPRLIST,
     ELEMENT_AST_NODE_PORTLIST,
@@ -34,10 +34,13 @@ typedef enum
 typedef uint32_t element_ast_flags;
 // decl flags
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_INTRINSIC = (1U << 1);
-static const element_ast_flags ELEMENT_AST_FLAG_DECL_EXTERN    = (1U << 2);
+static const element_ast_flags ELEMENT_AST_FLAG_DECL_EMPTY_INPUT = (1U << 2);
+static const element_ast_flags ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN = (1U << 3);
 
 typedef struct element_ast_node element_ast_node;
 typedef struct element_ast element_ast;
+
+typedef struct element_parser_ctx element_parser_ctx;
 
 element_result element_ast_get_type(const element_ast* node, element_ast_node_type* type);
 element_result element_ast_get_value_as_identifier(const element_ast* node, const char** value);

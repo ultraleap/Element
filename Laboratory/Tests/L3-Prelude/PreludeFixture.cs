@@ -4,9 +4,7 @@ namespace Laboratory.Tests.L3.Prelude
 {
     internal abstract class PreludeFixture : HostFixture
     {
-        protected static CompilationInput CompilationInput => new CompilationInput(FailOnError)
-        {
-            ExtraSourceFiles = new[]{GetEleFile("PreludeTestCode")}
-        };
+        protected CompilationInput ValidatedCompilationInput => new CompilationInput(LogMessage) {ExtraSourceFiles = new[]{GetEleFile("PreludeTestCode")}};
+        protected CompilationInput NonValidatedCompilationInput => new CompilationInput(LogMessage) {SkipValidation = true};
     }
 }

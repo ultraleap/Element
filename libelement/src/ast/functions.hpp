@@ -3,9 +3,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <vector>
-#include <cstdint>
-#include <cstdlib>
 
 #include "ast/ast_internal.hpp"
 #include "ast/fwd.hpp"

@@ -14,7 +14,7 @@ namespace Element
         public bool ExcludePrelude { get; set; } = false;
         public IReadOnlyList<DirectoryInfo> Packages { get; set; } = Array.Empty<DirectoryInfo>();
         public IReadOnlyList<FileInfo> ExtraSourceFiles { get; set; } = Array.Empty<FileInfo>();
-        public bool Debug { get; set; } = false;
+        public bool Debug { get; set; } = true;
         public bool SkipValidation { get; set; } = false;
         public MessageLevel Verbosity { get; set; } = MessageLevel.Information;
     }

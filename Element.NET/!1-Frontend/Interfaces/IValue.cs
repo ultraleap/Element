@@ -58,7 +58,7 @@ namespace Element.AST
         public static int GetSerializedSize(this IValue value, CompilationContext compilationContext) => value switch
         {
             { } when value.Type is ISerializableType t => t.Size(value, compilationContext),
-            IFunctionSignature fn when fn.IsNullary() => fn.FullyResolveValue(compilationContext).GetSerializedSize(compilationContext),
+            IFunctionSignature fn when fn.IsNullary() && fn != CompilationError.Instance => fn.FullyResolveValue(compilationContext).GetSerializedSize(compilationContext),
             _ => compilationContext.LogError(1, $"'{value}' of type '{value.Type}' is not serializable").Return(-1)
         };
 

@@ -7,9 +7,9 @@ namespace Laboratory.Tests.L3.Prelude
     {
         [Test]
         // Only parses, does not validate
-        public void Parse() => Assert.True(Host.Parse(new CompilationInput(FailOnError) {SkipValidation = true}));
+        public void Parse() => Assert.True(Host.Parse(NonValidatedCompilationInput));
         
         [Test]
-        public void Validate() =>  Assert.True(Host.Parse(CompilationInput));
+        public void Validate() =>  Assert.True(Host.Parse(ValidatedCompilationInput));
     }
 }

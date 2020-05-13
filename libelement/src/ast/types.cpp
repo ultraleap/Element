@@ -1,24 +1,31 @@
 #include "ast/types.hpp"
 
-#include <algorithm>
 #include <functional>
 #include <cassert>
 #include "interpreter_internal.hpp"
 #include "ast/ast_indexes.hpp"
 
+std::unordered_multimap<std::pair<size_t, size_t>, type_shared_ptr, pair_hash> element_anonymous_type::m_cache;
+
 
 struct any_constraint : public element_type_constraint
 {
+    DECLARE_TYPE_ID();
+    any_constraint() : element_type_constraint(type_id) {}
     bool is_satisfied_by(const type_constraint_const_shared_ptr& value) const override { return true; }
 };
 
 struct function_constraint : public element_type_constraint
 {
+    DECLARE_TYPE_ID();
+    function_constraint() : element_type_constraint(type_id) {}
     bool is_satisfied_by(const type_constraint_const_shared_ptr& value) const override { return !value->inputs().empty(); }
 };
 
 struct serializable_constraint : public element_type_constraint
 {
+    DECLARE_TYPE_ID();
+    serializable_constraint() : element_type_constraint(type_id) {}
     // TODO: this, if we still need it
     bool is_satisfied_by(const type_constraint_const_shared_ptr& value) const override { return false; }
 };
@@ -28,19 +35,32 @@ const type_constraint_const_shared_ptr element_type_constraint::function = std::
 const type_constraint_const_shared_ptr element_type_constraint::serializable = std::make_shared<serializable_constraint>();
 
 
-struct num_type : public element_type
+// TODO: interpreter-specific, can't be static!
+static const element_scope* num_scope = nullptr;
+// the prelude includes a definition for num, so it should be based on custom_type (and updated later)
+struct num_type : public element_custom_type
 {
-    num_type() : element_type("num") { m_ports_cached = true; }
+    num_type() : element_custom_type(nullptr, "Num") { m_ports_cached = true; }
     size_t get_size() const override { return 1; }
     bool is_serializable() const override { return true; } // TODO
     bool is_satisfied_by(const type_constraint_const_shared_ptr& v) const override { return v->inputs().empty() && v->outputs().empty(); }
+
+    const element_scope* scope() const override { return num_scope; }
 protected:
     void generate_ports_cache() const override {}
 };
 
+void update_scopes(const element_scope* names)
+{
+    num_scope = names->lookup("Num", false);
+}
+
+
 struct unary_type : public element_type
 {
-    unary_type() : element_type("<unary>") { generate_ports_cache(); }
+    DECLARE_TYPE_ID();
+
+    unary_type() : element_type(type_id, "<unary>") { generate_ports_cache(); }
     bool is_serializable() const override { return true; } // TODO
     bool is_satisfied_by(const type_constraint_const_shared_ptr& v) const override
     {
@@ -58,7 +78,9 @@ protected:
 
 struct binary_type : public element_type
 {
-    binary_type() : element_type("<binary>") { generate_ports_cache(); }
+    DECLARE_TYPE_ID();
+
+    binary_type() : element_type(type_id, "<binary>") { generate_ports_cache(); }
     bool is_serializable() const override { return true; } // TODO
     bool is_satisfied_by(const type_constraint_const_shared_ptr& v) const override
     {
@@ -74,6 +96,15 @@ protected:
         m_ports_cached = true;
     }
 };
+
+DEFINE_TYPE_ID(element_type,           1U << 0);
+DEFINE_TYPE_ID(element_custom_type,    1U << 1);
+DEFINE_TYPE_ID(element_anonymous_type, 1U << 2);
+DEFINE_TYPE_ID(unary_type,             1U << 3);
+DEFINE_TYPE_ID(binary_type,            1U << 4);
+DEFINE_TYPE_ID(any_constraint,         1U << 5);
+DEFINE_TYPE_ID(function_constraint,    1U << 6);
+DEFINE_TYPE_ID(serializable_constraint,1U << 7);
 
 const type_const_shared_ptr element_type::num = std::make_shared<num_type>();
 const type_const_shared_ptr element_type::unary = std::make_shared<unary_type>();

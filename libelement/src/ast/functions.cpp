@@ -20,27 +20,34 @@ function_const_shared_ptr element_function::get_builtin(const std::string& name)
     // Important: this must NOT be made as part of normal static initialisation, as it depends on other static objects
     static std::unordered_map<std::string, function_const_shared_ptr> builtins{
         // types
-        { "num",   std::make_shared<element_type_ctor>(element_type::num)                },
+        { "Num",   std::make_shared<element_type_ctor>(element_type::num)                },
         // functions
         MAKE_BINARY(add),
-        MAKE_UNARY (acos),
-        MAKE_UNARY (asin),
-        MAKE_UNARY (atan),
-        MAKE_BINARY(atan2),
-        MAKE_UNARY (ceil),
-        MAKE_UNARY (cos),
-        MAKE_BINARY(div),
-        MAKE_UNARY (floor),
-        MAKE_UNARY (ln),
-        MAKE_BINARY(log),
-        MAKE_BINARY(max),
-        MAKE_BINARY(min),
+        MAKE_BINARY(sub),
         MAKE_BINARY(mul),
+        MAKE_BINARY(div),
+    	
         MAKE_BINARY(pow),
         MAKE_BINARY(rem),
-        MAKE_UNARY (sin),
-        MAKE_BINARY(sub),
-        MAKE_UNARY (tan),
+    	
+        MAKE_BINARY(min),
+        MAKE_BINARY(max),
+
+        MAKE_UNARY(abs),
+        MAKE_UNARY(ceil),
+        MAKE_UNARY(floor),
+
+        MAKE_UNARY(sin),
+        MAKE_UNARY(cos),
+        MAKE_UNARY(tan),
+
+        MAKE_UNARY(asin),
+        MAKE_UNARY (acos),
+        MAKE_UNARY (atan),
+        MAKE_BINARY(atan2),
+    	
+        MAKE_UNARY(ln),
+        MAKE_BINARY(log),
     };
 
     auto it = builtins.find(name);
@@ -81,5 +88,5 @@ type_shared_ptr element_custom_function::generate_type(const element_scope* scop
         }
     }
 
-    return std::make_shared<element_anonymous_type>(std::move(inputs), std::move(outputs));
+    return element_anonymous_type::get(std::move(inputs), std::move(outputs));
 }

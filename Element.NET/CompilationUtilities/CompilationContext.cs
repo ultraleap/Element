@@ -26,7 +26,7 @@ namespace Element
 
         protected override CompilerMessage MakeMessage(int? messageCode, string context = default) => !messageCode.HasValue
                                                                                                           ? new CompilerMessage(null, null, context, TraceStack?.ToArray())
-                                                                                                          : new CompilerMessage(messageCode.Value, CompilerMessage.GetMessageLevel(messageCode.Value), context, TraceStack?.ToArray());
+                                                                                                          : new CompilerMessage(messageCode.Value, CompilerMessage.TryGetMessageLevel(messageCode.Value, out var level) ? level : MessageLevel.Information, context, TraceStack?.ToArray());
     }
 
     public static class CompilationContextExtensions

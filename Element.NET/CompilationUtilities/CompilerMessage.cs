@@ -12,17 +12,35 @@ namespace Element
     {
         private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
 
-        private static TomlTable GetMessageToml(int messageCode) =>
-            _messageToml[$"ELE{messageCode}"] is TomlTable messageTable
-                ? messageTable
-                : throw new InternalCompilerException($"ELE{messageCode} could not be found");
+        //public static string GetMessageName(int messageCode) => (string) GetMessageToml(messageCode)["name"];
 
-        public static string GetMessageName(int messageCode) => (string) GetMessageToml(messageCode)["name"];
+        // private static TomlTable GetMessageToml(int messageCode) =>
+        //     _messageToml[$"ELE{messageCode}"] is TomlTable messageTable
+        //         ? messageTable
+        //         : throw new InternalCompilerException($"ELE{messageCode} could not be found");
+        //
+        // public static MessageLevel GetMessageLevel(int messageCode) =>
+        //     Enum.TryParse((string) GetMessageToml(messageCode)["level"], out MessageLevel level)
+        //         ? level
+        //         : throw new InternalCompilerException($"\"{level}\" is not a valid message level");
 
-        public static MessageLevel GetMessageLevel(int messageCode) =>
-            Enum.TryParse((string) GetMessageToml(messageCode)["level"], out MessageLevel level)
-                ? level
-                : throw new InternalCompilerException($"\"{level}\" is not a valid message level");
+        private static bool TryGetMessageToml(int messageCode, out TomlTable message)
+        {
+            message = _messageToml.TryGetToml($"ELE{messageCode}", out var obj) && obj is TomlTable table ? table : null;
+            return message != null;
+        }
+        
+        public static bool TryGetMessageName(int messageCode, out string name)
+        {
+            name = TryGetMessageToml(messageCode, out var table) ? table["name"] as string : null;
+            return name != null;
+        }
+
+        public static bool TryGetMessageLevel(int messageCode, out MessageLevel level)
+        {
+            var name = TryGetMessageToml(messageCode, out var table) ? table["level"] as string: null;
+            return Enum.TryParse(name, out level);
+        }
 
         public CompilerMessage(string message, MessageLevel? messageLevel = null) : this(null, messageLevel, message, null){}
 
@@ -30,14 +48,15 @@ namespace Element
         public CompilerMessage(int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? traceStack)
         {
             MessageCode = messageCode;
-            MessageLevel = messageCode.HasValue ? GetMessageLevel(messageCode.Value) : messageLevel;
+            MessageLevel = Element.MessageLevel.Information;
             Context = context;
             TraceStack = traceStack ?? Array.Empty<TraceSite>();
 
             var builder = new StringBuilder();
             if (messageCode.HasValue)
             {
-                builder.Append("ELE").Append(MessageCode).Append(": ").Append(MessageLevel).Append(" - ").AppendLine(GetMessageName(messageCode.Value));
+                MessageLevel = TryGetMessageLevel(messageCode.Value, out var level) ? level : Element.MessageLevel.Information;
+                builder.Append("ELE").Append(MessageCode).Append(": ").Append(MessageLevel).Append(" - ").AppendLine(TryGetMessageName(messageCode.Value, out var message) ? message : "Unknown");
             }
 
             builder.Append(Context);

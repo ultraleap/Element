@@ -86,7 +86,8 @@ static element_result compile_custom_fn_scope(
     expression_shared_ptr& expr)
 {
     const element_ast* node = scope->node; // FUNCTION
-    if (node->type != ELEMENT_AST_NODE_FUNCTION || node->children.size() <= ast_idx::fn::body)
+    if (node->type != ELEMENT_AST_NODE_FUNCTION 
+        || node->children.size() <= ast_idx::fn::body)
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
 
     assert(scope->function() && scope->function()->inputs().size() >= inputs.size());
@@ -98,7 +99,31 @@ static element_result compile_custom_fn_scope(
 
     // find output
     const element_scope* output = scope->lookup("return", false);
-    return output ? compile_expression(ctx, output, output->node, expr) : ELEMENT_ERROR_INVALID_OPERATION;
+    if (output)
+        return compile_expression(ctx, output, output->node, expr);
+
+    return ELEMENT_ERROR_INVALID_OPERATION;
+}
+
+
+static element_result place_args(expression_shared_ptr& expr, const std::vector<expression_shared_ptr>& args)
+{
+    if (auto ua = expr->as<element_unbound_arg>()) {
+        if (ua->index() < args.size()) {
+            expr = args[ua->index()];
+            return ELEMENT_OK;
+        } else {
+            // TODO: error code
+            return ELEMENT_ERROR_ARGS_MISMATCH;
+        }
+    } else {
+        for (auto& dep : expr->dependents()) {
+            auto result = place_args(dep, args);
+            if (result != ELEMENT_OK)
+                return result;
+        }
+        return ELEMENT_OK;
+    }
 }
 
 static element_result compile_call(
@@ -106,30 +131,45 @@ static element_result compile_call(
     const element_scope* scope,
     const element_ast* bodynode,
     const element_scope*& fnscope,
-    expression_shared_ptr& expr,
-    size_t depth = 0)
+    expression_shared_ptr& expr)
 {
     if (bodynode->type == ELEMENT_AST_NODE_LITERAL) {
         expr = std::make_shared<element_constant>(bodynode->literal);
+        fnscope = scope->root()->lookup("Num", false); // HACK?
         return ELEMENT_OK;
     }
 
+    std::vector<expression_shared_ptr> args;
+
     // scope is the current scope the outer call is happening in
     // fnscope tracks the current available scope of the nested call
-    // TODO: adjust for methods
-    fnscope = fnscope->lookup(bodynode->identifier, depth == 0);
-    if (!fnscope) return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
 
-    // TODO: apply resolve_returns behaviour
+    const element_scope* orig_fnscope = fnscope;
+    const bool has_parent = bodynode->children.size() > ast_idx::call::parent && bodynode->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
+    // compound identifier with "parent" - could either be member access or method call
+    expression_shared_ptr parent;
+    if (has_parent) {
+        assert(bodynode->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_CALL || bodynode->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_LITERAL);
+        ELEMENT_OK_OR_RETURN(compile_call(ctx, scope, bodynode->children[ast_idx::call::parent].get(), fnscope, parent));
+        // TODO: check better, return error
+        if (!parent)
+            return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
+    }
+    const element_scope* parent_fnscope = fnscope;
+
+    if (!fnscope)
+        return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
+    fnscope = fnscope->lookup(bodynode->identifier, !has_parent);
+    if (!fnscope)
+        return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
 
     // TODO: check if we're doing partial application
 
-    std::vector<expression_shared_ptr> args;
     if (bodynode->children.size() > ast_idx::call::args && bodynode->children[ast_idx::call::args]->type == ELEMENT_AST_NODE_EXPRLIST) {
         // call with args
         const element_ast* callargs = bodynode->children[ast_idx::call::args].get();
         args.resize(callargs->children.size());
-        for (size_t i = 0; i < args.size(); ++i)
+        for (size_t i = 0; i < callargs->children.size(); ++i)
             ELEMENT_OK_OR_RETURN(compile_expression(ctx, scope, callargs->children[i].get(), args[i]));
     }
 
@@ -142,21 +182,56 @@ static element_result compile_call(
 
     expr = ctx.expr_cache.search(fnscope);
     if (!expr) {
+        // see if we need to redirect (e.g. method call)
+        if (has_parent) {
+            if (parent->is<element_structure>())
+                expr = parent->as<element_structure>()->output(bodynode->identifier);
+            if (expr) {
+                ELEMENT_OK_OR_RETURN(place_args(expr, args));
+                // TODO: more here?
+                return ELEMENT_OK;
+            } else {
+                // no member found - method access?
+                auto type = parent_fnscope->function()->type();
+                auto ctype = type ? type->as<element_custom_type>() : nullptr;
+                if (ctype) {
+                    const element_scope* tscope = ctype->scope();
+                    fnscope = tscope->lookup(bodynode->identifier, false);
+                    if (fnscope) {
+                        // found a function in type's scope
+                        auto fn = fnscope->function();
+                        if (fn->inputs().size() == args.size() + 1 && fn->inputs()[0].type->is_satisfied_by(type)) {
+                            // method call, inject parent as first arg
+                            args.insert(args.begin(), parent);
+                        }
+                        if (fn->inputs().size() != args.size())
+                            return ELEMENT_ERROR_INVALID_OPERATION;
+                    } else {
+                        return ELEMENT_ERROR_INVALID_OPERATION;
+                    }
+                } else {
+                    return ELEMENT_ERROR_INVALID_OPERATION;
+                }
+            }
+        }
+
         // TODO: temporary check if intrinsic
         if (fnscope->function() && fnscope->function()->is<element_intrinsic>()) {
             expr = generate_intrinsic_expression(fnscope->function()->as<element_intrinsic>(), args);
-            if (!expr) return ELEMENT_ERROR_INVALID_OPERATION;
-        } else if (bodynode->children.size() > ast_idx::call::parent && bodynode->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE) {
-            // compound identifier with "parent"
-            // TODO: fix this for methods, currently won't go looking in the type
-            assert(bodynode->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_CALL);
-            expression_shared_ptr parent;
-            ELEMENT_OK_OR_RETURN(compile_call(ctx, scope, bodynode->children[ast_idx::call::parent].get(), fnscope, parent, depth + 1));
-            // TODO: check better, return error
-            if (!parent || !parent->is<element_structure>()) return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
-            expr = parent->as<element_structure>()->output(bodynode->identifier);
-        } else {
+            if (!expr)
+                return ELEMENT_ERROR_INVALID_OPERATION;
+        }
+        else if (fnscope->function() && fnscope->function()->is<element_type_ctor>()) {
+            expr = std::shared_ptr<element_structure>(new element_structure({}));
+        }
+        else {
             ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, fnscope, args, expr));
+            auto btype = fnscope->function()->type();
+            auto type = btype ? btype->output("return")->type : nullptr;
+            auto ctype = type ? type->as<element_custom_type>() : nullptr;
+            if (ctype) {
+                fnscope = ctype->scope();
+            }
         }
     }
     return ELEMENT_OK;

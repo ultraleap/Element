@@ -1,3 +1,12 @@
 [submodule "Element/LMNT/thirdparty/dynasm"]
 	path = LMNT/dependencies/dynasm
 	url = https://github.com/Esvandiary/DynASM
+[submodule "libelement.CLI/dependencies/cli11"]
+	path = libelement.CLI/dependencies/cli11
+	url = https://github.com/CLIUtils/CLI11
+[submodule "dependencies/rapidjson"]
+	path = dependencies/rapidjson
+	url = git@github.com:Tencent/rapidjson.git
+[submodule "dependencies/toml11"]
+	path = dependencies/toml11
+	url = git@github.com:ToruNiina/toml11.git

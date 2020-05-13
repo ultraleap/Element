@@ -5,6 +5,6 @@
     <Parameter name="name" value="Alchemist" />
     <Parameter name="build-command" value="dotnet publish Alchemist/Alchemist.csproj --self-contained=false -o Alchemist/Build -v n" />
     <Parameter name="executable-path" value="Alchemist/Build/Alchemist" />
+    <Parameter name="working-directory" value="Alchemist/Build" />
   </TestRunParameters>
-
 </RunSettings>

@@ -1,5 +1,7 @@
 constraint PathFunc(u:Num):Vector3;
 
+struct Segment(a:Vector3, b:Vector3);
+
 struct Path(at:PathFunc, length:Num)
 {	
 	#Paths
@@ -47,12 +49,13 @@ struct Path(at:PathFunc, length:Num)
 		return = Path.Translate(Path(at, width.add(height).mul(2)), Vector3(width.div(-2), height.div(-2), 0));
 	}
 
+    #UNTESTED
 #	Lissajous(size:Vector2, frequency:Vector2, delta:Vector2):Path
 #	{
 #		at(u:Num):Vector3
 #		{
 #			t = Vector2(u, u);
-#			v = Vector2.mul(size, zip(Num.cos, Vector2.sub(Vector2.mul(frequency, t), delta)));
+#			v = Vector2.mul(size, zip(Num.cos, frequency.mul(t).sub(delta)));
 #			return = Vector3(v.x, v.y, 0);
 #		}
 #		l = Vector2.mul(size, frequency);
@@ -135,6 +138,62 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 		length = Vector3.distance(endpointA, endpointB);
 		return = BoundedPath(at, length);
 	}
+
+#   #UNTESTED
+#	PolyLineSimple(points:Vec3Array) : BoundedPath
+#	{
+#		segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)));
+#		segments = TArray(sub(points.count, 1), segment);
+#		return = PolySegmentSimple(segments);
+#	}
+#
+#   #UNTESTED
+#	PolySegmentSimple(segments:SegmentArray) : BoundedPath
+#	{
+#		segmentLength(s:Segment) = V3.Distance(s.a, s.b);
+#		totalLength = aggregate(add, Array.Select(segments, segmentLength), 0);
+#
+#		at(u:Num)
+#		{
+#			adjustedU = mul(u, segments.count);
+#			target = segments.index(adjustedU);
+#			return = Vec.Lerp(rem(adjustedU, 1), target.a, target.b);
+#		}
+#		return = BoundedPath(at, totalLength);
+#	}
+#
+#   #UNTESTED
+#	PolyLine(points:Vec3Array) : BoundedPath
+#	{
+#		segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)));
+#		segments = TArray(sub(points.count, 1), segment);
+#		return = PolySegment(segments);
+#	}
+#
+#   #UNTESTED
+#	PolySegment(segments:SegmentArray) : BoundedPath
+#	{
+#		segmentLength(s:Segment) = V3.Distance(s.a, s.b);
+#		totalLength = aggregate(add, Array.Select(segments, segmentLength), 0);
+#
+#		at(u:Num)
+#		{
+#			adjustedU = mul(u, totalLength);
+#			SegmentIteration -> s:Segment, distance:Num, continue:Num;
+#			segmentFinder(current:SegmentIteration, next:Segment) : SegmentIteration =
+#				if (current.continue,
+#					if(lt(current.distance, segmentLength(next)),
+#						SegmentIteration(next, current.distance, 0),
+#						SegmentIteration(current.s, sub(current.distance, segmentLength(next)), 1)
+#					),
+#					current
+#				);
+#			findResult = aggregate(segmentFinder, Array.Skip(segments, 1), SegmentIteration(segments.index(0), adjustedU, 1));
+#			targetU = div(findResult.distance, segmentLength(findResult.s));
+#			return = Vec.Lerp(targetU, findResult.s.a, findResult.s.b);
+#		}
+#		return = BoundedPath(at, totalLength);
+#	}
 	
 	#Modifiers
 	PingPong(path:BoundedPath):Path
@@ -154,13 +213,39 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 		}
 		return = Path(at, path.length);
 	}
-
-#	Easing(path:BoundedPath):Path
+	
+    #UNTESTED
+    WithBounds(path:Path, start:Num, end:Num):BoundedPath
+    {
+        segment = end.sub(start);
+        at(u:Num):Vector3 = path.at(u.add(start).mul(segment));
+        return = BoundedPath(at, path.length.mul(segment));
+    }
+   
+    #UNTESTED
+    LineBetween(a:Path, aPeriod:Num, b:Path, bPeriod:Num, time:Num):Path
+    {
+        pointA = a.at(time.div(aPeriod).rem(1));
+        pointB = b.at(time.div(bPeriod),rem(1));
+        return = Path.Easing(BoundedPath.Line(pointA, pointB));
+    }
+       
+#    #UNTESTED
+#	Join(pathArray:PathArray) : BoundedPath
 #	{
-#		at(u:Num):Vector3 = path.atBounded(Num.div(Num.sub(1, Num.cos(Num.mul(Num.pi, u))), 2));
-#		return = Path(at, path.length);
+#		pathLength(p:BoundedPath) = p.length;
+#		length = aggregate(add, Array.Select(pathArray, pathLength), 0);
+#		return = BoundedPath(at, length);
+#		at(u:Num)
+#		{
+#			adjustedU = mul(u, pathArray.count);
+#			currentPath = pathArray.index(adjustedU);
+#			localU = rem(adjustedU, 1);
+#			return = currentPath.atBounded(localU);
+#		}
 #	}
 #
+#    #UNTESTED
 #	PathSegment(path:BoundedPath, start:Num, end:Num):BoundedPath
 #	{
 #		segment = Num.sub(end, start);
