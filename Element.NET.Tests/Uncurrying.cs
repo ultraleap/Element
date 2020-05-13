@@ -6,7 +6,7 @@ namespace Element.NET.Tests
 {
     public class Uncurrying : FixtureBase
     {
-        private delegate float AddMul(float a, float b, float mulBy);
+        private delegate float AddSqr(float a, float b);
 
         [Test]
         public void UncurryAddMul()
@@ -18,11 +18,11 @@ namespace Element.NET.Tests
                 return;
             }
             var add = srcContext.EvaluateExpressionAs<IFunctionSignature>("Num.add", out _);
-            var mul = srcContext.EvaluateExpressionAs<IFunctionSignature>("Num.mul", out _);
-            var fusedAddMul = add.Uncurry(mul, srcContext);
-            var (compiled, _) = srcContext.Compile<AddMul>(fusedAddMul);
-            var result = compiled(5f, 10f, -2f);
-            Assert.AreEqual(-30f, result);
+            var mul = srcContext.EvaluateExpressionAs<IFunctionSignature>("Num.sqr", out _);
+            var uncurried = add.Uncurry(mul, srcContext);
+            var (compiled, _) = srcContext.Compile<AddSqr>(uncurried);
+            var result = compiled(5f, 10f);
+            Assert.AreEqual(225f, result);
         }
         
         // TODO: cannot uncurry variadic function as param a

@@ -194,7 +194,6 @@ namespace Element.AST
         public static IFunctionSignature Uncurry(this IFunctionSignature a, IFunctionSignature b,
                                                  Context context) =>
             UncurriedFunction.Create(a, b, context);
-            
 
         private class UncurriedFunction : IFunction
         {
@@ -205,8 +204,7 @@ namespace Element.AST
             {
                 _a = a;
                 _b = b;
-                var inputCount = 0;
-                Inputs = _a.Inputs.Concat(_b.Inputs.Skip(1)).Select(p => p.CloneWithNewId(new Identifier($"arg{inputCount++}"))).ToArray();
+                Inputs = _a.Inputs.Concat(_b.Inputs.Skip(1)).ToArray();
                 Output = _b.Output;
             }
             
@@ -220,6 +218,21 @@ namespace Element.AST
                 if (a.Inputs.Any(p => p == Port.VariadicPort))
                 {
                     return context.LogError(23, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
+                }
+
+                if (a.Inputs.Concat(b.Inputs).Any(p => p?.Identifier == null))
+                {
+                    return context.LogError(23, "Cannot uncurry functions with discarded/unnamed ports");
+                }
+
+                foreach (var aPort in a.Inputs)
+                {
+                    // TODO: Better solution to this error, it's very annoying to not be allowed to uncurry functions just because of port names!
+                    Identifier? id = null;
+                    if (b.Inputs.Skip(1).Any(bPort => aPort.Identifier.Equals(id = bPort.Identifier)))
+                    {
+                        return context.LogError(23, $"'{id}' is defined on both functions, these functions cannot be uncurried");
+                    }
                 }
                 
                 return new UncurriedFunction(a, b);

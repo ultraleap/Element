@@ -29,10 +29,10 @@ namespace Element.AST
             
             var condition = arguments[1] as IFunctionSignature;
             var body = arguments[2] as IFunctionSignature;
-            var group = new Loop(initialSerialized,
+            var loop = new Loop(initialSerialized,
                 state => condition.ResolveCall(new[]{initial.Deserialize(state, compilationContext)}, false, compilationContext) as Element.Expression ?? CompilationError.Instance,
                 state => body.ResolveCall(new[]{initial.Deserialize(state, compilationContext)}, false, compilationContext).Serialize(compilationContext));
-            return initial.Deserialize(Enumerable.Range(0, group.Size).Select(i => new ExpressionGroupElement(group, i)), compilationContext);
+            return initial.Deserialize(Enumerable.Range(0, loop.Size).Select(i => new ExpressionGroupElement(loop, i)), compilationContext);
         }
     }
 }
