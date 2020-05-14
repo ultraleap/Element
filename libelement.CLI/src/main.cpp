@@ -34,7 +34,7 @@ void log_callback(const element_log_message* const message)
 	}
 	else
 	{
-		msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}\nline {} column {} length {}\n",
+		msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}:{},{} length {}\n",
 			message->message_code, message->filename ? message->filename : "", message->line, message->column, message->length);
 	}
 
