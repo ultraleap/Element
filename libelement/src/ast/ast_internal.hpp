@@ -99,6 +99,12 @@ inline bool ast_node_in_function_scope(const element_ast* n)
         n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_FUNCTION);
 }
 
+inline bool ast_node_in_lambda_scope(const element_ast* n)
+{
+    return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE &&
+    n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_LAMBDA);
+}
+
 struct element_parser_ctx
 {
     std::shared_ptr<element_log_ctx> logger = nullptr;

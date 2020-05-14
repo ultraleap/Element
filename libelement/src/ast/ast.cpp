@@ -436,8 +436,10 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
     if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION)
         function_declaration = true;
 
-    //If a function declaration identifier in another functions scope is "return" then that's valid, otherwise not
-    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, function_declaration && ast_node_in_function_scope(ast->parent)));
+    //If a function declaration identifier in another function or lambdas scope is "return" then that's valid, otherwise not
+    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, function_declaration
+    && (ast_node_in_function_scope(ast->parent) || ast_node_in_lambda_scope(ast->parent))));
+
 
     GET_TOKEN(tokeniser, *tindex, tok);
     // always create the args node, even if it ends up being none/empty

@@ -60,12 +60,18 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${element_sources})
 # Don't rely on compiler extensions
 set_property(TARGET element PROPERTY CMAKE_CXX_EXTENSIONS OFF)
 
+IF (WIN32)
+    set(debug_dir "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+ELSE()
+    set(debug_dir "${CMAKE_BINARY_DIR}")
+ENDIF()
+
 # Copy prelude alongside built library
 add_custom_command (
 	TARGET element POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	"${CMAKE_CURRENT_SOURCE_DIR}/../Common"
-	"${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+	"${debug_dir}")
 
 target_include_directories(element
     PUBLIC
@@ -89,5 +95,5 @@ if (BUILD_TESTING)
     target_link_libraries(element_test_app PRIVATE element)
 
     set_target_properties(element_test_app PROPERTIES
-        VS_DEBUGGER_WORKING_DIRECTORY       "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+        VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
 endif ()

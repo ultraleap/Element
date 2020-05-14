@@ -73,7 +73,7 @@ static element_result compile_type_ctor(
     return ELEMENT_OK;
 }
 
-element_result compile_expression(
+static element_result compile_expression(
     element_compiler_ctx& ctx,
     const element_scope* scope,
     const element_ast* bodynode,
