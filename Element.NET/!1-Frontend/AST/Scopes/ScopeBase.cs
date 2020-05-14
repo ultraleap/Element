@@ -23,6 +23,7 @@ namespace Element.AST
         }
 
         public IEnumerator<IValue> GetEnumerator() => _cache.Values.Cast<IValue>().GetEnumerator();
+        IEnumerator<IValue> IEnumerable<IValue>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

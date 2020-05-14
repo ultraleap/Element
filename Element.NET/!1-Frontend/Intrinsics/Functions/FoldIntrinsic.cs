@@ -47,8 +47,10 @@ namespace Element.AST
 			IValue[] CreateDynamicFoldArguments()
 			{
 				var initial = TupleType.Instance.ResolveCall(new []{Constant.Zero, workingValue}, false, compilationContext);
-				if (!compilationContext.Parse("_(tup):Bool = tup.varg0.lt(list.count)", out Lambda predicateLambda)) throw new InternalCompilerException("Couldn't parse dynamic fold condition");
-				if (!compilationContext.Parse("_(tup) = Tuple(tup.varg0.add(1), aggregator(tup.varg1, list.at(tup.varg0)))", out Lambda bodyLambda)) throw new InternalCompilerException("Couldn't parse dynamic fold body");
+				string conditionSourceCode = "_(tup):Bool = tup.varg0.lt(list.count)";
+				string bodySourceCode = "_(tup) = Tuple(tup.varg0.add(1), aggregator(tup.varg1, list.at(tup.varg0)))";
+				if (!compilationContext.Parse(conditionSourceCode, out Lambda predicateLambda)) throw new InternalCompilerException("Couldn't parse dynamic fold condition");
+				if (!compilationContext.Parse(bodySourceCode, out Lambda bodyLambda)) throw new InternalCompilerException("Couldn't parse dynamic fold body");
 				var declaration = compilationContext.GetIntrinsicsDeclaration<Declaration>(this);
 				predicateLambda.Initialize(declaration);
 				bodyLambda.Initialize(declaration);

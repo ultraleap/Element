@@ -6,6 +6,56 @@ using Element.AST;
 
 namespace Element
 {
+    public readonly struct SourceInfo
+    {
+        public SourceInfo(string name, string text)
+        {
+            Name = name;
+            Text = text;
+        }
+        
+        public readonly string Name;
+        public readonly string Text;
+        
+        public (int Line, int Column, int LineCharacterIndex) CountLinesAndColumns(int index)
+        {
+            var line = 1;
+            var column = 1;
+            var lineCharacterIndex = 0;
+            for (var i = 0; i < index; i++)
+            {
+                if (Text[i] == '\r')
+                {
+                    line++;
+                    column = 1;
+                    lineCharacterIndex = 0;
+                    if (i + 1 < Text.Length && Text[i + 1] == '\n')
+                    {
+                        i++;
+                    }
+                }
+                else if (Text[i] == '\n')
+                {
+                    line++;
+                    column = 1;
+                    lineCharacterIndex = 0;
+                }
+                else if (Text[i] == '\t')
+                {
+                    column += 4;
+                    lineCharacterIndex++;
+                }
+                else
+                {
+                    column++;
+                    lineCharacterIndex++;
+                }
+            }
+
+            return (line, column, lineCharacterIndex);
+        }
+    }
+    
     public class SourceContext : Context
     {
         private SourceContext(CompilationInput compilationInput) : base(compilationInput) { }
@@ -49,7 +99,7 @@ namespace Element
         {
             compilationContext = MakeCompilationContext(out compilationContext);
             var success = this.Parse(expression, out AST.Expression expressionObject);
-            expressionObject.InitializeUsingStubDeclaration(compilationContext);
+            expressionObject.InitializeUsingStubDeclaration(expression, compilationContext);
             success &= expressionObject.Validate(this);
             return success
                        ? expressionObject.ResolveExpression(GlobalScope, compilationContext)
@@ -65,20 +115,18 @@ namespace Element
             return default!;
         }
 
-        public bool LoadElementSourceString(string sourceName, string elementSource) => LoadElementSourceString(sourceName, elementSource, true);
-        
+        public bool LoadElementSourceString(SourceInfo info) => LoadElementSourceString(info, true);
         public bool LoadElementSourceFile(FileInfo file) => LoadElementSourceFile(file, true);
 
         private bool LoadElementSourceFile(FileInfo file, bool validate) =>
-            LoadElementSourceString(file.FullName, Parser.Preprocess(File.ReadAllText(file.FullName)), validate);
-
-        private bool LoadElementSourceString(string sourceName, string sourceString, bool validate)
+            LoadElementSourceString(new SourceInfo(file.FullName, Parser.Preprocess(File.ReadAllText(file.FullName))), validate);
+        private bool LoadElementSourceString(SourceInfo info, bool validate)
         {
-            var success = this.Parse<SourceScope>(sourceString, out var sourceScope);
+            var success = this.Parse<SourceScope>(info.Text, out var sourceScope);
             if (success)
             {
-                GlobalScope[sourceName] = sourceScope;
-                GlobalScope.InitializeItems();
+                sourceScope.InitializeItems(info, GlobalScope);
+                GlobalScope[info.Name] = sourceScope;
                 if (validate)
                 {
                     success &= GlobalScope.ValidateScope(this);
@@ -87,7 +135,6 @@ namespace Element
 
             return success;
         }
-
 
         /// <summary>
         /// Parses all the given files as Element source files into the source context

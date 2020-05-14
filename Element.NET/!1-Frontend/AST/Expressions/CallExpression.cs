@@ -1,24 +1,32 @@
 using System.Linq;
+using Lexico;
 
 namespace Element.AST
 {
     // ReSharper disable once UnusedType.Global
-    public class CallExpression : ListOf<Expression>, ISubExpression
+    public class CallExpression : SubExpression
     {
-        void ISubExpression.Initialize(Declaration declaration)
+#pragma warning disable 169, 8618
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [field: Term] private ListOf<Expression> Expressions { get; set; }
+#pragma warning restore 169, 8618
+
+        protected override void InitializeImpl()
         {
-            foreach (var expr in List)
+            foreach (var expr in Expressions.List)
             {
-                expr.Initialize(declaration);
+                expr.Initialize(Declarer);
             }
         }
 
-        public bool Validate(SourceContext sourceContext) =>
-            List.Aggregate(true, (current, expr) => current & expr.Validate(sourceContext));
+        public override string ToString() => Expressions.ToString();
 
-        IValue ISubExpression.ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext) =>
+        public override bool Validate(SourceContext sourceContext) =>
+            Expressions.List.Aggregate(true, (current, expr) => current & expr.Validate(sourceContext));
+
+        protected override IValue SubExpressionImpl(IValue previous, IScope scope, CompilationContext compilationContext) =>
             previous is IFunctionSignature function
-                ? function.ResolveCall(List.Select(argExpr => argExpr.ResolveExpression(scope, compilationContext)).ToArray(), false, compilationContext)
+                ? function.ResolveCall(Expressions.List.Select(argExpr => argExpr.ResolveExpression(scope, compilationContext)).ToArray(), false, compilationContext)
                 : compilationContext.LogError(16, $"{previous} cannot be called - it is not a function");
     }
 }

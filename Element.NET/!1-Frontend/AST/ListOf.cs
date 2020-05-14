@@ -4,13 +4,13 @@ using Lexico;
 namespace Element.AST
 {
     [WhitespaceSurrounded, MultiLine]
-    public abstract class ListOf<T>
+    public class ListOf<T>
     {
-#pragma warning disable 169
+#pragma warning disable 169, 8618
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         // ReSharper disable once CollectionNeverUpdated.Global
         [field: SurroundBy("(", ")"), SeparatedBy(typeof(ListSeparator))] public List<T> List { get; private set; }
-#pragma warning restore 169
+#pragma warning restore 169, 8618
 
         public override string ToString() => $"({string.Join(", ", List)})";
     }

@@ -6,14 +6,6 @@ namespace Element.AST
     {
         protected abstract IEnumerable<Declaration> ItemsToCacheOnValidate { get; }
 
-        public void InitializeItems()
-        {
-            foreach (var item in ItemsToCacheOnValidate)
-            {
-                item.Initialize(this);
-            }
-        }
-
         public bool ValidateScope(SourceContext sourceContext, Identifier[] identifierBlacklist = null, Identifier[] identifierWhitelist = null)
         {
             if (sourceContext.SkipValidation) return true;

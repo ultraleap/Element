@@ -23,7 +23,10 @@ namespace Element.AST
         public void Initialize(Declaration declarer)
         {
             Declarer = declarer ?? throw new ArgumentNullException(nameof(declarer));
-            InitializeItems();
+            foreach (var item in ItemsToCacheOnValidate)
+            {
+                item.Initialize(Declarer.SourceInfo, this);
+            }
         }
     }
 }

@@ -36,8 +36,8 @@ namespace Element.AST
             }
         }
 
-        public static TIntrinsic GetByLocation<TIntrinsic>(string location, Context? context)
-            where TIntrinsic : class, IValue?
+        public static TIntrinsic? GetByLocation<TIntrinsic>(string location, Context? context)
+            where TIntrinsic : class, IValue
         {
             switch (_intrinsics.TryGetValue(location, out var intrinsic), intrinsic)
             {

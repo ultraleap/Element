@@ -18,7 +18,9 @@ namespace Element
         public void PopTrace() => TraceStack.Pop();
 
         public void PushFunction(IFunctionSignature functionSignature) => FunctionStack.Push(functionSignature);
+
         public void PopFunction() => FunctionStack.Pop();
+
         public bool ContainsFunction(IFunctionSignature functionSignature) => FunctionStack.Contains(functionSignature);
 
         public TDeclaration? GetIntrinsicsDeclaration<TDeclaration>(IIntrinsic intrinsic) where TDeclaration : Declaration =>

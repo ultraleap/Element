@@ -40,7 +40,7 @@ namespace Element.NET.Tests
                        : null;
             if (!string.IsNullOrEmpty(extraSource))
             {
-                result?.LoadElementSourceString("TestSource", extraSource);
+                result?.LoadElementSourceString(new SourceInfo("TestSource", extraSource));
             }
 
             return result;

@@ -4,17 +4,22 @@ namespace Element.AST
 {
     [WhitespaceSurrounded, MultiLine]
     // ReSharper disable once ClassNeverInstantiated.Global
-    public abstract class Expression : IDeclared
+    public abstract class Expression : Declared
     {
-        public abstract void Initialize(Declaration declaration);
-        public abstract IValue ResolveExpression(IScope scope, CompilationContext compilationContext);
-        public abstract bool Validate(SourceContext sourceContext);
-        public Declaration Declarer { get; protected set; }
+        public IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
+        {
+            compilationContext.PushTrace(MakeTraceSite());
+            var result = ExpressionImpl(scope, compilationContext);
+            compilationContext.PopTrace();
+            return result;
+        }
+
+        protected abstract IValue ExpressionImpl(IScope scope, CompilationContext context);
     }
 
     public static class ExpressionExtensions
     {
-        public static void InitializeUsingStubDeclaration(this Expression expression, CompilationContext compilationContext) =>
-            expression.Initialize(Declaration.MakeStubDeclaration(new Identifier("<stub declaration>"), new ExpressionBody(expression), compilationContext));
+        public static void InitializeUsingStubDeclaration(this Expression expression, string expressionString, CompilationContext compilationContext) =>
+            expression.Initialize(Declaration.MakeStubDeclaration(new Identifier("<stub declaration>"), new ExpressionBody(expression), expressionString, compilationContext));
     }
 }

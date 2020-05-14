@@ -23,44 +23,6 @@ namespace Element
             ReturnIdentifier,
         };
 
-        internal static (int Line, int Column, int LineCharacterIndex) CountLinesAndColumns(int index, string text)
-        {
-            var line = 1;
-            var column = 1;
-            var lineCharacterIndex = 0;
-            for (var i = 0; i < index; i++)
-            {
-                if (text[i] == '\r')
-                {
-                    line++;
-                    column = 1;
-                    lineCharacterIndex = 0;
-                    if (i + 1 < text.Length && text[i + 1] == '\n')
-                    {
-                        i++;
-                    }
-                }
-                else if (text[i] == '\n')
-                {
-                    line++;
-                    column = 1;
-                    lineCharacterIndex = 0;
-                }
-                else if (text[i] == '\t')
-                {
-                    column += 4;
-                    lineCharacterIndex++;
-                }
-                else
-                {
-                    column++;
-                    lineCharacterIndex++;
-                }
-            }
-
-            return (line, column, lineCharacterIndex);
-        }
-
         public static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
         public static bool Parse<T>(this Context context, string text, out T output)

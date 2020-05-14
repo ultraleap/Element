@@ -21,7 +21,7 @@ name = "InvalidCompileTarget"
 level = "Error"
 
 [ELE4]
-name = "IntrinsicNotImplemented"
+name = "IntrinsicNotFound"
 level = "Error"
 
 [ELE5]

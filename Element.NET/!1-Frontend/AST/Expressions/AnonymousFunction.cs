@@ -7,7 +7,7 @@ namespace Element.AST
             Body = body;
             Parent = parent;
             Output = output;
-            Inputs =  inputs.List.ToArray();
+            Inputs =  inputs.Ports.List.ToArray();
         }
 
         public IType Type => FunctionType.Instance;

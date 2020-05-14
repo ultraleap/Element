@@ -3,7 +3,7 @@ using Lexico;
 namespace Element.AST
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class IndexingExpression : ISubExpression
+    public class IndexingExpression : SubExpression
     {
 #pragma warning disable 169
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
@@ -12,11 +12,13 @@ namespace Element.AST
 
         public override string ToString() => $".{Identifier}";
 
-        void ISubExpression.Initialize(Declaration declaration) { }
+        public override bool Validate(SourceContext sourceContext) => sourceContext.ValidateIdentifier(Identifier);
+        protected override void InitializeImpl()
+        {
+            // No-op, nothing to do
+        }
 
-        public bool Validate(SourceContext sourceContext) => sourceContext.ValidateIdentifier(Identifier);
-        // No-op
-        IValue ISubExpression.ResolveSubExpression(IValue previous, IScope _, CompilationContext compilationContext) =>
+        protected override IValue SubExpressionImpl(IValue previous, IScope _, CompilationContext compilationContext) =>
             previous is IIndexable indexable
                 ? indexable[Identifier, false, compilationContext]
                 : compilationContext.LogError(16, $"'{previous}' is not indexable");
