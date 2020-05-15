@@ -4,6 +4,7 @@
 #include <utility>
 #include "ast/ast_indexes.hpp"
 
+#include <fmt/format.h>
 
 static std::vector<expression_shared_ptr> generate_placeholder_inputs(const element_type* t)
 {
@@ -51,6 +52,7 @@ static element_result compile_intrinsic(
         return ELEMENT_OK;
     } else {
         // not implemented yet
+        ctx.ictx.logger->log(ctx, ELEMENT_ERROR_NO_IMPL, fmt::format("Tried to compile intrinsic {} with no implementation.", fn->name()));
         assert(false);
         return ELEMENT_ERROR_NO_IMPL;
     }
@@ -86,9 +88,20 @@ static element_result compile_custom_fn_scope(
     expression_shared_ptr& expr)
 {
     const element_ast* node = scope->node; // FUNCTION
-    if (node->type != ELEMENT_AST_NODE_FUNCTION 
-        || node->children.size() <= ast_idx::fn::body)
+    if (node->type != ELEMENT_AST_NODE_FUNCTION) {
+        ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION, 
+            fmt::format("Tried to compile custom function scope {} but it's not a function.", scope->name),
+            node);
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
+    }
+
+    if (node->children.size() <= ast_idx::fn::body)
+    {
+        ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION, 
+            fmt::format("Tried to compile custom function scope {} but it has no body.", scope->name),
+            node);
+        return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
+    }
 
     assert(scope->function() && scope->function()->inputs().size() >= inputs.size());
     auto frame = ctx.expr_cache.add_frame();
@@ -102,6 +115,9 @@ static element_result compile_custom_fn_scope(
     if (output)
         return compile_expression(ctx, output, output->node, expr);
 
+    ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
+        fmt::format("Tried to find return scope in function scope {} and failed.", scope->name),
+        node);
     return ELEMENT_ERROR_INVALID_OPERATION;
 }
 
@@ -114,6 +130,7 @@ static element_result place_args(expression_shared_ptr& expr, const std::vector<
             return ELEMENT_OK;
         } else {
             // TODO: error code
+            //logging is done by the caller
             return ELEMENT_ERROR_ARGS_MISMATCH;
         }
     } else {
@@ -152,16 +169,35 @@ static element_result compile_call(
         assert(bodynode->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_CALL || bodynode->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_LITERAL);
         ELEMENT_OK_OR_RETURN(compile_call(ctx, scope, bodynode->children[ast_idx::call::parent].get(), fnscope, parent));
         // TODO: check better, return error
-        if (!parent)
+        if (!parent) {
+            //todo: not sure message is correct for any of these, but better than nothing right now. Fix as issues are found
+            ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
+                fmt::format("Failed to get expression for parent {} while indexing with {}",
+                    bodynode->children[ast_idx::call::parent]->identifier, bodynode->identifier),
+                bodynode);
             return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
+        }
     }
     const element_scope* parent_fnscope = fnscope;
 
-    if (!fnscope)
+    if (!fnscope) {
+        ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
+            fmt::format("Was going to find {}{} while indexing {} but failed. Started at {}.",
+                bodynode->identifier, !has_parent ? " recursively" : "", orig_fnscope->name, scope->name),
+            bodynode);
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
+    }
+
     fnscope = fnscope->lookup(bodynode->identifier, !has_parent);
-    if (!fnscope)
+
+    if (!fnscope) {
+        ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
+            fmt::format("Tried to find {} when indexing {}{} within {} but failed.",
+                 bodynode->identifier, parent_fnscope->name, !has_parent ? " recursively" : "", scope->parent ? scope->parent->name : scope->name),
+            bodynode);
+
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
+    }
 
     // TODO: check if we're doing partial application
 
@@ -186,8 +222,17 @@ static element_result compile_call(
         if (has_parent) {
             if (parent->is<element_structure>())
                 expr = parent->as<element_structure>()->output(bodynode->identifier);
+
             if (expr) {
-                ELEMENT_OK_OR_RETURN(place_args(expr, args));
+                auto result = place_args(expr, args);
+
+                if (!result) {
+                    ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
+                        fmt::format("Failed to place arguments in output expression of an element_structure. scope {}", scope->name),
+                        bodynode);
+                    return result;
+                }
+
                 // TODO: more here?
                 return ELEMENT_OK;
             } else {
@@ -204,12 +249,24 @@ static element_result compile_call(
                             // method call, inject parent as first arg
                             args.insert(args.begin(), parent);
                         }
-                        if (fn->inputs().size() != args.size())
+
+                        if (fn->inputs().size() != args.size()) {
+                            ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
+                                fmt::format("Function input count doesn't match argument count in function {} in type {} for scope {}", fn->name(), ctype->name(), scope->name),
+                                bodynode);
                             return ELEMENT_ERROR_INVALID_OPERATION;
+                        }
+
                     } else {
+                        ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
+                            fmt::format("Unable to find method {} in type {}", bodynode->identifier, ctype->name()),
+                            bodynode);
                         return ELEMENT_ERROR_INVALID_OPERATION;
                     }
                 } else {
+                    ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
+                        fmt::format("Return type of {} could not be found", parent_fnscope->name),
+                        bodynode);
                     return ELEMENT_ERROR_INVALID_OPERATION;
                 }
             }
@@ -218,8 +275,13 @@ static element_result compile_call(
         // TODO: temporary check if intrinsic
         if (fnscope->function() && fnscope->function()->is<element_intrinsic>()) {
             expr = generate_intrinsic_expression(fnscope->function()->as<element_intrinsic>(), args);
-            if (!expr)
+
+            if (!expr) {
+                ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
+                    fmt::format("Function {} is intrinsic but failed to generate intrinsic expression.", fnscope->name),
+                    bodynode);
                 return ELEMENT_ERROR_INVALID_OPERATION;
+            }
         }
         else if (fnscope->function() && fnscope->function()->is<element_type_ctor>()) {
             expr = std::shared_ptr<element_structure>(new element_structure({}));
@@ -244,6 +306,9 @@ static element_result compile_lambda(
     expression_shared_ptr& expr)
 {
     // TODO: this
+    ctx.ictx.logger->log(ctx, ELEMENT_ERROR_NO_IMPL,
+        fmt::format("Tried to compile lambda {}. Lambdas are not implemented in the compiler.", scope->name),
+        bodynode);
     return ELEMENT_ERROR_NO_IMPL;
 }
 
@@ -268,6 +333,7 @@ static element_result compile_expression(
         return compile_custom_fn_scope(ctx, scope, std::move(inputs), expr);
     } else {
         // interface
+        ctx.ictx.logger->log(ctx, ELEMENT_ERROR_NO_IMPL, "Tried to compile an expression with no implementation.", bodynode);
         return ELEMENT_ERROR_NO_IMPL;  // TODO: better error code
     }
 }

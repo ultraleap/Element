@@ -229,6 +229,19 @@ inline bool ast_node_in_lambda_scope(const element_ast* n)
     n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_LAMBDA);
 }
 
+inline const element_ast* get_root_from_ast(const element_ast* ast)
+{
+    if (!ast)
+        return nullptr;
+
+    while (ast->parent)
+    {
+        ast = ast->parent;
+    }
+
+    return ast;
+}
+
 struct element_parser_ctx
 {
     std::shared_ptr<element_log_ctx> logger = nullptr;

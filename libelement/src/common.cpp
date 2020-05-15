@@ -5,6 +5,7 @@
 #include "common_internal.hpp"
 #include "token_internal.hpp"
 #include "ast/ast_internal.hpp"
+#include "etree/compiler.hpp"
 
 #include <fmt/format.h>
 
@@ -59,7 +60,7 @@ std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const eleme
     return string;
 }
 
-std::string ast_to_string(element_ast* ast, int depth, const element_ast* ast_to_mark)
+std::string ast_to_string(const element_ast* ast, int depth, const element_ast* ast_to_mark)
 {
     std::string string;
 
@@ -215,6 +216,41 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
 	
     msg.message = new_log_message.c_str();
 	
+    log(msg);
+}
+
+void element_log_ctx::log(const element_compiler_ctx& context, element_result code, const std::string& message,
+    const element_ast* nearest_ast) const
+{
+    auto msg = element_log_message();
+    msg.message = message.c_str();
+    msg.message_code = code;
+    msg.line = -1;
+    msg.character = -1;
+    msg.length = -1;
+    msg.stage = ELEMENT_STAGE_PARSER;
+    msg.filename = "unknown"; //todo: get from scope/ast?
+    msg.related_log_message = nullptr;
+
+    std::string new_log_message;
+    if (nearest_ast && nearest_ast->nearest_token) {
+        msg.line = nearest_ast->nearest_token->line;
+        msg.character = nearest_ast->nearest_token->character;
+        msg.length = nearest_ast->nearest_token->tok_len;
+
+        //todo: print source code/use james debug recreation
+        new_log_message = message;
+    }
+    else {
+        new_log_message = message;
+    }
+
+    if (nearest_ast) {
+        new_log_message += "\n\n" + ast_to_string(get_root_from_ast(nearest_ast), 0, nearest_ast);
+    }
+
+    msg.message = new_log_message.c_str();
+
     log(msg);
 }
 
