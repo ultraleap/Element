@@ -193,6 +193,20 @@ namespace libelement::cli
 				}
 			}
 
+			auto packages = convert(input.get_packages());
+			auto packages_count = static_cast<int>(packages.size());
+			if (packages_count > 0) {
+				result = element_interpreter_load_packages(ictx, &packages[0], packages_count);
+				if (result != ELEMENT_OK)
+				{
+					//TODO: Better solution for this? Forces a parse error on any file load error
+					auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "Parsing failed");
+					std::cout << parse_error.serialize() << std::endl;
+
+					return result;
+				}
+			}
+
 			auto source_files = convert(input.get_source_files());
 			auto source_file_count = static_cast<int>(source_files.size());
 			if (source_file_count > 0) {
