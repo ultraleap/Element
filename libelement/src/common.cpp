@@ -38,6 +38,7 @@ std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const eleme
 
 		if(token.tok_pos >= 0 && token.tok_len >= 0)
 		{
+            //Align the token text using tabs (with tabs = 4 spaces), so that they start at character 24 (4*6)
             auto chunks = c.length() / 4;
             for(auto i = chunks; chunks < 6; chunks++)
                 string += "\t";
