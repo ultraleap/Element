@@ -15,6 +15,7 @@
 #include "etree/evaluator.hpp"
 #include "ast/ast_indexes.hpp"
 #include "token_internal.hpp"
+#include "../../libelement.CLI/build/include/configuration.hpp"
 
 bool file_exists(const std::string& file)
 {
@@ -175,8 +176,8 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
         log(result, std::string("element_ast_build failed"), filename);
     }
     ELEMENT_OK_OR_RETURN(result)
-	
-    if (options.debug) {
+
+    if (has_value(logging_bitmask, log_flags::debug)) {
         parser.log(ELEMENT_OK);
     }
 
@@ -364,10 +365,9 @@ element_result element_interpreter_ctx::print_ast(const std::string& name)
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_create(element_interpreter_ctx** ctx, bool debug)
+element_result element_interpreter_create(element_interpreter_ctx** ctx)
 {
     *ctx = new element_interpreter_ctx();
-    (*ctx)->options.debug = debug;
     return ELEMENT_OK;
 }
 

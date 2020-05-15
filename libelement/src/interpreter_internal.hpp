@@ -34,17 +34,11 @@ CREATE_CAST_CONVENIENCE_FUNCTIONS(function)
 #undef CREATE_CAST_CONVENIENCE_FUNCTIONS
 #undef LIBELEMENT_CONCAT
 
-struct element_interpreter_options
-{
-    bool debug;
-};
-
 struct element_interpreter_ctx
 {
     element_interpreter_ctx();
 
     std::shared_ptr<element_log_ctx> logger;
-    element_interpreter_options options;
     std::vector<std::pair<std::string, ast_unique_ptr>> trees;
     scope_unique_ptr names;
     std::unordered_map<const element_ast*, const element_scope*> ast_names;

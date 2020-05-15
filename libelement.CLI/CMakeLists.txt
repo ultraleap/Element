@@ -13,7 +13,16 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 find_package(RapidJSON)
 add_subdirectory("dependencies" EXCLUDE_FROM_ALL) 
 
+set(LOG_VERBOSITY "log_flags::debug | log_flags::output_ast")
+
+configure_file (
+    "in/configuration.hpp.in"
+    "include/configuration.hpp"
+)
+
 set(libelement_cli_sources
+
+	"in/configuration.hpp.in"
 
     "include/compiler_message.hpp"
     "include/command.hpp"
@@ -21,7 +30,8 @@ set(libelement_cli_sources
     "include/parse_command.hpp"
     "include/typeof_command.hpp"
     "include/message_codes.hpp"
-	
+	"include/configuration.hpp"
+
     "src/compiler_message.cpp"
     "src/command.cpp"
     "src/main.cpp"

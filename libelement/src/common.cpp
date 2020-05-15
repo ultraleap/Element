@@ -9,6 +9,8 @@
 
 #include <fmt/format.h>
 
+#include "../../libelement.CLI/build/include/configuration.hpp"
+
 #define PRINTCASE(a) case a: c = #a; break;
 std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const element_token* nearest_token = nullptr)
 {
@@ -123,8 +125,10 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
 
     string += "\n";
 
-    for (const auto& child : ast->children)
-        string += ast_to_string(child.get(), depth + 1, ast_to_mark);
+    if (has_value(logging_bitmask, log_flags::output_ast)) {
+        for (const auto& child : ast->children)
+            string += ast_to_string(child.get(), depth + 1, ast_to_mark);
+    }
 
     return string;
 }
@@ -206,10 +210,13 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
 
     //Only print ast/token prelude info if it's forced on or if a non-zero code is being logged
     const bool starts_with_prelude = context.tokeniser->filename.rfind("Prelude\\", 0) == 0;
-    if (!starts_with_prelude || code != ELEMENT_OK || print_prelude_info)
+    if (!starts_with_prelude || code != ELEMENT_OK || has_value(logging_bitmask, log_flags::output_prelude))
     {
-        new_log_message += "\n\n" + ast_to_string(context.root, 0, nearest_ast);
-        new_log_message += "\n\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
+        if (has_value(logging_bitmask, log_flags::output_ast))
+			new_log_message += "\n\n" + ast_to_string(context.root, 0, nearest_ast);
+    	
+        if (has_value(logging_bitmask, log_flags::output_tokens))
+			new_log_message += "\n\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
     } else {
         new_log_message += "\nskipped printing prelude debug info";
     }

@@ -16,7 +16,6 @@ using LogCallback = void (*)(const element_log_message* const);
 struct element_log_ctx
 {
     LogCallback callback;
-    bool print_prelude_info = false; //todo: configurable
 
     void log(const element_tokeniser_ctx& context, element_result code, const std::string& message, int length = -1, element_log_message* related_message = nullptr) const;
     void log(const element_interpreter_ctx& context, element_result code, const std::string& message, const std::string& filename) const;
