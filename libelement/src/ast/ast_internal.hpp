@@ -37,6 +37,15 @@ struct element_ast
         return print(this);
     }
 
+#ifndef NDEBUG
+    std::string node_code;
+	
+    void populate_node_code()
+    {
+        node_code = print(this);
+    }
+#endif
+
 private:
     static std::string print(const element_ast* node, const element_ast* parent = nullptr, bool skip = false)
     {

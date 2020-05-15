@@ -769,6 +769,10 @@ element_result element_parser_ctx::parse(size_t* tindex, element_ast* ast)
 
 element_result element_parser_ctx::validate(element_ast* ast)
 {
+#ifndef NDEBUG
+    ast->populate_node_code();
+#endif
+	
     element_result result = ELEMENT_OK;
     result = validate_type(ast);
 	if(result != ELEMENT_OK)
