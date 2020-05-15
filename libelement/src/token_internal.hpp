@@ -17,7 +17,7 @@ struct element_tokeniser_ctx
     int pos = 0; //position in the source file
     int line = 1;
     int line_start_position = 0;
-    int col = 1; //position in the line (starting from 1)
+    int character = 1; //position in the line (starting from 1)
     element_token cur_token;
     std::vector<element_token> tokens;
     std::vector<int> line_number_to_line_pos {0};

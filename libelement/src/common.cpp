@@ -9,7 +9,7 @@
 #include <fmt/format.h>
 
 #define PRINTCASE(a) case a: c = #a; break;
-std::string tokens_to_string(const element_tokeniser_ctx* tokeniser)
+std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const element_token* nearest_token = nullptr)
 {
     std::string string;
 
@@ -44,6 +44,11 @@ std::string tokens_to_string(const element_tokeniser_ctx* tokeniser)
 
             auto text = tokeniser->text(&token);
             string += text;
+
+            if (nearest_token == &token)
+            {
+                string += " <--- HERE";
+            }
 		}
 		
         string += "\n";
@@ -126,10 +131,8 @@ std::string ast_to_string(element_ast* ast, int depth, const element_ast* ast_to
 void element_log_ctx::log(const element_tokeniser_ctx& context, element_result code, const std::string& message, int length, element_log_message* related_message) const
 {
     element_log_message msg;
-    msg.message = message.c_str();
     msg.line = context.line;
-    msg.column = context.col;
-    msg.length = -1;
+    msg.character = context.character;
     msg.stage = ELEMENT_STAGE_TOKENISER;
     msg.filename = context.filename.c_str();
     msg.related_log_message = nullptr;
@@ -137,6 +140,10 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
     msg.message_code = code;
     msg.length = length;
     msg.related_log_message = related_message;
+
+    std::string new_log_message = message;
+    new_log_message += "\n\n" + tokens_to_string(&context);
+    msg.message = new_log_message.c_str();
 
     log(msg);
 }
@@ -146,7 +153,7 @@ void element_log_ctx::log(const element_interpreter_ctx& context, element_result
     auto msg = element_log_message();
     msg.message = message.c_str();
     msg.line = -1;
-    msg.column = -1;
+    msg.character = -1;
     msg.length = -1;
     msg.stage = ELEMENT_STAGE_PARSER;
     msg.filename = filename.c_str();
@@ -157,11 +164,13 @@ void element_log_ctx::log(const element_interpreter_ctx& context, element_result
 
 void element_log_ctx::log(const element_parser_ctx& context, element_result code, const std::string& message, const element_ast* nearest_ast) const
 {
+    assert(context.tokeniser);
+
     auto msg = element_log_message();
     msg.message = message.c_str();
     msg.message_code = code;
     msg.line = -1;
-    msg.column = -1;
+    msg.character = -1;
     msg.length = -1;
     msg.stage = ELEMENT_STAGE_PARSER;
     msg.filename = context.tokeniser->filename.c_str();
@@ -170,15 +179,15 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     std::string new_log_message;
     if (nearest_ast && nearest_ast->nearest_token) {
         msg.line = nearest_ast->nearest_token->line;
-        msg.column = nearest_ast->nearest_token->column;
+        msg.character = nearest_ast->nearest_token->character;
         msg.length = nearest_ast->nearest_token->tok_len;
 
         if (msg.line > 0) {
             std::string source_line = context.tokeniser->text_on_line(msg.line) + "\n";
 
             //todo: doesn't handle UTF8 I'm guessing
-            if (msg.column >= 0) {
-                for (int i = 0; i < msg.column - 1; ++i)
+            if (msg.character >= 0) {
+                for (int i = 0; i < msg.character - 1; ++i)
                     source_line += " ";
 
                 source_line += "^";
@@ -193,10 +202,15 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
         new_log_message = message;
     }
 
-    new_log_message += "\n\n" + ast_to_string(context.root, 0, nearest_ast);
-
-    if (context.tokeniser != nullptr)
-        new_log_message += "\n\n" + tokens_to_string(context.tokeniser);
+    //Only print ast/token prelude info if it's forced on or if a non-zero code is being logged
+    const bool starts_with_prelude = context.tokeniser->filename.rfind("Prelude\\", 0) == 0;
+    if (!starts_with_prelude || code != ELEMENT_OK || print_prelude_info)
+    {
+        new_log_message += "\n\n" + ast_to_string(context.root, 0, nearest_ast);
+        new_log_message += "\n\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
+    } else {
+        new_log_message += "\nskipped printing prelude debug info";
+    }
 	
     msg.message = new_log_message.c_str();
 	

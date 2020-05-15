@@ -707,10 +707,8 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
-
     ast->nearest_token = token;
-
-    //A sole underscore was used as an identifier
+    
     if (token->type == ELEMENT_TOK_UNDERSCORE || token->type == ELEMENT_TOK_SEMICOLON) {
         log(ELEMENT_ERROR_INVALID_IDENTIFIER,
             fmt::format("Invalid identifier '{}'", tokeniser->text(token)),
@@ -722,7 +720,7 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
 	if(token->type != ELEMENT_TOK_IDENTIFIER)
 	{
         log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-            fmt::format("Expected identifier, but received invalid token '{}'", tokeniser->text(token)),
+            fmt::format("Expected identifier, but found '{}' instead", tokeniser->text(token)),
             ast);
         return ELEMENT_ERROR_INVALID_IDENTIFIER;
 	}

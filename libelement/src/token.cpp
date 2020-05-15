@@ -10,7 +10,7 @@
 
 #include "interpreter_internal.hpp"
 
-//#define INCREMENT_TOKEN_LEN(s) { ++((s)->pos); ++((s)->col); ++((s)->cur_token.tok_len); }
+//#define INCREMENT_TOKEN_LEN(s) { ++((s)->pos); ++((s)->character); ++((s)->cur_token.tok_len); }
 
 // #define UTF8_UNCHECKED
 #if defined(UTF8_UNCHECKED)
@@ -52,14 +52,15 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
 {
     assert(state);
     assert(token);
-    if (index >= state->tokens.size()) {
 
-        auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens",
+    if (index >= state->tokens.size()) {
+        const auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens",
             index, state->tokens.size());
         
         state->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
         return ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
     }
+
     *token = &state->tokens[index];
     return ELEMENT_OK;
 }
@@ -87,7 +88,7 @@ static void reset_token(element_tokeniser_ctx* state)
     state->cur_token.post_len = 0;
 
     state->cur_token.line = -1;
-    state->cur_token.column = -1;
+    state->cur_token.character = -1;
     state->cur_token.line_start_position = -1;
 }
 
@@ -100,7 +101,7 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     state->cur_token.tok_pos = state->pos;
     state->cur_token.line = state->line;
     state->cur_token.line_start_position = state->line_start_position;
-    state->cur_token.column = state->col;
+    state->cur_token.character = state->character;
 
     const auto it_begin = it;
     uint32_t c = UTF8_PEEK_NEXT(it, end);
@@ -133,12 +134,12 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         } else {
             const auto it_rhs_start = it_next;
             UTF8_NEXT(it_next, end);
-            state->log(ELEMENT_ERROR_PARSE,
+            state->log(ELEMENT_ERROR_BAD_INDEX_INTO_NUMBER,
                 fmt::format("Found {} which was thought to be a number being indexed, "
                     "but encountered invalid character '{}' on the right hand side of '.'",
                     std::string(it_begin, it), std::string(it_rhs_start, it_next)));
 
-            return ELEMENT_ERROR_PARSE;
+            return ELEMENT_ERROR_BAD_INDEX_INTO_NUMBER;
         }
     }
 
@@ -155,11 +156,11 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         }
 
         if (!element_isdigit(c)) {
-            state->log(ELEMENT_ERROR_PARSE,
+            state->log(ELEMENT_ERROR_BAD_NUMBER_EXPONENT,
                 fmt::format("Found {} which was thought to be a number in scientific notation, "
                     "but encountered invalid character '{}' instead of the exponent number", 
                     std::string(it_begin, it), std::string(it_prev_character, it)));
-            return ELEMENT_ERROR_PARSE;
+            return ELEMENT_ERROR_BAD_NUMBER_EXPONENT;
         }
 
         while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
@@ -169,7 +170,7 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     // determine length in bytes
     const size_t len = std::distance(it_begin, it);
     state->pos += (int)len;
-    state->col += (int)len;
+    state->character += (int)len;
     state->cur_token.tok_len += (int)len;
     reset_token(state);
     return ELEMENT_OK;
@@ -198,7 +199,7 @@ static element_result tokenise_comment(std::string::iterator& it, const std::str
     const size_t len = std::distance(it_before, it);
     state->cur_token.post_len += (int)len;
     state->pos += (int)len;
-    state->col += (int)len;
+    state->character += (int)len;
 
     return ELEMENT_OK;
 }
@@ -215,7 +216,7 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
     state->cur_token.tok_pos = state->pos;
     state->cur_token.line = state->line;
     state->cur_token.line_start_position = state->line_start_position;
-    state->cur_token.column = state->col;
+    state->cur_token.character = state->character;
     const auto it_begin = it;
     uint32_t c = UTF8_PEEK_NEXT(it, end);
     if (c == '_') {
@@ -231,7 +232,7 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
     // determine length in bytes
     const size_t len = std::distance(it_begin, it);
     state->pos += (int)len;
-    state->col += (int)len;
+    state->character += (int)len;
     state->cur_token.tok_len += (int)len;
     reset_token(state);
     return ELEMENT_OK;
@@ -245,9 +246,9 @@ static void add_token(element_tokeniser_ctx* state, element_token_type t, int n)
     state->cur_token.tok_len = n;
     state->cur_token.line = state->line;
     state->cur_token.line_start_position = state->line_start_position;
-    state->cur_token.column = state->col;
+    state->cur_token.character = state->character;
     state->pos += n;
-    state->col += n;
+    state->character += n;
     reset_token(state);
 }
 
@@ -271,7 +272,7 @@ element_result element_tokeniser_clear(element_tokeniser_ctx* state)
     state->input.clear();
     state->line = 1;
     state->line_start_position = 0;
-    state->col = 1;
+    state->character = 1;
     state->pos = 0;
     reset_token(state);
     return ELEMENT_OK;
@@ -283,7 +284,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
     state->input = cinput;
     state->pos = 0;
     state->line = 1;
-    state->col = 1;
+    state->character = 1;
     reset_token(state);
 
     try
@@ -347,7 +348,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     }
                     else if (element_iseol(c)) {
                         ++state->line;
-                        state->col = 1;
+                        state->character = 1;
                         state->pos += 1;
                         state->line_start_position = state->pos;
                         state->line_number_to_line_pos.push_back(state->line_start_position);
@@ -357,7 +358,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     else if (element_isspace(c)) {
                         //just eat it!
                         state->pos += 1;
-                        state->col += 1;
+                        state->character += 1;
                         UTF8_NEXT(it, end);
                     }
                     else {

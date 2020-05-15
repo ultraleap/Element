@@ -38,7 +38,7 @@ typedef struct
 
     int line;
     int line_start_position; //the position at which the line starts in the input string
-    int column; //the position in the line where the token starts (starting from 1, not 0)
+    int character; //the position in the line where the token starts (starting from 1, not 0)
 } element_token;
 
 
