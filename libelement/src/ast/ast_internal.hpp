@@ -34,13 +34,11 @@ struct element_ast
 
 	std::string to_string() const
     {
-        return identifier.empty()
-    		? print(this)
-    		: this->identifier + print(this);
+        return print(this);
     }
 
 private:
-	static std::string print(const element_ast* node, const element_ast* parent = nullptr)
+    static std::string print(const element_ast* node, const element_ast* parent = nullptr, bool skip = false)
     {
         auto has_typed_parent = [](const element_ast* parent, element_ast_node_type type)
         {
@@ -51,91 +49,94 @@ private:
         {
             return node != nullptr && !node->children.empty();
         };
-		
+
         std::stringstream ss;
-        switch (node->type)
-        {
-        case ELEMENT_AST_NODE_PORT:
-        case ELEMENT_AST_NODE_IDENTIFIER:
-            ss << node->identifier;
-            break;
-        	
-        case ELEMENT_AST_NODE_TYPENAME:
-            ss << ":";
-            break;
+    	
+        if (!skip) {
+            switch (node->type)
+            {
+            case ELEMENT_AST_NODE_PORT:
+            case ELEMENT_AST_NODE_IDENTIFIER:
+                ss << node->identifier;
+                break;
 
-        case ELEMENT_AST_NODE_STRUCT:
-            ss << "struct ";
-            break;
-        	
-        case ELEMENT_AST_NODE_NAMESPACE:
-            ss << "namespace ";
-            break;
+            case ELEMENT_AST_NODE_TYPENAME:
+                ss << ":";
+                break;
 
-        case ELEMENT_AST_NODE_CONSTRAINT:
-            ss << "constraint ";
-            break;
+            case ELEMENT_AST_NODE_STRUCT:
+                ss << "struct ";
+                break;
 
-        case ELEMENT_AST_NODE_LAMBDA:
-            ss << "_";
-            break;
-        	
-        case ELEMENT_AST_NODE_LITERAL:
-            ss << node->literal;
-        	if (has_typed_parent(parent, ELEMENT_AST_NODE_CALL))
-                ss << ".";
-            break;
+            case ELEMENT_AST_NODE_NAMESPACE:
+                ss << "namespace ";
+                break;
 
-        //case ELEMENT_AST_NODE_FUNCTION:
-        //special case DECLARATION & CALL with terminal and newline
+            case ELEMENT_AST_NODE_CONSTRAINT:
+                ss << "constraint ";
+                break;
 
-        //all following cases recurse and return early to avoid default child recursion loop at bottom of function
-        case ELEMENT_AST_NODE_SCOPE:
-            ss << "{\n" << print(node, parent) << "\n}\n";
-            return ss.str();
-        	
-        case ELEMENT_AST_NODE_DECLARATION:
-        {
-            ss << node->identifier;
-            if (node->children.size() > ast_idx::decl::inputs && has_children(node->children[ast_idx::decl::inputs].get())) {
-                ss << "(" + print(node->children[ast_idx::decl::inputs].get(), node) << ")";
+            case ELEMENT_AST_NODE_LAMBDA:
+                ss << "_";
+                break;
+
+            case ELEMENT_AST_NODE_LITERAL:
+                ss << node->literal;
+                if (has_typed_parent(parent, ELEMENT_AST_NODE_CALL))
+                    ss << ".";
+                break;
+
+                //case ELEMENT_AST_NODE_FUNCTION:
+                //special case DECLARATION & CALL with terminal and newline
+
+                //all following cases recurse and return early to avoid default child recursion loop at bottom of function
+            case ELEMENT_AST_NODE_SCOPE:
+                ss << "{\n" << print(node, parent, true) << "\n}\n";
+                return ss.str();
+
+            case ELEMENT_AST_NODE_DECLARATION:
+            {
+                ss << node->identifier;
+                if (node->children.size() > ast_idx::decl::inputs && has_children(node->children[ast_idx::decl::inputs].get())) {
+                    ss << "(" + print(node->children[ast_idx::decl::inputs].get(), node) << ")";
+                }
+
+                if (node->children.size() > ast_idx::decl::outputs) {
+                    ss << print(node->children[ast_idx::decl::outputs].get(), node);
+                }
+
+                ss << " = ";
+                return ss.str();
             }
 
-            if (node->children.size() > ast_idx::decl::outputs) {
-                ss << print(node->children[ast_idx::decl::outputs].get(), node);
-            }
+            case ELEMENT_AST_NODE_CALL:
+            {
+                if (node->children.size() > ast_idx::call::parent) {
+                    ss << print(node->children[ast_idx::call::parent].get(), node);
+                }
 
-            ss << " = ";
-            return ss.str();
-        }
-        	
-        case ELEMENT_AST_NODE_CALL:
-        {
-            if (node->children.size() > ast_idx::call::parent) {
-                ss << print(node->children[ast_idx::call::parent].get(), node);
-            }
-        	
-            if (node->children.size() > ast_idx::call::args && has_children(node->children[ast_idx::call::args].get())) {
-                ss << node->identifier << "(" + print(node->children[ast_idx::call::args].get(), node) << ")";
+                if (node->children.size() > ast_idx::call::args && has_children(node->children[ast_idx::call::args].get())) {
+                    ss << node->identifier << "(" + print(node->children[ast_idx::call::args].get(), node) << ")";
+                    if (has_typed_parent(parent, ELEMENT_AST_NODE_CALL))
+                        ss << ".";
+                    return ss.str();
+                }
+
+                ss << node->identifier;
                 if (has_typed_parent(parent, ELEMENT_AST_NODE_CALL))
                     ss << ".";
                 return ss.str();
             }
 
-            ss << node->identifier;
-        	if(has_typed_parent(parent, ELEMENT_AST_NODE_CALL))
-                ss << ".";
-            return ss.str();
-	    }
-        	
-        default:
-            break;
+            default:
+                break;
+            }
         }
 
         for (const auto& child : node->children) {
 
-	        const auto* child_ptr = child.get();
-        	ss << print(child_ptr, node);
+            const auto* child_ptr = child.get();
+            ss << print(child_ptr, node);
 
         }
 
