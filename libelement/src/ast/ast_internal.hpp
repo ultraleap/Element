@@ -115,8 +115,8 @@ private:
                         return std::move(a) + ',' + print(ptr.get());
                     };
 
-                    auto begin_iter = begin(node->children);
-                    auto end_iter = end(node->children);
+                    const auto begin_iter = begin(node->children);
+                    const auto end_iter = end(node->children);
                 	
                     ss << std::accumulate(std::next(begin_iter), end_iter, print((*begin_iter).get()), fold);
 
