@@ -4,12 +4,14 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <numeric>
 #include <sstream>
 
 
 
 #include "ast_indexes.hpp"
 #include "common_internal.hpp"
+#include "configuration.hpp"
 #include "element/ast.h"
 #include "element/token.h"
 
@@ -38,11 +40,12 @@ struct element_ast
     }
 
 #ifndef NDEBUG
-    std::string node_code;
+    std::string ast_node_as_code;
 	
-    void populate_node_code()
+    void ast_node_to_code()
     {
-        node_code = print(this);
+    	if(has_value(logging_bitmask, log_flags::output_ast_node_as_code))
+			ast_node_as_code = print(this);
     }
 #endif
 
@@ -102,6 +105,26 @@ private:
             case ELEMENT_AST_NODE_SCOPE:
                 ss << "{\n" << print(node, parent, true) << "\n}\n";
                 return ss.str();
+
+            case ELEMENT_AST_NODE_PORTLIST:
+            case ELEMENT_AST_NODE_EXPRLIST:
+            {
+                if (has_children(node)) {
+
+                    auto fold = [](std::string a, const ast_unique_ptr& ptr) {
+                        return std::move(a) + ',' + print(ptr.get());
+                    };
+
+                    auto begin_iter = begin(node->children);
+                    auto end_iter = end(node->children);
+                	
+                    ss << std::accumulate(std::next(begin_iter), end_iter, print((*begin_iter).get()), fold);
+
+                    return ss.str();
+                }
+            		
+                return ss.str();
+            }
 
             case ELEMENT_AST_NODE_DECLARATION:
             {
