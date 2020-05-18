@@ -24,7 +24,7 @@ namespace libelement::cli
 
 	public:
 		typeof_command(common_command_arguments common_arguments, typeof_command_arguments custom_arguments)
-			: command(common_arguments), custom_arguments{ std::move(custom_arguments) }
+			: command(std::move(common_arguments)), custom_arguments{ std::move(custom_arguments) }
 		{
 		}
 

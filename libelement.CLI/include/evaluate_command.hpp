@@ -27,7 +27,7 @@ namespace libelement::cli
 
 	public:
 		evaluate_command(common_command_arguments common_arguments, evaluate_command_arguments custom_arguments)
-			: command(common_arguments), custom_arguments{ std::move(custom_arguments) }
+			: command(std::move(common_arguments)), custom_arguments{ std::move(custom_arguments) }
 		{
 		}
 

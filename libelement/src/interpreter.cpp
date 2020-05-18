@@ -15,7 +15,7 @@
 #include "etree/evaluator.hpp"
 #include "ast/ast_indexes.hpp"
 #include "token_internal.hpp"
-#include "../../libelement.CLI/build/include/configuration.hpp"
+#include "configuration.hpp"
 
 bool file_exists(const std::string& file)
 {

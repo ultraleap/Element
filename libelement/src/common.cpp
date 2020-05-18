@@ -9,7 +9,7 @@
 
 #include <fmt/format.h>
 
-#include "../../libelement.CLI/build/include/configuration.hpp"
+#include "configuration.hpp"
 
 #define PRINTCASE(a) case a: c = #a; break;
 std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const element_token* nearest_token = nullptr)

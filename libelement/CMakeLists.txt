@@ -7,6 +7,11 @@ project(element)
 
 set(CMAKE_CXX_STANDARD 17)
 
+configure_file (
+    "src/configuration.hpp.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp"
+)
+
 set(element_sources
     "src/token.cpp"
     "src/interpreter.cpp"
@@ -48,6 +53,9 @@ set(element_sources
     "include/element/token.h"
     "include/element/interpreter.h"
     "include/element/lmnt.h"
+    
+	"src/configuration.hpp.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp"
 )
 
 add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
@@ -82,6 +90,7 @@ target_include_directories(element
         # TODO: this, much nicer
         "${CMAKE_CURRENT_SOURCE_DIR}/../LMNT/include"
         "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
+        "${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_link_libraries(element PRIVATE utf8cpp fmt::fmt-header-only)
 
