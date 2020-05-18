@@ -929,11 +929,13 @@ void element_ast_delete(element_ast* ast)
     delete ast;
 }
 
-element_result element_ast_print(element_ast* ast)
+#ifndef NDEBUG
+void element_ast::ast_node_to_code()
 {
-    std::cout << ast_to_string(ast, 0);
-    return ELEMENT_OK;
+	if (has_value(logging_bitmask, log_flags::output_ast_node_as_code))
+		ast_node_as_code = ast_to_code(this);
 }
+#endif
 
 element_ast::walk_step element_ast::walk(const element_ast::walker& fn)
 {

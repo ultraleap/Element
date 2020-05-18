@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     //};
 
     element_interpreter_ctx* ictx;
-    element_interpreter_create(&ictx, true);
+    element_interpreter_create(&ictx);
     element_interpreter_load_prelude(ictx);
 
     //element_result result = element_interpreter_load_files(ictx, files, 1);

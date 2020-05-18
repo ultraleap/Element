@@ -350,21 +350,6 @@ element_result element_interpreter_ctx::clear()
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_ctx::print_ast(const std::string& name)
-{
-
-    auto it = std::find_if(trees.begin(), trees.end(),
-        [&name](const std::pair<std::string, ast_unique_ptr>& element) { return element.first == name; });
-
-    if (it == trees.end()) {
-        return ELEMENT_OK;
-    }
-
-    element_ast* ast = it->second.get();
-    element_ast_print(ast);
-    return ELEMENT_OK;
-}
-
 element_result element_interpreter_create(element_interpreter_ctx** ctx)
 {
     *ctx = new element_interpreter_ctx();
@@ -440,12 +425,6 @@ element_result element_interpreter_clear(element_interpreter_ctx* ctx)
     return ctx->clear();
 }
 
-element_result element_interpreter_print_ast(element_interpreter_ctx* ctx, const char* name)
-{
-    assert(ctx);
-    return ctx->print_ast(name);
-}
-
 element_result element_interpreter_get_function(element_interpreter_ctx* ctx, const char* name, const element_function** fn)
 {
     assert(ctx);
@@ -477,6 +456,10 @@ element_result element_interpreter_compile_function(
     *cfn = new element_compiled_function;
     (*cfn)->function = fn;
     (*cfn)->expression = std::move(fn_expr);
+	
+    if (has_value(logging_bitmask, log_flags::output_expression_tree))
+		std::cout << expression_to_string(*(*cfn)->expression);
+	
     return ELEMENT_OK;
 }
 

@@ -45,9 +45,6 @@ element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, c
 element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx);
 void element_interpreter_set_log_callback (element_interpreter_ctx* ctx, void (*log_callback)(const element_log_message*));
 
-//TEMPORARY
-element_result element_interpreter_print_ast(element_interpreter_ctx* ctx, const char* name);
-
 element_result element_interpreter_clear(element_interpreter_ctx* ctx);
 
 element_result element_interpreter_get_function(element_interpreter_ctx* ctx, const char* name, const element_function** fn);

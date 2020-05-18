@@ -125,14 +125,210 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
 
     string += "\n";
 
-    if (has_value(logging_bitmask, log_flags::output_ast)) {
-        for (const auto& child : ast->children)
-            string += ast_to_string(child.get(), depth + 1, ast_to_mark);
-    }
+    for (const auto& child : ast->children)
+        string += ast_to_string(child.get(), depth + 1, ast_to_mark);
 
     return string;
 }
 
+std::string expression_to_string(const element_expression& expression, int depth)
+{
+    std::string string;
+	
+    for (int i = 0; i < depth; ++i)
+        string += "  ";
+
+    if (expression.is<element_constant>())
+    {
+        const auto& constant = expression.as<element_constant>();
+        string += "CONSTANT: " + std::to_string(constant->value());
+    }
+
+    if (expression.is<element_input>())
+    {
+        const auto& input = expression.as<element_input>();
+        string += "INPUT: " + std::to_string(input->index());
+    }
+
+    if (expression.is<element_structure>())
+    {
+        const auto& structure = expression.as<element_structure>();
+        string += "STRUCTURE: ";
+    }
+	
+    if(expression.is<element_unary>())
+    {
+        const auto& unary = expression.as<element_unary>();
+        string += "UNARY: ";
+        char* c = nullptr;
+    	switch(unary->operation())
+    	{
+            PRINTCASE(element_unary_op::sin);
+            PRINTCASE(element_unary_op::cos);
+            PRINTCASE(element_unary_op::tan);
+            PRINTCASE(element_unary_op::asin);
+            PRINTCASE(element_unary_op::acos);
+            PRINTCASE(element_unary_op::atan);
+            PRINTCASE(element_unary_op::ln);
+            PRINTCASE(element_unary_op::abs);
+            PRINTCASE(element_unary_op::ceil);
+            PRINTCASE(element_unary_op::floor);
+    	}
+        string += c;
+    }
+
+    if (expression.is<element_binary>())
+    {
+        const auto& binary = expression.as<element_binary>();
+        string += "BINARY: ";
+        char* c = nullptr;
+        switch (binary->operation())
+        {
+            PRINTCASE(element_binary_op::add);
+            PRINTCASE(element_binary_op::sub);
+            PRINTCASE(element_binary_op::mul);
+            PRINTCASE(element_binary_op::div);
+            PRINTCASE(element_binary_op::rem);
+            PRINTCASE(element_binary_op::pow);
+            PRINTCASE(element_binary_op::min);
+            PRINTCASE(element_binary_op::max);
+            PRINTCASE(element_binary_op::log);
+            PRINTCASE(element_binary_op::atan2);
+        }
+        string += c;
+    }
+	
+    string += "\n";
+	
+    for (const auto& dependent : expression.dependents())
+        string += expression_to_string(*dependent, depth + 1);
+    return string;
+}
+
+std::string ast_to_code(const element_ast* node, const element_ast* parent, bool skip)
+{
+    auto has_typed_parent = [](const element_ast* parent, element_ast_node_type type)
+    {
+        return parent != nullptr && parent->type == type;
+    };
+
+    auto has_children = [](const element_ast* node)
+    {
+        return node != nullptr && !node->children.empty();
+    };
+
+    std::stringstream ss;
+
+    if (!skip) {
+        switch (node->type)
+        {
+        case ELEMENT_AST_NODE_PORT:
+        case ELEMENT_AST_NODE_IDENTIFIER:
+            ss << node->identifier;
+            break;
+
+        case ELEMENT_AST_NODE_TYPENAME:
+            ss << ":";
+            break;
+
+        case ELEMENT_AST_NODE_STRUCT:
+            ss << "struct ";
+            break;
+
+        case ELEMENT_AST_NODE_NAMESPACE:
+            ss << "namespace ";
+            break;
+
+        case ELEMENT_AST_NODE_CONSTRAINT:
+            ss << "constraint ";
+            break;
+
+        case ELEMENT_AST_NODE_LAMBDA:
+            ss << "_";
+            break;
+
+        case ELEMENT_AST_NODE_LITERAL:
+            ss << node->literal;
+            if (has_typed_parent(parent, ELEMENT_AST_NODE_CALL))
+                ss << ".";
+            break;
+
+            //case ELEMENT_AST_NODE_FUNCTION:
+            //special case DECLARATION & CALL with terminal and newline
+
+            //all following cases recurse and return early to avoid default child recursion loop at bottom of function
+        case ELEMENT_AST_NODE_SCOPE:
+            ss << "{\n" << ast_to_code(node, parent, true) << "\n}\n";
+            return ss.str();
+
+        case ELEMENT_AST_NODE_PORTLIST:
+        case ELEMENT_AST_NODE_EXPRLIST:
+        {
+            if (has_children(node)) {
+
+                auto fold = [](std::string a, const ast_unique_ptr& ptr) {
+                    return std::move(a) + ',' + ast_to_code(ptr.get());
+                };
+
+                const auto begin_iter = begin(node->children);
+                const auto end_iter = end(node->children);
+
+                ss << std::accumulate(std::next(begin_iter), end_iter, ast_to_code((*begin_iter).get()), fold);
+
+                return ss.str();
+            }
+
+            return ss.str();
+        }
+
+        case ELEMENT_AST_NODE_DECLARATION:
+        {
+            ss << node->identifier;
+            if (node->children.size() > ast_idx::decl::inputs && has_children(node->children[ast_idx::decl::inputs].get())) {
+                ss << "(" + ast_to_code(node->children[ast_idx::decl::inputs].get(), node) << ")";
+            }
+
+            if (node->children.size() > ast_idx::decl::outputs) {
+                ss << ast_to_code(node->children[ast_idx::decl::outputs].get(), node);
+            }
+
+            ss << " = ";
+            return ss.str();
+        }
+
+        case ELEMENT_AST_NODE_CALL:
+        {
+            if (node->children.size() > ast_idx::call::parent) {
+                ss << ast_to_code(node->children[ast_idx::call::parent].get(), node);
+            }
+
+            if (node->children.size() > ast_idx::call::args && has_children(node->children[ast_idx::call::args].get())) {
+                ss << node->identifier << "(" + ast_to_code(node->children[ast_idx::call::args].get(), node) << ")";
+                if (has_typed_parent(parent, ELEMENT_AST_NODE_CALL))
+                    ss << ".";
+                return ss.str();
+            }
+
+            ss << node->identifier;
+            if (has_typed_parent(parent, ELEMENT_AST_NODE_CALL))
+                ss << ".";
+            return ss.str();
+        }
+
+        default:
+            break;
+        }
+    }
+
+    for (const auto& child : node->children) {
+
+        const auto* child_ptr = child.get();
+        ss << ast_to_code(child_ptr, node);
+
+    }
+
+    return ss.str();
+}
 
 void element_log_ctx::log(const element_tokeniser_ctx& context, element_result code, const std::string& message, int length, element_log_message* related_message) const
 {

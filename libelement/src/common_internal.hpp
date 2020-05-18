@@ -3,6 +3,7 @@
 #include "element/common.h"
 #include <string>
 
+struct element_expression;
 struct element_tokeniser_ctx;
 struct element_interpreter_ctx;
 struct element_parser_ctx;
@@ -25,3 +26,5 @@ struct element_log_ctx
 };
 
 std::string ast_to_string(const element_ast* ast, int depth, const element_ast* ast_to_mark = nullptr);
+std::string expression_to_string(const element_expression& expression, int depth = 0);
+std::string ast_to_code(const element_ast* node, const element_ast* parent = nullptr, bool skip = false);
