@@ -903,7 +903,7 @@ element_result element_parser_ctx::validate_scope(element_ast* ast)
         }
     }
 	
-    return ELEMENT_OK;
+    return result;
 }
 
 element_result element_parser_ctx::ast_build()
@@ -932,7 +932,7 @@ void element_ast_delete(element_ast* ast)
 #ifndef NDEBUG
 void element_ast::ast_node_to_code()
 {
-	if (has_value(logging_bitmask, log_flags::output_ast_node_as_code))
+	if (flag_set(logging_bitmask, log_flags::output_ast_node_as_code))
 		ast_node_as_code = ast_to_code(this);
 }
 #endif
@@ -981,4 +981,12 @@ void element_parser_ctx::log(int message_code, const std::string& message, const
         return;
 
     logger->log(*this, message_code, message, nearest_ast);
+}
+
+void element_parser_ctx::log(const std::string& message) const
+{
+    if (logger == nullptr)
+        return;
+
+    logger->log(message, message_stage::ELEMENT_STAGE_MISC);
 }

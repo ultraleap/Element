@@ -166,6 +166,10 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     if (tokeniser->tokens.empty())
         return ELEMENT_OK;
 
+    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens)) {
+        log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+    }
+
     element_parser_ctx parser;
     parser.tokeniser = tokeniser;
     parser.logger = logger;
@@ -177,8 +181,8 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     }
     ELEMENT_OK_OR_RETURN(result)
 
-    if (has_value(logging_bitmask, log_flags::debug)) {
-        parser.log(ELEMENT_OK);
+    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast)) {
+        log("\n---\nAST\n---\n" + ast_to_string(parser.root));
     }
 
     auto ast = ast_unique_ptr(parser.root, element_ast_delete);
@@ -335,6 +339,14 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
 	logger->log(*this, code, message, filename);
 }
 
+void element_interpreter_ctx::log(const std::string& message) const
+{
+    if (logger == nullptr)
+        return;
+
+    logger->log(message, message_stage::ELEMENT_STAGE_MISC);
+}
+
 element_interpreter_ctx::element_interpreter_ctx()
 {
     // TODO: hack, remove
@@ -456,9 +468,10 @@ element_result element_interpreter_compile_function(
     *cfn = new element_compiled_function;
     (*cfn)->function = fn;
     (*cfn)->expression = std::move(fn_expr);
+
 	
-    if (has_value(logging_bitmask, log_flags::output_expression_tree))
-		std::cout << expression_to_string(*(*cfn)->expression);
+    if (flag_set(logging_bitmask, log_flags::output_expression_tree))
+        ctx->log("\n---------------\nEXPRESSION TREE\n---------------\n" + expression_to_string(*(*cfn)->expression));
 	
     return ELEMENT_OK;
 }

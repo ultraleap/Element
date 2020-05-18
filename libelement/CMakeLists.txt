@@ -7,6 +7,8 @@ project(element)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(LOG_VERBOSITY "log_flags::none")
+
 configure_file (
     "src/configuration.hpp.in"
     "${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp"

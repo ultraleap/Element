@@ -4,6 +4,7 @@
 
 //http://blog.bitwigglers.org/using-enum-classes-as-type-safe-bitmasks/
 enum class log_flags : int {
+	none = 0,
 	debug = 1,
 	output_tokens = 2,
  	output_ast = 4,
@@ -32,9 +33,9 @@ constexpr log_flags operator&(log_flags lhs, log_flags rhs)
 	);
 }
 
-constexpr bool has_value(const log_flags flags, const log_flags flag) 
+constexpr bool flag_set(const log_flags input_flags, const log_flags flags) 
 {
-    return (flags & flag) == flag;
+    return static_cast<int>(input_flags & flags);
 }
 
 constexpr log_flags logging_bitmask = @LOG_VERBOSITY@;

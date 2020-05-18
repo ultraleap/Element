@@ -190,4 +190,5 @@ private:
 
 public:
     void log(int message_code, const std::string& message = "", const element_ast* nearest_ast = nullptr) const;
+    void log(const std::string& message) const;
 };

@@ -51,7 +51,6 @@ element_result element_ast_get_child(const element_ast* ast, const size_t index,
 
 element_result element_ast_build(element_tokeniser_ctx* tctx, element_ast** ast);
 void element_ast_delete(element_ast* ast);
-element_result element_ast_print(element_ast* ast);
 
 #if defined(__cplusplus)
 }

@@ -12,7 +12,7 @@
 #include "configuration.hpp"
 
 #define PRINTCASE(a) case a: c = #a; break;
-std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const element_token* nearest_token = nullptr)
+std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const element_token* nearest_token)
 {
     std::string string;
 
@@ -344,7 +344,10 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
     msg.related_log_message = related_message;
 
     std::string new_log_message = message;
-    new_log_message += "\n\n" + tokens_to_string(&context);
+	
+    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens))
+        new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(&context, nullptr);
+
     msg.message = new_log_message.c_str();
 
     log(msg);
@@ -364,10 +367,26 @@ void element_log_ctx::log(const element_interpreter_ctx& context, element_result
     log(msg);
 }
 
+void element_log_ctx::log(const std::string& message, const element_stage stage) const
+{
+    auto msg = element_log_message();
+    msg.message = message.c_str();
+    msg.message_code = ELEMENT_OK;
+    msg.line = -1;
+    msg.character = -1;
+    msg.length = -1;
+    msg.stage = stage;
+    msg.related_log_message = nullptr;
+	
+    log(msg);
+}
+
 void element_log_ctx::log(const element_parser_ctx& context, element_result code, const std::string& message, const element_ast* nearest_ast) const
 {
     assert(context.tokeniser);
 
+    const bool starts_with_prelude = context.tokeniser->filename.rfind("Prelude\\", 0) == 0;
+	
     auto msg = element_log_message();
     msg.message = message.c_str();
     msg.message_code = code;
@@ -405,16 +424,17 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     }
 
     //Only print ast/token prelude info if it's forced on or if a non-zero code is being logged
-    const bool starts_with_prelude = context.tokeniser->filename.rfind("Prelude\\", 0) == 0;
-    if (!starts_with_prelude || code != ELEMENT_OK || has_value(logging_bitmask, log_flags::output_prelude))
+    if (code != ELEMENT_OK)
     {
-        if (has_value(logging_bitmask, log_flags::output_ast))
-			new_log_message += "\n\n" + ast_to_string(context.root, 0, nearest_ast);
+        if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens))
+            new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
     	
-        if (has_value(logging_bitmask, log_flags::output_tokens))
-			new_log_message += "\n\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
-    } else {
-        new_log_message += "\nskipped printing prelude debug info";
+        if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
+			new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast);
+    }
+	
+    if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude)) {
+        return; //early out if prelude logging disabled
     }
 	
     msg.message = new_log_message.c_str();
@@ -449,7 +469,8 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
     }
 
     if (nearest_ast) {
-        new_log_message += "\n\n" + ast_to_string(get_root_from_ast(nearest_ast), 0, nearest_ast);
+        if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
+			new_log_message += "\n\nAST\n---\n" + ast_to_string(get_root_from_ast(nearest_ast), 0, nearest_ast);
     }
 
     msg.message = new_log_message.c_str();

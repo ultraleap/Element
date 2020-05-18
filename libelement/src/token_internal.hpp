@@ -45,6 +45,14 @@ struct element_tokeniser_ctx
         logger->log(*this, message_code, message, length, related_message);
     }
 
+	void log(const std::string& message) const
+    {
+        if (logger == nullptr)
+            return;
+
+        logger->log(message, message_stage::ELEMENT_STAGE_MISC);
+    }
+
     void set_log_callback(LogCallback callback)
     {
         logger = std::make_shared<element_log_ctx>();
