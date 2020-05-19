@@ -163,7 +163,7 @@ struct element_parser_ctx
     element_result parse_declaration(size_t* tindex, element_ast* ast, bool find_return_type);
     // scope ::= '{' item* '}'
     element_result parse_scope(size_t* tindex, element_ast* ast);
-    element_result parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semi);
+    element_result parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semicolon);
     // function ::= qualifier* declaration type? (scope | statement | interface)
     // note qualifiers parsed further out and passed in
     element_result parse_function(size_t* tindex, element_ast* ast, element_ast_flags declflags);

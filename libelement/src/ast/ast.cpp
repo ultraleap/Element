@@ -320,6 +320,8 @@ element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
             // TODO: bomb out if we're trying to call a literal
             // add blank "none" if this is a simple call
             if (root->children.empty()) {
+            	//NOTE: This exist to cover the case when the first item in our expression chain is a function call
+            	//this will never be accessed in cases where the first item in our expression chain is an indexing expression
                 auto blank_ast = ast_new(root.get(), ELEMENT_AST_NODE_NONE);
                 blank_ast->nearest_token = token;
                 ast_add_child(root.get(), std::move(blank_ast));
@@ -504,7 +506,7 @@ element_result element_parser_ctx::parse_scope(size_t* tindex, element_ast* ast)
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semi)
+element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semicolon)
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
@@ -514,7 +516,7 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
     } else if (token->type == ELEMENT_TOK_EQUALS) {
         tokenlist_advance(tokeniser, tindex);
         ELEMENT_OK_OR_RETURN(parse_expression(tindex, ast));
-        if (expr_requires_semi) {
+        if (expr_requires_semicolon) {
             GET_TOKEN(tokeniser, *tindex, token);
             if (token->type == ELEMENT_TOK_SEMICOLON) {
                 tokenlist_advance(tokeniser, tindex);

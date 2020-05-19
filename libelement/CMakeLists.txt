@@ -7,7 +7,7 @@ project(element)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(LOG_VERBOSITY "log_flags::none")
+set(LOG_VERBOSITY "log_flags::none" CACHE STRING "logging flags")
 
 configure_file (
     "src/configuration.hpp.in"

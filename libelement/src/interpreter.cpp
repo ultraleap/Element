@@ -154,6 +154,10 @@ static element_result merge_names(scope_unique_ptr& a, scope_unique_ptr b, const
 
 element_result element_interpreter_ctx::load(const char* str, const char* filename)
 {
+	//HACK: JM - Not a fan of this...
+    std::string file = filename;
+    const auto starts_with_prelude = file.rfind("Prelude\\", 0) == 0;
+	
     element_tokeniser_ctx* tokeniser;
     ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
 
@@ -166,8 +170,12 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     if (tokeniser->tokens.empty())
         return ELEMENT_OK;
 
-    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens)) {
-        log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+    auto log_tokens = starts_with_prelude
+        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
+        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+	
+    if (log_tokens) {
+			log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
     }
 
     element_parser_ctx parser;
@@ -181,7 +189,11 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     }
     ELEMENT_OK_OR_RETURN(result)
 
-    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast)) {
+    auto log_ast = starts_with_prelude
+        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
+        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+	
+    if (log_ast) {
         log("\n---\nAST\n---\n" + ast_to_string(parser.root));
     }
 
@@ -469,7 +481,6 @@ element_result element_interpreter_compile_function(
     (*cfn)->function = fn;
     (*cfn)->expression = std::move(fn_expr);
 
-	
     if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree))
         ctx->log("\n---------------\nEXPRESSION TREE\n---------------\n" + expression_to_string(*(*cfn)->expression));
 	
