@@ -430,7 +430,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
             new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
     	
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
-			new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast);
+			new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast ? nearest_ast : nullptr);
     }
 	
     if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude)) {
@@ -451,8 +451,8 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
     msg.line = -1;
     msg.character = -1;
     msg.length = -1;
-    msg.stage = ELEMENT_STAGE_PARSER;
-    msg.filename = "unknown"; //todo: get from scope/ast?
+    msg.stage = ELEMENT_STAGE_COMPILER;
+    msg.filename = "<unknown>"; //todo: get from scope/ast?
     msg.related_log_message = nullptr;
 
     std::string new_log_message;
@@ -468,7 +468,7 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
         new_log_message = message;
     }
 
-    if (nearest_ast) {
+    if (code != ELEMENT_OK) {
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
 			new_log_message += "\n\nAST\n---\n" + ast_to_string(get_root_from_ast(nearest_ast), 0, nearest_ast);
     }
