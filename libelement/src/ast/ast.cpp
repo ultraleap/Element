@@ -73,6 +73,7 @@ static ast_unique_ptr ast_new(element_ast* parent, element_ast_node_type type = 
     // return std::make_unique<element_ast>(parent);
     element_ast* node = ast_pool.newElement(parent);
     node->type = type;
+    node->flags = 0;
     return ast_unique_ptr(node, delete_ast_unique_ptr);
 }
 
