@@ -470,7 +470,7 @@ element_result element_interpreter_compile_function(
     (*cfn)->expression = std::move(fn_expr);
 
 	
-    if (flag_set(logging_bitmask, log_flags::output_expression_tree))
+    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree))
         ctx->log("\n---------------\nEXPRESSION TREE\n---------------\n" + expression_to_string(*(*cfn)->expression));
 	
     return ELEMENT_OK;
