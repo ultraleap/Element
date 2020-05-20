@@ -1,0 +1,4 @@
+struct myStruct(a:Num)
+{
+    a(b:Num) = b; 
+}
