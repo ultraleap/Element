@@ -22,11 +22,13 @@ typedef enum
 
 typedef struct element_compiler_options
 {
+    //C requires that a struct or union have at least one member
     bool dummy;
 } element_compiler_options;
 
 typedef struct element_evaluator_options
 {
+    //C requires that a struct or union have at least one member
     bool dummy;
 } element_evaluator_options;
 

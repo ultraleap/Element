@@ -1,15 +1,16 @@
 #pragma once
 
+#include <string>
+
 #include "element/token.h"
 #include "element/common.h"
-#include <string>
+#include "etree/fwd.hpp"
 
 struct element_expression;
 struct element_tokeniser_ctx;
 struct element_interpreter_ctx;
 struct element_parser_ctx;
 struct element_ast;
-struct element_compiler_ctx;
 
 #define ENSURE_NOT_NULL(t) if (t == nullptr) { return ELEMENT_ERROR_INVALID_PTR; }
 

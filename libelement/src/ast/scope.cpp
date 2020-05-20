@@ -8,7 +8,7 @@
 #include "ast/ast_indexes.hpp"
 #include "stringutil.hpp"
 
-
+//todo: optimise all of this to use string_view
 const element_scope* element_scope::lookup(std::string search, bool recurse) const
 {
     return lookup(split<'.'>(search), 0, recurse);

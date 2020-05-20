@@ -20,8 +20,7 @@ struct element_expression : public element_construct, public rtti_type<element_e
 
 protected:
     element_expression(element_type_id t)
-        : element_construct()
-        , rtti_type(t)
+        : rtti_type(t)
     {
         // expressions have no inputs/outputs, so leave them empty
         m_ports_cached = true;
@@ -70,19 +69,19 @@ struct element_expression_structure : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    element_expression_structure(std::vector<std::pair<std::string, expression_shared_ptr>> deps)
+    element_expression_structure(const std::vector<std::pair<std::string, expression_shared_ptr>>& deps)
         : element_expression(type_id)
     {
         m_dependents.reserve(deps.size());
-        for (const auto& d : deps) {
-            m_dependents.emplace_back(d.second);
-            m_dependents_map[d.first] = d.second;
+        for (const auto& [name, expression] : deps) {
+            m_dependents.emplace_back(expression);
+            m_dependents_map[name] = expression;
         }
     }
 
     expression_shared_ptr output(const std::string& name) const
     {
-        auto it = m_dependents_map.find(name);
+        const auto it = m_dependents_map.find(name);
         return (it != m_dependents_map.end()) ? it->second : nullptr;
     }
 
@@ -147,7 +146,7 @@ struct element_expression_group : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    // TODO: implement
+    //todo: do we still need expression groups?
 protected:
     element_expression_group()
         : element_expression(type_id)
