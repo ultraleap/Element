@@ -24,6 +24,32 @@ int main(int argc, char** argv)
     element_interpreter_create(&ictx);
     element_interpreter_load_prelude(ictx);
 
+    const char* evaluate = "fakeadd(a:Num, b:Num) = Num.add(a, b);";
+    auto result = element_interpreter_load_string(ictx, evaluate, "<input>");
+    if (result != ELEMENT_OK)
+        return result;
+
+    const element_function* fn;
+
+    result = element_interpreter_get_function(ictx, "fakeadd", &fn);
+    if (result != ELEMENT_OK)
+        return result;
+
+    element_compiled_function* cfn;
+
+    result = element_interpreter_compile_function(ictx, fn, &cfn, NULL);
+    if (result != ELEMENT_OK)
+        return result;
+
+    element_value inputs[2] = { 1, 2 };
+    element_value outputs[1];
+
+    result = element_interpreter_evaluate_function(ictx, cfn, inputs, 2, outputs, 1, NULL);
+    if (result != ELEMENT_OK)
+        return result;
+
+    printf("%f", outputs[0]);
+
     //element_result result = element_interpreter_load_files(ictx, files, 1);
     //element_interpreter_load_packages(ictx, packages, 1);
 
