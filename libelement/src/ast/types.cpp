@@ -114,24 +114,32 @@ const type_const_shared_ptr element_type::binary = std::make_shared<binary_type>
 void element_custom_type::generate_ports_cache() const
 {
     const element_ast* node = m_scope->node;
-    if (node->type == ELEMENT_AST_NODE_STRUCT) {
-        assert(node->children.size() > ast_idx::fn::declaration);
-        element_ast* decl = node->children[ast_idx::fn::declaration].get();
-        assert(decl->type == ELEMENT_AST_NODE_DECLARATION);
-        if (decl->children.size() > ast_idx::decl::outputs) {
-            if (decl->children[ast_idx::decl::outputs]->type == ELEMENT_AST_NODE_PORTLIST) {
-                m_outputs = generate_portlist(m_scope, decl->children[ast_idx::decl::outputs].get());
-            } else if (decl->children[ast_idx::decl::outputs]->type == ELEMENT_AST_NODE_TYPENAME) {
-                m_outputs.push_back({ "return", find_typename(m_scope, decl->children[ast_idx::decl::outputs].get()) });
-            }
+    assert(node);
+
+    //todo: when is a type not a struct?
+    if (node->type != ELEMENT_AST_NODE_STRUCT)
+        return;
+
+    if (ast_node_struct_has_body(node)) {
+        //todo: do structs without scoped bodies, still have a child? do they generate this node?
+        assert(ast_node_struct_get_body(node)->type == ELEMENT_AST_NODE_SCOPE);
+
+        for (auto& [child_name, child_scope] : m_scope->children) {
+            const auto child_function = child_scope->function();
+            m_outputs.emplace_back(port_info{ child_name, child_function ? child_function->type() : nullptr }); //TODO: CPP20 - emplace_back can use aggregate initialization
         }
-        if (node->children.size() > ast_idx::fn::body) {
-            assert(node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_SCOPE);
-            for (auto& kv : m_scope->children) {
-                auto fn = kv.second->function();
-                m_outputs.push_back({ kv.first, fn ? fn->type() : nullptr });
-            }
-        }
-        m_ports_cached = true;
     }
+
+    const element_ast* decl = ast_node_struct_get_declaration(node);
+    if (ast_node_declaration_has_outputs(decl)) {
+        const element_ast* outputs = ast_node_declaration_get_outputs(decl);
+
+        if (outputs->type == ELEMENT_AST_NODE_PORTLIST) {
+            m_outputs = generate_portlist(m_scope, outputs);
+        } else if (outputs->type == ELEMENT_AST_NODE_TYPENAME) {
+            m_outputs.emplace_back(port_info{ "return", find_typename(m_scope, outputs) }); //TODO: CPP20 - emplace_back can use aggregate initialization
+        }
+    }
+
+    m_ports_cached = true;
 }

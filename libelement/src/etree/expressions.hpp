@@ -50,6 +50,7 @@ private:
     element_value m_value;
 };
 
+//User-provided input from the boundary
 struct element_input : public element_expression
 {
     DECLARE_TYPE_ID();

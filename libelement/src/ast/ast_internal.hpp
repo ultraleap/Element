@@ -14,6 +14,7 @@
 #include "configuration.hpp"
 #include "element/ast.h"
 #include "element/token.h"
+#include <cassert>
 
 using ast_unique_ptr = std::unique_ptr<element_ast, void(*)(element_ast*)>;
 
@@ -117,6 +118,50 @@ inline bool ast_node_in_lambda_scope(const element_ast* n)
 {
     return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE &&
     n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_LAMBDA);
+}
+
+[[nodiscard]] inline bool ast_node_struct_is_valid(const element_ast* n)
+{
+    return n && n->type == ELEMENT_AST_NODE_STRUCT && n->children.size() > ast_idx::fn::declaration;
+}
+
+[[nodiscard]] inline bool ast_node_struct_has_body(const element_ast* n)
+{
+    assert(ast_node_struct_is_valid(n));
+    //todo: is this even valid? I thought structs _must_ have a body, even if it's of type CONSTRAINT
+    return n->children.size() > ast_idx::fn::body;
+}
+
+[[nodiscard]] inline const element_ast* ast_node_struct_get_declaration(const element_ast* n)
+{
+    assert(ast_node_struct_is_valid(n));
+    return n->children[ast_idx::fn::declaration].get();
+}
+
+[[nodiscard]] inline const element_ast* ast_node_struct_get_body(const element_ast* n)
+{
+    assert(ast_node_struct_is_valid((n)));
+    assert(ast_node_struct_has_body(n));
+    return n->children[ast_idx::fn::body].get();
+}
+
+[[nodiscard]] inline bool ast_node_declaration_is_valid(const element_ast* n)
+{
+    //todo: do all valid declarations have inputs?
+    return n && n->type == ELEMENT_AST_NODE_DECLARATION;
+}
+
+[[nodiscard]] inline bool ast_node_declaration_has_outputs(const element_ast* n)
+{
+    assert(ast_node_declaration_is_valid(n));
+    return n->children.size() > ast_idx::decl::outputs;
+}
+
+[[nodiscard]] inline const element_ast* ast_node_declaration_get_outputs(const element_ast* n)
+{
+    assert(ast_node_declaration_is_valid(n));
+    assert(ast_node_declaration_has_outputs(n));
+    return n->children[ast_idx::decl::outputs].get();
 }
 
 inline const element_ast* get_root_from_ast(const element_ast* ast)

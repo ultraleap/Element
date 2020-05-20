@@ -7,7 +7,7 @@
 #include "ast/ast_indexes.hpp"
 
 
-type_const_shared_ptr element_construct::find_typename(const element_scope* scope, element_ast* node) const
+type_const_shared_ptr element_construct::find_typename(const element_scope* scope, const element_ast* node) const
 {
     assert(node->type == ELEMENT_AST_NODE_TYPENAME);
     std::vector<std::string> names;
@@ -19,7 +19,7 @@ type_const_shared_ptr element_construct::find_typename(const element_scope* scop
     return (result && result->function()) ? result->function()->type() : nullptr;
 }
 
-std::vector<port_info> element_construct::generate_portlist(const element_scope* scope, element_ast* portlist) const
+std::vector<port_info> element_construct::generate_portlist(const element_scope* scope, const element_ast* portlist) const
 {
     assert(portlist->type == ELEMENT_AST_NODE_PORTLIST);
     std::vector<port_info> result;
