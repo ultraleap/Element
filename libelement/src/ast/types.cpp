@@ -5,7 +5,7 @@
 #include "interpreter_internal.hpp"
 #include "ast/ast_indexes.hpp"
 
-std::unordered_multimap<std::pair<size_t, size_t>, type_shared_ptr, pair_hash> element_anonymous_type::m_cache;
+std::unordered_multimap<std::pair<size_t, size_t>, type_shared_ptr, pair_hash> element_type_anonymous::m_cache;
 
 
 struct any_constraint : public element_constraint
@@ -38,9 +38,9 @@ const constraint_const_shared_ptr element_constraint::serializable = std::make_s
 // TODO: interpreter-specific, can't be static!
 static const element_scope* num_scope = nullptr;
 // the prelude includes a definition for num, so it should be based on custom_type (and updated later)
-struct num_type : public element_custom_type
+struct num_type : public element_type_named
 {
-    num_type() : element_custom_type(nullptr, "Num") { m_ports_cached = true; }
+    num_type() : element_type_named(nullptr, "Num") { m_ports_cached = true; }
     size_t get_size() const override { return 1; }
     bool is_serializable() const override { return true; } // TODO
     bool is_satisfied_by(const constraint_const_shared_ptr& v) const override { return v->inputs().empty() && v->outputs().empty(); }
@@ -98,8 +98,8 @@ protected:
 };
 
 DEFINE_TYPE_ID(element_type,           1U << 0);
-DEFINE_TYPE_ID(element_custom_type,    1U << 1);
-DEFINE_TYPE_ID(element_anonymous_type, 1U << 2);
+DEFINE_TYPE_ID(element_type_named,    1U << 1);
+DEFINE_TYPE_ID(element_type_anonymous, 1U << 2);
 DEFINE_TYPE_ID(unary_type,             1U << 3);
 DEFINE_TYPE_ID(binary_type,            1U << 4);
 DEFINE_TYPE_ID(any_constraint,         1U << 5);
@@ -111,7 +111,7 @@ const type_const_shared_ptr element_type::unary = std::make_shared<unary_type>()
 const type_const_shared_ptr element_type::binary = std::make_shared<binary_type>();
 
 
-void element_custom_type::generate_ports_cache() const
+void element_type_named::generate_ports_cache() const
 {
     const element_ast* node = m_scope->node;
     assert(node);

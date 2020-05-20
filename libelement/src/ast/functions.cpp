@@ -88,5 +88,5 @@ type_shared_ptr element_custom_function::generate_type(const element_scope* scop
         }
     }
 
-    return element_anonymous_type::get(std::move(inputs), std::move(outputs));
+    return element_type_anonymous::get(std::move(inputs), std::move(outputs));
 }

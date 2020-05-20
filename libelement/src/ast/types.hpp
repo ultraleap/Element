@@ -86,18 +86,18 @@ protected:
     std::string m_name;
 };
 
-struct element_custom_type : public element_type
+struct element_type_named : public element_type
 {
     DECLARE_TYPE_ID();
 
-    element_custom_type(const element_scope* scope, std::string name)
+    element_type_named(const element_scope* scope, std::string name)
         : element_type(type_id, std::move(name))
         , m_scope(scope)
     {
     }
 
-    element_custom_type(const element_scope* scope)
-        : element_custom_type(scope, scope ? scope->name : "")
+    element_type_named(const element_scope* scope)
+        : element_type_named(scope, scope ? scope->name : "")
     {
     }
 
@@ -109,7 +109,7 @@ protected:
     const element_scope* m_scope;
 };
 
-struct element_anonymous_type : public element_type
+struct element_type_anonymous : public element_type
 {
     DECLARE_TYPE_ID();
 
@@ -124,7 +124,7 @@ struct element_anonymous_type : public element_type
                 return it->second;
         }
 
-        auto t = std::shared_ptr<element_anonymous_type>(new element_anonymous_type(std::move(inputs), std::move(outputs)));
+        auto t = std::shared_ptr<element_type_anonymous>(new element_type_anonymous(std::move(inputs), std::move(outputs)));
         m_cache.emplace(std::make_pair(inputs_size, outputs_size), t);
         return t;
     }
@@ -136,7 +136,7 @@ struct element_anonymous_type : public element_type
     }
 
 private:
-    element_anonymous_type(std::vector<port_info> inputs, std::vector<port_info> outputs)
+    element_type_anonymous(std::vector<port_info> inputs, std::vector<port_info> outputs)
         : element_type(type_id, "<anonymous>")
     {
         m_inputs = std::move(inputs);

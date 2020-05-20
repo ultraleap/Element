@@ -259,7 +259,7 @@ static element_result compile_call(
             // no member found - method access?
             //todo: for constructors this type is the type it's constructing, but for other functions it's the function constraint
             const auto type = parent_fnscope->function()->type();
-            const auto ctype = type ? type->as<element_custom_type>() : nullptr;
+            const auto ctype = type ? type->as<element_type_named>() : nullptr;
 
             if (!ctype) {
                 ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
@@ -316,7 +316,7 @@ static element_result compile_call(
             ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, fnscope, args, expr));
             auto btype = fnscope->function()->type();
             const auto type = btype ? btype->output("return")->type : nullptr;
-            const auto ctype = type ? type->as<element_custom_type>() : nullptr;
+            const auto ctype = type ? type->as<element_type_named>() : nullptr;
             if (ctype) {
                 fnscope = ctype->scope();
             }
