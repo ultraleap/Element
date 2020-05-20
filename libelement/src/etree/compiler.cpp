@@ -12,7 +12,7 @@ static std::vector<expression_shared_ptr> generate_placeholder_inputs(const elem
     const size_t insize = t->inputs().size();
     results.reserve(insize);
     for (size_t i = 0; i < insize; ++i) {
-        results.push_back(std::make_shared<element_input>(i, t->inputs()[i].type->get_size()));
+        results.push_back(std::make_shared<element_expression_input>(i, t->inputs()[i].type->get_size()));
     }
     return results;
 }
@@ -21,10 +21,10 @@ static expression_shared_ptr generate_intrinsic_expression(const element_intrins
 {
     if (auto ui = fn->as<element_unary_intrinsic>()) {
         assert(args.size() >= 1);
-        return std::make_shared<element_unary>(ui->operation(), args[0]);
+        return std::make_shared<element_expression_unary>(ui->operation(), args[0]);
     } else if (auto bi = fn->as<element_binary_intrinsic>()) {
         assert(args.size() >= 2);
-        return std::make_shared<element_binary>(bi->operation(), args[0], args[1]);
+        return std::make_shared<element_expression_binary>(bi->operation(), args[0], args[1]);
     } else {
         assert(false);
         return nullptr;
@@ -41,14 +41,14 @@ static element_result compile_intrinsic(
         assert(inputs.size() >= 1);
         // TODO: better error codes
         if (inputs[0]->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        expr = std::make_shared<element_unary>(ui->operation(), inputs[0]);
+        expr = std::make_shared<element_expression_unary>(ui->operation(), inputs[0]);
         return ELEMENT_OK;
     } else if (auto bi = fn->as<element_binary_intrinsic>()) {
         assert(inputs.size() >= 2);
         // TODO: better error codes
         if (inputs[0]->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
         if (inputs[1]->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        expr = std::make_shared<element_binary>(bi->operation(), inputs[0], inputs[1]);
+        expr = std::make_shared<element_expression_binary>(bi->operation(), inputs[0], inputs[1]);
         return ELEMENT_OK;
     } else {
         // not implemented yet
@@ -71,7 +71,7 @@ static element_result compile_type_ctor(
     deps.reserve(inputs.size());
     for (size_t i = 0; i < inputs.size(); ++i)
         deps.emplace_back(fn->inputs()[i].name, inputs[i]);
-    expr = std::make_shared<element_structure>(std::move(deps));
+    expr = std::make_shared<element_expression_structure>(std::move(deps));
     return ELEMENT_OK;
 }
 
@@ -151,7 +151,7 @@ static element_result compile_call(
     expression_shared_ptr& expr)
 {
     if (bodynode->type == ELEMENT_AST_NODE_LITERAL) {
-        expr = std::make_shared<element_constant>(bodynode->literal);
+        expr = std::make_shared<element_expression_constant>(bodynode->literal);
         fnscope = scope->root()->lookup("Num", false); // HACK?
         return ELEMENT_OK;
     }
@@ -221,15 +221,15 @@ static element_result compile_call(
     if (!expr) {
         // see if we need to redirect (e.g. method call)
         if (has_parent) {
-            if (parent->is<element_structure>())
-                expr = parent->as<element_structure>()->output(bodynode->identifier);
+            if (parent->is<element_expression_structure>())
+                expr = parent->as<element_expression_structure>()->output(bodynode->identifier);
 
             if (expr) {
                 auto result = place_args(expr, args);
 
                 if (!result) {
                     ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
-                        fmt::format("Failed to place arguments in output expression of an element_structure. scope {}", scope->name),
+                        fmt::format("Failed to place arguments in output expression of an element_expression_structure. scope {}", scope->name),
                         bodynode);
                     return result;
                 }
@@ -285,7 +285,7 @@ static element_result compile_call(
             }
         }
         else if (fnscope->function() && fnscope->function()->is<element_type_ctor>()) {
-            expr = std::shared_ptr<element_structure>(new element_structure({}));
+            expr = std::shared_ptr<element_expression_structure>(new element_expression_structure({}));
         }
         else {
             ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, fnscope, args, expr));

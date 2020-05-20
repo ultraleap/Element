@@ -138,27 +138,27 @@ std::string expression_to_string(const element_expression& expression, int depth
     for (int i = 0; i < depth; ++i)
         string += "  ";
 
-    if (expression.is<element_constant>())
+    if (expression.is<element_expression_constant>())
     {
-        const auto& constant = expression.as<element_constant>();
+        const auto& constant = expression.as<element_expression_constant>();
         string += "CONSTANT: " + std::to_string(constant->value());
     }
 
-    if (expression.is<element_input>())
+    if (expression.is<element_expression_input>())
     {
-        const auto& input = expression.as<element_input>();
+        const auto& input = expression.as<element_expression_input>();
         string += "INPUT: " + std::to_string(input->index());
     }
 
-    if (expression.is<element_structure>())
+    if (expression.is<element_expression_structure>())
     {
-        const auto& structure = expression.as<element_structure>();
+        const auto& structure = expression.as<element_expression_structure>();
         string += "STRUCTURE: ";
     }
 	
-    if(expression.is<element_unary>())
+    if(expression.is<element_expression_unary>())
     {
-        const auto& unary = expression.as<element_unary>();
+        const auto& unary = expression.as<element_expression_unary>();
         string += "UNARY: ";
         char* c = nullptr;
     	switch(unary->operation())
@@ -177,9 +177,9 @@ std::string expression_to_string(const element_expression& expression, int depth
         string += c;
     }
 
-    if (expression.is<element_binary>())
+    if (expression.is<element_expression_binary>())
     {
-        const auto& binary = expression.as<element_binary>();
+        const auto& binary = expression.as<element_expression_binary>();
         string += "BINARY: ";
         char* c = nullptr;
         switch (binary->operation())

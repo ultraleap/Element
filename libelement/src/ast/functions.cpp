@@ -13,8 +13,8 @@ DEFINE_TYPE_ID(element_binary_intrinsic, 1U << 2);
 DEFINE_TYPE_ID(element_type_ctor,        1U << 3);
 DEFINE_TYPE_ID(element_custom_function,  1U << 4);
 
-#define MAKE_UNARY(name)  { #name, std::make_shared<element_unary_intrinsic>(element_unary::op::name, #name) }
-#define MAKE_BINARY(name) { #name, std::make_shared<element_binary_intrinsic>(element_binary::op::name, #name) }
+#define MAKE_UNARY(name)  { #name, std::make_shared<element_unary_intrinsic>(element_expression_unary::op::name, #name) }
+#define MAKE_BINARY(name) { #name, std::make_shared<element_binary_intrinsic>(element_expression_binary::op::name, #name) }
 function_const_shared_ptr element_function::get_builtin(const std::string& name)
 {
     // Important: this must NOT be made as part of normal static initialisation, as it depends on other static objects

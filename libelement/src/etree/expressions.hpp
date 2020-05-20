@@ -2,8 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <cstdint>
-#include <cstdlib>
 #include <utility>
 #include <numeric>
 #include <unordered_map>
@@ -14,7 +12,6 @@
 #include "etree/fwd.hpp"
 #include "construct.hpp"
 #include "typeutil.hpp"
-
 
 struct element_expression : public element_construct, public rtti_type<element_expression>
 {
@@ -34,11 +31,11 @@ protected:
     element_type_id m_type_id = 0;
 };
 
-struct element_constant : public element_expression
+struct element_expression_constant : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    element_constant(element_value val)
+    element_expression_constant(element_value val)
         : element_expression(type_id)
         , m_value(val)
     {
@@ -51,11 +48,11 @@ private:
 };
 
 //User-provided input from the boundary
-struct element_input : public element_expression
+struct element_expression_input : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    element_input(size_t input_index, size_t input_size)
+    element_expression_input(size_t input_index, size_t input_size)
         : element_expression(type_id)
         , m_index(input_index)
         , m_size(input_size)
@@ -69,11 +66,11 @@ private:
     size_t m_size;
 };
 
-struct element_structure : public element_expression
+struct element_expression_structure : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    element_structure(std::vector<std::pair<std::string, expression_shared_ptr>> deps)
+    element_expression_structure(std::vector<std::pair<std::string, expression_shared_ptr>> deps)
         : element_expression(type_id)
     {
         m_dependents.reserve(deps.size());
@@ -99,13 +96,13 @@ private:
     std::unordered_map<std::string, expression_shared_ptr> m_dependents_map;
 };
 
-struct element_unary : public element_expression
+struct element_expression_unary : public element_expression
 {
     DECLARE_TYPE_ID();
 
     using op = element_unary_op;
 
-    element_unary(op t, expression_shared_ptr input)
+    element_expression_unary(op t, expression_shared_ptr input)
         : element_expression(type_id)
         , m_op(t)
     {
@@ -120,13 +117,13 @@ private:
     op m_op;
 };
 
-struct element_binary : public element_expression
+struct element_expression_binary : public element_expression
 {
     DECLARE_TYPE_ID();
 
     using op = element_binary_op;
 
-    element_binary(op t, expression_shared_ptr in1, expression_shared_ptr in2)
+    element_expression_binary(op t, expression_shared_ptr in1, expression_shared_ptr in2)
         : element_expression(type_id)
         , m_op(t)
     {
