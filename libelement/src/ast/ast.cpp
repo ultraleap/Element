@@ -321,7 +321,7 @@ element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
             // TODO: bomb out if we're trying to call a literal
             // add blank "none" if this is a simple call
             if (root->children.empty()) {
-            	//NOTE: This exist to cover the case when the first item in our expression chain is a function call
+            	//NOTE {1}: This exist to cover the case when the first item in our expression chain is a function call
             	//this will never be accessed in cases where the first item in our expression chain is an indexing expression
                 auto blank_ast = ast_new(root.get(), ELEMENT_AST_NODE_NONE);
                 blank_ast->nearest_token = token;

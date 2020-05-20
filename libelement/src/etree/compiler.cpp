@@ -162,6 +162,7 @@ static element_result compile_call(
     // fnscope tracks the current available scope of the nested call
 
     const element_scope* orig_fnscope = fnscope;
+	//NOTE {2}: This looks like it can be simplified (see NOTE {1})
     const bool has_parent = bodynode->children.size() > ast_idx::call::parent && bodynode->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
     // compound identifier with "parent" - could either be member access or method call
     expression_shared_ptr parent;
