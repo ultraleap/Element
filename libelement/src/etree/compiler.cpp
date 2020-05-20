@@ -124,7 +124,7 @@ static element_result compile_custom_fn_scope(
 
 static element_result place_args(expression_shared_ptr& expr, const std::vector<expression_shared_ptr>& args)
 {
-    if (auto ua = expr->as<element_unbound_arg>()) {
+    if (auto ua = expr->as<element_expression_unbound_arg>()) {
         if (ua->index() < args.size()) {
             expr = args[ua->index()];
             return ELEMENT_OK;

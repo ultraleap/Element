@@ -143,13 +143,13 @@ private:
 //
 // Expression groups
 //
-struct element_expr_group : public element_expression
+struct element_expression_group : public element_expression
 {
     DECLARE_TYPE_ID();
 
     // TODO: implement
 protected:
-    element_expr_group()
+    element_expression_group()
         : element_expression(type_id)
     {
     }
@@ -157,11 +157,11 @@ protected:
     // virtual size_t group_size() const = 0;
 };
 
-struct element_unbound_arg : public element_expression
+struct element_expression_unbound_arg : public element_expression
 {
     DECLARE_TYPE_ID();
     
-    element_unbound_arg(size_t idx)
+    element_expression_unbound_arg(size_t idx)
         : element_expression(type_id)
         , m_index(idx)
     {
