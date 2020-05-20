@@ -19,20 +19,20 @@
 void update_scopes(const element_scope* names);
 
 
-struct element_type_constraint : public element_construct, public rtti_type<element_type_constraint>
+struct element_constraint : public element_construct, public rtti_type<element_constraint>
 {
 public:
-    static const type_constraint_const_shared_ptr any;
-    static const type_constraint_const_shared_ptr function;
-    static const type_constraint_const_shared_ptr serializable;
+    static const constraint_const_shared_ptr any;
+    static const constraint_const_shared_ptr function;
+    static const constraint_const_shared_ptr serializable;
 
     // TODO: separate into "shape matches" and "type matches"
-    virtual bool is_satisfied_by(const type_constraint_const_shared_ptr& other) const
+    virtual bool is_satisfied_by(const constraint_const_shared_ptr& other) const
     {
-        return other.get() == this || other == element_type_constraint::any;
+        return other.get() == this || other == element_constraint::any;
     }
 
-    bool is_same_shape_as(const type_constraint_const_shared_ptr& other) const
+    bool is_same_shape_as(const constraint_const_shared_ptr& other) const
     {
         if (other.get() == this) return true;
 
@@ -54,14 +54,14 @@ public:
     }
 
 protected:
-    element_type_constraint(element_type_id id)
+    element_constraint(element_type_id id)
         : rtti_type(id)
     {
     }
 };
 
 
-struct element_type : public element_type_constraint
+struct element_type : public element_constraint
 {
 public:
     DECLARE_TYPE_ID();
@@ -78,7 +78,7 @@ public:
 
 protected:
     element_type(element_type_id id, std::string name)
-        : element_type_constraint(id | type_id)
+        : element_constraint(id | type_id)
         , m_name(std::move(name))
     {
     }
@@ -129,10 +129,10 @@ struct element_anonymous_type : public element_type
         return t;
     }
 
-    bool is_satisfied_by(const type_constraint_const_shared_ptr& other) const override
+    bool is_satisfied_by(const constraint_const_shared_ptr& other) const override
     {
         // for anonymous types, also allow shape matches
-        return element_type_constraint::is_satisfied_by(other) || is_same_shape_as(other);
+        return element_constraint::is_satisfied_by(other) || is_same_shape_as(other);
     }
 
 private:

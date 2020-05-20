@@ -20,7 +20,7 @@ using construct_vector = std::vector<construct_shared_ptr>;
 struct port_info
 {
     std::string name;
-    type_constraint_const_shared_ptr type;
+    constraint_const_shared_ptr type;
 
     bool operator==(const port_info& other) const
     {

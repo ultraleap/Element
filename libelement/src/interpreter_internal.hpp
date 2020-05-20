@@ -27,7 +27,7 @@ static inline LIBELEMENT_CONCAT(T, _const_shared_ptr) LIBELEMENT_CONCAT(as_, T)(
 static inline LIBELEMENT_CONCAT(element_, T)* LIBELEMENT_CONCAT(as_, T)(element_construct* ptr) { return dynamic_cast<LIBELEMENT_CONCAT(element_, T)*>(ptr); }\
 static inline const LIBELEMENT_CONCAT(element_, T)* LIBELEMENT_CONCAT(as_, T)(const element_construct* ptr) { return dynamic_cast<const LIBELEMENT_CONCAT(element_, T)*>(ptr); }
 
-CREATE_CAST_CONVENIENCE_FUNCTIONS(type_constraint)
+CREATE_CAST_CONVENIENCE_FUNCTIONS(constraint)
 CREATE_CAST_CONVENIENCE_FUNCTIONS(type)
 CREATE_CAST_CONVENIENCE_FUNCTIONS(function)
 

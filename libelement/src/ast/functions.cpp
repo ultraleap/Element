@@ -83,7 +83,7 @@ type_shared_ptr element_custom_function::generate_type(const element_scope* scop
             if (decl->children[ast_idx::decl::outputs]->type == ELEMENT_AST_NODE_TYPENAME) {
                 outputs.push_back({ "return", find_typename(scope, decl->children[ast_idx::decl::outputs].get()) });
             } else if (decl->children[ast_idx::decl::outputs]->type == ELEMENT_AST_NODE_NONE) {  // any
-                outputs.push_back({ "return", element_type_constraint::any });
+                outputs.push_back({ "return", element_constraint::any });
             }
         }
     }

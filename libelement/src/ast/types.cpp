@@ -8,31 +8,31 @@
 std::unordered_multimap<std::pair<size_t, size_t>, type_shared_ptr, pair_hash> element_anonymous_type::m_cache;
 
 
-struct any_constraint : public element_type_constraint
+struct any_constraint : public element_constraint
 {
     DECLARE_TYPE_ID();
-    any_constraint() : element_type_constraint(type_id) {}
-    bool is_satisfied_by(const type_constraint_const_shared_ptr& value) const override { return true; }
+    any_constraint() : element_constraint(type_id) {}
+    bool is_satisfied_by(const constraint_const_shared_ptr& value) const override { return true; }
 };
 
-struct function_constraint : public element_type_constraint
+struct function_constraint : public element_constraint
 {
     DECLARE_TYPE_ID();
-    function_constraint() : element_type_constraint(type_id) {}
-    bool is_satisfied_by(const type_constraint_const_shared_ptr& value) const override { return !value->inputs().empty(); }
+    function_constraint() : element_constraint(type_id) {}
+    bool is_satisfied_by(const constraint_const_shared_ptr& value) const override { return !value->inputs().empty(); }
 };
 
-struct serializable_constraint : public element_type_constraint
+struct serializable_constraint : public element_constraint
 {
     DECLARE_TYPE_ID();
-    serializable_constraint() : element_type_constraint(type_id) {}
+    serializable_constraint() : element_constraint(type_id) {}
     // TODO: this, if we still need it
-    bool is_satisfied_by(const type_constraint_const_shared_ptr& value) const override { return false; }
+    bool is_satisfied_by(const constraint_const_shared_ptr& value) const override { return false; }
 };
 
-const type_constraint_const_shared_ptr element_type_constraint::any = std::make_shared<any_constraint>();
-const type_constraint_const_shared_ptr element_type_constraint::function = std::make_shared<function_constraint>();
-const type_constraint_const_shared_ptr element_type_constraint::serializable = std::make_shared<serializable_constraint>();
+const constraint_const_shared_ptr element_constraint::any = std::make_shared<any_constraint>();
+const constraint_const_shared_ptr element_constraint::function = std::make_shared<function_constraint>();
+const constraint_const_shared_ptr element_constraint::serializable = std::make_shared<serializable_constraint>();
 
 
 // TODO: interpreter-specific, can't be static!
@@ -43,7 +43,7 @@ struct num_type : public element_custom_type
     num_type() : element_custom_type(nullptr, "Num") { m_ports_cached = true; }
     size_t get_size() const override { return 1; }
     bool is_serializable() const override { return true; } // TODO
-    bool is_satisfied_by(const type_constraint_const_shared_ptr& v) const override { return v->inputs().empty() && v->outputs().empty(); }
+    bool is_satisfied_by(const constraint_const_shared_ptr& v) const override { return v->inputs().empty() && v->outputs().empty(); }
 
     const element_scope* scope() const override { return num_scope; }
 protected:
@@ -62,7 +62,7 @@ struct unary_type : public element_type
 
     unary_type() : element_type(type_id, "<unary>") { generate_ports_cache(); }
     bool is_serializable() const override { return true; } // TODO
-    bool is_satisfied_by(const type_constraint_const_shared_ptr& v) const override
+    bool is_satisfied_by(const constraint_const_shared_ptr& v) const override
     {
         return v->inputs().size() == 1 && v->inputs()[0].type == element_type::num
             && v->outputs().size() == 1 && v->outputs()[0].type == element_type::num;
@@ -82,7 +82,7 @@ struct binary_type : public element_type
 
     binary_type() : element_type(type_id, "<binary>") { generate_ports_cache(); }
     bool is_serializable() const override { return true; } // TODO
-    bool is_satisfied_by(const type_constraint_const_shared_ptr& v) const override
+    bool is_satisfied_by(const constraint_const_shared_ptr& v) const override
     {
         return v->inputs().size() == 2 && v->inputs()[0].type == element_type::num && v->inputs()[1].type == element_type::num
             && v->outputs().size() == 1 && v->outputs()[0].type == element_type::num;

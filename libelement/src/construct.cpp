@@ -26,7 +26,7 @@ std::vector<port_info> element_construct::generate_portlist(const element_scope*
     for (auto& child : portlist->children) {
         assert(child->type == ELEMENT_AST_NODE_PORT);
         std::string child_id = child->identifier;
-        type_constraint_const_shared_ptr child_type = element_type_constraint::any;
+        constraint_const_shared_ptr child_type = element_constraint::any;
         if (child->children.size() > ast_idx::port::type) {
             child_type = find_typename(scope, child->children[ast_idx::port::type].get());
         }
