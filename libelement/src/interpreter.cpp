@@ -87,6 +87,7 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
             element_ast* outputnode = declnode->children[ast_idx::decl::outputs].get();
             // these should typically already exist from the body, so just try
             if (node->children.size() > ast_idx::fn::body) {
+            	//TODO: JM - What does this do?
                 if (outputnode->type == ELEMENT_AST_NODE_PORTLIST) {
                     for (const auto& t : outputnode->children) {
                         auto cptr = get_names(item.get(), t.get());
@@ -97,7 +98,7 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
                     auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
                     item->children.try_emplace(cptr->name, std::move(cptr));
                 }
-                else if (outputnode->type == ELEMENT_AST_NODE_NONE) {
+                else if (outputnode->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE) {
                     // implied any return
                     auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
                     item->children.try_emplace(cptr->name, std::move(cptr));
@@ -459,7 +460,10 @@ element_result element_interpreter_get_function(element_interpreter_ctx* ctx, co
         *fn = scope->function().get();
         return ELEMENT_OK;
     } else {
-        return ELEMENT_ERROR_NOT_FOUND;
+
+        auto result = ELEMENT_ERROR_NOT_FOUND;
+        ctx->log(result, fmt::format("Cannot find {}", name), "<input>");
+        return result;
     }
 }
 
@@ -476,7 +480,14 @@ element_result element_interpreter_compile_function(
     if (opts)
         options = *opts;
     expression_shared_ptr fn_expr;
-    ELEMENT_OK_OR_RETURN(element_compile(*ctx, fn, fn_expr, options));
+
+    auto result = element_compile(*ctx, fn, fn_expr, options);
+	if(result != ELEMENT_OK)
+	{
+        ctx->log(result, fmt::format("Failed to compile {}", fn->name()), "<input>");
+        return result;
+	}
+	
     *cfn = new element_compiled_function;
     (*cfn)->function = fn;
     (*cfn)->expression = std::move(fn_expr);
@@ -504,5 +515,10 @@ element_result element_interpreter_evaluate_function(
     element_evaluator_options options;
     if (opts)
         options = *opts;
-    return element_evaluate(*ctx, cfn->expression, inputs, inputs_count, outputs, outputs_count, options);
+    auto result = element_evaluate(*ctx, cfn->expression, inputs, inputs_count, outputs, outputs_count, options);
+    if (result != ELEMENT_OK) {
+        ctx->log(result, fmt::format("Failed to evaluate {}", cfn->function->name()), "<input>");
+    }
+
+	return result;
 }

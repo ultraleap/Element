@@ -96,3 +96,11 @@ addUsingDeepNestedCaptureWithLambda(a:Num, b:Num)
     
     return = addB(a);
 }
+
+struct rootStruct(a:Num) 
+{
+    namespace nestedNamespace
+    {
+        a = 5;
+    }
+}

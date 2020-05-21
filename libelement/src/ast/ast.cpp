@@ -246,7 +246,7 @@ element_result element_parser_ctx::parse_port(size_t* tindex, element_ast* ast)
     GET_TOKEN(tokeniser, *tindex, tok);
     if (tok->type == ELEMENT_TOK_COLON) {
         tokenlist_advance(tokeniser, tindex);
-        element_ast* type = ast_new_child(ast);
+        element_ast* type = ast_new_child(ast, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
         type->nearest_token = tok;
         ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
     }
@@ -323,7 +323,7 @@ element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
             if (root->children.empty()) {
             	//NOTE {1}: This exist to cover the case when the first item in our expression chain is a function call
             	//this will never be accessed in cases where the first item in our expression chain is an indexing expression
-                auto blank_ast = ast_new(root.get(), ELEMENT_AST_NODE_NONE);
+                auto blank_ast = ast_new(root.get());
                 blank_ast->nearest_token = token;
                 ast_add_child(root.get(), std::move(blank_ast));
             }
@@ -446,7 +446,7 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
 
     GET_TOKEN(tokeniser, *tindex, tok);
     // always create the args node, even if it ends up being none/empty
-    element_ast* args = ast_new_child(ast, ELEMENT_AST_NODE_NONE);
+    element_ast* args = ast_new_child(ast);
     args->nearest_token = tok;
     if (tok->type == ELEMENT_TOK_BRACKETL) {
         // argument list
@@ -479,7 +479,7 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
     else
     {
         // implied any output
-        element_ast* ret = ast_new_child(ast, ELEMENT_AST_NODE_NONE);
+        element_ast* ret = ast_new_child(ast, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
         ret->nearest_token = tok;
         ret->flags = ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN;	    
     }

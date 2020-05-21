@@ -227,7 +227,10 @@ static element_result compile_call(
     }
 
     //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
-    assert(args.empty() || (fnscope->function() && fnscope->function()->inputs().size() >= args.size()));
+    auto argument_count_match = args.empty() || (fnscope->function() && fnscope->function()->inputs().size() >= args.size());
+    if(!argument_count_match)
+        return ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH;
+    //assert(args.empty() || (fnscope->function() && fnscope->function()->inputs().size() >= args.size()));
     auto frame = ctx.expr_cache.add_frame();
     for (size_t i = 0; i < args.size(); ++i) {
         const element_scope* input_scope = fnscope->lookup(fnscope->function()->inputs()[i].name, false);
