@@ -306,9 +306,9 @@ static element_result compile_call_experimental_function(
         
         const auto parent_as_function = parent_scope->function();
 
-        //this does partial application of parent to arguments for this call
+        //this does partial application of parent to arguments for this call. This only works when the parent is a constructor
         if (parent_as_function) {
-            const auto parent_fn_type = parent_scope->function()->type();
+            const auto parent_fn_type = parent_scope->function()->type(); //this doesn't work when it is a custom_function, which is good, yay
             const auto parent_fn_type_named = parent_fn_type ? parent_fn_type->as<element_type_named>() : nullptr;
 
             assert(parent_fn_type); //todo
