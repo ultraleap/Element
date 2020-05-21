@@ -23,12 +23,12 @@ static expression_shared_ptr generate_intrinsic_expression(const element_intrins
 {
     //todo: logging rather than asserting?
 
-    if (auto ui = fn->as<element_unary_intrinsic>()) {
+    if (auto ui = fn->as<element_intrinsic_unary>()) {
         assert(args.size() >= 1);
         return std::make_shared<element_expression_unary>(ui->operation(), args[0]);
     }
 
-    if (auto bi = fn->as<element_binary_intrinsic>()) {
+    if (auto bi = fn->as<element_intrinsic_binary>()) {
         assert(args.size() >= 2);
         return std::make_shared<element_expression_binary>(bi->operation(), args[0], args[1]);
     }
@@ -43,7 +43,7 @@ static element_result compile_intrinsic(
     std::vector<expression_shared_ptr> inputs,
     expression_shared_ptr& expr)
 {
-    if (const auto ui = fn->as<element_unary_intrinsic>()) {
+    if (const auto ui = fn->as<element_intrinsic_unary>()) {
         assert(inputs.size() >= 1);
         // TODO: better error codes
         //todo: logging
@@ -52,7 +52,7 @@ static element_result compile_intrinsic(
         return ELEMENT_OK;
     }
 
-    if (const auto bi = fn->as<element_binary_intrinsic>()) {
+    if (const auto bi = fn->as<element_intrinsic_binary>()) {
         assert(inputs.size() >= 2);
         // TODO: better error codes
         //todo: logging

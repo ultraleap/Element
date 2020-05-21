@@ -8,13 +8,13 @@
 #include "ast/ast_indexes.hpp"
 
 DEFINE_TYPE_ID(element_intrinsic,        1U << 0);
-DEFINE_TYPE_ID(element_unary_intrinsic,  1U << 1);
-DEFINE_TYPE_ID(element_binary_intrinsic, 1U << 2);
+DEFINE_TYPE_ID(element_intrinsic_unary,  1U << 1);
+DEFINE_TYPE_ID(element_intrinsic_binary, 1U << 2);
 DEFINE_TYPE_ID(element_type_ctor,        1U << 3);
 DEFINE_TYPE_ID(element_custom_function,  1U << 4);
 
-#define MAKE_UNARY(name)  { #name, std::make_shared<element_unary_intrinsic>(element_expression_unary::op::name, #name) }
-#define MAKE_BINARY(name) { #name, std::make_shared<element_binary_intrinsic>(element_expression_binary::op::name, #name) }
+#define MAKE_UNARY(name)  { #name, std::make_shared<element_intrinsic_unary>(element_expression_unary::op::name, #name) }
+#define MAKE_BINARY(name) { #name, std::make_shared<element_intrinsic_binary>(element_expression_binary::op::name, #name) }
 function_const_shared_ptr element_function::get_builtin(const std::string& name)
 {
     // Important: this must NOT be made as part of normal static initialisation, as it depends on other static objects
@@ -64,27 +64,30 @@ void element_function::generate_ports_cache() const
 }
 
 
-type_shared_ptr element_custom_function::generate_type(const element_scope* scope)
+type_shared_ptr element_custom_function::generate_type(const element_scope* scope) const
 {
     std::vector<port_info> inputs;
     std::vector<port_info> outputs;
 
     const element_ast* node = scope->node;
-    assert(node->type == ELEMENT_AST_NODE_FUNCTION);
+    assert(ast_node_function_is_valid(node));
+
     if (node->type == ELEMENT_AST_NODE_FUNCTION) {
-        assert(node->children.size() > ast_idx::fn::declaration);
-        element_ast* decl = node->children[ast_idx::fn::declaration].get();
-        assert(decl->type == ELEMENT_AST_NODE_DECLARATION);
-        assert(decl->children.size() > ast_idx::decl::inputs);
-        if (decl->children[ast_idx::decl::inputs]->type == ELEMENT_AST_NODE_PORTLIST) {
+        const element_ast* decl = ast_node_function_get_declaration(node);
+        assert(ast_node_declaration_has_inputs(decl));
+
+        if (ast_node_declaration_get_inputs(decl)->type == ELEMENT_AST_NODE_PORTLIST)
             inputs = generate_portlist(scope, decl->children[ast_idx::decl::inputs].get());
-        }
-        if (decl->children.size() > ast_idx::decl::outputs) {
-            if (decl->children[ast_idx::decl::outputs]->type == ELEMENT_AST_NODE_TYPENAME) {
-                outputs.push_back({ "return", find_typename(scope, decl->children[ast_idx::decl::outputs].get()) });
-            } else if (decl->children[ast_idx::decl::outputs]->type == ELEMENT_AST_NODE_NONE) {  // any
+
+        if (ast_node_declaration_has_outputs(decl)) {
+            const element_ast* out = ast_node_declaration_get_outputs(decl);
+
+            if (out->type == ELEMENT_AST_NODE_TYPENAME)
+                outputs.push_back({ "return", find_typename(scope, out) });
+            else if (out->type == ELEMENT_AST_NODE_NONE)  // any
                 outputs.push_back({ "return", element_constraint::any });
-            }
+
+            //todo: what if it's not?
         }
     }
 
