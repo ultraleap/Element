@@ -154,6 +154,236 @@ static element_result place_args(expression_shared_ptr& expr, const std::vector<
     }
 }
 
+static element_result compile_call_experimental_literal(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    expression_shared_ptr& expr);
+
+static element_result compile_call_experimental(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    expression_shared_ptr& expr);
+
+static element_result compile_call_experimental_namespace(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    expression_shared_ptr& expr);
+
+static element_result compile_call_experimental_function(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    expression_shared_ptr& expr);
+
+static element_result compile_call_experimental_literal(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    expression_shared_ptr& expr)
+{
+    if (callsite_node->type != ELEMENT_AST_NODE_LITERAL) {
+        assert(false); //todo
+        return ELEMENT_ERROR_UNKNOWN;
+        
+    }
+
+    expr = std::make_shared<element_expression_constant>(callsite_node->literal);
+    callsite_current = callsite_root->root()->lookup("Num", false); // HACK?
+    return ELEMENT_OK;
+}
+
+static element_result compile_call_experimental_namespace(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    expression_shared_ptr& expr)
+{
+    if (callsite_node->type != ELEMENT_AST_NODE_CALL ||
+        callsite_current->node->type != ELEMENT_AST_NODE_NAMESPACE) {
+        assert(false); //todo
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+}
+
+
+static element_result compile_call_experimental_function(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current, //todo: rename, it's the indexing scope (of our parent), or our scope, or the scope we're being called from
+    expression_shared_ptr& expr)
+{
+    if (callsite_node->type != ELEMENT_AST_NODE_CALL
+        || (callsite_current->node->type != ELEMENT_AST_NODE_FUNCTION && callsite_current->node->type != ELEMENT_AST_NODE_STRUCT)) {
+        assert(false); //todo
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    const auto our_scope = callsite_current;
+
+    //NOTE {2}: This looks like it can be simplified (see NOTE {1})
+    const bool has_parent = callsite_node->children.size() > ast_idx::call::parent && callsite_node->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
+    expression_shared_ptr compiled_parent;
+    if (has_parent) {
+        //We're starting from the right-most call in the source and found out that we have a parent
+        //Before we can start compiling this call, we need to find and compile our parent
+
+        //Our parent could be anything (namespace, struct instance, number, number literal)
+        //This will continue recursing until we're at the left-most call in the source (bottom of the AST)
+        const auto callsite_node_parent = callsite_node->children[ast_idx::call::parent].get();
+        const auto result = compile_call_experimental(ctx, callsite_root, callsite_node_parent, callsite_current, compiled_parent);
+        assert(result == ELEMENT_OK); //todo
+        assert(callsite_current != our_scope); //our parent m
+    }
+
+    const auto parent_scope = has_parent ? callsite_current : nullptr;
+
+    //We've now compiled any parents (if we had any parents), so let's find what this call was meant to be
+    //If we did have a parent then we don't want to recurse when doing the lookup, what we're looking for should be directly in that scope
+    //todo: For parents, this only works when the parent has updated its scope to be a valid index target, as we don't handle the return of a function call atm
+    assert(callsite_current); //todo
+    callsite_current = callsite_current->lookup(callsite_node->identifier, !has_parent);
+    assert(callsite_current); //todo
+
+    std::vector<expression_shared_ptr> args;
+
+    static const auto fill_args_from_callsite = [](
+        std::vector<expression_shared_ptr>& args,
+        element_compiler_ctx& ctx,
+        const element_scope* callsite_root,
+        const element_ast* callsite_node) -> element_result
+    {
+        const bool calling_with_arguments = callsite_node->children.size() > ast_idx::call::args
+            && callsite_node->children[ast_idx::call::args]->type == ELEMENT_AST_NODE_EXPRLIST;
+
+        if (calling_with_arguments) {
+            const auto callargs_node = callsite_node->children[ast_idx::call::args].get();
+            args.resize(callargs_node->children.size());
+
+            //Compile all of the exprlist AST nodes and assign them to the arguments we're calling with
+            for (size_t i = 0; i < callargs_node->children.size(); ++i)
+                ELEMENT_OK_OR_RETURN(compile_expression(ctx, callsite_root, callargs_node->children[i].get(), args[i]));
+        }
+
+        return ELEMENT_OK;
+    };
+
+    //Handle any arguments to this call (assuming it is a call to a function(and struct?), and not a namespace)
+    const auto result = fill_args_from_callsite(args, ctx, callsite_root, callsite_node);
+    assert(result); //todo
+
+    //todo: add to expression cache
+
+    //Now we've compiled any and all of our parents, and we've compiled any and all of our arguments
+
+    if (has_parent) {
+        if (compiled_parent->is<element_expression_structure>()) {
+            //Our parent resulted in a struct instance, so we index it with the name.
+            //This is struct instance indexing
+            expr = compiled_parent->as<element_expression_structure>()->output(callsite_node->identifier);
+
+            //todo: add fallback here if we can't find it in the struct instance, then we have to grab the parent scope as that is the struct declaration/body
+
+            assert(expr); //todo
+
+            //todo: understand what this does and document it
+            const auto result = place_args(expr, args);
+            //todo: do we need to update the current callsite for the thing indexing us?
+            return result;
+        }
+
+        //Parent didn't compile to a structure.
+        //It was either a more complicated expression composed of intrinsics, a namespace, or a struct (e.g. Num.) ?
+        
+        const auto parent_as_function = parent_scope->function();
+
+        //this does partial application of parent to arguments for this call
+        if (parent_as_function) {
+            const auto parent_fn_type = parent_scope->function()->type();
+            const auto parent_fn_type_named = parent_fn_type ? parent_fn_type->as<element_type_named>() : nullptr;
+
+            assert(parent_fn_type); //todo
+
+            const element_scope* parent_fn_type_scope = parent_fn_type_named->scope();
+            assert(parent_scope == parent_fn_type_scope); //debug
+            assert(parent_fn_type_scope); //todo
+
+            assert(callsite_current == parent_fn_type_scope->lookup(callsite_node->identifier, false)); //debug
+            callsite_current = parent_fn_type_scope->lookup(callsite_node->identifier, false);
+            assert(callsite_current); //todo
+
+            // found a function in type's scope
+            const auto fn = callsite_current->function();
+            assert(fn); //todo
+            
+            //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
+            const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
+            const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(parent_fn_type);
+            if (mising_one_argument && argument_one_matches_parent_type) {
+                args.insert(args.begin(), compiled_parent);
+            }
+
+            assert(fn->inputs().size() == args.size()); //todo
+        }
+    }
+
+    // TODO: temporary check if intrinsic
+    //todo: why is this temporary?
+    const auto fn = callsite_current->function();
+    if (fn && fn->is<element_intrinsic>()) {
+        expr = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
+        assert(expr); //todo
+
+        //todo: we don't update the fnscope, so if our parent is an intrinsic when indexing, it fails
+    }
+    else if (fn && fn->is<element_type_ctor>()) {
+        //todo: are the dependents always meant to be empty? should we not be calling compile_type_ctor?
+        expr = std::shared_ptr<element_expression_structure>(new element_expression_structure({}));
+    }
+    else if (fn && fn->is<element_custom_function> {
+        ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, fnscope, args, expr));
+        auto btype = fnscope->function()->type();
+        const auto type = btype ? btype->output("return")->type : nullptr;
+        const auto ctype = type ? type->as<element_type_named>() : nullptr;
+        if (ctype) {
+            fnscope = ctype->scope();
+        }
+    }
+
+    return result;
+}
+
+static element_result compile_call_experimental(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    expression_shared_ptr& expr)
+{
+    assert(!expr);
+
+    if (callsite_node->type == ELEMENT_AST_NODE_LITERAL)
+        return compile_call_experimental_literal(ctx, callsite_root, callsite_node, callsite_current, expr);
+
+    const auto scope = callsite_current->lookup(callsite_node->identifier, true);
+
+
+    if (callsite_current->node->type == ELEMENT_AST_NODE_FUNCTION ||
+        callsite_current->node->type == ELEMENT_AST_NODE_STRUCT)
+    {
+        return compile_call_experimental_function(ctx, callsite_root, callsite_node, callsite_current, expr);
+    }
+}
+
 static element_result compile_call(
     element_compiler_ctx& ctx,
     const element_scope* scope,
