@@ -349,13 +349,13 @@ static element_result compile_call_experimental_function(
         //todo: are the dependents always meant to be empty? should we not be calling compile_type_ctor?
         expr = std::shared_ptr<element_expression_structure>(new element_expression_structure({}));
     }
-    else if (fn && fn->is<element_custom_function> {
-        ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, fnscope, args, expr));
-        auto btype = fnscope->function()->type();
+    else if (fn && fn->is<element_custom_function>()) {
+        ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, callsite_current, args, expr));
+        auto btype = fn->type();
         const auto type = btype ? btype->output("return")->type : nullptr;
         const auto ctype = type ? type->as<element_type_named>() : nullptr;
         if (ctype) {
-            fnscope = ctype->scope();
+            callsite_current = ctype->scope();
         }
     }
 
