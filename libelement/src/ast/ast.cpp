@@ -440,8 +440,8 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
         function_declaration = true;
 
     //If a function declaration identifier in another function or lambdas scope is "return" then that's valid, otherwise not
-    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, function_declaration
-    && (ast_node_in_function_scope(ast->parent) || ast_node_in_lambda_scope(ast->parent))));
+    const auto allow_reserved_names = function_declaration && (ast_node_in_function_scope(ast->parent) || ast_node_in_lambda_scope(ast->parent));
+    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, allow_reserved_names));
 
 
     GET_TOKEN(tokeniser, *tindex, tok);
