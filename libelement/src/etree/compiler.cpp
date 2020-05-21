@@ -214,7 +214,6 @@ static element_result compile_call_experimental_namespace(
     }
 }
 
-
 static element_result compile_call_experimental_function(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
@@ -222,8 +221,7 @@ static element_result compile_call_experimental_function(
     const element_scope*& callsite_current, //todo: rename, it's the indexing scope (of our parent), or our scope, or the scope we're being called from
     expression_shared_ptr& expr)
 {
-    if (callsite_node->type != ELEMENT_AST_NODE_CALL
-        || (callsite_current->node->type != ELEMENT_AST_NODE_FUNCTION && callsite_current->node->type != ELEMENT_AST_NODE_STRUCT)) {
+    if (callsite_node->type != ELEMENT_AST_NODE_CALL) {
         assert(false); //todo
         return ELEMENT_ERROR_UNKNOWN;
     }
@@ -279,7 +277,7 @@ static element_result compile_call_experimental_function(
 
     //Handle any arguments to this call (assuming it is a call to a function(and struct?), and not a namespace)
     const auto result = fill_args_from_callsite(args, ctx, callsite_root, callsite_node);
-    assert(result); //todo
+    assert(result == ELEMENT_OK); //todo
 
     //todo: add to expression cache
 
@@ -314,16 +312,16 @@ static element_result compile_call_experimental_function(
             assert(parent_fn_type); //todo
 
             const element_scope* parent_fn_type_scope = parent_fn_type_named->scope();
-            assert(parent_scope == parent_fn_type_scope); //debug
+            assert(parent_scope == parent_fn_type_scope); //debug. This is at least true when dealing with literals/Num
             assert(parent_fn_type_scope); //todo
 
-            assert(callsite_current == parent_fn_type_scope->lookup(callsite_node->identifier, false)); //debug
+            assert(callsite_current == parent_fn_type_scope->lookup(callsite_node->identifier, false)); //debug. //This is at least true when dealing with literals/Num, so this is all pointless for that case
             callsite_current = parent_fn_type_scope->lookup(callsite_node->identifier, false);
             assert(callsite_current); //todo
 
-            // found a function in type's scope
+            // found a function in type's scope. 
             const auto fn = callsite_current->function();
-            assert(fn); //todo
+            assert(fn); //todo, should be if, because if it's not a function then there's no partial application to do
             
             //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
             const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
@@ -359,8 +357,11 @@ static element_result compile_call_experimental_function(
             callsite_current = ctype->scope();
         }
     }
+    else {
+        assert(false); //todo
+    }
 
-    return result;
+    return ELEMENT_OK;
 }
 
 static element_result compile_call_experimental(
@@ -375,14 +376,7 @@ static element_result compile_call_experimental(
     if (callsite_node->type == ELEMENT_AST_NODE_LITERAL)
         return compile_call_experimental_literal(ctx, callsite_root, callsite_node, callsite_current, expr);
 
-    const auto scope = callsite_current->lookup(callsite_node->identifier, true);
-
-
-    if (callsite_current->node->type == ELEMENT_AST_NODE_FUNCTION ||
-        callsite_current->node->type == ELEMENT_AST_NODE_STRUCT)
-    {
-        return compile_call_experimental_function(ctx, callsite_root, callsite_node, callsite_current, expr);
-    }
+    return compile_call_experimental_function(ctx, callsite_root, callsite_node, callsite_current, expr);
 }
 
 static element_result compile_call(
@@ -581,7 +575,7 @@ static element_result compile_expression(
     // do we have a body?
     if (bodynode->type == ELEMENT_AST_NODE_CALL || bodynode->type == ELEMENT_AST_NODE_LITERAL) {
         // literal or non-constant expression
-        return compile_call(ctx, scope, bodynode, scope, expr);
+        return compile_call_experimental(ctx, scope, bodynode, scope, expr);
     } else if (bodynode->type == ELEMENT_AST_NODE_LAMBDA) {
         // lambda
         return compile_lambda(ctx, scope, bodynode, expr);
