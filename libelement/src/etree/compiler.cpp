@@ -343,11 +343,12 @@ static element_result compile_call_experimental_function(
         expr = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
         assert(expr); //todo
 
-        //todo: we don't update the fnscope, so if our parent is an intrinsic when indexing, it fails
+        //todo: we don't update the scope, so if our parent is an intrinsic when indexing, it fails
     }
     else if (fn && fn->is<element_type_ctor>()) {
         //todo: are the dependents always meant to be empty? should we not be calling compile_type_ctor?
         expr = std::shared_ptr<element_expression_structure>(new element_expression_structure({}));
+        //todo: we don't update the scope, so the thing indexing in to us doesn't know what type this structure is
     }
     else if (fn && fn->is<element_custom_function>()) {
         ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, callsite_current, args, expr));
