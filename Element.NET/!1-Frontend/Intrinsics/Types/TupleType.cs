@@ -1,18 +1,25 @@
-using System.Collections.Generic;
-
 namespace Element.AST
 {
-    public sealed class TupleType : SerializableIntrinsicType
+    public sealed class TupleType : IIntrinsicType
     {
+        private TupleType()
+        {
+            Inputs = new[] {Port.VariadicPort};
+            Output = Port.ReturnPort(AnyConstraint.Instance);
+        }
         public static TupleType Instance { get; } = new TupleType();
-        protected override IntrinsicType _instance => Instance;
-        public override string Name => "Tuple";
-        public override Port[] Inputs { get; } = {Port.VariadicPort};
-        
-        public override int Size(IValue instance, CompilationContext compilationContext) =>
-            (instance as IEnumerable<IValue>).GetSerializedSize(compilationContext);
+        public Port[] Inputs { get; }
+        public Port Output { get; }
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => Declaration(compilationContext).CreateInstance(arguments);
+        string IIntrinsic.Location => "Tuple";
+        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => Declaration(compilationContext);
 
-        public override bool Serialize(IValue instance, ref Element.Expression[] serialized, ref int position, CompilationContext compilationContext) =>
-            (instance as IEnumerable<IValue>).Serialize(ref serialized, ref position, compilationContext);
+        private IntrinsicStructDeclaration Declaration(CompilationContext context) =>
+            context.GetIntrinsicsDeclaration<IntrinsicStructDeclaration>(this);
+
+        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value is StructInstance;
+
+        public ISerializableValue DefaultValue(CompilationContext context) =>
+            context.LogError(14, $"Cannot create a default value for Tuple");
     }
 }

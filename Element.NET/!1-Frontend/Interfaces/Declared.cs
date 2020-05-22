@@ -5,15 +5,20 @@ namespace Element.AST
     public interface IDeclared
     {
         Declaration Declarer { get; }
+        int IndexInSource { get; }
     }
     
     public abstract class Declared : IDeclared
     {
-        // ReSharper disable once UnassignedField.Global
-        // Filled by Lexico
-        [Location] protected int ExpressionIndex;
+#pragma warning disable 649, 8618
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [Location] public int IndexInSource { get; private set; } // Filled by Lexico
+#pragma warning restore 649
         
-        public Declaration Declarer { get; private set; }
+        public Declaration Declarer { get; private set; } // Derived classes are all instantiated by Lexico and then initialized via Initialize
+#pragma warning restore 8618
+        
+        
         public void Initialize(Declaration declaration)
         {
             Declarer = declaration;
@@ -23,11 +28,14 @@ namespace Element.AST
         public abstract bool Validate(SourceContext sourceContext);
 
         protected abstract void InitializeImpl();
+    }
 
-        protected TraceSite MakeTraceSite()
+    public static class DeclaredExtensions
+    {
+        public static TraceSite MakeTraceSite(this IDeclared declared, string what)
         {
-            var (line, column, lineCharacterIndex) = Declarer.SourceInfo.CountLinesAndColumns(ExpressionIndex);
-            return new TraceSite(ToString(), Declarer.SourceInfo.Name, line, lineCharacterIndex);
+            var (line, column, lineCharacterIndex) = declared.Declarer.SourceInfo.CountLinesAndColumns(declared.IndexInSource);
+            return new TraceSite(what, declared.Declarer.SourceInfo.Name, line, lineCharacterIndex);
         }
     }
 }

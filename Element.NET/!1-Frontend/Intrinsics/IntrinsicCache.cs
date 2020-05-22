@@ -19,7 +19,6 @@ namespace Element.AST
                     new FoldIntrinsic(),
                     new ListIntrinsic(),
                     new IfIntrinsic(),
-                    new InferIntrinsic(),
                     new MemberwiseIntrinsic(),
                     new PersistIntrinsic()
                 }.Concat(Enum.GetValues(typeof(Constant.Intrinsic))

@@ -8,7 +8,7 @@ namespace Element.AST
             : base("memberwise",
                    new[]
                    {
-                       new Port("function", FunctionType.Instance),
+                       new Port("function", FunctionConstraint.Instance),
                        Port.VariadicPort
                    }, Port.ReturnPort(AnyConstraint.Instance))
         { }
@@ -22,7 +22,7 @@ namespace Element.AST
             }
 
 
-            var type = funcArgs[0].Type;
+            /*var type = funcArgs[0].Type;
             if (funcArgs.Any(v => v.Type != type))
             {
                 return compilationContext.LogError(14, "Arguments to memberwise must be homogeneous (all of same type)");
@@ -35,14 +35,14 @@ namespace Element.AST
             }
 
             // TODO: Needs to return anonymous scope, not a struct instance! This currently only works when the function outputs the same type as the inputs, e.g. (Vec3, Vec3) -> Vec3
-            if (type is DeclaredStruct declaredStruct)
+            if (type is StructDeclaration declaredStruct)
             {
                 return declaredStruct.CreateInstance(((IFunctionSignature)declaredStruct).Inputs
                                                                .Select(p => func.ResolveCall(funcArgs.Cast<StructInstance>()
                                                                                                      .Select(inst => inst[p.Identifier.Value, false, compilationContext])
                                                                                                      .ToArray(), false, compilationContext))
                                                                .ToArray());
-            }
+            }*/
 
             return compilationContext.LogError(14, "Arguments to memberwise must be constants or struct instances");
         }

@@ -40,7 +40,7 @@ namespace Element.CLR
 
         private class NumberExpression : Expression, ICLRExpression
         {
-            public NumberExpression(LExpression parameter, AST.IType? typeOverride = default)
+            public NumberExpression(LExpression parameter, IIntrinsicType? typeOverride = default)
                 : base(typeOverride) =>
                 Parameter = parameter;
 
@@ -49,7 +49,7 @@ namespace Element.CLR
             public LExpression Compile(Func<Expression, LExpression> compileOther) => Parameter;
             protected override string ToStringInternal() => Parameter.ToString();
             public override bool Equals(Expression other) => other == this;
-            public override int GetHashCode() => new {Parameter, InstanceTypeOverride}.GetHashCode();
+            public override int GetHashCode() => new {Parameter, InstanceTypeOverride = Type}.GetHashCode();
         }
     }
 
@@ -88,7 +88,7 @@ namespace Element.CLR
                 return CompilationError.Instance;
             }
 
-            if (!(result is DeclaredStruct declaredStruct))
+            if (!(result is StructDeclaration declaredStruct))
             {
                 return compilationContext.LogError(14, $"{result} is not a struct declaration");
             }
@@ -96,7 +96,7 @@ namespace Element.CLR
             return declaredStruct.CreateInstance(_elementToClrFieldMapping.Select(pair => new MemberExpression(root, parameter, pair.Value)).ToArray());
         }
 
-        private class MemberExpression : AST.IFunction
+        private class MemberExpression : IFunction
         {
             private readonly LExpression _parameter;
             private readonly IBoundaryConverter _root;
@@ -109,7 +109,6 @@ namespace Element.CLR
                 _clrField = clrField;
             }
 
-            AST.IType IValue.Type => AST.FunctionType.Instance;
             IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
             Port[] IFunctionSignature.Inputs { get; } = Array.Empty<Port>();
             Port IFunctionSignature.Output { get; } = Port.ReturnPort(AnyConstraint.Instance);

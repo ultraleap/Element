@@ -7,10 +7,10 @@ namespace Element.NET.Tests
 {
     public abstract class FixtureBase
     {
-        protected static void DoExpectingMessageCode(int messageCode, Func<SourceContext, bool> funcReturningSuccessStatus)
+        protected static void DoExpectingMessageCode(int messageCode, Func<SourceContext, bool> funcReturningSuccessStatus, string extraSource = default)
         {
             var errors = new List<CompilerMessage>();
-            var src = MakeSourceContext(logCallback: ExpectMessageCode(messageCode, errors));
+            var src = MakeSourceContext(logCallback: ExpectMessageCode(messageCode, errors), extraSource: extraSource);
             if (funcReturningSuccessStatus(src))
             {
                 if (errors.Count > 0) Assert.Fail("Expected message code '{0}' but got following code(s): {1}", messageCode, string.Join(",", errors.Select(err => err.MessageCode)));
@@ -33,17 +33,22 @@ namespace Element.NET.Tests
             else TestContext.WriteLine(message.ToString());
         };
 
-        protected static SourceContext? MakeSourceContext(CompilationInput compilationInput = default, Action<CompilerMessage> logCallback = default, string extraSource = default)
+        protected static SourceContext MakeSourceContext(CompilationInput compilationInput = default, Action<CompilerMessage> logCallback = default, string extraSource = default)
         {
             var result = SourceContext.TryCreate(compilationInput ?? new CompilationInput(logCallback ?? FailOnError), out var sourceContext)
                        ? sourceContext
                        : null;
             if (!string.IsNullOrEmpty(extraSource))
             {
-                result?.LoadElementSourceString(new SourceInfo("TestSource", extraSource));
+                result?.LoadElementSourceString(new SourceInfo("ExtraTestSource", extraSource));
             }
 
-            return result;
+            if (result == null)
+            {
+                Assert.Fail("Failed to create source context");
+            }
+
+            return result!; // Assert when null stops us getting here
         }
     }
 }

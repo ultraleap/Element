@@ -14,12 +14,10 @@ namespace Element.AST
         private CompilationError() { }
         IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
         protected override string ToStringInternal() => "<error>";
-
-        string IType.Name => "<error>";
+        public ISerializableValue DefaultValue(CompilationContext _) => this;
         bool IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) => false;
-        Port[] IFunctionSignature.Inputs { get; } = Array.Empty<Port>();
-        Port IFunctionSignature.Output => null;
-        IType IValue.Type => Instance;
+        Port[] IFunctionSignature.Inputs => Array.Empty<Port>();
+        Port IFunctionSignature.Output => Port.ReturnPort(this);
         public override IEnumerable<Element.Expression> Dependent => Enumerable.Empty<Element.Expression>();
     }
 }

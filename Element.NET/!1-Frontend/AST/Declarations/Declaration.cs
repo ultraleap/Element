@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Lexico;
 
@@ -10,7 +9,8 @@ namespace Element.AST
     {
 #pragma warning disable 649
         // ReSharper disable UnassignedField.Global
-        [Location] protected int IndexInSource;
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [Location] public int IndexInSource { get; private set; }
         [IndirectLiteral(nameof(IntrinsicQualifier))] protected Unnamed _;
         [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed __;
         [Term] public Identifier Identifier;
@@ -41,7 +41,6 @@ namespace Element.AST
             protected override string IntrinsicQualifier => string.Empty;
             protected override string Qualifier => string.Empty;
             protected override Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
-            public override IType Type => FunctionType.Instance;
         }
 
         public static Declaration MakeStubDeclaration(Identifier id, object body, string expressionString, CompilationContext compilationContext)
@@ -62,7 +61,7 @@ namespace Element.AST
             return clone;
         }
 
-        internal virtual bool Validate(SourceContext sourceContext)
+        internal bool Validate(SourceContext sourceContext)
         {
             var success = true;
             switch (Body)
@@ -77,11 +76,13 @@ namespace Element.AST
 
             success &= PortList?.Validate(sourceContext) ?? true;
             success &= DeclaredType?.Validate(sourceContext) ?? true;
+            success &= AdditionalValidation(sourceContext);
             return success;
         }
+        
+        protected virtual bool AdditionalValidation(SourceContext sourceContext) => true;
 
         public bool HasBeenValidated { get; set; }
-        public abstract IType Type { get; }
 
         internal void Initialize(SourceInfo info, IScope parent)
         {

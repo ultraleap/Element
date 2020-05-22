@@ -1,13 +1,13 @@
 namespace Element.AST
 {
     // ReSharper disable once UnusedType.Global
-    public class IntrinsicStructDeclaration : DeclaredStruct
+    public class IntrinsicStructDeclaration : StructDeclaration
     {
         protected override string IntrinsicQualifier => "intrinsic";
 
-        internal override bool Validate(SourceContext sourceContext)
+        protected override bool AdditionalValidation(SourceContext sourceContext)
         {
-            var success = base.Validate(sourceContext);
+            var success = true;
             if (DeclaredType != null)
             {
                 sourceContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");

@@ -1,10 +1,10 @@
 namespace Element.AST
 {
-    public class IntrinsicFunctionDeclaration : DeclaredFunction, IFunction
+    public class IntrinsicFunctionDeclaration : FunctionDeclaration, IFunction
     {
         protected override string IntrinsicQualifier => "intrinsic";
 
-        internal override bool Validate(SourceContext sourceContext)
+        protected override bool AdditionalValidation(SourceContext sourceContext)
         {
             var success = ImplementingIntrinsic<IFunction>(sourceContext) != null;
             if (!(Body is Terminal))

@@ -30,6 +30,7 @@ namespace Element.AST
 				IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
 
 			public Declaration Declarer { get; }
+			public int IndexInSource => Declarer.IndexInSource;
 		}
 		
 		public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
@@ -64,15 +65,14 @@ namespace Element.AST
 
 				return new[] {initial, predicateFn, bodyFn};
 			}
-			
-			return ListType.GetListCount(list, compilationContext) switch
-			{
-				(ListType.CountType.Constant, int count) => ListType.EvaluateElements(list, ListType.CountType.Constant, count, compilationContext)
-				                                                    .Aggregate(workingValue, (current, e) => aggregator.ResolveCall(new[] {current, e}, false, compilationContext)),
-				(ListType.CountType.Dynamic, _) => ((StructInstance) IntrinsicCache.GetByLocation<IFunctionSignature>("for", compilationContext)
-				                                                                   .ResolveCall(CreateDynamicFoldArguments(), false, compilationContext))[1],
-				_ => CompilationError.Instance
-			};
+
+			return ListType.HasConstantCount(list, out var constantCount, compilationContext)
+				       ? ListType.EvaluateElements(list, true, constantCount, compilationContext)
+				                 .Aggregate(workingValue, (current, e) =>
+					                            aggregator.ResolveCall(new[] {current, e}, false, compilationContext))
+				       : ((StructInstance) IntrinsicCache
+				                           .GetByLocation<IFunctionSignature>("for", compilationContext)
+				                           .ResolveCall(CreateDynamicFoldArguments(), false, compilationContext))[1];
 		}
 	}
 }

@@ -4,7 +4,7 @@ namespace Element.AST
     {
         public IValue ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext)
         {
-            compilationContext.PushTrace(MakeTraceSite());
+            compilationContext.PushTrace(this.MakeTraceSite(ToString()));
             var result = SubExpressionImpl(previous, scope, compilationContext);
             compilationContext.PopTrace();
             return result;

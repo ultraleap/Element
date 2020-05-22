@@ -35,6 +35,13 @@ namespace Element.AST
             var definition = functionSignature.GetDefinition(compilationContext);
             if (compilationContext.ContainsFunction(definition) && !(functionSignature is AppliedFunctionBase)) return compilationContext.LogError(11, $"Multiple references to {functionSignature} in same call stack - Recursion is disallowed");
             compilationContext.PushFunction(definition);
+            var tracingThisFunction = false;
+            if (functionSignature is IDeclared declared)
+            {
+                tracingThisFunction = true;
+                compilationContext.PushTrace(declared.MakeTraceSite(functionSignature.ToString()));
+            }
+            
 
             try
             {
@@ -59,8 +66,8 @@ namespace Element.AST
                 {
                     // If the signature is an applied function we want to use it as the call scope. More arguments are filled by subsequent applications until full application.
                     AppliedFunctionBase appliedFunction => appliedFunction,
-                    // Anonymous functions are special cased since they are an expression
-                    AnonymousFunction anonymousFunction => anonymousFunction.Parent,
+                    // Lambdas must be special cased as they can be declared within an expression and may capture function arguments
+                    Lambda lambda => lambda.DeclaringScope,
                     // If the signature is a function with a body then we use the bodies parent
                     IFunctionWithBody functionWithBody when functionWithBody.Body is Scope scope => scope.Declarer.Parent,
                     Declaration declaration => declaration.Parent,
@@ -85,6 +92,10 @@ namespace Element.AST
             finally
             {
                 compilationContext.PopFunction();
+                if (tracingThisFunction)
+                {
+                    compilationContext.PopTrace();
+                }
             }
         }
 
@@ -143,16 +154,13 @@ namespace Element.AST
             private readonly Port[] _inputs;
             private readonly IFunctionSignature _definition;
 
-            IType IValue.Type => _definition.Type;
             Port[] IFunctionSignature.Inputs => _inputs;
             Port IFunctionSignature.Output => _definition.Output;
 
             protected virtual IScope? _child => null;
 
             public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-                _child != null
-                    ? _child[id, false, compilationContext] ?? IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null)
-                    : IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
+                _child?[id, false, compilationContext] ?? IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
 
             public IFunctionSignature GetDefinition(CompilationContext compilationContext) => _definition;
         }
@@ -238,7 +246,6 @@ namespace Element.AST
                 return new UncurriedFunction(a, b);
             }
 
-            IType IValue.Type => FunctionType.Instance;
             IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
             public Port[] Inputs { get; }
             public Port Output { get; }

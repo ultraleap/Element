@@ -8,7 +8,7 @@ namespace Element.AST
     {
         public IValue ResolveExpression(IScope scope, CompilationContext compilationContext)
         {
-            compilationContext.PushTrace(MakeTraceSite());
+            compilationContext.PushTrace(this.MakeTraceSite(ToString()));
             var result = ExpressionImpl(scope, compilationContext);
             compilationContext.PopTrace();
             return result;

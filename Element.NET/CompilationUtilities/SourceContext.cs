@@ -6,56 +6,6 @@ using Element.AST;
 
 namespace Element
 {
-    public readonly struct SourceInfo
-    {
-        public SourceInfo(string name, string text)
-        {
-            Name = name;
-            Text = text;
-        }
-        
-        public readonly string Name;
-        public readonly string Text;
-        
-        public (int Line, int Column, int LineCharacterIndex) CountLinesAndColumns(int index)
-        {
-            var line = 1;
-            var column = 1;
-            var lineCharacterIndex = 0;
-            for (var i = 0; i < index; i++)
-            {
-                if (Text[i] == '\r')
-                {
-                    line++;
-                    column = 1;
-                    lineCharacterIndex = 0;
-                    if (i + 1 < Text.Length && Text[i + 1] == '\n')
-                    {
-                        i++;
-                    }
-                }
-                else if (Text[i] == '\n')
-                {
-                    line++;
-                    column = 1;
-                    lineCharacterIndex = 0;
-                }
-                else if (Text[i] == '\t')
-                {
-                    column += 4;
-                    lineCharacterIndex++;
-                }
-                else
-                {
-                    column++;
-                    lineCharacterIndex++;
-                }
-            }
-
-            return (line, column, lineCharacterIndex);
-        }
-    }
-    
     public class SourceContext : Context
     {
         private SourceContext(CompilationInput compilationInput) : base(compilationInput) { }
@@ -106,13 +56,13 @@ namespace Element
                        : CompilationError.Instance;
         }
 
-        public TValue EvaluateExpressionAs<TValue>(string expression, out CompilationContext compilationContext)
-            where TValue : IValue
+        public TValue? EvaluateExpressionAs<TValue>(string expression, out CompilationContext compilationContext)
+            where TValue : class, IValue
         {
             var result = EvaluateExpression(expression, out compilationContext);
             if (result is TValue value) return value;
             compilationContext.LogError(16, $"'{result}' is not a '{typeof(TValue)}'");
-            return default!;
+            return null;
         }
 
         public bool LoadElementSourceString(SourceInfo info) => LoadElementSourceString(info, true);

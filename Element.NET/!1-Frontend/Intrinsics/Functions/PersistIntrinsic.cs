@@ -6,7 +6,7 @@ namespace Element.AST
             : base("persist", new[]
             {
                 new Port("initial", AnyConstraint.Instance),
-                new Port("body", FunctionType.Instance)
+                new Port("body", FunctionConstraint.Instance)
             }, Port.ReturnPort(AnyConstraint.Instance))
         { }
 

@@ -67,7 +67,7 @@ namespace Element
 					_ => context.LogError(18, $"Expected boolean token for element Bool parameter '{name}'").Return(0)
 				};
 			}
-			else if (type is DeclaredStruct declaredStruct)
+			else if (type is StructDeclaration declaredStruct)
 			{
 				JToken cValue = null;
 				(value as JObject)?.TryGetValue(name, out cValue);

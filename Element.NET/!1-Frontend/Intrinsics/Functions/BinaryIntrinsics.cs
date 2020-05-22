@@ -16,7 +16,7 @@ namespace Element.AST
             new Port("b", BoolType.Instance)
         };
         
-        public static readonly Dictionary<Binary.Op, (string Location, Port[] Inputs, IType Return)> OperationOverrides = new Dictionary<Binary.Op, (string Location, Port[] Inputs, IType Return)>
+        public static readonly Dictionary<Binary.Op, (string Location, Port[] Inputs, IIntrinsicType Return)> OperationOverrides = new Dictionary<Binary.Op, (string Location, Port[] Inputs, IIntrinsicType Return)>
         {
             {Binary.Op.And, ("Bool", _boolInputs, BoolType.Instance)},
             {Binary.Op.Or, ("Bool", _boolInputs, BoolType.Instance)},

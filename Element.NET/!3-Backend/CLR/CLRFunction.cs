@@ -260,13 +260,41 @@ namespace Element.CLR
 					throw new NotSupportedException();
 			}
 		}
-		
-		public static (TDelegate?, CompilationContext) Compile<TDelegate>(this SourceContext sourceContext, string functionExpression,
-		                                                                  IBoundaryConverter boundaryConverter = default)
-			where TDelegate : Delegate =>
-			sourceContext.EvaluateExpression(functionExpression, out var exprContext) is { } val
-				? Compile<TDelegate>(sourceContext, val, boundaryConverter)
-				: (null, exprContext);
+
+		/// <summary>
+		/// Replaces the inputs of a Function with expressions that map to a pre-allocated array.
+		/// This is useful for applications where the exact inputs may be unknown or user-defined.
+		/// </summary>
+		/// <remarks>
+		/// All the inputs to the function must be serializable and constant size (No dynamic lists).
+		/// </remarks>
+		/// <param name="function"></param>
+		/// <param name="array">The resultant pre-allocated array. The function inputs are mapped directly to its contents.</param>
+		/// <param name="context"></param>
+		/// <returns>The result of calling `function` with all its inputs, or compilation error where there was an error.</returns>
+		public static IValue SourceArgumentsFromSerializedArray(this IFunctionSignature function, out float[] array,
+		                                                        CompilationContext context)
+		{
+			var defaultValues = function.Inputs.Select(p => p.ResolveConstraint(context) switch
+			{
+				IType type => type.DefaultValue(context),
+				{} v => context.LogError(14, $"'{v}' is not a type - only types can produce a default value")
+			}).ToArray();
+
+			var argSizes = defaultValues.Select(t => t.SerializedSize(context)).ToArray();
+			var totalSerializedSize = argSizes.Sum();
+
+			// Now allocate the array, and make an argument list that uses it as data
+			array = new float[totalSerializedSize];
+
+			var arrayExpr = LinqExpression.Constant(array);
+			var flattenedValIdx = 0;
+
+			Expression NextValue() => (Expression) NumberConverter.Instance.LinqToElement(LinqExpression.ArrayIndex(arrayExpr, LinqExpression.Constant(flattenedValIdx++)), null!, context);
+			
+			var arguments = defaultValues.Select(v => v.Deserialize(NextValue, context)).ToArray();
+			return function.ResolveCall(arguments, false, context);
+		}
 
 		public static (TDelegate?, CompilationContext) Compile<TDelegate>(this SourceContext sourceContext, IValue value,
 		                                                                  IBoundaryConverter boundaryConverter = default)
@@ -345,7 +373,7 @@ namespace Element.CLR
 				{
 					case CompilationError _: return null;
 					case IConstraint c:
-						context.LogError(3, $"Cannot compile a <{c.Type}>: {c}");
+						context.LogError(3, $"Cannot compile a constraint '{c}'");
 						return null;
 				}
 
@@ -355,11 +383,14 @@ namespace Element.CLR
 					return null;
 				}
 
-				if(value.TrySerialize(out Expression[] expressions, context))
+				var serialized = (value as ISerializableValue)?.Serialize(context).ToArray() ?? null;
+				var serializedSuccessfully = serialized != null && !serialized.Any(s => s == CompilationError.Instance);
+
+				if (serializedSuccessfully)
 				{
-					if (expressions.Length == 1 && outputType == typeof(float))
+					if (serialized!.Length == 1 && outputType == typeof(float))
 					{
-						var expr = expressions.Single();
+						var expr = serialized[0];
 						expr = ConstantFolding.Optimize(expr, data.ConstantCache);
 						expr = CommonSubexpressionExtraction.OptimizeSingle(data.CSECache, expr);
 						return Compile(expr, data);
