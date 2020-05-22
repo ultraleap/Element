@@ -406,12 +406,12 @@ static element_result compile_call_experimental(
 
     if (our_scope->node->type == ELEMENT_AST_NODE_NAMESPACE)
     {
-        const bool has_child = callsite_node->parent
+        /*const bool has_child = callsite_node->parent
                             && callsite_node->parent->type == ELEMENT_AST_NODE_CALL;
 
         //Having a namespace that isn't being indexed is an error
         if (!has_child)
-            return ELEMENT_ERROR_UNKNOWN; //todo
+            return ELEMENT_ERROR_UNKNOWN; //todo*/
 
         //A namespace can index in to another namespace, but nothing else
         if (has_parent && parent_scope->node->type != ELEMENT_AST_NODE_NAMESPACE)
