@@ -166,14 +166,20 @@ static element_result compile_call_experimental(
     const element_scope* callsite_root,
     const element_ast* callsite_node,
     const element_scope*& callsite_current,
-    expression_shared_ptr& expr);
+    expression_shared_ptr& expr); //note: might contain an expression
 
 static element_result compile_call_experimental_function(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node,
+    const element_scope* parent_scope,
     const element_scope*& callsite_current,
-    expression_shared_ptr& expr);
+    expression_shared_ptr& expr); //note: might contain an expression
+
+static element_result compile_call_experimental_namespace(
+    const element_ast* callsite_node,
+    const element_scope* parent_scope,
+    const expression_shared_ptr& expr);
 
 static element_result compile_call_experimental_literal(
     element_compiler_ctx& ctx,
@@ -189,6 +195,33 @@ static element_result compile_call_experimental_literal(
 
     expr = std::make_shared<element_expression_constant>(callsite_node->literal);
     callsite_current = callsite_root->root()->lookup("Num", false); // HACK?
+    return ELEMENT_OK;
+}
+
+static element_result compile_call_experimental_namespace(
+    const element_ast* callsite_node,
+    const element_scope* parent_scope,
+    const expression_shared_ptr& expr)
+{
+    const bool has_parent = parent_scope;
+
+    //todo; re-enable one james has fixed the lack of parentage on these reversed call nodes
+    /*const bool has_child = callsite_node->parent
+                        && callsite_node->parent->type == ELEMENT_AST_NODE_CALL;
+
+    //Having a namespace that isn't being indexed is an error
+    if (!has_child)
+        return ELEMENT_ERROR_UNKNOWN; //todo*/
+
+    //A namespace can index in to another namespace, but nothing else
+    if (has_parent && parent_scope->node->type != ELEMENT_AST_NODE_NAMESPACE)
+        return ELEMENT_ERROR_UNKNOWN; //todo
+
+    //An expression implies something was compiled before getting to us, but that shouldn't be possible
+    if (expr)
+        return ELEMENT_ERROR_UNKNOWN; //todo
+
+    //Our scope has already been updated, so our child will index in to us correctly
     return ELEMENT_OK;
 }
 
@@ -231,8 +264,6 @@ static element_result compile_call_experimental_function(
     //Handle any arguments to this function call
     std::vector<expression_shared_ptr> args;
     const auto result = fill_args_from_callsite(args, ctx, callsite_root, callsite_node);
-    if (result != ELEMENT_OK)
-        int i = 0;
     assert(result == ELEMENT_OK); //todo
 
     //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
@@ -324,13 +355,16 @@ static element_result compile_call_experimental_function(
         assert(expr); //todo
 
         //todo: we don't update the scope, so if our parent is an intrinsic when indexing, it fails
+        callsite_current = nullptr; //we don't seem to be relying on this being valid right now, because no tests change as a result, but that might change in the future as other bugs are fixed
     }
     else if (fn && fn->is<element_type_ctor>()) {
         //todo: are the dependents always meant to be empty? should we not be calling compile_type_ctor?
         expr = std::shared_ptr<element_expression_structure>(new element_expression_structure({}));
         //todo: we don't update the scope, so the thing indexing in to us doesn't know what type this structure is
+        //This seems to be valid in some cases with numbers(or literals only?). i.e if we set it to nullptr, all tests fail, so we're relying on something here
     }
     else if (fn && fn->is<element_custom_function>()) {
+        //todo: understand this better
         ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, callsite_current, args, expr));
         auto btype = fn->type();
         const auto type = btype ? btype->output("return")->type : nullptr;
@@ -338,6 +372,7 @@ static element_result compile_call_experimental_function(
         if (ctype) {
             callsite_current = ctype->scope();
         }
+        //assert(ctype); it seems like the lack of ctype here is okay, our scope is something we can rely on even though we're not updating it?
     }
     else {
         assert(false); //todo
@@ -405,36 +440,20 @@ static element_result compile_call_experimental(
         return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, callsite_current, expr);
 
     if (our_scope->node->type == ELEMENT_AST_NODE_NAMESPACE)
-    {
-        /*const bool has_child = callsite_node->parent
-                            && callsite_node->parent->type == ELEMENT_AST_NODE_CALL;
-
-        //Having a namespace that isn't being indexed is an error
-        if (!has_child)
-            return ELEMENT_ERROR_UNKNOWN; //todo*/
-
-        //A namespace can index in to another namespace, but nothing else
-        if (has_parent && parent_scope->node->type != ELEMENT_AST_NODE_NAMESPACE)
-            return ELEMENT_ERROR_UNKNOWN; //todo
-
-        //An expression implies something was compiled before getting to us, but that shouldn't be possible
-        if (expr)
-            return ELEMENT_ERROR_UNKNOWN; //todo
-
-        //We've updated the scope above, so our child will index in to that scope
-        return ELEMENT_OK;
-    }
+        return compile_call_experimental_namespace(callsite_node, parent_scope, expr);
 
     //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
     if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
         expr = ctx.expr_cache.search(our_scope);
         //todo: we should update the current scope so we can do indexing with this expression
+        callsite_current = nullptr; //we're not relying on this right now because no tests fail as a result, but may not be the case when we fix other bugs
         if (expr)
             return ELEMENT_OK;
     }
 
     //Wasn't something we know about
     expr = nullptr; //probably unecessary
+    callsite_current = nullptr;
     assert(false);
     return ELEMENT_ERROR_UNKNOWN; //todo
 }
