@@ -246,6 +246,86 @@ static element_result fill_args_from_callsite(
     return ELEMENT_OK;
 };
 
+//This does a bunch of stuff to get the type that the constructor returns, but that seems unecessary, as callsite_current that our parent modified should already point to that structs scope
+static element_result compile_call_experimental_function_find_ourselves_when_parent_is_constructor(
+    const element_ast* callsite_node,
+    const element_scope* parent_scope,
+    const element_scope*& our_scope)
+{
+    const auto parent_as_function = parent_scope->function();
+    if (!parent_as_function) {
+        assert(false);
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    //the type of a custom function isn't something that could contain us
+    if (parent_as_function->is<element_custom_function>()) {
+        assert(false);
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    //the type of an intrinsic function isn't something that could contain us
+    if (parent_as_function->is<element_intrinsic>()) {
+        assert(false); 
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    //must be a constructor, maybe we missed a case
+    assert(parent_as_function->is<element_type_ctor>());
+
+    //the type of a constructor is the type that constructor creates
+    const auto type = parent_as_function->type();
+    assert(type);
+    const auto named_type = type->as<element_type_named>();
+    assert(named_type);
+
+    const element_scope* named_type_scope = named_type->scope();
+    assert(named_type_scope); //todo
+    assert(parent_scope == named_type_scope); //debug. This is at least true when dealing with literals/Num
+
+    assert(our_scope == named_type_scope->lookup(callsite_node->identifier, false)); //debug. //This is at least true when dealing with literals/Num, so this is all pointless for that case
+
+    //find ourselves in the struct
+    our_scope = named_type_scope->lookup(callsite_node->identifier, false);
+    assert(our_scope); //todo
+    return ELEMENT_OK;
+}
+
+//this does partial application of parent to arguments for this call. This only works when the parent is a constructor (including literals)
+static element_result compile_call_experimental_function_partial_application(
+    const element_scope* our_scope,
+    std::vector<expression_shared_ptr>& args,
+    const element_scope* parent_scope,
+    const expression_shared_ptr& compiled_parent)
+{
+    const auto parent_as_function = parent_scope->function();
+    if (!parent_as_function)
+        return ELEMENT_OK;
+
+    //We must be a constructor. This isn't true of course, since functions should be first-class in Element
+    assert(parent_as_function->is<element_type_ctor>());
+
+    //We must be a function for partial application to make sense
+    const auto fn = our_scope->function();
+    assert(fn); //todo, should be if, because if it's not a function then there's no partial application to do
+
+    //parent_scope should be the scope of the constructor, which has a type that is what the constructor generates
+    //in theory the parent_scope could be the scope of a function definition, in the situation where the user is not calling the function, but indexing its name
+    //We don't support that right now, but element probably does, as functions are first-class and can be passed around like anything else, so partial application is relevant here for them.
+    const auto parent_function_type = parent_scope->function()->type();
+
+    //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
+    const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
+    //One of the few places that does type checking in libelement?
+    const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(parent_function_type);
+    if (mising_one_argument && argument_one_matches_parent_type) {
+        args.insert(args.begin(), compiled_parent);
+    }
+
+    assert(fn->inputs().size() == args.size()); //todo
+    return ELEMENT_OK;
+}
+
 static element_result compile_call_experimental_function(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
@@ -258,6 +338,10 @@ static element_result compile_call_experimental_function(
         assert(false); //todo
         return ELEMENT_ERROR_UNKNOWN;
     }
+
+    //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore those here.
+    const bool has_compiled_parent = expr.get();
+    const auto compiled_parent = expr;
 
     const auto our_scope = callsite_current;
 
@@ -285,12 +369,7 @@ static element_result compile_call_experimental_function(
 
     //Now we've compiled any and all of our parents, and we've compiled any and all of our arguments
 
-    //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore those here.
-    const bool has_compiled_parent = expr.get();
-
     if (has_compiled_parent) {
-        const auto compiled_parent = expr;
-
         /* Compiling our parent resulted in a struct instance, so we index that instance with our name.
           This is struct instance indexing.
           The callsite_scope will be invalid, as we did a lookup of ourselves based on the scope our parent set.
@@ -299,6 +378,7 @@ static element_result compile_call_experimental_function(
         if (compiled_parent->is<element_expression_structure>()) {
             expr = compiled_parent->as<element_expression_structure>()->output(callsite_node->identifier);
 
+            //We found ourselves in the struct instance, so we have our expression. We can leave now.
             if (expr) {
                 //todo: understand what this does and document it
                 const auto result = place_args(expr, args);
@@ -306,45 +386,15 @@ static element_result compile_call_experimental_function(
                 return result;
             }
 
-            //We failed to find ourselves in the struct instance.
-            //todo: add fallback here if we can't find it in the struct instance, then we have to grab the parent scope as that is the struct declaration/body
-            //We fall back out. Does this cause the fallback for finding ourselves in the struct body?
+            //We failed to find ourselves in the struct instance. We fall back out and try something else.
         }
 
         //Our parent didn't compile to a struct instance, or it did and we couldn't find ourselves as a member of it.
-        //It was either a more complicated expression composed of intrinsics, a namespace, or a struct (e.g. Num.) ?
+        //Let's try and find ourselves in the struct, if our parent is a constructor. Will this work in the case of `instance = MyType(1)`?
+        compile_call_experimental_function_find_ourselves_when_parent_is_constructor(callsite_node, parent_scope, callsite_current);
 
-        const auto parent_as_function = parent_scope->function();
-
-        //this does partial application of parent to arguments for this call. This only works when the parent is a constructor (including literals)
-        //This does a bunch of stuff to get the type that the constructor returns, but that seems unecessary, as callsite_current that our parent modified should already point to that structs scope
-        if (parent_as_function) {
-            const auto parent_fn_type = parent_as_function->type(); //this doesn't work when it is a custom_function, which is good, yay
-            const auto parent_fn_type_named = parent_fn_type ? parent_fn_type->as<element_type_named>() : nullptr;
-
-            assert(parent_fn_type); //todo
-
-            const element_scope* parent_fn_type_scope = parent_fn_type_named->scope();
-            assert(parent_scope == parent_fn_type_scope); //debug. This is at least true when dealing with literals/Num
-            assert(parent_fn_type_scope); //todo
-
-            assert(callsite_current == parent_fn_type_scope->lookup(callsite_node->identifier, false)); //debug. //This is at least true when dealing with literals/Num, so this is all pointless for that case
-            callsite_current = parent_fn_type_scope->lookup(callsite_node->identifier, false);
-            assert(callsite_current); //todo
-
-            // found a function in type's scope. 
-            const auto fn = callsite_current->function();
-            assert(fn); //todo, should be if, because if it's not a function then there's no partial application to do
-            
-            //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
-            const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
-            const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(parent_fn_type);
-            if (mising_one_argument && argument_one_matches_parent_type) {
-                args.insert(args.begin(), compiled_parent);
-            }
-
-            assert(fn->inputs().size() == args.size()); //todo
-        }
+        //If our parent is 
+        compile_call_experimental_function_partial_application(our_scope, args, parent_scope, compiled_parent);
     }
 
     // TODO: temporary check if intrinsic
