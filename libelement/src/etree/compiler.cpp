@@ -168,13 +168,6 @@ static element_result compile_call_experimental(
     const element_scope*& callsite_current,
     expression_shared_ptr& expr);
 
-static element_result compile_call_experimental_namespace(
-    element_compiler_ctx& ctx,
-    const element_scope* callsite_root,
-    const element_ast* callsite_node,
-    const element_scope*& callsite_current,
-    expression_shared_ptr& expr);
-
 static element_result compile_call_experimental_function(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
@@ -192,7 +185,6 @@ static element_result compile_call_experimental_literal(
     if (callsite_node->type != ELEMENT_AST_NODE_LITERAL) {
         assert(false); //todo
         return ELEMENT_ERROR_UNKNOWN;
-        
     }
 
     expr = std::make_shared<element_expression_constant>(callsite_node->literal);
@@ -200,24 +192,32 @@ static element_result compile_call_experimental_literal(
     return ELEMENT_OK;
 }
 
-static element_result compile_call_experimental_namespace(
+static element_result fill_args_from_callsite(
+    std::vector<expression_shared_ptr>& args,
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
-    const element_ast* callsite_node,
-    const element_scope*& callsite_current,
-    expression_shared_ptr& expr)
+    const element_ast* callsite_node)
 {
-    if (callsite_node->type != ELEMENT_AST_NODE_CALL ||
-        callsite_current->node->type != ELEMENT_AST_NODE_NAMESPACE) {
-        assert(false); //todo
-        return ELEMENT_ERROR_UNKNOWN;
+    const bool calling_with_arguments = callsite_node->children.size() > ast_idx::call::args
+        && callsite_node->children[ast_idx::call::args]->type == ELEMENT_AST_NODE_EXPRLIST;
+
+    if (calling_with_arguments) {
+        const auto callargs_node = callsite_node->children[ast_idx::call::args].get();
+        args.resize(callargs_node->children.size());
+
+        //Compile all of the exprlist AST nodes and assign them to the arguments we're calling with
+        for (size_t i = 0; i < callargs_node->children.size(); ++i)
+            ELEMENT_OK_OR_RETURN(compile_expression(ctx, callsite_root, callargs_node->children[i].get(), args[i]));
     }
-}
+
+    return ELEMENT_OK;
+};
 
 static element_result compile_call_experimental_function(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node,
+    const element_scope* parent_scope,
     const element_scope*& callsite_current, //todo: rename, it's the indexing scope (of our parent), or our scope, or the scope we're being called from
     expression_shared_ptr& expr)
 {
@@ -228,54 +228,8 @@ static element_result compile_call_experimental_function(
 
     const auto our_scope = callsite_current;
 
-    //NOTE {2}: This looks like it can be simplified (see NOTE {1})
-    const bool has_parent = callsite_node->children.size() > ast_idx::call::parent && callsite_node->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
-    expression_shared_ptr compiled_parent;
-    if (has_parent) {
-        //We're starting from the right-most call in the source and found out that we have a parent
-        //Before we can start compiling this call, we need to find and compile our parent
-
-        //Our parent could be anything (namespace, struct instance, number, number literal)
-        //This will continue recursing until we're at the left-most call in the source (bottom of the AST)
-        const auto callsite_node_parent = callsite_node->children[ast_idx::call::parent].get();
-        const auto result = compile_call_experimental(ctx, callsite_root, callsite_node_parent, callsite_current, compiled_parent);
-        assert(result == ELEMENT_OK); //todo
-        assert(callsite_current != our_scope); //our parent m
-    }
-
-    const auto parent_scope = has_parent ? callsite_current : nullptr;
-
-    //We've now compiled any parents (if we had any parents), so let's find what this call was meant to be
-    //If we did have a parent then we don't want to recurse when doing the lookup, what we're looking for should be directly in that scope
-    //todo: For parents, this only works when the parent has updated its scope to be a valid index target, as we don't handle the return of a function call atm
-    assert(callsite_current); //todo
-    callsite_current = callsite_current->lookup(callsite_node->identifier, !has_parent);
-    assert(callsite_current); //todo
-
+    //Handle any arguments to this function call
     std::vector<expression_shared_ptr> args;
-
-    static const auto fill_args_from_callsite = [](
-        std::vector<expression_shared_ptr>& args,
-        element_compiler_ctx& ctx,
-        const element_scope* callsite_root,
-        const element_ast* callsite_node) -> element_result
-    {
-        const bool calling_with_arguments = callsite_node->children.size() > ast_idx::call::args
-            && callsite_node->children[ast_idx::call::args]->type == ELEMENT_AST_NODE_EXPRLIST;
-
-        if (calling_with_arguments) {
-            const auto callargs_node = callsite_node->children[ast_idx::call::args].get();
-            args.resize(callargs_node->children.size());
-
-            //Compile all of the exprlist AST nodes and assign them to the arguments we're calling with
-            for (size_t i = 0; i < callargs_node->children.size(); ++i)
-                ELEMENT_OK_OR_RETURN(compile_expression(ctx, callsite_root, callargs_node->children[i].get(), args[i]));
-        }
-
-        return ELEMENT_OK;
-    };
-
-    //Handle any arguments to this call (assuming it is a call to a function(and struct?), and not a namespace)
     const auto result = fill_args_from_callsite(args, ctx, callsite_root, callsite_node);
     assert(result == ELEMENT_OK); //todo
 
@@ -283,30 +237,41 @@ static element_result compile_call_experimental_function(
 
     //Now we've compiled any and all of our parents, and we've compiled any and all of our arguments
 
-    if (has_parent) {
+    //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore those here.
+    const bool has_compiled_parent = expr.get();
+
+    if (has_compiled_parent) {
+        const auto compiled_parent = expr;
+
+        /* Compiling our parent resulted in a struct instance, so we index that instance with our name.
+          This is struct instance indexing.
+          The callsite_scope will be invalid, as we did a lookup of ourselves based on the scope our parent set.
+          Struct instances don't have a scope in libelement, as a scope is somewhere in the source code.
+          Literals in source code are not struct instances. */
         if (compiled_parent->is<element_expression_structure>()) {
-            //Our parent resulted in a struct instance, so we index it with the name.
-            //This is struct instance indexing
             expr = compiled_parent->as<element_expression_structure>()->output(callsite_node->identifier);
 
+            if (expr) {
+                //todo: understand what this does and document it
+                const auto result = place_args(expr, args);
+                //todo: We need to update the current callsite for the thing indexing us, otherwise once we index a struct instance we're stuck unable to index unless we ourselves compile to a struct instance
+                return result;
+            }
+
+            //We failed to find ourselves in the struct instance.
             //todo: add fallback here if we can't find it in the struct instance, then we have to grab the parent scope as that is the struct declaration/body
-
-            assert(expr); //todo
-
-            //todo: understand what this does and document it
-            const auto result = place_args(expr, args);
-            //todo: do we need to update the current callsite for the thing indexing us?
-            return result;
+            //We fall back out. Does this cause the fallback for finding ourselves in the struct body?
         }
 
-        //Parent didn't compile to a structure.
+        //Our parent didn't compile to a struct instance, or it did and we couldn't find ourselves as a member of it.
         //It was either a more complicated expression composed of intrinsics, a namespace, or a struct (e.g. Num.) ?
-        
+
         const auto parent_as_function = parent_scope->function();
 
-        //this does partial application of parent to arguments for this call. This only works when the parent is a constructor
+        //this does partial application of parent to arguments for this call. This only works when the parent is a constructor (including literals)
+        //This does a bunch of stuff to get the type that the constructor returns, but that seems unecessary, as callsite_current that our parent modified should already point to that structs scope
         if (parent_as_function) {
-            const auto parent_fn_type = parent_scope->function()->type(); //this doesn't work when it is a custom_function, which is good, yay
+            const auto parent_fn_type = parent_as_function->type(); //this doesn't work when it is a custom_function, which is good, yay
             const auto parent_fn_type_named = parent_fn_type ? parent_fn_type->as<element_type_named>() : nullptr;
 
             assert(parent_fn_type); //todo
@@ -364,6 +329,31 @@ static element_result compile_call_experimental_function(
     return ELEMENT_OK;
 }
 
+static element_result compile_call_experimental_compile_parent(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    expression_shared_ptr& expr)
+{
+    const auto our_scope = callsite_current;
+    //NOTE {2}: This looks like it can be simplified (see NOTE {1})
+    const bool has_parent = callsite_node->children.size() > ast_idx::call::parent && callsite_node->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
+    if (!has_parent)
+        return ELEMENT_OK;
+
+    //We're starting from the right-most call in the source and found out that we have a parent
+    //Before we can start compiling this call, we need to find and compile our parent
+
+    //Our parent could be anything (namespace, struct instance, number, number literal)
+    //This will continue recursing until we're at the left-most call in the source (bottom of the AST)
+    const auto callsite_node_parent = callsite_node->children[ast_idx::call::parent].get();
+    const auto result = compile_call_experimental(ctx, callsite_root, callsite_node_parent, callsite_current, expr);
+    assert(result == ELEMENT_OK); //todo
+    assert(callsite_current != our_scope); //Our parent is done compiling, so it must update the scope we're indexing in to. This should happen for all situations.
+    return result;
+}
+
 static element_result compile_call_experimental(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
@@ -376,7 +366,53 @@ static element_result compile_call_experimental(
     if (callsite_node->type == ELEMENT_AST_NODE_LITERAL)
         return compile_call_experimental_literal(ctx, callsite_root, callsite_node, callsite_current, expr);
 
-    return compile_call_experimental_function(ctx, callsite_root, callsite_node, callsite_current, expr);
+    if (callsite_node->type != ELEMENT_AST_NODE_CALL)
+        return ELEMENT_ERROR_UNKNOWN;
+
+    const auto original_scope = callsite_current;
+    const bool has_parent = callsite_node->children.size() > ast_idx::call::parent
+                         && callsite_node->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
+    if (has_parent) {
+        const auto result = compile_call_experimental_compile_parent(ctx, callsite_root, callsite_node, callsite_current, expr);
+        assert(result == ELEMENT_OK);
+    }
+    const auto parent_scope = has_parent ? callsite_current : nullptr;
+
+    //We've now compiled any parents (if we had any parents), so let's find what this call was meant to be
+    //If we did have a parent then we don't want to recurse when doing the lookup, what we're looking for should be directly in that scope
+    //todo: For parents, this only works when the parent has updated its scope to be a valid index target, as we don't handle the return of a function call atm
+    assert(callsite_current); //todo
+    callsite_current = callsite_current->lookup(callsite_node->identifier, !has_parent);
+    const auto our_scope = callsite_current;
+    assert(callsite_current); //todo
+
+    if (our_scope->function())
+        return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, callsite_current, expr);
+
+    if (our_scope->node->type == ELEMENT_AST_NODE_NAMESPACE)
+    {
+        const bool has_child = callsite_node->parent
+                            && callsite_node->parent->type == ELEMENT_AST_NODE_CALL;
+
+        //Having a namespace that isn't being indexed is an error
+        if (!has_child)
+            return ELEMENT_ERROR_UNKNOWN; //todo
+
+        //A namespace can index in to another namespace, but nothing else
+        if (has_parent && parent_scope->node->type != ELEMENT_AST_NODE_NAMESPACE)
+            return ELEMENT_ERROR_UNKNOWN; //todo
+
+        //An expression implies something was compiled before getting to us, but that shouldn't be possible
+        if (expr)
+            return ELEMENT_ERROR_UNKNOWN; //todo
+
+        //We've updated the scope above, so our child will index in to that scope
+        return ELEMENT_OK;
+    }
+
+    //Wasn't something we know about
+    expr = nullptr; //probably unecessary
+    return ELEMENT_ERROR_UNKNOWN; //todo
 }
 
 static element_result compile_call(
