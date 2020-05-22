@@ -231,9 +231,26 @@ static element_result compile_call_experimental_function(
     //Handle any arguments to this function call
     std::vector<expression_shared_ptr> args;
     const auto result = fill_args_from_callsite(args, ctx, callsite_root, callsite_node);
+    if (result != ELEMENT_OK)
+        int i = 0;
     assert(result == ELEMENT_OK); //todo
 
-    //todo: add to expression cache
+    //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
+    assert(args.empty() || (our_scope->function() && our_scope->function()->inputs().size() >= args.size()));
+    auto frame = ctx.expr_cache.add_frame(); //frame is popped when it goes out of scope
+    for (size_t i = 0; i < args.size(); ++i) {
+        const element_scope* input_scope = our_scope->lookup(our_scope->function()->inputs()[i].name, false);
+        ctx.expr_cache.add(input_scope, args[i]);
+    }
+
+    //todo: I believe this is seeing if this function was compiled previously when resolving the inputs to another function
+    //todo: This doesn't update the fnscope if it's found, which seems to be part of the reason why indexing has issues
+
+    const auto found_expr = ctx.expr_cache.search(our_scope);
+    if (found_expr) {
+        expr = found_expr;
+        return ELEMENT_OK;
+    }
 
     //Now we've compiled any and all of our parents, and we've compiled any and all of our arguments
 
@@ -361,8 +378,6 @@ static element_result compile_call_experimental(
     const element_scope*& callsite_current,
     expression_shared_ptr& expr)
 {
-    assert(!expr);
-
     if (callsite_node->type == ELEMENT_AST_NODE_LITERAL)
         return compile_call_experimental_literal(ctx, callsite_root, callsite_node, callsite_current, expr);
 
@@ -410,8 +425,17 @@ static element_result compile_call_experimental(
         return ELEMENT_OK;
     }
 
+    //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
+    if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
+        expr = ctx.expr_cache.search(our_scope);
+        //todo: we should update the current scope so we can do indexing with this expression
+        if (expr)
+            return ELEMENT_OK;
+    }
+
     //Wasn't something we know about
     expr = nullptr; //probably unecessary
+    assert(false);
     return ELEMENT_ERROR_UNKNOWN; //todo
 }
 
