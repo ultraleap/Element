@@ -15,36 +15,16 @@ namespace Element.AST
 
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
         {
-            var funcArgs = arguments.Skip(1).ToArray();
-            if (funcArgs.Any(v => v is IFunctionSignature fn && fn.Inputs.Length > 0))
-            {
-                return compilationContext.LogError(14, "Memberwise cannot operate on member functions with inputs");
-            }
+            var func = (IFunctionSignature)arguments[0];
+            var structs = arguments.Skip(1).Select(arg => arg as StructInstance).ToArray();
+            if (structs.Any(s => s == null)) return compilationContext.LogError(8, "Memberwise can only be applied to struct instances");
+            if (structs.Length < 1) return compilationContext.LogError(8, "Memberwise requires at least 1 struct to apply the given function");
+            var structType = structs[0]!.DeclaringStruct;
+            if (structType.Fields.Any(f => !f.Identifier.HasValue)) return compilationContext.LogError(8, "Memberwise cannot be applied to structs with ");
+            if (structs.Any(s => s!.DeclaringStruct != structType)) return compilationContext.LogError(8, "Memberwise can only be applied to struct instances of the same type");
 
-
-            /*var type = funcArgs[0].Type;
-            if (funcArgs.Any(v => v.Type != type))
-            {
-                return compilationContext.LogError(14, "Arguments to memberwise must be homogeneous (all of same type)");
-            }
-
-            var func = arguments[0] as IFunctionSignature;
-            if (type == NumType.Instance)
-            {
-                return func.ResolveCall(funcArgs, false, compilationContext);
-            }
-
-            // TODO: Needs to return anonymous scope, not a struct instance! This currently only works when the function outputs the same type as the inputs, e.g. (Vec3, Vec3) -> Vec3
-            if (type is StructDeclaration declaredStruct)
-            {
-                return declaredStruct.CreateInstance(((IFunctionSignature)declaredStruct).Inputs
-                                                               .Select(p => func.ResolveCall(funcArgs.Cast<StructInstance>()
-                                                                                                     .Select(inst => inst[p.Identifier.Value, false, compilationContext])
-                                                                                                     .ToArray(), false, compilationContext))
-                                                               .ToArray());
-            }*/
-
-            return compilationContext.LogError(14, "Arguments to memberwise must be constants or struct instances");
+            IValue ApplyFuncToMemberPair(Port p) => func.ResolveCall(structs.Select(inst => inst![p.Identifier!.Value, false, compilationContext]).ToArray(), false, compilationContext);
+            return structType.CreateInstance(structType.Fields.Select(ApplyFuncToMemberPair).ToArray());
         }
     }
 }

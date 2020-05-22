@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Element.AST
 {
     // ReSharper disable once ClassNeverInstantiated.Global
@@ -25,6 +27,10 @@ namespace Element.AST
         }
 
         public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value is StructInstance instance && instance.DeclaringStruct == this;
+        public override ISerializableValue DefaultValue(CompilationContext context) =>
+            CreateInstance(Fields.Select(f => (f.ResolveConstraint(context) as IType ??
+                                               context.LogError(14, $"'{f}' is not a type - only types can produce a default value"))
+                                             .DefaultValue(context)).ToArray());
 
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => CreateInstance(arguments);
     }

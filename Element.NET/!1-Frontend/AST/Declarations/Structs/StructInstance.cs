@@ -8,14 +8,13 @@ namespace Element.AST
     {
         public StructDeclaration DeclaringStruct { get; }
 
-        public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
+        public override IValue this[Identifier id, bool recurse, CompilationContext compilationContext] =>
             IndexCache(id)
             ?? DeclaringStruct.ResolveInstanceFunction(id, this, compilationContext);
 
-        public StructInstance(StructDeclaration declaringStruct, Port[] inputs, IValue[] memberValues)//, IType? instanceType = default)
+        public StructInstance(StructDeclaration declaringStruct, Port[] inputs, IValue[] memberValues)
         {
             DeclaringStruct = declaringStruct;
-            //Type = instanceType ?? declaringStruct;
             SetRange(memberValues.WithoutDiscardedArguments(inputs));
         }
 

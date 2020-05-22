@@ -96,7 +96,7 @@ namespace Element.CLR
             return declaredStruct.CreateInstance(_elementToClrFieldMapping.Select(pair => new MemberExpression(root, parameter, pair.Value)).ToArray());
         }
 
-        private class MemberExpression : IFunction
+        private class MemberExpression : Expression, ICLRExpression, IFunction
         {
             private readonly LExpression _parameter;
             private readonly IBoundaryConverter _root;
@@ -107,11 +107,18 @@ namespace Element.CLR
                 _root = root;
                 _parameter = parameter;
                 _clrField = clrField;
+                Inputs = Array.Empty<Port>();
+                Output = Port.ReturnPort(AnyConstraint.Instance);
+                Dependent = Array.Empty<Expression>();
             }
 
-            IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
-            Port[] IFunctionSignature.Inputs { get; } = Array.Empty<Port>();
-            Port IFunctionSignature.Output { get; } = Port.ReturnPort(AnyConstraint.Instance);
+            public LExpression Compile(Func<Expression, LExpression> compileOther) =>
+                LExpression.PropertyOrField(_parameter, _clrField);
+            public override IEnumerable<Expression> Dependent { get; }
+            protected override string ToStringInternal() => $"{_parameter}.{_clrField}";
+            public Port[] Inputs { get; }
+            public Port Output { get; }
+            public IFunctionSignature GetDefinition(CompilationContext compilationContext) => this;
             public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
                 _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, compilationContext);
         }

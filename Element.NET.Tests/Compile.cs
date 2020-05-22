@@ -46,8 +46,8 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         private TDelegate CompileAs<TDelegate>(SourceContext context, string expression, out float[] arguments) where TDelegate : Delegate
         {
             var function = context.EvaluateExpressionAs<IFunctionSignature>(expression, out var compilationContext);
-            function.SourceArgumentsFromSerializedArray(out arguments, compilationContext);
-            var (fn, _) = context.Compile<TDelegate>(function);
+            var fnWithSourcedArgs = function.SourceArgumentsFromSerializedArray(out arguments, compilationContext);
+            var (fn, _) = context.Compile<TDelegate>(fnWithSourcedArgs);
             return fn;
         }
         

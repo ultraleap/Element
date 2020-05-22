@@ -16,13 +16,10 @@ namespace Element.AST
         public IEnumerator<IValue> GetEnumerator() => Child?.GetEnumerator() ?? Enumerable.Empty<IValue>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public ISerializableValue DefaultValue(CompilationContext context) =>
-            CreateInstance(Fields.Select(f => (f.ResolveConstraint(context) as IType ??
-                                               context.LogError(14, $"'{f}' is not a type - only types can produce a default value"))
-                                             .DefaultValue(context)).ToArray());
 
         Port[] IFunctionSignature.Inputs => DeclaredInputs;
         Port IFunctionSignature.Output => Port.ReturnPort(this);
+        public abstract ISerializableValue DefaultValue(CompilationContext context);
         public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
 
         public abstract bool MatchesConstraint(IValue value, CompilationContext compilationContext);
@@ -37,7 +34,7 @@ namespace Element.AST
                 _ => compilationContext.LogError(7, $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>")
             };
 
-        public StructInstance CreateInstance(IValue[] members/*, IType? instanceType = default*/) => new StructInstance(this, DeclaredInputs, members/*, instanceType*/);
+        public StructInstance CreateInstance(IValue[] members) => new StructInstance(this, DeclaredInputs, members);
         IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
     }
 }

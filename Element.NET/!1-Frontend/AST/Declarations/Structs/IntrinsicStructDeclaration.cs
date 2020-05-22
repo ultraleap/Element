@@ -23,6 +23,7 @@ namespace Element.AST
         }
 
         public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(compilationContext).MatchesConstraint(value, compilationContext);
+        public override ISerializableValue DefaultValue(CompilationContext context) => ImplementingIntrinsic<IType>(context).DefaultValue(context);
         public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => ImplementingIntrinsic<IFunction>(compilationContext).Call(arguments, compilationContext);
     }
 }

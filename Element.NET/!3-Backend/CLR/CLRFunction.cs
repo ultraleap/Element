@@ -329,30 +329,27 @@ namespace Element.CLR
                 context.LogError(10, $"{delegateType} cannot have out parameters and must have non-void return type");
                 return (null, context);
             }
+            
+            // Create parameter expressions
+            var parameterExpressions = delegateParameters.Select(p => LinqExpression.Parameter(p.ParameterType, p.Name)).ToArray();
+            var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
+            
             if (value is IFunctionSignature fn && fn.Inputs.Length != delegateParameters.Length)
             {
 	            context.LogError(10, "Mismatch in number of parameters between delegate type and the function being compiled");
 	            return (null, context);
             }
-
-            // Create parameter expressions
-            var parameterExpressions = delegateParameters.Select(p => LinqExpression.Parameter(p.ParameterType, p.Name)).ToArray();
-            var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
-
-            var reducedExpression = value switch
-            {
-	            IFunctionSignature functionSignature => functionSignature.ResolveCall(
-		            functionSignature.Inputs.Select((f, idx) =>
-		                             {
-			                             var p = parameterExpressions[idx];
-			                             return p == null
-				                                    ? context.LogError(10, $"Unable to bind {functionSignature}'s input {f} - there is a mismatch in number of ports")
-				                                    : boundaryConverter.LinqToElement(p, boundaryConverter, context);
-		                             }).ToArray(), false, context),
-	            Expression expr => expr,
-	            _ => context.LogError(3, $"'{value}' is not compilable")
-            };
+            
+            var outputExpression = value is IFunctionSignature functionSignature
+	                                   ? functionSignature.ResolveCall(functionSignature.Inputs.Select((f, idx) =>
+	                                   {
+		                                   var p = parameterExpressions[idx];
+		                                   return p == null
+			                                          ? context.LogError(10, $"Unable to bind {functionSignature}'s input {f} - there is a mismatch in number of ports")
+			                                          : boundaryConverter.LinqToElement(p, boundaryConverter, context);
+	                                   }).ToArray(), false, context)
+	                                   : value;
 
             var data = new CompilationData
             {
@@ -410,8 +407,8 @@ namespace Element.CLR
 				return retval;
 			}
 
-            var outputExpression = boundaryConverter.ElementToLinq(reducedExpression, returnExpression.Type, ConvertFunction, context);
-            var outputAssign = LinqExpression.Assign(returnExpression, outputExpression);
+            var convertedOutputExpression = boundaryConverter.ElementToLinq(outputExpression, returnExpression.Type, ConvertFunction, context);
+            var outputAssign = LinqExpression.Assign(returnExpression, convertedOutputExpression);
             
 	        data.Variables.Add(returnExpression);
 	        data.Statements.Add(outputAssign);
