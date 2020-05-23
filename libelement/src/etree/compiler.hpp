@@ -4,6 +4,13 @@
 #include "ast/ast_internal.hpp"
 #include "interpreter_internal.hpp"
 
+struct expression_and_constraint
+{
+    expression_shared_ptr expression;
+    constraint_const_shared_ptr constraint;
+};
+
+using expression_and_constraint_shared = std::shared_ptr<expression_and_constraint>;
 
 struct expression_cache
 {
@@ -19,11 +26,11 @@ struct expression_cache
 
     expression_cache() { m_cache.resize(1); }
 
-    void add(const element_scope* scope, expression_shared_ptr expr) { m_cache.back()[scope] = expr; }
+    void add(const element_scope* scope, expression_and_constraint_shared expr) { m_cache.back()[scope] = expr; }
 
     frame add_frame() { return frame(*this); }
 
-    expression_shared_ptr search(const element_scope* scope) const
+    expression_and_constraint_shared search(const element_scope* scope) const
     {
         for (auto it = m_cache.rbegin(); it != m_cache.rend(); ++it) {
             auto mit = it->find(scope);
@@ -34,7 +41,7 @@ struct expression_cache
     }
 
 private:
-    std::vector<std::unordered_map<const element_scope*, expression_shared_ptr>> m_cache;
+    std::vector<std::unordered_map<const element_scope*, expression_and_constraint_shared>> m_cache;
 
     void push_frame() { m_cache.emplace_back(); }
     void pop_frame() { m_cache.pop_back(); }
