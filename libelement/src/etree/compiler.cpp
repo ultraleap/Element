@@ -101,7 +101,7 @@ static element_result compile_expression(
 static element_result compile_custom_fn_scope(
     element_compiler_ctx& ctx,
     const element_scope* scope,
-    std::vector<expression_and_constraint_shared> inputs,
+    std::vector<expression_and_constraint_shared> args,
     expression_shared_ptr& expr,
     constraint_const_shared_ptr& expr_constraint)
 {
@@ -122,19 +122,39 @@ static element_result compile_custom_fn_scope(
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
     }
 
+    const auto fn = scope->function();
     //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
-    assert(scope->function() && scope->function()->inputs().size() >= inputs.size());
+    assert(fn && fn->inputs().size() >= args.size());
     auto frame = ctx.expr_cache.add_frame();
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        const element_scope* input_scope = scope->lookup(scope->function()->inputs()[i].name, false);
-        ctx.expr_cache.add(input_scope, inputs[i]);
+    for (size_t i = 0; i < args.size(); ++i) {
+        const auto& parameter = fn->inputs()[i];
+
+        if (!parameter.type->is_satisfied_by(args[i]->constraint)) {
+            return ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED; //todo: logging
+        }
+
+        const element_scope* input_scope = scope->lookup(parameter.name, false);
+        ctx.expr_cache.add(input_scope, args[i]);
     }
 
     // find output
     // output is a function that's always present in the body of a function/lambda, representing what it returns
     const element_scope* output = scope->lookup("return", false);
-    if (output)
-        return compile_expression(ctx, output, output->node, expr, expr_constraint);
+    if (output) {
+        const auto result = compile_expression(ctx, output, output->node, expr, expr_constraint);
+        if (result != ELEMENT_OK)
+            return result;
+
+        const auto& fn_type = fn->type();
+        const auto fn_body = fn->type()->output("return");
+        assert(fn_body); //todo: is it possible for a function to not have a "return" output? I don't think so. generate_port_cache doesn't seem to exclude "return"
+
+        const auto& fn_return_type = fn_body->type;
+        if (!fn_return_type->is_satisfied_by(expr_constraint))
+            return ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED; //todo: logging
+
+        return ELEMENT_OK;
+    }
 
     ctx.ictx.logger->log(ctx, ELEMENT_ERROR_INVALID_OPERATION,
         fmt::format("Tried to find return scope in function scope {} and failed.", scope->name),
@@ -377,10 +397,20 @@ static element_result compile_call_experimental_function(
     assert(result == ELEMENT_OK); //todo
 
     //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
-    assert(args.empty() || (our_scope->function() && our_scope->function()->inputs().size() >= args.size()));
+    const auto& fn = our_scope->function();
+    assert(fn);
+
+    //todo: DRY
+    assert(args.empty() || (fn->inputs().size() >= args.size()));
     auto frame = ctx.expr_cache.add_frame(); //frame is popped when it goes out of scope
     for (size_t i = 0; i < args.size(); ++i) {
-        const element_scope* input_scope = our_scope->lookup(our_scope->function()->inputs()[i].name, false);
+        const auto& parameter = fn->inputs()[i];
+
+        if (!parameter.type->is_satisfied_by(args[i]->constraint)) {
+            return ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED; //todo: logging
+        }
+
+        const element_scope* input_scope = our_scope->lookup(parameter.name, false);
         ctx.expr_cache.add(input_scope, args[i]);
     }
 
@@ -390,9 +420,7 @@ static element_result compile_call_experimental_function(
     const auto found_expr = ctx.expr_cache.search(our_scope); //todo: rename to compilation cache
     if (found_expr) {
         expr = found_expr->expression;
-        expr_constraint = element_constraint::any; //todo: neither the expr_cache nor the args-related code handles types yet
-        if (expr->is<element_expression_binary>() || expr->is<element_expression_unary>() || expr->is<element_expression_constant>())
-            expr_constraint = element_type::num; //todo: this won't always be true, just a quick hack, we need to add support for the constraint to the expression cache
+        expr_constraint = found_expr->constraint;
         return ELEMENT_OK;
     }
 
@@ -428,7 +456,6 @@ static element_result compile_call_experimental_function(
 
     // TODO: temporary check if intrinsic
     //todo: why is this temporary?
-    const auto fn = callsite_current->function();
     if (fn && fn->is<element_intrinsic>()) {
         expr = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
         expr_constraint = fn->type()->output("return")->type; //todo: this just gets the type as declared in source, which is fine when it's Num, but otherwise won't really work. expr_constraint should be determined from generate_intrinsic_expression. Do all intrinsics return numbers? unlikely
@@ -547,11 +574,9 @@ static element_result compile_call_experimental(
     //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
     if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
         const auto found_expr = ctx.expr_cache.search(our_scope); //todo: rename to compilation cache
-        expr = found_expr->expression;
-        if (expr) {
-            expr_constraint = element_constraint::any; //todo: neither the expr_cache nor the args-related code handles types yet
-            if (expr->is<element_expression_binary>() || expr->is<element_expression_unary>() || expr->is<element_expression_constant>())
-                expr_constraint = element_type::num; //todo: this won't always be true, just a quick hack, we need to add support for the constraint to the expression cache
+        if (found_expr) {
+            expr = found_expr->expression;
+            expr_constraint = found_expr->constraint;
             return ELEMENT_OK;
         }
     }
@@ -632,7 +657,7 @@ static element_result element_compile(
         //todo: do this for all cases, not just custom function
         constraint_const_shared_ptr expr_constraint = element_constraint::any;
         auto result = compile_custom_fn(cctx, fn, std::move(inputs), expr, expr_constraint);
-        //todo: check the expr_constraint matches the constraint of the function we're compiling
+        //todo: check the expr_constraint matches the constraint of the function (probably `evaluate` if CLI) we're compiling, but only if result is OK
         return result;
     } else {
         assert(false);
