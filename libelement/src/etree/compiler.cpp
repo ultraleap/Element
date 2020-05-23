@@ -129,7 +129,8 @@ static element_result compile_custom_fn_scope(
     for (size_t i = 0; i < args.size(); ++i) {
         const auto& parameter = fn->inputs()[i];
 
-        if (!parameter.type->is_satisfied_by(args[i]->constraint)) {
+        //todo: it seems like a parameters type can be empty in some situations, figure out why and if it's a problem or if it's equivelant to being Any (which is how I'm treating it right now)
+        if (parameter.type && !parameter.type->is_satisfied_by(args[i]->constraint)) {
             return ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED; //todo: logging
         }
 
@@ -406,7 +407,8 @@ static element_result compile_call_experimental_function(
     for (size_t i = 0; i < args.size(); ++i) {
         const auto& parameter = fn->inputs()[i];
 
-        if (!parameter.type->is_satisfied_by(args[i]->constraint)) {
+        //todo: it seems like a parameters type can be empty in some situations, figure out why and if it's a problem or if it's equivelant to being Any (which is how I'm treating it right now)
+        if (parameter.type && !parameter.type->is_satisfied_by(args[i]->constraint)) {
             return ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED; //todo: logging
         }
 
