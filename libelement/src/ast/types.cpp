@@ -116,26 +116,32 @@ void element_type_named::generate_ports_cache() const
     const element_ast* node = m_scope->node;
     assert(node);
 
-    //todo: when is a type not a struct?
+    //todo: when is a named type not a struct?
     if (node->type != ELEMENT_AST_NODE_STRUCT)
         return;
 
     if (ast_node_struct_has_body(node)) {
-        //todo: do structs without scoped bodies, still have a child? do they generate this node?
-        assert(ast_node_struct_get_body(node)->type == ELEMENT_AST_NODE_SCOPE);
-
         for (auto& [child_name, child_scope] : m_scope->children) {
+            //todo: a bit of a hack. a structs "return" scope is there so it can be used with compile_custom_fn_scope I guess? but does it also need to be part of the types output?
             const auto child_function = child_scope->function();
             m_outputs.emplace_back(port_info{ child_name, child_function ? child_function->type() : nullptr }); //TODO: CPP20 - emplace_back can use aggregate initialization
         }
     }
 
     const element_ast* decl = ast_node_struct_get_declaration(node);
+    if (ast_node_declaration_has_inputs(decl)) {
+        const element_ast* inputs = ast_node_declaration_get_inputs(decl);
+
+        if (inputs->type == ELEMENT_AST_NODE_PORTLIST) {
+            m_inputs = generate_portlist(m_scope, inputs);
+        }
+    }
+
     if (ast_node_declaration_has_outputs(decl)) {
         const element_ast* outputs = ast_node_declaration_get_outputs(decl);
 
         if (outputs->type == ELEMENT_AST_NODE_PORTLIST) {
-            m_outputs = generate_portlist(m_scope, outputs);
+            m_outputs = generate_portlist(m_scope, outputs); //todo: is this valid? does it work?
         } else if (outputs->type == ELEMENT_AST_NODE_TYPENAME) {
             m_outputs.emplace_back(port_info{ "return", find_typename(m_scope, outputs) }); //TODO: CPP20 - emplace_back can use aggregate initialization
         }
