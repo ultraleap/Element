@@ -370,6 +370,8 @@ static element_result compile_call_experimental_function(
     if (found_expr) {
         expr = found_expr;
         expr_constraint = element_constraint::any; //todo: neither the expr_cache nor the args-related code handles types yet
+        if (expr->is<element_expression_binary>() || expr->is<element_expression_unary>() || expr->is<element_expression_constant>())
+            expr_constraint = element_type::num; //todo: this won't always be true, just a quick hack, we need to add support for the constraint to the expression cache
         return ELEMENT_OK;
     }
 
@@ -495,17 +497,16 @@ static element_result compile_call_experimental(
     if (callsite_current) {
         callsite_current = callsite_current->lookup(callsite_node->identifier, !has_parent);
 
-        //We weren't in our parents scope, so our parent was a function call of some kind
-        if (!callsite_current) {
-            if (parent_scope && parent_scope->function()->is<element_intrinsic>()){
-                if (expr_constraint->is<element_type>()
-                    && expr_constraint->as<element_type>() == element_type::num.get())
-                {
-                    callsite_current = parent_scope->root()->lookup("Num", false);
-                    assert(callsite_current); //we failed to find Num in source, but we're indexing in to a number. You can't index in to a number without the Num intrinsic, so this is a user error
-                    callsite_current = callsite_current->lookup(callsite_node->identifier, false); //Now we can find ourselves within Num
-                    assert(callsite_current); //we failed to find ourselves in Num, some kind of error
-                }
+        //We couldn't find ourselves but we do have a parent, so let's try indexing the constraint in case we're part of a struct body
+        if (!callsite_current && has_parent) {
+            //we only support numbers for now
+            if (expr_constraint->is<element_type>()
+                && expr_constraint->as<element_type>() == element_type::num.get())
+            {
+                callsite_current = parent_scope->root()->lookup("Num", false);
+                assert(callsite_current); //we failed to find Num in source, but we're indexing in to a number. You can't index in to a number without the Num intrinsic, so this is a user error
+                callsite_current = callsite_current->lookup(callsite_node->identifier, false); //Now we can find ourselves within Num
+                assert(callsite_current); //we failed to find ourselves in Num, some kind of error
             }
         }
     }
@@ -524,10 +525,12 @@ static element_result compile_call_experimental(
     //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
     if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
         expr = ctx.expr_cache.search(our_scope);
-        //todo: we should update the current scope so we can do indexing with this expression
-        callsite_current = nullptr; //we're not relying on this right now because no tests fail as a result, but may not be the case when we fix other bugs
-        if (expr)
+        if (expr) {
+            expr_constraint = element_constraint::any; //todo: neither the expr_cache nor the args-related code handles types yet
+            if (expr->is<element_expression_binary>() || expr->is<element_expression_unary>() || expr->is<element_expression_constant>())
+                expr_constraint = element_type::num; //todo: this won't always be true, just a quick hack, we need to add support for the constraint to the expression cache
             return ELEMENT_OK;
+        }
     }
 
     //Wasn't something we know about
