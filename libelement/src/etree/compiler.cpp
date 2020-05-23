@@ -260,6 +260,9 @@ static element_result compile_call_experimental_function_find_ourselves_when_par
     const element_scope* parent_scope,
     const element_scope*& our_scope)
 {
+    if (our_scope && our_scope->name == callsite_node->identifier)
+        return ELEMENT_OK; //we already found ourselves
+
     const auto parent_as_function = parent_scope->function();
     if (!parent_as_function) {
         assert(false);
@@ -307,26 +310,17 @@ static element_result compile_call_experimental_function_partial_application(
     const expression_shared_ptr& compiled_parent,
     const constraint_const_shared_ptr& compiled_parent_constraint)
 {
-    const auto parent_as_function = parent_scope->function();
-    if (!parent_as_function)
-        return ELEMENT_OK;
-
-    //We must be a constructor. This isn't true of course, since functions should be first-class in Element
-    assert(parent_as_function->is<element_type_ctor>());
+    if (!compiled_parent)
+        return ELEMENT_OK; //without a compiled parent, there's nothing to do partial application with. todo: check that the argument counts are still correct in this situation
 
     //We must be a function for partial application to make sense
     const auto fn = our_scope->function();
     assert(fn); //todo, should be if, because if it's not a function then there's no partial application to do
 
-    //parent_scope should be the scope of the constructor, which has a type that is what the constructor generates
-    //in theory the parent_scope could be the scope of a function definition, in the situation where the user is not calling the function, but indexing its name
-    //We don't support that right now, but element probably does, as functions are first-class and can be passed around like anything else, so partial application is relevant here for them.
-    const auto parent_function_type = parent_scope->function()->type();
-
     //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
     const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
     //One of the few places that does type checking in libelement?
-    const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(parent_function_type);
+    const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(compiled_parent_constraint);
     if (mising_one_argument && argument_one_matches_parent_type) {
         args.insert(args.begin(), compiled_parent);
     }
@@ -414,10 +408,9 @@ static element_result compile_call_experimental_function(
     const auto fn = callsite_current->function();
     if (fn && fn->is<element_intrinsic>()) {
         expr = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
+        expr_constraint = fn->type()->output("return")->type; //todo: this just gets the type as declared in source, which is fine when it's Num, but otherwise won't really work. expr_constraint should be determined from generate_intrinsic_expression. Do all intrinsics return numbers? unlikely
+        //callsite_current remains unchanged, should continue pointing to the intrinsic function
         assert(expr); //todo
-
-        //todo: we don't update the scope, so if our parent is an intrinsic when indexing, it fails
-        callsite_current = nullptr; //we don't seem to be relying on this being valid right now, because no tests change as a result, but that might change in the future as other bugs are fixed
     }
     else if (fn && fn->is<element_type_ctor>()) {
         //todo: are the dependents always meant to be empty? should we not be calling compile_type_ctor?
@@ -498,13 +491,32 @@ static element_result compile_call_experimental(
     //We've now compiled any parents (if we had any parents), so let's find what this call was meant to be
     //If we did have a parent then we don't want to recurse when doing the lookup, what we're looking for should be directly in that scope
     //todo: For parents, this only works when the parent has updated its scope to be a valid index target, as we don't handle the return of a function call atm
-    assert(callsite_current); //todo
-    callsite_current = callsite_current->lookup(callsite_node->identifier, !has_parent);
-    const auto our_scope = callsite_current;
-    assert(callsite_current); //todo
+    //callsite_current could be null if our parent was a dependent in an element_structure, since struct instances have no scope
+    if (callsite_current) {
+        callsite_current = callsite_current->lookup(callsite_node->identifier, !has_parent);
 
-    if (our_scope->function())
+        //We weren't in our parents scope, so our parent was a function call of some kind
+        if (!callsite_current) {
+            if (parent_scope && parent_scope->function()->is<element_intrinsic>()){
+                if (expr_constraint->is<element_type>()
+                    && expr_constraint->as<element_type>() == element_type::num.get())
+                {
+                    callsite_current = parent_scope->root()->lookup("Num", false);
+                    assert(callsite_current); //we failed to find Num in source, but we're indexing in to a number. You can't index in to a number without the Num intrinsic, so this is a user error
+                    callsite_current = callsite_current->lookup(callsite_node->identifier, false); //Now we can find ourselves within Num
+                    assert(callsite_current); //we failed to find ourselves in Num, some kind of error
+                }
+            }
+        }
+    }
+
+    const auto our_scope = callsite_current;
+
+    //if our_scope was null then our parent could be something else, which requires a different method of finding ourselves, but that's done in compile_call_experimental_function
+    if (our_scope == nullptr || our_scope->function())
         return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, callsite_current, expr, expr_constraint);
+
+    assert(our_scope);
 
     if (our_scope->node->type == ELEMENT_AST_NODE_NAMESPACE)
         return compile_call_experimental_namespace(callsite_node, parent_scope, expr);
