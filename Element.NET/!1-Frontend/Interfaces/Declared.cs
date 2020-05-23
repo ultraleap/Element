@@ -17,8 +17,9 @@ namespace Element.AST
         
         public Declaration Declarer { get; private set; } // Derived classes are all instantiated by Lexico and then initialized via Initialize
 #pragma warning restore 8618
-        
-        
+
+        public abstract override string ToString();
+
         public void Initialize(Declaration declaration)
         {
             Declarer = declaration;

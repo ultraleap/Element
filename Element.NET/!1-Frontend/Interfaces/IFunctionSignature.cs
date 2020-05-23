@@ -157,6 +157,8 @@ namespace Element.AST
             Port[] IFunctionSignature.Inputs => _inputs;
             Port IFunctionSignature.Output => _definition.Output;
 
+            public override string ToString() => _definition.ToString();
+
             protected virtual IScope? _child => null;
 
             public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>

@@ -18,6 +18,8 @@ namespace Element.AST
             SetRange(memberValues.WithoutDiscardedArguments(inputs));
         }
 
+        public override string ToString() => $"Instance:{DeclaringStruct}";
+
         public IValue this[int index] => IndexCache(index);
         public IEnumerable<Element.Expression> Serialize(CompilationContext context)
         {

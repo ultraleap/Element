@@ -33,6 +33,9 @@ namespace Element.AST
                     break;
             }
         }
+
+        public override string ToString() => "Lambda";
+
         public override bool Validate(SourceContext sourceContext)
         {
             var success = true;

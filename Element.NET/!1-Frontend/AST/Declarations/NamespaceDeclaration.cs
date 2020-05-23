@@ -9,6 +9,8 @@ namespace Element.AST
         protected override string IntrinsicQualifier => string.Empty;
         protected override string Qualifier { get; } = "namespace";
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope)};
+        public override string ToString() => $"{Location}:Namespace";
+
         IValue? IIndexable.this[Identifier id, bool recurse, CompilationContext compilationContext] => Child![id, recurse, compilationContext];
         public IEnumerator<IValue> GetEnumerator() => Child!.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

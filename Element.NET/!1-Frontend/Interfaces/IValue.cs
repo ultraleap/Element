@@ -6,6 +6,7 @@ namespace Element.AST
 {
     public interface IValue
     {
+        string ToString();
         //string NormalFormString { get; }
     }
 

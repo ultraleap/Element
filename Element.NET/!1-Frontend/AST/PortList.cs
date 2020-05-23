@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Lexico;
 
 namespace Element.AST
@@ -10,7 +9,9 @@ namespace Element.AST
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         [field: Term] public ListOf<Port> Ports { get; private set; }
 #pragma warning restore 8618
-        
+
+        public override string ToString() => Ports.ToString();
+
         protected override void InitializeImpl()
         {
             foreach (var p in Ports.List)

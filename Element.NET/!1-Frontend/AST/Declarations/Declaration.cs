@@ -26,7 +26,7 @@ namespace Element.AST
         protected abstract Type[] BodyAlternatives { get; }
         // ReSharper restore UnusedMember.Global
 
-        public override string ToString() => $"{Location}{DeclaredType}";
+        public abstract override string ToString();
 
         public SourceInfo SourceInfo { get; private set; }
 
@@ -41,6 +41,7 @@ namespace Element.AST
             protected override string IntrinsicQualifier => string.Empty;
             protected override string Qualifier => string.Empty;
             protected override Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
+            public override string ToString() => "<stub declaration>";
         }
 
         public static Declaration MakeStubDeclaration(Identifier id, object body, string expressionString, CompilationContext compilationContext)
