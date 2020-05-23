@@ -200,6 +200,7 @@ static element_result compile_call_experimental_literal(
     }
 
     expr = std::make_shared<element_expression_constant>(callsite_node->literal);
+    expr_constraint = element_type::num; //todo: should this be num (the internal type) or Num (the named type)? does it matter?
     callsite_current = callsite_root->root()->lookup("Num", false); // HACK?
     return ELEMENT_OK;
 }
@@ -432,6 +433,9 @@ static element_result compile_call_experimental_function(
         const auto ctype = type ? type->as<element_type_named>() : nullptr;
         if (ctype) {
             callsite_current = ctype->scope();
+        } else if (expr_constraint == element_type::num) {
+            //If the function we compiled resulted in a number, then update the scope to be a Num for the next thing indexing in to us
+            callsite_current = callsite_current->root()->lookup("Num", false);
         }
         //assert(ctype); it seems like the lack of ctype here is okay, our scope is something we can rely on even though we're not updating it?
     }
