@@ -438,6 +438,7 @@ static element_result compile_call_experimental_function(
     else if (fn && fn->is<element_type_ctor>()) {
         //todo: are the dependents always meant to be empty? should we not be calling compile_type_ctor?
         expr = std::shared_ptr<element_expression_structure>(new element_expression_structure({}));
+        expr_constraint = fn->type(); //the type of a constructor is also the type of the struct it creates
         //todo: we don't update the scope, so the thing indexing in to us doesn't know what type this structure is
         //This seems to be valid in some cases with numbers(or literals only?). i.e if we set it to nullptr, all tests fail, so we're relying on something here
     }
