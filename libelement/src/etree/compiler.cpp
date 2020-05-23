@@ -8,29 +8,35 @@
 #include "ast/ast_indexes.hpp"
 
 //When compiling a function that needs direct input from the boundary, generate placeholder expressions to represent that input when it's evaluated
-static std::vector<expression_shared_ptr> generate_placeholder_inputs(const element_type* t)
+static std::vector<expression_and_constraint_shared> generate_placeholder_inputs(const element_type* t)
 {
-    std::vector<expression_shared_ptr> results;
+    std::vector<expression_and_constraint_shared> results;
     const size_t insize = t->inputs().size();
     results.reserve(insize);
     for (size_t i = 0; i < insize; ++i) {
-        results.push_back(std::make_shared<element_expression_input>(i, t->inputs()[i].type->get_size()));
+        auto expression = std::make_shared<element_expression_input>(i, t->inputs()[i].type->get_size());
+        constraint_const_shared_ptr constraint = t->inputs()[i].type; //todo: have a look and see if these types make sense
+        results.emplace_back(expression_and_constraint_shared(
+            new expression_and_constraint{
+                std::move(expression), std::move(constraint)
+            }
+        ));
     }
     return results;
 }
 
-static expression_shared_ptr generate_intrinsic_expression(const element_intrinsic* fn, const std::vector<expression_shared_ptr>& args)
+static expression_shared_ptr generate_intrinsic_expression(const element_intrinsic* fn, const std::vector<expression_and_constraint_shared>& args)
 {
     //todo: logging rather than asserting?
 
     if (auto ui = fn->as<element_intrinsic_unary>()) {
         assert(args.size() >= 1);
-        return std::make_shared<element_expression_unary>(ui->operation(), args[0]);
+        return std::make_shared<element_expression_unary>(ui->operation(), args[0]->expression);
     }
 
     if (auto bi = fn->as<element_intrinsic_binary>()) {
         assert(args.size() >= 2);
-        return std::make_shared<element_expression_binary>(bi->operation(), args[0], args[1]);
+        return std::make_shared<element_expression_binary>(bi->operation(), args[0]->expression, args[1]->expression);
     }
 
     assert(false);
@@ -40,15 +46,15 @@ static expression_shared_ptr generate_intrinsic_expression(const element_intrins
 static element_result compile_intrinsic(
     element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<expression_shared_ptr> inputs,
+    std::vector<expression_and_constraint_shared> inputs,
     expression_shared_ptr& expr)
 {
     if (const auto ui = fn->as<element_intrinsic_unary>()) {
         assert(inputs.size() >= 1);
         // TODO: better error codes
         //todo: logging
-        if (inputs[0]->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        expr = std::make_shared<element_expression_unary>(ui->operation(), inputs[0]);
+        if (inputs[0]->expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
+        expr = std::make_shared<element_expression_unary>(ui->operation(), inputs[0]->expression);
         return ELEMENT_OK;
     }
 
@@ -56,9 +62,9 @@ static element_result compile_intrinsic(
         assert(inputs.size() >= 2);
         // TODO: better error codes
         //todo: logging
-        if (inputs[0]->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        if (inputs[1]->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        expr = std::make_shared<element_expression_binary>(bi->operation(), inputs[0], inputs[1]);
+        if (inputs[0]->expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
+        if (inputs[1]->expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
+        expr = std::make_shared<element_expression_binary>(bi->operation(), inputs[0]->expression, inputs[1]->expression);
         return ELEMENT_OK;
     }
 
@@ -71,7 +77,7 @@ static element_result compile_intrinsic(
 static element_result compile_type_ctor(
     element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<expression_shared_ptr> inputs,
+    std::vector<expression_and_constraint_shared> inputs,
     expression_shared_ptr& expr)
 {
     assert(fn->inputs().size() >= inputs.size());
@@ -80,7 +86,7 @@ static element_result compile_type_ctor(
     std::vector<std::pair<std::string, expression_shared_ptr>> deps;
     deps.reserve(inputs.size());
     for (size_t i = 0; i < inputs.size(); ++i)
-        deps.emplace_back(fn->inputs()[i].name, inputs[i]);
+        deps.emplace_back(fn->inputs()[i].name, inputs[i]->expression);
     expr = std::make_shared<element_expression_structure>(std::move(deps));
     return ELEMENT_OK;
 }
@@ -95,7 +101,7 @@ static element_result compile_expression(
 static element_result compile_custom_fn_scope(
     element_compiler_ctx& ctx,
     const element_scope* scope,
-    std::vector<expression_shared_ptr> inputs,
+    std::vector<expression_and_constraint_shared> inputs,
     expression_shared_ptr& expr,
     constraint_const_shared_ptr& expr_constraint)
 {
@@ -137,11 +143,11 @@ static element_result compile_custom_fn_scope(
 }
 
 //todo: understand what this does and document it
-static element_result place_args(expression_shared_ptr& expr, const std::vector<expression_shared_ptr>& args)
+static element_result place_args(expression_shared_ptr& expr, const std::vector<expression_and_constraint_shared>& args)
 {
     if (const auto ua = expr->as<element_expression_unbound_arg>()) {
         if (ua->index() < args.size()) {
-            expr = args[ua->index()];
+            expr = args[ua->index()]->expression;
             return ELEMENT_OK;
         } else {
             return ELEMENT_ERROR_ARGS_MISMATCH; //logging is done by the caller
@@ -233,7 +239,7 @@ static element_result compile_call_experimental_namespace(
 }
 
 static element_result fill_args_from_callsite(
-    std::vector<expression_shared_ptr>& args,
+    std::vector<expression_and_constraint_shared>& args,
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node)
@@ -245,10 +251,23 @@ static element_result fill_args_from_callsite(
         const auto callargs_node = callsite_node->children[ast_idx::call::args].get();
         args.resize(callargs_node->children.size());
 
+        //Initialize the args
+        for (size_t i = 0; i < args.size(); ++i) {
+            if (!args[i])
+                args[i] = std::make_shared<expression_and_constraint>();
+        }
+
         //Compile all of the exprlist AST nodes and assign them to the arguments we're calling with
-        auto constraint = element_constraint::any; //todo: we don't use this right now but we should (and it should be a part of args, with each member being a pair, as each arg is overwriting this value)
         for (size_t i = 0; i < callargs_node->children.size(); ++i)
-            ELEMENT_OK_OR_RETURN(compile_expression(ctx, callsite_root, callargs_node->children[i].get(), args[i], constraint));
+        {
+            ELEMENT_OK_OR_RETURN(compile_expression(
+                ctx,
+                callsite_root,
+                callargs_node->children[i].get(),
+                args[i]->expression,
+                args[i]->constraint
+            ));
+        }
     }
 
     return ELEMENT_OK;
@@ -305,7 +324,7 @@ static element_result compile_call_experimental_function_find_ourselves_when_par
 //this does partial application of parent to arguments for this call. This only works when the parent is a constructor (including literals)
 static element_result compile_call_experimental_function_partial_application(
     const element_scope* our_scope,
-    std::vector<expression_shared_ptr>& args,
+    std::vector<expression_and_constraint_shared>& args,
     const element_scope* parent_scope,
     const expression_shared_ptr& compiled_parent,
     const constraint_const_shared_ptr& compiled_parent_constraint)
@@ -322,7 +341,9 @@ static element_result compile_call_experimental_function_partial_application(
     //One of the few places that does type checking in libelement?
     const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(compiled_parent_constraint);
     if (mising_one_argument && argument_one_matches_parent_type) {
-        args.insert(args.begin(), compiled_parent);
+        args.insert(args.begin(), expression_and_constraint_shared(
+            new expression_and_constraint{ compiled_parent, compiled_parent_constraint }
+        ));
     }
 
     assert(fn->inputs().size() == args.size()); //todo
@@ -351,7 +372,7 @@ static element_result compile_call_experimental_function(
     const auto our_scope = callsite_current;
 
     //Handle any arguments to this function call
-    std::vector<expression_shared_ptr> args;
+    std::vector<expression_and_constraint_shared> args;
     const auto result = fill_args_from_callsite(args, ctx, callsite_root, callsite_node);
     assert(result == ELEMENT_OK); //todo
 
@@ -366,9 +387,9 @@ static element_result compile_call_experimental_function(
     //todo: I believe this is seeing if this function was compiled previously when resolving the inputs to another function
     //todo: This doesn't update the fnscope if it's found, which seems to be part of the reason why indexing has issues
 
-    const auto found_expr = ctx.expr_cache.search(our_scope);
+    const auto found_expr = ctx.expr_cache.search(our_scope); //todo: rename to compilation cache
     if (found_expr) {
-        expr = found_expr;
+        expr = found_expr->expression;
         expr_constraint = element_constraint::any; //todo: neither the expr_cache nor the args-related code handles types yet
         if (expr->is<element_expression_binary>() || expr->is<element_expression_unary>() || expr->is<element_expression_constant>())
             expr_constraint = element_type::num; //todo: this won't always be true, just a quick hack, we need to add support for the constraint to the expression cache
@@ -401,7 +422,7 @@ static element_result compile_call_experimental_function(
         //Let's try and find ourselves in the struct, if our parent is a constructor. Will this work in the case of `instance = MyType(1)`?
         compile_call_experimental_function_find_ourselves_when_parent_is_constructor(callsite_node, parent_scope, callsite_current);
 
-        //If our parent is 
+        //If our parent is something we can pass as an argument, let's try to do so if we're missing an argument
         compile_call_experimental_function_partial_application(our_scope, args, parent_scope, compiled_parent, compiled_parent_constraint);
     }
 
@@ -524,7 +545,8 @@ static element_result compile_call_experimental(
 
     //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
     if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
-        expr = ctx.expr_cache.search(our_scope);
+        const auto found_expr = ctx.expr_cache.search(our_scope); //todo: rename to compilation cache
+        expr = found_expr->expression;
         if (expr) {
             expr_constraint = element_constraint::any; //todo: neither the expr_cache nor the args-related code handles types yet
             if (expr->is<element_expression_binary>() || expr->is<element_expression_unary>() || expr->is<element_expression_constant>())
@@ -759,7 +781,7 @@ static element_result compile_expression(
 static element_result compile_custom_fn(
     element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<expression_shared_ptr> inputs,
+    std::vector<expression_and_constraint_shared> inputs,
     expression_shared_ptr& expr,
     constraint_const_shared_ptr& expr_constraint)
 {
@@ -771,7 +793,7 @@ static element_result compile_custom_fn(
 static element_result element_compile(
     element_interpreter_ctx& ctx,
     const element_function* fn,
-    std::vector<expression_shared_ptr> inputs,
+    std::vector<expression_and_constraint_shared> inputs,
     expression_shared_ptr& expr,
     element_compiler_options opts)
 {
