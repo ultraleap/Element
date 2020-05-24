@@ -47,20 +47,20 @@ namespace libelement::cli
 			const auto evaluate = "evaluate = " + custom_arguments.expression + ";";
 			result = element_interpreter_load_string(ictx, evaluate.c_str(), "<input>");
 			if (result != ELEMENT_OK) {
-				return compiler_message(ELEMENT_ERROR_PARSE, "Failed to parse: " + evaluate);
+				return compiler_message(ELEMENT_ERROR_PARSE, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
 			result = element_interpreter_get_function(ictx, "evaluate", &fn);
 			if (result != ELEMENT_OK)
-				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to find: " + evaluate);
+				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
 
 			result = element_interpreter_compile_function(ictx, fn, &cfn, nullptr);
 			if (result != ELEMENT_OK)
-				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to compile: " + evaluate);
+				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to compile: " + evaluate + " with element_result " + std::to_string(result));
 
 			result = element_interpreter_evaluate_function(ictx, cfn, nullptr, 1, outputs, 1, nullptr);
 			if (result != ELEMENT_OK)
-				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to evaluate: " + evaluate);
+				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to evaluate: " + evaluate + " with element_result " + std::to_string(result));
 
 			return generate_response(result, outputs[0], trace_site);
 		}

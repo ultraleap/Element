@@ -185,7 +185,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     auto result = parser.ast_build();
     //todo: hacky message to help with unit tests until we add logging for all error cases
     if (result < ELEMENT_OK) {
-        log(result, std::string("element_ast_build failed"), filename);
+        log(result, std::string("element_ast_build failed with element_result " + std::to_string(result)), filename);
     }
     ELEMENT_OK_OR_RETURN(result)
 
@@ -202,14 +202,14 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     result = add_ast_names(ast_names, root.get());
     //todo: hacky message to help with unit tests until we add logging for all error cases
     if (result < ELEMENT_OK) {
-        log(result, std::string("add_ast_names failed"), filename);
+        log(result, std::string("add_ast_names failed with element_result " + std::to_string(result)), filename);
     }
     ELEMENT_OK_OR_RETURN(result)
 
     result = merge_names(names, std::move(root), nullptr);
     //todo: hacky message to help with unit tests until we add logging for all error cases
     if (result < ELEMENT_OK) {
-        log(result, std::string("merge_names failed"), filename);
+        log(result, std::string("merge_names failed with element_result " + std::to_string(result)), filename);
     }
     ELEMENT_OK_OR_RETURN(result)
 
