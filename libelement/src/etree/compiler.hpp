@@ -75,4 +75,5 @@ element_result element_compile(
     element_interpreter_ctx& ctx,
     const element_function* fn,
     expression_shared_ptr& expr,
+    constraint_const_shared_ptr& constraint,
     element_compiler_options opts);

@@ -60,4 +60,5 @@ struct element_compiled_function
 {
     const element_function* function;
     expression_shared_ptr expression;
+    constraint_const_shared_ptr constraint; //todo: can we enforce a stricker type (e.g. element_type instead of constraint)
 };
