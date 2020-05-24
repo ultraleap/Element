@@ -124,8 +124,9 @@ static element_result compile_custom_fn_scope(
 
     const auto fn = scope->function();
     //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
+    //todo: DRY
+    
     assert(fn && fn->inputs().size() >= args.size());
-    auto frame = ctx.expr_cache.add_frame();
     for (size_t i = 0; i < args.size(); ++i) {
         const auto& parameter = fn->inputs()[i];
 
@@ -135,7 +136,7 @@ static element_result compile_custom_fn_scope(
         }
 
         const element_scope* input_scope = scope->lookup(parameter.name, false);
-        ctx.expr_cache.add(input_scope, args[i]);
+        ctx.comp_cache.add(input_scope, args[i]);
     }
 
     // find output
@@ -401,10 +402,14 @@ static element_result compile_call_experimental_function(
     //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
     const auto& fn = our_scope->function();
     assert(fn);
-
+    
     //todo: DRY
+    if (ctx.comp_cache.is_callstack_recursive(our_scope))
+        return ELEMENT_ERROR_CIRCULAR_COMPILATION; //todo: logging
+
     assert(args.empty() || (fn->inputs().size() >= args.size()));
-    auto frame = ctx.expr_cache.add_frame(); //frame is popped when it goes out of scope
+    auto frame = ctx.comp_cache.add_frame(our_scope); //frame is popped when it goes out of scope
+
     for (size_t i = 0; i < args.size(); ++i) {
         const auto& parameter = fn->inputs()[i];
 
@@ -414,13 +419,13 @@ static element_result compile_call_experimental_function(
         }
 
         const element_scope* input_scope = our_scope->lookup(parameter.name, false);
-        ctx.expr_cache.add(input_scope, args[i]);
+        ctx.comp_cache.add(input_scope, args[i]);
     }
 
     //todo: I believe this is seeing if this function was compiled previously when resolving the inputs to another function
     //todo: This doesn't update the fnscope if it's found, which seems to be part of the reason why indexing has issues
 
-    const auto found_expr = ctx.expr_cache.search(our_scope); //todo: rename to compilation cache
+    const auto found_expr = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
     if (found_expr) {
         expr = found_expr->expression;
         expr_constraint = found_expr->constraint;
@@ -583,7 +588,7 @@ static element_result compile_call_experimental(
 
     //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
     if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
-        const auto found_expr = ctx.expr_cache.search(our_scope); //todo: rename to compilation cache
+        const auto found_expr = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
         if (found_expr) {
             expr = found_expr->expression;
             expr_constraint = found_expr->constraint;
@@ -655,6 +660,9 @@ static element_result compile_custom_fn(
 {
     const auto cfn = fn->as<element_custom_function>();
     const element_scope* scope = cfn->scope();
+    if (ctx.comp_cache.is_callstack_recursive(scope))
+        return ELEMENT_ERROR_CIRCULAR_COMPILATION; //todo: logging
+    auto frame = ctx.comp_cache.add_frame(scope); //frame is popped when it goes out of scope
     return compile_custom_fn_scope(ctx, scope, std::move(inputs), expr, expr_constraint);
 }
 
