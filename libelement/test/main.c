@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     element_interpreter_create(&ictx);
     element_interpreter_load_prelude(ictx);
 
-    const char* evaluate = "fakeadd(a:Num, b:Num) = Num.add(a, b);";
+    const char* evaluate = "deferredAdd(a, b) = Num.add(a, b);";
     auto result = element_interpreter_load_string(ictx, evaluate, "<input>");
     if (result != ELEMENT_OK)
         return result;
