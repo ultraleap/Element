@@ -671,6 +671,7 @@ static element_result element_compile(
     const element_function* fn,
     std::vector<expression_and_constraint_shared> inputs,
     expression_shared_ptr& expr,
+    constraint_const_shared_ptr& constraint,
     element_compiler_options opts)
 {
     element_compiler_ctx cctx = { ctx, std::move(opts) };
@@ -680,9 +681,7 @@ static element_result element_compile(
     } else if (fn->is<element_type_ctor>()) {
         return compile_type_ctor(cctx, fn, std::move(inputs), expr);
     } else if (fn->is<element_custom_function>()) {
-        //todo: do this for all cases, not just custom function
-        constraint_const_shared_ptr expr_constraint = element_constraint::any;
-        auto result = compile_custom_fn(cctx, fn, std::move(inputs), expr, expr_constraint);
+        auto result = compile_custom_fn(cctx, fn, std::move(inputs), expr, constraint);
         //todo: check the expr_constraint matches the constraint of the function (probably `evaluate` if CLI) we're compiling, but only if result is OK
         return result;
     } else {
@@ -696,8 +695,9 @@ element_result element_compile(
     element_interpreter_ctx& ctx,
     const element_function* fn,
     expression_shared_ptr& expr,
+    constraint_const_shared_ptr& constraint,
     element_compiler_options opts)
 {
     auto inputs = generate_placeholder_inputs(fn->type().get());
-    return element_compile(ctx, fn, std::move(inputs), expr, std::move(opts));
+    return element_compile(ctx, fn, std::move(inputs), expr, constraint, std::move(opts));
 }

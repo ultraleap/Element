@@ -155,17 +155,11 @@ namespace libelement::cli
 		using log_callback = void (*)(const element_log_message* const);
 		static void configure(CLI::App& app, command::callback callback);
 
-		compiler_message generate_response(element_result result, element_value value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>()) const
+		static compiler_message generate_response(element_result result, element_value value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 		{
 			return generate_response(result, std::isnan(value) ? "NaN" : std::to_string(value), trace_stack);
 		}
 
-		void set_log_callback(command::log_callback log_callback) const {
-
-			element_interpreter_set_log_callback(ictx, log_callback);
-		}
-
-	private:
 		static compiler_message generate_response(element_result result, std::string value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 		{
 			switch (result)
@@ -175,6 +169,11 @@ namespace libelement::cli
 			default:
 				return compiler_message(ELEMENT_ERROR_UNKNOWN, value, trace_stack);
 			}
+		}
+
+		void set_log_callback(command::log_callback log_callback) const {
+
+			element_interpreter_set_log_callback(ictx, log_callback);
 		}
 
 	protected:

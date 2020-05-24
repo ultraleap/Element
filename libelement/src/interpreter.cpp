@@ -480,17 +480,12 @@ element_result element_interpreter_compile_function(
     if (opts)
         options = *opts;
     expression_shared_ptr fn_expr;
-
-    auto result = element_compile(*ctx, fn, fn_expr, options);
-	if(result != ELEMENT_OK)
-	{
-        ctx->log(result, fmt::format("Failed to compile {}", fn->name()), "<input>");
-        return result;
-	}
-	
+    constraint_const_shared_ptr fn_constraint;
+    ELEMENT_OK_OR_RETURN(element_compile(*ctx, fn, fn_expr, fn_constraint, options));
     *cfn = new element_compiled_function;
     (*cfn)->function = fn;
     (*cfn)->expression = std::move(fn_expr);
+    (*cfn)->constraint = std::move(fn_constraint);
 
     if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree))
         ctx->log("\n---------------\nEXPRESSION TREE\n---------------\n" + expression_to_string(*(*cfn)->expression));
@@ -518,7 +513,51 @@ element_result element_interpreter_evaluate_function(
     auto result = element_evaluate(*ctx, cfn->expression, inputs, inputs_count, outputs, outputs_count, options);
     if (result != ELEMENT_OK) {
         ctx->log(result, fmt::format("Failed to evaluate {}", cfn->function->name()), "<input>");
+}
+
+element_result element_compiled_function_get_typeof_compilation(element_compiled_function* cfn, char* string_buffer, unsigned int string_buffer_size)
+{
+    if (string_buffer == nullptr)
+        return ELEMENT_ERROR_UNKNOWN;
+
+    std::string str = "Constraint";
+
+    const auto anonymous_type = cfn->constraint->as<element_type_anonymous>();
+    const auto named_type = cfn->constraint->as<element_type_named>();
+    const auto type = cfn->constraint->as<element_type>();
+
+    if (anonymous_type)
+    {
+        str = "Anonymous";
+    }
+    else if (named_type)
+    {
+        str = named_type->name();
+    }
+    else if (type)
+    {
+        if (type == element_type::binary.get()
+            || type == element_type::unary.get())
+        {
+            str = "Function";
+        }
+        else if (type == element_type::num.get())
+        {
+            str = "Num"; //todo: num isn't Num in source, rather the numeral type?
+        }
+    }
+    else
+    {
+        if (cfn->constraint == element_constraint::any)
+        {
+            str = "Any"; //todo: any isn't Any in source, rather the implicit type?
+        }
+        else if (cfn->constraint == element_constraint::function)
+        {
+            str = "Function";
+        }
     }
 
-	return result;
+    strncpy(string_buffer, str.c_str(), string_buffer_size);
+    return ELEMENT_OK;
 }
