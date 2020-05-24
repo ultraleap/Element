@@ -141,6 +141,7 @@ static element_result compile_custom_fn_scope(
     // find output
     // output is a function that's always present in the body of a function/lambda, representing what it returns
     const element_scope* output = scope->lookup("return", false);
+
     if (output) {
         const auto result = compile_expression(ctx, output, output->node, expr, expr_constraint);
         if (result != ELEMENT_OK)
@@ -629,6 +630,14 @@ static element_result compile_expression(
         // generate inputs
         auto inputs = generate_placeholder_inputs(scope->function()->type().get());
         // now compile function using those inputs
+        return compile_custom_fn_scope(ctx, scope, std::move(inputs), expr, expr_constraint);
+    }
+    else if (bodynode->type == ELEMENT_AST_NODE_FUNCTION) {
+        //todo: a function declaration isn't an expression, but NestedConstructs/AddUsingLocal seems to generate a scope hiearchy with nested returns, so compile_custom_fn_scope calls us with a "return" function
+        //maybe this is valid, considering there's also a case for ELEMENT_AST_NODE_LAMBDA (although lambdas aren't implemented yet)
+        //todo: we should figure out why the returns are being nested (return of addUsingLocal, is a function that also has a return, which contains the actual call to localAdd
+        // generate inputs
+        auto inputs = generate_placeholder_inputs(scope->function()->type().get());
         return compile_custom_fn_scope(ctx, scope, std::move(inputs), expr, expr_constraint);
     } else {
         // interface
