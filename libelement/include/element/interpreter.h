@@ -68,7 +68,7 @@ element_result element_interpreter_evaluate_function(
 
 
 element_result element_interpreter_test_eval(element_interpreter_ctx* ctx, const char* fn_name, const element_value* inputs, size_t inputs_size, element_value* outputs, size_t outputs_size);
-
+element_result element_interpreter_get_internal_typeof(element_interpreter_ctx* ctx, const char* string, const char* filename, char* output_string_buffer, unsigned intoutput_string_buffer_size);
 element_result element_compiled_function_get_typeof_compilation(element_compiled_function* cfn, char* string_buffer, unsigned int string_buffer_size);
 
 #if defined(__cplusplus)
