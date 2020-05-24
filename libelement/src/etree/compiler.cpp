@@ -458,6 +458,7 @@ static element_result compile_call_experimental_function(
 
     // TODO: temporary check if intrinsic
     //todo: why is this temporary?
+    //todo: this branching compilation is basically element_compile? we could maybe try moving some stuff around and call that here instead?
     if (fn && fn->is<element_intrinsic>()) {
         expr = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
         expr_constraint = fn->type()->output("return")->type; //todo: this just gets the type as declared in source, which is fine when it's Num, but otherwise won't really work. expr_constraint should be determined from generate_intrinsic_expression. Do all intrinsics return numbers? unlikely
@@ -472,7 +473,7 @@ static element_result compile_call_experimental_function(
         //This seems to be valid in some cases with numbers(or literals only?). i.e if we set it to nullptr, all tests fail, so we're relying on something here
     }
     else if (fn && fn->is<element_custom_function>()) {
-        //todo: understand this better
+        //todo: we do some compiling in ourselves, and some in this function, which is kinda messy. maybe it's possible to make it work together nicely, less duplicated code
         ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, callsite_current, args, expr, expr_constraint));
         auto btype = fn->type();
         const auto type = btype ? btype->output("return")->type : nullptr;
@@ -543,32 +544,38 @@ static element_result compile_call_experimental(
 
     //We've now compiled any parents (if we had any parents), so let's find what this call was meant to be
     //If we did have a parent then we don't want to recurse when doing the lookup, what we're looking for should be directly in that scope
-    //todo: For parents, this only works when the parent has updated its scope to be a valid index target, as we don't handle the return of a function call atm
     //callsite_current could be null if our parent was a dependent in an element_structure, since struct instances have no scope
     if (callsite_current) {
         callsite_current = callsite_current->lookup(callsite_node->identifier, !has_parent);
 
+        //todo: this is necessary because the current handling for struct body/instance indexing happens when we know we're a function, but right now we don't know what we are. We should be doing that stuff here, not in compiling the function
         //We couldn't find ourselves but we do have a parent, so let's try indexing the constraint in case we're part of a struct body
         if (!callsite_current && has_parent) {
-            //we only support numbers for now
+            //todo: this first searches the struct body before the struct instance, which means shadowing names will probably cause reverse behaviour to what is expected
             if (expr_constraint->is<element_type>()
-                && expr_constraint->as<element_type>() == element_type::num.get())
-            {
+                && expr_constraint->as<element_type>() == element_type::num.get()) {
                 callsite_current = parent_scope->root()->lookup("Num", false);
                 assert(callsite_current); //we failed to find Num in source, but we're indexing in to a number. You can't index in to a number without the Num intrinsic, so this is a user error
                 callsite_current = callsite_current->lookup(callsite_node->identifier, false); //Now we can find ourselves within Num
                 assert(callsite_current); //we failed to find ourselves in Num, some kind of error
-            }
+            } else if (expr_constraint->is<element_type_named>() &&
+                expr_constraint->as<element_type_named>()) {
+                const auto named_type = expr_constraint->as<element_type_named>();
+                callsite_current = named_type->scope()->lookup(callsite_node->identifier, false); //Now we can find ourselves within the struct body
+                assert(callsite_current); //we failed to find ourselves in there, some kind of error
+            } else if (expr_constraint->is<element_type_anonymous>() &&
+                expr_constraint->as<element_type_anonymous>()) {
+                const auto anonymous_type = expr_constraint->as<element_type_named>();
+                //todo: a function type is anonymous, but indexing a function isn't valid. Not sure if there are situations where an anonymous type is generated, requires more research
+            } //Something else, so don't try indexing in to it?
         }
     }
 
     const auto our_scope = callsite_current;
-
-    //if our_scope was null then our parent could be something else, which requires a different method of finding ourselves, but that's done in compile_call_experimental_function
-    if (our_scope == nullptr || our_scope->function())
-        return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, callsite_current, expr, expr_constraint);
-
     assert(our_scope);
+
+    if (our_scope->function())
+        return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, callsite_current, expr, expr_constraint);
 
     if (our_scope->node->type == ELEMENT_AST_NODE_NAMESPACE)
         return compile_call_experimental_namespace(callsite_node, parent_scope, expr);
