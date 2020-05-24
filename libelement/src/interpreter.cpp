@@ -515,6 +515,83 @@ element_result element_interpreter_evaluate_function(
         ctx->log(result, fmt::format("Failed to evaluate {}", cfn->function->name()), "<input>");
 }
 
+element_result element_interpreter_get_internal_typeof(
+    element_interpreter_ctx* ctx,
+    const char* string,
+    const char* filename,
+    char* output_string_buffer,
+    unsigned int output_string_buffer_size)
+{
+    assert(ctx);
+    assert(string);
+    assert(filename);
+
+    element_result result = ELEMENT_OK;
+
+    if (ctx->trees.empty())
+        return ELEMENT_ERROR_UNKNOWN;
+
+    auto& global_scope = ctx->names;
+    const auto found_scope = global_scope->lookup(string);
+
+    std::string internal_typeof = "Unknown";
+
+    if (found_scope)
+    {
+        //todo: if the function is a nullary binding to a constant, then the test suite is expecting it to be Num. I don't know if that's valid, seems special-cased
+        if (found_scope->node->type == ELEMENT_AST_NODE_FUNCTION)
+            internal_typeof = "Function";
+        else if (found_scope->node->type == ELEMENT_AST_NODE_CONSTRAINT)
+            internal_typeof = "Constraint";
+        else if (found_scope->node->type == ELEMENT_AST_NODE_STRUCT)
+            internal_typeof = "Type";
+        else if (found_scope->node->type == ELEMENT_AST_NODE_NAMESPACE)
+            internal_typeof = "Namespace";
+    }
+
+    //It's not something that exists in the AST
+    if (internal_typeof == "Unknown")
+    {
+        try
+        {
+            //todo: create a tokeniser and check to see if it can parse it as a number. this is a hack
+            std::stof(string);
+            internal_typeof = "Num";
+        } catch (...) {}
+    }
+
+    //It's not a number, so it could be a struct instance or something more complex, try compiling it and getting the resulting type
+    //todo: this is relying on the lack of error checking for top-level functions having serializable types (ie. the return type is always known)
+    if (internal_typeof == "Unknown")
+    {
+        std::string eval_wrapper = "evaluate = " + std::string(string) + ";";
+        result = ctx->load(eval_wrapper.c_str(), "totes_not_a_hack_upon_a_hack");
+        if (result != ELEMENT_OK)
+            return result;
+
+        const element_function* fn;
+        result = element_interpreter_get_function(ctx, "evaluate", &fn);
+        if (result != ELEMENT_OK)
+            return result;
+
+        element_compiled_function* cfn;
+        result = element_interpreter_compile_function(ctx, fn, &cfn, nullptr);
+        if (result != ELEMENT_OK)
+            return result;
+
+        internal_typeof.resize(output_string_buffer_size);
+        element_compiled_function_get_typeof_compilation(cfn, internal_typeof.data(), output_string_buffer_size);
+    }
+
+    strncpy(output_string_buffer, internal_typeof.c_str(), output_string_buffer_size);
+
+    //:(
+    assert(internal_typeof != "Unknown");
+
+    return result;
+}
+
+//todo: this is relying on the lack of error checking for top-level functions having serializable types (ie. the return type is always known)
 element_result element_compiled_function_get_typeof_compilation(element_compiled_function* cfn, char* string_buffer, unsigned int string_buffer_size)
 {
     if (string_buffer == nullptr)
