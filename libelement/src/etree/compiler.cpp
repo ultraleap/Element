@@ -472,11 +472,17 @@ static element_result compile_call_experimental_function(
         assert(expr); //todo
     }
     else if (fn && fn->is<element_type_ctor>()) {
-        //todo: are the dependents always meant to be empty? should we not be calling compile_type_ctor?
-        expr = std::shared_ptr<element_expression_structure>(new element_expression_structure({}));
+        //todo: should we not be calling compile_type_ctor?
+        std::vector<std::pair<std::string, expression_shared_ptr>> struct_instance_dependents;
+        struct_instance_dependents.resize(args.size());
+        for (unsigned int i = 0; i < args.size(); ++i) {
+            const auto& arg = args[i];
+            const auto& param = fn->type()->inputs()[i];
+            struct_instance_dependents[i].first = param.name;
+            struct_instance_dependents[i].second = arg->expression;
+        }
+        expr = std::shared_ptr<element_expression_structure>(new element_expression_structure(std::move(struct_instance_dependents)));
         expr_constraint = fn->type(); //the type of a constructor is also the type of the struct it creates
-        //todo: we don't update the scope, so the thing indexing in to us doesn't know what type this structure is
-        //This seems to be valid in some cases with numbers(or literals only?). i.e if we set it to nullptr, all tests fail, so we're relying on something here
     }
     else if (fn && fn->is<element_custom_function>()) {
         //todo: we do some compiling in ourselves, and some in this function, which is kinda messy. maybe it's possible to make it work together nicely, less duplicated code
