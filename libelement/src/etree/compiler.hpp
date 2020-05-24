@@ -12,38 +12,54 @@ struct expression_and_constraint
 
 using expression_and_constraint_shared = std::shared_ptr<expression_and_constraint>;
 
-struct expression_cache
+struct compilation_cache
 {
     struct frame
     {
-    friend struct expression_cache;
+    friend struct compilation_cache;
     public:
         ~frame() { m_parent.pop_frame(); }
     protected:
-        frame(expression_cache& parent) : m_parent(parent) { m_parent.push_frame(); }
-        expression_cache& m_parent;
+        frame(compilation_cache& parent, const element_scope* function_scope) : m_parent(parent) { m_parent.push_frame(function_scope); }
+        compilation_cache& m_parent;
     };
 
-    expression_cache() { m_cache.resize(1); }
+    compilation_cache() { m_cache.resize(1); } //todo: do we still need this?
 
-    void add(const element_scope* scope, expression_and_constraint_shared expr) { m_cache.back()[scope] = expr; }
+    void add(const element_scope* scope, expression_and_constraint_shared expr) { m_cache.back().cache[scope] = std::move(expr); }
 
-    frame add_frame() { return frame(*this); }
+    frame add_frame(const element_scope* function_scope) { return frame(*this, function_scope); }
 
     expression_and_constraint_shared search(const element_scope* scope) const
     {
         for (auto it = m_cache.rbegin(); it != m_cache.rend(); ++it) {
-            auto mit = it->find(scope);
-            if (mit != it->end())
+            auto mit = it->cache.find(scope);
+            if (mit != it->cache.end())
                 return mit->second;
         }
         return nullptr;
     }
 
-private:
-    std::vector<std::unordered_map<const element_scope*, expression_and_constraint_shared>> m_cache;
+    bool is_callstack_recursive(const element_scope* function_scope)
+    {
+        for (auto it = m_cache.rbegin(); it != m_cache.rend(); ++it) {
+            if (it->function == function_scope)
+                return true;
+        }
 
-    void push_frame() { m_cache.emplace_back(); }
+        return false;
+    }
+
+private:
+    using Cache = std::unordered_map<const element_scope*, expression_and_constraint_shared>;
+    struct CacheEntry
+    {
+        Cache cache;
+        const element_scope* function;
+    };
+    std::vector<CacheEntry> m_cache;
+
+    void push_frame(const element_scope* function_scope) { m_cache.emplace_back(CacheEntry{ Cache{}, function_scope }); }
     void pop_frame() { m_cache.pop_back(); }
 };
 
@@ -52,7 +68,7 @@ struct element_compiler_ctx
 {
     element_interpreter_ctx& ictx;
     element_compiler_options options;
-    expression_cache expr_cache;
+    compilation_cache comp_cache;
 };
 
 element_result element_compile(
