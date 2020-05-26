@@ -10,9 +10,6 @@ struct compilation
     constraint_const_shared_ptr constraint;
 };
 
-//todo: consider the implications of using and not using it as shared_ptr, given that it's already containing shared_ptrs
-using compilation_shared_ptr = std::shared_ptr<compilation>;
-
 struct compilation_cache
 {
     struct frame
@@ -35,18 +32,21 @@ struct compilation_cache
     compilation_cache() { m_cache.resize(1); } //todo: do we still need this?
 
     //todo: we should probably not allow reassignment of existing function entries
-    void add(const element_scope* scope, compilation_shared_ptr expr) { m_cache.back().cache[scope] = std::move(expr); }
+    void add(const element_scope* scope, compilation compiled) { m_cache.back().cache[scope] = std::move(compiled); }
 
     frame add_frame(const element_scope* function_scope) { return frame(*this, function_scope); }
 
-    compilation_shared_ptr search(const element_scope* scope) const
+    const compilation& search(const element_scope* scope) const
     {
+        static compilation empty_compilation{};
+
         for (auto it = m_cache.rbegin(); it != m_cache.rend(); ++it) {
             auto mit = it->cache.find(scope);
             if (mit != it->cache.end())
                 return mit->second;
         }
-        return nullptr;
+
+        return empty_compilation;
     }
 
     //todo: this only makes sense to have here if all the scopes are functions that we've called, so maybe I haven't thought about this enough and it should be its own class
@@ -61,7 +61,7 @@ struct compilation_cache
     }
 
 private:
-    using Cache = std::unordered_map<const element_scope*, compilation_shared_ptr>;
+    using Cache = std::unordered_map<const element_scope*, compilation>;
 
     struct CacheEntry
     {
