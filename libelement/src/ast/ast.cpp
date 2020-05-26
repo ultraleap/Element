@@ -48,10 +48,11 @@ static int tokenlist_advance(element_tokeniser_ctx* tctx, size_t* tindex)
     // TODO: do something with these, we might need them later to preserve formatting...
     const element_token* tok;
     GET_TOKEN(tctx, *tindex, tok);
-    while (*tindex < tcount && tok->type == ELEMENT_TOK_NONE) {
+    while (*tindex < tcount - 1 && tok->type == ELEMENT_TOK_NONE) {
         ++(*tindex);
         GET_TOKEN(tctx, *tindex, tok);
     }
+	
     return (*tindex < tcount);
 }
 

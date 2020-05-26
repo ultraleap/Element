@@ -95,6 +95,24 @@ private:
     std::unordered_map<std::string, expression_shared_ptr> m_dependents_map;
 };
 
+struct element_expression_nullary : public element_expression
+{
+    DECLARE_TYPE_ID();
+
+    using op = element_nullary_op;
+
+    element_expression_nullary(op t)
+        : element_expression(type_id)
+        , m_op(t)
+    {
+    }
+
+    op operation() const { return m_op; }
+    size_t get_size() const override { return 1; }
+private:
+    op m_op;
+};
+
 struct element_expression_unary : public element_expression
 {
     DECLARE_TYPE_ID();

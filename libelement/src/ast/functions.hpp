@@ -51,12 +51,28 @@ protected:
     std::string m_name;
 };
 
+struct element_intrinsic_nullary : public element_intrinsic
+{
+    DECLARE_TYPE_ID();
+
+    element_intrinsic_nullary(element_nullary_op op, type_const_shared_ptr type, std::string name)
+        : element_intrinsic(type_id, type, std::move(name))
+        , m_op(op)
+    {
+    }
+
+    element_nullary_op operation() const { return m_op; }
+
+private:
+    element_nullary_op m_op;
+};
+
 struct element_intrinsic_unary : public element_intrinsic
 {
     DECLARE_TYPE_ID();
 
-    element_intrinsic_unary(element_unary_op op, std::string name)
-        : element_intrinsic(type_id, element_type::unary, std::move(name))
+    element_intrinsic_unary(element_unary_op op, type_const_shared_ptr type, std::string name)
+        : element_intrinsic(type_id, type, std::move(name))
         , m_op(op)
     {
     }
@@ -71,8 +87,8 @@ struct element_intrinsic_binary : public element_intrinsic
 {
     DECLARE_TYPE_ID();
 
-    element_intrinsic_binary(element_binary_op op, std::string name)
-        : element_intrinsic(type_id, element_type::binary, std::move(name))
+    element_intrinsic_binary(element_binary_op op, type_const_shared_ptr type, std::string name)
+        : element_intrinsic(type_id, type, std::move(name))
         , m_op(op)
     {
     }

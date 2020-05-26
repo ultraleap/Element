@@ -81,11 +81,11 @@ static std::vector<compilation> generate_placeholder_inputs(
     const element_type* t)
 {
     std::vector<compilation> results;
-    const size_t insize = t->inputs().size();
+    const auto insize = t->inputs().size();
     results.reserve(insize);
     for (size_t i = 0; i < insize; ++i) {
         auto expression = std::make_shared<element_expression_input>(i, t->inputs()[i].type->get_size());
-        constraint_const_shared_ptr constraint = t->inputs()[i].type; //todo: have a look and see if these types make sense
+        auto constraint = t->inputs()[i].type; //todo: have a look and see if these types make sense
         results.emplace_back(compilation{ std::move(expression), std::move(constraint) });
     }
     return results;
@@ -97,6 +97,15 @@ static element_result compile_intrinsic(
     std::vector<compilation> inputs,
     compilation& output_compilation)
 {
+    if (const auto ni = fn->as<element_intrinsic_nullary>()) {
+        assert(inputs.size() == 0);
+        // TODO: better error codes
+        //todo: logging
+        output_compilation.expression = std::make_shared<element_expression_nullary>(ni->operation());
+        output_compilation.constraint = fn->type()->output("return")->type;
+        return ELEMENT_OK;
+    }
+	
     if (const auto ui = fn->as<element_intrinsic_unary>()) {
         assert(inputs.size() >= 1);
         // TODO: better error codes
