@@ -8,16 +8,16 @@
 #include "ast/ast_indexes.hpp"
 
 //When compiling a function that needs direct input from the boundary, generate placeholder expressions to represent that input when it's evaluated
-static std::vector<expression_and_constraint_shared> generate_placeholder_inputs(const element_type* t)
+static std::vector<compilation_shared_ptr> generate_placeholder_inputs(const element_type* t)
 {
-    std::vector<expression_and_constraint_shared> results;
+    std::vector<compilation_shared_ptr> results;
     const size_t insize = t->inputs().size();
     results.reserve(insize);
     for (size_t i = 0; i < insize; ++i) {
         auto expression = std::make_shared<element_expression_input>(i, t->inputs()[i].type->get_size());
         constraint_const_shared_ptr constraint = t->inputs()[i].type; //todo: have a look and see if these types make sense
-        results.emplace_back(expression_and_constraint_shared(
-            new expression_and_constraint{
+        results.emplace_back(compilation_shared_ptr(
+            new compilation{
                 std::move(expression), std::move(constraint)
             }
         ));
@@ -25,7 +25,7 @@ static std::vector<expression_and_constraint_shared> generate_placeholder_inputs
     return results;
 }
 
-static expression_shared_ptr generate_intrinsic_expression(const element_intrinsic* fn, const std::vector<expression_and_constraint_shared>& args)
+static expression_shared_ptr generate_intrinsic_expression(const element_intrinsic* fn, const std::vector<compilation_shared_ptr>& args)
 {
     //todo: logging rather than asserting?
 
@@ -46,7 +46,7 @@ static expression_shared_ptr generate_intrinsic_expression(const element_intrins
 static element_result compile_intrinsic(
     element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<expression_and_constraint_shared> inputs,
+    std::vector<compilation_shared_ptr> inputs,
     expression_shared_ptr& expr)
 {
     if (const auto ui = fn->as<element_intrinsic_unary>()) {
@@ -77,7 +77,7 @@ static element_result compile_intrinsic(
 static element_result compile_type_ctor(
     element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<expression_and_constraint_shared> inputs,
+    std::vector<compilation_shared_ptr> inputs,
     expression_shared_ptr& expr)
 {
     assert(fn->inputs().size() >= inputs.size());
@@ -101,7 +101,7 @@ static element_result compile_expression(
 static element_result compile_custom_fn_scope(
     element_compiler_ctx& ctx,
     const element_scope* scope,
-    std::vector<expression_and_constraint_shared> args,
+    std::vector<compilation_shared_ptr> args,
     expression_shared_ptr& expr,
     constraint_const_shared_ptr& expr_constraint)
 {
@@ -166,7 +166,7 @@ static element_result compile_custom_fn_scope(
 }
 
 //todo: understand what this does and document it
-static element_result place_args(expression_shared_ptr& expr, const std::vector<expression_and_constraint_shared>& args)
+static element_result place_args(expression_shared_ptr& expr, const std::vector<compilation_shared_ptr>& args)
 {
     if (const auto ua = expr->as<element_expression_unbound_arg>()) {
         if (ua->index() < args.size()) {
@@ -262,7 +262,7 @@ static element_result compile_call_experimental_namespace(
 }
 
 static element_result fill_args_from_callsite(
-    std::vector<expression_and_constraint_shared>& args,
+    std::vector<compilation_shared_ptr>& args,
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node)
@@ -277,7 +277,7 @@ static element_result fill_args_from_callsite(
         //Initialize the args
         for (size_t i = 0; i < args.size(); ++i) {
             if (!args[i])
-                args[i] = std::make_shared<expression_and_constraint>();
+                args[i] = std::make_shared<compilation>();
         }
 
         //Compile all of the exprlist AST nodes and assign them to the arguments we're calling with
@@ -347,7 +347,7 @@ static element_result compile_call_experimental_function_find_ourselves_when_par
 //this does partial application of parent to arguments for this call. This only works when the parent is a constructor (including literals)
 static element_result compile_call_experimental_function_partial_application(
     const element_scope* our_scope,
-    std::vector<expression_and_constraint_shared>& args,
+    std::vector<compilation_shared_ptr>& args,
     const element_scope* parent_scope,
     const expression_shared_ptr& compiled_parent,
     const constraint_const_shared_ptr& compiled_parent_constraint)
@@ -364,8 +364,8 @@ static element_result compile_call_experimental_function_partial_application(
     //One of the few places that does type checking in libelement?
     const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(compiled_parent_constraint);
     if (mising_one_argument && argument_one_matches_parent_type) {
-        args.insert(args.begin(), expression_and_constraint_shared(
-            new expression_and_constraint{ compiled_parent, compiled_parent_constraint }
+        args.insert(args.begin(), compilation_shared_ptr(
+            new compilation{ compiled_parent, compiled_parent_constraint }
         ));
     }
 
@@ -395,7 +395,7 @@ static element_result compile_call_experimental_function(
     const auto our_scope = callsite_current;
 
     //Handle any arguments to this function call
-    std::vector<expression_and_constraint_shared> args;
+    std::vector<compilation_shared_ptr> args;
     const auto result = fill_args_from_callsite(args, ctx, callsite_root, callsite_node);
     assert(result == ELEMENT_OK); //todo
 
@@ -660,7 +660,7 @@ static element_result compile_expression(
 static element_result compile_custom_fn(
     element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<expression_and_constraint_shared> inputs,
+    std::vector<compilation_shared_ptr> inputs,
     expression_shared_ptr& expr,
     constraint_const_shared_ptr& expr_constraint)
 {
@@ -675,7 +675,7 @@ static element_result compile_custom_fn(
 static element_result element_compile(
     element_interpreter_ctx& ctx,
     const element_function* fn,
-    std::vector<expression_and_constraint_shared> inputs,
+    std::vector<compilation_shared_ptr> inputs,
     expression_shared_ptr& expr,
     constraint_const_shared_ptr& constraint,
     element_compiler_options opts)
