@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+
 #include "ast/ast_internal.hpp"
 #include "interpreter_internal.hpp"
 
@@ -8,6 +9,11 @@ struct compilation
 {
     expression_shared_ptr expression;
     constraint_const_shared_ptr constraint;
+
+    [[nodiscard]] bool valid() const
+    {
+        return expression.get();
+    }
 };
 
 struct compilation_cache
@@ -78,6 +84,7 @@ private:
 
 struct element_compiler_ctx
 {
+    //todo: we use the logger in ictx, but we should have our own
     element_interpreter_ctx& ictx;
     element_compiler_options options;
     compilation_cache comp_cache;

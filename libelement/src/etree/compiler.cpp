@@ -403,9 +403,9 @@ static element_result compile_call_experimental_function(
     //todo: I believe this is seeing if this function was compiled previously when resolving the inputs to another function
     //todo: This doesn't update the fnscope if it's found, which seems to be part of the reason why indexing has issues
 
-    const auto& found_expr = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
-    if (found_expr.expression) {
-        output_compilation = found_expr;
+    const auto& cached_compilation = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
+    if (cached_compilation.valid()) {
+        output_compilation = cached_compilation;
         return ELEMENT_OK;
     }
 
@@ -576,8 +576,8 @@ static element_result compile_call_experimental(
 
     //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
     if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
-        const auto& cached_compilation = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
-        if (cached_compilation.expression) {
+        const auto& cached_compilation = ctx.comp_cache.search(our_scope);
+        if (cached_compilation.valid()) {
             output_compilation = cached_compilation;
             return ELEMENT_OK;
         }
@@ -595,7 +595,7 @@ static element_result compile_lambda(
     element_compiler_ctx& ctx,
     const element_scope* scope,
     const element_ast* bodynode,
-    expression_shared_ptr& expr)
+    compilation& output_compilation)
 {
     // TODO: this
     ctx.ictx.logger->log(ctx, ELEMENT_ERROR_NO_IMPL,
@@ -616,7 +616,7 @@ static element_result compile_expression(
         return compile_call_experimental(ctx, scope, bodynode, scope, output_compilation);
     } else if (bodynode->type == ELEMENT_AST_NODE_LAMBDA) {
         // lambda
-        return compile_lambda(ctx, scope, bodynode, output_compilation.expression);
+        return compile_lambda(ctx, scope, bodynode, output_compilation);
     } else if (bodynode->type == ELEMENT_AST_NODE_SCOPE) {
         // function in current scope
         // generate inputs
