@@ -331,10 +331,10 @@ static element_result compile_call_experimental_function_find_ourselves_when_par
 static element_result compile_call_experimental_function_partial_application(
     const element_scope* our_scope,
     std::vector<compilation>& args,
-    const element_scope* parent_scope,
+    const element_scope* parent_scope, //todo: will we ever want to know the scope?
     const compilation& compiled_parent)
 {
-    if (!compiled_parent.expression)
+    if (!compiled_parent.valid())
         return ELEMENT_OK; //without a compiled parent, there's nothing to do partial application with. todo: check that the argument counts are still correct in this situation
 
     //We must be a function for partial application to make sense
@@ -377,11 +377,10 @@ static element_result compile_call_experimental_function(
     const auto result = fill_and_compile_arguments_from_callsite(args, ctx, callsite_root, callsite_node);
     assert(result == ELEMENT_OK); //todo
 
-    //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
     const auto& fn = our_scope->function();
     assert(fn);
     
-    //todo: DRY
+    //todo: All of this comp cache stuff is repeated. DRY
     if (ctx.comp_cache.is_callstack_recursive(our_scope))
         return ELEMENT_ERROR_CIRCULAR_COMPILATION; //todo: logging
 
@@ -400,10 +399,8 @@ static element_result compile_call_experimental_function(
         ctx.comp_cache.add(input_scope, args[i]);
     }
 
-    //todo: I believe this is seeing if this function was compiled previously when resolving the inputs to another function
-    //todo: This doesn't update the fnscope if it's found, which seems to be part of the reason why indexing has issues
-
-    const auto& cached_compilation = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
+    //If we're a port then we should be in the expression cache, due to the previous function adding us to it
+    const auto& cached_compilation = ctx.comp_cache.search(our_scope);
     if (cached_compilation.valid()) {
         output_compilation = cached_compilation;
         return ELEMENT_OK;
@@ -445,8 +442,8 @@ static element_result compile_call_experimental_function(
     //todo: why is this temporary?
     if (fn && fn->is<element_intrinsic>()) {
         output_compilation.expression = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
-        //todo: this just gets the type as declared in source, which is fine when it's Num, but otherwise won't really work. expr_constraint should be determined from generate_intrinsic_expression. Do all intrinsics return numbers? unlikely
-        output_compilation.constraint = fn->type()->output("return")->type; 
+        //todo: expr_constraint should be determined from generate_intrinsic_expression? Do all intrinsics return numbers? unlikely
+        output_compilation.constraint = fn->type()->output("return")->type;
         //callsite_current remains unchanged, should continue pointing to the intrinsic function which is correct (I think)
         assert(output_compilation.expression); //todo
         return ELEMENT_OK;
@@ -477,8 +474,14 @@ static element_result compile_call_experimental_function(
             callsite_current = ctype->scope();
         else if (output_compilation.constraint == element_type::num) //If the function we compiled resulted in a number, then update the scope to be a Num for the next thing indexing in to us
             callsite_current = callsite_current->root()->lookup("Num", false);
-        //otherwise we leave the callsite as it is.. not sure that's correct, but then do we ever hit this case? maybe when returning a first-class function, but we lack a lot of support for t
-        //pretend there's an else() assert for now
+        else if (output_compilation.expression->is<element_expression_structure>() //we might not need all the ctype stuff since we can do this now
+            && output_compilation.constraint->is<element_type_named>())
+            callsite_current = output_compilation.constraint->as<element_type_named>()->scope();
+        else
+        {
+            //first class function? some kind of constraint?
+            assert(false);
+        }
         return ELEMENT_OK;
     }
 
@@ -495,7 +498,8 @@ static element_result compile_call_experimental_compile_parent(
 {
     const auto our_scope = callsite_current;
     //NOTE {2}: This looks like it can be simplified (see NOTE {1})
-    const bool has_parent = callsite_node->children.size() > ast_idx::call::parent && callsite_node->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
+    const bool has_parent = callsite_node->children.size() > ast_idx::call::parent
+                         && callsite_node->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
     if (!has_parent)
         return ELEMENT_OK;
 
@@ -543,14 +547,7 @@ static element_result compile_call_experimental(
         //We couldn't find ourselves but we do have a parent, so let's try indexing the constraint in case we're part of a struct body
         if (!callsite_current && has_parent) {
             //todo: this first searches the struct body before the struct instance, which means shadowing names will probably cause reverse behaviour to what is expected
-            if (output_compilation.constraint->is<element_type>()
-             && output_compilation.constraint->as<element_type>() == element_type::num.get()) {
-                callsite_current = parent_scope->root()->lookup("Num", false);
-                assert(callsite_current); //we failed to find Num in source, but we're indexing in to a number. You can't index in to a number without the Num intrinsic, so this is a user error
-                callsite_current = callsite_current->lookup(callsite_node->identifier, false); //Now we can find ourselves within Num
-                assert(callsite_current); //we failed to find ourselves in Num, some kind of error
-            }
-            else if (output_compilation.constraint->is<element_type_named>()
+            if (output_compilation.constraint->is<element_type_named>()
                   && output_compilation.constraint->as<element_type_named>()) {
                 const auto named_type = output_compilation.constraint->as<element_type_named>();
                 callsite_current = named_type->scope()->lookup(callsite_node->identifier, false); //Now we can find ourselves within the struct body
@@ -560,8 +557,13 @@ static element_result compile_call_experimental(
                   && output_compilation.constraint->as<element_type_anonymous>()) {
                 const auto anonymous_type = output_compilation.constraint->as<element_type_named>();
                 //todo: a function type is anonymous, but indexing a function isn't valid. Not sure if there are situations where an anonymous type is generated, requires more research
+                assert(false);
             }
-            //Something else, so don't try indexing in to it?
+            else
+            {
+                //Something else?
+                assert(false);
+            }
         }
     }
 
