@@ -4,13 +4,14 @@
 #include "ast/ast_internal.hpp"
 #include "interpreter_internal.hpp"
 
-struct expression_and_constraint
+struct compilation
 {
     expression_shared_ptr expression;
     constraint_const_shared_ptr constraint;
 };
 
-using expression_and_constraint_shared = std::shared_ptr<expression_and_constraint>;
+//todo: consider the implications of using and not using it as shared_ptr, given that it's already containing shared_ptrs
+using compilation_shared_ptr = std::shared_ptr<compilation>;
 
 struct compilation_cache
 {
@@ -18,19 +19,27 @@ struct compilation_cache
     {
     friend struct compilation_cache;
     public:
+        //todo: enable these as needed, with correct implementations  
+        frame(const frame& other) = delete;
+        frame(frame&& other) = delete;
+        frame& operator=(const frame& other) = delete;
+        frame& operator=(frame&& other) = delete;
+
         ~frame() { m_parent.pop_frame(); }
     protected:
         frame(compilation_cache& parent, const element_scope* function_scope) : m_parent(parent) { m_parent.push_frame(function_scope); }
         compilation_cache& m_parent;
     };
 
+    //todo: is this meant to be some kind of global cache entry? we should pass the global scope to it in that case. I'm not sure we're using it anyway right now
     compilation_cache() { m_cache.resize(1); } //todo: do we still need this?
 
-    void add(const element_scope* scope, expression_and_constraint_shared expr) { m_cache.back().cache[scope] = std::move(expr); }
+    //todo: we should probably not allow reassignment of existing function entries
+    void add(const element_scope* scope, compilation_shared_ptr expr) { m_cache.back().cache[scope] = std::move(expr); }
 
     frame add_frame(const element_scope* function_scope) { return frame(*this, function_scope); }
 
-    expression_and_constraint_shared search(const element_scope* scope) const
+    compilation_shared_ptr search(const element_scope* scope) const
     {
         for (auto it = m_cache.rbegin(); it != m_cache.rend(); ++it) {
             auto mit = it->cache.find(scope);
@@ -40,6 +49,7 @@ struct compilation_cache
         return nullptr;
     }
 
+    //todo: this only makes sense to have here if all the scopes are functions that we've called, so maybe I haven't thought about this enough and it should be its own class
     bool is_callstack_recursive(const element_scope* function_scope)
     {
         for (auto it = m_cache.rbegin(); it != m_cache.rend(); ++it) {
@@ -51,7 +61,7 @@ struct compilation_cache
     }
 
 private:
-    using Cache = std::unordered_map<const element_scope*, expression_and_constraint_shared>;
+    using Cache = std::unordered_map<const element_scope*, compilation_shared_ptr>;
     struct CacheEntry
     {
         Cache cache;
