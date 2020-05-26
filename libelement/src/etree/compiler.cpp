@@ -279,54 +279,6 @@ static element_result fill_and_compile_arguments_from_callsite(
     return ELEMENT_OK;
 };
 
-//This does a bunch of stuff to get the type that the constructor returns, but that seems unecessary, as callsite_current that our parent modified should already point to that structs scope
-static element_result compile_call_experimental_function_find_ourselves_when_parent_is_constructor(
-    const element_ast* callsite_node,
-    const element_scope* parent_scope,
-    const element_scope*& our_scope)
-{
-    if (our_scope && our_scope->name == callsite_node->identifier)
-        return ELEMENT_OK; //we already found ourselves
-
-    const auto parent_as_function = parent_scope->function();
-    if (!parent_as_function) {
-        assert(false);
-        return ELEMENT_ERROR_UNKNOWN;
-    }
-
-    //the type of a custom function isn't something that could contain us
-    if (parent_as_function->is<element_custom_function>()) {
-        assert(false);
-        return ELEMENT_ERROR_UNKNOWN;
-    }
-
-    //the type of an intrinsic function isn't something that could contain us
-    if (parent_as_function->is<element_intrinsic>()) {
-        assert(false); 
-        return ELEMENT_ERROR_UNKNOWN;
-    }
-
-    //must be a constructor, maybe we missed a case
-    assert(parent_as_function->is<element_type_ctor>());
-
-    //the type of a constructor is the type that constructor creates
-    const auto type = parent_as_function->type();
-    assert(type);
-    const auto named_type = type->as<element_type_named>();
-    assert(named_type);
-
-    const element_scope* named_type_scope = named_type->scope();
-    assert(named_type_scope); //todo
-    assert(parent_scope == named_type_scope); //debug. This is at least true when dealing with literals/Num
-
-    assert(our_scope == named_type_scope->lookup(callsite_node->identifier, false)); //debug. //This is at least true when dealing with literals/Num, so this is all pointless for that case
-
-    //find ourselves in the struct
-    our_scope = named_type_scope->lookup(callsite_node->identifier, false);
-    assert(our_scope); //todo
-    return ELEMENT_OK;
-}
-
 //this does partial application of parent to arguments for this call. This only works when the parent is a constructor (including literals)
 static element_result compile_call_experimental_function_partial_application(
     const element_scope* our_scope,
@@ -409,28 +361,24 @@ static element_result compile_call_experimental_function(
     //Now we've compiled any and all of our parents, and we've compiled any and all of our arguments
 
     if (has_compiled_parent) {
+        //todo: compile_call_experimental checks to see if we're in a struct body, which happens before this check to see if we're in the struct index. this is because of our dependence on args (which is only a thing for functions), but can definitely be cleaned up
         /* Compiling our parent resulted in a struct instance, so we index that instance with our name.
           This is struct instance indexing.
           The callsite_scope will be invalid, as we did a lookup of ourselves based on the scope our parent set.
           Struct instances don't have a scope in libelement, as a scope is somewhere in the source code.
           Literals in source code are not struct instances. */
         if (compiled_parent.expression->is<element_expression_structure>()) {
-            output_compilation.expression = compiled_parent.expression->as<element_expression_structure>()->output(callsite_node->identifier);
+            auto expr = compiled_parent.expression->as<element_expression_structure>()->output(callsite_node->identifier);
 
             //We found ourselves in the struct instance, so we have our expression. We can leave now.
-            if (output_compilation.expression) {
+            if (expr) {
+                output_compilation.expression = std::move(expr);
                 //todo: understand what this does and document it
                 const auto result = place_args(output_compilation.expression, args);
-                //todo: this is broken, because now we're something in a struct instance, but we're just an expression, so good luck to anything indexing in to us (unless we're also a struct instance :b)
+                //todo: this is broken, because now we're something in a struct instance, but we're just an expression, so good luck to anything indexing in to us (unless we're also a struct instance :b) as there's no type information.
                 return result;
             }
-
-            //We failed to find ourselves in the struct instance. We fall back out and try something else.
         }
-
-        //Our parent didn't compile to a struct instance, or it did and we couldn't find ourselves as a member of it.
-        //Let's try and find ourselves in the struct, if our parent is a constructor. Will this work in the case of `instance = MyType(1)`?
-        compile_call_experimental_function_find_ourselves_when_parent_is_constructor(callsite_node, parent_scope, callsite_current);
 
         //If our parent is something we can pass as an argument, let's try to do so if we're missing an argument
         compile_call_experimental_function_partial_application(our_scope, args, parent_scope, compiled_parent);
@@ -450,16 +398,7 @@ static element_result compile_call_experimental_function(
     }
 
     if (fn && fn->is<element_type_ctor>()) {
-        //todo: should we not be calling compile_type_ctor?
-        std::vector<std::pair<std::string, expression_shared_ptr>> struct_instance_dependents;
-        struct_instance_dependents.resize(args.size());
-        for (unsigned int i = 0; i < args.size(); ++i) {
-            const auto& arg = args[i];
-            const auto& param = fn->type()->inputs()[i];
-            struct_instance_dependents[i].first = param.name;
-            struct_instance_dependents[i].second = arg.expression;
-        }
-        output_compilation.expression = std::make_shared<element_expression_structure>(std::move(struct_instance_dependents));
+        compile_type_ctor(ctx, fn.get(), args, output_compilation.expression);
         output_compilation.constraint = fn->type(); //the type of a constructor is also the type of the struct it creates
         return ELEMENT_OK;
     }
