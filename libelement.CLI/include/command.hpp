@@ -157,7 +157,17 @@ namespace libelement::cli
 
 		static compiler_message generate_response(element_result result, element_value value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 		{
-			return generate_response(result, std::isnan(value) ? "NaN" : std::to_string(value), trace_stack);
+			std::string output;
+			if (std::isnan(value))
+				output = "NaN";
+			else if (value == std::numeric_limits<float>::infinity())
+				output = std::to_string(std::numeric_limits<float>::infinity());
+			else if (value == -std::numeric_limits<float>::infinity())
+				output = std::to_string(-std::numeric_limits<float>::infinity());
+			else
+				output = std::to_string(value);
+			
+			return generate_response(result, output, trace_stack);
 		}
 
 		static compiler_message generate_response(element_result result, std::string value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())

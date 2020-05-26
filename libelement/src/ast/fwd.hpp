@@ -18,8 +18,20 @@ struct element_function;
 using function_shared_ptr = std::shared_ptr<element_function>;
 using function_const_shared_ptr = std::shared_ptr<const element_function>;
 
+enum class element_nullary_op {
+	//num
+	nan,
+	positive_infinity,
+	negative_infinity,
+
+	//boolean
+    true_value,
+    false_value,
+};
+
 enum class element_unary_op
 {
+	//num
     sin,
     cos,
     tan,
@@ -30,10 +42,14 @@ enum class element_unary_op
     abs,
     ceil,
     floor,
+
+	//boolean
+    not,
 };
 
 enum class element_binary_op
 {
+	//num
     add,
     sub,
     mul,
@@ -44,4 +60,16 @@ enum class element_binary_op
     max,
     log,
     atan2,
+
+	//boolean
+    and,
+    or,
+
+	//comparison
+	eq,
+	neq,
+	lt,
+	leq,
+	gt,
+	geq
 };

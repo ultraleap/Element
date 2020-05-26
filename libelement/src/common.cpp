@@ -155,6 +155,25 @@ std::string expression_to_string(const element_expression& expression, int depth
         const auto& structure = expression.as<element_expression_structure>();
         string += "STRUCTURE: ";
     }
+
+    if (expression.is<element_expression_nullary>())
+    {
+        const auto& nullary = expression.as<element_expression_nullary>();
+        string += "NULLARY: ";
+        char* c = nullptr;
+        switch (nullary->operation())
+        {
+            //num
+            PRINTCASE(element_nullary_op::positive_infinity);
+            PRINTCASE(element_nullary_op::negative_infinity);
+            PRINTCASE(element_nullary_op::nan);
+
+        	//boolean
+            PRINTCASE(element_nullary_op::true_value);
+            PRINTCASE(element_nullary_op::false_value);
+        }
+        string += c;
+    }
 	
     if(expression.is<element_expression_unary>())
     {
@@ -163,6 +182,7 @@ std::string expression_to_string(const element_expression& expression, int depth
         char* c = nullptr;
     	switch(unary->operation())
     	{
+            //num
             PRINTCASE(element_unary_op::sin);
             PRINTCASE(element_unary_op::cos);
             PRINTCASE(element_unary_op::tan);
@@ -173,6 +193,9 @@ std::string expression_to_string(const element_expression& expression, int depth
             PRINTCASE(element_unary_op::abs);
             PRINTCASE(element_unary_op::ceil);
             PRINTCASE(element_unary_op::floor);
+
+            //boolean
+            PRINTCASE(element_unary_op::not);
     	}
         string += c;
     }
@@ -184,6 +207,7 @@ std::string expression_to_string(const element_expression& expression, int depth
         char* c = nullptr;
         switch (binary->operation())
         {
+        	//num
             PRINTCASE(element_binary_op::add);
             PRINTCASE(element_binary_op::sub);
             PRINTCASE(element_binary_op::mul);
@@ -194,6 +218,18 @@ std::string expression_to_string(const element_expression& expression, int depth
             PRINTCASE(element_binary_op::max);
             PRINTCASE(element_binary_op::log);
             PRINTCASE(element_binary_op::atan2);
+
+            //boolean
+            PRINTCASE(element_binary_op::and);
+            PRINTCASE(element_binary_op:: or );
+
+            //comparison
+            PRINTCASE(element_binary_op::eq);
+            PRINTCASE(element_binary_op::neq);
+            PRINTCASE(element_binary_op::lt);
+            PRINTCASE(element_binary_op::leq);
+            PRINTCASE(element_binary_op::gt);
+            PRINTCASE(element_binary_op::geq);
         }
         string += c;
     }

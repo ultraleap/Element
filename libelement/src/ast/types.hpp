@@ -66,9 +66,15 @@ struct element_type : public element_constraint
 public:
     DECLARE_TYPE_ID();
 
-    static const type_const_shared_ptr num;  // the absolute unit
+    static const type_const_shared_ptr num;      // the absolute unit
+    static const type_const_shared_ptr boolean;
+    static const type_const_shared_ptr nullary;
     static const type_const_shared_ptr unary;
     static const type_const_shared_ptr binary;
+    static const type_const_shared_ptr nullary_boolean;
+    static const type_const_shared_ptr unary_boolean;
+    static const type_const_shared_ptr binary_boolean;
+    static const type_const_shared_ptr binary_comparison;
 
     // TODO: make this accurate?
     virtual bool is_serializable() const { return get_size() != 0; }
