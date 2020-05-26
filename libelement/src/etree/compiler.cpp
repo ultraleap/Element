@@ -8,35 +8,31 @@
 #include "ast/ast_indexes.hpp"
 
 //When compiling a function that needs direct input from the boundary, generate placeholder expressions to represent that input when it's evaluated
-static std::vector<compilation_shared_ptr> generate_placeholder_inputs(const element_type* t)
+static std::vector<compilation> generate_placeholder_inputs(const element_type* t)
 {
-    std::vector<compilation_shared_ptr> results;
+    std::vector<compilation> results;
     const size_t insize = t->inputs().size();
     results.reserve(insize);
     for (size_t i = 0; i < insize; ++i) {
         auto expression = std::make_shared<element_expression_input>(i, t->inputs()[i].type->get_size());
         constraint_const_shared_ptr constraint = t->inputs()[i].type; //todo: have a look and see if these types make sense
-        results.emplace_back(compilation_shared_ptr(
-            new compilation{
-                std::move(expression), std::move(constraint)
-            }
-        ));
+        results.emplace_back(compilation{ std::move(expression), std::move(constraint) });
     }
     return results;
 }
 
-static expression_shared_ptr generate_intrinsic_expression(const element_intrinsic* fn, const std::vector<compilation_shared_ptr>& args)
+static expression_shared_ptr generate_intrinsic_expression(const element_intrinsic* fn, const std::vector<compilation>& args)
 {
     //todo: logging rather than asserting?
 
     if (auto ui = fn->as<element_intrinsic_unary>()) {
         assert(args.size() >= 1);
-        return std::make_shared<element_expression_unary>(ui->operation(), args[0]->expression);
+        return std::make_shared<element_expression_unary>(ui->operation(), args[0].expression);
     }
 
     if (auto bi = fn->as<element_intrinsic_binary>()) {
         assert(args.size() >= 2);
-        return std::make_shared<element_expression_binary>(bi->operation(), args[0]->expression, args[1]->expression);
+        return std::make_shared<element_expression_binary>(bi->operation(), args[0].expression, args[1].expression);
     }
 
     assert(false);
@@ -46,15 +42,15 @@ static expression_shared_ptr generate_intrinsic_expression(const element_intrins
 static element_result compile_intrinsic(
     element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<compilation_shared_ptr> inputs,
+    std::vector<compilation> inputs,
     expression_shared_ptr& expr)
 {
     if (const auto ui = fn->as<element_intrinsic_unary>()) {
         assert(inputs.size() >= 1);
         // TODO: better error codes
         //todo: logging
-        if (inputs[0]->expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        expr = std::make_shared<element_expression_unary>(ui->operation(), inputs[0]->expression);
+        if (inputs[0].expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
+        expr = std::make_shared<element_expression_unary>(ui->operation(), inputs[0].expression);
         return ELEMENT_OK;
     }
 
@@ -62,9 +58,9 @@ static element_result compile_intrinsic(
         assert(inputs.size() >= 2);
         // TODO: better error codes
         //todo: logging
-        if (inputs[0]->expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        if (inputs[1]->expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        expr = std::make_shared<element_expression_binary>(bi->operation(), inputs[0]->expression, inputs[1]->expression);
+        if (inputs[0].expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
+        if (inputs[1].expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
+        expr = std::make_shared<element_expression_binary>(bi->operation(), inputs[0].expression, inputs[1].expression);
         return ELEMENT_OK;
     }
 
@@ -77,7 +73,7 @@ static element_result compile_intrinsic(
 static element_result compile_type_ctor(
     element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<compilation_shared_ptr> inputs,
+    std::vector<compilation> inputs,
     expression_shared_ptr& expr)
 {
     assert(fn->inputs().size() >= inputs.size());
@@ -86,7 +82,7 @@ static element_result compile_type_ctor(
     std::vector<std::pair<std::string, expression_shared_ptr>> deps;
     deps.reserve(inputs.size());
     for (size_t i = 0; i < inputs.size(); ++i)
-        deps.emplace_back(fn->inputs()[i].name, inputs[i]->expression);
+        deps.emplace_back(fn->inputs()[i].name, inputs[i].expression);
     expr = std::make_shared<element_expression_structure>(std::move(deps));
     return ELEMENT_OK;
 }
@@ -100,7 +96,7 @@ static element_result compile_expression(
 static element_result compile_custom_fn_scope(
     element_compiler_ctx& ctx,
     const element_scope* scope,
-    std::vector<compilation_shared_ptr> args,
+    std::vector<compilation> args,
     compilation& output_compilation)
 {
     const element_ast* node = scope->node;
@@ -129,7 +125,7 @@ static element_result compile_custom_fn_scope(
         const auto& parameter = fn->inputs()[i];
 
         //todo: it seems like a parameters type can be empty in some situations, figure out why and if it's a problem or if it's equivelant to being Any (which is how I'm treating it right now)
-        if (parameter.type && !parameter.type->is_satisfied_by(args[i]->constraint)) {
+        if (parameter.type && !parameter.type->is_satisfied_by(args[i].constraint)) {
             return ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED; //todo: logging
         }
 
@@ -164,11 +160,11 @@ static element_result compile_custom_fn_scope(
 }
 
 //todo: understand what this does and document it
-static element_result place_args(expression_shared_ptr& expr, const std::vector<compilation_shared_ptr>& args)
+static element_result place_args(expression_shared_ptr& expr, const std::vector<compilation>& args)
 {
     if (const auto ua = expr->as<element_expression_unbound_arg>()) {
         if (ua->index() < args.size()) {
-            expr = args[ua->index()]->expression;
+            expr = args[ua->index()].expression;
             return ELEMENT_OK;
         } else {
             return ELEMENT_ERROR_ARGS_MISMATCH; //logging is done by the caller
@@ -255,8 +251,8 @@ static element_result compile_call_experimental_namespace(
     return ELEMENT_OK;
 }
 
-static element_result fill_args_from_callsite(
-    std::vector<compilation_shared_ptr>& args,
+static element_result fill_and_compile_arguments_from_callsite(
+    std::vector<compilation>& args,
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node)
@@ -268,12 +264,6 @@ static element_result fill_args_from_callsite(
         const auto callargs_node = callsite_node->children[ast_idx::call::args].get();
         args.resize(callargs_node->children.size());
 
-        //Initialize the args
-        for (size_t i = 0; i < args.size(); ++i) {
-            if (!args[i])
-                args[i] = std::make_shared<compilation>();
-        }
-
         //Compile all of the exprlist AST nodes and assign them to the arguments we're calling with
         for (size_t i = 0; i < callargs_node->children.size(); ++i)
         {
@@ -281,7 +271,7 @@ static element_result fill_args_from_callsite(
                 ctx,
                 callsite_root,
                 callargs_node->children[i].get(),
-                *args[i] //todo: we don't need this stuff to be a shared_ptr
+                args[i]
             ));
         }
     }
@@ -340,7 +330,7 @@ static element_result compile_call_experimental_function_find_ourselves_when_par
 //this does partial application of parent to arguments for this call. This only works when the parent is a constructor (including literals)
 static element_result compile_call_experimental_function_partial_application(
     const element_scope* our_scope,
-    std::vector<compilation_shared_ptr>& args,
+    std::vector<compilation>& args,
     const element_scope* parent_scope,
     const compilation& compiled_parent)
 {
@@ -356,9 +346,7 @@ static element_result compile_call_experimental_function_partial_application(
     //One of the few places that does type checking in libelement?
     const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(compiled_parent.constraint);
     if (mising_one_argument && argument_one_matches_parent_type) {
-        args.insert(args.begin(), compilation_shared_ptr( //todo: args probably doesn't need to hold shared ptrs
-            new compilation(compiled_parent)
-        ));
+        args.insert(args.begin(), compiled_parent);
     }
 
     assert(fn->inputs().size() == args.size()); //todo
@@ -385,8 +373,8 @@ static element_result compile_call_experimental_function(
     const auto our_scope = callsite_current;
 
     //Handle any arguments to this function call
-    std::vector<compilation_shared_ptr> args;
-    const auto result = fill_args_from_callsite(args, ctx, callsite_root, callsite_node);
+    std::vector<compilation> args;
+    const auto result = fill_and_compile_arguments_from_callsite(args, ctx, callsite_root, callsite_node);
     assert(result == ELEMENT_OK); //todo
 
     //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
@@ -404,7 +392,7 @@ static element_result compile_call_experimental_function(
         const auto& parameter = fn->inputs()[i];
 
         //todo: it seems like a parameters type can be empty in some situations, figure out why and if it's a problem or if it's equivelant to being Any (which is how I'm treating it right now)
-        if (parameter.type && !parameter.type->is_satisfied_by(args[i]->constraint)) {
+        if (parameter.type && !parameter.type->is_satisfied_by(args[i].constraint)) {
             return ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED; //todo: logging
         }
 
@@ -416,8 +404,8 @@ static element_result compile_call_experimental_function(
     //todo: This doesn't update the fnscope if it's found, which seems to be part of the reason why indexing has issues
 
     const auto& found_expr = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
-    if (found_expr) {
-        output_compilation = *found_expr;
+    if (found_expr.expression) {
+        output_compilation = found_expr;
         return ELEMENT_OK;
     }
 
@@ -472,7 +460,7 @@ static element_result compile_call_experimental_function(
             const auto& arg = args[i];
             const auto& param = fn->type()->inputs()[i];
             struct_instance_dependents[i].first = param.name;
-            struct_instance_dependents[i].second = arg->expression;
+            struct_instance_dependents[i].second = arg.expression;
         }
         output_compilation.expression = std::make_shared<element_expression_structure>(std::move(struct_instance_dependents));
         output_compilation.constraint = fn->type(); //the type of a constructor is also the type of the struct it creates
@@ -588,9 +576,9 @@ static element_result compile_call_experimental(
 
     //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
     if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
-        const auto& found_expr = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
-        if (found_expr) {
-            output_compilation = *found_expr;
+        const auto& cached_compilation = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
+        if (cached_compilation.expression) {
+            output_compilation = cached_compilation;
             return ELEMENT_OK;
         }
     }
@@ -653,7 +641,7 @@ static element_result compile_expression(
 static element_result compile_custom_fn(
     element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<compilation_shared_ptr> inputs,
+    std::vector<compilation> inputs,
     compilation& output_compilation)
 {
     const auto cfn = fn->as<element_custom_function>();
@@ -667,7 +655,7 @@ static element_result compile_custom_fn(
 static element_result element_compile(
     element_interpreter_ctx& ctx,
     const element_function* fn,
-    std::vector<compilation_shared_ptr> inputs,
+    std::vector<compilation> inputs,
     compilation& output_compilation,
     element_compiler_options opts)
 {
