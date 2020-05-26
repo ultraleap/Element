@@ -205,6 +205,13 @@ namespace Element.AST
                                                  Context context) =>
             UncurriedFunction.Create(a, b, context);
 
+        public static IFunctionSignature? Uncurry(this IFunctionSignature a, string bFunctionExpression,
+                                                  SourceContext context)
+        {
+            var b = context.EvaluateExpressionAs<IFunctionSignature>(bFunctionExpression, out _);
+            return b == null ? null : a.Uncurry(b, context);
+        }
+
         private class UncurriedFunction : IFunction
         {
             private readonly IFunctionSignature _a;

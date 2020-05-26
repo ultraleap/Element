@@ -8,7 +8,7 @@ namespace Laboratory.Tests.L2.Semantics
         public Structs() : base("Structs") { }
 
         [Test]
-        public void TypeofStruct() => AssertTypeof(CompilationInput, "MyStruct", "Type");
+        public void TypeofStruct() => AssertTypeof(CompilationInput, "MyStruct", "MyStruct:Struct");
 
         [Test]
         public void ConstructInstance() => AssertTypeof(CompilationInput, "MyStruct(5)", "Instance:MyStruct:Struct");

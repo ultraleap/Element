@@ -77,7 +77,7 @@ namespace Element.CLR
         public StructConverter(string elementTypeExpression, Type structType)
         {
             _elementTypeExpression = elementTypeExpression;
-            _elementToClrFieldMapping = structType.GetFields().ToDictionary(f => f.Name, f => f.Name);
+            _elementToClrFieldMapping = structType.GetFields().ToDictionary(f => f.Name, f => $"{char.ToLower(f.Name[0])}{f.Name.Substring(1)}");
         }
 
         public IValue LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext compilationContext)
@@ -191,7 +191,7 @@ namespace Element.CLR
             };
         }
 
-        private bool TryAddStructConverter(Type clrStructType, out IBoundaryConverter boundaryConverter)
+        private bool TryAddStructConverter(Type clrStructType, out IBoundaryConverter? boundaryConverter)
         {
             if (clrStructType.GetCustomAttribute<ElementStructTemplateAttribute>() is {} attr)
             {

@@ -44,7 +44,7 @@ namespace Element
             return success;
         }
 
-        public static bool ValidateIdentifier(this Context context, Identifier identifier, Identifier[] blacklist = null, Identifier[] whitelist = null)
+        public static bool ValidateIdentifier(this Context context, Identifier identifier, Identifier[]? blacklist = null, Identifier[]? whitelist = null)
         {
             if (string.IsNullOrEmpty(identifier))
             {

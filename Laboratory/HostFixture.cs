@@ -158,6 +158,4 @@ namespace Laboratory
                 Assert.Fail($"Received failure");
         }
     }
-    
-    
 }

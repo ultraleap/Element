@@ -26,9 +26,9 @@ namespace Element
         public TDeclaration? GetIntrinsicsDeclaration<TDeclaration>(IIntrinsic intrinsic) where TDeclaration : Declaration =>
             SourceContext.GetIntrinsicsDeclaration<TDeclaration>(intrinsic, this);
 
-        protected override CompilerMessage MakeMessage(int? messageCode, string context = default) => !messageCode.HasValue
-                                                                                                          ? new CompilerMessage(null, null, context, TraceStack?.ToArray())
-                                                                                                          : new CompilerMessage(messageCode.Value, CompilerMessage.TryGetMessageLevel(messageCode.Value, out var level) ? level : MessageLevel.Information, context, TraceStack?.ToArray());
+        protected override CompilerMessage MakeMessage(int? messageCode, string context) => !messageCode.HasValue
+                                                                                                ? new CompilerMessage(null, null, context, TraceStack?.ToArray())
+                                                                                                : new CompilerMessage(messageCode.Value, CompilerMessage.TryGetMessageLevel(messageCode.Value, out var level) ? level : MessageLevel.Information, context, TraceStack?.ToArray());
     }
 
     public static class CompilationContextExtensions

@@ -296,22 +296,17 @@ namespace Element.CLR
 			return function.ResolveCall(arguments, false, context);
 		}
 
-		public static (TDelegate?, CompilationContext) Compile<TDelegate>(this SourceContext sourceContext, IValue value,
-		                                                                  IBoundaryConverter boundaryConverter = default)
-			where TDelegate : Delegate
-		{
-			var (@delegate, context) = sourceContext.Compile(value, typeof(TDelegate), boundaryConverter);
-			return ((TDelegate?)@delegate, context);
-		}
+		public static TDelegate? Compile<TDelegate>(this IValue value, CompilationContext context, IBoundaryConverter? boundaryConverter = default)
+			where TDelegate : Delegate =>
+			(TDelegate?)Compile(value, context, typeof(TDelegate), boundaryConverter);
 
-		private static (Delegate?, CompilationContext) Compile(this SourceContext sourceContext, IValue value,
-		                                                       Type delegateType, IBoundaryConverter boundaryConverter = default)
+		private static Delegate? Compile(IValue value, CompilationContext context, 
+		                                 Type delegateType, IBoundaryConverter? boundaryConverter = default)
         {
-            if (sourceContext == null) throw new ArgumentNullException(nameof(sourceContext));
+            if (context == null) throw new ArgumentNullException(nameof(context));
             if (value == null) throw new ArgumentNullException(nameof(value));
             if (delegateType == null) throw new ArgumentNullException(nameof(delegateType));
 
-            sourceContext.MakeCompilationContext(out var context);
             boundaryConverter ??= new BoundaryConverter();
 
             // Check return type/single out parameter of delegate
@@ -319,7 +314,7 @@ namespace Element.CLR
             if (method == null)
             {
 	            context.LogError(10, $"{delegateType} did not have invoke method");
-	            return (null, context);
+	            return null;
             }
             
             var delegateParameters = method.GetParameters();
@@ -327,7 +322,7 @@ namespace Element.CLR
             if (delegateParameters.Any(p => p.IsOut) || method.ReturnType == typeof(void))
             {
                 context.LogError(10, $"{delegateType} cannot have out parameters and must have non-void return type");
-                return (null, context);
+                return null;
             }
             
             // Create parameter expressions
@@ -338,7 +333,7 @@ namespace Element.CLR
             if (value is IFunctionSignature fn && fn.Inputs.Length != delegateParameters.Length)
             {
 	            context.LogError(10, "Mismatch in number of parameters between delegate type and the function being compiled");
-	            return (null, context);
+	            return null;
             }
             
             var outputExpression = value is IFunctionSignature functionSignature
@@ -415,7 +410,7 @@ namespace Element.CLR
 
 			// Put everything into a single code block, and wrap it in the Delegate
 			var fnBody = LinqExpression.Block(data.Variables, data.Statements);
-			return (LinqExpression.Lambda(delegateType, fnBody, false, parameterExpressions).Compile(), context);
+			return LinqExpression.Lambda(delegateType, fnBody, false, parameterExpressions).Compile();
         }
     }
 }

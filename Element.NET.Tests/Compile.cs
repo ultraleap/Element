@@ -47,14 +47,14 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         {
             var function = context.EvaluateExpressionAs<IFunctionSignature>(expression, out var compilationContext);
             var fnWithSourcedArgs = function.SourceArgumentsFromSerializedArray(out arguments, compilationContext);
-            var (fn, _) = context.Compile<TDelegate>(fnWithSourcedArgs);
+            var fn = fnWithSourcedArgs.Compile<TDelegate>(compilationContext);
             return fn;
         }
         
         private TDelegate CompileAs<TDelegate>(SourceContext context, string expression) where TDelegate : Delegate
         {
-            var function = context.EvaluateExpressionAs<IValue>(expression, out _);
-            var (fn, _) = context.Compile<TDelegate>(function);
+            var function = context.EvaluateExpressionAs<IValue>(expression, out var compilationContext);
+            var fn = function.Compile<TDelegate>(compilationContext);
             return fn;
         }
         

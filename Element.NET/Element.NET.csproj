@@ -6,13 +6,14 @@
     <Nullable>enable</Nullable>
 
     <PackageId>Element.NET</PackageId>
-    <Version>1.0.0-alpha2</Version>
+    <Version>1.0.0-alpha3</Version>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Authors>Ultraleap</Authors>
     <Company>Ultraleap</Company>
     <RepositoryUrl>https://github.com/ultraleap/Element</RepositoryUrl>
     <Description>C# compiler for the Element embedded programming language.</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageVersion>1.0.0-alpha5</PackageVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lexico" Version="1.0.0-alpha1" />

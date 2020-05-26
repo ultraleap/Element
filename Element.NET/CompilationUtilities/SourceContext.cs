@@ -55,7 +55,7 @@ namespace Element
                        ? expressionObject.ResolveExpression(GlobalScope, compilationContext)
                        : CompilationError.Instance;
         }
-
+        
         public TValue? EvaluateExpressionAs<TValue>(string expression, out CompilationContext compilationContext)
             where TValue : class, IValue
         {
@@ -96,7 +96,7 @@ namespace Element
             return (overallSuccess, fileResults);
         }
 
-        protected override CompilerMessage MakeMessage(int? messageCode, string context = default)=> !messageCode.HasValue
+        protected override CompilerMessage MakeMessage(int? messageCode, string context) => !messageCode.HasValue
             ? new CompilerMessage(null, null, context, null)
             : new CompilerMessage(messageCode.Value, CompilerMessage.TryGetMessageLevel(messageCode.Value, out var level) ? level : MessageLevel.Information, context, null);
 

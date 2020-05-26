@@ -8,7 +8,7 @@ namespace Element
     /// </summary>
     public class PersistentHost : IHost
     {
-        public static bool TryCreate(CompilationInput input, out PersistentHost host)
+        public static bool TryCreate(CompilationInput input, out PersistentHost? host)
         {
             host = null;
             if (!SourceContext.TryCreate(input, out var context)) return false;
@@ -28,7 +28,7 @@ namespace Element
                           ?.Serialize(compilationContext)
                           .ToFloatArray(compilationContext) is {} result
                       ? (true, result)
-                      : (_context.LogError(1, "Result not serializable") == CompilationError.Instance, null)
+                      : (_context.LogError(1, "Result not serializable") == CompilationError.Instance, Array.Empty<float>())
                 : (false, Array.Empty<float>());
 
         public (bool Success, string Result) Typeof(CompilationInput input, string expression) =>

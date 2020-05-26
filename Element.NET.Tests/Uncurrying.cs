@@ -20,7 +20,7 @@ namespace Element.NET.Tests
             var add = srcContext.EvaluateExpressionAs<IFunctionSignature>("Num.add", out _);
             var mul = srcContext.EvaluateExpressionAs<IFunctionSignature>("Num.sqr", out _);
             var uncurried = add.Uncurry(mul, srcContext);
-            var (compiled, _) = srcContext.Compile<AddSqr>(uncurried);
+            var compiled = uncurried.Compile<AddSqr>(srcContext.MakeCompilationContext(out _));
             var result = compiled(5f, 10f);
             Assert.AreEqual(225f, result);
         }

@@ -11,9 +11,8 @@ namespace Element
         public bool Debug => CompilationInput.Debug;
         public bool SkipValidation => CompilationInput.SkipValidation;
 
-        public CompilationError LogError(int? messageCode, string context = default)
+        public CompilationError LogError(int? messageCode, string context)
         {
-            
             var msg = MakeMessage(messageCode, context);
             if (!msg.MessageLevel.HasValue || msg.MessageLevel.Value >= CompilationInput.Verbosity)
             {
@@ -32,6 +31,6 @@ namespace Element
             }
         }
         
-        protected abstract CompilerMessage MakeMessage(int? messageCode, string context = default);
+        protected abstract CompilerMessage MakeMessage(int? messageCode, string context);
     }
 }

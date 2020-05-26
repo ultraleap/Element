@@ -6,7 +6,7 @@ namespace Element.AST
     {
         protected abstract IEnumerable<Declaration> ItemsToCacheOnValidate { get; }
 
-        public bool ValidateScope(SourceContext sourceContext, Identifier[] identifierBlacklist = null, Identifier[] identifierWhitelist = null)
+        public bool ValidateScope(SourceContext sourceContext, Identifier[]? identifierBlacklist = null, Identifier[]? identifierWhitelist = null)
         {
             if (sourceContext.SkipValidation) return true;
             
