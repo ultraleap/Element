@@ -260,7 +260,7 @@ element_result element_interpreter_ctx::load_files(const std::vector<std::string
             continue; //todo: error handling
         }
 
-        element_result result = load_file(filename);
+        const element_result result = load_file(filename);
         if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
             ret = result;
     }
