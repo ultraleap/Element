@@ -21,36 +21,43 @@ static std::vector<compilation> generate_placeholder_inputs(const element_type* 
     return results;
 }
 
-static expression_shared_ptr generate_intrinsic_expression(const element_intrinsic* fn, const std::vector<compilation>& args)
+static compilation generate_intrinsic_expression(const element_intrinsic* fn, const std::vector<compilation>& args)
 {
     //todo: logging rather than asserting?
 
-    if (auto ui = fn->as<element_intrinsic_unary>()) {
-        assert(args.size() >= 1);
-        return std::make_shared<element_expression_unary>(ui->operation(), args[0].expression);
+    if (const auto ui = fn->as<element_intrinsic_unary>()) {
+        assert(args.size() == 1);
+        return {
+            std::make_shared<element_expression_unary>(ui->operation(), args[0].expression),
+            fn->type()->output("return")->type
+        };
     }
 
-    if (auto bi = fn->as<element_intrinsic_binary>()) {
-        assert(args.size() >= 2);
-        return std::make_shared<element_expression_binary>(bi->operation(), args[0].expression, args[1].expression);
+    if (const auto bi = fn->as<element_intrinsic_binary>()) {
+        assert(args.size() == 2);
+        return {
+            std::make_shared<element_expression_binary>(bi->operation(), args[0].expression, args[1].expression),
+            fn->type()->output("return")->type
+        };
     }
 
     assert(false);
-    return nullptr;
+    return {};
 }
 
 static element_result compile_intrinsic(
     element_compiler_ctx& ctx,
     const element_function* fn,
     std::vector<compilation> inputs,
-    expression_shared_ptr& expr)
+    compilation& output_compilation)
 {
     if (const auto ui = fn->as<element_intrinsic_unary>()) {
         assert(inputs.size() >= 1);
         // TODO: better error codes
         //todo: logging
         if (inputs[0].expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        expr = std::make_shared<element_expression_unary>(ui->operation(), inputs[0].expression);
+        output_compilation.expression = std::make_shared<element_expression_unary>(ui->operation(), inputs[0].expression);
+        output_compilation.constraint = fn->type()->output("return")->type;
         return ELEMENT_OK;
     }
 
@@ -60,7 +67,8 @@ static element_result compile_intrinsic(
         //todo: logging
         if (inputs[0].expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
         if (inputs[1].expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
-        expr = std::make_shared<element_expression_binary>(bi->operation(), inputs[0].expression, inputs[1].expression);
+        output_compilation.expression = std::make_shared<element_expression_binary>(bi->operation(), inputs[0].expression, inputs[1].expression);
+        output_compilation.constraint = fn->type()->output("return")->type;
         return ELEMENT_OK;
     }
 
@@ -74,16 +82,20 @@ static element_result compile_type_ctor(
     element_compiler_ctx& ctx,
     const element_function* fn,
     std::vector<compilation> inputs,
-    expression_shared_ptr& expr)
+    compilation& output_compilation)
 {
+    assert(!output_compilation.valid());
     assert(fn->inputs().size() >= inputs.size());
 
     // TODO: is flat list here OK?
     std::vector<std::pair<std::string, expression_shared_ptr>> deps;
     deps.reserve(inputs.size());
+
     for (size_t i = 0; i < inputs.size(); ++i)
         deps.emplace_back(fn->inputs()[i].name, inputs[i].expression);
-    expr = std::make_shared<element_expression_structure>(std::move(deps));
+
+    output_compilation.expression = std::make_shared<element_expression_structure>(std::move(deps));
+    output_compilation.constraint = fn->type(); //A constructors type is the type that it creates
     return ELEMENT_OK;
 }
 
@@ -257,6 +269,10 @@ static element_result fill_and_compile_arguments_from_callsite(
     const element_scope* callsite_root,
     const element_ast* callsite_node)
 {
+    assert(args.empty());
+    assert(callsite_root);
+    assert(callsite_node);
+
     const bool calling_with_arguments = callsite_node->children.size() > ast_idx::call::args
         && callsite_node->children[ast_idx::call::args]->type == ELEMENT_AST_NODE_EXPRLIST;
 
@@ -281,28 +297,27 @@ static element_result fill_and_compile_arguments_from_callsite(
 
 //this does partial application of parent to arguments for this call. This only works when the parent is a constructor (including literals)
 static element_result compile_call_experimental_function_partial_application(
-    const element_scope* our_scope,
+    const element_function* fn,
     std::vector<compilation>& args,
     const element_scope* parent_scope, //todo: will we ever want to know the scope?
     const compilation& compiled_parent)
 {
-    if (!compiled_parent.valid())
-        return ELEMENT_OK; //without a compiled parent, there's nothing to do partial application with. todo: check that the argument counts are still correct in this situation
+    assert(fn);
 
-    //We must be a function for partial application to make sense
-    const auto fn = our_scope->function();
-    assert(fn); //todo, should be if, because if it's not a function then there's no partial application to do
+    //without a compiled parent, there's nothing to do partial application with
+    if (compiled_parent.valid()) {
+        const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
+        const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(compiled_parent.constraint);
 
-    //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
-    const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
-    //One of the few places that does type checking in libelement?
-    const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(compiled_parent.constraint);
-    if (mising_one_argument && argument_one_matches_parent_type) {
-        args.insert(args.begin(), compiled_parent);
+        //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
+        if (mising_one_argument && argument_one_matches_parent_type)
+            args.insert(args.begin(), compiled_parent);
     }
 
-    assert(fn->inputs().size() == args.size()); //todo
-    return ELEMENT_OK;
+    if (fn->inputs().size() == args.size())
+        return ELEMENT_OK;
+
+    return ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH;
 }
 
 static element_result compile_call_experimental_function(
@@ -310,27 +325,29 @@ static element_result compile_call_experimental_function(
     const element_scope* callsite_root,
     const element_ast* callsite_node,
     const element_scope* parent_scope,
-    const element_scope*& callsite_current, //todo: rename, it's the indexing scope (of our parent), or our scope, or the scope we're being called from
+    const element_scope* our_scope, //todo: rename, it's the indexing scope (of our parent), or our scope, or the scope we're being called from
     compilation& output_compilation)
 {
+    assert(callsite_root);
+    assert(callsite_node);
+    assert(our_scope);
+
     if (callsite_node->type != ELEMENT_AST_NODE_CALL) {
         assert(false); //todo
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore those here.
+    const auto& fn = our_scope->function();
+    assert(fn);
+
+    //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore as parents anyway
     const bool has_compiled_parent = output_compilation.expression.get();
     const auto compiled_parent = output_compilation;
-
-    const auto our_scope = callsite_current;
 
     //Handle any arguments to this function call
     std::vector<compilation> args;
     const auto result = fill_and_compile_arguments_from_callsite(args, ctx, callsite_root, callsite_node);
     assert(result == ELEMENT_OK); //todo
-
-    const auto& fn = our_scope->function();
-    assert(fn);
     
     //todo: All of this comp cache stuff is repeated. DRY
     if (ctx.comp_cache.is_callstack_recursive(our_scope))
@@ -381,7 +398,7 @@ static element_result compile_call_experimental_function(
         }
 
         //If our parent is something we can pass as an argument, let's try to do so if we're missing an argument
-        compile_call_experimental_function_partial_application(our_scope, args, parent_scope, compiled_parent);
+        compile_call_experimental_function_partial_application(fn.get(), args, parent_scope, compiled_parent);
     }
 
     //todo: this branching compilation is basically element_compile? we could maybe try moving some stuff around and call that here instead?
@@ -389,40 +406,18 @@ static element_result compile_call_experimental_function(
     // TODO: temporary check if intrinsic
     //todo: why is this temporary?
     if (fn && fn->is<element_intrinsic>()) {
-        output_compilation.expression = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
-        //todo: expr_constraint should be determined from generate_intrinsic_expression? Do all intrinsics return numbers? unlikely
-        output_compilation.constraint = fn->type()->output("return")->type;
-        //callsite_current remains unchanged, should continue pointing to the intrinsic function which is correct (I think)
-        assert(output_compilation.expression); //todo
-        return ELEMENT_OK;
+        output_compilation = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
+        if (output_compilation.valid())
+            return ELEMENT_OK;
     }
 
     if (fn && fn->is<element_type_ctor>()) {
-        compile_type_ctor(ctx, fn.get(), args, output_compilation.expression);
-        output_compilation.constraint = fn->type(); //the type of a constructor is also the type of the struct it creates
-        return ELEMENT_OK;
+        return compile_type_ctor(ctx, fn.get(), args, output_compilation);;
     }
 
-    if (fn && fn->is<element_custom_function>()) {
-        //todo: we do some compiling in ourselves, and some in this function, which is kinda messy. maybe it's possible to make it work together nicely, less duplicated code
-        ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, callsite_current, args, output_compilation));
-        const auto btype = fn->type();
-        const auto type = btype ? btype->output("return")->type : nullptr;
-        const auto ctype = type ? type->as<element_type_named>() : nullptr;
-        if (ctype) //Update the scope to point to the scope of the type that our return function is returning. todo: is this just the compilation constraint now?
-            callsite_current = ctype->scope();
-        else if (output_compilation.constraint == element_type::num) //If the function we compiled resulted in a number, then update the scope to be a Num for the next thing indexing in to us
-            callsite_current = callsite_current->root()->lookup("Num", false);
-        else if (output_compilation.expression->is<element_expression_structure>() //we might not need all the ctype stuff since we can do this now
-            && output_compilation.constraint->is<element_type_named>())
-            callsite_current = output_compilation.constraint->as<element_type_named>()->scope();
-        else
-        {
-            //first class function? some kind of constraint?
-            assert(false);
-        }
-        return ELEMENT_OK;
-    }
+    //todo: we do some compiling in ourselves, and some in this function, which is kinda messy. maybe it's possible to make it work together nicely, less duplicated code
+    if (fn && fn->is<element_custom_function>())
+        return compile_custom_fn_scope(ctx, our_scope, args, output_compilation);
 
     assert(false); //todo
     return ELEMENT_ERROR_UNKNOWN;
@@ -510,7 +505,7 @@ static element_result compile_call_experimental(
     assert(our_scope);
 
     if (our_scope->function())
-        return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, callsite_current, output_compilation);
+        return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, &(*callsite_current), output_compilation);
 
     if (our_scope->node->type == ELEMENT_AST_NODE_NAMESPACE)
         return compile_call_experimental_namespace(callsite_node, parent_scope, output_compilation.expression);
@@ -551,32 +546,42 @@ static element_result compile_expression(
     const element_ast* bodynode,
     compilation& output_compilation)
 {
-    // do we have a body?
-    if (bodynode->type == ELEMENT_AST_NODE_CALL || bodynode->type == ELEMENT_AST_NODE_LITERAL) {
-        // literal or non-constant expression
+    assert(bodynode);
+
+    // literal or non-constant expression
+    if (bodynode->type == ELEMENT_AST_NODE_CALL || bodynode->type == ELEMENT_AST_NODE_LITERAL)
         return compile_call_experimental(ctx, scope, bodynode, scope, output_compilation);
-    } else if (bodynode->type == ELEMENT_AST_NODE_LAMBDA) {
-        // lambda
+    
+
+    // lambda
+    if (bodynode->type == ELEMENT_AST_NODE_LAMBDA)
         return compile_lambda(ctx, scope, bodynode, output_compilation);
-    } else if (bodynode->type == ELEMENT_AST_NODE_SCOPE) {
+
+    if (bodynode->type == ELEMENT_AST_NODE_SCOPE) {
         // function in current scope
         // generate inputs
         auto inputs = generate_placeholder_inputs(scope->function()->type().get());
         // now compile function using those inputs
         return compile_custom_fn_scope(ctx, scope, std::move(inputs), output_compilation);
     }
-    else if (bodynode->type == ELEMENT_AST_NODE_FUNCTION) {
+
+    if (bodynode->type == ELEMENT_AST_NODE_FUNCTION) {
         //todo: a function declaration isn't an expression, but NestedConstructs/AddUsingLocal seems to generate a scope hiearchy with nested returns, so compile_custom_fn_scope calls us with a "return" function
         //maybe this is valid, considering there's also a case for ELEMENT_AST_NODE_LAMBDA (although lambdas aren't implemented yet)
         //todo: we should figure out why the returns are being nested (return of addUsingLocal, is a function that also has a return, which contains the actual call to localAdd
         // generate inputs
         auto inputs = generate_placeholder_inputs(scope->function()->type().get());
         return compile_custom_fn_scope(ctx, scope, std::move(inputs), output_compilation);
-    } else {
-        // interface
+    }
+
+    // interface
+    if (bodynode->type == ELEMENT_AST_NODE_CONSTRAINT) {
         ctx.ictx.logger->log(ctx, ELEMENT_ERROR_NO_IMPL, "Tried to compile an expression with no implementation.", bodynode);
         return ELEMENT_ERROR_NO_IMPL;  // TODO: better error code
     }
+
+    ctx.ictx.logger->log(ctx, ELEMENT_ERROR_UNKNOWN, "Tried to compile an expression that is unknown", bodynode);
+    return ELEMENT_ERROR_UNKNOWN;
 }
 
 static element_result compile_custom_fn(
@@ -602,19 +607,21 @@ static element_result element_compile(
 {
     element_compiler_ctx cctx = { ctx, std::move(opts) };
 
-    if (fn->is<element_intrinsic>()) {
-        return compile_intrinsic(cctx, fn, std::move(inputs), output_compilation.expression);
-    } else if (fn->is<element_type_ctor>()) {
-        return compile_type_ctor(cctx, fn, std::move(inputs), output_compilation.expression);
-    } else if (fn->is<element_custom_function>()) {
+    if (fn->is<element_intrinsic>())
+        return compile_intrinsic(cctx, fn, std::move(inputs), output_compilation);
+
+    if (fn->is<element_type_ctor>())
+        return compile_type_ctor(cctx, fn, std::move(inputs), output_compilation);
+
+    if (fn->is<element_custom_function>()) {
         auto result = compile_custom_fn(cctx, fn, std::move(inputs), output_compilation);
         //todo: check the expr_constraint matches the constraint of the function (probably `evaluate` if CLI) we're compiling, but only if result is OK
         return result;
-    } else {
-        assert(false);
-        //todo: logging
-        return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
     }
+
+    assert(false);
+    //todo: logging
+    return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
 }
 
 element_result element_compile(

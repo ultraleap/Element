@@ -310,7 +310,7 @@ element_result element_interpreter_ctx::load_packages(const std::vector<std::str
             continue; //todo: error handling
         }
 
-        element_result result = load_package(package);
+        const auto result = load_package(package);
         if (result != ELEMENT_OK && ret != ELEMENT_OK) //todo: only returns first error
             ret = result;
     }
@@ -402,9 +402,10 @@ element_result element_interpreter_load_files(element_interpreter_ctx* ctx, cons
     assert(ctx);
 
     std::vector<std::string> actual_files;
+    actual_files.resize(files_count);
     for (int i = 0; i < files_count; ++i) {
         //std::cout << fmt::format("load_file {}\n", files[i]); //todo: proper logging
-        actual_files.push_back(files[i]);
+        actual_files[i] = files[i];
     }
 
     return ctx->load_files(actual_files);
@@ -423,9 +424,10 @@ element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, c
     assert(ctx);
 
     std::vector<std::string> actual_packages;
+    actual_packages.resize(packages_count);
     for (int i = 0; i < packages_count; ++i) {
         //std::cout << fmt::format("load_packages {}\n", packages[i]); //todo: proper logging
-        actual_packages.push_back(packages[i]);
+        actual_packages[i] = packages[i];
     }
 
     return ctx->load_packages(actual_packages);
@@ -555,6 +557,7 @@ element_result element_interpreter_get_internal_typeof(
 
     //It's not a number, so it could be a struct instance or something more complex, try compiling it and getting the resulting type
     //todo: this is relying on the lack of error checking for top-level functions having serializable types (ie. the return type is always known)
+    //todo: this polutes the interpreter, do we need to make a new interpreter? can we delete what we've added?
     if (internal_typeof == "Unknown")
     {
         std::string eval_wrapper = "evaluate = " + std::string(string) + ";";
@@ -576,6 +579,7 @@ element_result element_interpreter_get_internal_typeof(
         element_compiled_function_get_typeof_compilation(cfn, internal_typeof.data(), output_string_buffer_size);
     }
 
+    //todo: safer C function?
     strncpy(output_string_buffer, internal_typeof.c_str(), output_string_buffer_size);
 
     //:(
@@ -604,7 +608,7 @@ element_result element_compiled_function_get_typeof_compilation(element_compiled
     {
         str = named_type->name();
     }
-    else if (type)
+    else if (type) //todo: I'm not sure this is valid
     {
         if (type == element_type::binary.get()
             || type == element_type::unary.get())
@@ -628,6 +632,7 @@ element_result element_compiled_function_get_typeof_compilation(element_compiled
         }
     }
 
+    //todo: safer C function?
     strncpy(string_buffer, str.c_str(), string_buffer_size);
     return ELEMENT_OK;
 }
