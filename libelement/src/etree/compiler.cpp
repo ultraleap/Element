@@ -95,15 +95,13 @@ static element_result compile_expression(
     element_compiler_ctx& ctx,
     const element_scope* scope,
     const element_ast* bodynode,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& expr_constraint);
+    compilation& output_compilation);
 
 static element_result compile_custom_fn_scope(
     element_compiler_ctx& ctx,
     const element_scope* scope,
     std::vector<compilation_shared_ptr> args,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& expr_constraint)
+    compilation& output_compilation)
 {
     const element_ast* node = scope->node;
 
@@ -144,7 +142,7 @@ static element_result compile_custom_fn_scope(
     const element_scope* output = scope->lookup("return", false);
 
     if (output) {
-        const auto result = compile_expression(ctx, output, output->node, expr, expr_constraint);
+        const auto result = compile_expression(ctx, output, output->node, output_compilation);
         if (result != ELEMENT_OK)
             return result;
 
@@ -153,7 +151,7 @@ static element_result compile_custom_fn_scope(
         assert(fn_body); //todo: is it possible for a function to not have a "return" output? I don't think so. generate_port_cache doesn't seem to exclude "return"
 
         const auto& fn_return_type = fn_body->type;
-        if (!fn_return_type->is_satisfied_by(expr_constraint))
+        if (!fn_return_type->is_satisfied_by(output_compilation.constraint))
             return ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED; //todo: logging
 
         return ELEMENT_OK;
@@ -190,16 +188,14 @@ static element_result compile_call_experimental_literal(
     const element_scope* callsite_root,
     const element_ast* callsite_node,
     const element_scope*& callsite_current,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& expr_constraint);
+    compilation& output_compilation);
 
 static element_result compile_call_experimental(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node,
     const element_scope*& callsite_current,
-    expression_shared_ptr& expr, //note: might contain an expression
-    constraint_const_shared_ptr& expr_constraint);
+    compilation& output_compilation); //note: might contain an expression, if we had a parent
 
 static element_result compile_call_experimental_function(
     element_compiler_ctx& ctx,
@@ -207,8 +203,7 @@ static element_result compile_call_experimental_function(
     const element_ast* callsite_node,
     const element_scope* parent_scope,
     const element_scope*& callsite_current,
-    expression_shared_ptr& expr, //note: might contain an expression
-    constraint_const_shared_ptr& expr_constraint); 
+    compilation& output_compilation);  //note: might contain an expression, if we had a parent
 
 static element_result compile_call_experimental_namespace(
     const element_ast* callsite_node,
@@ -220,16 +215,15 @@ static element_result compile_call_experimental_literal(
     const element_scope* callsite_root,
     const element_ast* callsite_node,
     const element_scope*& callsite_current,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& expr_constraint)
+    compilation& output_compilation)
 {
     if (callsite_node->type != ELEMENT_AST_NODE_LITERAL) {
         assert(false); //todo
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    expr = std::make_shared<element_expression_constant>(callsite_node->literal);
-    expr_constraint = element_type::num; //todo: should this be num (the internal type) or Num (the named type)? does it matter?
+    output_compilation.expression = std::make_shared<element_expression_constant>(callsite_node->literal);
+    output_compilation.constraint = element_type::num; //todo: should this be num (the internal type) or Num (the named type)? it matters a bit
     callsite_current = callsite_root->root()->lookup("Num", false); // HACK?
     return ELEMENT_OK;
 }
@@ -287,8 +281,7 @@ static element_result fill_args_from_callsite(
                 ctx,
                 callsite_root,
                 callargs_node->children[i].get(),
-                args[i]->expression,
-                args[i]->constraint
+                *args[i] //todo: we don't need this stuff to be a shared_ptr
             ));
         }
     }
@@ -349,10 +342,9 @@ static element_result compile_call_experimental_function_partial_application(
     const element_scope* our_scope,
     std::vector<compilation_shared_ptr>& args,
     const element_scope* parent_scope,
-    const expression_shared_ptr& compiled_parent,
-    const constraint_const_shared_ptr& compiled_parent_constraint)
+    const compilation& compiled_parent)
 {
-    if (!compiled_parent)
+    if (!compiled_parent.expression)
         return ELEMENT_OK; //without a compiled parent, there's nothing to do partial application with. todo: check that the argument counts are still correct in this situation
 
     //We must be a function for partial application to make sense
@@ -362,10 +354,10 @@ static element_result compile_call_experimental_function_partial_application(
     //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
     const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
     //One of the few places that does type checking in libelement?
-    const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(compiled_parent_constraint);
+    const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(compiled_parent.constraint);
     if (mising_one_argument && argument_one_matches_parent_type) {
-        args.insert(args.begin(), compilation_shared_ptr(
-            new compilation{ compiled_parent, compiled_parent_constraint }
+        args.insert(args.begin(), compilation_shared_ptr( //todo: args probably doesn't need to hold shared ptrs
+            new compilation(compiled_parent)
         ));
     }
 
@@ -379,8 +371,7 @@ static element_result compile_call_experimental_function(
     const element_ast* callsite_node,
     const element_scope* parent_scope,
     const element_scope*& callsite_current, //todo: rename, it's the indexing scope (of our parent), or our scope, or the scope we're being called from
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& expr_constraint)
+    compilation& output_compilation)
 {
     if (callsite_node->type != ELEMENT_AST_NODE_CALL) {
         assert(false); //todo
@@ -388,9 +379,8 @@ static element_result compile_call_experimental_function(
     }
 
     //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore those here.
-    const bool has_compiled_parent = expr.get();
-    const auto compiled_parent = expr;
-    const auto compiled_parent_constraint = expr_constraint;
+    const bool has_compiled_parent = output_compilation.expression.get();
+    const auto compiled_parent = output_compilation;
 
     const auto our_scope = callsite_current;
 
@@ -425,10 +415,9 @@ static element_result compile_call_experimental_function(
     //todo: I believe this is seeing if this function was compiled previously when resolving the inputs to another function
     //todo: This doesn't update the fnscope if it's found, which seems to be part of the reason why indexing has issues
 
-    const auto found_expr = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
+    const auto& found_expr = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
     if (found_expr) {
-        expr = found_expr->expression;
-        expr_constraint = found_expr->constraint;
+        output_compilation = *found_expr;
         return ELEMENT_OK;
     }
 
@@ -440,14 +429,14 @@ static element_result compile_call_experimental_function(
           The callsite_scope will be invalid, as we did a lookup of ourselves based on the scope our parent set.
           Struct instances don't have a scope in libelement, as a scope is somewhere in the source code.
           Literals in source code are not struct instances. */
-        if (compiled_parent->is<element_expression_structure>()) {
-            expr = compiled_parent->as<element_expression_structure>()->output(callsite_node->identifier);
+        if (compiled_parent.expression->is<element_expression_structure>()) {
+            output_compilation.expression = compiled_parent.expression->as<element_expression_structure>()->output(callsite_node->identifier);
 
             //We found ourselves in the struct instance, so we have our expression. We can leave now.
-            if (expr) {
+            if (output_compilation.expression) {
                 //todo: understand what this does and document it
-                const auto result = place_args(expr, args);
-                //todo: We need to update the current callsite for the thing indexing us, otherwise once we index a struct instance we're stuck unable to index unless we ourselves compile to a struct instance
+                const auto result = place_args(output_compilation.expression, args);
+                //todo: this is broken, because now we're something in a struct instance, but we're just an expression, so good luck to anything indexing in to us (unless we're also a struct instance :b)
                 return result;
             }
 
@@ -459,19 +448,23 @@ static element_result compile_call_experimental_function(
         compile_call_experimental_function_find_ourselves_when_parent_is_constructor(callsite_node, parent_scope, callsite_current);
 
         //If our parent is something we can pass as an argument, let's try to do so if we're missing an argument
-        compile_call_experimental_function_partial_application(our_scope, args, parent_scope, compiled_parent, compiled_parent_constraint);
+        compile_call_experimental_function_partial_application(our_scope, args, parent_scope, compiled_parent);
     }
 
+    //todo: this branching compilation is basically element_compile? we could maybe try moving some stuff around and call that here instead?
+    
     // TODO: temporary check if intrinsic
     //todo: why is this temporary?
-    //todo: this branching compilation is basically element_compile? we could maybe try moving some stuff around and call that here instead?
     if (fn && fn->is<element_intrinsic>()) {
-        expr = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
-        expr_constraint = fn->type()->output("return")->type; //todo: this just gets the type as declared in source, which is fine when it's Num, but otherwise won't really work. expr_constraint should be determined from generate_intrinsic_expression. Do all intrinsics return numbers? unlikely
-        //callsite_current remains unchanged, should continue pointing to the intrinsic function
-        assert(expr); //todo
+        output_compilation.expression = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
+        //todo: this just gets the type as declared in source, which is fine when it's Num, but otherwise won't really work. expr_constraint should be determined from generate_intrinsic_expression. Do all intrinsics return numbers? unlikely
+        output_compilation.constraint = fn->type()->output("return")->type; 
+        //callsite_current remains unchanged, should continue pointing to the intrinsic function which is correct (I think)
+        assert(output_compilation.expression); //todo
+        return ELEMENT_OK;
     }
-    else if (fn && fn->is<element_type_ctor>()) {
+
+    if (fn && fn->is<element_type_ctor>()) {
         //todo: should we not be calling compile_type_ctor?
         std::vector<std::pair<std::string, expression_shared_ptr>> struct_instance_dependents;
         struct_instance_dependents.resize(args.size());
@@ -481,28 +474,28 @@ static element_result compile_call_experimental_function(
             struct_instance_dependents[i].first = param.name;
             struct_instance_dependents[i].second = arg->expression;
         }
-        expr = std::shared_ptr<element_expression_structure>(new element_expression_structure(std::move(struct_instance_dependents)));
-        expr_constraint = fn->type(); //the type of a constructor is also the type of the struct it creates
-    }
-    else if (fn && fn->is<element_custom_function>()) {
-        //todo: we do some compiling in ourselves, and some in this function, which is kinda messy. maybe it's possible to make it work together nicely, less duplicated code
-        ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, callsite_current, args, expr, expr_constraint));
-        auto btype = fn->type();
-        const auto type = btype ? btype->output("return")->type : nullptr;
-        const auto ctype = type ? type->as<element_type_named>() : nullptr;
-        if (ctype) {
-            callsite_current = ctype->scope();
-        } else if (expr_constraint == element_type::num) {
-            //If the function we compiled resulted in a number, then update the scope to be a Num for the next thing indexing in to us
-            callsite_current = callsite_current->root()->lookup("Num", false);
-        }
-        //assert(ctype); it seems like the lack of ctype here is okay, our scope is something we can rely on even though we're not updating it?
-    }
-    else {
-        assert(false); //todo
+        output_compilation.expression = std::make_shared<element_expression_structure>(std::move(struct_instance_dependents));
+        output_compilation.constraint = fn->type(); //the type of a constructor is also the type of the struct it creates
+        return ELEMENT_OK;
     }
 
-    return ELEMENT_OK;
+    if (fn && fn->is<element_custom_function>()) {
+        //todo: we do some compiling in ourselves, and some in this function, which is kinda messy. maybe it's possible to make it work together nicely, less duplicated code
+        ELEMENT_OK_OR_RETURN(compile_custom_fn_scope(ctx, callsite_current, args, output_compilation));
+        const auto btype = fn->type();
+        const auto type = btype ? btype->output("return")->type : nullptr;
+        const auto ctype = type ? type->as<element_type_named>() : nullptr;
+        if (ctype) //Update the scope to point to the scope of the type that our return function is returning. todo: is this just the compilation constraint now?
+            callsite_current = ctype->scope();
+        else if (output_compilation.constraint == element_type::num) //If the function we compiled resulted in a number, then update the scope to be a Num for the next thing indexing in to us
+            callsite_current = callsite_current->root()->lookup("Num", false);
+        //otherwise we leave the callsite as it is.. not sure that's correct, but then do we ever hit this case? maybe when returning a first-class function, but we lack a lot of support for t
+        //pretend there's an else() assert for now
+        return ELEMENT_OK;
+    }
+
+    assert(false); //todo
+    return ELEMENT_ERROR_UNKNOWN;
 }
 
 static element_result compile_call_experimental_compile_parent(
@@ -510,8 +503,7 @@ static element_result compile_call_experimental_compile_parent(
     const element_scope* callsite_root,
     const element_ast* callsite_node,
     const element_scope*& callsite_current,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& expr_constraint)
+    compilation& output_compilation)
 {
     const auto our_scope = callsite_current;
     //NOTE {2}: This looks like it can be simplified (see NOTE {1})
@@ -525,7 +517,7 @@ static element_result compile_call_experimental_compile_parent(
     //Our parent could be anything (namespace, struct instance, number, number literal)
     //This will continue recursing until we're at the left-most call in the source (bottom of the AST)
     const auto callsite_node_parent = callsite_node->children[ast_idx::call::parent].get();
-    const auto result = compile_call_experimental(ctx, callsite_root, callsite_node_parent, callsite_current, expr, expr_constraint);
+    const auto result = compile_call_experimental(ctx, callsite_root, callsite_node_parent, callsite_current, output_compilation);
     assert(result == ELEMENT_OK); //todo
     assert(callsite_current != our_scope); //Our parent is done compiling, so it must update the scope we're indexing in to. This should happen for all situations.
     return result;
@@ -536,11 +528,10 @@ static element_result compile_call_experimental(
     const element_scope* callsite_root,
     const element_ast* callsite_node,
     const element_scope*& callsite_current,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& expr_constraint)
+    compilation& output_compilation)
 {
     if (callsite_node->type == ELEMENT_AST_NODE_LITERAL)
-        return compile_call_experimental_literal(ctx, callsite_root, callsite_node, callsite_current, expr, expr_constraint);
+        return compile_call_experimental_literal(ctx, callsite_root, callsite_node, callsite_current, output_compilation);
 
     if (callsite_node->type != ELEMENT_AST_NODE_CALL)
         return ELEMENT_ERROR_UNKNOWN;
@@ -549,7 +540,7 @@ static element_result compile_call_experimental(
     const bool has_parent = callsite_node->children.size() > ast_idx::call::parent
                          && callsite_node->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
     if (has_parent) {
-        const auto result = compile_call_experimental_compile_parent(ctx, callsite_root, callsite_node, callsite_current, expr, expr_constraint);
+        const auto result = compile_call_experimental_compile_parent(ctx, callsite_root, callsite_node, callsite_current, output_compilation);
         assert(result == ELEMENT_OK);
     }
     const auto parent_scope = has_parent ? callsite_current : nullptr;
@@ -564,22 +555,25 @@ static element_result compile_call_experimental(
         //We couldn't find ourselves but we do have a parent, so let's try indexing the constraint in case we're part of a struct body
         if (!callsite_current && has_parent) {
             //todo: this first searches the struct body before the struct instance, which means shadowing names will probably cause reverse behaviour to what is expected
-            if (expr_constraint->is<element_type>()
-                && expr_constraint->as<element_type>() == element_type::num.get()) {
+            if (output_compilation.constraint->is<element_type>()
+             && output_compilation.constraint->as<element_type>() == element_type::num.get()) {
                 callsite_current = parent_scope->root()->lookup("Num", false);
                 assert(callsite_current); //we failed to find Num in source, but we're indexing in to a number. You can't index in to a number without the Num intrinsic, so this is a user error
                 callsite_current = callsite_current->lookup(callsite_node->identifier, false); //Now we can find ourselves within Num
                 assert(callsite_current); //we failed to find ourselves in Num, some kind of error
-            } else if (expr_constraint->is<element_type_named>() &&
-                expr_constraint->as<element_type_named>()) {
-                const auto named_type = expr_constraint->as<element_type_named>();
+            }
+            else if (output_compilation.constraint->is<element_type_named>()
+                  && output_compilation.constraint->as<element_type_named>()) {
+                const auto named_type = output_compilation.constraint->as<element_type_named>();
                 callsite_current = named_type->scope()->lookup(callsite_node->identifier, false); //Now we can find ourselves within the struct body
                 assert(callsite_current); //we failed to find ourselves in there, some kind of error
-            } else if (expr_constraint->is<element_type_anonymous>() &&
-                expr_constraint->as<element_type_anonymous>()) {
-                const auto anonymous_type = expr_constraint->as<element_type_named>();
+            }
+            else if (output_compilation.constraint->is<element_type_anonymous>()
+                  && output_compilation.constraint->as<element_type_anonymous>()) {
+                const auto anonymous_type = output_compilation.constraint->as<element_type_named>();
                 //todo: a function type is anonymous, but indexing a function isn't valid. Not sure if there are situations where an anonymous type is generated, requires more research
-            } //Something else, so don't try indexing in to it?
+            }
+            //Something else, so don't try indexing in to it?
         }
     }
 
@@ -587,23 +581,23 @@ static element_result compile_call_experimental(
     assert(our_scope);
 
     if (our_scope->function())
-        return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, callsite_current, expr, expr_constraint);
+        return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, callsite_current, output_compilation);
 
     if (our_scope->node->type == ELEMENT_AST_NODE_NAMESPACE)
-        return compile_call_experimental_namespace(callsite_node, parent_scope, expr);
+        return compile_call_experimental_namespace(callsite_node, parent_scope, output_compilation.expression);
 
     //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
     if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
-        const auto found_expr = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
+        const auto& found_expr = ctx.comp_cache.search(our_scope); //todo: rename to compilation cache
         if (found_expr) {
-            expr = found_expr->expression;
-            expr_constraint = found_expr->constraint;
+            output_compilation = *found_expr;
             return ELEMENT_OK;
         }
     }
 
     //Wasn't something we know about
-    expr = nullptr; //probably unecessary
+    output_compilation.expression = nullptr;
+    output_compilation.constraint = nullptr;
     callsite_current = nullptr;
     assert(false);
     return ELEMENT_ERROR_UNKNOWN; //todo
@@ -626,22 +620,21 @@ static element_result compile_expression(
     element_compiler_ctx& ctx,
     const element_scope* scope,
     const element_ast* bodynode,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& expr_constraint)
+    compilation& output_compilation)
 {
     // do we have a body?
     if (bodynode->type == ELEMENT_AST_NODE_CALL || bodynode->type == ELEMENT_AST_NODE_LITERAL) {
         // literal or non-constant expression
-        return compile_call_experimental(ctx, scope, bodynode, scope, expr, expr_constraint);
+        return compile_call_experimental(ctx, scope, bodynode, scope, output_compilation);
     } else if (bodynode->type == ELEMENT_AST_NODE_LAMBDA) {
         // lambda
-        return compile_lambda(ctx, scope, bodynode, expr);
+        return compile_lambda(ctx, scope, bodynode, output_compilation.expression);
     } else if (bodynode->type == ELEMENT_AST_NODE_SCOPE) {
         // function in current scope
         // generate inputs
         auto inputs = generate_placeholder_inputs(scope->function()->type().get());
         // now compile function using those inputs
-        return compile_custom_fn_scope(ctx, scope, std::move(inputs), expr, expr_constraint);
+        return compile_custom_fn_scope(ctx, scope, std::move(inputs), output_compilation);
     }
     else if (bodynode->type == ELEMENT_AST_NODE_FUNCTION) {
         //todo: a function declaration isn't an expression, but NestedConstructs/AddUsingLocal seems to generate a scope hiearchy with nested returns, so compile_custom_fn_scope calls us with a "return" function
@@ -649,7 +642,7 @@ static element_result compile_expression(
         //todo: we should figure out why the returns are being nested (return of addUsingLocal, is a function that also has a return, which contains the actual call to localAdd
         // generate inputs
         auto inputs = generate_placeholder_inputs(scope->function()->type().get());
-        return compile_custom_fn_scope(ctx, scope, std::move(inputs), expr, expr_constraint);
+        return compile_custom_fn_scope(ctx, scope, std::move(inputs), output_compilation);
     } else {
         // interface
         ctx.ictx.logger->log(ctx, ELEMENT_ERROR_NO_IMPL, "Tried to compile an expression with no implementation.", bodynode);
@@ -661,33 +654,31 @@ static element_result compile_custom_fn(
     element_compiler_ctx& ctx,
     const element_function* fn,
     std::vector<compilation_shared_ptr> inputs,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& expr_constraint)
+    compilation& output_compilation)
 {
     const auto cfn = fn->as<element_custom_function>();
     const element_scope* scope = cfn->scope();
     if (ctx.comp_cache.is_callstack_recursive(scope))
         return ELEMENT_ERROR_CIRCULAR_COMPILATION; //todo: logging
     auto frame = ctx.comp_cache.add_frame(scope); //frame is popped when it goes out of scope
-    return compile_custom_fn_scope(ctx, scope, std::move(inputs), expr, expr_constraint);
+    return compile_custom_fn_scope(ctx, scope, std::move(inputs), output_compilation);
 }
 
 static element_result element_compile(
     element_interpreter_ctx& ctx,
     const element_function* fn,
     std::vector<compilation_shared_ptr> inputs,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& constraint,
+    compilation& output_compilation,
     element_compiler_options opts)
 {
     element_compiler_ctx cctx = { ctx, std::move(opts) };
 
     if (fn->is<element_intrinsic>()) {
-        return compile_intrinsic(cctx, fn, std::move(inputs), expr);
+        return compile_intrinsic(cctx, fn, std::move(inputs), output_compilation.expression);
     } else if (fn->is<element_type_ctor>()) {
-        return compile_type_ctor(cctx, fn, std::move(inputs), expr);
+        return compile_type_ctor(cctx, fn, std::move(inputs), output_compilation.expression);
     } else if (fn->is<element_custom_function>()) {
-        auto result = compile_custom_fn(cctx, fn, std::move(inputs), expr, constraint);
+        auto result = compile_custom_fn(cctx, fn, std::move(inputs), output_compilation);
         //todo: check the expr_constraint matches the constraint of the function (probably `evaluate` if CLI) we're compiling, but only if result is OK
         return result;
     } else {
@@ -700,10 +691,9 @@ static element_result element_compile(
 element_result element_compile(
     element_interpreter_ctx& ctx,
     const element_function* fn,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& constraint,
+    compilation& output_compilation,
     element_compiler_options opts)
 {
     auto inputs = generate_placeholder_inputs(fn->type().get());
-    return element_compile(ctx, fn, std::move(inputs), expr, constraint, std::move(opts));
+    return element_compile(ctx, fn, std::move(inputs), output_compilation, std::move(opts));
 }

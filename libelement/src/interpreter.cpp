@@ -479,13 +479,12 @@ element_result element_interpreter_compile_function(
     element_compiler_options options;
     if (opts)
         options = *opts;
-    expression_shared_ptr fn_expr;
-    constraint_const_shared_ptr fn_constraint;
-    ELEMENT_OK_OR_RETURN(element_compile(*ctx, fn, fn_expr, fn_constraint, options));
+    compilation compiled_result;
+    ELEMENT_OK_OR_RETURN(element_compile(*ctx, fn, compiled_result, options));
     *cfn = new element_compiled_function;
     (*cfn)->function = fn;
-    (*cfn)->expression = std::move(fn_expr);
-    (*cfn)->constraint = std::move(fn_constraint);
+    (*cfn)->expression = std::move(compiled_result.expression);
+    (*cfn)->constraint = std::move(compiled_result.constraint);
 
     if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree))
         ctx->log("\n---------------\nEXPRESSION TREE\n---------------\n" + expression_to_string(*(*cfn)->expression));

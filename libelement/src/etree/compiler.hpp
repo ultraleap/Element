@@ -62,11 +62,13 @@ struct compilation_cache
 
 private:
     using Cache = std::unordered_map<const element_scope*, compilation_shared_ptr>;
+
     struct CacheEntry
     {
         Cache cache;
-        const element_scope* function;
+        const element_scope* function = nullptr;
     };
+
     std::vector<CacheEntry> m_cache;
 
     void push_frame(const element_scope* function_scope) { m_cache.emplace_back(CacheEntry{ Cache{}, function_scope }); }
@@ -84,6 +86,5 @@ struct element_compiler_ctx
 element_result element_compile(
     element_interpreter_ctx& ctx,
     const element_function* fn,
-    expression_shared_ptr& expr,
-    constraint_const_shared_ptr& constraint,
+    compilation& output_compilation,
     element_compiler_options opts);
