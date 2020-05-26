@@ -7,8 +7,72 @@
 
 #include "ast/ast_indexes.hpp"
 
+static element_result element_compile(
+    element_compiler_ctx& ctx,
+    const element_function* fn,
+    std::vector<compilation>&& inputs,
+    compilation& output_compilation);
+
+static std::vector<compilation> generate_placeholder_inputs(
+    const element_type* t);
+
+static element_result compile_type_ctor(
+    element_compiler_ctx& ctx,
+    const element_function* fn,
+    std::vector<compilation> inputs,
+    compilation& output_compilation);
+
+static element_result compile_expression(
+    element_compiler_ctx& ctx,
+    const element_scope* scope,
+    const element_ast* bodynode,
+    compilation& output_compilation);
+
+static element_result compile_custom_fn_scope(
+    element_compiler_ctx& ctx,
+    const element_scope* scope,
+    std::vector<compilation> args,
+    compilation& output_compilation);
+
+static element_result compile_call_literal(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    compilation& output_compilation);
+
+static element_result compile_call(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope*& callsite_current,
+    compilation& output_compilation); //note: might contain an expression, if we had a parent
+
+static element_result compile_call_function(
+    element_compiler_ctx& ctx,
+    const element_scope* callsite_root,
+    const element_ast* callsite_node,
+    const element_scope* our_scope, //todo: rename, it's the indexing scope (of our parent), or our scope, or the scope we're being called from
+    compilation& output_compilation);  //note: might contain an expression, if we had a parent
+
+static element_result compile_call_namespace(
+    const element_ast* callsite_node,
+    const element_scope* parent_scope,
+    const expression_shared_ptr& expr);
+
+static element_result place_args(
+    expression_shared_ptr& expr,
+    const std::vector<compilation>& args);
+
+static element_result compile_custom_fn(
+    element_compiler_ctx& ctx,
+    const element_function* fn,
+    std::vector<compilation> inputs,
+    compilation& output_compilation);
+
 //When compiling a function that needs direct input from the boundary, generate placeholder expressions to represent that input when it's evaluated
-static std::vector<compilation> generate_placeholder_inputs(const element_type* t)
+static std::vector<compilation> generate_placeholder_inputs(
+    const element_type* t)
 {
     std::vector<compilation> results;
     const size_t insize = t->inputs().size();
@@ -19,30 +83,6 @@ static std::vector<compilation> generate_placeholder_inputs(const element_type* 
         results.emplace_back(compilation{ std::move(expression), std::move(constraint) });
     }
     return results;
-}
-
-static compilation generate_intrinsic_expression(const element_intrinsic* fn, const std::vector<compilation>& args)
-{
-    //todo: logging rather than asserting?
-
-    if (const auto ui = fn->as<element_intrinsic_unary>()) {
-        assert(args.size() == 1);
-        return {
-            std::make_shared<element_expression_unary>(ui->operation(), args[0].expression),
-            fn->type()->output("return")->type
-        };
-    }
-
-    if (const auto bi = fn->as<element_intrinsic_binary>()) {
-        assert(args.size() == 2);
-        return {
-            std::make_shared<element_expression_binary>(bi->operation(), args[0].expression, args[1].expression),
-            fn->type()->output("return")->type
-        };
-    }
-
-    assert(false);
-    return {};
 }
 
 static element_result compile_intrinsic(
@@ -99,12 +139,6 @@ static element_result compile_type_ctor(
     return ELEMENT_OK;
 }
 
-static element_result compile_expression(
-    element_compiler_ctx& ctx,
-    const element_scope* scope,
-    const element_ast* bodynode,
-    compilation& output_compilation);
-
 static element_result compile_custom_fn_scope(
     element_compiler_ctx& ctx,
     const element_scope* scope,
@@ -129,9 +163,8 @@ static element_result compile_custom_fn_scope(
     }
 
     const auto fn = scope->function();
-    //todo: understand what this chunk of code does, what it's caching, and when that cache will be used again
-    //todo: DRY
-    
+
+    //same as compile_call_function, so this happens twice some of the time
     assert(fn && fn->inputs().size() >= args.size());
     for (size_t i = 0; i < args.size(); ++i) {
         const auto& parameter = fn->inputs()[i];
@@ -191,34 +224,7 @@ static element_result place_args(expression_shared_ptr& expr, const std::vector<
     }
 }
 
-static element_result compile_call_experimental_literal(
-    element_compiler_ctx& ctx,
-    const element_scope* callsite_root,
-    const element_ast* callsite_node,
-    const element_scope*& callsite_current,
-    compilation& output_compilation);
-
-static element_result compile_call_experimental(
-    element_compiler_ctx& ctx,
-    const element_scope* callsite_root,
-    const element_ast* callsite_node,
-    const element_scope*& callsite_current,
-    compilation& output_compilation); //note: might contain an expression, if we had a parent
-
-static element_result compile_call_experimental_function(
-    element_compiler_ctx& ctx,
-    const element_scope* callsite_root,
-    const element_ast* callsite_node,
-    const element_scope* parent_scope,
-    const element_scope*& callsite_current,
-    compilation& output_compilation);  //note: might contain an expression, if we had a parent
-
-static element_result compile_call_experimental_namespace(
-    const element_ast* callsite_node,
-    const element_scope* parent_scope,
-    const expression_shared_ptr& expr);
-
-static element_result compile_call_experimental_literal(
+static element_result compile_call_literal(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node,
@@ -236,7 +242,7 @@ static element_result compile_call_experimental_literal(
     return ELEMENT_OK;
 }
 
-static element_result compile_call_experimental_namespace(
+static element_result compile_call_namespace(
     const element_ast* callsite_node,
     const element_scope* parent_scope,
     const expression_shared_ptr& expr)
@@ -296,66 +302,108 @@ static element_result fill_and_compile_arguments_from_callsite(
 };
 
 //this does partial application of parent to arguments for this call. This only works when the parent is a constructor (including literals)
-static element_result compile_call_experimental_function_partial_application(
+static void compile_call_function_partial_application(
     const element_function* fn,
     std::vector<compilation>& args,
-    const element_scope* parent_scope, //todo: will we ever want to know the scope?
     const compilation& compiled_parent)
 {
     assert(fn);
 
     //without a compiled parent, there's nothing to do partial application with
-    if (compiled_parent.valid()) {
-        const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
-        const bool argument_one_matches_parent_type = !fn->inputs().empty() && fn->inputs()[0].type->is_satisfied_by(compiled_parent.constraint);
+    if (!compiled_parent.valid())
+        return;
 
-        //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
-        if (mising_one_argument && argument_one_matches_parent_type)
-            args.insert(args.begin(), compiled_parent);
-    }
+    const bool mising_one_argument = fn->inputs().size() == args.size() + 1;
+    const bool argument_one_matches_parent_type = !fn->inputs().empty()
+                                                && fn->inputs()[0].type->is_satisfied_by(compiled_parent.constraint);
 
-    if (fn->inputs().size() == args.size())
-        return ELEMENT_OK;
-
-    return ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH;
+    //if we're missing an argument to a method call while indexing, then pass the parent as the first argument
+    if (mising_one_argument && argument_one_matches_parent_type)
+        args.insert(args.begin(), compiled_parent);
 }
 
-static element_result compile_call_experimental_function(
+static element_result compile_call_function_indexing_parent_struct_instance(
+    const element_ast* callsite_node,
+    const std::vector<compilation>& args, //todo: I don't understand what the plan for these was
+    const compilation& compiled_parent,
+    compilation& output_compilation
+    )
+{
+    //todo: compile_call_experimental checks to see if we're in a struct body, which happens before this check to see if we're in the struct index. this is because of our dependence on args (which is only a thing for functions), but can definitely be cleaned up
+    /* Compiling our parent resulted in a struct instance, so we index that instance with our name.
+      This is struct instance indexing.
+      The callsite_scope will be invalid, as we did a lookup of ourselves based on the scope our parent set.
+      Struct instances don't have a scope in libelement, as a scope is somewhere in the source code.
+      Literals in source code are not struct instances. */
+
+    //didn't have a parent
+    if (!compiled_parent.valid())
+        return ELEMENT_OK;
+
+    //parent wasn't a struct instance
+    if (!compiled_parent.expression->is<element_expression_structure>())
+        return ELEMENT_OK;
+
+    //our name isn't a member of the struct instance
+    auto expr = compiled_parent.expression->as<element_expression_structure>()->output(callsite_node->identifier);
+    if (!expr)
+        return ELEMENT_OK;
+
+    //We found ourselves in the struct instance, so we have our expression
+    output_compilation.expression = std::move(expr);
+    //todo: understand what this does and document it
+    const auto result = place_args(output_compilation.expression, args);
+    //todo: this is broken, because now we're something in a struct instance, but we're just an expression, so good luck to anything indexing in to us (unless we're also a struct instance :b) as there's no type information.
+    return result;
+}
+
+static element_result compile_call_function(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node,
-    const element_scope* parent_scope,
     const element_scope* our_scope, //todo: rename, it's the indexing scope (of our parent), or our scope, or the scope we're being called from
     compilation& output_compilation)
 {
     assert(callsite_root);
     assert(callsite_node);
     assert(our_scope);
+    assert(callsite_node->type == ELEMENT_AST_NODE_CALL);
 
-    if (callsite_node->type != ELEMENT_AST_NODE_CALL) {
-        assert(false); //todo
+    if (callsite_node->type != ELEMENT_AST_NODE_CALL)
         return ELEMENT_ERROR_UNKNOWN;
-    }
 
     const auto& fn = our_scope->function();
     assert(fn);
 
-    //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore as parents anyway
-    const bool has_compiled_parent = output_compilation.expression.get();
-    const auto compiled_parent = output_compilation;
+    //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore them as parents anyway
+    const auto compiled_parent = std::move(output_compilation);
 
-    //Handle any arguments to this function call
-    std::vector<compilation> args;
-    const auto result = fill_and_compile_arguments_from_callsite(args, ctx, callsite_root, callsite_node);
-    assert(result == ELEMENT_OK); //todo
+    //If we're a port then we should be in the expression cache, due to the previous function adding us to it
+    //todo: are there other situations where we would be in the cache?
+    const auto& cached_compilation = ctx.comp_cache.search(our_scope);
+    if (cached_compilation.valid()) {
+        //we've already been compiled, so we're done
+        output_compilation = cached_compilation;
+        return ELEMENT_OK;
+    }
+
     
-    //todo: All of this comp cache stuff is repeated. DRY
+
+    //Handle and compile any arguments to this function call
+    std::vector<compilation> args;
+    auto result = fill_and_compile_arguments_from_callsite(args, ctx, callsite_root, callsite_node);
+    assert(result == ELEMENT_OK); //todo
+    assert(args.empty() || (fn->inputs().size() >= args.size()));
+    
+    //Element doesn't allow recursion as it becomes difficult to determine when element code has a deterministic runtime
     if (ctx.comp_cache.is_callstack_recursive(our_scope))
         return ELEMENT_ERROR_CIRCULAR_COMPILATION; //todo: logging
 
-    assert(args.empty() || (fn->inputs().size() >= args.size()));
-    auto frame = ctx.comp_cache.add_frame(our_scope); //frame is popped when it goes out of scope
+    //we're now done compiling our arguments
+    //frame is popped when it goes out of scope, representing the start/end of our function
+    auto frame = ctx.comp_cache.add_frame(our_scope);
 
+    //type checking the arguments and registering them in the cache
     for (size_t i = 0; i < args.size(); ++i) {
         const auto& parameter = fn->inputs()[i];
 
@@ -368,62 +416,37 @@ static element_result compile_call_experimental_function(
         ctx.comp_cache.add(input_scope, args[i]);
     }
 
-    //If we're a port then we should be in the expression cache, due to the previous function adding us to it
-    const auto& cached_compilation = ctx.comp_cache.search(our_scope);
-    if (cached_compilation.valid()) {
-        output_compilation = cached_compilation;
-        return ELEMENT_OK;
+    //If our parent is a struct instance, let's find our name, as we're already compiled
+    compilation comp;
+    result = compile_call_function_indexing_parent_struct_instance(callsite_node, args, compiled_parent, comp);
+    if (comp.valid()) {
+        output_compilation = std::move(comp);
+        return result;
     }
 
-    //Now we've compiled any and all of our parents, and we've compiled any and all of our arguments
+    //If our parent is something we can pass as an argument, let's try to do so if we're missing an argument
+    compile_call_function_partial_application(fn.get(), args, compiled_parent);
 
-    if (has_compiled_parent) {
-        //todo: compile_call_experimental checks to see if we're in a struct body, which happens before this check to see if we're in the struct index. this is because of our dependence on args (which is only a thing for functions), but can definitely be cleaned up
-        /* Compiling our parent resulted in a struct instance, so we index that instance with our name.
-          This is struct instance indexing.
-          The callsite_scope will be invalid, as we did a lookup of ourselves based on the scope our parent set.
-          Struct instances don't have a scope in libelement, as a scope is somewhere in the source code.
-          Literals in source code are not struct instances. */
-        if (compiled_parent.expression->is<element_expression_structure>()) {
-            auto expr = compiled_parent.expression->as<element_expression_structure>()->output(callsite_node->identifier);
+    //Ensure our arguments match up
+    if (fn->inputs().size() != args.size())
+        return ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH;
 
-            //We found ourselves in the struct instance, so we have our expression. We can leave now.
-            if (expr) {
-                output_compilation.expression = std::move(expr);
-                //todo: understand what this does and document it
-                const auto result = place_args(output_compilation.expression, args);
-                //todo: this is broken, because now we're something in a struct instance, but we're just an expression, so good luck to anything indexing in to us (unless we're also a struct instance :b) as there's no type information.
-                return result;
-            }
-        }
-
-        //If our parent is something we can pass as an argument, let's try to do so if we're missing an argument
-        compile_call_experimental_function_partial_application(fn.get(), args, parent_scope, compiled_parent);
-    }
-
-    //todo: this branching compilation is basically element_compile? we could maybe try moving some stuff around and call that here instead?
+    if (fn->is<element_intrinsic>())
+        return compile_intrinsic(ctx, fn.get(), std::move(args), output_compilation);
     
-    // TODO: temporary check if intrinsic
-    //todo: why is this temporary?
-    if (fn && fn->is<element_intrinsic>()) {
-        output_compilation = generate_intrinsic_expression(fn->as<element_intrinsic>(), args);
-        if (output_compilation.valid())
-            return ELEMENT_OK;
+    if (fn->is<element_type_ctor>())
+        return compile_type_ctor(ctx, fn.get(), std::move(args), output_compilation);
+
+    if (fn->is<element_custom_function>()) {
+        return compile_custom_fn_scope(ctx, our_scope, std::move(args), output_compilation);
     }
 
-    if (fn && fn->is<element_type_ctor>()) {
-        return compile_type_ctor(ctx, fn.get(), args, output_compilation);;
-    }
-
-    //todo: we do some compiling in ourselves, and some in this function, which is kinda messy. maybe it's possible to make it work together nicely, less duplicated code
-    if (fn && fn->is<element_custom_function>())
-        return compile_custom_fn_scope(ctx, our_scope, args, output_compilation);
-
-    assert(false); //todo
-    return ELEMENT_ERROR_UNKNOWN;
+    assert(false);
+    //todo: logging
+    return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
 }
 
-static element_result compile_call_experimental_compile_parent(
+static element_result compile_call_compile_parent(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node,
@@ -443,13 +466,13 @@ static element_result compile_call_experimental_compile_parent(
     //Our parent could be anything (namespace, struct instance, number, number literal)
     //This will continue recursing until we're at the left-most call in the source (bottom of the AST)
     const auto callsite_node_parent = callsite_node->children[ast_idx::call::parent].get();
-    const auto result = compile_call_experimental(ctx, callsite_root, callsite_node_parent, callsite_current, output_compilation);
+    const auto result = compile_call(ctx, callsite_root, callsite_node_parent, callsite_current, output_compilation);
     assert(result == ELEMENT_OK); //todo
     assert(callsite_current != our_scope); //Our parent is done compiling, so it must update the scope we're indexing in to. This should happen for all situations.
     return result;
 }
 
-static element_result compile_call_experimental(
+static element_result compile_call(
     element_compiler_ctx& ctx,
     const element_scope* callsite_root,
     const element_ast* callsite_node,
@@ -457,7 +480,7 @@ static element_result compile_call_experimental(
     compilation& output_compilation)
 {
     if (callsite_node->type == ELEMENT_AST_NODE_LITERAL)
-        return compile_call_experimental_literal(ctx, callsite_root, callsite_node, callsite_current, output_compilation);
+        return compile_call_literal(ctx, callsite_root, callsite_node, callsite_current, output_compilation);
 
     if (callsite_node->type != ELEMENT_AST_NODE_CALL)
         return ELEMENT_ERROR_UNKNOWN;
@@ -466,58 +489,57 @@ static element_result compile_call_experimental(
     const bool has_parent = callsite_node->children.size() > ast_idx::call::parent
                          && callsite_node->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
     if (has_parent) {
-        const auto result = compile_call_experimental_compile_parent(ctx, callsite_root, callsite_node, callsite_current, output_compilation);
+        const auto result = compile_call_compile_parent(ctx, callsite_root, callsite_node, callsite_current, output_compilation);
         assert(result == ELEMENT_OK);
     }
     const auto parent_scope = has_parent ? callsite_current : nullptr;
 
     //We've now compiled any parents (if we had any parents), so let's find what this call was meant to be
     //If we did have a parent then we don't want to recurse when doing the lookup, what we're looking for should be directly in that scope
-    //callsite_current could be null if our parent was a dependent in an element_structure, since struct instances have no scope
-    if (callsite_current) {
-        callsite_current = callsite_current->lookup(callsite_node->identifier, !has_parent);
+    assert(callsite_current);
+    callsite_current = callsite_current->lookup(callsite_node->identifier, !has_parent);
 
-        //todo: this is necessary because the current handling for struct body/instance indexing happens when we know we're a function, but right now we don't know what we are. We should be doing that stuff here, not in compiling the function
-        //We couldn't find ourselves but we do have a parent, so let's try indexing the constraint in case we're part of a struct body
-        if (!callsite_current && has_parent) {
-            //todo: this first searches the struct body before the struct instance, which means shadowing names will probably cause reverse behaviour to what is expected
-            if (output_compilation.constraint->is<element_type_named>()
-                  && output_compilation.constraint->as<element_type_named>()) {
-                const auto named_type = output_compilation.constraint->as<element_type_named>();
-                callsite_current = named_type->scope()->lookup(callsite_node->identifier, false); //Now we can find ourselves within the struct body
-                assert(callsite_current); //we failed to find ourselves in there, some kind of error
-            }
-            else if (output_compilation.constraint->is<element_type_anonymous>()
-                  && output_compilation.constraint->as<element_type_anonymous>()) {
-                const auto anonymous_type = output_compilation.constraint->as<element_type_named>();
-                //todo: a function type is anonymous, but indexing a function isn't valid. Not sure if there are situations where an anonymous type is generated, requires more research
-                assert(false);
-            }
-            else
-            {
-                //Something else?
-                assert(false);
-            }
-        }
-    }
-
-    const auto our_scope = callsite_current;
-    assert(our_scope);
-
-    if (our_scope->function())
-        return compile_call_experimental_function(ctx, callsite_root, callsite_node, parent_scope, &(*callsite_current), output_compilation);
-
-    if (our_scope->node->type == ELEMENT_AST_NODE_NAMESPACE)
-        return compile_call_experimental_namespace(callsite_node, parent_scope, output_compilation.expression);
+    if (callsite_current
+     && callsite_current->node->type == ELEMENT_AST_NODE_NAMESPACE)
+        return compile_call_namespace(callsite_node, parent_scope, output_compilation.expression);
 
     //This node we're compiling came from a port, so its expression should be cached from the function that called the function this port is for
-    if (our_scope->node->type == ELEMENT_AST_NODE_PORT) {
-        const auto& cached_compilation = ctx.comp_cache.search(our_scope);
+    if (callsite_current
+     && callsite_current->node->type == ELEMENT_AST_NODE_PORT) {
+        const auto& cached_compilation = ctx.comp_cache.search(callsite_current);
         if (cached_compilation.valid()) {
             output_compilation = cached_compilation;
             return ELEMENT_OK;
         }
     }
+
+    //todo: this is necessary because the current handling for struct body/instance indexing happens when we know we're a function, but right now we don't know what we are. We should be doing that stuff here, not in compiling the function
+    //We couldn't find ourselves but we do have a parent, so let's try indexing the constraint in case we're part of a struct body
+    if (!callsite_current && has_parent) {
+        //todo: this first searches the struct body before the struct instance, which means shadowing names will probably cause reverse behaviour to what is expected
+        if (output_compilation.constraint->is<element_type_named>()
+         && output_compilation.constraint->as<element_type_named>()) {
+            const auto named_type = output_compilation.constraint->as<element_type_named>();
+            callsite_current = named_type->scope()->lookup(callsite_node->identifier, false); //Now we can find ourselves within the struct body
+            assert(callsite_current); //we failed to find ourselves in there, some kind of error
+        }
+        else if (output_compilation.constraint->is<element_type_anonymous>()
+              && output_compilation.constraint->as<element_type_anonymous>()) {
+            const auto anonymous_type = output_compilation.constraint->as<element_type_named>();
+            //todo: a function type is anonymous, but indexing a function isn't valid. Not sure if there are situations where an anonymous type is generated, requires more research
+            assert(false);
+        }
+        else {
+            //Something else?
+            assert(false);
+        }
+    }
+
+    //if we got this far and still haven't found ourselves, maybe the user is just wrong
+    assert(callsite_current);
+
+    if (callsite_current->function())
+        return compile_call_function(ctx, callsite_root, callsite_node, callsite_current, output_compilation);
 
     //Wasn't something we know about
     output_compilation.expression = nullptr;
@@ -550,9 +572,8 @@ static element_result compile_expression(
 
     // literal or non-constant expression
     if (bodynode->type == ELEMENT_AST_NODE_CALL || bodynode->type == ELEMENT_AST_NODE_LITERAL)
-        return compile_call_experimental(ctx, scope, bodynode, scope, output_compilation);
+        return compile_call(ctx, scope, bodynode, scope, output_compilation);
     
-
     // lambda
     if (bodynode->type == ELEMENT_AST_NODE_LAMBDA)
         return compile_lambda(ctx, scope, bodynode, output_compilation);
@@ -599,24 +620,19 @@ static element_result compile_custom_fn(
 }
 
 static element_result element_compile(
-    element_interpreter_ctx& ctx,
+    element_compiler_ctx& ctx,
     const element_function* fn,
-    std::vector<compilation> inputs,
-    compilation& output_compilation,
-    element_compiler_options opts)
+    std::vector<compilation>&& inputs,
+    compilation& output_compilation)
 {
-    element_compiler_ctx cctx = { ctx, std::move(opts) };
-
     if (fn->is<element_intrinsic>())
-        return compile_intrinsic(cctx, fn, std::move(inputs), output_compilation);
+        return compile_intrinsic(ctx, fn, std::move(inputs), output_compilation);
 
     if (fn->is<element_type_ctor>())
-        return compile_type_ctor(cctx, fn, std::move(inputs), output_compilation);
+        return compile_type_ctor(ctx, fn, std::move(inputs), output_compilation);
 
     if (fn->is<element_custom_function>()) {
-        auto result = compile_custom_fn(cctx, fn, std::move(inputs), output_compilation);
-        //todo: check the expr_constraint matches the constraint of the function (probably `evaluate` if CLI) we're compiling, but only if result is OK
-        return result;
+        return compile_custom_fn(ctx, fn, std::move(inputs), output_compilation);
     }
 
     assert(false);
@@ -630,6 +646,7 @@ element_result element_compile(
     compilation& output_compilation,
     element_compiler_options opts)
 {
+    element_compiler_ctx cctx = { ctx, std::move(opts) };
     auto inputs = generate_placeholder_inputs(fn->type().get());
-    return element_compile(ctx, fn, std::move(inputs), output_compilation, std::move(opts));
+    return element_compile(cctx, fn, std::move(inputs), output_compilation);
 }
