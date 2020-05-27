@@ -97,7 +97,7 @@ static element_result compile_intrinsic(
     std::vector<compilation> inputs,
     compilation& output_compilation)
 {
-    if (const auto ni = fn->as<element_intrinsic_nullary>()) {
+    if (const auto* const ni = fn->as<element_intrinsic_nullary>()) {
         assert(inputs.size() == 0);
         // TODO: better error codes
         //todo: logging
@@ -106,7 +106,7 @@ static element_result compile_intrinsic(
         return ELEMENT_OK;
     }
 	
-    if (const auto ui = fn->as<element_intrinsic_unary>()) {
+    if (const auto* const ui = fn->as<element_intrinsic_unary>()) {
         assert(inputs.size() >= 1);
         // TODO: better error codes
         //todo: logging
@@ -116,7 +116,7 @@ static element_result compile_intrinsic(
         return ELEMENT_OK;
     }
 
-    if (const auto bi = fn->as<element_intrinsic_binary>()) {
+    if (const auto* const bi = fn->as<element_intrinsic_binary>()) {
         assert(inputs.size() >= 2);
         // TODO: better error codes
         //todo: logging
@@ -272,13 +272,12 @@ static element_result compile_call_namespace(
 {
     const bool has_parent = parent_scope;
 
-    //todo; re-enable one james has fixed the lack of parentage on these reversed call nodes
-    /*const bool has_child = callsite_node->parent
+    const bool has_child = callsite_node->parent
                         && callsite_node->parent->type == ELEMENT_AST_NODE_CALL;
 
     //Having a namespace that isn't being indexed is an error
     if (!has_child)
-        return ELEMENT_ERROR_UNKNOWN; //todo*/
+        return ELEMENT_ERROR_UNKNOWN; //todo
 
     //A namespace can index in to another namespace, but nothing else
     if (has_parent && parent_scope->node->type != ELEMENT_AST_NODE_NAMESPACE)
@@ -411,7 +410,10 @@ static element_result compile_call_function(
     std::vector<compilation> args;
     auto result = fill_and_compile_arguments_from_callsite(args, ctx, callsite_root, callsite_node);
     assert(result == ELEMENT_OK); //todo
-    assert(args.empty() || (fn->inputs().size() >= args.size()));
+
+    //more arguments than expected
+	if(fn->inputs().size() < args.size())
+        return ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH;
 
     //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore them as parents anyway
     const auto compiled_parent = std::move(output_compilation);
@@ -424,6 +426,10 @@ static element_result compile_call_function(
 
     //If our parent is something we can pass as an argument, let's try to do so if we're missing one
     compile_call_function_partial_application(fn.get(), args, compiled_parent);
+
+	//fewer arguments than expected
+    if ( fn->inputs().size() != args.size())
+        return ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH;
 
     //We can finally compile this function
     return element_compile(ctx, fn.get(), std::move(args), output_compilation);
