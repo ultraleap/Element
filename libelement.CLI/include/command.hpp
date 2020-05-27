@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <CLI/CLI.hpp>
@@ -155,22 +156,27 @@ namespace libelement::cli
 		using log_callback = void (*)(const element_log_message* const);
 		static void configure(CLI::App& app, command::callback callback);
 
-		static compiler_message generate_response(element_result result, element_value value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+		static compiler_message generate_response(const element_result result, element_value* outputs, const size_t count, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 		{
 			std::string output;
-			if (std::isnan(value))
-				output = "NaN";
-			else if (value == std::numeric_limits<float>::infinity())
-				output = std::to_string(std::numeric_limits<float>::infinity());
-			else if (value == -std::numeric_limits<float>::infinity())
-				output = std::to_string(-std::numeric_limits<float>::infinity());
-			else
-				output = std::to_string(value);
+			for (auto i = 0; i < count; i++) {
+				if (std::isnan(outputs[i]))
+					output += "NaN";
+				else if (outputs[i] == std::numeric_limits<float>::infinity())
+					output += std::to_string(std::numeric_limits<float>::infinity());
+				else if (outputs[i] == -std::numeric_limits<float>::infinity())
+					output += std::to_string(-std::numeric_limits<float>::infinity());
+				else
+					output += std::to_string(outputs[i]);
+
+				if (i < (count - 1))
+					output += " ";
+			}
 			
-			return generate_response(result, output, trace_stack);
+			return generate_response(result, output, std::move(trace_stack));
 		}
 
-		static compiler_message generate_response(element_result result, std::string value, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+		static compiler_message generate_response(const element_result result, const std::string value, const std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 		{
 			switch (result)
 			{
@@ -181,7 +187,7 @@ namespace libelement::cli
 			}
 		}
 
-		void set_log_callback(command::log_callback log_callback) const {
+		void set_log_callback(const command::log_callback log_callback) const {
 
 			element_interpreter_set_log_callback(ictx, log_callback);
 		}
