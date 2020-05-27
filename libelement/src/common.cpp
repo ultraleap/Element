@@ -221,7 +221,7 @@ std::string expression_to_string(const element_expression& expression, int depth
 
             //boolean
             PRINTCASE(element_binary_op::and);
-            PRINTCASE(element_binary_op:: or );
+            PRINTCASE(element_binary_op::or);
 
             //comparison
             PRINTCASE(element_binary_op::eq);
