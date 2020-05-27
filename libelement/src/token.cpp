@@ -74,7 +74,7 @@ void element_tokeniser_set_log_callback(element_tokeniser_ctx* state, void (*log
 
 static void reset_token(element_tokeniser_ctx* state)
 {
-    if (state->cur_token.type != ELEMENT_TOK_NONE || state->cur_token.post_len > 0) {
+    if (state->cur_token.type != ELEMENT_TOK_NONE) {
         // save current token
         state->tokens.push_back(state->cur_token);
         state->cur_token.pre_pos = -1;
