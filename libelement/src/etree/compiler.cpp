@@ -70,6 +70,12 @@ static element_result compile_custom_fn(
     std::vector<compilation> inputs,
     compilation& output_compilation);
 
+static void compile_call_indexing_struct(
+    const element_ast* callsite_node,
+    const compilation& compiled_parent,
+    const element_scope** output_scope
+    );
+
 //When compiling a function that needs direct input from the boundary, generate placeholder expressions to represent that input when it's evaluated
 static std::vector<compilation> generate_placeholder_inputs(
     const element_type* t)
@@ -162,9 +168,17 @@ static element_result compile_custom_fn_scope(
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
     }
 
+    if (ctx.comp_cache.is_callstack_recursive(scope))
+        return ELEMENT_ERROR_CIRCULAR_COMPILATION; //todo: logging
+
+    auto frame = ctx.comp_cache.add_frame(scope); //frame is popped when it goes out of scope
+
     const auto fn = scope->function();
 
-    //same as compile_call_function, so this happens twice some of the time
+    //Ensure our arguments match up
+    if (fn->inputs().size() != args.size())
+        return ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH;
+
     assert(fn && fn->inputs().size() >= args.size());
     for (size_t i = 0; i < args.size(); ++i) {
         const auto& parameter = fn->inputs()[i];
@@ -375,9 +389,6 @@ static element_result compile_call_function(
     const auto& fn = our_scope->function();
     assert(fn);
 
-    //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore them as parents anyway
-    const auto compiled_parent = std::move(output_compilation);
-
     //If we're a port then we should be in the expression cache, due to the previous function adding us to it
     //todo: are there other situations where we would be in the cache?
     const auto& cached_compilation = ctx.comp_cache.search(our_scope);
@@ -387,63 +398,26 @@ static element_result compile_call_function(
         return ELEMENT_OK;
     }
 
-    
-
-    //Handle and compile any arguments to this function call
+    //Find and compile any arguments to this function call
     std::vector<compilation> args;
     auto result = fill_and_compile_arguments_from_callsite(args, ctx, callsite_root, callsite_node);
     assert(result == ELEMENT_OK); //todo
     assert(args.empty() || (fn->inputs().size() >= args.size()));
-    
-    //Element doesn't allow recursion as it becomes difficult to determine when element code has a deterministic runtime
-    if (ctx.comp_cache.is_callstack_recursive(our_scope))
-        return ELEMENT_ERROR_CIRCULAR_COMPILATION; //todo: logging
 
-    //we're now done compiling our arguments
-    //frame is popped when it goes out of scope, representing the start/end of our function
-    auto frame = ctx.comp_cache.add_frame(our_scope);
-
-    //type checking the arguments and registering them in the cache
-    for (size_t i = 0; i < args.size(); ++i) {
-        const auto& parameter = fn->inputs()[i];
-
-        //todo: it seems like a parameters type can be empty in some situations, figure out why and if it's a problem or if it's equivelant to being Any (which is how I'm treating it right now)
-        if (parameter.type && !parameter.type->is_satisfied_by(args[i].constraint)) {
-            return ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED; //todo: logging
-        }
-
-        const element_scope* input_scope = our_scope->lookup(parameter.name, false);
-        ctx.comp_cache.add(input_scope, args[i]);
-    }
+    //If we had a parent, their compiled expression will be what's passed to us. The exception is namespace parents, but we want to ignore them as parents anyway
+    const auto compiled_parent = std::move(output_compilation);
 
     //If our parent is a struct instance, let's find our name, as we're already compiled
-    compilation comp;
-    result = compile_call_function_indexing_parent_struct_instance(callsite_node, args, compiled_parent, comp);
-    if (comp.valid()) {
-        output_compilation = std::move(comp);
+    result = compile_call_function_indexing_parent_struct_instance(callsite_node, args, compiled_parent, output_compilation);
+    if (output_compilation.valid()) {
         return result;
     }
 
-    //If our parent is something we can pass as an argument, let's try to do so if we're missing an argument
+    //If our parent is something we can pass as an argument, let's try to do so if we're missing one
     compile_call_function_partial_application(fn.get(), args, compiled_parent);
 
-    //Ensure our arguments match up
-    if (fn->inputs().size() != args.size())
-        return ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH;
-
-    if (fn->is<element_intrinsic>())
-        return compile_intrinsic(ctx, fn.get(), std::move(args), output_compilation);
-    
-    if (fn->is<element_type_ctor>())
-        return compile_type_ctor(ctx, fn.get(), std::move(args), output_compilation);
-
-    if (fn->is<element_custom_function>()) {
-        return compile_custom_fn_scope(ctx, our_scope, std::move(args), output_compilation);
-    }
-
-    assert(false);
-    //todo: logging
-    return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
+    //We can finally compile this function
+    return element_compile(ctx, fn.get(), std::move(args), output_compilation);
 }
 
 static element_result compile_call_compile_parent(
@@ -470,6 +444,44 @@ static element_result compile_call_compile_parent(
     assert(result == ELEMENT_OK); //todo
     assert(callsite_current != our_scope); //Our parent is done compiling, so it must update the scope we're indexing in to. This should happen for all situations.
     return result;
+}
+
+static void compile_call_indexing_struct(
+    const element_ast* callsite_node,
+    const compilation& compiled_parent,
+    const element_scope** output_scope
+    )
+{
+    //has parent
+    if (!compiled_parent.valid())
+        return;
+
+    //we already know who we are
+    if (*output_scope)
+        return;
+
+    //todo: this is necessary because the current handling for struct body/instance indexing happens when we know we're a function, but right now we don't know what we are. We should be doing that stuff here, not in compiling the function
+    //We couldn't find ourselves but we do have a parent, so let's try indexing the constraint in case we're part of a struct body
+    //todo: this first searches the struct body before the struct instance, which means shadowing names will probably cause reverse behaviour to what is expected
+
+    const auto named_type = compiled_parent.constraint->as<element_type_named>();
+    const auto anonymous_type = compiled_parent.constraint->as<element_type_named>();
+
+    if (named_type) {
+        //Now we can find ourselves within the struct body
+        *output_scope = named_type->scope()->lookup(callsite_node->identifier, false);
+        //we failed to find ourselves in there, some kind of error
+        assert(*output_scope);
+    }
+    else if (anonymous_type) {
+        //todo: a function type is anonymous, but indexing a function isn't valid. Not sure if there are situations where an anonymous type is generated, requires more research
+        //todo: log error
+        assert(false);
+    }
+    else {
+        //Something else?
+        assert(false);
+    }
 }
 
 static element_result compile_call(
@@ -513,29 +525,9 @@ static element_result compile_call(
         }
     }
 
-    //todo: this is necessary because the current handling for struct body/instance indexing happens when we know we're a function, but right now we don't know what we are. We should be doing that stuff here, not in compiling the function
-    //We couldn't find ourselves but we do have a parent, so let's try indexing the constraint in case we're part of a struct body
-    if (!callsite_current && has_parent) {
-        //todo: this first searches the struct body before the struct instance, which means shadowing names will probably cause reverse behaviour to what is expected
-        if (output_compilation.constraint->is<element_type_named>()
-         && output_compilation.constraint->as<element_type_named>()) {
-            const auto named_type = output_compilation.constraint->as<element_type_named>();
-            callsite_current = named_type->scope()->lookup(callsite_node->identifier, false); //Now we can find ourselves within the struct body
-            assert(callsite_current); //we failed to find ourselves in there, some kind of error
-        }
-        else if (output_compilation.constraint->is<element_type_anonymous>()
-              && output_compilation.constraint->as<element_type_anonymous>()) {
-            const auto anonymous_type = output_compilation.constraint->as<element_type_named>();
-            //todo: a function type is anonymous, but indexing a function isn't valid. Not sure if there are situations where an anonymous type is generated, requires more research
-            assert(false);
-        }
-        else {
-            //Something else?
-            assert(false);
-        }
-    }
+    compile_call_indexing_struct(callsite_node, output_compilation, &callsite_current);
 
-    //if we got this far and still haven't found ourselves, maybe the user is just wrong
+    //if we got this far and still haven't found ourselves, maybe the user is just wrong :b
     assert(callsite_current);
 
     if (callsite_current->function())
@@ -613,9 +605,6 @@ static element_result compile_custom_fn(
 {
     const auto cfn = fn->as<element_custom_function>();
     const element_scope* scope = cfn->scope();
-    if (ctx.comp_cache.is_callstack_recursive(scope))
-        return ELEMENT_ERROR_CIRCULAR_COMPILATION; //todo: logging
-    auto frame = ctx.comp_cache.add_frame(scope); //frame is popped when it goes out of scope
     return compile_custom_fn_scope(ctx, scope, std::move(inputs), output_compilation);
 }
 
