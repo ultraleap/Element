@@ -499,6 +499,21 @@ void element_interpreter_delete_compiled_function(element_compiled_function* cfn
     delete cfn;
 }
 
+//HACK: This is horrible and temporary, find a better way to size the outputs
+size_t get_outputs_size(
+    element_interpreter_ctx* ctx,
+    const element_compiled_function* cfn)
+{
+    assert(ctx);
+    assert(cfn);
+    assert(cfn->expression);
+
+	if(cfn->expression->as<element_expression_structure>())
+		return cfn->expression->dependents().size();
+
+    return 1;
+}
+
 element_result element_interpreter_evaluate_function(
     element_interpreter_ctx* ctx,
     const element_compiled_function* cfn,

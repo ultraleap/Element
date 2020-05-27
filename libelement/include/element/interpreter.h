@@ -59,6 +59,10 @@ element_result element_interpreter_compile_function(
 
 void element_interpreter_delete_compiled_function(element_compiled_function* cfn);
 
+size_t get_outputs_size(
+    element_interpreter_ctx* ctx,
+    const element_compiled_function* cfn);
+	
 element_result element_interpreter_evaluate_function(
     element_interpreter_ctx* ctx,
     const element_compiled_function* fn,

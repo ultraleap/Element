@@ -40,7 +40,7 @@ namespace libelement::cli
 			//call into libelement
 			const element_function* fn;
 			element_compiled_function* cfn;
-			element_value outputs[1];
+		
 			const std::vector<trace_site> trace_site{};
 
 			//Not handling error responses properly yet
@@ -69,7 +69,10 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to compile: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			result = element_interpreter_evaluate_function(ictx, cfn, nullptr, 1, outputs, 1, nullptr);
+			//HACK: just to get multiple values serializing, do something better here!
+			const auto size = get_outputs_size(ictx, cfn);
+			element_value outputs[256];
+			result = element_interpreter_evaluate_function(ictx, cfn, nullptr, 1, outputs, size, nullptr);
 			if (result != ELEMENT_OK) {
 				message_type type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
@@ -77,7 +80,7 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to evaluate: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			return generate_response(result, outputs[0], trace_site);
+			return generate_response(result, outputs, size, trace_site);
 		}
 
 		std::string as_string() const override
