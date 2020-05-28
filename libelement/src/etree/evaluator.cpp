@@ -66,6 +66,7 @@ static element_result do_evaluate(evaluator_ctx& ctx, const expression_const_sha
 
     if (const auto* eb = expr->as<element_expression_if>()) {
         assert(outputs_count > outputs_written);
+        assert(eb->predicate()->get_size() == 1);
         assert(eb->if_true()->get_size() == 1);
         assert(eb->if_false()->get_size() == 1);
         size_t intermediate_written = 0;
