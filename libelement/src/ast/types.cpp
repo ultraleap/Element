@@ -204,6 +204,7 @@ protected:
     }
 };
 
+//TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
 struct if_condition_type : public element_type {
     DECLARE_TYPE_ID();
 

@@ -64,6 +64,7 @@ static element_result do_evaluate(evaluator_ctx& ctx, const expression_const_sha
         return ELEMENT_OK;
     }
 
+    //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
     if (const auto* eb = expr->as<element_expression_if>()) {
         assert(outputs_count > outputs_written);
         assert(eb->predicate()->get_size() == 1);
@@ -172,6 +173,7 @@ element_value element_evaluate_binary(element_expression_binary::op op, element_
     }
 }
 
+//TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
 element_value element_evaluate_if(element_value predicate, element_value if_true, element_value if_false)
 {
     return predicate ? if_true : if_false;
