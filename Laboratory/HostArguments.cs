@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -238,7 +239,7 @@ namespace Laboratory
                 var values = result.Split(' ', StringSplitOptions.RemoveEmptyEntries)
                     .Select(s =>
                     {
-                        success &= float.TryParse(s, out var value);
+                        success &= float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var value);
                         return value;
                     })
                     .ToArray();
