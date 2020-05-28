@@ -75,6 +75,7 @@ public:
     static const type_const_shared_ptr unary_boolean;
     static const type_const_shared_ptr binary_boolean;
     static const type_const_shared_ptr binary_comparison;
+    static const type_const_shared_ptr if_condition;
 
     // TODO: make this accurate?
     virtual bool is_serializable() const { return get_size() != 0; }

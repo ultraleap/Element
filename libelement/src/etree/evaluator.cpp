@@ -62,7 +62,22 @@ static element_result do_evaluate(evaluator_ctx& ctx, const expression_const_sha
         ELEMENT_OK_OR_RETURN(do_evaluate(ctx, eb->input2(), &b, 1, intermediate_written));
         outputs[outputs_written++] = element_evaluate_binary(eb->operation(), a, b);
         return ELEMENT_OK;
-    } 
+    }
+
+    if (const auto* eb = expr->as<element_expression_if>()) {
+        assert(outputs_count > outputs_written);
+        assert(eb->if_true()->get_size() == 1);
+        assert(eb->if_false()->get_size() == 1);
+        size_t intermediate_written = 0;
+        element_value predicate, if_true, if_false;
+        ELEMENT_OK_OR_RETURN(do_evaluate(ctx, eb->predicate(), &predicate, 1, intermediate_written));
+        intermediate_written = 0;
+        ELEMENT_OK_OR_RETURN(do_evaluate(ctx, eb->if_true(), &if_true, 1, intermediate_written));
+        intermediate_written = 0;
+        ELEMENT_OK_OR_RETURN(do_evaluate(ctx, eb->if_false(), &if_false, 1, intermediate_written));
+        outputs[outputs_written++] = element_evaluate_if(predicate, if_true, if_false);
+        return ELEMENT_OK;
+    }
 
 	return ELEMENT_ERROR_NO_IMPL;
 }
@@ -154,4 +169,9 @@ element_value element_evaluate_binary(element_expression_binary::op op, element_
     case element_expression_binary::op::geq:   return a >= b;
     default: assert(false);                    return static_cast<element_value>(std::nan(""));
     }
+}
+
+element_value element_evaluate_if(element_value predicate, element_value if_true, element_value if_false)
+{
+    return predicate ? if_true : if_false;
 }

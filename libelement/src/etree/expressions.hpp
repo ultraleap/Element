@@ -157,6 +157,24 @@ private:
     op m_op;
 };
 
+struct element_expression_if : public element_expression
+{
+    DECLARE_TYPE_ID();
+
+    element_expression_if(expression_shared_ptr predicate, expression_shared_ptr if_true, expression_shared_ptr if_false)
+        : element_expression(type_id)
+    {
+        m_dependents.emplace_back(std::move(predicate));
+        m_dependents.emplace_back(std::move(if_true));
+        m_dependents.emplace_back(std::move(if_false));
+    }
+    const expression_shared_ptr& predicate() const { return m_dependents[0]; }
+    const expression_shared_ptr& if_true() const { return m_dependents[1]; }
+    const expression_shared_ptr& if_false() const { return m_dependents[2]; }
+
+    size_t get_size() const override { return 1; }
+};
+
 //
 // Expression groups
 //

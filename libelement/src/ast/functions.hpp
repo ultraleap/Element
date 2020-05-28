@@ -99,6 +99,15 @@ private:
     element_binary_op m_op;
 };
 
+struct element_intrinsic_if : public element_intrinsic {
+    DECLARE_TYPE_ID();
+
+    element_intrinsic_if(type_const_shared_ptr type, std::string name)
+        : element_intrinsic(type_id, std::move(type), std::move(name))
+    {
+    }
+};
+
 // TOOD: expr groups et al
 
 
