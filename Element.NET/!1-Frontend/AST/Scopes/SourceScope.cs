@@ -16,6 +16,14 @@ namespace Element.AST
         // ReSharper disable once CollectionNeverUpdated.Local
         [Optional] private List<Declaration>? _items;
 #pragma warning restore 649
+        
+        public void InitializeItems(SourceInfo info, IScope parent)
+        {
+            foreach (var item in this)
+            {
+                item.Initialize(info, parent);
+            }
+        }
 
         public IEnumerator<Declaration> GetEnumerator() => _items?.GetEnumerator() ?? Enumerable.Empty<Declaration>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

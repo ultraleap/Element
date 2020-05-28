@@ -8,13 +8,13 @@ namespace Laboratory.Tests.L2.Semantics
         public Structs() : base("Structs") { }
 
         [Test]
-        public void TypeofStruct() => AssertTypeof(CompilationInput, "MyStruct", "Type");
+        public void TypeofStruct() => AssertTypeof(CompilationInput, "MyStruct", "MyStruct:Struct");
 
         [Test]
-        public void ConstructInstance() => AssertTypeof(CompilationInput, "MyStruct(5)", "MyStruct");
+        public void ConstructInstance() => AssertTypeof(CompilationInput, "MyStruct(5)", "Instance:MyStruct:Struct");
         
         [Test]
-        public void ConstructInstanceWithNestedStruct() => AssertTypeof(CompilationInput, "NestedStruct(MyStruct(5))", "NestedStruct");
+        public void ConstructInstanceWithNestedStruct() => AssertTypeof(CompilationInput, "NestedStruct(MyStruct(5))", "Instance:NestedStruct:Struct");
 
         [Test]
         public void InstanceMemberAccess() => AssertApproxEqual(CompilationInput, "MyStruct(5).a", "5");
@@ -23,10 +23,10 @@ namespace Laboratory.Tests.L2.Semantics
         public void InvalidMemberAccess() => EvaluateExpectingErrorCode(CompilationInput, 7, "MyStruct(10).invalid");
 
         [Test]
-        public void FunctionAsMember() => AssertTypeof(CompilationInput, "MyStruct(pickSecond)", "MyStruct");
+        public void FunctionAsMember() => AssertTypeof(CompilationInput, "MyStruct(pickSecond)", "Instance:MyStruct:Struct");
 
         [Test]
-        public void ConstrainedMembers() => AssertTypeof(CompilationInput, "Vector3(5, 10, 15)", "Vector3");
+        public void ConstrainedMembers() => AssertTypeof(CompilationInput, "Vector3(5, 10, 15)", "Instance:Vector3:Struct");
 
         [
             TestCase("Vector3(1)"),

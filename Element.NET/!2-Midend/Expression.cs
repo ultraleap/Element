@@ -8,16 +8,14 @@ namespace Element
 	/// <summary>
 	/// Base class for all Element expressions
 	/// </summary>
-	public abstract class Expression : IEquatable<Expression>, IValue, IIndexable
+	public abstract class Expression : IEquatable<Expression>, ISerializableValue, IIndexable
 	{
-		protected Expression(IType? instanceTypeOverride = default) => InstanceTypeOverride = instanceTypeOverride;
+		protected Expression(IIntrinsicType? instanceTypeOverride = default) => Type = instanceTypeOverride ?? NumType.Instance;
 		
-		public virtual IType Type => InstanceTypeOverride ?? NumType.Instance;
-
 		/// <summary>
-		/// The source type of the expression for instance indexing purposes
+		/// The primitive type of the expression
 		/// </summary>
-		public readonly IType? InstanceTypeOverride;
+		public readonly IIntrinsicType Type;
 
 		public abstract IEnumerable<Expression> Dependent { get; }
 
@@ -36,7 +34,22 @@ namespace Element
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
 		
 		public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-			compilationContext.GetIntrinsicsDeclaration<DeclaredStruct>((InstanceTypeOverride ?? Type) as IIntrinsic)
-			                  ?.ResolveInstanceFunction(id, this, compilationContext);
+			Type.GetDeclaration(compilationContext).ResolveInstanceFunction(id, this, compilationContext);
+
+		public IEnumerable<Expression> Serialize(CompilationContext context)
+		{
+			yield return this;
+		}
+
+		public ISerializableValue Deserialize(Func<Expression> nextValue, CompilationContext context)
+		{
+			var result = nextValue();
+			if (result.Type != Type)
+			{
+				context.LogError(1, $"'{result}' deserialized to incorrect type: is '{result.Type}' - expected '{Type}'");
+			}
+
+			return result;
+		}
 	}
 }

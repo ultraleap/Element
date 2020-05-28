@@ -28,6 +28,7 @@ namespace Element.AST
                 IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
 
             public Declaration Declarer { get; }
+            public int IndexInSource => Declarer.IndexInSource;
         }
 
         public static IScope Clone(this IScope scope, Declaration declarer, IScope parent)=>

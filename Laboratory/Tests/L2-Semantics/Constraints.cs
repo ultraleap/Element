@@ -23,15 +23,15 @@ namespace Laboratory.Tests.L2.Semantics
             else EvaluateExpectingErrorCode(CompilationInput, 8, expression);
         }
 
-        [TestCase("explicitAny", "Function")]
-        [TestCase("onlyNum", "Function")]
-        [TestCase("returnsNum", "Function")]
-        [TestCase("returnsNotNum", "Function")]
-        [TestCase("NumFunction", "Constraint")]
-        [TestCase("Any", "Constraint")]
-        [TestCase("MySpace", "Namespace")]
-        [TestCase("5", "Num")]
-        [TestCase("a", "Num")]
+        [TestCase("explicitAny", "explicitAny:Function")]
+        [TestCase("onlyNum", "onlyNum:Function")]
+        [TestCase("returnsNum", "returnsNum:Function")]
+        [TestCase("returnsNotNum", "returnsNotNum:Function")]
+        [TestCase("NumFunction", "NumFunction:Constraint")]
+        [TestCase("Any", "Any:Constraint")]
+        [TestCase("MySpace", "MySpace:Namespace")]
+        [TestCase("5", "5")]
+        [TestCase("a", "Num")] // TODO: Fails because it's not possible to prevent full resolution of the expr!
         public void TypeofIs(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
 
         [TestCase("MySpace")]

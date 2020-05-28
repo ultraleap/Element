@@ -6,9 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Element;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -228,6 +226,7 @@ namespace Laboratory
                 if (input.ExtraSourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.ExtraSourceFiles);
                 if (input.Debug) processArgs.Append(" --debug ");
                 if (input.SkipValidation) processArgs.Append(" --no-validation ");
+                if (input.NoParseTrace) processArgs.Append(" --no-parse-trace ");
                 return processArgs;
             }
 

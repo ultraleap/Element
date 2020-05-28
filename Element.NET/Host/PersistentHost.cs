@@ -8,13 +8,15 @@ namespace Element
     /// </summary>
     public class PersistentHost : IHost
     {
-        public PersistentHost(CompilationInput input)
+        public static bool TryCreate(CompilationInput input, out PersistentHost? host)
         {
-            if (!SourceContext.TryCreate(input, out _context))
-            {
-                throw new ArgumentException("Failed to initialize context with given compiler arguments");
-            }
+            host = null;
+            if (!SourceContext.TryCreate(input, out var context)) return false;
+            host = new PersistentHost(context);
+            return true;
         }
+        
+        private PersistentHost(SourceContext context) => _context = context;
 
         private readonly SourceContext _context;
 
@@ -22,19 +24,20 @@ namespace Element
 
         public (bool Success, float[] Result) Evaluate(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
-                ? _context.EvaluateExpression(expression, out var compilationContext)
-                          .TrySerialize(out float[] result, compilationContext)
+                ? _context.EvaluateExpressionAs<ISerializableValue>(expression, out var compilationContext)
+                          ?.Serialize(compilationContext)
+                          .ToFloatArray(compilationContext) is {} result
                       ? (true, result)
-                      : (_context.LogError(1, "Result not serializable") == CompilationError.Instance, null)
-                : (false, null);
+                      : (_context.LogError(1, "Result not serializable") == CompilationError.Instance, Array.Empty<float>())
+                : (false, Array.Empty<float>());
 
         public (bool Success, string Result) Typeof(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
                 ? _context.EvaluateExpression(expression, out _) switch
                 {
                     CompilationError err => (false, err.ToString()),
-                    { } result => (true, result.Type.Name),
-                    _ => (false, "<error>")
+                    { } result => (true, result.ToString()),
+                    null => (false, "<null>")
                 }
                 : (false, "<compilation input error>");
     }

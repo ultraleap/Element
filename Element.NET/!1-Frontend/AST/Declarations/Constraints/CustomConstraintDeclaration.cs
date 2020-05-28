@@ -3,11 +3,11 @@ using System.Linq;
 namespace Element.AST
 {
     // ReSharper disable once UnusedType.Global
-    public class ExtrinsicConstraint : DeclaredConstraint
+    public class CustomConstraintDeclaration : ConstraintDeclaration
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;
 
-        internal override bool Validate(SourceContext sourceContext)
+        protected override bool AdditionalValidation(SourceContext sourceContext)
         {
             if (!HasDeclaredInputs)
             {

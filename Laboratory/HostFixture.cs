@@ -122,7 +122,7 @@ namespace Laboratory
             
             Assert.That(result, Is.EqualTo(typeStr));
         }
-
+        
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());
         protected static FileInfo GetEleFile(string partialName) => GetFile("*.ele", partialName);
         protected static FileInfo GetFile(string pattern, string partialName) => TestDirectory.GetFiles(pattern, SearchOption.AllDirectories).Single(file => file.Name.Contains(partialName));
@@ -185,6 +185,4 @@ namespace Laboratory
                 Assert.Fail($"Received failure");
         }
     }
-    
-    
 }

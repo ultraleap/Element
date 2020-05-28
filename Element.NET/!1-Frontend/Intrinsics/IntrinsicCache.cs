@@ -19,7 +19,6 @@ namespace Element.AST
                     new FoldIntrinsic(),
                     new ListIntrinsic(),
                     new IfIntrinsic(),
-                    new InferIntrinsic(),
                     new MemberwiseIntrinsic(),
                     new PersistIntrinsic()
                 }.Concat(Enum.GetValues(typeof(Constant.Intrinsic))
@@ -36,18 +35,18 @@ namespace Element.AST
             }
         }
 
-        public static TIntrinsic GetByLocation<TIntrinsic>(string location, Context? context)
-            where TIntrinsic : class, IValue?
+        public static TIntrinsic? GetByLocation<TIntrinsic>(string location, ILogger? logger)
+            where TIntrinsic : class, IValue
         {
             switch (_intrinsics.TryGetValue(location, out var intrinsic), intrinsic)
             {
                 case (true, TIntrinsic t):
                     return t;
                 case (false, _):
-                    context?.LogError(4, $"Intrinsic '{location}' is not implemented");
+                    logger?.LogError(4, $"Intrinsic '{location}' is not implemented");
                     return null;
                 case (true, _):
-                    context?.LogError(14, $"Found intrinsic '{location}' but it is not '{typeof(TIntrinsic)}'");
+                    logger?.LogError(14, $"Found intrinsic '{location}' but it is not '{typeof(TIntrinsic)}'");
                     return null;
             }
         }

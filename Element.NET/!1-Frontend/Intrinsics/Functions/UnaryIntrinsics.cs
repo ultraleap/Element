@@ -4,7 +4,7 @@ namespace Element.AST
 {
     internal class UnaryIntrinsic : IntrinsicFunction
     {
-        public static readonly Dictionary<Unary.Op, (string Location, Port Input, IType Return)> OperationOverrides = new Dictionary<Unary.Op, (string Location, Port Input, IType Return)>
+        public static readonly Dictionary<Unary.Op, (string Location, Port Input, IIntrinsicType Return)> OperationOverrides = new Dictionary<Unary.Op, (string Location, Port Input, IIntrinsicType Return)>
         {
             {Unary.Op.Not, ("Bool", new Port("a", BoolType.Instance), BoolType.Instance)},
         };

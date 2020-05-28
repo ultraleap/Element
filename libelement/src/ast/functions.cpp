@@ -119,7 +119,7 @@ type_shared_ptr element_custom_function::generate_type(const element_scope* scop
 
             if (out->type == ELEMENT_AST_NODE_TYPENAME)
                 outputs.push_back({ "return", find_typename(scope, out) });
-            else if (out->type == ELEMENT_AST_NODE_NONE)  // any
+            else if (out->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE)  // any
                 outputs.push_back({ "return", element_constraint::any });
 
             //todo: what if it's not?

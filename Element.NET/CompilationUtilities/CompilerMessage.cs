@@ -12,18 +12,6 @@ namespace Element
     {
         private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
 
-        //public static string GetMessageName(int messageCode) => (string) GetMessageToml(messageCode)["name"];
-
-        // private static TomlTable GetMessageToml(int messageCode) =>
-        //     _messageToml[$"ELE{messageCode}"] is TomlTable messageTable
-        //         ? messageTable
-        //         : throw new InternalCompilerException($"ELE{messageCode} could not be found");
-        //
-        // public static MessageLevel GetMessageLevel(int messageCode) =>
-        //     Enum.TryParse((string) GetMessageToml(messageCode)["level"], out MessageLevel level)
-        //         ? level
-        //         : throw new InternalCompilerException($"\"{level}\" is not a valid message level");
-
         private static bool TryGetMessageToml(int messageCode, out TomlTable message)
         {
             message = _messageToml.TryGetToml($"ELE{messageCode}", out var obj) && obj is TomlTable table ? table : null;

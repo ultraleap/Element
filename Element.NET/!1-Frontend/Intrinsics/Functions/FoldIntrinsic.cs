@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -30,11 +31,12 @@ namespace Element.AST
 				IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
 
 			public Declaration Declarer { get; }
+			public int IndexInSource => Declarer.IndexInSource;
 		}
 		
 		public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
 		{
-			var list = arguments[0] as StructInstance;
+			var list = (StructInstance) arguments[0];
 			var workingValue = arguments[1];
 			var aggregator = (IFunctionSignature)arguments[2];
 			
@@ -47,8 +49,10 @@ namespace Element.AST
 			IValue[] CreateDynamicFoldArguments()
 			{
 				var initial = TupleType.Instance.ResolveCall(new []{Constant.Zero, workingValue}, false, compilationContext);
-				if (!compilationContext.Parse("_(tup):Bool = tup.varg0.lt(list.count)", out Lambda predicateLambda)) throw new InternalCompilerException("Couldn't parse dynamic fold condition");
-				if (!compilationContext.Parse("_(tup) = Tuple(tup.varg0.add(1), aggregator(tup.varg1, list.at(tup.varg0)))", out Lambda bodyLambda)) throw new InternalCompilerException("Couldn't parse dynamic fold body");
+				string conditionSourceCode = "_(tup):Bool = tup.varg0.lt(list.count)";
+				string bodySourceCode = "_(tup) = Tuple(tup.varg0.add(1), aggregator(tup.varg1, list.at(tup.varg0)))";
+				if (!Parser.Parse(conditionSourceCode, out Lambda predicateLambda, compilationContext)) throw new InternalCompilerException("Couldn't parse dynamic fold condition");
+				if (!Parser.Parse(bodySourceCode, out Lambda bodyLambda, compilationContext)) throw new InternalCompilerException("Couldn't parse dynamic fold body");
 				var declaration = compilationContext.GetIntrinsicsDeclaration<Declaration>(this);
 				predicateLambda.Initialize(declaration);
 				bodyLambda.Initialize(declaration);
@@ -62,15 +66,14 @@ namespace Element.AST
 
 				return new[] {initial, predicateFn, bodyFn};
 			}
-			
-			return ListType.GetListCount(list, compilationContext) switch
-			{
-				(ListType.CountType.Constant, int count) => ListType.EvaluateElements(list, ListType.CountType.Constant, count, compilationContext)
-				                                                    .Aggregate(workingValue, (current, e) => aggregator.ResolveCall(new[] {current, e}, false, compilationContext)),
-				(ListType.CountType.Dynamic, _) => ((StructInstance) IntrinsicCache.GetByLocation<IFunctionSignature>("for", compilationContext)
-				                                                                   .ResolveCall(CreateDynamicFoldArguments(), false, compilationContext))[1],
-				_ => CompilationError.Instance
-			};
+
+			return ListType.HasConstantCount(list, out var constantCount, compilationContext)
+				       ? ListType.EvaluateElements(list, true, constantCount, compilationContext)
+				                 .Aggregate(workingValue, (current, e) =>
+					                            aggregator.ResolveCall(new[] {current, e}, false, compilationContext))
+				       : ((StructInstance) IntrinsicCache
+				                           .GetByLocation<IFunctionSignature>("for", compilationContext)
+				                           .ResolveCall(CreateDynamicFoldArguments(), false, compilationContext))[1];
 		}
 	}
 }

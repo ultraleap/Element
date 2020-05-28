@@ -10,10 +10,11 @@ constraint Indexer(i:Num);
 constraint Predicate(a):Bool;
 
 intrinsic struct Tuple;
+
 # Calls function by nominative argument matching the functions parameters with the supplied instances fields
 # Typically used with memberwise to cast an untyped variadic return back into a type instance, e.g.
 #   Vector3Add(a, b) = infer(Vector3, memberwise(Num.add, a, b));
-intrinsic infer(function, instance);
+#intrinsic infer(function, instance);
 
 
 

@@ -35,6 +35,13 @@ namespace Element.AST
             var definition = functionSignature.GetDefinition(compilationContext);
             if (compilationContext.ContainsFunction(definition) && !(functionSignature is AppliedFunctionBase)) return compilationContext.LogError(11, $"Multiple references to {functionSignature} in same call stack - Recursion is disallowed");
             compilationContext.PushFunction(definition);
+            var tracingThisFunction = false;
+            if (functionSignature is IDeclared declared)
+            {
+                tracingThisFunction = true;
+                compilationContext.PushTrace(declared.MakeTraceSite(functionSignature.ToString()));
+            }
+            
 
             try
             {
@@ -59,8 +66,8 @@ namespace Element.AST
                 {
                     // If the signature is an applied function we want to use it as the call scope. More arguments are filled by subsequent applications until full application.
                     AppliedFunctionBase appliedFunction => appliedFunction,
-                    // Anonymous functions are special cased since they are an expression
-                    AnonymousFunction anonymousFunction => anonymousFunction.Parent,
+                    // Lambdas must be special cased as they can be declared within an expression and may capture function arguments
+                    Lambda lambda => lambda.DeclaringScope,
                     // If the signature is a function with a body then we use the bodies parent
                     IFunctionWithBody functionWithBody when functionWithBody.Body is Scope scope => scope.Declarer.Parent,
                     Declaration declaration => declaration.Parent,
@@ -85,6 +92,10 @@ namespace Element.AST
             finally
             {
                 compilationContext.PopFunction();
+                if (tracingThisFunction)
+                {
+                    compilationContext.PopTrace();
+                }
             }
         }
 
@@ -143,16 +154,15 @@ namespace Element.AST
             private readonly Port[] _inputs;
             private readonly IFunctionSignature _definition;
 
-            IType IValue.Type => _definition.Type;
             Port[] IFunctionSignature.Inputs => _inputs;
             Port IFunctionSignature.Output => _definition.Output;
+
+            public override string ToString() => _definition.ToString();
 
             protected virtual IScope? _child => null;
 
             public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-                _child != null
-                    ? _child[id, false, compilationContext] ?? IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null)
-                    : IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
+                _child?[id, false, compilationContext] ?? IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
 
             public IFunctionSignature GetDefinition(CompilationContext compilationContext) => _definition;
         }
@@ -189,6 +199,72 @@ namespace Element.AST
             protected override IScope? _child => Body as IScope;
 
             public object Body { get; }
+        }
+
+        public static IFunctionSignature Uncurry(this IFunctionSignature a, IFunctionSignature b,
+                                                 ILogger logger) =>
+            UncurriedFunction.Create(a, b, logger);
+
+        public static IFunctionSignature? Uncurry(this IFunctionSignature a, string bFunctionExpression,
+                                                  SourceContext context)
+        {
+            var b = context.EvaluateExpressionAs<IFunctionSignature>(bFunctionExpression, out _);
+            return b == null ? null : a.Uncurry(b, context);
+        }
+
+        private class UncurriedFunction : IFunction
+        {
+            private readonly IFunctionSignature _a;
+            private readonly IFunctionSignature _b;
+
+            private UncurriedFunction(IFunctionSignature a, IFunctionSignature b)
+            {
+                _a = a;
+                _b = b;
+                Inputs = _a.Inputs.Concat(_b.Inputs.Skip(1)).ToArray();
+                Output = _b.Output;
+            }
+            
+            public static IFunctionSignature Create(IFunctionSignature a, IFunctionSignature b, ILogger logger)
+            {
+                if (b.Inputs.Length < 1)
+                {
+                    return logger.LogError(23, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
+                }
+
+                if (a.Inputs.Any(p => p == Port.VariadicPort))
+                {
+                    return logger.LogError(23, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
+                }
+
+                if (a.Inputs.Concat(b.Inputs).Any(p => p?.Identifier == null))
+                {
+                    return logger.LogError(23, "Cannot uncurry functions with discarded/unnamed ports");
+                }
+
+                foreach (var aPort in a.Inputs)
+                {
+                    // TODO: Better solution to this error, it's very annoying to not be allowed to uncurry functions just because of port names!
+                    Identifier? id = null;
+                    if (b.Inputs.Skip(1).Any(bPort => aPort.Identifier.Equals(id = bPort.Identifier)))
+                    {
+                        return logger.LogError(23, $"'{id}' is defined on both functions, these functions cannot be uncurried");
+                    }
+                }
+                
+                return new UncurriedFunction(a, b);
+            }
+
+            IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
+            public Port[] Inputs { get; }
+            public Port Output { get; }
+            public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
+                _b.ResolveCall(
+                    // Skip arguments meant for function a
+                    arguments.Skip(_a.Inputs.Length)
+                             .Prepend(_a.ResolveCall(arguments.Take(_a.Inputs.Length).ToArray(), false, compilationContext))
+                             .ToArray(),
+                    false, compilationContext);
         }
     }
 }

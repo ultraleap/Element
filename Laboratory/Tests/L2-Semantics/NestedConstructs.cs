@@ -22,7 +22,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void AddUsingLocalWithShadowing() => AssertApproxEqual(CompilationInput, "12", "addUsingLocalWithShadowing(6, 6)");
 
         [Test]
-        public void LocalStructInstance() => AssertTypeof(CompilationInput, "returnLocalStructInstance(5)", "Vector2");
+        public void LocalStructInstance() => AssertTypeof(CompilationInput, "returnLocalStructInstance(5)", "Instance:returnLocalStructInstance.Vector2:Struct");
 
         [Test]
         public void LocalStructInstanceFunction() => AssertApproxEqual(CompilationInput, "15", "returnLocalStructInstance(5).add(10).x");
@@ -38,5 +38,8 @@ namespace Laboratory.Tests.L2.Semantics
         
         [Test]
         public void AddUsingDeepNestedCaptureWithLambda() => AssertApproxEqual(CompilationInput, "13", "addUsingDeepNestedCaptureWithLambda(5, 8)");
+        
+        [Test]
+        public void NestedNamespacesInStructBody() => AssertTypeof(CompilationInput, "rootStruct.nestedNamespace", "rootStruct.nestedNamespace:Namespace");
     }
 }

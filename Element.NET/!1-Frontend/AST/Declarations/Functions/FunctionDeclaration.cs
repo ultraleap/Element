@@ -1,22 +1,15 @@
+using System;
+
 namespace Element.AST
 {
-    public class FunctionDeclaration : DeclaredFunction, IFunctionWithBody
+    public abstract class FunctionDeclaration : Declaration, IFunctionSignature
     {
-        protected override string IntrinsicQualifier => string.Empty;
-        protected override Identifier[] ScopeIdentifierWhitelist { get; } = {Parser.ReturnIdentifier};
+        protected override string Qualifier => string.Empty; // Functions don't have a qualifier
+        protected override Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
+        public override string ToString() => $"{Location}:Function";
 
-        internal override bool Validate(SourceContext sourceContext)
-        {
-            var success = base.Validate(sourceContext);
-            if (Body is Terminal)
-            {
-                sourceContext.LogError(21, $"Non intrinsic function '{Location}' must have a body");
-                success = false;
-            }
-
-            return success;
-        }
-
-        object IFunctionWithBody.Body => Body;
+        public Port[] Inputs => DeclaredInputs;
+        public Port Output => DeclaredOutput;
+        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
     }
 }

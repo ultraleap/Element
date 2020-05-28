@@ -3,20 +3,21 @@ namespace Element.AST
     /// <summary>
     /// The type for a single number.
     /// </summary>
-    public sealed class NumType : SerializableIntrinsicType
+    public sealed class NumType : IIntrinsicType
     {
-        public static NumType Instance { get; } = new NumType();
-        protected override IntrinsicType _instance => Instance;
-        public override Port[] Inputs { get; } = {new Port("a", Instance)};
-        public override string Name => "Num";
-        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => arguments[0]; // Return the number - type checking will already have occurred.
-        public override int Size(IValue instance, CompilationContext compilationContext) => 1;
-
-        public override bool Serialize(IValue instance, ref Element.Expression[] serialized, ref int position, CompilationContext compilationContext)
+        private NumType()
         {
-            if (!(instance is Element.Expression expr && expr.InstanceTypeOverride == null)) return false;
-            serialized[position++] = expr;
-            return true;
+            Inputs = new[]{new Port("a", Instance)};
+            Output = Port.ReturnPort(Instance);
         }
+        public static NumType Instance { get; } = new NumType();
+        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value is Element.Expression expr && expr.Type == Instance;
+        public Port[] Inputs { get; }
+        public Port Output { get; }
+        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => arguments[0]; // Return the number - type checking will already have occurred.
+        string IIntrinsic.Location => "Num";
+        public ISerializableValue DefaultValue(CompilationContext _) => Constant.Zero;
+        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this.GetDeclaration(compilationContext);
+
     }
 }

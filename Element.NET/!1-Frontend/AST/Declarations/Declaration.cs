@@ -1,14 +1,16 @@
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using Lexico;
 
 namespace Element.AST
 {
     [WhitespaceSurrounded, MultiLine]
-    public abstract class Declaration : IValue
+    public abstract class Declaration : IValue, IDeclared
     {
 #pragma warning disable 649
         // ReSharper disable UnassignedField.Global
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [Location] public int IndexInSource { get; private set; }
         [IndirectLiteral(nameof(IntrinsicQualifier))] protected Unnamed _;
         [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed __;
         [Term] public Identifier Identifier;
@@ -24,7 +26,9 @@ namespace Element.AST
         protected abstract Type[] BodyAlternatives { get; }
         // ReSharper restore UnusedMember.Global
 
-        public override string ToString() => $"{Location}{DeclaredType}";
+        public abstract override string ToString();
+
+        public SourceInfo SourceInfo { get; private set; }
 
         protected bool HasDeclaredInputs => DeclaredInputs.Length > 0;
         protected Port[] DeclaredInputs { get; private set; }
@@ -37,25 +41,28 @@ namespace Element.AST
             protected override string IntrinsicQualifier => string.Empty;
             protected override string Qualifier => string.Empty;
             protected override Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
-            public override IType Type => FunctionType.Instance;
+            public override string ToString() => "<stub declaration>";
         }
 
-        public static Declaration MakeStubDeclaration(Identifier id, object body, CompilationContext compilationContext) =>
-            new StubDeclaration
+        public static Declaration MakeStubDeclaration(Identifier id, object body, string expressionString, CompilationContext compilationContext)
+        {
+            var result = new StubDeclaration
             {
                 Identifier = id,
-                Body = body,
-                Parent = compilationContext.SourceContext.GlobalScope,
+                Body = body
             };
+            result.Initialize(new SourceInfo(id, expressionString), compilationContext.SourceContext.GlobalScope);
+            return result;
+        }
 
         internal Declaration Clone(IScope newParent)
         {
             var clone = (Declaration)MemberwiseClone();
-            clone.Initialize(newParent);
+            clone.Initialize(SourceInfo, newParent);
             return clone;
         }
 
-        internal virtual bool Validate(SourceContext sourceContext)
+        internal bool Validate(SourceContext sourceContext)
         {
             var success = true;
             switch (Body)
@@ -67,39 +74,31 @@ namespace Element.AST
                     success &= expressionBody.Expression.Validate(sourceContext);
                     break;
             }
-            if (PortList?.List.Count > 0)
-            {
-                var distinctPortIdentifiers = new HashSet<string>();
-                foreach (var port in PortList.List)
-                {
-                    if (!(port.Identifier is { } id)) continue;
-                    if (!distinctPortIdentifiers.Add(id))
-                    {
-                        sourceContext.LogError(2, $"Cannot add duplicate identifier '{id}'");
-                        success = false;
-                    }
 
-                    if (!sourceContext.ValidateIdentifier(id))
-                    {
-                        success = false;
-                    }
-                }
-            }
-
+            success &= PortList?.Validate(sourceContext) ?? true;
+            success &= DeclaredType?.Validate(sourceContext) ?? true;
+            success &= AdditionalValidation(sourceContext);
             return success;
         }
+        
+        protected virtual bool AdditionalValidation(SourceContext sourceContext) => true;
 
         public bool HasBeenValidated { get; set; }
-        public abstract IType Type { get; }
 
-        internal void Initialize(IScope parent)
+        internal void Initialize(SourceInfo info, IScope parent)
         {
+            SourceInfo = info;
             Parent = parent ?? throw new ArgumentNullException(nameof(parent));
             Child?.Initialize(this);
-            DeclaredInputs = string.IsNullOrEmpty(IntrinsicQualifier)
-                                 ? PortList?.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
-                                 : PortList?.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs;
+            DeclaredType?.Initialize(this);
+            DeclaredInputs = (string.IsNullOrEmpty(IntrinsicQualifier)
+                                  ? PortList?.Ports.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
+                                  : PortList?.Ports.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs) ?? Array.Empty<Port>();
             DeclaredOutput = Port.ReturnPort(DeclaredType);
+            foreach (var port in DeclaredInputs.Append(DeclaredOutput))
+            {
+                port.Initialize(this);
+            }
             if (Body is ExpressionBody expressionBody) expressionBody.Expression.Initialize(this);
         }
 
@@ -111,9 +110,11 @@ namespace Element.AST
         };
         public Scope? Child => Body as Scope;
         public IScope Parent { get; private set; }
+        public Declaration Declarer => this;
 
-        protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(Context? context)
+        protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(ILogger? logger)
             where TIntrinsic : class, IValue
-            => IntrinsicCache.GetByLocation<TIntrinsic>(Location, context);
+            => IntrinsicCache.GetByLocation<TIntrinsic>(Location, logger);
+
     }
 }

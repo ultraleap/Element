@@ -260,27 +260,53 @@ namespace Element.CLR
 					throw new NotSupportedException();
 			}
 		}
-		
-		public static TDelegate Compile<TDelegate>(this SourceContext sourceContext, string functionExpression,
-		                                           IBoundaryConverter boundaryConverter = default)
-			where TDelegate : Delegate? =>
-			sourceContext.EvaluateExpression(functionExpression, out _) is { } val
-				? (TDelegate)sourceContext.Compile(val, typeof(TDelegate), boundaryConverter)
-				: null;
-		
-		public static TDelegate Compile<TDelegate>(this SourceContext sourceContext, IValue value,
-		                                            IBoundaryConverter boundaryConverter = default)
-			where TDelegate : Delegate? =>
-			(TDelegate)sourceContext.Compile(value, typeof(TDelegate), boundaryConverter);
 
-		private static Delegate? Compile(this SourceContext sourceContext, IValue value,
-		                                 Type delegateType, IBoundaryConverter boundaryConverter = default)
+		/// <summary>
+		/// Replaces the inputs of a Function with expressions that map to a pre-allocated array.
+		/// This is useful for applications where the exact inputs may be unknown or user-defined.
+		/// </summary>
+		/// <remarks>
+		/// All the inputs to the function must be serializable and constant size (No dynamic lists).
+		/// </remarks>
+		/// <param name="function"></param>
+		/// <param name="array">The resultant pre-allocated array. The function inputs are mapped directly to its contents.</param>
+		/// <param name="context"></param>
+		/// <returns>The result of calling `function` with all its inputs, or compilation error where there was an error.</returns>
+		public static IValue SourceArgumentsFromSerializedArray(this IFunctionSignature function, out float[] array,
+		                                                        CompilationContext context)
+		{
+			var defaultValues = function.Inputs.Select(p => p.ResolveConstraint(context) switch
+			{
+				IType type => type.DefaultValue(context),
+				{} v => context.LogError(14, $"'{v}' is not a type - only types can produce a default value")
+			}).ToArray();
+
+			var argSizes = defaultValues.Select(t => t.SerializedSize(context)).ToArray();
+			var totalSerializedSize = argSizes.Sum();
+
+			// Now allocate the array, and make an argument list that uses it as data
+			array = new float[totalSerializedSize];
+
+			var arrayExpr = LinqExpression.Constant(array);
+			var flattenedValIdx = 0;
+
+			Expression NextValue() => (Expression) NumberConverter.Instance.LinqToElement(LinqExpression.ArrayIndex(arrayExpr, LinqExpression.Constant(flattenedValIdx++)), null!, context);
+			
+			var arguments = defaultValues.Select(v => v.Deserialize(NextValue, context)).ToArray();
+			return function.ResolveCall(arguments, false, context);
+		}
+
+		public static TDelegate? Compile<TDelegate>(this IValue value, CompilationContext context, IBoundaryConverter? boundaryConverter = default)
+			where TDelegate : Delegate =>
+			(TDelegate?)Compile(value, context, typeof(TDelegate), boundaryConverter);
+
+		private static Delegate? Compile(IValue value, CompilationContext context, 
+		                                 Type delegateType, IBoundaryConverter? boundaryConverter = default)
         {
-            if (sourceContext == null) throw new ArgumentNullException(nameof(sourceContext));
+            if (context == null) throw new ArgumentNullException(nameof(context));
             if (value == null) throw new ArgumentNullException(nameof(value));
             if (delegateType == null) throw new ArgumentNullException(nameof(delegateType));
 
-            sourceContext.MakeCompilationContext(out var context);
             boundaryConverter ??= new BoundaryConverter();
 
             // Check return type/single out parameter of delegate
@@ -298,24 +324,27 @@ namespace Element.CLR
                 context.LogError(10, $"{delegateType} cannot have out parameters and must have non-void return type");
                 return null;
             }
-
+            
             // Create parameter expressions
             var parameterExpressions = delegateParameters.Select(p => LinqExpression.Parameter(p.ParameterType, p.Name)).ToArray();
             var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
-            var reducedExpression = value switch
+            
+            if (value is IFunctionSignature fn && fn.Inputs.Length != delegateParameters.Length)
             {
-	            IFunctionSignature functionSignature => functionSignature.ResolveCall(
-		            functionSignature.Inputs.Select(f =>
-		                             {
-			                             ParameterExpression p;
-			                             return (p = Array.Find(parameterExpressions, i => i.Name == f.Identifier)) == null
-				                                    ? context.LogError(10, $"Unable to bind {functionSignature}'s input {f} - could not find matching parameter name on delegate")
-				                                    : boundaryConverter.LinqToElement(p, boundaryConverter, context);
-		                             }).ToArray(), false, context),
-	            Expression expr => expr,
-	            _ => context.LogError(3, $"'{value}' is not compilable")
-            };
+	            context.LogError(10, "Mismatch in number of parameters between delegate type and the function being compiled");
+	            return null;
+            }
+            
+            var outputExpression = value is IFunctionSignature functionSignature
+	                                   ? functionSignature.ResolveCall(functionSignature.Inputs.Select((f, idx) =>
+	                                   {
+		                                   var p = parameterExpressions[idx];
+		                                   return p == null
+			                                          ? context.LogError(10, $"Unable to bind {functionSignature}'s input {f} - there is a mismatch in number of ports")
+			                                          : boundaryConverter.LinqToElement(p, boundaryConverter, context);
+	                                   }).ToArray(), false, context)
+	                                   : value;
 
             var data = new CompilationData
             {
@@ -336,7 +365,7 @@ namespace Element.CLR
 				{
 					case CompilationError _: return null;
 					case IConstraint c:
-						context.LogError(3, $"Cannot compile a <{c.Type}>: {c}");
+						context.LogError(3, $"Cannot compile a constraint '{c}'");
 						return null;
 				}
 
@@ -346,11 +375,14 @@ namespace Element.CLR
 					return null;
 				}
 
-				if(value.TrySerialize(out Expression[] expressions, context))
+				var serialized = (value as ISerializableValue)?.Serialize(context).ToArray() ?? null;
+				var serializedSuccessfully = serialized != null && !serialized.Any(s => s == CompilationError.Instance);
+
+				if (serializedSuccessfully)
 				{
-					if (expressions.Length == 1 && outputType == typeof(float))
+					if (serialized!.Length == 1 && outputType == typeof(float))
 					{
-						var expr = expressions.Single();
+						var expr = serialized[0];
 						expr = ConstantFolding.Optimize(expr, data.ConstantCache);
 						expr = CommonSubexpressionExtraction.OptimizeSingle(data.CSECache, expr);
 						return Compile(expr, data);
@@ -370,8 +402,8 @@ namespace Element.CLR
 				return retval;
 			}
 
-            var outputExpression = boundaryConverter.ElementToLinq(reducedExpression, returnExpression.Type, ConvertFunction, context);
-            var outputAssign = LinqExpression.Assign(returnExpression, outputExpression);
+            var convertedOutputExpression = boundaryConverter.ElementToLinq(outputExpression, returnExpression.Type, ConvertFunction, context);
+            var outputAssign = LinqExpression.Assign(returnExpression, convertedOutputExpression);
             
 	        data.Variables.Add(returnExpression);
 	        data.Statements.Add(outputAssign);

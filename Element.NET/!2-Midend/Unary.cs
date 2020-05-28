@@ -48,7 +48,7 @@ namespace Element
 		};
 
 		public Unary(Op operation, Expression operand)
-			: base(AST.UnaryIntrinsic.OperationOverrides.TryGetValue(operation, out var details) ? details.Return : default)
+			: base(UnaryIntrinsic.OperationOverrides.TryGetValue(operation, out var details) ? details.Return : default)
 		{
 			Operation = operation;
 			Operand = operand ?? throw new ArgumentNullException(nameof(operand));

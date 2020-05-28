@@ -90,11 +90,15 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     else if (ast->type == ELEMENT_AST_NODE_PORT) {
         string += fmt::format("PORT: {}", ast->identifier);
     }
+    else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_PORT) {
+		string += "IMPLICIT TYPE";
+    }
+    else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_DECLARATION) {
+        string += "IMPLICIT RETURN";
+    }
     else if (ast->type == ELEMENT_AST_NODE_NONE) {
         if (ast->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT))
             string += "EMPTY INPUT";
-        else if (ast->has_flag(ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN))
-            string += "IMPLICIT RETURN";
         else if (ast->flags == 0)
             string += "NONE";
         else
@@ -393,10 +397,11 @@ void element_log_ctx::log(const element_interpreter_ctx& context, element_result
 {
     auto msg = element_log_message();
     msg.message = message.c_str();
+    msg.message_code = code;
     msg.line = -1;
     msg.character = -1;
     msg.length = -1;
-    msg.stage = ELEMENT_STAGE_PARSER;
+    msg.stage = ELEMENT_STAGE_EVALUATOR;
     msg.filename = filename.c_str();
     msg.related_log_message = nullptr;
 	

@@ -40,7 +40,7 @@ namespace Element.CLR
 
         private class NumberExpression : Expression, ICLRExpression
         {
-            public NumberExpression(LExpression parameter, AST.IType? typeOverride = default)
+            public NumberExpression(LExpression parameter, IIntrinsicType? typeOverride = default)
                 : base(typeOverride) =>
                 Parameter = parameter;
 
@@ -49,7 +49,7 @@ namespace Element.CLR
             public LExpression Compile(Func<Expression, LExpression> compileOther) => Parameter;
             protected override string ToStringInternal() => Parameter.ToString();
             public override bool Equals(Expression other) => other == this;
-            public override int GetHashCode() => new {Parameter, InstanceTypeOverride}.GetHashCode();
+            public override int GetHashCode() => new {Parameter, InstanceTypeOverride = Type}.GetHashCode();
         }
     }
 
@@ -77,7 +77,7 @@ namespace Element.CLR
         public StructConverter(string elementTypeExpression, Type structType)
         {
             _elementTypeExpression = elementTypeExpression;
-            _elementToClrFieldMapping = structType.GetFields().ToDictionary(f => f.Name, f => f.Name);
+            _elementToClrFieldMapping = structType.GetFields().ToDictionary(f => f.Name, f => $"{char.ToLower(f.Name[0])}{f.Name.Substring(1)}");
         }
 
         public IValue LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext compilationContext)
@@ -88,7 +88,7 @@ namespace Element.CLR
                 return CompilationError.Instance;
             }
 
-            if (!(result is DeclaredStruct declaredStruct))
+            if (!(result is StructDeclaration declaredStruct))
             {
                 return compilationContext.LogError(14, $"{result} is not a struct declaration");
             }
@@ -96,7 +96,7 @@ namespace Element.CLR
             return declaredStruct.CreateInstance(_elementToClrFieldMapping.Select(pair => new MemberExpression(root, parameter, pair.Value)).ToArray());
         }
 
-        private class MemberExpression : AST.IFunction
+        private class MemberExpression : Expression, ICLRExpression, IFunction
         {
             private readonly LExpression _parameter;
             private readonly IBoundaryConverter _root;
@@ -107,12 +107,18 @@ namespace Element.CLR
                 _root = root;
                 _parameter = parameter;
                 _clrField = clrField;
+                Inputs = Array.Empty<Port>();
+                Output = Port.ReturnPort(AnyConstraint.Instance);
+                Dependent = Array.Empty<Expression>();
             }
 
-            AST.IType IValue.Type => AST.FunctionType.Instance;
-            IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
-            Port[] IFunctionSignature.Inputs { get; } = Array.Empty<Port>();
-            Port IFunctionSignature.Output { get; } = Port.ReturnPort(AnyConstraint.Instance);
+            public LExpression Compile(Func<Expression, LExpression> compileOther) =>
+                LExpression.PropertyOrField(_parameter, _clrField);
+            public override IEnumerable<Expression> Dependent { get; }
+            protected override string ToStringInternal() => $"{_parameter}.{_clrField}";
+            public Port[] Inputs { get; }
+            public Port Output { get; }
+            public IFunctionSignature GetDefinition(CompilationContext compilationContext) => this;
             public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
                 _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, compilationContext);
         }
@@ -185,7 +191,7 @@ namespace Element.CLR
             };
         }
 
-        private bool TryAddStructConverter(Type clrStructType, out IBoundaryConverter boundaryConverter)
+        private bool TryAddStructConverter(Type clrStructType, out IBoundaryConverter? boundaryConverter)
         {
             if (clrStructType.GetCustomAttribute<ElementStructTemplateAttribute>() is {} attr)
             {

@@ -16,7 +16,10 @@ addFive(a, b, c, d, e)
 
 recurse(a) = recurse(a);
 
+recurseIndirect(a) = recurseIndirectOther(a);
+recurseIndirectOther(a) = recurseIndirect(a);
+
 invalidReturn(a:Num, b:Num):Num 
 {
-   a = Num.add(a.x, b.x);
+   c = Num.add(a.x, b.x);
 }

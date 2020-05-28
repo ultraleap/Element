@@ -16,6 +16,7 @@ namespace Element
         public IReadOnlyList<FileInfo> ExtraSourceFiles { get; set; } = Array.Empty<FileInfo>();
         public bool Debug { get; set; } = true;
         public bool SkipValidation { get; set; } = false;
+        public bool NoParseTrace { get; set; } = false;
         public MessageLevel Verbosity { get; set; } = MessageLevel.Information;
     }
 }
