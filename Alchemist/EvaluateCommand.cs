@@ -14,7 +14,7 @@ namespace Alchemist
 		protected override (int ExitCode, string Result) CommandImplementation(CompilationInput input) =>
 			(0, new AtomicHost().Evaluate(input, Expression) switch
 			{
-				(true, {} result) => string.Join(", ", result).Replace("∞", "Infinity"),
+				(true, {} result) => string.Join(" ", result).Replace("∞", "Infinity"),
 				_ => "<error>"
 			});
 		// Windows terminal replaces ∞ with 8 - see here https://stackoverflow.com/questions/40907417/why-is-infinity-printed-as-8-in-the-windows-10-console
