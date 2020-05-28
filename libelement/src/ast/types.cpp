@@ -204,6 +204,27 @@ protected:
     }
 };
 
+struct if_condition_type : public element_type {
+    DECLARE_TYPE_ID();
+
+    if_condition_type() : element_type(type_id, "<if>") { generate_ports_cache(); }
+    bool is_serializable() const override { return true; } // TODO
+    bool is_satisfied_by(const constraint_const_shared_ptr& v) const override
+    {
+        return v->inputs().size() == 3 && v->inputs()[0].type == element_type::boolean && v->inputs()[1].type == element_type::any && v->inputs()[2].type == element_type::any
+            && v->outputs().size() == 1 && v->outputs()[0].type == element_type::any;
+    }
+protected:
+    void generate_ports_cache() const override
+    {
+        m_inputs.push_back(port_info{ "predicate", element_type::boolean });
+        m_inputs.push_back(port_info{ "if_true", element_type::any });
+        m_inputs.push_back(port_info{ "if_false", element_type::any });
+        m_outputs.push_back(port_info{ "return", element_type::any });
+        m_ports_cached = true;
+    }
+};
+
 DEFINE_TYPE_ID(element_type,            1U << 0);
 DEFINE_TYPE_ID(element_type_named,      1U << 1);
 DEFINE_TYPE_ID(element_type_anonymous,  1U << 2);
@@ -217,6 +238,7 @@ DEFINE_TYPE_ID(binary_comparison_type,  1U << 9);
 DEFINE_TYPE_ID(any_constraint,          1U << 10);
 DEFINE_TYPE_ID(function_constraint,     1U << 11);
 DEFINE_TYPE_ID(serializable_constraint, 1U << 12);
+DEFINE_TYPE_ID(if_condition_type,       1U << 13);
 
 const type_const_shared_ptr element_type::num = std::make_shared<num_type>();
 const type_const_shared_ptr element_type::boolean = std::make_shared<boolean_type>();
@@ -227,6 +249,7 @@ const type_const_shared_ptr element_type::nullary_boolean = std::make_shared<nul
 const type_const_shared_ptr element_type::unary_boolean = std::make_shared<unary_boolean_type>();
 const type_const_shared_ptr element_type::binary_boolean = std::make_shared<binary_boolean_type>();
 const type_const_shared_ptr element_type::binary_comparison = std::make_shared<binary_comparison_type>();
+const type_const_shared_ptr element_type::if_condition = std::make_shared<if_condition_type>();
 
 
 void element_type_named::generate_ports_cache() const

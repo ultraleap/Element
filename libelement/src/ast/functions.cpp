@@ -13,12 +13,14 @@ DEFINE_TYPE_ID(element_intrinsic_unary,          1U << 2);
 DEFINE_TYPE_ID(element_intrinsic_binary,         1U << 3);
 DEFINE_TYPE_ID(element_type_ctor,                1U << 4);
 DEFINE_TYPE_ID(element_custom_function,          1U << 5);
+DEFINE_TYPE_ID(element_intrinsic_if,             1U << 6);
 
 #define MAKE_UNARY(name)  { #name, std::make_shared<element_intrinsic_unary>(element_expression_unary::op::name, element_type::unary, #name) }
 #define MAKE_BINARY(name) { #name, std::make_shared<element_intrinsic_binary>(element_expression_binary::op::name, element_type::binary, #name) }
 #define MAKE_UNARY_BOOLEAN(name) { #name, std::make_shared<element_intrinsic_unary>(element_expression_unary::op::name, element_type::unary_boolean, #name) }
 #define MAKE_BINARY_BOOLEAN(name) { #name, std::make_shared<element_intrinsic_binary>(element_expression_binary::op::name, element_type::binary_boolean, #name) }
 #define MAKE_COMPARISON_BOOLEAN(name) { #name, std::make_shared<element_intrinsic_binary>(element_expression_binary::op::name, element_type::binary_comparison, #name) }
+
 function_const_shared_ptr element_function::get_builtin(const std::string& name)
 {
     // Important: this must NOT be made as part of normal static initialisation, as it depends on other static objects
@@ -26,6 +28,15 @@ function_const_shared_ptr element_function::get_builtin(const std::string& name)
         // types
         { "Num",              std::make_shared<element_type_ctor>(element_type::num) },
         { "Bool",             std::make_shared<element_type_ctor>(element_type::boolean) },
+    	
+        //{ "List",           std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::positive_infinity, element_type::nullary, "List") },
+
+        // special functions
+        { "if",               std::make_shared<element_intrinsic_if>(element_type::if_condition, "if") },
+        //{ "for",            std::make_shared<element_intrinsic_for>() },
+        //{ "fold",           std::make_shared<element_intrinsic_fold>() },
+        //{ "infer",          std::make_shared<element_intrinsic_infer>() },
+        //{ "memberwise",     std::make_shared<element_intrinsic_memberwise>() },
 
     	// nullary functions
         { "True",             std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::true_value, element_type::nullary_boolean, "False") },
@@ -33,7 +44,7 @@ function_const_shared_ptr element_function::get_builtin(const std::string& name)
         { "NaN",              std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::nan, element_type::nullary, "NaN") },
         { "PositiveInfinity", std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::positive_infinity, element_type::nullary, "PositiveInfinity") },
         { "NegativeInfinity", std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::negative_infinity, element_type::nullary, "NegativeInfinity") },
-
+   
     	// functions
         MAKE_BINARY(add),
         MAKE_BINARY(sub),

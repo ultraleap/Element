@@ -127,6 +127,18 @@ static element_result compile_intrinsic(
         return ELEMENT_OK;
     }
 
+    if (const auto* const bi = fn->as<element_intrinsic_if>()) {
+        assert(inputs.size() >= 3);
+        // TODO: better error codes
+        //todo: logging
+        if (inputs[0].expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
+        if (inputs[1].expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
+        if (inputs[2].expression->get_size() != 1) return ELEMENT_ERROR_ARGS_MISMATCH;
+        output_compilation.expression = std::make_shared<element_expression_if>(inputs[0].expression, inputs[1].expression, inputs[2].expression);
+        output_compilation.constraint = fn->type()->output("return")->type;
+        return ELEMENT_OK;
+    }
+
     // not implemented yet
     ctx.ictx.logger->log(ctx, ELEMENT_ERROR_NO_IMPL, fmt::format("Tried to compile intrinsic {} with no implementation.", fn->name()));
     assert(false);
