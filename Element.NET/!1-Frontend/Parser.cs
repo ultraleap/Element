@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Element.AST;
 using Lexico;
@@ -25,30 +25,31 @@ namespace Element
 
         public static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public static bool Parse<T>(this Context context, string text, out T output)
+        public static bool Parse<T>(string text, out T output, ILogger logger, bool noParseTrace = false)
         {
             var success = Lexico.Lexico.TryParse(text, out output);
             if (!success)
             {
-                var parseTrace = new List<string>();
-                Lexico.Lexico.TryParse<T>(text, out _, new DelegateTextTrace(msg =>
+                if (!noParseTrace)
                 {
-                    if (!string.IsNullOrEmpty(msg)) parseTrace.Add(msg);
-                }));
-                foreach (var msg in parseTrace)
-                {
-                    context.Log(msg);
+                    var sb = new StringBuilder();
+                    Lexico.Lexico.TryParse<T>(text, out _, new DelegateTextTrace(msg =>
+                    {
+                        if (!string.IsNullOrEmpty(msg)) sb.AppendLine(msg);
+                    }));
+                    logger.Log(sb.ToString());
                 }
-                context.LogError(9, "Parsing failed, see previous parse trace messages for details.");
+
+                logger.LogError(9, $"Parsing failed - {(noParseTrace ? "enable parse trace and run again for details." : "see parse trace messages for details.")}");
             }
             return success;
         }
 
-        public static bool ValidateIdentifier(this Context context, Identifier identifier, Identifier[]? blacklist = null, Identifier[]? whitelist = null)
+        public static bool ValidateIdentifier(Identifier identifier, ILogger logger, Identifier[]? blacklist = null, Identifier[]? whitelist = null)
         {
             if (string.IsNullOrEmpty(identifier))
             {
-                context.LogError(15, "Null or empty identifier is invalid");
+                logger.LogError(15, "Null or empty identifier is invalid");
                 return false;
             }
 
@@ -57,7 +58,7 @@ namespace Element
             if (GloballyReservedIdentifiers.Where(id => !(whitelist?.Contains(identifier) ?? false)).Any(Predicate)
                 || (blacklist?.Any(Predicate) ?? false))
             {
-                context.LogError(15, $"'{identifier}' is a reserved identifier");
+                logger.LogError(15, $"'{identifier}' is a reserved identifier");
                 return false;
             }
 

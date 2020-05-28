@@ -30,9 +30,13 @@ namespace Element.AST
             var previous = LitOrId switch
             {
                 // If the start of the list is an identifier, find the value that it identifies
-                Identifier id => scope[id, true, compilationContext] is { } v
-                                     ? v
-                                     : compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
+                Identifier id => scope[id, true, compilationContext] switch
+                {
+                  CompilationError _ => compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
+                  // ReSharper disable once PatternAlwaysOfType
+                  IValue v => v,
+                  _ => compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope")
+                },
                 Constant constant => constant,
                 _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
             };

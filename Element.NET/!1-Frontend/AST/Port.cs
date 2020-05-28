@@ -57,7 +57,7 @@ namespace Element.AST
         public override bool Validate(SourceContext sourceContext)
         {
             var success = true;
-            if (_identifier is Identifier id) success &= sourceContext.ValidateIdentifier(id);
+            if (_identifier is Identifier id) success &= Parser.ValidateIdentifier(id, sourceContext);
             success &= _type?.Validate(sourceContext) ?? true;
             return success;
         }

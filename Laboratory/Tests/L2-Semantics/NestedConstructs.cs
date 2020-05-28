@@ -40,6 +40,6 @@ namespace Laboratory.Tests.L2.Semantics
         public void AddUsingDeepNestedCaptureWithLambda() => AssertApproxEqual(CompilationInput, "13", "addUsingDeepNestedCaptureWithLambda(5, 8)");
         
         [Test]
-        public void DisallowNestedNamespacesInsideOtherConstructs() => EvaluateExpectingErrorCode(CompilationInput, 7777,"rootStruct(5).nestedNamespace.a");
+        public void NestedNamespacesInStructBody() => AssertTypeof(CompilationInput, "rootStruct.nestedNamespace", "rootStruct.nestedNamespace:Namespace");
     }
 }

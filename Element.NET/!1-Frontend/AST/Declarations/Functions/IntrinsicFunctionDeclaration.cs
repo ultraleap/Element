@@ -16,6 +16,6 @@ namespace Element.AST
             return success;
         }
 
-        IValue IFunction.Call(IValue[] arguments, CompilationContext compilationContext) => ImplementingIntrinsic<IFunction>(compilationContext).Call(arguments, compilationContext);
+        IValue IFunction.Call(IValue[] arguments, CompilationContext compilationContext) => ImplementingIntrinsic<IFunction>(compilationContext)?.Call(arguments, compilationContext) ?? CompilationError.Instance;
     }
 }

@@ -8,7 +8,7 @@ namespace Element.AST
 
         public bool ValidateScope(SourceContext sourceContext, Identifier[]? identifierBlacklist = null, Identifier[]? identifierWhitelist = null)
         {
-            if (sourceContext.SkipValidation) return true;
+            if (sourceContext.CompilationInput.SkipValidation) return true;
             
             var success = true;
 
@@ -26,7 +26,7 @@ namespace Element.AST
                     Set(item.Identifier, item);
                 }
 
-                if (!sourceContext.ValidateIdentifier(item.Identifier, identifierBlacklist, identifierWhitelist))
+                if (!Parser.ValidateIdentifier(item.Identifier, sourceContext, identifierBlacklist, identifierWhitelist))
                 {
                     success = false;
                 }

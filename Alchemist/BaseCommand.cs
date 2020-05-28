@@ -32,6 +32,8 @@ namespace Alchemist
 		public bool LogMessagesAsJson { get; set; }
 		
 		protected abstract bool _skipValidation { get; }
+		
+		protected abstract bool _noParseTrace { get; }
 
 		private DirectoryInfo GetPackageDirectories(string package)
 		{
@@ -48,6 +50,7 @@ namespace Alchemist
 			{
 				Debug = Debug,
 				SkipValidation = _skipValidation,
+				NoParseTrace = _noParseTrace,
 				Verbosity = Verbosity,
 				ExcludePrelude = ExcludePrelude,
 				Packages = Packages.Select(GetPackageDirectories).ToList(),

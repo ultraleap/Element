@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -35,7 +36,7 @@ namespace Element.AST
 		
 		public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
 		{
-			var list = arguments[0] as StructInstance;
+			var list = (StructInstance) arguments[0];
 			var workingValue = arguments[1];
 			var aggregator = (IFunctionSignature)arguments[2];
 			
@@ -50,8 +51,8 @@ namespace Element.AST
 				var initial = TupleType.Instance.ResolveCall(new []{Constant.Zero, workingValue}, false, compilationContext);
 				string conditionSourceCode = "_(tup):Bool = tup.varg0.lt(list.count)";
 				string bodySourceCode = "_(tup) = Tuple(tup.varg0.add(1), aggregator(tup.varg1, list.at(tup.varg0)))";
-				if (!compilationContext.Parse(conditionSourceCode, out Lambda predicateLambda)) throw new InternalCompilerException("Couldn't parse dynamic fold condition");
-				if (!compilationContext.Parse(bodySourceCode, out Lambda bodyLambda)) throw new InternalCompilerException("Couldn't parse dynamic fold body");
+				if (!Parser.Parse(conditionSourceCode, out Lambda predicateLambda, compilationContext)) throw new InternalCompilerException("Couldn't parse dynamic fold condition");
+				if (!Parser.Parse(bodySourceCode, out Lambda bodyLambda, compilationContext)) throw new InternalCompilerException("Couldn't parse dynamic fold body");
 				var declaration = compilationContext.GetIntrinsicsDeclaration<Declaration>(this);
 				predicateLambda.Initialize(declaration);
 				bodyLambda.Initialize(declaration);

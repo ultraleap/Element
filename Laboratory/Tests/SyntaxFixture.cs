@@ -49,7 +49,8 @@ namespace Laboratory.Tests
             {
                 ExcludePrelude = true,
                 ExtraSourceFiles = new[]{fileInfo},
-                SkipValidation = skipValidation
+                SkipValidation = skipValidation,
+                NoParseTrace = expectingError
             };
             
             var success = Host.Parse(compilationInput);

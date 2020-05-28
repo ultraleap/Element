@@ -202,8 +202,8 @@ namespace Element.AST
         }
 
         public static IFunctionSignature Uncurry(this IFunctionSignature a, IFunctionSignature b,
-                                                 Context context) =>
-            UncurriedFunction.Create(a, b, context);
+                                                 ILogger logger) =>
+            UncurriedFunction.Create(a, b, logger);
 
         public static IFunctionSignature? Uncurry(this IFunctionSignature a, string bFunctionExpression,
                                                   SourceContext context)
@@ -225,21 +225,21 @@ namespace Element.AST
                 Output = _b.Output;
             }
             
-            public static IFunctionSignature Create(IFunctionSignature a, IFunctionSignature b, Context context)
+            public static IFunctionSignature Create(IFunctionSignature a, IFunctionSignature b, ILogger logger)
             {
                 if (b.Inputs.Length < 1)
                 {
-                    return context.LogError(23, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
+                    return logger.LogError(23, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
                 }
 
                 if (a.Inputs.Any(p => p == Port.VariadicPort))
                 {
-                    return context.LogError(23, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
+                    return logger.LogError(23, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
                 }
 
                 if (a.Inputs.Concat(b.Inputs).Any(p => p?.Identifier == null))
                 {
-                    return context.LogError(23, "Cannot uncurry functions with discarded/unnamed ports");
+                    return logger.LogError(23, "Cannot uncurry functions with discarded/unnamed ports");
                 }
 
                 foreach (var aPort in a.Inputs)
@@ -248,7 +248,7 @@ namespace Element.AST
                     Identifier? id = null;
                     if (b.Inputs.Skip(1).Any(bPort => aPort.Identifier.Equals(id = bPort.Identifier)))
                     {
-                        return context.LogError(23, $"'{id}' is defined on both functions, these functions cannot be uncurried");
+                        return logger.LogError(23, $"'{id}' is defined on both functions, these functions cannot be uncurried");
                     }
                 }
                 

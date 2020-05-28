@@ -22,8 +22,8 @@ namespace Element.AST
             return success;
         }
 
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(compilationContext).MatchesConstraint(value, compilationContext);
-        public override ISerializableValue DefaultValue(CompilationContext context) => ImplementingIntrinsic<IType>(context).DefaultValue(context);
-        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => ImplementingIntrinsic<IFunction>(compilationContext).Call(arguments, compilationContext);
+        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(compilationContext)?.MatchesConstraint(value, compilationContext) ?? false;
+        public override ISerializableValue DefaultValue(CompilationContext context) => ImplementingIntrinsic<IType>(context)?.DefaultValue(context) ?? CompilationError.Instance;
+        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => ImplementingIntrinsic<IFunction>(compilationContext)?.Call(arguments, compilationContext) ?? CompilationError.Instance;
     }
 }

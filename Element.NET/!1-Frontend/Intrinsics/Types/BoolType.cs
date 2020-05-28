@@ -17,12 +17,12 @@ namespace Element.AST
             value is Element.Expression expr && expr.Type == Instance;
 
         public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-            IntrinsicCache.GetByLocation<IFunctionSignature>("Bool.if", compilationContext).ResolveCall(new IValue[]
+            IntrinsicCache.GetByLocation<IFunctionSignature>("Bool.if", compilationContext)?.ResolveCall(new IValue[]
             {
-                new Binary(Binary.Op.Gt, arguments[0] as Element.Expression, Constant.Zero),
+                new Binary(Binary.Op.Gt, (Element.Expression) arguments[0], Constant.Zero),
                 Constant.True,
                 Constant.False
-            }, false, compilationContext);
+            }, false, compilationContext) ?? CompilationError.Instance;
         IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this.GetDeclaration(compilationContext);
     }
 }

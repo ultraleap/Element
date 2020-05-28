@@ -6,11 +6,15 @@ using Element.AST;
 
 namespace Element
 {
-    public class SourceContext : Context
+    public class SourceContext : ILogger
     {
-        private SourceContext(CompilationInput compilationInput) : base(compilationInput) { }
+        private SourceContext(CompilationInput compilationInput)
+        {
+            CompilationInput = compilationInput;
+        }
         
         public GlobalScope GlobalScope { get; } = new GlobalScope();
+        public CompilationInput CompilationInput { get; }
 
         public static bool TryCreate(CompilationInput compilationInput, out SourceContext sourceContext)
         {
@@ -48,7 +52,7 @@ namespace Element
         public IValue EvaluateExpression(string expression, out CompilationContext compilationContext)
         {
             compilationContext = MakeCompilationContext(out compilationContext);
-            var success = this.Parse(expression, out AST.Expression expressionObject);
+            var success = Parser.Parse(expression, out AST.Expression expressionObject, this, CompilationInput.NoParseTrace);
             expressionObject.InitializeUsingStubDeclaration(expression, compilationContext);
             success &= expressionObject.Validate(this);
             return success
@@ -72,7 +76,7 @@ namespace Element
             LoadElementSourceString(new SourceInfo(file.FullName, Parser.Preprocess(File.ReadAllText(file.FullName))), validate);
         private bool LoadElementSourceString(SourceInfo info, bool validate)
         {
-            var success = this.Parse<SourceScope>(info.Text, out var sourceScope);
+            var success = Parser.Parse<SourceScope>(info.Text, out var sourceScope, this, CompilationInput.NoParseTrace);
             if (success)
             {
                 sourceScope.InitializeItems(info, GlobalScope);
@@ -95,8 +99,28 @@ namespace Element
             var overallSuccess = fileResults.All(fr => fr.Success) && GlobalScope.ValidateScope(this);
             return (overallSuccess, fileResults);
         }
+        
+        public CompilationError LogError(int? messageCode, string context)
+        {
+            var msg = MakeMessage(messageCode, context);
+            if (!msg.MessageLevel.HasValue || msg.MessageLevel.Value >= CompilationInput.Verbosity)
+            {
+                CompilationInput.LogCallback?.Invoke(msg);
+            }
 
-        protected override CompilerMessage MakeMessage(int? messageCode, string context) => !messageCode.HasValue
+            return CompilationError.Instance;
+        }
+
+        public void Log(string message)
+        {
+            var msg = MakeMessage(null, message);
+            if (!msg.MessageLevel.HasValue || msg.MessageLevel.Value >= CompilationInput.Verbosity)
+            {
+                CompilationInput.LogCallback?.Invoke(msg);
+            }
+        }
+
+        private CompilerMessage MakeMessage(int? messageCode, string context) => !messageCode.HasValue
             ? new CompilerMessage(null, null, context, null)
             : new CompilerMessage(messageCode.Value, CompilerMessage.TryGetMessageLevel(messageCode.Value, out var level) ? level : MessageLevel.Information, context, null);
 

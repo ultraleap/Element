@@ -12,7 +12,7 @@ namespace Element.AST
 
         public override string ToString() => $".{Identifier}";
 
-        public override bool Validate(SourceContext sourceContext) => sourceContext.ValidateIdentifier(Identifier);
+        public override bool Validate(SourceContext sourceContext) => Parser.ValidateIdentifier(Identifier, sourceContext);
         protected override void InitializeImpl()
         {
             // No-op, nothing to do
@@ -20,7 +20,7 @@ namespace Element.AST
 
         protected override IValue SubExpressionImpl(IValue previous, IScope _, CompilationContext compilationContext) =>
             previous is IIndexable indexable
-                ? indexable[Identifier, false, compilationContext]
+                ? indexable[Identifier, false, compilationContext] ?? CompilationError.Instance
                 : compilationContext.LogError(16, $"'{previous}' is not indexable");
     }
 }

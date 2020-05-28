@@ -112,9 +112,9 @@ namespace Element.AST
         public IScope Parent { get; private set; }
         public Declaration Declarer => this;
 
-        protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(Context? context)
+        protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(ILogger? logger)
             where TIntrinsic : class, IValue
-            => IntrinsicCache.GetByLocation<TIntrinsic>(Location, context);
+            => IntrinsicCache.GetByLocation<TIntrinsic>(Location, logger);
 
     }
 }

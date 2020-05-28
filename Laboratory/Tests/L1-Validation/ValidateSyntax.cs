@@ -1,7 +1,5 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L1.Validation
