@@ -127,6 +127,7 @@ static element_result compile_intrinsic(
         return ELEMENT_OK;
     }
 
+    //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
     if (const auto* const bi = fn->as<element_intrinsic_if>()) {
         assert(inputs.size() >= 3);
         // TODO: better error codes

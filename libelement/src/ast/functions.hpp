@@ -99,6 +99,7 @@ private:
     element_binary_op m_op;
 };
 
+//TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
 struct element_intrinsic_if : public element_intrinsic {
     DECLARE_TYPE_ID();
 
