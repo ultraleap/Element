@@ -225,6 +225,7 @@ namespace Laboratory
                 if (input.ExtraSourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.ExtraSourceFiles);
                 if (input.Debug) processArgs.Append(" --debug ");
                 if (input.SkipValidation) processArgs.Append(" --no-validation ");
+                if (input.NoParseTrace) processArgs.Append(" --no-parse-trace ");
                 return processArgs;
             }
 
