@@ -39,7 +39,7 @@ function_const_shared_ptr element_function::get_builtin(const std::string& name)
         //{ "memberwise",     std::make_shared<element_intrinsic_memberwise>() },
 
     	// nullary functions
-        { "True",             std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::true_value, element_type::nullary_boolean, "False") },
+        { "True",             std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::true_value, element_type::nullary_boolean, "True") },
         { "False",            std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::false_value, element_type::nullary_boolean, "False") },
         { "NaN",              std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::nan, element_type::nullary, "NaN") },
         { "PositiveInfinity", std::make_shared<element_intrinsic_nullary>(element_expression_nullary::op::positive_infinity, element_type::nullary, "PositiveInfinity") },
