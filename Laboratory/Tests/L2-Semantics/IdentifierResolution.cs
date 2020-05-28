@@ -16,7 +16,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void ResolvesCorrectLiteralAfterIndexingNamespace(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
         
         [
-            TestCase("Num.acos(0).degrees", "90"),
+            TestCase("Num.cos(0).degrees", "90"),
         ]
         public void ResolvesCorrectLiteralAfterIndexingIntrinsicFunction(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
 
