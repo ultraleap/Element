@@ -4,11 +4,17 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <numeric>
+#include <sstream>
 
 
+
+#include "ast_indexes.hpp"
 #include "common_internal.hpp"
+#include "configuration.hpp"
 #include "element/ast.h"
 #include "element/token.h"
+#include <cassert>
 
 using ast_unique_ptr = std::unique_ptr<element_ast, void(*)(element_ast*)>;
 
@@ -29,6 +35,15 @@ struct element_ast
         return (flags & flag) == flag;
     }
 
+#ifndef NDEBUG
+    std::string ast_node_as_code;
+
+    void ast_node_to_code();
+#endif
+
+private:
+
+public:
     //element_ast* find_child(std::function<bool(const element_ast* elem)> fn)
     //{
     //    for (const auto& t : children) {
@@ -79,7 +94,6 @@ struct element_ast
     element_ast(element_ast* iparent) : parent(iparent) {}
 };
 
-
 inline bool ast_node_has_identifier(const element_ast* n)
 {
     return n->type == ELEMENT_AST_NODE_DECLARATION
@@ -93,10 +107,122 @@ inline bool ast_node_has_literal(const element_ast* n)
     return n->type == ELEMENT_AST_NODE_LITERAL;
 }
 
+//SCOPE
+
 inline bool ast_node_in_function_scope(const element_ast* n)
 {
     return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE &&
         n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_FUNCTION);
+}
+
+inline bool ast_node_in_lambda_scope(const element_ast* n)
+{
+    return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE &&
+    n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_LAMBDA);
+}
+
+//STRUCT
+
+[[nodiscard]] inline bool ast_node_struct_is_valid(const element_ast* n)
+{
+    return n && n->type == ELEMENT_AST_NODE_STRUCT && n->children.size() > ast_idx::fn::declaration;
+}
+
+[[nodiscard]] inline bool ast_node_struct_has_body(const element_ast* n)
+{
+    assert(ast_node_struct_is_valid(n));
+    //todo: is this even valid? I thought structs _must_ have a body, even if it's of type CONSTRAINT
+    return n->children.size() > ast_idx::fn::body;
+}
+
+[[nodiscard]] inline const element_ast* ast_node_struct_get_declaration(const element_ast* n)
+{
+    assert(ast_node_struct_is_valid(n));
+    return n->children[ast_idx::fn::declaration].get();
+}
+
+[[nodiscard]] inline const element_ast* ast_node_struct_get_body(const element_ast* n)
+{
+    assert(ast_node_struct_is_valid((n)));
+    assert(ast_node_struct_has_body(n));
+    return n->children[ast_idx::fn::body].get();
+}
+
+//FUNCTION
+
+[[nodiscard]] inline bool ast_node_function_is_valid(const element_ast* n)
+{
+    return n && n->type == ELEMENT_AST_NODE_FUNCTION &&
+        n->children.size() > ast_idx::fn::declaration && n->children[ast_idx::fn::declaration]->type == ELEMENT_AST_NODE_DECLARATION;
+}
+
+[[nodiscard]] inline bool ast_node_function_has_body(const element_ast* n)
+{
+    assert(ast_node_function_is_valid(n));
+    //todo: is this even valid? I thought functions _must_ have a body, even if it's of type CONSTRAINT
+    return n->children.size() > ast_idx::fn::body;
+}
+
+[[nodiscard]] inline const element_ast* ast_node_function_get_declaration(const element_ast* n)
+{
+    assert(ast_node_function_is_valid(n));
+    return n->children[ast_idx::fn::declaration].get();
+}
+
+[[nodiscard]] inline const element_ast* ast_node_function_get_body(const element_ast* n)
+{
+    assert(ast_node_function_is_valid((n)));
+    assert(ast_node_function_has_body(n));
+    return n->children[ast_idx::fn::body].get();
+}
+
+//DECLARATION
+
+[[nodiscard]] inline bool ast_node_declaration_is_valid(const element_ast* n)
+{
+    //todo: do all valid declarations have inputs?
+    return n && n->type == ELEMENT_AST_NODE_DECLARATION;
+}
+
+[[nodiscard]] inline bool ast_node_declaration_has_inputs(const element_ast* n)
+{
+    assert(ast_node_declaration_is_valid(n));
+    return n->children.size() > ast_idx::decl::inputs;
+}
+
+[[nodiscard]] inline const element_ast* ast_node_declaration_get_inputs(const element_ast* n)
+{
+    assert(ast_node_declaration_is_valid(n));
+    assert(ast_node_declaration_has_inputs(n));
+    return n->children[ast_idx::decl::inputs].get();
+}
+
+[[nodiscard]] inline bool ast_node_declaration_has_outputs(const element_ast* n)
+{
+    assert(ast_node_declaration_is_valid(n));
+    return n->children.size() > ast_idx::decl::outputs;
+}
+
+[[nodiscard]] inline const element_ast* ast_node_declaration_get_outputs(const element_ast* n)
+{
+    assert(ast_node_declaration_is_valid(n));
+    assert(ast_node_declaration_has_outputs(n));
+    return n->children[ast_idx::decl::outputs].get();
+}
+
+//MISC
+
+inline const element_ast* get_root_from_ast(const element_ast* ast)
+{
+    if (!ast)
+        return nullptr;
+
+    while (ast->parent)
+    {
+        ast = ast->parent;
+    }
+
+    return ast;
 }
 
 struct element_parser_ctx
@@ -130,7 +256,7 @@ struct element_parser_ctx
     element_result parse_declaration(size_t* tindex, element_ast* ast, bool find_return_type);
     // scope ::= '{' item* '}'
     element_result parse_scope(size_t* tindex, element_ast* ast);
-    element_result parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semi);
+    element_result parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semicolon);
     // function ::= qualifier* declaration type? (scope | statement | interface)
     // note qualifiers parsed further out and passed in
     element_result parse_function(size_t* tindex, element_ast* ast, element_ast_flags declflags);
@@ -157,4 +283,5 @@ private:
 
 public:
     void log(int message_code, const std::string& message = "", const element_ast* nearest_ast = nullptr) const;
+    void log(const std::string& message) const;
 };

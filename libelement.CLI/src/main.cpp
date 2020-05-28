@@ -28,14 +28,16 @@ void log_callback(const element_log_message* const message)
 
 	std::string msg_info;
 
-	if (message_code == ELEMENT_OK) {
-		msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}\n",
-			message->message_code, message->filename ? message->filename : "");
-	}
-	else
-	{
-		msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}\nline {} column {} length {}\n",
-			message->message_code, message->filename ? message->filename : "", message->line, message->column, message->length);
+	if (message->stage != ELEMENT_STAGE_MISC) {
+		if (message_code == ELEMENT_OK) {
+			msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}\n",
+				message->message_code, message->filename ? message->filename : "");
+		}
+		else
+		{
+			msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}:{},{} length {}\n",
+				message->message_code, message->filename ? message->filename : "", message->line, message->character, message->length);
+		}
 	}
 
 	std::string message_with_info = msg_info + message->message;

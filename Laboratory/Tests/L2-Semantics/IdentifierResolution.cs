@@ -13,7 +13,12 @@ namespace Laboratory.Tests.L2.Semantics
             TestCase("X.Y.b", "10"),
             TestCase("X.Y.c", "15"),
         ]
-        public void ResolvesCorrectLiteral(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
+        public void ResolvesCorrectLiteralAfterIndexingNamespace(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
+        
+        [
+            TestCase("Num.cos(0).degrees", "90"),
+        ]
+        public void ResolvesCorrectLiteralAfterIndexingIntrinsicFunction(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
 
         [Test]
         public void ResolveResultingNullaryExpression() => AssertApproxEqual(CompilationInput, "A.x", "5");

@@ -18,5 +18,5 @@ element_result element_evaluate(
     element_value* outputs, size_t outputs_count,
     element_evaluator_options opts);
 
-element_value element_evaluate_unary(element_unary::op op, element_value a);
-element_value element_evaluate_binary(element_binary::op op, element_value a, element_value b);
+element_value element_evaluate_unary(element_expression_unary::op op, element_value a);
+element_value element_evaluate_binary(element_expression_binary::op op, element_value a, element_value b);

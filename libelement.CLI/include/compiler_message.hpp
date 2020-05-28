@@ -19,14 +19,14 @@ namespace libelement::cli
 	//	std::string what;
 	//	std::string source;
 	//	int line = 0;
-	//	int column = 0;
+	//	int character = 0;
 
 	public:
-		trace_site(const std::string& what, const std::string& source, const int line, const int column)
-			//: what{ std::move(what) }, source{ std::move(source) }, line{ line }, column{ column }
+		trace_site(const std::string& what, const std::string& source, const int line, const int character)
+			//: what{ std::move(what) }, source{ std::move(source) }, line{ line }, character{ character }
 		{
 			std::stringstream ss;
-			ss << what << " in " << source << ":" << line << "," << column << std::endl;
+			ss << what << " in " << source << ":" << line << "," << character << std::endl;
 			message = ss.str();
 		}
 

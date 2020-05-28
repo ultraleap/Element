@@ -73,6 +73,7 @@ static ast_unique_ptr ast_new(element_ast* parent, element_ast_node_type type = 
     // return std::make_unique<element_ast>(parent);
     element_ast* node = ast_pool.newElement(parent);
     node->type = type;
+    node->flags = 0;
     return ast_unique_ptr(node, delete_ast_unique_ptr);
 }
 
@@ -145,6 +146,9 @@ static void ast_move(element_ast* from, element_ast* to, bool reparent)
     ast_clear(to);
 
     *to = std::move(*from);
+    for (auto& child : to->children)
+        child->parent = to;
+
     to->parent = new_parent;
 }
 
@@ -245,7 +249,7 @@ element_result element_parser_ctx::parse_port(size_t* tindex, element_ast* ast)
     GET_TOKEN(tokeniser, *tindex, tok);
     if (tok->type == ELEMENT_TOK_COLON) {
         tokenlist_advance(tokeniser, tindex);
-        element_ast* type = ast_new_child(ast);
+        element_ast* type = ast_new_child(ast, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
         type->nearest_token = tok;
         ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
     }
@@ -320,22 +324,27 @@ element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
             // TODO: bomb out if we're trying to call a literal
             // add blank "none" if this is a simple call
             if (root->children.empty()) {
-                auto blank_ast = ast_new(root.get(), ELEMENT_AST_NODE_NONE);
-                blank_ast->nearest_token = token;
-                ast_add_child(root.get(), std::move(blank_ast));
+            	//NOTE {1}: This exist to cover the case when the first item in our expression chain is a function call
+            	//this will never be accessed in cases where the first item in our expression chain is an indexing expression
+                auto root_call_node = ast_new(root.get());
+                root_call_node->nearest_token = token;
+                ast_add_child(root.get(), std::move(root_call_node));
             }
             // parse args
-            element_ast* cid = ast_new_child(root.get());
-            cid->nearest_token = token;
-            ELEMENT_OK_OR_RETURN(parse_exprlist(tindex, cid));
-        } else if (token->type == ELEMENT_TOK_DOT) {
+            const auto call_node = ast_new_child(root.get());
+            call_node->nearest_token = token;
+        	
+            ELEMENT_OK_OR_RETURN(parse_exprlist(tindex, call_node));
+        	
+        } else if (token->type == ELEMENT_TOK_DOT){
             // member field access
-            ast_unique_ptr callroot = ast_new(nullptr, ELEMENT_AST_NODE_CALL);
+            auto indexing_node = ast_new(nullptr, ELEMENT_AST_NODE_CALL);
             // move existing root into left side of new one
-            ast_add_child(callroot.get(), std::move(root));
+            ast_add_child(indexing_node.get(), std::move(root));
+      
             tokenlist_advance(tokeniser, tindex);
-            ELEMENT_OK_OR_RETURN(parse_identifier(tindex, callroot.get()));
-            root = std::move(callroot);
+            ELEMENT_OK_OR_RETURN(parse_identifier(tindex, indexing_node.get()));
+            root = std::move(indexing_node);
         }
         GET_TOKEN(tokeniser, *tindex, token);
     }
@@ -436,12 +445,14 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
     if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION)
         function_declaration = true;
 
-    //If a function declaration identifier in another functions scope is "return" then that's valid, otherwise not
-    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, function_declaration && ast_node_in_function_scope(ast->parent)));
+    //If a function declaration identifier in another function or lambdas scope is "return" then that's valid, otherwise not
+    const auto allow_reserved_names = function_declaration && (ast_node_in_function_scope(ast->parent) || ast_node_in_lambda_scope(ast->parent));
+    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, allow_reserved_names));
+
 
     GET_TOKEN(tokeniser, *tindex, tok);
     // always create the args node, even if it ends up being none/empty
-    element_ast* args = ast_new_child(ast, ELEMENT_AST_NODE_NONE);
+    element_ast* args = ast_new_child(ast);
     args->nearest_token = tok;
     if (tok->type == ELEMENT_TOK_BRACKETL) {
         // argument list
@@ -474,7 +485,7 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
     else
     {
         // implied any output
-        element_ast* ret = ast_new_child(ast, ELEMENT_AST_NODE_NONE);
+        element_ast* ret = ast_new_child(ast, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
         ret->nearest_token = tok;
         ret->flags = ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN;	    
     }
@@ -502,7 +513,7 @@ element_result element_parser_ctx::parse_scope(size_t* tindex, element_ast* ast)
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semi)
+element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semicolon)
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
@@ -512,7 +523,7 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
     } else if (token->type == ELEMENT_TOK_EQUALS) {
         tokenlist_advance(tokeniser, tindex);
         ELEMENT_OK_OR_RETURN(parse_expression(tindex, ast));
-        if (expr_requires_semi) {
+        if (expr_requires_semicolon) {
             GET_TOKEN(tokeniser, *tindex, token);
             if (token->type == ELEMENT_TOK_SEMICOLON) {
                 tokenlist_advance(tokeniser, tindex);
@@ -522,7 +533,7 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
         }
     } else {
         if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION) {
-            log(ELEMENT_ERROR_MISSING_FUNCTION_BODY, "Expecting function body, but none was found", nullptr);
+            log(ELEMENT_ERROR_MISSING_FUNCTION_BODY, "Expecting function body, but none was found", ast);
             return ELEMENT_ERROR_MISSING_FUNCTION_BODY;
         }
         return ELEMENT_ERROR_UNKNOWN;
@@ -541,6 +552,12 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
     ELEMENT_OK_OR_RETURN(parse_declaration(tindex, decl, true));
     decl->flags = declflags;
 
+    if(decl->identifier == "xor")
+    {
+	    //fucking indexing chains...
+        int i = 0;
+    }
+	
     element_ast* bodynode = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tokeniser, *tindex, body);
@@ -705,10 +722,8 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
-
     ast->nearest_token = token;
-
-    //A sole underscore was used as an identifier
+    
     if (token->type == ELEMENT_TOK_UNDERSCORE || token->type == ELEMENT_TOK_SEMICOLON) {
         log(ELEMENT_ERROR_INVALID_IDENTIFIER,
             fmt::format("Invalid identifier '{}'", tokeniser->text(token)),
@@ -720,7 +735,7 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
 	if(token->type != ELEMENT_TOK_IDENTIFIER)
 	{
         log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-            fmt::format("Expected identifier, but received invalid token '{}'", tokeniser->text(token)),
+            fmt::format("Expected identifier, but found '{}' instead", tokeniser->text(token)),
             ast);
         return ELEMENT_ERROR_INVALID_IDENTIFIER;
 	}
@@ -767,6 +782,10 @@ element_result element_parser_ctx::parse(size_t* tindex, element_ast* ast)
 
 element_result element_parser_ctx::validate(element_ast* ast)
 {
+#ifndef NDEBUG
+    //ast->ast_node_to_code();
+#endif
+	
     element_result result = ELEMENT_OK;
     result = validate_type(ast);
 	if(result != ELEMENT_OK)
@@ -899,7 +918,7 @@ element_result element_parser_ctx::validate_scope(element_ast* ast)
         }
     }
 	
-    return ELEMENT_OK;
+    return result;
 }
 
 element_result element_parser_ctx::ast_build()
@@ -925,11 +944,13 @@ void element_ast_delete(element_ast* ast)
     delete ast;
 }
 
-element_result element_ast_print(element_ast* ast)
+#ifndef NDEBUG
+void element_ast::ast_node_to_code()
 {
-    std::cout << ast_to_string(ast, 0);
-    return ELEMENT_OK;
+	if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast_node_as_code))
+		ast_node_as_code = ast_to_code(this);
 }
+#endif
 
 element_ast::walk_step element_ast::walk(const element_ast::walker& fn)
 {
@@ -975,4 +996,12 @@ void element_parser_ctx::log(int message_code, const std::string& message, const
         return;
 
     logger->log(*this, message_code, message, nearest_ast);
+}
+
+void element_parser_ctx::log(const std::string& message) const
+{
+    if (logger == nullptr)
+        return;
+
+    logger->log(message, message_stage::ELEMENT_STAGE_MISC);
 }

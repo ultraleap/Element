@@ -29,6 +29,7 @@ typedef enum
     ELEMENT_AST_NODE_LAMBDA,
     ELEMENT_AST_NODE_IDENTIFIER,
     ELEMENT_AST_NODE_LITERAL,
+    ELEMENT_AST_NODE_UNSPECIFIED_TYPE
 } element_ast_node_type;
 
 typedef uint32_t element_ast_flags;
@@ -51,7 +52,6 @@ element_result element_ast_get_child(const element_ast* ast, const size_t index,
 
 element_result element_ast_build(element_tokeniser_ctx* tctx, element_ast** ast);
 void element_ast_delete(element_ast* ast);
-element_result element_ast_print(element_ast* ast);
 
 #if defined(__cplusplus)
 }

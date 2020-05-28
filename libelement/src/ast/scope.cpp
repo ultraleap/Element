@@ -8,7 +8,7 @@
 #include "ast/ast_indexes.hpp"
 #include "stringutil.hpp"
 
-
+//todo: optimise all of this to use string_view
 const element_scope* element_scope::lookup(std::string search, bool recurse) const
 {
     return lookup(split<'.'>(search), 0, recurse);
@@ -84,7 +84,7 @@ function_const_shared_ptr element_scope::function() const
         if (node->type == ELEMENT_AST_NODE_FUNCTION) {
             m_function = std::make_shared<element_custom_function>(this);
         } else if (node->type == ELEMENT_AST_NODE_STRUCT) {
-            auto type = std::make_shared<element_custom_type>(this);
+            auto type = std::make_shared<element_type_named>(this);
             m_function = std::make_shared<element_type_ctor>(type);
         }
     }

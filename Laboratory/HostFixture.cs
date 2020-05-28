@@ -45,47 +45,74 @@ namespace Laboratory
             return diff / Math.Min(absA + absB, float.MaxValue) < epsilon;
             // ReSharper enable CompareOfFloatsByEqualityOperator
         }
+        
+        private (bool, float[]) EvaluateControlExpression(CompilationInput compilationInput, string controlExpression) 
+            => Host.Evaluate(compilationInput, controlExpression);
 
-        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params string[] expressions) =>
-            AssertApproxEqual(compilationInput, controlExpression, FloatComparer, expressions.Select(expression =>
-            {
-                var messages = new List<CompilerMessage>();
-                compilationInput.LogCallback = CacheMessage(messages);
-                var (success, result) = Host.Evaluate(compilationInput, expression);
-                ExpectingSuccess(messages, success);
-                
-                return result;
-            }).ToArray());
+        private (bool, float[][]) EvaluateExpressions(CompilationInput compilationInput, string[] expressions)
+        {
+            var succeeded = true;
+            var results = expressions.Select(
+                expression =>
+                {
+                    var (success, result) = Host.Evaluate(compilationInput, expression);
+                    succeeded &= success;
+                    return result;
+                }).ToArray();
 
-        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params float[][] results) =>
-            AssertApproxEqual(compilationInput, controlExpression, FloatComparer, results);
-
+            return (succeeded, results);
+        }
+   
         private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params float[][] results)
         {
+            //Initialise messages list outside of functions that actually trigger the callback to fire,
+            //so that a complete list of messages from all expressions can be built
             var messages = new List<CompilerMessage>();
             compilationInput.LogCallback = CacheMessage(messages);
-            var (success, controlResult) = Host.Evaluate(compilationInput, controlExpression);
-            ExpectingSuccess(messages, success);
+
+            var (controlSuccess, control) = EvaluateControlExpression(compilationInput, controlExpression);
+
+            //Check compiler responses
+            ExpectingSuccess(messages, controlSuccess);
             
-            results.Aggregate(controlResult, (expected, result) =>
+            //Check outputs
+            results.Aggregate(control, (expected, result) =>
             {
                 CollectionAssert.AreEqual(expected, result, comparer);
                 return expected;
             });
         }
         
-        
-        
-        protected void AssertApproxEqualRelaxed(CompilationInput compilationInput, string controlExpression, params string[] expressions) =>
-            AssertApproxEqual(compilationInput, controlExpression, RelaxedFloatComparer, expressions.Select(expression =>
+        private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params string[] expressions)
+        {            
+            //Initialise messages list outside of functions that actually trigger the callback to fire,
+            //so that a complete list of messages from all expressions can be built
+            var messages = new List<CompilerMessage>();
+            compilationInput.LogCallback = CacheMessage(messages);
+
+            var (controlSuccess, control) = EvaluateControlExpression(compilationInput, controlExpression);
+            var (resultSuccess, results) = EvaluateExpressions(compilationInput, expressions);
+            var success = controlSuccess && resultSuccess;
+
+            //Check compiler responses
+            ExpectingSuccess(messages, success);
+            
+            //Check outputs
+            results.Aggregate(control, (expected, result) =>
             {
-                var messages = new List<CompilerMessage>();
-                compilationInput.LogCallback = CacheMessage(messages);
-                var (success, result) = Host.Evaluate(compilationInput, expression);
-                ExpectingSuccess(messages, success);
-                
-                return result;
-            }).ToArray());
+                CollectionAssert.AreEqual(expected, result, comparer);
+                return expected;
+            });
+        }
+
+        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params float[][] results) =>
+            AssertApproxEqual(compilationInput, controlExpression, FloatComparer, results);
+
+        protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params string[] expressions)
+            => AssertApproxEqual(compilationInput, controlExpression, FloatComparer, expressions);
+
+        protected void AssertApproxEqualRelaxed(CompilationInput compilationInput, string controlExpression, params string[] expressions) 
+            => AssertApproxEqual(compilationInput, controlExpression, RelaxedFloatComparer, expressions);
 
         protected void AssertTypeof(CompilationInput compilationInput, string expression, string typeStr)
         {

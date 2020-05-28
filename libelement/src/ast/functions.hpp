@@ -51,11 +51,11 @@ protected:
     std::string m_name;
 };
 
-struct element_unary_intrinsic : public element_intrinsic
+struct element_intrinsic_unary : public element_intrinsic
 {
     DECLARE_TYPE_ID();
 
-    element_unary_intrinsic(element_unary_op op, std::string name)
+    element_intrinsic_unary(element_unary_op op, std::string name)
         : element_intrinsic(type_id, element_type::unary, std::move(name))
         , m_op(op)
     {
@@ -67,11 +67,11 @@ private:
     element_unary_op m_op;
 };
 
-struct element_binary_intrinsic : public element_intrinsic
+struct element_intrinsic_binary : public element_intrinsic
 {
     DECLARE_TYPE_ID();
 
-    element_binary_intrinsic(element_binary_op op, std::string name)
+    element_intrinsic_binary(element_binary_op op, std::string name)
         : element_intrinsic(type_id, element_type::binary, std::move(name))
         , m_op(op)
     {
@@ -116,5 +116,5 @@ protected:
     const element_scope* m_scope;
 
 private:
-    type_shared_ptr generate_type(const element_scope* scope);
+    type_shared_ptr generate_type(const element_scope* scope) const;
 };

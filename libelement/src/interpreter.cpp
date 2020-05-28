@@ -15,6 +15,7 @@
 #include "etree/evaluator.hpp"
 #include "ast/ast_indexes.hpp"
 #include "token_internal.hpp"
+#include "configuration.hpp"
 
 bool file_exists(const std::string& file)
 {
@@ -86,6 +87,7 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
             element_ast* outputnode = declnode->children[ast_idx::decl::outputs].get();
             // these should typically already exist from the body, so just try
             if (node->children.size() > ast_idx::fn::body) {
+            	//TODO: JM - What does this do?
                 if (outputnode->type == ELEMENT_AST_NODE_PORTLIST) {
                     for (const auto& t : outputnode->children) {
                         auto cptr = get_names(item.get(), t.get());
@@ -96,7 +98,7 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
                     auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
                     item->children.try_emplace(cptr->name, std::move(cptr));
                 }
-                else if (outputnode->type == ELEMENT_AST_NODE_NONE) {
+                else if (outputnode->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE) {
                     // implied any return
                     auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
                     item->children.try_emplace(cptr->name, std::move(cptr));
@@ -153,6 +155,10 @@ static element_result merge_names(scope_unique_ptr& a, scope_unique_ptr b, const
 
 element_result element_interpreter_ctx::load(const char* str, const char* filename)
 {
+	//HACK: JM - Not a fan of this...
+    std::string file = filename;
+    const auto starts_with_prelude = file.rfind("Prelude\\", 0) == 0;
+	
     element_tokeniser_ctx* tokeniser;
     ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
 
@@ -165,6 +171,14 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     if (tokeniser->tokens.empty())
         return ELEMENT_OK;
 
+    auto log_tokens = starts_with_prelude
+        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
+        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+	
+    if (log_tokens) {
+			log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+    }
+
     element_parser_ctx parser;
     parser.tokeniser = tokeniser;
     parser.logger = logger;
@@ -175,9 +189,13 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
         log(result, std::string("element_ast_build failed"), filename);
     }
     ELEMENT_OK_OR_RETURN(result)
+
+    auto log_ast = starts_with_prelude
+        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
+        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
 	
-    if (options.debug) {
-        parser.log(ELEMENT_OK);
+    if (log_ast) {
+        log("\n---\nAST\n---\n" + ast_to_string(parser.root));
     }
 
     auto ast = ast_unique_ptr(parser.root, element_ast_delete);
@@ -334,6 +352,14 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
 	logger->log(*this, code, message, filename);
 }
 
+void element_interpreter_ctx::log(const std::string& message) const
+{
+    if (logger == nullptr)
+        return;
+
+    logger->log(message, message_stage::ELEMENT_STAGE_MISC);
+}
+
 element_interpreter_ctx::element_interpreter_ctx()
 {
     // TODO: hack, remove
@@ -349,25 +375,9 @@ element_result element_interpreter_ctx::clear()
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_ctx::print_ast(const std::string& name)
-{
-
-    auto it = std::find_if(trees.begin(), trees.end(),
-        [&name](const std::pair<std::string, ast_unique_ptr>& element) { return element.first == name; });
-
-    if (it == trees.end()) {
-        return ELEMENT_OK;
-    }
-
-    element_ast* ast = it->second.get();
-    element_ast_print(ast);
-    return ELEMENT_OK;
-}
-
-element_result element_interpreter_create(element_interpreter_ctx** ctx, bool debug)
+element_result element_interpreter_create(element_interpreter_ctx** ctx)
 {
     *ctx = new element_interpreter_ctx();
-    (*ctx)->options.debug = debug;
     return ELEMENT_OK;
 }
 
@@ -440,12 +450,6 @@ element_result element_interpreter_clear(element_interpreter_ctx* ctx)
     return ctx->clear();
 }
 
-element_result element_interpreter_print_ast(element_interpreter_ctx* ctx, const char* name)
-{
-    assert(ctx);
-    return ctx->print_ast(name);
-}
-
 element_result element_interpreter_get_function(element_interpreter_ctx* ctx, const char* name, const element_function** fn)
 {
     assert(ctx);
@@ -456,7 +460,10 @@ element_result element_interpreter_get_function(element_interpreter_ctx* ctx, co
         *fn = scope->function().get();
         return ELEMENT_OK;
     } else {
-        return ELEMENT_ERROR_NOT_FOUND;
+
+        auto result = ELEMENT_ERROR_NOT_FOUND;
+        ctx->log(result, fmt::format("Cannot find {}", name), "<input>");
+        return result;
     }
 }
 
@@ -473,10 +480,21 @@ element_result element_interpreter_compile_function(
     if (opts)
         options = *opts;
     expression_shared_ptr fn_expr;
-    ELEMENT_OK_OR_RETURN(element_compile(*ctx, fn, fn_expr, options));
+
+    auto result = element_compile(*ctx, fn, fn_expr, options);
+	if(result != ELEMENT_OK)
+	{
+        ctx->log(result, fmt::format("Failed to compile {}", fn->name()), "<input>");
+        return result;
+	}
+	
     *cfn = new element_compiled_function;
     (*cfn)->function = fn;
     (*cfn)->expression = std::move(fn_expr);
+
+    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree))
+        ctx->log("\n---------------\nEXPRESSION TREE\n---------------\n" + expression_to_string(*(*cfn)->expression));
+	
     return ELEMENT_OK;
 }
 
@@ -497,5 +515,10 @@ element_result element_interpreter_evaluate_function(
     element_evaluator_options options;
     if (opts)
         options = *opts;
-    return element_evaluate(*ctx, cfn->expression, inputs, inputs_count, outputs, outputs_count, options);
+    auto result = element_evaluate(*ctx, cfn->expression, inputs, inputs_count, outputs, outputs_count, options);
+    if (result != ELEMENT_OK) {
+        ctx->log(result, fmt::format("Failed to evaluate {}", cfn->function->name()), "<input>");
+    }
+
+	return result;
 }

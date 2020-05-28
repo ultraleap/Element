@@ -2,8 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <cstdint>
-#include <cstdlib>
 #include <utility>
 #include <numeric>
 #include <unordered_map>
@@ -15,7 +13,6 @@
 #include "construct.hpp"
 #include "typeutil.hpp"
 
-
 struct element_expression : public element_construct, public rtti_type<element_expression>
 {
     const std::vector<expression_shared_ptr>& dependents() const { return m_dependents; }
@@ -23,8 +20,7 @@ struct element_expression : public element_construct, public rtti_type<element_e
 
 protected:
     element_expression(element_type_id t)
-        : element_construct()
-        , rtti_type(t)
+        : rtti_type(t)
     {
         // expressions have no inputs/outputs, so leave them empty
         m_ports_cached = true;
@@ -34,11 +30,11 @@ protected:
     element_type_id m_type_id = 0;
 };
 
-struct element_constant : public element_expression
+struct element_expression_constant : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    element_constant(element_value val)
+    element_expression_constant(element_value val)
         : element_expression(type_id)
         , m_value(val)
     {
@@ -50,11 +46,12 @@ private:
     element_value m_value;
 };
 
-struct element_input : public element_expression
+//User-provided input from the boundary
+struct element_expression_input : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    element_input(size_t input_index, size_t input_size)
+    element_expression_input(size_t input_index, size_t input_size)
         : element_expression(type_id)
         , m_index(input_index)
         , m_size(input_size)
@@ -68,23 +65,23 @@ private:
     size_t m_size;
 };
 
-struct element_structure : public element_expression
+struct element_expression_structure : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    element_structure(std::vector<std::pair<std::string, expression_shared_ptr>> deps)
+    element_expression_structure(const std::vector<std::pair<std::string, expression_shared_ptr>>& deps)
         : element_expression(type_id)
     {
         m_dependents.reserve(deps.size());
-        for (const auto& d : deps) {
-            m_dependents.emplace_back(d.second);
-            m_dependents_map[d.first] = d.second;
+        for (const auto& [name, expression] : deps) {
+            m_dependents.emplace_back(expression);
+            m_dependents_map[name] = expression;
         }
     }
 
     expression_shared_ptr output(const std::string& name) const
     {
-        auto it = m_dependents_map.find(name);
+        const auto it = m_dependents_map.find(name);
         return (it != m_dependents_map.end()) ? it->second : nullptr;
     }
 
@@ -98,13 +95,13 @@ private:
     std::unordered_map<std::string, expression_shared_ptr> m_dependents_map;
 };
 
-struct element_unary : public element_expression
+struct element_expression_unary : public element_expression
 {
     DECLARE_TYPE_ID();
 
     using op = element_unary_op;
 
-    element_unary(op t, expression_shared_ptr input)
+    element_expression_unary(op t, expression_shared_ptr input)
         : element_expression(type_id)
         , m_op(t)
     {
@@ -119,13 +116,13 @@ private:
     op m_op;
 };
 
-struct element_binary : public element_expression
+struct element_expression_binary : public element_expression
 {
     DECLARE_TYPE_ID();
 
     using op = element_binary_op;
 
-    element_binary(op t, expression_shared_ptr in1, expression_shared_ptr in2)
+    element_expression_binary(op t, expression_shared_ptr in1, expression_shared_ptr in2)
         : element_expression(type_id)
         , m_op(t)
     {
@@ -145,13 +142,13 @@ private:
 //
 // Expression groups
 //
-struct element_expr_group : public element_expression
+struct element_expression_group : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    // TODO: implement
+    //todo: do we still need expression groups?
 protected:
-    element_expr_group()
+    element_expression_group()
         : element_expression(type_id)
     {
     }
@@ -159,11 +156,11 @@ protected:
     // virtual size_t group_size() const = 0;
 };
 
-struct element_unbound_arg : public element_expression
+struct element_expression_unbound_arg : public element_expression
 {
     DECLARE_TYPE_ID();
     
-    element_unbound_arg(size_t idx)
+    element_expression_unbound_arg(size_t idx)
         : element_expression(type_id)
         , m_index(idx)
     {

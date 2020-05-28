@@ -1,3 +1,14 @@
+intrinsic struct Num
+{
+	intrinsic mul(a:Num, b:Num):Num;
+	intrinsic div(a:Num, b:Num):Num;
+	
+	intrinsic acos(a:Num):Num;
+    pi = 3.14159265359;
+	
+	degrees(theta:Num):Num = theta.mul(180.div(pi));
+}
+
 namespace A
 {
     x = 5;

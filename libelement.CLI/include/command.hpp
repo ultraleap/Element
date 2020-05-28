@@ -129,7 +129,7 @@ namespace libelement::cli
 		command(common_command_arguments common_arguments)
 			: common_arguments{ std::move(common_arguments) }
 		{
-			element_interpreter_create(&ictx, common_arguments.debug);
+			element_interpreter_create(&ictx);
 		}
 
 		virtual ~command() {
@@ -189,6 +189,20 @@ namespace libelement::cli
 					auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "Parsing failed");
 					std::cout << parse_error.serialize() << std::endl;
 					
+					return result;
+				}
+			}
+
+			auto packages = convert(input.get_packages());
+			auto packages_count = static_cast<int>(packages.size());
+			if (packages_count > 0) {
+				result = element_interpreter_load_packages(ictx, &packages[0], packages_count);
+				if (result != ELEMENT_OK)
+				{
+					//TODO: Better solution for this? Forces a parse error on any file load error
+					auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "Parsing failed");
+					std::cout << parse_error.serialize() << std::endl;
+
 					return result;
 				}
 			}

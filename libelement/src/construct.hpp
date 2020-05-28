@@ -20,7 +20,7 @@ using construct_vector = std::vector<construct_shared_ptr>;
 struct port_info
 {
     std::string name;
-    type_constraint_const_shared_ptr type;
+    constraint_const_shared_ptr type;
 
     bool operator==(const port_info& other) const
     {
@@ -66,8 +66,8 @@ struct element_construct : public std::enable_shared_from_this<element_construct
 protected:
     element_construct() = default;
 
-    std::vector<port_info> generate_portlist(const element_scope* scope, element_ast* portlist) const;
-    type_const_shared_ptr find_typename(const element_scope* scope, element_ast* type) const;
+    std::vector<port_info> generate_portlist(const element_scope* scope, const element_ast* portlist) const;
+    type_const_shared_ptr find_typename(const element_scope* scope, const element_ast* type) const;
 
     virtual void generate_ports_cache() const { }
     mutable bool m_ports_cached = false;

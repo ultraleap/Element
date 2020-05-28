@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stddef.h>
 
 typedef float element_value;
 
@@ -61,14 +62,16 @@ typedef enum message_type
     ELEMENT_ERROR_MEMORY_SIZE = -14,
     ELEMENT_ERROR_MISSING_EXTCALL = -15,
     ELEMENT_ERROR_INVALID_OPERATION = -16,
+
+	//NEW
     ELEMENT_ERROR_PRELUDE_ALREADY_LOADED = -100,
     ELEMENT_ERROR_DIRECTORY_NOT_FOUND = -101,
     ELEMENT_ERROR_FILE_NOT_FOUND = -102,
-
-	//NEW
     ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END = -200,
     ELEMENT_ERROR_EXCEPTION = -201,
     ELEMENT_ERROR_CONSTRAINT_HAS_BODY = -202,
+    ELEMENT_ERROR_BAD_INDEX_INTO_NUMBER = -203,
+    ELEMENT_ERROR_BAD_NUMBER_EXPONENT = -203,
 } message_type;
 
 typedef int32_t element_result;
@@ -91,8 +94,8 @@ struct element_log_message {
     // determines which values in this struct will be relevant
     element_result message_code;
     // the first character of the source file which the message is relevant, or -1
-    int column;
-    // the length of the relevant part of the source file (starting from the column), or -1
+    int character;
+    // the length of the relevant part of the source file (starting from the character), or -1
     int length;
     // the line in which the error occured, or -1
     int line;
