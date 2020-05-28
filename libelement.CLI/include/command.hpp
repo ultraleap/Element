@@ -163,9 +163,9 @@ namespace libelement::cli
 				if (std::isnan(outputs[i]))
 					output += "NaN";
 				else if (outputs[i] == std::numeric_limits<float>::infinity())
-					output += std::to_string(std::numeric_limits<float>::infinity());
+					output += "Infinity";
 				else if (outputs[i] == -std::numeric_limits<float>::infinity())
-					output += std::to_string(-std::numeric_limits<float>::infinity());
+					output += "-Infinity";
 				else
 					output += std::to_string(outputs[i]);
 
