@@ -529,6 +529,9 @@ element_result element_interpreter_evaluate_function(
     auto result = element_evaluate(*ctx, cfn->expression, inputs, inputs_count, outputs, outputs_count, options);
     if (result != ELEMENT_OK) {
         ctx->log(result, fmt::format("Failed to evaluate {}", cfn->function->name()), "<input>");
+	}
+
+    return result;
 }
 
 element_result element_interpreter_get_internal_typeof(

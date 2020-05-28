@@ -13,9 +13,10 @@ void command::configure(CLI::App& app, command::callback callback)
 	app.add_flag("--no-prelude", arguments->no_prelude, "Prelude functionality is included. Warning: Without Prelude only unverified compiler intrinsics will be available.");
 	app.add_option("--packages", arguments->packages, "Element packages to load into the context.");
 	app.add_option("--source-files", arguments->source_files, "Extra individual source files to load into the context.");
-	app.add_flag("--debug", arguments->debug, "Preserves debug information while compiling.");
-	app.add_option("--verbosity", arguments->verbosity, "Verbosity of compiler messages.");
-	app.add_flag("--logjson", arguments->log_json, "Serializes log messages structured as Json instead of plain string.");
+	app.add_flag("--debug", arguments->debug, "--NOT IMPLEMENTED-- Preserves debug information while compiling.");
+	app.add_option("--verbosity", arguments->verbosity, "--NOT IMPLEMENTED-- Verbosity of compiler messages.");
+	app.add_flag("--logjson", arguments->log_json, "--NOT IMPLEMENTED-- Serializes log messages structured as Json instead of plain string.");
+	app.add_flag("--no-parse-trace", arguments->log_json, "--NOT IMPLEMENTED-- Controls whether or not to display the parse trace if parsing fails.");
 
 	//not a big fan of this but it works, so leaving it for now
 	parse_command::configure(app, arguments, callback);
