@@ -20,7 +20,7 @@ include(FetchContent)
 FetchContent_Declare(
     utfcpp
     GIT_REPOSITORY https://github.com/nemtrif/utfcpp
-    GIT_TAG v3.1
+    GIT_TAG v3.1.1
 )
 FetchContent_GetProperties(utfcpp)
 if (NOT utfcpp_POPULATED)
