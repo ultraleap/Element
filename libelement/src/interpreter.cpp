@@ -62,31 +62,31 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
     case ELEMENT_AST_NODE_CONSTRAINT:
     case ELEMENT_AST_NODE_STRUCT:
     {
-        assert(node->children.size() > ast_idx::fn::declaration);
-        element_ast* declnode = node->children[ast_idx::fn::declaration].get();
+        assert(node->children.size() > ast_idx::function::declaration);
+        element_ast* declnode = node->children[ast_idx::function::declaration].get();
         assert(declnode->type == ELEMENT_AST_NODE_DECLARATION);
         auto item = scope_new(parent, declnode->identifier, node);
         // inputs
-        if (declnode->children.size() > ast_idx::decl::inputs && declnode->children[ast_idx::decl::inputs]->type == ELEMENT_AST_NODE_PORTLIST) {
-            for (const auto& t : declnode->children[ast_idx::decl::inputs]->children) {
+        if (declnode->children.size() > ast_idx::declaration::inputs && declnode->children[ast_idx::declaration::inputs]->type == ELEMENT_AST_NODE_PORTLIST) {
+            for (const auto& t : declnode->children[ast_idx::declaration::inputs]->children) {
                 auto cptr = get_names(item.get(), t.get());
                 item->children.emplace(cptr->name, std::move(cptr));
             }
         }
         // body
-        if (node->children.size() > ast_idx::fn::body) {
-            if (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_SCOPE) {
-                for (const auto& t : node->children[ast_idx::fn::body]->children) {
+        if (node->children.size() > ast_idx::function::body) {
+            if (node->children[ast_idx::function::body]->type == ELEMENT_AST_NODE_SCOPE) {
+                for (const auto& t : node->children[ast_idx::function::body]->children) {
                     auto cptr = get_names(item.get(), t.get());
                     item->children.try_emplace(cptr->name, std::move(cptr));
                 }
             }
         }
         // outputs
-        if (declnode->children.size() > ast_idx::decl::outputs) {
-            element_ast* outputnode = declnode->children[ast_idx::decl::outputs].get();
+        if (declnode->children.size() > ast_idx::declaration::outputs) {
+            element_ast* outputnode = declnode->children[ast_idx::declaration::outputs].get();
             // these should typically already exist from the body, so just try
-            if (node->children.size() > ast_idx::fn::body) {
+            if (node->children.size() > ast_idx::function::body) {
             	//TODO: JM - What does this do?
                 if (outputnode->type == ELEMENT_AST_NODE_PORTLIST) {
                     for (const auto& t : outputnode->children) {
@@ -95,12 +95,12 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
                     }
                 }
                 else if (outputnode->type == ELEMENT_AST_NODE_TYPENAME) {
-                    auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
+                    auto cptr = scope_new(item.get(), "return", node->children[ast_idx::function::body].get());
                     item->children.try_emplace(cptr->name, std::move(cptr));
                 }
                 else if (outputnode->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE) {
                     // implied any return
-                    auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
+                    auto cptr = scope_new(item.get(), "return", node->children[ast_idx::function::body].get());
                     item->children.try_emplace(cptr->name, std::move(cptr));
                 }
                 else {
@@ -375,32 +375,32 @@ element_result element_interpreter_ctx::clear()
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_create(element_interpreter_ctx** ctx)
+element_result element_interpreter_create(element_interpreter_ctx** context)
 {
-    *ctx = new element_interpreter_ctx();
+    *context = new element_interpreter_ctx();
     return ELEMENT_OK;
 }
 
-void element_interpreter_delete(element_interpreter_ctx* ctx)
+void element_interpreter_delete(element_interpreter_ctx* context)
 {
-    delete ctx;
+    delete context;
 }
 
-element_result element_interpreter_load_string(element_interpreter_ctx* ctx, const char* string, const char* filename)
+element_result element_interpreter_load_string(element_interpreter_ctx* context, const char* string, const char* filename)
 {
-    assert(ctx);
-    return ctx->load(string, filename);
+    assert(context);
+    return context->load(string, filename);
 }
 
-element_result element_interpreter_load_file(element_interpreter_ctx* ctx, const char* file)
+element_result element_interpreter_load_file(element_interpreter_ctx* context, const char* file)
 {
-    assert(ctx);
-    return ctx->load_file(file);
+    assert(context);
+    return context->load_file(file);
 }
 
-element_result element_interpreter_load_files(element_interpreter_ctx* ctx, const char** files, int files_count)
+element_result element_interpreter_load_files(element_interpreter_ctx* context, const char** files, int files_count)
 {
-    assert(ctx);
+    assert(context);
 
     std::vector<std::string> actual_files;
     actual_files.resize(files_count);
@@ -409,20 +409,20 @@ element_result element_interpreter_load_files(element_interpreter_ctx* ctx, cons
         actual_files[i] = files[i];
     }
 
-    return ctx->load_files(actual_files);
+    return context->load_files(actual_files);
 }
 
 
-element_result element_interpreter_load_package(element_interpreter_ctx* ctx, const char* package)
+element_result element_interpreter_load_package(element_interpreter_ctx* context, const char* package)
 {
-    assert(ctx);
+    assert(context);
     //std::cout << fmt::format("load_package {}\n", package); //todo: proper logging
-    return ctx->load_package(package);
+    return context->load_package(package);
 }
 
-element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, const char** packages, int packages_count)
+element_result element_interpreter_load_packages(element_interpreter_ctx* context, const char** packages, int packages_count)
 {
-    assert(ctx);
+    assert(context);
 
     std::vector<std::string> actual_packages;
     actual_packages.resize(packages_count);
@@ -431,126 +431,126 @@ element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, c
         actual_packages[i] = packages[i];
     }
 
-    return ctx->load_packages(actual_packages);
+    return context->load_packages(actual_packages);
 }
 
-element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx)
+element_result element_interpreter_load_prelude(element_interpreter_ctx* context)
 {
-    assert(ctx);
-    return ctx->load_prelude();
+    assert(context);
+    return context->load_prelude();
 }
 
-void element_interpreter_set_log_callback(element_interpreter_ctx* ctx, void (*log_callback)(const element_log_message* const))
+void element_interpreter_set_log_callback(element_interpreter_ctx* context, void (*log_callback)(const element_log_message* const))
 {
-    assert(ctx);
-    ctx->set_log_callback(log_callback);
+    assert(context);
+    context->set_log_callback(log_callback);
 }
 
-element_result element_interpreter_clear(element_interpreter_ctx* ctx)
+element_result element_interpreter_clear(element_interpreter_ctx* context)
 {
-    assert(ctx);
-    return ctx->clear();
+    assert(context);
+    return context->clear();
 }
 
-element_result element_interpreter_get_function(element_interpreter_ctx* ctx, const char* name, const element_function** fn)
+element_result element_interpreter_get_function(element_interpreter_ctx* context, const char* name, const element_function** function)
 {
-    assert(ctx);
+    assert(context);
     assert(name);
-    if (!ctx->names) return ELEMENT_ERROR_NOT_FOUND;
-    const element_scope* scope = ctx->names->lookup(name);
+    if (!context->names) return ELEMENT_ERROR_NOT_FOUND;
+    const element_scope* scope = context->names->lookup(name);
     if (scope && scope->function()) {
-        *fn = scope->function().get();
+        *function = scope->function().get();
         return ELEMENT_OK;
     } else {
 
         auto result = ELEMENT_ERROR_NOT_FOUND;
-        ctx->log(result, fmt::format("Cannot find {}", name), "<input>");
+        context->log(result, fmt::format("Cannot find {}", name), "<input>");
         return result;
     }
 }
 
 element_result element_interpreter_compile_function(
-    element_interpreter_ctx* ctx,
-    const element_function* fn,
-    element_compiled_function** cfn,
+    element_interpreter_ctx* context,
+    const element_function* function,
+    element_compiled_function** compiled_function,
     const element_compiler_options* opts)
 {
-    assert(ctx);
-    assert(fn);
-    assert(cfn);
+    assert(context);
+    assert(function);
+    assert(compiled_function);
     element_compiler_options options;
     if (opts)
         options = *opts;
     compilation compiled_result;
-    ELEMENT_OK_OR_RETURN(element_compile(*ctx, fn, compiled_result, options));
-    *cfn = new element_compiled_function;
-    (*cfn)->function = fn;
-    (*cfn)->expression = std::move(compiled_result.expression);
-    (*cfn)->constraint = std::move(compiled_result.constraint);
+    ELEMENT_OK_OR_RETURN(element_compile(*context, function, compiled_result, options));
+    *compiled_function = new element_compiled_function;
+    (*compiled_function)->function = function;
+    (*compiled_function)->expression = std::move(compiled_result.expression);
+    (*compiled_function)->constraint = std::move(compiled_result.constraint);
 
     if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree))
-        ctx->log("\n---------------\nEXPRESSION TREE\n---------------\n" + expression_to_string(*(*cfn)->expression));
+        context->log("\n---------------\nEXPRESSION TREE\n---------------\n" + expression_to_string(*(*compiled_function)->expression));
 	
     return ELEMENT_OK;
 }
 
-void element_interpreter_delete_compiled_function(element_compiled_function* cfn)
+void element_interpreter_delete_compiled_function(element_compiled_function* compiled_function)
 {
-    delete cfn;
+    delete compiled_function;
 }
 
 //HACK: This is horrible and temporary, find a better way to size the outputs
 size_t get_outputs_size(
-    element_interpreter_ctx* ctx,
-    const element_compiled_function* cfn)
+    element_interpreter_ctx* context,
+    const element_compiled_function* compiled_function)
 {
-    assert(ctx);
-    assert(cfn);
-    assert(cfn->expression);
+    assert(context);
+    assert(compiled_function);
+    assert(compiled_function->expression);
 
-	if(cfn->expression->as<element_expression_structure>())
-		return cfn->expression->dependents().size();
+	if(compiled_function->expression->as<element_expression_structure>())
+		return compiled_function->expression->dependents().size();
 
     return 1;
 }
 
 element_result element_interpreter_evaluate_function(
-    element_interpreter_ctx* ctx,
-    const element_compiled_function* cfn,
+    element_interpreter_ctx* context,
+    const element_compiled_function* compiled_function,
     const element_value* inputs, size_t inputs_count,
     element_value* outputs, size_t outputs_count,
     const element_evaluator_options* opts)
 {
-    assert(ctx);
-    assert(cfn);
+    assert(context);
+    assert(compiled_function);
     element_evaluator_options options;
     if (opts)
         options = *opts;
-    auto result = element_evaluate(*ctx, cfn->expression, inputs, inputs_count, outputs, outputs_count, options);
+    auto result = element_evaluate(*context, compiled_function->expression, inputs, inputs_count, outputs, outputs_count, options);
     if (result != ELEMENT_OK) {
-        ctx->log(result, fmt::format("Failed to evaluate {}", cfn->function->name()), "<input>");
+        context->log(result, fmt::format("Failed to evaluate {}", compiled_function->function->name()), "<input>");
 	}
 
     return result;
 }
 
 element_result element_interpreter_get_internal_typeof(
-    element_interpreter_ctx* ctx,
+    element_interpreter_ctx* context,
     const char* string,
     const char* filename,
     char* output_string_buffer,
     unsigned int output_string_buffer_size)
 {
-    assert(ctx);
+    assert(context);
     assert(string);
     assert(filename);
 
     element_result result = ELEMENT_OK;
 
-    if (ctx->trees.empty())
+    if (context->trees.empty())
         return ELEMENT_ERROR_UNKNOWN;
 
-    auto& global_scope = ctx->names;
+    auto& global_scope = context->names;
     const auto found_scope = global_scope->lookup(string);
 
     std::string internal_typeof = "Unknown";
@@ -585,26 +585,26 @@ element_result element_interpreter_get_internal_typeof(
     if (internal_typeof == "Unknown")
     {
         std::string eval_wrapper = "evaluate = " + std::string(string) + ";";
-        result = ctx->load(eval_wrapper.c_str(), "totes_not_a_hack_upon_a_hack");
+        result = context->load(eval_wrapper.c_str(), "totes_not_a_hack_upon_a_hack");
         if (result != ELEMENT_OK)
             return result;
 
         const element_function* fn;
-        result = element_interpreter_get_function(ctx, "evaluate", &fn);
+        result = element_interpreter_get_function(context, "evaluate", &fn);
         if (result != ELEMENT_OK)
             return result;
 
-        element_compiled_function* cfn;
-        result = element_interpreter_compile_function(ctx, fn, &cfn, nullptr);
+        element_compiled_function* compiled_function;
+        result = element_interpreter_compile_function(context, fn, &compiled_function, nullptr);
         if (result != ELEMENT_OK)
             return result;
 
         internal_typeof.resize(output_string_buffer_size);
-        element_compiled_function_get_typeof_compilation(cfn, internal_typeof.data(), output_string_buffer_size);
+        element_compiled_function_get_typeof_compilation(compiled_function, internal_typeof.data(), output_string_buffer_size);
     }
 
     //todo: safer C function?
-    strncpy(output_string_buffer, internal_typeof.c_str(), output_string_buffer_size);
+    strncpy_s(output_string_buffer, output_string_buffer_size, internal_typeof.c_str(), output_string_buffer_size);
 
     //:(
     assert(internal_typeof != "Unknown");
@@ -613,16 +613,16 @@ element_result element_interpreter_get_internal_typeof(
 }
 
 //todo: this is relying on the lack of error checking for top-level functions having serializable types (ie. the return type is always known)
-element_result element_compiled_function_get_typeof_compilation(element_compiled_function* cfn, char* string_buffer, unsigned int string_buffer_size)
+element_result element_compiled_function_get_typeof_compilation(element_compiled_function* compiled_function, char* string_buffer, unsigned int string_buffer_size)
 {
     if (string_buffer == nullptr)
         return ELEMENT_ERROR_UNKNOWN;
 
     std::string str = "Constraint";
 
-    const auto anonymous_type = cfn->constraint->as<element_type_anonymous>();
-    const auto named_type = cfn->constraint->as<element_type_named>();
-    const auto type = cfn->constraint->as<element_type>();
+    const auto anonymous_type = compiled_function->constraint->as<element_type_anonymous>();
+    const auto named_type = compiled_function->constraint->as<element_type_named>();
+    const auto type = compiled_function->constraint->as<element_type>();
 
     if (anonymous_type)
     {
@@ -646,17 +646,17 @@ element_result element_compiled_function_get_typeof_compilation(element_compiled
     }
     else
     {
-        if (cfn->constraint == element_constraint::any)
+        if (compiled_function->constraint == element_constraint::any)
         {
             str = "Any"; //todo: any isn't Any in source, rather the implicit type?
         }
-        else if (cfn->constraint == element_constraint::function)
+        else if (compiled_function->constraint == element_constraint::function)
         {
             str = "Function";
         }
     }
 
     //todo: safer C function?
-    strncpy(string_buffer, str.c_str(), string_buffer_size);
+    strncpy_s(string_buffer, string_buffer_size, str.c_str(), string_buffer_size);
     return ELEMENT_OK;
 }

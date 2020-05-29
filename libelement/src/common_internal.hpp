@@ -28,7 +28,7 @@ struct element_log_ctx
     void log(const element_log_message& log) const;
 };
 
-std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const element_token* nearest_token = nullptr);
+std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token = nullptr);
 std::string ast_to_string(const element_ast* ast, int depth = 0, const element_ast* ast_to_mark = nullptr);
 std::string expression_to_string(const element_expression& expression, int depth = 0);
 std::string ast_to_code(const element_ast* node, const element_ast* parent = nullptr, bool skip = false);

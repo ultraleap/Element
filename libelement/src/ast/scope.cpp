@@ -48,8 +48,8 @@ element_item_type element_scope::item_type() const
     case ELEMENT_AST_NODE_ROOT:
         return ELEMENT_ITEM_ROOT;
     case ELEMENT_AST_NODE_FUNCTION:
-        assert(node->children.size() > ast_idx::fn::body);
-        return (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_CONSTRAINT)
+        assert(node->children.size() > ast_idx::function::body);
+        return (node->children[ast_idx::function::body]->type == ELEMENT_AST_NODE_CONSTRAINT)
             ? ELEMENT_ITEM_CONSTRAINT
             : ELEMENT_ITEM_FUNCTION;
     case ELEMENT_AST_NODE_STRUCT:
@@ -69,9 +69,9 @@ function_const_shared_ptr element_scope::function() const
         return m_function;
     // Check if it makes sense for the node we have
     // TODO: this needs to change
-    if (node->children.size() > ast_idx::fn::declaration) {
-        auto decl = node->children[ast_idx::fn::declaration].get();
-        if (decl->type == ELEMENT_AST_NODE_DECLARATION && decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
+    if (node->children.size() > ast_idx::function::declaration) {
+	    const auto declaration = node->children[ast_idx::function::declaration].get();
+        if (declaration->type == ELEMENT_AST_NODE_DECLARATION && declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
             // Check name against builtins
             m_function = element_function::get_builtin(node->children[0]->identifier);
             if (!m_function) {

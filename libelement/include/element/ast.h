@@ -33,7 +33,7 @@ typedef enum
 } element_ast_node_type;
 
 typedef uint32_t element_ast_flags;
-// decl flags
+// declaration flags
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_INTRINSIC = (1U << 1);
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_EMPTY_INPUT = (1U << 2);
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN = (1U << 3);

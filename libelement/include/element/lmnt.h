@@ -14,12 +14,12 @@ typedef struct element_lmnt_compile_options
     bool dummy;
 } element_lmnt_compile_options;
 
-element_result element_lmnt_archive_init(element_lmnt_archive_ctx** ctx);
-void element_lmnt_archive_delete(element_lmnt_archive_ctx* ctx);
+element_result element_lmnt_archive_init(element_lmnt_archive_ctx** context);
+void element_lmnt_archive_delete(element_lmnt_archive_ctx* context);
 
 element_result element_lmnt_compile(
-    element_interpreter_ctx* ctx,
-    const element_compiled_function* cfn,
+    element_interpreter_ctx* context,
+    const element_compiled_function* compiled_function,
     const element_lmnt_compile_options* opts,
     element_lmnt_archive_ctx* archive
 );
