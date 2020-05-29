@@ -108,14 +108,14 @@ type_shared_ptr element_custom_function::generate_type(const element_scope* scop
     assert(ast_node_function_is_valid(node));
 
     if (node->type == ELEMENT_AST_NODE_FUNCTION) {
-        const element_ast* decl = ast_node_function_get_declaration(node);
-        assert(ast_node_declaration_has_inputs(decl));
+        const element_ast* declaration = ast_node_function_get_declaration(node);
+        assert(ast_node_declaration_has_inputs(declaration));
 
-        if (ast_node_declaration_get_inputs(decl)->type == ELEMENT_AST_NODE_PORTLIST)
-            inputs = generate_portlist(scope, decl->children[ast_idx::decl::inputs].get());
+        if (ast_node_declaration_get_inputs(declaration)->type == ELEMENT_AST_NODE_PORTLIST)
+            inputs = generate_portlist(scope, declaration->children[ast_idx::declaration::inputs].get());
 
-        if (ast_node_declaration_has_outputs(decl)) {
-            const element_ast* out = ast_node_declaration_get_outputs(decl);
+        if (ast_node_declaration_has_outputs(declaration)) {
+	        const auto* out = ast_node_declaration_get_outputs(declaration);
 
             if (out->type == ELEMENT_AST_NODE_TYPENAME)
                 outputs.push_back({ "return", find_typename(scope, out) });

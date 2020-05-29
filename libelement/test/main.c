@@ -20,40 +20,40 @@ int main(int argc, char** argv)
     //    "../test/test - Copy.ele"
     //};
 
-    element_interpreter_ctx* ictx;
-    element_interpreter_create(&ictx);
-    element_interpreter_load_prelude(ictx);
+    element_interpreter_ctx* context;
+    element_interpreter_create(&context);
+    element_interpreter_load_prelude(context);
 
     const char* evaluate = "deferredAdd(a, b) = Num.add(a, b);";
-    auto result = element_interpreter_load_string(ictx, evaluate, "<input>");
+    auto result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
         return result;
 
     const element_function* fn;
 
-    result = element_interpreter_get_function(ictx, "fakeadd", &fn);
+    result = element_interpreter_get_function(context, "fakeadd", &fn);
     if (result != ELEMENT_OK)
         return result;
 
     element_compiled_function* cfn;
 
-    result = element_interpreter_compile_function(ictx, fn, &cfn, NULL);
+    result = element_interpreter_compile_function(context, fn, &cfn, NULL);
     if (result != ELEMENT_OK)
         return result;
 
     element_value inputs[2] = { 1, 2 };
     element_value outputs[1];
 
-    result = element_interpreter_evaluate_function(ictx, cfn, inputs, 2, outputs, 1, NULL);
+    result = element_interpreter_evaluate_function(context, cfn, inputs, 2, outputs, 1, NULL);
     if (result != ELEMENT_OK)
         return result;
 
     printf("%f", outputs[0]);
 
-    //element_result result = element_interpreter_load_files(ictx, files, 1);
-    //element_interpreter_load_packages(ictx, packages, 1);
+    //element_result result = element_interpreter_load_files(context, files, 1);
+    //element_interpreter_load_packages(context, packages, 1);
 
-    element_interpreter_delete(ictx);
+    element_interpreter_delete(context);
 
     return 0;
 
@@ -74,16 +74,16 @@ int main(int argc, char** argv)
     element_tokeniser_ctx* tctx;
     element_tokeniser_create(&tctx);
 
-    element_interpreter_ctx* ictx;
-    element_interpreter_create(&ictx);
+    element_interpreter_ctx* context;
+    element_interpreter_create(&context);
 
     clock_t start = clock();
     const size_t iters = 100;*/
 
 /*
     for (size_t i = 0; i < iters; ++i) {
-        // element_interpreter_load_string(ictx, input, "<input>");
-        // element_interpreter_clear(ictx);
+        // element_interpreter_load_string(context, input, "<input>");
+        // element_interpreter_clear(context);
 
         element_tokeniser_run(tctx, input, "<input>");
         element_tokeniser_clear(tctx);
@@ -104,14 +104,14 @@ int main(int argc, char** argv)
             fclose(f);
             buf[pos] = '\0';
 
-            element_interpreter_load_string(ictx, buf, argv[j]);
+            element_interpreter_load_string(context, buf, argv[j]);
             // printf("OK\n");
             free(buf);
         }
 
-        element_interpreter_load_string(ictx, input, "<input>");
+        element_interpreter_load_string(context, input, "<input>");
         if (i + 1 < iters)
-            element_interpreter_clear(ictx);
+            element_interpreter_clear(context);
     }
 
 
@@ -119,34 +119,34 @@ int main(int argc, char** argv)
     double t = 1000000.0 * ((double)(end - start) / CLOCKS_PER_SEC) / iters;
     printf("time (us): %lf\n", t);
 
-    const element_function* fn = NULL;
+    const element_function* function = NULL;
     element_compiled_function* cfn = NULL;
     element_value inputs[2] = { 3.0, 4.0 };
     element_value outputs[1];
-    element_interpreter_get_function(ictx, "num.add", &fn);
-    element_interpreter_compile_function(ictx, fn, &cfn, NULL);
-    element_interpreter_evaluate_function(ictx, cfn, inputs, 2, outputs, 1, NULL);
+    element_interpreter_get_function(context, "num.add", &function);
+    element_interpreter_compile_function(context, function, &cfn, NULL);
+    element_interpreter_evaluate_function(context, cfn, inputs, 2, outputs, 1, NULL);
     printf("add(%f,%f) = %f\n", inputs[0], inputs[1], outputs[0]);
 
     inputs[0] = 3.14159f / 4.0f;
-    element_interpreter_get_function(ictx, "num.sin", &fn);
-    element_interpreter_compile_function(ictx, fn, &cfn, NULL);
-    element_interpreter_evaluate_function(ictx, cfn, inputs, 1, outputs, 1, NULL);
+    element_interpreter_get_function(context, "num.sin", &function);
+    element_interpreter_compile_function(context, function, &cfn, NULL);
+    element_interpreter_evaluate_function(context, cfn, inputs, 1, outputs, 1, NULL);
     printf("sin(%f) = %f\n", inputs[0], outputs[0]);
 
     inputs[0] = 2.5f;
-    element_interpreter_get_function(ictx, "Tomato", &fn);
-    element_interpreter_compile_function(ictx, fn, &cfn, NULL);
-    element_interpreter_evaluate_function(ictx, cfn, inputs, 1, outputs, 1, NULL);
+    element_interpreter_get_function(context, "Tomato", &function);
+    element_interpreter_compile_function(context, function, &cfn, NULL);
+    element_interpreter_evaluate_function(context, cfn, inputs, 1, outputs, 1, NULL);
     printf("Tomato(%f) = %f\n", inputs[0], outputs[0]);
 
     inputs[0] = 2.5f;
-    element_interpreter_get_function(ictx, "Tomato4", &fn);
-    element_interpreter_compile_function(ictx, fn, &cfn, NULL);
-    element_interpreter_evaluate_function(ictx, cfn, inputs, 1, outputs, 1, NULL);
+    element_interpreter_get_function(context, "Tomato4", &function);
+    element_interpreter_compile_function(context, function, &cfn, NULL);
+    element_interpreter_evaluate_function(context, cfn, inputs, 1, outputs, 1, NULL);
     printf("Tomato4(%f) = %f\n", inputs[0], outputs[0]);
 
-    element_interpreter_delete(ictx);
+    element_interpreter_delete(context);
     
     getchar();
     return 0;*/

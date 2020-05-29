@@ -549,23 +549,17 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_FUNCTION;
-    element_ast* decl = ast_new_child(ast);
-    ELEMENT_OK_OR_RETURN(parse_declaration(tindex, decl, true));
-    decl->flags = declflags;
+    element_ast* const declaration = ast_new_child(ast);
+    ELEMENT_OK_OR_RETURN(parse_declaration(tindex, declaration, true));
+    declaration->flags = declflags;
 
-    if(decl->identifier == "xor")
-    {
-	    //fucking indexing chains...
-        int i = 0;
-    }
-	
-    element_ast* bodynode = ast_new_child(ast);
+    auto* body_node = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tokeniser, *tindex, body);
-    bodynode->nearest_token = body;
+    body_node->nearest_token = body;
     if (body->type == ELEMENT_TOK_SEMICOLON) {
-        bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
-        if (decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
+        body_node->type = ELEMENT_AST_NODE_CONSTRAINT;
+        if (declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
             tokenlist_advance(tokeniser, tindex);
         }
         else {
@@ -576,7 +570,7 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
         }
     } else {
         // real body of some sort
-        ELEMENT_OK_OR_RETURN(parse_body(tindex, bodynode, true));
+        ELEMENT_OK_OR_RETURN(parse_body(tindex, body_node, true));
     }
 
     return ELEMENT_OK;
@@ -597,13 +591,13 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_STRUCT;
-    element_ast* decl = ast_new_child(ast);
-    decl->flags = declflags;
+    element_ast* declaration = ast_new_child(ast);
+    declaration->flags = declflags;
 
-    ELEMENT_OK_OR_RETURN(parse_declaration(tindex, decl, false))
+    ELEMENT_OK_OR_RETURN(parse_declaration(tindex, declaration, false))
 
-    const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-    const auto has_portlist = !decl->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
+    const auto is_intrinsic = declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+    const auto has_portlist = !declaration->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
 
     //todo: ask craig
     if (!is_intrinsic && !has_portlist)
@@ -615,17 +609,17 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
         return ELEMENT_ERROR_MISSING_PORTS;
     }
 
-    element_ast* bodynode = ast_new_child(ast);
+    element_ast* body_node = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tokeniser, *tindex, body);
-    bodynode->nearest_token = body;
+    body_node->nearest_token = body;
     tokenlist_advance(tokeniser, tindex);
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         // constraint
-        bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
+        body_node->type = ELEMENT_AST_NODE_CONSTRAINT;
     } else if (body->type == ELEMENT_TOK_BRACEL) {
         // scope (struct body)
-        ELEMENT_OK_OR_RETURN(parse_scope(tindex, bodynode));
+        ELEMENT_OK_OR_RETURN(parse_scope(tindex, body_node));
     } else {
         log(ELEMENT_ERROR_UNKNOWN, 
             "unknown error in parse_struct",
@@ -650,14 +644,14 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_CONSTRAINT;
-    element_ast* decl = ast_new_child(ast);
-    decl->flags = declflags;
+    auto declaration = ast_new_child(ast);
+    declaration->flags = declflags;
 
-    // cosntraints can have return types
-    ELEMENT_OK_OR_RETURN(parse_declaration(tindex, decl, true))
+    // constraints can have return types
+    ELEMENT_OK_OR_RETURN(parse_declaration(tindex, declaration, true))
 
-    const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-    const auto has_portlist = !decl->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
+    const auto is_intrinsic = declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+    const auto has_portlist = !declaration->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
 
     //todo: ask craig, port list for struct 
     if (!is_intrinsic && !has_portlist)
@@ -669,14 +663,14 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
         return ELEMENT_ERROR_MISSING_PORTS;
     }
 
-    element_ast* bodynode = ast_new_child(ast);
+    element_ast* body_node = ast_new_child(ast);
     const element_token* body;
     GET_TOKEN(tokeniser, *tindex, body);
-    bodynode->nearest_token = body;
+    body_node->nearest_token = body;
     tokenlist_advance(tokeniser, tindex);
 
     if (body->type == ELEMENT_TOK_SEMICOLON) {
-        bodynode->type = ELEMENT_AST_NODE_CONSTRAINT;
+        body_node->type = ELEMENT_AST_NODE_CONSTRAINT;
     }
     else if (body->type == ELEMENT_TOK_BRACEL) {
         log(ELEMENT_ERROR_CONSTRAINT_HAS_BODY, 
@@ -784,7 +778,7 @@ element_result element_parser_ctx::parse(size_t* tindex, element_ast* ast)
 element_result element_parser_ctx::validate(element_ast* ast)
 {
 #ifndef NDEBUG
-    //ast->ast_node_to_code();
+    ast->ast_node_to_code();
 #endif
 	
     element_result result = ELEMENT_OK;
@@ -796,7 +790,7 @@ element_result element_parser_ctx::validate(element_ast* ast)
     if (length == 0)
         return result;
 
-	for(auto i = 0; i < length; i++)
+	for (auto i = 0; i < length; i++)
 	{
 		//special case validation
 		auto* const child = ast->children[i].get();
@@ -861,24 +855,24 @@ element_result element_parser_ctx::validate_portlist(element_ast* ast)
 element_result element_parser_ctx::validate_struct(element_ast* ast)
 {
     element_result result = ELEMENT_OK;
-    assert(ast->children.size() > ast_idx::fn::declaration);
-    if (ast->children.size() > ast_idx::fn::body) 
+    assert(ast->children.size() > ast_idx::function::declaration);
+    if (ast->children.size() > ast_idx::function::body) 
     {
-        auto* decl = ast->children[ast_idx::fn::declaration].get();
-        assert(decl->type == ELEMENT_AST_NODE_DECLARATION);
+        auto* declaration = ast->children[ast_idx::function::declaration].get();
+        assert(declaration->type == ELEMENT_AST_NODE_DECLARATION);
     	
-        auto identifier = decl->identifier;
-        auto* body = ast->children[ast_idx::fn::body].get();
+        auto identifier = declaration->identifier;
+        auto* body = ast->children[ast_idx::function::body].get();
     	
         if (body->type == ELEMENT_AST_NODE_SCOPE) 
         {
             for (auto& child : body->children) 
             {
-                assert(child->children.size() > ast_idx::fn::declaration);
-                auto* child_decl = child->children[ast_idx::fn::declaration].get();
-                assert(child_decl->type == ELEMENT_AST_NODE_DECLARATION);
+                assert(child->children.size() > ast_idx::function::declaration);
+                auto* child_declaration = child->children[ast_idx::function::declaration].get();
+                assert(child_declaration->type == ELEMENT_AST_NODE_DECLARATION);
 
-                if (identifier == child_decl->identifier)
+                if (identifier == child_declaration->identifier)
                 {
                     log(ELEMENT_ERROR_INVALID_IDENTIFIER,
                         fmt::format("Struct identifier '{}' detected in scope '{}'",
@@ -903,19 +897,19 @@ element_result element_parser_ctx::validate_scope(element_ast* ast)
         if (child->type != ELEMENT_AST_NODE_FUNCTION)
             continue; //TODO: Handle other types
     	
-        auto* child_decl = child->children[ast_idx::fn::declaration].get();
-        auto child_identifier = child_decl->identifier;
+        auto* child_declaration = child->children[ast_idx::function::declaration].get();
+        auto child_identifier = child_declaration->identifier;
         auto it = std::find(names.begin(), names.end(), child_identifier);
     	if(it != names.end())
     	{
             log(ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
                 fmt::format("Duplicate declaration '{}' detected in scope", child_identifier),
-                child_decl);
+                child_declaration);
             result = ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
     	}
         else
         {
-            names.push_back(child_decl->identifier);
+            names.push_back(child_declaration->identifier);
         }
     }
 	

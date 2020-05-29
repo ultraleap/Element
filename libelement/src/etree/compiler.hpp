@@ -84,14 +84,14 @@ private:
 
 struct element_compiler_ctx
 {
-    //todo: we use the logger in ictx, but we should have our own
-    element_interpreter_ctx& ictx;
+    //todo: we use the logger in context, but we should have our own
+    element_interpreter_ctx& context;
     element_compiler_options options;
     compilation_cache comp_cache;
 };
 
 element_result element_compile(
-    element_interpreter_ctx& ctx,
-    const element_function* fn,
+    element_interpreter_ctx& context,
+    const element_function* function,
     compilation& output_compilation,
     element_compiler_options opts);

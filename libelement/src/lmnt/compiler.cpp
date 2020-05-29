@@ -53,13 +53,13 @@ static std::unordered_map<element_binary_op, lmnt_opcode> binary_vector_ops = {
 
 struct compiler_ctx
 {
-    element_interpreter_ctx& ictx;
+    element_interpreter_ctx& context;
     element_lmnt_compile_options opts;
     element_lmnt_archive_ctx& archive;
-    element_lmnt_compiled_function* fn;
+    element_lmnt_compiled_function* function;
     std::shared_ptr<std::vector<element_value>> constants;
 
-    std::unordered_map<const element_expression*, element_lmnt_stack_entry>& entries() { return archive.entries[fn]; }
+    std::unordered_map<const element_expression*, element_lmnt_stack_entry>& entries() { return archive.entries[function]; }
 };
 
 element_result buf_raw_write_and_update(char* b, size_t bsize, size_t& i, const void* d, size_t dsize)
@@ -78,22 +78,22 @@ element_result buf_write_and_update(char* b, size_t bsize, size_t& i, const T& t
 }
 
 static element_result generate_lmnt_constants(
-    compiler_ctx& ctx,
+    compiler_ctx& context,
     const expression_const_shared_ptr& expr)
 {
     if (auto ce = expr->as<element_expression_constant>()) {
-        size_t cidx = ctx.archive.get_constant(ce->value());
-        ctx.entries()[expr.get()] = { element_lmnt_stack_entry::entry_type::constant, cidx, 1 };
+        size_t cidx = context.archive.get_constant(ce->value());
+        context.entries()[expr.get()] = { element_lmnt_stack_entry::entry_type::constant, cidx, 1 };
     } else {
         for (const auto& t : expr->dependents()) {
-            ELEMENT_OK_OR_RETURN(generate_lmnt_constants(ctx, t));
+            ELEMENT_OK_OR_RETURN(generate_lmnt_constants(context, t));
         }
     }
     return ELEMENT_OK;
 }
 
 static element_result generate_lmnt_ops(
-    compiler_ctx& ctx,
+    compiler_ctx& context,
     const expression_const_shared_ptr& expr,
     size_t depth = 0)
 {
@@ -103,19 +103,19 @@ static element_result generate_lmnt_ops(
         // TODO: if constant -> output, do a COPY
         return ELEMENT_OK;
     } else if (auto ie = expr->as<element_expression_input>()) {
-        assert(ie->index() + ie->get_size() <= ctx.fn->inputs_size);
-        ctx.entries()[expr.get()] = {element_lmnt_stack_entry::entry_type::input, ie->index(), ie->get_size()};
+        assert(ie->index() + ie->get_size() <= context.function->inputs_size);
+        context.entries()[expr.get()] = {element_lmnt_stack_entry::entry_type::input, ie->index(), ie->get_size()};
         // TODO: if input -> output, do a COPY
         return ELEMENT_OK;
     } else if (auto se = expr->as<element_expression_structure>()) {
         assert(depth == 0);
         for (const auto& d : se->dependents()) {
             // do *not* increment depth here: let the dependents write to the outputs as needed
-            ELEMENT_OK_OR_RETURN(generate_lmnt_ops(ctx, d, depth));
+            ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, d, depth));
         }
         return ELEMENT_OK;
     } else if (auto ue = expr->as<element_expression_unary>()) {
-        ELEMENT_OK_OR_RETURN(generate_lmnt_ops(ctx, ue->input(), depth + 1));
+        ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, ue->input(), depth + 1));
         element_lmnt_instruction op;
         // find our opcode
         auto itu = unary_scalar_ops.find(ue->operation());
@@ -124,21 +124,21 @@ static element_result generate_lmnt_ops(
         else
             return ELEMENT_ERROR_NO_IMPL;
         // find our input on the stack
-        auto it1 = ctx.entries().find(ue->input().get());
-        if (it1 != ctx.entries().end())
+        auto it1 = context.entries().find(ue->input().get());
+        if (it1 != context.entries().end())
             op.arg1 = it1->second;
         else
             return ELEMENT_ERROR_INVALID_OPERATION;
         if (depth > 0)
-            op.arg3 = { element_lmnt_stack_entry::entry_type::local, ctx.fn->locals_size++, 1 };
+            op.arg3 = { element_lmnt_stack_entry::entry_type::local, context.function->locals_size++, 1 };
         else
-            op.arg3 = { element_lmnt_stack_entry::entry_type::output, ctx.fn->outputs_matched++, 1 };
-        ctx.fn->ops.push_back(op);
-        ctx.entries()[expr.get()] = op.arg3;
+            op.arg3 = { element_lmnt_stack_entry::entry_type::output, context.function->outputs_matched++, 1 };
+        context.function->ops.push_back(op);
+        context.entries()[expr.get()] = op.arg3;
         return ELEMENT_OK;
     } else if (auto be = expr->as<element_expression_binary>()) {
-        ELEMENT_OK_OR_RETURN(generate_lmnt_ops(ctx, be->input1(), depth + 1));
-        ELEMENT_OK_OR_RETURN(generate_lmnt_ops(ctx, be->input2(), depth + 1));
+        ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, be->input1(), depth + 1));
+        ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, be->input2(), depth + 1));
         element_lmnt_instruction op;
         // find our opcode
         auto itb = binary_scalar_ops.find(be->operation());
@@ -147,22 +147,22 @@ static element_result generate_lmnt_ops(
         else
             return ELEMENT_ERROR_NO_IMPL;
         // find our inputs on the stack
-        auto it1 = ctx.entries().find(be->input1().get());
-        if (it1 != ctx.entries().end())
+        auto it1 = context.entries().find(be->input1().get());
+        if (it1 != context.entries().end())
             op.arg1 = it1->second;
         else
             return ELEMENT_ERROR_INVALID_OPERATION;
-        auto it2 = ctx.entries().find(be->input2().get());
-        if (it2 != ctx.entries().end())
+        auto it2 = context.entries().find(be->input2().get());
+        if (it2 != context.entries().end())
             op.arg2 = it2->second;
         else
             return ELEMENT_ERROR_INVALID_OPERATION;
         if (depth > 0)
-            op.arg3 = { element_lmnt_stack_entry::entry_type::local, ctx.fn->locals_size++, 1 };
+            op.arg3 = { element_lmnt_stack_entry::entry_type::local, context.function->locals_size++, 1 };
         else
-            op.arg3 = { element_lmnt_stack_entry::entry_type::output, ctx.fn->outputs_matched++, 1 };
-        ctx.fn->ops.push_back(op);
-        ctx.entries()[expr.get()] = op.arg3;
+            op.arg3 = { element_lmnt_stack_entry::entry_type::output, context.function->outputs_matched++, 1 };
+        context.function->ops.push_back(op);
+        context.entries()[expr.get()] = op.arg3;
         return ELEMENT_OK;
     } else {
         assert(false);
@@ -184,23 +184,23 @@ static size_t get_input_size(const expression_const_shared_ptr& expr)
 
 
 static element_result lmnt_compile(
-    element_interpreter_ctx& ictx,
-    const element_compiled_function& cfn,
+    element_interpreter_ctx& context,
+    const element_compiled_function& compiled_function,
     const element_lmnt_compile_options& opts,
     element_lmnt_archive_ctx& archive)
 {
     // generate LMNT function from etree
-    compiler_ctx result { ictx, opts, archive };
+    compiler_ctx result { context, opts, archive };
     result.archive.functions.emplace_back();
-    result.fn = &result.archive.functions.back();
-    result.fn->function = cfn.function;
-    ELEMENT_OK_OR_RETURN(generate_lmnt_constants(result, cfn.expression));
+    result.function = &result.archive.functions.back();
+    result.function->function = compiled_function.function;
+    ELEMENT_OK_OR_RETURN(generate_lmnt_constants(result, compiled_function.expression));
 
     // don't rely on function's inputs/outputs: no guarantee they are concrete
-    result.fn->inputs_size = get_input_size(cfn.expression);
-    result.fn->outputs_size = cfn.expression->get_size();
+    result.function->inputs_size = get_input_size(compiled_function.expression);
+    result.function->outputs_size = compiled_function.expression->get_size();
 
-    ELEMENT_OK_OR_RETURN(generate_lmnt_ops(result, cfn.expression));
+    ELEMENT_OK_OR_RETURN(generate_lmnt_ops(result, compiled_function.expression));
 
     return ELEMENT_OK;
 }
@@ -320,28 +320,28 @@ static element_result build_archive(
 }
 
 
-element_result element_lmnt_archive_init(element_lmnt_archive_ctx** ctx)
+element_result element_lmnt_archive_init(element_lmnt_archive_ctx** context)
 {
-    *ctx = new element_lmnt_archive_ctx;
+    *context = new element_lmnt_archive_ctx;
     return ELEMENT_OK;
 }
 
-void element_lmnt_archive_delete(element_lmnt_archive_ctx* ctx)
+void element_lmnt_archive_delete(element_lmnt_archive_ctx* context)
 {
-    delete ctx;
+    delete context;
 }
 
 element_result element_lmnt_compile(
-    element_interpreter_ctx* ctx,
-    const element_compiled_function* cfn,
+    element_interpreter_ctx* context,
+    const element_compiled_function* compiled_function,
     const element_lmnt_compile_options* opts,
     element_lmnt_archive_ctx* archive)
 {
-    assert(ctx);
-    assert(cfn);
+    assert(context);
+    assert(compiled_function);
     assert(opts);
     assert(archive);
-    return lmnt_compile(*ctx, *cfn, *opts, *archive);
+    return lmnt_compile(*context, *compiled_function, *opts, *archive);
 }
 
 element_result element_lmnt_archive_build(

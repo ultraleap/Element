@@ -263,24 +263,24 @@ void element_type_named::generate_ports_cache() const
         return;
 
     if (ast_node_struct_has_body(node)) {
-        for (auto& [child_name, child_scope] : m_scope->children) {
+        for (const auto& [child_name, child_scope] : m_scope->children) {
             //todo: a bit of a hack. a structs "return" scope is there so it can be used with compile_custom_fn_scope I guess? but does it also need to be part of the types output?
             const auto child_function = child_scope->function();
             m_outputs.emplace_back(port_info{ child_name, child_function ? child_function->type() : nullptr }); //TODO: CPP20 - emplace_back can use aggregate initialization
         }
     }
 
-    const element_ast* decl = ast_node_struct_get_declaration(node);
-    if (ast_node_declaration_has_inputs(decl)) {
-        const element_ast* inputs = ast_node_declaration_get_inputs(decl);
+    const element_ast* declaration = ast_node_struct_get_declaration(node);
+    if (ast_node_declaration_has_inputs(declaration)) {
+	    const auto inputs = ast_node_declaration_get_inputs(declaration);
 
         if (inputs->type == ELEMENT_AST_NODE_PORTLIST) {
             m_inputs = generate_portlist(m_scope, inputs);
         }
     }
 
-    if (ast_node_declaration_has_outputs(decl)) {
-        const element_ast* outputs = ast_node_declaration_get_outputs(decl);
+    if (ast_node_declaration_has_outputs(declaration)) {
+	    const auto outputs = ast_node_declaration_get_outputs(declaration);
 
         if (outputs->type == ELEMENT_AST_NODE_PORTLIST) {
             m_outputs = generate_portlist(m_scope, outputs); //todo: is this valid? does it work?

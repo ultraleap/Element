@@ -4,7 +4,7 @@
 namespace ast_idx
 {
 
-namespace fn
+namespace function
 {
     constexpr size_t declaration = 0;
     constexpr size_t body = 1;
@@ -16,7 +16,7 @@ namespace lambda
     constexpr size_t body = 1;
 }
 
-namespace decl
+namespace declaration
 {
     constexpr size_t inputs = 0;
     constexpr size_t outputs = 1;

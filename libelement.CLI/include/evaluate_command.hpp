@@ -45,7 +45,7 @@ namespace libelement::cli
 
 			//Not handling error responses properly yet
 			const auto evaluate = "evaluate = " + custom_arguments.expression + ";";
-			result = element_interpreter_load_string(ictx, evaluate.c_str(), "<input>");
+			result = element_interpreter_load_string(context, evaluate.c_str(), "<input>");
 			if (result != ELEMENT_OK) {
 				message_type type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
@@ -53,7 +53,7 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			result = element_interpreter_get_function(ictx, "evaluate", &fn);
+			result = element_interpreter_get_function(context, "evaluate", &fn);
 			if (result != ELEMENT_OK) {
 				message_type type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
@@ -61,7 +61,7 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			result = element_interpreter_compile_function(ictx, fn, &cfn, nullptr);
+			result = element_interpreter_compile_function(context, fn, &cfn, nullptr);
 			if (result != ELEMENT_OK) {
 				message_type type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
@@ -70,9 +70,9 @@ namespace libelement::cli
 			}
 
 			//HACK: just to get multiple values serializing, do something better here!
-			const auto size = get_outputs_size(ictx, cfn);
+			const auto size = get_outputs_size(context, cfn);
 			element_value outputs[256];
-			result = element_interpreter_evaluate_function(ictx, cfn, nullptr, 1, outputs, size, nullptr);
+			result = element_interpreter_evaluate_function(context, cfn, nullptr, 1, outputs, size, nullptr);
 			if (result != ELEMENT_OK) {
 				message_type type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)

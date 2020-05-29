@@ -128,18 +128,18 @@ namespace libelement::cli
 	{
 	protected:
 		common_command_arguments common_arguments;
-		element_interpreter_ctx* ictx;
+		element_interpreter_ctx* context;
 
 	public:
 		command(common_command_arguments common_arguments)
 			: common_arguments{ std::move(common_arguments) }
 		{
-			element_interpreter_create(&ictx);
+			element_interpreter_create(&context);
 		}
 
 		virtual ~command() {
 
-			element_interpreter_delete(ictx);
+			element_interpreter_delete(context);
 		}
 
 		//remove copy/move to be certain no implcit conversion is happening
@@ -193,7 +193,7 @@ namespace libelement::cli
 
 		void set_log_callback(const command::log_callback log_callback) const {
 
-			element_interpreter_set_log_callback(ictx, log_callback);
+			element_interpreter_set_log_callback(context, log_callback);
 		}
 
 	protected:
@@ -201,7 +201,7 @@ namespace libelement::cli
 		{
 			element_result result = ELEMENT_OK;
 			if (!input.get_no_prelude()) {
-				result = element_interpreter_load_prelude(ictx);
+				result = element_interpreter_load_prelude(context);
 				if (result != ELEMENT_OK) 
 				{
 					//TODO: Better solution for this? Forces a parse error on any file load error
@@ -215,7 +215,7 @@ namespace libelement::cli
 			auto packages = convert(input.get_packages());
 			auto packages_count = static_cast<int>(packages.size());
 			if (packages_count > 0) {
-				result = element_interpreter_load_packages(ictx, &packages[0], packages_count);
+				result = element_interpreter_load_packages(context, &packages[0], packages_count);
 				if (result != ELEMENT_OK)
 				{
 					//TODO: Better solution for this? Forces a parse error on any file load error
@@ -230,7 +230,7 @@ namespace libelement::cli
 			auto source_file_count = static_cast<int>(source_files.size());
 			if (source_file_count > 0) {
 				
-				result = element_interpreter_load_files(ictx, &source_files[0], source_file_count);
+				result = element_interpreter_load_files(context, &source_files[0], source_file_count);
 				if (result != ELEMENT_OK) 
 				{
 					//TODO: Better solution for this? Forces a parse error on any file load error

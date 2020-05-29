@@ -36,8 +36,6 @@ namespace libelement::cli
 				return compiler_message(ELEMENT_ERROR_PARSE,"Failed to setup context");
 
 			//call into libelement
-			const element_function* fn;
-			element_compiled_function* cfn;
 			const std::vector<trace_site> trace_site{};
 
 			//Not handling error responses properly yet
@@ -45,7 +43,7 @@ namespace libelement::cli
 			//todo: rename to normal typeof
 			std::string internaltypeof_string(256, '\0');
 
-			result = element_interpreter_get_internal_typeof(ictx, typeof.c_str(), "<input>", internaltypeof_string.data(), 256);
+			result = element_interpreter_get_internal_typeof(context, typeof.c_str(), "<input>", internaltypeof_string.data(), 256);
 			if (result != ELEMENT_OK)
 				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to get internal type of '" + typeof + "'");
 

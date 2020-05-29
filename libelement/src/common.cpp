@@ -12,11 +12,11 @@
 #include "configuration.hpp"
 
 #define PRINTCASE(a) case a: c = #a; break;
-std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const element_token* nearest_token)
+std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token)
 {
     std::string string;
 
-	for(const auto& token : tokeniser->tokens)
+	for(const auto& token : context->tokens)
 	{
         std::string c;
         switch (token.type)
@@ -46,7 +46,7 @@ std::string tokens_to_string(const element_tokeniser_ctx* tokeniser, const eleme
             for(auto i = chunks; chunks < 6; chunks++)
                 string += "\t";
 
-            auto text = tokeniser->text(&token);
+            auto text = context->text(&token);
             string += text;
 
             if (nearest_token == &token)
@@ -324,12 +324,12 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent, bool
         case ELEMENT_AST_NODE_DECLARATION:
         {
             ss << node->identifier;
-            if (node->children.size() > ast_idx::decl::inputs && has_children(node->children[ast_idx::decl::inputs].get())) {
-                ss << "(" + ast_to_code(node->children[ast_idx::decl::inputs].get(), node) << ")";
+            if (node->children.size() > ast_idx::declaration::inputs && has_children(node->children[ast_idx::declaration::inputs].get())) {
+                ss << "(" + ast_to_code(node->children[ast_idx::declaration::inputs].get(), node) << ")";
             }
 
-            if (node->children.size() > ast_idx::decl::outputs) {
-                ss << ast_to_code(node->children[ast_idx::decl::outputs].get(), node);
+            if (node->children.size() > ast_idx::declaration::outputs) {
+                ss << ast_to_code(node->children[ast_idx::declaration::outputs].get(), node);
             }
 
             ss << " = ";
