@@ -132,7 +132,7 @@ static element_result compile_intrinsic(
     }
 
     // not implemented yet
-    context.context.logger->log(context, ELEMENT_ERROR_NO_IMPL, fmt::format("Tried to compile intrinsic {} with no implementation.", function->name()));
+    context.log(ELEMENT_ERROR_NO_IMPL, fmt::format("Tried to compile intrinsic {} with no implementation.", function->name()), nullptr);
     assert(false);
     return ELEMENT_ERROR_NO_IMPL;
 }
@@ -225,7 +225,7 @@ element_result element_compile(
     compilation& output_compilation,
     element_compiler_options opts)
 {
-    element_compiler_ctx compiler_context = { context, std::move(opts) };
+    element_compiler_ctx compiler_context = { context.logger, std::move(opts)  };
     auto inputs = generate_placeholder_inputs(function->type().get());
     return element_compile(compiler_context, function, std::move(inputs), output_compilation);
 }
@@ -273,17 +273,13 @@ static element_result compile_custom_function_scope(
     const element_ast* node = enclosing_scope->node;
 
     if (node->type != ELEMENT_AST_NODE_FUNCTION) {
-        context.context.logger->log(context, ELEMENT_ERROR_INVALID_OPERATION, 
-            fmt::format("Tried to compile custom function enclosing_scope {} but it's not a function.", enclosing_scope->name),
-            node);
+        context.log(ELEMENT_ERROR_INVALID_OPERATION, fmt::format("Tried to compile custom function enclosing_scope {} but it's not a function.", enclosing_scope->name), node);
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
     }
 
     if (node->children.size() <= ast_idx::function::body)
     {
-        context.context.logger->log(context, ELEMENT_ERROR_INVALID_OPERATION, 
-            fmt::format("Tried to compile custom function enclosing_scope {} but it has no body.", enclosing_scope->name),
-            node);
+        context.log(ELEMENT_ERROR_INVALID_OPERATION, fmt::format("Tried to compile custom function enclosing_scope {} but it has no body.", enclosing_scope->name), node);
         return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code
     }
 
@@ -331,9 +327,7 @@ static element_result compile_custom_function_scope(
         return ELEMENT_OK;
     }
 
-    context.context.logger->log(context, ELEMENT_ERROR_INVALID_OPERATION,
-        fmt::format("Tried to find return enclosing_scope in function enclosing_scope {} and failed.", enclosing_scope->name),
-        node);
+    context.log(ELEMENT_ERROR_INVALID_OPERATION, fmt::format("Tried to find return enclosing_scope in function enclosing_scope {} and failed.", enclosing_scope->name), node);
     return ELEMENT_ERROR_INVALID_OPERATION;
 }
 
@@ -636,9 +630,7 @@ static element_result compile_lambda(
     compilation& output_compilation)
 {
     // TODO: this
-    context.context.logger->log(context, ELEMENT_ERROR_NO_IMPL,
-        fmt::format("Tried to compile lambda {}. Lambdas are not implemented in the compiler.", scope->name),
-        body_node);
+    context.log(ELEMENT_ERROR_NO_IMPL, fmt::format("Tried to compile lambda {}. Lambdas are not implemented in the compiler.", scope->name), body_node);
     return ELEMENT_ERROR_NO_IMPL;
 }
 
@@ -677,10 +669,10 @@ static element_result compile_expression(
 
     // interface
     if (body_node->type == ELEMENT_AST_NODE_CONSTRAINT) {
-        context.context.logger->log(context, ELEMENT_ERROR_NO_IMPL, "Tried to compile an expression with no implementation.", body_node);
+        context.log(ELEMENT_ERROR_NO_IMPL, "Tried to compile an expression with no implementation.", body_node);
         return ELEMENT_ERROR_NO_IMPL;  // TODO: better error code
     }
 
-    context.context.logger->log(context, ELEMENT_ERROR_UNKNOWN, "Tried to compile an expression that is unknown", body_node);
+    context.log(ELEMENT_ERROR_UNKNOWN, "Tried to compile an expression that is unknown", body_node);
     return ELEMENT_ERROR_UNKNOWN;
 }

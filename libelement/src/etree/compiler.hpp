@@ -84,10 +84,32 @@ private:
 
 struct element_compiler_ctx
 {
-    //todo: we use the logger in context, but we should have our own
-    element_interpreter_ctx& context;
+    std::shared_ptr<element_log_ctx> logger;
+	
     element_compiler_options options;
     compilation_cache comp_cache;
+
+    void set_log_callback(LogCallback callback)
+    {
+        logger = std::make_shared<element_log_ctx>();
+        logger->callback = callback;
+    }
+	
+    void log(element_result code, const std::string& message, const element_ast* nearest_ast)
+    {
+        if (logger == nullptr)
+            return;
+
+        logger->log(*this, code, message, nearest_ast);
+    }
+
+    void log(const std::string& message) const
+    {
+        if (logger == nullptr)
+            return;
+
+        logger->log(message, message_stage::ELEMENT_STAGE_COMPILER);
+    }
 };
 
 element_result element_compile(
