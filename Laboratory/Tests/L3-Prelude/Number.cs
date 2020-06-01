@@ -10,6 +10,17 @@ namespace Laboratory.Tests.L3.Prelude
 	/// </summary>
 	internal class Number : PreludeFixture
 	{
+		[
+			TestCase("Num(0)", "0"),
+			TestCase("Num(1)", "1"),
+			TestCase("Num(1.2)", "1.2"),
+			TestCase("Num(9999)", "9999"),
+			TestCase("Num(0.1)", "0.1"),
+			TestCase("Num(-0.1)", "-0.1")
+		]
+		public void Construct(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+
+		
 		#region Random
 		
 		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
