@@ -93,9 +93,6 @@ namespace Laboratory
             var (controlSuccess, control) = EvaluateControlExpression(compilationInput, controlExpression);
             var (resultSuccess, results) = EvaluateExpressions(compilationInput, expressions);
             var success = controlSuccess && resultSuccess;
-
-            //Check compiler responses
-            ExpectingSuccess(messages, success);
             
             //Check outputs
             results.Aggregate(control, (expected, result) =>
@@ -103,6 +100,9 @@ namespace Laboratory
                 CollectionAssert.AreEqual(expected, result, comparer);
                 return expected;
             });
+
+            //Check compiler responses
+            ExpectingSuccess(messages, success);
         }
 
         protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params float[][] results) =>
