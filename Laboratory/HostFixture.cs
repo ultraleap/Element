@@ -70,17 +70,20 @@ namespace Laboratory
             var messages = new List<CompilerMessage>();
             compilationInput.LogCallback = CacheMessage(messages);
 
-            var (controlSuccess, control) = EvaluateControlExpression(compilationInput, controlExpression);
-
-            //Check compiler responses
-            ExpectingSuccess(messages, controlSuccess);
+            var (success, control) = EvaluateControlExpression(compilationInput, controlExpression);
             
             //Check outputs
-            results.Aggregate(control, (expected, result) =>
+            if (success)
             {
-                CollectionAssert.AreEqual(expected, result, comparer);
-                return expected;
-            });
+                results.Aggregate(control, (expected, result) =>
+                {
+                    CollectionAssert.AreEqual(expected, result, comparer);
+                    return expected;
+                });
+            }
+
+            //Check compiler responses
+            ExpectingSuccess(messages, success);
         }
         
         private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params string[] expressions)
@@ -95,11 +98,14 @@ namespace Laboratory
             var success = controlSuccess && resultSuccess;
             
             //Check outputs
-            results.Aggregate(control, (expected, result) =>
+            if (success)
             {
-                CollectionAssert.AreEqual(expected, result, comparer);
-                return expected;
-            });
+                results.Aggregate(control, (expected, result) =>
+                {
+                    CollectionAssert.AreEqual(expected, result, comparer);
+                    return expected;
+                });
+            }
 
             //Check compiler responses
             ExpectingSuccess(messages, success);
