@@ -42,27 +42,13 @@ set(element_sources
     "src/obj_model/object_model.cpp"
 
     "src/obj_model/element_object.hpp"
-    "src/obj_model/identifier.hpp"
-    "src/obj_model/literal.hpp"
     "src/obj_model/type_annotation.hpp"
     "src/obj_model/port.hpp"
-    "src/obj_model/port_list.hpp"
-    "src/obj_model/expression_list.hpp"
     
     "src/obj_model/declarations/declaration.hpp"
     "src/obj_model/declarations/declaration.cpp"
-    #"src/obj_model/declarations/intrinsic_constraint_declaration.hpp"
-    #"src/obj_model/declarations/custom_constraint_declaration.hpp"
-    #"src/obj_model/declarations/intrinsic_function_declaration.hpp"
-    #"src/obj_model/declarations/custom_function_declaration.hpp"
-    #"src/obj_model/declarations/intrinsic_struct_declaration.hpp"
-    #"src/obj_model/declarations/custom_struct_declaration.hpp"
-    #"src/obj_model/declarations/namespace_declaration.hpp"
 
     "src/obj_model/expressions/expression.hpp"
-    #"src/obj_model/expressions/call_expression.hpp"
-    #"src/obj_model/expressions/indexing_expression.hpp"
-    #"src/obj_model/expressions/lambda_expression.hpp"
     
     "src/obj_model/scopes/scope.hpp"
     "src/obj_model/scopes/scope.cpp"
