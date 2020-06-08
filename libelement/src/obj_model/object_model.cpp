@@ -88,30 +88,30 @@ void build_function_body(element_ast* ast)
 	if(has_parent)
         build_function_body(ast->children[ast_idx::call::parent].get());
 
-    switch (ast->type)
-    {
-    case ELEMENT_AST_NODE_CONSTRAINT:
-        log("CONSTRAINT"); //ONLY IF INTRINSIC == true
-        break;
-    case ELEMENT_AST_NODE_LITERAL:
-        log("LITERAL");
-    	
-    	if(is_indexing)
-            log("INDEXING");
-        break;
-    case ELEMENT_AST_NODE_CALL:
-    	if(has_arguments) //call
-			log("CALL");
-    	
-        if(is_indexing) //then index result of call
-            log("INDEXING");
-        break;
-    case ELEMENT_AST_NODE_SCOPE:
-        log("SCOPE");
-        break;
-    default:
-        log("???");
-    }
+   // switch (ast->type)
+   // {
+   // case ELEMENT_AST_NODE_CONSTRAINT:
+   //     log("CONSTRAINT"); //ONLY IF INTRINSIC == true
+   //     break;
+   // case ELEMENT_AST_NODE_LITERAL:
+   //     log("LITERAL");
+   // 	
+   // 	if(is_indexing)
+   //         log("INDEXING");
+   //     break;
+   // case ELEMENT_AST_NODE_CALL:
+   // 	if(has_arguments) //call
+			//log("CALL");
+   // 	
+   //     if(is_indexing) //then index result of call
+   //         log("INDEXING");
+   //     break;
+   // case ELEMENT_AST_NODE_SCOPE:
+   //     log("SCOPE");
+   //     break;
+   // default:
+   //     log("???");
+   // }
 }
 
 std::unique_ptr<element::declaration> element::build_function_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
@@ -143,7 +143,7 @@ std::unique_ptr<element::declaration> element::build_namespace_declaration(eleme
 	auto namespace_decl = std::make_unique<namespace_declaration>(parent_scope);
     namespace_decl->identifier = ast->identifier;
 
-    log(namespace_decl->to_string());
+    //log(namespace_decl->to_string());
 
     if (ast->children.size() > ast_idx::ns::body)
     {
