@@ -30,6 +30,8 @@ namespace element
         [[nodiscard]] bool has_output() const;
 
         explicit declaration();
+
+        [[nodiscard]] virtual std::string location() const;
     };
 
     struct scoped_declaration : declaration {
@@ -42,12 +44,14 @@ namespace element
 
     	void add_declaration(std::unique_ptr<declaration> declaration) const;
 
-        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string location() const override;
     };
 
     struct struct_declaration : scoped_declaration
 	{
         struct_declaration(const std::shared_ptr<element::scope>& parent_scope, bool is_intrinsic);
+    	
+        [[nodiscard]] std::string to_string() const override;
     };
 	
     struct constraint_declaration : declaration
@@ -58,6 +62,8 @@ namespace element
     struct function_declaration : scoped_declaration
 	{
         function_declaration(const std::shared_ptr<element::scope>& parent_scope, bool is_intrinsic);
+
+        [[nodiscard]] std::string to_string() const override;
     };
 
     struct namespace_declaration : scoped_declaration

@@ -8,7 +8,6 @@
 
 namespace element
 {
-	
     struct scope : element_object
 	{
         std::shared_ptr<scope> parent_scope;
@@ -27,7 +26,8 @@ namespace element
     	{
             return parent_scope == nullptr;
     	}
-
+    	
+        [[nodiscard]] std::string location() const;
         [[nodiscard]] std::string to_string() const override;
     };
 
