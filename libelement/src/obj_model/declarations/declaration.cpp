@@ -1,4 +1,10 @@
 #include "declaration.hpp"
+
+
+#include <iterator>
+#include <numeric>
+#include <sstream>
+
 #include "../scopes/scope.hpp"
 
 //declaration
@@ -16,6 +22,11 @@ bool element::scoped_declaration::has_scope() const
 	return !scope->declarations.empty();
 }
 
+bool element::scoped_declaration::has_inputs() const
+{
+	return !inputs.empty();
+}
+
 void element::scoped_declaration::add_declaration(std::unique_ptr< element::declaration> declaration) const
 {
 	scope->declarations.push_back(std::move(declaration));
@@ -23,10 +34,22 @@ void element::scoped_declaration::add_declaration(std::unique_ptr< element::decl
 
 std::string element::scoped_declaration::to_string() const
 {
-	if (scope->parent_scope->is_root())
-		return identifier;
+	auto declaration = identifier;
 
-	return scope->parent_scope->to_string() + "." + identifier;
+	if (has_inputs()) {
+		static auto accumulate = [](std::string accumulator, const element::port& port)
+		{
+			return std::move(accumulator) + ", " + port.to_string();
+		};
+
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
+		declaration = identifier + "(" + input_ports + ")";
+	}
+
+	if (scope->parent_scope->is_root())
+		return declaration;
+
+	return scope->parent_scope->to_string() + "." + declaration;
 }
 
 //struct
