@@ -27,7 +27,10 @@ void build_output(element_ast* ast, element::declaration& declaration)
 {
     auto* const inputs = ast->children[ast_idx::declaration::outputs].get();
 
-    declaration.output = element::port("return");
+	//TODO: Handle complex return with port list and whatnot
+
+	//TODO: Use static definition for implicit return?
+    declaration.output = std::make_unique<element::port>("return");
 }
 
 void build_inputs(element_ast* ast, element::declaration& declaration)

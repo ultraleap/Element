@@ -3,7 +3,8 @@
 #include <memory>
 #include <memory>
 #include <string>
-#include <utility>
+#include <vector>
+
 
 #include "obj_model/port.hpp"
 #include "obj_model/element_object.hpp"
@@ -20,10 +21,13 @@ namespace element
 	struct declaration : element_object
 	{
         std::vector<port> inputs;
-        port output;
+        std::unique_ptr<port> output;
         std::string qualifier;
         std::string identifier;
         bool intrinsic;
+        [[nodiscard]] bool is_intrinsic() const;
+        [[nodiscard]] bool has_inputs() const;
+        [[nodiscard]] bool has_output() const;
 
         explicit declaration();
     };
@@ -33,7 +37,6 @@ namespace element
         std::shared_ptr<scope> scope;
 
         [[nodiscard]] bool has_scope() const;
-        [[nodiscard]] bool has_inputs() const;
     	
         explicit scoped_declaration(const std::shared_ptr<element::scope>& parent_scope);
 
