@@ -33,6 +33,7 @@ namespace element
         std::shared_ptr<scope> scope;
 
         [[nodiscard]] bool has_scope() const;
+        [[nodiscard]] bool has_inputs() const;
     	
         explicit scoped_declaration(const std::shared_ptr<element::scope>& parent_scope);
 

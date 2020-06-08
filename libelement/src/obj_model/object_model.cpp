@@ -21,6 +21,23 @@ void log(element_ast* ast)
     log(ast->identifier);
 }
 
+
+
+void build_output(element_ast* ast, element::declaration& declaration)
+{
+    auto* const inputs = ast->children[ast_idx::declaration::outputs].get();
+
+    declaration.output = element::port("return");
+}
+
+void build_inputs(element_ast* ast, element::declaration& declaration)
+{
+    auto* const inputs = ast->children[ast_idx::declaration::inputs].get();
+
+    for (auto& input : inputs->children)
+        declaration.inputs.emplace_back(input->identifier);
+}
+
 std::unique_ptr<element::declaration> element::build_struct_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
 {
 	auto* const decl = ast->children[ast_idx::function::declaration].get();
@@ -28,6 +45,9 @@ std::unique_ptr<element::declaration> element::build_struct_declaration(element_
 
 	auto struct_decl = std::make_unique<struct_declaration>(parent_scope, intrinsic);
     struct_decl->identifier = decl->identifier;
+
+    build_inputs(decl, *struct_decl);
+    build_output(decl, *struct_decl);
 
     log(struct_decl->to_string());
 
@@ -58,6 +78,9 @@ std::unique_ptr<element::declaration> element::build_function_declaration(elemen
 
 	auto function_decl = std::make_unique<function_declaration>(parent_scope, intrinsic);
     function_decl->identifier = decl->identifier;
+
+    build_inputs(decl, *function_decl);
+    build_output(decl, *function_decl);
 
     log(function_decl->to_string());
 
