@@ -8,8 +8,24 @@
 #include "../scopes/scope.hpp"
 
 //declaration
-element::declaration::declaration() : intrinsic{ false }
+element::declaration::declaration()
+	: intrinsic{ false }, output{ nullptr }
 {
+}
+
+bool element::declaration::is_intrinsic() const
+{
+	return intrinsic;
+}
+
+bool element::declaration::has_inputs() const
+{
+	return !inputs.empty();
+}
+
+bool element::declaration::has_output() const
+{
+	return output != nullptr;
 }
 
 element::scoped_declaration::scoped_declaration(const std::shared_ptr<element::scope>& parent_scope) : scope{ parent_scope }
@@ -22,11 +38,6 @@ bool element::scoped_declaration::has_scope() const
 	return !scope->declarations.empty();
 }
 
-bool element::scoped_declaration::has_inputs() const
-{
-	return !inputs.empty();
-}
-
 void element::scoped_declaration::add_declaration(std::unique_ptr< element::declaration> declaration) const
 {
 	scope->declarations.push_back(std::move(declaration));
@@ -35,6 +46,7 @@ void element::scoped_declaration::add_declaration(std::unique_ptr< element::decl
 std::string element::scoped_declaration::to_string() const
 {
 	auto declaration = identifier;
+
 
 	if (has_inputs()) {
 		static auto accumulate = [](std::string accumulator, const element::port& port)
@@ -46,10 +58,13 @@ std::string element::scoped_declaration::to_string() const
 		declaration = identifier + "(" + input_ports + ")";
 	}
 
-	if (scope->parent_scope->is_root())
-		return declaration;
+	if (scope->parent_scope->is_root()) 
+		return is_intrinsic() ? "intrinsic " + declaration : declaration;
 
-	return scope->parent_scope->to_string() + "." + declaration;
+	//recursive construction
+	declaration = scope->parent_scope->to_string() + "." + declaration;
+
+	return is_intrinsic() ? "intrinsic " + declaration : declaration;
 }
 
 //struct
