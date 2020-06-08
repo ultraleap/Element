@@ -11,7 +11,6 @@
 #include "construct.hpp"
 #include "typeutil.hpp"
 
-
 struct element_function : public element_construct, public rtti_type<element_function>
 {
     // type_shared_ptr type() { return m_type; }

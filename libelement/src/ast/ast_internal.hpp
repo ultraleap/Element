@@ -18,6 +18,30 @@
 
 using ast_unique_ptr = std::unique_ptr<element_ast, void(*)(element_ast*)>;
 
+//class ast_visitor
+//{
+//public:
+//    virtual void visit_none(element_ast* ast) = 0;
+//    virtual void visit_root(element_ast* ast) = 0;
+//    virtual void visit_function(element_ast* ast) = 0;
+//    virtual void visit_struct(element_ast* ast) = 0;
+//    virtual void visit_namespace(element_ast* ast) = 0;
+//    virtual void visit_declaration(element_ast* ast) = 0;
+//    virtual void visit_scope(element_ast* ast) = 0;
+//    virtual void visit_constraint(element_ast* ast) = 0;
+//    virtual void visit_expression(element_ast* ast) = 0;
+//    virtual void visit_expression_list(element_ast* ast) = 0;
+//    virtual void visit_port_list(element_ast* ast) = 0;
+//    virtual void visit_port(element_ast* ast) = 0;
+//    virtual void visit_typename(element_ast* ast) = 0;
+//    virtual void visit_call(element_ast* ast) = 0;
+//    virtual void visit_lambda(element_ast* ast) = 0;
+//    virtual void visit_identifier(element_ast* ast) = 0;
+//    virtual void visit_literal(element_ast* ast) = 0;
+//    virtual void visit_unspecified_type(element_ast* ast) = 0;
+//};
+
+//PRINTCASE(ELEMENT_TOK_NONE);
 struct element_ast
 {
     element_ast_node_type type;
@@ -34,6 +58,43 @@ struct element_ast
     {
         return (flags & flag) == flag;
     }
+
+//	//use for ast_node_as_code and ast_print at some point
+//    void visit(ast_visitor& visitor)
+//    {
+//        visit_node(visitor , this);
+//    	
+//        for(auto& child : children)
+//        {
+//            child->visit(visitor);
+//        }
+//    }
+//	
+//private:
+//    static void visit_node(ast_visitor& visitor, element_ast* ast)
+//    {
+//        switch(ast->type)
+//        {
+//        case ELEMENT_AST_NODE_NONE: visitor.visit_none(ast); break;
+//        case ELEMENT_AST_NODE_ROOT: visitor.visit_root(ast); break;
+//        case ELEMENT_AST_NODE_FUNCTION: visitor.visit_function(ast); break;
+//        case ELEMENT_AST_NODE_STRUCT: visitor.visit_struct(ast); break;
+//        case ELEMENT_AST_NODE_NAMESPACE: visitor.visit_namespace(ast); break;
+//        case ELEMENT_AST_NODE_DECLARATION: visitor.visit_declaration(ast); break;
+//        case ELEMENT_AST_NODE_SCOPE: visitor.visit_scope(ast); break;
+//        case ELEMENT_AST_NODE_CONSTRAINT: visitor.visit_constraint(ast); break;
+//        case ELEMENT_AST_NODE_EXPRESSION: visitor.visit_expression(ast); break;
+//        case ELEMENT_AST_NODE_EXPRLIST: visitor.visit_expression_list(ast); break;
+//        case ELEMENT_AST_NODE_PORTLIST: visitor.visit_port_list(ast); break;
+//        case ELEMENT_AST_NODE_PORT: visitor.visit_port(ast); break;
+//        case ELEMENT_AST_NODE_TYPENAME: visitor.visit_typename(ast); break;
+//        case ELEMENT_AST_NODE_CALL: visitor.visit_call(ast); break;
+//        case ELEMENT_AST_NODE_LAMBDA: visitor.visit_lambda(ast); break;
+//        case ELEMENT_AST_NODE_IDENTIFIER: visitor.visit_identifier(ast); break;
+//        case ELEMENT_AST_NODE_LITERAL: visitor.visit_literal(ast); break;
+//        case ELEMENT_AST_NODE_UNSPECIFIED_TYPE: visitor.visit_unspecified_type(ast); break;
+//	    }
+//    }
 
 #ifndef NDEBUG
     std::string ast_node_as_code;

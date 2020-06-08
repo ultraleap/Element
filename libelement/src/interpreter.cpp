@@ -16,6 +16,7 @@
 #include "ast/ast_indexes.hpp"
 #include "token_internal.hpp"
 #include "configuration.hpp"
+#include "obj_model/object_model.hpp"
 
 bool file_exists(const std::string& file)
 {
@@ -189,6 +190,8 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
         log(result, std::string("element_ast_build failed with element_result " + std::to_string(result)), filename);
     }
     ELEMENT_OK_OR_RETURN(result)
+
+	auto object_model = element::build_root_scope(parser.root);
 
     auto log_ast = starts_with_prelude
         ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
