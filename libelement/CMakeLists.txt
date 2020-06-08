@@ -25,6 +25,7 @@ set(element_sources
     "src/interpreter_internal.hpp"
     "src/token_internal.hpp"
 
+    #AST
     "src/ast/ast.cpp"
     "src/ast/ast_internal.hpp"
     "src/ast/ast_indexes.hpp"
@@ -35,7 +36,34 @@ set(element_sources
     "src/ast/scope.hpp"
     "src/ast/types.cpp"
     "src/ast/types.hpp"
+    
+    #Object model
+    "src/obj_model/object_model.hpp"
 
+    "src/obj_model/element_object.hpp"
+    "src/obj_model/identifier.hpp"
+    "src/obj_model/literal.hpp"
+    "src/obj_model/scope.hpp"
+    "src/obj_model/type_name.hpp"
+    "src/obj_model/port.hpp"
+    "src/obj_model/port_list.hpp"
+    "src/obj_model/expression_list.hpp"
+
+    "src/obj_model/declarations/declaration.hpp"
+    "src/obj_model/declarations/intrinsic_constraint_declaration.hpp"
+    "src/obj_model/declarations/custom_constraint_declaration.hpp"
+    "src/obj_model/declarations/intrinsic_function_declaration.hpp"
+    "src/obj_model/declarations/custom_function_declaration.hpp"
+    "src/obj_model/declarations/intrinsic_struct_declaration.hpp"
+    "src/obj_model/declarations/custom_struct_declaration.hpp"
+    "src/obj_model/declarations/namespace_declaration.hpp"
+
+    "src/obj_model/expressions/expression.hpp"
+    "src/obj_model/expressions/call_expression.hpp"
+    "src/obj_model/expressions/indexing_expression.hpp"
+    "src/obj_model/expressions/lambda_expression.hpp"
+
+    #Expression tree
     "src/etree/compiler.cpp"
     "src/etree/compiler.hpp"
     "src/etree/evaluator.cpp"
