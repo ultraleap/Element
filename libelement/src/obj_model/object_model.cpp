@@ -5,6 +5,7 @@
 #include "ast/ast_indexes.hpp"
 #include "ast/ast_internal.hpp"
 #include "declarations/declaration.hpp"
+#include "expressions/expression.hpp"
 
 void build_scope(element_ast* ast, const element::scoped_declaration& declaration);
 
@@ -23,16 +24,19 @@ void log(element_ast* ast)
     log(ast->identifier);
 }
 
-
-
 void build_output(element_ast* ast, element::declaration& declaration)
 {
-    auto* const inputs = ast->children[ast_idx::declaration::outputs].get();
+    auto has_declared_output = ast->children.size() > ast_idx::declaration::outputs;
 
-	//TODO: Handle complex return with port list and whatnot
+    //TODO: Handle complex return with port list and whatnot
+    if (has_declared_output) {
+        auto* const output = ast->children[ast_idx::declaration::outputs].get();
+    }
 
-	//TODO: Use static definition for implicit return?
+    //TODO: Use static definition for implicit return?
     declaration.output = std::make_unique<element::port>("return");
+    //TODO: Constraints
+    //declaration.constraint = std::make_unique<element_constraint>("return");
 }
 
 void build_inputs(element_ast* ast, element::declaration& declaration)
@@ -45,12 +49,13 @@ void build_inputs(element_ast* ast, element::declaration& declaration)
 
 std::unique_ptr<element::declaration> element::build_struct_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
 {
-	auto* const decl = ast->children[ast_idx::function::declaration].get();
+    auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-	auto struct_decl = std::make_unique<struct_declaration>(parent_scope, intrinsic);
+    auto struct_decl = std::make_unique<struct_declaration>(parent_scope, intrinsic);
     struct_decl->identifier = decl->identifier;
 
+    //fields
     build_inputs(decl, *struct_decl);
     build_output(decl, *struct_decl);
 
@@ -60,13 +65,13 @@ std::unique_ptr<element::declaration> element::build_struct_declaration(element_
     {
         if (ast->children.size() > ast_idx::function::body)
         {
-            auto body = ast->children[ast_idx::function::body].get();
+            auto* body = ast->children[ast_idx::function::body].get();
             if (body->type == ELEMENT_AST_NODE_SCOPE)
                 build_scope(body, *struct_decl);
         }
     }
 
-    return struct_decl;
+    return std::move(struct_decl);
 }
 
 std::unique_ptr<element::declaration> element::build_constraint_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
@@ -74,85 +79,162 @@ std::unique_ptr<element::declaration> element::build_constraint_declaration(elem
     return nullptr;
 }
 
-void build_function_body(element_ast* ast)
-{
-    const auto has_parent =
-        ast->children.size() > ast_idx::call::parent && ast->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
-
-    const auto has_arguments = ast->children.size() > ast_idx::call::args
-        && ast->children[ast_idx::call::args]->type != ELEMENT_AST_NODE_NONE;
-
-    const auto is_indexing = ast->parent && ast->parent->type == ELEMENT_AST_NODE_CALL;
-	
-	//recurse
-	if(has_parent)
-        build_function_body(ast->children[ast_idx::call::parent].get());
-
-   // switch (ast->type)
-   // {
-   // case ELEMENT_AST_NODE_CONSTRAINT:
-   //     log("CONSTRAINT"); //ONLY IF INTRINSIC == true
-   //     break;
-   // case ELEMENT_AST_NODE_LITERAL:
-   //     log("LITERAL");
-   // 	
-   // 	if(is_indexing)
-   //         log("INDEXING");
-   //     break;
-   // case ELEMENT_AST_NODE_CALL:
-   // 	if(has_arguments) //call
-			//log("CALL");
-   // 	
-   //     if(is_indexing) //then index result of call
-   //         log("INDEXING");
-   //     break;
-   // case ELEMENT_AST_NODE_SCOPE:
-   //     log("SCOPE");
-   //     break;
-   // default:
-   //     log("???");
-   // }
-}
-
 std::unique_ptr<element::declaration> element::build_function_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
 {
-	//HC SVNT DRACONES
+    auto* const body = ast->children[ast_idx::function::body].get();
+    if (body->type == ELEMENT_AST_NODE_SCOPE)
+        return build_scope_bodied_function_declaration(ast, parent_scope);
+
+    if (body->type == ELEMENT_AST_NODE_CALL) 
+        return build_expression_bodied_function_declaration(ast, parent_scope);
+
+    //TODO: Handle this properly
+    //if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
+    //    return build_constraint_declaration(ast, parent_scope);
+
+    return nullptr;
+}
+
+std::unique_ptr<element::declaration> element::build_scope_bodied_function_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
+{
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-	auto function_decl = std::make_unique<function_declaration>(parent_scope, intrinsic);
+    auto function_decl = std::make_unique<function_declaration>(parent_scope, intrinsic);
     function_decl->identifier = decl->identifier;
 
     build_inputs(decl, *function_decl);
     build_output(decl, *function_decl);
 
-    log(function_decl->to_string());
-
     auto* const body = ast->children[ast_idx::function::body].get();
     if (body->type == ELEMENT_AST_NODE_SCOPE)
         build_scope(body, *function_decl);
+
+    log(function_decl->to_string());
+
+    return std::move(function_decl);
+}
+
+[[nodiscard]] std::shared_ptr<element::expression> build_identifier_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
+{
+    const auto identifier_expression = std::make_shared<element::identifier_expression>(ast->identifier);
+    parent->children.push_back(identifier_expression);
+    return parent;
+}
+
+[[nodiscard]] std::shared_ptr<element::expression> build_literal_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
+{
+	const auto literal_expression = std::make_shared<element::literal_expression>(ast->literal);
+    parent->children.push_back(literal_expression);
+    return parent;
+}
+
+[[nodiscard]] std::shared_ptr<element::expression> build_call_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
+{
+    const auto call_expression = std::make_shared<element::call_expression>();
 	
-    if (body->type == ELEMENT_AST_NODE_CALL)
-		build_function_body(body);
+    auto* const expressions = ast->children[ast_idx::call::args].get();
+    for (auto& expression : expressions->children)
+        auto result = build_expression(expression.get(), call_expression);
+
+    parent->children.push_back(call_expression);
+    return parent;
+}
+
+std::shared_ptr<element::expression> element::build_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
+{
+    const auto has_parent =
+        ast->children.size() > ast_idx::call::parent && ast->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
+
+	const auto has_arguments = 
+        ast->children.size() > ast_idx::call::args && ast->children[ast_idx::call::args]->type == ELEMENT_AST_NODE_EXPRLIST;
+
+    //recurse up to parent to reverse ast definition
+    if (has_parent) 
+        parent = build_expression(ast->children[ast_idx::call::parent].get(), parent);
+
+    const auto is_literal = ast->type == ELEMENT_AST_NODE_LITERAL;
+    if (is_literal)
+        return build_literal_expression(ast, std::move(parent));
 	
-    return function_decl;
+    const auto is_identifier = ast->type == ELEMENT_AST_NODE_IDENTIFIER
+        || (!has_parent && ast->type == ELEMENT_AST_NODE_CALL);
+
+    //identifier shouldn't return early, if it is followed by a call expression,
+	//since indexing and call expressions are combined in the ast stage
+    if (is_identifier) {
+        auto expression = build_identifier_expression(ast, std::move(parent));
+        if (!has_arguments)
+            return expression;
+    	
+        parent = expression;
+    }
+
+    //indexing shouldn't return early, as it *might* be followed by a call expression,
+    //since indexing and call expressions are combined in the ast stage
+    const auto is_indexing = has_parent
+        && (ast->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_CALL || ast->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_LITERAL);
+
+	if (is_indexing)
+    {
+        auto indexing_expression = std::make_unique<element::indexing_expression>(ast->identifier);
+        parent->children.push_back(std::move(indexing_expression));
+    }
+
+	if(has_arguments)
+        return build_call_expression(ast, std::move(parent));
+	
+    return parent;
+}
+
+std::unique_ptr<element::declaration> element::build_expression_bodied_function_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
+{
+    //HC SVNT DRACONES
+    auto* const decl = ast->children[ast_idx::function::declaration].get();
+    auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+
+    auto function_decl = std::make_unique<element::expression_bodied_function_declaration>(parent_scope);
+    function_decl->identifier = decl->identifier;
+
+    build_inputs(decl, *function_decl);
+    build_output(decl, *function_decl);
+
+    const auto has_parent =
+        ast->children.size() > ast_idx::call::parent && ast->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE
+        || ast->parent && ast->parent->type != ELEMENT_AST_NODE_NONE;
+
+    const auto has_arguments = ast->children.size() > ast_idx::call::args
+        && ast->children[ast_idx::call::args]->type != ELEMENT_AST_NODE_NONE;
+
+    const auto is_indexing = ast->parent && ast->parent->type == ELEMENT_AST_NODE_CALL;
+
+    auto* const body = ast->children[ast_idx::function::body].get();
+    if (body->type == ELEMENT_AST_NODE_CALL) {
+
+        auto expression = std::make_unique<element::expression>();
+        function_decl->expression = build_expression(body, std::move(expression));
+    }
+	
+    log(function_decl->to_string());
+
+    return std::move(function_decl);
 }
 
 std::unique_ptr<element::declaration> element::build_namespace_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
 {
-	auto namespace_decl = std::make_unique<namespace_declaration>(parent_scope);
+    auto namespace_decl = std::make_unique<namespace_declaration>(parent_scope);
     namespace_decl->identifier = ast->identifier;
 
     //log(namespace_decl->to_string());
 
     if (ast->children.size() > ast_idx::ns::body)
     {
-        auto body = ast->children[ast_idx::ns::body].get();
-    	if(body->type == ELEMENT_AST_NODE_SCOPE)
-			build_scope(body, *namespace_decl);
+        auto* body = ast->children[ast_idx::ns::body].get();
+        if (body->type == ELEMENT_AST_NODE_SCOPE)
+            build_scope(body, *namespace_decl);
     }
 
-    return namespace_decl;
+    return std::move(namespace_decl);
 }
 
 std::unique_ptr<element::declaration> element::build_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)

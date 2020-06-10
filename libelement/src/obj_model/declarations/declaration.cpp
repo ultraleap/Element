@@ -1,15 +1,10 @@
 #include "declaration.hpp"
 
-
-#include <iterator>
-#include <numeric>
-#include <sstream>
-
 #include "../scopes/scope.hpp"
 
 //declaration
 element::declaration::declaration()
-	: intrinsic{ false }, output{ nullptr }
+	: output{ nullptr }
 {
 }
 
@@ -28,11 +23,17 @@ bool element::declaration::has_output() const
 	return output != nullptr;
 }
 
+bool element::declaration::has_constraint() const
+{
+	return constraint != nullptr;
+}
+
 std::string element::declaration::location() const
 {
 	return identifier;
 }
 
+//scoped_declaration
 element::scoped_declaration::scoped_declaration(const std::shared_ptr<element::scope>& parent_scope) : scope{ parent_scope }
 {
 	scope = std::make_shared<element::scope>(parent_scope, this);
@@ -43,7 +44,7 @@ bool element::scoped_declaration::has_scope() const
 	return !scope->declarations.empty();
 }
 
-void element::scoped_declaration::add_declaration(std::unique_ptr< element::declaration> declaration) const
+void element::scoped_declaration::add_declaration(std::unique_ptr<element::declaration> declaration) const
 {
 	scope->declarations.push_back(std::move(declaration));
 }
@@ -51,17 +52,6 @@ void element::scoped_declaration::add_declaration(std::unique_ptr< element::decl
 std::string element::scoped_declaration::location() const
 {
 	auto declaration = identifier;
-
-	//TODO: If we need to print port lists, this'll do it. Move it wherever it is needed
-	//if (has_inputs()) {
-	//	static auto accumulate = [](std::string accumulator, const element::port& port)
-	//	{
-	//		return std::move(accumulator) + "," + port.to_string();
-	//	};
-
-	//	const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
-	//	declaration = identifier + "(" + input_ports + ")";
-	//}
 
 	if (scope->parent_scope->is_root())
 		return declaration;
@@ -80,7 +70,7 @@ element::struct_declaration::struct_declaration(const std::shared_ptr<element::s
 
 std::string element::struct_declaration::to_string() const
 {
-	return location() +":Struct";
+	return location() + ":Struct";
 }
 
  //constraint
@@ -101,11 +91,36 @@ element::function_declaration::function_declaration(const std::shared_ptr<elemen
 
 std::string element::function_declaration::to_string() const
 {
-	return location() + ":Function";
+	auto declaration = identifier;
+
+	if (has_inputs()) {
+		static auto accumulate = [](std::string accumulator, const element::port& port)
+		{
+			return std::move(accumulator) + "," + port.to_string();
+		};
+	
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
+		declaration = identifier + "(" + input_ports + ")";
+	}
+	
+	return location() + declaration + ":Function";
+}
+
+//expression bodied function
+element::expression_bodied_function_declaration::expression_bodied_function_declaration(const std::shared_ptr<element::scope>& parent_scope)
+	: scoped_declaration(parent_scope)
+{
+	qualifier = function_qualifier;
+	intrinsic = false;
+}
+
+std::string element::expression_bodied_function_declaration::to_string() const
+{
+	return location() + expression->to_string() + ":Function";
 }
 
 //namespace
-element::namespace_declaration::namespace_declaration(std::shared_ptr<element::scope> parent_scope)
+element::namespace_declaration::namespace_declaration(const std::shared_ptr<element::scope>& parent_scope)
 	: scoped_declaration(parent_scope)
 {
 	qualifier = namespace_qualifier;

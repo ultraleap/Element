@@ -13,6 +13,7 @@
 #include "construct.hpp"
 #include "typeutil.hpp"
 
+//TODO: It looks like this being based on element_construct is largely irrelevant at the moment, can easily be switched out
 struct element_expression : public element_construct, public rtti_type<element_expression>
 {
     const std::vector<expression_shared_ptr>& dependents() const { return m_dependents; }

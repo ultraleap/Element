@@ -8,34 +8,40 @@
 
 #include "obj_model/port.hpp"
 #include "obj_model/element_object.hpp"
+#include "obj_model/expressions/expression.hpp"
 
 namespace element
 {
     struct scope;
-	
+
+    static const std::string intrinsic_qualifier = "intrinsic";
 	static const std::string namespace_qualifier = "namespace";
-    static const std::string struct_qualifier = "struct";
     static const std::string constraint_qualifier = "constraint";
-    static const std::string function_qualifier = "function";
+    static const std::string struct_qualifier = "struct";
+    static const std::string function_qualifier; //empty string
+    static const std::string return_keyword = "return";
 	
 	struct declaration : element_object
 	{
         std::vector<port> inputs;
         std::unique_ptr<port> output;
-        std::string qualifier;
+        std::unique_ptr<element_constraint> constraint;
+		
+		std::string qualifier;
         std::string identifier;
-        bool intrinsic;
-        [[nodiscard]] bool is_intrinsic() const;
-        [[nodiscard]] bool has_inputs() const;
-        [[nodiscard]] bool has_output() const;
+        bool intrinsic = false;
 
         explicit declaration();
-
+		
+        [[nodiscard]] bool has_inputs() const;
+        [[nodiscard]] bool has_output() const;
+        [[nodiscard]] bool has_constraint() const;
+        [[nodiscard]] bool is_intrinsic() const;
         [[nodiscard]] virtual std::string location() const;
     };
 
-    struct scoped_declaration : declaration {
-    	
+    struct scoped_declaration : declaration
+	{
         std::shared_ptr<scope> scope;
 
         [[nodiscard]] bool has_scope() const;
@@ -47,27 +53,36 @@ namespace element
         [[nodiscard]] std::string location() const override;
     };
 
-    struct struct_declaration : scoped_declaration
+    struct struct_declaration final : scoped_declaration
 	{
         struct_declaration(const std::shared_ptr<element::scope>& parent_scope, bool is_intrinsic);
     	
         [[nodiscard]] std::string to_string() const override;
     };
 	
-    struct constraint_declaration : declaration
+    struct constraint_declaration final : declaration
 	{
 		constraint_declaration(bool is_intrinsic);
     };
 
-    struct function_declaration : scoped_declaration
+    struct function_declaration final : scoped_declaration
 	{
         function_declaration(const std::shared_ptr<element::scope>& parent_scope, bool is_intrinsic);
 
         [[nodiscard]] std::string to_string() const override;
     };
 
-    struct namespace_declaration : scoped_declaration
+    struct expression_bodied_function_declaration final : scoped_declaration {
+
+        std::shared_ptr<expression> expression;
+    	
+        expression_bodied_function_declaration(const std::shared_ptr<element::scope>& parent_scope);
+
+        [[nodiscard]] std::string to_string() const override;
+    };
+
+    struct namespace_declaration final : scoped_declaration
 	{
-        namespace_declaration(std::shared_ptr<element::scope> parent_scope);
+        namespace_declaration(const std::shared_ptr<element::scope>& parent_scope);
     };
 }

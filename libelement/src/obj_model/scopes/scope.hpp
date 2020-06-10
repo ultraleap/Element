@@ -31,7 +31,7 @@ namespace element
         [[nodiscard]] std::string to_string() const override;
     };
 
-    struct root_scope : scope
+    struct root_scope final : scope
 	{
         explicit root_scope()
             : scope(nullptr, nullptr)
