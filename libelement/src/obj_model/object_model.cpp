@@ -115,13 +115,6 @@ std::unique_ptr<element::declaration> element::build_scope_bodied_function_decla
     return std::move(function_decl);
 }
 
-[[nodiscard]] std::shared_ptr<element::expression> build_identifier_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
-{
-    const auto identifier_expression = std::make_shared<element::identifier_expression>(ast->identifier);
-    parent->children.push_back(identifier_expression);
-    return parent;
-}
-
 [[nodiscard]] std::shared_ptr<element::expression> build_literal_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
 {
 	const auto literal_expression = std::make_shared<element::literal_expression>(ast->literal);
@@ -156,19 +149,6 @@ std::shared_ptr<element::expression> element::build_expression(element_ast* ast,
     const auto is_literal = ast->type == ELEMENT_AST_NODE_LITERAL;
     if (is_literal)
         return build_literal_expression(ast, std::move(parent));
-	
-    const auto is_identifier = ast->type == ELEMENT_AST_NODE_IDENTIFIER
-        || (!has_parent && ast->type == ELEMENT_AST_NODE_CALL);
-
-    //identifier shouldn't return early, if it is followed by a call expression,
-	//since indexing and call expressions are combined in the ast stage
-    if (is_identifier) {
-        auto expression = build_identifier_expression(ast, std::move(parent));
-        if (!has_arguments)
-            return expression;
-    	
-        parent = expression;
-    }
 
     //indexing shouldn't return early, as it *might* be followed by a call expression,
     //since indexing and call expressions are combined in the ast stage
@@ -177,8 +157,13 @@ std::shared_ptr<element::expression> element::build_expression(element_ast* ast,
 
 	if (is_indexing)
     {
-        auto indexing_expression = std::make_unique<element::indexing_expression>(ast->identifier);
-        parent->children.push_back(std::move(indexing_expression));
+	    auto indexing_expression = std::make_unique<element::indexing_expression>(ast->identifier);
+	    parent->children.push_back(std::move(indexing_expression));
+    }
+    else
+    {
+	    const auto identifier_expression = std::make_shared<element::identifier_expression>(ast->identifier);
+	    parent->children.push_back(identifier_expression);
     }
 
 	if(has_arguments)
