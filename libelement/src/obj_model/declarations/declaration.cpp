@@ -96,7 +96,7 @@ std::string element::function_declaration::to_string() const
 	if (has_inputs()) {
 		static auto accumulate = [](std::string accumulator, const element::port& port)
 		{
-			return std::move(accumulator) + "," + port.to_string();
+			return std::move(accumulator) + ", " + port.to_string();
 		};
 	
 		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
@@ -116,7 +116,7 @@ element::expression_bodied_function_declaration::expression_bodied_function_decl
 
 std::string element::expression_bodied_function_declaration::to_string() const
 {
-	return location() + expression->to_string() + ":Function";
+	return location() + " = " + expression->to_string() + ":Function";
 }
 
 //namespace
