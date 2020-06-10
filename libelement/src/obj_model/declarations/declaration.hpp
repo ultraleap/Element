@@ -42,11 +42,11 @@ namespace element
 
     struct scoped_declaration : declaration
 	{
-        std::shared_ptr<scope> scope;
+        std::unique_ptr<scope> scope;
 
         [[nodiscard]] bool has_scope() const;
     	
-        explicit scoped_declaration(const std::shared_ptr<element::scope>& parent_scope);
+        explicit scoped_declaration(const element::scope* parent_scope);
 
     	void add_declaration(std::unique_ptr<declaration> declaration) const;
 
@@ -55,7 +55,7 @@ namespace element
 
     struct struct_declaration final : scoped_declaration
 	{
-        struct_declaration(const std::shared_ptr<element::scope>& parent_scope, bool is_intrinsic);
+        struct_declaration(const element::scope* parent_scope, bool is_intrinsic);
     	
         [[nodiscard]] std::string to_string() const override;
     };
@@ -67,7 +67,7 @@ namespace element
 
     struct function_declaration final : scoped_declaration
 	{
-        function_declaration(const std::shared_ptr<element::scope>& parent_scope, bool is_intrinsic);
+        function_declaration(const element::scope* parent_scope, bool is_intrinsic);
 
         [[nodiscard]] std::string to_string() const override;
     };
@@ -76,14 +76,14 @@ namespace element
 
         std::shared_ptr<expression> expression;
     	
-        expression_bodied_function_declaration(const std::shared_ptr<element::scope>& parent_scope);
+        expression_bodied_function_declaration(const element::scope* parent_scope);
 
         [[nodiscard]] std::string to_string() const override;
     };
 
     struct namespace_declaration final : scoped_declaration
 	{
-        namespace_declaration(const std::shared_ptr<element::scope>& parent_scope);
+        namespace_declaration(const element::scope* parent_scope);
 
         [[nodiscard]] std::string to_string() const override;
     };

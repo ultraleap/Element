@@ -34,9 +34,10 @@ std::string element::declaration::location() const
 }
 
 //scoped_declaration
-element::scoped_declaration::scoped_declaration(const std::shared_ptr<element::scope>& parent_scope) : scope{ parent_scope }
+element::scoped_declaration::scoped_declaration(const element::scope* parent_scope)
+	: scope(std::make_unique<element::scope>(parent_scope, this))
 {
-	scope = std::make_shared<element::scope>(parent_scope, this);
+
 }
 
 bool element::scoped_declaration::has_scope() const
@@ -61,7 +62,7 @@ std::string element::scoped_declaration::location() const
 }
 
 //struct
-element::struct_declaration::struct_declaration(const std::shared_ptr<element::scope>& parent_scope, bool is_intrinsic)
+element::struct_declaration::struct_declaration(const element::scope* parent_scope, bool is_intrinsic)
 	: scoped_declaration(parent_scope)
 {
 	qualifier = struct_qualifier;
@@ -94,7 +95,7 @@ element::constraint_declaration::constraint_declaration(bool is_intrinsic)
 
 
 //function
-element::function_declaration::function_declaration(const std::shared_ptr<element::scope>& parent_scope, bool is_intrinsic)
+element::function_declaration::function_declaration(const element::scope* parent_scope, bool is_intrinsic)
 	: scoped_declaration(parent_scope)
 {
 	qualifier = function_qualifier;
@@ -119,7 +120,7 @@ std::string element::function_declaration::to_string() const
 }
 
 //expression bodied function
-element::expression_bodied_function_declaration::expression_bodied_function_declaration(const std::shared_ptr<element::scope>& parent_scope)
+element::expression_bodied_function_declaration::expression_bodied_function_declaration(const element::scope* parent_scope)
 	: scoped_declaration(parent_scope)
 {
 	qualifier = function_qualifier;
@@ -132,7 +133,7 @@ std::string element::expression_bodied_function_declaration::to_string() const
 }
 
 //namespace
-element::namespace_declaration::namespace_declaration(const std::shared_ptr<element::scope>& parent_scope)
+element::namespace_declaration::namespace_declaration(const element::scope* parent_scope)
 	: scoped_declaration(parent_scope)
 {
 	qualifier = namespace_qualifier;
