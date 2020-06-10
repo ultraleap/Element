@@ -8,6 +8,8 @@ namespace element
 {
     struct element_object
 	{
+		virtual ~element_object() = default;
+    	
 		[[nodiscard]] virtual std::string to_string() const { return ""; }
     };
 

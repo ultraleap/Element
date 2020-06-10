@@ -1,12 +1,18 @@
 //#pragma once
 //
+//#include <memory>
+//
 //#include "element_object.hpp"
+//#include "expressions/expression.hpp"
 //
 //namespace element
 //{
-//    struct type_annotation : public element_object
+//    struct type_annotation final : element_object
 //	{
-//        explicit type_annotation(element_object* parent) : element_object(parent)
+//        std::shared_ptr<expression> expression;
+//    	
+//        explicit type_annotation(std::shared_ptr<element::expression> expression) :
+//    		expression{std::move(expression)}
 //        {
 //        }
 //    };

@@ -15,6 +15,12 @@
 #include "token_internal.hpp"
 #include "MemoryPool.h"
 
+//static const std::string intrinsic_qualifier = "intrinsic";
+//static const std::string namespace_qualifier = "namespace";
+//static const std::string struct_qualifier = "struct";
+//static const std::string constraint_qualifier = "constraint";
+//static const std::string return_keyword = "return";
+
 static std::unordered_set<std::string> qualifiers {"intrinsic"};
 static std::unordered_set<std::string> constructs{ "struct", "namespace", "constraint"};
 static std::unordered_set<std::string> reserved_args{};

@@ -42,7 +42,7 @@ set(element_sources
     "src/obj_model/object_model.cpp"
 
     "src/obj_model/element_object.hpp"
-    "src/obj_model/type_annotation.hpp"
+    #"src/obj_model/type_annotation.hpp"
     "src/obj_model/port.hpp"
     
     "src/obj_model/declarations/declaration.hpp"

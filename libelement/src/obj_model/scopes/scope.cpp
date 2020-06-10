@@ -10,7 +10,7 @@ std::string element::scope::location() const
 	return declarer->location();
 }
 
-void element::scope::add_declaration(std::unique_ptr< element::declaration> declaration)
+void element::scope::add_declaration(std::unique_ptr<element::declaration> declaration)
 {
     declarations.push_back(std::move(declaration));
 }

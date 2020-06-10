@@ -2,9 +2,7 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 
-#include "ast/ast_internal.hpp"
 #include "ast/fwd.hpp"
 #include "ast/scope.hpp"
 #include "ast/types.hpp"

@@ -4,13 +4,18 @@
 #include <vector>
 
 #include "element_object.hpp"
+#include "ast/types.hpp"
 
 namespace element
 {
-    struct port : element_object
+	struct type_annotation;
+
+	struct port : element_object
 	{
         std::string identifier;
-    	//TODO: type annotation & constraint matching
+		
+        //TODO: constraint matching
+        std::unique_ptr<element_constraint> constraint;
 
         explicit port(std::string identifier = "")
     		: identifier{std::move(identifier)}
