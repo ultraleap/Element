@@ -47,7 +47,7 @@ void build_inputs(element_ast* ast, element::declaration& declaration)
         declaration.inputs.emplace_back(input->identifier);
 }
 
-std::unique_ptr<element::declaration> element::build_struct_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
+std::unique_ptr<element::declaration> element::build_struct_declaration(const element_ast* const ast, const std::shared_ptr<element::scope>& parent_scope)
 {
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -74,12 +74,12 @@ std::unique_ptr<element::declaration> element::build_struct_declaration(element_
     return std::move(struct_decl);
 }
 
-std::unique_ptr<element::declaration> element::build_constraint_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
+std::unique_ptr<element::declaration> element::build_constraint_declaration(const element_ast* const ast, const std::shared_ptr<element::scope>& parent_scope)
 {
     return nullptr;
 }
 
-std::unique_ptr<element::declaration> element::build_function_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
+std::unique_ptr<element::declaration> element::build_function_declaration(const element_ast* const ast, const std::shared_ptr<element::scope>& parent_scope)
 {
     auto* const body = ast->children[ast_idx::function::body].get();
     if (body->type == ELEMENT_AST_NODE_SCOPE)
@@ -95,7 +95,7 @@ std::unique_ptr<element::declaration> element::build_function_declaration(elemen
     return nullptr;
 }
 
-std::unique_ptr<element::declaration> element::build_scope_bodied_function_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
+std::unique_ptr<element::declaration> element::build_scope_bodied_function_declaration(const element_ast* const ast, const std::shared_ptr<element::scope>& parent_scope)
 {
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -115,14 +115,14 @@ std::unique_ptr<element::declaration> element::build_scope_bodied_function_decla
     return std::move(function_decl);
 }
 
-[[nodiscard]] std::shared_ptr<element::expression> build_literal_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
+[[nodiscard]] std::shared_ptr<element::expression> build_literal_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
 {
 	const auto literal_expression = std::make_shared<element::literal_expression>(ast->literal);
     parent->children.push_back(literal_expression);
     return parent;
 }
 
-[[nodiscard]] std::shared_ptr<element::expression> build_call_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
+[[nodiscard]] std::shared_ptr<element::expression> build_call_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
 {
 	//create call expression to represent the nested expression
     const auto call_expression = std::make_shared<element::call_expression>();
@@ -140,7 +140,7 @@ std::unique_ptr<element::declaration> element::build_scope_bodied_function_decla
     return parent;
 }
 
-std::shared_ptr<element::expression> element::build_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
+std::shared_ptr<element::expression> element::build_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
 {
     //HC SVNT DRACONES
     const auto has_parent =
@@ -179,7 +179,7 @@ std::shared_ptr<element::expression> element::build_expression(element_ast* ast,
     return parent;
 }
 
-std::unique_ptr<element::declaration> element::build_expression_bodied_function_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
+std::unique_ptr<element::declaration> element::build_expression_bodied_function_declaration(const element_ast* const ast, const std::shared_ptr<element::scope>& parent_scope)
 {
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -202,12 +202,12 @@ std::unique_ptr<element::declaration> element::build_expression_bodied_function_
     return std::move(function_decl);
 }
 
-std::unique_ptr<element::declaration> element::build_namespace_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
+std::unique_ptr<element::declaration> element::build_namespace_declaration(const element_ast* const ast, const std::shared_ptr<element::scope>& parent_scope)
 {
     auto namespace_decl = std::make_unique<namespace_declaration>(parent_scope);
     namespace_decl->identifier = ast->identifier;
 
-    //log(namespace_decl->to_string());
+    log(namespace_decl->to_string());
 
     if (ast->children.size() > ast_idx::ns::body)
     {
@@ -219,7 +219,7 @@ std::unique_ptr<element::declaration> element::build_namespace_declaration(eleme
     return std::move(namespace_decl);
 }
 
-std::unique_ptr<element::declaration> element::build_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
+std::unique_ptr<element::declaration> element::build_declaration(const element_ast* const ast, const std::shared_ptr<element::scope>& parent_scope)
 {
     if (ast->type == ELEMENT_AST_NODE_STRUCT)
         return build_struct_declaration(ast, parent_scope);
@@ -247,7 +247,7 @@ void build_scope(element_ast* ast, const element::scoped_declaration& declaratio
     }
 }
 
-std::shared_ptr<element::root_scope> element::build_root_scope(element_ast* ast)
+std::shared_ptr<element::root_scope> element::build_root_scope(const element_ast* const ast)
 {
     if (ast->type != ELEMENT_AST_NODE_ROOT) {
 

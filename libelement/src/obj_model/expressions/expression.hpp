@@ -29,9 +29,9 @@ namespace element
 
 	struct literal_expression final : expression
 	{
-        float value;
+        element_value value;
 
-        explicit literal_expression(float value)
+        explicit literal_expression(const element_value value)
 			: value{value}
         {
         }
@@ -85,6 +85,7 @@ namespace element
 	
     struct lambda_expression final : expression
 	{
+		//TODO
         std::vector<port> inputs;
         std::unique_ptr<port> output;
         std::unique_ptr<element_constraint> constraint;

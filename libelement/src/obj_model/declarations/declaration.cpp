@@ -126,3 +126,8 @@ element::namespace_declaration::namespace_declaration(const std::shared_ptr<elem
 	qualifier = namespace_qualifier;
 	intrinsic = false;
 }
+
+std::string element::namespace_declaration::to_string() const
+{
+	return location() + ":Namespace";
+}
