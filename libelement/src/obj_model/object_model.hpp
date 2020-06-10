@@ -15,6 +15,6 @@ namespace element
 	std::unique_ptr<declaration> build_namespace_declaration(const element_ast* ast, const scope* parent_scope);
 	std::unique_ptr<declaration> build_declaration(const element_ast* ast, const scope* parent_scope);
 	std::shared_ptr<expression> build_expression(const element_ast* ast, std::shared_ptr<element::expression> parent);
-	std::unique_ptr<root_scope> build_root_scope(const element_ast* ast);
+	std::unique_ptr<scope> build_root_scope(const element_ast* ast);
 }
 

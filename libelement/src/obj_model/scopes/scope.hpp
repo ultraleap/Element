@@ -24,18 +24,11 @@ namespace element
 
         [[nodiscard]] bool is_root() const
     	{
+            assert(!declarer);
             return parent_scope == nullptr;
     	}
     	
         [[nodiscard]] std::string location() const;
         [[nodiscard]] std::string to_string() const override;
-    };
-
-    struct root_scope final : scope
-	{
-        explicit root_scope()
-            : scope(nullptr, nullptr)
-        {
-        }
     };
 }

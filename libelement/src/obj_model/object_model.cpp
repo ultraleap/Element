@@ -247,7 +247,7 @@ void build_scope(element_ast* ast, const element::scoped_declaration& declaratio
     }
 }
 
-std::unique_ptr<element::root_scope> element::build_root_scope(const element_ast* const ast)
+std::unique_ptr<element::scope> element::build_root_scope(const element_ast* const ast)
 {
     if (ast->type != ELEMENT_AST_NODE_ROOT) {
 
@@ -255,7 +255,7 @@ std::unique_ptr<element::root_scope> element::build_root_scope(const element_ast
         return nullptr;
     }
 
-    auto root = std::make_unique<element::root_scope>();
+    auto root = std::make_unique<element::scope>(nullptr, nullptr);
 
     for (auto& child : ast->children)
     {
