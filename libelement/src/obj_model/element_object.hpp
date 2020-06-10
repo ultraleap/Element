@@ -10,7 +10,7 @@ namespace element
 	{
 		virtual ~element_object() = default;
     	
-		[[nodiscard]] virtual std::string to_string() const { return ""; }
+        [[nodiscard]] virtual std::string to_string() const = 0;
     };
 
  //   struct error : element_object

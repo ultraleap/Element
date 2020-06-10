@@ -84,5 +84,7 @@ namespace element
     struct namespace_declaration final : scoped_declaration
 	{
         namespace_declaration(const std::shared_ptr<element::scope>& parent_scope);
+
+        [[nodiscard]] std::string to_string() const override;
     };
 }
