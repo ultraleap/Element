@@ -10,13 +10,13 @@ namespace element
 {
     struct scope : element_object
 	{
-        std::shared_ptr<scope> parent_scope;
+        const scope* const parent_scope = nullptr;
         const declaration* const declarer;
     	
         std::vector<std::unique_ptr<declaration>> declarations;
 
-        explicit scope(std::shared_ptr<scope> parent_scope, const declaration* const declarer)
-            : parent_scope{ std::move(parent_scope) }, declarer{ declarer }
+        explicit scope(const scope* parent_scope, const declaration* const declarer)
+            : parent_scope{ parent_scope }, declarer{ declarer }
         {
         }
     	
