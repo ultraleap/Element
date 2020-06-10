@@ -14,7 +14,8 @@ namespace element
 	{
     	//need to use a shared pointer here as call expressions can have a list of independent expressions that all share the same parent i.e. the call expression itself
         std::vector<std::shared_ptr<expression>> children;
-
+    	
+        [[nodiscard]] virtual bool has_children() const { return !children.empty();  }
         [[nodiscard]] std::string to_string() const override
         {
             static auto accumulate = [](std::string accumulator, const std::shared_ptr<element::expression>& expression)
@@ -35,6 +36,7 @@ namespace element
         {
         }
 
+        [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_string() const override { return std::to_string(value); }
 	};
 
@@ -47,6 +49,7 @@ namespace element
         {
         }
 
+        [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_string() const override { return identifier; }
     };
 
@@ -73,6 +76,7 @@ namespace element
         {
         }
 
+        [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_string() const override
         {
 	        return "." + identifier;
