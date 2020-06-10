@@ -22,7 +22,7 @@ namespace element
                 return std::move(accumulator) + expression->to_string();
             };
 
-            return "=" + std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_string(), accumulate);
+            return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_string(), accumulate);
         }
     };
 
@@ -58,9 +58,9 @@ namespace element
             {
                 return std::move(accumulator) + "," + expression->to_string();
             };
-        	
-            auto expressions = std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_string(), accumulate);
-        	return "("+expressions+")";
+
+            const auto expressions = std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_string(), accumulate);
+        	return "(" + expressions + ")";
         }
     };
 	

@@ -124,11 +124,17 @@ std::unique_ptr<element::declaration> element::build_scope_bodied_function_decla
 
 [[nodiscard]] std::shared_ptr<element::expression> build_call_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
 {
+	//create call expression to represent the nested expression
     const auto call_expression = std::make_shared<element::call_expression>();
 	
     auto* const expressions = ast->children[ast_idx::call::args].get();
-    for (auto& expression : expressions->children)
-        auto result = build_expression(expression.get(), call_expression);
+    for (auto& child_expression : expressions->children) {
+
+    	//then create an expression for each comma separated value in the call expression 
+        const auto expression = std::make_shared<element::expression>();
+        auto child = build_expression(child_expression.get(), expression);
+        call_expression->children.push_back(child);
+    }
 
     parent->children.push_back(call_expression);
     return parent;
@@ -136,6 +142,7 @@ std::unique_ptr<element::declaration> element::build_scope_bodied_function_decla
 
 std::shared_ptr<element::expression> element::build_expression(element_ast* ast, std::shared_ptr<element::expression> parent)
 {
+    //HC SVNT DRACONES
     const auto has_parent =
         ast->children.size() > ast_idx::call::parent && ast->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
 
@@ -174,7 +181,6 @@ std::shared_ptr<element::expression> element::build_expression(element_ast* ast,
 
 std::unique_ptr<element::declaration> element::build_expression_bodied_function_declaration(element_ast* ast, const std::shared_ptr<element::scope>& parent_scope)
 {
-    //HC SVNT DRACONES
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
@@ -183,15 +189,6 @@ std::unique_ptr<element::declaration> element::build_expression_bodied_function_
 
     build_inputs(decl, *function_decl);
     build_output(decl, *function_decl);
-
-    const auto has_parent =
-        ast->children.size() > ast_idx::call::parent && ast->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE
-        || ast->parent && ast->parent->type != ELEMENT_AST_NODE_NONE;
-
-    const auto has_arguments = ast->children.size() > ast_idx::call::args
-        && ast->children[ast_idx::call::args]->type != ELEMENT_AST_NODE_NONE;
-
-    const auto is_indexing = ast->parent && ast->parent->type == ELEMENT_AST_NODE_CALL;
 
     auto* const body = ast->children[ast_idx::function::body].get();
     if (body->type == ELEMENT_AST_NODE_CALL) {
