@@ -70,7 +70,19 @@ element::struct_declaration::struct_declaration(const std::shared_ptr<element::s
 
 std::string element::struct_declaration::to_string() const
 {
-	return location() + ":Struct";
+	std::string ports;
+
+	if (has_inputs()) {
+		static auto accumulate = [](std::string accumulator, const element::port& port)
+		{
+			return std::move(accumulator) + ", " + port.to_string();
+		};
+
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
+		ports = "(" + input_ports + ")";
+	}
+
+	return location() + ports + ":Struct";
 }
 
  //constraint
