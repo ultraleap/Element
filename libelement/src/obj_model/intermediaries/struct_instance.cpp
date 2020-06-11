@@ -11,7 +11,7 @@ element::struct_instance::struct_instance(const element::struct_declaration* dec
     }
 }
 
-std::string element::scope::to_string() const
+std::string element::struct_instance::to_string() const
 {
     return "Instance:" + declarer->to_string();
 }
