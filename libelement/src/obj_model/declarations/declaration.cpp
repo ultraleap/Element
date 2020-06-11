@@ -47,7 +47,7 @@ bool element::scoped_declaration::has_scope() const
 
 void element::scoped_declaration::add_declaration(std::unique_ptr<element::declaration> declaration) const
 {
-	scope->declarations.push_back(std::move(declaration));
+	scope->declarations.emplace(declaration->identifier, std::move(declaration));
 }
 
 std::string element::scoped_declaration::location() const

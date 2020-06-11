@@ -14,7 +14,7 @@ namespace element
 	{
         std::string identifier;
 		
-        //TODO: constraint matching
+        //TODO: JM - constraint matching
         std::unique_ptr<element_constraint> constraint;
 
         explicit port(std::string identifier = "")

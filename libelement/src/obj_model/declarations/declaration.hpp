@@ -35,7 +35,7 @@ namespace element
 		
         [[nodiscard]] bool has_inputs() const;
         [[nodiscard]] bool has_output() const;
-        [[nodiscard]] bool has_constraint() const;
+        [[nodiscard]] bool has_constraint() const; //TODO: JM - nonsense, this needs to be a constraint::something OR constraint::any
         [[nodiscard]] bool is_intrinsic() const;
         [[nodiscard]] virtual std::string location() const;
     };
