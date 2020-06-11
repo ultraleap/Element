@@ -26,16 +26,16 @@ void log(element_ast* ast)
 
 void build_output(element_ast* ast, element::declaration& declaration)
 {
-    auto has_declared_output = ast->children.size() > ast_idx::declaration::outputs;
+    const auto has_declared_output = ast->children.size() > ast_idx::declaration::outputs;
 
-    //TODO: Handle complex return with port list and whatnot
+    //TODO: JM - Handle complex return with port list and whatnot
     if (has_declared_output) {
         auto* const output = ast->children[ast_idx::declaration::outputs].get();
     }
 
-    //TODO: Use static definition for implicit return?
+    //TODO: JM - Use static definition for implicit return?
     declaration.output = std::make_unique<element::port>("return");
-    //TODO: Constraints
+    //TODO: JM - Constraints
     //declaration.constraint = std::make_unique<element_constraint>("return");
 }
 
@@ -88,7 +88,7 @@ std::unique_ptr<element::declaration> element::build_function_declaration(const 
     if (body->type == ELEMENT_AST_NODE_CALL) 
         return build_expression_bodied_function_declaration(ast, parent_scope);
 
-    //TODO: Handle this properly
+    //TODO: JM - Handle this properly
     //if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
     //    return build_constraint_declaration(ast, parent_scope);
 

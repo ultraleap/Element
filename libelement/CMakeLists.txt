@@ -44,11 +44,18 @@ set(element_sources
     "src/obj_model/element_object.hpp"
     #"src/obj_model/type_annotation.hpp"
     "src/obj_model/port.hpp"
+
+    "src/obj_model/constraints/constraint.hpp"
+    "src/obj_model/constraints/constraint.cpp"
     
     "src/obj_model/declarations/declaration.hpp"
     "src/obj_model/declarations/declaration.cpp"
-
+    
     "src/obj_model/expressions/expression.hpp"
+    "src/obj_model/expressions/expression.cpp"
+
+    "src/obj_model/intermediaries/struct_instance.hpp"
+    "src/obj_model/intermediaries/struct_instance.cpp"
     
     "src/obj_model/scopes/scope.hpp"
     "src/obj_model/scopes/scope.cpp"

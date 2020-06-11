@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <map>
 #include <memory>
 
 #include "obj_model/element_object.hpp"
@@ -13,7 +13,7 @@ namespace element
         const scope* const parent_scope = nullptr;
         const declaration* const declarer;
     	
-        std::vector<std::unique_ptr<declaration>> declarations;
+        std::map<std::string, std::unique_ptr<declaration>> declarations;
 
         explicit scope(const scope* parent_scope, const declaration* const declarer)
             : parent_scope{ parent_scope }, declarer{ declarer }
@@ -21,6 +21,7 @@ namespace element
         }
     	
         void add_declaration(std::unique_ptr<declaration> declaration);
+        declaration* find(const std::string& identifier, bool recurse) const;
 
         [[nodiscard]] bool is_root() const
     	{
