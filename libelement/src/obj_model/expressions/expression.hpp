@@ -3,7 +3,6 @@
 #include <utility>
 #include <vector>
 
-
 #include "ast/types.hpp"
 #include "obj_model/element_object.hpp"
 #include "obj_model/port.hpp"
