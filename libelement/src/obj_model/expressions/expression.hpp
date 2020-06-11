@@ -6,11 +6,13 @@
 #include "ast/types.hpp"
 #include "obj_model/element_object.hpp"
 #include "obj_model/port.hpp"
+#include "obj_model/scopes/scope.hpp"
 
 namespace element
 {
     struct expression : element_object
 	{
+        const scope* enclosing_scope = nullptr;
     	//need to use a shared pointer here as call expressions can have a list of independent expressions that all share the same parent i.e. the call expression itself
         std::vector<std::shared_ptr<expression>> children;
     	
@@ -24,6 +26,8 @@ namespace element
 
             return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_string(), accumulate);
         }
+
+        std::unique_ptr<compiled_expression> compile();
     };
 
 	struct literal_expression final : expression
@@ -37,6 +41,7 @@ namespace element
 
         [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_string() const override { return std::to_string(value); }
+        [[nodiscard]] const element_object* index(const indexing_expression*) const override;
 	};
 
     struct identifier_expression final : expression
@@ -50,6 +55,7 @@ namespace element
 
         [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_string() const override { return identifier; }
+        [[nodiscard]] const element_object* index(const indexing_expression*) const override;
     };
 
     struct call_expression final : expression
@@ -64,6 +70,8 @@ namespace element
             const auto expressions = std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_string(), accumulate);
         	return "(" + expressions + ")";
         }
+
+        [[nodiscard]] const element_object* index(const indexing_expression*) const override;
     };
 	
     struct indexing_expression final : expression
