@@ -58,6 +58,7 @@ namespace element
         struct_declaration(const element::scope* parent_scope, bool is_intrinsic);
     	
         [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] const element_object* index(const indexing_expression*) const override;
     };
 	
     struct constraint_declaration final : declaration
@@ -70,6 +71,9 @@ namespace element
         function_declaration(const element::scope* parent_scope, bool is_intrinsic);
 
         [[nodiscard]] std::string to_string() const override;
+
+        [[nodiscard]] virtual const element_object* call(const call_expression*) const;
+
     };
 
     struct expression_bodied_function_declaration final : scoped_declaration {
@@ -86,5 +90,6 @@ namespace element
         namespace_declaration(const element::scope* parent_scope);
 
         [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] const element_object* index(const indexing_expression*) const override;
     };
 }

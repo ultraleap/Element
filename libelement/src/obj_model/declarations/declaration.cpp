@@ -86,6 +86,11 @@ std::string element::struct_declaration::to_string() const
 	return location() + ports + ":Struct";
 }
 
+const element::element_object* element::struct_declaration::index(const indexing_expression* expr) const
+{
+	return scope->find(expr->identifier, false);
+}
+
  //constraint
 element::constraint_declaration::constraint_declaration(bool is_intrinsic)
 {
@@ -119,6 +124,11 @@ std::string element::function_declaration::to_string() const
 	return location() + declaration + ":Function";
 }
 
+const element::element_object* element::function_declaration::call(const call_expression*) const
+{
+	return nullptr;
+}
+
 //expression bodied function
 element::expression_bodied_function_declaration::expression_bodied_function_declaration(const element::scope* parent_scope)
 	: scoped_declaration(parent_scope)
@@ -143,4 +153,9 @@ element::namespace_declaration::namespace_declaration(const element::scope* pare
 std::string element::namespace_declaration::to_string() const
 {
 	return location() + ":Namespace";
+}
+
+const element::element_object* element::namespace_declaration::index(const indexing_expression* expr) const
+{
+	return scope->find(expr->identifier, false);
 }
