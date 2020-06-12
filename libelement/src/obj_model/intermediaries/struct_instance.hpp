@@ -4,7 +4,6 @@
 
 namespace element
 {
-    //todo: cba to make new headers atm
     struct compiled_expression final : element_object
     {
         const element_object* declarer = nullptr; //literal, struct instance, function instance?

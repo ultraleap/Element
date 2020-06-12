@@ -28,6 +28,8 @@ bool directory_exists(const std::string& directory)
     return std::filesystem::exists(directory) && std::filesystem::is_directory(directory);
 }
 
+#ifdef LEGACY_COMPILER
+
 static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
 {
     switch (node->type) {
@@ -154,6 +156,8 @@ static element_result merge_names(scope_unique_ptr& a, scope_unique_ptr b, const
     return ELEMENT_OK;
 }
 
+#endif
+
 element_result element_interpreter_ctx::load(const char* str, const char* filename)
 {
 	//HACK: JM - Not a fan of this...
@@ -191,8 +195,6 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     }
     ELEMENT_OK_OR_RETURN(result)
 
-	auto object_model = element::build_root_scope(parser.root);
-
     auto log_ast = starts_with_prelude
         ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
         : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
@@ -201,6 +203,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
         log("\n---\nAST\n---\n" + ast_to_string(parser.root));
     }
 
+#ifdef LEGACY_COMPILER
     auto ast = ast_unique_ptr(parser.root, element_ast_delete);
     scope_unique_ptr root = get_names(nullptr, parser.root);
     result = add_ast_names(ast_names, root.get());
@@ -221,6 +224,12 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 
     // TODO: HACK
     update_scopes(names.get());
+#else
+
+    auto object_model = element::build_root_scope(parser.root);
+
+    //TODO: HERE! DO STUFF HERE! HERE!!! HERE!!!!!
+#endif
 
     return ELEMENT_OK;
 }
@@ -415,7 +424,6 @@ element_result element_interpreter_load_files(element_interpreter_ctx* context, 
     return context->load_files(actual_files);
 }
 
-
 element_result element_interpreter_load_package(element_interpreter_ctx* context, const char* package)
 {
     assert(context);
@@ -454,6 +462,8 @@ element_result element_interpreter_clear(element_interpreter_ctx* context)
     assert(context);
     return context->clear();
 }
+
+#ifdef LEGACY_COMPILER
 
 element_result element_interpreter_get_function(element_interpreter_ctx* context, const char* name, const element_function** function)
 {
@@ -663,3 +673,5 @@ element_result element_compiled_function_get_typeof_compilation(element_compiled
     strncpy_s(string_buffer, string_buffer_size, str.c_str(), string_buffer_size);
     return ELEMENT_OK;
 }
+
+#endif

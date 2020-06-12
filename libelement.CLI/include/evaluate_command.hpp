@@ -37,9 +37,11 @@ namespace libelement::cli
 			if (result != ELEMENT_OK)
 				return compiler_message(ELEMENT_ERROR_PARSE, "Failed to setup context");
 
+#ifdef LEGACY_COMPILER
 			//call into libelement
 			const element_function* fn;
 			element_compiled_function* cfn;
+#endif
 		
 			const std::vector<trace_site> trace_site{};
 
@@ -52,7 +54,7 @@ namespace libelement::cli
 					type = static_cast<message_type>(result);
 				return compiler_message(type, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
 			}
-
+#ifdef LEGACY_COMPILER
 			result = element_interpreter_get_function(context, "evaluate", &fn);
 			if (result != ELEMENT_OK) {
 				message_type type = ELEMENT_ERROR_UNKNOWN;
@@ -81,6 +83,9 @@ namespace libelement::cli
 			}
 
 			return generate_response(result, outputs, size, trace_site);
+#endif
+
+			return generate_response(0, "TODO");
 		}
 
 		std::string as_string() const override

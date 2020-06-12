@@ -25,7 +25,7 @@ namespace element
 
         [[nodiscard]] bool is_root() const
     	{
-            assert(!declarer);
+            //assert(!declarer);
             return parent_scope == nullptr;
     	}
     	
