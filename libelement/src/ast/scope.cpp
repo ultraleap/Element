@@ -1,3 +1,5 @@
+#ifdef LEGACY_COMPILER
+
 #include "ast/scope.hpp"
 
 #include <functional>
@@ -92,3 +94,5 @@ function_const_shared_ptr element_scope::function() const
     m_function_cached = true;
     return m_function;
 }
+
+#endif

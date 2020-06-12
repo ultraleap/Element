@@ -1,3 +1,5 @@
+#ifdef LEGACY_COMPILER
+
 #include "lmnt/compiler.hpp"
 #include "lmnt/common.h"
 #include "interpreter_internal.hpp"
@@ -352,3 +354,5 @@ element_result element_lmnt_archive_build(
     assert(size);
     return build_archive(*archive, buffer, *size);
 }
+
+#endif

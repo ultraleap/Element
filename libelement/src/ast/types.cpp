@@ -1,3 +1,5 @@
+#ifdef LEGACY_COMPILER
+
 #include "ast/types.hpp"
 
 #include <functional>
@@ -291,3 +293,5 @@ void element_type_named::generate_ports_cache() const
 
     m_ports_cached = true;
 }
+
+#endif

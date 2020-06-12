@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef LEGACY_COMPILER
+
 #include <string>
 #include <vector>
 #include <utility>
@@ -208,3 +210,5 @@ struct element_expression_unbound_arg : public element_expression
 protected:
     size_t m_index;
 };
+
+#endif

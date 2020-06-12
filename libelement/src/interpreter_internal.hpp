@@ -13,6 +13,9 @@
 #include "etree/fwd.hpp"
 #include "etree/expressions.hpp"
 #include "common_internal.hpp"
+#include "obj_model/scopes/scope.hpp"
+
+#ifdef LEGACY_COMPILER
 
 struct element_interpreter_ctx
 {
@@ -42,3 +45,26 @@ struct element_compiled_function
     expression_shared_ptr expression;
     constraint_const_shared_ptr constraint; //todo: can we enforce a stricker type (e.g. element_type instead of constraint)
 };
+
+#else
+
+struct element_interpreter_ctx
+{
+    bool prelude_loaded = false;
+    std::shared_ptr<element_log_ctx> logger;
+
+    element_interpreter_ctx();
+
+    element_result load(const char* str, const char* filename = "<input>");
+    element_result load_file(const std::string& file);
+    element_result load_files(const std::vector<std::string>& files);
+    element_result load_package(const std::string& package);
+    element_result load_packages(const std::vector<std::string>& packages);
+    element_result load_prelude();
+    element_result clear();
+    void set_log_callback(LogCallback callback);
+    void log(int message_code, const std::string& message, const std::string& filename = std::string());
+    void log(const std::string& message) const;
+};
+
+#endif

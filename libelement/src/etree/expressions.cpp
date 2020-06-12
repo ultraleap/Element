@@ -1,3 +1,5 @@
+#ifdef LEGACY_COMPILER
+
 #include "expressions.hpp"
 
 //todo: why do we use bits instead of normal numbers?
@@ -10,3 +12,5 @@ DEFINE_TYPE_ID(element_expression_binary,          1U << 5);
 DEFINE_TYPE_ID(element_expression_if,              1U << 6);
 DEFINE_TYPE_ID(element_expression_group,           1U << 7);
 DEFINE_TYPE_ID(element_expression_unbound_arg,     1U << 8);
+
+#endif

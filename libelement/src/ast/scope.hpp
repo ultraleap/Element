@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef LEGACY_COMPILER
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -61,3 +63,5 @@ static inline scope_unique_ptr scope_new_anonymous(const element_scope* parent, 
     s->name = std::string("#anonymous_") + std::to_string(uintptr_t(parent) ^ uintptr_t(node));
     return std::move(s);
 }
+
+#endif

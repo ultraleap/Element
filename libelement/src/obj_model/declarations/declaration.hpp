@@ -25,7 +25,7 @@ namespace element
 	{
         std::vector<port> inputs;
         std::unique_ptr<port> output;
-        std::unique_ptr<element_constraint> constraint;
+        //std::unique_ptr<element_constraint> constraint;
 		
 		std::string qualifier;
         std::string identifier;

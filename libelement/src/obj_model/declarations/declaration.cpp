@@ -25,7 +25,8 @@ bool element::declaration::has_output() const
 
 bool element::declaration::has_constraint() const
 {
-	return constraint != nullptr;
+	//TODO: Constraints
+	return false; //return constraint != nullptr;
 }
 
 std::string element::declaration::location() const

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef LEGACY_COMPILER
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -80,3 +82,5 @@ protected:
         return std::static_pointer_cast<Derived>(shared_from_this());
     }
 };
+
+#endif
