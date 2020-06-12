@@ -133,3 +133,8 @@ if (BUILD_TESTING)
     set_target_properties(element_test_app PROPERTIES
         VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
 endif ()
+
+target_compile_definitions(element
+    PRIVATE
+        ${LEGACY_COMPILER}
+)

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef LEGACY_COMPILER
+
 #include <unordered_map>
 
 #include "ast/ast_internal.hpp"
@@ -117,3 +119,5 @@ element_result element_compile(
     const element_function* function,
     compilation& output_compilation,
     element_compiler_options opts);
+
+#endif

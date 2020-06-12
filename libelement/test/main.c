@@ -1,3 +1,4 @@
+
 #include "element/token.h"
 #include "element/ast.h"
 #include "element/interpreter.h"
@@ -10,6 +11,8 @@
 
 int main(int argc, char** argv)
 {
+#ifdef LEGACY_COMPILER
+
     //todo: good location for these + copy on build
     //char* packages[] = {
     //    "../test/packages/test/"
@@ -150,4 +153,5 @@ int main(int argc, char** argv)
     
     getchar();
     return 0;*/
+#endif
 }

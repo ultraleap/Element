@@ -1,3 +1,5 @@
+#ifdef LEGACY_COMPILER
+
 #include "etree/compiler.hpp"
 
 #include <cassert>
@@ -676,3 +678,5 @@ static element_result compile_expression(
     context.log(ELEMENT_ERROR_UNKNOWN, "Tried to compile an expression that is unknown", body_node);
     return ELEMENT_ERROR_UNKNOWN;
 }
+
+#endif

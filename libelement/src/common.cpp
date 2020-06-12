@@ -5,11 +5,16 @@
 #include "common_internal.hpp"
 #include "token_internal.hpp"
 #include "ast/ast_internal.hpp"
+
+#ifdef LEGACY_COMPILER
 #include "etree/compiler.hpp"
+#endif
 
 #include <fmt/format.h>
 
 #include "configuration.hpp"
+#include "ast/fwd.hpp"
+#include "etree/expressions.hpp"
 
 #define PRINTCASE(a) case a: c = #a; break;
 std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token)

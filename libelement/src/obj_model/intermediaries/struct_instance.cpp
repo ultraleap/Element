@@ -1,17 +1,10 @@
 #include "struct_instance.hpp"
 
 //compiled_expression
-
-
 const element::element_object* element::compiled_expression::index(const indexing_expression*) const
 {
-    //this is how we do partial application. if we index a struct instance and find it's an instance function
-    //then we create a function_instance of that function, with ourselves as the first provided argument
-    //when we return that function_instance, either the next expression is a call which fills the remaining arguments and then calls it
-    //or we just return it/store it, to be used later
     return nullptr;
 }
-
 
 //struct_instance
 element::struct_instance::struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<expression>>& expressions)
@@ -27,10 +20,12 @@ element::struct_instance::struct_instance(const struct_declaration* declarer, co
 
 const element::element_object* element::struct_instance::index(const indexing_expression* expression) const
 {
-    //do things
+    //this is how we do partial application. if we index a struct instance and find it's an instance function
+    //then we create a function_instance of that function, with ourselves as the first provided argument
+    //when we return that function_instance, either the next expression is a call which fills the remaining arguments and then calls it
+    //or we just return it/store it, to be used later
     return nullptr;
 }
-
 
 std::string element::struct_instance::to_string() const
 {
@@ -38,8 +33,6 @@ std::string element::struct_instance::to_string() const
 }
 
 //function_instance
-
-
 element::function_instance::function_instance(const function_declaration* declarer, const std::vector<std::shared_ptr<expression>>& expressions)
     : declarer{declarer}
 {

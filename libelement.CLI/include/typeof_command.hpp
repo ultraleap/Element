@@ -43,11 +43,14 @@ namespace libelement::cli
 			//todo: rename to normal typeof
 			std::string internaltypeof_string(256, '\0');
 
+#ifdef LEGACY_COMPILER
 			result = element_interpreter_get_internal_typeof(context, typeof.c_str(), "<input>", internaltypeof_string.data(), 256);
 			if (result != ELEMENT_OK)
 				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to get internal type of '" + typeof + "'");
 
 			return generate_response(result, internaltypeof_string, trace_site);
+#endif
+			return generate_response(0, "TODO");
 		}
 
 		std::string as_string() const override
