@@ -117,8 +117,7 @@ std::unique_ptr<element::declaration> element::build_scope_bodied_function_decla
 
 [[nodiscard]] std::shared_ptr<element::expression> build_literal_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
 {
-	const auto literal_expression = std::make_shared<element::literal_expression>(ast->literal);
-    literal_expression->enclosing_scope = parent->enclosing_scope;
+	const auto literal_expression = std::make_shared<element::literal_expression>(ast->literal, parent->enclosing_scope);
     parent->children.push_back(literal_expression);
     return parent;
 }
@@ -126,15 +125,13 @@ std::unique_ptr<element::declaration> element::build_scope_bodied_function_decla
 [[nodiscard]] std::shared_ptr<element::expression> build_call_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
 {
 	//create call expression to represent the nested expression
-    const auto call_expression = std::make_shared<element::call_expression>();
-    call_expression->enclosing_scope = parent->enclosing_scope;
+    const auto call_expression = std::make_shared<element::call_expression>(parent->enclosing_scope);
 	
     auto* const expressions = ast->children[ast_idx::call::args].get();
     for (auto& child_expression : expressions->children) {
 
     	//then create an expression for each comma separated value in the call expression 
-        const auto expression = std::make_shared<element::expression>();
-        expression->enclosing_scope = parent->enclosing_scope;
+        const auto expression = std::make_shared<element::expression>(parent->enclosing_scope);
         auto child = build_expression(child_expression.get(), expression);
         call_expression->children.push_back(child);
     }
@@ -167,12 +164,12 @@ std::shared_ptr<element::expression> element::build_expression(const element_ast
 
 	if (is_indexing)
     {
-	    auto indexing_expression = std::make_unique<element::indexing_expression>(ast->identifier);
+	    auto indexing_expression = std::make_unique<element::indexing_expression>(ast->identifier, parent->enclosing_scope);
 	    parent->children.push_back(std::move(indexing_expression));
     }
     else
     {
-	    const auto identifier_expression = std::make_shared<element::identifier_expression>(ast->identifier);
+	    const auto identifier_expression = std::make_shared<element::identifier_expression>(ast->identifier, parent->enclosing_scope);
 	    parent->children.push_back(identifier_expression);
     }
 
@@ -196,8 +193,7 @@ std::unique_ptr<element::declaration> element::build_expression_bodied_function_
     auto* const body = ast->children[ast_idx::function::body].get();
     if (body->type == ELEMENT_AST_NODE_CALL) {
 
-        auto expression = std::make_unique<element::expression>();
-        expression->enclosing_scope = function_decl->scope.get();
+        auto expression = std::make_unique<element::expression>(function_decl->scope.get());
         function_decl->expression = build_expression(body, std::move(expression));
     }
 	
