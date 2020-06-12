@@ -1,3 +1,5 @@
+#ifdef LEGACY_COMPILER
+
 #include "construct.hpp"
 
 #include <algorithm>
@@ -56,3 +58,5 @@ size_t element_construct::get_size() const
         sz += output.type->get_size();
     return sz;
 }
+
+#endif

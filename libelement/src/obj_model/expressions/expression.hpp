@@ -1,8 +1,10 @@
 #pragma once
 
+#include <numeric>
 #include <utility>
 #include <vector>
 
+#include "element/common.h"
 #include "ast/types.hpp"
 #include "obj_model/element_object.hpp"
 #include "obj_model/port.hpp"
@@ -104,6 +106,6 @@ namespace element
 		//TODO
         std::vector<port> inputs;
         std::unique_ptr<port> output;
-        std::unique_ptr<element_constraint> constraint;
+        //std::unique_ptr<element_constraint> constraint;
     };
 }

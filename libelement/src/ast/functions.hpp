@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef LEGACY_COMPILER
+
 #include <memory>
 #include <string>
 
@@ -141,3 +143,5 @@ protected:
 private:
     type_shared_ptr generate_type(const element_scope* scope) const;
 };
+
+#endif

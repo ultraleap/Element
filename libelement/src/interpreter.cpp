@@ -380,9 +380,9 @@ element_interpreter_ctx::element_interpreter_ctx()
 
 element_result element_interpreter_ctx::clear()
 {
-    trees.clear();
-    names.reset();
-    ast_names.clear();
+    //trees.clear();
+    //names.reset();
+    //ast_names.clear();
 
     return ELEMENT_OK;
 }

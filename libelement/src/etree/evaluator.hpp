@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef LEGACY_COMPILER
+
 #include <vector>
 #include <cstdlib>
 #include "etree/expressions.hpp"
@@ -23,3 +25,5 @@ element_value element_evaluate_nullary(element_expression_nullary::op op);
 element_value element_evaluate_unary(element_expression_unary::op op, element_value a);
 element_value element_evaluate_binary(element_expression_binary::op op, element_value a, element_value b);
 element_value element_evaluate_if(element_value predicate, element_value if_true, element_value if_false);
+
+#endif

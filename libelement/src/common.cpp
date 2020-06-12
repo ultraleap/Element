@@ -140,6 +140,8 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     return string;
 }
 
+#ifdef LEGACY_COMPILER
+
 std::string expression_to_string(const element_expression& expression, int depth)
 {
     std::string string;
@@ -249,6 +251,8 @@ std::string expression_to_string(const element_expression& expression, int depth
         string += expression_to_string(*dependent, depth + 1);
     return string;
 }
+
+#endif
 
 std::string ast_to_code(const element_ast* node, const element_ast* parent, bool skip)
 {

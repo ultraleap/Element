@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef LEGACY_COMPILER
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -155,3 +157,5 @@ private:
     // type matching while supporting disparate anonymous types
     static std::unordered_multimap<std::pair<size_t, size_t>, type_shared_ptr, pair_hash> m_cache;
 };
+
+#endif

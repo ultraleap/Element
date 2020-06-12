@@ -1,5 +1,7 @@
 #include "struct_instance.hpp"
 
+#include <cassert>
+
 //compiled_expression
 const element::element_object* element::compiled_expression::index(const indexing_expression*) const
 {

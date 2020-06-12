@@ -7,8 +7,8 @@ namespace element
     struct compiled_expression final : element_object
     {
         const element_object* declarer = nullptr; //literal, struct instance, function instance?
-        constraint_const_shared_ptr constraint = element_type::any;
-        const expression_shared_ptr expression;
+        //constraint_const_shared_ptr constraint = element_type::any;
+        //const expression_shared_ptr expression;
 
         [[nodiscard]] const element_object* index(const indexing_expression*) const override;
         [[nodiscard]] std::string to_string() const override { return ""; }

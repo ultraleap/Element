@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef LEGACY_COMPILER
+
 #include <memory>
 #include "common_internal.hpp"
 
@@ -73,3 +75,5 @@ enum class element_binary_op
 	gt,
 	geq
 };
+
+#endif
