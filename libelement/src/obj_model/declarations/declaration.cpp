@@ -128,7 +128,7 @@ std::string element::function_declaration::to_string() const
 	return location() + ":Function";
 }
 
-std::shared_ptr<element::element_object> element::function_declaration::call(const std::vector<std::shared_ptr<compiled_expression>>& args) const
+std::shared_ptr<element::element_object> element::function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
 {
 	//e.g. Mynamespace.my_function(1) is a call on a function declaration
 
@@ -157,8 +157,8 @@ std::shared_ptr<element::element_object> element::function_declaration::call(con
 		}
 	}
 
-	const auto instance = std::make_shared<function_instance>(this, args);
-	return instance->call(args);
+	//don't have all the arguments, so partially apply them
+	return std::make_shared<function_instance>(this, std::move(args));
 }
 
 std::shared_ptr<element::compiled_expression> element::function_declaration::compile() const
@@ -179,7 +179,7 @@ std::string element::expression_bodied_function_declaration::to_string() const
 	return location() + " = " + expression->to_string() + ":Function";
 }
 
-std::shared_ptr<element::element_object> element::expression_bodied_function_declaration::call(const std::vector<std::shared_ptr<compiled_expression>>& args) const
+std::shared_ptr<element::element_object> element::expression_bodied_function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
 {
 	//todo: apply arguments to callstack/cache so they can be found from scope lookups
 	return expression->compile();
