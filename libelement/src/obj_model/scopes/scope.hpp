@@ -13,15 +13,15 @@ namespace element
         const scope* parent_scope = nullptr;
         const declaration* const declarer;
     	
-        std::map<std::string, std::unique_ptr<declaration>> declarations;
+        std::map<std::string, std::shared_ptr<declaration>> declarations;
 
         explicit scope(const scope* parent_scope, const declaration* const declarer)
             : parent_scope{ parent_scope }, declarer{ declarer }
         {
         }
     	
-        void add_declaration(std::unique_ptr<declaration> declaration);
-        declaration* find(const std::string& identifier, bool recurse) const;
+        void add_declaration(std::shared_ptr<declaration> declaration);
+        std::shared_ptr<element::declaration> find(const std::string& identifier, bool recurse) const;
 
         [[nodiscard]] bool is_root() const
     	{

@@ -17,6 +17,7 @@
 #include "token_internal.hpp"
 #include "configuration.hpp"
 #include "obj_model/object_model.hpp"
+#include "obj_model/intermediaries/struct_instance.hpp"
 
 bool file_exists(const std::string& file)
 {
@@ -687,10 +688,11 @@ element_result element_delete_compileable(element_interpreter_ctx* context, elem
 
 element_result element_interpreter_find(element_interpreter_ctx* context, const char* path, element_compilable** compilable)
 {
-    const auto obj = context->global_scope->find(path, false);
-    *compilable = new element_compilable{obj};
+    auto obj = context->global_scope->find(path, false);
+    *compilable = new element_compilable{std::move(obj)};
     return ELEMENT_OK;
 }
+
 element_result element_interpreter_compile(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
@@ -698,6 +700,31 @@ element_result element_interpreter_compile(
     element_evaluatable** evaluatable)
 {
     auto compiled = compilable->object->compile();
+    *evaluatable = new element_evaluatable{std::move(compiled)};
     return ELEMENT_OK;
+}
+
+element_result element_interpreter_evaluate(
+    element_interpreter_ctx* context,
+    const element_evaluator_options* options,
+    const element_evaluatable* evaluatable,
+    const element_inputs* inputs,
+    const element_outputs* outputs)
+{
+    element_evaluator_options opts;
+    if (options) opts = *options;
+    const auto result = element_evaluate(
+        *context,
+        evaluatable->evaluatable->expression,
+        inputs->values,
+        inputs->count,
+        outputs->values,
+        outputs->count,
+        opts);
+    if (result != ELEMENT_OK) {
+        context->log(result, fmt::format("Failed to evaluate {}", evaluatable->evaluatable->declarer->to_string()), "<input>");
+    }
+
+    return result;
 }
 #endif

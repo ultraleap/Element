@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef LEGACY_COMPILER
-
 #include <string>
 #include <vector>
 #include <utility>
@@ -16,21 +14,22 @@
 #include "typeutil.hpp"
 
 //TODO: It looks like this being based on element_construct is largely irrelevant at the moment, can easily be switched out
-struct element_expression : public element_construct, public rtti_type<element_expression>
+struct element_expression : public rtti_type<element_expression>
 {
     const std::vector<expression_shared_ptr>& dependents() const { return m_dependents; }
     std::vector<expression_shared_ptr>& dependents() { return m_dependents; }
+
+    virtual size_t get_size() const { return m_size; }
 
 protected:
     element_expression(element_type_id t)
         : rtti_type(t)
     {
-        // expressions have no inputs/outputs, so leave them empty
-        m_ports_cached = true;
     }
 
     std::vector<expression_shared_ptr> m_dependents;
     element_type_id m_type_id = 0;
+    int m_size = 0;
 };
 
 struct element_expression_constant : public element_expression
@@ -210,5 +209,3 @@ struct element_expression_unbound_arg : public element_expression
 protected:
     size_t m_index;
 };
-
-#endif

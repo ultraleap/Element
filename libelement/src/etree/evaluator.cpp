@@ -1,5 +1,3 @@
-#ifdef LEGACY_COMILER
-
 #include "etree/evaluator.hpp"
 #include <algorithm>
 #include <cassert>
@@ -180,5 +178,3 @@ element_value element_evaluate_if(element_value predicate, element_value if_true
 {
     return predicate ? if_true : if_false;
 }
-
-#endif

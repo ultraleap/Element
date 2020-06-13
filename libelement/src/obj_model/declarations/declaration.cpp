@@ -1,8 +1,10 @@
 #include "declaration.hpp"
 
 //SELF
-#include "../scopes/scope.hpp"
-#include "../expressions/expression.hpp"
+#include "obj_model/scopes/scope.hpp"
+#include "obj_model/expressions/expression.hpp"
+#include "obj_model/intermediaries/struct_instance.hpp"
+#include "etree/expressions.hpp"
 
 //declaration
 element::declaration::declaration()
@@ -47,7 +49,7 @@ bool element::scoped_declaration::has_scope() const
 	return !scope->declarations.empty();
 }
 
-void element::scoped_declaration::add_declaration(std::unique_ptr<element::declaration> declaration) const
+void element::scoped_declaration::add_declaration(std::shared_ptr<element::declaration> declaration) const
 {
 	scope->declarations.emplace(declaration->identifier, std::move(declaration));
 }
@@ -88,7 +90,7 @@ std::string element::struct_declaration::to_string() const
 	return location() + ports + ":Struct";
 }
 
-const element::element_object* element::struct_declaration::index(const indexing_expression* expr) const
+std::shared_ptr<element::element_object> element::struct_declaration::index(const indexing_expression* expr) const
 {
 	return scope->find(expr->identifier, false);
 }
@@ -126,12 +128,23 @@ std::string element::function_declaration::to_string() const
 	return location() + ":Function";
 }
 
-const element::element_object* element::function_declaration::call(const call_expression* expr) const
+std::shared_ptr<element::element_object> element::function_declaration::call(const call_expression* expr) const
 {
 	//:b
-	if (intrinsic && identifier == "add")
+	if (intrinsic)
 	{
 		auto result = std::make_shared<compiled_expression>();
+		result->declarer = this;
+		//todo: better way of getting to our parent?
+		if (scope->parent_scope->declarer->identifier == "Num" && identifier == "add")
+		{
+			result->expression = std::make_shared<element_expression_binary>(
+				element_binary_op::add,
+				expr->children[0]->compile()->expression,
+				expr->children[1]->compile()->expression);
+		}
+
+		return result;
 	}
 
 	return nullptr;
@@ -168,7 +181,7 @@ std::string element::namespace_declaration::to_string() const
 	return location() + ":Namespace";
 }
 
-const element::element_object* element::namespace_declaration::index(const indexing_expression* expr) const
+std::shared_ptr<element::element_object> element::namespace_declaration::index(const indexing_expression* expr) const
 {
 	return scope->find(expr->identifier, false);
 }
