@@ -9,7 +9,7 @@ std::shared_ptr<element::element_object> element::compiled_expression::index(con
 }
 
 //struct_instance
-element::struct_instance::struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<expression>>& expressions)
+element::struct_instance::struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions)
     : declarer{ declarer }
 {
     //TODO: JM - variadics
@@ -35,19 +35,33 @@ std::string element::struct_instance::to_string() const
 }
 
 //function_instance
-element::function_instance::function_instance(const function_declaration* declarer, const std::vector<std::shared_ptr<expression>>& expressions)
+element::function_instance::function_instance(const function_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions)
     : declarer{declarer}
 {
-    //TODO: JM - variadics
-    assert(declarer->inputs.size() == expressions.size());
-    for (size_t i = 0; i < declarer->inputs.size(); ++i)
-    {
-        //provided_arguments.emplace(declarer->inputs[i].identifier, expressions[i]);
-    }
+    provided_arguments = expressions;
 }
 
-std::shared_ptr<element::element_object> element::function_instance::call(const call_expression* expression) const
+std::string element::function_instance::to_string() const
 {
-    //do things
+    return declarer->location() + ":FunctionInstance";
+}
+
+std::shared_ptr<element::element_object> element::function_instance::call(const std::vector<std::shared_ptr<compiled_expression>>& args) const
+{
+    std::vector<std::shared_ptr<compiled_expression>> compiled_arguments = provided_arguments;
+    compiled_arguments.insert(compiled_arguments.begin(), args.begin(), args.end());
+
+    if (compiled_arguments.size() == declarer->inputs.size())
+    {
+        //we have the exact arguments we need
+        return declarer->call(compiled_arguments);
+    }
+    else if (compiled_arguments.size() < declarer->inputs.size())
+    {
+        //we partially apply the arguments we have. todo: reuse existing instance if we can?
+        return std::make_shared<function_instance>(declarer, std::move(compiled_arguments));
+    }
+
+    assert(false);
     return nullptr;
 }

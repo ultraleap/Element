@@ -51,7 +51,12 @@ std::shared_ptr<element::compiled_expression> element::expression::compile() con
         else if (dynamic_cast<const call_expression*>(child))
         {
             const auto* const expr = static_cast<const call_expression*>(child);
-            current = current->call(expr);
+            std::vector<std::shared_ptr<compiled_expression>> compiled_arguments;
+            for (auto& arg : expr->children)
+            {
+                compiled_arguments.push_back(arg->compile());
+            }
+            current = current->call(std::move(compiled_arguments));
         }
         else
         {
