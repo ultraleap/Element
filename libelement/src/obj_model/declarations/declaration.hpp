@@ -72,7 +72,7 @@ namespace element
 
         [[nodiscard]] std::string to_string() const override;
 
-        [[nodiscard]] std::shared_ptr<element_object> call(const std::vector<std::shared_ptr<compiled_expression>>& args) const override;
+        [[nodiscard]] std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const override;
         [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
     };
 
@@ -85,7 +85,7 @@ namespace element
         expression_bodied_function_declaration(const element::scope* parent_scope);
 
         [[nodiscard]] std::string to_string() const override;
-        [[nodiscard]] std::shared_ptr<element_object> call(const std::vector<std::shared_ptr<compiled_expression>>& args) const override;
+        [[nodiscard]] std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const override;
         [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
     };
 

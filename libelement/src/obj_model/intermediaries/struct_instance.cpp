@@ -35,10 +35,10 @@ std::string element::struct_instance::to_string() const
 }
 
 //function_instance
-element::function_instance::function_instance(const function_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions)
+element::function_instance::function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<compiled_expression>> args)
     : declarer{declarer}
+    , provided_arguments(std::move(args))
 {
-    provided_arguments = expressions;
 }
 
 std::string element::function_instance::to_string() const
@@ -46,20 +46,19 @@ std::string element::function_instance::to_string() const
     return declarer->location() + ":FunctionInstance";
 }
 
-std::shared_ptr<element::element_object> element::function_instance::call(const std::vector<std::shared_ptr<compiled_expression>>& args) const
+std::shared_ptr<element::element_object> element::function_instance::call(std::vector<std::shared_ptr<compiled_expression>> args) const
 {
-    std::vector<std::shared_ptr<compiled_expression>> compiled_arguments = provided_arguments;
-    compiled_arguments.insert(compiled_arguments.begin(), args.begin(), args.end());
+    args.insert(args.begin(), provided_arguments.begin(), provided_arguments.end());
 
-    if (compiled_arguments.size() == declarer->inputs.size())
+    if (args.size() == declarer->inputs.size())
     {
         //we have the exact arguments we need
-        return declarer->call(compiled_arguments);
+        return declarer->call(args);
     }
-    else if (compiled_arguments.size() < declarer->inputs.size())
+    else if (args.size() < declarer->inputs.size())
     {
         //we partially apply the arguments we have. todo: reuse existing instance if we can?
-        return std::make_shared<function_instance>(declarer, std::move(compiled_arguments));
+        return std::make_shared<function_instance>(declarer, std::move(args));
     }
 
     assert(false);

@@ -32,10 +32,10 @@ namespace element
         const function_declaration* const declarer;
         std::vector<std::shared_ptr<compiled_expression>> provided_arguments;
 
-        explicit function_instance(const function_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions);
+        explicit function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<compiled_expression>> args);
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] static bool is_instance_function() { return true; }
-        [[nodiscard]] std::shared_ptr<element_object> call(const std::vector<std::shared_ptr<compiled_expression>>& args) const override;
+        [[nodiscard]] std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const override;
     };
 }
