@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     element_interpreter_create(&context);
     element_interpreter_load_prelude(context);
 
-    const char* evaluate = "evaluate = Num.add(1, 2);";
+    const char* evaluate = "evaluate = 1.add(2);";
     auto result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
         return result;

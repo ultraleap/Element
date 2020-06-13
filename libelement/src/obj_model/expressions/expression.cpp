@@ -30,7 +30,9 @@ std::shared_ptr<element::compiled_expression> element::expression::compile() con
         compiled->expression = std::make_shared<element_expression_constant>(expr->value);
         //a compiled expression's declarer is always a raw pointer, because it shouldn't be an intermediary but something that's part of the object model. I think
         //it's basically just some root thing we can use to track down where it came from if we need to
-        compiled->declarer = current.get();
+        compiled->object = current;
+        //todo: don't have constraints set up right now, so just hacking it in to declarer. not even sure if that's a bad thing, declarer makes sense?
+        compiled->declarer = enclosing_scope->get_global()->find("Num", false).get(); //hopefully the Num declaration doesn't move anywhere (e.g merging..)
         current = std::move(compiled);
     }
     else
@@ -70,5 +72,28 @@ std::shared_ptr<element::compiled_expression> element::expression::compile() con
     }
 
     throw; //todo: could be e.g. a namespace declaration, so not something that was compileable
+    return nullptr;
+}
+
+std::shared_ptr<element::element_object> element::literal_expression::index(const indexing_expression* expr) const
+{
+    const auto& num = enclosing_scope->get_global()->find("Num", false);
+    const auto obj = num->index(expr);
+    if (dynamic_cast<function_declaration*>(obj.get()))
+    {
+        auto func = static_cast<function_declaration*>(obj.get());
+        //todo: typechecking
+
+        //hopefully this is a sufficiently large warning sign that what we're doing here is not good
+        auto compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation = std::make_shared<compiled_expression>();
+        compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->expression = std::make_shared<element_expression_constant>(value);
+        compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->object = std::make_shared<literal_expression>(value, enclosing_scope); //this is really bad, we should not recreate the literal expression. all of this is an iffy hack though
+        compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->declarer = enclosing_scope->get_global()->find("Num", false).get();
+        std::vector<std::shared_ptr<compiled_expression>> compiled_args = { { std::move(compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation) } };
+        auto partially_applied_function = std::make_shared<function_instance>(func, std::move(compiled_args));
+        return std::move(partially_applied_function);
+    }
+
+    throw;
     return nullptr;
 }

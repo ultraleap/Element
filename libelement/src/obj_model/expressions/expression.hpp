@@ -47,7 +47,9 @@ namespace element
 
         [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_string() const override { return std::to_string(value); }
-        //[[nodiscard]] const element_object* index(const indexing_expression*) const override;
+
+        //when a literal is compiled and we need to later index it, it goes through here
+        [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
 	};
 
     struct identifier_expression final : expression

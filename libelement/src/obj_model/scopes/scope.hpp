@@ -27,6 +27,14 @@ namespace element
     	{
             return parent_scope == nullptr;
     	}
+
+        const scope* get_global() const
+        {
+            const scope* global = this;
+            while (global->parent_scope)
+                global = global->parent_scope;
+            return global;
+        }
     	
         [[nodiscard]] std::string location() const;
         [[nodiscard]] std::string to_string() const override;
