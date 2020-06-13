@@ -31,6 +31,8 @@ namespace element
         std::string identifier;
         bool intrinsic = false;
 
+        std::unique_ptr<scope> scope; //needed to merge object model
+
         explicit declaration();
 		
         [[nodiscard]] bool has_inputs() const;
@@ -42,8 +44,6 @@ namespace element
 
     struct scoped_declaration : declaration
 	{
-        std::unique_ptr<scope> scope;
-
         [[nodiscard]] bool has_scope() const;
     	
         explicit scoped_declaration(const element::scope* parent_scope);
@@ -83,6 +83,7 @@ namespace element
         expression_bodied_function_declaration(const element::scope* parent_scope);
 
         [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
     };
 
     struct namespace_declaration final : scoped_declaration

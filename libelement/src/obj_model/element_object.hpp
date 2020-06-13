@@ -1,6 +1,8 @@
 #pragma once
 
+//STD
 #include <string>
+#include <memory>
 
 #include "typeutil.hpp"
 
@@ -20,6 +22,7 @@ namespace element
         //todo: some kind of component architecture?
         [[nodiscard]] virtual const element_object* index(const indexing_expression*) const { return nullptr; };
         [[nodiscard]] virtual const element_object* call(const call_expression*) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile() const { return nullptr; };
     };
 
  //   struct error : element_object

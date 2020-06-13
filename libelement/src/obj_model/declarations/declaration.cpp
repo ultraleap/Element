@@ -1,6 +1,8 @@
 #include "declaration.hpp"
 
+//SELF
 #include "../scopes/scope.hpp"
+#include "../expressions/expression.hpp"
 
 //declaration
 element::declaration::declaration()
@@ -36,9 +38,8 @@ std::string element::declaration::location() const
 
 //scoped_declaration
 element::scoped_declaration::scoped_declaration(const element::scope* parent_scope)
-	: scope(std::make_unique<element::scope>(parent_scope, this))
 {
-
+	scope = std::make_unique<element::scope>(parent_scope, this);
 }
 
 bool element::scoped_declaration::has_scope() const
@@ -122,11 +123,17 @@ std::string element::function_declaration::to_string() const
 		declaration = identifier + "(" + input_ports + ")";
 	}
 	
-	return location() + declaration + ":Function";
+	return location() + ":Function";
 }
 
-const element::element_object* element::function_declaration::call(const call_expression*) const
+const element::element_object* element::function_declaration::call(const call_expression* expr) const
 {
+	//:b
+	if (intrinsic && identifier == "add")
+	{
+		auto result = std::make_shared<compiled_expression>();
+	}
+
 	return nullptr;
 }
 
@@ -141,6 +148,11 @@ element::expression_bodied_function_declaration::expression_bodied_function_decl
 std::string element::expression_bodied_function_declaration::to_string() const
 {
 	return location() + " = " + expression->to_string() + ":Function";
+}
+
+std::shared_ptr<element::compiled_expression> element::expression_bodied_function_declaration::compile() const
+{
+	return expression->compile();
 }
 
 //namespace

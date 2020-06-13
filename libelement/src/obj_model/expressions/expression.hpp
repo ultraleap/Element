@@ -33,7 +33,7 @@ namespace element
             return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_string(), accumulate);
         }
 
-        std::unique_ptr<compiled_expression> compile();
+        [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
     };
 
 	struct literal_expression final : expression

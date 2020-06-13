@@ -11,7 +11,48 @@
 
 int main(int argc, char** argv)
 {
-#ifdef LEGACY_COMPILER
+#ifndef LEGACY_COMPILER
+    element_interpreter_ctx* context;
+    element_interpreter_create(&context);
+    element_interpreter_load_prelude(context);
+
+    const char* evaluate = "evaluate(a, b) = Num.add(a, b);";
+    auto result = element_interpreter_load_string(context, evaluate, "<input>");
+    if (result != ELEMENT_OK)
+        return result;
+
+    element_compilable* compilable;
+    result = element_interpreter_find(context, "evaluate", &compilable);
+    if (result != ELEMENT_OK)
+        return result;
+
+    struct element_evaluatable* evaluatable;
+    result = element_interpreter_compile(context, NULL, compilable, &evaluatable);
+    if (result != ELEMENT_OK)
+        return result;
+
+    /*float inputs[] = { 1, 2 };
+    element_inputs input;
+    input.values = &inputs;
+    input.count = 2;
+
+    float outputs[1];
+    element_outputs output;
+    output.values = &outputs;
+    output.count = 1;
+
+    result = element_interpreter_evaluate(context, NULL, evaluatable, &input, &output);
+    if (result != ELEMENT_OK)
+        return result;
+
+    printf("%f", output.values[0]);*/
+
+    //todo
+    element_delete_compileable(context, &compilable);
+    element_interpreter_delete(context);
+
+    return 0;
+#else
 
     //todo: good location for these + copy on build
     //char* packages[] = {

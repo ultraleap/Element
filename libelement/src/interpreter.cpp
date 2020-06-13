@@ -227,7 +227,10 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 #else
 
     auto object_model = element::build_root_scope(parser.root);
-
+    if (global_scope)
+        global_scope->merge(std::move(object_model)); //hack for now
+    else
+        global_scope = std::move(object_model);
     //TODO: HERE! DO STUFF HERE! HERE!!! HERE!!!!!
 #endif
 
@@ -673,5 +676,28 @@ element_result element_compiled_function_get_typeof_compilation(element_compiled
     strncpy_s(string_buffer, string_buffer_size, str.c_str(), string_buffer_size);
     return ELEMENT_OK;
 }
+#else
 
+element_result element_delete_compileable(element_interpreter_ctx* context, element_compilable** compilable)
+{
+    delete* compilable;
+    *compilable = nullptr;
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_find(element_interpreter_ctx* context, const char* path, element_compilable** compilable)
+{
+    const auto obj = context->global_scope->find(path, false);
+    *compilable = new element_compilable{obj};
+    return ELEMENT_OK;
+}
+element_result element_interpreter_compile(
+    element_interpreter_ctx* context,
+    const element_compiler_options* options,
+    const element_compilable* compilable,
+    element_evaluatable** evaluatable)
+{
+    auto compiled = compilable->object->compile();
+    return ELEMENT_OK;
+}
 #endif
