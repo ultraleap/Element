@@ -128,26 +128,42 @@ std::string element::function_declaration::to_string() const
 	return location() + ":Function";
 }
 
-std::shared_ptr<element::element_object> element::function_declaration::call(const call_expression* expr) const
+std::shared_ptr<element::element_object> element::function_declaration::call(const std::vector<std::shared_ptr<compiled_expression>>& args) const
 {
-	//:b
-	if (intrinsic)
-	{
-		auto result = std::make_shared<compiled_expression>();
-		result->declarer = this;
-		//todo: better way of getting to our parent?
-		if (scope->parent_scope->declarer->identifier == "Num" && identifier == "add")
-		{
-			result->expression = std::make_shared<element_expression_binary>(
-				element_binary_op::add,
-				expr->children[0]->compile()->expression,
-				expr->children[1]->compile()->expression);
-		}
+	//e.g. Mynamespace.my_function(1) is a call on a function declaration
 
-		return result;
+	if (inputs.size() == args.size())
+	{
+		//todo: cache arguments as part of callstack for our child functions (e.g. return) to be able to reference
+		//todo: forward on any extra arguments to return? return can have it's own portlist right? how do we determine that, hmm, it would be here though
+		if (intrinsic)
+		{
+			auto result = std::make_shared<compiled_expression>();
+			result->declarer = this;
+			//todo: better way of getting to our parent?
+			if (scope->parent_scope->declarer->identifier == "Num" && identifier == "add")
+			{
+				result->expression = std::make_shared<element_expression_binary>(
+					element_binary_op::add,
+					args[0]->expression,
+					args[1]->expression);
+			}
+
+			return result;
+		}
+		else
+		{
+			return scope->find("return", false)->call({});
+		}
 	}
 
-	return nullptr;
+	const auto instance = std::make_shared<function_instance>(this, args);
+	return instance->call(args);
+}
+
+std::shared_ptr<element::compiled_expression> element::function_declaration::compile() const
+{
+	throw;
 }
 
 //expression bodied function
@@ -163,8 +179,15 @@ std::string element::expression_bodied_function_declaration::to_string() const
 	return location() + " = " + expression->to_string() + ":Function";
 }
 
+std::shared_ptr<element::element_object> element::expression_bodied_function_declaration::call(const std::vector<std::shared_ptr<compiled_expression>>& args) const
+{
+	//todo: apply arguments to callstack/cache so they can be found from scope lookups
+	return expression->compile();
+}
+
 std::shared_ptr<element::compiled_expression> element::expression_bodied_function_declaration::compile() const
 {
+	//todo: should compilation have to happen via a call? I think so, so this function becomes redundant/an issue
 	return expression->compile();
 }
 

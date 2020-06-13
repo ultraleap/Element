@@ -72,10 +72,12 @@ namespace element
 
         [[nodiscard]] std::string to_string() const override;
 
-        [[nodiscard]] virtual std::shared_ptr<element_object> call(const call_expression*) const;
-
+        [[nodiscard]] std::shared_ptr<element_object> call(const std::vector<std::shared_ptr<compiled_expression>>& args) const override;
+        [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
     };
 
+    //expression bodied functions are used as the leaf-functions for a chain of scope bodied ones to prevent recursion
+    //the last thing in a function call chain must be an expression bodied "return"
     struct expression_bodied_function_declaration final : scoped_declaration {
 
         std::shared_ptr<expression> expression;
@@ -83,6 +85,7 @@ namespace element
         expression_bodied_function_declaration(const element::scope* parent_scope);
 
         [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::shared_ptr<element_object> call(const std::vector<std::shared_ptr<compiled_expression>>& args) const override;
         [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
     };
 

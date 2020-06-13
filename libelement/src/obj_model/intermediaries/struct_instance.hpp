@@ -19,9 +19,9 @@ namespace element
     struct struct_instance final : element_object
     {
         const struct_declaration* const declarer;
-        std::map<std::string, std::unique_ptr<compiled_expression>> fields;
+        std::map<std::string, std::shared_ptr<compiled_expression>> fields;
 
-        explicit struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<expression>>& expressions);
+        explicit struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions);
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
@@ -30,11 +30,12 @@ namespace element
     struct function_instance final : element_object
     {
         const function_declaration* const declarer;
-        std::map<std::string, std::unique_ptr<compiled_expression>> provided_arguments;
+        std::vector<std::shared_ptr<compiled_expression>> provided_arguments;
 
-        explicit function_instance(const function_declaration* declarer, const std::vector<std::shared_ptr<expression>>& expressions);
+        explicit function_instance(const function_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions);
 
+        [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] static bool is_instance_function() { return true; }
-        [[nodiscard]] std::shared_ptr<element_object> call(const call_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> call(const std::vector<std::shared_ptr<compiled_expression>>& args) const override;
     };
 }

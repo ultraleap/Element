@@ -3,6 +3,7 @@
 //STD
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "typeutil.hpp"
 
@@ -21,7 +22,7 @@ namespace element
 
         //todo: some kind of component architecture?
         [[nodiscard]] virtual std::shared_ptr<element_object> index(const indexing_expression*) const { return nullptr; };
-        [[nodiscard]] virtual std::shared_ptr<element_object> call(const call_expression*) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<element_object> call(const std::vector<std::shared_ptr<compiled_expression>>& args) const { return nullptr; };
         [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile() const { return nullptr; };
     };
 
