@@ -20,8 +20,8 @@ namespace element
         [[nodiscard]] virtual std::string to_string() const = 0;
 
         //todo: some kind of component architecture?
-        [[nodiscard]] virtual const element_object* index(const indexing_expression*) const { return nullptr; };
-        [[nodiscard]] virtual const element_object* call(const call_expression*) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<element_object> index(const indexing_expression*) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<element_object> call(const call_expression*) const { return nullptr; };
         [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile() const { return nullptr; };
     };
 

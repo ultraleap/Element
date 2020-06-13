@@ -10,16 +10,16 @@ std::string element::scope::location() const
 	return declarer->location();
 }
 
-void element::scope::add_declaration(std::unique_ptr<element::declaration> declaration)
+void element::scope::add_declaration(std::shared_ptr<element::declaration> declaration)
 {
     declarations.emplace(declaration->identifier, std::move(declaration));
 }
 
-element::declaration* element::scope::find(const std::string& identifier, const bool recurse = false) const
+std::shared_ptr<element::declaration> element::scope::find(const std::string& identifier, const bool recurse = false) const
 {
     const auto name_it = declarations.find(identifier);
     if (name_it != declarations.end())
-            return name_it->second.get();
+            return name_it->second;
 
     return (recurse && parent_scope) ? parent_scope->find(identifier, true) : nullptr;
 }

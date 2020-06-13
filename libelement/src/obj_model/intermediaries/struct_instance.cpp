@@ -3,9 +3,9 @@
 #include <cassert>
 
 //compiled_expression
-const element::element_object* element::compiled_expression::index(const indexing_expression*) const
+std::shared_ptr<element::element_object> element::compiled_expression::index(const indexing_expression* expr) const
 {
-    return nullptr;
+    return object->index(expr);
 }
 
 //struct_instance
@@ -20,7 +20,7 @@ element::struct_instance::struct_instance(const struct_declaration* declarer, co
     }
 }
 
-const element::element_object* element::struct_instance::index(const indexing_expression* expression) const
+std::shared_ptr<element::element_object> element::struct_instance::index(const indexing_expression* expression) const
 {
     //this is how we do partial application. if we index a struct instance and find it's an instance function
     //then we create a function_instance of that function, with ourselves as the first provided argument
@@ -46,7 +46,7 @@ element::function_instance::function_instance(const function_declaration* declar
     }
 }
 
-const element::element_object* element::function_instance::call(const call_expression* expression) const
+std::shared_ptr<element::element_object> element::function_instance::call(const call_expression* expression) const
 {
     //do things
     return nullptr;

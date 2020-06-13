@@ -1,12 +1,13 @@
 #pragma once
 
-#ifdef LEGACY_COMPILER
 
 #include <memory>
 #include "common_internal.hpp"
 
+#ifdef LEGACY_COMPILER
 struct element_scope;
 using scope_unique_ptr = std::unique_ptr<element_scope>;
+#endif
 
 struct element_constraint;
 using constraint_shared_ptr = std::shared_ptr<element_constraint>;
@@ -75,5 +76,3 @@ enum class element_binary_op
 	gt,
 	geq
 };
-
-#endif

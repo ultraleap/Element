@@ -48,7 +48,7 @@ namespace element
     	
         explicit scoped_declaration(const element::scope* parent_scope);
 
-    	void add_declaration(std::unique_ptr<declaration> declaration) const;
+    	void add_declaration(std::shared_ptr<declaration> declaration) const;
 
         [[nodiscard]] std::string location() const override;
     };
@@ -58,7 +58,7 @@ namespace element
         struct_declaration(const element::scope* parent_scope, bool is_intrinsic);
     	
         [[nodiscard]] std::string to_string() const override;
-        [[nodiscard]] const element_object* index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
     };
 	
     struct constraint_declaration final : declaration
@@ -72,7 +72,7 @@ namespace element
 
         [[nodiscard]] std::string to_string() const override;
 
-        [[nodiscard]] virtual const element_object* call(const call_expression*) const;
+        [[nodiscard]] virtual std::shared_ptr<element_object> call(const call_expression*) const;
 
     };
 
@@ -91,6 +91,6 @@ namespace element
         namespace_declaration(const element::scope* parent_scope);
 
         [[nodiscard]] std::string to_string() const override;
-        [[nodiscard]] const element_object* index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
     };
 }

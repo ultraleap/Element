@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     element_interpreter_create(&context);
     element_interpreter_load_prelude(context);
 
-    const char* evaluate = "evaluate(a, b) = Num.add(a, b);";
+    const char* evaluate = "evaluate = Num.add(1, 2);";
     auto result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
         return result;
@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
-    /*float inputs[] = { 1, 2 };
+    float inputs[] = { 1, 2 };
     element_inputs input;
     input.values = &inputs;
     input.count = 2;
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
-    printf("%f", output.values[0]);*/
+    printf("%f", output.values[0]);
 
     //todo
     element_delete_compileable(context, &compilable);

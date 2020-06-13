@@ -47,7 +47,7 @@ void build_inputs(element_ast* ast, element::declaration& declaration)
         declaration.inputs.emplace_back(input->identifier);
 }
 
-std::unique_ptr<element::declaration> element::build_struct_declaration(const element_ast* const ast, const scope* const parent_scope)
+std::shared_ptr<element::declaration> element::build_struct_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -74,12 +74,12 @@ std::unique_ptr<element::declaration> element::build_struct_declaration(const el
     return std::move(struct_decl);
 }
 
-std::unique_ptr<element::declaration> element::build_constraint_declaration(const element_ast* const ast, const scope* const parent_scope)
+std::shared_ptr<element::declaration> element::build_constraint_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     return nullptr;
 }
 
-std::unique_ptr<element::declaration> element::build_function_declaration(const element_ast* const ast, const scope* const parent_scope)
+std::shared_ptr<element::declaration> element::build_function_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     auto* const body = ast->children[ast_idx::function::body].get();
     if (body->type == ELEMENT_AST_NODE_SCOPE || body->type == ELEMENT_AST_NODE_CONSTRAINT /* intrinsic function*/)
@@ -91,7 +91,7 @@ std::unique_ptr<element::declaration> element::build_function_declaration(const 
     return nullptr;
 }
 
-std::unique_ptr<element::declaration> element::build_scope_bodied_function_declaration(const element_ast* const ast, const scope* const parent_scope)
+std::shared_ptr<element::declaration> element::build_scope_bodied_function_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -175,7 +175,7 @@ std::shared_ptr<element::expression> element::build_expression(const element_ast
     return parent;
 }
 
-std::unique_ptr<element::declaration> element::build_expression_bodied_function_declaration(const element_ast* const ast, const scope* const parent_scope)
+std::shared_ptr<element::declaration> element::build_expression_bodied_function_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -199,7 +199,7 @@ std::unique_ptr<element::declaration> element::build_expression_bodied_function_
     return std::move(function_decl);
 }
 
-std::unique_ptr<element::declaration> element::build_namespace_declaration(const element_ast* const ast, const scope* const parent_scope)
+std::shared_ptr<element::declaration> element::build_namespace_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     auto namespace_decl = std::make_unique<namespace_declaration>(parent_scope);
     namespace_decl->identifier = ast->identifier;
@@ -216,7 +216,7 @@ std::unique_ptr<element::declaration> element::build_namespace_declaration(const
     return std::move(namespace_decl);
 }
 
-std::unique_ptr<element::declaration> element::build_declaration(const element_ast* const ast, const scope* const parent_scope)
+std::shared_ptr<element::declaration> element::build_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     if (ast->type == ELEMENT_AST_NODE_STRUCT)
         return build_struct_declaration(ast, parent_scope);
