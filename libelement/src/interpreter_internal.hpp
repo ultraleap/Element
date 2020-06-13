@@ -48,10 +48,22 @@ struct element_compiled_function
 
 #else
 
+struct element_compilable
+{
+    element::element_object* object;
+};
+
+struct element_evaluatable
+{
+    std::shared_ptr<element::compiled_expression> evaluatable;
+};
+
 struct element_interpreter_ctx
 {
     bool prelude_loaded = false;
     std::shared_ptr<element_log_ctx> logger;
+
+    std::unique_ptr<element::scope> global_scope;
 
     element_interpreter_ctx();
 

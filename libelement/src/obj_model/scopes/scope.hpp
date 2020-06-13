@@ -10,7 +10,7 @@ namespace element
 {
     struct scope : element_object
 	{
-        const scope* const parent_scope = nullptr;
+        const scope* parent_scope = nullptr;
         const declaration* const declarer;
     	
         std::map<std::string, std::unique_ptr<declaration>> declarations;
@@ -25,11 +25,26 @@ namespace element
 
         [[nodiscard]] bool is_root() const
     	{
-            //assert(!declarer);
             return parent_scope == nullptr;
     	}
     	
         [[nodiscard]] std::string location() const;
         [[nodiscard]] std::string to_string() const override;
+
+        void merge(std::unique_ptr<scope>&& other)
+        {
+            if (!is_root() || !other->is_root())
+                throw;
+
+            for (auto& [identifier, declaration] : other->declarations)
+            {
+                if (declarations.count(identifier))
+                    throw;
+
+                declarations[identifier] = std::move(declaration);
+                if (declarations[identifier]->scope)
+                    declarations[identifier]->scope->parent_scope = this;
+            }
+        }
     };
 }

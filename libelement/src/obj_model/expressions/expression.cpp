@@ -8,7 +8,7 @@ element::expression::expression(const scope* enclosing_scope)
 {
 }
 
-std::unique_ptr<element::compiled_expression> element::expression::compile()
+std::shared_ptr<element::compiled_expression> element::expression::compile() const
 {
     if (children.empty())
         return nullptr; //todo: error_object

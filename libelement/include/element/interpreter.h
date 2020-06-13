@@ -75,6 +75,56 @@ element_result element_interpreter_evaluate_function(
 element_result element_interpreter_test_eval(element_interpreter_ctx* context, const char* fn_name, const element_value* inputs, size_t inputs_size, element_value* outputs, size_t outputs_size);
 element_result element_interpreter_get_internal_typeof(element_interpreter_ctx* context, const char* string, const char* filename, char* output_string_buffer, unsigned intoutput_string_buffer_size);
 element_result element_compiled_function_get_typeof_compilation(element_compiled_function* cfn, char* string_buffer, unsigned int string_buffer_size);
+#else
+
+typedef struct element_compilable element_compilable;
+typedef struct element_evaluatable element_evaluatable;
+
+typedef struct element_inputs
+{
+    element_value* values;
+    int count;
+} element_inputs;
+
+typedef struct element_outputs
+{
+    element_value* values;
+    int count;
+} element_outputs;
+
+typedef struct element_metainfo element_metainfo;
+
+element_result element_delete_compileable(
+    element_interpreter_ctx* context,
+    element_compilable** compilable);
+
+element_result element_interpreter_find(
+    element_interpreter_ctx* context,
+    const char* path,
+    element_compilable** compilable);
+
+element_result element_interpreter_compile(
+    element_interpreter_ctx* context,
+    const element_compiler_options* options,
+    const element_compilable* compilable,
+    element_evaluatable** evaluatable);
+
+element_result element_interpreter_evaluate(
+    element_interpreter_ctx* context,
+    const element_evaluator_options* options,
+    const element_evaluatable* evaluatable,
+    const element_inputs* inputs,
+    const element_outputs* outputs);
+
+element_result element_interpreter_evaluate_expression(
+    element_interpreter_ctx* context,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    const element_outputs* outputs);
+
+element_result element_metainfo_for_evalutable(
+    const element_evaluatable* evaluatable,
+    const element_metainfo** metainfo);
 #endif
 
 #if defined(__cplusplus)

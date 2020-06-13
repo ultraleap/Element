@@ -82,15 +82,11 @@ std::unique_ptr<element::declaration> element::build_constraint_declaration(cons
 std::unique_ptr<element::declaration> element::build_function_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     auto* const body = ast->children[ast_idx::function::body].get();
-    if (body->type == ELEMENT_AST_NODE_SCOPE)
+    if (body->type == ELEMENT_AST_NODE_SCOPE || body->type == ELEMENT_AST_NODE_CONSTRAINT /* intrinsic function*/)
         return build_scope_bodied_function_declaration(ast, parent_scope);
 
     if (body->type == ELEMENT_AST_NODE_CALL) 
         return build_expression_bodied_function_declaration(ast, parent_scope);
-
-    //TODO: JM - Handle this properly
-    //if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
-    //    return build_constraint_declaration(ast, parent_scope);
 
     return nullptr;
 }
@@ -183,6 +179,7 @@ std::unique_ptr<element::declaration> element::build_expression_bodied_function_
 {
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+    assert(!intrinsic);
 
     auto function_decl = std::make_unique<element::expression_bodied_function_declaration>(parent_scope);
     function_decl->identifier = decl->identifier;
