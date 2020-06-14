@@ -75,7 +75,18 @@ element::struct_declaration::struct_declaration(const element::scope* parent_sco
 
 std::string element::struct_declaration::to_string() const
 {
+	return location() + ":Struct";
+}
+
+std::string element::struct_declaration::to_code(int depth) const
+{
 	std::string ports;
+
+	const std::string offset = "    ";
+	std::string declaration_offset;
+
+	for (auto i = 0; i < depth; ++i)
+		declaration_offset += offset;
 
 	if (has_inputs()) {
 		static auto accumulate = [](std::string accumulator, const element::port& port)
@@ -87,7 +98,10 @@ std::string element::struct_declaration::to_string() const
 		ports = "(" + input_ports + ")";
 	}
 
-	return location() + ports + ":Struct";
+	if (intrinsic)
+		return declaration_offset + "intrinsic struct " + identifier + ports + scope->to_code(depth);
+
+	return declaration_offset + "struct "+ identifier + ports + scope->to_code(depth);
 }
 
 std::shared_ptr<element::element_object> element::struct_declaration::index(const indexing_expression* expr) const
@@ -113,19 +127,34 @@ element::function_declaration::function_declaration(const element::scope* parent
 
 std::string element::function_declaration::to_string() const
 {
+	return location() + ":Function";
+}
+
+std::string element::function_declaration::to_code(int depth) const
+{
 	auto declaration = identifier;
+	std::string ports;
+
+	const std::string offset = "    ";
+	std::string declaration_offset;
+
+	for (auto i = 0; i < depth; ++i)
+		declaration_offset += offset;
 
 	if (has_inputs()) {
 		static auto accumulate = [](std::string accumulator, const element::port& port)
 		{
 			return std::move(accumulator) + ", " + port.to_string();
 		};
-	
-		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
-		declaration = identifier + "(" + input_ports + ")";
+
+        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
+		ports = "(" + input_ports + ")";
 	}
-	
-	return location() + ":Function";
+
+	if (intrinsic)
+	    return declaration_offset + "intrinsic " + identifier + ports + ";";
+
+    return declaration_offset + identifier + ports + scope->to_code(depth);
 }
 
 std::shared_ptr<element::element_object> element::function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
@@ -181,7 +210,30 @@ element::expression_bodied_function_declaration::expression_bodied_function_decl
 
 std::string element::expression_bodied_function_declaration::to_string() const
 {
-	return location() + " = " + expression->to_string() + ":Function";
+	return location() + ":Function";
+}
+
+std::string element::expression_bodied_function_declaration::to_code(int depth) const
+{
+	auto declaration = identifier;
+
+	const std::string offset = "    ";
+	std::string declaration_offset;
+
+	for (auto i = 0; i < depth; ++i)
+		declaration_offset += offset;
+
+	if (has_inputs()) {
+		static auto accumulate = [](std::string accumulator, const element::port& port)
+		{
+			return std::move(accumulator) + ", " + port.to_string();
+		};
+
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
+		declaration = identifier + "(" + input_ports + ")";
+	}
+
+	return declaration_offset + declaration + " = " + expression->to_code() + ";";
 }
 
 std::shared_ptr<element::element_object> element::expression_bodied_function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
@@ -223,6 +275,11 @@ element::namespace_declaration::namespace_declaration(const element::scope* pare
 std::string element::namespace_declaration::to_string() const
 {
 	return location() + ":Namespace";
+}
+
+std::string element::namespace_declaration::to_code(int depth) const
+{
+	return "namespace " + identifier + scope->to_code(depth);
 }
 
 std::shared_ptr<element::element_object> element::namespace_declaration::index(const indexing_expression* expr) const

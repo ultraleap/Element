@@ -23,14 +23,14 @@ namespace element
         expression(const scope* enclosing_scope);
 
         [[nodiscard]] virtual bool has_children() const { return !children.empty();  }
-        [[nodiscard]] std::string to_string() const override
+        [[nodiscard]] std::string to_code(int depth = 0) const override
         {
             static auto accumulate = [](std::string accumulator, const std::shared_ptr<element::expression>& expression)
             {
-                return std::move(accumulator) + expression->to_string();
+                return std::move(accumulator) + expression->to_code();
             };
 
-            return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_string(), accumulate);
+            return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_code(), accumulate);
         }
 
         [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
@@ -46,7 +46,7 @@ namespace element
         }
 
         [[nodiscard]] bool has_children() const override { return false; }
-        [[nodiscard]] std::string to_string() const override { return std::to_string(value); }
+        [[nodiscard]] std::string to_code(int depth = 0) const override { return std::to_string(value); }
 
         //when a literal is compiled and we need to later index it, it goes through here
         [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
@@ -62,7 +62,7 @@ namespace element
         }
 
         [[nodiscard]] bool has_children() const override { return false; }
-        [[nodiscard]] std::string to_string() const override { return identifier; }
+        [[nodiscard]] std::string to_code(int depth = 0) const override { return identifier; }
         //[[nodiscard]] const element_object* index(const indexing_expression*) const override;
     };
 
@@ -73,14 +73,14 @@ namespace element
         {
         }
 
-        [[nodiscard]] std::string to_string() const override
+        [[nodiscard]] std::string to_code(int depth = 0) const override
         {
             static auto accumulate = [](std::string accumulator, const std::shared_ptr<element::expression>& expression)
             {
-                return std::move(accumulator) + "," + expression->to_string();
+                return std::move(accumulator) + "," + expression->to_code();
             };
 
-            const auto expressions = std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_string(), accumulate);
+            const auto expressions = std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_code(), accumulate);
         	return "(" + expressions + ")";
         }
 
@@ -97,7 +97,7 @@ namespace element
         }
 
         [[nodiscard]] bool has_children() const override { return false; }
-        [[nodiscard]] std::string to_string() const override
+        [[nodiscard]] std::string to_code(int depth = 0) const override
         {
 	        return "." + identifier;
         }

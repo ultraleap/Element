@@ -38,6 +38,7 @@ namespace element
     	
         [[nodiscard]] std::string location() const;
         [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string to_code(int depth = -1) const override;
 
         void merge(std::unique_ptr<scope>&& other)
         {

@@ -261,5 +261,9 @@ std::unique_ptr<element::scope> element::build_root_scope(const element_ast* con
             root->add_declaration(std::move(decl));
     }
 
+    log("\n<CODE>");
+    log(root->to_code());
+    log("</CODE>\n");
+
     return root;
 }

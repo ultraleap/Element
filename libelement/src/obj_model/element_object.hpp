@@ -17,8 +17,9 @@ namespace element
     struct element_object
 	{
 		virtual ~element_object() = default;
-    	
-        [[nodiscard]] virtual std::string to_string() const = 0;
+
+        [[nodiscard]] virtual std::string to_string() const { return ""; }
+        [[nodiscard]] virtual std::string to_code(int depth) const { return ""; }
 
         //todo: some kind of component architecture?
         [[nodiscard]] virtual std::shared_ptr<element_object> index(const indexing_expression*) const { return nullptr; };
