@@ -5,6 +5,25 @@ std::string element::scope::to_string() const
 	return declarer->to_string();
 }
 
+std::string element::scope::to_code(int depth) const
+{
+    std::string code;
+
+    const std::string offset = "    ";
+    std::string scope_offset;
+
+    for (auto i = 0; i < depth; ++i)
+        scope_offset += offset;
+
+    for (const auto& declaration : declarations)
+        code += declaration.second->to_code(depth + 1) + "\n";
+
+    if (is_root())
+        return code;
+
+    return "\n" + scope_offset + "{\n" + code + scope_offset + "}";
+}
+
 std::string element::scope::location() const
 {
 	return declarer->location();
