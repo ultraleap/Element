@@ -5,7 +5,32 @@
 //compiled_expression
 std::shared_ptr<element::element_object> element::compiled_expression::index(const indexing_expression* expr) const
 {
-    return object->index(expr);
+    if (object)
+        return object->index(expr);
+
+    //todo: is there any point?
+    if (declarer)
+    {
+        assert(false); //figure out if/when this occurs and if it should
+        return declarer->index(expr);
+    }
+
+    return nullptr;
+}
+
+std::shared_ptr<element::element_object> element::compiled_expression::call(std::vector<std::shared_ptr<compiled_expression>> args) const
+{
+    if (object)
+        return object->call(std::move(args));
+
+    //todo: is there any point?
+    if (declarer)
+    {
+        assert(false); //figure out if/when this occurs and if it should
+        return declarer->call(std::move(args));
+    }
+
+    return nullptr;
 }
 
 //struct_instance
