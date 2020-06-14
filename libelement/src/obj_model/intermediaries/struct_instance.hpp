@@ -13,6 +13,7 @@ namespace element
         expression_shared_ptr expression;
 
         [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const override;
         [[nodiscard]] std::string to_string() const override { return ""; }
     };
 

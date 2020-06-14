@@ -158,7 +158,12 @@ std::shared_ptr<element::element_object> element::function_declaration::call(std
 	}
 
 	//don't have all the arguments, so partially apply them
-	return std::make_shared<function_instance>(this, std::move(args));
+	//is a compiled expression because if the call is the full expression, then we return it from expression->compile, which needs to be a compiled expression.
+	//todo: need to figure out differences between compiling and calling and their restrictions, if any
+	auto result = std::make_shared<compiled_expression>();
+	result->declarer = this;
+	result->object = std::make_shared<function_instance>(this, std::move(args));
+	return std::move(result);
 }
 
 std::shared_ptr<element::compiled_expression> element::function_declaration::compile() const
@@ -182,12 +187,28 @@ std::string element::expression_bodied_function_declaration::to_string() const
 std::shared_ptr<element::element_object> element::expression_bodied_function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
 {
 	//todo: apply arguments to callstack/cache so they can be found from scope lookups
-	return expression->compile();
+	const auto& compiled = compile();
+	//if it was a function instance then we should apply the arguments we have to it
+    //e.g. evaluate = add5(2); will call function declaration add5 with 2, so we need to apply 2 here. maybe there's a better way
+	if (dynamic_cast<function_instance*>(compiled->object.get()) &&
+		static_cast<int>(args.size()) > static_cast<int>(inputs.size())) //we were given more args than we accept, so apply the remaining ones to the function instance
+	{
+		const auto& instance = static_cast<function_instance*>(compiled->object.get());
+		instance->provided_arguments.insert(instance->provided_arguments.end(), args.begin() + inputs.size(), args.end());
+
+		//egh.. it feels like everything needs to return a compiled_expression
+		if (instance->provided_arguments.size() == instance->declarer->inputs.size())
+			return instance->call({});
+		else
+			compiled->object = instance->call({});
+	}
+
+	return compiled;
 }
 
 std::shared_ptr<element::compiled_expression> element::expression_bodied_function_declaration::compile() const
 {
-	//todo: should compilation have to happen via a call? I think so, so this function becomes redundant/an issue
+	//todo: should compilation have to happen via a call? I think so, so this function becomes redundant/an issue? mmmm
 	return expression->compile();
 }
 

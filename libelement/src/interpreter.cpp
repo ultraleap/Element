@@ -701,6 +701,7 @@ element_result element_interpreter_compile(
 {
     auto compiled = compilable->object->compile();
     *evaluatable = new element_evaluatable{std::move(compiled)};
+
     return ELEMENT_OK;
 }
 
