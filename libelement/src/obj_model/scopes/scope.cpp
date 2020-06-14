@@ -15,8 +15,9 @@ std::string element::scope::to_code(int depth) const
     for (auto i = 0; i < depth; ++i)
         scope_offset += offset;
 
-    for (const auto& declaration : declarations)
-        code += declaration.second->to_code(depth + 1) + "\n";
+    const auto end = std::end(declarations);
+    for (auto declaration = std::begin(declarations); declaration != end; ++declaration)
+        code += declaration->second->to_code(depth + 1) + (std::next(declaration) == end ? "" :  "\n");
 
     if (is_root())
         return code;
