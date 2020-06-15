@@ -40,6 +40,9 @@ namespace element
         [[nodiscard]] virtual std::string to_string() const { return ""; }
         [[nodiscard]] virtual std::string to_code(int depth) const { return ""; }
 
+        //TODO: Add constraints
+        //bool matches_constraint(constraint& constraint);
+
         //todo: some kind of component architecture?
         [[nodiscard]] virtual std::shared_ptr<element_object> index(const identifier&) const { return nullptr; };
         [[nodiscard]] virtual std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const { return nullptr; };

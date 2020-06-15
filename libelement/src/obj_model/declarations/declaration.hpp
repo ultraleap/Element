@@ -33,7 +33,7 @@ namespace element
 
         std::unique_ptr<scope> scope; //needed to merge object model
 
-        explicit declaration();
+        explicit declaration(element::identifier identifier);
 		
         [[nodiscard]] bool has_inputs() const;
         [[nodiscard]] bool has_output() const;
@@ -46,7 +46,7 @@ namespace element
 	{
         [[nodiscard]] bool has_scope() const;
     	
-        explicit scoped_declaration(const element::scope* parent_scope);
+        explicit scoped_declaration(element::identifier identifier, const element::scope* parent_scope);
 
     	void add_declaration(std::shared_ptr<declaration> declaration) const;
 
@@ -55,7 +55,7 @@ namespace element
 
     struct struct_declaration final : scoped_declaration
 	{
-        struct_declaration(const element::scope* parent_scope, bool is_intrinsic);
+        struct_declaration(element::identifier identifier, const element::scope* parent_scope, bool is_intrinsic);
     	
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
@@ -65,12 +65,15 @@ namespace element
 	
     struct constraint_declaration final : declaration
 	{
-		constraint_declaration(bool is_intrinsic);
+		constraint_declaration(element::identifier identifier, bool is_intrinsic);
+
+        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string to_code(int depth) const override;
     };
 
     struct function_declaration final : scoped_declaration
 	{
-        function_declaration(const element::scope* parent_scope, bool is_intrinsic);
+        function_declaration(element::identifier identifier, const element::scope* parent_scope, bool is_intrinsic);
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
@@ -85,7 +88,7 @@ namespace element
 
         std::shared_ptr<expression> expression;
     	
-        expression_bodied_function_declaration(const element::scope* parent_scope);
+        expression_bodied_function_declaration(element::identifier identifier, const element::scope* parent_scope);
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
@@ -96,7 +99,7 @@ namespace element
 
     struct namespace_declaration final : scoped_declaration
 	{
-        namespace_declaration(const element::scope* parent_scope);
+        namespace_declaration(element::identifier identifier, const element::scope* parent_scope);
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
