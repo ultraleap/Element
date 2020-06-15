@@ -78,7 +78,7 @@ element_result element_compiled_function_get_typeof_compilation(element_compiled
 #else
 
 typedef struct element_compilable element_compilable;
-typedef struct element_evaluatable element_evaluatable;
+typedef struct element_evaluable element_evaluable;
 
 typedef struct element_inputs
 {
@@ -107,12 +107,12 @@ element_result element_interpreter_compile(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
     const element_compilable* compilable,
-    element_evaluatable** evaluatable);
+    element_evaluable** evaluable);
 
 element_result element_interpreter_evaluate(
     element_interpreter_ctx* context,
     const element_evaluator_options* options,
-    const element_evaluatable* evaluatable,
+    const element_evaluable* evaluable,
     const element_inputs* inputs,
     const element_outputs* outputs);
 
@@ -123,7 +123,7 @@ element_result element_interpreter_evaluate_expression(
     const element_outputs* outputs);
 
 element_result element_metainfo_for_evalutable(
-    const element_evaluatable* evaluatable,
+    const element_evaluable* evaluable,
     const element_metainfo** metainfo);
 #endif
 

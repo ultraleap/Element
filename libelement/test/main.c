@@ -29,8 +29,8 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
-    struct element_evaluatable* evaluatable;
-    result = element_interpreter_compile(context, NULL, compilable, &evaluatable);
+    struct element_evaluable* evaluable;
+    result = element_interpreter_compile(context, NULL, compilable, &evaluable);
     if (result != ELEMENT_OK)
         return result;
 
@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     output.values = &outputs;
     output.count = 1;
 
-    result = element_interpreter_evaluate(context, NULL, evaluatable, &input, &output);
+    result = element_interpreter_evaluate(context, NULL, evaluable, &input, &output);
     if (result != ELEMENT_OK)
         return result;
 

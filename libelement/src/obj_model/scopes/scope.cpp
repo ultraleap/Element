@@ -22,7 +22,7 @@ std::string element::scope::to_code(int depth) const
     if (is_root())
         return code;
 
-    return "\n" + scope_offset + "{\n" + code + scope_offset + "}";
+    return "\n" + scope_offset + "{\n" + code  + "\n" + scope_offset + "}";
 }
 
 std::string element::scope::location() const

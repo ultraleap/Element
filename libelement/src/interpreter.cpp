@@ -697,10 +697,10 @@ element_result element_interpreter_compile(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
     const element_compilable* compilable,
-    element_evaluatable** evaluatable)
+    element_evaluable** evaluable)
 {
     auto compiled = compilable->object->compile();
-    *evaluatable = new element_evaluatable{std::move(compiled)};
+    *evaluable = new element_evaluable{std::move(compiled)};
 
     return ELEMENT_OK;
 }
@@ -708,7 +708,7 @@ element_result element_interpreter_compile(
 element_result element_interpreter_evaluate(
     element_interpreter_ctx* context,
     const element_evaluator_options* options,
-    const element_evaluatable* evaluatable,
+    const element_evaluable* evaluable,
     const element_inputs* inputs,
     const element_outputs* outputs)
 {
@@ -716,14 +716,14 @@ element_result element_interpreter_evaluate(
     if (options) opts = *options;
     const auto result = element_evaluate(
         *context,
-        evaluatable->evaluatable->expression,
+        evaluable->evaluable->expression,
         inputs->values,
         inputs->count,
         outputs->values,
         outputs->count,
         opts);
     if (result != ELEMENT_OK) {
-        context->log(result, fmt::format("Failed to evaluate {}", evaluatable->evaluatable->declarer->to_string()), "<input>");
+        context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->declarer->to_string()), "<input>");
     }
 
     return result;

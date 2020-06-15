@@ -66,7 +66,7 @@ std::string element::scoped_declaration::location() const
 }
 
 //struct
-element::struct_declaration::struct_declaration(const element::scope* parent_scope, bool is_intrinsic)
+element::struct_declaration::struct_declaration(const element::scope* parent_scope, const bool is_intrinsic)
 	: scoped_declaration(parent_scope)
 {
 	qualifier = struct_qualifier;
@@ -78,7 +78,7 @@ std::string element::struct_declaration::to_string() const
 	return location() + ":Struct";
 }
 
-std::string element::struct_declaration::to_code(int depth) const
+std::string element::struct_declaration::to_code(const int depth) const
 {
 	std::string ports;
 
@@ -110,7 +110,7 @@ std::shared_ptr<element::element_object> element::struct_declaration::index(cons
 }
 
  //constraint
-element::constraint_declaration::constraint_declaration(bool is_intrinsic)
+element::constraint_declaration::constraint_declaration(const bool is_intrinsic)
 {
 	qualifier = constraint_qualifier;
 	intrinsic = is_intrinsic;
@@ -118,7 +118,7 @@ element::constraint_declaration::constraint_declaration(bool is_intrinsic)
 
 
 //function
-element::function_declaration::function_declaration(const element::scope* parent_scope, bool is_intrinsic)
+element::function_declaration::function_declaration(const element::scope* parent_scope, const bool is_intrinsic)
 	: scoped_declaration(parent_scope)
 {
 	qualifier = function_qualifier;
@@ -159,7 +159,7 @@ std::string element::function_declaration::to_code(int depth) const
 
 std::shared_ptr<element::element_object> element::function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
 {
-	//e.g. Mynamespace.my_function(1) is a call on a function declaration
+	//e.g. my_namespace.my_function(1) is a call on a function declaration
 
 	if (inputs.size() == args.size())
 	{
@@ -213,7 +213,7 @@ std::string element::expression_bodied_function_declaration::to_string() const
 	return location() + ":Function";
 }
 
-std::string element::expression_bodied_function_declaration::to_code(int depth) const
+std::string element::expression_bodied_function_declaration::to_code(const int depth) const
 {
 	auto declaration = identifier;
 
@@ -277,7 +277,7 @@ std::string element::namespace_declaration::to_string() const
 	return location() + ":Namespace";
 }
 
-std::string element::namespace_declaration::to_code(int depth) const
+std::string element::namespace_declaration::to_code(const int depth) const
 {
 	return "namespace " + identifier + scope->to_code(depth);
 }
