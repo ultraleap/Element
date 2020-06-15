@@ -13,7 +13,7 @@ namespace element
 {
     struct scope;
 
-    struct expression : element_object
+    struct expression : element_object, std::enable_shared_from_this<expression>
 	{
         const scope* enclosing_scope;
 
@@ -34,6 +34,8 @@ namespace element
         }
 
         [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
+
+        [[nodiscard]] virtual std::shared_ptr<element_object> compile(std::shared_ptr<element_object>) { return nullptr; }
     };
 
 	struct literal_expression final : expression
@@ -50,6 +52,7 @@ namespace element
 
         //when a literal is compiled and we need to later index it, it goes through here
         [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> compile(std::shared_ptr<element_object> previous) override;
 	};
 
     struct identifier_expression final : expression
@@ -64,6 +67,7 @@ namespace element
         [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_code(int depth = 0) const override { return identifier; }
         //[[nodiscard]] const element_object* index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> compile(std::shared_ptr<element_object> previous) override;
     };
 
     struct call_expression final : expression
@@ -77,7 +81,7 @@ namespace element
         {
             static auto accumulate = [](std::string accumulator, const std::shared_ptr<element::expression>& expression)
             {
-                return std::move(accumulator) + "," + expression->to_code();
+                return std::move(accumulator) + ", " + expression->to_code();
             };
 
             const auto expressions = std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_code(), accumulate);
@@ -85,6 +89,7 @@ namespace element
         }
 
         //[[nodiscard]] const element_object* index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> compile(std::shared_ptr<element_object> previous) override;
     };
 	
     struct indexing_expression final : expression
@@ -101,6 +106,8 @@ namespace element
         {
 	        return "." + identifier;
         }
+
+        [[nodiscard]] std::shared_ptr<element_object> compile(std::shared_ptr<element_object> previous) override;
     };
 	
     struct lambda_expression final : expression
