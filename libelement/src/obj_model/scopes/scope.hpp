@@ -30,9 +30,15 @@ namespace element
 
         [[nodiscard]] const scope* get_global() const
         {
-            const scope* global = this;
-            while (global->parent_scope)
-                global = global->parent_scope;
+            const static scope* global = nullptr;
+            if (global)
+                return global;
+
+            const auto* local = this;
+            while (local->parent_scope)
+                local = local->parent_scope;
+
+            global = local;
             return global;
         }
     	
