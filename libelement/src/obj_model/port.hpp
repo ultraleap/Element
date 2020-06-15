@@ -1,8 +1,8 @@
 #pragma once
 
 #include <utility>
-#include <vector>
 
+#include "type_annotation.hpp"
 #include "element_object.hpp"
 #include "ast/types.hpp"
 
@@ -13,18 +13,17 @@ namespace element
 	struct port : element_object
 	{
         identifier identifier;
-		
-        //TODO: JM - constraint matching
-        //std::unique_ptr<element_constraint> constraint;
+        std::unique_ptr<type_annotation> annotation;
 
-        explicit port(std::string identifier = "")
-    		: identifier{std::move(identifier)}
-        { 
-        }
+        explicit port(element::identifier identifier, std::unique_ptr<type_annotation> annotation);
 
-        [[nodiscard]] std::string to_string() const override
+        [[nodiscard]] std::string to_string() const override { return identifier.value; }
+        [[nodiscard]] std::string to_code(int depth) const override
         {
-            return identifier.value;
+            if(annotation)
+                return annotation->to_code(depth);
+
+            return "";
         }
     };
 }
