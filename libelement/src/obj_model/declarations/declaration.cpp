@@ -7,8 +7,8 @@
 #include "etree/expressions.hpp"
 
 //declaration
-element::declaration::declaration()
-	: output{ nullptr }, identifier("")
+element::declaration::declaration(element::identifier identifier)
+	: output{ nullptr }, identifier(identifier)
 {
 }
 
@@ -39,7 +39,8 @@ std::string element::declaration::location() const
 }
 
 //scoped_declaration
-element::scoped_declaration::scoped_declaration(const element::scope* parent_scope)
+element::scoped_declaration::scoped_declaration(element::identifier identifier, const element::scope* parent_scope)
+    : declaration(std::move(identifier))
 {
 	scope = std::make_unique<element::scope>(parent_scope, this);
 }
@@ -66,8 +67,8 @@ std::string element::scoped_declaration::location() const
 }
 
 //struct
-element::struct_declaration::struct_declaration(const element::scope* parent_scope, const bool is_intrinsic)
-	: scoped_declaration(parent_scope)
+element::struct_declaration::struct_declaration(element::identifier identifier, const element::scope* parent_scope, const bool is_intrinsic)
+	: scoped_declaration(std::move(identifier), parent_scope)
 {
 	qualifier = struct_qualifier;
 	intrinsic = is_intrinsic;
@@ -110,16 +111,47 @@ std::shared_ptr<element::element_object> element::struct_declaration::index(cons
 }
 
  //constraint
-element::constraint_declaration::constraint_declaration(const bool is_intrinsic)
+element::constraint_declaration::constraint_declaration(element::identifier identifier, const bool is_intrinsic)
+    : declaration(std::move(identifier))
 {
 	qualifier = constraint_qualifier;
 	intrinsic = is_intrinsic;
 }
 
+std::string element::constraint_declaration::to_string() const
+{
+	return location() + ":Constraint";
+}
+
+std::string element::constraint_declaration::to_code(const int depth) const
+{
+	std::string ports;
+
+	const std::string offset = "    ";
+	std::string declaration_offset;
+
+	for (auto i = 0; i < depth; ++i)
+		declaration_offset += offset;
+
+	if (has_inputs()) {
+		static auto accumulate = [](std::string accumulator, const element::port& port)
+		{
+			return std::move(accumulator) + ", " + port.to_string();
+		};
+
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier.value, accumulate);
+		ports = "(" + input_ports + ")";
+	}
+
+	if (intrinsic)
+		return declaration_offset + "intrinsic constraint " + identifier.value + ports;
+
+	return declaration_offset + "constraint " + identifier.value + ports;
+}
 
 //function
-element::function_declaration::function_declaration(const element::scope* parent_scope, const bool is_intrinsic)
-	: scoped_declaration(parent_scope)
+element::function_declaration::function_declaration(element::identifier identifier, const element::scope* parent_scope, const bool is_intrinsic)
+	: scoped_declaration(std::move(identifier), parent_scope)
 {
 	qualifier = function_qualifier;
 	intrinsic = is_intrinsic;
@@ -201,8 +233,8 @@ std::shared_ptr<element::compiled_expression> element::function_declaration::com
 }
 
 //expression bodied function
-element::expression_bodied_function_declaration::expression_bodied_function_declaration(const element::scope* parent_scope)
-	: scoped_declaration(parent_scope)
+element::expression_bodied_function_declaration::expression_bodied_function_declaration(element::identifier identifier, const element::scope* parent_scope)
+	: scoped_declaration(std::move(identifier), parent_scope)
 {
 	qualifier = function_qualifier;
 	intrinsic = false;
@@ -265,8 +297,8 @@ std::shared_ptr<element::compiled_expression> element::expression_bodied_functio
 }
 
 //namespace
-element::namespace_declaration::namespace_declaration(const element::scope* parent_scope)
-	: scoped_declaration(parent_scope)
+element::namespace_declaration::namespace_declaration(element::identifier identifier, const element::scope* parent_scope)
+	: scoped_declaration(std::move(identifier), parent_scope)
 {
 	qualifier = namespace_qualifier;
 	intrinsic = false;
