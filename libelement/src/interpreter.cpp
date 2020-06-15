@@ -228,11 +228,10 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 #else
 
     auto object_model = element::build_root_scope(parser.root);
-    if (global_scope)
-        global_scope->merge(std::move(object_model)); //hack for now
-    else
-        global_scope = std::move(object_model);
-    //TODO: HERE! DO STUFF HERE! HERE!!! HERE!!!!!
+    result = global_scope->merge(std::move(object_model));
+    if (result != ELEMENT_OK) {
+        log(result, std::string("build_root_scope failed with element_result " + std::to_string(result)), filename);
+    }
 #endif
 
     return ELEMENT_OK;
@@ -379,6 +378,7 @@ void element_interpreter_ctx::log(const std::string& message) const
 element_interpreter_ctx::element_interpreter_ctx()
 {
     // TODO: hack, remove
+    global_scope = std::make_unique<element::scope>(nullptr, nullptr);
     clear();
 }
 

@@ -21,7 +21,7 @@ namespace element
         }
     	
         void add_declaration(std::shared_ptr<declaration> declaration);
-        std::shared_ptr<element::declaration> find(const std::string& identifier, bool recurse) const;
+        std::shared_ptr<declaration> find(const std::string& identifier, bool recurse) const;
 
         [[nodiscard]] bool is_root() const
     	{
@@ -40,20 +40,22 @@ namespace element
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth = -1) const override;
 
-        void merge(std::unique_ptr<scope>&& other)
+        element_result merge(std::unique_ptr<scope>&& other)
         {
             if (!is_root() || !other->is_root())
-                throw;
+                return ELEMENT_ERROR_UNKNOWN;
 
             for (auto& [identifier, declaration] : other->declarations)
             {
                 if (declarations.count(identifier))
-                    throw;
+                    return ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
 
                 declarations[identifier] = std::move(declaration);
                 if (declarations[identifier]->scope)
                     declarations[identifier]->scope->parent_scope = this;
             }
+
+            return ELEMENT_OK;
         }
     };
 }
