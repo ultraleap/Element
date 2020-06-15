@@ -8,7 +8,7 @@
 
 //declaration
 element::declaration::declaration()
-	: output{ nullptr }
+	: output{ nullptr }, identifier("")
 {
 }
 
@@ -35,7 +35,7 @@ bool element::declaration::has_constraint() const
 
 std::string element::declaration::location() const
 {
-	return identifier;
+	return identifier.value;
 }
 
 //scoped_declaration
@@ -51,12 +51,12 @@ bool element::scoped_declaration::has_scope() const
 
 void element::scoped_declaration::add_declaration(std::shared_ptr<element::declaration> declaration) const
 {
-	scope->declarations.emplace(declaration->identifier, std::move(declaration));
+	scope->declarations.emplace(declaration->identifier.value, std::move(declaration));
 }
 
 std::string element::scoped_declaration::location() const
 {
-	auto declaration = identifier;
+	auto declaration = identifier.value;
 
 	if (scope->parent_scope->is_root())
 		return declaration;
@@ -94,19 +94,19 @@ std::string element::struct_declaration::to_code(const int depth) const
 			return std::move(accumulator) + ", " + port.to_string();
 		};
 
-		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier.value, accumulate);
 		ports = "(" + input_ports + ")";
 	}
 
 	if (intrinsic)
-		return declaration_offset + "intrinsic struct " + identifier + ports + scope->to_code(depth);
+		return declaration_offset + "intrinsic struct " + identifier.value + ports + scope->to_code(depth);
 
-	return declaration_offset + "struct "+ identifier + ports + scope->to_code(depth);
+	return declaration_offset + "struct "+ identifier.value + ports + scope->to_code(depth);
 }
 
-std::shared_ptr<element::element_object> element::struct_declaration::index(const indexing_expression* expr) const
+std::shared_ptr<element::element_object> element::struct_declaration::index(const element::identifier& identifier) const
 {
-	return scope->find(expr->identifier, false);
+	return scope->find(identifier.value, false);
 }
 
  //constraint
@@ -132,7 +132,7 @@ std::string element::function_declaration::to_string() const
 
 std::string element::function_declaration::to_code(int depth) const
 {
-	auto declaration = identifier;
+	auto declaration = identifier.value;
 	std::string ports;
 
 	const std::string offset = "    ";
@@ -147,14 +147,14 @@ std::string element::function_declaration::to_code(int depth) const
 			return std::move(accumulator) + ", " + port.to_string();
 		};
 
-        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
+        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier.value, accumulate);
 		ports = "(" + input_ports + ")";
 	}
 
 	if (intrinsic)
-	    return declaration_offset + "intrinsic " + identifier + ports + ";";
+	    return declaration_offset + "intrinsic " + identifier.value + ports + ";";
 
-    return declaration_offset + identifier + ports + scope->to_code(depth);
+    return declaration_offset + identifier.value + ports + scope->to_code(depth);
 }
 
 std::shared_ptr<element::element_object> element::function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
@@ -170,7 +170,7 @@ std::shared_ptr<element::element_object> element::function_declaration::call(std
 			auto result = std::make_shared<compiled_expression>();
 			result->declarer = this;
 			//todo: better way of getting to our parent?
-			if (scope->parent_scope->declarer->identifier == "Num" && identifier == "add")
+			if (scope->parent_scope->declarer->identifier.value == "Num" && identifier.value == "add")
 			{
 				result->expression = std::make_shared<element_expression_binary>(
 					element_binary_op::add,
@@ -215,7 +215,7 @@ std::string element::expression_bodied_function_declaration::to_string() const
 
 std::string element::expression_bodied_function_declaration::to_code(const int depth) const
 {
-	auto declaration = identifier;
+	auto declaration = identifier.value;
 
 	const std::string offset = "    ";
 	std::string declaration_offset;
@@ -229,8 +229,8 @@ std::string element::expression_bodied_function_declaration::to_code(const int d
 			return std::move(accumulator) + ", " + port.to_string();
 		};
 
-		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier, accumulate);
-		declaration = identifier + "(" + input_ports + ")";
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier.value, accumulate);
+		declaration = identifier.value + "(" + input_ports + ")";
 	}
 
 	return declaration_offset + declaration + " = " + expression->to_code() + ";";
@@ -279,10 +279,10 @@ std::string element::namespace_declaration::to_string() const
 
 std::string element::namespace_declaration::to_code(const int depth) const
 {
-	return "namespace " + identifier + scope->to_code(depth);
+	return "namespace " + identifier.value + scope->to_code(depth);
 }
 
-std::shared_ptr<element::element_object> element::namespace_declaration::index(const indexing_expression* expr) const
+std::shared_ptr<element::element_object> element::namespace_declaration::index(const element::identifier& expr) const
 {
-	return scope->find(expr->identifier, false);
+	return scope->find(identifier.value, false);
 }

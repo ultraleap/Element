@@ -12,7 +12,7 @@ namespace element
 
 	struct port : element_object
 	{
-        std::string identifier;
+        identifier identifier;
 		
         //TODO: JM - constraint matching
         //std::unique_ptr<element_constraint> constraint;
@@ -24,7 +24,7 @@ namespace element
 
         [[nodiscard]] std::string to_string() const override
         {
-            return identifier;
+            return identifier.value;
         }
     };
 }

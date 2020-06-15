@@ -30,10 +30,10 @@ std::shared_ptr<element::compiled_expression> element::expression::compile() con
     return nullptr;
 }
 
-std::shared_ptr<element::element_object> element::literal_expression::index(const indexing_expression* expr) const
+std::shared_ptr<element::element_object> element::literal_expression::index(const identifier& identifier) const
 {
     const auto& num = enclosing_scope->get_global()->find("Num", false);
-    const auto obj = num->index(expr);
+    const auto obj = num->index(identifier);
     if (dynamic_cast<function_declaration*>(obj.get()))
     {
         auto func = static_cast<function_declaration*>(obj.get());
@@ -61,7 +61,7 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
     if (!enclosing_scope)
         return nullptr;
 
-    return enclosing_scope->find(identifier, true);
+    return enclosing_scope->find(identifier.value, true);
 }
 
 [[nodiscard]] std::shared_ptr<element::element_object> element::literal_expression::compile(std::shared_ptr<element_object> previous)
@@ -87,7 +87,7 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
     if (!previous) //can only resolve indexing if previous exists
         return nullptr;
 
-    return previous->index(this);
+    return previous->index(identifier);
 }
 
 [[nodiscard]] std::shared_ptr<element::element_object> element::call_expression::compile(std::shared_ptr<element_object> previous)

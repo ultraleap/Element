@@ -53,7 +53,7 @@ std::shared_ptr<element::declaration> element::build_struct_declaration(const el
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
     auto struct_decl = std::make_unique<struct_declaration>(parent_scope, intrinsic);
-    struct_decl->identifier = decl->identifier;
+    struct_decl->identifier = identifier(decl->identifier);
 
     //fields
     build_inputs(decl, *struct_decl);
@@ -97,7 +97,7 @@ std::shared_ptr<element::declaration> element::build_scope_bodied_function_decla
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
     auto function_decl = std::make_unique<function_declaration>(parent_scope, intrinsic);
-    function_decl->identifier = decl->identifier;
+    function_decl->identifier = identifier(decl->identifier);
 
     build_inputs(decl, *function_decl);
     build_output(decl, *function_decl);
@@ -182,7 +182,7 @@ std::shared_ptr<element::declaration> element::build_expression_bodied_function_
     assert(!intrinsic);
 
     auto function_decl = std::make_unique<element::expression_bodied_function_declaration>(parent_scope);
-    function_decl->identifier = decl->identifier;
+    function_decl->identifier = identifier(decl->identifier);
 
     build_inputs(decl, *function_decl);
     build_output(decl, *function_decl);
@@ -202,7 +202,7 @@ std::shared_ptr<element::declaration> element::build_expression_bodied_function_
 std::shared_ptr<element::declaration> element::build_namespace_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     auto namespace_decl = std::make_unique<namespace_declaration>(parent_scope);
-    namespace_decl->identifier = ast->identifier;
+    namespace_decl->identifier = identifier(ast->identifier);
 
     //log(namespace_decl->to_string());
 

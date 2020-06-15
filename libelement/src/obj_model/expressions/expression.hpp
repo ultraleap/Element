@@ -51,13 +51,13 @@ namespace element
         [[nodiscard]] std::string to_code(int depth = 0) const override { return std::to_string(value); }
 
         //when a literal is compiled and we need to later index it, it goes through here
-        [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> index(const identifier&) const override;
         [[nodiscard]] std::shared_ptr<element_object> compile(std::shared_ptr<element_object> previous) override;
 	};
 
     struct identifier_expression final : expression
 	{
-        std::string identifier;
+        identifier identifier;
 
         explicit identifier_expression(std::string identifier, const scope* enclosing_scope)
             : expression{ enclosing_scope }, identifier{std::move(identifier)}
@@ -65,7 +65,7 @@ namespace element
         }
 
         [[nodiscard]] bool has_children() const override { return false; }
-        [[nodiscard]] std::string to_code(int depth = 0) const override { return identifier; }
+        [[nodiscard]] std::string to_code(int depth = 0) const override { return identifier.value; }
         //[[nodiscard]] const element_object* index(const indexing_expression*) const override;
         [[nodiscard]] std::shared_ptr<element_object> compile(std::shared_ptr<element_object> previous) override;
     };
@@ -94,7 +94,7 @@ namespace element
 	
     struct indexing_expression final : expression
 	{
-        std::string identifier;
+        identifier identifier;
 
         explicit indexing_expression(std::string identifier, const scope* enclosing_scope)
             : expression{ enclosing_scope }, identifier{ std::move(identifier) }
@@ -104,7 +104,7 @@ namespace element
         [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_code(int depth = 0) const override
         {
-	        return "." + identifier;
+	        return "." + identifier.value;
         }
 
         [[nodiscard]] std::shared_ptr<element_object> compile(std::shared_ptr<element_object> previous) override;

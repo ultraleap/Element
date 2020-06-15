@@ -21,14 +21,14 @@ namespace element
         }
     	
         void add_declaration(std::shared_ptr<declaration> declaration);
-        std::shared_ptr<declaration> find(const std::string& identifier, bool recurse) const;
+        [[nodiscard]] std::shared_ptr<declaration> find(const std::string& identifier, bool recurse) const;
 
         [[nodiscard]] bool is_root() const
     	{
             return parent_scope == nullptr;
     	}
 
-        const scope* get_global() const
+        [[nodiscard]] const scope* get_global() const
         {
             const scope* global = this;
             while (global->parent_scope)

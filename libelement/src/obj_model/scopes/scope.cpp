@@ -32,7 +32,7 @@ std::string element::scope::location() const
 
 void element::scope::add_declaration(std::shared_ptr<element::declaration> declaration)
 {
-    declarations.emplace(declaration->identifier, std::move(declaration));
+    declarations.emplace(declaration->identifier.value, std::move(declaration));
 }
 
 std::shared_ptr<element::declaration> element::scope::find(const std::string& identifier, const bool recurse = false) const
