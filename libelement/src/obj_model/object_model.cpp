@@ -59,7 +59,7 @@ std::shared_ptr<element::declaration> element::build_struct_declaration(const el
     build_inputs(decl, *struct_decl);
     build_output(decl, *struct_decl);
 
-    log(struct_decl->to_string());
+    //log(struct_decl->to_string());
 
     if (ast->children.size() > ast_idx::function::body)
     {
@@ -106,7 +106,7 @@ std::shared_ptr<element::declaration> element::build_scope_bodied_function_decla
     if (body->type == ELEMENT_AST_NODE_SCOPE)
         build_scope(body, *function_decl);
 
-    log(function_decl->to_string());
+    //log(function_decl->to_string());
 
     return std::move(function_decl);
 }
@@ -194,7 +194,7 @@ std::shared_ptr<element::declaration> element::build_expression_bodied_function_
         function_decl->expression = build_expression(body, std::move(expression));
     }
 	
-    log(function_decl->to_string());
+    //log(function_decl->to_string());
 
     return std::move(function_decl);
 }
@@ -204,7 +204,7 @@ std::shared_ptr<element::declaration> element::build_namespace_declaration(const
     auto namespace_decl = std::make_unique<namespace_declaration>(parent_scope);
     namespace_decl->identifier = ast->identifier;
 
-    log(namespace_decl->to_string());
+    //log(namespace_decl->to_string());
 
     if (ast->children.size() > ast_idx::ns::body)
     {
@@ -230,7 +230,7 @@ std::shared_ptr<element::declaration> element::build_declaration(const element_a
     if (ast->type == ELEMENT_AST_NODE_NAMESPACE)
         return build_namespace_declaration(ast, parent_scope);
 
-    log("Not a declaration");
+    //log("Not a declaration");
     return nullptr;
 }
 
@@ -248,7 +248,7 @@ std::unique_ptr<element::scope> element::build_root_scope(const element_ast* con
 {
     if (ast->type != ELEMENT_AST_NODE_ROOT) {
 
-        log("Not a root");
+        //log("Not a root");
         return nullptr;
     }
 
@@ -261,9 +261,11 @@ std::unique_ptr<element::scope> element::build_root_scope(const element_ast* con
             root->add_declaration(std::move(decl));
     }
 
-    log("\n<CODE>");
-    log(root->to_code());
-    log("</CODE>\n");
+    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_object_model_as_code)) {
+        log("\n<CODE>");
+        log(root->to_code());
+        log("</CODE>\n");
+    }
 
     return root;
 }
