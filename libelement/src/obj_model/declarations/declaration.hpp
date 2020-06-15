@@ -28,7 +28,7 @@ namespace element
         //std::unique_ptr<element_constraint> constraint;
 		
 		std::string qualifier;
-        std::string identifier;
+        identifier identifier;
         bool intrinsic = false;
 
         std::unique_ptr<scope> scope; //needed to merge object model
@@ -60,7 +60,7 @@ namespace element
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> index(const element::identifier&) const override;
     };
 	
     struct constraint_declaration final : declaration
@@ -101,6 +101,6 @@ namespace element
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<element_object> index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<element_object> index(const element::identifier&) const override;
     };
 }

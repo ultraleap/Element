@@ -3,16 +3,16 @@
 #include <cassert>
 
 //compiled_expression
-std::shared_ptr<element::element_object> element::compiled_expression::index(const indexing_expression* expr) const
+std::shared_ptr<element::element_object> element::compiled_expression::index(const identifier& identifier) const
 {
     if (object)
-        return object->index(expr);
+        return object->index(identifier);
 
     //todo: is there any point?
     if (declarer)
     {
         assert(false); //figure out if/when this occurs and if it should
-        return declarer->index(expr);
+        return declarer->index(identifier);
     }
 
     return nullptr;
@@ -45,7 +45,7 @@ element::struct_instance::struct_instance(const struct_declaration* declarer, co
     }
 }
 
-std::shared_ptr<element::element_object> element::struct_instance::index(const indexing_expression* expression) const
+std::shared_ptr<element::element_object> element::struct_instance::index(const identifier& identifier) const
 {
     //this is how we do partial application. if we index a struct instance and find it's an instance function
     //then we create a function_instance of that function, with ourselves as the first provided argument

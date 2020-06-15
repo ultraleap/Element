@@ -3,6 +3,7 @@
 //STD
 #include <string>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "typeutil.hpp"
@@ -14,6 +15,24 @@ namespace element
     struct indexing_expression;
     struct call_expression;
 
+    struct identifier
+    {
+        explicit identifier(std::string value)
+            : value{std::move(value)}
+        {
+        }
+
+        identifier(identifier const& other) = default;
+        identifier& operator=(identifier const& other) = default;
+
+        identifier(identifier&& other) = default;
+        identifier& operator=(identifier&& other) = default;
+
+        ~identifier() = default;
+
+        std::string value;
+    };
+
     struct element_object
 	{
 		virtual ~element_object() = default;
@@ -22,7 +41,7 @@ namespace element
         [[nodiscard]] virtual std::string to_code(int depth) const { return ""; }
 
         //todo: some kind of component architecture?
-        [[nodiscard]] virtual std::shared_ptr<element_object> index(const indexing_expression*) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<element_object> index(const identifier&) const { return nullptr; };
         [[nodiscard]] virtual std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const { return nullptr; };
         [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile() const { return nullptr; };
     };
