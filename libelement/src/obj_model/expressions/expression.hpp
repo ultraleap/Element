@@ -59,7 +59,7 @@ namespace element
 	{
         identifier identifier;
 
-        explicit identifier_expression(std::string identifier, const scope* enclosing_scope)
+        explicit identifier_expression(element::identifier identifier, const scope* enclosing_scope)
             : expression{ enclosing_scope }, identifier{std::move(identifier)}
         {
         }
@@ -96,7 +96,7 @@ namespace element
 	{
         identifier identifier;
 
-        explicit indexing_expression(std::string identifier, const scope* enclosing_scope)
+        explicit indexing_expression(element::identifier identifier, const scope* enclosing_scope)
             : expression{ enclosing_scope }, identifier{ std::move(identifier) }
         {
         }

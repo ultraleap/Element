@@ -24,27 +24,44 @@ void log(element_ast* ast)
     log(ast->identifier);
 }
 
+std::unique_ptr<element::type_annotation> build_type_annotation(const element_ast* ast)
+{
+    if (ast->type == ELEMENT_AST_NODE_TYPENAME) 
+    {
+        auto* const identifier = ast->children[ast_idx::port::type].get();
+        if (identifier->type != ELEMENT_AST_NODE_IDENTIFIER)
+            throw;
+
+        return std::make_unique<element::type_annotation>(element::identifier(identifier->identifier));
+    }
+    
+    return nullptr;
+}
+
 void build_output(element_ast* ast, element::declaration& declaration)
 {
-    const auto has_declared_output = ast->children.size() > ast_idx::declaration::outputs;
-
-    //TODO: JM - Handle complex return with port list and whatnot
-    if (has_declared_output) {
-        auto* const output = ast->children[ast_idx::declaration::outputs].get();
-    }
-
-    //TODO: JM - Use static definition for implicit return?
-    declaration.output = std::make_unique<element::port>("return");
-    //TODO: JM - Constraints
-    //declaration.constraint = std::make_unique<element_constraint>("return");
+    auto* const output = ast->children[ast_idx::declaration::outputs].get();
+    auto type_annotation = build_type_annotation(output);
+    declaration.output = std::make_unique<element::port>(element::identifier("return"), std::move(type_annotation));
 }
 
 void build_inputs(element_ast* ast, element::declaration& declaration)
 {
     auto* const inputs = ast->children[ast_idx::declaration::inputs].get();
 
-    for (auto& input : inputs->children)
-        declaration.inputs.emplace_back(input->identifier);
+    for (auto& input : inputs->children) 
+    {
+        const auto has_type_annotation = input->children.size() > ast_idx::port::type;
+        if (!has_type_annotation) 
+        {
+            declaration.inputs.emplace_back(element::identifier(input->identifier), nullptr);
+            continue;
+        }
+
+        auto* const output = input->children[ast_idx::port::type].get();
+        auto type_annotation = build_type_annotation(output);
+        declaration.inputs.emplace_back(element::identifier(input->identifier), std::move(type_annotation));
+    }
 }
 
 std::shared_ptr<element::declaration> element::build_struct_declaration(const element_ast* const ast, const scope* const parent_scope)
@@ -169,12 +186,12 @@ std::shared_ptr<element::expression> element::build_expression(const element_ast
 
 	if (is_indexing)
     {
-	    auto indexing_expression = std::make_unique<element::indexing_expression>(ast->identifier, parent->enclosing_scope);
+	    auto indexing_expression = std::make_unique<element::indexing_expression>(identifier(ast->identifier), parent->enclosing_scope);
 	    parent->children.push_back(std::move(indexing_expression));
     }
     else
     {
-	    const auto identifier_expression = std::make_shared<element::identifier_expression>(ast->identifier, parent->enclosing_scope);
+	    const auto identifier_expression = std::make_shared<element::identifier_expression>(identifier(ast->identifier), parent->enclosing_scope);
 	    parent->children.push_back(identifier_expression);
     }
 

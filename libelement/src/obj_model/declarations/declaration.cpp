@@ -90,12 +90,12 @@ std::string element::struct_declaration::to_code(const int depth) const
 		declaration_offset += offset;
 
 	if (has_inputs()) {
-		static auto accumulate = [](std::string accumulator, const element::port& port)
+		static auto accumulate = [depth](std::string accumulator, const element::port& port)
 		{
-			return std::move(accumulator) + ", " + port.to_string();
+			return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
 		};
 
-		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier.value, accumulate);
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
 		ports = "(" + input_ports + ")";
 	}
 
@@ -134,14 +134,17 @@ std::string element::constraint_declaration::to_code(const int depth) const
 		declaration_offset += offset;
 
 	if (has_inputs()) {
-		static auto accumulate = [](std::string accumulator, const element::port& port)
+		static auto accumulate = [depth](std::string accumulator, const element::port& port)
 		{
-			return std::move(accumulator) + ", " + port.to_string();
+			return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
 		};
 
-		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier.value, accumulate);
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
 		ports = "(" + input_ports + ")";
 	}
+
+	if (output)
+		ports += output->to_code(depth);
 
 	if (intrinsic)
 		return declaration_offset + "intrinsic constraint " + identifier.value + ports;
@@ -174,14 +177,17 @@ std::string element::function_declaration::to_code(int depth) const
 		declaration_offset += offset;
 
 	if (has_inputs()) {
-		static auto accumulate = [](std::string accumulator, const element::port& port)
+		static auto accumulate = [depth](std::string accumulator, const element::port& port)
 		{
-			return std::move(accumulator) + ", " + port.to_string();
+			return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
 		};
 
-        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier.value, accumulate);
+        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
 		ports = "(" + input_ports + ")";
 	}
+
+	if (output)
+		ports += output->to_code(depth);
 
 	if (intrinsic)
 	    return declaration_offset + "intrinsic " + identifier.value + ports + ";";
@@ -256,14 +262,17 @@ std::string element::expression_bodied_function_declaration::to_code(const int d
 		declaration_offset += offset;
 
 	if (has_inputs()) {
-		static auto accumulate = [](std::string accumulator, const element::port& port)
+		static auto accumulate = [depth](std::string accumulator, const element::port& port)
 		{
-			return std::move(accumulator) + ", " + port.to_string();
+			return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
 		};
 
-		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].identifier.value, accumulate);
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
 		declaration = identifier.value + "(" + input_ports + ")";
 	}
+
+	if (output)
+		declaration += output->to_code(depth);
 
 	return declaration_offset + declaration + " = " + expression->to_code() + ";";
 }
