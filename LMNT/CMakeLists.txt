@@ -108,7 +108,10 @@ if (UNIX)
     target_link_libraries(lmnt PRIVATE "m")
 endif ()
 
-
+option(BUILD_TESTING "Build tests" OFF)
+include(CTest)
 if (BUILD_TESTING)
+    enable_testing()
+    add_subdirectory("test")
     add_subdirectory("testapp")
 endif ()
