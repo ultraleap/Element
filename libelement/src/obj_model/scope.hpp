@@ -14,13 +14,13 @@ public:
     explicit scope(const scope* parent_scope, const declaration* const declarer);
     virtual ~scope() = default;
 
-    //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
+    //todo: default them if we really need them, but it's unlikely given it should be wrapped in a unique_ptr
     scope(const scope& scope) = delete;
     scope(scope&& scope) = delete;
     scope& operator = (const scope& scope) = delete;
     scope& operator = (scope&& scope) = delete;
 
-    [[nodiscard]] std::shared_ptr<declaration> find(const std::string& identifier, bool recurse) const;
+    [[nodiscard]] std::shared_ptr<declaration> find(const std::string& name, bool recurse) const;
     [[nodiscard]] bool is_root() const { return parent_scope == nullptr; }
     [[nodiscard]] bool is_empty() const { return declarations.empty(); }
     [[nodiscard]] const scope* get_global() const;

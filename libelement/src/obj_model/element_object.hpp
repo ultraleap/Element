@@ -15,6 +15,8 @@ namespace element
 
     struct identifier
     {
+        identifier() = default;
+
         explicit identifier(std::string value)
             : value{std::move(value)}
         {

@@ -6,80 +6,54 @@
 #include "obj_model/intermediaries.hpp"
 #include "etree/expressions.hpp"
 
+namespace element
+{
+
 //declaration
-element::declaration::declaration(element::identifier identifier)
-	: output{ nullptr }, identifier(std::move(identifier))
+declaration::declaration(identifier name)
+	: declaration(std::move(name), nullptr)
 {
 }
 
-bool element::declaration::is_intrinsic() const
+declaration::declaration(identifier name, const scope* parent)
+	: name(std::move(name))
+	, our_scope(std::make_unique<scope>(parent, this))
 {
-	return intrinsic;
 }
 
-bool element::declaration::has_inputs() const
+bool declaration::has_scope() const
 {
-	return !inputs.empty();
+	return our_scope && !our_scope->is_empty();
 }
 
-bool element::declaration::has_output() const
+std::string declaration::location() const
 {
-	return output != nullptr;
-}
+	auto declaration = name.value;
 
-bool element::declaration::has_constraint() const
-{
-	//TODO: Constraints
-	return false; //return constraint != nullptr;
-}
-
-std::string element::declaration::location() const
-{
-	return identifier.value;
-}
-
-//scoped_declaration
-element::scoped_declaration::scoped_declaration(element::identifier identifier, const element::scope* parent_scope)
-    : declaration(std::move(identifier))
-{
-	scope = std::make_unique<element::scope>(parent_scope, this);
-}
-
-bool element::scoped_declaration::has_scope() const
-{
-	return !scope->is_empty();
-}
-
-void element::scoped_declaration::add_declaration(std::shared_ptr<element::declaration> declaration) const
-{
-	scope->add_declaration(std::move(declaration));
-}
-
-std::string element::scoped_declaration::location() const
-{
-	auto declaration = identifier.value;
-
-	if (scope->get_parent_scope()->is_root())
+	if (!our_scope)
 		return declaration;
+	
+	if (our_scope->get_parent_scope() && our_scope->get_parent_scope()->is_root())
+	    return declaration;
 
 	//recursive construction
-	return scope->get_parent_scope()->location() + "." + declaration;
+	return our_scope->get_parent_scope()->location() + "." + declaration;
 }
 
 //struct
-element::struct_declaration::struct_declaration(element::identifier identifier, const element::scope* parent_scope, const bool is_intrinsic)
-	: scoped_declaration(std::move(identifier), parent_scope)
+struct_declaration::struct_declaration(identifier identifier, const scope* parent_scope, const bool is_intrinsic)
+	: declaration(std::move(identifier), parent_scope)
 {
 	qualifier = struct_qualifier;
 	intrinsic = is_intrinsic;
 }
 
-std::string element::struct_declaration::to_string() const
+std::string struct_declaration::to_string() const
 {
 	return location() + ":Struct";
 }
 
-std::string element::struct_declaration::to_code(const int depth) const
+std::string struct_declaration::to_code(const int depth) const
 {
 	std::string ports;
 
@@ -90,7 +64,7 @@ std::string element::struct_declaration::to_code(const int depth) const
 		declaration_offset += offset;
 
 	if (has_inputs()) {
-		static auto accumulate = [depth](std::string accumulator, const element::port& port)
+		static auto accumulate = [depth](std::string accumulator, const port& port)
 		{
 			return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
 		};
@@ -100,30 +74,30 @@ std::string element::struct_declaration::to_code(const int depth) const
 	}
 
 	if (intrinsic)
-		return declaration_offset + "intrinsic struct " + identifier.value + ports + scope->to_code(depth);
+		return declaration_offset + "intrinsic struct " + name.value + ports + our_scope->to_code(depth);
 
-	return declaration_offset + "struct "+ identifier.value + ports + scope->to_code(depth);
+	return declaration_offset + "struct " + name.value + ports + our_scope->to_code(depth);
 }
 
-std::shared_ptr<element::element_object> element::struct_declaration::index(const element::identifier& identifier) const
+std::shared_ptr<element_object> struct_declaration::index(const identifier& identifier) const
 {
-	return scope->find(identifier.value, false);
+	return our_scope->find(identifier.value, false);
 }
 
- //constraint
-element::constraint_declaration::constraint_declaration(element::identifier identifier, const bool is_intrinsic)
-    : declaration(std::move(identifier))
+//constraint
+constraint_declaration::constraint_declaration(identifier identifier, const bool is_intrinsic)
+	: declaration(std::move(identifier))
 {
 	qualifier = constraint_qualifier;
 	intrinsic = is_intrinsic;
 }
 
-std::string element::constraint_declaration::to_string() const
+std::string constraint_declaration::to_string() const
 {
 	return location() + ":Constraint";
 }
 
-std::string element::constraint_declaration::to_code(const int depth) const
+std::string constraint_declaration::to_code(const int depth) const
 {
 	std::string ports;
 
@@ -134,7 +108,7 @@ std::string element::constraint_declaration::to_code(const int depth) const
 		declaration_offset += offset;
 
 	if (has_inputs()) {
-		static auto accumulate = [depth](std::string accumulator, const element::port& port)
+		static auto accumulate = [depth](std::string accumulator, const port& port)
 		{
 			return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
 		};
@@ -147,27 +121,27 @@ std::string element::constraint_declaration::to_code(const int depth) const
 		ports += output->to_code(depth);
 
 	if (intrinsic)
-		return declaration_offset + "intrinsic constraint " + identifier.value + ports;
+		return declaration_offset + "intrinsic constraint " + name.value + ports;
 
-	return declaration_offset + "constraint " + identifier.value + ports;
+	return declaration_offset + "constraint " + name.value + ports;
 }
 
 //function
-element::function_declaration::function_declaration(element::identifier identifier, const element::scope* parent_scope, const bool is_intrinsic)
-	: scoped_declaration(std::move(identifier), parent_scope)
+function_declaration::function_declaration(identifier identifier, const scope* parent_scope, const bool is_intrinsic)
+	: declaration(std::move(identifier), parent_scope)
 {
 	qualifier = function_qualifier;
 	intrinsic = is_intrinsic;
 }
 
-std::string element::function_declaration::to_string() const
+std::string function_declaration::to_string() const
 {
 	return location() + ":Function";
 }
 
-std::string element::function_declaration::to_code(int depth) const
+std::string function_declaration::to_code(int depth) const
 {
-	auto declaration = identifier.value;
+	auto declaration = name.value;
 	std::string ports;
 
 	const std::string offset = "    ";
@@ -177,12 +151,12 @@ std::string element::function_declaration::to_code(int depth) const
 		declaration_offset += offset;
 
 	if (has_inputs()) {
-		static auto accumulate = [depth](std::string accumulator, const element::port& port)
+		static auto accumulate = [depth](std::string accumulator, const port& port)
 		{
 			return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
 		};
 
-        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
+		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
 		ports = "(" + input_ports + ")";
 	}
 
@@ -190,12 +164,12 @@ std::string element::function_declaration::to_code(int depth) const
 		ports += output->to_code(depth);
 
 	if (intrinsic)
-	    return declaration_offset + "intrinsic " + identifier.value + ports + ";";
+		return declaration_offset + "intrinsic " + name.value + ports + ";";
 
-    return declaration_offset + identifier.value + ports + scope->to_code(depth);
+	return declaration_offset + name.value + ports + our_scope->to_code(depth);
 }
 
-std::shared_ptr<element::element_object> element::function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
+std::shared_ptr<element_object> function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
 {
 	//e.g. my_namespace.my_function(1) is a call on a function declaration
 
@@ -208,7 +182,7 @@ std::shared_ptr<element::element_object> element::function_declaration::call(std
 			auto result = std::make_shared<compiled_expression>();
 			result->declarer = this;
 			//todo: better way of getting to our parent?
-			if (scope->get_parent_scope()->declarer->identifier.value == "Num" && identifier.value == "add")
+			if (our_scope->get_parent_scope()->declarer->name.value == "Num" && name.value == "add")
 			{
 				result->expression = std::make_shared<element_expression_binary>(
 					element_binary_op::add,
@@ -220,7 +194,7 @@ std::shared_ptr<element::element_object> element::function_declaration::call(std
 		}
 		else
 		{
-			return scope->find("return", false)->call({});
+			return our_scope->find("return", false)->call({});
 		}
 	}
 
@@ -233,27 +207,27 @@ std::shared_ptr<element::element_object> element::function_declaration::call(std
 	return std::move(result);
 }
 
-std::shared_ptr<element::compiled_expression> element::function_declaration::compile() const
+std::shared_ptr<compiled_expression> function_declaration::compile() const
 {
 	throw;
 }
 
 //expression bodied function
-element::expression_bodied_function_declaration::expression_bodied_function_declaration(element::identifier identifier, const element::scope* parent_scope)
-	: scoped_declaration(std::move(identifier), parent_scope)
+expression_bodied_function_declaration::expression_bodied_function_declaration(identifier identifier, const scope* parent_scope)
+	: declaration(std::move(identifier), parent_scope)
 {
 	qualifier = function_qualifier;
 	intrinsic = false;
 }
 
-std::string element::expression_bodied_function_declaration::to_string() const
+std::string expression_bodied_function_declaration::to_string() const
 {
 	return location() + ":Function";
 }
 
-std::string element::expression_bodied_function_declaration::to_code(const int depth) const
+std::string expression_bodied_function_declaration::to_code(const int depth) const
 {
-	auto declaration = identifier.value;
+	auto declaration = name.value;
 
 	const std::string offset = "    ";
 	std::string declaration_offset;
@@ -262,13 +236,13 @@ std::string element::expression_bodied_function_declaration::to_code(const int d
 		declaration_offset += offset;
 
 	if (has_inputs()) {
-		static auto accumulate = [depth](std::string accumulator, const element::port& port)
+		static auto accumulate = [depth](std::string accumulator, const port& port)
 		{
 			return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
 		};
 
 		const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
-		declaration = identifier.value + "(" + input_ports + ")";
+		declaration = name.value + "(" + input_ports + ")";
 	}
 
 	if (output)
@@ -277,12 +251,12 @@ std::string element::expression_bodied_function_declaration::to_code(const int d
 	return declaration_offset + declaration + " = " + expression->to_code() + ";";
 }
 
-std::shared_ptr<element::element_object> element::expression_bodied_function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
+std::shared_ptr<element_object> expression_bodied_function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
 {
 	//todo: apply arguments to callstack/cache so they can be found from scope lookups
 	const auto& compiled = compile();
 	//if it was a function instance then we should apply the arguments we have to it
-    //e.g. evaluate = add5(2); will call function declaration add5 with 2, so we need to apply 2 here. maybe there's a better way
+	//e.g. evaluate = add5(2); will call function declaration add5 with 2, so we need to apply 2 here. maybe there's a better way
 	if (dynamic_cast<function_instance*>(compiled->object.get()) &&
 		static_cast<int>(args.size()) > static_cast<int>(inputs.size())) //we were given more args than we accept, so apply the remaining ones to the function instance
 	{
@@ -299,31 +273,33 @@ std::shared_ptr<element::element_object> element::expression_bodied_function_dec
 	return compiled;
 }
 
-std::shared_ptr<element::compiled_expression> element::expression_bodied_function_declaration::compile() const
+std::shared_ptr<compiled_expression> expression_bodied_function_declaration::compile() const
 {
 	//todo: should compilation have to happen via a call? I think so, so this function becomes redundant/an issue? mmmm
 	return expression->compile();
 }
 
 //namespace
-element::namespace_declaration::namespace_declaration(element::identifier identifier, const element::scope* parent_scope)
-	: scoped_declaration(std::move(identifier), parent_scope)
+namespace_declaration::namespace_declaration(identifier identifier, const scope* parent_scope)
+	: declaration(std::move(identifier), parent_scope)
 {
 	qualifier = namespace_qualifier;
 	intrinsic = false;
 }
 
-std::string element::namespace_declaration::to_string() const
+std::string namespace_declaration::to_string() const
 {
 	return location() + ":Namespace";
 }
 
-std::string element::namespace_declaration::to_code(const int depth) const
+std::string namespace_declaration::to_code(const int depth) const
 {
-	return "namespace " + identifier.value + scope->to_code(depth);
+	return "namespace " + name.value + our_scope->to_code(depth);
 }
 
-std::shared_ptr<element::element_object> element::namespace_declaration::index(const element::identifier& expr) const
+std::shared_ptr<element_object> namespace_declaration::index(const identifier& expr) const
 {
-	return scope->find(identifier.value, false);
+	return our_scope->find(name.value, false);
+}
+
 }
