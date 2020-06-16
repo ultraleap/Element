@@ -128,6 +128,7 @@ public:
     [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
 
     std::shared_ptr<expression> expression;
+
 private:
     //todo
 };
