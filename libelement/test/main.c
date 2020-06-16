@@ -9,16 +9,11 @@
 #include <stdint.h>
 #include <time.h>
 
-int main(int argc, char** argv)
+element_result eval(const char* evaluate)
 {
-#ifndef LEGACY_COMPILER
     element_interpreter_ctx* context;
     element_interpreter_create(&context);
     element_interpreter_load_prelude(context);
-
-    const char* evaluate =
-        "add5 = Num.add(5);"
-        "evaluate = add5(2);";
 
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
@@ -53,6 +48,28 @@ int main(int argc, char** argv)
     //todo
     element_delete_compilable(context, &compilable);
     element_interpreter_delete(context);
+    return ELEMENT_OK;
+}
+
+int main(int argc, char** argv)
+{
+#ifndef LEGACY_COMPILER
+    char* evaluate =
+        "add5 = Num.add(5);"
+        "evaluate = add5(2);";
+
+    element_result result;
+    result = eval("evaluate = Num.add(1, 2);");
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = eval("evaluate = 1.add(2);");
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = eval("add5 = Num.add(5); evaluate = add5(2);");
+    if (result != ELEMENT_OK)
+        return result;
 
     return 0;
 #else

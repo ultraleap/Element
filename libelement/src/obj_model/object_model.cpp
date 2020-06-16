@@ -1,12 +1,16 @@
+#include "object_model.hpp"
+
+//STD
 #include <iostream>
 #include <memory>
 
+//SELF
 #include "object.hpp"
-#include "object_model.hpp"
 #include "ast/ast_indexes.hpp"
 #include "ast/ast_internal.hpp"
 #include "declarations.hpp"
 #include "expressions.hpp"
+#include "configuration.hpp"
 
 void build_scope(element_ast* ast, const element::declaration& declaration);
 

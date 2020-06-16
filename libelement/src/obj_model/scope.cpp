@@ -72,15 +72,15 @@ std::shared_ptr<declaration> scope::find(const std::string& name, const bool rec
 
 const scope* scope::get_global() const
 {
-    const static scope* global = nullptr;
-    if (global)
-        return global;
+    //const static scope* global = nullptr;
+    //if (global)
+    //    return global;
 
     const auto* local = this;
     while (local->parent_scope)
         local = local->parent_scope;
 
-    global = local;
-    return global;
+    //global = local;
+    return local;
 }
 }

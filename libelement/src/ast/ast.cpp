@@ -8,12 +8,12 @@
 #include <cassert>
 #include <memory>
 #include <unordered_set>
-#include <iostream>
 
 #include "ast/ast_internal.hpp"
 #include "ast/ast_indexes.hpp"
 #include "token_internal.hpp"
 #include "MemoryPool.h"
+#include "configuration.hpp"
 
 //static const std::string intrinsic_qualifier = "intrinsic";
 //static const std::string namespace_qualifier = "namespace";
