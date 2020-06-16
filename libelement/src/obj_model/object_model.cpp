@@ -5,8 +5,8 @@
 #include "object_model.hpp"
 #include "ast/ast_indexes.hpp"
 #include "ast/ast_internal.hpp"
-#include "declarations/declaration.hpp"
-#include "expressions/expression.hpp"
+#include "declarations.hpp"
+#include "expressions.hpp"
 
 void build_scope(element_ast* ast, const element::scoped_declaration& declaration);
 

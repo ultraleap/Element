@@ -1,4 +1,4 @@
-#include "struct_instance.hpp"
+#include "intermediaries.hpp"
 
 #include <cassert>
 

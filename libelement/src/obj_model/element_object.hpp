@@ -20,7 +20,7 @@ namespace element
         {
         }
 
-        static inline identifier unidentifier = "_";
+        static identifier unidentifier;
 
         identifier(identifier const& other) = default;
         identifier& operator=(identifier const& other) = default;
