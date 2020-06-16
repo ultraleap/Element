@@ -43,7 +43,7 @@ element_result eval(const char* evaluate)
     if (result != ELEMENT_OK)
         return result;
 
-    printf("%f", output.values[0]);
+    printf("%s -> %f\n", evaluate, output.values[0]);
 
     //todo
     element_delete_compilable(context, &compilable);
@@ -54,10 +54,6 @@ element_result eval(const char* evaluate)
 int main(int argc, char** argv)
 {
 #ifndef LEGACY_COMPILER
-    char* evaluate =
-        "add5 = Num.add(5);"
-        "evaluate = add5(2);";
-
     element_result result;
     result = eval("evaluate = Num.add(1, 2);");
     if (result != ELEMENT_OK)
