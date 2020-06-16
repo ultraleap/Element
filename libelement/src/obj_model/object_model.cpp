@@ -55,7 +55,6 @@ void build_inputs(element_ast* ast, element::declaration& declaration)
 
     for (auto& input : inputs->children) 
     {
-        //TODO: This does not test the PORT->TYPENAME->IDENTIFIER tree
         if (input->type != ELEMENT_AST_NODE_PORT)
             throw;
 
