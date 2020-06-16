@@ -29,7 +29,8 @@ namespace element
         [[nodiscard]] std::string to_code(int depth = 0) const override;
 
         [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
-        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context, std::shared_ptr<object>) { return nullptr; }
+        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context, std::shared_ptr<object>) { return nullptr; };
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
 
         const scope* enclosing_scope;
 

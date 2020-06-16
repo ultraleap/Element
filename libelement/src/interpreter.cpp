@@ -699,6 +699,13 @@ element_result element_interpreter_compile(
 {
     const element::compilation_context compilation_context(context->global_scope.get());
     auto compiled = compilable->object->compile(compilation_context);
+
+    if (!compiled->expression_tree)
+    {
+        assert(false);
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
     *evaluable = new element_evaluable{std::move(compiled)};
 
     return ELEMENT_OK;

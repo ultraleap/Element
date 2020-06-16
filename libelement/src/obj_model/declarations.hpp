@@ -38,12 +38,11 @@ public:
     [[nodiscard]] bool has_inputs() const { return !inputs.empty(); };
     [[nodiscard]] bool has_output() const { return output.has_value(); };
     [[nodiscard]] bool has_constraint() const { return false; }; //TODO: JM - nonsense, this needs to be a constraint::something OR constraint::any
-    [[nodiscard]] bool is_intrinsic() const { return intrinsic; };
     [[nodiscard]] bool has_scope() const;
+    [[nodiscard]] bool is_intrinsic() const { return _intrinsic; }
 
     [[nodiscard]] virtual std::string location() const;
 
-    bool intrinsic = false;
     std::string qualifier;
     const identifier name;
     std::vector<port> inputs;
@@ -51,8 +50,8 @@ public:
     std::optional<port> output;
     //std::unique_ptr<element_constraint> constraint;
 
-private:
-    //todo
+protected:
+    bool _intrinsic = false; //todo: we need to decide on coding standards, if our types are lowercase like our variables and functions, we need some way to differentiate them
 };
 
 class struct_declaration final : public declaration
@@ -106,6 +105,8 @@ public:
 
     [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
     [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
+
+    std::shared_ptr<const object> body;
 };
 
 //expression bodied functions are used as the leaf-functions for a chain of scope bodied ones to prevent recursion

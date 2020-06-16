@@ -46,7 +46,6 @@ namespace element
         : declaration(std::move(identifier), parent_scope)
     {
         qualifier = struct_qualifier;
-        intrinsic = is_intrinsic;
     }
 
     std::string struct_declaration::to_string() const
@@ -74,7 +73,7 @@ namespace element
             ports = "(" + input_ports + ")";
         }
 
-        if (intrinsic)
+        if (_intrinsic)
             return declaration_offset + "intrinsic struct " + name.value + ports + our_scope->to_code(depth);
 
         return declaration_offset + "struct " + name.value + ports + our_scope->to_code(depth);
@@ -90,7 +89,7 @@ namespace element
         : declaration(std::move(identifier))
     {
         qualifier = constraint_qualifier;
-        intrinsic = is_intrinsic;
+        _intrinsic = is_intrinsic;
     }
 
     std::string constraint_declaration::to_string() const
@@ -121,7 +120,7 @@ namespace element
         if (output)
             ports += output->to_code(depth);
 
-        if (intrinsic)
+        if (_intrinsic)
             return declaration_offset + "intrinsic constraint " + name.value + ports;
 
         return declaration_offset + "constraint " + name.value + ports;
@@ -129,10 +128,11 @@ namespace element
 
     //function
     function_declaration::function_declaration(identifier identifier, const scope* parent_scope, const bool is_intrinsic)
-        : declaration(std::move(identifier), parent_scope)
+        : declaration(std::move(identifier)
+        , parent_scope)
     {
         qualifier = function_qualifier;
-        intrinsic = is_intrinsic;
+        _intrinsic = is_intrinsic;
     }
 
     std::string function_declaration::to_string() const
@@ -164,7 +164,7 @@ namespace element
         if (output)
             ports += output->to_code(depth);
 
-        if (intrinsic)
+        if (_intrinsic)
             return declaration_offset + "intrinsic " + name.value + ports + ";";
 
         return declaration_offset + name.value + ports + our_scope->to_code(depth);
@@ -172,25 +172,8 @@ namespace element
 
     std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
-        //e.g. my_namespace.my_function(1) is a call on a function declaration
-
-	if (inputs.size() == args.size())
-	{
-		//todo: cache arguments as part of callstack for our child functions (e.g. return) to be able to reference
-		//todo: forward on any extra arguments to return? return can have it's own portlist right? how do we determine that, hmm, it would be here though
-		if (intrinsic)
-		{
-            const auto intrinsic = intrinsic::get_intrinsic(*this);
-		    if(intrinsic)
-				return intrinsic->call(context, args);
-		}
-		else
-		{
-			return our_scope->find("return", false)->call(context, {});
-		}
-
-		return nullptr;
-	}
+        if (inputs.size() == args.size())
+            return body->call(context, args);
 
         //don't have all the arguments, so partially apply them
         //is a compiled expression because if the call is the full expression, then we return it from expression->compile, which needs to be a compiled expression.
@@ -203,6 +186,19 @@ namespace element
 
     std::shared_ptr<compiled_expression> function_declaration::compile(const compilation_context& context) const
     {
+        if (inputs.empty())
+        {
+            auto obj = call(context, {});
+
+            if (dynamic_cast<compiled_expression*>(obj.get()))
+                return std::dynamic_pointer_cast<compiled_expression>(obj);
+
+            auto compiled = std::make_shared<compiled_expression>();
+            compiled->creator = this;
+            compiled->object_model = std::move(obj);
+            return compiled;
+        }
+
         throw;
     }
 
@@ -211,7 +207,7 @@ namespace element
         : declaration(std::move(identifier), parent_scope)
     {
         qualifier = function_qualifier;
-        intrinsic = false;
+        _intrinsic = false;
     }
 
     std::string expression_bodied_function_declaration::to_string() const
@@ -278,7 +274,7 @@ namespace element
         : declaration(std::move(identifier), parent_scope)
     {
         qualifier = namespace_qualifier;
-        intrinsic = false;
+        _intrinsic = false;
     }
 
     std::string namespace_declaration::to_string() const

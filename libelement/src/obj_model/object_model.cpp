@@ -11,6 +11,7 @@
 #include "declarations.hpp"
 #include "expressions.hpp"
 #include "configuration.hpp"
+#include "functions.hpp"
 
 void build_scope(element_ast* ast, const element::declaration& declaration);
 
@@ -117,33 +118,39 @@ std::shared_ptr<element::declaration> element::build_constraint_declaration(cons
 
 std::shared_ptr<element::declaration> element::build_function_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
-    auto* const body = ast->children[ast_idx::function::body].get();
-    if (body->type == ELEMENT_AST_NODE_SCOPE || body->type == ELEMENT_AST_NODE_CONSTRAINT /* intrinsic function*/)
-        return build_scope_bodied_function_declaration(ast, parent_scope);
-
-    if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL)
-        return build_expression_bodied_function_declaration(ast, parent_scope);
-
-    return nullptr;
-}
-
-std::shared_ptr<element::declaration> element::build_scope_bodied_function_declaration(const element_ast* const ast, const scope* const parent_scope)
-{
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-    auto function_decl = std::make_unique<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
+    auto function_decl = std::make_shared<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
 
     build_inputs(decl, *function_decl);
     build_output(decl, *function_decl);
 
     auto* const body = ast->children[ast_idx::function::body].get();
+
     if (body->type == ELEMENT_AST_NODE_SCOPE)
+    {
+        assert(!intrinsic);
         build_scope(body, *function_decl);
+        function_decl->body = function_decl->our_scope->find("return", false);
+    }
+    else if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL)
+    {
+        assert(!intrinsic);
+        auto expression = std::make_unique<element::expression>(function_decl->our_scope.get());
+        function_decl->body = build_expression(body, std::move(expression));
+    }
+    else if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
+    {
+        assert(intrinsic);
+        function_decl->body = intrinsic::get_intrinsic(*function_decl);
+    }
+    else
+    {
+        function_decl = nullptr;
+    }
 
-    //log(function_decl->to_string());
-
-    return std::move(function_decl);
+    return function_decl;
 }
 
 [[nodiscard]] std::shared_ptr<element::expression> build_literal_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
@@ -234,29 +241,6 @@ std::shared_ptr<element::expression> element::build_expression(const element_ast
         return build_call_expression(ast, std::move(parent));
 	
     return parent;
-}
-
-std::shared_ptr<element::declaration> element::build_expression_bodied_function_declaration(const element_ast* const ast, const scope* const parent_scope)
-{
-    auto* const decl = ast->children[ast_idx::function::declaration].get();
-    const auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-    assert(!intrinsic);
-
-    auto function_decl = std::make_unique<element::expression_bodied_function_declaration>(identifier(decl->identifier), parent_scope);
-
-    build_inputs(decl, *function_decl);
-    build_output(decl, *function_decl);
-
-    auto* const body = ast->children[ast_idx::function::body].get();
-    if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL) {
-
-        auto expression = std::make_unique<element::expression>(function_decl->our_scope.get());
-        function_decl->expression = build_expression(body, std::move(expression));
-    }
-	
-    //log(function_decl->to_string());
-
-    return std::move(function_decl);
 }
 
 std::shared_ptr<element::declaration> element::build_namespace_declaration(const element_ast* const ast, const scope* const parent_scope)
