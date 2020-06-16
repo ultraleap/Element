@@ -3,7 +3,7 @@
 //SELF
 #include "type_annotation.hpp"
 #include "object.hpp"
-#include "ast/types.hpp"
+#include "types.hpp"
 
 namespace element
 {

@@ -29,13 +29,9 @@ set(element_sources
     "src/ast/ast.cpp"
     "src/ast/ast_internal.hpp"
     "src/ast/ast_indexes.hpp"
-    "src/ast/functions.cpp"
-    "src/ast/functions.hpp"
     "src/ast/fwd.hpp"
     "src/ast/scope.cpp"
     "src/ast/scope.hpp"
-    "src/ast/types.cpp"
-    "src/ast/types.hpp"
     
     #Object model
     "src/obj_model/fwd.hpp"
@@ -59,6 +55,12 @@ set(element_sources
     
     "src/obj_model/expressions.hpp"
     "src/obj_model/expressions.cpp"
+
+    "src/obj_model/functions.cpp"
+    "src/obj_model/functions.hpp"
+
+    "src/obj_model/types.cpp"
+    "src/obj_model/types.hpp"
 
     "src/obj_model/intermediaries.hpp"
     "src/obj_model/intermediaries.cpp"
