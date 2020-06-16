@@ -216,7 +216,7 @@ int main(int argc, char** argv)
             continue;
         }
 
-        lmnt_update_args(&ctx, def, c_args, sizeof(c_args) / sizeof(lmnt_value), 0);
+        lmnt_update_args(&ctx, def, 0, c_args, sizeof(c_args) / sizeof(lmnt_value));
 
         // lmnt_result er = lmnt_execute(&ctx, def, c_rvals, sizeof(c_rvals)/sizeof(lmnt_value));
         // lmnt_result er = lmnt_jit_execute(&ctx, def, fn, c_rvals, sizeof(c_rvals) / sizeof(lmnt_value));
@@ -226,7 +226,7 @@ int main(int argc, char** argv)
         // intensity = c_rvals[3]
         // printf("%.3f: [%.3f, %.3f, %.3f] @ %.3f\n", c_args[0], c_rvals[0], c_rvals[1], c_rvals[2], c_rvals[3]);
         // getc(stdin);
-        lmnt_update_args(&ctx, def, c_args, sizeof(c_args) / sizeof(lmnt_value), 0);
+        lmnt_update_args(&ctx, def, 0, c_args, sizeof(c_args) / sizeof(lmnt_value));
 
 #define THE_TEST_ITERS 100000000
 
@@ -240,7 +240,7 @@ int main(int argc, char** argv)
                 lmnt_result er = lmnt_execute(&ctx, def, c_rvals, sizeof(c_rvals) / sizeof(lmnt_value));
                 assert(er >= THE_TEST_RVALS_SIZE);
                 c_args[0] += 1.0f / 10000.0f;
-                lmnt_update_args(&ctx, def, c_args, sizeof(c_args) / sizeof(lmnt_value), 0);
+                lmnt_update_args(&ctx, def, 0, c_args, sizeof(c_args) / sizeof(lmnt_value));
             }
             t2 = get_current_usec();
         }
@@ -252,7 +252,7 @@ int main(int argc, char** argv)
                 lmnt_result er = lmnt_jit_execute(&ctx, def, &fndata, c_rvals, sizeof(c_rvals) / sizeof(lmnt_value));
                 assert(er >= THE_TEST_RVALS_SIZE);
                 c_args[0] += 1.0f / 10000.0f;
-                lmnt_update_args(&ctx, def, c_args, sizeof(c_args) / sizeof(lmnt_value), 0);
+                lmnt_update_args(&ctx, def, 0, c_args, sizeof(c_args) / sizeof(lmnt_value));
             }
             t2 = get_current_usec();
         }
@@ -264,7 +264,7 @@ int main(int argc, char** argv)
                 lmnt_result er = hardcoded_circle_ht(ctx.writable_stack, sizeof(c_args) / sizeof(lmnt_value), c_rvals, sizeof(c_rvals) / sizeof(lmnt_value));
                 assert(er >= THE_TEST_RVALS_SIZE);
                 c_args[0] += 1.0f / 10000.0f;
-                lmnt_update_args(&ctx, def, c_args, sizeof(c_args) / sizeof(lmnt_value), 0);
+                lmnt_update_args(&ctx, def, 0, c_args, sizeof(c_args) / sizeof(lmnt_value));
             }
             t2 = get_current_usec();
         }

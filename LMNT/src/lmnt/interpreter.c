@@ -174,7 +174,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_resume(
     assert(def);
     // Make sure the def we're resuming is the one the user thinks we are
     if (LMNT_UNLIKELY(ctx->cur_def != def))
-       return LMNT_ERROR_DEF_MISMATCH;
+        return LMNT_ERROR_DEF_MISMATCH;
     // Run main execute loop
     return execute(ctx, rvals, rvals_count);
 }
@@ -188,7 +188,7 @@ lmnt_result lmnt_interrupt(lmnt_ictx* ctx)
 
 lmnt_result lmnt_update_args(
     lmnt_ictx* ctx, const lmnt_def* def,
-    const lmnt_value* args, const lmnt_offset count, const lmnt_offset offset)
+    const lmnt_offset offset, const lmnt_value* args, const lmnt_offset count)
 {
     assert(ctx);
     assert(ctx->stack && ctx->stack_count);
@@ -203,18 +203,7 @@ lmnt_result lmnt_update_args(
     return LMNT_OK;
 }
 
-lmnt_result lmnt_update_arg(
-    lmnt_ictx* ctx, const lmnt_def* def,
-    const lmnt_value arg, const lmnt_offset offset)
+lmnt_result lmnt_ictx_find_def(const lmnt_ictx* ctx, const char* name, const lmnt_def** def)
 {
-    assert(ctx);
-    assert(ctx->stack && ctx->stack_count);
-    assert(def);
-    if (LMNT_UNLIKELY(offset >= ctx->stack_count))
-        return LMNT_ERROR_ACCESS_VIOLATION;
-    if (LMNT_UNLIKELY(offset >= def->args_count))
-        return LMNT_ERROR_ARGS_MISMATCH;
-    // Copy arg into the writable stack
-    ctx->writable_stack[offset] = arg;
-    return LMNT_OK;
+    return lmnt_find_def(&ctx->archive, name, def);
 }
