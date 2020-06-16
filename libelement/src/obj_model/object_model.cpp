@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 
+#include "element_object.hpp"
 #include "object_model.hpp"
 #include "ast/ast_indexes.hpp"
 #include "ast/ast_internal.hpp"
@@ -51,16 +52,20 @@ void build_inputs(element_ast* ast, element::declaration& declaration)
 
     for (auto& input : inputs->children) 
     {
+        auto identifier = input->type == ELEMENT_AST_NODE_IDENTIFIER
+            ? element::identifier(input->identifier)
+            : element::identifier::unidentifier;
+
         const auto has_type_annotation = input->children.size() > ast_idx::port::type;
         if (!has_type_annotation) 
         {
-            declaration.inputs.emplace_back(element::identifier(input->identifier), nullptr);
+            declaration.inputs.emplace_back(identifier, nullptr);
             continue;
         }
 
         auto* const output = input->children[ast_idx::port::type].get();
         auto type_annotation = build_type_annotation(output);
-        declaration.inputs.emplace_back(element::identifier(input->identifier), std::move(type_annotation));
+        declaration.inputs.emplace_back(identifier, std::move(type_annotation));
     }
 }
 
@@ -158,8 +163,28 @@ std::shared_ptr<element::declaration> element::build_scope_bodied_function_decla
         call_expression->children.push_back(child);
     }
 
+    //auto body = element::build_function_declaration(ast, parent);
+
     parent->children.push_back(call_expression);
     return parent;
+}
+
+std::shared_ptr<element::expression> build_scope_bodied_lambda_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent_scope)
+{
+
+    return nullptr;
+}
+
+std::shared_ptr<element::expression> build_expression_bodied_lambda_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent_scope)
+{
+
+    return nullptr;
+}
+
+[[nodiscard]] std::shared_ptr<element::expression> build_lambda_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
+{
+    log("LAMBDA NOT IMPLEMENTED");
+    return nullptr;
 }
 
 std::shared_ptr<element::expression> element::build_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
@@ -178,6 +203,11 @@ std::shared_ptr<element::expression> element::build_expression(const element_ast
     const auto is_literal = ast->type == ELEMENT_AST_NODE_LITERAL;
     if (is_literal)
         return build_literal_expression(ast, std::move(parent));
+
+
+    const auto is_lambda = ast->type == ELEMENT_AST_NODE_LAMBDA;
+    if (is_lambda)
+        return build_lambda_expression(ast, std::move(parent));
 
     //indexing shouldn't return early, as it *might* be followed by a call expression,
     //since indexing and call expressions are combined in the ast stage
