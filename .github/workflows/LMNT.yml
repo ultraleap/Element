@@ -20,4 +20,4 @@ jobs:
       - name: Test
         working-directory: ${{runner.workspace}}/build
         shell: bash
-        run: ctest -C Release
+        run: ctest --verbose -C Release
