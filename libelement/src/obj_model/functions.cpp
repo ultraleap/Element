@@ -18,6 +18,29 @@ namespace element
         { "Num.sub", std::make_shared<intrinsic_binary>(element_binary_op::sub, nullptr) },
         { "Num.mul", std::make_shared<intrinsic_binary>(element_binary_op::mul, nullptr) },
         { "Num.div", std::make_shared<intrinsic_binary>(element_binary_op::div, nullptr) },
+
+        { "Num.pow", std::make_shared<intrinsic_binary>(element_binary_op::pow, nullptr) },
+        { "Num.rem", std::make_shared<intrinsic_binary>(element_binary_op::rem, nullptr) },
+
+        { "Num.min", std::make_shared<intrinsic_binary>(element_binary_op::min, nullptr) },
+        { "Num.max", std::make_shared<intrinsic_binary>(element_binary_op::max, nullptr) },
+
+        { "Num.abs", std::make_shared<intrinsic_unary>(element_unary_op::abs, nullptr) },
+        { "Num.ceil", std::make_shared<intrinsic_unary>(element_unary_op::ceil, nullptr) },
+        { "Num.floor", std::make_shared<intrinsic_unary>(element_unary_op::floor, nullptr) },
+
+        { "Num.sin", std::make_shared<intrinsic_unary>(element_unary_op::sin, nullptr) },
+        { "Num.cos", std::make_shared<intrinsic_unary>(element_unary_op::cos, nullptr) },
+        { "Num.tan", std::make_shared<intrinsic_unary>(element_unary_op::tan, nullptr) },
+
+        { "Num.asin", std::make_shared<intrinsic_unary>(element_unary_op::asin, nullptr) },
+        { "Num.acos", std::make_shared<intrinsic_unary>(element_unary_op::acos, nullptr) },
+        { "Num.atan", std::make_shared<intrinsic_unary>(element_unary_op::atan, nullptr) },
+
+        { "Num.atan2", std::make_shared<intrinsic_binary>(element_binary_op::atan2, nullptr) },
+
+        { "Num.ln", std::make_shared<intrinsic_unary>(element_unary_op::ln, nullptr) },
+        { "Num.log", std::make_shared<intrinsic_binary>(element_binary_op::log, nullptr) },
     };
 
     std::shared_ptr<element::intrinsic> element::intrinsic::get_intrinsic(const declaration& declaration)
