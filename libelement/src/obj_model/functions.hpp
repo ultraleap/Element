@@ -1,6 +1,100 @@
 #pragma once
 
-#ifdef LEGACY_COMPILER
+#ifndef LEGACY_COMPILER
+
+#include <memory>
+
+#include "ast/fwd.hpp"
+#include "types.hpp"
+#include "construct.hpp"
+#include "typeutil.hpp"
+
+namespace element
+{
+    class element_intrinsic : rtti_type<element_intrinsic>
+    {
+    private:
+        type_const_shared_ptr type;
+        element::identifier name;
+
+    public:
+        element_intrinsic(element_type_id id, type_const_shared_ptr type, element::identifier name)
+            : rtti_type(id)
+            , type(std::move(type))
+            , name(std::move(name))
+        {
+        }
+
+        const element::identifier& get_identifier() const { return name; }
+    };
+
+    class element_intrinsic_nullary : element_intrinsic
+    {
+    public:
+        DECLARE_TYPE_ID();
+
+    private:
+        element_nullary_op operation;
+
+    public:
+        element_intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr type, element::identifier name)
+            : element_intrinsic(type_id, type, std::move(name))
+            , operation(operation)
+        {
+        }
+
+        element_nullary_op get_operation() const { return operation; }
+    };
+
+    class element_intrinsic_unary : element_intrinsic
+    {
+    public:
+        DECLARE_TYPE_ID();
+
+    private:
+        element_unary_op operation;
+
+    public:
+        element_intrinsic_unary(element_unary_op operation, type_const_shared_ptr type, element::identifier name)
+            : element_intrinsic(type_id, type, std::move(name))
+            , operation(operation)
+        {
+        }
+
+        element_unary_op get_operation() const { return operation; }
+    };
+
+    class element_intrinsic_binary : public element_intrinsic
+    {
+    public:
+        DECLARE_TYPE_ID();
+
+    private:
+        element_binary_op operation;
+
+    public:
+        element_intrinsic_binary(element_binary_op operation, type_const_shared_ptr type, element::identifier name)
+            : element_intrinsic(type_id, type, std::move(name))
+            , operation(operation)
+        {
+        }
+
+        element_binary_op get_operation() const { return operation; }
+    };
+
+    //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
+    class element_intrinsic_if : public element_intrinsic
+    {
+        DECLARE_TYPE_ID();
+
+        element_intrinsic_if(type_const_shared_ptr type, element::identifier name)
+            : element_intrinsic(type_id, std::move(type), std::move(name))
+        {
+        }
+    };
+}
+
+#else
 
 #include <memory>
 #include <string>
