@@ -1,17 +1,15 @@
 #pragma once
 
+//STD
 #include <vector>
 #include <string>
 #include <memory>
 #include <functional>
-#include <numeric>
 #include <sstream>
 
-
-
+//SELF
 #include "ast_indexes.hpp"
 #include "common_internal.hpp"
-#include "configuration.hpp"
 #include "element/ast.h"
 #include "element/token.h"
 #include <cassert>

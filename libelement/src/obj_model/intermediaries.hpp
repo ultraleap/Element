@@ -6,40 +6,71 @@
 
 namespace element
 {
-    struct compiled_expression final : object
+    class compiled_expression final : public object
     {
+    public:
+        compiled_expression() = default;
+        virtual ~compiled_expression() = default;
+
+        //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
+        compiled_expression(const compiled_expression&) = delete;
+        compiled_expression(compiled_expression&&) = delete;
+        compiled_expression& operator=(const compiled_expression&) = delete;
+        compiled_expression& operator=(compiled_expression&&) = delete;
+
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] std::string to_string() const override { return ""; }
+
         const object* creator = nullptr; //the thing that generated this thing
         //A compiled expression contains either an expression tree that was output from something being compiled, or some object model thing
         //probably shouldn't contain both but let's see if we ever need to :b
         std::shared_ptr<object> object_model;
         expression_shared_ptr expression_tree;
         //constraint_const_shared_ptr constraint = element_type::any; //the constraint of the expression/object model (if the object model isn't aware of its constraint? but it should be?)
-
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
-        [[nodiscard]] std::string to_string() const override { return ""; }
+    private:
     };
 
-    struct struct_instance final : object
+    class struct_instance final : public object
     {
-        const struct_declaration* const declarer;
-        std::map<std::string, std::shared_ptr<compiled_expression>> fields;
-
+    public:
         explicit struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions);
+        virtual ~struct_instance() = default;
+
+        //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
+        struct_instance(const struct_instance&) = delete;
+        struct_instance(struct_instance&&) = delete;
+        struct_instance& operator=(const struct_instance&) = delete;
+        struct_instance& operator=(struct_instance&&) = delete;
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
+
+        const struct_declaration* const declarer;
+        std::map<std::string, std::shared_ptr<compiled_expression>> fields;
+
+    private:
     };
 
-    struct function_instance final : object
+    class function_instance final : public object
     {
-        const function_declaration* const declarer;
-        std::vector<std::shared_ptr<compiled_expression>> provided_arguments;
-
+    public:
         explicit function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<compiled_expression>> args);
+        virtual ~function_instance() = default;
+
+        //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
+        function_instance(const function_instance&) = delete;
+        function_instance(function_instance&&) = delete;
+        function_instance& operator=(const function_instance&) = delete;
+        function_instance& operator=(function_instance&&) = delete;
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] static bool is_instance_function() { return true; }
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+
+        const function_declaration* const declarer;
+        std::vector<std::shared_ptr<compiled_expression>> provided_arguments;
+
+    private:
     };
 }

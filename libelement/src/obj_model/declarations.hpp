@@ -58,7 +58,7 @@ private:
 class struct_declaration final : public declaration
 {
 public:
-    struct_declaration(element::identifier identifier, const element::scope* parent_scope, bool is_intrinsic);
+    struct_declaration(identifier identifier, const scope* parent_scope, bool is_intrinsic);
     virtual ~struct_declaration() = default;
 
     //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr

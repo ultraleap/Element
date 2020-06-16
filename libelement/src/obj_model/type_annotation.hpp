@@ -8,16 +8,19 @@
 
 namespace element
 {
-    struct type_annotation : object
+    class type_annotation : public object
     {
-        identifier identifier;
-
+    public:
         //TODO: This should be an expression, not an identifier
-        type_annotation(element::identifier identifier)
-            : identifier{std::move(identifier)}
-        { 
+        type_annotation(identifier name)
+            : name{std::move(name)}
+        {
         }
 
         [[nodiscard]] std::string to_code(int depth) const override;
+
+        identifier name;
+
+    private:
     };
 }

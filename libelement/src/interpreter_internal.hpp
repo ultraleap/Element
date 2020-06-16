@@ -1,16 +1,13 @@
 #pragma once
 
-#include <unordered_map>
 #include <vector>
 #include <string>
 #include <memory>
 
 #include "element/interpreter.h"
-#include "ast/ast_internal.hpp"
 
 #include "ast/functions.hpp"
 #include "ast/scope.hpp"
-#include "etree/fwd.hpp"
 #include "etree/expressions.hpp"
 #include "common_internal.hpp"
 #include "obj_model/scope.hpp"
