@@ -1,4 +1,80 @@
-#ifdef LEGACY_COMPILER
+#ifndef LEGACY_COMPILER
+
+#include "functions.hpp"
+#include "intermediaries.hpp"
+#include "etree/expressions.hpp"
+
+DEFINE_TYPE_ID(element::intrinsic_nullary, 1U << 0);
+DEFINE_TYPE_ID(element::intrinsic_unary, 1U << 1);
+DEFINE_TYPE_ID(element::intrinsic_binary, 1U << 2);
+//DEFINE_TYPE_ID(element::intrinsic_if, 1U << 3);
+
+namespace element
+{
+    std::unordered_map<std::string, std::shared_ptr<element::intrinsic>> element::intrinsic::intrinsic_map
+    {
+        // functions
+        { "Num.add", std::make_shared<intrinsic_binary>(element_binary_op::add, nullptr) },
+        { "Num.sub", std::make_shared<intrinsic_binary>(element_binary_op::sub, nullptr) },
+        { "Num.mul", std::make_shared<intrinsic_binary>(element_binary_op::mul, nullptr) },
+        { "Num.div", std::make_shared<intrinsic_binary>(element_binary_op::div, nullptr) },
+    };
+
+    std::shared_ptr<element::intrinsic> element::intrinsic::get_intrinsic(const declaration& declaration)
+    {
+        const auto location = declaration.location();
+        if (intrinsic_map.count(location))
+        {
+            return intrinsic_map[location];
+        }
+
+        return nullptr;
+    }
+
+    element::intrinsic::intrinsic(element_type_id id, type_const_shared_ptr type)
+        : rtti_type(id), type(std::move(type))
+    {
+    }
+
+    std::shared_ptr<element::object> element::intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    {
+        auto result = std::make_shared<compiled_expression>();
+        result->creator = nullptr;
+
+        result->expression_tree = std::make_shared<element_expression_nullary>(
+            operation);
+
+        return result;
+    }
+
+    std::shared_ptr<element::object> element::intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    {
+        auto result = std::make_shared<compiled_expression>();
+        result->creator = nullptr;
+
+        result->expression_tree = std::make_shared<element_expression_unary>(
+            operation,
+            args[0]->expression_tree);
+
+        return result;
+    }
+
+    std::shared_ptr<element::object> element::intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    {
+        auto result = std::make_shared<compiled_expression>();
+        result->creator = nullptr;
+
+        result->expression_tree = std::make_shared<element_expression_binary>(
+            operation,
+            args[0]->expression_tree,
+            args[1]->expression_tree);
+
+        return result;
+    }
+}
+
+
+#else
 
 #include "ast/functions.hpp"
 

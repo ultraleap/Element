@@ -7,71 +7,78 @@
 #include <vector>
 
 //SELF
+#include <map>
+
 #include "fwd.hpp"
 
 namespace element
 {
-class compilation_context
-{
-private:
-    const scope* global_scope;
+    struct identifier;
+    class intrinsic;
 
-public:
-    compilation_context(const scope* const scope);
-};
-
-struct identifier
-{
-    identifier() = default;
-
-    explicit identifier(std::string value)
-        : value{std::move(value)}
+    class compilation_context
     {
-    }
+    private:
+        const scope* global_scope;
 
-    static identifier unidentifier;
+    public:
+        explicit compilation_context(const scope* scope);
 
-    identifier(identifier const& other) = default;
-    identifier& operator=(identifier const& other) = default;
+        [[nodiscard]] const scope* get_global_scope() const { return global_scope; }
+    };
 
-    identifier(identifier&& other) = default;
-    identifier& operator=(identifier&& other) = default;
+    struct identifier
+    {
+        identifier() = default;
 
-    ~identifier() = default;
+        explicit identifier(std::string value)
+            : value{std::move(value)}
+        {
+        }
 
-    std::string value;
-};
+        static identifier unidentifier;
 
-class object
-{
-public:
-    virtual ~object() = default;
+        identifier(identifier const& other) = default;
+        identifier& operator=(identifier const& other) = default;
 
-    [[nodiscard]] virtual std::string to_string() const { return ""; }
-    [[nodiscard]] virtual std::string to_code(int depth) const { return ""; }
+        identifier(identifier&& other) = default;
+        identifier& operator=(identifier&& other) = default;
 
-    //TODO: Add constraints
-    //bool matches_constraint(constraint& constraint);
+        ~identifier() = default;
 
-    //todo: some kind of component architecture?
-    [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { return nullptr; };
-    [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const { return nullptr; };
-    [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile(const compilation_context& context) const { return nullptr; };
+        std::string value;
+    };
 
-protected:
-    object() = default;
-};
+    class object
+    {
+    public:
+        virtual ~object() = default;
 
-//struct error : object
-// {
-//    static const object_model_id type_id;
-//
-//    std::string message;
+        [[nodiscard]] virtual std::string to_string() const { return ""; }
+        [[nodiscard]] virtual std::string to_code(int depth) const { return ""; }
 
-//    explicit error(std::string message)
-//        : object(nullptr, type_id)
-//        , message{std::move(message)}
-//    {
-//    }
-//};
-}
+        //TODO: Add constraints
+        //bool matches_constraint(constraint& constraint);
+
+        //todo: some kind of component architecture?
+        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile(const compilation_context& context) const { return nullptr; };
+
+    protected:
+        object() = default;
+    };
+
+    //struct error : object
+    // {
+    //    static const object_model_id type_id;
+    //
+    //    std::string message;
+
+    //    explicit error(std::string message)
+    //        : object(nullptr, type_id)
+    //        , message{std::move(message)}
+    //    {
+    //    }
+    //};
+ }
