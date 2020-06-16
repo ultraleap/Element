@@ -47,23 +47,23 @@ element::scoped_declaration::scoped_declaration(element::identifier identifier, 
 
 bool element::scoped_declaration::has_scope() const
 {
-	return !scope->declarations.empty();
+	return !scope->is_empty();
 }
 
 void element::scoped_declaration::add_declaration(std::shared_ptr<element::declaration> declaration) const
 {
-	scope->declarations.emplace(declaration->identifier.value, std::move(declaration));
+	scope->add_declaration(std::move(declaration));
 }
 
 std::string element::scoped_declaration::location() const
 {
 	auto declaration = identifier.value;
 
-	if (scope->parent_scope->is_root())
+	if (scope->get_parent_scope()->is_root())
 		return declaration;
 
 	//recursive construction
-	return scope->parent_scope->location() + "." + declaration;
+	return scope->get_parent_scope()->location() + "." + declaration;
 }
 
 //struct
@@ -208,7 +208,7 @@ std::shared_ptr<element::element_object> element::function_declaration::call(std
 			auto result = std::make_shared<compiled_expression>();
 			result->declarer = this;
 			//todo: better way of getting to our parent?
-			if (scope->parent_scope->declarer->identifier.value == "Num" && identifier.value == "add")
+			if (scope->get_parent_scope()->declarer->identifier.value == "Num" && identifier.value == "add")
 			{
 				result->expression = std::make_shared<element_expression_binary>(
 					element_binary_op::add,

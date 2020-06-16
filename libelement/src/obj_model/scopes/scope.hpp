@@ -8,60 +8,35 @@
 
 namespace element
 {
-    struct scope : element_object
-	{
-        const scope* parent_scope = nullptr;
-        const declaration* const declarer;
-    	
-        std::map<std::string, std::shared_ptr<declaration>> declarations;
+class scope final : public element_object
+{
+public:
+    explicit scope(const scope* parent_scope, const declaration* const declarer);
+    virtual ~scope() = default;
 
-        explicit scope(const scope* parent_scope, const declaration* const declarer)
-            : parent_scope{ parent_scope }, declarer{ declarer }
-        {
-        }
-    	
-        void add_declaration(std::shared_ptr<declaration> declaration);
-        [[nodiscard]] std::shared_ptr<declaration> find(const std::string& identifier, bool recurse) const;
+    //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
+    scope(const scope& scope) = delete;
+    scope(scope&& scope) = delete;
+    scope& operator = (const scope& scope) = delete;
+    scope& operator = (scope&& scope) = delete;
 
-        [[nodiscard]] bool is_root() const
-    	{
-            return parent_scope == nullptr;
-    	}
+    [[nodiscard]] std::shared_ptr<declaration> find(const std::string& identifier, bool recurse) const;
+    [[nodiscard]] bool is_root() const { return parent_scope == nullptr; }
+    [[nodiscard]] bool is_empty() const { return declarations.empty(); }
+    [[nodiscard]] const scope* get_global() const;
+    [[nodiscard]] const scope* get_parent_scope() const { return parent_scope; }
+    [[nodiscard]] std::string to_string() const override;
 
-        [[nodiscard]] const scope* get_global() const
-        {
-            const static scope* global = nullptr;
-            if (global)
-                return global;
+    [[nodiscard]] std::string location() const;
+    [[nodiscard]] std::string to_code(int depth = -1) const override;
 
-            const auto* local = this;
-            while (local->parent_scope)
-                local = local->parent_scope;
+    void add_declaration(std::shared_ptr<declaration> declaration);
+    element_result merge(std::unique_ptr<scope>&& other);
 
-            global = local;
-            return global;
-        }
-    	
-        [[nodiscard]] std::string location() const;
-        [[nodiscard]] std::string to_string() const override;
-        [[nodiscard]] std::string to_code(int depth = -1) const override;
+    const declaration* const declarer;
 
-        element_result merge(std::unique_ptr<scope>&& other)
-        {
-            if (!is_root() || !other->is_root())
-                return ELEMENT_ERROR_UNKNOWN;
-
-            for (auto& [identifier, declaration] : other->declarations)
-            {
-                if (declarations.count(identifier))
-                    return ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
-
-                declarations[identifier] = std::move(declaration);
-                if (declarations[identifier]->scope)
-                    declarations[identifier]->scope->parent_scope = this;
-            }
-
-            return ELEMENT_OK;
-        }
-    };
+private:
+    const scope* parent_scope = nullptr;
+    std::map<std::string, std::shared_ptr<declaration>> declarations;
+};
 }

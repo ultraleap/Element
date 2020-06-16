@@ -12,7 +12,7 @@
 
 namespace element
 {
-    struct scope;
+    class scope;
 
     static const std::string intrinsic_qualifier = "intrinsic";
 	static const std::string namespace_qualifier = "namespace";
