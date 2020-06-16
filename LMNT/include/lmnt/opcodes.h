@@ -102,7 +102,7 @@ typedef struct
 
 extern const lmnt_op_info lmnt_opcode_info[LMNT_OP_END];
 
-#define LMNT_OP16(a) (a & 0xFF), ((a >> 8) & 0xFF)
-#define LMNT_OP(op, arg1, arg2, arg3) LMNT_OP16(op), LMNT_OP16(arg1), LMNT_OP16(arg2), LMNT_OP16(arg3)
+#define LMNT_OP16(a) (char)(a & 0xFF), (char)((a >> 8) & 0xFF)
+#define LMNT_OP_BYTES(op, arg1, arg2, arg3) LMNT_OP16(op), LMNT_OP16(arg1), LMNT_OP16(arg2), LMNT_OP16(arg3)
 
 #endif

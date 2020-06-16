@@ -29,45 +29,45 @@ static const char filedata_circle_ht[] = {
     // 0x16 | temp22, temp23, temp24, temp25, temp26
     // ]
     //temp22 = t / interval
-    LMNT_OP(LMNT_OP_DIVSS, 0x02, 0x05, 0x16),
+    LMNT_OP_BYTES(LMNT_OP_DIVSS, 0x02, 0x05, 0x16),
     //temp22 = mod(temp22, 1)
-    LMNT_OP(LMNT_OP_MODSS, 0x16, 0x01, 0x16),
+    LMNT_OP_BYTES(LMNT_OP_MODSS, 0x16, 0x01, 0x16),
     //temp22 = mul(temp22, tau)
-    LMNT_OP(LMNT_OP_MULSS, 0x16, 0x00, 0x16),
+    LMNT_OP_BYTES(LMNT_OP_MULSS, 0x16, 0x00, 0x16),
     //pos_x = cos(temp22)
-    LMNT_OP(LMNT_OP_COS, 0x16, 0x00, 0x12),
+    LMNT_OP_BYTES(LMNT_OP_COS, 0x16, 0x00, 0x12),
     //pos_x = mul(pos_x, radius)
-    LMNT_OP(LMNT_OP_MULSS, 0x12, 0x04, 0x12),
+    LMNT_OP_BYTES(LMNT_OP_MULSS, 0x12, 0x04, 0x12),
     //pos_y = sin(temp22)
-    LMNT_OP(LMNT_OP_SIN, 0x16, 0x00, 0x13),
+    LMNT_OP_BYTES(LMNT_OP_SIN, 0x16, 0x00, 0x13),
     //pos_y = mul(pos_y, radius)
-    LMNT_OP(LMNT_OP_MULSS, 0x13, 0x04, 0x13),
+    LMNT_OP_BYTES(LMNT_OP_MULSS, 0x13, 0x04, 0x13),
     //pos_z = 0.00
-    LMNT_OP(LMNT_OP_ASSIGNIBS, 0x0000, 0x0000, 0x14),
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x0000, 0x14),
     //intensity = 0.0 (to not break summing later)
-    LMNT_OP(LMNT_OP_ASSIGNIBS, 0x0000, 0x0000, 0x15),
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x0000, 0x15),
     //temp22 = t14
-    LMNT_OP(LMNT_OP_ASSIGNSS, 0x09, 0x00, 0x16),
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNSS, 0x09, 0x00, 0x16),
     //temp23 = t24
-    LMNT_OP(LMNT_OP_ASSIGNSS, 0x0D, 0x00, 0x17),
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNSS, 0x0D, 0x00, 0x17),
     //temp24 = t34
-    LMNT_OP(LMNT_OP_ASSIGNSS, 0x11, 0x00, 0x18),
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNSS, 0x11, 0x00, 0x18),
     //t1 = t1 * pos
-    LMNT_OP(LMNT_OP_MULVV, 0x06, 0x12, 0x06),
+    LMNT_OP_BYTES(LMNT_OP_MULVV, 0x06, 0x12, 0x06),
     //t2 = t2 * pos
-    LMNT_OP(LMNT_OP_MULVV, 0x0A, 0x12, 0x0A),
+    LMNT_OP_BYTES(LMNT_OP_MULVV, 0x0A, 0x12, 0x0A),
     //t3 = t3 * pos
-    LMNT_OP(LMNT_OP_MULVV, 0x0E, 0x12, 0x0E),
+    LMNT_OP_BYTES(LMNT_OP_MULVV, 0x0E, 0x12, 0x0E),
     //pos_x = sum(t1)
-    LMNT_OP(LMNT_OP_SUMV, 0x06, 0x00, 0x12),
+    LMNT_OP_BYTES(LMNT_OP_SUMV, 0x06, 0x00, 0x12),
     //pos_y = sum(t2)
-    LMNT_OP(LMNT_OP_SUMV, 0x0A, 0x00, 0x13),
+    LMNT_OP_BYTES(LMNT_OP_SUMV, 0x0A, 0x00, 0x13),
     //pos_z = sum(t3)
-    LMNT_OP(LMNT_OP_SUMV, 0x0E, 0x00, 0x14),
+    LMNT_OP_BYTES(LMNT_OP_SUMV, 0x0E, 0x00, 0x14),
     // pos = pos + [t14, t24, t34, ???]
-    LMNT_OP(LMNT_OP_ADDVV, 0x12, 0x16, 0x12),
+    LMNT_OP_BYTES(LMNT_OP_ADDVV, 0x12, 0x16, 0x12),
     //intensity = 1.0
-    LMNT_OP(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x15),
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x15),
     // pad to multiple of 8
     0x00, 0x00, 0x00, 0x00,
     // constants
