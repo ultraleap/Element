@@ -69,7 +69,7 @@ public:
     [[nodiscard]] std::string to_string() const override;
     [[nodiscard]] std::string to_code(int depth) const override;
 
-    [[nodiscard]] std::shared_ptr<element_object> index(const element::identifier&) const override;
+    [[nodiscard]] std::shared_ptr<element_object> index(const compilation_context& context, const element::identifier&) const override;
 };
 
 class constraint_declaration final : public declaration
@@ -103,8 +103,8 @@ public:
     [[nodiscard]] std::string to_string() const override;
     [[nodiscard]] std::string to_code(int depth) const override;
 
-    [[nodiscard]] std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const override;
-    [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
+    [[nodiscard]] std::shared_ptr<element_object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+    [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
 };
 
 //expression bodied functions are used as the leaf-functions for a chain of scope bodied ones to prevent recursion
@@ -123,8 +123,8 @@ public:
 
     [[nodiscard]] std::string to_string() const override;
     [[nodiscard]] std::string to_code(int depth) const override;
-    [[nodiscard]] std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const override;
-    [[nodiscard]] std::shared_ptr<compiled_expression> compile() const override;
+    [[nodiscard]] std::shared_ptr<element_object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+    [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
 
     std::shared_ptr<expression> expression;
 private:
@@ -145,6 +145,6 @@ public:
 
     [[nodiscard]] std::string to_string() const override;
     [[nodiscard]] std::string to_code(int depth) const override;
-    [[nodiscard]] std::shared_ptr<element_object> index(const element::identifier&) const override;
+    [[nodiscard]] std::shared_ptr<element_object> index(const compilation_context& context, const element::identifier&) const override;
 };
 }

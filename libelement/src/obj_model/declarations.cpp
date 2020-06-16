@@ -33,7 +33,7 @@ std::string declaration::location() const
 	if (!our_scope)
 		return declaration;
 	
-	if (our_scope->get_parent_scope() && our_scope->get_parent_scope()->is_root())
+	if (!our_scope->get_parent_scope() || our_scope->get_parent_scope()->is_root())
 	    return declaration;
 
 	//recursive construction
@@ -194,7 +194,7 @@ std::shared_ptr<element::element_object> element::function_declaration::call(con
 		}
 		else
 		{
-			return scope->find("return", false)->call(context, {});
+			return our_scope->find("return", false)->call(context, {});
 		}
 	}
 
@@ -297,9 +297,7 @@ std::string namespace_declaration::to_code(const int depth) const
 	return "namespace " + name.value + our_scope->to_code(depth);
 }
 
-std::shared_ptr<element::element_object> element::namespace_declaration::index(const element::identifier& expr) const
-std::shared_ptr<element_object> namespace_declaration::index(const identifier& expr) const
-std::shared_ptr<element::element_object> element::namespace_declaration::index(const compilation_context& context, const element::identifier& expr) const
+std::shared_ptr<element_object> namespace_declaration::index(const compilation_context& context, const element::identifier& expr) const
 {
 	return our_scope->find(name.value, false);
 }

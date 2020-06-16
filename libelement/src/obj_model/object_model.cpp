@@ -102,7 +102,7 @@ std::shared_ptr<element::declaration> element::build_constraint_declaration(cons
     build_inputs(decl, *constraint_decl);
     build_output(decl, *constraint_decl);
 
-    //log(constraint_decl->to_string()); //todo: broke
+    log(constraint_decl->to_string());
 
     return std::move(constraint_decl);
 }
