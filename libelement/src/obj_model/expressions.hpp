@@ -6,7 +6,7 @@
 
 //SELF
 #include "element/common.h"
-#include "ast/types.hpp"
+#include "obj_model/types.hpp"
 #include "obj_model/object.hpp"
 #include "obj_model/port.hpp"
 #include "fwd.hpp"
