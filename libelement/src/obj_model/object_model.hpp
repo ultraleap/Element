@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "element/ast.h"
-#include "scopes/scope.hpp"
+#include "scope.hpp"
 
 namespace element
 {

@@ -8,7 +8,7 @@
 
 #include "obj_model/port.hpp"
 #include "obj_model/element_object.hpp"
-#include "obj_model/expressions/expression.hpp"
+#include "obj_model/expressions.hpp"
 
 namespace element
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "obj_model/scopes/scope.hpp"
+#include "obj_model/scope.hpp"
 #include "etree/fwd.hpp"
 
 namespace element

@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "obj_model/element_object.hpp"
-#include "obj_model/declarations/declaration.hpp"
+#include "obj_model/declarations.hpp"
 
 namespace element
 {

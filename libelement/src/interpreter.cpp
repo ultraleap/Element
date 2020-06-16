@@ -6,18 +6,16 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 
 #include <fmt/format.h>
 
 #include "common_internal.hpp"
 #include "etree/compiler.hpp"
 #include "etree/evaluator.hpp"
-#include "ast/ast_indexes.hpp"
 #include "token_internal.hpp"
 #include "configuration.hpp"
 #include "obj_model/object_model.hpp"
-#include "obj_model/intermediaries/struct_instance.hpp"
+#include "obj_model/intermediaries.hpp"
 
 bool file_exists(const std::string& file)
 {

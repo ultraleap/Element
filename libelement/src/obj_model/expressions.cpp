@@ -1,8 +1,8 @@
-#include "expression.hpp"
+#include "expressions.hpp"
 
 #include "etree/expressions.hpp"
-#include "obj_model/scopes/scope.hpp"
-#include "obj_model/intermediaries/struct_instance.hpp"
+#include "obj_model/scope.hpp"
+#include "obj_model/intermediaries.hpp"
 
 element::expression::expression(const scope* enclosing_scope)
     : enclosing_scope{enclosing_scope}

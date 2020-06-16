@@ -1,14 +1,14 @@
-#include "declaration.hpp"
+#include "declarations.hpp"
 
 //SELF
-#include "obj_model/scopes/scope.hpp"
-#include "obj_model/expressions/expression.hpp"
-#include "obj_model/intermediaries/struct_instance.hpp"
+#include "obj_model/scope.hpp"
+#include "obj_model/expressions.hpp"
+#include "obj_model/intermediaries.hpp"
 #include "etree/expressions.hpp"
 
 //declaration
 element::declaration::declaration(element::identifier identifier)
-	: output{ nullptr }, identifier(identifier)
+	: output{ nullptr }, identifier(std::move(identifier))
 {
 }
 
