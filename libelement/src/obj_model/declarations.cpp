@@ -1,9 +1,11 @@
 #include "declarations.hpp"
 
 //SELF
+#include "obj_model/object.hpp"
 #include "obj_model/scope.hpp"
 #include "obj_model/expressions.hpp"
 #include "obj_model/intermediaries.hpp"
+#include "obj_model/functions.hpp"
 #include "etree/expressions.hpp"
 
 namespace element
@@ -172,30 +174,23 @@ namespace element
     {
         //e.g. my_namespace.my_function(1) is a call on a function declaration
 
-        if (inputs.size() == args.size())
-        {
-            //todo: cache arguments as part of callstack for our child functions (e.g. return) to be able to reference
-            //todo: forward on any extra arguments to return? return can have it's own portlist right? how do we determine that, hmm, it would be here though
-            if (intrinsic)
-            {
-                auto result = std::make_shared<compiled_expression>();
-                result->creator = this;
-                //todo: better way of getting to our parent?
-                if (our_scope->get_parent_scope()->declarer->name.value == "Num" && name.value == "add")
-                {
-                    result->expression_tree = std::make_shared<element_expression_binary>(
-                        element_binary_op::add,
-                        args[0]->expression_tree,
-                        args[1]->expression_tree);
-                }
+	if (inputs.size() == args.size())
+	{
+		//todo: cache arguments as part of callstack for our child functions (e.g. return) to be able to reference
+		//todo: forward on any extra arguments to return? return can have it's own portlist right? how do we determine that, hmm, it would be here though
+		if (intrinsic)
+		{
+            const auto intrinsic = intrinsic::get_intrinsic(*this);
+		    if(intrinsic)
+				return intrinsic->call(context, args);
+		}
+		else
+		{
+			return our_scope->find("return", false)->call(context, {});
+		}
 
-                return result;
-            }
-            else
-            {
-                return our_scope->find("return", false)->call(context, {});
-            }
-        }
+		return nullptr;
+	}
 
         //don't have all the arguments, so partially apply them
         //is a compiled expression because if the call is the full expression, then we return it from expression->compile, which needs to be a compiled expression.

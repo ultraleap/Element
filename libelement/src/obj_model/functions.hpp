@@ -5,30 +5,31 @@
 #include <memory>
 
 #include "ast/fwd.hpp"
+#include "object.hpp"
 #include "types.hpp"
 #include "construct.hpp"
 #include "typeutil.hpp"
+#include <unordered_map>
 
 namespace element
 {
-    class element_intrinsic : rtti_type<element_intrinsic>
+    class intrinsic : public object, public rtti_type<intrinsic>
     {
-    private:
         type_const_shared_ptr type;
-        element::identifier name;
 
     public:
-        element_intrinsic(element_type_id id, type_const_shared_ptr type, element::identifier name)
-            : rtti_type(id)
-            , type(std::move(type))
-            , name(std::move(name))
-        {
-        }
+        intrinsic(element_type_id id, type_const_shared_ptr type);
 
-        const element::identifier& get_identifier() const { return name; }
+        const std::string& get_identifier() const;
+
+    private:
+        static std::unordered_map<std::string, std::shared_ptr<intrinsic>> intrinsic_map;
+
+    public:
+        static std::shared_ptr<intrinsic> get_intrinsic(const declaration& declaration);
     };
 
-    class element_intrinsic_nullary : element_intrinsic
+    class intrinsic_nullary final : public intrinsic
     {
     public:
         DECLARE_TYPE_ID();
@@ -37,16 +38,17 @@ namespace element
         element_nullary_op operation;
 
     public:
-        element_intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr type, element::identifier name)
-            : element_intrinsic(type_id, type, std::move(name))
+        intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr type)
+            : intrinsic(type_id, type)
             , operation(operation)
         {
         }
 
-        element_nullary_op get_operation() const { return operation; }
+        [[nodiscard]] std::shared_ptr<element::object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] element_nullary_op get_operation() const { return operation; }
     };
 
-    class element_intrinsic_unary : element_intrinsic
+    class intrinsic_unary final : public intrinsic
     {
     public:
         DECLARE_TYPE_ID();
@@ -55,16 +57,17 @@ namespace element
         element_unary_op operation;
 
     public:
-        element_intrinsic_unary(element_unary_op operation, type_const_shared_ptr type, element::identifier name)
-            : element_intrinsic(type_id, type, std::move(name))
+        intrinsic_unary(element_unary_op operation, type_const_shared_ptr type)
+            : intrinsic(type_id, type)
             , operation(operation)
         {
         }
 
-        element_unary_op get_operation() const { return operation; }
+        [[nodiscard]] std::shared_ptr<element::object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] element_unary_op get_operation() const { return operation; }
     };
 
-    class element_intrinsic_binary : public element_intrinsic
+    class intrinsic_binary final : public intrinsic
     {
     public:
         DECLARE_TYPE_ID();
@@ -73,25 +76,26 @@ namespace element
         element_binary_op operation;
 
     public:
-        element_intrinsic_binary(element_binary_op operation, type_const_shared_ptr type, element::identifier name)
-            : element_intrinsic(type_id, type, std::move(name))
+        intrinsic_binary(element_binary_op operation, type_const_shared_ptr type)
+            : intrinsic(type_id, type)
             , operation(operation)
         {
         }
 
-        element_binary_op get_operation() const { return operation; }
+        [[nodiscard]] element_binary_op get_operation() const { return operation; }
+        [[nodiscard]] std::shared_ptr<element::object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
     };
 
-    //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
-    class element_intrinsic_if : public element_intrinsic
-    {
-        DECLARE_TYPE_ID();
+    ////TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
+    //class intrinsic_if final : public intrinsic
+    //{
+    //    DECLARE_TYPE_ID();
 
-        element_intrinsic_if(type_const_shared_ptr type, element::identifier name)
-            : element_intrinsic(type_id, std::move(type), std::move(name))
-        {
-        }
-    };
+    //    intrinsic_if(type_const_shared_ptr type, std::string name)
+    //        : intrinsic(type_id, std::move(type), std::move(name))
+    //    {
+    //    }
+    //};
 }
 
 #else
