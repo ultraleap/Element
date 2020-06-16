@@ -121,7 +121,7 @@ std::shared_ptr<element::declaration> element::build_function_declaration(const 
     if (body->type == ELEMENT_AST_NODE_SCOPE || body->type == ELEMENT_AST_NODE_CONSTRAINT /* intrinsic function*/)
         return build_scope_bodied_function_declaration(ast, parent_scope);
 
-    if (body->type == ELEMENT_AST_NODE_CALL) 
+    if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL)
         return build_expression_bodied_function_declaration(ast, parent_scope);
 
     return nullptr;
@@ -248,7 +248,7 @@ std::shared_ptr<element::declaration> element::build_expression_bodied_function_
     build_output(decl, *function_decl);
 
     auto* const body = ast->children[ast_idx::function::body].get();
-    if (body->type == ELEMENT_AST_NODE_CALL) {
+    if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL) {
 
         auto expression = std::make_unique<element::expression>(function_decl->our_scope.get());
         function_decl->expression = build_expression(body, std::move(expression));

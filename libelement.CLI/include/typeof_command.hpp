@@ -28,10 +28,10 @@ namespace libelement::cli
 		{
 		}
 
-		compiler_message execute(const compilation_input& input) const override
+		compiler_message execute(const compilation_input& compilation_input) const override
 		{
 			element_result result = ELEMENT_OK;
-			result = setup(input);
+			result = setup(compilation_input);
 			if (result != ELEMENT_OK)
 				return compiler_message(ELEMENT_ERROR_PARSE,"Failed to setup context");
 
