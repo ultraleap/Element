@@ -36,7 +36,7 @@ namespace element
         {
         }
 
-        static identifier unidentifier;
+        static identifier return_identifier;
 
         identifier(identifier const& other) = default;
         identifier& operator=(identifier const& other) = default;
