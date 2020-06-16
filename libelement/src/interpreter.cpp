@@ -715,14 +715,14 @@ element_result element_interpreter_evaluate(
     if (options) opts = *options;
     const auto result = element_evaluate(
         *context,
-        evaluable->evaluable->expression,
+        evaluable->evaluable->expression_tree,
         inputs->values,
         inputs->count,
         outputs->values,
         outputs->count,
         opts);
     if (result != ELEMENT_OK) {
-        context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->declarer->to_string()), "<input>");
+        context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->creator->to_string()), "<input>");
     }
 
     return result;

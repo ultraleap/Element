@@ -1,16 +1,15 @@
 #pragma once
 
+//STD
 #include <utility>
 
-
-#include "obj_model/element_object.hpp"
+//SELF
+#include "obj_model/object.hpp"
 
 namespace element
 {
-    struct expression;
-
-    struct type_annotation : element_object
-	{
+    struct type_annotation : object
+    {
         identifier identifier;
 
         //TODO: This should be an expression, not an identifier

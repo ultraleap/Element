@@ -1,14 +1,16 @@
 #pragma once
 
+//STD
 #include <map>
 #include <memory>
 
-#include "obj_model/element_object.hpp"
+//SELF
+#include "obj_model/object.hpp"
 #include "obj_model/declarations.hpp"
 
 namespace element
 {
-class scope final : public element_object
+class scope final : public object
 {
 public:
     explicit scope(const scope* parent_scope, const declaration* const declarer);

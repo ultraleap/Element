@@ -50,7 +50,7 @@ struct element_compiled_function
 
 struct element_compilable
 {
-    std::shared_ptr<element::element_object> object;
+    std::shared_ptr<element::object> object;
 };
 
 struct element_evaluable

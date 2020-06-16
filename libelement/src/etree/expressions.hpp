@@ -12,7 +12,7 @@
 #include "etree/fwd.hpp"
 #include "construct.hpp"
 #include "typeutil.hpp"
-#include "obj_model/element_object.hpp"
+#include "obj_model/object.hpp"
 
 struct element_expression : rtti_type<element_expression>
 {

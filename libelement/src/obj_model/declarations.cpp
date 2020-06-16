@@ -79,7 +79,7 @@ std::string struct_declaration::to_code(const int depth) const
 	return declaration_offset + "struct " + name.value + ports + our_scope->to_code(depth);
 }
 
-std::shared_ptr<element::element_object> element::struct_declaration::index(const compilation_context& context, const element::identifier& identifier) const
+std::shared_ptr<element::object> element::struct_declaration::index(const compilation_context& context, const element::identifier& identifier) const
 {
 	return our_scope->find(identifier.value, false);
 }
@@ -169,7 +169,7 @@ std::string function_declaration::to_code(int depth) const
 	return declaration_offset + name.value + ports + our_scope->to_code(depth);
 }
 
-std::shared_ptr<element::element_object> element::function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+std::shared_ptr<element::object> element::function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
 {
 	//e.g. my_namespace.my_function(1) is a call on a function declaration
 
@@ -180,14 +180,14 @@ std::shared_ptr<element::element_object> element::function_declaration::call(con
 		if (intrinsic)
 		{
 			auto result = std::make_shared<compiled_expression>();
-			result->declarer = this;
+			result->creator = this;
 			//todo: better way of getting to our parent?
 			if (our_scope->get_parent_scope()->declarer->name.value == "Num" && name.value == "add")
 			{
-				result->expression = std::make_shared<element_expression_binary>(
+				result->expression_tree = std::make_shared<element_expression_binary>(
 					element_binary_op::add,
-					args[0]->expression,
-					args[1]->expression);
+					args[0]->expression_tree,
+					args[1]->expression_tree);
 			}
 
 			return result;
@@ -202,8 +202,8 @@ std::shared_ptr<element::element_object> element::function_declaration::call(con
 	//is a compiled expression because if the call is the full expression, then we return it from expression->compile, which needs to be a compiled expression.
 	//todo: need to figure out differences between compiling and calling and their restrictions, if any
 	auto result = std::make_shared<compiled_expression>();
-	result->declarer = this;
-	result->object = std::make_shared<function_instance>(this, std::move(args));
+	result->creator = this;
+	result->object_model = std::make_shared<function_instance>(this, std::move(args));
 	return std::move(result);
 }
 
@@ -251,23 +251,23 @@ std::string expression_bodied_function_declaration::to_code(const int depth) con
 	return declaration_offset + declaration + " = " + expression->to_code() + ";";
 }
 
-std::shared_ptr<element::element_object> element::expression_bodied_function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+std::shared_ptr<element::object> element::expression_bodied_function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
 {
 	//todo: apply arguments to callstack/cache so they can be found from scope lookups
 	const auto& compiled = compile(context);
 	//if it was a function instance then we should apply the arguments we have to it
 	//e.g. evaluate = add5(2); will call function declaration add5 with 2, so we need to apply 2 here. maybe there's a better way
-	if (dynamic_cast<function_instance*>(compiled->object.get()) &&
+	if (dynamic_cast<function_instance*>(compiled->object_model.get()) &&
 		static_cast<int>(args.size()) > static_cast<int>(inputs.size())) //we were given more args than we accept, so apply the remaining ones to the function instance
 	{
-		const auto& instance = static_cast<function_instance*>(compiled->object.get());
+		const auto& instance = static_cast<function_instance*>(compiled->object_model.get());
 		instance->provided_arguments.insert(instance->provided_arguments.end(), args.begin() + inputs.size(), args.end());
 
 		//egh.. it feels like everything needs to return a compiled_expression
 		if (instance->provided_arguments.size() == instance->declarer->inputs.size())
 			return instance->call(context, {});
 		else
-			compiled->object = instance->call(context, {});
+			compiled->object_model = instance->call(context, {});
 	}
 
 	return compiled;
@@ -297,7 +297,7 @@ std::string namespace_declaration::to_code(const int depth) const
 	return "namespace " + name.value + our_scope->to_code(depth);
 }
 
-std::shared_ptr<element_object> namespace_declaration::index(const compilation_context& context, const element::identifier& expr) const
+std::shared_ptr<object> namespace_declaration::index(const compilation_context& context, const element::identifier& expr) const
 {
 	return our_scope->find(name.value, false);
 }
