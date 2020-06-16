@@ -8,7 +8,7 @@
 #include "declarations.hpp"
 #include "expressions.hpp"
 
-void build_scope(element_ast* ast, const element::scoped_declaration& declaration);
+void build_scope(element_ast* ast, const element::declaration& declaration);
 
 void log(const std::string& message)
 {
@@ -39,7 +39,7 @@ void build_output(element_ast* ast, element::declaration& declaration)
 {
     auto* const output = ast->children[ast_idx::declaration::outputs].get();
     auto type_annotation = build_type_annotation(output);
-    declaration.output = std::make_unique<element::port>(element::identifier("return"), std::move(type_annotation));
+    declaration.output.emplace(element::port{ element::identifier("return"), std::move(type_annotation) });
 }
 
 void build_inputs(element_ast* ast, element::declaration& declaration)
@@ -102,7 +102,7 @@ std::shared_ptr<element::declaration> element::build_constraint_declaration(cons
     build_inputs(decl, *constraint_decl);
     build_output(decl, *constraint_decl);
 
-    log(constraint_decl->to_string());
+    //log(constraint_decl->to_string()); //todo: broke
 
     return std::move(constraint_decl);
 }
@@ -231,7 +231,7 @@ std::shared_ptr<element::expression> element::build_expression(const element_ast
 std::shared_ptr<element::declaration> element::build_expression_bodied_function_declaration(const element_ast* const ast, const scope* const parent_scope)
 {
     auto* const decl = ast->children[ast_idx::function::declaration].get();
-    auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+    const auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
     assert(!intrinsic);
 
     auto function_decl = std::make_unique<element::expression_bodied_function_declaration>(identifier(decl->identifier), parent_scope);
@@ -242,7 +242,7 @@ std::shared_ptr<element::declaration> element::build_expression_bodied_function_
     auto* const body = ast->children[ast_idx::function::body].get();
     if (body->type == ELEMENT_AST_NODE_CALL) {
 
-        auto expression = std::make_unique<element::expression>(function_decl->scope.get());
+        auto expression = std::make_unique<element::expression>(function_decl->our_scope.get());
         function_decl->expression = build_expression(body, std::move(expression));
     }
 	
@@ -285,13 +285,13 @@ std::shared_ptr<element::declaration> element::build_declaration(const element_a
     return nullptr;
 }
 
-void build_scope(element_ast* ast, const element::scoped_declaration& declaration)
+void build_scope(element_ast* ast, const element::declaration& declaration)
 {
     for (auto& child : ast->children)
     {
-        auto child_decl = build_declaration(child.get(), declaration.scope.get());
+        auto child_decl = build_declaration(child.get(), declaration.our_scope.get());
         if (child_decl)
-            declaration.add_declaration(std::move(child_decl));
+            declaration.our_scope->add_declaration(std::move(child_decl));
     }
 }
 
