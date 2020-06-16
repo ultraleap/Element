@@ -42,6 +42,11 @@ namespace element
         return nullptr;
     }
 
+    [[nodiscard]] std::shared_ptr<object> expression::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    {
+        return compile(context);
+    }
+
     std::shared_ptr<object> literal_expression::index(const compilation_context& context, const identifier& identifier) const
     {
         const auto& num = enclosing_scope->get_global()->find("Num", false);

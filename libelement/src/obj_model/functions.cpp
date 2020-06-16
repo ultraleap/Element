@@ -11,7 +11,7 @@ DEFINE_TYPE_ID(element::intrinsic_binary, 1U << 2);
 
 namespace element
 {
-    std::unordered_map<std::string, std::shared_ptr<intrinsic>> intrinsic::intrinsic_map
+    const std::unordered_map<std::string, const std::shared_ptr<const intrinsic>> intrinsic::intrinsic_map
     {
         //types
         { "Num", nullptr },
@@ -78,13 +78,13 @@ namespace element
         { "Any", nullptr },
     };
 
-    std::shared_ptr<intrinsic> intrinsic::get_intrinsic(const declaration& declaration)
+    std::shared_ptr<const intrinsic> intrinsic::get_intrinsic(const declaration& declaration)
     {
         const auto location = declaration.location();
-        if (intrinsic_map.count(location))
-        {
-            return intrinsic_map[location];
-        }
+
+        const auto it = intrinsic_map.find(location);
+        if (it != intrinsic_map.end())
+            return it->second;
 
         return nullptr;
     }

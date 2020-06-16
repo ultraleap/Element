@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 {
 #ifndef LEGACY_COMPILER
     element_result result;
-    result = eval("evaluate = -3;");
+    result = eval("evaluate = Num.add(1, 2);");
     if (result != ELEMENT_OK)
         return result;
 
@@ -63,9 +63,13 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
-    result = eval("add5 = Num.add(5); evaluate = add5(2);");
+    result = eval("evaluate = -3;");
     if (result != ELEMENT_OK)
         return result;
+
+    /*result = eval("add5 = Num.add(5); evaluate = add5(2);");
+    if (result != ELEMENT_OK)
+        return result;*/
 
     return 0;
 #else

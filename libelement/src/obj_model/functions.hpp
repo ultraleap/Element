@@ -23,10 +23,10 @@ namespace element
         const std::string& get_identifier() const;
 
     private:
-        static std::unordered_map<std::string, std::shared_ptr<intrinsic>> intrinsic_map;
+        static const std::unordered_map<std::string, const std::shared_ptr<const intrinsic>> intrinsic_map;
 
     public:
-        static std::shared_ptr<intrinsic> get_intrinsic(const declaration& declaration);
+        static std::shared_ptr<const intrinsic> get_intrinsic(const declaration& declaration);
     };
 
     class intrinsic_nullary final : public intrinsic
