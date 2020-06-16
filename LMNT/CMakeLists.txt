@@ -56,6 +56,8 @@ list(TRANSFORM LMNT_JIT_ARCHITECTURES REPLACE "NATIVE" "${LMNT_TARGET_ARCH}")
 list(REMOVE_DUPLICATES LMNT_JIT_ARCHITECTURES)
 
 if(LMNT_BUILD_JIT)
+    include(FetchDynASM)
+
     string(REPLACE ";" ", " jit_arch_list "${LMNT_JIT_ARCHITECTURES}")
     message(STATUS "Building JIT for: ${jit_arch_list}")
 
@@ -68,10 +70,8 @@ if(LMNT_BUILD_JIT)
         "include/lmnt/jit.h"
     )
 
-
     set (jit_inputs)
     set (jit_outputs)
-    add_subdirectory("dependencies/dynasm")
     foreach (arch IN LISTS LMNT_JIT_ARCHITECTURES)
         set(lmnt_jit_input "${CMAKE_CURRENT_SOURCE_DIR}/src/lmnt/jit/jit-${arch}.dasc")
         set(lmnt_jit_output "${CMAKE_CURRENT_BINARY_DIR}/jit-${arch}.c")
@@ -110,14 +110,5 @@ endif ()
 
 
 if (BUILD_TESTING)
-    add_executable(lmnt_test_app
-        "test/main.c"
-        "test/simple.h"
-        "test/circle.h"
-        "test/circle_ht.h"
-        "test/simple125.h"
-        "test/simple250.h"
-        "test/simple500.h"
-        "test/simple1000.h")
-    target_link_libraries(lmnt_test_app PRIVATE lmnt)
+    add_subdirectory("testapp")
 endif ()

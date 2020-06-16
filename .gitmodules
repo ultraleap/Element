@@ -1,3 +1,0 @@
-[submodule "Element/LMNT/thirdparty/dynasm"]
-	path = LMNT/dependencies/dynasm
-	url = https://github.com/Esvandiary/DynASM

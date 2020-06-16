@@ -72,8 +72,8 @@ static int clock_gettime(int X, struct timeval *tv)
 
     t.QuadPart -= offset.QuadPart;
     microseconds = (double)t.QuadPart / frequencyToMicroseconds;
-    t.QuadPart = microseconds;
-    tv->tv_sec = t.QuadPart / 1000000;
+    t.QuadPart = (LONGLONG)microseconds;
+    tv->tv_sec = (long)(t.QuadPart / 1000000);
     tv->tv_usec = t.QuadPart % 1000000;
     return (0);
 }
