@@ -110,11 +110,26 @@ namespace element
         [[nodiscard]] std::shared_ptr<element_object> compile(std::shared_ptr<element_object> previous) override;
     };
 	
-    struct lambda_expression final : expression
-	{
-		//TODO
+    struct lambda_expression : expression {
+
+        lambda_expression(const element::scope* parent_scope);
+
+        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string to_code(int depth) const override;
+
         std::vector<port> inputs;
         std::unique_ptr<port> output;
-        //std::unique_ptr<element_constraint> constraint;
+    };
+
+    //expression bodied functions are used as the leaf-functions for a chain of scope bodied ones to prevent recursion
+    //the last thing in a function call chain must be an expression bodied "return"
+    struct expression_bodied_lambda_expression final : lambda_expression
+    {
+        std::shared_ptr<expression> expression;
+
+        expression_bodied_lambda_expression(const element::scope* parent_scope);
+
+        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string to_code(int depth) const override;
     };
 }

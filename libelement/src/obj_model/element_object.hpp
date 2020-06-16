@@ -6,8 +6,6 @@
 #include <utility>
 #include <vector>
 
-#include "typeutil.hpp"
-
 namespace element
 {
     struct compiled_expression;
@@ -21,6 +19,8 @@ namespace element
             : value{std::move(value)}
         {
         }
+
+        static identifier unidentifier;
 
         identifier(identifier const& other) = default;
         identifier& operator=(identifier const& other) = default;

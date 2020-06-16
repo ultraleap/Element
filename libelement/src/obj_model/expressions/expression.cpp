@@ -103,3 +103,34 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
 
     return previous->call(std::move(compiled_arguments));
 }
+
+element::lambda_expression::lambda_expression(const element::scope* parent_scope)
+    : expression(parent_scope)
+{
+    
+}
+
+[[nodiscard]] std::string element::lambda_expression::to_string() const
+{
+    return "_";
+}
+
+[[nodiscard]] std::string element::lambda_expression::to_code(int depth) const
+{
+    return "_";
+}
+
+element::expression_bodied_lambda_expression::expression_bodied_lambda_expression(const element::scope* parent_scope)
+    : lambda_expression(parent_scope)
+{
+}
+
+[[nodiscard]] std::string element::expression_bodied_lambda_expression::to_string() const
+{
+    return "_";
+}
+
+[[nodiscard]] std::string element::expression_bodied_lambda_expression::to_code(int depth) const
+{
+    return "_";
+}
