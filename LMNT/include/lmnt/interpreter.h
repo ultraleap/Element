@@ -11,7 +11,7 @@
 typedef lmnt_result(*lmnt_op_fn)(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
 // Main interpreter context struct
-struct lmnt_ictx_s
+struct lmnt_ictx
 {
     // user-provided data
     char* memory_area;

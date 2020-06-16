@@ -74,8 +74,8 @@ typedef LMNT_VALUE_TYPE lmnt_value;
 //
 
 // Forward declare lmnt_ictx so it can be used in definitions
-struct lmnt_ictx_s;
-typedef struct lmnt_ictx_s lmnt_ictx;
+struct lmnt_ictx;
+typedef struct lmnt_ictx lmnt_ictx;
 
 #define LMNT_OK_OR_RETURN(t) \
 { \
