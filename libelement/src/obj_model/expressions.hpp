@@ -1,19 +1,22 @@
 #pragma once
 
+//STD
 #include <numeric>
 #include <utility>
 #include <vector>
 
+//SELF
 #include "element/common.h"
 #include "ast/types.hpp"
-#include "obj_model/element_object.hpp"
+#include "obj_model/object.hpp"
 #include "obj_model/port.hpp"
+#include "fwd.hpp"
 
 namespace element
 {
     class scope;
 
-    struct expression : element_object, std::enable_shared_from_this<expression>
+    struct expression : object, std::enable_shared_from_this<expression>
 	{
         const scope* enclosing_scope;
 
@@ -35,7 +38,7 @@ namespace element
 
         [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
 
-        [[nodiscard]] virtual std::shared_ptr<element_object> compile(const compilation_context& context, std::shared_ptr<element_object>) { return nullptr; }
+        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context, std::shared_ptr<object>) { return nullptr; }
     };
 
 	struct literal_expression final : expression
@@ -51,8 +54,8 @@ namespace element
         [[nodiscard]] std::string to_code(int depth = 0) const override { return std::to_string(value); }
 
         //when a literal is compiled and we need to later index it, it goes through here
-        [[nodiscard]] std::shared_ptr<element_object> index(const compilation_context& context, const identifier&) const override;
-        [[nodiscard]] std::shared_ptr<element_object> compile(const compilation_context& context, std::shared_ptr<element_object> previous) override;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, std::shared_ptr<object> previous) override;
 	};
 
     struct identifier_expression final : expression
@@ -66,7 +69,7 @@ namespace element
 
         [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_code(int depth = 0) const override { return identifier.value; }
-        [[nodiscard]] std::shared_ptr<element_object> compile(const compilation_context& context, std::shared_ptr<element_object> previous) override;
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, std::shared_ptr<object> previous) override;
     };
 
     struct call_expression final : expression
@@ -87,8 +90,8 @@ namespace element
         	return "(" + expressions + ")";
         }
 
-        //[[nodiscard]] const element_object* index(const indexing_expression*) const override;
-        [[nodiscard]] std::shared_ptr<element_object> compile(const compilation_context& context, std::shared_ptr<element_object> previous) override;
+        //[[nodiscard]] const object* index(const indexing_expression*) const override;
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, std::shared_ptr<object> previous) override;
     };
 	
     struct indexing_expression final : expression
@@ -106,7 +109,7 @@ namespace element
 	        return "." + identifier.value;
         }
 
-        [[nodiscard]] std::shared_ptr<element_object> compile(const compilation_context& context, std::shared_ptr<element_object> previous) override;
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, std::shared_ptr<object> previous) override;
     };
 	
     struct lambda_expression : expression {

@@ -1,16 +1,16 @@
 #pragma once
 
+//STD
 #include <utility>
 
+//SELF
 #include "type_annotation.hpp"
-#include "element_object.hpp"
+#include "object.hpp"
 #include "ast/types.hpp"
 
 namespace element
 {
-struct type_annotation;
-
-class port : public element_object
+class port : public object
 {
 public:
     port() = default;

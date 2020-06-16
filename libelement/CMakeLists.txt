@@ -38,11 +38,13 @@ set(element_sources
     "src/ast/types.hpp"
     
     #Object model
+    "src/obj_model/fwd.hpp"
+
     "src/obj_model/object_model.hpp"
     "src/obj_model/object_model.cpp"
     
-    "src/obj_model/element_object.hpp"
-    "src/obj_model/element_object.cpp"
+    "src/obj_model/object.hpp"
+    "src/obj_model/object.cpp"
 
     "src/obj_model/object_model.hpp"
     "src/obj_model/object_model.cpp"

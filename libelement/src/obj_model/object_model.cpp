@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 
-#include "element_object.hpp"
+#include "object.hpp"
 #include "object_model.hpp"
 #include "ast/ast_indexes.hpp"
 #include "ast/ast_internal.hpp"

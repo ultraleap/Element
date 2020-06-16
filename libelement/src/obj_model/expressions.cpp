@@ -15,7 +15,7 @@ std::shared_ptr<element::compiled_expression> element::expression::compile(const
         return nullptr; //todo: error_object
 
     //find first thing in the chain
-    std::shared_ptr<element_object> current = nullptr;
+    std::shared_ptr<object> current = nullptr;
     for (const auto& expression : children) 
     {
         current = expression->compile(context, current);
@@ -30,7 +30,7 @@ std::shared_ptr<element::compiled_expression> element::expression::compile(const
     return nullptr;
 }
 
-std::shared_ptr<element::element_object> element::literal_expression::index(const compilation_context& context, const identifier& identifier) const
+std::shared_ptr<element::object> element::literal_expression::index(const compilation_context& context, const identifier& identifier) const
 {
     const auto& num = enclosing_scope->get_global()->find("Num", false);
     const auto obj = num->index(context, identifier);
@@ -41,9 +41,9 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
 
         //hopefully this is a sufficiently large warning sign that what we're doing here is not good
         auto compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation = std::make_shared<compiled_expression>();
-        compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->expression = std::make_shared<element_expression_constant>(value);
-        compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->object = std::make_shared<literal_expression>(value, enclosing_scope); //this is really bad, we should not recreate the literal expression. all of this is an iffy hack though
-        compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->declarer = enclosing_scope->get_global()->find("Num", false).get();
+        compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->expression_tree = std::make_shared<element_expression_constant>(value);
+        compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->object_model = std::make_shared<literal_expression>(value, enclosing_scope); //this is really bad, we should not recreate the literal expression. all of this is an iffy hack though
+        compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->creator = enclosing_scope->get_global()->find("Num", false).get();
         std::vector<std::shared_ptr<compiled_expression>> compiled_args = { { std::move(compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation) } };
         auto partially_applied_function = std::make_shared<function_instance>(func, std::move(compiled_args));
         return std::move(partially_applied_function);
@@ -53,7 +53,7 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
     return nullptr;
 }
 
-[[nodiscard]] std::shared_ptr<element::element_object> element::identifier_expression::compile(const compilation_context& context, std::shared_ptr<element_object> previous)
+[[nodiscard]] std::shared_ptr<element::object> element::identifier_expression::compile(const compilation_context& context, std::shared_ptr<object> previous)
 {
     if (previous) //cannot resolve identifier if previous exists
         return nullptr;
@@ -64,7 +64,7 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
     return enclosing_scope->find(identifier.value, true);
 }
 
-[[nodiscard]] std::shared_ptr<element::element_object> element::literal_expression::compile(const compilation_context& context, std::shared_ptr<element_object> previous)
+[[nodiscard]] std::shared_ptr<element::object> element::literal_expression::compile(const compilation_context& context, std::shared_ptr<object> previous)
 {
     if (previous) //cannot resolve literal if previous exists
         return nullptr;
@@ -73,16 +73,16 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
         return nullptr;
 
     auto compiled = std::make_shared<compiled_expression>();
-    compiled->expression = std::make_shared<element_expression_constant>(value);
+    compiled->expression_tree = std::make_shared<element_expression_constant>(value);
     //a compiled expression's declarer is always a raw pointer, because it shouldn't be an intermediary but something that's part of the object model. I think
     //it's basically just some root thing we can use to track down where it came from if we need to
-    compiled->object = shared_from_this();
+    compiled->object_model = shared_from_this();
     //todo: don't have constraints set up right now, so just hacking it in to declarer. not even sure if that's a bad thing, declarer makes sense?
-    compiled->declarer = enclosing_scope->get_global()->find("Num", false).get(); //hopefully the Num declaration doesn't move anywhere (e.g merging..)
+    compiled->creator = enclosing_scope->get_global()->find("Num", false).get(); //hopefully the Num declaration doesn't move anywhere (e.g merging..)
     return std::move(compiled);
 }
 
-[[nodiscard]] std::shared_ptr<element::element_object> element::indexing_expression::compile(const compilation_context& context, std::shared_ptr<element_object> previous)
+[[nodiscard]] std::shared_ptr<element::object> element::indexing_expression::compile(const compilation_context& context, std::shared_ptr<object> previous)
 {
     if (!previous) //can only resolve indexing if previous exists
         return nullptr;
@@ -90,7 +90,7 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
     return previous->index(context, identifier);
 }
 
-[[nodiscard]] std::shared_ptr<element::element_object> element::call_expression::compile(const compilation_context& context, std::shared_ptr<element_object> previous)
+[[nodiscard]] std::shared_ptr<element::object> element::call_expression::compile(const compilation_context& context, std::shared_ptr<object> previous)
 {
     if (!previous) //can only resolve call if previous exists
         return nullptr;

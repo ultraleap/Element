@@ -1,19 +1,20 @@
 #pragma once
 
+//STD
 #include <memory>
 #include <memory>
 #include <string>
 #include <vector>
 #include <optional>
 
+//SELF
 #include "obj_model/port.hpp"
-#include "obj_model/element_object.hpp"
+#include "obj_model/object.hpp"
 #include "obj_model/expressions.hpp"
+#include "fwd.hpp"
 
 namespace element
 {
-class scope;
-
 static const std::string intrinsic_qualifier = "intrinsic";
 static const std::string namespace_qualifier = "namespace";
 static const std::string constraint_qualifier = "constraint";
@@ -21,7 +22,7 @@ static const std::string struct_qualifier = "struct";
 static const std::string function_qualifier; //empty string
 static const std::string return_keyword = "return";
 
-class declaration : public element_object
+class declaration : public object
 {
 public:
     explicit declaration(identifier name);
@@ -69,7 +70,7 @@ public:
     [[nodiscard]] std::string to_string() const override;
     [[nodiscard]] std::string to_code(int depth) const override;
 
-    [[nodiscard]] std::shared_ptr<element_object> index(const compilation_context& context, const element::identifier&) const override;
+    [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const element::identifier&) const override;
 };
 
 class constraint_declaration final : public declaration
@@ -103,7 +104,7 @@ public:
     [[nodiscard]] std::string to_string() const override;
     [[nodiscard]] std::string to_code(int depth) const override;
 
-    [[nodiscard]] std::shared_ptr<element_object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+    [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
     [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
 };
 
@@ -123,7 +124,7 @@ public:
 
     [[nodiscard]] std::string to_string() const override;
     [[nodiscard]] std::string to_code(int depth) const override;
-    [[nodiscard]] std::shared_ptr<element_object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+    [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
     [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
 
     std::shared_ptr<expression> expression;
@@ -145,6 +146,6 @@ public:
 
     [[nodiscard]] std::string to_string() const override;
     [[nodiscard]] std::string to_code(int depth) const override;
-    [[nodiscard]] std::shared_ptr<element_object> index(const compilation_context& context, const element::identifier&) const override;
+    [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const element::identifier&) const override;
 };
 }
