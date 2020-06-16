@@ -35,13 +35,11 @@ static void test_add_positive(void)
     TEST_LOAD_ARCHIVE(ctx, "test", def, a);
     delete_archive_array(a);
 
-    lmnt_value args[] = {1.0f, 2.0f};
-    const size_t args_count = sizeof(args)/sizeof(lmnt_value);
-    CU_ASSERT_EQUAL(lmnt_update_args(ctx, def, 0, args, args_count), LMNT_OK);
+    TEST_UPDATE_ARGS(ctx, def, (lmnt_offset)0, 1.0f, 2.0f);
 
     lmnt_value rvals[1];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
-    CU_ASSERT_EQUAL(lmnt_execute(ctx, def, rvals, rvals_count), rvals_count);
+    CU_ASSERT_EQUAL(lmnt_execute(ctx, def, rvals, (lmnt_offset)rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 3.0, 0.000001);
 }
 

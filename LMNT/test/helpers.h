@@ -18,6 +18,12 @@
     }\
     CU_ASSERT_EQUAL_FATAL(lmnt_ictx_find_def((ctx), (name), &(def)), LMNT_OK);
 
+#define TEST_UPDATE_ARGS(ctx, def, offset, ...) \
+    {\
+        lmnt_value args[] = {__VA_ARGS__};\
+        const size_t args_count = sizeof(args)/sizeof(lmnt_value);\
+        CU_ASSERT_EQUAL(lmnt_update_args((ctx), (def), (offset), args, (lmnt_offset)args_count), LMNT_OK);\
+    }
 
 
 static lmnt_ictx* create_interpreter_with_size(size_t bufsize)
