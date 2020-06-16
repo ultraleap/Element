@@ -11,9 +11,15 @@ DEFINE_TYPE_ID(element::intrinsic_binary, 1U << 2);
 
 namespace element
 {
-    std::unordered_map<std::string, std::shared_ptr<element::intrinsic>> element::intrinsic::intrinsic_map
+    std::unordered_map<std::string, std::shared_ptr<intrinsic>> intrinsic::intrinsic_map
     {
-        // functions
+        //types
+        { "Num", nullptr },
+        { "Bool", nullptr },
+        { "List", nullptr },
+        { "Tuple", nullptr },
+
+        //functions
         { "Num.add", std::make_shared<intrinsic_binary>(element_binary_op::add, nullptr) },
         { "Num.sub", std::make_shared<intrinsic_binary>(element_binary_op::sub, nullptr) },
         { "Num.mul", std::make_shared<intrinsic_binary>(element_binary_op::mul, nullptr) },
@@ -41,9 +47,38 @@ namespace element
 
         { "Num.ln", std::make_shared<intrinsic_unary>(element_unary_op::ln, nullptr) },
         { "Num.log", std::make_shared<intrinsic_binary>(element_binary_op::log, nullptr) },
+
+        { "Num.NaN", std::make_shared<intrinsic_nullary>(element_nullary_op::nan, nullptr) },
+        { "Num.PositiveInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::positive_infinity, nullptr) },
+        { "Num.NegativeInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::negative_infinity, nullptr) },
+
+        { "Num.eq", std::make_shared<intrinsic_binary>(element_binary_op::eq, nullptr) },
+        { "Num.neq", std::make_shared<intrinsic_binary>(element_binary_op::neq, nullptr) },
+        { "Num.lt", std::make_shared<intrinsic_binary>(element_binary_op::lt, nullptr) },
+        { "Num.leq", std::make_shared<intrinsic_binary>(element_binary_op::leq, nullptr) },
+        { "Num.gt", std::make_shared<intrinsic_binary>(element_binary_op::gt, nullptr) },
+        { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, nullptr) },
+
+        { "Bool.if", nullptr },
+        { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not, nullptr) },
+        { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and, nullptr) },
+        { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op::or, nullptr) },
+
+        { "True", std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, nullptr) },
+        { "False", std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, nullptr) },
+
+        { "list", nullptr },
+        { "List.fold", nullptr },
+
+        { "memberwise", nullptr },
+        { "for", nullptr },
+        //{ "persist", nullptr }, //todo: unlikely to be part of the language
+
+        //constraints
+        { "Any", nullptr },
     };
 
-    std::shared_ptr<element::intrinsic> element::intrinsic::get_intrinsic(const declaration& declaration)
+    std::shared_ptr<intrinsic> intrinsic::get_intrinsic(const declaration& declaration)
     {
         const auto location = declaration.location();
         if (intrinsic_map.count(location))
@@ -54,12 +89,12 @@ namespace element
         return nullptr;
     }
 
-    element::intrinsic::intrinsic(element_type_id id, type_const_shared_ptr type)
+    intrinsic::intrinsic(element_type_id id, type_const_shared_ptr type)
         : rtti_type(id), type(std::move(type))
     {
     }
 
-    std::shared_ptr<element::object> element::intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
         auto result = std::make_shared<compiled_expression>();
         result->creator = nullptr;
@@ -70,7 +105,7 @@ namespace element
         return result;
     }
 
-    std::shared_ptr<element::object> element::intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
         auto result = std::make_shared<compiled_expression>();
         result->creator = nullptr;
@@ -82,7 +117,7 @@ namespace element
         return result;
     }
 
-    std::shared_ptr<element::object> element::intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
         auto result = std::make_shared<compiled_expression>();
         result->creator = nullptr;
