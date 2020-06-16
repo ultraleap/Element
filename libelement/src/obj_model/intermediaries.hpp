@@ -12,8 +12,8 @@ namespace element
         //constraint_const_shared_ptr constraint = element_type::any;
         expression_shared_ptr expression;
 
-        [[nodiscard]] std::shared_ptr<element_object> index(const identifier&) const override;
-        [[nodiscard]] std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] std::shared_ptr<element_object> index(const compilation_context& context, const identifier&) const override;
+        [[nodiscard]] std::shared_ptr<element_object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
         [[nodiscard]] std::string to_string() const override { return ""; }
     };
 
@@ -25,7 +25,7 @@ namespace element
         explicit struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions);
 
         [[nodiscard]] std::string to_string() const override;
-        [[nodiscard]] std::shared_ptr<element_object> index(const identifier&) const override;
+        [[nodiscard]] std::shared_ptr<element_object> index(const compilation_context& context, const identifier&) const override;
     };
 
     struct function_instance final : element_object
@@ -37,6 +37,6 @@ namespace element
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] static bool is_instance_function() { return true; }
-        [[nodiscard]] std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] std::shared_ptr<element_object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
     };
 }

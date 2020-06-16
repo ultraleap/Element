@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     printf("%f", output.values[0]);
 
     //todo
-    element_delete_compileable(context, &compilable);
+    element_delete_compilable(context, &compilable);
     element_interpreter_delete(context);
 
     return 0;

@@ -75,7 +75,7 @@ struct element_interpreter_ctx
     element_result load_prelude();
     element_result clear();
     void set_log_callback(LogCallback callback);
-    void log(int message_code, const std::string& message, const std::string& filename = std::string());
+    void log(int message_code, const std::string& message, const std::string& filename = std::string()) const;
     void log(const std::string& message) const;
 };
 

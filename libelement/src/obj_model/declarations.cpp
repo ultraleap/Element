@@ -79,7 +79,7 @@ std::string struct_declaration::to_code(const int depth) const
 	return declaration_offset + "struct " + name.value + ports + our_scope->to_code(depth);
 }
 
-std::shared_ptr<element_object> struct_declaration::index(const identifier& identifier) const
+std::shared_ptr<element::element_object> element::struct_declaration::index(const compilation_context& context, const element::identifier& identifier) const
 {
 	return our_scope->find(identifier.value, false);
 }
@@ -169,7 +169,7 @@ std::string function_declaration::to_code(int depth) const
 	return declaration_offset + name.value + ports + our_scope->to_code(depth);
 }
 
-std::shared_ptr<element_object> function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
+std::shared_ptr<element::element_object> element::function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
 {
 	//e.g. my_namespace.my_function(1) is a call on a function declaration
 
@@ -194,7 +194,7 @@ std::shared_ptr<element_object> function_declaration::call(std::vector<std::shar
 		}
 		else
 		{
-			return our_scope->find("return", false)->call({});
+			return scope->find("return", false)->call(context, {});
 		}
 	}
 
@@ -207,7 +207,7 @@ std::shared_ptr<element_object> function_declaration::call(std::vector<std::shar
 	return std::move(result);
 }
 
-std::shared_ptr<compiled_expression> function_declaration::compile() const
+std::shared_ptr<element::compiled_expression> element::function_declaration::compile(const compilation_context& context) const
 {
 	throw;
 }
@@ -251,10 +251,10 @@ std::string expression_bodied_function_declaration::to_code(const int depth) con
 	return declaration_offset + declaration + " = " + expression->to_code() + ";";
 }
 
-std::shared_ptr<element_object> expression_bodied_function_declaration::call(std::vector<std::shared_ptr<compiled_expression>> args) const
+std::shared_ptr<element::element_object> element::expression_bodied_function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
 {
 	//todo: apply arguments to callstack/cache so they can be found from scope lookups
-	const auto& compiled = compile();
+	const auto& compiled = compile(context);
 	//if it was a function instance then we should apply the arguments we have to it
 	//e.g. evaluate = add5(2); will call function declaration add5 with 2, so we need to apply 2 here. maybe there's a better way
 	if (dynamic_cast<function_instance*>(compiled->object.get()) &&
@@ -265,18 +265,18 @@ std::shared_ptr<element_object> expression_bodied_function_declaration::call(std
 
 		//egh.. it feels like everything needs to return a compiled_expression
 		if (instance->provided_arguments.size() == instance->declarer->inputs.size())
-			return instance->call({});
+			return instance->call(context, {});
 		else
-			compiled->object = instance->call({});
+			compiled->object = instance->call(context, {});
 	}
 
 	return compiled;
 }
 
-std::shared_ptr<compiled_expression> expression_bodied_function_declaration::compile() const
+std::shared_ptr<element::compiled_expression> element::expression_bodied_function_declaration::compile(const compilation_context& context) const
 {
 	//todo: should compilation have to happen via a call? I think so, so this function becomes redundant/an issue? mmmm
-	return expression->compile();
+	return expression->compile(context);
 }
 
 //namespace
@@ -297,7 +297,9 @@ std::string namespace_declaration::to_code(const int depth) const
 	return "namespace " + name.value + our_scope->to_code(depth);
 }
 
+std::shared_ptr<element::element_object> element::namespace_declaration::index(const element::identifier& expr) const
 std::shared_ptr<element_object> namespace_declaration::index(const identifier& expr) const
+std::shared_ptr<element::element_object> element::namespace_declaration::index(const compilation_context& context, const element::identifier& expr) const
 {
 	return our_scope->find(name.value, false);
 }

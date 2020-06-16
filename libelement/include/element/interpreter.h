@@ -94,7 +94,7 @@ typedef struct element_outputs
 
 typedef struct element_metainfo element_metainfo;
 
-element_result element_delete_compileable(
+element_result element_delete_compilable(
     element_interpreter_ctx* context,
     element_compilable** compilable);
 

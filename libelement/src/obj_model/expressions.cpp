@@ -9,7 +9,7 @@ element::expression::expression(const scope* enclosing_scope)
 {
 }
 
-std::shared_ptr<element::compiled_expression> element::expression::compile() const
+std::shared_ptr<element::compiled_expression> element::expression::compile(const compilation_context& context) const
 {
     if (children.empty())
         return nullptr; //todo: error_object
@@ -18,7 +18,7 @@ std::shared_ptr<element::compiled_expression> element::expression::compile() con
     std::shared_ptr<element_object> current = nullptr;
     for (const auto& expression : children) 
     {
-        current = expression->compile(current);
+        current = expression->compile(context, current);
     }
 
     if (dynamic_cast<compiled_expression*>(current.get()))
@@ -30,10 +30,10 @@ std::shared_ptr<element::compiled_expression> element::expression::compile() con
     return nullptr;
 }
 
-std::shared_ptr<element::element_object> element::literal_expression::index(const identifier& identifier) const
+std::shared_ptr<element::element_object> element::literal_expression::index(const compilation_context& context, const identifier& identifier) const
 {
     const auto& num = enclosing_scope->get_global()->find("Num", false);
-    const auto obj = num->index(identifier);
+    const auto obj = num->index(context, identifier);
     if (dynamic_cast<function_declaration*>(obj.get()))
     {
         auto func = static_cast<function_declaration*>(obj.get());
@@ -53,7 +53,7 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
     return nullptr;
 }
 
-[[nodiscard]] std::shared_ptr<element::element_object> element::identifier_expression::compile(std::shared_ptr<element_object> previous)
+[[nodiscard]] std::shared_ptr<element::element_object> element::identifier_expression::compile(const compilation_context& context, std::shared_ptr<element_object> previous)
 {
     if (previous) //cannot resolve identifier if previous exists
         return nullptr;
@@ -64,7 +64,7 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
     return enclosing_scope->find(identifier.value, true);
 }
 
-[[nodiscard]] std::shared_ptr<element::element_object> element::literal_expression::compile(std::shared_ptr<element_object> previous)
+[[nodiscard]] std::shared_ptr<element::element_object> element::literal_expression::compile(const compilation_context& context, std::shared_ptr<element_object> previous)
 {
     if (previous) //cannot resolve literal if previous exists
         return nullptr;
@@ -82,15 +82,15 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
     return std::move(compiled);
 }
 
-[[nodiscard]] std::shared_ptr<element::element_object> element::indexing_expression::compile(std::shared_ptr<element_object> previous)
+[[nodiscard]] std::shared_ptr<element::element_object> element::indexing_expression::compile(const compilation_context& context, std::shared_ptr<element_object> previous)
 {
     if (!previous) //can only resolve indexing if previous exists
         return nullptr;
 
-    return previous->index(identifier);
+    return previous->index(context, identifier);
 }
 
-[[nodiscard]] std::shared_ptr<element::element_object> element::call_expression::compile(std::shared_ptr<element_object> previous)
+[[nodiscard]] std::shared_ptr<element::element_object> element::call_expression::compile(const compilation_context& context, std::shared_ptr<element_object> previous)
 {
     if (!previous) //can only resolve call if previous exists
         return nullptr;
@@ -98,10 +98,10 @@ std::shared_ptr<element::element_object> element::literal_expression::index(cons
     std::vector<std::shared_ptr<compiled_expression>> compiled_arguments;
     for (const auto& arg : children)
     {
-        compiled_arguments.push_back(arg->compile());
+        compiled_arguments.push_back(arg->compile(context));
     }
 
-    return previous->call(std::move(compiled_arguments));
+    return previous->call(context, std::move(compiled_arguments));
 }
 
 element::lambda_expression::lambda_expression(const element::scope* parent_scope)
