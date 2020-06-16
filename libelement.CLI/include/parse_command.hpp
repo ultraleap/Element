@@ -31,9 +31,9 @@ namespace libelement::cli
 		{
 		}
 
-		compiler_message execute(const compilation_input& input) const override
+		compiler_message execute(const compilation_input& compilation_input) const override
 		{
-			auto result = setup(input);
+			auto result = setup(compilation_input);
 			if (result != ELEMENT_OK)
 			{				
 				return compiler_message("False");

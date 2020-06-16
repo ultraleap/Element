@@ -31,17 +31,11 @@ namespace libelement::cli
 		{
 		}
 
-		compiler_message execute(const compilation_input& input) const override
+		compiler_message execute(const compilation_input& compilation_input) const override
 		{
-			auto result = setup(input);
+			auto result = setup(compilation_input);
 			if (result != ELEMENT_OK)
 				return compiler_message(ELEMENT_ERROR_PARSE, "Failed to setup context");
-
-#ifdef LEGACY_COMPILER
-			//call into libelement
-			const element_function* fn;
-			element_compiled_function* cfn;
-#endif
 		
 			const std::vector<trace_site> trace_site{};
 
@@ -54,8 +48,9 @@ namespace libelement::cli
 					type = static_cast<message_type>(result);
 				return compiler_message(type, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
 			}
-#ifdef LEGACY_COMPILER
-			result = element_interpreter_get_function(context, "evaluate", &fn);
+
+			element_compilable* compilable;
+			result = element_interpreter_find(context, "evaluate", &compilable);
 			if (result != ELEMENT_OK) {
 				message_type type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
@@ -63,7 +58,8 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			result = element_interpreter_compile_function(context, fn, &cfn, nullptr);
+			struct element_evaluable* evaluable;
+			result = element_interpreter_compile(context, nullptr, compilable, &evaluable);
 			if (result != ELEMENT_OK) {
 				message_type type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
@@ -71,10 +67,17 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to compile: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			//HACK: just to get multiple values serializing, do something better here!
-			const auto size = get_outputs_size(context, cfn);
-			element_value outputs[256];
-			result = element_interpreter_evaluate_function(context, cfn, nullptr, 1, outputs, size, nullptr);
+			element_value inputs[] = { 1, 2 };
+			element_inputs input;
+			input.values = inputs;
+			input.count = 2;
+
+			element_value outputs[1];
+			element_outputs output;
+			output.values = outputs;
+			output.count = 1;
+
+			result = element_interpreter_evaluate(context, nullptr, evaluable, &input, &output);
 			if (result != ELEMENT_OK) {
 				message_type type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
@@ -82,10 +85,7 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to evaluate: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			return generate_response(result, outputs, size, trace_site);
-#endif
-
-			return generate_response(0, "TODO");
+			return generate_response(result, output, trace_site);
 		}
 
 		std::string as_string() const override
