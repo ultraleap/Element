@@ -10,10 +10,6 @@
 
 void build_scope(element_ast* ast, const element::scoped_declaration& declaration);
 
-template <class T, class... S> static std::unique_ptr<T> create_type(S&&... args) {
-    return std::make_shared<T>(std::forward<S>(args)...);
-}
-
 void log(const std::string& message)
 {
     //do something better
@@ -190,6 +186,7 @@ std::shared_ptr<element::expression> build_expression_bodied_lambda_expression(c
 std::shared_ptr<element::expression> element::build_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
 {
     //HC SVNT DRACONES
+    //a.k.a dragons innit
     const auto has_parent =
         ast->children.size() > ast_idx::call::parent && ast->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
 

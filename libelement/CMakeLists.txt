@@ -42,7 +42,6 @@ set(element_sources
     "src/obj_model/object_model.cpp"
     
     "src/obj_model/element_object.hpp"
-    "src/obj_model/element_object.cpp"
 
     "src/obj_model/object_model.hpp"
     "src/obj_model/object_model.cpp"
@@ -52,17 +51,17 @@ set(element_sources
     "src/obj_model/type_annotation.hpp"
     "src/obj_model/type_annotation.cpp"
     
-    "src/obj_model/declarations/declaration.hpp"
-    "src/obj_model/declarations/declaration.cpp"
+    "src/obj_model/declarations.hpp"
+    "src/obj_model/declarations.cpp"
     
-    "src/obj_model/expressions/expression.hpp"
-    "src/obj_model/expressions/expression.cpp"
+    "src/obj_model/expressions.hpp"
+    "src/obj_model/expressions.cpp"
 
-    "src/obj_model/intermediaries/struct_instance.hpp"
-    "src/obj_model/intermediaries/struct_instance.cpp"
+    "src/obj_model/intermediaries.hpp"
+    "src/obj_model/intermediaries.cpp"
     
-    "src/obj_model/scopes/scope.hpp"
-    "src/obj_model/scopes/scope.cpp"
+    "src/obj_model/scope.hpp"
+    "src/obj_model/scope.cpp"
 
     #Expression tree
     "src/etree/compiler.cpp"
