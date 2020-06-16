@@ -14,8 +14,7 @@
 #include "typeutil.hpp"
 #include "obj_model/element_object.hpp"
 
-//TODO: It looks like this being based on element_construct is largely irrelevant at the moment, can easily be switched out
-struct element_expression : element::element_object,  rtti_type<element_expression>
+struct element_expression : rtti_type<element_expression>
 {
     const std::vector<expression_shared_ptr>& dependents() const { return m_dependents; }
     std::vector<expression_shared_ptr>& dependents() { return m_dependents; }
