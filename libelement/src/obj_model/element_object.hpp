@@ -8,10 +8,20 @@
 
 namespace element
 {
+    class scope;
     struct compiled_expression;
     struct identifier_expression;
     struct indexing_expression;
     struct call_expression;
+
+    class compilation_context
+    {
+    private:
+        const scope* global_scope;
+
+    public:
+        compilation_context(const scope* const scope);
+    };
 
     struct identifier
     {
@@ -46,16 +56,16 @@ namespace element
         //bool matches_constraint(constraint& constraint);
 
         //todo: some kind of component architecture?
-        [[nodiscard]] virtual std::shared_ptr<element_object> index(const identifier&) const { return nullptr; };
-        [[nodiscard]] virtual std::shared_ptr<element_object> call(std::vector<std::shared_ptr<compiled_expression>> args) const { return nullptr; };
-        [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile() const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<element_object> index(const compilation_context& context, const identifier&) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<element_object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile(const compilation_context& context) const { return nullptr; };
     };
 
  //   struct error : element_object
 	//{
  //       static const object_model_id type_id;
  //   	
- //       std::string message;
+ //       std::string message;\
 
  //       explicit error(std::string message)
  //   		: element_object(nullptr, type_id)

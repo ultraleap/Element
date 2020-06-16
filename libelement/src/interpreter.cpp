@@ -357,7 +357,7 @@ void element_interpreter_ctx::set_log_callback(LogCallback callback)
     logger->callback = callback;
 }
 
-void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename)
+void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename) const
 {
     if (logger == nullptr)
         return;
@@ -677,7 +677,7 @@ element_result element_compiled_function_get_typeof_compilation(element_compiled
 }
 #else
 
-element_result element_delete_compileable(element_interpreter_ctx* context, element_compilable** compilable)
+element_result element_delete_compilable(element_interpreter_ctx* context, element_compilable** compilable)
 {
     delete* compilable;
     *compilable = nullptr;
@@ -697,7 +697,8 @@ element_result element_interpreter_compile(
     const element_compilable* compilable,
     element_evaluable** evaluable)
 {
-    auto compiled = compilable->object->compile();
+    const element::compilation_context compilation_context(context->global_scope.get());
+    auto compiled = compilable->object->compile(compilation_context);
     *evaluable = new element_evaluable{std::move(compiled)};
 
     return ELEMENT_OK;
