@@ -46,8 +46,8 @@ namespace element
     };
 
     struct element_object
-	{
-		virtual ~element_object() = default;
+    {
+        virtual ~element_object() = default;
 
         [[nodiscard]] virtual std::string to_string() const { return ""; }
         [[nodiscard]] virtual std::string to_code(int depth) const { return ""; }
@@ -61,16 +61,16 @@ namespace element
         [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile(const compilation_context& context) const { return nullptr; };
     };
 
- //   struct error : element_object
-	//{
- //       static const object_model_id type_id;
- //   	
- //       std::string message;\
+   //struct error : element_object
+   // {
+   //    static const object_model_id type_id;
+   //
+   //    std::string message;
 
- //       explicit error(std::string message)
- //   		: element_object(nullptr, type_id)
- //   		, message{std::move(message)}
- //       {
- //       }
- //   };
+   //    explicit error(std::string message)
+   //        : element_object(nullptr, type_id)
+   //        , message{std::move(message)}
+   //    {
+   //    }
+   //};
 }
