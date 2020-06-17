@@ -1,7 +1,7 @@
 #pragma once
 
 //SELF
-#include "obj_model/scope.hpp"
+#include "scope.hpp"
 #include "etree/fwd.hpp"
 
 namespace element

@@ -200,8 +200,6 @@ std::shared_ptr<element::expression> build_expression_bodied_lambda_expression(c
 
 std::shared_ptr<element::expression> element::build_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
 {
-    //HC SVNT DRACONES
-    //a.k.a dragons innit
     const auto has_parent =
         ast->children.size() > ast_idx::call::parent && ast->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
 

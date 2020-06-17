@@ -1,11 +1,11 @@
 #include "declarations.hpp"
 
 //SELF
-#include "obj_model/object.hpp"
-#include "obj_model/scope.hpp"
-#include "obj_model/expressions.hpp"
-#include "obj_model/intermediaries.hpp"
-#include "obj_model/functions.hpp"
+#include "object.hpp"
+#include "scope.hpp"
+#include "expressions.hpp"
+#include "intermediaries.hpp"
+#include "functions.hpp"
 #include "etree/expressions.hpp"
 
 namespace element

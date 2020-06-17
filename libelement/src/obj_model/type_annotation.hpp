@@ -4,7 +4,7 @@
 #include <utility>
 
 //SELF
-#include "obj_model/object.hpp"
+#include "object.hpp"
 
 namespace element
 {
@@ -12,7 +12,7 @@ namespace element
     {
     public:
         //TODO: This should be an expression, not an identifier
-        type_annotation(identifier name)
+        explicit type_annotation(identifier name)
             : name{std::move(name)}
         {
         }

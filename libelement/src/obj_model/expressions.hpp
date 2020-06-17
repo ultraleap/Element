@@ -6,9 +6,9 @@
 
 //SELF
 #include "element/common.h"
-#include "obj_model/types.hpp"
-#include "obj_model/object.hpp"
-#include "obj_model/port.hpp"
+#include "types.hpp"
+#include "object.hpp"
+#include "port.hpp"
 #include "fwd.hpp"
 
 namespace element
@@ -16,7 +16,7 @@ namespace element
     class expression : public object, public std::enable_shared_from_this<expression>
     {
     public:
-        expression(const scope* enclosing_scope);
+        explicit expression(const scope* enclosing_scope);
         virtual ~expression() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
