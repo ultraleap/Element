@@ -56,6 +56,9 @@ set(element_sources
     "src/obj_model/expressions.hpp"
     "src/obj_model/expressions.cpp"
 
+    "src/obj_model/intrinsics.cpp"
+    "src/obj_model/intrinsics.hpp"
+
     "src/obj_model/functions.cpp"
     "src/obj_model/functions.hpp"
 
