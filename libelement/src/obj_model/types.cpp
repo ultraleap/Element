@@ -1,126 +1,28 @@
-#ifndef LEGACY_COMPILER
-
 #include "types.hpp"
 
-#include <cassert>
-#include "interpreter_internal.hpp"
+#ifndef LEGACY_COMPILER
 
-class element_constraint : public rtti_type<element_constraint>
+namespace element
 {
-public:
-    static const constraint_const_shared_ptr nullary;
-    static const constraint_const_shared_ptr unary;
-    static const constraint_const_shared_ptr binary;
+    DEFINE_TYPE_ID(element_type, 1U << 0);
+    DEFINE_TYPE_ID(num_type, 1U << 1);
+    DEFINE_TYPE_ID(boolean_type, 1U << 2);
 
-    static const constraint_const_shared_ptr any;
-    static const constraint_const_shared_ptr function;
+    DEFINE_TYPE_ID(any_constraint, 1U << 3);
+    DEFINE_TYPE_ID(function_constraint, 1U << 4);
+    DEFINE_TYPE_ID(nullary_constraint, 1U << 5);
+    DEFINE_TYPE_ID(unary_constraint, 1U << 6);
+    DEFINE_TYPE_ID(binary_constraint, 1U << 7);
 
-    element_constraint(element_type_id id)
-        : rtti_type(id)
-    {
-    }
-};
+    const type_const_shared_ptr element_type::num = std::make_shared<num_type>();
+    const type_const_shared_ptr element_type::boolean = std::make_shared<boolean_type>();
 
-class element_type : public element_constraint
-{
-public:
-    DECLARE_TYPE_ID();
-
-    static const type_const_shared_ptr num;      // the absolute unit
-    static const type_const_shared_ptr boolean;
-
-    std::string name() const { return m_name; }
-
-protected:
-    element_type(element_type_id id, std::string name)
-        : element_constraint(type_id)
-        , m_name(std::move(name))
-    {
-    }
-
-    std::string m_name;
-};
-
-class any_constraint : public element_constraint
-{
-public:
-    DECLARE_TYPE_ID();
-    any_constraint() : element_constraint(type_id) {}
-};
-
-class function_constraint : public element_constraint
-{
-public:
-    DECLARE_TYPE_ID();
-    function_constraint() : element_constraint(type_id) {}
-};
-
-class num_type : public element_type
-{
-public:
-    DECLARE_TYPE_ID();
-    num_type() : element_type(type_id, "Num")
-    { 
-    }
-};
-
-class boolean_type : public element_type
-{
-public:
-    DECLARE_TYPE_ID();
-    boolean_type() : element_type(type_id, "Bool")
-    {
-    }
-};
-
-class nullary_constraint : public element_constraint
-{
-public:
-    DECLARE_TYPE_ID();
-
-    nullary_constraint() : element_constraint(type_id)
-    {
-    }
-};
-
-class unary_constraint : public element_constraint
-{
-public:
-    DECLARE_TYPE_ID();
-
-    unary_constraint() : element_constraint(type_id)
-    {
-    }
-};
-
-class binary_constraint : public element_constraint
-{
-public:
-    DECLARE_TYPE_ID();
-
-    binary_constraint() : element_constraint(type_id)
-    {
-    }
-};
-
-DEFINE_TYPE_ID(element_type, 1U << 0);
-DEFINE_TYPE_ID(num_type, 1U << 1);
-DEFINE_TYPE_ID(boolean_type, 1U << 2);
-
-DEFINE_TYPE_ID(any_constraint, 1U << 3);
-DEFINE_TYPE_ID(function_constraint, 1U << 4);
-DEFINE_TYPE_ID(nullary_constraint, 1U << 5);
-DEFINE_TYPE_ID(unary_constraint, 1U << 6);
-DEFINE_TYPE_ID(binary_constraint, 1U << 7);
-
-const type_const_shared_ptr element_type::num = std::make_shared<num_type>();
-const type_const_shared_ptr element_type::boolean = std::make_shared<boolean_type>();
-
-const constraint_const_shared_ptr element_constraint::any = std::make_shared<any_constraint>();
-const constraint_const_shared_ptr element_constraint::function = std::make_shared<function_constraint>();
-const constraint_const_shared_ptr element_constraint::nullary = std::make_shared<nullary_constraint>();
-const constraint_const_shared_ptr element_constraint::unary = std::make_shared<unary_constraint>();
-const constraint_const_shared_ptr element_constraint::binary = std::make_shared<binary_constraint>();
+    const constraint_const_shared_ptr element_constraint::any = std::make_shared<any_constraint>();
+    const constraint_const_shared_ptr element_constraint::function = std::make_shared<function_constraint>();
+    const constraint_const_shared_ptr element_constraint::nullary = std::make_shared<nullary_constraint>();
+    const constraint_const_shared_ptr element_constraint::unary = std::make_shared<unary_constraint>();
+    const constraint_const_shared_ptr element_constraint::binary = std::make_shared<binary_constraint>();
+}
 
 #else
 

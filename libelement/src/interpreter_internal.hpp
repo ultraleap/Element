@@ -10,7 +10,6 @@
 #include "etree/expressions.hpp"
 #include "common_internal.hpp"
 #include "obj_model/scope.hpp"
-#include "obj_model/functions.hpp"
 
 #ifdef LEGACY_COMPILER
 

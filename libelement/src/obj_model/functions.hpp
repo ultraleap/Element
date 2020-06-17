@@ -3,24 +3,23 @@
 #ifndef LEGACY_COMPILER
 
 #include <memory>
+#include <unordered_map>
 
 #include "ast/fwd.hpp"
+#include "fwd.hpp"
 #include "object.hpp"
-#include "types.hpp"
-#include "construct.hpp"
 #include "typeutil.hpp"
-#include <unordered_map>
 
 namespace element
 {
     class intrinsic : public object, public rtti_type<intrinsic>
     {
-        type_const_shared_ptr type;
+    private:
+        //TODO: this might need to be a constraint_const_shared_ptr
+        type_const_shared_ptr return_type;
 
     public:
-        intrinsic(element_type_id id, type_const_shared_ptr type);
-
-        const std::string& get_identifier() const;
+        intrinsic(element_type_id id, type_const_shared_ptr return_type);
 
     private:
         static const std::unordered_map<std::string, const std::shared_ptr<const intrinsic>> intrinsic_map;
@@ -38,11 +37,7 @@ namespace element
         element_nullary_op operation;
 
     public:
-        intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr type)
-            : intrinsic(type_id, type)
-            , operation(operation)
-        {
-        }
+        explicit intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr return_type);
 
         [[nodiscard]] std::shared_ptr<element::object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
         [[nodiscard]] element_nullary_op get_operation() const { return operation; }
@@ -55,13 +50,11 @@ namespace element
 
     private:
         element_unary_op operation;
+        //TODO: this might need to be a constraint_const_shared_ptr
+        type_const_shared_ptr argument_type;
 
     public:
-        intrinsic_unary(element_unary_op operation, type_const_shared_ptr type)
-            : intrinsic(type_id, type)
-            , operation(operation)
-        {
-        }
+        explicit intrinsic_unary(element_unary_op operation, type_const_shared_ptr return_type, type_const_shared_ptr argument_type);
 
         [[nodiscard]] std::shared_ptr<element::object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
         [[nodiscard]] element_unary_op get_operation() const { return operation; }
@@ -74,13 +67,13 @@ namespace element
 
     private:
         element_binary_op operation;
+        //TODO: this might need to be a constraint_const_shared_ptr
+        type_const_shared_ptr first_argument_type;
+        //TODO: this might need to be a constraint_const_shared_ptr
+        type_const_shared_ptr second_argument_type;
 
     public:
-        intrinsic_binary(element_binary_op operation, type_const_shared_ptr type)
-            : intrinsic(type_id, type)
-            , operation(operation)
-        {
-        }
+        explicit intrinsic_binary(element_binary_op operation, type_const_shared_ptr return_type, type_const_shared_ptr first_argument_type, type_const_shared_ptr second_argument_type);
 
         [[nodiscard]] element_binary_op get_operation() const { return operation; }
         [[nodiscard]] std::shared_ptr<element::object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
@@ -91,8 +84,8 @@ namespace element
     //{
     //    DECLARE_TYPE_ID();
 
-    //    intrinsic_if(type_const_shared_ptr type, std::string name)
-    //        : intrinsic(type_id, std::move(type), std::move(name))
+    //    intrinsic_if(type_const_shared_ptr return_type, std::string name)
+    //        : intrinsic(type_id, std::move(return_type), std::move(name))
     //    {
     //    }
     //};
@@ -111,18 +104,18 @@ namespace element
 
 struct element_function : public element_construct, public rtti_type<element_function>
 {
-    // type_shared_ptr type() { return m_type; }
-    type_const_shared_ptr type() const { return m_type; }
+    // type_shared_ptr return_type() { return m_type; }
+    type_const_shared_ptr return_type() const { return m_type; }
 
     virtual std::string name() const = 0;
 
     static function_const_shared_ptr get_builtin(const std::string& name);
 
 protected:
-    element_function(element_type_id id, type_const_shared_ptr type)
+    element_function(element_type_id id, type_const_shared_ptr return_type)
         : element_construct()
         , rtti_type(id)
-        , m_type(std::move(type))
+        , m_type(std::move(return_type))
     {
     }
 
@@ -139,8 +132,8 @@ struct element_intrinsic : public element_function
     std::string name() const override { return m_name; }
 
 protected:
-    element_intrinsic(element_type_id id, type_const_shared_ptr type, std::string name)
-        : element_function(type_id | id, std::move(type))
+    element_intrinsic(element_type_id id, type_const_shared_ptr return_type, std::string name)
+        : element_function(type_id | id, std::move(return_type))
         , m_name(std::move(name))
     {
     }
@@ -152,8 +145,8 @@ struct element_intrinsic_nullary : public element_intrinsic
 {
     DECLARE_TYPE_ID();
 
-    element_intrinsic_nullary(element_nullary_op op, type_const_shared_ptr type, std::string name)
-        : element_intrinsic(type_id, type, std::move(name))
+    element_intrinsic_nullary(element_nullary_op op, type_const_shared_ptr return_type, std::string name)
+        : element_intrinsic(type_id, return_type, std::move(name))
         , m_op(op)
     {
     }
@@ -168,8 +161,8 @@ struct element_intrinsic_unary : public element_intrinsic
 {
     DECLARE_TYPE_ID();
 
-    element_intrinsic_unary(element_unary_op op, type_const_shared_ptr type, std::string name)
-        : element_intrinsic(type_id, type, std::move(name))
+    element_intrinsic_unary(element_unary_op op, type_const_shared_ptr return_type, std::string name)
+        : element_intrinsic(type_id, return_type, std::move(name))
         , m_op(op)
     {
     }
@@ -184,8 +177,8 @@ struct element_intrinsic_binary : public element_intrinsic
 {
     DECLARE_TYPE_ID();
 
-    element_intrinsic_binary(element_binary_op op, type_const_shared_ptr type, std::string name)
-        : element_intrinsic(type_id, type, std::move(name))
+    element_intrinsic_binary(element_binary_op op, type_const_shared_ptr return_type, std::string name)
+        : element_intrinsic(type_id, return_type, std::move(name))
         , m_op(op)
     {
     }
@@ -200,8 +193,8 @@ private:
 struct element_intrinsic_if : public element_intrinsic {
     DECLARE_TYPE_ID();
 
-    element_intrinsic_if(type_const_shared_ptr type, std::string name)
-        : element_intrinsic(type_id, std::move(type), std::move(name))
+    element_intrinsic_if(type_const_shared_ptr return_type, std::string name)
+        : element_intrinsic(type_id, std::move(return_type), std::move(name))
     {
     }
 };
@@ -213,8 +206,8 @@ struct element_type_ctor : public element_function
 {
     DECLARE_TYPE_ID();
 
-    element_type_ctor(type_const_shared_ptr type)
-        : element_function(type_id, std::move(type))
+    element_type_ctor(type_const_shared_ptr return_type)
+        : element_function(type_id, std::move(return_type))
     {
     }
 

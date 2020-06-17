@@ -1,6 +1,7 @@
 #ifndef LEGACY_COMPILER
 
 #include "functions.hpp"
+#include "types.hpp"
 #include "intermediaries.hpp"
 #include "etree/expressions.hpp"
 
@@ -20,52 +21,52 @@ namespace element
         { "Tuple", nullptr },
 
         //functions
-        { "Num.add", std::make_shared<intrinsic_binary>(element_binary_op::add, nullptr) },
-        { "Num.sub", std::make_shared<intrinsic_binary>(element_binary_op::sub, nullptr) },
-        { "Num.mul", std::make_shared<intrinsic_binary>(element_binary_op::mul, nullptr) },
-        { "Num.div", std::make_shared<intrinsic_binary>(element_binary_op::div, nullptr) },
+        { "Num.add", std::make_shared<intrinsic_binary>(element_binary_op::add) },
+        { "Num.sub", std::make_shared<intrinsic_binary>(element_binary_op::sub) },
+        { "Num.mul", std::make_shared<intrinsic_binary>(element_binary_op::mul) },
+        { "Num.div", std::make_shared<intrinsic_binary>(element_binary_op::div) },
 
-        { "Num.pow", std::make_shared<intrinsic_binary>(element_binary_op::pow, nullptr) },
-        { "Num.rem", std::make_shared<intrinsic_binary>(element_binary_op::rem, nullptr) },
+        { "Num.pow", std::make_shared<intrinsic_binary>(element_binary_op::pow) },
+        { "Num.rem", std::make_shared<intrinsic_binary>(element_binary_op::rem) },
 
-        { "Num.min", std::make_shared<intrinsic_binary>(element_binary_op::min, nullptr) },
-        { "Num.max", std::make_shared<intrinsic_binary>(element_binary_op::max, nullptr) },
+        { "Num.min", std::make_shared<intrinsic_binary>(element_binary_op::min) },
+        { "Num.max", std::make_shared<intrinsic_binary>(element_binary_op::max) },
 
-        { "Num.abs", std::make_shared<intrinsic_unary>(element_unary_op::abs, nullptr) },
-        { "Num.ceil", std::make_shared<intrinsic_unary>(element_unary_op::ceil, nullptr) },
-        { "Num.floor", std::make_shared<intrinsic_unary>(element_unary_op::floor, nullptr) },
+        { "Num.abs", std::make_shared<intrinsic_unary>(element_unary_op::abs) },
+        { "Num.ceil", std::make_shared<intrinsic_unary>(element_unary_op::ceil) },
+        { "Num.floor", std::make_shared<intrinsic_unary>(element_unary_op::floor) },
 
-        { "Num.sin", std::make_shared<intrinsic_unary>(element_unary_op::sin, nullptr) },
-        { "Num.cos", std::make_shared<intrinsic_unary>(element_unary_op::cos, nullptr) },
-        { "Num.tan", std::make_shared<intrinsic_unary>(element_unary_op::tan, nullptr) },
+        { "Num.sin", std::make_shared<intrinsic_unary>(element_unary_op::sin) },
+        { "Num.cos", std::make_shared<intrinsic_unary>(element_unary_op::cos) },
+        { "Num.tan", std::make_shared<intrinsic_unary>(element_unary_op::tan) },
 
-        { "Num.asin", std::make_shared<intrinsic_unary>(element_unary_op::asin, nullptr) },
-        { "Num.acos", std::make_shared<intrinsic_unary>(element_unary_op::acos, nullptr) },
-        { "Num.atan", std::make_shared<intrinsic_unary>(element_unary_op::atan, nullptr) },
+        { "Num.asin", std::make_shared<intrinsic_unary>(element_unary_op::asin) },
+        { "Num.acos", std::make_shared<intrinsic_unary>(element_unary_op::acos) },
+        { "Num.atan", std::make_shared<intrinsic_unary>(element_unary_op::atan) },
 
-        { "Num.atan2", std::make_shared<intrinsic_binary>(element_binary_op::atan2, nullptr) },
+        { "Num.atan2", std::make_shared<intrinsic_binary>(element_binary_op::atan2) },
 
-        { "Num.ln", std::make_shared<intrinsic_unary>(element_unary_op::ln, nullptr) },
-        { "Num.log", std::make_shared<intrinsic_binary>(element_binary_op::log, nullptr) },
+        { "Num.ln", std::make_shared<intrinsic_unary>(element_unary_op::ln) },
+        { "Num.log", std::make_shared<intrinsic_binary>(element_binary_op::log) },
 
-        { "Num.NaN", std::make_shared<intrinsic_nullary>(element_nullary_op::nan, nullptr) },
-        { "Num.PositiveInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::positive_infinity, nullptr) },
-        { "Num.NegativeInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::negative_infinity, nullptr) },
+        { "Num.NaN", std::make_shared<intrinsic_nullary>(element_nullary_op::nan) },
+        { "Num.PositiveInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::positive_infinity) },
+        { "Num.NegativeInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::negative_infinity) },
 
-        { "Num.eq", std::make_shared<intrinsic_binary>(element_binary_op::eq, nullptr) },
-        { "Num.neq", std::make_shared<intrinsic_binary>(element_binary_op::neq, nullptr) },
-        { "Num.lt", std::make_shared<intrinsic_binary>(element_binary_op::lt, nullptr) },
-        { "Num.leq", std::make_shared<intrinsic_binary>(element_binary_op::leq, nullptr) },
-        { "Num.gt", std::make_shared<intrinsic_binary>(element_binary_op::gt, nullptr) },
-        { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, nullptr) },
+        { "Num.eq", std::make_shared<intrinsic_binary>(element_binary_op::eq, element_type::boolean, element_type::num, element_type::num) },
+        { "Num.neq", std::make_shared<intrinsic_binary>(element_binary_op::neq, element_type::boolean, element_type::num, element_type::num) },
+        { "Num.lt", std::make_shared<intrinsic_binary>(element_binary_op::lt, element_type::boolean, element_type::num, element_type::num) },
+        { "Num.leq", std::make_shared<intrinsic_binary>(element_binary_op::leq, element_type::boolean, element_type::num, element_type::num) },
+        { "Num.gt", std::make_shared<intrinsic_binary>(element_binary_op::gt, element_type::boolean, element_type::num, element_type::num) },
+        { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, element_type::boolean, element_type::num, element_type::num) },
 
         { "Bool.if", nullptr },
-        { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not, nullptr) },
-        { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and, nullptr) },
-        { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op::or, nullptr) },
+        { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not, element_type::boolean, element_type::boolean) },
+        { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and, element_type::boolean, element_type::boolean) },
+        { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op::or , element_type::boolean, element_type::boolean) },
 
-        { "True", std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, nullptr) },
-        { "False", std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, nullptr) },
+        { "True", std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, element_type::boolean) },
+        { "False", std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, element_type::boolean) },
 
         { "list", nullptr },
         { "List.fold", nullptr },
@@ -90,7 +91,13 @@ namespace element
     }
 
     intrinsic::intrinsic(element_type_id id, type_const_shared_ptr type)
-        : rtti_type(id), type(std::move(type))
+        : rtti_type(id), return_type(std::move(type))
+    {
+    }
+
+    intrinsic_nullary::intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr return_type = element_type::num):
+        intrinsic(type_id, std::move(return_type))
+        , operation(operation)
     {
     }
 
@@ -105,6 +112,15 @@ namespace element
         return result;
     }
 
+    intrinsic_unary::intrinsic_unary(element_unary_op operation, 
+                                     type_const_shared_ptr return_type = element_type::num, 
+                                     type_const_shared_ptr argument_type = element_type::num)
+        : intrinsic(type_id, std::move(return_type))
+        , operation(operation)
+        , argument_type{std::move(argument_type)}
+    {
+    }
+
     std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
         auto result = std::make_shared<compiled_expression>();
@@ -115,6 +131,16 @@ namespace element
             args[0]->expression_tree);
 
         return result;
+    }
+
+    intrinsic_binary::intrinsic_binary(element_binary_op operation, type_const_shared_ptr return_type = element_type::num,
+                                       type_const_shared_ptr first_argument_type = element_type::num,
+                                       type_const_shared_ptr second_argument_type = element_type::num):
+        intrinsic(type_id, std::move(return_type))
+        , operation(operation)
+        , first_argument_type{std::move(first_argument_type)}
+        , second_argument_type{std::move(second_argument_type)}
+    {
     }
 
     std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const

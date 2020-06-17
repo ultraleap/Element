@@ -31,12 +31,12 @@ element_result eval(const char* evaluate)
 
     float inputs[] = { 1, 2 };
     element_inputs input;
-    input.values = &inputs;
+    input.values = inputs;
     input.count = 2;
 
     float outputs[1];
     element_outputs output;
-    output.values = &outputs;
+    output.values = outputs;
     output.count = 1;
 
     result = element_interpreter_evaluate(context, NULL, evaluable, &input, &output);
