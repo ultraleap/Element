@@ -9,11 +9,11 @@ struct element_scope;
 using scope_unique_ptr = std::unique_ptr<element_scope>;
 #endif
 
-struct element_constraint;
+class element_constraint;
 using constraint_shared_ptr = std::shared_ptr<element_constraint>;
 using constraint_const_shared_ptr = std::shared_ptr<const element_constraint>;
 
-struct element_type;
+class element_type;
 using type_shared_ptr = std::shared_ptr<element_type>;
 using type_const_shared_ptr = std::shared_ptr<const element_type>;
 
