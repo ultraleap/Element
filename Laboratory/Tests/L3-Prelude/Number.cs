@@ -24,44 +24,44 @@ namespace Laboratory.Tests.L3.Prelude
 		
 		#region Random
 		
-		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
-		{
-			("Num.ln({0})", MathF.Log),
-			("Num.sin({0})", MathF.Sin),
-			("Num.cos({0})", MathF.Cos),
-			("Num.tan({0})", MathF.Tan),
-			("Num.asin({0})", MathF.Asin),
-			("Num.acos({0})", MathF.Acos),
-			("Num.atan({0})", MathF.Atan),
-		};
+		// private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
+		// {
+		// 	("Num.ln({0})", MathF.Log),
+		// 	("Num.sin({0})", MathF.Sin),
+		// 	("Num.cos({0})", MathF.Cos),
+		// 	("Num.tan({0})", MathF.Tan),
+		// 	("Num.asin({0})", MathF.Asin),
+		// 	("Num.acos({0})", MathF.Acos),
+		// 	("Num.atan({0})", MathF.Atan),
+		// };
+		//
+		// [Test, Pairwise]
+		// public void UnaryMathOpRandom([ValueSource(nameof(_unaryOpTestValues))]
+		//                               (string ElementFunction, Func<float, float> CLRFunction) functionPair,
+		//                               [Random(-1.0e6f, 1.0e6f, 20)] float arg0) =>
+		// 	AssertApproxEqual(ValidatedCompilationInput,
+		// 		string.Format(functionPair.ElementFunction, arg0),
+		// 		new[]{functionPair.CLRFunction(arg0)});
 
-		[Test, Pairwise]
-		public void UnaryMathOpRandom([ValueSource(nameof(_unaryOpTestValues))]
-		                              (string ElementFunction, Func<float, float> CLRFunction) functionPair,
-		                              [Random(-1.0e6f, 1.0e6f, 20)] float arg0) =>
-			AssertApproxEqual(ValidatedCompilationInput,
-				string.Format(functionPair.ElementFunction, arg0),
-				new[]{functionPair.CLRFunction(arg0)});
-
-		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] BinaryOpMap =
-		{
-			("Num.add({0}, {1})", (a, b) => a + b),
-			("Num.sub({0}, {1})", (a, b) => a - b),
-			("Num.mul({0}, {1})", (a, b) => a * b),
-			("Num.div({0}, {1})", (a, b) => a / b),
-			("Num.rem({0}, {1})", (a, b) => a % b),
-			("Num.min({0}, {1})", MathF.Min),
-			("Num.max({0}, {1})", MathF.Max),
-			("Num.atan2({0}, {1})", MathF.Atan2),
-		};
-		[Test, Pairwise]
-		public void BinaryMathOpRandom([ValueSource(nameof(BinaryOpMap))]
-			(string ElementFunction, Func<float, float, float> CLRFunction) functionPair,
-			[Random(-1.0e6f, 1.0e6f, 20)] float arg0,
-			[Random(-1.0e6f, 1.0e6f, 20)] float arg1) =>
-			AssertApproxEqual(ValidatedCompilationInput,
-				string.Format(functionPair.ElementFunction, arg0, arg1),
-				new[]{functionPair.CLRFunction(arg0, arg1)});
+		// private static (string ElementFunction, Func<float, float, float> CLRFunction)[] BinaryOpMap =
+		// {
+		// 	("Num.add({0}, {1})", (a, b) => a + b),
+		// 	("Num.sub({0}, {1})", (a, b) => a - b),
+		// 	("Num.mul({0}, {1})", (a, b) => a * b),
+		// 	("Num.div({0}, {1})", (a, b) => a / b),
+		// 	("Num.rem({0}, {1})", (a, b) => a % b),
+		// 	("Num.min({0}, {1})", MathF.Min),
+		// 	("Num.max({0}, {1})", MathF.Max),
+		// 	("Num.atan2({0}, {1})", MathF.Atan2),
+		// };
+		// [Test, Pairwise]
+		// public void BinaryMathOpRandom([ValueSource(nameof(BinaryOpMap))]
+		// 	(string ElementFunction, Func<float, float, float> CLRFunction) functionPair,
+		// 	[Random(-1.0e6f, 1.0e6f, 20)] float arg0,
+		// 	[Random(-1.0e6f, 1.0e6f, 20)] float arg1) =>
+		// 	AssertApproxEqual(ValidatedCompilationInput,
+		// 		string.Format(functionPair.ElementFunction, arg0, arg1),
+		// 		new[]{functionPair.CLRFunction(arg0, arg1)});
 		
 		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] AdditionalBinaryOpMap =
 		{
