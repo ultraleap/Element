@@ -8,7 +8,7 @@
 
 namespace element
 {
-    class element_constraint : public rtti_type<element_constraint>
+    class constraint : public rtti_type<constraint>
     {
     public:
         static const constraint_const_shared_ptr nullary;
@@ -18,13 +18,13 @@ namespace element
         static const constraint_const_shared_ptr any;
         static const constraint_const_shared_ptr function;
 
-        element_constraint(element_type_id id)
+        constraint(element_type_id id)
             : rtti_type(id)
         {
         }
     };
 
-    class element_type : public element_constraint
+    class type : public constraint
     {
     public:
         DECLARE_TYPE_ID();
@@ -32,72 +32,72 @@ namespace element
         static const type_const_shared_ptr num;      // the absolute unit
         static const type_const_shared_ptr boolean;
 
-        [[nodiscard]] std::string name() const { return m_name; }
+        [[nodiscard]] std::string get_name() const { return name; }
 
     protected:
-        element_type(element_type_id id, std::string name)
-            : element_constraint(type_id)
-            , m_name(std::move(name))
+        type(element_type_id id, std::string name)
+            : constraint(type_id)
+            , name(std::move(name))
         {
         }
 
-        std::string m_name;
+        std::string name;
     };
 
-    class any_constraint : public element_constraint
+    class any_constraint : public constraint
     {
     public:
         DECLARE_TYPE_ID();
-        any_constraint() : element_constraint(type_id) {}
+        any_constraint() : constraint(type_id) {}
     };
 
-    class function_constraint : public element_constraint {
+    class function_constraint : public constraint {
     public:
         DECLARE_TYPE_ID();
-        function_constraint() : element_constraint(type_id) {}
+        function_constraint() : constraint(type_id) {}
     };
 
-    class num_type : public element_type {
+    class num_type : public type {
     public:
         DECLARE_TYPE_ID();
-        num_type() : element_type(type_id, "Num")
+        num_type() : type(type_id, "Num")
         {
         }
     };
 
-    class boolean_type : public element_type {
+    class boolean_type : public type {
     public:
         DECLARE_TYPE_ID();
-        boolean_type() : element_type(type_id, "Bool")
+        boolean_type() : type(type_id, "Bool")
         {
         }
     };
 
-    class nullary_constraint : public element_constraint
-    {
-    public:
-        DECLARE_TYPE_ID();
-
-        nullary_constraint() : element_constraint(type_id)
-        {
-        }
-    };
-
-    class unary_constraint : public element_constraint
+    class nullary_constraint : public constraint
     {
     public:
         DECLARE_TYPE_ID();
 
-        unary_constraint() : element_constraint(type_id)
+        nullary_constraint() : constraint(type_id)
         {
         }
     };
 
-    class binary_constraint : public element_constraint {
+    class unary_constraint : public constraint
+    {
     public:
         DECLARE_TYPE_ID();
 
-        binary_constraint() : element_constraint(type_id)
+        unary_constraint() : constraint(type_id)
+        {
+        }
+    };
+
+    class binary_constraint : public constraint {
+    public:
+        DECLARE_TYPE_ID();
+
+        binary_constraint() : constraint(type_id)
         {
         }
     };

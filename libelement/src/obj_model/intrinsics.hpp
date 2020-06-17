@@ -10,13 +10,10 @@
 
 namespace element
 {
-    class intrinsic : public object, public rtti_type<intrinsic> {
-    private:
-        //TODO: this might need to be a constraint_const_shared_ptr
-        type_const_shared_ptr return_type;
-
+    class intrinsic : public object, public rtti_type<intrinsic>
+    {
     public:
-        intrinsic(element_type_id id, type_const_shared_ptr return_type);
+        intrinsic(element_type_id id);
 
     private:
         static const std::unordered_map<std::string, const std::shared_ptr<const intrinsic>> intrinsic_map;
@@ -25,7 +22,18 @@ namespace element
         static std::shared_ptr<const intrinsic> get_intrinsic(const declaration& declaration);
     };
 
-    class intrinsic_nullary final : public intrinsic {
+    class intrinsic_function : public intrinsic
+    {
+    private:
+        //TODO: this might need to be a constraint_const_shared_ptr
+        type_const_shared_ptr return_type;
+
+    public:
+        intrinsic_function(element_type_id id, type_const_shared_ptr return_type);
+    };
+
+    class intrinsic_nullary final : public intrinsic_function
+    {
     public:
         DECLARE_TYPE_ID();
 
@@ -39,7 +47,8 @@ namespace element
         [[nodiscard]] element_nullary_op get_operation() const { return operation; }
     };
 
-    class intrinsic_unary final : public intrinsic {
+    class intrinsic_unary final : public intrinsic_function
+    {
     public:
         DECLARE_TYPE_ID();
 
@@ -55,7 +64,8 @@ namespace element
         [[nodiscard]] element_unary_op get_operation() const { return operation; }
     };
 
-    class intrinsic_binary final : public intrinsic {
+    class intrinsic_binary final : public intrinsic_function
+    {
     public:
         DECLARE_TYPE_ID();
 

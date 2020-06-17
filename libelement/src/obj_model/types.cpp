@@ -4,7 +4,7 @@
 
 namespace element
 {
-    DEFINE_TYPE_ID(element_type, 1U << 0);
+    DEFINE_TYPE_ID(type, 1U << 0);
     DEFINE_TYPE_ID(num_type, 1U << 1);
     DEFINE_TYPE_ID(boolean_type, 1U << 2);
 
@@ -14,14 +14,14 @@ namespace element
     DEFINE_TYPE_ID(unary_constraint, 1U << 6);
     DEFINE_TYPE_ID(binary_constraint, 1U << 7);
 
-    const type_const_shared_ptr element_type::num = std::make_shared<num_type>();
-    const type_const_shared_ptr element_type::boolean = std::make_shared<boolean_type>();
+    const type_const_shared_ptr type::num = std::make_shared<num_type>();
+    const type_const_shared_ptr type::boolean = std::make_shared<boolean_type>();
 
-    const constraint_const_shared_ptr element_constraint::any = std::make_shared<any_constraint>();
-    const constraint_const_shared_ptr element_constraint::function = std::make_shared<function_constraint>();
-    const constraint_const_shared_ptr element_constraint::nullary = std::make_shared<nullary_constraint>();
-    const constraint_const_shared_ptr element_constraint::unary = std::make_shared<unary_constraint>();
-    const constraint_const_shared_ptr element_constraint::binary = std::make_shared<binary_constraint>();
+    const constraint_const_shared_ptr constraint::any = std::make_shared<any_constraint>();
+    const constraint_const_shared_ptr constraint::function = std::make_shared<function_constraint>();
+    const constraint_const_shared_ptr constraint::nullary = std::make_shared<nullary_constraint>();
+    const constraint_const_shared_ptr constraint::unary = std::make_shared<unary_constraint>();
+    const constraint_const_shared_ptr constraint::binary = std::make_shared<binary_constraint>();
 }
 
 #else
