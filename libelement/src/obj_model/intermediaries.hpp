@@ -24,6 +24,7 @@ namespace element
         [[nodiscard]] std::string to_string() const override { return ""; }
 
         const object* creator = nullptr; //the thing that generated this thing
+        type_const_shared_ptr type = nullptr; //the type of the thing that generated this thing
         //A compiled expression contains either an expression tree that was output from something being compiled, or some object model thing
         //probably shouldn't contain both but let's see if we ever need to :b
         std::shared_ptr<object> object_model;

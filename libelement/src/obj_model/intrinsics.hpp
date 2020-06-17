@@ -24,7 +24,7 @@ namespace element
 
     class intrinsic_function : public intrinsic
     {
-    private:
+    protected:
         //TODO: this might need to be a constraint_const_shared_ptr
         type_const_shared_ptr return_type;
 

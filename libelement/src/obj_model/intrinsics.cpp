@@ -110,6 +110,7 @@ namespace element
     {
         auto result = std::make_shared<compiled_expression>();
         result->creator = nullptr;
+        result->type = return_type;
 
         result->expression_tree = std::make_shared<element_expression_nullary>(
             operation);
@@ -130,6 +131,7 @@ namespace element
     {
         auto result = std::make_shared<compiled_expression>();
         result->creator = nullptr;
+        result->type = return_type;
 
         result->expression_tree = std::make_shared<element_expression_unary>(
             operation,
@@ -152,6 +154,7 @@ namespace element
     {
         auto result = std::make_shared<compiled_expression>();
         result->creator = nullptr;
+        result->type = return_type;
 
         result->expression_tree = std::make_shared<element_expression_binary>(
             operation,

@@ -8,23 +8,7 @@
 
 namespace element
 {
-    class constraint : public rtti_type<constraint>
-    {
-    public:
-        static const constraint_const_shared_ptr nullary;
-        static const constraint_const_shared_ptr unary;
-        static const constraint_const_shared_ptr binary;
-
-        static const constraint_const_shared_ptr any;
-        static const constraint_const_shared_ptr function;
-
-        constraint(element_type_id id)
-            : rtti_type(id)
-        {
-        }
-    };
-
-    class type : public constraint
+    class type : public rtti_type<type>
     {
     public:
         DECLARE_TYPE_ID();
@@ -36,25 +20,12 @@ namespace element
 
     protected:
         type(element_type_id id, std::string name)
-            : constraint(type_id)
+            : rtti_type(type_id)
             , name(std::move(name))
         {
         }
 
         std::string name;
-    };
-
-    class any_constraint : public constraint
-    {
-    public:
-        DECLARE_TYPE_ID();
-        any_constraint() : constraint(type_id) {}
-    };
-
-    class function_constraint : public constraint {
-    public:
-        DECLARE_TYPE_ID();
-        function_constraint() : constraint(type_id) {}
     };
 
     class num_type : public type {
@@ -71,6 +42,35 @@ namespace element
         boolean_type() : type(type_id, "Bool")
         {
         }
+    };
+
+    class constraint : public rtti_type<constraint>
+    {
+    public:
+        static const constraint_const_shared_ptr nullary;
+        static const constraint_const_shared_ptr unary;
+        static const constraint_const_shared_ptr binary;
+
+        static const constraint_const_shared_ptr any;
+        static const constraint_const_shared_ptr function;
+
+        constraint(element_type_id id)
+            : rtti_type(id)
+        {
+        }
+    };
+
+    class any_constraint : public constraint
+    {
+    public:
+        DECLARE_TYPE_ID();
+        any_constraint() : constraint(type_id) {}
+    };
+
+    class function_constraint : public constraint {
+    public:
+        DECLARE_TYPE_ID();
+        function_constraint() : constraint(type_id) {}
     };
 
     class nullary_constraint : public constraint
