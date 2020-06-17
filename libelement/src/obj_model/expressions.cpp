@@ -30,7 +30,9 @@ namespace element
         std::shared_ptr<object> current = nullptr;
         for (const auto& expression : children)
         {
-            current = expression->compile(context, current);
+            auto previous = std::move(current);
+            current = expression->compile(context, previous);
+            assert(current);
         }
 
         return current->compile(context);
