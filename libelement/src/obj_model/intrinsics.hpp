@@ -15,9 +15,6 @@ namespace element
     public:
         intrinsic(element_type_id id);
 
-    private:
-        static const std::unordered_map<std::string, const std::shared_ptr<const intrinsic>> intrinsic_map;
-
     public:
         static std::shared_ptr<const intrinsic> get_intrinsic(const declaration& declaration);
     };

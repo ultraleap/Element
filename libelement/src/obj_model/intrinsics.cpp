@@ -12,75 +12,75 @@ DEFINE_TYPE_ID(element::intrinsic_binary, 1U << 2);
 
 namespace element
 {
-    const std::unordered_map<std::string, const std::shared_ptr<const intrinsic>> intrinsic::intrinsic_map
-    {
-        //types
-        { "Num", nullptr },
-        { "Bool", nullptr },
-        { "List", nullptr },
-        { "Tuple", nullptr },
-
-        //functions
-        { "Num.add", std::make_shared<intrinsic_binary>(element_binary_op::add) },
-        { "Num.sub", std::make_shared<intrinsic_binary>(element_binary_op::sub) },
-        { "Num.mul", std::make_shared<intrinsic_binary>(element_binary_op::mul) },
-        { "Num.div", std::make_shared<intrinsic_binary>(element_binary_op::div) },
-
-        { "Num.pow", std::make_shared<intrinsic_binary>(element_binary_op::pow) },
-        { "Num.rem", std::make_shared<intrinsic_binary>(element_binary_op::rem) },
-
-        { "Num.min", std::make_shared<intrinsic_binary>(element_binary_op::min) },
-        { "Num.max", std::make_shared<intrinsic_binary>(element_binary_op::max) },
-
-        { "Num.abs", std::make_shared<intrinsic_unary>(element_unary_op::abs) },
-        { "Num.ceil", std::make_shared<intrinsic_unary>(element_unary_op::ceil) },
-        { "Num.floor", std::make_shared<intrinsic_unary>(element_unary_op::floor) },
-
-        { "Num.sin", std::make_shared<intrinsic_unary>(element_unary_op::sin) },
-        { "Num.cos", std::make_shared<intrinsic_unary>(element_unary_op::cos) },
-        { "Num.tan", std::make_shared<intrinsic_unary>(element_unary_op::tan) },
-
-        { "Num.asin", std::make_shared<intrinsic_unary>(element_unary_op::asin) },
-        { "Num.acos", std::make_shared<intrinsic_unary>(element_unary_op::acos) },
-        { "Num.atan", std::make_shared<intrinsic_unary>(element_unary_op::atan) },
-
-        { "Num.atan2", std::make_shared<intrinsic_binary>(element_binary_op::atan2) },
-
-        { "Num.ln", std::make_shared<intrinsic_unary>(element_unary_op::ln) },
-        { "Num.log", std::make_shared<intrinsic_binary>(element_binary_op::log) },
-
-        { "Num.NaN", std::make_shared<intrinsic_nullary>(element_nullary_op::nan) },
-        { "Num.PositiveInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::positive_infinity) },
-        { "Num.NegativeInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::negative_infinity) },
-
-        { "Num.eq", std::make_shared<intrinsic_binary>(element_binary_op::eq, type::boolean, type::num, type::num) },
-        { "Num.neq", std::make_shared<intrinsic_binary>(element_binary_op::neq, type::boolean, type::num, type::num) },
-        { "Num.lt", std::make_shared<intrinsic_binary>(element_binary_op::lt, type::boolean, type::num, type::num) },
-        { "Num.leq", std::make_shared<intrinsic_binary>(element_binary_op::leq, type::boolean, type::num, type::num) },
-        { "Num.gt", std::make_shared<intrinsic_binary>(element_binary_op::gt, type::boolean, type::num, type::num) },
-        { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, type::boolean, type::num, type::num) },
-
-        { "Bool.if", nullptr },
-        { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not, type::boolean, type::boolean) },
-        { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and, type::boolean, type::boolean) },
-        { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op::or , type::boolean, type::boolean) },
-
-        { "True", std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, type::boolean) },
-        { "False", std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, type::boolean) },
-
-        { "list", nullptr },
-        { "List.fold", nullptr },
-
-        { "memberwise", nullptr },
-        { "for", nullptr },
-        //{ "persist", nullptr }, //todo: unlikely to be part of the language
-
-        //constraints
-        { "Any", nullptr },
-    };
-
     std::shared_ptr<const intrinsic> intrinsic::get_intrinsic(const declaration& declaration)
     {
+        const static std::unordered_map<std::string, const std::shared_ptr<const intrinsic>> intrinsic_map
+        {
+            //types
+            { "Num", nullptr },
+            { "Bool", nullptr },
+            { "List", nullptr },
+            { "Tuple", nullptr },
+
+            //functions
+            { "Num.add", std::make_shared<intrinsic_binary>(element_binary_op::add) },
+            { "Num.sub", std::make_shared<intrinsic_binary>(element_binary_op::sub) },
+            { "Num.mul", std::make_shared<intrinsic_binary>(element_binary_op::mul) },
+            { "Num.div", std::make_shared<intrinsic_binary>(element_binary_op::div) },
+
+            { "Num.pow", std::make_shared<intrinsic_binary>(element_binary_op::pow) },
+            { "Num.rem", std::make_shared<intrinsic_binary>(element_binary_op::rem) },
+
+            { "Num.min", std::make_shared<intrinsic_binary>(element_binary_op::min) },
+            { "Num.max", std::make_shared<intrinsic_binary>(element_binary_op::max) },
+
+            { "Num.abs", std::make_shared<intrinsic_unary>(element_unary_op::abs) },
+            { "Num.ceil", std::make_shared<intrinsic_unary>(element_unary_op::ceil) },
+            { "Num.floor", std::make_shared<intrinsic_unary>(element_unary_op::floor) },
+
+            { "Num.sin", std::make_shared<intrinsic_unary>(element_unary_op::sin) },
+            { "Num.cos", std::make_shared<intrinsic_unary>(element_unary_op::cos) },
+            { "Num.tan", std::make_shared<intrinsic_unary>(element_unary_op::tan) },
+
+            { "Num.asin", std::make_shared<intrinsic_unary>(element_unary_op::asin) },
+            { "Num.acos", std::make_shared<intrinsic_unary>(element_unary_op::acos) },
+            { "Num.atan", std::make_shared<intrinsic_unary>(element_unary_op::atan) },
+
+            { "Num.atan2", std::make_shared<intrinsic_binary>(element_binary_op::atan2) },
+
+            { "Num.ln", std::make_shared<intrinsic_unary>(element_unary_op::ln) },
+            { "Num.log", std::make_shared<intrinsic_binary>(element_binary_op::log) },
+
+            { "Num.NaN", std::make_shared<intrinsic_nullary>(element_nullary_op::nan) },
+            { "Num.PositiveInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::positive_infinity) },
+            { "Num.NegativeInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::negative_infinity) },
+
+            { "Num.eq", std::make_shared<intrinsic_binary>(element_binary_op::eq, type::boolean, type::num, type::num) },
+            { "Num.neq", std::make_shared<intrinsic_binary>(element_binary_op::neq, type::boolean, type::num, type::num) },
+            { "Num.lt", std::make_shared<intrinsic_binary>(element_binary_op::lt, type::boolean, type::num, type::num) },
+            { "Num.leq", std::make_shared<intrinsic_binary>(element_binary_op::leq, type::boolean, type::num, type::num) },
+            { "Num.gt", std::make_shared<intrinsic_binary>(element_binary_op::gt, type::boolean, type::num, type::num) },
+            { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, type::boolean, type::num, type::num) },
+
+            { "Bool.if", nullptr },
+            { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not, type::boolean, type::boolean) },
+            { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and, type::boolean, type::boolean) },
+            { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op:: or , type::boolean, type::boolean) },
+
+            { "True", std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, type::boolean) },
+            { "False", std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, type::boolean) },
+
+            { "list", nullptr },
+            { "List.fold", nullptr },
+
+            { "memberwise", nullptr },
+            { "for", nullptr },
+            //{ "persist", nullptr }, //todo: unlikely to be part of the language
+
+            //constraints
+            { "Any", nullptr },
+        };
+
         const auto location = declaration.location();
 
         const auto it = intrinsic_map.find(location);
