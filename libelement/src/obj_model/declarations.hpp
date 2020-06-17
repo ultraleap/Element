@@ -103,6 +103,7 @@ namespace element
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
+        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
         [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
 

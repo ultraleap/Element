@@ -170,6 +170,11 @@ namespace element
         return declaration_offset + name.value + ports + our_scope->to_code(depth);
     }
 
+    std::shared_ptr<object> function_declaration::index(const compilation_context& context, const identifier& name) const
+    {
+        return compile(context)->index(context, name);
+    }
+
     std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
         if (inputs.size() == args.size())
