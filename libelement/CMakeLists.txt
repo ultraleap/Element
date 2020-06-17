@@ -64,9 +64,6 @@ set(element_sources
 
     "src/obj_model/intermediaries.hpp"
     "src/obj_model/intermediaries.cpp"
-    
-    "src/obj_model/intrinsics.hpp"
-    "src/obj_model/intrinsics.cpp"
 
     "src/obj_model/scope.hpp"
     "src/obj_model/scope.cpp"

@@ -1,6 +1,110 @@
 #pragma once
 
-#ifdef LEGACY_COMPILER
+#ifndef LEGACY_COMPILER
+
+#include "typeutil.hpp"
+
+#include "interpreter_internal.hpp"
+
+namespace element
+{
+    class element_constraint : public rtti_type<element_constraint>
+    {
+    public:
+        static const constraint_const_shared_ptr nullary;
+        static const constraint_const_shared_ptr unary;
+        static const constraint_const_shared_ptr binary;
+
+        static const constraint_const_shared_ptr any;
+        static const constraint_const_shared_ptr function;
+
+        element_constraint(element_type_id id)
+            : rtti_type(id)
+        {
+        }
+    };
+
+    class element_type : public element_constraint
+    {
+    public:
+        DECLARE_TYPE_ID();
+
+        static const type_const_shared_ptr num;      // the absolute unit
+        static const type_const_shared_ptr boolean;
+
+        [[nodiscard]] std::string name() const { return m_name; }
+
+    protected:
+        element_type(element_type_id id, std::string name)
+            : element_constraint(type_id)
+            , m_name(std::move(name))
+        {
+        }
+
+        std::string m_name;
+    };
+
+    class any_constraint : public element_constraint
+    {
+    public:
+        DECLARE_TYPE_ID();
+        any_constraint() : element_constraint(type_id) {}
+    };
+
+    class function_constraint : public element_constraint {
+    public:
+        DECLARE_TYPE_ID();
+        function_constraint() : element_constraint(type_id) {}
+    };
+
+    class num_type : public element_type {
+    public:
+        DECLARE_TYPE_ID();
+        num_type() : element_type(type_id, "Num")
+        {
+        }
+    };
+
+    class boolean_type : public element_type {
+    public:
+        DECLARE_TYPE_ID();
+        boolean_type() : element_type(type_id, "Bool")
+        {
+        }
+    };
+
+    class nullary_constraint : public element_constraint
+    {
+    public:
+        DECLARE_TYPE_ID();
+
+        nullary_constraint() : element_constraint(type_id)
+        {
+        }
+    };
+
+    class unary_constraint : public element_constraint
+    {
+    public:
+        DECLARE_TYPE_ID();
+
+        unary_constraint() : element_constraint(type_id)
+        {
+        }
+    };
+
+    class binary_constraint : public element_constraint {
+    public:
+        DECLARE_TYPE_ID();
+
+        binary_constraint() : element_constraint(type_id)
+        {
+        }
+    };
+
+}
+
+#else
 
 #include <memory>
 #include <string>
@@ -28,7 +132,7 @@ public:
     static const constraint_const_shared_ptr function;
     static const constraint_const_shared_ptr serializable;
 
-    // TODO: separate into "shape matches" and "type matches"
+    // TODO: separate into "shape matches" and "return_type matches"
     virtual bool is_satisfied_by(const constraint_const_shared_ptr& other) const
     {
         return other.get() == this || other == element_constraint::any;
@@ -45,11 +149,11 @@ public:
         if (i1.size() != i2.size() || o1.size() != o2.size())
             return false;
         for (size_t i = 0; i < i1.size(); ++i) {
-            if (!i1[i].type->is_same_shape_as(i2[i].type))
+            if (!i1[i].return_type->is_same_shape_as(i2[i].return_type))
                 return false;
         }
         for (size_t i = 0; i < o1.size(); ++i) {
-            if (!o1[i].type->is_same_shape_as(o2[i].type))
+            if (!o1[i].return_type->is_same_shape_as(o2[i].return_type))
                 return false;
         }
         return true;
@@ -154,7 +258,7 @@ private:
     }
 
     // Keeping a cache of anonymous types (matching on signature) allows us to use pointer-comparison for
-    // type matching while supporting disparate anonymous types
+    // return_type matching while supporting disparate anonymous types
     static std::unordered_multimap<std::pair<size_t, size_t>, type_shared_ptr, pair_hash> m_cache;
 };
 
