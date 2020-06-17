@@ -11,7 +11,7 @@
 #include "declarations.hpp"
 #include "expressions.hpp"
 #include "configuration.hpp"
-#include "functions.hpp"
+#include "intrinsics.hpp"
 
 void build_scope(element_ast* ast, const element::declaration& declaration);
 
