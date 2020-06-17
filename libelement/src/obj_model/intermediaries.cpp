@@ -35,6 +35,23 @@ namespace element
         return nullptr;
     }
 
+    std::shared_ptr<compiled_expression> compiled_expression::compile(const compilation_context& context) const
+    {
+        if (expression_tree)
+            return const_cast<compiled_expression*>(this)->shared_from_this();
+
+        if (object_model)
+            return object_model->compile(context);
+
+        if (creator)
+        {
+            assert(false);
+            return creator->compile(context);
+        }
+
+        return nullptr;
+    }
+
     //struct_instance
     struct_instance::struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions)
         : declarer{ declarer }

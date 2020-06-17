@@ -6,7 +6,7 @@
 
 namespace element
 {
-    class compiled_expression final : public object
+    class compiled_expression final : public object, public std::enable_shared_from_this<compiled_expression>
     {
     public:
         compiled_expression() = default;
@@ -20,6 +20,7 @@ namespace element
 
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile(const compilation_context& context) const;
         [[nodiscard]] std::string to_string() const override { return ""; }
 
         const object* creator = nullptr; //the thing that generated this thing

@@ -33,13 +33,7 @@ namespace element
             current = expression->compile(context, current);
         }
 
-        if (dynamic_cast<compiled_expression*>(current.get()))
-        {
-            return std::static_pointer_cast<compiled_expression>(current);
-        }
-
-        throw; //todo: could be e.g. a namespace declaration, so not something that was compilable
-        return nullptr;
+        return current->compile(context);
     }
 
     [[nodiscard]] std::shared_ptr<object> expression::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
