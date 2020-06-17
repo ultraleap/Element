@@ -23,16 +23,24 @@ namespace Laboratory.Tests.L3.Prelude
 		
 		#region Random
 		
-		private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
-		{
-			("Num.ln({0})", MathF.Log),
-			("Num.sin({0})", MathF.Sin),
-			("Num.cos({0})", MathF.Cos),
-			("Num.tan({0})", MathF.Tan),
-			("Num.asin({0})", MathF.Asin),
-			("Num.acos({0})", MathF.Acos),
-			("Num.atan({0})", MathF.Atan),
-		};
+		// private static (string ElementFunction, Func<float, float> CLRFunction)[] _unaryOpTestValues =
+		// {
+		// 	("Num.ln({0})", MathF.Log),
+		// 	("Num.sin({0})", MathF.Sin),
+		// 	("Num.cos({0})", MathF.Cos),
+		// 	("Num.tan({0})", MathF.Tan),
+		// 	("Num.asin({0})", MathF.Asin),
+		// 	("Num.acos({0})", MathF.Acos),
+		// 	("Num.atan({0})", MathF.Atan),
+		// };
+		//
+		// [Test, Pairwise]
+		// public void UnaryMathOpRandom([ValueSource(nameof(_unaryOpTestValues))]
+		//                               (string ElementFunction, Func<float, float> CLRFunction) functionPair,
+		//                               [Random(-1.0e6f, 1.0e6f, 20)] float arg0) =>
+		// 	AssertApproxEqual(ValidatedCompilationInput,
+		// 		string.Format(functionPair.ElementFunction, arg0),
+		// 		new[]{functionPair.CLRFunction(arg0)});
 
 		[Test, Pairwise]
 		public void UnaryMathOpRandom([ValueSource(nameof(_unaryOpTestValues))]
