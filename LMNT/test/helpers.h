@@ -116,13 +116,14 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
     va_start(args, consts_count);
     for (size_t i = 0; i < instr_count; ++i) {
         for (size_t j = 0; j < 8; ++j) {
-            buf[idx++] = va_arg(args, char);
+            buf[idx++] = va_arg(args, int); // actually char, but va_arg requires int
         }
     }
 
     idx += padding;
     for (size_t i = 0; i < consts_count; ++i) {
-        lmnt_value val = va_arg(args, lmnt_value);
+        // TODO: handle lmnt_value not being float
+        lmnt_value val = va_arg(args, double); // actually lmnt_value, but va_arg requires double
         memcpy(buf + idx, (const char*)(&val), sizeof(val));
         idx += sizeof(val);
     }
