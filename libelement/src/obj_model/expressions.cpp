@@ -40,7 +40,13 @@ namespace element
 
     [[nodiscard]] std::shared_ptr<object> expression::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
-        return compile(context);
+        call_stack::frame frame;
+        frame.function = enclosing_scope->declarer;
+        frame.arguments = std::move(args);
+        context.stack.frames.emplace_back(std::move(frame));
+        auto compiled = compile(context);
+        context.stack.frames.pop_back();
+        return compiled;
     }
 
     std::shared_ptr<object> literal_expression::index(const compilation_context& context, const identifier& identifier) const
@@ -74,7 +80,33 @@ namespace element
         if (!enclosing_scope)
             return nullptr;
 
-        return enclosing_scope->find(identifier.value, true);
+        auto found = enclosing_scope->find(identifier.value, false);
+        if (found)
+            return found;
+
+        if (!context.stack.frames.empty())
+        {
+            const auto& frame = context.stack.frames.back();
+            for (int i = 0; i < frame.function->inputs.size(); i++)
+            {
+                const auto& input = frame.function->inputs[i];
+                if (input.name.value == identifier.value)
+                {
+                    if (frame.arguments.size() >= i)
+                        return frame.arguments[i];
+                    else
+                        break;
+                }
+            }
+        }
+
+        found = enclosing_scope->get_parent_scope()->find(identifier.value, true);
+        if (found)
+            return found;
+
+        assert(false);
+        throw;
+        return nullptr;
     }
 
     [[nodiscard]] std::shared_ptr<object> literal_expression::compile(const compilation_context& context, std::shared_ptr<object> previous)

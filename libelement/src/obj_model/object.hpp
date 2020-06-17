@@ -14,6 +14,18 @@ namespace element
     struct identifier;
     class intrinsic;
 
+    class call_stack
+    {
+    public:
+        struct frame
+        {
+            const declaration* function;
+            std::vector<std::shared_ptr<compiled_expression>> arguments;
+        };
+
+        std::vector<frame> frames;
+    };
+
     class compilation_context
     {
     private:
@@ -23,6 +35,7 @@ namespace element
         explicit compilation_context(const scope* scope);
 
         [[nodiscard]] const scope* get_global_scope() const { return global_scope; }
+        mutable call_stack stack;
     };
 
     struct identifier
