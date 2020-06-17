@@ -53,20 +53,20 @@ namespace element
         { "Num.PositiveInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::positive_infinity) },
         { "Num.NegativeInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::negative_infinity) },
 
-        { "Num.eq", std::make_shared<intrinsic_binary>(element_binary_op::eq, element_type::boolean, element_type::num, element_type::num) },
-        { "Num.neq", std::make_shared<intrinsic_binary>(element_binary_op::neq, element_type::boolean, element_type::num, element_type::num) },
-        { "Num.lt", std::make_shared<intrinsic_binary>(element_binary_op::lt, element_type::boolean, element_type::num, element_type::num) },
-        { "Num.leq", std::make_shared<intrinsic_binary>(element_binary_op::leq, element_type::boolean, element_type::num, element_type::num) },
-        { "Num.gt", std::make_shared<intrinsic_binary>(element_binary_op::gt, element_type::boolean, element_type::num, element_type::num) },
-        { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, element_type::boolean, element_type::num, element_type::num) },
+        { "Num.eq", std::make_shared<intrinsic_binary>(element_binary_op::eq, type::boolean, type::num, type::num) },
+        { "Num.neq", std::make_shared<intrinsic_binary>(element_binary_op::neq, type::boolean, type::num, type::num) },
+        { "Num.lt", std::make_shared<intrinsic_binary>(element_binary_op::lt, type::boolean, type::num, type::num) },
+        { "Num.leq", std::make_shared<intrinsic_binary>(element_binary_op::leq, type::boolean, type::num, type::num) },
+        { "Num.gt", std::make_shared<intrinsic_binary>(element_binary_op::gt, type::boolean, type::num, type::num) },
+        { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, type::boolean, type::num, type::num) },
 
         { "Bool.if", nullptr },
-        { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not, element_type::boolean, element_type::boolean) },
-        { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and, element_type::boolean, element_type::boolean) },
-        { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op:: or , element_type::boolean, element_type::boolean) },
+        { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not, type::boolean, type::boolean) },
+        { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and, type::boolean, type::boolean) },
+        { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op::or , type::boolean, type::boolean) },
 
-        { "True", std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, element_type::boolean) },
-        { "False", std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, element_type::boolean) },
+        { "True", std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, type::boolean) },
+        { "False", std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, type::boolean) },
 
         { "list", nullptr },
         { "List.fold", nullptr },
@@ -90,13 +90,18 @@ namespace element
         return nullptr;
     }
 
-    intrinsic::intrinsic(element_type_id id, type_const_shared_ptr type)
-        : rtti_type(id), return_type(std::move(type))
+    intrinsic::intrinsic(const element_type_id id)
+        : rtti_type(id)
     {
     }
 
-    intrinsic_nullary::intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr return_type = element_type::num) :
-        intrinsic(type_id, std::move(return_type))
+    intrinsic_function::intrinsic_function(const element_type_id id, type_const_shared_ptr return_type)
+        : intrinsic(id), return_type(std::move(return_type))
+    {
+    }
+
+    intrinsic_nullary::intrinsic_nullary(const element_nullary_op operation, type_const_shared_ptr return_type = type::num):
+        intrinsic_function(type_id, std::move(return_type))
         , operation(operation)
     {
     }
@@ -112,12 +117,12 @@ namespace element
         return result;
     }
 
-    intrinsic_unary::intrinsic_unary(element_unary_op operation,
-        type_const_shared_ptr return_type = element_type::num,
-        type_const_shared_ptr argument_type = element_type::num)
-        : intrinsic(type_id, std::move(return_type))
+    intrinsic_unary::intrinsic_unary(element_unary_op operation, 
+                                     type_const_shared_ptr return_type = type::num, 
+                                     type_const_shared_ptr argument_type = type::num)
+        : intrinsic_function(type_id, std::move(return_type))
         , operation(operation)
-        , argument_type{ std::move(argument_type) }
+        , argument_type{std::move(argument_type)}
     {
     }
 
@@ -133,13 +138,13 @@ namespace element
         return result;
     }
 
-    intrinsic_binary::intrinsic_binary(element_binary_op operation, type_const_shared_ptr return_type = element_type::num,
-        type_const_shared_ptr first_argument_type = element_type::num,
-        type_const_shared_ptr second_argument_type = element_type::num) :
-        intrinsic(type_id, std::move(return_type))
+    intrinsic_binary::intrinsic_binary(const element_binary_op operation, type_const_shared_ptr return_type = type::num,
+                                       type_const_shared_ptr first_argument_type = type::num,
+                                       type_const_shared_ptr second_argument_type = type::num):
+        intrinsic_function(type_id, std::move(return_type))
         , operation(operation)
-        , first_argument_type{ std::move(first_argument_type) }
-        , second_argument_type{ std::move(second_argument_type) }
+        , first_argument_type{std::move(first_argument_type)}
+        , second_argument_type{std::move(second_argument_type)}
     {
     }
 

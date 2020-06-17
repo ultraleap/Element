@@ -25,13 +25,13 @@ namespace element
     class expression_bodied_function_declaration;
     class namespace_declaration;
 
-    class element_constraint;
-    using constraint_shared_ptr = std::shared_ptr<element_constraint>;
-    using constraint_const_shared_ptr = std::shared_ptr<const element_constraint>;
+    class constraint;
+    using constraint_shared_ptr = std::shared_ptr<constraint>;
+    using constraint_const_shared_ptr = std::shared_ptr<const constraint>;
 
-    class element_type;
-    using type_shared_ptr = std::shared_ptr<element_type>;
-    using type_const_shared_ptr = std::shared_ptr<const element_type>;
+    class type;
+    using type_shared_ptr = std::shared_ptr<type>;
+    using type_const_shared_ptr = std::shared_ptr<const type>;
 
     struct element_function;
     using function_shared_ptr = std::shared_ptr<element_function>;
