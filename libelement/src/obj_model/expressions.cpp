@@ -1,8 +1,8 @@
 #include "expressions.hpp"
 
 #include "etree/expressions.hpp"
-#include "obj_model/scope.hpp"
-#include "obj_model/intermediaries.hpp"
+#include "scope.hpp"
+#include "intermediaries.hpp"
 
 namespace element
 {

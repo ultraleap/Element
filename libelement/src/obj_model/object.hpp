@@ -7,8 +7,6 @@
 #include <vector>
 
 //SELF
-#include <map>
-
 #include "fwd.hpp"
 
 namespace element

@@ -5,15 +5,15 @@
 #include <memory>
 
 //SELF
-#include "obj_model/object.hpp"
-#include "obj_model/declarations.hpp"
+#include "object.hpp"
+#include "declarations.hpp"
 
 namespace element
 {
     class scope final : public object
     {
     public:
-        explicit scope(const scope* parent_scope, const declaration* const declarer);
+        explicit scope(const scope* parent_scope, const declaration* declarer);
         virtual ~scope() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a unique_ptr
