@@ -10,6 +10,13 @@ namespace element
         if (object_model)
             return object_model->index(context, identifier);
 
+        if(type)
+        {
+            //TODO: THIS IS HORRIBLE, FIX
+            const auto type_type = context.get_global_scope()->find(type->get_name(), true);
+            return type_type->index(context, identifier);
+        }
+
         //todo: is there any point?
         if (creator)
         {

@@ -185,6 +185,7 @@ namespace element
         //todo: need to figure out differences between compiling and calling and their restrictions, if any
         auto result = std::make_shared<compiled_expression>();
         result->creator = this;
+        result->type = nullptr;
         result->object_model = std::make_shared<function_instance>(this, std::move(args));
         return std::move(result);
     }
@@ -200,6 +201,7 @@ namespace element
 
             auto compiled = std::make_shared<compiled_expression>();
             compiled->creator = this;
+            compiled->type = nullptr;
             compiled->object_model = std::move(obj);
             return compiled;
         }
