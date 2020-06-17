@@ -75,6 +75,10 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
+    result = eval("add5(a) = a.add(5); evaluate = add5(5);");
+    if (result != ELEMENT_OK)
+        return result;
+
     /*result = eval("add5 = Num.add(5); evaluate = add5(2);");
     if (result != ELEMENT_OK)
         return result;*/
