@@ -78,12 +78,12 @@ namespace element
         element_binary_op get_operation() const { return operation; }
     };
 
-    //TODO: JM -  Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
-    class element_intrinsic_if : element_intrinsic
-    {
-        element_intrinsic_if(type_const_shared_ptr type, identifier name)
-            : element_intrinsic(std::move(type), std::move(name))
-        {
-        }
-    };
+    ////TODO: JM -  Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
+    //class element_intrinsic_if : element_intrinsic
+    //{
+    //    element_intrinsic_if(type_const_shared_ptr type, identifier name)
+    //        : element_intrinsic(std::move(type), std::move(name))
+    //    {
+    //    }
+    //};
 }
