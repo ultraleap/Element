@@ -87,6 +87,14 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;*/
 
+    result = eval("evaluate = Bool.if(False, 1, 0);");
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = eval("evaluate = Num.mod(5, 2);");
+    if (result != ELEMENT_OK)
+        return result;
+
     //todo: element doesn't support partial application of any function, only instance functions (i.e. member functions with implicit "this")
     /*result = eval("add5 = Num.add(5); evaluate = add5(2);");
     if (result != ELEMENT_OK)

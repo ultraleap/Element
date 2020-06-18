@@ -8,7 +8,7 @@
 DEFINE_TYPE_ID(element::intrinsic_nullary, 1U << 0);
 DEFINE_TYPE_ID(element::intrinsic_unary, 1U << 1);
 DEFINE_TYPE_ID(element::intrinsic_binary, 1U << 2);
-//DEFINE_TYPE_ID(element::intrinsic_if, 1U << 3);
+DEFINE_TYPE_ID(element::intrinsic_if, 1U << 3);
 
 namespace element
 {
@@ -62,7 +62,7 @@ namespace element
             { "Num.gt", std::make_shared<intrinsic_binary>(element_binary_op::gt, type::boolean, type::num, type::num) },
             { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, type::boolean, type::num, type::num) },
 
-            { "Bool.if", nullptr },
+            { "Bool.if", std::make_shared<intrinsic_if>() },
             { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not, type::boolean, type::boolean) },
             { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and, type::boolean, type::boolean) },
             { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op:: or , type::boolean, type::boolean) },
@@ -144,5 +144,24 @@ namespace element
             operation,
             args[0],
             args[1]);
+    }
+
+    intrinsic_if::intrinsic_if()
+        : intrinsic_function(type_id, nullptr)
+    {
+    }
+
+    std::shared_ptr<object> intrinsic_if::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    {
+        auto result = std::make_shared<compiled_expression>();
+        result->creator = nullptr;
+        result->type = nullptr;
+
+        result->expression_tree = std::make_shared<element_expression_if>(
+            context.stack.frames.back().arguments[0]->expression_tree,
+            context.stack.frames.back().arguments[1]->expression_tree,
+            context.stack.frames.back().arguments[2]->expression_tree);
+
+        return result;
     }
 }

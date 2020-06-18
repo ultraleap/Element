@@ -51,7 +51,7 @@ namespace element
         if (!enclosing_scope)
             return nullptr;
 
-        return enclosing_scope->find(identifier.value, true);
+        //todo: all below this is broke innit
 
         //todo: all below this is broke innit
     }

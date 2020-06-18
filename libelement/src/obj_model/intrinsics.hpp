@@ -80,14 +80,14 @@ namespace element
         [[nodiscard]] element_binary_op get_operation() const { return operation; }
     };
 
-    ////TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
-    //class intrinsic_if final : public intrinsic
-    //{
-    //    DECLARE_TYPE_ID();
+    //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
+    class intrinsic_if final : public intrinsic_function
+    {
+    public:
+        DECLARE_TYPE_ID();
 
-    //    intrinsic_if(type_const_shared_ptr return_type, std::string name)
-    //        : intrinsic(type_id, std::move(return_type), std::move(name))
-    //    {
-    //    }
-    //};
+        intrinsic_if();
+
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+    };
 }
