@@ -14,7 +14,26 @@ namespace element
         {
             //TODO: THIS IS HORRIBLE, FIX
             const auto type_type = context.get_global_scope()->find(type->get_name(), true);
-            return type_type->index(context, identifier);
+
+            auto found = type_type->index(context, identifier);
+            if (!found)
+            {
+                assert(false);
+                return nullptr;
+            }
+            //ew
+            if (dynamic_cast<function_declaration*>(found.get()))
+            {
+                auto func = std::dynamic_pointer_cast<function_declaration>(found);
+                std::vector<std::shared_ptr<compiled_expression>> ourselves{ compile(context) };
+                auto partially_applied_function = std::make_shared<function_instance>(func.get(), std::move(ourselves));
+                partially_applied_function->stack = context.stack;
+                return std::move(partially_applied_function);
+            }
+
+            //tried to find something on the type but it wasn't a function. maybe a namespace? but that shouldn't be here?
+            assert(false);
+            return found;
         }
 
         //todo: is there any point?
@@ -117,7 +136,7 @@ namespace element
             //we have the exact arguments we need, so now we just need to perform the call
             //we also need to swap the callstacks so that the call can use the one at the point the instance was created
             std::swap(stack, context.stack);
-            auto ret = declarer->body->call(context, args);
+            auto ret = declarer->call(context, args);
             //we then swap them back, in case our instance is called multiple times.
             //Technically the call we did could have modified the callstack, but if it's behaving correctly it will be identical due to popping frames
             std::swap(stack, context.stack);
@@ -140,9 +159,16 @@ namespace element
     {
         //todo: maybe create the wrapped instance of ourselves, ourselves, instead of relying on the function declaration to do it
         std::swap(stack, context.stack);
-        auto ret = declarer->compile(context);
+        auto ret = declarer->call(context, std::move(provided_arguments));
         //we then swap them back just in case;
         std::swap(stack, context.stack);
-        return ret;
+
+        if (dynamic_cast<compiled_expression*>(ret.get()))
+        {
+            return std::dynamic_pointer_cast<compiled_expression>(ret);
+        }
+
+        assert(false);
+        return nullptr;
     }
 }

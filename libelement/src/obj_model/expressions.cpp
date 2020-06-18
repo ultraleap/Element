@@ -61,6 +61,7 @@ namespace element
             compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->creator = enclosing_scope->get_global()->find("Num", false).get();
             std::vector<std::shared_ptr<compiled_expression>> compiled_args = { { std::move(compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation) } };
             auto partially_applied_function = std::make_shared<function_instance>(func, std::move(compiled_args));
+            partially_applied_function->stack = context.stack;
             return std::move(partially_applied_function);
         }
 
