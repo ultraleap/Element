@@ -18,12 +18,12 @@ namespace element
         compiled_expression& operator=(const compiled_expression&) = delete;
         compiled_expression& operator=(compiled_expression&&) = delete;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& identifier) const override;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
         [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile(const compilation_context& context) const;
         [[nodiscard]] std::string to_string() const override { return ""; }
 
-        const object* creator = nullptr; //the thing that generated this thing
+        //const object* creator = nullptr; //the thing that generated this thing
         type_const_shared_ptr type = nullptr; //the type of the thing that generated this thing
         //A compiled expression contains either an expression tree that was output from something being compiled, or some object model thing
         //probably shouldn't contain both but let's see if we ever need to :b

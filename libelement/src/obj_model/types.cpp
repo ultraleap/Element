@@ -22,6 +22,15 @@ namespace element
     const constraint_const_shared_ptr constraint::nullary = std::make_shared<nullary_constraint>();
     const constraint_const_shared_ptr constraint::unary = std::make_shared<unary_constraint>();
     const constraint_const_shared_ptr constraint::binary = std::make_shared<binary_constraint>();
+
+    std::shared_ptr<object> num_type::index(const compilation_context& context, const identifier& identifier) const
+    {
+        static std::shared_ptr<declaration> declaration;
+        if (!declaration)
+            declaration = context.get_global_scope()->find("Num", false);
+
+        return declaration->index(context, identifier);
+    }
 }
 
 #else

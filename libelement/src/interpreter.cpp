@@ -729,7 +729,7 @@ element_result element_interpreter_evaluate(
         outputs->count,
         opts);
     if (result != ELEMENT_OK) {
-        context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->creator->to_string()), "<input>");
+        context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->to_string()), "<input>");
     }
 
     return result;

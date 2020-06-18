@@ -7,40 +7,14 @@ namespace element
     //compiled_expression
     std::shared_ptr<object> compiled_expression::index(const compilation_context& context, const identifier& identifier) const
     {
-        if (object_model)
-            return object_model->index(context, identifier);
-
         if (type)
         {
-            //TODO: THIS IS HORRIBLE, FIX
-            const auto type_type = context.get_global_scope()->find(type->get_name(), true);
-
-            auto found = type_type->index(context, identifier);
-            if (!found)
-            {
-                assert(false);
-                return nullptr;
-            }
-            //ew
-            if (dynamic_cast<function_declaration*>(found.get()))
-            {
-                auto func = std::dynamic_pointer_cast<function_declaration>(found);
-                std::vector<std::shared_ptr<compiled_expression>> ourselves{ compile(context) };
-                auto partially_applied_function = std::make_shared<function_instance>(func.get(), std::move(ourselves));
-                partially_applied_function->stack = context.stack;
-                return std::move(partially_applied_function);
-            }
-
-            //tried to find something on the type but it wasn't a function. maybe a namespace? but that shouldn't be here?
-            assert(false);
-            return found;
-        }
-
-        //todo: is there any point?
-        if (creator)
-        {
-            assert(false); //figure out if/when this occurs and if it should
-            return creator->index(context, identifier);
+            const auto partial_application = type->index(context, identifier);
+            auto func = std::dynamic_pointer_cast<function_declaration>(partial_application);
+            std::vector<std::shared_ptr<compiled_expression>> ourselves{ compile(context) };
+            auto partially_applied_function = std::make_shared<function_instance>(func.get(), std::move(ourselves));
+            partially_applied_function->stack = context.stack;
+            return std::move(partially_applied_function);
         }
 
         return nullptr;
@@ -48,15 +22,8 @@ namespace element
 
     std::shared_ptr<object> compiled_expression::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
-        if (object_model)
-            return object_model->call(context, std::move(args));
-
-        //todo: is there any point?
-        if (creator)
-        {
-            assert(false); //figure out if/when this occurs and if it should
-            return creator->call(context, std::move(args));
-        }
+        if (type)
+            return type->call(context, std::move(args));
 
         return nullptr;
     }
@@ -66,14 +33,8 @@ namespace element
         if (expression_tree)
             return const_cast<compiled_expression*>(this)->shared_from_this();
 
-        if (object_model)
-            return object_model->compile(context);
-
-        if (creator)
-        {
-            assert(false);
-            return creator->compile(context);
-        }
+        if (type)
+            return type->compile(context);
 
         return nullptr;
     }
@@ -122,17 +83,6 @@ namespace element
 
         if (args.size() == declarer->inputs.size())
         {
-            /*
-             someFunc()
-             {
-                doFunc(a) = a.add(1);
-                otherFunc = Num.add(1, 2);
-                return = doFunc(otherFunc);
-             }
-
-             evaluate = someFunc;
-             */
-
             //we have the exact arguments we need, so now we just need to perform the call
             //we also need to swap the callstacks so that the call can use the one at the point the instance was created
             std::swap(stack, context.stack);
@@ -145,14 +95,6 @@ namespace element
 
         assert(false);
         return nullptr;
-
-        /* Element doesn't allow general partial application, but if it did, we would do it here
-        if (args.size() < declarer->inputs.size())
-        {
-            //we partially apply the arguments we have. todo: reuse existing instance if we can?
-            return std::make_shared<function_instance>(declarer, std::move(args));
-        }
-        */
     }
 
     std::shared_ptr<compiled_expression> function_instance::compile(const compilation_context& context) const
