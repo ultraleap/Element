@@ -150,7 +150,7 @@ element_value element_evaluate_binary(element_expression_binary::op op, element_
     case element_expression_binary::op::add:   return a + b;
     case element_expression_binary::op::atan2: return std::atan2(a, b);
     case element_expression_binary::op::div:   return a / b;
-    case element_expression_binary::op::log:   return std::log10(a) / std::log10(b); // TODO: optimised pseudo-ops for log10 et al?
+    case element_expression_binary::op::log:   return b ? std::log10(a) / std::log10(b) : std::nanf(""); // TODO: optimised pseudo-ops for log10 et al?
     case element_expression_binary::op::max:   return (std::max)(a, b);
     case element_expression_binary::op::min:   return (std::min)(a, b);
     case element_expression_binary::op::mul:   return a * b;
@@ -176,5 +176,6 @@ element_value element_evaluate_binary(element_expression_binary::op op, element_
 //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
 element_value element_evaluate_if(element_value predicate, element_value if_true, element_value if_false)
 {
-    return predicate ? if_true : if_false;
+    //Element treats negative numbers and 0 as false
+    return predicate > 0 ? if_true : if_false;
 }
