@@ -110,31 +110,6 @@ namespace element
         std::shared_ptr<const object> body;
     };
 
-    //expression bodied functions are used as the leaf-functions for a chain of scope bodied ones to prevent recursion
-    //the last thing in a function call chain must be an expression bodied "return"
-    class expression_bodied_function_declaration final : public declaration
-    {
-    public:
-        expression_bodied_function_declaration(identifier identifier, const scope* parent_scope);
-        virtual ~expression_bodied_function_declaration() = default;
-
-        //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
-        expression_bodied_function_declaration(const expression_bodied_function_declaration& scope) = delete;
-        expression_bodied_function_declaration(expression_bodied_function_declaration&& scope) = delete;
-        expression_bodied_function_declaration& operator=(const expression_bodied_function_declaration& scope) = delete;
-        expression_bodied_function_declaration& operator=(expression_bodied_function_declaration&& scope) = delete;
-
-        [[nodiscard]] std::string to_string() const override;
-        [[nodiscard]] std::string to_code(int depth) const override;
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
-        [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
-
-        std::shared_ptr<expression> expression;
-
-    private:
-        //todo
-    };
-
     class namespace_declaration final : public declaration
     {
     public:

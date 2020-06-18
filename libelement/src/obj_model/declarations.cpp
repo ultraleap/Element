@@ -172,108 +172,84 @@ namespace element
 
     std::shared_ptr<object> function_declaration::index(const compilation_context& context, const identifier& name) const
     {
-        return compile(context)->index(context, name);
+        //Indexing a nullary(constant is valid), implicit call and then index
+        //e.g. Num.pi.add(1)
+        //if it's not a nullary, then the call will fail
+        return call(context, {})->index(context, name);
     }
 
     std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
-        if (inputs.size() == args.size())
-            return body->call(context, args);
+        /**
+        todo: write tests
+         MyStruct(myNum:Num)
+         {
+            DoThing(this:MyStruct, a:Num) = a.mul(this.myNum);
+         }
 
-        //don't have all the arguments, so partially apply them
-        //is a compiled expression because if the call is the full expression, then we return it from expression->compile, which needs to be a compiled expression.
-        //todo: need to figure out differences between compiling and calling and their restrictions, if any
-        auto result = std::make_shared<compiled_expression>();
-        result->creator = this;
-        result->type = nullptr;
-        result->object_model = std::make_shared<function_instance>(this, std::move(args));
-        return std::move(result);
+         MyStruct.DoThing(MyStruct(1), 1)
+         MyStruct(1).DoThing(1)
+         
+         myStructInstance = MyStruct(5);
+         returnHigherOrder = myStructInstance.DoThing;
+         useHigherOrderFunc(a:Unary) = a;
+         useHigherOrderFunc(useHigherOrderFunc(returnHigherOrder));
+         eval = a(2)
+         
+         find DoThing(), not a member, so check struct declaration
+         if DoThing is instance function
+            return dothing->call(shared_from_this())
+         
+         */
+
+        //Tried to call a function declaration without passing the right number of arguments
+        //If this was via an instance function, the struct instance will inject itself in to the arguments, so not something we concern ourselves with
+        //Element itself doesn't support partial application of any function
+        if (inputs.size() != args.size())
+        {
+            assert(false);
+            return nullptr;
+        }
+
+        //If we're scope-bodied compiling ourselves means return the return in our scope
+        //    if that return is a nullary, we compile it and return
+        //    if that return is anything else, we return it as a higher-order function
+        //If we're expression-bodied compiling ourselves means compiling the expression chain
+        //    if they use our parameters, they should get it from the callstack
+        //If we're intrinsic-bodied compiling ourselves means generating a compiled_expression representing an expression tree
+        //    intrinsics require parameters, which they should get it from the callstack
+
+        call_stack::frame frame;
+        frame.function = this;
+        frame.arguments = std::move(args);
+        context.stack.frames.emplace_back(std::move(frame));
+        auto ret = body->call(context, {});
+        context.stack.frames.pop_back();
+        return ret;
     }
 
     std::shared_ptr<compiled_expression> function_declaration::compile(const compilation_context& context) const
     {
+        //E.g. evaluate = Num.pi;
+        
+        //Nullaries can always be compiled without making a function instance
         if (inputs.empty())
         {
             auto obj = call(context, {});
-
-            if (dynamic_cast<compiled_expression*>(obj.get()))
-                return std::dynamic_pointer_cast<compiled_expression>(obj);
-
-            auto compiled = std::make_shared<compiled_expression>();
-            compiled->creator = this;
-            compiled->type = nullptr;
-            compiled->object_model = std::move(obj);
-            return compiled;
+            assert(dynamic_cast<compiled_expression*>(obj.get())); //todo: one of the calls returned something that wasn't wrapped in a compiled expression
+            return std::dynamic_pointer_cast<compiled_expression>(std::move(obj));
         }
 
-        throw;
-    }
-
-    //expression bodied function
-    expression_bodied_function_declaration::expression_bodied_function_declaration(identifier identifier, const scope* parent_scope)
-        : declaration(std::move(identifier), parent_scope)
-    {
-        qualifier = function_qualifier;
-        _intrinsic = false;
-    }
-
-    std::string expression_bodied_function_declaration::to_string() const
-    {
-        return location() + ":Function";
-    }
-
-    std::string expression_bodied_function_declaration::to_code(const int depth) const
-    {
-        auto declaration = name.value;
-
-        const std::string offset = "    ";
-        std::string declaration_offset;
-
-        for (auto i = 0; i < depth; ++i)
-            declaration_offset += offset;
-
-        if (has_inputs()) {
-            static auto accumulate = [depth](std::string accumulator, const port& port)
-            {
-                return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
-            };
-
-            const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
-            declaration = name.value + "(" + input_ports + ")";
-        }
-
-        if (output)
-            declaration += output->to_code(depth);
-
-        return declaration_offset + declaration + " = " + expression->to_code() + ";";
-    }
-
-    std::shared_ptr<object> expression_bodied_function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
-    {
-        //todo: apply arguments to callstack/cache so they can be found from scope lookups
-        const auto& compiled = compile(context);
-        //if it was a function instance then we should apply the arguments we have to it
-        //e.g. evaluate = add5(2); will call function declaration add5 with 2, so we need to apply 2 here. maybe there's a better way
-        if (dynamic_cast<function_instance*>(compiled->object_model.get()) &&
-            static_cast<int>(args.size()) > static_cast<int>(inputs.size())) //we were given more args than we accept, so apply the remaining ones to the function instance
-        {
-            const auto& instance = static_cast<function_instance*>(compiled->object_model.get());
-            instance->provided_arguments.insert(instance->provided_arguments.end(), args.begin() + inputs.size(), args.end());
-
-            //egh.. it feels like everything needs to return a compiled_expression
-            if (instance->provided_arguments.size() == instance->declarer->inputs.size())
-                return instance->call(context, {});
-            else
-                compiled->object_model = instance->call(context, {});
-        }
-
-        return compiled;
-    }
-
-    std::shared_ptr<compiled_expression> expression_bodied_function_declaration::compile(const compilation_context& context) const
-    {
-        //todo: should compilation have to happen via a call? I think so, so this function becomes redundant/an issue? mmmm
-        return expression->compile(context);
+        //Compiling a declaration that isn't nullary creates a function instance, that can later have stuff applied to it
+        //This allows it to keep a copy of the callstack for when it is called later on
+        auto ret = std::make_shared<compiled_expression>();
+        ret->creator = this;
+        ret->type = nullptr;
+        ret->expression_tree = nullptr;
+        auto instance = std::make_shared<function_instance>(this, std::vector<std::shared_ptr<compiled_expression>>{});
+        instance->stack = context.stack;
+        ret->object_model = std::move(instance);
+        return ret;
     }
 
     //namespace
