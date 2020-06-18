@@ -7,6 +7,7 @@
 #include "intermediaries.hpp"
 #include "functions.hpp"
 #include "etree/expressions.hpp"
+#include "intrinsics.hpp"
 
 namespace element
 {
@@ -51,6 +52,7 @@ namespace element
         : declaration(std::move(identifier), parent_scope)
     {
         qualifier = struct_qualifier;
+        _intrinsic = is_intrinsic;
     }
 
     std::string struct_declaration::to_string() const
@@ -87,6 +89,37 @@ namespace element
     std::shared_ptr<object> struct_declaration::index(const compilation_context& context, const identifier& identifier) const
     {
         return our_scope->find(identifier, false);
+    }
+
+    std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    {
+        //obviously not a good thing
+        if (_intrinsic)
+        {
+            if (name.value == "Num")
+            {
+                return args[0];
+            }
+            else if (name.value == "Bool")
+            {
+                auto& true_decl = *context.get_global_scope()->find("True", false);
+                auto& false_decl = *context.get_global_scope()->find("False", false);
+
+                auto result = std::make_shared<compiled_expression>();
+                result->creator = this;
+
+                auto true_expr = intrinsic::get_intrinsic(true_decl)->call(context, {});
+                auto false_expr = intrinsic::get_intrinsic(false_decl)->call(context, {});
+
+                auto ifz = std::make_shared<element_expression_if>(
+                    args[0]->expression_tree,
+                    std::dynamic_pointer_cast<compiled_expression>(true_expr)->expression_tree,
+                    std::dynamic_pointer_cast<compiled_expression>(false_expr)->expression_tree);
+                result->expression_tree = std::move(ifz);
+                return result;
+            }
+        }
+        return std::shared_ptr<object>();
     }
 
     //constraint

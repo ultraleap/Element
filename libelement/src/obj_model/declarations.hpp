@@ -73,6 +73,7 @@ namespace element
         [[nodiscard]] std::string to_code(int depth) const override;
 
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const element::identifier&) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
     };
 
     class constraint_declaration final : public declaration
