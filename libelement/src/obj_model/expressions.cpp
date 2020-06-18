@@ -31,7 +31,7 @@ namespace element
         for (const auto& expression : children)
         {
             auto previous = std::move(current);
-            current = expression->compile(context, previous);
+            current = expression->resolve_expression(context, previous);
             assert(current);
         }
 
@@ -40,13 +40,8 @@ namespace element
 
     [[nodiscard]] std::shared_ptr<object> expression::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
-        call_stack::frame frame;
-        frame.function = enclosing_scope->declarer;
-        frame.arguments = std::move(args);
-        context.stack.frames.emplace_back(std::move(frame));
-        auto compiled = compile(context);
-        context.stack.frames.pop_back();
-        return compiled;
+        assert(args.size() == 0); //todo: why can't we use compile directly?
+        return compile(context);
     }
 
     std::shared_ptr<object> literal_expression::index(const compilation_context& context, const identifier& identifier) const
@@ -62,6 +57,7 @@ namespace element
             auto compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation = std::make_shared<compiled_expression>();
             compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->expression_tree = std::make_shared<element_expression_constant>(value);
             compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->object_model = std::make_shared<literal_expression>(value, enclosing_scope); //this is really bad, we should not recreate the literal expression. all of this is an iffy hack though
+            compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->type = type::num;
             compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation->creator = enclosing_scope->get_global()->find("Num", false).get();
             std::vector<std::shared_ptr<compiled_expression>> compiled_args = { { std::move(compile_ourselves_again_because_we_dont_have_access_to_our_original_compilation) } };
             auto partially_applied_function = std::make_shared<function_instance>(func, std::move(compiled_args));
@@ -72,7 +68,7 @@ namespace element
         return nullptr;
     }
 
-    [[nodiscard]] std::shared_ptr<object> identifier_expression::compile(const compilation_context& context, std::shared_ptr<object> previous)
+    [[nodiscard]] std::shared_ptr<object> identifier_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
     {
         if (previous) //cannot resolve identifier if previous exists
             return nullptr;
@@ -80,10 +76,13 @@ namespace element
         if (!enclosing_scope)
             return nullptr;
 
+        //todo: all below this is broke innit
+
         auto found = enclosing_scope->find(identifier.value, false);
         if (found)
             return found;
 
+        //todo: make it nice and on the callstack itself
         if (!context.stack.frames.empty())
         {
             const auto& frame = context.stack.frames.back();
@@ -100,6 +99,7 @@ namespace element
             }
         }
 
+        //todo: this has to be merged with the callstack I think, i.e. each level of scopage has its own locals + arguments to do lookups with
         found = enclosing_scope->get_parent_scope()->find(identifier.value, true);
         if (found)
             return found;
@@ -109,7 +109,7 @@ namespace element
         return nullptr;
     }
 
-    [[nodiscard]] std::shared_ptr<object> literal_expression::compile(const compilation_context& context, std::shared_ptr<object> previous)
+    [[nodiscard]] std::shared_ptr<object> literal_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
     {
         if (previous) //cannot resolve literal if previous exists
             return nullptr;
@@ -122,12 +122,11 @@ namespace element
         //a compiled expression's declarer is always a raw pointer, because it shouldn't be an intermediary but something that's part of the object model. I think
         //it's basically just some root thing we can use to track down where it came from if we need to
         compiled->object_model = shared_from_this();
-        //todo: don't have constraints set up right now, so just hacking it in to declarer. not even sure if that's a bad thing, declarer makes sense?
-        compiled->creator = enclosing_scope->get_global()->find("Num", false).get(); //hopefully the Num declaration doesn't move anywhere (e.g merging..)
+        compiled->type = type::num;
         return std::move(compiled);
     }
 
-    [[nodiscard]] std::shared_ptr<object> indexing_expression::compile(const compilation_context& context, std::shared_ptr<object> previous)
+    [[nodiscard]] std::shared_ptr<object> indexing_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
     {
         if (!previous) //can only resolve indexing if previous exists
             return nullptr;
@@ -146,7 +145,7 @@ namespace element
         return "(" + expressions + ")";
     }
 
-    [[nodiscard]] std::shared_ptr<object> call_expression::compile(const compilation_context& context, std::shared_ptr<object> previous)
+    [[nodiscard]] std::shared_ptr<object> call_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
     {
         if (!previous) //can only resolve call if previous exists
             return nullptr;

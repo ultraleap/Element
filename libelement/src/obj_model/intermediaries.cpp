@@ -10,7 +10,7 @@ namespace element
         if (object_model)
             return object_model->index(context, identifier);
 
-        if(type)
+        if (type)
         {
             //TODO: THIS IS HORRIBLE, FIX
             const auto type_type = context.get_global_scope()->find(type->get_name(), true);
@@ -103,16 +103,46 @@ namespace element
 
         if (args.size() == declarer->inputs.size())
         {
-            //we have the exact arguments we need
-            return declarer->call(context, args);
-        }
-        else if (args.size() < declarer->inputs.size())
-        {
-            //we partially apply the arguments we have. todo: reuse existing instance if we can?
-            return std::make_shared<function_instance>(declarer, std::move(args));
+            /*
+             someFunc()
+             {
+                doFunc(a) = a.add(1);
+                otherFunc = Num.add(1, 2);
+                return = doFunc(otherFunc);
+             }
+
+             evaluate = someFunc;
+             */
+
+            //we have the exact arguments we need, so now we just need to perform the call
+            //we also need to swap the callstacks so that the call can use the one at the point the instance was created
+            std::swap(stack, context.stack);
+            auto ret = declarer->body->call(context, args);
+            //we then swap them back, in case our instance is called multiple times.
+            //Technically the call we did could have modified the callstack, but if it's behaving correctly it will be identical due to popping frames
+            std::swap(stack, context.stack);
+            return ret;
         }
 
         assert(false);
         return nullptr;
+
+        /* Element doesn't allow general partial application, but if it did, we would do it here
+        if (args.size() < declarer->inputs.size())
+        {
+            //we partially apply the arguments we have. todo: reuse existing instance if we can?
+            return std::make_shared<function_instance>(declarer, std::move(args));
+        }
+        */
+    }
+
+    std::shared_ptr<compiled_expression> function_instance::compile(const compilation_context& context) const
+    {
+        //todo: maybe create the wrapped instance of ourselves, ourselves, instead of relying on the function declaration to do it
+        std::swap(stack, context.stack);
+        auto ret = declarer->compile(context);
+        //we then swap them back just in case;
+        std::swap(stack, context.stack);
+        return ret;
     }
 }

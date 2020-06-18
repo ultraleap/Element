@@ -135,7 +135,7 @@ namespace element
 
         result->expression_tree = std::make_shared<element_expression_unary>(
             operation,
-            args[0]->expression_tree);
+            context.stack.frames.back().arguments[0]->expression_tree);
 
         return result;
     }
@@ -158,8 +158,8 @@ namespace element
 
         result->expression_tree = std::make_shared<element_expression_binary>(
             operation,
-            args[0]->expression_tree,
-            args[1]->expression_tree);
+            context.stack.frames.back().arguments[0]->expression_tree,
+            context.stack.frames.back().arguments[1]->expression_tree);
 
         return result;
     }
