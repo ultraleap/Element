@@ -27,10 +27,8 @@ namespace element
 
         [[nodiscard]] virtual bool has_children() const { return !children.empty(); }
         [[nodiscard]] std::string to_code(int depth = 0) const override;
-
-        [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
+        std::shared_ptr<compiled_expression> compile(const compilation_context& context) const;
         [[nodiscard]] virtual std::shared_ptr<object> resolve_expression(const compilation_context& context, std::shared_ptr<object>) { return nullptr; };
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
 
         const scope* enclosing_scope;
 
@@ -57,9 +55,6 @@ namespace element
 
         [[nodiscard]] bool has_children() const override { return false; }
         [[nodiscard]] std::string to_code(int depth = 0) const override { return std::to_string(value); }
-
-        //when a literal is compiled and we need to later index it, it goes through here
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
         [[nodiscard]] std::shared_ptr<object> resolve_expression(const compilation_context& context, std::shared_ptr<object> previous) override;
 
         element_value value;
@@ -107,8 +102,6 @@ namespace element
         call_expression& operator=(call_expression&&) = delete;
 
         [[nodiscard]] std::string to_code(int depth = 0) const override;
-
-        //[[nodiscard]] const object* index(const indexing_expression*) const override;
         [[nodiscard]] std::shared_ptr<object> resolve_expression(const compilation_context& context, std::shared_ptr<object> previous) override;
 
     private:

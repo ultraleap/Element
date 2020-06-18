@@ -40,7 +40,7 @@ namespace element
     public:
         explicit intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr return_type);
 
-        [[nodiscard]] std::shared_ptr<element::object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
         [[nodiscard]] element_nullary_op get_operation() const { return operation; }
     };
 
@@ -57,7 +57,7 @@ namespace element
     public:
         explicit intrinsic_unary(element_unary_op operation, type_const_shared_ptr return_type, type_const_shared_ptr argument_type);
 
-        [[nodiscard]] std::shared_ptr<element::object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
         [[nodiscard]] element_unary_op get_operation() const { return operation; }
     };
 
@@ -76,8 +76,8 @@ namespace element
     public:
         explicit intrinsic_binary(element_binary_op operation, type_const_shared_ptr return_type, type_const_shared_ptr first_argument_type, type_const_shared_ptr second_argument_type);
 
+        [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
         [[nodiscard]] element_binary_op get_operation() const { return operation; }
-        [[nodiscard]] std::shared_ptr<element::object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
     };
 
     ////TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input

@@ -8,7 +8,7 @@
 
 namespace element
 {
-    class type : public rtti_type<type>
+    class type : public object, public rtti_type<type>
     {
     public:
         DECLARE_TYPE_ID();
@@ -28,12 +28,18 @@ namespace element
         std::string name;
     };
 
-    class num_type : public type {
+    class num_type : public type
+    {
+
     public:
         DECLARE_TYPE_ID();
         num_type() : type(type_id, "Num")
         {
         }
+
+    public:
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context,
+            const identifier& identifier) const override;
     };
 
     class boolean_type : public type {

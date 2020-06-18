@@ -59,18 +59,18 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
-    result = eval("evaluate = 1.add(2);");
-    if (result != ELEMENT_OK)
-        return result;
+    //result = eval("evaluate = 1.add(2);");
+    //if (result != ELEMENT_OK)
+    //    return result;
 
-    result = eval("evaluate = -3;");
-    if (result != ELEMENT_OK)
-        return result;
+    //result = eval("evaluate = -3;");
+    //if (result != ELEMENT_OK)
+    //    return result;
 
-    result = eval("evaluate = Num.NaN;");
-    if (result != ELEMENT_OK)
-        return result;
-
+    //result = eval("evaluate = Num.NaN;");
+    //if (result != ELEMENT_OK)
+    //    return result;
+    /*
     result = eval("evaluate = Num.tau;");
     if (result != ELEMENT_OK)
         return result;
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 
     result = eval("evaluate = Num.asin(-1).degrees;");
     if (result != ELEMENT_OK)
-        return result;
+        return result;*/
 
     //todo: element doesn't support partial application of any function, only instance functions (i.e. member functions with implicit "this")
     /*result = eval("add5 = Num.add(5); evaluate = add5(2);");
