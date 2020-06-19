@@ -22,7 +22,7 @@ namespace element
         scope& operator = (const scope&) = delete;
         scope& operator = (scope&&) = delete;
 
-        [[nodiscard]] std::shared_ptr<declaration> find(const std::string& name, bool recurse) const;
+        [[nodiscard]] std::shared_ptr<declaration> find(const identifier& name, bool recurse) const;
         [[nodiscard]] bool is_root() const { return parent_scope == nullptr; }
         [[nodiscard]] bool is_empty() const { return declarations.empty(); }
         [[nodiscard]] const scope* get_global() const;
@@ -39,6 +39,6 @@ namespace element
 
     private:
         const scope* parent_scope = nullptr;
-        std::map<std::string, std::shared_ptr<declaration>> declarations;
+        std::map<identifier, std::shared_ptr<declaration>> declarations;
     };
 }

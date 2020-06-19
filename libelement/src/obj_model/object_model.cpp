@@ -132,7 +132,7 @@ std::shared_ptr<element::declaration> element::build_function_declaration(const 
     {
         assert(!intrinsic);
         build_scope(body, *function_decl);
-        function_decl->body = function_decl->our_scope->find("return", false);
+        function_decl->body = function_decl->our_scope->find(identifier::return_identifier, false);
     }
     else if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL)
     {

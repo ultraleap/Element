@@ -27,7 +27,7 @@ namespace element
 
         [[nodiscard]] virtual bool has_children() const { return !children.empty(); }
         [[nodiscard]] std::string to_code(int depth = 0) const override;
-        std::shared_ptr<compiled_expression> compile(const compilation_context& context) const;
+        [[nodiscard]] std::shared_ptr<compiled_expression> compile(const compilation_context& context) const;
         [[nodiscard]] virtual std::shared_ptr<object> resolve_expression(const compilation_context& context, std::shared_ptr<object>) { return nullptr; };
 
         const scope* enclosing_scope;

@@ -108,6 +108,19 @@ namespace element
 
     std::shared_ptr<compiled_expression> intrinsic_nullary::compile(const compilation_context& context) const
     {
+        //Special case for handling nullary calls
+        auto result = std::make_shared<compiled_expression>();
+        //result->creator = nullptr;
+        result->type = return_type;
+
+        result->expression_tree = std::make_shared<element_expression_nullary>(
+            operation);
+
+        return result;
+    }
+
+    std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    {
         auto result = std::make_shared<compiled_expression>();
         //result->creator = nullptr;
         result->type = return_type;
@@ -127,7 +140,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<compiled_expression> intrinsic_unary::compile(const compilation_context& context) const
+    std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
         auto result = std::make_shared<compiled_expression>();
         //result->creator = nullptr;
@@ -135,7 +148,7 @@ namespace element
 
         result->expression_tree = std::make_shared<element_expression_unary>(
             operation,
-            context.stack.frames.back().arguments[0]->expression_tree);
+            args[0]->expression_tree);
 
         return result;
     }
@@ -150,7 +163,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<compiled_expression> intrinsic_binary::compile(const compilation_context& context) const
+    std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
         auto result = std::make_shared<compiled_expression>();
         //result->creator = nullptr;
@@ -158,8 +171,8 @@ namespace element
 
         result->expression_tree = std::make_shared<element_expression_binary>(
             operation,
-            context.stack.frames.back().arguments[0]->expression_tree,
-            context.stack.frames.back().arguments[1]->expression_tree);
+            args[0]->expression_tree,
+            args[1]->expression_tree);
 
         return result;
     }
