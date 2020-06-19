@@ -41,6 +41,11 @@ namespace element
         return our_scope->get_parent_scope()->location() + "." + declaration;
     }
 
+    std::shared_ptr<compiled_expression> declaration::compile(const compilation_context& context) const
+    {
+        return body->compile(context);
+    }
+
     //struct
     struct_declaration::struct_declaration(identifier identifier, const scope* parent_scope, const bool is_intrinsic)
         : declaration(std::move(identifier), parent_scope)
@@ -81,7 +86,7 @@ namespace element
 
     std::shared_ptr<object> struct_declaration::index(const compilation_context& context, const identifier& identifier) const
     {
-        return our_scope->find(identifier.value, false);
+        return our_scope->find(identifier, false);
     }
 
     //constraint
@@ -170,19 +175,9 @@ namespace element
         return declaration_offset + name.value + ports + our_scope->to_code(depth);
     }
 
-    std::shared_ptr<object> function_declaration::index(const compilation_context& context, const identifier& name) const
-    {
-        return body->index(context, name);
-    }
-
     std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
     {
         return body->call(context, args);
-    }
-
-    std::shared_ptr<compiled_expression> function_declaration::compile(const compilation_context& context) const
-    {
-        return body->compile(context);
     }
 
     //namespace
@@ -203,8 +198,8 @@ namespace element
         return "namespace " + name.value + our_scope->to_code(depth);
     }
 
-    std::shared_ptr<object> namespace_declaration::index(const compilation_context& context, const element::identifier& expr) const
+    std::shared_ptr<object> namespace_declaration::index(const compilation_context& context, const element::identifier& identifier) const
     {
-        return our_scope->find(name.value, false);
+        return our_scope->find(identifier, false);
     }
 }

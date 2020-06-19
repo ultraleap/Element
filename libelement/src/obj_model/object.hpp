@@ -42,7 +42,7 @@ namespace element
     {
         identifier() = default;
 
-        explicit identifier(std::string value)
+        identifier(std::string value)
             : value{std::move(value)}
         {
         }
@@ -58,6 +58,11 @@ namespace element
         ~identifier() = default;
 
         std::string value;
+
+        bool operator <(const identifier& rhs) const
+        {
+            return value < rhs.value;
+        }
     };
 
     class object

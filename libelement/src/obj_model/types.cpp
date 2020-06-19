@@ -1,3 +1,4 @@
+#include <string>
 #include "types.hpp"
 
 #ifndef LEGACY_COMPILER
@@ -14,6 +15,9 @@ namespace element
     DEFINE_TYPE_ID(unary_constraint, 1U << 6);
     DEFINE_TYPE_ID(binary_constraint, 1U << 7);
 
+    identifier num_type::identifier{ "Num" };
+    identifier boolean_type::identifier{ "Bool" };
+
     const type_const_shared_ptr type::num = std::make_shared<num_type>();
     const type_const_shared_ptr type::boolean = std::make_shared<boolean_type>();
 
@@ -23,11 +27,22 @@ namespace element
     const constraint_const_shared_ptr constraint::unary = std::make_shared<unary_constraint>();
     const constraint_const_shared_ptr constraint::binary = std::make_shared<binary_constraint>();
 
-    std::shared_ptr<object> num_type::index(const compilation_context& context, const identifier& identifier) const
+    std::shared_ptr<object> num_type::index(const compilation_context& context, const element::identifier& identifier) const
     {
         static std::shared_ptr<declaration> declaration;
+
         if (!declaration)
-            declaration = context.get_global_scope()->find("Num", false);
+            declaration = context.get_global_scope()->find(num_type::identifier, false);
+
+        return declaration->index(context, identifier);
+    }
+
+    std::shared_ptr<object> boolean_type::index(const compilation_context& context, const element::identifier& identifier) const
+    {
+        static std::shared_ptr<declaration> declaration;
+
+        if (!declaration)
+            declaration = context.get_global_scope()->find(boolean_type::identifier, false);
 
         return declaration->index(context, identifier);
     }

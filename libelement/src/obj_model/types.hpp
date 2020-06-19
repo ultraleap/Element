@@ -16,16 +16,16 @@ namespace element
         static const type_const_shared_ptr num;      // the absolute unit
         static const type_const_shared_ptr boolean;
 
-        [[nodiscard]] std::string get_name() const { return name; }
+        [[nodiscard]] identifier get_identifier() const { return name; }
 
     protected:
-        type(element_type_id id, std::string name)
+        type(element_type_id id, identifier name)
             : rtti_type(type_id)
             , name(std::move(name))
         {
         }
 
-        std::string name;
+        identifier name;
     };
 
     class num_type : public type
@@ -33,21 +33,31 @@ namespace element
 
     public:
         DECLARE_TYPE_ID();
-        num_type() : type(type_id, "Num")
+        num_type() : type(type_id, identifier)
         {
         }
 
     public:
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context,
-            const identifier& identifier) const override;
+            const element::identifier& identifier) const override;
+
+    private:
+        static element::identifier identifier;
     };
 
     class boolean_type : public type {
     public:
         DECLARE_TYPE_ID();
-        boolean_type() : type(type_id, "Bool")
+        boolean_type() : type(type_id, identifier)
         {
         }
+
+    public:
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context,
+            const element::identifier& identifier) const override;
+
+    private:
+        static element::identifier identifier;
     };
 
     class constraint : public rtti_type<constraint>

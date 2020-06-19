@@ -686,7 +686,7 @@ element_result element_delete_compilable(element_interpreter_ctx* context, eleme
 
 element_result element_interpreter_find(element_interpreter_ctx* context, const char* path, element_compilable** compilable)
 {
-    auto obj = context->global_scope->find(path, false);
+    auto obj = context->global_scope->find(element::identifier(path), false);
     *compilable = new element_compilable{std::move(obj)};
     return ELEMENT_OK;
 }

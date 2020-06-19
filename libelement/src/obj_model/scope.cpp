@@ -61,7 +61,7 @@ void scope::add_declaration(std::shared_ptr<declaration> declaration)
     declarations.emplace(declaration->name.value, std::move(declaration));
 }
 
-std::shared_ptr<declaration> scope::find(const std::string& name, const bool recurse = false) const
+std::shared_ptr<declaration> scope::find(const identifier& name, const bool recurse = false) const
 {
     const auto name_it = declarations.find(name);
     if (name_it != declarations.end())
