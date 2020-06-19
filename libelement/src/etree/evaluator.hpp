@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <cstdlib>
+
+#include "element/interpreter.h"
 #include "etree/expressions.hpp"
 
 element_result element_evaluate(

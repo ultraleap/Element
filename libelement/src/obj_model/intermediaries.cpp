@@ -4,43 +4,8 @@
 
 namespace element
 {
-    //compiled_expression
-    std::shared_ptr<object> compiled_expression::index(const compilation_context& context, const identifier& identifier) const
-    {
-        if (type)
-        {
-            const auto partial_application = type->index(context, identifier);
-            auto func = std::dynamic_pointer_cast<function_declaration>(partial_application);
-            std::vector<std::shared_ptr<compiled_expression>> ourselves{ compile(context) };
-            auto partially_applied_function = std::make_shared<function_instance>(func.get(), std::move(ourselves));
-            partially_applied_function->stack = context.stack;
-            return std::move(partially_applied_function);
-        }
-
-        return nullptr;
-    }
-
-    std::shared_ptr<object> compiled_expression::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
-    {
-        if (type)
-            return type->call(context, std::move(args));
-
-        return nullptr;
-    }
-
-    std::shared_ptr<compiled_expression> compiled_expression::compile(const compilation_context& context) const
-    {
-        if (expression_tree)
-            return const_cast<compiled_expression*>(this)->shared_from_this();
-
-        if (type)
-            return type->compile(context);
-
-        return nullptr;
-    }
-
     //struct_instance
-    struct_instance::struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<compiled_expression>>& expressions)
+    struct_instance::struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<object>>& expressions)
         : declarer{ declarer }
     {
         //TODO: JM - variadics
@@ -66,7 +31,7 @@ namespace element
     }
 
     //function_instance
-    function_instance::function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<compiled_expression>> args)
+    function_instance::function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<object>> args)
         : declarer{ declarer }
         , provided_arguments(std::move(args))
     {
@@ -77,7 +42,7 @@ namespace element
         return declarer->location() + ":FunctionInstance";
     }
 
-    std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<object>> args) const
     {
         args.insert(args.begin(), provided_arguments.begin(), provided_arguments.end());
 
@@ -91,23 +56,6 @@ namespace element
             //Technically the call we did could have modified the callstack, but if it's behaving correctly it will be identical due to popping frames
             std::swap(stack, context.stack);
             return ret;
-        }
-
-        assert(false);
-        return nullptr;
-    }
-
-    std::shared_ptr<compiled_expression> function_instance::compile(const compilation_context& context) const
-    {
-        //todo: maybe create the wrapped instance of ourselves, ourselves, instead of relying on the function declaration to do it
-        std::swap(stack, context.stack);
-        auto ret = declarer->call(context, std::move(provided_arguments));
-        //we then swap them back just in case;
-        std::swap(stack, context.stack);
-
-        if (dynamic_cast<compiled_expression*>(ret.get()))
-        {
-            return std::dynamic_pointer_cast<compiled_expression>(ret);
         }
 
         assert(false);

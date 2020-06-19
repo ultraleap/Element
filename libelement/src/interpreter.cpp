@@ -12,6 +12,7 @@
 #include "common_internal.hpp"
 #include "etree/compiler.hpp"
 #include "etree/evaluator.hpp"
+#include "etree/expressions.hpp"
 #include "token_internal.hpp"
 #include "configuration.hpp"
 #include "obj_model/object_model.hpp"
@@ -700,15 +701,16 @@ element_result element_interpreter_compile(
     const element::compilation_context compilation_context(context->global_scope.get());
     auto compiled = compilable->object->compile(compilation_context);
 
-    if (!compiled->expression_tree)
+    if (dynamic_cast<element_expression*>(compiled.get()))
     {
-        assert(false);
-        return ELEMENT_ERROR_UNKNOWN;
+        auto expression = std::dynamic_pointer_cast<element_expression>(compiled);
+        *evaluable = new element_evaluable{ std::move(expression) };
+
+        return ELEMENT_OK;
     }
 
-    *evaluable = new element_evaluable{std::move(compiled)};
-
-    return ELEMENT_OK;
+    assert(false);
+    return ELEMENT_ERROR_UNKNOWN;
 }
 
 element_result element_interpreter_evaluate(
@@ -722,7 +724,7 @@ element_result element_interpreter_evaluate(
     if (options) opts = *options;
     const auto result = element_evaluate(
         *context,
-        evaluable->evaluable->expression_tree,
+        evaluable->evaluable,
         inputs->values,
         inputs->count,
         outputs->values,
