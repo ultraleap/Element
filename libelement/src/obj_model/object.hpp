@@ -20,7 +20,7 @@ namespace element
         struct frame
         {
             const declaration* function;
-            std::vector<std::shared_ptr<compiled_expression>> arguments;
+            std::vector<std::shared_ptr<object>> arguments;
         };
 
         std::vector<frame> frames;
@@ -78,8 +78,8 @@ namespace element
 
         //todo: some kind of component architecture?
         [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { return nullptr; };
-        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const { return nullptr; };
-        [[nodiscard]] virtual std::shared_ptr<compiled_expression> compile(const compilation_context& context) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element::object>> args) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const { return nullptr; };
 
     protected:
         object() = default;

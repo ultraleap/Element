@@ -51,7 +51,7 @@ namespace element
         std::shared_ptr<const object> body;
         //std::unique_ptr<element_constraint> constraint;
 
-        std::shared_ptr<compiled_expression> compile(const compilation_context& context) const override;
+        std::shared_ptr<object> compile(const compilation_context& context) const override;
 
     protected:
         bool _intrinsic = false; //todo: we need to decide on coding standards, if our types are lowercase like our variables and functions, we need some way to differentiate them
@@ -107,7 +107,7 @@ namespace element
         [[nodiscard]] std::string to_code(int depth) const override;
 
         //[[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const;
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element::object>> args) const override;
     };
 
     class namespace_declaration final : public declaration

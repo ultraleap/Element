@@ -41,7 +41,7 @@ namespace element
         return our_scope->get_parent_scope()->location() + "." + declaration;
     }
 
-    std::shared_ptr<compiled_expression> declaration::compile(const compilation_context& context) const
+    std::shared_ptr<object> declaration::compile(const compilation_context& context) const
     {
         return body->compile(context);
     }
@@ -175,7 +175,7 @@ namespace element
         return declaration_offset + name.value + ports + our_scope->to_code(depth);
     }
 
-    std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> args) const
     {
         return body->call(context, args);
     }

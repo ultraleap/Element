@@ -106,29 +106,10 @@ namespace element
     {
     }
 
-    std::shared_ptr<compiled_expression> intrinsic_nullary::compile(const compilation_context& context) const
+    std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<element::object>> args) const
     {
-        //Special case for handling nullary calls
-        auto result = std::make_shared<compiled_expression>();
-        //result->creator = nullptr;
-        result->type = return_type;
-
-        result->expression_tree = std::make_shared<element_expression_nullary>(
+        return std::make_shared<element_expression_nullary>(
             operation);
-
-        return result;
-    }
-
-    std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
-    {
-        auto result = std::make_shared<compiled_expression>();
-        //result->creator = nullptr;
-        result->type = return_type;
-
-        result->expression_tree = std::make_shared<element_expression_nullary>(
-            operation);
-
-        return result;
     }
 
     intrinsic_unary::intrinsic_unary(element_unary_op operation, 
@@ -140,17 +121,11 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<element::object>> args) const
     {
-        auto result = std::make_shared<compiled_expression>();
-        //result->creator = nullptr;
-        result->type = return_type;
-
-        result->expression_tree = std::make_shared<element_expression_unary>(
+        return std::make_shared<element_expression_unary>(
             operation,
-            args[0]->expression_tree);
-
-        return result;
+            args[0]);
     }
 
     intrinsic_binary::intrinsic_binary(const element_binary_op operation, type_const_shared_ptr return_type = type::num,
@@ -163,17 +138,11 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<element::object>> args) const
     {
-        auto result = std::make_shared<compiled_expression>();
-        //result->creator = nullptr;
-        result->type = return_type;
-
-        result->expression_tree = std::make_shared<element_expression_binary>(
+        return std::make_shared<element_expression_binary>(
             operation,
-            args[0]->expression_tree,
-            args[1]->expression_tree);
-
-        return result;
+            args[0],
+            args[1]);
     }
 }

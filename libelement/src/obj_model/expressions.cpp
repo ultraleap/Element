@@ -21,7 +21,7 @@ namespace element
         return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_code(), accumulate);
     }
 
-    std::shared_ptr<compiled_expression> expression::compile(const compilation_context& context) const
+    std::shared_ptr<object> expression::compile(const compilation_context& context) const
     {
         if (children.empty())
             return nullptr; //todo: error_object
@@ -91,7 +91,7 @@ namespace element
         if (!previous) //can only resolve call if previous exists
             return nullptr;
 
-        std::vector<std::shared_ptr<compiled_expression>> compiled_arguments;
+        std::vector<std::shared_ptr<object>> compiled_arguments;
         for (const auto& arg : children)
             compiled_arguments.push_back(arg->compile(context));
 
