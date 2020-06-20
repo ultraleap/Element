@@ -14,7 +14,6 @@ namespace element
     class indexing_expression;
     class call_expression;
 
-    class compiled_expression;
     class struct_instance;
     class function_instance;
 

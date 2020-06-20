@@ -31,7 +31,7 @@ namespace element
     }
 
     //function_instance
-    function_instance::function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<object>> args)
+    function_instance::function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<element_expression>> args)
         : declarer{ declarer }
         , provided_arguments(std::move(args))
     {
@@ -42,7 +42,7 @@ namespace element
         return declarer->location() + ":FunctionInstance";
     }
 
-    std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<object>> args) const
+    std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
     {
         args.insert(args.begin(), provided_arguments.begin(), provided_arguments.end());
 

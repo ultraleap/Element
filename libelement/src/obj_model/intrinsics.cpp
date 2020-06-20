@@ -106,7 +106,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<element::object>> args) const
+    std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
     {
         return std::make_shared<element_expression_nullary>(
             operation);
@@ -121,7 +121,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<element::object>> args) const
+    std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
     {
         return std::make_shared<element_expression_unary>(
             operation,
@@ -138,7 +138,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<element::object>> args) const
+    std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
     {
         return std::make_shared<element_expression_binary>(
             operation,
