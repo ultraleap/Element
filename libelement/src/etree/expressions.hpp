@@ -13,7 +13,7 @@
 #include "typeutil.hpp"
 #include "obj_model/object.hpp"
 
-struct element_expression : element::object, rtti_type<element_expression>
+struct element_expression : element::object, rtti_type<element_expression>, std::enable_shared_from_this<element_expression>
 {
     [[nodiscard]] const std::vector<expression_shared_ptr>& dependents() const { return m_dependents; }
     std::vector<expression_shared_ptr>& dependents() { return m_dependents; }
@@ -29,6 +29,7 @@ protected:
     std::vector<expression_shared_ptr> m_dependents;
     element_type_id m_type_id = 0;
     int m_size = 0;
+    [[nodiscard]] std::shared_ptr<element_expression> compile(const element::compilation_context& context) const override { return std::dynamic_pointer_cast<element_expression>(const_cast<element_expression*>(this)->shared_from_this()); };
 };
 
 struct element_expression_constant final : public element_expression

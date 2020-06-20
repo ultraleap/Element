@@ -31,7 +31,7 @@ namespace element
     class function_instance final : public object
     {
     public:
-        explicit function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<object>> args);
+        explicit function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<element_expression>> args);
         virtual ~function_instance() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
@@ -42,10 +42,10 @@ namespace element
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] static bool is_instance_function() { return true; }
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> args) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const override;
   
         const function_declaration* const declarer;
-        std::vector<std::shared_ptr<object>> provided_arguments;
+        std::vector<std::shared_ptr<element_expression>> provided_arguments;
         mutable call_stack stack;
 
     private:

@@ -21,7 +21,7 @@ namespace element
         return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_code(), accumulate);
     }
 
-    std::shared_ptr<object> expression::compile(const compilation_context& context) const
+    std::shared_ptr<element_expression> expression::compile(const compilation_context& context) const
     {
         if (children.empty())
             return nullptr; //todo: error_object
@@ -34,6 +34,11 @@ namespace element
             current = expression->resolve_expression(context, previous);
             assert(current);
         }
+
+        //if (dynamic_cast<element_expression*>(current.get()))
+        //{
+        //    return dynamic_cast<element_expression*>(current.get());
+        //}
 
         return current->compile(context);
     }
@@ -59,12 +64,7 @@ namespace element
         if (!enclosing_scope)
             return nullptr;
 
-        auto compiled = std::make_shared<compiled_expression>();
-        compiled->expression_tree = std::make_shared<element_expression_constant>(value);
-        //a compiled expression's declarer is always a raw pointer, because it shouldn't be an intermediary but something that's part of the object model. I think
-        //it's basically just some root thing we can use to track down where it came from if we need to
-        compiled->type = type::num;
-        return std::move(compiled);
+        return std::make_shared<element_expression_constant>(value);
     }
 
     [[nodiscard]] std::shared_ptr<object> indexing_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
@@ -91,7 +91,7 @@ namespace element
         if (!previous) //can only resolve call if previous exists
             return nullptr;
 
-        std::vector<std::shared_ptr<object>> compiled_arguments;
+        std::vector<std::shared_ptr<element_expression>> compiled_arguments;
         for (const auto& arg : children)
             compiled_arguments.push_back(arg->compile(context));
 
