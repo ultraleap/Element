@@ -55,17 +55,17 @@ int main(int argc, char** argv)
 {
 #ifndef LEGACY_COMPILER
     element_result result;
-    //result = eval("evaluate = Num.add(1, 2);");
-    //if (result != ELEMENT_OK)
-    //    return result;
+    result = eval("evaluate = Num.add(1, 2);");
+    if (result != ELEMENT_OK)
+        return result;
 
     result = eval("evaluate = 1.add(2);");
     if (result != ELEMENT_OK)
         return result;
 
-    //result = eval("evaluate = -3;");
-    //if (result != ELEMENT_OK)
-    //    return result;
+    result = eval("evaluate = -3;");
+    if (result != ELEMENT_OK)
+        return result;
 
     //result = eval("evaluate = Num.NaN;");
     //if (result != ELEMENT_OK)

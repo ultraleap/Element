@@ -29,18 +29,19 @@ protected:
     std::vector<expression_shared_ptr> m_dependents;
     element_type_id m_type_id = 0;
     int m_size = 0;
-    [[nodiscard]] std::shared_ptr<element_expression> compile(const element::compilation_context& context) const override { return std::dynamic_pointer_cast<element_expression>(const_cast<element_expression*>(this)->shared_from_this()); };
+
+    std::shared_ptr<const element::type> type;
+
+    //TODO: THIS IS AFWUL! FIX!
+    [[nodiscard]] std::shared_ptr<element_expression>  compile(const element::compilation_context& context) const override;
+    [[nodiscard]] virtual std::shared_ptr<object> index(const element::compilation_context& context, const element::identifier& identifier) const override;
 };
 
 struct element_expression_constant final : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    explicit element_expression_constant(element_value val)
-        : element_expression(type_id)
-        , m_value(val)
-    {
-    }
+    explicit element_expression_constant(element_value val);
 
     [[nodiscard]] element_value value() const { return m_value; }
     [[nodiscard]] size_t get_size() const override { return 1; }
@@ -97,6 +98,7 @@ private:
     std::unordered_map<std::string, expression_shared_ptr> m_dependents_map;
 };
 
+//TODO: NEED TO PASS RETURN TYPE HERE
 struct element_expression_nullary final : public element_expression
 {
     DECLARE_TYPE_ID();
@@ -115,6 +117,7 @@ private:
     op m_op;
 };
 
+//TODO: NEED TO PASS RETURN TYPE HERE
 struct element_expression_unary final : public element_expression
 {
     DECLARE_TYPE_ID();
@@ -136,6 +139,7 @@ private:
     op m_op;
 };
 
+//TODO: NEED TO PASS RETURN TYPE HERE
 struct element_expression_binary final : public element_expression
 {
     DECLARE_TYPE_ID();
