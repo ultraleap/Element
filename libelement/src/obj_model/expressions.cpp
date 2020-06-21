@@ -134,3 +134,29 @@ namespace element
         return "_";
     }
 }
+
+element_expression_constant::element_expression_constant(element_value val) : element_expression(type_id), m_value(val)
+{
+    type = element::type::num;
+}
+
+std::shared_ptr<element_expression> element_expression::compile(const element::compilation_context& context) const
+{
+    //TODO: THIS IS AFWUL! FIX!
+    return std::dynamic_pointer_cast<element_expression>(const_cast<element_expression*>(this)->shared_from_this());
+}
+
+std::shared_ptr<element::object> element_expression::index(const element::compilation_context& context, const element::identifier& identifier) const
+{
+    assert(type);
+
+    const auto declarer = type->index(context, identifier);
+    auto args = std::vector<std::shared_ptr<element_expression>>();
+    args.push_back(const_cast<element_expression*>(this)->shared_from_this());
+
+    auto* function_declaration = dynamic_cast<element::function_declaration*>(declarer.get());
+    if(function_declaration)
+        return std::make_shared<element::function_instance>(function_declaration, args);
+
+    throw;
+}

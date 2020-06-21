@@ -224,7 +224,7 @@ namespace Laboratory.Tests.L3.Prelude
 		[
 			TestCase("Num.add(0, 0)", "0"),
 			TestCase("Num.add(0, 1)", "1"),
-			TestCase("Num.add(1, 0)", "1"),
+			TestCase("1.add(2)", "1"),
 			TestCase("Num.add(2, 3)", "5"),
 			TestCase("Num.add(-1.5, -1.5)", "-3"),
 			TestCase("Num.add(1.5, -1.5)", "0"),
