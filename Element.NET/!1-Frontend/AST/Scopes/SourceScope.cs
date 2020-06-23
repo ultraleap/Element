@@ -17,11 +17,11 @@ namespace Element.AST
         [Optional] private List<Declaration>? _items;
 #pragma warning restore 649
         
-        public void InitializeItems(SourceInfo info, IScope parent)
+        public void InitializeItems(SourceInfo info, IScope parent, SourceContext sourceContext)
         {
             foreach (var item in this)
             {
-                item.Initialize(info, parent);
+                item.Initialize(info, parent, sourceContext);
             }
         }
 

@@ -33,8 +33,8 @@ namespace Element.AST
         protected bool HasDeclaredInputs => DeclaredInputs.Length > 0;
         protected Port[] DeclaredInputs { get; private set; }
         protected Port DeclaredOutput { get; private set; }
-        protected virtual Identifier[] ScopeIdentifierWhitelist { get; } = null;
-        protected virtual Identifier[] ScopeIdentifierBlacklist { get; } = null;
+        protected virtual Identifier[] ScopeIdentifierWhitelist { get; } = Array.Empty<Identifier>();
+        protected virtual Identifier[] ScopeIdentifierBlacklist { get; } = Array.Empty<Identifier>();
 
         private sealed class StubDeclaration : Declaration
         {
@@ -44,62 +44,57 @@ namespace Element.AST
             public override string ToString() => "<stub declaration>";
         }
 
-        public static Declaration MakeStubDeclaration(Identifier id, object body, string expressionString, CompilationContext compilationContext)
+        public static Declaration MakeStubDeclaration(Identifier id, object body, string expressionString, IScope scope)
         {
             var result = new StubDeclaration
             {
                 Identifier = id,
                 Body = body
             };
-            result.Initialize(new SourceInfo(id, expressionString), compilationContext.SourceContext.GlobalScope);
+            result.Initialize(new SourceInfo(id, expressionString), scope, null);
             return result;
         }
 
         internal Declaration Clone(IScope newParent)
         {
             var clone = (Declaration)MemberwiseClone();
-            clone.Initialize(SourceInfo, newParent);
+            clone.Initialize(SourceInfo, newParent, null);
             return clone;
         }
 
-        internal bool Validate(SourceContext sourceContext)
+        internal void Validate(ResultBuilder resultBuilder)
         {
-            var success = true;
             switch (Body)
             {
-                case Scope scope:
-                    success &= scope.ValidateScope(sourceContext, ScopeIdentifierBlacklist, ScopeIdentifierWhitelist);
-                    break;
                 case ExpressionBody expressionBody:
-                    success &= expressionBody.Expression.Validate(sourceContext);
+                    expressionBody.Expression.Validate(resultBuilder);
+                    break;
+                case Scope scope:
+                    scope.Validate(resultBuilder, ScopeIdentifierBlacklist, ScopeIdentifierWhitelist);
                     break;
             }
 
-            success &= PortList?.Validate(sourceContext) ?? true;
-            success &= DeclaredType?.Validate(sourceContext) ?? true;
-            success &= AdditionalValidation(sourceContext);
-            return success;
+            PortList?.Validate(resultBuilder);
+            DeclaredType?.Validate(resultBuilder);
+            AdditionalValidation(resultBuilder);
         }
         
-        protected virtual bool AdditionalValidation(SourceContext sourceContext) => true;
+        protected virtual void AdditionalValidation(ResultBuilder builder) {}
 
-        public bool HasBeenValidated { get; set; }
-
-        internal void Initialize(SourceInfo info, IScope parent)
+        internal void Initialize(SourceInfo info, IScope parent, IIntrinsicCache? cache)
         {
             SourceInfo = info;
             Parent = parent ?? throw new ArgumentNullException(nameof(parent));
-            Child?.Initialize(this);
-            DeclaredType?.Initialize(this);
-            DeclaredInputs = (string.IsNullOrEmpty(IntrinsicQualifier)
-                                  ? PortList?.Ports.List.ToArray() ?? Array.Empty<Port>() // Not intrinsic so if there's no port list it's an empty array
-                                  : PortList?.Ports.List.ToArray() ?? ImplementingIntrinsic<IFunctionSignature>(null)?.Inputs) ?? Array.Empty<Port>();
+            Child?.Initialize(this, cache);
+            DeclaredType?.Initialize(this, cache);
+            DeclaredInputs = PortList?.Ports.List.ToArray() ?? Array.Empty<Port>();
             DeclaredOutput = Port.ReturnPort(DeclaredType);
             foreach (var port in DeclaredInputs.Append(DeclaredOutput))
             {
-                port.Initialize(this);
+                port.Initialize(this, cache);
             }
-            if (Body is ExpressionBody expressionBody) expressionBody.Expression.Initialize(this);
+            if (Body is ExpressionBody expressionBody) expressionBody.Expression.Initialize(this, cache);
+            if (!string.IsNullOrEmpty(IntrinsicQualifier)) cache?.CacheIntrinsicDeclaration(this);
         }
 
         public string Location => Parent switch
@@ -111,10 +106,6 @@ namespace Element.AST
         public Scope? Child => Body as Scope;
         public IScope Parent { get; private set; }
         public Declaration Declarer => this;
-
-        protected TIntrinsic? ImplementingIntrinsic<TIntrinsic>(ILogger? logger)
-            where TIntrinsic : class, IValue
-            => IntrinsicCache.GetByLocation<TIntrinsic>(Location, logger);
 
     }
 }

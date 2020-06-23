@@ -11,14 +11,14 @@ namespace Element.AST
         {
             if (!HasDeclaredInputs)
             {
-                sourceContext.LogError(13, $"Non-intrinsic constraint '{Location}' must have a port list");
+                sourceContext.Flush(13, $"Non-intrinsic constraint '{Location}' must have a port list");
                 return false;
             }
 
             return true;
         }
 
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext)
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext)
         {
             if (!(value is IFunctionSignature fn)) return false;
             if (fn.Inputs.Length != DeclaredInputs.Length) return false;

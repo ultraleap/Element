@@ -46,21 +46,25 @@ namespace Laboratory
             // ReSharper enable CompareOfFloatsByEqualityOperator
         }
         
-        private (bool, float[]) EvaluateControlExpression(CompilationInput compilationInput, string controlExpression) 
+        private Result<float[]> EvaluateControlExpression(CompilationInput compilationInput, string controlExpression) 
             => Host.Evaluate(compilationInput, controlExpression);
 
-        private (bool, float[][]) EvaluateExpressions(CompilationInput compilationInput, string[] expressions)
+        private Result<float[][]> EvaluateExpressions(CompilationInput compilationInput, string[] expressions)
         {
-            var succeeded = true;
-            var results = expressions.Select(
-                expression =>
-                {
-                    var (success, result) = Host.Evaluate(compilationInput, expression);
-                    succeeded &= success;
-                    return result;
-                }).ToArray();
+            var resultBuilder = new ResultBuilder<float[][]>(NoTrace.Instance, new float[expressions.Length][]);
 
-            return (succeeded, results);
+            for (var i = 0; i < expressions.Length; i++)
+            {
+                var expr = expressions[i];
+                var exprResult = Host.Evaluate(compilationInput, expr);
+                resultBuilder.Append(exprResult.Do(results =>
+                {
+                    // ReSharper disable once AccessToModifiedClosure
+                    resultBuilder.Result[i] = results;
+                }));
+            }
+
+            return resultBuilder.ToResult();
         }
    
         private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params float[][] results)
@@ -70,7 +74,7 @@ namespace Laboratory
             var messages = new List<CompilerMessage>();
             compilationInput.LogCallback = CacheMessage(messages);
 
-            var (controlSuccess, control) = EvaluateControlExpression(compilationInput, controlExpression);
+            var controlResult = EvaluateControlExpression(compilationInput, controlExpression);
 
             //Check compiler responses
             ExpectingSuccess(messages, controlSuccess);

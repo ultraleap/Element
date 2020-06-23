@@ -14,43 +14,41 @@ namespace Element.AST
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
         
-        protected override void InitializeImpl()
+        protected override void InitializeImpl(IIntrinsicCache? cache)
         {
             foreach (var expr in Expressions ?? Enumerable.Empty<SubExpression>())
             {
-                expr.Initialize(Declarer);
+                expr.Initialize(Declarer, cache);
             }
         }
-        
-        public override bool Validate(SourceContext sourceContext) =>
-            Expressions?.Aggregate(true, (current, expr) => current & expr.Validate(sourceContext)) ?? true;
 
-        protected override IValue ExpressionImpl(IScope scope, CompilationContext compilationContext)
+        public override void Validate(ResultBuilder resultBuilder)
         {
-            var previous = LitOrId switch
+            foreach (var expr in Expressions ?? Enumerable.Empty<SubExpression>())
             {
-                // If the start of the list is an identifier, find the value that it identifies
-                Identifier id => scope[id, true, compilationContext] switch
-                {
-                  CompilationError _ => compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope"),
-                  // ReSharper disable once PatternAlwaysOfType
-                  IValue v => v,
-                  _ => compilationContext.LogError(7, $"Couldn't find '{id}' in local or outer scope")
-                },
-                Constant constant => constant,
-                _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
-            };
-
-            // Early out if something failed above
-            if (previous is CompilationError err) return err;
-
-            previous = previous.FullyResolveValue(compilationContext);
-            // Evaluate all expressions for this chain if there are any, making sure that the result is fully resolved if it returns a nullary.
-            previous = (Expressions?.Aggregate(previous, (current, expr) => expr.ResolveSubExpression(current.FullyResolveValue(compilationContext), scope, compilationContext))
-                        ?? previous)
-                .FullyResolveValue(compilationContext);
-
-            return previous;
+                expr.Validate(resultBuilder);
+            }
         }
+
+        protected override Result<IValue> ExpressionImpl(IScope scope, CompilationContext compilationContext) =>
+            (LitOrId switch
+                {
+                    // If the start of the list is an identifier, find the value that it identifies
+                    Identifier id => scope[id, true, compilationContext].Map(v => v),
+                    Constant constant => constant,
+                    _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
+                })
+            .Bind(previous =>
+            {
+                var fullyResolved = previous.FullyResolveValue(compilationContext);
+                // Evaluate all expressions for this chain if there are any
+                return Expressions?.Aggregate(fullyResolved, ResolveSubExpression)
+                                  .Bind(result => result.FullyResolveValue(compilationContext)) // Make sure to fully resolve the result of the chain
+                       ?? fullyResolved; // If there's no subexpressions just return what we found
+
+                Result<IValue> ResolveSubExpression(Result<IValue> current, SubExpression subExpr) =>
+                    current.Bind(v => v.FullyResolveValue(compilationContext))
+                           .Bind(fullyResolvedSubExpr => subExpr.ResolveSubExpression(fullyResolvedSubExpr, scope, compilationContext));
+            });
     }
 }

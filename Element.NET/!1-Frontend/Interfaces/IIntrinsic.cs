@@ -1,35 +1,31 @@
+using System.Collections.Generic;
+
 namespace Element.AST
 {
-    public interface IIntrinsic : IValue
+    public abstract class Intrinsic<TDeclaration> where TDeclaration : Declaration
     {
-        string Location { get; }
+        public abstract Identifier Identifier { get; }
+
+        public Result<TDeclaration> Declaration(IIntrinsicCache cache) => cache.GetIntrinsic<TDeclaration>(Identifier);
     }
     
-    public interface IIntrinsicType : IIntrinsic, IFunction, IType { }
-    
-    public abstract class IntrinsicFunction : IIntrinsic, IFunction
+    public abstract class IntrinsicFunction : Intrinsic<IntrinsicFunctionDeclaration>
     {
-        private readonly Port[] _inputs;
-        private readonly Port _output;
-
-        protected IntrinsicFunction(string location, Port[] inputs, Port output)
-        {
-            Location = location;
-            _inputs = inputs;
-            _output = output;
-        }
-
-        public string Location { get; }
-        public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
-        Port[] IFunctionSignature.Inputs => _inputs;
-        Port IFunctionSignature.Output => _output;
-        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) =>
-            compilationContext.GetIntrinsicsDeclaration<IntrinsicFunctionDeclaration>(this);
+        public abstract Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
+        public abstract IReadOnlyList<Port> Inputs { get; }
+        public abstract Port Output { get; }
     }
     
-    public static class IntrinsicHelpers
+    public abstract class IntrinsicConstraint : Intrinsic<IntrinsicConstraintDeclaration>, IConstraint
     {
-        public static IntrinsicStructDeclaration GetDeclaration(this IIntrinsicType type, CompilationContext compilationContext) =>
-            compilationContext.GetIntrinsicsDeclaration<IntrinsicStructDeclaration>(type);
+        public abstract Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext);
+    }
+    
+    public abstract class IntrinsicType : Intrinsic<IntrinsicStructDeclaration>, IConstraint
+    {
+        public abstract IReadOnlyList<Port> Fields { get; }
+        public abstract Result<IValue> Construct(StructDeclaration declaration, IReadOnlyList<IValue> arguments);
+        public abstract Result<ISerializableValue> DefaultValue(CompilationContext context);
+        public abstract Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext);
     }
 }

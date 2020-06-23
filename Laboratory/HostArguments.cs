@@ -230,9 +230,12 @@ namespace Laboratory
                 return processArgs;
             }
 
-            bool IHost.Parse(CompilationInput input) => bool.Parse(RunHostProcess(input, BeginCommand(input, "parse").ToString()));
+            Result IHost.Parse(CompilationInput input) =>
+                bool.Parse(RunHostProcess(input, BeginCommand(input, "parse").ToString()))
+                    ? Result.Success
+                    : (MessageCode.ParseError, "Parsing failed - see log for details");
 
-            (bool Success, float[] Result) IHost.Evaluate(CompilationInput input, string expression)
+            Result<float[]> IHost.Evaluate(CompilationInput input, string expression)
             {
                 var success = true;
                 var result = RunHostProcess(input, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString());
@@ -243,11 +246,13 @@ namespace Laboratory
                         return value;
                     })
                     .ToArray();
-                return (success, values);
+                return success
+                        ? new Result<float[]>(values)
+                        : (MessageCode.ParseError, "Failed to parse process result as float array");
             }
 
-            (bool Success, string Result) IHost.Typeof(CompilationInput input, string expression) =>
-                (true, RunHostProcess(input, BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString()));
+            Result<string> IHost.Typeof(CompilationInput input, string expression) =>
+                RunHostProcess(input, BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
         }
     }
 }

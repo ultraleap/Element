@@ -18,16 +18,18 @@ namespace Element.AST
 
         public override string ToString() => $":{Expression}";
         
-        public IConstraint ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
-            _constraint ?? Expression.ResolveExpression(scope, compilationContext) switch
-            {
-                IConstraint constraint => _constraint = constraint,
-                {} notConstraint => compilationContext.LogError(16, $"'{notConstraint}' is not a constraint"),
-                _ => throw new ArgumentOutOfRangeException()
-            };
+        public Result<IConstraint> ResolveConstraint(IScope scope, CompilationContext context) =>
+            _constraint != null
+                ? new Result<IConstraint>(_constraint)
+                : Expression.ResolveExpression(scope, context).Bind(value => value switch
+                {
+                    IConstraint constraint => new Result<IConstraint>(_constraint = constraint),
+                    {} notConstraint => context.Trace(MessageCode.InvalidExpression, $"'{notConstraint}' is not a constraint"),
+                    _ => throw new ArgumentOutOfRangeException()
+                });
 
-        protected override void InitializeImpl() => Expression.Initialize(Declarer);
+        protected override void InitializeImpl(IIntrinsicCache? cache) => Expression.Initialize(Declarer, cache);
         
-        public override bool Validate(SourceContext sourceContext) => true; // TODO: Disallow complex expressions
+        public override void Validate(ResultBuilder resultBuilder) {} // TODO: Disallow complex expressions e.g. calls
     }
 }

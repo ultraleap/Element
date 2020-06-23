@@ -14,7 +14,7 @@ namespace Element.AST
             }, Array.Empty<Port>(), Port.ReturnPort(NumType.Instance))
             => _value = value;
 
-        public override IValue Call(IValue[] _, CompilationContext __) =>
+        public override Result<IValue> Call(IValue[] _, CompilationContext __) =>
             _value switch
             {
                 Constant.Intrinsic.True => Constant.True,

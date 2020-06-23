@@ -19,6 +19,6 @@ namespace Element.AST
         
         public Unary.Op Operation { get; }
 
-        public override IValue Call(IValue[] arguments, CompilationContext _) => new Unary(Operation, arguments[0] as Element.Expression);
+        public override Result<IValue> Call(IValue[] arguments, CompilationContext _) => new Unary(Operation, arguments[0] as Element.Expression);
     }
 }

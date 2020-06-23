@@ -10,12 +10,12 @@ namespace Element
 	/// </summary>
 	public abstract class Expression : IEquatable<Expression>, ISerializableValue, IIndexable
 	{
-		protected Expression(IIntrinsicType? instanceTypeOverride = default) => Type = instanceTypeOverride ?? NumType.Instance;
+		protected Expression(IntrinsicType? instanceTypeOverride = default) => Type = instanceTypeOverride ?? NumType.Instance;
 		
 		/// <summary>
 		/// The primitive type of the expression
 		/// </summary>
-		public readonly IIntrinsicType Type;
+		public readonly IntrinsicType Type;
 
 		public abstract IEnumerable<Expression> Dependent { get; }
 
@@ -33,23 +33,17 @@ namespace Element
 		public IEnumerable<Expression> AllDependent => Dependent.SelectMany(d => new[] {d}.Concat(d.AllDependent));
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
 		
-		public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-			Type.GetDeclaration(compilationContext).ResolveInstanceFunction(id, this, compilationContext);
+		public Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
+			Type.Declaration(context.SourceContext).Bind(decl => decl.ResolveInstanceFunction(id, this, context));
 
-		public IEnumerable<Expression> Serialize(CompilationContext context)
-		{
-			yield return this;
-		}
+		public void Serialize(ResultBuilder<IList<Expression>> resultBuilder) => resultBuilder.Result.Add(this);
 
-		public ISerializableValue Deserialize(Func<Expression> nextValue, CompilationContext context)
+		public Result<ISerializableValue> Deserialize(Func<Expression> nextValue, ITrace trace)
 		{
 			var result = nextValue();
-			if (result.Type != Type)
-			{
-				context.LogError(1, $"'{result}' deserialized to incorrect type: is '{result.Type}' - expected '{Type}'");
-			}
-
-			return result;
+			return result.Type == Type
+				       ? new Result<ISerializableValue>(result)
+				       : trace.Trace(MessageCode.SerializationError, $"'{result}' deserialized to incorrect type: is '{result.Type}' - expected '{Type}'");
 		}
 	}
 }

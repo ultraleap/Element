@@ -104,6 +104,26 @@ level = "Error"
 name = "NonConstantExpression"
 level = "Error"
 
+[ELE25]
+name = "FileAccessError"
+level = "Error"
+
+[ELE26]
+name = "ArgumentNotFound"
+level = "Error"
+
+[ELE27]
+name = "DuplicateSourceFile"
+level = "Error"
+
+[ELE28]
+name = "ArgumentOutOfRange"
+level = "Error"
+
+[ELE29]
+name = "MultipleIntrinsicLocations"
+level = "Warning"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

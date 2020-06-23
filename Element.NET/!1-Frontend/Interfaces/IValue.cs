@@ -4,6 +4,17 @@ using System.Linq;
 
 namespace Element.AST
 {
+    /*public abstract class ElementValue
+    {
+        public abstract override string ToString();
+        //public abstract string NormalFormString { get; }
+        
+        public virtual Result<ISerializableValue> DefaultValue() => (14, $"'{this}' i");
+        public virtual Result<IEnumerable<Element.Expression>> Serialize() => (1, $"'{this}' is not serializable");
+        public virtual Result<ISerializableValue> Deserialize(Func<Element.Expression> nextValue) => (1, $"'{this}' cannot be deserialized");
+    }*/
+    
+    
     public interface IValue
     {
         string ToString();
@@ -12,41 +23,34 @@ namespace Element.AST
 
     public interface ISerializableValue : IValue
     {
-        IEnumerable<Element.Expression> Serialize(CompilationContext context);
-        ISerializableValue Deserialize(Func<Element.Expression> nextValue, CompilationContext context);
+        void Serialize(ResultBuilder<IList<Element.Expression>> resultBuilder);
+        Result<ISerializableValue> Deserialize(Func<Element.Expression> nextValue, ITrace trace);
     }
 
     public static class ValueExtensions
     {
-        public static IValue FullyResolveValue(this IValue value, CompilationContext compilationContext)
-        {
-            var previous = value;
-            while (previous is IFunctionSignature fn && fn.IsNullary())
-            {
-                var result = fn.ResolveCall(Array.Empty<IValue>(), false, compilationContext);
-                // ReSharper disable once PossibleUnintendedReferenceComparison
-                if (result == previous) break; // Prevent infinite loop if a nullary just returns itself
-                previous = result;
-            }
+        public static Result<IValue> FullyResolveValue(this IValue value, CompilationContext context) =>
+            (value is IFunction fn && fn.IsNullary()
+                 ? fn.Call(Array.Empty<IValue>(), context)
+                 : new Result<IValue>(value))
+            .Map(v => v is Element.Expression expr ? ConstantFolding.Optimize(expr) : v)
+            // ReSharper disable once PossibleUnintendedReferenceComparison
+            .Bind(v => v != value ? v.FullyResolveValue(context) : new Result<IValue>(v)); // Recurse until the resolved value is the same
 
-            return previous switch
-            {
-                Element.Expression expr => ConstantFolding.Optimize(expr),
-                _ => previous
-            };
-        }
-        
-        public static IEnumerable<(Identifier Identifier, IValue Value)> WithoutDiscardedArguments(this IValue[] arguments, Port[] ports)
+        public static IEnumerable<(Identifier Identifier, IValue Value)> WithoutDiscardedArguments(this IEnumerable<IValue> arguments, IEnumerable<Port> ports)
         {
-            var result = new List<(Identifier Identifier, IValue Value)>();
-            var variadicArgNumber = 0;
+            var argArray = arguments.ToArray();
+            var portArray = ports.ToArray();
             
+            var result = new List<(Identifier Identifier, IValue Value)>(argArray.Length);
+            var variadicArgNumber = 0;
+
             // Keeps iterating until we've checked all arguments that we can
             // There can be more arguments than ports if the function is variadic
-            for (var i = 0; i < arguments.Length; i++)
+            for (var i = 0; i < argArray.Length; i++)
             {
-                var arg = arguments[i];
-                var port = i < ports.Length ? ports[i] : null;
+                var arg = argArray[i];
+                var port = i < portArray.Length ? portArray[i] : null;
                 // port can be null if we are checking a variadic function
                 if (port == Port.VariadicPort || variadicArgNumber > 0)
                 {
@@ -55,51 +59,52 @@ namespace Element.AST
                 }
                 else if ((port?.Identifier.HasValue ?? false) && arg != null)
                 {
-                    result.Add((port.Identifier.Value, arg));
+                    result.Add((port!.Identifier!.Value, arg));
                 }
             }
-
+            
             return result;
         }
 
-        public static IEnumerable<Element.Expression> Serialize(this IValue value, CompilationContext context) =>
-            value is ISerializableValue serializableValue
-                ? serializableValue.Serialize(context)
-                : context.LogError(1, $"'{value}' is not a serializable").Return(Enumerable.Empty<Element.Expression>());
-
-        public static int SerializedSize(this ISerializableValue value, CompilationContext compilationContext)
+        public static Result<IList<Element.Expression>> Serialize(this IValue value, ITrace trace)
         {
-            var size = 0;
-            Element.Expression CountExpr() => size++.Return(Constant.Zero);
-            return value?.Deserialize(CountExpr, compilationContext) switch
-            {
-                CompilationError _ => -1,
-                { } => size,
-                _ => -1
-            };
+            if (!(value is ISerializableValue serializableValue)) return trace.Trace(MessageCode.SerializationError, $"'{value}' is not a serializable");
+            var result = new ResultBuilder<IList<Element.Expression>>(trace, new List<Element.Expression>());
+            serializableValue.Serialize(result);
+            return result.ToResult();
         }
 
-        public static ISerializableValue Deserialize(this ISerializableValue value, IEnumerable<Element.Expression> expressions,
-                                                     CompilationContext context) =>
-            value.Deserialize(new Queue<Element.Expression>(expressions).Dequeue, context);
-
-        public static float[]? ToFloatArray(this IEnumerable<Element.Expression> expressions,
-                                            CompilationContext compilationContext)
+        public static Result<int> SerializedSize(this ISerializableValue value, ITrace trace)
         {
-            var success = true;
-            var result = expressions.Select(selector: expr =>
-                {
-                    var val = (expr as Constant)?.Value;
-                    if (val.HasValue)
-                    {
-                        return val.Value;
-                    }
+            var size = 0;
+            return value.Deserialize(() =>
+            {
+                size++;
+                return Constant.Zero;
+            }, trace).Map(_ => size); // Discard the value and just check the size
+        }
 
-                    success = false;
-                    compilationContext.LogError(1, $"Non-constant expression '{expr}' cannot be evaluated to a float");
-                    return 0;
-                }).ToArray();
-            return success ? result : null;
+        public static Result<ISerializableValue> Deserialize(this ISerializableValue value, IEnumerable<Element.Expression> expressions, ITrace trace) =>
+            value.Deserialize(new Queue<Element.Expression>(expressions).Dequeue, trace);
+
+        public static Result<float[]> ToFloatArray(this IEnumerable<Element.Expression> expressions, ITrace trace)
+        {
+            var exprs = expressions.ToArray();
+            var result = new float[exprs.Length];
+            for (var i = 0; i < result.Length; i++)
+            {
+                var expr = exprs[i];
+                var val = (expr as Constant)?.Value;
+                if (val.HasValue)
+                {
+                    result[i] = val!.Value;
+                }
+                else
+                {
+                    return trace.Trace(MessageCode.SerializationError, $"Non-constant expression '{expr}' cannot be evaluated to a float");
+                }
+            }
+            return result;
         }
     }
 }

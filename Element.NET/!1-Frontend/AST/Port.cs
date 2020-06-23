@@ -14,7 +14,7 @@ namespace Element.AST
 #pragma warning restore 649
 
         public Identifier? Identifier => _identifier is Identifier id ? (Identifier?)id : null;
-        private IConstraint? _cachedConstraint;
+        private Result<IConstraint> _cachedConstraint;
         
         // ReSharper disable once UnusedMember.Global - Used by Lexico to generate instances
         // ReSharper disable once MemberCanBePrivate.Global
@@ -39,27 +39,23 @@ namespace Element.AST
         public Port(Identifier identifier, IConstraint constraint)
         {
             _identifier = identifier;
-            _cachedConstraint = constraint;
+            _cachedConstraint = new Result<IConstraint>(constraint);
         }
 
-        public IConstraint ResolveConstraint(CompilationContext compilationContext) =>
+        public Result<IConstraint> ResolveConstraint(CompilationContext compilationContext) =>
             ResolveConstraint(compilationContext.SourceContext.GlobalScope, compilationContext);
         
-        public IConstraint ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
-            _cachedConstraint ?? (_type != null
-                                      ? _cachedConstraint = _type.ResolveConstraint(scope, compilationContext)
-                                      : AnyConstraint.Instance);
+        public Result<IConstraint> ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
+            _cachedConstraint.Else(() => _cachedConstraint = _type?.ResolveConstraint(scope, compilationContext) ?? AnyConstraint.Instance);
 
         public override string ToString() => $"{_identifier}{_type}";
 
-        protected override void InitializeImpl() => _type?.Initialize(Declarer);
+        protected override void InitializeImpl(IIntrinsicCache? cache) => _type?.Initialize(Declarer, cache);
 
-        public override bool Validate(SourceContext sourceContext)
+        public override void Validate(ResultBuilder resultBuilder)
         {
-            var success = true;
-            if (_identifier is Identifier id) success &= Parser.ValidateIdentifier(id, sourceContext);
-            success &= _type?.Validate(sourceContext) ?? true;
-            return success;
+            if (_identifier is Identifier id) id.Validate(resultBuilder); // Don't validate identifier if this port has none
+            _type?.Validate(resultBuilder);
         }
     }
 }

@@ -5,7 +5,7 @@ namespace Element.AST
     /// <summary>
     /// An intrinsic with 2 arguments and a single return.
     /// </summary>
-    public sealed class BinaryIntrinsic : IntrinsicFunction
+    public sealed class BinaryIntrinsic : IntrinsicFunctionDeclaration
     {
         private static readonly Port[] _numInputs = {
             new Port("a", NumType.Instance),
@@ -39,7 +39,7 @@ namespace Element.AST
 
         public Binary.Op Operation { get; }
 
-        public override IValue Call(IValue[] arguments, CompilationContext _) =>
+        public override Result<IValue> Call(IValue[] arguments, CompilationContext _) =>
             new Binary(Operation, arguments[0] as Element.Expression, arguments[1] as Element.Expression);
     }
 }

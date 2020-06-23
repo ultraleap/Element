@@ -1,4 +1,3 @@
-using System;
 using Element.AST;
 
 namespace Element
@@ -8,37 +7,23 @@ namespace Element
     /// </summary>
     public class PersistentHost : IHost
     {
-        public static bool TryCreate(CompilationInput input, out PersistentHost? host)
-        {
-            host = null;
-            if (!SourceContext.TryCreate(input, out var context)) return false;
-            host = new PersistentHost(context);
-            return true;
-        }
-        
+        public static Result<PersistentHost> Create(CompilationInput input) => SourceContext.Create(input).Map(context => new PersistentHost(context));
+
         private PersistentHost(SourceContext context) => _context = context;
 
         private readonly SourceContext _context;
 
-        public bool Parse(CompilationInput input) => _context.ApplyExtraInput(input);
+        public Result Parse(CompilationInput input) => _context.ApplyExtraInput(input);
 
-        public (bool Success, float[] Result) Evaluate(CompilationInput input, string expression) =>
+        public Result<float[]> Evaluate(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
-                ? _context.EvaluateExpressionAs<ISerializableValue>(expression, out var compilationContext)
-                          ?.Serialize(compilationContext)
-                          .ToFloatArray(compilationContext) is {} result
-                      ? (true, result)
-                      : (_context.LogError(1, "Result not serializable") == CompilationError.Instance, Array.Empty<float>())
-                : (false, Array.Empty<float>());
+                    .Bind(() => _context.EvaluateExpressionAs<ISerializableValue>(expression))
+                    .Bind(value => value.Serialize(_context))
+                    .Bind(serialized => serialized.ToFloatArray(_context));
 
-        public (bool Success, string Result) Typeof(CompilationInput input, string expression) =>
+        public Result<string> Typeof(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
-                ? _context.EvaluateExpression(expression, out _) switch
-                {
-                    CompilationError err => (false, err.ToString()),
-                    { } result => (true, result.ToString()),
-                    null => (false, "<null>")
-                }
-                : (false, "<compilation input error>");
+                    .Bind(() => _context.EvaluateExpression(expression))
+                    .Map(value => value.ToString());
     }
 }

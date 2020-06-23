@@ -11,7 +11,7 @@ namespace Element.AST
         protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope)};
         public override string ToString() => $"{Location}:Namespace";
 
-        IValue? IIndexable.this[Identifier id, bool recurse, CompilationContext compilationContext] => Child![id, recurse, compilationContext];
+        Result<IValue> IIndexable.this[Identifier id, bool recurse, CompilationContext context] => Child![id, recurse, context];
         public IEnumerator<IValue> GetEnumerator() => Child!.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         int IReadOnlyCollection<IValue>.Count => Child!.Count;

@@ -90,7 +90,7 @@ namespace Element.CLR
 
             if (!(result is StructDeclaration declaredStruct))
             {
-                return compilationContext.LogError(14, $"{result} is not a struct declaration");
+                return compilationContext.Flush(14, $"{result} is not a struct declaration");
             }
             
             return declaredStruct.CreateInstance(_elementToClrFieldMapping.Select(pair => new MemberExpression(root, parameter, pair.Value)).ToArray());
@@ -118,9 +118,9 @@ namespace Element.CLR
             protected override string ToStringInternal() => $"{_parameter}.{_clrField}";
             public Port[] Inputs { get; }
             public Port Output { get; }
-            public IFunctionSignature GetDefinition(CompilationContext compilationContext) => this;
-            public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-                _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, compilationContext);
+            public Result<IFunctionSignature> GetDefinition(CompilationContext compilationContext) => this;
+            public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+                _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, context);
         }
 
         public LExpression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext compilationContext)
@@ -136,7 +136,7 @@ namespace Element.CLR
             foreach (var pair in _elementToClrFieldMapping)
             {
                 var memberExpression = LExpression.PropertyOrField(obj, pair.Value);
-                var result = convertFunction(scope?[new Identifier(pair.Key), false, compilationContext], memberExpression.Type, compilationContext);
+                var result = convertFunction(scope?[new Identifier(pair.Key), false, TODO], memberExpression.Type, compilationContext);
                 assigns.Add(LExpression.Assign(memberExpression, result));
             }
 
@@ -211,7 +211,7 @@ namespace Element.CLR
                 return retval.LinqToElement(parameter, root, compilationContext);
             }
 
-            return compilationContext.LogError(12, $"No {nameof(IBoundaryConverter)} for CLR type '{parameter.Type}'");
+            return compilationContext.Flush(12, $"No {nameof(IBoundaryConverter)} for CLR type '{parameter.Type}'");
         }
 
         public System.Linq.Expressions.Expression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
@@ -224,7 +224,7 @@ namespace Element.CLR
                 return output.ElementToLinq(value, outputType, convertFunction, compilationContext);
             }
 
-            compilationContext.LogError(12, $"No {nameof(IBoundaryConverter)} for CLR type '{outputType}'");
+            compilationContext.Flush(12, $"No {nameof(IBoundaryConverter)} for CLR type '{outputType}'");
             return null;
         }
     }

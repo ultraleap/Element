@@ -24,17 +24,19 @@ namespace Element.AST
 			{
 				Declarer = declarer;
 				_parent = parent;
-				SetRange(items);
+				_source = items.ToList();
 			}
 
-			public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-				IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
+			public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
+				Index(id) ?? (recurse ? _parent[id, true, context] : null);
+
+			protected override IList<(Identifier Identifier, IValue Value)> _source { get; }
 
 			public Declaration Declarer { get; }
 			public int IndexInSource => Declarer.IndexInSource;
 		}
 		
-		public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
+		public override Result<IValue> Call(IValue[] arguments, CompilationContext compilationContext)
 		{
 			var list = (StructInstance) arguments[0];
 			var workingValue = arguments[1];
@@ -54,8 +56,8 @@ namespace Element.AST
 				if (!Parser.Parse(conditionSourceCode, out Lambda predicateLambda, compilationContext)) throw new InternalCompilerException("Couldn't parse dynamic fold condition");
 				if (!Parser.Parse(bodySourceCode, out Lambda bodyLambda, compilationContext)) throw new InternalCompilerException("Couldn't parse dynamic fold body");
 				var declaration = compilationContext.GetIntrinsicsDeclaration<Declaration>(this);
-				predicateLambda.Initialize(declaration);
-				bodyLambda.Initialize(declaration);
+				predicateLambda.Initialize(declaration, TODO);
+				bodyLambda.Initialize(declaration, TODO);
 				var captureScope = new FoldCaptureScope(declaration, new (Identifier, IValue)[]
 				{
 					(new Identifier("list"), list),
@@ -71,7 +73,7 @@ namespace Element.AST
 				       ? ListType.EvaluateElements(list, true, constantCount, compilationContext)
 				                 .Aggregate(workingValue, (current, e) =>
 					                            aggregator.ResolveCall(new[] {current, e}, false, compilationContext))
-				       : ((StructInstance) IntrinsicCache
+				       : ((StructInstance) IIntrinsicCache
 				                           .GetByLocation<IFunctionSignature>("for", compilationContext)
 				                           .ResolveCall(CreateDynamicFoldArguments(), false, compilationContext))[1];
 		}

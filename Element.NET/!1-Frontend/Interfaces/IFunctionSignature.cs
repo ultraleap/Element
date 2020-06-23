@@ -1,173 +1,153 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Element.AST
 {
-    public interface IUnique<T> where T : IValue
+    public interface IInstancable<out TDefinition> where TDefinition : IValue
     {
-        T GetDefinition(CompilationContext compilationContext);
+        TDefinition GetDefinition(CompilationContext compilationContext);
     }
     
-    public interface IFunctionSignature : IValue, IUnique<IFunctionSignature>
+    public interface IFunction : IValue, IInstancable<IFunction>
     {
+        Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
         Port[] Inputs { get; }
         Port Output { get; }
     }
 
-    public interface IFunction : IFunctionSignature
+    public static class FunctionHelpers
     {
-        IValue Call(IValue[] arguments, CompilationContext compilationContext);
-    }
+        public static bool IsNullary(this IFunction Function) => Function.Inputs.Length == 0;
 
-    public interface IFunctionWithBody : IFunctionSignature // Not IFunction as all functions with bodies are resolved identically in ResolveCall
-    {
-        object Body { get; }
-    }
-
-    public static class FunctionExtensions
-    {
-        public static bool IsNullary(this IFunctionSignature functionSignature) => functionSignature.Inputs.Length == 0;
-
-        public static IValue ResolveCall(this IFunctionSignature functionSignature, IValue[] arguments, bool allowPartialApplication,
-                                         CompilationContext compilationContext)
+        public static Result<IValue> ApplyFunction(IFunction function, IReadOnlyList<IValue> arguments,
+                                                   IScope callScope, bool allowPartialApplication, CompilationContext context)
         {
-            if (functionSignature == CompilationError.Instance) return functionSignature;
-            var definition = functionSignature.GetDefinition(compilationContext);
-            if (compilationContext.ContainsFunction(definition) && !(functionSignature is AppliedFunctionBase)) return compilationContext.LogError(11, $"Multiple references to {functionSignature} in same call stack - Recursion is disallowed");
-            compilationContext.PushFunction(definition);
-            var tracingThisFunction = false;
-            if (functionSignature is IDeclared declared)
+            var definition = function.GetDefinition(context);
+            if (context.ContainsFunction(definition) && !(function is AppliedFunctionBase)) return context.Trace(MessageCode.CircularCompilation, $"Multiple references to {function} in same call stack - Recursion is disallowed");
+            context.PushFunction(definition);
+            var shownInTrace = false;
+            if (function is IDeclared declared)
             {
-                tracingThisFunction = true;
-                compilationContext.PushTrace(declared.MakeTraceSite(functionSignature.ToString()));
+                shownInTrace = true;
+                context.PushTrace(declared.MakeTraceSite(function.ToString()));
             }
-            
 
             try
             {
-                // Local function since it can call into itself recursively
-                static IValue ResolveFunctionBody(object body, IScope scope, CompilationContext compilationContext)  =>
-                    body switch
-                    {
-                        // If a function has expression body we just compile the single expression using the call scope
-                        ExpressionBody exprBody => exprBody.Expression.ResolveExpression(scope, compilationContext),
-                        // If a function has a scope body we need to find the return identifier
-                        IScope scopeBody => scopeBody[Parser.ReturnIdentifier, false, compilationContext] switch
-                        {
-                            IFunctionWithBody nullaryReturn when nullaryReturn.IsNullary() => ResolveFunctionBody(nullaryReturn.Body, scope, compilationContext),
-                            IFunctionWithBody functionReturn => functionReturn,
-                            null => compilationContext.LogError(7, $"'{Parser.ReturnIdentifier}' not found in function scope"),
-                            var nyi => throw new NotImplementedException(nyi.ToString())
-                        },
-                        _ => throw new InternalCompilerException("Function body type unrecognized")
-                    };
-                
-                var callScope = functionSignature switch
+                var callScope = function switch
                 {
                     // If the signature is an applied function we want to use it as the call scope. More arguments are filled by subsequent applications until full application.
                     AppliedFunctionBase appliedFunction => appliedFunction,
-                    // Lambdas must be special cased as they can be declared within an expression and may capture function arguments
-                    Lambda lambda => lambda.DeclaringScope,
                     // If the signature is a function with a body then we use the bodies parent
                     IFunctionWithBody functionWithBody when functionWithBody.Body is Scope scope => scope.Declarer.Parent,
                     Declaration declaration => declaration.Parent,
-                    _ => compilationContext.SourceContext.GlobalScope
+                    _ => context.SourceContext.GlobalScope
                 };
 
-                // Fully resolve arguments
-                arguments = arguments.Select(arg => arg.FullyResolveValue(compilationContext)).ToArray();
                 
-                return CheckArguments(functionSignature, arguments, callScope, allowPartialApplication, compilationContext)
-                           ? (functionSignature switch
-                           {
-                               // When there's no arguments we can just resolve immediately
-                               IFunctionWithBody functionWithBody when arguments.Length > 0 => new AppliedFunctionWithBody(arguments, functionWithBody, callScope),
-                               IFunctionWithBody functionWithBody => functionWithBody.ResolveReturn(callScope, ResolveFunctionBody(functionWithBody.Body, callScope, compilationContext), compilationContext),
-                               IFunction function when arguments.Length > 0 => new AppliedFunction(arguments, function, callScope),
-                               IFunction function => functionSignature.ResolveReturn(callScope, function.Call(arguments, compilationContext), compilationContext),
-                               _ => throw new InternalCompilerException($"{functionSignature} function type not resolvable")
-                           }).FullyResolveValue(compilationContext)
-                           : CompilationError.Instance;
+                // Fully resolve arguments
+                return arguments.Select(arg => arg.FullyResolveValue(context)).BindEnumerable(ResolveCall);
+                
+                
+                
+                Result<IValue> ResolveCall(IEnumerable<IValue> args)
+                {
+                    arguments = args.ToArray();
+                    return CheckArguments(function, arguments, callScope, allowPartialApplication, context)
+                        .Bind(() =>
+                                  (function switch
+                                      {
+                                          // When there's no arguments we can just resolve immediately
+                                          IFunctionWithBody functionWithBody when arguments.Length > 0 => new AppliedFunctionWithBody(arguments, functionWithBody, callScope),
+                                          IFunctionWithBody functionWithBody => functionWithBody.ResolveReturn(callScope, ResolveFunctionBody(functionWithBody.Body, callScope, context), context),
+                                          { } fn when arguments.Length > 0 => new AppliedFunction(arguments, fn, callScope),
+                                          { } fn => function.ResolveReturn(callScope, fn.Call(arguments, context), context),
+                                          _ => throw new InternalCompilerException($"{function} function type not resolvable")
+                                      }).Bind(returnValue => returnValue.FullyResolveValue(context)));
+                }
             }
             finally
             {
-                compilationContext.PopFunction();
-                if (tracingThisFunction)
+                context.PopFunction();
+                if (shownInTrace)
                 {
-                    compilationContext.PopTrace();
+                    context.PopTrace();
                 }
             }
         }
 
-        private static bool CheckArguments(IFunctionSignature functionSignature, IValue[] arguments, IScope callScope, bool allowPartialApplication, CompilationContext compilationContext)
+        private static Result CheckArguments(IFunction function, IValue[] arguments, IScope callScope, bool allowPartialApplication, CompilationContext context)
         {
-            var argumentsValid = true;
-            if (arguments.Length > 0)
+            if (arguments.Length <= 0) return Result.Success;
+            var resultBuilder = new ResultBuilder(context);
+                
+            var ports = function.Inputs;
+            var isVariadic = ports.Any(p => p == Port.VariadicPort);
+            if (!allowPartialApplication && !isVariadic && arguments.Length != ports.Length
+                || !allowPartialApplication && arguments.Length < ports.Length)
             {
-                var ports = functionSignature.Inputs;
-                var isVariadic = ports.Any(p => p == Port.VariadicPort);
-                if (!allowPartialApplication && !isVariadic && arguments.Length != ports.Length
-                    || !allowPartialApplication && arguments.Length < ports.Length)
-                {
-                    compilationContext.LogError(6, $"Expected '{ports.Length}' arguments but got '{arguments.Length}'");
-                    argumentsValid = false;
-                }
-
-                for (var i = 0; i < Math.Min(ports.Length, arguments.Length); i++)
-                {
-                    var arg = arguments[i];
-                    var port = ports[i];
-                    if (port == Port.VariadicPort)
-                        break; // If we find a variadic port we can't do any more constraint checking here, it must be done within the functions implementation.
-                    var constraint = port.ResolveConstraint(callScope, compilationContext);
-                    if (!constraint.MatchesConstraint(arg, compilationContext))
-                    {
-                        compilationContext.LogError(8, $"Value '{arg}' given for port '{port}' does not match '{constraint}' constraint");
-                        argumentsValid = false;
-                    }
-                }
+                resultBuilder.Append(MessageCode.ArgumentCountMismatch, $"Expected '{ports.Length}' arguments but got '{arguments.Length}'");
             }
 
-            return argumentsValid;
+            for (var i = 0; i < Math.Min(ports.Length, arguments.Length); i++)
+            {
+                var arg = arguments[i];
+                var port = ports[i];
+                if (port == Port.VariadicPort)
+                    break; // If we find a variadic port we can't do any more constraint checking here, it must be done within the functions implementation.
+                resultBuilder.Append(port.ResolveConstraint(callScope, context)
+                                         .Do(constraint => constraint.MatchesConstraint(arg, context)
+                                                                     .Do(matches => matches
+                                                                                        ? Result.Success
+                                                                                        : context.Trace(MessageCode.ConstraintNotSatisfied, $"Value '{arg}' given for port '{port}' does not match '{constraint}' constraint"))));
+            }
+
+            return resultBuilder.ToResult();
         }
 
-        private static IValue ResolveReturn(this IFunctionSignature functionSignature, IScope callScope, IValue result, CompilationContext compilationContext)
+        private static Result<IValue> ResolveReturn(this IFunction function, IScope callScope, IValue result, CompilationContext context) =>
+            function.Output.ResolveConstraint(callScope, context)
+                    .Bind(constraint => result.FullyResolveValue(context)
+                                              .Bind(fullyResolvedResult => constraint.MatchesConstraint(fullyResolvedResult, context)
+                                                                                     .Bind(matches => matches
+                                                                                                          ? new Result<IValue>(fullyResolvedResult)
+                                                                                                          : context.Trace(MessageCode.ConstraintNotSatisfied, $"Result '{fullyResolvedResult}' for function '{function.GetDefinition(context)}' does not match '{constraint}' constraint"))));
+
+        private abstract class AppliedFunctionBase : ScopeBase, IFunction
         {
-            var fullyResolvedResult = result.FullyResolveValue(compilationContext);
-            var returnConstraint = functionSignature.Output.ResolveConstraint(callScope, compilationContext);
-            return returnConstraint.MatchesConstraint(fullyResolvedResult, compilationContext)
-                       ? fullyResolvedResult
-                       : compilationContext.LogError(8, $"Result '{fullyResolvedResult}' for function '{functionSignature.GetDefinition(compilationContext)}' does not match '{returnConstraint}' constraint");
-        }
-        
-        private abstract class AppliedFunctionBase : ScopeBase, IFunctionSignature
-        {
-            protected AppliedFunctionBase(IValue[] arguments, IFunctionSignature definition, IScope parent)
+            protected AppliedFunctionBase(IValue[] arguments, IFunction definition, IScope parent)
             {
                 _definition = definition;
                 _parent = parent;
                 _inputs = definition.Inputs.Skip(arguments.Length).ToArray();
-                SetRange(arguments.WithoutDiscardedArguments(definition.Inputs));
+                _source = arguments.WithoutDiscardedArguments(definition.Inputs).ToList();
             }
 
             private readonly IScope _parent;
             private readonly Port[] _inputs;
-            private readonly IFunctionSignature _definition;
+            private readonly IFunction _definition;
 
-            Port[] IFunctionSignature.Inputs => _inputs;
-            Port IFunctionSignature.Output => _definition.Output;
+            Port[] IFunction.Inputs => _inputs;
+            Port IFunction.Output => _definition.Output;
+            public abstract Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
 
             public override string ToString() => _definition.ToString();
 
             protected virtual IScope? _child => null;
+            protected override IList<(Identifier Identifier, IValue Value)> _source { get; }
 
-            public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-                _child?[id, false, compilationContext] ?? IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
+            public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
+                _child?[id, false, context]
+                    .Else(() => Index(id))
+                    .ElseIf(recurse, () => _parent[id, true, context])
+                ?? Index(id)
+                    .ElseIf(recurse, () => _parent[id, true, context]);
 
-            public IFunctionSignature GetDefinition(CompilationContext compilationContext) => _definition;
+            public IFunction GetDefinition(CompilationContext compilationContext) => _definition;
         }
 
-        private class AppliedFunction : AppliedFunctionBase, IFunction
+        private class AppliedFunction : AppliedFunctionBase
         {
             public AppliedFunction(IValue[] arguments, IFunction definition, IScope parent)
                 : base(arguments, definition, parent) =>
@@ -175,16 +155,17 @@ namespace Element.AST
 
             private readonly IFunction _definition;
 
-            IValue IFunction.Call(IValue[] arguments, CompilationContext compilationContext) =>
-                this.ResolveReturn(this, _definition.Call(this.Concat(arguments).ToArray(), compilationContext), compilationContext);
+            public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+                _definition.Call(this.Concat(arguments).ToArray(), context)
+                           .Bind(result => this.ResolveReturn(this, result, context));
         }
 
-        private class AppliedFunctionWithBody : AppliedFunctionBase, IFunctionWithBody
+        private class AppliedFunctionWithBody : AppliedFunctionBase
         {
-            public AppliedFunctionWithBody(IValue[] arguments, IFunctionWithBody functionWithBody, IScope parent)
-                : base(arguments, functionWithBody, parent)
+            public AppliedFunctionWithBody(IValue[] arguments, IFunction functionDefinition, object functionBody, IScope parent)
+                : base(arguments, functionDefinition, parent)
             {
-                Body = functionWithBody.Body switch
+                Body = functionBody switch
                 {
                     ExpressionBody exprBody => exprBody,
                     IScope scopeBody => scopeBody switch
@@ -201,23 +182,19 @@ namespace Element.AST
             public object Body { get; }
         }
 
-        public static IFunctionSignature Uncurry(this IFunctionSignature a, IFunctionSignature b,
-                                                 ILogger logger) =>
-            UncurriedFunction.Create(a, b, logger);
+        public static Result<IFunction> Uncurry(this IFunction a, IFunction b, ITrace trace) =>
+            UncurriedFunction.Create(a, b, trace);
 
-        public static IFunctionSignature? Uncurry(this IFunctionSignature a, string bFunctionExpression,
-                                                  SourceContext context)
-        {
-            var b = context.EvaluateExpressionAs<IFunctionSignature>(bFunctionExpression, out _);
-            return b == null ? null : a.Uncurry(b, context);
-        }
+        public static Result<IFunction> Uncurry(this IFunction a, string bFunctionExpression,
+                                                  SourceContext context) =>
+            context.EvaluateExpressionAs<IFunction>(bFunctionExpression).Bind(a.Uncurry);
 
         private class UncurriedFunction : IFunction
         {
-            private readonly IFunctionSignature _a;
-            private readonly IFunctionSignature _b;
+            private readonly IFunction _a;
+            private readonly IFunction _b;
 
-            private UncurriedFunction(IFunctionSignature a, IFunctionSignature b)
+            private UncurriedFunction(IFunction a, IFunction b)
             {
                 _a = a;
                 _b = b;
@@ -225,21 +202,21 @@ namespace Element.AST
                 Output = _b.Output;
             }
             
-            public static IFunctionSignature Create(IFunctionSignature a, IFunctionSignature b, ILogger logger)
+            public static Result<IFunction> Create(IFunction a, IFunction b, ITrace trace)
             {
                 if (b.Inputs.Length < 1)
                 {
-                    return logger.LogError(23, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
+                    return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
                 }
 
                 if (a.Inputs.Any(p => p == Port.VariadicPort))
                 {
-                    return logger.LogError(23, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
+                    return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
                 }
 
                 if (a.Inputs.Concat(b.Inputs).Any(p => p?.Identifier == null))
                 {
-                    return logger.LogError(23, "Cannot uncurry functions with discarded/unnamed ports");
+                    return trace.Trace(MessageCode.FunctionCannotBeUncurried, "Cannot uncurry functions with discarded/unnamed ports");
                 }
 
                 foreach (var aPort in a.Inputs)
@@ -248,23 +225,20 @@ namespace Element.AST
                     Identifier? id = null;
                     if (b.Inputs.Skip(1).Any(bPort => aPort.Identifier.Equals(id = bPort.Identifier)))
                     {
-                        return logger.LogError(23, $"'{id}' is defined on both functions, these functions cannot be uncurried");
+                        return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"'{id}' is defined on both functions, these functions cannot be uncurried");
                     }
                 }
                 
                 return new UncurriedFunction(a, b);
             }
 
-            IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
+            IFunction IInstancable<IFunction>.GetDefinition(CompilationContext compilationContext) => this;
             public Port[] Inputs { get; }
             public Port Output { get; }
-            public IValue Call(IValue[] arguments, CompilationContext compilationContext) =>
-                _b.ResolveCall(
-                    // Skip arguments meant for function a
-                    arguments.Skip(_a.Inputs.Length)
-                             .Prepend(_a.ResolveCall(arguments.Take(_a.Inputs.Length).ToArray(), false, compilationContext))
-                             .ToArray(),
-                    false, compilationContext);
+            public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+                _a.Call(arguments.Take(_a.Inputs.Length).ToArray(), context)
+                  // Now resolve B, skip arguments used in A
+                  .Bind(resultOfA => _b.Call(arguments.Skip(_a.Inputs.Length).Prepend(resultOfA).ToArray(), context));
         }
     }
 }

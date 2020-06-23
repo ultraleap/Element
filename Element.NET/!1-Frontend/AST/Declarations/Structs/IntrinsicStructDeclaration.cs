@@ -1,29 +1,36 @@
+using System.Collections.Generic;
+
 namespace Element.AST
 {
     // ReSharper disable once UnusedType.Global
-    public class IntrinsicStructDeclaration : StructDeclaration
+    public sealed class IntrinsicStructDeclaration : StructDeclaration
     {
         protected override string IntrinsicQualifier => "intrinsic";
 
-        protected override bool AdditionalValidation(SourceContext sourceContext)
+        protected override void AdditionalValidation(ResultBuilder builder)
         {
-            var success = true;
             if (DeclaredType != null)
             {
-                sourceContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
-                success = false;
+                builder.Append(MessageCode.StructCannotHaveReturnType, $"Struct '{Identifier}' cannot have declared return type");
             }
-
-            // Intrinsic structs implement constraint resolution and a callable constructor
-            // They don't implement IScope, scope impl is still handled by DeclaredStruct
-            success &= ImplementingIntrinsic<IType>(sourceContext) != null;
-            success &= ImplementingIntrinsic<IFunction>(sourceContext) != null;
-
-            return success;
         }
 
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic<IConstraint>(compilationContext)?.MatchesConstraint(value, compilationContext) ?? false;
-        public override ISerializableValue DefaultValue(CompilationContext context) => ImplementingIntrinsic<IType>(context)?.DefaultValue(context) ?? CompilationError.Instance;
-        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => ImplementingIntrinsic<IFunction>(compilationContext)?.Call(arguments, compilationContext) ?? CompilationError.Instance;
+        public Result<IIntrinsicType> ImplementingIntrinsic =>
+            _idToIntrinsic.TryGetValue(Identifier, out var intrinsicType)
+                ? new Result<IIntrinsicType>(intrinsicType)
+                : (MessageCode.IntrinsicNotFound, $"Intrinsic '{Identifier}' not found");
+
+        private static readonly Dictionary<string, IIntrinsicType> _idToIntrinsic = new Dictionary<string, IIntrinsicType>
+        {
+            {"Num", NumType.Instance},
+            {"Bool", BoolType.Instance},
+            {"List", ListType.Instance},
+            {"Tuple", TupleType.Instance}
+        };
+
+        public override Result<Port[]> Fields => ImplementingIntrinsic.Bind(type => Fields);
+        public override Result<ISerializableValue> DefaultValue(CompilationContext compilationContext) => ImplementingIntrinsic.Bind(type => type.DefaultValue);
+        protected override Result<IValue> Construct(IEnumerable<IValue> arguments) => ImplementingIntrinsic.Bind(type => type.Construct(this, arguments));
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic.Bind(type => type.MatchesConstraint(value, compilationContext));
     }
 }

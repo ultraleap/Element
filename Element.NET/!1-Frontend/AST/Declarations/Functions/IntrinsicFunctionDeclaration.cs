@@ -1,21 +1,28 @@
+using System.Collections.Generic;
+
 namespace Element.AST
 {
-    public class IntrinsicFunctionDeclaration : FunctionDeclaration, IFunction
+    public sealed class IntrinsicFunctionDeclaration : FunctionDeclaration, IFunction
     {
         protected override string IntrinsicQualifier => "intrinsic";
 
-        protected override bool AdditionalValidation(SourceContext sourceContext)
+        protected override void AdditionalValidation(ResultBuilder builder)
         {
-            var success = ImplementingIntrinsic<IFunction>(sourceContext) != null;
             if (!(Body is Terminal))
             {
-                sourceContext.LogError(20, $"Intrinsic function '{Location}' cannot have a body");
-                success = false;
+                builder.Append(MessageCode.IntrinsicCannotHaveBody, $"Intrinsic function '{Location}' cannot have a body");
             }
-
-            return success;
+            // TODO: Check declared inputs/outputs match the compiler-defined ones
         }
 
-        IValue IFunction.Call(IValue[] arguments, CompilationContext compilationContext) => ImplementingIntrinsic<IFunction>(compilationContext)?.Call(arguments, compilationContext) ?? CompilationError.Instance;
+        public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => _implementation.Call(arguments, context); // TODO: All the other stuff (from ResolveCall)
+        public override Port[] Inputs { get; }
+        public override Port Output { get; }
+
+        private IntrinsicFunction _implementation => Identifier.Value switch
+        {
+            "Num" => NumType.Instance,
+            _ =>
+        };
     }
 }

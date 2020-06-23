@@ -272,29 +272,33 @@ namespace Element.CLR
 		/// <param name="array">The resultant pre-allocated array. The function inputs are mapped directly to its contents.</param>
 		/// <param name="context"></param>
 		/// <returns>The result of calling `function` with all its inputs, or compilation error where there was an error.</returns>
-		public static IValue SourceArgumentsFromSerializedArray(this IFunctionSignature function, out float[] array,
-		                                                        CompilationContext context)
-		{
-			var defaultValues = function.Inputs.Select(p => p.ResolveConstraint(context) switch
-			{
-				IType type => type.DefaultValue(context),
-				{} v => context.LogError(14, $"'{v}' is not a type - only types can produce a default value")
-			}).ToArray();
+		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IFunction function, CompilationContext context) =>
+			function.Inputs.Select(p => p.ResolveConstraint(context)
+			                             .Bind(c => c is IType type
+				                                        ? type.DefaultValue(context)
+				                                        : context.Trace(MessageCode.TypeError, $"'{c}' is not a type - only types can produce a default value")))
+			        .BindEnumerable(defaultValues =>
+			        {
+				        var defaults = defaultValues.ToArray();
+				        return defaults.Select(value => value.SerializedSize(context))
+				                       .MapEnumerable(argSizes => (defaults, argSizes));
+			        })
+			        .Map(tuple =>
+			        {
+				        var (defaultValues, argSizes) = tuple;
+				        var totalSerializedSize = argSizes.Sum();
 
-			var argSizes = defaultValues.Select(t => t.SerializedSize(context)).ToArray();
-			var totalSerializedSize = argSizes.Sum();
+				        // Now allocate the array, and make an argument list that uses it as data
+				        var array = new float[totalSerializedSize];
 
-			// Now allocate the array, and make an argument list that uses it as data
-			array = new float[totalSerializedSize];
+				        var arrayExpr = LinqExpression.Constant(array);
+				        var flattenedValIdx = 0;
 
-			var arrayExpr = LinqExpression.Constant(array);
-			var flattenedValIdx = 0;
+				        Expression NextValue() => (Expression) NumberConverter.Instance.LinqToElement(LinqExpression.ArrayIndex(arrayExpr, LinqExpression.Constant(flattenedValIdx++)), null!, context);
 
-			Expression NextValue() => (Expression) NumberConverter.Instance.LinqToElement(LinqExpression.ArrayIndex(arrayExpr, LinqExpression.Constant(flattenedValIdx++)), null!, context);
-			
-			var arguments = defaultValues.Select(v => v.Deserialize(NextValue, context)).ToArray();
-			return function.ResolveCall(arguments, false, context);
-		}
+				        var arguments = defaultValues.Select(v => v.Deserialize(NextValue, context)).ToArray();
+				        return (function.Call(arguments, context), array);
+			        });
 
 		public static TDelegate? Compile<TDelegate>(this IValue value, CompilationContext context, IBoundaryConverter? boundaryConverter = default)
 			where TDelegate : Delegate =>
@@ -313,7 +317,7 @@ namespace Element.CLR
             var method = delegateType.GetMethod(nameof(Action.Invoke));
             if (method == null)
             {
-	            context.LogError(10, $"{delegateType} did not have invoke method");
+	            context.Flush(10, $"{delegateType} did not have invoke method");
 	            return null;
             }
             
@@ -321,7 +325,7 @@ namespace Element.CLR
             var delegateReturn = method.ReturnParameter;
             if (delegateParameters.Any(p => p.IsOut) || method.ReturnType == typeof(void))
             {
-                context.LogError(10, $"{delegateType} cannot have out parameters and must have non-void return type");
+                context.Flush(10, $"{delegateType} cannot have out parameters and must have non-void return type");
                 return null;
             }
             
@@ -332,7 +336,7 @@ namespace Element.CLR
             
             if (value is IFunctionSignature fn && fn.Inputs.Length != delegateParameters.Length)
             {
-	            context.LogError(10, "Mismatch in number of parameters between delegate type and the function being compiled");
+	            context.Flush(10, "Mismatch in number of parameters between delegate type and the function being compiled");
 	            return null;
             }
             
@@ -341,7 +345,7 @@ namespace Element.CLR
 	                                   {
 		                                   var p = parameterExpressions[idx];
 		                                   return p == null
-			                                          ? context.LogError(10, $"Unable to bind {functionSignature}'s input {f} - there is a mismatch in number of ports")
+			                                          ? context.Flush(10, $"Unable to bind {functionSignature}'s input {f} - there is a mismatch in number of ports")
 			                                          : boundaryConverter.LinqToElement(p, boundaryConverter, context);
 	                                   }).ToArray(), false, context)
 	                                   : value;
@@ -365,13 +369,13 @@ namespace Element.CLR
 				{
 					case CompilationError _: return null;
 					case IConstraint c:
-						context.LogError(3, $"Cannot compile a constraint '{c}'");
+						context.Flush(3, $"Cannot compile a constraint '{c}'");
 						return null;
 				}
 
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == value)
 				{
-					context.LogError(11, $"Circular dependency when compiling '{value}'");
+					context.Flush(11, $"Circular dependency when compiling '{value}'");
 					return null;
 				}
 

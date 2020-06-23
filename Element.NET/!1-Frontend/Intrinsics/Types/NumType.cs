@@ -1,23 +1,19 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Element.AST
 {
     /// <summary>
     /// The type for a single number.
     /// </summary>
-    public sealed class NumType : IIntrinsicType
+    public sealed class NumType : IntrinsicType
     {
-        private NumType()
-        {
-            Inputs = new[]{new Port("a", Instance)};
-            Output = Port.ReturnPort(Instance);
-        }
+        private NumType() => Fields = new[]{new Port("a", Instance)};
         public static NumType Instance { get; } = new NumType();
-        public bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value is Element.Expression expr && expr.Type == Instance;
-        public Port[] Inputs { get; }
-        public Port Output { get; }
-        public IValue Call(IValue[] arguments, CompilationContext compilationContext) => arguments[0]; // Return the number - type checking will already have occurred.
-        string IIntrinsic.Location => "Num";
-        public ISerializableValue DefaultValue(CompilationContext _) => Constant.Zero;
-        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this.GetDeclaration(compilationContext);
-
+        public override Port[] Fields { get; }
+        public override Result<IValue> Construct(StructDeclaration declaration, IEnumerable<IValue> arguments) => new Result<IValue>(arguments.First());
+        public override Result<ISerializableValue> DefaultValue(CompilationContext _) => Constant.Zero;
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) => value is Element.Expression expr && expr.Type == Instance;
+        public override Identifier Identifier { get; } = new Identifier("Num");
     }
 }

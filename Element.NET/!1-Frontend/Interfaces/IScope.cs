@@ -6,7 +6,7 @@ namespace Element.AST
 {
     public interface IIndexable
     {
-        IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] { get; }
+        Result<IValue> this[Identifier id, bool recurse, CompilationContext context] { get; }
     }
 
     public interface IScope : IIndexable, IReadOnlyCollection<IValue> { }
@@ -21,11 +21,14 @@ namespace Element.AST
             {
                 Declarer = declarer;
                 _parent = parent;
-                SetRange(items.Select(item => (item.Identifier, (IValue)item.Clone(this))));
+                _source = items.Select(item => (item.Identifier, (IValue)item.Clone(this))).ToList();
             }
 
-            public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-                IndexCache(id) ?? (recurse ? _parent[id, true, compilationContext] : null);
+            public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
+                Index(id)
+                    .ElseIf(recurse, () => _parent[id, true, context]);
+
+            protected override IList<(Identifier Identifier, IValue Value)> _source { get; }
 
             public Declaration Declarer { get; }
             public int IndexInSource => Declarer.IndexInSource;

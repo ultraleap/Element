@@ -11,22 +11,28 @@ namespace Element.AST
         [field: Term] private ListOf<Expression> Expressions { get; set; }
 #pragma warning restore 169, 8618
 
-        protected override void InitializeImpl()
+        protected override void InitializeImpl(IIntrinsicCache? cache)
         {
             foreach (var expr in Expressions.List)
             {
-                expr.Initialize(Declarer);
+                expr.Initialize(Declarer, cache);
             }
         }
 
         public override string ToString() => Expressions.ToString();
+        public override void Validate(ResultBuilder resultBuilder)
+        {
+            foreach (var expr in Expressions.List)
+            {
+                expr.Validate(resultBuilder);
+            }
+        }
 
-        public override bool Validate(SourceContext sourceContext) =>
-            Expressions.List.Aggregate(true, (current, expr) => current & expr.Validate(sourceContext));
-
-        protected override IValue SubExpressionImpl(IValue previous, IScope scope, CompilationContext compilationContext) =>
-            previous is IFunctionSignature function
-                ? function.ResolveCall(Expressions.List.Select(argExpr => argExpr.ResolveExpression(scope, compilationContext)).ToArray(), false, compilationContext)
-                : compilationContext.LogError(16, $"{previous} cannot be called - it is not a function");
+        protected override Result<IValue> SubExpressionImpl(IValue previous, IScope scope, CompilationContext compilationContext) =>
+            previous is IFunction function
+                ? Expressions.List
+                             .Select(argExpr => argExpr.ResolveExpression(scope, compilationContext))
+                             .BindEnumerable(args => function.Call(args.ToArray(), compilationContext))
+                : compilationContext.Trace(MessageCode.InvalidExpression, $"{previous} cannot be called - it is not a function");
     }
 }

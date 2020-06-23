@@ -8,8 +8,8 @@ namespace Element.AST
         protected override Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Scope), typeof(Terminal)};
         public override string ToString() => $"{Location}:Function";
 
-        public Port[] Inputs => DeclaredInputs;
-        public Port Output => DeclaredOutput;
-        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
+        public abstract Port[] Inputs { get; }
+        public abstract Port Output { get; }
+        IFunctionSignature IInstancable<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
     }
 }

@@ -25,44 +25,30 @@ namespace Element
 
         public static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public static bool Parse<T>(string text, out T output, ILogger logger, bool noParseTrace = false)
+        public static Result Parse<T>(string text, out T output, ITrace trace, bool noParseTrace = false)
         {
-            var success = Lexico.Lexico.TryParse(text, out output);
-            if (!success)
-            {
-                if (!noParseTrace)
-                {
-                    var sb = new StringBuilder();
-                    Lexico.Lexico.TryParse<T>(text, out _, new DelegateTextTrace(msg =>
-                    {
-                        if (!string.IsNullOrEmpty(msg)) sb.AppendLine(msg);
-                    }));
-                    logger.Log(sb.ToString());
-                }
-
-                logger.LogError(9, $"Parsing failed - {(noParseTrace ? "enable parse trace and run again for details." : "see parse trace messages for details.")}");
-            }
-            return success;
+            if (Lexico.Lexico.TryParse(text, out output)) return Result.Success;
+            if (noParseTrace) return trace.Trace(MessageCode.ParseError, "Parsing failed - enable parse trace and run again for details.");
+            
+            // Using StringBuilder as there's potentially a lot of trace lines
+            var sb = new StringBuilder();
+            Lexico.Lexico.TryParse<T>(text, out _, new DelegateTextTrace(msg => { if (!string.IsNullOrEmpty(msg)) sb.AppendLine(msg); }));
+            return trace.Trace(MessageCode.ParseError, $"Parsing failed - see parse trace below for details.\n{sb}");
         }
 
-        public static bool ValidateIdentifier(Identifier identifier, ILogger logger, Identifier[]? blacklist = null, Identifier[]? whitelist = null)
+        public static void Validate(this Identifier identifier, ResultBuilder builder, Identifier[]? blacklist = null, Identifier[]? whitelist = null)
         {
             if (string.IsNullOrEmpty(identifier))
             {
-                logger.LogError(15, "Null or empty identifier is invalid");
-                return false;
+                builder.Append(MessageCode.InvalidIdentifier, "Null or empty identifier is invalid");
             }
 
             bool Predicate(Identifier reserved) => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase);
-
             if (GloballyReservedIdentifiers.Where(id => !(whitelist?.Contains(identifier) ?? false)).Any(Predicate)
                 || (blacklist?.Any(Predicate) ?? false))
             {
-                logger.LogError(15, $"'{identifier}' is a reserved identifier");
-                return false;
+                builder.Append(MessageCode.InvalidIdentifier, $"'{identifier}' is a reserved identifier");
             }
-
-            return true;
         }
     }
 }

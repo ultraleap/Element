@@ -21,7 +21,7 @@ namespace Element
 			{
 				if (!input.Identifier.HasValue)
 				{
-					context.LogError(10, "Function has port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
+					context.Flush(10, "Function has port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
 					return;
 				}
 				JsonConfiguration.TryGetValue(input.Identifier, out var iValue);
@@ -45,10 +45,10 @@ namespace Element
 				return (false, e.ToString());
 			}
 
-			return (true, null);
+			return (true, string.Empty);
 		}
 
-		private static void RecursivelyEvaluate(float[] argumentArray, string name, IType type, JToken value, ref int idx, CompilationContext context)
+		private static void RecursivelyEvaluate(float[] argumentArray, string name, IType? type, JToken? value, ref int idx, CompilationContext context)
 		{
 			if (type == NumType.Instance)
 			{
@@ -56,7 +56,7 @@ namespace Element
 				{
 					JTokenType.Float => (float) (double) value,
 					JTokenType.Integer => (int) value,
-					_ => context.LogError(18, $"Expected float or integer token for element Num parameter '{name}'").Return(0)
+					_ => context.Flush(18, $"Expected float or integer token for element Num parameter '{name}'").Return(0)
 				};
 			}
 			else if (type == BoolType.Instance)
@@ -64,12 +64,12 @@ namespace Element
 				argumentArray[idx++] = (value?.Type ?? JTokenType.None) switch
 				{
 					JTokenType.Boolean => (bool)value ? 1f : 0f,
-					_ => context.LogError(18, $"Expected boolean token for element Bool parameter '{name}'").Return(0)
+					_ => context.Flush(18, $"Expected boolean token for element Bool parameter '{name}'").Return(0)
 				};
 			}
 			else if (type is StructDeclaration declaredStruct)
 			{
-				JToken cValue = null;
+				JToken? cValue = null;
 				(value as JObject)?.TryGetValue(name, out cValue);
 				foreach (var field in declaredStruct.Fields)
 				{
@@ -78,7 +78,7 @@ namespace Element
 			}
 			else
 			{
-				context.LogError(18, $"Element type '{type}' is not supported for JSON argument provisioning");
+				context.Flush(18, $"Element type '{type}' is not supported for JSON argument provisioning");
 			}
 		}
 	}

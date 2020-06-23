@@ -12,32 +12,28 @@ namespace Element.AST
 
         public override string ToString() => Ports.ToString();
 
-        protected override void InitializeImpl()
+        protected override void InitializeImpl(IIntrinsicCache? cache)
         {
             foreach (var p in Ports.List)
             {
-                p.Initialize(Declarer);
+                p.Initialize(Declarer, cache);
             }
         }
         
-        public override bool Validate(SourceContext sourceContext)
+        public override void Validate(ResultBuilder resultBuilder)
         {
-            var success = true;
-            if (Ports.List.Count > 0)
+            if (Ports.List.Count <= 0) return;
+            
+            var distinctPortIdentifiers = new HashSet<string>();
+            foreach (var port in Ports.List)
             {
-                var distinctPortIdentifiers = new HashSet<string>();
-                foreach (var port in Ports.List)
+                if (!(port.Identifier is { } id)) continue;
+                port.Validate(resultBuilder);
+                if (!distinctPortIdentifiers.Add(id))
                 {
-                    if (!(port.Identifier is { } id)) continue;
-                    success &= port.Validate(sourceContext);
-                    if (!distinctPortIdentifiers.Add(id))
-                    {
-                        sourceContext.LogError(2, $"Cannot add duplicate identifier '{id}'");
-                        success = false;
-                    }
+                    resultBuilder.Append(MessageCode.MultipleDefinitions, $"'{Declarer}' has multiple input definitions of '{id}'");
                 }
             }
-            return success;
         }
     }
 }

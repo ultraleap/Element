@@ -7,7 +7,7 @@ namespace Element.AST
 
         protected override bool AdditionalValidation(SourceContext sourceContext) => ImplementingIntrinsic<IConstraint>(sourceContext) != null;
 
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) =>
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) =>
             ImplementingIntrinsic<IConstraint>(compilationContext)?.MatchesConstraint(value, compilationContext) ?? false;
     }
 }

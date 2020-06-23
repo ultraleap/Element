@@ -4,33 +4,30 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class StructInstance : ScopeBase, ISerializableValue, IReadOnlyList<IValue>
+    public sealed class StructInstance : ScopeBase, ISerializableValue, IInstancable<StructDeclaration> //, IReadOnlyList<IValue>
     {
         public StructDeclaration DeclaringStruct { get; }
 
-        public override IValue this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-            IndexCache(id)
-            ?? DeclaringStruct.ResolveInstanceFunction(id, this, compilationContext);
+        public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
+            Index(id, context)
+                .Else(() => DeclaringStruct.ResolveInstanceFunction(id, this, context));
 
-        public StructInstance(StructDeclaration declaringStruct, Port[] inputs, IValue[] memberValues)
+        protected override IList<(Identifier Identifier, IValue Value)> _source { get; }
+
+        public StructInstance(StructDeclaration declaringStruct, IEnumerable<Port> inputs, IEnumerable<IValue> fieldValues)
         {
             DeclaringStruct = declaringStruct;
-            SetRange(memberValues.WithoutDiscardedArguments(inputs));
+            _source = fieldValues.WithoutDiscardedArguments(inputs).ToList();
+        }
+
+        public StructDeclaration GetDefinition(CompilationContext compilationContext)
+        {
+            throw new NotImplementedException();
         }
 
         public override string ToString() => $"Instance:{DeclaringStruct}";
 
-        public IValue this[int index] => IndexCache(index);
-        public IEnumerable<Element.Expression> Serialize(CompilationContext context)
-        {
-            var serializableValues = this.Select(v => v as ISerializableValue ?? CompilationError.Instance).ToArray();
-            if (serializableValues.Any(sv => sv == CompilationError.Instance))
-            {
-                return new []{CompilationError.Instance};
-            }
-            return serializableValues.SelectMany(m => m.Serialize(context));
-            // TODO: List serialization path
-        }
+        //public IValue this[int index] => IndexCache(index).mat;
         
         /*public bool Serialize(IValue instance, ref Element.Expression[] serialized, ref int position, CompilationContext compilationContext) =>
             instance is StructInstance listInstance
@@ -39,7 +36,27 @@ namespace Element.AST
         public override IValue Deserialize(IEnumerable<Element.Expression> expressions, CompilationContext compilationContext) =>
             MakeList(expressions.ToArray(), compilationContext);*/
 
-        public ISerializableValue Deserialize(Func<Element.Expression> nextValue, CompilationContext context) =>
-            DeclaringStruct.CreateInstance(this.Cast<ISerializableValue>().Select(m => m.Deserialize(nextValue, context)).ToArray());
+        public void Serialize(ResultBuilder<IList<Element.Expression>> resultBuilder)
+        {
+            // TODO: List serialization
+            foreach (var v in this)
+            {
+                if (v is ISerializableValue sv)
+                {
+                    sv.Serialize(resultBuilder);
+                }
+                else
+                {
+                    resultBuilder.Append(MessageCode.SerializationError, $"'{v}' is not serializable");
+                }
+            }
+            return this.SelectMany(v => v is ISerializableValue sv
+                                            ? sv.Serialize()
+                                            :;
+        }
+
+        public Result<ISerializableValue> Deserialize(Func<Element.Expression> nextValue, ITrace trace) =>
+            this.Select(field => field is ISerializableValue sv ? sv.Deserialize(nextValue, trace) : trace.Trace(MessageCode.SerializationError, $"'{field}' cannot be deserialized"))
+                .MapEnumerable(fields => (ISerializableValue)DeclaringStruct.CreateInstance(fields));
     }
 }

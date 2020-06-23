@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Element.AST
@@ -7,31 +8,28 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier => string.Empty;
 
-        protected override bool AdditionalValidation(SourceContext sourceContext)
+        protected override void AdditionalValidation(ResultBuilder builder)
         {
-            var success = true;
-
             if (DeclaredType != null)
             {
-                sourceContext.LogError(19, $"Struct '{Identifier}' cannot have declared return type");
-                success = false;
+                builder.Append(MessageCode.StructCannotHaveReturnType, $"Struct '{Identifier}' cannot have declared return type");
             }
 
             if (!HasDeclaredInputs)
             {
-                sourceContext.LogError(13, $"Non intrinsic '{Location}' must have ports");
-                success = false;
+                builder.Append(MessageCode.MissingPorts, $"Non intrinsic '{Location}' must have ports");
             }
-
-            return success;
         }
 
-        public override bool MatchesConstraint(IValue value, CompilationContext compilationContext) => value is StructInstance instance && instance.DeclaringStruct == this;
-        public override ISerializableValue DefaultValue(CompilationContext context) =>
-            CreateInstance(Fields.Select(f => (f.ResolveConstraint(context) as IType ??
-                                               context.LogError(14, $"'{f}' is not a type - only types can produce a default value"))
-                                             .DefaultValue(context)).ToArray());
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) => value is StructInstance instance && instance.DeclaringStruct == this;
+        public override Result<Port[]> Fields => DeclaredInputs;
 
-        public override IValue Call(IValue[] arguments, CompilationContext compilationContext) => CreateInstance(arguments);
+        public override Result<ISerializableValue> DefaultValue(CompilationContext compilationContext) =>
+            Fields.Bind(fields => fields.Select(field => field.ResolveConstraint(compilationContext)
+                                                              .Bind(constraint => constraint is IType type
+                                                                                      ? type.DefaultValue(compilationContext)
+                                                                                      : compilationContext.Trace(MessageCode.TypeError, $"'{field}' is not a type - only types can produce a default value")))
+                                        .MapEnumerable(defaults => (ISerializableValue)CreateInstance(defaults.ToArray())));
+        protected override Result<IValue> Construct(IEnumerable<IValue> arguments) => CreateInstance(arguments);
     }
 }

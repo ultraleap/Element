@@ -2,7 +2,7 @@ namespace Element.AST
 {
     public abstract class SubExpression : Declared
     {
-        public IValue ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext)
+        public Result<IValue> ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext)
         {
             compilationContext.PushTrace(this.MakeTraceSite(ToString()));
             var result = SubExpressionImpl(previous, scope, compilationContext);
@@ -10,6 +10,6 @@ namespace Element.AST
             return result;
         }
         
-        protected abstract IValue SubExpressionImpl(IValue previous, IScope scope, CompilationContext context);
+        protected abstract Result<IValue> SubExpressionImpl(IValue previous, IScope scope, CompilationContext context);
     }
 }

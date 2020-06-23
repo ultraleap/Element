@@ -10,7 +10,7 @@ namespace Element.AST
             }, Port.ReturnPort(AnyConstraint.Instance))
         { }
 
-        public override IValue Call(IValue[] arguments, CompilationContext compilationContext)
+        public override Result<IValue> Call(IValue[] arguments, CompilationContext compilationContext)
         {
             throw new System.NotImplementedException();
         }

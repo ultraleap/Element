@@ -6,14 +6,13 @@
     <Nullable>enable</Nullable>
 
     <PackageId>Element.NET</PackageId>
-    <Version>1.0.0-alpha3</Version>
+    <PackageVersion>1.0.0-alpha.12</PackageVersion>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Authors>Ultraleap</Authors>
     <Company>Ultraleap</Company>
     <RepositoryUrl>https://github.com/ultraleap/Element</RepositoryUrl>
     <Description>C# compiler for the Element embedded programming language.</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageVersion>1.0.0-alpha5</PackageVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lexico" Version="1.0.0-alpha2" />
@@ -22,9 +21,7 @@
     <PackageReference Include="Tomlyn" Version="0.1.2" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\Common\**" Link="%(RecursiveDir)%(Filename)%(Extension)">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="..\Common\**" PackagePath="contentFiles\any\any;content" CopyToOutputDirectory="Always" PackageCopyToOutput="true" />
   </ItemGroup>
   <ItemGroup>
     <_UnmanagedRegistrationCache Remove="obj\Element.NET.csproj.UnmanagedRegistration.cache" />

@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using Lexico;
 
 namespace Element.AST
 {
-    public class Lambda : Expression, IFunctionWithBody
+    public class Lambda : Expression, IFunction
     {
 #pragma warning disable 649, 169, 8618
         [Term] private Unidentifier _;
@@ -14,47 +15,52 @@ namespace Element.AST
         
         public Port[] Inputs { get; private set; }
         public Port Output { get; private set; }
+        public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
+        {
+            return FunctionHelpers.ApplyFunction(this, arguments, DeclaringScope, false, context);
+        }
+
         public IScope DeclaringScope { get; private set; }
 #pragma warning restore 8618
         
-        public IFunctionSignature GetDefinition(CompilationContext compilationContext) => this;
+        public IFunction GetDefinition(CompilationContext compilationContext) => this;
 
-        protected override void InitializeImpl()
+        protected override void InitializeImpl(IIntrinsicCache? cache)
         {
-            _portList.Initialize(Declarer);
-            _type?.Initialize(Declarer);
+            _portList.Initialize(Declarer, cache);
+            _type?.Initialize(Declarer, cache);
             Inputs =  _portList.Ports.List.ToArray();
             Output = Port.ReturnPort(_type);
             switch (_body)
             {
-                case ExpressionBody b: b.Expression.Initialize(Declarer);
+                case ExpressionBody b: b.Expression.Initialize(Declarer, cache);
                     break;
-                case Scope s: s.Initialize(Declarer);
+                case Scope s: s.Initialize(Declarer, cache);
                     break;
             }
         }
 
         public override string ToString() => "Lambda";
 
-        public override bool Validate(SourceContext sourceContext)
+        public override void Validate(ResultBuilder resultBuilder)
         {
-            var success = true;
-            success &= _portList.Validate(sourceContext);
-            success &= _type?.Validate(sourceContext) ?? true;
-            return success && _body switch
+            _portList.Validate(resultBuilder);
+            _type?.Validate(resultBuilder);
+            switch(_body)
             {
-                ExpressionBody b => b.Expression.Validate(sourceContext),
-                Scope s => s.ValidateScope(sourceContext, identifierWhitelist: new[] {Parser.ReturnIdentifier}),
-                _ => false
-            };
+                case ExpressionBody b:
+                    b.Expression.Validate(resultBuilder);
+                    break;
+                case Scope s:
+                    s.Validate(resultBuilder, identifierWhitelist: new[] {Parser.ReturnIdentifier});
+                    break;
+            }
         }
 
-        protected override IValue ExpressionImpl(IScope scope, CompilationContext compilationContext)
+        protected override Result<IValue> ExpressionImpl(IScope scope, CompilationContext compilationContext)
         {
             DeclaringScope = scope;
             return this;
         }
-
-        object IFunctionWithBody.Body => _body;
     }
 }

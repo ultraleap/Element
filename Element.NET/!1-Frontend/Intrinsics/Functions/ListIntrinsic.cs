@@ -1,6 +1,6 @@
 namespace Element.AST
 {
-	public class ListIntrinsic : IntrinsicFunction
+	public class ListIntrinsic : IIntrinsicFunction
 	{
 		public ListIntrinsic()
 			: base("list",
@@ -8,7 +8,12 @@ namespace Element.AST
 			       Port.ReturnPort(ListType.Instance))
 		{ }
 
-		public override IValue Call(IValue[] arguments, CompilationContext context) =>
-			ListType.Instance.MakeList(arguments, context);
+		public override Result<IValue> Call(IValue[] arguments, CompilationContext context) =>
+			
+
+		public Result<IValue> Call(IValue[] arguments) => ListType.Instance.MakeList(arguments);
+
+		public Port[] Inputs { get; }
+		public Port Output { get; }
 	}
 }

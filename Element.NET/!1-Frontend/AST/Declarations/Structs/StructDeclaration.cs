@@ -12,8 +12,8 @@ namespace Element.AST
 
         public override string ToString() => $"{Location}:Struct";
 
-        public Port[] Fields => DeclaredInputs;
-        public IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] => (Child ?? Parent)[id, recurse, compilationContext];
+        public abstract Result<Port[]> Fields { get; }
+        public Result<IValue> this[Identifier id, bool recurse, CompilationContext context] => (Child ?? Parent)[id, recurse, context];
         public int Count => Child?.Count ?? 0;
         public IEnumerator<IValue> GetEnumerator() => Child?.GetEnumerator() ?? Enumerable.Empty<IValue>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -21,22 +21,32 @@ namespace Element.AST
 
         Port[] IFunctionSignature.Inputs => DeclaredInputs;
         Port IFunctionSignature.Output => Port.ReturnPort(this);
-        public abstract ISerializableValue DefaultValue(CompilationContext context);
-        public abstract IValue Call(IValue[] arguments, CompilationContext compilationContext);
+        public abstract Result<ISerializableValue> DefaultValue(CompilationContext compilationContext);
 
-        public abstract bool MatchesConstraint(IValue value, CompilationContext compilationContext);
-        public IValue ResolveInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, CompilationContext compilationContext) =>
-            this[instanceFunctionIdentifier, false, compilationContext] switch
-            {
-                FunctionDeclaration instanceFunction when instanceFunction.IsNullary() => (IValue)compilationContext.LogError(22, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
-                IFunctionSignature function when function.Inputs[0].ResolveConstraint(this, compilationContext) == this => function.ResolveCall(new[]{instanceBeingIndexed}, true, compilationContext),
-                IFunctionSignature function => compilationContext.LogError(22, $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function"),
-                Declaration notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction.Location}' is not a function"),
-                {} notInstanceFunction => compilationContext.LogError(22, $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function"),
-                _ => compilationContext.LogError(7, $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>")
-            };
+        public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
+        {
+            // TODO: Push function, check arguments, etc
+        }
 
-        public StructInstance CreateInstance(IValue[] members) => new StructInstance(this, DeclaredInputs, members);
-        IFunctionSignature IUnique<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
+        protected abstract Result<IValue> Construct(IEnumerable<IValue> fields);
+
+        public abstract Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext);
+        public Result<IValue> ResolveInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, CompilationContext context) =>
+            this[instanceFunctionIdentifier, false, context]
+                .Bind(v => v switch
+                {
+                    FunctionDeclaration instanceFunction when instanceFunction.IsNullary() => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
+                    IFunctionSignature function => function.Inputs[0].ResolveConstraint(this, context).Bind(constraint => constraint switch
+                    {
+                        {} when constraint == this => function.ResolveCall(new[] {instanceBeingIndexed}, true, context),
+                        _ => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function")
+                    }),
+                    Declaration notInstanceFunction => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"'{notInstanceFunction.Location}' is not a function"),
+                    {} notInstanceFunction => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function"),
+                    _ => context.Trace(MessageCode.IdentifierNotFound, $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>")
+                });
+
+        public StructInstance CreateInstance(IEnumerable<IValue> members) => new StructInstance(this, DeclaredInputs, members);
+        IFunctionSignature IInstancable<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
     }
 }

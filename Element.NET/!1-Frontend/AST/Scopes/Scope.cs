@@ -7,7 +7,7 @@ namespace Element.AST
 {
     [WhitespaceSurrounded, MultiLine]
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class Scope : DeclaredScope, IDeclared
+    public class Scope : ScopeBase, IDeclared
     {
 #pragma warning disable 649, 169, 8618
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
@@ -18,18 +18,18 @@ namespace Element.AST
         public Declaration Declarer { get; private set; }
 #pragma warning restore 8618
 
-        protected override IEnumerable<Declaration> ItemsToCacheOnValidate => _items ?? Enumerable.Empty<Declaration>();
+        public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
+            Index(id)
+                .ElseIf(recurse, () => Declarer.Parent[id, true, context]);
 
+        protected override IList<(Identifier Identifier, IValue Value)> _source => _items.Select(item => (item.Identifier, (IValue)item)).ToList();
 
-        public override IValue? this[Identifier id, bool recurse, CompilationContext compilationContext] =>
-            IndexCache(id) ?? (recurse ? Declarer.Parent[id, true, compilationContext] : null);
-
-        public void Initialize(Declaration declarer)
+        public void Initialize(Declaration declarer, IIntrinsicCache? cache)
         {
             Declarer = declarer ?? throw new ArgumentNullException(nameof(declarer));
-            foreach (var item in ItemsToCacheOnValidate)
+            foreach (var item in _items ?? Enumerable.Empty<Declaration>())
             {
-                item.Initialize(Declarer.SourceInfo, this);
+                item.Initialize(Declarer.SourceInfo, this, cache);
             }
         }
     }
