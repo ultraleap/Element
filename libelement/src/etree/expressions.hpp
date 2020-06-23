@@ -21,8 +21,9 @@ struct element_expression : element::object, rtti_type<element_expression>, std:
     [[nodiscard]] virtual size_t get_size() const { return m_size; }
 
 protected:
-    explicit element_expression(element_type_id t)
+    explicit element_expression(element_type_id t, std::shared_ptr<const element::type> actual_type)
         : rtti_type(t)
+        , actual_type(std::move(actual_type))
     {
     }
 
@@ -30,7 +31,7 @@ protected:
     element_type_id m_type_id = 0;
     int m_size = 0;
 
-    std::shared_ptr<const element::type> type;
+    std::shared_ptr<const element::type> actual_type;
 
     //TODO: THIS IS AFWUL! FIX!
     [[nodiscard]] std::shared_ptr<element_expression>  compile(const element::compilation_context& context) const override;
@@ -55,7 +56,7 @@ struct element_expression_input final : public element_expression
     DECLARE_TYPE_ID();
 
     explicit element_expression_input(size_t input_index, size_t input_size)
-        : element_expression(type_id)
+        : element_expression(type_id, nullptr)
         , m_index(input_index)
         , m_size(input_size)
     {
@@ -73,7 +74,7 @@ struct element_expression_structure final : public element_expression
     DECLARE_TYPE_ID();
 
     explicit element_expression_structure(const std::vector<std::pair<std::string, expression_shared_ptr>>& deps)
-        : element_expression(type_id)
+        : element_expression(type_id, nullptr)
     {
         m_dependents.reserve(deps.size());
         for (const auto& [name, expression] : deps) {
@@ -98,15 +99,14 @@ private:
     std::unordered_map<std::string, expression_shared_ptr> m_dependents_map;
 };
 
-//TODO: NEED TO PASS RETURN TYPE HERE
 struct element_expression_nullary final : public element_expression
 {
     DECLARE_TYPE_ID();
 
     using op = element_nullary_op;
 
-    explicit element_expression_nullary(op t)
-        : element_expression(type_id)
+    explicit element_expression_nullary(op t, std::shared_ptr<const element::type> actual_type)
+        : element_expression(type_id, std::move(actual_type))
         , m_op(t)
     {
     }
@@ -124,8 +124,8 @@ struct element_expression_unary final : public element_expression
 
     using op = element_unary_op;
 
-    explicit element_expression_unary(op t, expression_shared_ptr input)
-        : element_expression(type_id)
+    explicit element_expression_unary(op t, expression_shared_ptr input, std::shared_ptr<const element::type> actual_type)
+        : element_expression(type_id, std::move(actual_type))
         , m_op(t)
     {
         m_dependents.emplace_back(std::move(input));
@@ -146,8 +146,8 @@ struct element_expression_binary final : public element_expression
 
     using op = element_binary_op;
 
-    explicit element_expression_binary(op t, expression_shared_ptr in1, expression_shared_ptr in2)
-        : element_expression(type_id)
+    explicit element_expression_binary(op t, expression_shared_ptr in1, expression_shared_ptr in2, std::shared_ptr<const element::type> actual_type)
+        : element_expression(type_id, std::move(actual_type))
         , m_op(t)
     {
         m_dependents.emplace_back(std::move(in1));
@@ -167,13 +167,7 @@ struct element_expression_if final : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    explicit element_expression_if(expression_shared_ptr predicate, expression_shared_ptr if_true, expression_shared_ptr if_false)
-        : element_expression(type_id)
-    {
-        m_dependents.emplace_back(std::move(predicate));
-        m_dependents.emplace_back(std::move(if_true));
-        m_dependents.emplace_back(std::move(if_false));
-    }
+    explicit element_expression_if(expression_shared_ptr predicate, expression_shared_ptr if_true, expression_shared_ptr if_false);
     [[nodiscard]] const expression_shared_ptr& predicate() const { return m_dependents[0]; }
     [[nodiscard]] const expression_shared_ptr& if_true() const { return m_dependents[1]; }
     [[nodiscard]] const expression_shared_ptr& if_false() const { return m_dependents[2]; }

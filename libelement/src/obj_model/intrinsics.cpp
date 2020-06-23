@@ -108,8 +108,18 @@ namespace element
 
     std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
     {
+        return compile(context);
+    }
+
+    std::shared_ptr<element_expression> intrinsic_nullary::compile(const compilation_context& context) const
+    {
+        auto type = type::num;
+
+        if (operation == element_nullary_op::true_value || operation == element_nullary_op::false_value)
+            type = type::boolean;
+
         return std::make_shared<element_expression_nullary>(
-            operation);
+            operation, std::move(type));
     }
 
     intrinsic_unary::intrinsic_unary(element_unary_op operation, 
@@ -123,9 +133,15 @@ namespace element
 
     std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
     {
+        auto type = type::num;
+
+        if (operation == element_unary_op::not)
+            type = type::boolean;
+
         return std::make_shared<element_expression_unary>(
             operation,
-            args[0]);
+            args[0],
+            std::move(type));
     }
 
     intrinsic_binary::intrinsic_binary(const element_binary_op operation, type_const_shared_ptr return_type = type::num,
@@ -140,10 +156,28 @@ namespace element
 
     std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
     {
+        auto type = type::num;
+
+        switch (operation)
+        {
+            case element_binary_op::and:
+            case element_binary_op::or:
+            case element_binary_op::eq:
+            case element_binary_op::neq:
+            case element_binary_op::lt:
+            case element_binary_op::leq:
+            case element_binary_op::gt:
+            case element_binary_op::geq:
+            {
+                type = type::boolean;
+            }
+        }
+
         return std::make_shared<element_expression_binary>(
             operation,
             args[0],
-            args[1]);
+            args[1],
+            std::move(type));
     }
 
     intrinsic_if::intrinsic_if()
@@ -151,17 +185,13 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_if::call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const
+    std::shared_ptr<object> intrinsic_if::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
     {
-        auto result = std::make_shared<compiled_expression>();
-        result->creator = nullptr;
-        result->type = nullptr;
+        auto ret = std::make_shared<element_expression_if>(
+            context.stack.frames.back().arguments[0],
+            context.stack.frames.back().arguments[1],
+            context.stack.frames.back().arguments[2]);
 
-        result->expression_tree = std::make_shared<element_expression_if>(
-            context.stack.frames.back().arguments[0]->expression_tree,
-            context.stack.frames.back().arguments[1]->expression_tree,
-            context.stack.frames.back().arguments[2]->expression_tree);
-
-        return result;
+        return ret;
     }
 }

@@ -61,4 +61,11 @@ namespace element
         assert(false);
         return nullptr;
     }
+
+    std::shared_ptr<element_expression> function_instance::compile(const compilation_context& context) const
+    {
+        auto result = std::dynamic_pointer_cast<element_expression>(call(context, {}));
+        assert(result); //todo: doesn't handle complex stuff
+        return result;
+    }
 }

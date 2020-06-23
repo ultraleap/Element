@@ -700,7 +700,12 @@ element_result element_interpreter_compile(
 {
     const element::compilation_context compilation_context(context->global_scope.get());
     auto compiled = compilable->object->compile(compilation_context);
+
+    if (!compiled)
+        return ELEMENT_ERROR_UNKNOWN;
+
     *evaluable = new element_evaluable{ std::move(compiled) };
+
     return ELEMENT_OK;
 }
 
@@ -711,6 +716,9 @@ element_result element_interpreter_evaluate(
     const element_inputs* inputs,
     const element_outputs* outputs)
 {
+    if (!evaluable->evaluable)
+        return ELEMENT_ERROR_UNKNOWN;
+
     element_evaluator_options opts;
     if (options) opts = *options;
     const auto result = element_evaluate(
