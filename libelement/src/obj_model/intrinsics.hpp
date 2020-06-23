@@ -41,6 +41,7 @@ namespace element
         explicit intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr return_type);
 
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const override;
+        [[nodiscard]] std::shared_ptr<element_expression> compile(const compilation_context& context) const override;
         [[nodiscard]] element_nullary_op get_operation() const { return operation; }
     };
 
@@ -88,6 +89,6 @@ namespace element
 
         intrinsic_if();
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<compiled_expression>> args) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const override;
     };
 }

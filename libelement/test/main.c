@@ -67,25 +67,26 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
-    //result = eval("evaluate = Num.NaN;");
-    //if (result != ELEMENT_OK)
-    //    return result;
-
-    //result = eval("evaluate = Num.pi;");
-    //if (result != ELEMENT_OK)
-    //    return result;
-
-    //result = eval("evaluate = Num.tau;");
-    //if (result != ELEMENT_OK)
-    //    return result;
-    /*
-    result = eval("add5(a) = a.add(5); evaluate = add5(5);");
+    result = eval("evaluate = Num.NaN;");
     if (result != ELEMENT_OK)
         return result;
 
-    result = eval("evaluate = Num.asin(-1).degrees;");
+    result = eval("evaluate = Num.pi;");
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = eval("evaluate = Num.tau;");
+    if (result != ELEMENT_OK)
+        return result;
+    
+    /*
+    result = eval("add5(a) = a.add(5); evaluate = add5(5);");
     if (result != ELEMENT_OK)
         return result;*/
+
+    result = eval("evaluate = Num.asin(-1).degrees;");
+    if (result != ELEMENT_OK)
+        return result;
 
     result = eval("evaluate = Bool.if(False, 1, 0);");
     if (result != ELEMENT_OK)

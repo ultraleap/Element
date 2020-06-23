@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <cassert>
 
 //SELF
 #include "fwd.hpp"
@@ -79,9 +80,9 @@ namespace element
         //bool matches_constraint(constraint& constraint);
 
         //todo: some kind of component architecture?
-        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { return nullptr; };
-        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const { return nullptr; };
-        [[nodiscard]] virtual std::shared_ptr<element_expression> compile(const compilation_context& context) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { assert(false);  return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const { assert(false); return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<element_expression> compile(const compilation_context& context) const { assert(false); return nullptr; };
 
     protected:
         object() = default;

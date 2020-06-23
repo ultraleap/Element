@@ -21,6 +21,13 @@ namespace element
         return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_code(), accumulate);
     }
 
+    std::shared_ptr<object> expression::call(const compilation_context& context,
+        std::vector<std::shared_ptr<element_expression>> args) const
+    {
+        //assert(args.empty()); //todo
+        return compile(context);
+    }
+
     std::shared_ptr<element_expression> expression::compile(const compilation_context& context) const
     {
         if (children.empty())
@@ -51,9 +58,38 @@ namespace element
         if (!enclosing_scope)
             return nullptr;
 
-        //todo: all below this is broke innit
 
         //todo: all below this is broke innit
+
+        auto found = enclosing_scope->find(identifier.value, false);
+        if (found)
+            return found;
+
+        //todo: make it nice and on the callstack itself
+        for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
+        {
+            const auto& frame = *it;
+            for (std::size_t i = 0; i < frame.function->inputs.size(); i++)
+            {
+                const auto& input = frame.function->inputs[i];
+                if (input.name.value == identifier.value)
+                {
+                    if (i < frame.arguments.size())
+                        return frame.arguments[i];
+                    else
+                        break;
+                }
+            }
+        }
+
+        //todo: this has to be merged with the callstack I think, i.e. each level of scopage has its own locals + arguments to do lookups with
+        found = enclosing_scope->get_parent_scope()->find(identifier.value, true);
+        if (found)
+            return found;
+
+        assert(false);
+        throw;
+        return nullptr;
     }
 
     [[nodiscard]] std::shared_ptr<object> literal_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
@@ -95,12 +131,7 @@ namespace element
         for (const auto& arg : children)
             compiled_arguments.push_back(arg->compile(context));
 
-        call_stack::frame frame;
-        frame.arguments = std::move(compiled_arguments);
-        context.stack.frames.emplace_back(std::move(frame));
-        auto ret =  previous->call(context, context.stack.frames.back().arguments);
-        context.stack.frames.pop_back();
-        return ret;
+        return previous->call(context, std::move(compiled_arguments));
     }
 
     lambda_expression::lambda_expression(const scope* parent_scope)
@@ -135,28 +166,10 @@ namespace element
     }
 }
 
-element_expression_constant::element_expression_constant(element_value val) : element_expression(type_id), m_value(val)
+element_expression_if::element_expression_if(expression_shared_ptr predicate, expression_shared_ptr if_true, expression_shared_ptr if_false)
+    : element_expression(type_id, element::type::boolean)
 {
-    type = element::type::num;
-}
-
-std::shared_ptr<element_expression> element_expression::compile(const element::compilation_context& context) const
-{
-    //TODO: THIS IS AFWUL! FIX!
-    return std::dynamic_pointer_cast<element_expression>(const_cast<element_expression*>(this)->shared_from_this());
-}
-
-std::shared_ptr<element::object> element_expression::index(const element::compilation_context& context, const element::identifier& identifier) const
-{
-    assert(type);
-
-    const auto declarer = type->index(context, identifier);
-    auto args = std::vector<std::shared_ptr<element_expression>>();
-    args.push_back(const_cast<element_expression*>(this)->shared_from_this());
-
-    auto* function_declaration = dynamic_cast<element::function_declaration*>(declarer.get());
-    if(function_declaration)
-        return std::make_shared<element::function_instance>(function_declaration, args);
-
-    throw;
+    m_dependents.emplace_back(std::move(predicate));
+    m_dependents.emplace_back(std::move(if_true));
+    m_dependents.emplace_back(std::move(if_false));
 }

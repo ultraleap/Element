@@ -43,6 +43,7 @@ namespace element
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] static bool is_instance_function() { return true; }
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const override;
+        [[nodiscard]] std::shared_ptr<element_expression> compile(const compilation_context& context) const override;
   
         const function_declaration* const declarer;
         std::vector<std::shared_ptr<element_expression>> provided_arguments;
