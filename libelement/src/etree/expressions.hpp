@@ -34,8 +34,8 @@ protected:
     int m_size = 0;
 
     //TODO: THIS IS AFWUL! FIX!
-    [[nodiscard]] std::shared_ptr<element_expression>  compile(const element::compilation_context& context) const override;
-    [[nodiscard]] virtual std::shared_ptr<object> index(const element::compilation_context& context, const element::identifier& identifier) const override;
+    [[nodiscard]] std::shared_ptr<object> compile(const element::compilation_context& context) const override;
+    [[nodiscard]] std::shared_ptr<object> index(const element::compilation_context& context, const element::identifier& identifier) const override;
 };
 
 struct element_expression_constant final : public element_expression

@@ -106,12 +106,12 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
+    std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
         return compile(context);
     }
 
-    std::shared_ptr<element_expression> intrinsic_nullary::compile(const compilation_context& context) const
+    std::shared_ptr<object> intrinsic_nullary::compile(const compilation_context& context) const
     {
         auto type = type::num;
 
@@ -131,16 +131,19 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
+    std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
         auto type = type::num;
 
         if (operation == element_unary_op::not)
             type = type::boolean;
 
+        auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
+        assert(expr);
+
         return std::make_shared<element_expression_unary>(
             operation,
-            args[0],
+            std::move(expr),
             std::move(type));
     }
 
@@ -154,7 +157,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
+    std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
         auto type = type::num;
 
@@ -173,10 +176,15 @@ namespace element
             }
         }
 
+        auto expr1 = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
+        auto expr2 = std::dynamic_pointer_cast<element_expression>(compiled_args[1]);
+        assert(expr1);
+        assert(expr2);
+
         return std::make_shared<element_expression_binary>(
             operation,
-            args[0],
-            args[1],
+            expr1,
+            expr2,
             std::move(type));
     }
 
@@ -185,12 +193,22 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_if::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
+    std::shared_ptr<object> intrinsic_if::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
+        auto& frame = context.stack.frames.back();
+
+        auto pred_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
+        auto true_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[1]);
+        auto false_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[2]);
+
+        assert(pred_expr);
+        assert(true_expr);
+        assert(false_expr);
+
         auto ret = std::make_shared<element_expression_if>(
-            context.stack.frames.back().arguments[0],
-            context.stack.frames.back().arguments[1],
-            context.stack.frames.back().arguments[2]);
+            pred_expr,
+            true_expr,
+            false_expr);
 
         return ret;
     }
