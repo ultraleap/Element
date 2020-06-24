@@ -745,4 +745,25 @@ element_result element_interpreter_evaluate(
 
     return result;
 }
+
+element_result element_metainfo_for_evalutable(const element_evaluable* evaluable, element_metainfo** metainfo)
+{
+    //todo: error checking and stuff
+
+    *metainfo = new element_metainfo();
+    (*metainfo)->typeof = evaluable->evaluable->to_string();
+    (*metainfo)->code = evaluable->evaluable->to_code(0);
+
+    return ELEMENT_OK;
+}
+
+element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size)
+{
+    if (buffer_size < static_cast<int>(metainfo->typeof.size()))
+        return ELEMENT_ERROR_UNKNOWN;
+
+    strncpy_s(buffer, buffer_size, metainfo->typeof.c_str(), buffer_size);
+
+    return ELEMENT_OK;
+}
 #endif

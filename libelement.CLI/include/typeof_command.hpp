@@ -50,7 +50,61 @@ namespace libelement::cli
 
 			return generate_response(result, internaltypeof_string, trace_site);
 #endif
-			return generate_response(0, "TODO");
+
+			//Not handling error responses properly yet
+			const auto evaluate = "evaluate = " + custom_arguments.expression + ";";
+			result = element_interpreter_load_string(context, evaluate.c_str(), "<input>");
+			if (result != ELEMENT_OK) {
+				message_type type = ELEMENT_ERROR_UNKNOWN;
+				if (result > 0)
+					type = static_cast<message_type>(result);
+				return compiler_message(type, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
+			}
+
+			element_compilable* compilable;
+			result = element_interpreter_find(context, "evaluate", &compilable);
+			if (result != ELEMENT_OK) {
+				message_type type = ELEMENT_ERROR_UNKNOWN;
+				if (result > 0)
+					type = static_cast<message_type>(result);
+				return compiler_message(type, "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
+			}
+
+			element_evaluable* evaluable;
+			result = element_interpreter_compile(context, nullptr, compilable, &evaluable);
+			if (result != ELEMENT_OK) {
+				message_type type = ELEMENT_ERROR_UNKNOWN;
+				if (result > 0)
+					type = static_cast<message_type>(result);
+				return compiler_message(type, "Failed to compile: " + evaluate + " with element_result " + std::to_string(result));
+			}
+
+			element_metainfo* metainfo;
+			result = element_metainfo_for_evalutable(evaluable, &metainfo);
+			if (result != ELEMENT_OK) {
+				message_type type = ELEMENT_ERROR_UNKNOWN;
+				if (result > 0)
+					type = static_cast<message_type>(result);
+				return compiler_message(type, "Failed to get metainfo for: " + evaluate + " with element_result " + std::to_string(result));
+			}
+
+			result = element_metainfo_for_evalutable(evaluable, &metainfo);
+			if (result != ELEMENT_OK) {
+				message_type type = ELEMENT_ERROR_UNKNOWN;
+				if (result > 0)
+					type = static_cast<message_type>(result);
+				return compiler_message(type, "Failed to get metainfo for: " + evaluate + " with element_result " + std::to_string(result));
+			}
+
+			result = element_metainfo_get_typeof(metainfo, internaltypeof_string.data(), internaltypeof_string.size());
+			if (result != ELEMENT_OK) {
+				message_type type = ELEMENT_ERROR_UNKNOWN;
+				if (result > 0)
+					type = static_cast<message_type>(result);
+				return compiler_message(type, "Failed to get typeof for: " + evaluate + " with element_result " + std::to_string(result));
+			}
+
+			return generate_response(result, internaltypeof_string);
 		}
 
 		std::string as_string() const override

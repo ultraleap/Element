@@ -40,7 +40,9 @@ namespace element
 
     std::string function_instance::to_string() const
     {
-        return declarer->location() + ":FunctionInstance";
+        //todo: element test expects Function, not FunctionInstance
+        //return declarer->location() + ":FunctionInstance";
+        return declarer->location() + ":Function";
     }
 
     std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
