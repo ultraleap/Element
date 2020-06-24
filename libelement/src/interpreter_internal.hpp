@@ -54,6 +54,15 @@ struct element_evaluable
     std::shared_ptr<element::object> evaluable;
 };
 
+struct element_metainfo
+{
+    //todo: decide what kinda stuff to associate here, just need typeof for now
+
+    std::string code; //the code associated with this thing
+    std::string typeof; //internal type representation
+    std::string source_type; //the type as it is in source, i.e. something the user could use in an element source file
+};
+
 struct element_interpreter_ctx
 {
     bool prelude_loaded = false;

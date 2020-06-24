@@ -124,7 +124,10 @@ element_result element_interpreter_evaluate_expression(
 
 element_result element_metainfo_for_evalutable(
     const element_evaluable* evaluable,
-    const element_metainfo** metainfo);
+    element_metainfo** metainfo);
+
+element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size);
+
 #endif
 
 #if defined(__cplusplus)
