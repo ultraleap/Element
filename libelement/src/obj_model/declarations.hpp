@@ -109,6 +109,7 @@ namespace element
 
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const final;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const override;
+        [[nodiscard]] std::shared_ptr<element_expression> compile(const compilation_context& context) const override;
     };
 
     class namespace_declaration final : public declaration

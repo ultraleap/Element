@@ -121,6 +121,11 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
+    //pass higher order function
+    result = eval("double(a:Num) = a.mul(2); applyFive(a) = a(5); evaluate = applyFive(double);");
+    if (result != ELEMENT_OK)
+        return result;
+
     return 0;
 #else
 

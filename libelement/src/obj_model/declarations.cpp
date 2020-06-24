@@ -208,7 +208,7 @@ namespace element
 
     std::shared_ptr<object> function_declaration::index(const compilation_context& context, const identifier& name) const
     {
-        return body->call(context, {})->index(context, name);
+        return call(context, {})->index(context, name);
     }
 
     std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
@@ -220,6 +220,23 @@ namespace element
         auto ret = body->call(context, context.stack.frames.back().arguments); //todo: we don't need args passed as well as in the stack
         context.stack.frames.pop_back();
         return ret;
+    }
+
+    std::shared_ptr<element_expression> function_declaration::compile(const compilation_context& context) const
+    {
+        if (inputs.empty())
+        {
+            call_stack::frame frame;
+            frame.function = this;
+            context.stack.frames.emplace_back(std::move(frame));
+            auto ret = body->compile(context); //todo: we don't need args passed as well as in the stack
+            context.stack.frames.pop_back();
+            return ret;
+        }
+
+        //todo: no way to compile to an intermediary (e.g. higher order function, struct instance)
+        assert(false);
+        return nullptr;
     }
 
     //namespace
