@@ -98,6 +98,7 @@ namespace element
         {
             if (name.value == "Num")
             {
+                args[0]->actual_type = type::num;
                 return args[0];
             }
             else if (name.value == "Bool")

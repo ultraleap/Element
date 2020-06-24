@@ -55,48 +55,34 @@ int main(int argc, char** argv)
 {
 #ifndef LEGACY_COMPILER
     element_result result;
-    result = eval("evaluate = Num.add(1, 2);");
-    if (result != ELEMENT_OK)
-        return result;
 
-    result = eval("evaluate = 1.add(2);");
-    if (result != ELEMENT_OK)
-        return result;
-
+    //Expression bodied function. Literal.
     result = eval("evaluate = -3;");
     if (result != ELEMENT_OK)
         return result;
 
+    //intrinsic struct. intrinsic function. calling with arguments
+    result = eval("evaluate = Num.add(1, 2);");
+    if (result != ELEMENT_OK)
+        return result;
+
+    //instance function
+    result = eval("evaluate = 1.add(2);");
+    if (result != ELEMENT_OK)
+        return result;
+
+    //intrinsic nullary
     result = eval("evaluate = Num.NaN;");
     if (result != ELEMENT_OK)
         return result;
 
+    //nullary
     result = eval("evaluate = Num.pi;");
     if (result != ELEMENT_OK)
         return result;
 
+    //nullary which looks up another nullary locally
     result = eval("evaluate = Num.tau;");
-    if (result != ELEMENT_OK)
-        return result;
-    
-    /*
-    result = eval("add5(a) = a.add(5); evaluate = add5(5);");
-    if (result != ELEMENT_OK)
-        return result;*/
-
-    result = eval("evaluate = Num.asin(-1).degrees;");
-    if (result != ELEMENT_OK)
-        return result;
-
-    result = eval("evaluate = Bool.if(False, 1, 0);");
-    if (result != ELEMENT_OK)
-        return result;
-
-    result = eval("evaluate = Num.mod(5, 2);");
-    if (result != ELEMENT_OK)
-        return result;
-
-    result = eval("evaluate = Bool(2);");
     if (result != ELEMENT_OK)
         return result;
 
@@ -104,6 +90,36 @@ int main(int argc, char** argv)
     /*result = eval("add5 = Num.add(5); evaluate = add5(2);");
     if (result != ELEMENT_OK)
         return result;*/
+
+    /*
+    result = eval("add5(a) = a.add(5); evaluate = add5(5);");
+    if (result != ELEMENT_OK)
+        return result;*/
+
+    //chaining functions. indexing degrees on result of asin. instance function degrees that is now nullary. 
+    result = eval("evaluate = Num.asin(-1).degrees;");
+    if (result != ELEMENT_OK)
+        return result;
+
+    //if expression. false nullary.
+    result = eval("evaluate = Bool.if(False, 1, 0);");
+    if (result != ELEMENT_OK)
+        return result;
+
+    //mod
+    result = eval("evaluate = Num.mod(5, 2);");
+    if (result != ELEMENT_OK)
+        return result;
+
+    //bool constructor
+    result = eval("evaluate = Bool(2);");
+    if (result != ELEMENT_OK)
+        return result;
+
+    //num constructor converts back to num
+    result = eval("evaluate = Num(Bool(Num(2))).mul(1);");
+    if (result != ELEMENT_OK)
+        return result;
 
     return 0;
 #else

@@ -20,6 +20,8 @@ struct element_expression : element::object, rtti_type<element_expression>, std:
 
     [[nodiscard]] virtual size_t get_size() const { return m_size; }
 
+    std::shared_ptr<const element::type> actual_type;
+
 protected:
     explicit element_expression(element_type_id t, std::shared_ptr<const element::type> actual_type)
         : rtti_type(t)
@@ -30,8 +32,6 @@ protected:
     std::vector<expression_shared_ptr> m_dependents;
     element_type_id m_type_id = 0;
     int m_size = 0;
-
-    std::shared_ptr<const element::type> actual_type;
 
     //TODO: THIS IS AFWUL! FIX!
     [[nodiscard]] std::shared_ptr<element_expression>  compile(const element::compilation_context& context) const override;
