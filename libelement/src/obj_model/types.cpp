@@ -29,20 +29,16 @@ namespace element
 
     std::shared_ptr<object> num_type::index(const compilation_context& context, const element::identifier& identifier) const
     {
-        static std::shared_ptr<declaration> declaration;
-
-        if (!declaration)
-            declaration = context.get_global_scope()->find(num_type::identifier, false);
+        //todo: cache, but don't use static
+        std::shared_ptr<declaration> declaration = context.get_global_scope()->find(num_type::identifier, false);
 
         return declaration->index(context, identifier);
     }
 
     std::shared_ptr<object> boolean_type::index(const compilation_context& context, const element::identifier& identifier) const
     {
-        static std::shared_ptr<declaration> declaration;
-
-        if (!declaration)
-            declaration = context.get_global_scope()->find(boolean_type::identifier, false);
+        //todo: cache, but don't use static
+        std::shared_ptr<declaration> declaration = context.get_global_scope()->find(boolean_type::identifier, false);
 
         return declaration->index(context, identifier);
     }

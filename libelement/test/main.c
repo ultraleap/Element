@@ -86,15 +86,10 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
-    //todo: element doesn't support partial application of any function, only instance functions (i.e. member functions with implicit "this")
-    /*result = eval("add5 = Num.add(5); evaluate = add5(2);");
+    //indexing intrinsic function
+    result = eval("evaluate = Num.cos(0).degrees;");
     if (result != ELEMENT_OK)
-        return result;*/
-
-    /*
-    result = eval("add5(a) = a.add(5); evaluate = add5(5);");
-    if (result != ELEMENT_OK)
-        return result;*/
+        return result;
 
     //chaining functions. indexing degrees on result of asin. instance function degrees that is now nullary. 
     result = eval("evaluate = Num.asin(-1).degrees;");
@@ -123,6 +118,42 @@ int main(int argc, char** argv)
 
     //pass higher order function
     result = eval("double(a:Num) = a.mul(2); applyFive(a) = a(5); evaluate = applyFive(double);");
+    if (result != ELEMENT_OK)
+        return result;
+
+    //todo: element doesn't support partial application of any function, only instance functions (i.e. member functions with implicit "this")
+    /*
+    result = eval("add5 = Num.add(5); evaluate = add5(2);");
+    if (result != ELEMENT_OK)
+        return result;
+    */
+
+    /*
+    result = eval("add5(a) = a.add(5); evaluate = add5(5);");
+    if (result != ELEMENT_OK)
+        return result;
+    */
+
+    // todo: asserts as expected, but no way to do error handling
+    /*
+    result = eval("one = two; two = one; evaluate = one;");
+    if (result != ELEMENT_OK)
+        return result;
+    */
+
+    result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).a;");
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).b;");
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct) = s.a.add(s.b);} evaluate = MyStruct(1, 2).add;");
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct, s2:MyStruct) = MyStruct(s.a.add(s2.a), s.b.add(s2.b));} evaluate = MyStruct(1, 2).add(MyStruct(1, 2)).b;");
     if (result != ELEMENT_OK)
         return result;
 

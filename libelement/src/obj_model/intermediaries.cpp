@@ -12,7 +12,7 @@ namespace element
         assert(declarer->inputs.size() == expressions.size());
         for (size_t i = 0; i < declarer->inputs.size(); ++i)
         {
-            //fields.emplace(declarer->inputs[i].identifier, expressions[i]);
+            fields.emplace(declarer->inputs[i].name.value, expressions[i]);
         }
     }
 
@@ -22,7 +22,27 @@ namespace element
         //then we create a function_instance of that function, with ourselves as the first provided argument
         //when we return that function_instance, either the next expression is a call which fills the remaining arguments and then calls it
         //or we just return it/store it, to be used later
+        auto found_field = fields.find(identifier.value);
+
+        //found it as a field
+        if (found_field != fields.end())
+            return found_field->second;
+
+        auto func = std::dynamic_pointer_cast<function_declaration>(declarer->our_scope->find(identifier, false));
+        //todo: not exactly working type checking, good enough for now though
+        if (func && func->has_inputs() && func->inputs[0].annotation && func->inputs[0].annotation->name.value == declarer->name.value)
+        {
+            std::vector<std::shared_ptr<object>> args = { const_cast<struct_instance*>(this)->shared_from_this() };
+            return std::make_shared<function_instance>(func.get(), context.stack, std::move(args));
+        }
+
+        assert(!"failed to index struct instance");
         return nullptr;
+    }
+
+    std::shared_ptr<object> struct_instance::compile(const compilation_context& context) const
+    {
+        return const_cast<struct_instance*>(this)->shared_from_this();
     }
 
     std::string struct_instance::to_string() const
@@ -31,7 +51,7 @@ namespace element
     }
 
     //function_instance
-    function_instance::function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<element_expression>> args)
+    function_instance::function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<object>> args)
         : declarer(declarer)
         , stack(std::move(stack))
         , provided_arguments(std::move(args))

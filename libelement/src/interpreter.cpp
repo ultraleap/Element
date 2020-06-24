@@ -702,7 +702,10 @@ element_result element_interpreter_compile(
     auto compiled = compilable->object->compile(compilation_context);
 
     if (!compiled)
+    {
+        assert(!"tried to compile something but it resulted in a nullptr");
         return ELEMENT_ERROR_UNKNOWN;
+    }
 
     *evaluable = new element_evaluable{ std::move(compiled) };
 
@@ -717,11 +720,15 @@ element_result element_interpreter_evaluate(
     const element_outputs* outputs)
 {
     if (!evaluable->evaluable)
+    {
+        assert(!"tried to evaluate something but it's nullptr");
         return ELEMENT_ERROR_UNKNOWN;
+    }
 
     auto expr = std::dynamic_pointer_cast<element_expression>(evaluable->evaluable);
     if (!expr)
     {
+        assert(!"tried to evaluate something but it's not an element_expression");
         return ELEMENT_ERROR_UNKNOWN;
     }
 
@@ -752,7 +759,7 @@ element_result element_metainfo_for_evalutable(const element_evaluable* evaluabl
 
     *metainfo = new element_metainfo();
     (*metainfo)->typeof = evaluable->evaluable->to_string();
-    (*metainfo)->code = evaluable->evaluable->to_code(0);
+    //(*metainfo)->code = evaluable->evaluable->to_code(0);
 
     return ELEMENT_OK;
 }

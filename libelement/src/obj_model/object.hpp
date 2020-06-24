@@ -38,6 +38,16 @@ namespace element
         explicit compilation_context(const scope* scope);
 
         [[nodiscard]] const scope* get_global_scope() const { return global_scope; }
+        [[nodiscard]] bool is_recursive(const declaration* declaration) const
+        {
+            for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); it++)
+            {
+                if (it->function == declaration)
+                    return true;
+            }
+
+            return false;
+        }
         mutable call_stack stack;
     };
 
@@ -73,8 +83,8 @@ namespace element
     public:
         virtual ~object() = default;
 
-        [[nodiscard]] virtual std::string to_string() const { return "make abs"; }
-        [[nodiscard]] virtual std::string to_code(int depth) const { return "make abs"; }
+        [[nodiscard]] virtual std::string to_string() const { assert(!"make abs"); throw;  return "make abs"; }
+        [[nodiscard]] virtual std::string to_code(int depth) const { assert(!"make abs"); throw;  return "make abs"; }
 
         //TODO: Add constraints
         //bool matches_constraint(constraint& constraint);
@@ -82,15 +92,15 @@ namespace element
         /*
          * Namespace, element_expression, struct declaration, struct instance, function declaration if nullary
          */
-        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { assert(!"make abs");  return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { assert(!"make abs"); throw;  return nullptr; };
         /*
          * struct declaration, function declaration, function instance
          */
-        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const { assert(!"make abs"); return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const { assert(!"make abs"); throw;  return nullptr; };
         /*
          * expression, anything that remains after an expression is compiled, anything that a user tries to compile using the C API
          */
-        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const { assert(!"make abs"); return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const { assert(!"make abs"); throw;  return nullptr; };
 
     protected:
         object() = default;

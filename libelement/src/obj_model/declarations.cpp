@@ -48,6 +48,11 @@ namespace element
     {
         qualifier = struct_qualifier;
         _intrinsic = is_intrinsic;
+
+        if (_intrinsic)
+            body = intrinsic::get_intrinsic(*this);
+        else
+            body = std::make_shared<intrinsic_user_constructor>(this);
     }
 
     std::string struct_declaration::to_string() const
@@ -88,36 +93,8 @@ namespace element
 
     std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
-        //obviously not a good thing
-        if (_intrinsic)
-        {
-            if (name.value == "Num")
-            {
-                auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
-                assert(expr);
-                expr->actual_type = type::num;
-                return expr;
-            }
-            else if (name.value == "Bool")
-            {
-                auto& true_decl = *context.get_global_scope()->find(identifier("True"), false);
-                auto& false_decl = *context.get_global_scope()->find(identifier("False"), false);
-
-                auto true_expr = intrinsic::get_intrinsic(true_decl)->call(context, {});
-                auto false_expr = intrinsic::get_intrinsic(false_decl)->call(context, {});
-
-                auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
-                assert(expr);
-
-                auto ret = std::make_shared<element_expression_if>(
-                    expr,
-                    std::dynamic_pointer_cast<element_expression>(true_expr),
-                    std::dynamic_pointer_cast<element_expression>(false_expr));
-                
-                return ret;
-            }
-        }
-        return std::shared_ptr<object>();
+        //todo: add frame instead of using arguments?
+        return body->call(context, compiled_args);
     }
 
     //constraint
@@ -213,10 +190,20 @@ namespace element
 
     std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
+        if (context.is_recursive(this))
+        {
+            assert(!"recursive");
+        }
+
         call_stack::frame frame;
         frame.function = this;
         frame.compiled_arguments = std::move(compiled_args);
         context.stack.frames.emplace_back(std::move(frame));
+
+        if (!body)
+        {
+            assert(!"failed to call scope-bodied function as it's missing a return");
+        }
 
         //todo: we don't need args passed since it's in the stack
         auto ret = body->call(context, context.stack.frames.back().compiled_arguments);
@@ -232,9 +219,19 @@ namespace element
         if (inputs.empty())
         {
             //Nullary, compile the body
+            if (context.is_recursive(this))
+            {
+                assert(!"recursive");
+            }
+
             call_stack::frame frame;
             frame.function = this;
             context.stack.frames.emplace_back(std::move(frame));
+
+            if (!body)
+            {
+                assert(!"failed to compile scope-bodied function as it's missing a return");
+            }
 
             ret = body->compile(context);
 
@@ -244,7 +241,7 @@ namespace element
         {
             //Not nullary, create function instance for higher order function stuff
             //We don't create a new frame here since when the function instance is called, it'll call the declaration which will create the frame
-            ret = std::make_shared<function_instance>(this, context.stack, std::vector<std::shared_ptr<element_expression>>{});
+            ret = std::make_shared<function_instance>(this, context.stack, std::vector<std::shared_ptr<object>>{});
         }
 
         return ret;
