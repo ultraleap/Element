@@ -31,8 +31,9 @@ namespace element
     }
 
     //function_instance
-    function_instance::function_instance(const function_declaration* declarer, std::vector<std::shared_ptr<element_expression>> args)
-        : declarer{ declarer }
+    function_instance::function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<element_expression>> args)
+        : declarer(declarer)
+        , stack(std::move(stack))
         , provided_arguments(std::move(args))
     {
     }
@@ -42,16 +43,16 @@ namespace element
         return declarer->location() + ":FunctionInstance";
     }
 
-    std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
+    std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
-        args.insert(args.begin(), provided_arguments.begin(), provided_arguments.end());
+        compiled_args.insert(compiled_args.begin(), provided_arguments.begin(), provided_arguments.end());
 
-        if (args.size() == declarer->inputs.size())
+        if (compiled_args.size() == declarer->inputs.size())
         {
             //we have the exact arguments we need, so now we just need to perform the call
             //we also need to swap the callstacks so that the call can use the one at the point the instance was created
             std::swap(stack, context.stack);
-            auto ret = declarer->call(context, args);
+            auto ret = declarer->call(context, compiled_args);
             //we then swap them back, in case our instance is called multiple times.
             //Technically the call we did could have modified the callstack, but if it's behaving correctly it will be identical due to popping frames
             std::swap(stack, context.stack);
@@ -62,10 +63,12 @@ namespace element
         return nullptr;
     }
 
-    std::shared_ptr<element_expression> function_instance::compile(const compilation_context& context) const
+    std::shared_ptr<object> function_instance::compile(const compilation_context& context) const
     {
-        auto result = std::dynamic_pointer_cast<element_expression>(call(context, {}));
-        assert(result); //todo: doesn't handle complex stuff
-        return result;
+        //the last thing in an expression was an instance function with everything fully applied
+        if (provided_arguments.size() == declarer->inputs.size())
+            return call(context, {});
+
+        return const_cast<function_instance*>(this)->shared_from_this();
     }
 }

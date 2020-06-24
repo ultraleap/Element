@@ -14,10 +14,10 @@ DEFINE_TYPE_ID(element_expression_if,              1U << 6);
 //DEFINE_TYPE_ID(element_expression_group,           1U << 7);
 //DEFINE_TYPE_ID(element_expression_unbound_arg,     1U << 8);
 
-std::shared_ptr<element_expression> element_expression::compile(const element::compilation_context& context) const
+std::shared_ptr<element::object> element_expression::compile(const element::compilation_context& context) const
 {
     //TODO: THIS IS AFWUL! FIX!
-    return std::dynamic_pointer_cast<element_expression>(const_cast<element_expression*>(this)->shared_from_this());
+    return const_cast<element_expression*>(this)->shared_from_this();
 }
 
 std::shared_ptr<element::object> element_expression::index(const element::compilation_context& context, const element::identifier& identifier) const
@@ -30,7 +30,7 @@ std::shared_ptr<element::object> element_expression::index(const element::compil
 
     auto* function_declaration = dynamic_cast<element::function_declaration*>(declarer.get());
     if (function_declaration)
-        return std::make_shared<element::function_instance>(function_declaration, args);
+        return std::make_shared<element::function_instance>(function_declaration, context.stack, args);
 
     throw;
 }

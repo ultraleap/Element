@@ -21,14 +21,20 @@ namespace element
         return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_code(), accumulate);
     }
 
-    std::shared_ptr<object> expression::call(const compilation_context& context,
-        std::vector<std::shared_ptr<element_expression>> args) const
+    std::shared_ptr<object> expression::call(
+        const compilation_context& context,
+        std::vector<std::shared_ptr<object>> compiled_args) const
     {
-        //assert(args.empty()); //todo
+        //todo: can't think of a reason this would be empty, even without having a global, the declaration should have added itself
+        assert(!context.stack.frames.empty());
+
+        //todo: for now, just some error checking to make sure we're not doing something too crazy, but all of this is a problem
+        assert(compiled_args.size() == context.stack.frames.back().compiled_arguments.size());
+
         return compile(context);
     }
 
-    std::shared_ptr<element_expression> expression::compile(const compilation_context& context) const
+    std::shared_ptr<object> expression::compile(const compilation_context& context) const
     {
         if (children.empty())
             return nullptr; //todo: error_object
@@ -74,8 +80,8 @@ namespace element
                 const auto& input = frame.function->inputs[i];
                 if (input.name.value == identifier.value)
                 {
-                    if (i < frame.arguments.size())
-                        return frame.arguments[i];
+                    if (i < frame.compiled_arguments.size())
+                        return frame.compiled_arguments[i];
                     else
                         break;
                 }
@@ -127,7 +133,7 @@ namespace element
         if (!previous) //can only resolve call if previous exists
             return nullptr;
 
-        std::vector<std::shared_ptr<element_expression>> compiled_arguments;
+        std::vector<std::shared_ptr<object>> compiled_arguments;
         for (const auto& arg : children)
             compiled_arguments.push_back(arg->compile(context));
 

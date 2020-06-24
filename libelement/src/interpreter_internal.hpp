@@ -51,7 +51,7 @@ struct element_compilable
 
 struct element_evaluable
 {
-    std::shared_ptr<element_expression> evaluable;
+    std::shared_ptr<element::object> evaluable;
 };
 
 struct element_interpreter_ctx

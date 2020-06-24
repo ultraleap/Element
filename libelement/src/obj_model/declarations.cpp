@@ -42,11 +42,6 @@ namespace element
         return our_scope->get_parent_scope()->location() + "." + declaration;
     }
 
-    std::shared_ptr<element_expression> declaration::compile(const compilation_context& context) const
-    {
-        return body->compile(context);
-    }
-
     //struct
     struct_declaration::struct_declaration(identifier identifier, const scope* parent_scope, const bool is_intrinsic)
         : declaration(std::move(identifier), parent_scope)
@@ -91,15 +86,17 @@ namespace element
         return our_scope->find(identifier, false);
     }
 
-    std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
+    std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
         //obviously not a good thing
         if (_intrinsic)
         {
             if (name.value == "Num")
             {
-                args[0]->actual_type = type::num;
-                return args[0];
+                auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
+                assert(expr);
+                expr->actual_type = type::num;
+                return expr;
             }
             else if (name.value == "Bool")
             {
@@ -109,8 +106,11 @@ namespace element
                 auto true_expr = intrinsic::get_intrinsic(true_decl)->call(context, {});
                 auto false_expr = intrinsic::get_intrinsic(false_decl)->call(context, {});
 
+                auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
+                assert(expr);
+
                 auto ret = std::make_shared<element_expression_if>(
-                    args[0],
+                    expr,
                     std::dynamic_pointer_cast<element_expression>(true_expr),
                     std::dynamic_pointer_cast<element_expression>(false_expr));
                 
@@ -211,32 +211,43 @@ namespace element
         return call(context, {})->index(context, name);
     }
 
-    std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const
+    std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
         call_stack::frame frame;
         frame.function = this;
-        frame.arguments = std::move(args);
+        frame.compiled_arguments = std::move(compiled_args);
         context.stack.frames.emplace_back(std::move(frame));
-        auto ret = body->call(context, context.stack.frames.back().arguments); //todo: we don't need args passed as well as in the stack
+
+        //todo: we don't need args passed since it's in the stack
+        auto ret = body->call(context, context.stack.frames.back().compiled_arguments);
+
         context.stack.frames.pop_back();
         return ret;
     }
 
-    std::shared_ptr<element_expression> function_declaration::compile(const compilation_context& context) const
+    std::shared_ptr<object> function_declaration::compile(const compilation_context& context) const
     {
+        std::shared_ptr<object> ret;
+
         if (inputs.empty())
         {
+            //Nullary, compile the body
             call_stack::frame frame;
             frame.function = this;
             context.stack.frames.emplace_back(std::move(frame));
-            auto ret = body->compile(context); //todo: we don't need args passed as well as in the stack
+
+            ret = body->compile(context);
+
             context.stack.frames.pop_back();
-            return ret;
+        }
+        else
+        {
+            //Not nullary, create function instance for higher order function stuff
+            //We don't create a new frame here since when the function instance is called, it'll call the declaration which will create the frame
+            ret = std::make_shared<function_instance>(this, context.stack, std::vector<std::shared_ptr<element_expression>>{});
         }
 
-        //todo: no way to compile to an intermediary (e.g. higher order function, struct instance)
-        assert(false);
-        return nullptr;
+        return ret;
     }
 
     //namespace

@@ -719,16 +719,26 @@ element_result element_interpreter_evaluate(
     if (!evaluable->evaluable)
         return ELEMENT_ERROR_UNKNOWN;
 
-    element_evaluator_options opts;
-    if (options) opts = *options;
+    auto expr = std::dynamic_pointer_cast<element_expression>(evaluable->evaluable);
+    if (!expr)
+    {
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    element_evaluator_options opts{};
+
+    if (options)
+        opts = *options;
+
     const auto result = element_evaluate(
         *context,
-        evaluable->evaluable,
+        std::move(expr),
         inputs->values,
         inputs->count,
         outputs->values,
         outputs->count,
         opts);
+
     if (result != ELEMENT_OK) {
         context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->to_string()), "<input>");
     }

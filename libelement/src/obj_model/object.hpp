@@ -23,7 +23,7 @@ namespace element
         struct frame
         {
             const declaration* function;
-            std::vector<std::shared_ptr<element_expression>> arguments;
+            std::vector<std::shared_ptr<object>> compiled_arguments;
         };
 
         std::vector<frame> frames;
@@ -73,16 +73,24 @@ namespace element
     public:
         virtual ~object() = default;
 
-        [[nodiscard]] virtual std::string to_string() const { return ""; }
-        [[nodiscard]] virtual std::string to_code(int depth) const { return ""; }
+        [[nodiscard]] virtual std::string to_string() const { return "make abs"; }
+        [[nodiscard]] virtual std::string to_code(int depth) const { return "make abs"; }
 
         //TODO: Add constraints
         //bool matches_constraint(constraint& constraint);
 
-        //todo: some kind of component architecture?
-        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { assert(false);  return nullptr; };
-        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<element_expression>> args) const { assert(false); return nullptr; };
-        [[nodiscard]] virtual std::shared_ptr<element_expression> compile(const compilation_context& context) const { assert(false); return nullptr; };
+        /*
+         * Namespace, element_expression, struct declaration, struct instance, function declaration if nullary
+         */
+        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { assert(!"make abs");  return nullptr; };
+        /*
+         * struct declaration, function declaration, function instance
+         */
+        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const { assert(!"make abs"); return nullptr; };
+        /*
+         * expression, anything that remains after an expression is compiled, anything that a user tries to compile using the C API
+         */
+        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const { assert(!"make abs"); return nullptr; };
 
     protected:
         object() = default;
