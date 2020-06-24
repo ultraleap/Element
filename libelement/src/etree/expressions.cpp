@@ -25,13 +25,15 @@ std::shared_ptr<element::object> element_expression::index(const element::compil
     assert(actual_type);
 
     const auto declarer = actual_type->index(context, identifier);
-    auto args = std::vector<std::shared_ptr<element_expression>>();
+    auto args = std::vector<std::shared_ptr<object>>();
     args.push_back(const_cast<element_expression*>(this)->shared_from_this());
 
     auto* function_declaration = dynamic_cast<element::function_declaration*>(declarer.get());
-    if (function_declaration)
+    //todo: not real typechecking. also, kinda duplicated from struct instance.
+    if (function_declaration && function_declaration->has_inputs() && function_declaration->inputs[0].annotation && function_declaration->inputs[0].annotation->name.value == actual_type->get_identifier().value)
         return std::make_shared<element::function_instance>(function_declaration, context.stack, args);
 
+    assert(!"tried to index on an expression but found a function that is not an instance function");
     throw;
 }
 

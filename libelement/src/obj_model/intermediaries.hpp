@@ -7,7 +7,7 @@
 namespace element
 {
 
-    class struct_instance final : public object
+    class struct_instance final : public object, public std::enable_shared_from_this<struct_instance>
     {
     public:
         explicit struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<object>>& expressions);
@@ -21,6 +21,7 @@ namespace element
 
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
 
         const struct_declaration* const declarer;
         std::map<std::string, std::shared_ptr<object>> fields;
@@ -31,7 +32,7 @@ namespace element
     class function_instance final : public object, public std::enable_shared_from_this<function_instance>
     {
     public:
-        explicit function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<element_expression>> args);
+        explicit function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<object>> args);
         virtual ~function_instance() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
@@ -46,7 +47,7 @@ namespace element
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
   
         const function_declaration* const declarer;
-        std::vector<std::shared_ptr<element_expression>> provided_arguments;
+        std::vector<std::shared_ptr<object>> provided_arguments;
 
     private:
         mutable call_stack stack;

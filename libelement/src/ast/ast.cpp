@@ -876,7 +876,7 @@ element_result element_parser_ctx::validate_struct(element_ast* ast)
             {
                 assert(child->children.size() > ast_idx::function::declaration);
                 auto* child_declaration = child->children[ast_idx::function::declaration].get();
-                assert(child_declaration->type == ELEMENT_AST_NODE_DECLARATION);
+                assert(child_declaration->type == ELEMENT_AST_NODE_DECLARATION || child_declaration->type == ELEMENT_AST_NODE_SCOPE);
 
                 if (identifier == child_declaration->identifier)
                 {

@@ -9,6 +9,9 @@ DEFINE_TYPE_ID(element::intrinsic_nullary, 1U << 0);
 DEFINE_TYPE_ID(element::intrinsic_unary, 1U << 1);
 DEFINE_TYPE_ID(element::intrinsic_binary, 1U << 2);
 DEFINE_TYPE_ID(element::intrinsic_if, 1U << 3);
+DEFINE_TYPE_ID(element::intrinsic_num_constructor, 1U << 4);
+DEFINE_TYPE_ID(element::intrinsic_bool_constructor, 1U << 5);
+DEFINE_TYPE_ID(element::intrinsic_user_constructor, 1U << 6);
 
 namespace element
 {
@@ -17,8 +20,8 @@ namespace element
         const static std::unordered_map<std::string, const std::shared_ptr<const intrinsic>> intrinsic_map
         {
             //types
-            { "Num", nullptr },
-            { "Bool", nullptr },
+            { "Num", std::make_shared<intrinsic_num_constructor>() },
+            { "Bool", std::make_shared<intrinsic_bool_constructor>() },
             { "List", nullptr },
             { "Tuple", nullptr },
 
@@ -211,5 +214,54 @@ namespace element
             false_expr);
 
         return ret;
+    }
+
+    intrinsic_num_constructor::intrinsic_num_constructor()
+        : intrinsic_function(type_id, type::num)
+    {
+    }
+
+    std::shared_ptr<object> intrinsic_num_constructor::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
+    {
+        auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
+        assert(expr); //todo: I don't think it could be anything but an expression?
+        expr->actual_type = type::num;
+        return expr;
+    }
+
+    intrinsic_bool_constructor::intrinsic_bool_constructor()
+        : intrinsic_function(type_id, type::boolean)
+    {
+    }
+
+    std::shared_ptr<object> intrinsic_bool_constructor::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
+    {
+        auto& true_decl = *context.get_global_scope()->find(identifier("True"), false);
+        auto& false_decl = *context.get_global_scope()->find(identifier("False"), false);
+
+        auto true_expr = get_intrinsic(true_decl)->call(context, {});
+        auto false_expr = get_intrinsic(false_decl)->call(context, {});
+
+        auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
+        
+        assert(expr); //todo: I think this is accurate
+        assert(std::dynamic_pointer_cast<element_expression>(true_expr));
+        assert(std::dynamic_pointer_cast<element_expression>(false_expr));
+
+        return std::make_shared<element_expression_if>(
+            expr,
+            std::dynamic_pointer_cast<element_expression>(true_expr),
+            std::dynamic_pointer_cast<element_expression>(false_expr));
+    }
+
+    intrinsic_user_constructor::intrinsic_user_constructor(const struct_declaration* declarer)
+        : intrinsic_function(type_id, nullptr)
+        , declarer(declarer)
+    {
+    }
+
+    std::shared_ptr<object> intrinsic_user_constructor::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
+    {
+        return std::make_shared<struct_instance>(declarer, compiled_args);
     }
 }

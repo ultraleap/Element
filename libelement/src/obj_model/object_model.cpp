@@ -89,12 +89,9 @@ std::shared_ptr<element::declaration> element::build_struct_declaration(const el
 
     if (ast->children.size() > ast_idx::function::body)
     {
-        if (ast->children.size() > ast_idx::function::body)
-        {
-            auto* body = ast->children[ast_idx::function::body].get();
-            if (body->type == ELEMENT_AST_NODE_SCOPE)
-                build_scope(body, *struct_decl);
-        }
+        auto* body = ast->children[ast_idx::function::body].get();
+        if (body->type == ELEMENT_AST_NODE_SCOPE)
+            build_scope(body, *struct_decl);
     }
 
     return std::move(struct_decl);
@@ -133,6 +130,11 @@ std::shared_ptr<element::declaration> element::build_function_declaration(const 
         assert(!intrinsic);
         build_scope(body, *function_decl);
         function_decl->body = function_decl->our_scope->find(identifier::return_identifier, false);
+        if (!function_decl->body)
+        {
+            //todo: commented out as parsing files that contain lambdas etc cause issues even if not used
+            //assert(!"scope-bodied function is missing a return");
+        }
     }
     else if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL)
     {
