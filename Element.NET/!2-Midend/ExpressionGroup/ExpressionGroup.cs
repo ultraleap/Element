@@ -15,8 +15,10 @@ namespace Element
 	}
 
 	public delegate Expression ConditionFunction(ReadOnlyCollection<State> state);
+	public delegate Result<Expression> ResultConditionFunction(ReadOnlyCollection<State> state);
 
 	public delegate IEnumerable<Expression> NewValueFunction(ReadOnlyCollection<State> previous);
+	public delegate Result<IEnumerable<Expression>> ResultNewValueFunction(ReadOnlyCollection<State> previous);
 
 	/// <summary>
 	/// A single expression within an expression group

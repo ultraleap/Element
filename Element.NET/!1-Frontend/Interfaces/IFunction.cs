@@ -12,20 +12,38 @@ namespace Element.AST
     public interface IFunction : IValue, IInstancable<IFunction>
     {
         Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
-        Port[] Inputs { get; }
+        IReadOnlyList<Port> Inputs { get; }
         Port Output { get; }
     }
 
     public static class FunctionHelpers
     {
-        public static bool IsNullary(this IFunction Function) => Function.Inputs.Length == 0;
+        public static bool IsNullary(this IFunction function) => function.Inputs.Count == 0;
 
-        public static Result<IValue> ApplyFunction(IFunction function, IReadOnlyList<IValue> arguments,
-                                                   IScope callScope, bool allowPartialApplication, CompilationContext context)
+        public static Result<IValue> PartiallyApply(this IFunction function, IValue[] arguments, CompilationContext context)
+        {
+            /*{
+                // When there's no arguments we can just resolve immediately
+                IFunctionWithBody functionWithBody when arguments.Length > 0 => new AppliedFunctionWithBody(arguments, functionWithBody, callScope),
+                IFunctionWithBody functionWithBody => functionWithBody.ResolveReturn(callScope, ResolveFunctionBody(functionWithBody.Body, callScope, context), context),
+                { } fn when arguments.Length > 0 => new AppliedFunction(arguments, fn, callScope),
+                { } fn => function.CheckOutputConstraint(callScope, fn.Call(arguments, context), context),
+                _ => throw new InternalCompilerException($"{function} function type not resolvable")
+            }*/
+        }
+
+        public static Result<IValue> ApplyFunction(IFunction function,
+                                                   IEnumerable<IValue> arguments,
+                                                   IScope callScope,
+                                                   Func<Result<IValue>> resolveFunc,
+                                                   bool allowPartialApplication,
+                                                   CompilationContext context)
         {
             var definition = function.GetDefinition(context);
-            if (context.ContainsFunction(definition) && !(function is AppliedFunctionBase)) return context.Trace(MessageCode.CircularCompilation, $"Multiple references to {function} in same call stack - Recursion is disallowed");
+            if (context.ContainsFunction(definition)) return context.Trace(MessageCode.CircularCompilation, $"Multiple references to {function} in same call stack - Recursion is disallowed");
+            
             context.PushFunction(definition);
+            
             var shownInTrace = false;
             if (function is IDeclared declared)
             {
@@ -35,37 +53,10 @@ namespace Element.AST
 
             try
             {
-                var callScope = function switch
-                {
-                    // If the signature is an applied function we want to use it as the call scope. More arguments are filled by subsequent applications until full application.
-                    AppliedFunctionBase appliedFunction => appliedFunction,
-                    // If the signature is a function with a body then we use the bodies parent
-                    IFunctionWithBody functionWithBody when functionWithBody.Body is Scope scope => scope.Declarer.Parent,
-                    Declaration declaration => declaration.Parent,
-                    _ => context.SourceContext.GlobalScope
-                };
-
-                
-                // Fully resolve arguments
-                return arguments.Select(arg => arg.FullyResolveValue(context)).BindEnumerable(ResolveCall);
-                
-                
-                
-                Result<IValue> ResolveCall(IEnumerable<IValue> args)
-                {
-                    arguments = args.ToArray();
-                    return CheckArguments(function, arguments, callScope, allowPartialApplication, context)
-                        .Bind(() =>
-                                  (function switch
-                                      {
-                                          // When there's no arguments we can just resolve immediately
-                                          IFunctionWithBody functionWithBody when arguments.Length > 0 => new AppliedFunctionWithBody(arguments, functionWithBody, callScope),
-                                          IFunctionWithBody functionWithBody => functionWithBody.ResolveReturn(callScope, ResolveFunctionBody(functionWithBody.Body, callScope, context), context),
-                                          { } fn when arguments.Length > 0 => new AppliedFunction(arguments, fn, callScope),
-                                          { } fn => function.ResolveReturn(callScope, fn.Call(arguments, context), context),
-                                          _ => throw new InternalCompilerException($"{function} function type not resolvable")
-                                      }).Bind(returnValue => returnValue.FullyResolveValue(context)));
-                }
+                // TODO: Make and push capture scope with arguments and functions locals
+                return CheckInputConstraints(function, arguments as IValue[] ?? arguments.ToArray(), callScope, allowPartialApplication, context)
+                       .Bind(resolveFunc)
+                       .Bind(returnValue => returnValue.FullyResolveValue(context));
             }
             finally
             {
@@ -77,20 +68,30 @@ namespace Element.AST
             }
         }
 
-        private static Result CheckArguments(IFunction function, IValue[] arguments, IScope callScope, bool allowPartialApplication, CompilationContext context)
+        public static Result<IValue> ResolveFunctionBody(object body, IScope scope, CompilationContext compilationContext) =>
+            body switch
+            {
+                // If a function has expression body we just compile the single expression using the call scope
+                ExpressionBody exprBody => exprBody.Expression.ResolveExpression(scope, compilationContext),
+                // If a function has a scope body we need to find the return identifier
+                IScope scopeBody => scopeBody[Parser.ReturnIdentifier, false, compilationContext],
+                _ => throw new InternalCompilerException("Function body type unrecognized")
+            };
+
+        private static Result CheckInputConstraints(IFunction function, IReadOnlyList<IValue> arguments, IScope callScope, bool allowPartialApplication, CompilationContext context)
         {
-            if (arguments.Length <= 0) return Result.Success;
+            if (arguments.Count <= 0) return Result.Success;
             var resultBuilder = new ResultBuilder(context);
                 
             var ports = function.Inputs;
             var isVariadic = ports.Any(p => p == Port.VariadicPort);
-            if (!allowPartialApplication && !isVariadic && arguments.Length != ports.Length
-                || !allowPartialApplication && arguments.Length < ports.Length)
+            if (!allowPartialApplication && !isVariadic && arguments.Count != ports.Count
+                || !allowPartialApplication && arguments.Count < ports.Count)
             {
-                resultBuilder.Append(MessageCode.ArgumentCountMismatch, $"Expected '{ports.Length}' arguments but got '{arguments.Length}'");
+                resultBuilder.Append(MessageCode.ArgumentCountMismatch, $"Expected '{ports.Count}' arguments but got '{arguments.Count}'");
             }
 
-            for (var i = 0; i < Math.Min(ports.Length, arguments.Length); i++)
+            for (var i = 0; i < Math.Min(ports.Count, arguments.Count); i++)
             {
                 var arg = arguments[i];
                 var port = ports[i];
@@ -106,15 +107,19 @@ namespace Element.AST
             return resultBuilder.ToResult();
         }
 
-        private static Result<IValue> ResolveReturn(this IFunction function, IScope callScope, IValue result, CompilationContext context) =>
+        private static Result<IValue> CheckOutputConstraint(this IFunction function, IScope callScope, IValue result, CompilationContext context) =>
             function.Output.ResolveConstraint(callScope, context)
-                    .Bind(constraint => result.FullyResolveValue(context)
-                                              .Bind(fullyResolvedResult => constraint.MatchesConstraint(fullyResolvedResult, context)
-                                                                                     .Bind(matches => matches
-                                                                                                          ? new Result<IValue>(fullyResolvedResult)
-                                                                                                          : context.Trace(MessageCode.ConstraintNotSatisfied, $"Result '{fullyResolvedResult}' for function '{function.GetDefinition(context)}' does not match '{constraint}' constraint"))));
+                    .Accumulate(() => result.FullyResolveValue(context))
+                    .Bind(tuple =>
+                    {
+                        var (constraint, fullyResolvedResult) = tuple;
+                        return constraint.MatchesConstraint(fullyResolvedResult, context)
+                                         .Bind(matches => matches
+                                                              ? new Result<IValue>(fullyResolvedResult)
+                                                              : context.Trace(MessageCode.ConstraintNotSatisfied, $"Result '{fullyResolvedResult}' for function '{function.GetDefinition(context)}' does not match '{constraint}' constraint"));
+                    });
 
-        private abstract class AppliedFunctionBase : ScopeBase, IFunction
+        /*private abstract class AppliedFunctionBase : ScopeBase, IFunction
         {
             protected AppliedFunctionBase(IValue[] arguments, IFunction definition, IScope parent)
             {
@@ -128,7 +133,7 @@ namespace Element.AST
             private readonly Port[] _inputs;
             private readonly IFunction _definition;
 
-            Port[] IFunction.Inputs => _inputs;
+            IReadOnlyList<Port> IFunction.Inputs => _inputs;
             Port IFunction.Output => _definition.Output;
             public abstract Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
 
@@ -157,7 +162,7 @@ namespace Element.AST
 
             public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
                 _definition.Call(this.Concat(arguments).ToArray(), context)
-                           .Bind(result => this.ResolveReturn(this, result, context));
+                           .Bind(result => this.CheckOutputConstraint(this, result, context));
         }
 
         private class AppliedFunctionWithBody : AppliedFunctionBase
@@ -180,14 +185,14 @@ namespace Element.AST
             protected override IScope? _child => Body as IScope;
 
             public object Body { get; }
-        }
+        }*/
 
         public static Result<IFunction> Uncurry(this IFunction a, IFunction b, ITrace trace) =>
             UncurriedFunction.Create(a, b, trace);
 
         public static Result<IFunction> Uncurry(this IFunction a, string bFunctionExpression,
                                                   SourceContext context) =>
-            context.EvaluateExpressionAs<IFunction>(bFunctionExpression).Bind(a.Uncurry);
+            context.EvaluateExpressionAs<IFunction>(bFunctionExpression).Bind(fn => a.Uncurry(fn, context));
 
         private class UncurriedFunction : IFunction
         {
@@ -204,7 +209,7 @@ namespace Element.AST
             
             public static Result<IFunction> Create(IFunction a, IFunction b, ITrace trace)
             {
-                if (b.Inputs.Length < 1)
+                if (b.Inputs.Count < 1)
                 {
                     return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
                 }
@@ -233,12 +238,12 @@ namespace Element.AST
             }
 
             IFunction IInstancable<IFunction>.GetDefinition(CompilationContext compilationContext) => this;
-            public Port[] Inputs { get; }
+            public IReadOnlyList<Port> Inputs { get; }
             public Port Output { get; }
             public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-                _a.Call(arguments.Take(_a.Inputs.Length).ToArray(), context)
+                _a.Call(arguments.Take(_a.Inputs.Count).ToArray(), context)
                   // Now resolve B, skip arguments used in A
-                  .Bind(resultOfA => _b.Call(arguments.Skip(_a.Inputs.Length).Prepend(resultOfA).ToArray(), context));
+                  .Bind(resultOfA => _b.Call(arguments.Skip(_a.Inputs.Count).Prepend(resultOfA).ToArray(), context));
         }
     }
 }

@@ -8,12 +8,12 @@ using LExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
 {
-    public delegate System.Linq.Expressions.Expression? ConvertFunction(IValue value, Type outputType, CompilationContext context);
+    public delegate Result<System.Linq.Expressions.Expression> ConvertFunction(IValue value, Type outputType, ITrace trace);
     
     public interface IBoundaryConverter
     {
-        IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext compilationContext);
-        System.Linq.Expressions.Expression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext compilationContext);
+        Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext context);
+        Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext context);
     }
 
     public class NumberConverter : IBoundaryConverter
@@ -21,26 +21,28 @@ namespace Element.CLR
         private NumberConverter(){}
         public static NumberConverter Instance { get; } = new NumberConverter();
 
-        public IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext compilationContext) =>
+        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext context) =>
             parameter.Type switch
         {
             {} t when t == typeof(bool) => new NumberExpression(LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)), BoolType.Instance),
             _ => new NumberExpression(LExpression.Convert(parameter, typeof(float)))
         };
 
-        public System.Linq.Expressions.Expression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
-                                                                 CompilationContext compilationContext) =>
-            (outputType, convertFunction(value, typeof(float), compilationContext)) switch
-            {
-                (_, {} result) when result.Type == outputType => result, // Correct type from convert, return directly
-                ({} t, {} result) when t == typeof(bool) => LExpression.LessThanOrEqual(result, LExpression.Constant(0f)),
-                (_, {} result) => LExpression.Convert(result, outputType),
-                (_, _) => null
-            };
+        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
+                                                 CompilationContext context) =>
+            convertFunction(value, typeof(float), context)
+                .Map(convertedValue =>
+                          (outputType, convertedValue) switch
+                          {
+                              (_, {} result) when result.Type == outputType => result, // Correct type from convert, return directly
+                              ({} t, {} result) when t == typeof(bool) => LExpression.LessThanOrEqual(result, LExpression.Constant(0f)),
+                              (_, {} result) => LExpression.Convert(result, outputType),
+                              _ => throw new InternalCompilerException($"Unhandled {nameof(ElementToLinq)} output type")
+                          });
 
         private class NumberExpression : Expression, ICLRExpression
         {
-            public NumberExpression(LExpression parameter, IIntrinsicType? typeOverride = default)
+            public NumberExpression(LExpression parameter, IntrinsicType? typeOverride = default)
                 : base(typeOverride) =>
                 Parameter = parameter;
 
@@ -80,29 +82,18 @@ namespace Element.CLR
             _elementToClrFieldMapping = structType.GetFields().ToDictionary(f => f.Name, f => $"{char.ToLower(f.Name[0])}{f.Name.Substring(1)}");
         }
 
-        public IValue LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext compilationContext)
-        {
-            var result = compilationContext.SourceContext.EvaluateExpression(_elementTypeExpression, out _);
-            if (result == CompilationError.Instance)
-            {
-                return CompilationError.Instance;
-            }
+        public Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext context) =>
+            context.SourceContext.EvaluateExpression(_elementTypeExpression)
+                   .Cast<StructDeclaration>(context)
+                   .Map(structDeclaration => (IValue)new StructInstance(structDeclaration, _elementToClrFieldMapping.Select(pair => new FieldExpression(root, parameter, pair.Value))));
 
-            if (!(result is StructDeclaration declaredStruct))
-            {
-                return compilationContext.Flush(14, $"{result} is not a struct declaration");
-            }
-            
-            return declaredStruct.CreateInstance(_elementToClrFieldMapping.Select(pair => new MemberExpression(root, parameter, pair.Value)).ToArray());
-        }
-
-        private class MemberExpression : Expression, ICLRExpression, IFunction
+        private class FieldExpression : Expression, ICLRExpression, IFunction
         {
             private readonly LExpression _parameter;
             private readonly IBoundaryConverter _root;
             private readonly string _clrField;
 
-            public MemberExpression(IBoundaryConverter root, LExpression parameter, string clrField)
+            public FieldExpression(IBoundaryConverter root, LExpression parameter, string clrField)
             {
                 _root = root;
                 _parameter = parameter;
@@ -116,14 +107,14 @@ namespace Element.CLR
                 LExpression.PropertyOrField(_parameter, _clrField);
             public override IEnumerable<Expression> Dependent { get; }
             protected override string ToStringInternal() => $"{_parameter}.{_clrField}";
-            public Port[] Inputs { get; }
+            public IReadOnlyList<Port> Inputs { get; }
             public Port Output { get; }
-            public Result<IFunctionSignature> GetDefinition(CompilationContext compilationContext) => this;
+            public IFunction GetDefinition(CompilationContext compilationContext) => this;
             public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
                 _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, context);
         }
 
-        public LExpression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext compilationContext)
+        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext context)
         {
             var obj = LExpression.Variable(outputType);
             var assigns = new List<LExpression>();
@@ -131,17 +122,22 @@ namespace Element.CLR
             {
                 assigns.Add(LExpression.Assign(obj, LExpression.New(outputType)));
             }
-
-            var scope = value as IScope;
+            
+            if (!(value is IScope scope)) return context.Trace(MessageCode.InvalidBoundaryData, $"'{value}' is not a scope - expected scope when converting a struct");
+            var builder = new ResultBuilder<LExpression>(context, default!);
+            
             foreach (var pair in _elementToClrFieldMapping)
             {
                 var memberExpression = LExpression.PropertyOrField(obj, pair.Value);
-                var result = convertFunction(scope?[new Identifier(pair.Key), false, TODO], memberExpression.Type, compilationContext);
-                assigns.Add(LExpression.Assign(memberExpression, result));
+                var fieldResult = scope[new Identifier(pair.Key), false, context].Bind(fieldValue => convertFunction(fieldValue, memberExpression.Type, context));
+                builder.Append(in fieldResult);
+                if (!fieldResult.IsSuccess) continue;
+                assigns.Add(LExpression.Assign(memberExpression, fieldResult.ResultOr(default!)));
             }
-
+            
             assigns.Add(obj);
-            return LExpression.Block(new[] {obj}, assigns);
+            builder.Result = LExpression.Block(new[] {obj}, assigns);
+            return builder.ToResult();
         }
     }
     
@@ -191,41 +187,28 @@ namespace Element.CLR
             };
         }
 
-        private bool TryAddStructConverter(Type clrStructType, out IBoundaryConverter? boundaryConverter)
+        private Result<IBoundaryConverter> TryAddStructConverter(Type clrStructType, ITrace trace)
         {
-            if (clrStructType.GetCustomAttribute<ElementStructTemplateAttribute>() is {} attr)
-            {
-                Add(clrStructType, boundaryConverter = new StructConverter(attr.ElementTypeExpression, clrStructType));
-                return true;
-            }
-
-            boundaryConverter = null;
-            return false;
+            if (!(clrStructType.GetCustomAttribute<ElementStructTemplateAttribute>() is {} attr))
+                return trace.Trace(MessageCode.MissingBoundaryConverter, $"Could not find or create {nameof(IBoundaryConverter)} for CLR type '{clrStructType}'");
+            var boundaryConverter = new StructConverter(attr.ElementTypeExpression, clrStructType);
+            Add(clrStructType, boundaryConverter);
+            return boundaryConverter;
         }
 
-        public IValue LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext compilationContext)
-        {
-            if (TryGetValue(parameter.Type, out var retval)
-                || TryAddStructConverter(parameter.Type, out retval))
-            {
-                return retval.LinqToElement(parameter, root, compilationContext);
-            }
+        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext context) =>
+            // TODO: Detect circular conversion
+            TryGetValue(parameter.Type, out var converter)
+                ? converter!.LinqToElement(parameter, root, context)
+                : TryAddStructConverter(parameter.Type, context)
+                    .Bind(converter => converter!.LinqToElement(parameter, root, context));
 
-            return compilationContext.Flush(12, $"No {nameof(IBoundaryConverter)} for CLR type '{parameter.Type}'");
-        }
-
-        public System.Linq.Expressions.Expression? ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
-                                                                 CompilationContext compilationContext)
-        {
-            // TODO: Detect circular
-            if (TryGetValue(outputType, out var output)
-                || TryAddStructConverter(outputType, out output))
-            {
-                return output.ElementToLinq(value, outputType, convertFunction, compilationContext);
-            }
-
-            compilationContext.Flush(12, $"No {nameof(IBoundaryConverter)} for CLR type '{outputType}'");
-            return null;
-        }
+        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
+                                                 CompilationContext context) =>
+            // TODO: Detect circular conversion
+            TryGetValue(outputType, out var output)
+                ? output!.ElementToLinq(value, outputType, convertFunction, context)
+                : TryAddStructConverter(outputType, context)
+                    .Bind(converter => converter!.ElementToLinq(value, outputType, convertFunction, context));
     }
 }

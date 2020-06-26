@@ -8,6 +8,6 @@ namespace Element.AST
         private FunctionConstraint() {}
         public static FunctionConstraint Instance { get; } = new FunctionConstraint();
         public override string ToString() => "<function>";
-        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) => value is IFunctionSignature;
+        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext context) => value.FullyResolveValue(context).Map(v => v is IFunction);
     }
 }

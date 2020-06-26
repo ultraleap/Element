@@ -7,7 +7,7 @@ namespace Element.AST
     {
         private BinaryFunctionConstraint() {}
         public static BinaryFunctionConstraint Instance { get; } = new BinaryFunctionConstraint();
-        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) =>
-            value is IFunctionSignature fn && fn.Inputs.Length == 2;
+        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext context) =>
+            value.FullyResolveValue(context).Map(v => v is IFunction fn && fn.Inputs.Count == 2);
     }
 }

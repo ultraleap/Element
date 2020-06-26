@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lexico;
 
@@ -7,7 +8,7 @@ namespace Element.AST
     [WhitespaceSurrounded, MultiLine]
     public abstract class Declaration : IValue, IDeclared
     {
-#pragma warning disable 649
+#pragma warning disable 649, 8618
         // ReSharper disable UnassignedField.Global
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         [Location] public int IndexInSource { get; private set; }
@@ -17,8 +18,7 @@ namespace Element.AST
         [Optional] protected PortList? PortList;
         [Optional] protected TypeAnnotation? DeclaredType;
         [IndirectAlternative(nameof(BodyAlternatives)), WhitespaceSurrounded, MultiLine] protected object Body;
-        // ReSharper restore UnassignedField.Global
-#pragma warning restore 649
+#pragma warning restore 649, 8618
 
         // ReSharper disable UnusedMember.Global
         protected abstract string IntrinsicQualifier { get; }
@@ -30,8 +30,8 @@ namespace Element.AST
 
         public SourceInfo SourceInfo { get; private set; }
 
-        protected bool HasDeclaredInputs => DeclaredInputs.Length > 0;
-        protected Port[] DeclaredInputs { get; private set; }
+        protected bool HasDeclaredInputs => DeclaredInputs.Count > 0;
+        protected IReadOnlyList<Port> DeclaredInputs { get; private set; }
         protected Port DeclaredOutput { get; private set; }
         protected virtual Identifier[] ScopeIdentifierWhitelist { get; } = Array.Empty<Identifier>();
         protected virtual Identifier[] ScopeIdentifierBlacklist { get; } = Array.Empty<Identifier>();
@@ -81,7 +81,7 @@ namespace Element.AST
         
         protected virtual void AdditionalValidation(ResultBuilder builder) {}
 
-        internal void Initialize(SourceInfo info, IScope parent, IIntrinsicCache? cache)
+        internal void Initialize(in SourceInfo info, IScope parent, IIntrinsicCache? cache)
         {
             SourceInfo = info;
             Parent = parent ?? throw new ArgumentNullException(nameof(parent));

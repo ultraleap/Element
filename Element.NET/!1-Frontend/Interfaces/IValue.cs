@@ -4,15 +4,29 @@ using System.Linq;
 
 namespace Element.AST
 {
-    /*public abstract class ElementValue
+    public interface IElementValue
+    {
+        string ToString();
+        string NormalFormString { get; }
+        Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
+        Result<IValue> Index(Identifier id, bool recurse, CompilationContext context);
+        Result<bool> MatchesConstraint(IValue value, CompilationContext context);
+        Result<ISerializableValue> DefaultValue(CompilationContext context);
+        void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder);
+        Result<ISerializableValue> Deserialize(Func<Element.Expression> nextValue, ITrace trace);
+    }
+
+    public abstract class ElementValue : IElementValue
     {
         public abstract override string ToString();
-        //public abstract string NormalFormString { get; }
-        
-        public virtual Result<ISerializableValue> DefaultValue() => (14, $"'{this}' i");
-        public virtual Result<IEnumerable<Element.Expression>> Serialize() => (1, $"'{this}' is not serializable");
-        public virtual Result<ISerializableValue> Deserialize(Func<Element.Expression> nextValue) => (1, $"'{this}' cannot be deserialized");
-    }*/
+        public abstract string NormalFormString { get; }
+        public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' cannot be called, it is not a function");
+        public virtual Result<IValue> Index(Identifier id, bool recurse, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' is not indexable");
+        public virtual Result<bool> MatchesConstraint(IValue value, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' cannot be used as a port annotation, it is not a constraint");
+        public virtual Result<ISerializableValue> DefaultValue(CompilationContext context) => context.Trace(MessageCode.ConstraintNotSatisfied, $"'{this}' i");
+        public virtual void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder) => resultBuilder.Append(MessageCode.SerializationError, $"'{this}' is not serializable");
+        public virtual Result<ISerializableValue> Deserialize(Func<Element.Expression> nextValue, ITrace trace) => trace.Trace(MessageCode.SerializationError, $"'{this}' cannot be deserialized");
+    }
     
     
     public interface IValue
@@ -23,7 +37,7 @@ namespace Element.AST
 
     public interface ISerializableValue : IValue
     {
-        void Serialize(ResultBuilder<IList<Element.Expression>> resultBuilder);
+        void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder);
         Result<ISerializableValue> Deserialize(Func<Element.Expression> nextValue, ITrace trace);
     }
 
@@ -33,7 +47,7 @@ namespace Element.AST
             (value is IFunction fn && fn.IsNullary()
                  ? fn.Call(Array.Empty<IValue>(), context)
                  : new Result<IValue>(value))
-            .Map(v => v is Element.Expression expr ? ConstantFolding.Optimize(expr) : v)
+            .Map(v => v is Element.Expression expr ? expr.FoldConstants() : v)
             // ReSharper disable once PossibleUnintendedReferenceComparison
             .Bind(v => v != value ? v.FullyResolveValue(context) : new Result<IValue>(v)); // Recurse until the resolved value is the same
 
@@ -66,10 +80,10 @@ namespace Element.AST
             return result;
         }
 
-        public static Result<IList<Element.Expression>> Serialize(this IValue value, ITrace trace)
+        public static Result<List<Element.Expression>> Serialize(this IValue value, ITrace trace)
         {
             if (!(value is ISerializableValue serializableValue)) return trace.Trace(MessageCode.SerializationError, $"'{value}' is not a serializable");
-            var result = new ResultBuilder<IList<Element.Expression>>(trace, new List<Element.Expression>());
+            var result = new ResultBuilder<List<Element.Expression>>(trace, new List<Element.Expression>());
             serializableValue.Serialize(result);
             return result.ToResult();
         }
@@ -89,7 +103,7 @@ namespace Element.AST
 
         public static Result<float[]> ToFloatArray(this IEnumerable<Element.Expression> expressions, ITrace trace)
         {
-            var exprs = expressions.ToArray();
+            var exprs = expressions as Element.Expression[] ?? expressions.ToArray();
             var result = new float[exprs.Length];
             for (var i = 0; i < result.Length; i++)
             {

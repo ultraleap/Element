@@ -4,11 +4,11 @@ namespace Element.AST
     {
         private PredicateFunctionConstraint() {}
         public static PredicateFunctionConstraint Instance { get; } = new PredicateFunctionConstraint();
-        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) =>
-            value is IFunctionSignature fn
-                ? fn.Output.ResolveConstraint(compilationContext)
-                    .Bind(constraint => BoolType.Instance.Declaration(compilationContext.SourceContext)
-                                                .Map(boolDeclaration => constraint == boolDeclaration))
-                : false;
+        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext context) =>
+            value.FullyResolveValue(context).Bind(v => v is IFunction fn
+                                                           ? fn.Output.ResolveConstraint(context)
+                                                               .Bind(constraint => BoolType.Instance.Declaration(context.SourceContext)
+                                                                                           .Map(boolDeclaration => constraint == boolDeclaration))
+                                                           : false);
     }
 }

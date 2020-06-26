@@ -13,12 +13,10 @@ namespace Element.AST
         [Alternative(typeof(ExpressionBody), typeof(Scope)), WhitespaceSurrounded, MultiLine] private object _body;
 #pragma warning restore 649, 169
         
-        public Port[] Inputs { get; private set; }
+        public IReadOnlyList<Port> Inputs { get; private set; }
         public Port Output { get; private set; }
-        public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
-        {
-            return FunctionHelpers.ApplyFunction(this, arguments, DeclaringScope, false, context);
-        }
+        public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+            FunctionHelpers.ApplyFunction(this, arguments, DeclaringScope, , false, context);
 
         public IScope DeclaringScope { get; private set; }
 #pragma warning restore 8618

@@ -4,21 +4,27 @@ namespace Element.AST
 {
     internal class UnaryIntrinsic : IntrinsicFunction
     {
-        public static readonly Dictionary<Unary.Op, (string Location, Port Input, IIntrinsicType Return)> OperationOverrides = new Dictionary<Unary.Op, (string Location, Port Input, IIntrinsicType Return)>
+        public static readonly Dictionary<Unary.Op, (Port Input, IntrinsicType Return)> OperationOverrides = new Dictionary<Unary.Op, (Port Input, IntrinsicType Return)>
         {
-            {Unary.Op.Not, ("Bool", new Port("a", BoolType.Instance), BoolType.Instance)},
+            {Unary.Op.Not, (new Port("a", BoolType.Instance), BoolType.Instance)},
         };
 
         public UnaryIntrinsic(Unary.Op operation)
-            : base(OperationOverrides.TryGetValue(operation, out var details) is {} overridden && overridden
-                       ? $"{details.Location}.{operation.ToString().ToLowerInvariant()}"
-                       : $"Num.{operation.ToString().ToLowerInvariant()}",
-                   new[]{overridden ? details.Input : new Port("a", NumType.Instance)},
-                   Port.ReturnPort(overridden ? details.Return : NumType.Instance)) =>
+        {
             Operation = operation;
-        
+            Identifier = new Identifier(operation.ToString().ToLowerInvariant());
+            
+            // Assumed to be (a:Num):Num unless overridden above
+            var overridden = OperationOverrides.TryGetValue(operation, out var details);
+            Inputs = new[] {overridden ? details.Input : new Port("a", NumType.Instance)};
+            Output = Port.ReturnPort(overridden ? details.Return : NumType.Instance);
+        }
+
         public Unary.Op Operation { get; }
 
-        public override Result<IValue> Call(IValue[] arguments, CompilationContext _) => new Unary(Operation, arguments[0] as Element.Expression);
+        public override Identifier Identifier { get; }
+        public override IReadOnlyList<Port> Inputs { get; }
+        public override Port Output { get; }
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => new Unary(Operation, (Element.Expression) arguments[0]); // TODO: use ApplyArguments
     }
 }

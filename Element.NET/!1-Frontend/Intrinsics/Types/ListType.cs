@@ -11,115 +11,36 @@ namespace Element.AST
 
         private ListType() => Fields = new[]{new Port(_indexerId, FunctionConstraint.Instance), new Port(_countId, NumType.Instance)};
         public static ListType Instance { get; } = new ListType();
-        public override Port[] Fields { get; }
+        public override IReadOnlyList<Port> Fields { get; }
         public override Identifier Identifier { get; } = new Identifier("List");
 
-        public override Result<IValue> Construct(StructDeclaration declaration, IEnumerable<IValue> arguments) => declaration.CreateInstance(arguments);
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) =>
-            value is StructInstance instance
-                ? Declaration(compilationContext.SourceContext)
-                    .Map(decl => decl == instance.DeclaringStruct) 
-                : false;
-        public override Result<ISerializableValue> DefaultValue(CompilationContext context) => MakeList(Array.Empty<IValue>(), context).Map(v => (ISerializableValue)v);
-        public Result<IValue> MakeList(IValue[] elements, CompilationContext context) =>
-            context.SourceContext.GetIntrinsic<StructDeclaration>(Identifier)
-                   .Bind(decl => Construct(decl, new IValue[]{new IndexFunction(elements), new Constant(elements.Length)}));
+        public override Result<IValue> Construct(IReadOnlyList<IValue> arguments, CompilationContext context) => Declaration(context.SourceContext).Map(decl => (IValue)new StructInstance(decl, arguments));
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => Declaration(context.SourceContext).Bind(decl => decl.IsInstanceOfStruct(value, context));
+        public override Result<ISerializableValue> DefaultValue(CompilationContext context) => ListIntrinsic.Instance.Call(Array.Empty<IValue>(), context).Cast<ISerializableValue>(context);
+        
+        public static Result<int> ConstantCount(StructInstance listInstance, CompilationContext context) =>
+            Instance.Declaration(context.SourceContext)
+                    .Check(listTypeDecl =>
+                               listInstance.DeclaringStruct != listTypeDecl
+                                   ? context.Trace(MessageCode.TypeError, "Struct instance is not a list")
+                                   : Result.Success)
+                    .Bind(() => listInstance[_countId, false, context]
+                              .Bind(countValue => countValue switch
+                              {
+                                  Constant c => new Result<int>((int) c),
+                                  Element.Expression e => context.Trace(MessageCode.NotCompileConstant, $"List count '{e}' is not a compile-time constant expression"),
+                                  _ => throw new InternalCompilerException($"Couldn't get List.'{_countId}' from '{listInstance}'. Count must be an expression.")
+                              }));
 
-        private class IndexFunction : IFunction
-        {
-            private readonly IValue[] _elements;
-
-            public IndexFunction(IValue[] elements) => _elements = elements;
-
-            Port[] IFunctionSignature.Inputs { get; } = {new Port("i", NumType.Instance)};
-            Port IFunctionSignature.Output { get; } = Port.ReturnPort(AnyConstraint.Instance);
-            IFunctionSignature IInstancable<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
-
-            public override string ToString() => "<list index function>";
-
-            Result<IValue> IFunction.Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-                new Result<IValue>(ListElement.Create(arguments[0], _elements));
-        }
-
-        private class ListElement : IFunction, IIndexable
-        {
-            public static IValue Create(IValue index, IReadOnlyList<IValue> elements) =>
-                index switch
+        public static Result<IValue[]> EvaluateElements(StructInstance listInstance, CompilationContext context) =>
+            ConstantCount(listInstance, context)
+                .Accumulate(() => listInstance[_indexerId, false, context].Cast<IFunction>(() => throw new InternalCompilerException($"Couldn't get List.'{_indexerId}' from '{listInstance}'. Indexer must be a function.")))
+                .Bind(tuple =>
                 {
-                    Element.Expression indexExpr when elements.All(e => e is Element.Expression) => new Mux(indexExpr, elements.Cast<Element.Expression>()),
-                    Constant constantIndex => elements[(int)constantIndex.Value],
-                    _ => new ListElement(index, elements)
-                };
-
-            private ListElement(IValue index, IReadOnlyList<IValue> elements)
-            {
-                _index = index;
-                _elements = elements;
-            }
-
-            IFunctionSignature IInstancable<IFunctionSignature>.GetDefinition(CompilationContext compilationContext) => this;
-
-            public override string ToString() => "<list element>";
-            private readonly IValue _index;
-            private readonly IReadOnlyList<IValue> _elements;
-            
-            Result<IValue> IFunction.Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-                _elements[0] is IFunctionSignature
-                    ? _elements.Select(e => ((IFunctionSignature)e).ResolveCall(arguments.ToArray(), false, context))
-                                                                   .MapEnumerable(v => Create(_index, v.ToList()))
-                    : context.Trace(MessageCode.InvalidExpression, "List element is not a function - it cannot be called");
-
-            public Port[] Inputs => _elements[0] is IFunctionSignature fn ? fn.Inputs : new[]{Port.VariadicPort};
-            public Port Output => _elements[0] is IFunctionSignature fn ? fn.Output : Port.ReturnPort(AnyConstraint.Instance);
-            public Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
-                _elements[0] is IIndexable
-                    ? Create(_index, _elements.Select(e => ((IIndexable)e)[id, recurse, context]).ToList())
-                    : context.Trace(MessageCode.InvalidExpression, "List element is not indexable");
-        }
-
-        public static bool HasConstantCount(StructInstance listInstance, out int constantCount, CompilationContext context)
-        {
-            if (listInstance.DeclaringStruct != Instance.Declaration(context))
-            {
-                context.Flush(8, "Struct instance is not a list");
-                constantCount = -1;
-                return false;
-            }
-
-            constantCount = listInstance[_countId, false, context] switch
-            {
-                Constant c => (int)c,
-                Element.Expression _ => -1, // Can't get count for a non-constant expression
-                _ => context.Flush(8, $"Couldn't get List.'{_countId}' from '{listInstance}'. Count must be an expression.").Return(-1)
-            };
-
-            return constantCount >= 0;
-        }
-
-        public static IValue[] EvaluateElements(StructInstance listInstance, bool hasConstantCount, int count, CompilationContext compilationContext)
-        {
-            if (listInstance == null) throw new ArgumentNullException(nameof(listInstance));
-            if (listInstance.DeclaringStruct != Instance.GetDeclaration(compilationContext))
-            {
-                compilationContext.Flush(8, "Struct instance is not a list");
-                return Array.Empty<IValue>();
-            }
-
-            if (!hasConstantCount)
-            {
-                return new []{compilationContext.Flush(24, $"Cannot evaluate dynamic list '{listInstance}' at compile time")};
-            }
-
-
-            if (!(listInstance[_indexerId, false, TODO] is IFunctionSignature indexer))
-            {
-                compilationContext.Flush(8, $"Couldn't get List.'{_indexerId}' from '{listInstance}'.");
-                return Array.Empty<IValue>();
-            }
-            
-            return Enumerable.Range(0, count)
-                             .Select(i => indexer.ResolveCall(new IValue[] {new Constant(i)}, false, compilationContext))
-                             .ToArray();
-        }
+                    var (count, indexer) = tuple;
+                    return Enumerable.Range(0, count)
+                                     .Select(i => indexer.Call(new IValue[] {new Constant(i)}, context))
+                                     .ToResultArray();
+                });
     }
 }

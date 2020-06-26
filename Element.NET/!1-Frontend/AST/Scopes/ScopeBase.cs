@@ -9,17 +9,17 @@ namespace Element.AST
     {
         public abstract Result<IValue> this[Identifier id, bool recurse, CompilationContext context] { get; }
         
-        protected Result<IValue> Index(int index) =>
+        protected Result<IValue> Index(int index, CompilationContext context) =>
             index < _source.Count
                 ? new Result<IValue>(_source[index].Value)
-                : (MessageCode.ArgumentOutOfRange, $"Index {index} out of range, {this} contains {_source.Count} items");
+                : context.Trace(MessageCode.ArgumentOutOfRange, $"Index {index} out of range, {this} contains {_source.Count} items");
         
-        protected Result<IValue> Index(Identifier id)
+        protected Result<IValue> Index(Identifier id, CompilationContext context)
         {
             var (identifier, value) = _source.FirstOrDefault(v => v.Identifier == id);
             return identifier != default
                        ? new Result<IValue>(value)
-                       : (MessageCode.IdentifierNotFound, $"'{id}' not found in '{this}'");
+                       : context.Trace(MessageCode.IdentifierNotFound, $"'{id}' not found in '{this}'");
         }
 
         public void Validate(ResultBuilder resultBuilder, Identifier[]? identifierBlacklist = null, Identifier[]? identifierWhitelist = null)

@@ -13,24 +13,23 @@ namespace Element.AST
             {
                 builder.Append(MessageCode.StructCannotHaveReturnType, $"Struct '{Identifier}' cannot have declared return type");
             }
+
+            builder.Append(IntrinsicCache.Get<IntrinsicType>(Identifier, builder.Trace));
         }
 
-        public Result<IIntrinsicType> ImplementingIntrinsic =>
-            _idToIntrinsic.TryGetValue(Identifier, out var intrinsicType)
-                ? new Result<IIntrinsicType>(intrinsicType)
-                : (MessageCode.IntrinsicNotFound, $"Intrinsic '{Identifier}' not found");
-
-        private static readonly Dictionary<string, IIntrinsicType> _idToIntrinsic = new Dictionary<string, IIntrinsicType>
+        private IntrinsicType Implementation
         {
-            {"Num", NumType.Instance},
-            {"Bool", BoolType.Instance},
-            {"List", ListType.Instance},
-            {"Tuple", TupleType.Instance}
-        };
-
-        public override Result<Port[]> Fields => ImplementingIntrinsic.Bind(type => Fields);
-        public override Result<ISerializableValue> DefaultValue(CompilationContext compilationContext) => ImplementingIntrinsic.Bind(type => type.DefaultValue);
-        protected override Result<IValue> Construct(IEnumerable<IValue> arguments) => ImplementingIntrinsic.Bind(type => type.Construct(this, arguments));
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) => ImplementingIntrinsic.Bind(type => type.MatchesConstraint(value, compilationContext));
+            get
+            {
+                var intrinsic = IntrinsicCache.Get<IntrinsicType>(Identifier, null);
+                if (intrinsic.IsSuccess) return intrinsic.ResultOr(default!); // Guaranteed to return result as we checked first
+                throw new InternalCompilerException($"No intrinsic '{Identifier.Value}' - this exception can only occur if validation is skipped");
+            }
+        }
+        
+        public override IReadOnlyList<Port> Fields => Implementation.Fields;
+        public override Result<ISerializableValue> DefaultValue(CompilationContext context) => Implementation.DefaultValue(context);
+        public override Result<IValue> Call(IReadOnlyList<IValue> fields, CompilationContext context) => Implementation.Construct(fields, context);
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => Implementation.MatchesConstraint(value, context);
     }
 }

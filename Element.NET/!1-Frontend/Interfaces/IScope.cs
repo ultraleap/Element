@@ -25,8 +25,7 @@ namespace Element.AST
             }
 
             public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
-                Index(id)
-                    .ElseIf(recurse, () => _parent[id, true, context]);
+                Index(id, context).ElseIf(recurse, () => _parent[id, true, context]);
 
             protected override IList<(Identifier Identifier, IValue Value)> _source { get; }
 

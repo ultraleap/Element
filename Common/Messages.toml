@@ -101,7 +101,7 @@ name = "FunctionCannotBeUncurried"
 level = "Error"
 
 [ELE24]
-name = "NonConstantExpression"
+name = "NotCompileConstant"
 level = "Error"
 
 [ELE25]
@@ -123,6 +123,10 @@ level = "Error"
 [ELE29]
 name = "MultipleIntrinsicLocations"
 level = "Warning"
+
+[ELE30]
+name = "InvalidCast"
+level = "Error"
 
 [ELE9999]
 name = "UnknownError"

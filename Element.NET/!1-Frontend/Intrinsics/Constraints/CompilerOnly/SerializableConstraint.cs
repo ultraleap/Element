@@ -8,6 +8,6 @@ namespace Element.AST
         private SerializableConstraint() {}
         public static SerializableConstraint Instance { get; } = new SerializableConstraint();
         public override string ToString() => "Serializable Constraint";
-        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) => value is ISerializableValue;
+        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext context) => value.FullyResolveValue(context).Map(v=> v is ISerializableValue);
     }
 }

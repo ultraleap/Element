@@ -14,19 +14,19 @@ namespace Element
 		/// <summary>
 		/// Optimizes an array of expressions in-place
 		/// </summary>
-		public static void Optimize(Expression[] input,
+		public static void FoldConstants(this Expression[] input,
 			Dictionary<Expression, Expression> cache = null)
 		{
 			for (var i = 0; i < input.Length; i++)
 			{
-				input[i] = Optimize(input[i], cache);
+				input[i] = FoldConstants(input[i], cache);
 			}
 		}
 
 		/// <summary>
 		/// Optimizes a single expression, returning a new one
 		/// </summary>
-		public static Expression Optimize(Expression input,
+		public static Expression FoldConstants(this Expression input,
 			Dictionary<Expression, Expression> cache = null)
 		{
 			cache ??= new Dictionary<Expression, Expression>();
@@ -44,7 +44,7 @@ namespace Element
 			{
 				case Constant _: break;
 				case Unary u1:
-					var u1a = Optimize(u1.Operand, cache);
+					var u1a = FoldConstants(u1.Operand, cache);
 					var u = u1a.Equals(u1.Operand) ? u1 : new Unary(u1.Operation, u1a);
 					if (u.Operand is Constant c1)
 					{
@@ -52,8 +52,8 @@ namespace Element
 					}
 					return u;
 				case Binary b1:
-					var b1a = Optimize(b1.OpA, cache);
-					var b1b = Optimize(b1.OpB, cache);
+					var b1a = FoldConstants(b1.OpA, cache);
+					var b1b = FoldConstants(b1.OpB, cache);
 					var b = (b1a.Equals(b1.OpA) && b1b.Equals(b1.OpB)) ? b1 : new Binary(b1.Operation, b1a, b1b);
 					var cA = (b.OpA as Constant)?.Value;
 					var cB = (b.OpB as Constant)?.Value;
@@ -95,7 +95,7 @@ namespace Element
 					}
 					return b;
 				case Mux m1:
-					var m = new Mux(Optimize(m1.Selector, cache), m1.Operands.Select(e => Optimize(e, cache)));
+					var m = new Mux(FoldConstants(m1.Selector, cache), m1.Operands.Select(e => FoldConstants(e, cache)));
 					if (m.Operands.Count == 1 || m.Operands.All(o => o.Equals(m.Operands[0])))
 					{
 						return m.Operands[0];
@@ -110,12 +110,12 @@ namespace Element
 					switch (e1.Group)
 					{
 						// TODO: Merge these
-						case Persist p:
+						/*case Persist p:
 							if (p.NewValue[e1.Index].AllDependent.All(v => (v as State)?.Scope != p.State[0].Scope))
 							{
 								return p.NewValue[e1.Index];
 							}
-							break;
+							break;*/
 						case Loop l:
 							if (l.Body[e1.Index].AllDependent.All(v => (v as State)?.Scope != l.State[0].Scope))
 							{
@@ -123,21 +123,22 @@ namespace Element
 							}
 							break;
 					}
-					return new ExpressionGroupElement(OptimizeGroup(e1.Group, cache), e1.Index);
+					return new ExpressionGroupElement(FoldConstants(e1.Group, cache), e1.Index);
 			}
 			return input;
 		}
 
-		public static ExpressionGroup OptimizeGroup(ExpressionGroup group,
+		public static ExpressionGroup FoldConstants(this ExpressionGroup group,
 			Dictionary<Expression, Expression> cache = null) =>
 			group switch
 			{
 				// TODO: Cut out state values that aren't used
 				// TODO: Nested scopes properly
-				Persist p => new Persist(p.State.Select(s => Optimize(s.InitialValue, cache)),
-				                         _ => p.NewValue.Select(e => Optimize(e, cache))),
-				Loop l => new Loop(l.State.Select(s => Optimize(s.InitialValue, cache)),
-				                   _ => Optimize(l.Condition, cache), _ => l.Body.Select(e => Optimize(e, cache))),
+				/*Persist p => new Persist(p.State.Select(s => Optimize(s.InitialValue, cache)),
+				                         _ => p.NewValue.Select(e => Optimize(e, cache))),*/
+				Loop l => Loop.Create(l.State.Select(s => FoldConstants(s.InitialValue, cache)),
+				                   _ => FoldConstants(l.Condition, cache),
+				                   _ => l.Body.Select(e => FoldConstants(e, cache))),
 				_ => group
 			};
 	}

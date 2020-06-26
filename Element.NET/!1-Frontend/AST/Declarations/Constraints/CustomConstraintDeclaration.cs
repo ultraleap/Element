@@ -7,36 +7,43 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;
 
-        protected override bool AdditionalValidation(SourceContext sourceContext)
+        protected override void AdditionalValidation(ResultBuilder builder)
         {
             if (!HasDeclaredInputs)
             {
-                sourceContext.Flush(13, $"Non-intrinsic constraint '{Location}' must have a port list");
-                return false;
+                builder.Append(MessageCode.MissingPorts, $"Non-intrinsic constraint '{Location}' must have a port list");
             }
-
-            return true;
         }
 
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext)
-        {
-            if (!(value is IFunctionSignature fn)) return false;
-            if (fn.Inputs.Length != DeclaredInputs.Length) return false;
-            var success = true;
-            bool CompareConstraints(IConstraint argumentConstraint, IConstraint matchingConstraint)
-            {
-                if (matchingConstraint == AnyConstraint.Instance) return true;
-                return matchingConstraint == argumentConstraint;
-            }
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) =>
+            value.FullyResolveValue(context)
+                 .Cast<IFunction>(context)
+                 .Bind(fn =>
+                 {
+                     if (fn.Inputs.Count != DeclaredInputs.Count) return false;
+                     var resultBuilder = new ResultBuilder<bool>(context, true);
+                     void CompareConstraints(Port argPort, Port declPort)
+                     {
+                         resultBuilder.Append(argPort.ResolveConstraint(Parent, context)
+                                                     .Accumulate(() => declPort.ResolveConstraint(Parent, context))
+                                                     .Do(tuple =>
+                                                     {
+                                                         var (argConstraint, declConstraint) = tuple;
+                                                         // This port pair passes if the declarations port is Any (all constraints are narrower than Any)
+                                                         // otherwise it must be exactly the same constraint since there is no type/constraint hierarchy
+                                                         resultBuilder.Result &=
+                                                             declConstraint == AnyConstraint.Instance
+                                                             || argConstraint == declConstraint;
+                                                     }));
+                     }
 
-            foreach (var (argumentPort, matchingPort) in fn.Inputs.Zip(DeclaredInputs, (argumentPort, matchingPort) => (argumentPort, matchingPort)))
-            {
-                success &= CompareConstraints(argumentPort.ResolveConstraint(Parent, compilationContext), matchingPort.ResolveConstraint(Parent, compilationContext));
-            }
+                     foreach (var (argumentPort, matchingPort) in fn.Inputs.Zip(DeclaredInputs, (argumentPort, matchingPort) => (argumentPort, matchingPort)))
+                     {
+                         CompareConstraints(argumentPort, matchingPort);
+                     }
+                     CompareConstraints(fn.Output, DeclaredOutput);
 
-            success &= CompareConstraints(fn.Output.ResolveConstraint(Parent, compilationContext), DeclaredOutput.ResolveConstraint(Parent, compilationContext));
-
-            return success;
-        }
+                     return resultBuilder.ToResult();
+                 });
     }
 }

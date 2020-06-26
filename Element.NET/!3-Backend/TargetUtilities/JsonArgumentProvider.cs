@@ -21,7 +21,7 @@ namespace Element
 			{
 				if (!input.Identifier.HasValue)
 				{
-					context.Flush(10, "Function has port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
+					context.Trace(MessageCode.InvalidBoundaryFunction, "Function has port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
 					return;
 				}
 				JsonConfiguration.TryGetValue(input.Identifier, out var iValue);

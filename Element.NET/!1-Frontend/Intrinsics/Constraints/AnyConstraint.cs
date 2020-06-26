@@ -7,7 +7,7 @@ namespace Element.AST
     {
         private AnyConstraint() {}
         public static AnyConstraint Instance { get; } = new AnyConstraint();
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) => true;
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => true;
         public override Identifier Identifier => new Identifier("Any");
     }
 }

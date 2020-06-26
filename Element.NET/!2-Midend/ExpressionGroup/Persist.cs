@@ -1,4 +1,4 @@
-namespace Element
+/*namespace Element
 {
 	using System;
 	using System.Collections.Generic;
@@ -39,4 +39,4 @@ namespace Element
 		protected override string ToStringInternal() => $"Persist({StateListJoin(State)}; {ListJoin(NewValue)})";
 		// public override bool Equals(Expression other) => this == other || other is Persist && other.ToString() == ToString();
 	}
-}
+}*/

@@ -25,9 +25,9 @@ namespace Element
 
         public static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public static Result Parse<T>(string text, out T output, ITrace trace, bool noParseTrace = false)
+        public static Result<T> Parse<T>(string text, ITrace trace, bool noParseTrace = false) where T : notnull
         {
-            if (Lexico.Lexico.TryParse(text, out output)) return Result.Success;
+            if (Lexico.Lexico.TryParse(text, out T output)) return new Result<T>(output);
             if (noParseTrace) return trace.Trace(MessageCode.ParseError, "Parsing failed - enable parse trace and run again for details.");
             
             // Using StringBuilder as there's potentially a lot of trace lines

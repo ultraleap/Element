@@ -6,22 +6,22 @@ using Lexico;
 namespace Element.AST
 {
     /// <summary>
-    /// The global scope, root of all other scopes
+    /// Represents a top-level blob of Element source code
     /// </summary>
     [WhitespaceSurrounded, MultiLine, TopLevel]
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class SourceScope : IEnumerable<Declaration>
+    public class SourceBlob : IEnumerable<Declaration>
     {
 #pragma warning disable 649
         // ReSharper disable once CollectionNeverUpdated.Local
         [Optional] private List<Declaration>? _items;
 #pragma warning restore 649
         
-        public void InitializeItems(SourceInfo info, IScope parent, SourceContext sourceContext)
+        public void Initialize(in SourceInfo info, IScope parent, IIntrinsicCache? cache)
         {
             foreach (var item in this)
             {
-                item.Initialize(info, parent, sourceContext);
+                item.Initialize(in info, parent, cache);
             }
         }
 

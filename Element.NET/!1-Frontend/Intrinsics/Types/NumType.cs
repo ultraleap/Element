@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Element.AST
 {
@@ -10,10 +9,10 @@ namespace Element.AST
     {
         private NumType() => Fields = new[]{new Port("a", Instance)};
         public static NumType Instance { get; } = new NumType();
-        public override Port[] Fields { get; }
-        public override Result<IValue> Construct(StructDeclaration declaration, IEnumerable<IValue> arguments) => new Result<IValue>(arguments.First());
+        public override IReadOnlyList<Port> Fields { get; }
+        public override Result<IValue> Construct(IReadOnlyList<IValue> arguments, CompilationContext context) => new Result<IValue>(arguments[0]);
         public override Result<ISerializableValue> DefaultValue(CompilationContext _) => Constant.Zero;
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) => value is Element.Expression expr && expr.Type == Instance;
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => value.FullyResolveValue(context).Map(v => v is Element.Expression expr && expr.Type == Instance);
         public override Identifier Identifier { get; } = new Identifier("Num");
     }
 }

@@ -19,7 +19,7 @@ namespace Element.AST
 #pragma warning restore 8618
 
         public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
-            Index(id)
+            Index(id, context)
                 .ElseIf(recurse, () => Declarer.Parent[id, true, context]);
 
         protected override IList<(Identifier Identifier, IValue Value)> _source => _items.Select(item => (item.Identifier, (IValue)item)).ToList();

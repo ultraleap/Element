@@ -36,7 +36,7 @@ namespace Element
 		public Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
 			Type.Declaration(context.SourceContext).Bind(decl => decl.ResolveInstanceFunction(id, this, context));
 
-		public void Serialize(ResultBuilder<IList<Expression>> resultBuilder) => resultBuilder.Result.Add(this);
+		public void Serialize(ResultBuilder<List<Expression>> resultBuilder) => resultBuilder.Result.Add(this);
 
 		public Result<ISerializableValue> Deserialize(Func<Expression> nextValue, ITrace trace)
 		{

@@ -21,15 +21,15 @@ namespace Element.AST
             }
         }
 
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) => value is StructInstance instance && instance.DeclaringStruct == this;
-        public override Result<Port[]> Fields => DeclaredInputs;
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => new StructInstance(this, arguments);
 
-        public override Result<ISerializableValue> DefaultValue(CompilationContext compilationContext) =>
-            Fields.Bind(fields => fields.Select(field => field.ResolveConstraint(compilationContext)
-                                                              .Bind(constraint => constraint is IType type
-                                                                                      ? type.DefaultValue(compilationContext)
-                                                                                      : compilationContext.Trace(MessageCode.TypeError, $"'{field}' is not a type - only types can produce a default value")))
-                                        .MapEnumerable(defaults => (ISerializableValue)CreateInstance(defaults.ToArray())));
-        protected override Result<IValue> Construct(IEnumerable<IValue> arguments) => CreateInstance(arguments);
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => IsInstanceOfStruct(value, context);
+        public override IReadOnlyList<Port> Fields => DeclaredInputs;
+        public override Result<ISerializableValue> DefaultValue(CompilationContext context) =>
+            Fields.Select(field => field.ResolveConstraint(context)
+                                        .Bind(constraint => constraint is IType type
+                                                                ? type.DefaultValue(context)
+                                                                : context.Trace(MessageCode.TypeError, $"'{field}' is not a type - only types can produce a default value")))
+                  .MapEnumerable(defaults => (ISerializableValue)new StructInstance(this, defaults.ToArray()));
     }
 }

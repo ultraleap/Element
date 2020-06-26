@@ -2,6 +2,6 @@ namespace Element.AST
 {
     public interface IType : IConstraint
     {
-        Result<ISerializableValue> DefaultValue(CompilationContext compilationContext);
+        Result<ISerializableValue> DefaultValue(CompilationContext context);
     }
 }

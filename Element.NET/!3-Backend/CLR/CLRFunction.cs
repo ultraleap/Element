@@ -182,7 +182,7 @@ namespace Element.CLR
 		{
 			switch (group)
 			{
-				case Persist p:
+				/*case Persist p:
 					foreach (var s in p.State)
 					{
 						if (!(s.InitialValue is Constant))
@@ -206,7 +206,7 @@ namespace Element.CLR
 					data.Statements.AddRange(assigns);
 					return Enumerable.Range(0, p.Size)
 					                 .Select(i => LinqExpression.ArrayAccess(data.StateArray, LinqExpression.Constant(i)))
-					                 .ToArray();
+					                 .ToArray();*/
 				case Loop l:
 					var stateList = new List<ParameterExpression>();
 					foreach (var s in l.State)
@@ -279,54 +279,53 @@ namespace Element.CLR
 				                                        : context.Trace(MessageCode.TypeError, $"'{c}' is not a type - only types can produce a default value")))
 			        .BindEnumerable(defaultValues =>
 			        {
-				        var defaults = defaultValues.ToArray();
+				        var defaults = defaultValues as ISerializableValue[] ?? defaultValues.ToArray();
 				        return defaults.Select(value => value.SerializedSize(context))
 				                       .MapEnumerable(argSizes => (defaults, argSizes));
 			        })
-			        .Map(tuple =>
+			        .Bind(tuple =>
 			        {
 				        var (defaultValues, argSizes) = tuple;
 				        var totalSerializedSize = argSizes.Sum();
 
-				        // Now allocate the array, and make an argument list that uses it as data
+				        // Allocate the array and make an expression for it
 				        var array = new float[totalSerializedSize];
+				        var arrayObjectExpr = LinqExpression.Constant(array);
 
-				        var arrayExpr = LinqExpression.Constant(array);
-				        var flattenedValIdx = 0;
-
-				        Expression NextValue() => (Expression) NumberConverter.Instance.LinqToElement(LinqExpression.ArrayIndex(arrayExpr, LinqExpression.Constant(flattenedValIdx++)), null!, context);
-
-				        var arguments = defaultValues.Select(v => v.Deserialize(NextValue, context)).ToArray();
-				        return (function.Call(arguments, context), array);
+				        return Enumerable.Range(0, totalSerializedSize)
+				                         // For each array index, create an ArrayIndex expression
+				                         .Select(i => NumberConverter.Instance.LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), null!, context).Cast<Expression>(context))
+				                         // Change from array of results to a result of an array
+				                         .ToResultArray()
+				                         .Bind(expressions =>
+				                         {
+					                         // Create a func for accessing the 
+					                         var flattenedValIdx = 0;
+					                         Expression NextValue() => expressions[flattenedValIdx++];
+					                         return defaultValues.Select(v => v.Deserialize(NextValue, context))
+					                                             .BindEnumerable(arguments => function.Call(arguments.ToArray(), context)
+					                                                                                  .Map(result => (result, array)));
+				                         });
 			        });
 
-		public static TDelegate? Compile<TDelegate>(this IValue value, CompilationContext context, IBoundaryConverter? boundaryConverter = default)
+		public static Result<TDelegate> Compile<TDelegate>(this IValue value, CompilationContext context, IBoundaryConverter? boundaryConverter = default)
 			where TDelegate : Delegate =>
-			(TDelegate?)Compile(value, context, typeof(TDelegate), boundaryConverter);
+			Compile(value, context, typeof(TDelegate), boundaryConverter).Map(result => (TDelegate)result);
 
-		private static Delegate? Compile(IValue value, CompilationContext context, 
+		private static Result<Delegate> Compile(IValue value, CompilationContext context, 
 		                                 Type delegateType, IBoundaryConverter? boundaryConverter = default)
         {
-            if (context == null) throw new ArgumentNullException(nameof(context));
-            if (value == null) throw new ArgumentNullException(nameof(value));
-            if (delegateType == null) throw new ArgumentNullException(nameof(delegateType));
-
-            boundaryConverter ??= new BoundaryConverter();
+	        boundaryConverter ??= new BoundaryConverter();
 
             // Check return type/single out parameter of delegate
             var method = delegateType.GetMethod(nameof(Action.Invoke));
-            if (method == null)
-            {
-	            context.Flush(10, $"{delegateType} did not have invoke method");
-	            return null;
-            }
-            
+            if (method == null) return context.Trace(MessageCode.InvalidBoundaryFunction, $"{delegateType} did not have invoke method");
+
             var delegateParameters = method.GetParameters();
             var delegateReturn = method.ReturnParameter;
             if (delegateParameters.Any(p => p.IsOut) || method.ReturnType == typeof(void))
             {
-                context.Flush(10, $"{delegateType} cannot have out parameters and must have non-void return type");
-                return null;
+                return context.Trace(MessageCode.InvalidBoundaryFunction, $"{delegateType} cannot have out parameters and must have non-void return type");
             }
             
             // Create parameter expressions
@@ -334,21 +333,22 @@ namespace Element.CLR
             var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
             
-            if (value is IFunctionSignature fn && fn.Inputs.Length != delegateParameters.Length)
+            if (value is IFunction fn && fn.Inputs.Count != delegateParameters.Length)
             {
-	            context.Flush(10, "Mismatch in number of parameters between delegate type and the function being compiled");
-	            return null;
+	            return context.Trace(MessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
             }
-            
-            var outputExpression = value is IFunctionSignature functionSignature
-	                                   ? functionSignature.ResolveCall(functionSignature.Inputs.Select((f, idx) =>
-	                                   {
-		                                   var p = parameterExpressions[idx];
-		                                   return p == null
-			                                          ? context.Flush(10, $"Unable to bind {functionSignature}'s input {f} - there is a mismatch in number of ports")
-			                                          : boundaryConverter.LinqToElement(p, boundaryConverter, context);
-	                                   }).ToArray(), false, context)
-	                                   : value;
+
+            var resultBuilder = new ResultBuilder<Delegate>(context, default!);
+            IValue outputExpression = value;
+            // If input value is not a function we just try to use it directly
+            if (value is IFunction function)
+            {
+	            var outputExpr = function.Inputs.Select((f, idx) => boundaryConverter.LinqToElement(parameterExpressions[idx], boundaryConverter, context))
+	                                     .BindEnumerable(args => function.Call(args.ToArray(), context));
+	            resultBuilder.Append(in outputExpr);
+	            if (outputExpr.IsError) return resultBuilder.ToResult();
+	            outputExpression = outputExpr.ResultOr(default!);
+            }
 
             var data = new CompilationData
             {
@@ -360,61 +360,50 @@ namespace Element.CLR
                 CSECache = new Dictionary<ElementExpression, CachedExpression>(),
                 ConstantCache = new Dictionary<ElementExpression, ElementExpression>()
             };
+
+            static bool IsPrimitiveElementType(Type t) => t == typeof(float) || t == typeof(bool);
             
             // Compile delegate
             var detectCircular = new Stack<IValue>();
-            LinqExpression? ConvertFunction(IValue value, Type outputType, CompilationContext context)
+            Result<LinqExpression> ConvertFunction(IValue value, Type outputType, ITrace trace)
 			{
-				switch (value)
-				{
-					case CompilationError _: return null;
-					case IConstraint c:
-						context.Flush(3, $"Cannot compile a constraint '{c}'");
-						return null;
-				}
-
+				if (value is IConstraint c) return context.Trace(MessageCode.InvalidCompileTarget, $"Cannot compile a constraint '{c}'");
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == value)
 				{
-					context.Flush(11, $"Circular dependency when compiling '{value}'");
-					return null;
+					return context.Trace(MessageCode.CircularCompilation, $"Circular dependency when compiling '{value}'");
 				}
 
-				var serialized = (value as ISerializableValue)?.Serialize(context).ToArray() ?? null;
-				var serializedSuccessfully = serialized != null && !serialized.Any(s => s == CompilationError.Instance);
-
-				if (serializedSuccessfully)
+				// If this value is serializable then serialize and use it
+				if (value is ISerializableValue sv)
 				{
-					if (serialized!.Length == 1 && outputType == typeof(float))
-					{
-						var expr = serialized[0];
-						expr = ConstantFolding.Optimize(expr, data.ConstantCache);
-						expr = CommonSubexpressionExtraction.OptimizeSingle(data.CSECache, expr);
-						return Compile(expr, data);
-					}
-
-					return boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context);
+					return sv.Serialize(context)
+					               .Bind(serialized => serialized.Count switch
+					               {
+						               1 when IsPrimitiveElementType(outputType) => Compile(serialized[0].FoldConstants(data.ConstantCache).CacheExpressions(data.CSECache), data),
+						               _ => boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context)
+					               });
 				}
-
-				if (outputType == typeof(float))
-				{
-					throw new InternalCompilerException($"Could not compile {value} - output type is float but {value} is not an expression.");
-				}
-
+				
+				// Else we try to use a boundary converter to convert to serializable expressions
+				// TODO: Move circular checks to boundary converters
 				detectCircular.Push(value);
 				var retval = boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context);
 				detectCircular.Pop();
 				return retval;
 			}
 
-            var convertedOutputExpression = boundaryConverter.ElementToLinq(outputExpression, returnExpression.Type, ConvertFunction, context);
-            var outputAssign = LinqExpression.Assign(returnExpression, convertedOutputExpression);
-            
-	        data.Variables.Add(returnExpression);
-	        data.Statements.Add(outputAssign);
+            return boundaryConverter.ElementToLinq(outputExpression, returnExpression.Type, ConvertFunction, context)
+                                    .Map(convertedOutputExpression =>
+                                    {
+	                                    var outputAssign = LinqExpression.Assign(returnExpression, convertedOutputExpression);
 
-			// Put everything into a single code block, and wrap it in the Delegate
-			var fnBody = LinqExpression.Block(data.Variables, data.Statements);
-			return LinqExpression.Lambda(delegateType, fnBody, false, parameterExpressions).Compile();
+	                                    data.Variables.Add(returnExpression);
+	                                    data.Statements.Add(outputAssign);
+
+	                                    // Put everything into a single code block, and wrap it in the Delegate
+	                                    var fnBody = LinqExpression.Block(data.Variables, data.Statements);
+	                                    return LinqExpression.Lambda(delegateType, fnBody, false, parameterExpressions).Compile();
+                                    });
         }
     }
 }

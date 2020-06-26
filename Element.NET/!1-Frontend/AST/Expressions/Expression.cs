@@ -2,6 +2,11 @@ using Lexico;
 
 namespace Element.AST
 {
+    public interface IExpression
+    {
+        Result<IValue> ResolveExpression(IScope scope, CompilationContext compilationContext);
+    }
+    
     [WhitespaceSurrounded, MultiLine]
     // ReSharper disable once ClassNeverInstantiated.Global
     public abstract class Expression : Declared

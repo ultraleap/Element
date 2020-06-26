@@ -5,9 +5,21 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic";
 
-        protected override bool AdditionalValidation(SourceContext sourceContext) => ImplementingIntrinsic<IConstraint>(sourceContext) != null;
+        protected override void AdditionalValidation(ResultBuilder builder)
+        {
+            builder.Append(IntrinsicCache.Get<IntrinsicConstraint>(Identifier, builder.Trace));
+        }
 
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext compilationContext) =>
-            ImplementingIntrinsic<IConstraint>(compilationContext)?.MatchesConstraint(value, compilationContext) ?? false;
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => Implementation.MatchesConstraint(value, context);
+        
+        private IntrinsicConstraint Implementation
+        {
+            get
+            {
+                var intrinsic = IntrinsicCache.Get<IntrinsicConstraint>(Identifier, null);
+                if (intrinsic.IsSuccess) return intrinsic.ResultOr(default!); // Guaranteed to return result as we checked first
+                throw new InternalCompilerException($"No intrinsic '{Identifier.Value}' - this exception can only occur if validation is skipped");
+            }
+        }
     }
 }

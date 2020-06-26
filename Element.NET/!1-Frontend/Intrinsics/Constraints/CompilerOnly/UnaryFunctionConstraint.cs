@@ -9,7 +9,7 @@ namespace Element.AST
 
         public static UnaryFunctionConstraint Instance { get; } = new UnaryFunctionConstraint();
 
-        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext compilationContext) =>
-            value is IFunctionSignature fn && fn.Inputs.Length == 1;
+        Result<bool> IConstraint.MatchesConstraint(IValue value, CompilationContext context) =>
+            value.FullyResolveValue(context).Map(v => v is IFunction fn && fn.Inputs.Count == 1);
     }
 }

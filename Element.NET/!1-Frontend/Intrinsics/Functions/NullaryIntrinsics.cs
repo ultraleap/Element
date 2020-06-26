@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Element.AST
 {
@@ -7,14 +8,23 @@ namespace Element.AST
         private readonly Constant.Intrinsic _value;
         
         public NullaryIntrinsics(Constant.Intrinsic value)
-            : base(value switch
+        {
+            _value = value;
+            Identifier = new Identifier(value.ToString());
+            Inputs = Array.Empty<Port>();
+            Output = Port.ReturnPort(value switch
             {
-                { } v when v == Constant.Intrinsic.True || v == Constant.Intrinsic.False => v.ToString(),
-                _ => $"Num.{value.ToString()}"
-            }, Array.Empty<Port>(), Port.ReturnPort(NumType.Instance))
-            => _value = value;
+                Constant.Intrinsic.True => BoolType.Instance,
+                Constant.Intrinsic.False => BoolType.Instance,
+                _ => NumType.Instance
+            });
+        }
 
-        public override Result<IValue> Call(IValue[] _, CompilationContext __) =>
+        public override Identifier Identifier { get; }
+        public override IReadOnlyList<Port> Inputs { get; }
+        public override Port Output { get; }
+
+        public override Result<IValue> Call(IReadOnlyList<IValue> _, CompilationContext __) =>
             _value switch
             {
                 Constant.Intrinsic.True => Constant.True,
@@ -24,5 +34,6 @@ namespace Element.AST
                 Constant.Intrinsic.NegativeInfinity => Constant.NegativeInfinity,
                 _ => throw new InternalCompilerException("Intrinsic nullary case not handled")
             };
+
     }
 }

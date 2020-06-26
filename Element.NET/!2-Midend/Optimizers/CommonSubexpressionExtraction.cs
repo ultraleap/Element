@@ -13,11 +13,11 @@ namespace Element
 			OnlyMultipleUses
 		}
 
-		public static void Optimize(Expression[] inputs, Mode mode, Dictionary<Expression, CachedExpression> cache)
+		public static void CacheExpressions(this Expression[] inputs, Mode mode, Dictionary<Expression, CachedExpression> cache)
 		{
 			for (var i = 0; i < inputs.Length; i++)
 			{
-				inputs[i] = OptimizeSingle(cache, inputs[i]);
+				inputs[i] = CacheExpressions(inputs[i], cache);
 			}
 			if (mode == Mode.OnlyMultipleUses)
 			{
@@ -25,7 +25,7 @@ namespace Element
 			}
 		}
 
-		public static Expression OptimizeSingle(Dictionary<Expression, CachedExpression> cache, Expression value)
+		public static Expression CacheExpressions(this Expression value, Dictionary<Expression, CachedExpression> cache)
 		{
 			if (value is Constant || value is CachedExpression || value is State) { return value; }
 			if (!cache.TryGetValue(value, out var found))
@@ -34,13 +34,13 @@ namespace Element
 				switch (value)
 				{
 					case Unary u:
-						newValue = new Unary(u.Operation, OptimizeSingle(cache, u.Operand));
+						newValue = new Unary(u.Operation, CacheExpressions(u.Operand, cache));
 						break;
 					case Binary b:
-						newValue = new Binary(b.Operation, OptimizeSingle(cache, b.OpA), OptimizeSingle(cache, b.OpB));
+						newValue = new Binary(b.Operation, CacheExpressions(b.OpA, cache), CacheExpressions(b.OpB, cache));
 						break;
 					case Mux m:
-						newValue = new Mux(OptimizeSingle(cache, m.Selector), m.Operands.Select(o => OptimizeSingle(cache, o)));
+						newValue = new Mux(CacheExpressions(m.Selector, cache), m.Operands.Select(o => CacheExpressions(o, cache)));
 						break;
 					case ExpressionGroupElement ge:
 						return new ExpressionGroupElement(OptimizeGroup(cache, ge.Group), ge.Index);
@@ -52,38 +52,22 @@ namespace Element
 			return found;
 		}
 
-		private static ExpressionGroup OptimizeGroup(Dictionary<Expression, CachedExpression> cache, ExpressionGroup group)
-		{
-			// TODO: Generalise this somehow?
-			switch (group)
+		private static ExpressionGroup OptimizeGroup(Dictionary<Expression, CachedExpression> cache, ExpressionGroup group) =>
+			group switch
 			{
-				case Persist p:
-					return new Persist(p.State.Select(s => OptimizeSingle(cache, s.InitialValue)),
-						_ => p.NewValue.Select(n => OptimizeSingle(cache, n)));
-				case Loop l:
-					return new Loop(l.State.Select(s => OptimizeSingle(cache, s.InitialValue)),
-						_ => OptimizeSingle(cache, l.Condition),
-						_ => l.Body.Select(n => OptimizeSingle(cache, n)));
-				default:
-					return group;
-			}
-		}
+				// TODO: Generalise this somehow?
+				//Persist p => new Persist(p.State.Select(s => OptimizeSingle(cache, s.InitialValue)), _ => p.NewValue.Select(n => OptimizeSingle(cache, n))),
+				Loop l => Loop.Create(l.State.Select(s => CacheExpressions(s.InitialValue, cache)), _ => CacheExpressions(l.Condition, cache), _ => l.Body.Select(n => CacheExpressions(n, cache))),
+				_ => group
+			};
 
-		private static Expression FoldBackSingleUses(CachedExpression[] singleUses, Expression value)
-		{
-			switch (value)
+		private static Expression FoldBackSingleUses(CachedExpression[] singleUses, Expression value) =>
+			value switch
 			{
-				case CachedExpression c:
-					if (System.Array.IndexOf(singleUses, c) > 0) {
-						return c.Value;
-					}
-					break;
-				case Unary u:
-					return new Unary(u.Operation, FoldBackSingleUses(singleUses, u.Operand));
-				case Binary b:
-					return new Binary(b.Operation, FoldBackSingleUses(singleUses, b.OpA), FoldBackSingleUses(singleUses, b.OpB));
-			}
-			return value;
-		}
+				CachedExpression c when System.Array.IndexOf(singleUses, c) > 0 => c.Value,
+				Unary u => new Unary(u.Operation, FoldBackSingleUses(singleUses, u.Operand)),
+				Binary b => new Binary(b.Operation, FoldBackSingleUses(singleUses, b.OpA), FoldBackSingleUses(singleUses, b.OpB)),
+				_ => value
+			};
 	}
 }

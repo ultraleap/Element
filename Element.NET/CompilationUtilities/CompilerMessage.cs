@@ -34,12 +34,13 @@ namespace Element
         MissingFunctionBody = 21,
         CannotBeUsedAsInstanceFunction = 22,
         FunctionCannotBeUncurried = 23,
-        NonConstantExpression = 24,
+        NotCompileConstant = 24,
         FileAccessError = 25,
         ArgumentNotFound = 26,
         DuplicateSourceFile = 27,
         ArgumentOutOfRange = 28,
         MultipleIntrinsicLocations = 29,
+        InvalidCast = 30,
         UnknownError = 9999,
     }
     

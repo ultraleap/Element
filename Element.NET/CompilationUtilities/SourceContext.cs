@@ -21,7 +21,7 @@ namespace Element
         internal GlobalScope GlobalScope { get; } = new GlobalScope();
         public CompilationInput CompilationInput { get; }
         
-        public CompilerMessage? Trace(MessageCode messageCode, string context)=>
+        public CompilerMessage? Trace(MessageCode messageCode, string? context)=>
             CompilerMessage.TryGetMessageLevel((int)messageCode, out var level)
             && CompilationInput.Verbosity >= level
                 ? new CompilerMessage(messageCode, context)
@@ -34,15 +34,15 @@ namespace Element
         }
 
         public Result<IValue> EvaluateExpression(string expression) =>
-            Parser.Parse(expression, out AST.Expression expressionObject, this, CompilationInput.NoParseTrace)
-                  .And(() =>
+            Parser.Parse<AST.Expression>(expression, this, CompilationInput.NoParseTrace)
+                  .Bind(expressionObject =>
                   {
                       expressionObject.InitializeUsingStubDeclaration(expression, GlobalScope, this);
-                      var resultBuilder = new ResultBuilder(this);
-                      expressionObject.Validate(resultBuilder);
-                      return resultBuilder.ToResult();
-                  })
-                  .Bind(() => expressionObject.ResolveExpression(GlobalScope, new CompilationContext(this)));
+                      var validationResultBuilder = new ResultBuilder(this);
+                      expressionObject.Validate(validationResultBuilder);
+                      return validationResultBuilder.ToResult()
+                                          .Bind(() => expressionObject.ResolveExpression(GlobalScope, new CompilationContext(this)));
+                  });
 
         public Result<TValue> EvaluateExpressionAs<TValue>(string expression)
             where TValue : class, IValue =>
@@ -55,11 +55,11 @@ namespace Element
         public Result LoadElementSourceString(SourceInfo info) =>
             GlobalScope.ContainsSource(info.Name)
                 ? Trace(MessageCode.DuplicateSourceFile, $"'{info.Name}' already added")
-                : Parser.Parse<SourceScope>(info.PreprocessedText, out var sourceScope, this, CompilationInput.NoParseTrace)
-                        .And(() =>
+                : Parser.Parse<SourceBlob>(info.PreprocessedText, this, CompilationInput.NoParseTrace)
+                        .Do(sourceScope =>
                         {
-                            sourceScope.InitializeItems(info, GlobalScope, this);
-                            return GlobalScope.AddSource(info.Name, sourceScope);
+                            sourceScope.Initialize(in info, GlobalScope, this);
+                            return GlobalScope.AddSource(info.Name, sourceScope, this);
                         });
 
         /// <summary>
