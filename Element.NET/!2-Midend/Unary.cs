@@ -48,7 +48,11 @@ namespace Element
 		};
 
 		public Unary(Op operation, Expression operand)
-			: base(UnaryIntrinsic.OperationOverrides.TryGetValue(operation, out var details) ? details.Return : default)
+			: base(operation switch
+			{
+				Op.Not => BoolType.Instance,
+				_ => NumType.Instance
+			})
 		{
 			Operation = operation;
 			Operand = operand ?? throw new ArgumentNullException(nameof(operand));

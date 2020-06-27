@@ -20,15 +20,15 @@ namespace Element.AST
 
         public abstract override string ToString();
 
-        public void Initialize(Declaration declaration, IIntrinsicCache? cache)
+        public void Initialize(Declaration declaration)
         {
             Declarer = declaration;
-            InitializeImpl(cache);
+            InitializeImpl();
         }
 
         public abstract void Validate(ResultBuilder resultBuilder);
 
-        protected abstract void InitializeImpl(IIntrinsicCache? cache);
+        protected abstract void InitializeImpl();
     }
 
     public static class DeclaredExtensions

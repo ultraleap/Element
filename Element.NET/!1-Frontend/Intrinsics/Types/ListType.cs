@@ -6,35 +6,35 @@ namespace Element.AST
 {
     public sealed class ListType : IntrinsicType
     {
-        private static readonly Identifier _indexerId = new Identifier("at");
-        private static readonly Identifier _countId = new Identifier("count");
+        public static readonly Identifier IndexerId = new Identifier("at");
+        public static readonly Identifier CountId = new Identifier("count");
 
-        private ListType() => Fields = new[]{new Port(_indexerId, FunctionConstraint.Instance), new Port(_countId, NumType.Instance)};
+        private ListType()
+        {
+            Identifier = new Identifier("List");
+        }
+
         public static ListType Instance { get; } = new ListType();
-        public override IReadOnlyList<Port> Fields { get; }
-        public override Identifier Identifier { get; } = new Identifier("List");
+        public override Identifier Identifier { get; }
 
-        public override Result<IValue> Construct(IReadOnlyList<IValue> arguments, CompilationContext context) => Declaration(context.SourceContext).Map(decl => (IValue)new StructInstance(decl, arguments));
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => Declaration(context.SourceContext).Bind(decl => decl.IsInstanceOfStruct(value, context));
-        public override Result<ISerializableValue> DefaultValue(CompilationContext context) => ListIntrinsic.Instance.Call(Array.Empty<IValue>(), context).Cast<ISerializableValue>(context);
-        
+        public override Result<IValue> Construct(StructDeclaration decl, IReadOnlyList<IValue> arguments, CompilationContext context) => new StructInstance(decl, arguments);
+        public override Result<bool> MatchesConstraint(StructDeclaration decl, IValue value, CompilationContext context) => decl.IsInstanceOfStruct(value, context);
+        public override Result<IValue> DefaultValue(CompilationContext context) => ListIntrinsic.Instance.Call(Array.Empty<IValue>(), context);
+
         public static Result<int> ConstantCount(StructInstance listInstance, CompilationContext context) =>
-            Instance.Declaration(context.SourceContext)
-                    .Check(listTypeDecl =>
-                               listInstance.DeclaringStruct != listTypeDecl
-                                   ? context.Trace(MessageCode.TypeError, "Struct instance is not a list")
-                                   : Result.Success)
-                    .Bind(() => listInstance[_countId, false, context]
+            listInstance.DeclaringStruct.IsIntrinsicType<ListType>()
+                ? listInstance.Index(CountId, context)
                               .Bind(countValue => countValue switch
                               {
                                   Constant c => new Result<int>((int) c),
                                   Element.Expression e => context.Trace(MessageCode.NotCompileConstant, $"List count '{e}' is not a compile-time constant expression"),
-                                  _ => throw new InternalCompilerException($"Couldn't get List.'{_countId}' from '{listInstance}'. Count must be an expression.")
-                              }));
+                                  _ => throw new InternalCompilerException($"Couldn't get List.'{CountId}' from '{listInstance}'. Count must be an expression.")
+                              })
+                : context.Trace(MessageCode.TypeError, "Struct instance is not a list");
 
         public static Result<IValue[]> EvaluateElements(StructInstance listInstance, CompilationContext context) =>
             ConstantCount(listInstance, context)
-                .Accumulate(() => listInstance[_indexerId, false, context].Cast<IFunction>(() => throw new InternalCompilerException($"Couldn't get List.'{_indexerId}' from '{listInstance}'. Indexer must be a function.")))
+                .Accumulate(() => listInstance.Index(IndexerId, context))
                 .Bind(tuple =>
                 {
                     var (count, indexer) = tuple;

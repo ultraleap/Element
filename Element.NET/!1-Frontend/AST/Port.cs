@@ -14,7 +14,7 @@ namespace Element.AST
 #pragma warning restore 649
 
         public Identifier? Identifier => _identifier is Identifier id ? (Identifier?)id : null;
-        private Result<IConstraint> _cachedConstraint;
+        private Result<IValue> _cachedConstraint;
         
         // ReSharper disable once UnusedMember.Global - Used by Lexico to generate instances
         // ReSharper disable once MemberCanBePrivate.Global
@@ -24,7 +24,7 @@ namespace Element.AST
         
         public static Port VariadicPort { get; } = new Port();
         public static Port ReturnPort(TypeAnnotation? annotation) => new Port("return", annotation);
-        public static Port ReturnPort(IConstraint constraint) => new Port("return", constraint);
+        public static Port ReturnPort(IValue constraint) => new Port("return", constraint);
 
         private Port(string identifier, TypeAnnotation? typeAnnotation) :this(new Identifier(identifier), typeAnnotation) { }
 
@@ -34,23 +34,24 @@ namespace Element.AST
             _type = typeAnnotation;
         }
         
-        public Port(string identifier, IConstraint constraint) :this(new Identifier(identifier), constraint) { }
+        public Port(string identifier, IValue constraint) :this(new Identifier(identifier), constraint) { }
         
-        public Port(Identifier identifier, IConstraint constraint)
+        public Port(Identifier identifier, IValue constraint)
         {
             _identifier = identifier;
-            _cachedConstraint = new Result<IConstraint>(constraint);
+            _cachedConstraint = new Result<IValue>(constraint);
         }
 
-        public Result<IConstraint> ResolveConstraint(CompilationContext compilationContext) =>
+        public Result<IValue> ResolveConstraint(CompilationContext compilationContext) =>
             ResolveConstraint(compilationContext.SourceContext.GlobalScope, compilationContext);
         
-        public Result<IConstraint> ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
-            _cachedConstraint.Else(() => _cachedConstraint = _type?.ResolveConstraint(scope, compilationContext) ?? AnyConstraint.Instance);
+        public Result<IValue> ResolveConstraint(IScope scope, CompilationContext compilationContext) =>
+            _cachedConstraint.Else(() => _cachedConstraint = _type?.ResolveConstraint(scope, compilationContext)
+                                                             ?? AnyConstraint.Instance);
 
         public override string ToString() => $"{_identifier}{_type}";
 
-        protected override void InitializeImpl(IIntrinsicCache? cache) => _type?.Initialize(Declarer, cache);
+        protected override void InitializeImpl() => _type?.Initialize(Declarer);
 
         public override void Validate(ResultBuilder resultBuilder)
         {

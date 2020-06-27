@@ -4,13 +4,11 @@ namespace Element.AST
 {
     public sealed class TupleType : IntrinsicType
     {
-        private TupleType() => Fields = new[] {Port.VariadicPort};
+        private TupleType() {}
         public static TupleType Instance { get; } = new TupleType();
-        public override IReadOnlyList<Port> Fields { get; }
-        public override Result<IValue> Construct(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-            Declaration(context.SourceContext).Map(decl => (IValue)new StructInstance(decl, arguments));
-        public override Result<ISerializableValue> DefaultValue(CompilationContext context) => context.Trace(MessageCode.TypeError, "Cannot create a default value for Tuple");
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => value.FullyResolveValue(context).Map(v => v is StructInstance);
+        public override Result<IValue> Construct(StructDeclaration structDeclaration, IReadOnlyList<IValue> arguments, CompilationContext context) => new StructInstance(structDeclaration, arguments);
+        public override Result<IValue> DefaultValue(CompilationContext context) => context.Trace(MessageCode.TypeError, "Cannot create a default value for Tuple");
+        public override Result<bool> MatchesConstraint(StructDeclaration decl, IValue value, CompilationContext context) => value.FullyResolveValue(context).Map(v => v is StructInstance);
         public override Identifier Identifier { get; } = new Identifier("Tuple");
     }
 }

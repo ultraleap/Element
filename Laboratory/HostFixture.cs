@@ -4,12 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using Element;
+using Element.NET.Tests;
 using NUnit.Framework;
 
 namespace Laboratory
 {
-    [TestFixture, Parallelizable(ParallelScope.All)]
-    internal abstract class HostFixture
+    internal abstract class HostFixture : FixtureBase
     {
         protected readonly IHost Host = HostArguments.MakeHost();
         
@@ -51,7 +51,7 @@ namespace Laboratory
 
         private Result<float[][]> EvaluateExpressions(CompilationInput compilationInput, string[] expressions)
         {
-            var resultBuilder = new ResultBuilder<float[][]>(NoTrace.Instance, new float[expressions.Length][]);
+            var resultBuilder = new ResultBuilder<float[][]>(new BasicTrace(compilationInput.Verbosity), new float[expressions.Length][]);
 
             for (var i = 0; i < expressions.Length; i++)
             {
@@ -66,48 +66,32 @@ namespace Laboratory
 
             return resultBuilder.ToResult();
         }
-   
-        private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params float[][] results)
-        {
-            //Initialise messages list outside of functions that actually trigger the callback to fire,
-            //so that a complete list of messages from all expressions can be built
-            var messages = new List<CompilerMessage>();
-            compilationInput.LogCallback = CacheMessage(messages);
 
-            var controlResult = EvaluateControlExpression(compilationInput, controlExpression);
+        private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params float[][] results) =>
+            EvaluateControlExpression(compilationInput, controlExpression)
+                .Match((control, messages) =>
+                       {
+                           LogMessages(messages);
+                           foreach (var result in results)
+                           {
+                               CollectionAssert.AreEqual(control, result, comparer);
+                           }
+                       },
+                       messages => ExpectingSuccess(messages, false));
 
-            //Check compiler responses
-            ExpectingSuccess(messages, controlSuccess);
-            
-            //Check outputs
-            results.Aggregate(control, (expected, result) =>
-            {
-                CollectionAssert.AreEqual(expected, result, comparer);
-                return expected;
-            });
-        }
-        
-        private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params string[] expressions)
-        {            
-            //Initialise messages list outside of functions that actually trigger the callback to fire,
-            //so that a complete list of messages from all expressions can be built
-            var messages = new List<CompilerMessage>();
-            compilationInput.LogCallback = CacheMessage(messages);
-
-            var (controlSuccess, control) = EvaluateControlExpression(compilationInput, controlExpression);
-            var (resultSuccess, results) = EvaluateExpressions(compilationInput, expressions);
-            var success = controlSuccess && resultSuccess;
-
-            //Check compiler responses
-            ExpectingSuccess(messages, success);
-            
-            //Check outputs
-            results.Aggregate(control, (expected, result) =>
-            {
-                CollectionAssert.AreEqual(expected, result, comparer);
-                return expected;
-            });
-        }
+        private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params string[] expressions) =>
+            EvaluateControlExpression(compilationInput, controlExpression)
+                .Accumulate(() => EvaluateExpressions(compilationInput, expressions))
+                .Match((evaluated, messages) =>
+                       {
+                           var (control, results) = evaluated;
+                           LogMessages(messages);
+                           foreach (var result in results)
+                           {
+                               CollectionAssert.AreEqual(control, result, comparer);
+                           }
+                       },
+                       messages => ExpectingSuccess(messages, false));
 
         protected void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, params float[][] results) =>
             AssertApproxEqual(compilationInput, controlExpression, FloatComparer, results);
@@ -118,75 +102,23 @@ namespace Laboratory
         protected void AssertApproxEqualRelaxed(CompilationInput compilationInput, string controlExpression, params string[] expressions) 
             => AssertApproxEqual(compilationInput, controlExpression, RelaxedFloatComparer, expressions);
 
-        protected void AssertTypeof(CompilationInput compilationInput, string expression, string typeStr)
-        {
-            var (success, result) = Host.Typeof(compilationInput, expression);
-            if (!success) 
-                Assert.Fail();
-            
-            Assert.That(result, Is.EqualTo(typeStr));
-        }
-        
+        protected void AssertTypeof(CompilationInput compilationInput, string expression, string typeStr) =>
+            Host.Typeof(compilationInput, expression)
+                .Match((result, messages) =>
+                {
+                    LogMessages(messages);
+                    Assert.That(result, Is.EqualTo(typeStr));
+                }, messages => ExpectingSuccess(messages, false));
+
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());
         protected static FileInfo GetEleFile(string partialName) => GetFile("*.ele", partialName);
         protected static FileInfo GetFile(string pattern, string partialName) => TestDirectory.GetFiles(pattern, SearchOption.AllDirectories).Single(file => file.Name.Contains(partialName));
 
 
-        protected void EvaluateExpectingErrorCode(CompilationInput compilationInput, int messageCode, string expression)
+        protected void EvaluateExpectingErrorCode(CompilationInput compilationInput, MessageCode messageCode, string expression)
         {
-            var messages = new List<CompilerMessage>();
-            compilationInput.LogCallback = CacheMessage(messages);
-            var (success, _) = Host.Evaluate(compilationInput, expression);
-
-            ExpectingError(messages, success, messageCode);
-        }
-        
-        protected static void LogMessage(CompilerMessage message)
-        {
-            TestContext.WriteLine(message.ToString());
-            TestContext.WriteLine(string.Empty);
-        }
-
-        protected static Action<CompilerMessage> CacheMessage(List<CompilerMessage> messages) => message =>
-        {
-            messages.Add(message);
-            LogMessage(message);
-        };
-        
-        protected static void ExpectingError(List<CompilerMessage> messages, bool success, int messageCode)
-        {
-            var errors = messages.Where(s => s.MessageLevel >= MessageLevel.Error).ToArray();
-            var hasErrors = errors.Any();
-            
-            if (messages.Any(s => s.MessageCode == messageCode)) 
-                Assert.Pass($"Received expected message code {messageCode}");
-            
-            if (success) 
-                Assert.Fail("Expected error ELE{0} '{1}' but succeeded",
-                    messageCode, CompilerMessage.TryGetMessageName(messageCode, out var name) ? name : "?");
-
-            if (hasErrors) 
-                Assert.Fail("Expected error ELE{0} '{1}' but got following error codes instead: {2}",
-                    messageCode, CompilerMessage.TryGetMessageName(messageCode, out var name) ? name : "?",
-                    string.Join(", ", errors.Select(err => err.MessageCode)));
-            
-            Assert.Fail("Expected message code {0} '{1}', but success was false and no errors were received", messageCode,
-                CompilerMessage.TryGetMessageName(messageCode, out var msg) ? msg : "?");
-        }
-        
-        protected static void ExpectingSuccess(List<CompilerMessage> messages, bool success)
-        {
-            var errors = messages.Where(s => s.MessageLevel >= MessageLevel.Error).ToArray();
-            var hasErrors = errors.Any();
-            
-            if (hasErrors) 
-                Assert.Fail("Expected success and got following code(s): {0}", 
-                    string.Join(",", errors.Select(err => err.MessageCode)));
-            
-            if(success)
-                Assert.Pass($"Received success");
-            else
-                Assert.Fail($"Received failure");
+            var result = Host.Evaluate(compilationInput, expression);
+            ExpectingError(result.Messages, result.IsSuccess, messageCode);
         }
     }
 }

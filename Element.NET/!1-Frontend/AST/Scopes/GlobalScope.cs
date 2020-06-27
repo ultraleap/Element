@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class GlobalScope : ScopeBase
+    public sealed class GlobalScope : Scope
     {
         private readonly Dictionary<string, SourceBlob> _sourceScopes = new Dictionary<string, SourceBlob>();
         private IList<(Identifier Identifier, IValue Value)>? _cachedList;
@@ -23,7 +23,7 @@ namespace Element.AST
             return Result.Success;
         }
 
-        public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] => Index(id, context);
+        public override IScope? Parent => null;
 
         protected override IList<(Identifier Identifier, IValue Value)> _source => _cachedList ??= _sourceScopes.Values
                                                                                                                 .SelectMany(scope => scope.Select(declaration => (declaration.Identifier, (IValue) declaration)))

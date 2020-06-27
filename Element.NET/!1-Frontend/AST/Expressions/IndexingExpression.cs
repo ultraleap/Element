@@ -13,10 +13,9 @@ namespace Element.AST
         public override string ToString() => $".{Identifier}";
 
         public override void Validate(ResultBuilder resultBuilder) => Identifier.Validate(resultBuilder);
-        protected override void InitializeImpl(IIntrinsicCache? cache) { /* No-op, nothing to do */ }
+        protected override void InitializeImpl() { /* No-op, nothing to do */ }
+
         protected override Result<IValue> SubExpressionImpl(IValue previous, IScope _, CompilationContext compilationContext) =>
-            previous is IIndexable indexable
-                ? indexable[Identifier, false, compilationContext]
-                : compilationContext.Trace(MessageCode.InvalidExpression, $"'{previous}' is not indexable");
+            previous.Index(Identifier, compilationContext);
     }
 }

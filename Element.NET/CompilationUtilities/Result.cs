@@ -15,6 +15,7 @@ namespace Element
         }
 
         public ITrace Trace { get; }
+        public IReadOnlyList<CompilerMessage> Messages => _messages;
         
         public ResultBuilder Append(CompilerMessage message)
         {
@@ -56,6 +57,7 @@ namespace Element
         
         public ITrace Trace { get; }
         public T Result { get; set; }
+        public IReadOnlyList<CompilerMessage> Messages => _messages;
         
         public ResultBuilder<T> Append(CompilerMessage message)
         {
@@ -176,6 +178,8 @@ namespace Element
                        ? new Result<TResult>(inputs.Fold().Messages)
                        : inputs.Fold().Merge(new Result<TResult>(mapFunc(inputs.Select(i => i.ResultOr(default!))))); // Or value will never be selected, we already checked for any errors
         }
+        
+        
 
         public static Result<TResult> FoldArray<TIn, TResult>(in this Result<TIn[]> enumerable, TResult initial, Func<TResult, TIn, Result<TResult>> foldFunc)
             where TIn : notnull
@@ -242,6 +246,12 @@ namespace Element
         public IReadOnlyCollection<CompilerMessage> Messages { get; }
         private readonly T _value;
         
+        public void Match(Action<T, IReadOnlyCollection<CompilerMessage>> onResult, Action<IReadOnlyCollection<CompilerMessage>> onError)
+        {
+            if (IsSuccess) onResult(_value, Messages);
+            else onError(Messages);
+        }
+
         public TResult Match<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(_value, Messages) : onError(Messages);
         
         public Result Do(Func<T, Result> action) => IsSuccess ? new Result(Messages.Combine(action(_value).Messages)) : new Result(Messages);
@@ -302,7 +312,7 @@ namespace Element
         public Result<TResult> Bind<TResult>(Func<T, Result<TResult>> bindFunc) where TResult : notnull  => IsSuccess ? Merge(bindFunc(_value)) : new Result<TResult>(Messages);
         public Result<TResult> Bind<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, Result<TResult>> bindFunc) where TResult : notnull => IsSuccess ? bindFunc(_value, Messages) : new Result<TResult>(Messages);
 
-        public Result Check(Func<T, Result> checkFunc) => new Result(Messages.Combine(checkFunc(_value).Messages));
+        public Result<T> Check(Func<T, Result> checkFunc) => new Result<T>(Messages.Combine(checkFunc(_value).Messages));
 
         public Result<TResult> Cast<TResult>(Func<CompilerMessage?> castFailFunc) where TResult : notnull
         {

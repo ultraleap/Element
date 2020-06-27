@@ -7,6 +7,29 @@ namespace Element
     {
         CompilerMessage? Trace(MessageCode messageCode, string? context);
     }
+
+    public abstract class TraceBase : ITrace
+    {
+        public CompilerMessage? Trace(MessageCode messageCode, string? context) =>
+            CompilerMessage.TryGetMessageLevel(messageCode, out var level)
+            && Verbosity >= level
+                ? new CompilerMessage(messageCode, context, TraceStack)
+                : null;
+
+        public abstract MessageLevel Verbosity { get; }
+        public abstract IReadOnlyCollection<TraceSite>? TraceStack { get; }
+    }
+
+    public class BasicTrace : TraceBase
+    {
+        public BasicTrace(MessageLevel verbosity)
+        {
+            Verbosity = verbosity;
+        }
+
+        public override MessageLevel Verbosity { get; }
+        public override IReadOnlyCollection<TraceSite>? TraceStack => null;
+    }
     
     public interface ITraceSink
     {
@@ -16,43 +39,24 @@ namespace Element
     /// <summary>
     /// Contains the status of the compilation process including call stack and logging messages.
     /// </summary>
-    public class CompilationContext : ITrace
+    public class CompilationContext : TraceBase
     {
         public CompilationContext(SourceContext sourceContext) =>
             SourceContext = sourceContext;
         
         public SourceContext SourceContext { get; }
         
-        private Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
-        private Stack<IFunction> FunctionStack { get; } = new Stack<IFunction>();
+        private readonly Stack<TraceSite> _traceStack = new Stack<TraceSite>();
+        private readonly Stack<IValue> _callStack = new Stack<IValue>();
 
-        public void PushTrace(in TraceSite traceSite) => TraceStack.Push(traceSite);
-        public void PopTrace() => TraceStack.Pop();
+        public void PushTrace(in TraceSite traceSite) => _traceStack.Push(traceSite);
+        public void PopTrace() => _traceStack.Pop();
 
-        public void PushFunction(IFunction function) => FunctionStack.Push(function);
-        public void PopFunction() => FunctionStack.Pop();
-        public bool ContainsFunction(IFunction function) => FunctionStack.Contains(function);
+        public void PushFunction(IValue functionSignature) => _callStack.Push(functionSignature);
+        public void PopFunction() => _callStack.Pop();
+        public bool ContainsFunction(IValue functionSignature) => _callStack.Contains(functionSignature);
 
-        public CompilerMessage? Trace(MessageCode messageCode, string? context) =>
-            CompilerMessage.TryGetMessageLevel((int)messageCode, out var level)
-            && SourceContext.CompilationInput.Verbosity >= level
-                ? new CompilerMessage(messageCode, context, TraceStack)
-                : null;
-    }
-    
-    public class CaptureFrame : ScopeBase
-    {
-        private CaptureFrame()
-        {
-            
-        }
-
-        private readonly CaptureFrame? _parent;
-
-
-        public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
-            Index(id, context).ElseIf(recurse && _parent != null, () => _parent![id, recurse, context]);
-
-        protected override IList<(Identifier Identifier, IValue Value)> _source { get; }
+        public override MessageLevel Verbosity => SourceContext.CompilationInput.Verbosity;
+        public override IReadOnlyCollection<TraceSite>? TraceStack => _traceStack;
     }
 }

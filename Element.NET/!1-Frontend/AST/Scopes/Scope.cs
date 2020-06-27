@@ -1,36 +1,46 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded, MultiLine]
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class Scope : ScopeBase, IDeclared
+    public interface IScope
     {
-#pragma warning disable 649, 169, 8618
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [Location] public int IndexInSource { get; private set; }
-        [SurroundBy("{", "}"), WhitespaceSurrounded, Optional] private List<Declaration>? _items;
-#pragma warning restore 649, 169
-        
-        public Declaration Declarer { get; private set; }
-#pragma warning restore 8618
-
-        public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
+        public abstract Result<IValue> Index(Identifier id, CompilationContext context);
+        public abstract Result<IValue> Lookup(Identifier id, CompilationContext context);
+        IReadOnlyList<IValue> Members { get; }
+    }
+    
+    public abstract class Scope : IScope
+    {
+        public Result<IValue> Lookup(Identifier id, CompilationContext context) =>
             Index(id, context)
-                .ElseIf(recurse, () => Declarer.Parent[id, true, context]);
+                .ElseIf(Parent != null, () => Parent!.Lookup(id, context));
 
-        protected override IList<(Identifier Identifier, IValue Value)> _source => _items.Select(item => (item.Identifier, (IValue)item)).ToList();
-
-        public void Initialize(Declaration declarer, IIntrinsicCache? cache)
+        public IReadOnlyList<IValue> Members => _source.Select(pair => pair.Value).ToArray();
+        public abstract IScope? Parent { get; }
+        
+        public Result<IValue> Index(Identifier id, CompilationContext context)
         {
-            Declarer = declarer ?? throw new ArgumentNullException(nameof(declarer));
-            foreach (var item in _items ?? Enumerable.Empty<Declaration>())
+            var (identifier, value) = _source.FirstOrDefault(v => v.Identifier == id);
+            return identifier != default
+                       ? new Result<IValue>(value)
+                       : context.Trace(MessageCode.IdentifierNotFound, $"'{id}' not found in '{this}'");
+        }
+
+        public void Validate(ResultBuilder resultBuilder, Identifier[]? identifierBlacklist = null, Identifier[]? identifierWhitelist = null)
+        {
+            var idHashSet = new HashSet<Identifier>();
+            foreach (var (identifier, value) in _source)
             {
-                item.Initialize(Declarer.SourceInfo, this, cache);
+                identifier.Validate(resultBuilder, identifierBlacklist, identifierWhitelist);
+                if (value is Declaration declaration) declaration.Validate(resultBuilder);
+                if (!idHashSet.Add(identifier))
+                {
+                    resultBuilder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{identifier}'");
+                }
             }
         }
+
+        protected abstract IList<(Identifier Identifier, IValue Value)> _source { get; }
     }
 }

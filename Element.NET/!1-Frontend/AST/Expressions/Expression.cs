@@ -24,7 +24,7 @@ namespace Element.AST
 
     public static class ExpressionExtensions
     {
-        public static void InitializeUsingStubDeclaration(this Expression expression, string expressionString, IScope scope, SourceContext sourceContext) =>
-            expression.Initialize(Declaration.MakeStubDeclaration(new Identifier("<stub declaration>"), new ExpressionBody(expression), expressionString, scope), sourceContext);
+        public static void InitializeUsingStubDeclaration(this Expression expression, string expressionString, IScope scope) =>
+            expression.Initialize(Declaration.MakeStubDeclaration(new Identifier("<stub declaration>"), new ExpressionBody(expression), expressionString, scope));
     }
 }

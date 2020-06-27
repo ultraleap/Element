@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Element.AST
 {
-    public sealed class IntrinsicFunctionDeclaration : FunctionDeclaration
+    public sealed class IntrinsicFunctionSignatureDeclaration : FunctionSignatureDeclaration
     {
         protected override string IntrinsicQualifier => "intrinsic";
 
@@ -13,18 +13,18 @@ namespace Element.AST
                 builder.Append(MessageCode.IntrinsicCannotHaveBody, $"Intrinsic function '{Location}' cannot have a body");
             }
             // TODO: Check declared inputs/outputs match the compiler-defined ones
-            builder.Append(IntrinsicCache.Get<IntrinsicFunction>(Identifier, builder.Trace));
+            builder.Append(IntrinsicCache.Get<IntrinsicFunctionSignature>(Identifier, builder.Trace));
         }
 
-        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => Implementation.Call(arguments, context);
-        public override IReadOnlyList<Port> Inputs => Implementation.Inputs;
-        public override Port Output => Implementation.Output;
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+            // TODO: Type checking
+            ImplementingIntrinsic.Call(arguments, context);
 
-        private IntrinsicFunction Implementation
+        public IntrinsicFunctionSignature ImplementingIntrinsic
         {
             get
             {
-                var intrinsic = IntrinsicCache.Get<IntrinsicFunction>(Identifier, null);
+                var intrinsic = IntrinsicCache.Get<IntrinsicFunctionSignature>(Identifier, null);
                 if (intrinsic.IsSuccess) return intrinsic.ResultOr(default!); // Guaranteed to return result as we checked first
                 throw new InternalCompilerException($"No intrinsic '{Identifier.Value}' - this exception can only occur if validation is skipped");
             }

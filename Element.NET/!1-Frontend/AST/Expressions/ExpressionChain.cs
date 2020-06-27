@@ -14,11 +14,11 @@ namespace Element.AST
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
         
-        protected override void InitializeImpl(IIntrinsicCache? cache)
+        protected override void InitializeImpl()
         {
             foreach (var expr in Expressions ?? Enumerable.Empty<SubExpression>())
             {
-                expr.Initialize(Declarer, cache);
+                expr.Initialize(Declarer);
             }
         }
 
@@ -34,7 +34,7 @@ namespace Element.AST
             (LitOrId switch
                 {
                     // If the start of the list is an identifier, find the value that it identifies
-                    Identifier id => scope[id, true, compilationContext].Map(v => v),
+                    Identifier id => scope.Lookup(id, compilationContext).Map(v => v),
                     Constant constant => constant,
                     _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
                 })

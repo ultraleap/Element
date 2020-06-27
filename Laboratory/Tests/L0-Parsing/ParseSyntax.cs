@@ -29,9 +29,9 @@ namespace Laboratory.Tests.L0.Parsing
                 (nameof(CallExpression), "(5, a(10, c))", typeof(CallExpression)),
                 (nameof(IndexingExpression), ".identifier", typeof(IndexingExpression)),
                 (nameof(Lambda), "_(_a) = 5", typeof(Lambda)),
-                ($"{nameof(CustomFunctionDeclaration)}-ExpressionBody", "a(a):Num = 5;", typeof(CustomFunctionDeclaration)),
-                ($"{nameof(CustomFunctionDeclaration)}-ScopeBody", "a(a):Num {return = 5;}", typeof(CustomFunctionDeclaration)),
-                ($"{nameof(IntrinsicFunctionDeclaration)}", "intrinsic a(a):Num;", typeof(IntrinsicFunctionDeclaration)),
+                ($"{nameof(CustomFunctionSignatureDeclaration)}-ExpressionBody", "a(a):Num = 5;", typeof(CustomFunctionSignatureDeclaration)),
+                ($"{nameof(CustomFunctionSignatureDeclaration)}-ScopeBody", "a(a):Num {return = 5;}", typeof(CustomFunctionSignatureDeclaration)),
+                ($"{nameof(IntrinsicFunctionSignatureDeclaration)}", "intrinsic a(a):Num;", typeof(IntrinsicFunctionSignatureDeclaration)),
                 (nameof(CustomConstraintDeclaration), "constraint a(a):Num;", typeof(CustomConstraintDeclaration)),
                 ($"{nameof(IntrinsicConstraintDeclaration)}", "intrinsic constraint a;", typeof(IntrinsicConstraintDeclaration)),
                 (nameof(CustomStructDeclaration), "struct a(a);", typeof(CustomStructDeclaration)),
@@ -48,7 +48,7 @@ namespace Laboratory.Tests.L0.Parsing
         }
 
         [TestCaseSource(nameof(GenerateParseTestData))]
-        public void Parse((FileInfo fileInfo, int? messageCode) info) => SyntaxTest(info, true);
+        public void Parse((FileInfo fileInfo, MessageCode? messageCode) info) => SyntaxTest(info, true);
         
         // TODO: Force consuming the whole text in all of these parsers
         // TODO: Make this test use host so that it can test process hosts!

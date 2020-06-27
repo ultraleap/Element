@@ -1,6 +1,6 @@
 namespace Element
 {
-    public readonly struct SourceInfo
+    public class SourceInfo
     {
         public SourceInfo(string name, string text)
         {

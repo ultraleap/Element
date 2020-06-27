@@ -1,3 +1,4 @@
+using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L2.Semantics
@@ -26,14 +27,14 @@ namespace Laboratory.Tests.L2.Semantics
 
         [TestCase("Num.add(1)")]
         [TestCase("Num.add(1, 3, 5)")]
-        public void IncorrectArgCountFails(string expression) => EvaluateExpectingErrorCode(CompilationInput, 6, expression);
+        public void IncorrectArgCountFails(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.ArgumentCountMismatch, expression);
 
         [Test]
-        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, 11, "recurse(5)");
+        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.CircularCompilation, "recurse(5)");
         [Test]
-        public void IndirectRecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, 11, "recurseIndirect(5)");
+        public void IndirectRecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.CircularCompilation, "recurseIndirect(5)");
         
         [Test]
-        public void InvalidReturn() => EvaluateExpectingErrorCode(CompilationInput, 7, "invalidReturn(5, 5)");
+        public void InvalidReturn() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.IdentifierNotFound, "invalidReturn(5, 5)");
     }
 }

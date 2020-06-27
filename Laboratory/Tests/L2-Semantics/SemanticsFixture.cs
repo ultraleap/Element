@@ -12,7 +12,7 @@ namespace Laboratory.Tests.L2.Semantics
         
         private FileInfo[] SourceFiles { get; }
 
-        protected CompilationInput CompilationInput => new CompilationInput(LogMessage)
+        protected CompilationInput CompilationInput => new CompilationInput
         {
             ExcludePrelude = true,
             ExtraSourceFiles = SourceFiles

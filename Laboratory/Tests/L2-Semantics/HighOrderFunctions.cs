@@ -1,3 +1,4 @@
+using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L2.Semantics
@@ -75,7 +76,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void ConstraintChecking(string expression, bool succeeds, string type = default)
         {
             if (succeeds) AssertTypeof(CompilationInput, expression, type);
-            else EvaluateExpectingErrorCode(CompilationInput, 8, expression);
+            else EvaluateExpectingErrorCode(CompilationInput, MessageCode.ConstraintNotSatisfied, expression);
         }
 
         [Test]

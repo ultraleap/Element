@@ -8,7 +8,8 @@ namespace Element
 	/// <summary>
 	/// Base class for all Element expressions
 	/// </summary>
-	public abstract class Expression : IEquatable<Expression>, ISerializableValue, IIndexable
+	// TODO: Make a wrapper Value class for expressions to remove Value logic from Expression implementation
+	public abstract class Expression : Value, IEquatable<Expression>
 	{
 		protected Expression(IntrinsicType? instanceTypeOverride = default) => Type = instanceTypeOverride ?? NumType.Instance;
 		
@@ -32,17 +33,18 @@ namespace Element
 		public override int GetHashCode() => ToString().GetHashCode();
 		public IEnumerable<Expression> AllDependent => Dependent.SelectMany(d => new[] {d}.Concat(d.AllDependent));
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
-		
-		public Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
-			Type.Declaration(context.SourceContext).Bind(decl => decl.ResolveInstanceFunction(id, this, context));
 
-		public void Serialize(ResultBuilder<List<Expression>> resultBuilder) => resultBuilder.Result.Add(this);
+		// TODO: This allows indexing constants from an expression, see note about wrapper class above to fix
+		public override Result<IValue> Index(Identifier id, CompilationContext context) =>
+			context.SourceContext.GlobalScope.Lookup(Type.Identifier, context).Bind(v => v.Index(id, context));
 
-		public Result<ISerializableValue> Deserialize(Func<Expression> nextValue, ITrace trace)
+		public override void Serialize(ResultBuilder<List<Expression>> resultBuilder) => resultBuilder.Result.Add(this);
+
+		public override Result<IValue> Deserialize(Func<Expression> nextValue, ITrace trace)
 		{
 			var result = nextValue();
 			return result.Type == Type
-				       ? new Result<ISerializableValue>(result)
+				       ? new Result<IValue>(result)
 				       : trace.Trace(MessageCode.SerializationError, $"'{result}' deserialized to incorrect type: is '{result.Type}' - expected '{Type}'");
 		}
 	}

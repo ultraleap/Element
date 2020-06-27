@@ -28,8 +28,7 @@ namespace Element.CLR
             _ => new NumberExpression(LExpression.Convert(parameter, typeof(float)))
         };
 
-        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
-                                                 CompilationContext context) =>
+        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext context) =>
             convertFunction(value, typeof(float), context)
                 .Map(convertedValue =>
                           (outputType, convertedValue) switch
@@ -87,19 +86,17 @@ namespace Element.CLR
                    .Cast<StructDeclaration>(context)
                    .Map(structDeclaration => (IValue)new StructInstance(structDeclaration, _elementToClrFieldMapping.Select(pair => new FieldExpression(root, parameter, pair.Value))));
 
-        private class FieldExpression : Expression, ICLRExpression, IFunction
+        private class FieldExpression : Expression, ICLRExpression
         {
             private readonly LExpression _parameter;
-            private readonly IBoundaryConverter _root;
+            //private readonly IBoundaryConverter _root;
             private readonly string _clrField;
 
             public FieldExpression(IBoundaryConverter root, LExpression parameter, string clrField)
             {
-                _root = root;
+                //_root = root;
                 _parameter = parameter;
                 _clrField = clrField;
-                Inputs = Array.Empty<Port>();
-                Output = Port.ReturnPort(AnyConstraint.Instance);
                 Dependent = Array.Empty<Expression>();
             }
 
@@ -107,11 +104,8 @@ namespace Element.CLR
                 LExpression.PropertyOrField(_parameter, _clrField);
             public override IEnumerable<Expression> Dependent { get; }
             protected override string ToStringInternal() => $"{_parameter}.{_clrField}";
-            public IReadOnlyList<Port> Inputs { get; }
-            public Port Output { get; }
-            public IFunction GetDefinition(CompilationContext compilationContext) => this;
-            public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-                _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, context);
+            /*public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+                _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, context);*/
         }
 
         public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext context)
@@ -123,13 +117,13 @@ namespace Element.CLR
                 assigns.Add(LExpression.Assign(obj, LExpression.New(outputType)));
             }
             
-            if (!(value is IScope scope)) return context.Trace(MessageCode.InvalidBoundaryData, $"'{value}' is not a scope - expected scope when converting a struct");
+            if (!(value is StructInstance structInstance)) return context.Trace(MessageCode.InvalidBoundaryData, $"'{value}' is not a struct instance - expected struct instance when converting a struct");
             var builder = new ResultBuilder<LExpression>(context, default!);
             
             foreach (var pair in _elementToClrFieldMapping)
             {
                 var memberExpression = LExpression.PropertyOrField(obj, pair.Value);
-                var fieldResult = scope[new Identifier(pair.Key), false, context].Bind(fieldValue => convertFunction(fieldValue, memberExpression.Type, context));
+                var fieldResult = structInstance.Index(new Identifier(pair.Key), context).Bind(fieldValue => convertFunction(fieldValue, memberExpression.Type, context));
                 builder.Append(in fieldResult);
                 if (!fieldResult.IsSuccess) continue;
                 assigns.Add(LExpression.Assign(memberExpression, fieldResult.ResultOr(default!)));

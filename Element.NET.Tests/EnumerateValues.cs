@@ -10,7 +10,7 @@ namespace Element.NET.Tests
         public void EnumerateAll()
         {
             var sourceContext = MakeSourceContext();
-            var results = sourceContext.GlobalScope.EnumerateValues<IValue>(_ => true);
+            var results = sourceContext.GlobalScope.EnumerateRecursively(_ => true);
             CollectionAssert.IsNotEmpty(results);
         }
 
@@ -21,30 +21,33 @@ namespace Element.NET.Tests
         public void EnumerateByName(string nameContains)
         {
             var sourceContext = MakeSourceContext();
-            var results = sourceContext.GlobalScope.EnumerateValues<Declaration>(v => v.Location.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
+            var results = sourceContext.GlobalScope.EnumerateDeclarationsRecursively(d => d.Location.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
             CollectionAssert.IsNotEmpty(results);
             // TODO: Actually check collection contents are correct
         }
 
-        private static readonly IIntrinsic[] _types =
+        private static readonly IntrinsicType[] _types =
         {
             NumType.Instance,
             BoolType.Instance,
-            ListType.Instance,
+            ListType.Instance, 
             TupleType.Instance,
         };
         
         [TestCaseSource(nameof(_types))]
-        public void EnumerateByReturnType(IIntrinsic type)
+        public void EnumerateByReturnType(IntrinsicType type)
         {
             var sourceContext = MakeSourceContext();
-            sourceContext.MakeCompilationContext(out var compilationContext);
-            bool Filter(IValue v) => v is IFunctionSignature fn && fn.Output.ResolveConstraint(compilationContext) == compilationContext.GetIntrinsicsDeclaration<StructDeclaration>(type);
-            var results = sourceContext.GlobalScope.EnumerateValues<Declaration>(Filter);
+            var compilationContext = new CompilationContext(sourceContext);
+            bool Filter(Declaration d) => d is IFunctionSignature fn
+                                          && fn.Output.ResolveConstraint(compilationContext)
+                                               .Match((t, _) => t.IsIntrinsicType(type),
+                                                      _ => false);
+            var results = sourceContext.GlobalScope.EnumerateDeclarationsRecursively(Filter);
             CollectionAssert.IsNotEmpty(results);
             // TODO: Actually check collection contents are correct
         }
         
-        // Test case: don't recurse into function scopes! Returning intermediates would be dumb!
+        // Test case: don't recurse into function scopes! Returning intermediates would be bad!
     }
 }

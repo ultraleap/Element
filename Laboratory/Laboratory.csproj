@@ -64,6 +64,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Element.NET.Tests\Element.NET.Tests.csproj" />
     <ProjectReference Include="..\Element.NET\Element.NET.csproj" />
   </ItemGroup>
 

@@ -48,20 +48,20 @@ namespace Element
     {
         private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
 
-        private static bool TryGetMessageToml(int messageCode, out TomlTable message)
+        private static bool TryGetMessageToml(MessageCode messageCode, out TomlTable? message)
         {
-            message = _messageToml.TryGetToml($"ELE{messageCode}", out var obj) && obj is TomlTable table ? table : null;
+            message = _messageToml.TryGetToml($"ELE{(int)messageCode}", out var obj) && obj is TomlTable table ? table : null;
             return message != null;
         }
         
-        public static bool TryGetMessageName(int messageCode, out string name)
+        public static bool TryGetMessageName(MessageCode messageCode, out string? name)
         {
-            name = TryGetMessageToml(messageCode, out var table) ? (string) table["name"] : null;
+            name = TryGetMessageToml(messageCode, out var table) ? (string) table!["name"] : null;
             return name != null;
         }
 
-        public static bool TryGetMessageLevel(int messageCode, out MessageLevel level) =>
-            Enum.TryParse(TryGetMessageToml(messageCode, out var table) ? (string) table["level"] : null, out level);
+        public static bool TryGetMessageLevel(MessageCode messageCode, out MessageLevel level) =>
+            Enum.TryParse(TryGetMessageToml(messageCode, out var table) ? (string) table!["level"] : null, out level);
 
         public CompilerMessage(string message, MessageLevel? messageLevel = null) : this(null, messageLevel, message, null) {}
         public CompilerMessage(MessageCode messageCode, string? context, IReadOnlyCollection<TraceSite>? traceStack = null) : this((int)messageCode, null, context, traceStack) {}
@@ -70,7 +70,7 @@ namespace Element
         public CompilerMessage(int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? traceStack)
         {
             MessageCode = messageCode;
-            MessageLevel = messageCode.HasValue && TryGetMessageLevel(messageCode.Value, out var level)
+            MessageLevel = messageCode.HasValue && TryGetMessageLevel((MessageCode)messageCode.Value, out var level)
                                ? level
                                : messageLevel ?? Element.MessageLevel.Information;
             Context = context;
@@ -94,7 +94,7 @@ namespace Element
                     if (MessageCode.HasValue)
                     {
                         builder.Append("ELE").Append(MessageCode).Append(": ").Append(MessageLevel).Append(" - ")
-                               .AppendLine(TryGetMessageName(MessageCode.Value, out var message)
+                               .AppendLine(TryGetMessageName((MessageCode)MessageCode.Value, out var message)
                                                ? message
                                                : "Unknown");
                     }

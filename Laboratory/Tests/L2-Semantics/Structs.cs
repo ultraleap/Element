@@ -20,7 +20,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void InstanceMemberAccess() => AssertApproxEqual(CompilationInput, "MyStruct(5).a", "5");
 
         [Test]
-        public void InvalidMemberAccess() => EvaluateExpectingErrorCode(CompilationInput, 7, "MyStruct(10).invalid");
+        public void InvalidMemberAccess() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.IdentifierNotFound, "MyStruct(10).invalid");
 
         [Test]
         public void FunctionAsMember() => AssertTypeof(CompilationInput, "MyStruct(pickSecond)", "Instance:MyStruct:Struct");
@@ -33,13 +33,13 @@ namespace Laboratory.Tests.L2.Semantics
             TestCase("Vector3(5, 10)"),
             TestCase("Vector3(20, 5, 10, 40)")
         ]
-        public void MemberCountNotCorrect(string expression) => EvaluateExpectingErrorCode(CompilationInput, 6, expression);
+        public void MemberCountNotCorrect(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.ArgumentCountMismatch, expression);
         
         [Test]
-        public void MemberConstraintsNotSatisfied() => EvaluateExpectingErrorCode(CompilationInput, 8, "Vector3(pickSecond, 5, 10)");
+        public void MemberConstraintsNotSatisfied() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.ConstraintNotSatisfied, "Vector3(pickSecond, 5, 10)");
 
         [Test]
-        public void NoImplicitConversionBetweenStructs() => EvaluateExpectingErrorCode(CompilationInput, 8, "onlyNum(NumNum(5))");
+        public void NoImplicitConversionBetweenStructs() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.ConstraintNotSatisfied, "onlyNum(NumNum(5))");
 
         [Test]
         public void IntrinsicInstanceFunction() => AssertApproxEqual(CompilationInput, "6.add(5)", "11");
@@ -51,6 +51,6 @@ namespace Laboratory.Tests.L2.Semantics
         public void CustomStructInstanceFunction() => AssertApproxEqual(CompilationInput, "Vector3(5, 5, 5).add(Vector3(10, 10, 10))", "Vector3(15, 15, 15)");
 
         [Test]
-        public void InstanceFunctionRequiresExplicitType() => EvaluateExpectingErrorCode(CompilationInput, 22, "5.addTen");
+        public void InstanceFunctionRequiresExplicitType() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.CannotBeUsedAsInstanceFunction, "5.addTen");
     }
 }

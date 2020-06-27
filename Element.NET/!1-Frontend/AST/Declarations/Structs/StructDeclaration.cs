@@ -1,38 +1,31 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class StructDeclaration : Declaration, IScope, IFunction, IType
+    public abstract class StructDeclaration : Declaration, IScope, IFunctionSignature
     {
         protected override string Qualifier { get; } = "struct";
-        protected override System.Type[] BodyAlternatives { get; } = {typeof(Scope), typeof(Terminal)};
+        protected override Type[] BodyAlternatives { get; } = {typeof(Block), typeof(Terminal)};
         protected override Identifier[] ScopeIdentifierBlacklist => new[]{Identifier};
 
         public override string ToString() => $"{Location}:Struct";
 
-        public abstract IReadOnlyList<Port> Fields { get; }
-        public Result<IValue> this[Identifier id, bool recurse, CompilationContext context] => (Child ?? Parent)[id, recurse, context];
-        public int Count => Child?.Count ?? 0;
-        public IEnumerator<IValue> GetEnumerator() => Child?.GetEnumerator() ?? Enumerable.Empty<IValue>().GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public IReadOnlyList<Port> Fields => DeclaredInputs;
+        public Result<IValue> Lookup(Identifier id, CompilationContext context) => (Child ?? Parent).Lookup(id, context);
+        public override IReadOnlyList<IValue> Members => Child?.Members ?? Array.Empty<IValue>();
 
-
-        IReadOnlyList<Port> IFunction.Inputs => DeclaredInputs;
-        Port IFunction.Output => Port.ReturnPort(this);
-        public abstract Result<ISerializableValue> DefaultValue(CompilationContext context);
-        public abstract Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
-        public abstract Result<bool> MatchesConstraint(IValue value, CompilationContext context);
+        IReadOnlyList<Port> IFunctionSignature.Inputs => DeclaredInputs;
+        Port IFunctionSignature.Output => Port.ReturnPort(this);
         
         public Result<bool> IsInstanceOfStruct(IValue value, CompilationContext context) => value.FullyResolveValue(context).Map(v => v is StructInstance instance && instance.DeclaringStruct == this);
         
         public Result<IValue> ResolveInstanceFunction(Identifier instanceFunctionIdentifier, IValue instanceBeingIndexed, CompilationContext context) =>
-            this[instanceFunctionIdentifier, false, context]
+            Index(instanceFunctionIdentifier, context)
                 .Bind(v => v switch
                 {
-                    FunctionDeclaration instanceFunction when instanceFunction.IsNullary() => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
-                    IFunction function => function.Inputs[0].ResolveConstraint(this, context).Bind(constraint => constraint switch
+                    FunctionSignatureDeclaration instanceFunction when instanceFunction.IsNullary() => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Constant '{instanceFunction.Location}' cannot be accessed by indexing an instance"),
+                    IFunctionSignature function => function.Inputs[0].ResolveConstraint(this, context).Bind(constraint => constraint switch
                     {
                         {} when constraint == this => function.PartiallyApply(new[] {instanceBeingIndexed}, context),
                         _ => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Found function '{function}' <{function.Inputs[0]}> must be of type <:{Identifier}> to be used as an instance function")
@@ -41,7 +34,5 @@ namespace Element.AST
                     {} notInstanceFunction => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"'{notInstanceFunction}' found by indexing '{instanceBeingIndexed}' is not a function"),
                     _ => context.Trace(MessageCode.IdentifierNotFound, $"Couldn't find any member or instance function '{instanceFunctionIdentifier}' for '{instanceBeingIndexed}' of type <{this}>")
                 });
-
-        IFunction IInstancable<IFunction>.GetDefinition(CompilationContext compilationContext) => this;
     }
 }

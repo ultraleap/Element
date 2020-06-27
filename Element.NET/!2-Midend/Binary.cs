@@ -63,7 +63,18 @@ namespace Element
 			};
 
 		public Binary(Op operation, Expression opA, Expression opB)
-			: base(AST.BinaryIntrinsic.OperationOverrides.TryGetValue(operation, out var details) ? details.Return : default)
+			: base(operation switch
+			{
+				Op.And => BoolType.Instance,
+				Op.Or => BoolType.Instance,
+				Op.Eq => BoolType.Instance,
+				Op.NEq => BoolType.Instance,
+				Op.Lt => BoolType.Instance,
+				Op.LEq => BoolType.Instance,
+				Op.Gt => BoolType.Instance,
+				Op.GEq => BoolType.Instance,
+				_ => default
+			})
 		{
 			Operation = operation;
 			OpA = opA ?? throw new ArgumentNullException(nameof(opA));

@@ -22,14 +22,9 @@ namespace Element.AST
         }
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => new StructInstance(this, arguments);
-
         public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => IsInstanceOfStruct(value, context);
-        public override IReadOnlyList<Port> Fields => DeclaredInputs;
-        public override Result<ISerializableValue> DefaultValue(CompilationContext context) =>
-            Fields.Select(field => field.ResolveConstraint(context)
-                                        .Bind(constraint => constraint is IType type
-                                                                ? type.DefaultValue(context)
-                                                                : context.Trace(MessageCode.TypeError, $"'{field}' is not a type - only types can produce a default value")))
-                  .MapEnumerable(defaults => (ISerializableValue)new StructInstance(this, defaults.ToArray()));
+        public override Result<IValue> DefaultValue(CompilationContext context) =>
+            Fields.Select(field => field.ResolveConstraint(context).Bind(v => v.DefaultValue(context)))
+                  .MapEnumerable(defaults => (IValue)new StructInstance(this, defaults.ToArray()));
     }
 }

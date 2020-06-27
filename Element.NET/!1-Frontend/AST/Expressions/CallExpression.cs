@@ -11,11 +11,11 @@ namespace Element.AST
         [field: Term] private ListOf<Expression> Expressions { get; set; }
 #pragma warning restore 169, 8618
 
-        protected override void InitializeImpl(IIntrinsicCache? cache)
+        protected override void InitializeImpl()
         {
             foreach (var expr in Expressions.List)
             {
-                expr.Initialize(Declarer, cache);
+                expr.Initialize(Declarer);
             }
         }
 
@@ -29,7 +29,7 @@ namespace Element.AST
         }
 
         protected override Result<IValue> SubExpressionImpl(IValue previous, IScope scope, CompilationContext compilationContext) =>
-            previous is IFunction function
+            previous is IFunctionSignature function
                 ? Expressions.List
                              .Select(argExpr => argExpr.ResolveExpression(scope, compilationContext))
                              .BindEnumerable(args => function.Call(args.ToArray(), compilationContext))

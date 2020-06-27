@@ -12,11 +12,11 @@ namespace Element.AST
 
         public override string ToString() => Ports.ToString();
 
-        protected override void InitializeImpl(IIntrinsicCache? cache)
+        protected override void InitializeImpl()
         {
             foreach (var p in Ports.List)
             {
-                p.Initialize(Declarer, cache);
+                p.Initialize(Declarer);
             }
         }
         

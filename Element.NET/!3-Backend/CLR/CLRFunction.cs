@@ -268,18 +268,16 @@ namespace Element.CLR
 		/// <remarks>
 		/// All the inputs to the function must be serializable and constant size (No dynamic lists).
 		/// </remarks>
-		/// <param name="function"></param>
+		/// <param name="functionSignature"></param>
 		/// <param name="array">The resultant pre-allocated array. The function inputs are mapped directly to its contents.</param>
 		/// <param name="context"></param>
 		/// <returns>The result of calling `function` with all its inputs, or compilation error where there was an error.</returns>
-		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IFunction function, CompilationContext context) =>
-			function.Inputs.Select(p => p.ResolveConstraint(context)
-			                             .Bind(c => c is IType type
-				                                        ? type.DefaultValue(context)
-				                                        : context.Trace(MessageCode.TypeError, $"'{c}' is not a type - only types can produce a default value")))
+		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IFunctionSignature functionSignature, CompilationContext context) =>
+			functionSignature.Inputs.Select(p => p.ResolveConstraint(context)
+			                                      .Bind(c => c.DefaultValue(context)))
 			        .BindEnumerable(defaultValues =>
 			        {
-				        var defaults = defaultValues as ISerializableValue[] ?? defaultValues.ToArray();
+				        var defaults = defaultValues as IValue[] ?? defaultValues.ToArray();
 				        return defaults.Select(value => value.SerializedSize(context))
 				                       .MapEnumerable(argSizes => (defaults, argSizes));
 			        })
@@ -303,7 +301,7 @@ namespace Element.CLR
 					                         var flattenedValIdx = 0;
 					                         Expression NextValue() => expressions[flattenedValIdx++];
 					                         return defaultValues.Select(v => v.Deserialize(NextValue, context))
-					                                             .BindEnumerable(arguments => function.Call(arguments.ToArray(), context)
+					                                             .BindEnumerable(arguments => functionSignature.Call(arguments.ToArray(), context)
 					                                                                                  .Map(result => (result, array)));
 				                         });
 			        });
@@ -333,7 +331,7 @@ namespace Element.CLR
             var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
             
-            if (value is IFunction fn && fn.Inputs.Count != delegateParameters.Length)
+            if (value is IFunctionSignature fn && fn.Inputs.Count != delegateParameters.Length)
             {
 	            return context.Trace(MessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
             }
@@ -341,7 +339,7 @@ namespace Element.CLR
             var resultBuilder = new ResultBuilder<Delegate>(context, default!);
             IValue outputExpression = value;
             // If input value is not a function we just try to use it directly
-            if (value is IFunction function)
+            if (value is IFunctionSignature function)
             {
 	            var outputExpr = function.Inputs.Select((f, idx) => boundaryConverter.LinqToElement(parameterExpressions[idx], boundaryConverter, context))
 	                                     .BindEnumerable(args => function.Call(args.ToArray(), context));
@@ -367,23 +365,22 @@ namespace Element.CLR
             var detectCircular = new Stack<IValue>();
             Result<LinqExpression> ConvertFunction(IValue value, Type outputType, ITrace trace)
 			{
-				if (value is IConstraint c) return context.Trace(MessageCode.InvalidCompileTarget, $"Cannot compile a constraint '{c}'");
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == value)
 				{
 					return context.Trace(MessageCode.CircularCompilation, $"Circular dependency when compiling '{value}'");
 				}
 
 				// If this value is serializable then serialize and use it
-				if (value is ISerializableValue sv)
+				if (value.IsSerializable(context))
 				{
-					return sv.Serialize(context)
-					               .Bind(serialized => serialized.Count switch
-					               {
-						               1 when IsPrimitiveElementType(outputType) => Compile(serialized[0].FoldConstants(data.ConstantCache).CacheExpressions(data.CSECache), data),
-						               _ => boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context)
-					               });
+					return value.Serialize(context)
+					         .Bind(serialized => serialized.Count switch
+					         {
+						         1 when IsPrimitiveElementType(outputType) => Compile(serialized[0].FoldConstants(data.ConstantCache).CacheExpressions(data.CSECache), data),
+						         _ => boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context)
+					         });
 				}
-				
+
 				// Else we try to use a boundary converter to convert to serializable expressions
 				// TODO: Move circular checks to boundary converters
 				detectCircular.Push(value);

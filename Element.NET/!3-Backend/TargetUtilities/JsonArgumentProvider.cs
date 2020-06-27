@@ -12,21 +12,25 @@ namespace Element
 	{
 		public JObject JsonConfiguration { get; private set; }
 
-		public void ProvideArguments(IFunction function, float[] arguments, CompilationContext context)
+		public Result ProvideArguments(IFunctionSignature functionSignature, float[] arguments, CompilationContext context)
 		{
-			if (function == null) { return; }
-
 			var idx = 0;
-			foreach (var input in function.Inputs)
+			int Index() => idx++; 
+			var resultBuilder = new ResultBuilder(context);
+			foreach (var input in functionSignature.Inputs)
 			{
-				if (!input.Identifier.HasValue)
+				if (input.Identifier.HasValue)
 				{
-					context.Trace(MessageCode.InvalidBoundaryFunction, "Function has port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
-					return;
+					JsonConfiguration.TryGetValue(input.Identifier.Value, out var iValue);
+					RecursivelyEvaluate(resultBuilder, arguments, input.Identifier.Value, input.ResolveConstraint(context), iValue, Index, context);
 				}
-				JsonConfiguration.TryGetValue(input.Identifier, out var iValue);
-				RecursivelyEvaluate(arguments, input.Identifier, input.ResolveConstraint(context) as IType, iValue, ref idx, context);
+				else
+				{
+					resultBuilder.Append(MessageCode.InvalidBoundaryFunction, "Function has port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
+				}
 			}
+
+			return resultBuilder.ToResult();
 		}
 
 		public (bool Success, string Error) ParseFromJsonFile(string filePath) =>
@@ -48,38 +52,56 @@ namespace Element
 			return (true, string.Empty);
 		}
 
-		private static void RecursivelyEvaluate(float[] argumentArray, string name, IType? type, JToken? value, ref int idx, CompilationContext context)
-		{
-			if (type == NumType.Instance)
+		private static void RecursivelyEvaluate(ResultBuilder builder, float[] argumentArray, Identifier fieldIdentifier, in Result<IValue> fieldType, JToken? value, Func<int> idx, CompilationContext context) =>
+			fieldType.Do(type =>
 			{
-				argumentArray[idx++] = (value?.Type ?? JTokenType.None) switch
+				if (type.IsIntrinsicType<NumType>())
 				{
-					JTokenType.Float => (float) (double) value,
-					JTokenType.Integer => (int) value,
-					_ => context.Flush(18, $"Expected float or integer token for element Num parameter '{name}'").Return(0)
-				};
-			}
-			else if (type == BoolType.Instance)
-			{
-				argumentArray[idx++] = (value?.Type ?? JTokenType.None) switch
-				{
-					JTokenType.Boolean => (bool)value ? 1f : 0f,
-					_ => context.Flush(18, $"Expected boolean token for element Bool parameter '{name}'").Return(0)
-				};
-			}
-			else if (type is StructDeclaration declaredStruct)
-			{
-				JToken? cValue = null;
-				(value as JObject)?.TryGetValue(name, out cValue);
-				foreach (var field in declaredStruct.Fields)
-				{
-					RecursivelyEvaluate(argumentArray, field.Identifier, field.ResolveConstraint(declaredStruct, context) as IType, cValue, ref idx, context);
+					switch (value?.Type ?? JTokenType.None)
+					{
+						case JTokenType.Float:
+							argumentArray[idx()] = (float) (double) value;
+							break;
+						case JTokenType.Integer:
+							argumentArray[idx()] = (int) value;
+							break;
+						default:
+							builder.Append(MessageCode.InvalidBoundaryData, $"Expected float or integer token for element Num parameter '{fieldIdentifier}'");
+							break;
+					}
 				}
-			}
-			else
-			{
-				context.Flush(18, $"Element type '{type}' is not supported for JSON argument provisioning");
-			}
-		}
+				else if (type.IsIntrinsicType<BoolType>())
+				{
+					switch (value?.Type ?? JTokenType.None)
+					{
+						case JTokenType.Boolean:
+							argumentArray[idx()] = (bool) value ? 1f : 0f;
+							break;
+						default:
+							builder.Append(MessageCode.InvalidBoundaryData, $"Expected boolean token for element Bool parameter '{fieldIdentifier}'");
+							break;
+					}
+				}
+				else if (type is StructDeclaration declaredStruct)
+				{
+					JToken? cValue = null;
+					(value as JObject)?.TryGetValue(fieldIdentifier, out cValue);
+					foreach (var field in declaredStruct.Fields)
+					{
+						if (field.Identifier.HasValue)
+						{
+							RecursivelyEvaluate(builder, argumentArray, field.Identifier.Value, field.ResolveConstraint(declaredStruct, context), cValue, idx, context);
+						}
+						else
+						{
+							builder.Append(MessageCode.InvalidBoundaryData, $"Struct '{declaredStruct}' has field(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
+						}
+					}
+				}
+				else
+				{
+					builder.Append(MessageCode.InvalidBoundaryData, $"Element type '{type}' is not supported for JSON argument provisioning");
+				}
+			});
 	}
 }

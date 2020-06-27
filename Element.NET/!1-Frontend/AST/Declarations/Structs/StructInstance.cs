@@ -4,50 +4,47 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class StructInstance : ScopeBase, ISerializableValue
+    public sealed class StructInstance : Value
     {
         public StructDeclaration DeclaringStruct { get; }
 
-        public override Result<IValue> this[Identifier id, bool recurse, CompilationContext context] =>
-            Index(id, context).Else(() => DeclaringStruct.ResolveInstanceFunction(id, this, context));
+        private sealed class StructInstanceScope : Scope
+        {
+            public StructInstanceScope(IList<(Identifier Identifier, IValue Value)> source)
+            {
+                _source = source;
+            }
 
-        protected override IList<(Identifier Identifier, IValue Value)> _source { get; }
-
+            public override IScope? Parent => null;
+            protected override IList<(Identifier Identifier, IValue Value)> _source { get; }
+        }
+        
+        private readonly StructInstanceScope _scope;
+        
         public StructInstance(StructDeclaration declaringStruct, IEnumerable<IValue> fieldValues)
         {
             DeclaringStruct = declaringStruct;
-            _source = fieldValues.WithoutDiscardedArguments(declaringStruct.Fields).ToList();
+            _scope = new StructInstanceScope(fieldValues.WithoutDiscardedArguments(declaringStruct.Fields).ToList());
         }
 
         public override string ToString() => $"Instance:{DeclaringStruct}";
-
-        public Result<IValue> Field(int index, CompilationContext context) => Index(index, context);
         
-        /*public bool Serialize(IValue instance, ref Element.Expression[] serialized, ref int position, CompilationContext compilationContext) =>
-            instance is StructInstance listInstance
-            && EvaluateElements(listInstance, compilationContext).Serialize(ref serialized, ref position, compilationContext);
+        public override Result<IValue> Index(Identifier id, CompilationContext context) =>
+            _scope.Lookup(id, context).Else(() => DeclaringStruct.ResolveInstanceFunction(id, this, context));
 
-        public override IValue Deserialize(IEnumerable<Element.Expression> expressions, CompilationContext compilationContext) =>
-            MakeList(expressions.ToArray(), compilationContext);*/
+        public override IReadOnlyList<IValue> Members => _scope.Members;
 
-        public void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder)
+        public override void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder)
         {
             // TODO: List serialization
-            foreach (var v in this)
+            foreach (var member in Members)
             {
-                if (v is ISerializableValue sv)
-                {
-                    sv.Serialize(resultBuilder);
-                }
-                else
-                {
-                    resultBuilder.Append(MessageCode.SerializationError, $"'{v}' is not serializable");
-                }
+                member.Serialize(resultBuilder);
             }
         }
 
-        public Result<ISerializableValue> Deserialize(Func<Element.Expression> nextValue, ITrace trace) =>
-            this.Select(field => field is ISerializableValue sv ? sv.Deserialize(nextValue, trace) : trace.Trace(MessageCode.SerializationError, $"'{field}' cannot be deserialized"))
-                .MapEnumerable(fields => (ISerializableValue)new StructInstance(DeclaringStruct, fields));
+        public override Result<IValue> Deserialize(Func<Element.Expression> nextValue, ITrace trace) =>
+            Members.Select(f => f.Deserialize(nextValue, trace))
+                   .MapEnumerable(deserializedFields => (IValue) new StructInstance(DeclaringStruct, deserializedFields));
     }
 }

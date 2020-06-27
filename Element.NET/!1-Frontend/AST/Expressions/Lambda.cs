@@ -3,14 +3,14 @@ using Lexico;
 
 namespace Element.AST
 {
-    public class Lambda : Expression, IFunction
+    public class Lambda : Expression, IFunctionSignature
     {
 #pragma warning disable 649, 169, 8618
         [Term] private Unidentifier _;
         [Term] private PortList _portList;
         [Optional] private TypeAnnotation? _type;
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [Alternative(typeof(ExpressionBody), typeof(Scope)), WhitespaceSurrounded, MultiLine] private object _body;
+        [Alternative(typeof(ExpressionBody), typeof(Block)), WhitespaceSurrounded, MultiLine] private object _body;
 #pragma warning restore 649, 169
         
         public IReadOnlyList<Port> Inputs { get; private set; }
@@ -21,19 +21,19 @@ namespace Element.AST
         public IScope DeclaringScope { get; private set; }
 #pragma warning restore 8618
         
-        public IFunction GetDefinition(CompilationContext compilationContext) => this;
+        public Result<IFunctionSignature> GetUniqueIdentifier(CompilationContext compilationContext) => this;
 
-        protected override void InitializeImpl(IIntrinsicCache? cache)
+        protected override void InitializeImpl()
         {
-            _portList.Initialize(Declarer, cache);
-            _type?.Initialize(Declarer, cache);
+            _portList.Initialize(Declarer);
+            _type?.Initialize(Declarer);
             Inputs =  _portList.Ports.List.ToArray();
             Output = Port.ReturnPort(_type);
             switch (_body)
             {
-                case ExpressionBody b: b.Expression.Initialize(Declarer, cache);
+                case ExpressionBody b: b.Expression.Initialize(Declarer);
                     break;
-                case Scope s: s.Initialize(Declarer, cache);
+                case Block s: s.Initialize(Declarer);
                     break;
             }
         }
@@ -49,7 +49,7 @@ namespace Element.AST
                 case ExpressionBody b:
                     b.Expression.Validate(resultBuilder);
                     break;
-                case Scope s:
+                case Block s:
                     s.Validate(resultBuilder, identifierWhitelist: new[] {Parser.ReturnIdentifier});
                     break;
             }

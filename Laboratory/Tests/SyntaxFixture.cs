@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Element;
 using NUnit.Framework;
@@ -11,9 +9,9 @@ namespace Laboratory.Tests
 {
     internal abstract class SyntaxFixture : HostFixture
     {
-        protected const int DefaultFailingParseTestCode = 9;
+        protected static readonly MessageCode DefaultFailingParseTestCode = MessageCode.ParseError;
         
-        protected static IEnumerable GenerateTestData(string testKind, string directory, int? defaultExpectedErrorCode)
+        protected static IEnumerable GenerateTestData(string testKind, string directory, MessageCode? defaultExpectedErrorCode)
         {
             var files = new DirectoryInfo(directory).GetFiles("*.ele", SearchOption.AllDirectories);
             foreach (var file in files)
@@ -28,24 +26,22 @@ namespace Laboratory.Tests
                 };
 
                 var expectedMessageCode = expectedResult
-                    ? (int?) null
+                    ? (MessageCode?) null
                     : int.TryParse(match.Groups["value"].Value, out var code)
-                        ? code
-                        : defaultExpectedErrorCode ??
-                          throw new ArgumentNullException(nameof(defaultExpectedErrorCode),
-                              $"Error code must be specified explicitly for {testKind} tests");
+                        ? (MessageCode)code
+                        : defaultExpectedErrorCode
+                          ?? throw new ArgumentNullException(nameof(defaultExpectedErrorCode), $"Error code must be specified explicitly for {testKind} tests");
   
                 yield return new TestCaseData((file, expectedMessageCode)).SetName($"{testKind}{file.FullName.Split(directory)[1]}");
             }
         }
         
-        public void SyntaxTest((FileInfo, int?) info, bool skipValidation)
+        public void SyntaxTest((FileInfo ParseTestFile, MessageCode? ExpectedMessageCode) info, bool skipValidation)
         {
             var (fileInfo, messageCode) = info;
             var expectingError = messageCode.HasValue;
             
-            var messages = new List<CompilerMessage>();
-            var compilationInput = new CompilationInput(CacheMessage(messages))
+            var compilationInput = new CompilationInput
             {
                 ExcludePrelude = true,
                 ExtraSourceFiles = new[]{fileInfo},
@@ -53,11 +49,11 @@ namespace Laboratory.Tests
                 NoParseTrace = expectingError
             };
             
-            var success = Host.Parse(compilationInput);
-            if(expectingError)
-                ExpectingError(messages, success, messageCode.Value);
+            var result = Host.Parse(compilationInput);
+            if (expectingError)
+                ExpectingError(result.Messages, result.IsSuccess, messageCode!.Value);
             else
-                ExpectingSuccess(messages, success);
+                ExpectingSuccess(result.Messages, result.IsSuccess);
         }
     }
 }

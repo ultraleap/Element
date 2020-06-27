@@ -1,3 +1,4 @@
+using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L2.Semantics
@@ -22,6 +23,6 @@ namespace Laboratory.Tests.L2.Semantics
         public void EIsC() => AssertApproxEqual(CompilationInput, "e", "c");
 
         [Test]
-        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, 11, "f");
+        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.CircularCompilation, "f");
     }
 }

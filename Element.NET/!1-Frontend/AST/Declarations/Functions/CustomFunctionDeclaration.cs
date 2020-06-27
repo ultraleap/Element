@@ -2,14 +2,11 @@ using System.Collections.Generic;
 
 namespace Element.AST
 {
-    public class CustomFunctionDeclaration : FunctionDeclaration
+    public class CustomFunctionSignatureDeclaration : FunctionSignatureDeclaration
     {
         protected override string IntrinsicQualifier => string.Empty;
         protected override Identifier[] ScopeIdentifierWhitelist { get; } = {Parser.ReturnIdentifier};
-
-
-        public override IReadOnlyList<Port> Inputs => DeclaredInputs;
-        public override Port Output => DeclaredOutput;
+        
         protected override void AdditionalValidation(ResultBuilder builder)
         {
             if (Body is Terminal)

@@ -1,4 +1,3 @@
-using System;
 using Lexico;
 
 namespace Element.AST
@@ -6,7 +5,7 @@ namespace Element.AST
     // ReSharper disable once ClassNeverInstantiated.Global
     public class TypeAnnotation : Declared
     {
-        private IConstraint? _constraint;
+        private IValue? _constraint;
 
 #pragma warning disable 169, 8618
         [Literal(":"), WhitespaceSurrounded, MultiLine] private Unnamed _;
@@ -18,17 +17,12 @@ namespace Element.AST
 
         public override string ToString() => $":{Expression}";
         
-        public Result<IConstraint> ResolveConstraint(IScope scope, CompilationContext context) =>
+        public Result<IValue> ResolveConstraint(IScope scope, CompilationContext context) =>
             _constraint != null
-                ? new Result<IConstraint>(_constraint)
-                : Expression.ResolveExpression(scope, context).Bind(value => value switch
-                {
-                    IConstraint constraint => new Result<IConstraint>(_constraint = constraint),
-                    {} notConstraint => context.Trace(MessageCode.InvalidExpression, $"'{notConstraint}' is not a constraint"),
-                    _ => throw new ArgumentOutOfRangeException()
-                });
+                ? new Result<IValue>(_constraint)
+                : Expression.ResolveExpression(scope, context).Map(value => _constraint = value);
 
-        protected override void InitializeImpl(IIntrinsicCache? cache) => Expression.Initialize(Declarer, cache);
+        protected override void InitializeImpl() => Expression.Initialize(Declarer);
         
         public override void Validate(ResultBuilder resultBuilder) {} // TODO: Disallow complex expressions e.g. calls
     }

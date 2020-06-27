@@ -4,31 +4,20 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class ForIntrinsic : IntrinsicFunction
+    public sealed class ForIntrinsic : IntrinsicFunctionSignature
     {
         private ForIntrinsic()
         {
             Identifier = new Identifier("for");
-            Inputs = new[]
-            {
-                new Port(_initialIdentifier, SerializableConstraint.Instance),
-                new Port(_conditionIdentifier, PredicateFunctionConstraint.Instance),
-                new Port(_bodyIdentifier, FunctionConstraint.Instance)
-            };
-            Output = Port.ReturnPort(AnyConstraint.Instance);
         }
 
         public static ForIntrinsic Instance { get; } = new ForIntrinsic();
 
-        private static readonly Identifier _initialIdentifier = new Identifier("initial");
-        private static readonly Identifier _conditionIdentifier = new Identifier("condition");
-        private static readonly Identifier _bodyIdentifier = new Identifier("body");
-
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
         {
-            var initial = (ISerializableValue) arguments[0];
-            var condition = (IFunction) arguments[1];
-            var body = (IFunction) arguments[2];
+            var initial = arguments[0];
+            var condition = (IFunctionSignature) arguments[1];
+            var body = (IFunctionSignature) arguments[2];
 
             Result<Element.Expression> Condition(ReadOnlyCollection<State> state) =>
                 initial.Deserialize(state, context)
@@ -46,9 +35,6 @@ namespace Element.AST
                           .Bind(loop => initial.Deserialize(Enumerable.Range(0, loop.Size).Select(i => new ExpressionGroupElement(loop, i)), context))
                           .Cast<IValue>(context);
         }
-
-        public override IReadOnlyList<Port> Inputs { get; }
-        public override Port Output { get; }
         public override Identifier Identifier { get; }
     }
 }

@@ -1,3 +1,4 @@
+using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L2.Semantics
@@ -20,7 +21,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void ConstraintChecking(string expression, bool succeeds)
         {
             if (succeeds) AssertApproxEqual(CompilationInput, expression, "5");
-            else EvaluateExpectingErrorCode(CompilationInput, 8, expression);
+            else EvaluateExpectingErrorCode(CompilationInput, MessageCode.ConstraintNotSatisfied, expression);
         }
 
         [TestCase("explicitAny", "explicitAny:Function")]
@@ -39,6 +40,6 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("Num")]
         [TestCase("Any")]
         [TestCase("onlyNum")]
-        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilationInput, 1, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.SerializationError, expression);
     }
 }

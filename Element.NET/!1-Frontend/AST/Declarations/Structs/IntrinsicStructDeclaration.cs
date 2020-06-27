@@ -17,7 +17,7 @@ namespace Element.AST
             builder.Append(IntrinsicCache.Get<IntrinsicType>(Identifier, builder.Trace));
         }
 
-        private IntrinsicType Implementation
+        public IntrinsicType ImplementingIntrinsic
         {
             get
             {
@@ -27,9 +27,8 @@ namespace Element.AST
             }
         }
         
-        public override IReadOnlyList<Port> Fields => Implementation.Fields;
-        public override Result<ISerializableValue> DefaultValue(CompilationContext context) => Implementation.DefaultValue(context);
-        public override Result<IValue> Call(IReadOnlyList<IValue> fields, CompilationContext context) => Implementation.Construct(fields, context);
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => Implementation.MatchesConstraint(value, context);
+        public override Result<IValue> DefaultValue(CompilationContext context) => ImplementingIntrinsic.DefaultValue(context);
+        public override Result<IValue> Call(IReadOnlyList<IValue> fields, CompilationContext context) => ImplementingIntrinsic.Construct(this, fields, context);
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => ImplementingIntrinsic.MatchesConstraint(this, value, context);
     }
 }

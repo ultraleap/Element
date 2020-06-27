@@ -46,7 +46,7 @@ namespace Alchemist
 		public int Invoke(string args)
 		{
 			Log(args);
-			var (exitCode, result) = CommandImplementation(new CompilationInput(Log)
+			var result = CommandImplementation(new CompilationInput
 			{
 				Debug = Debug,
 				SkipValidation = _skipValidation,
@@ -56,8 +56,12 @@ namespace Alchemist
 				Packages = Packages.Select(GetPackageDirectories).ToList(),
 				ExtraSourceFiles = ExtraSourceFiles.Select(file => new FileInfo(file)).ToList()
 			});
-			Log(result);
-			return exitCode;
+			foreach (var msg in result.Messages)
+			{
+				Log(msg.ToString());
+			}
+			if (result.IsSuccess) Log(result.ResultOr(string.Empty));
+			return result.IsSuccess ? 0 : 1;
 		}
 
 		private void Log(string message, MessageLevel? level = default) => Log(new CompilerMessage(message, level));
@@ -69,6 +73,6 @@ namespace Alchemist
 			else Console.WriteLine(msg);
 		}
 
-		protected abstract (int ExitCode, string Result) CommandImplementation(CompilationInput input);
+		protected abstract Result<string> CommandImplementation(CompilationInput input);
 	}
 }

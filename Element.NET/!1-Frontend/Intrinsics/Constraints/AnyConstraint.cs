@@ -5,9 +5,12 @@ namespace Element.AST
     /// </summary>
     public sealed class AnyConstraint : IntrinsicConstraint
     {
-        private AnyConstraint() {}
+        private AnyConstraint()
+        {
+            Identifier = new Identifier("Any");
+        }
         public static AnyConstraint Instance { get; } = new AnyConstraint();
         public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => true;
-        public override Identifier Identifier => new Identifier("Any");
+        public override Identifier Identifier { get; }
     }
 }

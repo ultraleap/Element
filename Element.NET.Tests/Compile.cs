@@ -43,144 +43,151 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         private delegate MyCustomElementStruct CustomStructDelegateNoArgs();
         private delegate MyCustomElementStruct CustomStructDelegate(float f, Vector3 v3);
 
-        private TDelegate CompileAs<TDelegate>(SourceContext context, string expression, out float[] arguments) where TDelegate : Delegate
-        {
-            var function = context.EvaluateExpressionAs<IFunctionSignature>(expression, out var compilationContext);
-            var fnWithSourcedArgs = function.SourceArgumentsFromSerializedArray(out arguments, compilationContext);
-            var fn = fnWithSourcedArgs.Compile<TDelegate>(compilationContext);
-            return fn;
-        }
+        private static Result<(TDelegate Delegate, float[] ArgumentArray)> CompileAndSourceArguments<TDelegate>(SourceContext context, string expression)
+            where TDelegate : Delegate =>
+            context.EvaluateExpression(expression)
+                   .Cast<IFunctionSignature>(context)
+                   .Bind(function => function.SourceArgumentsFromSerializedArray(new CompilationContext(context)))
+                   .Bind(tuple =>
+                   {
+                       var (capturingValue, captureArray) = tuple;
+                       return capturingValue.Compile<TDelegate>(new CompilationContext(context))
+                                            .Map(compiled => (compiled, captureArray));
+                   });
         
-        private TDelegate CompileAs<TDelegate>(SourceContext context, string expression) where TDelegate : Delegate
-        {
-            var function = context.EvaluateExpressionAs<IValue>(expression, out var compilationContext);
-            var fn = function.Compile<TDelegate>(compilationContext);
-            return fn;
-        }
+        private void CompileWithSourcedArgsAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate, float[]> checkFunc)
+            where TDelegate : Delegate =>
+            CompileAndSourceArguments<TDelegate>(sourceContext, expression)
+                .Match((t, messages) =>
+                {
+                    LogMessages(messages);
+                    checkFunc(t.Delegate, t.ArgumentArray);
+                }, messages => ExpectingSuccess(messages, false));
         
+        private static Result<TDelegate> CompileDelegate<TDelegate>(SourceContext context, string expression)
+            where TDelegate : Delegate =>
+            context.EvaluateExpression(expression)
+                   .Bind(fn => fn.Compile<TDelegate>(new CompilationContext(context)));
+        
+        private void CompileAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate> checkFunc)
+            where TDelegate : Delegate =>
+            CompileDelegate<TDelegate>(sourceContext, expression)
+                .Match((fn, messages) =>
+                {
+                    LogMessages(messages);
+                    checkFunc(fn);
+                }, messages => ExpectingSuccess(messages, false));
+
+        private void CompileAndCheck<TDelegate>(string expression, Action<TDelegate> checkFunc) where TDelegate : Delegate => CompileAndCheck(MakeSourceContext(), expression, checkFunc);
+
         [Test]
-        public void ConstantPi()
-        {
-            var pi = CompileAs<Constant>(MakeSourceContext(), "Num.pi");
-            Assert.AreEqual(3.14159265359f, pi());
-        }
-        
+        public void ConstantPi() => CompileAndCheck<Constant>("Num.pi", piFn => Assert.AreEqual(3.14159265359f, piFn()));
+
         [Test]
-        public void BinaryAdd()
-        {
-            var add = CompileAs<BinaryOp>(MakeSourceContext(), "Num.add");
-            Assert.AreEqual(11f, add(3f, 8f));
-        }
+        public void BinaryAdd() => CompileAndCheck<BinaryOp>("Num.add", addFn => Assert.AreEqual(11f, addFn(3f, 8f)));
 
         [Test]
         public void CompileBinaryAsUnaryFails()
         {
-            DoExpectingMessageCode(10, src =>
-            {
-                var fn = CompileAs<UnaryOp>(src,"Num.add");
-                return fn != null;
-            });
+            var fn = CompileDelegate<UnaryOp>(MakeSourceContext(), "Num.add");
+            ExpectingError(fn.Messages, fn.IsSuccess, MessageCode.InvalidBoundaryFunction);
         }
         
         [Test]
         public void CompileUnaryAsBinaryFails()
         {
-            DoExpectingMessageCode(10, src =>
-            {
-                var fn = CompileAs<BinaryOp>(src, "Num.sqr");
-                return fn != null;
-            });
+            var fn = CompileDelegate<BinaryOp>(MakeSourceContext(), "Num.sqr");
+            ExpectingError(fn.Messages, fn.IsSuccess, MessageCode.InvalidBoundaryFunction);
         }
 
         [Test]
-        public void ListWithStaticCount() => Assert.AreEqual(20f, CompileAs<Constant>(MakeSourceContext(), "List.repeat(4, 5).fold(0, Num.add)")());
+        public void ListWithStaticCount() => CompileAndCheck<Constant>("List.repeat(4, 5).fold(0, Num.add)", fn => Assert.AreEqual(20f, fn()));
 
         private static readonly int[] _dynamicListCounts = Enumerable.Repeat(1, 20).ToArray();
 
         [TestCaseSource(nameof(_dynamicListCounts))]
-        public void ListWithDynamicCount(int count)
-        {
-            var dynamicList = CompileAs<UnaryOp>(MakeSourceContext(), "_(a:Num):Num = List.repeat(1, a).fold(0, Num.add)");
-            Assert.AreEqual(count, dynamicList(count));
-        }
+        public void ListWithDynamicCount(int count) => CompileAndCheck<UnaryOp>("_(a:Num):Num = List.repeat(1, a).fold(0, Num.add)", fn => Assert.AreEqual(count, fn(count)));
 
         [Test]
         public void NoObjectBoundaryConverter()
         {
-            DoExpectingMessageCode(12, src =>
+            var fn = CompileDelegate<InvalidDelegate>(MakeSourceContext(), "Num.sqr");
+            ExpectingError(fn.Messages, fn.IsSuccess, MessageCode.MissingBoundaryConverter);
+        }
+
+        [Test]
+        public void TopLevelList() =>
+            CompileAndCheck<IndexArray>("_(list:List, idx:Num):Num = list.at(idx)", fn =>
             {
-                var fn = CompileAs<InvalidDelegate>(src, "Num.sqr");
-                return fn != null;
+                var thirdElement = fn(new List<float> {1f, 4f, 7f, -3f}, 3);
+                Assert.AreEqual(7f, thirdElement);
             });
-        }
 
         [Test]
-        public void TopLevelList()
-        {
-            var fn = CompileAs<IndexArray>(MakeSourceContext(), "_(list:List, idx:Num):Num = list.at(idx)");
-            var thirdElement = fn(new List<float> {1f, 4f, 7f, -3f}, 3);
-            Assert.AreEqual(7f, thirdElement);
-        }
+        public void IntermediateStructVectorAdd() => CompileAndCheck<BinaryOp>("_(a:Num, b:Num):Num = Vector3(a, a, a).add(Vector3(b, b, b)).x", fn => Assert.AreEqual(15f, fn(5f, 10f)));
 
         [Test]
-        public void IntermediateStructVectorAdd()
-        {
-            var fn = CompileAs<BinaryOp>(MakeSourceContext(extraSource: _compileSource), "_(a:Num, b:Num):Num = Vector3(a, a, a).add(Vector3(b, b, b)).x");
-            var result = fn(5f, 10f);
-            Assert.AreEqual(15f, result);
-        }
-        
-        [Test]
-        public void StructVectorAdd()
-        {
-            var fn = CompileAs<VectorOperation>(MakeSourceContext(extraSource: _compileSource), "Vector3.add");
-            var result = fn(new Vector3(5f), new Vector3(10f));
-            Assert.AreEqual(15f, result.X);
-        }
+        public void StructVectorAdd() =>
+            CompileAndCheck<VectorOperation>(MakeSourceContext(extraSource: _compileSource),
+                                             "Vector3.add",
+                                             fn =>
+                                             {
+                                                 var result = fn(new Vector3(5f), new Vector3(10f));
+                                                 Assert.AreEqual(15f, result.X);
+                                             });
 
         [Test]
-        public void MakeCustomStructInstance()
-        {
-            var fn = CompileAs<CustomStructDelegate>(MakeSourceContext(extraSource: _compileSource), "_(f:Num, v3:Vector3):MyCustomElementStruct = MyCustomElementStruct(f, v3)");
-            var result = fn(5f, new Vector3(10f));
-            Assert.AreEqual(5f, result.floatField);
-            Assert.AreEqual(10f, result.vector3Field.X);
-        }
+        public void MakeCustomStructInstance() => 
+            CompileAndCheck<CustomStructDelegate>(MakeSourceContext(extraSource: _compileSource),
+                                                  "_(f:Num, v3:Vector3):MyCustomElementStruct = MyCustomElementStruct(f, v3)",
+                                                  fn =>
+                                                  {
+                                                      var result = fn(5f, new Vector3(10f));
+                                                      Assert.AreEqual(5f, result.floatField);
+                                                      Assert.AreEqual(10f, result.vector3Field.X);
+                                                  });
 
-        private static string _customStructOperationSource = @"_(f:Num, v3:Vector3):MyCustomElementStruct
+        private static string _customStructOperationSource = @"
+_(f:Num, v3:Vector3):MyCustomElementStruct
 {
     fsqr = f.sqr;
     vadded = v3.add(Vector3(fsqr, fsqr, fsqr));
     return = MyCustomElementStruct(fsqr, vadded);
-}";
-        
-        [Test]
-        public void CustomStructOperations()
-        {
-            var fn = CompileAs<CustomStructDelegate>(MakeSourceContext(extraSource: _compileSource), _customStructOperationSource);
-            var result = fn(5f, new Vector3(3f, 6f, -10f));
-            Assert.AreEqual(25f, result.floatField);
-            Assert.AreEqual(28f, result.vector3Field.X);
-            Assert.AreEqual(31f, result.vector3Field.Y);
-            Assert.AreEqual(15f, result.vector3Field.Z);
-        }
+}
+";
 
         [Test]
-        public void SourceArgumentFromSerializedArray()
-        {
-            var fn = CompileAs<CustomStructDelegateNoArgs>(MakeSourceContext(extraSource: _compileSource), _customStructOperationSource, out var args);
-            Assert.AreEqual(4, args.Length);
-            args[0] = 5f;
-            args[1] = 3f;
-            args[2] = 6f;
-            args[3] = -10f;
-            var result = fn();
+        public void CustomStructOperations() =>
+            CompileAndCheck<CustomStructDelegate>(MakeSourceContext(extraSource: _compileSource),
+                                                  _customStructOperationSource,
+                                                  fn =>
+                                                  {
+                                                      var result = fn(5f, new Vector3(3f, 6f, -10f));
+                                                      Assert.AreEqual(25f, result.floatField);
+                                                      Assert.AreEqual(28f, result.vector3Field.X);
+                                                      Assert.AreEqual(31f, result.vector3Field.Y);
+                                                      Assert.AreEqual(15f, result.vector3Field.Z);
+                                                  });
+
+        [Test]
+        public void SourceArgumentFromSerializedArray() =>
+            CompileWithSourcedArgsAndCheck<CustomStructDelegateNoArgs>(MakeSourceContext(extraSource: _compileSource),
+                                                        _customStructOperationSource,
+                                                        (fn, args) =>
+                                                        {
+                                                            Assert.AreEqual(4, args.Length);
+                                                            args[0] = 5f;
+                                                            args[1] = 3f;
+                                                            args[2] = 6f;
+                                                            args[3] = -10f;
+                                                            
+                                                            var result = fn();
             
-            Assert.AreEqual(25f, result.floatField);
-            Assert.AreEqual(28f, result.vector3Field.X);
-            Assert.AreEqual(31f, result.vector3Field.Y);
-            Assert.AreEqual(15f, result.vector3Field.Z);
-        }
+                                                            Assert.AreEqual(25f, result.floatField);
+                                                            Assert.AreEqual(28f, result.vector3Field.X);
+                                                            Assert.AreEqual(31f, result.vector3Field.Y);
+                                                            Assert.AreEqual(15f, result.vector3Field.Z);
+                                                        });
 
         private static readonly (float, float)[] _factorialArguments =
         {
@@ -199,10 +206,8 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         };
 
         [TestCaseSource(nameof(_factorialArguments))]
-        public void FactorialUsingFor((float fac, float result) f)
-        {
-            var fn = CompileAs<UnaryOp>(MakeSourceContext(), "_(a:Num):Num = for(Tuple(a, 1), _(tup):Bool = tup.varg0.gt(0), _(tup) = Tuple(tup.varg0.sub(1), tup.varg1.mul(tup.varg0))).varg1");
-            Assert.AreEqual(f.result, fn(f.fac));
-        }
+        public void FactorialUsingFor((float fac, float result) f) =>
+            CompileAndCheck<UnaryOp>("_(a:Num):Num = for(Tuple(a, 1), _(tup):Bool = tup.varg0.gt(0), _(tup) = Tuple(tup.varg0.sub(1), tup.varg1.mul(tup.varg0))).varg1",
+                                     fn => Assert.AreEqual(f.result, fn(f.fac)));
     }
 }

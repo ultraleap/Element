@@ -5,27 +5,16 @@ using Element.AST;
 
 namespace Element
 {
-    public interface IIntrinsicCache
-    {
-        Result<TDeclaration> GetIntrinsic<TDeclaration>(Identifier intrinsicIdentifier) where TDeclaration : Declaration;
-        void CacheIntrinsicDeclaration(Declaration declaration);
-    }
-    
-    public class SourceContext : IIntrinsicCache, ITrace
+    public class SourceContext : TraceBase
     {
         private SourceContext(CompilationInput compilationInput)
         {
             CompilationInput = compilationInput;
         }
         
-        internal GlobalScope GlobalScope { get; } = new GlobalScope();
+        public GlobalScope GlobalScope { get; } = new GlobalScope();
         public CompilationInput CompilationInput { get; }
         
-        public CompilerMessage? Trace(MessageCode messageCode, string? context)=>
-            CompilerMessage.TryGetMessageLevel((int)messageCode, out var level)
-            && CompilationInput.Verbosity >= level
-                ? new CompilerMessage(messageCode, context)
-                : null;
 
         public static Result<SourceContext> Create(CompilationInput compilationInput)
         {
@@ -37,35 +26,30 @@ namespace Element
             Parser.Parse<AST.Expression>(expression, this, CompilationInput.NoParseTrace)
                   .Bind(expressionObject =>
                   {
-                      expressionObject.InitializeUsingStubDeclaration(expression, GlobalScope, this);
+                      expressionObject.InitializeUsingStubDeclaration(expression, GlobalScope);
                       var validationResultBuilder = new ResultBuilder(this);
                       expressionObject.Validate(validationResultBuilder);
                       return validationResultBuilder.ToResult()
                                           .Bind(() => expressionObject.ResolveExpression(GlobalScope, new CompilationContext(this)));
                   });
 
-        public Result<TValue> EvaluateExpressionAs<TValue>(string expression)
-            where TValue : class, IValue =>
-            EvaluateExpression(expression).Bind(v => v is TValue value
-                                                         ? (Result<TValue>)value
-                                                         : Trace(MessageCode.InvalidExpression, $"'{v}' is not a '{typeof(TValue)}'"));
+        public Result<SourceContext> LoadElementSourceFile(FileInfo file) => LoadElementSourceString(new SourceInfo(file.FullName, File.ReadAllText(file.FullName)));
 
-        public Result LoadElementSourceFile(FileInfo file) => LoadElementSourceString(new SourceInfo(file.FullName, File.ReadAllText(file.FullName)));
-
-        public Result LoadElementSourceString(SourceInfo info) =>
+        public Result<SourceContext> LoadElementSourceString(SourceInfo info) =>
             GlobalScope.ContainsSource(info.Name)
                 ? Trace(MessageCode.DuplicateSourceFile, $"'{info.Name}' already added")
                 : Parser.Parse<SourceBlob>(info.PreprocessedText, this, CompilationInput.NoParseTrace)
                         .Do(sourceScope =>
                         {
-                            sourceScope.Initialize(in info, GlobalScope, this);
+                            sourceScope.Initialize(in info, GlobalScope);
                             return GlobalScope.AddSource(info.Name, sourceScope, this);
-                        });
+                        })
+                        .Map(() => this);
 
         /// <summary>
         /// Parses all the given files as Element source files into the source context
         /// </summary>
-        public Result LoadElementSourceFiles(IEnumerable<FileInfo> files) => files.Select(LoadElementSourceFile).Fold();
+        public Result<SourceContext> LoadElementSourceFiles(IEnumerable<FileInfo> files) => files.Select(LoadElementSourceFile).Fold().Map(() => this);
         
         public Result ApplyExtraInput(CompilationInput input)
         {
@@ -82,45 +66,6 @@ namespace Element
         private static readonly LambdaEqualityComparer<DirectoryInfo> _directoryComparer = new LambdaEqualityComparer<DirectoryInfo>((a, b) => a.FullName == b.FullName, info => info.GetHashCode());
         private static readonly LambdaEqualityComparer<FileInfo> _fileComparer = new LambdaEqualityComparer<FileInfo>((a, b) => a.FullName == b.FullName, info => info.GetHashCode());
         private static readonly object _syncRoot = new object();
-
-        private readonly Dictionary<string, Declaration> _intrinsicDeclarations = new Dictionary<string, Declaration>();
-        private readonly Dictionary<string, List<Declaration>> _multiplyDefinedIntrinsics = new Dictionary<string, List<Declaration>>();
-
-        public Result<TDeclaration> GetIntrinsic<TDeclaration>(Identifier intrinsicIdentifier)
-            where TDeclaration : Declaration
-        {
-            var result = _intrinsicDeclarations.TryGetValue(intrinsicIdentifier, out var declaration)
-                             ? declaration is TDeclaration decl
-                                   ? new Result<TDeclaration>(decl)
-                                   : Trace(MessageCode.TypeError, $"Found intrinsic '{intrinsicIdentifier}' but it is not a '{typeof(TDeclaration)}'")
-                             : Trace(MessageCode.IntrinsicNotFound, $"No intrinsic '{intrinsicIdentifier}' in cache");
-            return _multiplyDefinedIntrinsics.TryGetValue(intrinsicIdentifier, out var declarations)
-                ? new Result<TDeclaration>(result, Trace(MessageCode.MultipleIntrinsicLocations, $"Intrinsic '{intrinsicIdentifier}' is defined in multiple locations Locations:\n{string.Join("    \\n", declarations.Select(d => d.Location))}"))
-                : result;
-        }
-
-        void IIntrinsicCache.CacheIntrinsicDeclaration(Declaration declaration)
-        {
-            if (_intrinsicDeclarations.ContainsKey(declaration.Identifier))
-            {
-                if (_multiplyDefinedIntrinsics.TryGetValue(declaration.Identifier, out var declarations))
-                {
-                    declarations.Add(declaration);
-                }
-                else
-                {
-                    _multiplyDefinedIntrinsics.Add(declaration.Identifier, new List<Declaration>
-                    {
-                        _intrinsicDeclarations[declaration.Identifier], // The one we already cached
-                        declaration // The second one we just discovered
-                    });
-                }
-            }
-            else
-            {
-                _intrinsicDeclarations[declaration.Identifier] = declaration;
-            }
-        }
         
         private Result LoadPackagesAndExtraSourceFiles()
         {
@@ -150,12 +95,15 @@ namespace Element
                     }
                 }
                 
-                return LoadElementSourceFiles(CompilationInput.Packages
+                return (Result)LoadElementSourceFiles(CompilationInput.Packages
                                                               .SelectMany(LoadPackage)
                                                               .Concat(preludeSourceFiles)
                                                               .Concat(CompilationInput.ExtraSourceFiles)
                                                               .Distinct(_fileComparer));
             }
         }
+
+        public override MessageLevel Verbosity => CompilationInput.Verbosity;
+        public override IReadOnlyCollection<TraceSite>? TraceStack => null;
     }
 }

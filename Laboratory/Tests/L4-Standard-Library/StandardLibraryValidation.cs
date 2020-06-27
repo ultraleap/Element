@@ -6,10 +6,18 @@ namespace Laboratory.Tests.L4.StandardLibrary
     {
         [Test]
         // Evaluates an arbitrary expression since creating the prelude will be parsed implicitly when not excluded
-        public void Parse() => Assert.True(Host.Parse(NonValidatedCompilationInput));
-        
+        public void Parse()
+        {
+            var result = Host.Parse(NonValidatedCompilationInput);
+            ExpectingSuccess(result.Messages, result.IsSuccess);
+        }
+
         [Test]
         // Evaluates an arbitrary expression since creating the prelude will be parsed implicitly when not excluded
-        public void Validate() =>  Assert.True(Host.Parse(ValidatedCompilationInput));
+        public void Validate()
+        {
+            var result = Host.Parse(ValidatedCompilationInput);
+            ExpectingSuccess(result.Messages, result.IsSuccess);
+        }
     }
 }

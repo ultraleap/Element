@@ -10,9 +10,9 @@ namespace Element.AST
             builder.Append(IntrinsicCache.Get<IntrinsicConstraint>(Identifier, builder.Trace));
         }
 
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => Implementation.MatchesConstraint(value, context);
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => ImplementingIntrinsic.MatchesConstraint(value, context);
         
-        private IntrinsicConstraint Implementation
+        public IntrinsicConstraint ImplementingIntrinsic
         {
             get
             {
