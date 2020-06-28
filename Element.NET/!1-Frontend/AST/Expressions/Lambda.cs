@@ -20,8 +20,6 @@ namespace Element.AST
 
         public IScope DeclaringScope { get; private set; }
 #pragma warning restore 8618
-        
-        public Result<IFunctionSignature> GetUniqueIdentifier(CompilationContext compilationContext) => this;
 
         protected override void InitializeImpl()
         {
