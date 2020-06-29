@@ -6,7 +6,7 @@ using Lexico;
 namespace Element.AST
 {
     [WhitespaceSurrounded, MultiLine]
-    public abstract class Declaration : Value, IDeclared
+    public abstract class Declaration : IDeclared, IExpression
     {
 #pragma warning disable 649, 8618
         // ReSharper disable UnassignedField.Global
@@ -27,7 +27,11 @@ namespace Element.AST
         // ReSharper restore UnusedMember.Global
 
         public abstract override string ToString();
-        
+        public Result<IValue> Resolve(IScope scope, CompilationContext compilationContext)
+        {
+            throw new NotImplementedException();
+        }
+
         internal void Initialize(in SourceInfo info, IScope parent)
         {
             SourceInfo = info;

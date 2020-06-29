@@ -29,10 +29,8 @@ namespace Element.AST
         }
 
         protected override Result<IValue> SubExpressionImpl(IValue previous, IScope scope, CompilationContext compilationContext) =>
-            previous is IFunctionSignature function
-                ? Expressions.List
-                             .Select(argExpr => argExpr.ResolveExpression(scope, compilationContext))
-                             .BindEnumerable(args => function.Call(args.ToArray(), compilationContext))
-                : compilationContext.Trace(MessageCode.InvalidExpression, $"{previous} cannot be called - it is not a function");
+            Expressions.List
+                       .Select(argExpr => argExpr.ResolveExpression(scope, compilationContext))
+                       .BindEnumerable(args => previous.Call(args.ToArray(), compilationContext));
     }
 }

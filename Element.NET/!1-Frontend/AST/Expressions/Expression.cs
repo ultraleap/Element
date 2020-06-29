@@ -4,7 +4,7 @@ namespace Element.AST
 {
     public interface IExpression
     {
-        Result<IValue> ResolveExpression(IScope scope, CompilationContext compilationContext);
+        Result<IValue> Resolve(IScope scope, CompilationContext compilationContext);
     }
     
     [WhitespaceSurrounded, MultiLine]

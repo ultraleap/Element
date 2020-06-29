@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Element.AST
 {
-    public abstract class StructDeclaration : Declaration, IScope, IFunctionSignature
+    public abstract class StructDeclaration : Declaration
     {
         protected override string Qualifier { get; } = "struct";
         protected override Type[] BodyAlternatives { get; } = {typeof(Block), typeof(Terminal)};

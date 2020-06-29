@@ -18,7 +18,6 @@ namespace Element.AST
                          .Cast<StructInstance>(context)
                          // Get the option lists indexer (field 0)
                          .Bind(optionListInstance => optionListInstance.Index(ListType.IndexerId, context))
-                         .Cast<IFunctionSignature>(context)
                          // Call the list indexer to get option 0 if true or option 1 if false.
                          .Bind(optionListIndexer => optionListIndexer.Call(new IValue[] {arguments[0] == Constant.True ? Constant.Zero : Constant.One}, context));
     }

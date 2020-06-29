@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Element.AST
 {
-    public abstract class FunctionSignatureDeclaration : Declaration, IFunctionSignature
+    public abstract class FunctionSignatureDeclaration : Declaration
     {
         protected override string Qualifier => string.Empty; // Functions don't have a qualifier
         protected override Type[] BodyAlternatives { get; } = {typeof(Binding), typeof(Block), typeof(Terminal)};

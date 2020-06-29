@@ -16,8 +16,8 @@ namespace Element.AST
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
         {
             var initial = arguments[0];
-            var condition = (IFunctionSignature) arguments[1];
-            var body = (IFunctionSignature) arguments[2];
+            var condition = arguments[1];
+            var body = arguments[2];
 
             Result<Element.Expression> Condition(ReadOnlyCollection<State> state) =>
                 initial.Deserialize(state, context)

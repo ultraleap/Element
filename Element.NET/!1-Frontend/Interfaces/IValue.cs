@@ -16,12 +16,17 @@ namespace Element.AST
         void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder);
         Result<IValue> Deserialize(Func<Element.Expression> nextValue, ITrace trace);
     }
+
+    public interface IConstraint
+    {
+        Result<bool> MatchesConstraint(IValue value, CompilationContext context);
+    }
     
     public interface IFunctionSignature
     {
         Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
-        IReadOnlyList<Port> Inputs { get; }
-        Port Output { get; }
+        IReadOnlyList<IConstraint> Inputs { get; }
+        IConstraint Output { get; }
     }
 
     public abstract class Value : IValue
@@ -344,31 +349,17 @@ namespace Element.AST
                     return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
                 }
 
-                if (a.Inputs.Any(p => p == Port.VariadicPort))
+                // TODO: Disallow variadics as A
+                if ()
                 {
                     return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
-                }
-
-                if (a.Inputs.Concat(b.Inputs).Any(p => p?.Identifier == null))
-                {
-                    return trace.Trace(MessageCode.FunctionCannotBeUncurried, "Cannot uncurry functions with discarded/unnamed ports");
-                }
-
-                foreach (var aPort in a.Inputs)
-                {
-                    // TODO: Better solution to this error, it's very annoying to not be allowed to uncurry functions just because of port names!
-                    Identifier? id = null;
-                    if (b.Inputs.Skip(1).Any(bPort => aPort.Identifier.Equals(id = bPort.Identifier)))
-                    {
-                        return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"'{id}' is defined on both functions, these functions cannot be uncurried");
-                    }
                 }
                 
                 return new UncurriedFunctionSignature(a, b);
             }
 
-            public IReadOnlyList<Port> Inputs { get; }
-            public Port Output { get; }
+            public IReadOnlyList<IConstraint> Inputs { get; }
+            public IConstraint Output { get; }
             public override string ToString() => $"({_a} << {_b}):Function";
 
             public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>

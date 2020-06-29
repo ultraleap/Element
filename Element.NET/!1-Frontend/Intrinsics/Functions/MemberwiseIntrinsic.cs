@@ -14,7 +14,7 @@ namespace Element.AST
         public override Identifier Identifier { get; }
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
         {
-            var func = (IFunctionSignature)arguments[0];
+            var func = arguments[0];
             var structs = arguments.Skip(1).Select(arg => arg as StructInstance).ToArray();
             if (structs.Any(s => s == null)) return context.Trace(MessageCode.ConstraintNotSatisfied, "Memberwise can only be applied to struct instances");
             if (structs.Length < 1) return context.Trace(MessageCode.ConstraintNotSatisfied, "Memberwise requires at least 1 struct to apply the given function");
