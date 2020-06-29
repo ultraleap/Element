@@ -16,6 +16,7 @@
 #include "token_internal.hpp"
 #include "configuration.hpp"
 #include "obj_model/object_model.hpp"
+#include "obj_model/declarations.hpp"
 #include "obj_model/intermediaries.hpp"
 
 bool file_exists(const std::string& file)
@@ -717,8 +718,13 @@ element_result element_interpreter_evaluate(
     const element_evaluator_options* options,
     const element_evaluable* evaluable,
     const element_inputs* inputs,
-    const element_outputs* outputs)
+    element_outputs* outputs)
 {
+    element_evaluator_options opts{};
+
+    if (options)
+        opts = *options;
+
     if (!evaluable->evaluable)
     {
         assert(!"tried to evaluate something but it's nullptr");
@@ -728,23 +734,61 @@ element_result element_interpreter_evaluate(
     auto expr = std::dynamic_pointer_cast<element_expression>(evaluable->evaluable);
     if (!expr)
     {
-        assert(!"tried to evaluate something but it's not an element_expression");
-        return ELEMENT_ERROR_UNKNOWN;
+        //todo: this is a quick hack just to test basic structs
+        auto struct_instance = std::dynamic_pointer_cast<element::struct_instance>(evaluable->evaluable);
+        if (!struct_instance)
+        {
+            assert(!"tried to evaluate something but it's not an element_expression");
+            return ELEMENT_ERROR_UNKNOWN;
+        }
+
+        if (static_cast<int>(struct_instance->fields.size()) > outputs->count)
+        {
+            assert(!"tried to evaluate a struct but not enough output space to deserialize it");
+            return ELEMENT_ERROR_UNKNOWN;
+        }
+
+        int c = 0;
+
+        for (auto& f : struct_instance->fields)
+        {
+            auto field_expr = std::dynamic_pointer_cast<element_expression>(f.second);
+            if (!field_expr)
+            {
+                assert(!"tried to evaluate a struct instance but one of the fields is not an element_expression");
+                return ELEMENT_ERROR_UNKNOWN;
+            }
+
+            std::size_t one = 1;
+            const auto result = element_evaluate(
+                *context,
+                std::move(field_expr),
+                nullptr,
+                0,
+                &outputs->values[c],
+                one,
+                opts);
+            c++;
+
+            if (result != ELEMENT_OK) {
+                context->log(result, fmt::format("Failed to evaluate {}", f.second->to_string()), "<input>");
+            }
+        }
+
+        outputs->count = c;
+        return ELEMENT_OK;
     }
 
-    element_evaluator_options opts{};
-
-    if (options)
-        opts = *options;
-
+    std::size_t count = outputs->count;
     const auto result = element_evaluate(
         *context,
         std::move(expr),
         inputs->values,
         inputs->count,
         outputs->values,
-        outputs->count,
+        count,
         opts);
+    outputs->count = count;
 
     if (result != ELEMENT_OK) {
         context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->to_string()), "<input>");

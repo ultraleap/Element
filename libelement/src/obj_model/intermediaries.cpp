@@ -93,4 +93,12 @@ namespace element
 
         return const_cast<function_instance*>(this)->shared_from_this();
     }
+
+    std::shared_ptr<object> function_instance::index(const compilation_context& context, const identifier& name) const
+    {
+        //if we're a fully applied instance function (essentially a nullary), then we need to compile ourselves to index what we return
+        auto compiled = compile(context);
+        //because our compile can return ourselves we check it didn't before indexing it (infinite loops)
+        return compiled.get() == this ? nullptr : compiled->index(context, name);
+    }
 }

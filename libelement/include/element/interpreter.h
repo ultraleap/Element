@@ -114,7 +114,7 @@ element_result element_interpreter_evaluate(
     const element_evaluator_options* options,
     const element_evaluable* evaluable,
     const element_inputs* inputs,
-    const element_outputs* outputs);
+    element_outputs* outputs);
 
 element_result element_interpreter_evaluate_expression(
     element_interpreter_ctx* context,

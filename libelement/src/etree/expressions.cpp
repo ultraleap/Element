@@ -25,6 +25,13 @@ std::shared_ptr<element::object> element_expression::index(const element::compil
     assert(actual_type);
 
     const auto declarer = actual_type->index(context, identifier);
+
+    if (!declarer)
+    {
+        assert(!"failed to index on type, user error?");
+        return nullptr;
+    }
+
     auto args = std::vector<std::shared_ptr<object>>();
     args.push_back(const_cast<element_expression*>(this)->shared_from_this());
 
