@@ -72,10 +72,10 @@ namespace libelement::cli
 			input.values = inputs;
 			input.count = 2;
 
-			element_value outputs[1];
+			element_value outputs[512];
 			element_outputs output;
 			output.values = outputs;
-			output.count = 1;
+			output.count = 512;
 
 			result = element_interpreter_evaluate(context, nullptr, evaluable, &input, &output);
 			if (result != ELEMENT_OK) {

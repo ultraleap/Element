@@ -174,7 +174,7 @@ namespace libelement::cli
 				else
 					data += std::to_string(output.values[i]);
 
-				if (i >= output.count - 1)
+				if (output.count > 1 && i < output.count)
 					data += " ";
 			}
 			

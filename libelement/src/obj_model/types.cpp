@@ -31,7 +31,7 @@ namespace element
     {
         //todo: cache, but don't use static
         std::shared_ptr<declaration> declaration = context.get_global_scope()->find(num_type::identifier, false);
-
+        assert(declaration);
         return declaration->index(context, identifier);
     }
 
@@ -39,7 +39,7 @@ namespace element
     {
         //todo: cache, but don't use static
         std::shared_ptr<declaration> declaration = context.get_global_scope()->find(boolean_type::identifier, false);
-
+        assert(declaration);
         return declaration->index(context, identifier);
     }
 }

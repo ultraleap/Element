@@ -92,19 +92,22 @@ element_result element_evaluate(
     std::vector<element_value>& outputs,
     const element_evaluator_options opts)
 {
-    return element_evaluate(context, std::move(fn), inputs.data(), inputs.size(), outputs.data(), outputs.size(), std::move(opts));
+    auto size = outputs.size();
+    return element_evaluate(context, std::move(fn), inputs.data(), inputs.size(), outputs.data(), size, std::move(opts));
 }
 
 element_result element_evaluate(
     element_interpreter_ctx& context,
     expression_const_shared_ptr fn,
     const element_value* inputs, size_t inputs_count,
-    element_value* outputs, size_t outputs_count,
+    element_value* outputs, size_t& outputs_count,
     element_evaluator_options opts)
 {
     evaluator_ctx ectx = { inputs, inputs_count, std::move(opts) };
     size_t outputs_written = 0;
-    return do_evaluate(ectx, fn, outputs, outputs_count, outputs_written);
+    const auto result = do_evaluate(ectx, fn, outputs, outputs_count, outputs_written);
+    outputs_count = outputs_written;
+    return result;
 }
 
 element_value element_evaluate_nullary(element_expression_nullary::op op)

@@ -45,6 +45,7 @@ namespace element
         [[nodiscard]] static bool is_instance_function() { return true; }
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
   
         const function_declaration* const declarer;
         std::vector<std::shared_ptr<object>> provided_arguments;

@@ -17,7 +17,7 @@ element_result element_evaluate(
     element_interpreter_ctx& context,
     expression_const_shared_ptr fn,
     const element_value* inputs, size_t inputs_count,
-    element_value* outputs, size_t outputs_count,
+    element_value* outputs, size_t& outputs_count,
     element_evaluator_options opts);
 
 element_value element_evaluate_nullary(element_expression_nullary::op op);
