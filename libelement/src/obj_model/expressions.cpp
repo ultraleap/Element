@@ -69,7 +69,7 @@ namespace element
 
         auto found = enclosing_scope->find(identifier.value, false);
         if (found)
-            return found;
+            return found->compile(context);
 
         //todo: make it nice and on the callstack itself
         for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
@@ -91,7 +91,7 @@ namespace element
         //todo: this has to be merged with the callstack I think, i.e. each level of scopage has its own locals + arguments to do lookups with
         found = enclosing_scope->get_parent_scope()->find(identifier.value, true);
         if (found)
-            return found;
+            return found->compile(context);
 
         assert(false);
         throw;
@@ -173,8 +173,15 @@ namespace element
 }
 
 element_expression_if::element_expression_if(expression_shared_ptr predicate, expression_shared_ptr if_true, expression_shared_ptr if_false)
-    : element_expression(type_id, element::type::boolean)
+    : element_expression(type_id, nullptr)
 {
+    if (if_true->actual_type != if_false->actual_type)
+    {
+        assert(!"the resulting type of the two branches of an if-expression must be the same");
+    }
+
+    actual_type = if_true->actual_type;
+
     m_dependents.emplace_back(std::move(predicate));
     m_dependents.emplace_back(std::move(if_true));
     m_dependents.emplace_back(std::move(if_false));

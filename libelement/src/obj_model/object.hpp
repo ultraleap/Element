@@ -11,6 +11,7 @@
 #include "fwd.hpp"
 
 struct element_expression;
+struct element_interpreter_ctx;
 
 namespace element
 {
@@ -35,7 +36,7 @@ namespace element
         const scope* global_scope;
 
     public:
-        explicit compilation_context(const scope* scope);
+        explicit compilation_context(const scope* scope, element_interpreter_ctx* interpreter);
 
         [[nodiscard]] const scope* get_global_scope() const { return global_scope; }
         [[nodiscard]] bool is_recursive(const declaration* declaration) const
@@ -49,6 +50,7 @@ namespace element
             return false;
         }
         mutable call_stack stack;
+        element_interpreter_ctx* interpreter;
     };
 
     struct identifier

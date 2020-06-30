@@ -55,7 +55,7 @@ namespace element
         bool _intrinsic = false; //todo: we need to decide on coding standards, if our types are lowercase like our variables and functions, we need some way to differentiate them
     };
 
-    class struct_declaration final : public declaration
+    class struct_declaration final : public declaration, public std::enable_shared_from_this<struct_declaration>
     {
     public:
         struct_declaration(identifier identifier, const scope* parent_scope, bool is_intrinsic);
@@ -72,6 +72,7 @@ namespace element
 
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const element::identifier&) const override;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const final { return const_cast<struct_declaration*>(this)->shared_from_this(); }
     };
 
     class constraint_declaration final : public declaration
@@ -110,7 +111,7 @@ namespace element
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
     };
 
-    class namespace_declaration final : public declaration
+    class namespace_declaration final : public declaration, public std::enable_shared_from_this<namespace_declaration>
     {
     public:
         namespace_declaration(identifier identifier, const element::scope* parent_scope);
@@ -125,5 +126,7 @@ namespace element
         [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const element::identifier&) const override;
+        //todo: required because typeof does compilation, might need to change that?
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const final { return const_cast<namespace_declaration*>(this)->shared_from_this(); }
     };
 }

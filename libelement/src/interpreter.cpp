@@ -699,7 +699,7 @@ element_result element_interpreter_compile(
     const element_compilable* compilable,
     element_evaluable** evaluable)
 {
-    const element::compilation_context compilation_context(context->global_scope.get());
+    const element::compilation_context compilation_context(context->global_scope.get(), context);
     auto compiled = compilable->object->compile(compilation_context);
 
     if (!compiled)
@@ -738,13 +738,14 @@ element_result element_interpreter_evaluate(
         auto struct_instance = std::dynamic_pointer_cast<element::struct_instance>(evaluable->evaluable);
         if (!struct_instance)
         {
-            assert(!"tried to evaluate something but it's not an element_expression");
+            assert(!"tried to evaluate something but it's not an element_expression or struct instance");
             return ELEMENT_ERROR_UNKNOWN;
         }
 
+        //doesn't calc space of fields :b
         if (static_cast<int>(struct_instance->fields.size()) > outputs->count)
         {
-            assert(!"tried to evaluate a struct but not enough output space to deserialize it");
+            assert(!"tried to evaluate a struct instance but not enough output space to deserialize it");
             return ELEMENT_ERROR_UNKNOWN;
         }
 
@@ -752,7 +753,19 @@ element_result element_interpreter_evaluate(
 
         for (auto& f : struct_instance->fields)
         {
-            auto field_expr = std::dynamic_pointer_cast<element_expression>(f.second);
+            element_inputs sub_inputs{ nullptr, 0 };
+            element_outputs sub_outputs{&outputs->values[c], outputs->count - c};
+            element_evaluable sub_evaluable{ f.second };
+            assert(sub_outputs.count > 0);
+            const auto result = element_interpreter_evaluate(context, options, &sub_evaluable, &sub_inputs, &sub_outputs);
+            if (result != ELEMENT_OK) {
+                context->log(result, fmt::format("Failed to evaluate {}", f.second->to_string()), "<input>");
+                return result;
+            }
+
+            c += sub_outputs.count;
+
+            /*auto field_expr = std::dynamic_pointer_cast<element_expression>(f.second);
             if (!field_expr)
             {
                 assert(!"tried to evaluate a struct instance but one of the fields is not an element_expression");
@@ -772,7 +785,7 @@ element_result element_interpreter_evaluate(
 
             if (result != ELEMENT_OK) {
                 context->log(result, fmt::format("Failed to evaluate {}", f.second->to_string()), "<input>");
-            }
+            }*/
         }
 
         outputs->count = c;
