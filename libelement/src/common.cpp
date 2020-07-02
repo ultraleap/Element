@@ -347,6 +347,9 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent, bool
 
         case ELEMENT_AST_NODE_CALL:
         {
+            //todo: make this (and LITERAL) work again after AST changes
+            return "todo";
+            /*
             if (node->children.size() > ast_idx::call::parent) {
                 ss << ast_to_code(node->children[ast_idx::call::parent].get(), node);
             }
@@ -361,7 +364,7 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent, bool
             ss << node->identifier;
             if (has_typed_parent(parent, ELEMENT_AST_NODE_CALL))
                 ss << ".";
-            return ss.str();
+            return ss.str();*/
         }
 
         default:

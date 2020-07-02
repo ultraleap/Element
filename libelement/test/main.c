@@ -121,18 +121,18 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
-    //todo: element doesn't support partial application of any function, only instance functions (i.e. member functions with implicit "this")
+    //element doesn't support partial application of any function, only instance functions (i.e. member functions with implicit "this")
     /*
     result = eval("add5 = Num.add(5); evaluate = add5(2);");
     if (result != ELEMENT_OK)
         return result;
     */
 
+    //todo: fails
     /*
-    result = eval("add5(a) = a.add(5); evaluate = add5(5);");
+    result = eval("mul(a) { return(b) = a.mul(b); } evaluate = mul(5)(2);");
     if (result != ELEMENT_OK)
-        return result;
-    */
+        return result;*/
 
     // todo: asserts as expected, but no way to do error handling
     /*

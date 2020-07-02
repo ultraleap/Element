@@ -311,51 +311,71 @@ element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
     assert(token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_NUMBER);
-    // get identifier
-    ast_unique_ptr root = ast_new(nullptr, ELEMENT_AST_NODE_CALL);
-    root->nearest_token = token;
+
+    /* The first AST node is either LITERAL or CALL
+     * LITERAL or CALL can have children, which indicates that they are the start of a chain (literals are always at the start of a chain)
+     *  e.g. 180.add(2).add(3) is a LITERAL 180 with four children, CALL ADD, EXPRLIST, CALL ADD, EXPRLIST
+     * an EXPRLIST indicates parenthesis (). In the above situation, each EXPRTLIST will have a child which is another parse_call()
+     * The first has a child LITERAL 2, the other LITERAL 3
+     * In situations where there are multiple arguments, e.g. Num.add(Num.add(1, 2), Num.mul(Num.pi, Num.pi)).mul(1.add(2)), this translates to the following:
+     * CALL: Num
+     *     CALL: add
+     *     EXPRLIST
+     *         CALL: Num
+     *             CALL: add
+     *             EXPRLIST
+     *                 LITERAL 1
+     *                 LITERAL 2
+     *         CALL: Num
+     *             CALL: mul
+     *             EXPRLIST
+     *                 CALL: Num
+     *                     CALL: pi
+     *                 CALL: Num
+     *                     CALL: pi
+     *     CALL: mul
+     *     EXPRLIST
+     *         LITERAL 1
+     *             CALL: add
+     *             EXPRLIST
+     *                 LITERAL 2
+     */
+
+    element_ast* root = ast;
+
     if (token->type == ELEMENT_TOK_IDENTIFIER) {
-        ELEMENT_OK_OR_RETURN(parse_identifier(tindex, root.get()));
+        // get identifier
+        ELEMENT_OK_OR_RETURN(parse_identifier(tindex, root));
+        root->type = ELEMENT_AST_NODE_CALL;
     } else if (token->type == ELEMENT_TOK_NUMBER) {
         // this will change root's type to LITERAL
-        ELEMENT_OK_OR_RETURN(parse_literal(tindex, root.get()));
+        ELEMENT_OK_OR_RETURN(parse_literal(tindex, root));
     } else {
         assert(false);
         return ELEMENT_ERROR_INVALID_ARCHIVE; // TODO: error code
     }
+
     GET_TOKEN(tokeniser, *tindex, token);
 
     while (token->type == ELEMENT_TOK_DOT || token->type == ELEMENT_TOK_BRACKETL) {
         if (token->type == ELEMENT_TOK_BRACKETL) {
             // call with args
-            // TODO: bomb out if we're trying to call a literal
-            // add blank "none" if this is a simple call
-            if (root->children.empty()) {
-            	//NOTE {1}: This exist to cover the case when the first item in our expression chain is a function call
-            	//this will never be accessed in cases where the first item in our expression chain is an indexing expression
-                auto root_call_node = ast_new(root.get());
-                root_call_node->nearest_token = token;
-                ast_add_child(root.get(), std::move(root_call_node));
-            }
-            // parse args
-            const auto call_node = ast_new_child(root.get());
-            call_node->nearest_token = token;
-        	
+            // TODO: bomb out if we're trying to call a literal, keep track of previous node
+            
+            const auto call_node = ast_new_child(root);
             ELEMENT_OK_OR_RETURN(parse_exprlist(tindex, call_node));
         	
         } else if (token->type == ELEMENT_TOK_DOT){
-            // member field access
-            auto indexing_node = ast_new(nullptr, ELEMENT_AST_NODE_CALL);
-            // move existing root into left side of new one
-            ast_add_child(indexing_node.get(), std::move(root));
-      
+            //advance over the dot so we're now at (what should be) the identifier token
             tokenlist_advance(tokeniser, tindex);
-            ELEMENT_OK_OR_RETURN(parse_identifier(tindex, indexing_node.get()));
-            root = std::move(indexing_node);
+
+            auto indexing_node = ast_new_child(root, ELEMENT_AST_NODE_CALL);
+            ELEMENT_OK_OR_RETURN(parse_identifier(tindex, indexing_node));
         }
+
         GET_TOKEN(tokeniser, *tindex, token);
     }
-    ast_move(root.get(), ast, false);
+
     return ELEMENT_OK;
 }
 

@@ -27,12 +27,6 @@ namespace ns
     constexpr size_t body = 0;
 }
 
-namespace call
-{
-    constexpr size_t parent = 0;
-    constexpr size_t args = 1;
-}
-
 namespace port
 {
     constexpr size_t type = 0;
