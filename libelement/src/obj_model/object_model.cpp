@@ -140,7 +140,8 @@ std::shared_ptr<element::declaration> element::build_function_declaration(const 
     {
         assert(!intrinsic);
         auto expression = std::make_unique<element::expression>(function_decl->our_scope.get());
-        function_decl->body = build_expression(body, std::move(expression));
+        build_expression(body, expression.get());
+        function_decl->body = std::move(expression);
     }
     else if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
     {
@@ -164,6 +165,9 @@ std::shared_ptr<element::declaration> element::build_function_declaration(const 
 
 [[nodiscard]] std::shared_ptr<element::expression> build_call_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
 {
+    return nullptr;
+
+    /*
 	//create call expression to represent the nested expression
     const auto call_expression = std::make_shared<element::call_expression>(parent->enclosing_scope);
 	
@@ -179,7 +183,7 @@ std::shared_ptr<element::declaration> element::build_function_declaration(const 
     //auto body = element::build_function_declaration(ast, parent);
 
     parent->children.push_back(call_expression);
-    return parent;
+    return parent;*/
 }
 
 std::shared_ptr<element::expression> build_scope_bodied_lambda_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent_scope)
@@ -200,9 +204,74 @@ std::shared_ptr<element::expression> build_expression_bodied_lambda_expression(c
     return nullptr;
 }
 
-std::shared_ptr<element::expression> element::build_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
+void element::build_expression(const element_ast* const ast, expression* expr)
 {
-    const auto has_parent =
+    assert(expr);
+    const auto is_literal = ast->type == ELEMENT_AST_NODE_LITERAL;
+    const auto is_lambda = ast->type == ELEMENT_AST_NODE_LAMBDA;
+    const auto is_identifier = ast->type == ELEMENT_AST_NODE_CALL;
+    const auto is_call = ast->type == ELEMENT_AST_NODE_EXPRLIST;
+
+    if (is_lambda)
+    {
+        //todo: lambdas are not supported
+        return;
+    }
+
+    if (is_literal)
+    {
+        if (!expr->children.empty())
+        {
+            assert(!"found literal in the middle of a chain");
+        }
+
+        expr->children.push_back(std::make_shared<literal_expression>(ast->literal, expr->enclosing_scope));
+    }
+    else if (is_identifier)
+    {
+        if (expr->children.empty())
+            expr->children.push_back(std::make_shared<identifier_expression>(ast->identifier, expr->enclosing_scope));
+        else
+            expr->children.push_back(std::make_shared<indexing_expression>(ast->identifier, expr->enclosing_scope));
+    }
+    else if (is_call)
+    {
+        if (expr->children.empty())
+        {
+            assert(!"found a call expression at the start of a chain");
+            return;
+        }
+
+        if (ast->children.empty())
+        {
+            assert(!"found a call expression with no children (arguments)");
+            return;
+        }
+
+        expr->children.push_back(std::make_shared<call_expression>(expr->enclosing_scope));
+    }
+
+    //start of an expression chain
+    if (expr->children.size() == 1)
+    {
+        //every child of the first AST node is part of the chain
+        for (auto& child : ast->children)
+        {
+            build_expression(child.get(), expr);
+        }
+    }
+    else if (is_call)
+    {
+        //every child of the current AST node (EXPRLIST) is the start of another expression, comma separated
+        for (auto& child : ast->children)
+        {
+            auto argument = std::make_shared<expression>(expr->enclosing_scope);
+            build_expression(child.get(), argument.get());
+            expr->children.back()->children.push_back(std::move(argument));
+        }
+    }
+
+    /*const auto has_parent =
         ast->children.size() > ast_idx::call::parent && ast->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
 
 	const auto has_arguments = 
@@ -240,7 +309,7 @@ std::shared_ptr<element::expression> element::build_expression(const element_ast
 	if(has_arguments)
         return build_call_expression(ast, std::move(parent));
 	
-    return parent;
+    return parent;*/
 }
 
 std::shared_ptr<element::declaration> element::build_namespace_declaration(const element_ast* const ast, const scope* const parent_scope)
