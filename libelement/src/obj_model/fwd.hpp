@@ -9,6 +9,7 @@ namespace element
     class type_annotation;
     class port;
 
+    class expression_chain;
     class expression;
     class identifier_expression;
     class indexing_expression;

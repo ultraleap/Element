@@ -49,3 +49,18 @@ element_expression_constant::element_expression_constant(element_value val)
     , m_value(val)
 {
 }
+
+element_expression_if::element_expression_if(expression_shared_ptr predicate, expression_shared_ptr if_true, expression_shared_ptr if_false)
+    : element_expression(type_id, nullptr)
+{
+    if (if_true->actual_type != if_false->actual_type)
+    {
+        assert(!"the resulting type of the two branches of an if-expression must be the same");
+    }
+
+    actual_type = if_true->actual_type;
+
+    m_dependents.emplace_back(std::move(predicate));
+    m_dependents.emplace_back(std::move(if_true));
+    m_dependents.emplace_back(std::move(if_false));
+}
