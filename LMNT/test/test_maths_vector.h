@@ -438,12 +438,12 @@ static void test_modvv(void)
 
     TEST_UPDATE_ARGS(ctx, fndata, 0,
         2.5f, 3.5f, 2.5f, 3.5f,
-        1.4f, 1.4f, 1.4f, 1.4f);
+        1.4f, 1.4f, 1.2f, 1.2f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.1, FLOAT_ERROR_MARGIN);
     CU_ASSERT_DOUBLE_EQUAL(rvals[1], 0.7, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 1.1, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 0.7, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 0.1, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 1.1, FLOAT_ERROR_MARGIN);
 
     TEST_UPDATE_ARGS(ctx, fndata, 0,
     0.0f, 3.5f, 0.0f, 4.5f,
