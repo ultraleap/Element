@@ -315,7 +315,7 @@ element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
     /* The first AST node is either LITERAL or CALL
      * LITERAL or CALL can have children, which indicates that they are the start of a chain (literals are always at the start of a chain)
      *  e.g. 180.add(2).add(3) is a LITERAL 180 with four children, CALL ADD, EXPRLIST, CALL ADD, EXPRLIST
-     * an EXPRLIST indicates parenthesis (). In the above situation, each EXPRTLIST will have a child which is another parse_call()
+     * an EXPRLIST indicates parenthesis (). In the above situation, each EXPRLIST will have a child which is another parse_call()
      * The first has a child LITERAL 2, the other LITERAL 3
      * In situations where there are multiple arguments, e.g. Num.add(Num.add(1, 2), Num.mul(Num.pi, Num.pi)).mul(1.add(2)), this translates to the following:
      * CALL: Num

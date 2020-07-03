@@ -6,22 +6,23 @@
 
 namespace element
 {
-    expression::expression(const scope* enclosing_scope)
-        : enclosing_scope{ enclosing_scope }
+    expression_chain::expression_chain(const declaration* declarer)
+        : declarer{declarer}
     {
+        assert(declarer);
     }
 
-    std::string expression::to_code(int depth) const
+    std::string expression_chain::to_code(int depth) const
     {
-        static auto accumulate = [](std::string accumulator, const std::shared_ptr<expression>& expression)
+        static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression>& expression)
         {
             return std::move(accumulator) + expression->to_code();
         };
 
-        return std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_code(), accumulate);
+        return std::accumulate(std::next(std::begin(expressions)), std::end(expressions), expressions[0]->to_code(), accumulate);
     }
 
-    std::shared_ptr<object> expression::call(
+    std::shared_ptr<object> expression_chain::call(
         const compilation_context& context,
         std::vector<std::shared_ptr<object>> compiled_args) const
     {
@@ -34,40 +35,53 @@ namespace element
         return compile(context);
     }
 
-    std::shared_ptr<object> expression::compile(const compilation_context& context) const
+    std::shared_ptr<object> expression_chain::compile(const compilation_context& context) const
     {
-        if (children.empty())
+        if (expressions.empty())
             return nullptr; //todo: error_object
 
-        //find first thing in the chain
         std::shared_ptr<object> current = nullptr;
-        for (const auto& expression : children)
+        for (const auto& expression : expressions)
         {
             auto previous = std::move(current);
-            current = expression->resolve_expression(context, previous);
+            current = expression->resolve(context, std::move(previous));
             assert(current);
         }
-
-        //if (dynamic_cast<element_expression*>(current.get()))
-        //{
-        //    return dynamic_cast<element_expression*>(current.get());
-        //}
 
         return current->compile(context);
     }
 
-    [[nodiscard]] std::shared_ptr<object> identifier_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
+    expression::expression(const expression_chain* parent)
+        : parent(parent)
     {
-        if (previous) //cannot resolve identifier if previous exists
-            return nullptr;
+        assert(parent);
+    }
 
-        if (!enclosing_scope)
-            return nullptr;
+    identifier_expression::identifier_expression(identifier name, const expression_chain* parent)
+        : expression(parent)
+        , name(std::move(name))
+    {
+        assert(parent);
+    }
 
+    [[nodiscard]] std::shared_ptr<object> identifier_expression::resolve(const compilation_context& context, std::shared_ptr<object> obj)
+    {
+        if (obj)
+        {
+            assert(!"somehow an identifier was not the first thing in the chain");
+            return nullptr;
+        }
+
+        if (!parent->declarer->our_scope)
+        {
+            assert(!"somehow an expression chains declarer has no scope");
+            return nullptr;
+        }
 
         //todo: all below this is broke innit
 
-        auto found = enclosing_scope->find(identifier.value, false);
+        const auto& enclosing_scope = parent->declarer->our_scope;
+        auto found = enclosing_scope->find(name.value, false);
         if (found)
             return found->compile(context);
 
@@ -78,7 +92,7 @@ namespace element
             for (std::size_t i = 0; i < frame.function->inputs.size(); i++)
             {
                 const auto& input = frame.function->inputs[i];
-                if (input.name.value == identifier.value)
+                if (input.name.value == name.value)
                 {
                     if (i < frame.compiled_arguments.size())
                         return frame.compiled_arguments[i];
@@ -89,7 +103,7 @@ namespace element
         }
 
         //todo: this has to be merged with the callstack I think, i.e. each level of scopage has its own locals + arguments to do lookups with
-        found = enclosing_scope->get_parent_scope()->find(identifier.value, true);
+        found = enclosing_scope->get_parent_scope()->find(name.value, true);
         if (found)
             return found->compile(context);
 
@@ -98,48 +112,81 @@ namespace element
         return nullptr;
     }
 
-    [[nodiscard]] std::shared_ptr<object> literal_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
+    literal_expression::literal_expression(element_value value, const expression_chain* parent)
+        : expression(parent)
+        , value(value)
     {
-        if (previous) //cannot resolve literal if previous exists
-            return nullptr;
+        assert(parent);
+    }
 
-        if (!enclosing_scope)
+    [[nodiscard]] std::shared_ptr<object> literal_expression::resolve(const compilation_context& context, std::shared_ptr<object> obj)
+    {
+        if (obj)
+        {
+            assert(!"somehow a literal was not the first thing in the chain");
             return nullptr;
+        }
+
+        if (!parent->declarer->our_scope)
+        {
+            assert(!"somehow an expression chains declarer has no scope");
+            return nullptr;
+        }
 
         return std::make_shared<element_expression_constant>(value);
     }
 
-    [[nodiscard]] std::shared_ptr<object> indexing_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
+    indexing_expression::indexing_expression(identifier name, const expression_chain* parent)
+        : expression(parent)
+        , name(std::move(name))
     {
-        if (!previous) //can only resolve indexing if previous exists
-            return nullptr;
+        assert(parent);
+    }
 
-        return previous->index(context, name);
+    [[nodiscard]] std::shared_ptr<object> indexing_expression::resolve(const compilation_context& context, std::shared_ptr<object> obj)
+    {
+        if (!obj)
+        {
+            assert(!"somehow an indexing expression was the first thing in the chain");
+            return nullptr;
+        }
+
+        return obj->index(context, name);
+    }
+
+    call_expression::call_expression(const expression_chain* parent)
+        : expression(parent)
+    {
+        assert(parent);
     }
 
     std::string call_expression::to_code(int depth) const
     {
-        static auto accumulate = [](std::string accumulator, const std::shared_ptr<expression>& expression)
+        static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression_chain>& chain)
         {
-            return std::move(accumulator) + ", " + expression->to_code();
+            return std::move(accumulator) + ", " + chain->to_code();
         };
 
-        const auto expressions = std::accumulate(std::next(std::begin(children)), std::end(children), children[0]->to_code(), accumulate);
+        const auto expressions = std::accumulate(std::next(std::begin(arguments)), std::end(arguments), arguments[0]->to_code(), accumulate);
         return "(" + expressions + ")";
     }
 
-    [[nodiscard]] std::shared_ptr<object> call_expression::resolve_expression(const compilation_context& context, std::shared_ptr<object> previous)
+    [[nodiscard]] std::shared_ptr<object> call_expression::resolve(const compilation_context& context, std::shared_ptr<object> obj)
     {
-        if (!previous) //can only resolve call if previous exists
+        if (!obj)
+        {
+            assert(!"somehow a call expression was the first thing in the chain");
             return nullptr;
+        }
 
         std::vector<std::shared_ptr<object>> compiled_arguments;
-        for (const auto& arg : children)
+        for (const auto& arg : arguments)
             compiled_arguments.push_back(arg->compile(context));
 
-        return previous->call(context, std::move(compiled_arguments));
+        return obj->call(context, std::move(compiled_arguments));
     }
 
+    /*
     lambda_expression::lambda_expression(const scope* parent_scope)
         : expression(parent_scope)
     {
@@ -169,20 +216,5 @@ namespace element
     [[nodiscard]] std::string expression_bodied_lambda_expression::to_code(int depth) const
     {
         return "_";
-    }
-}
-
-element_expression_if::element_expression_if(expression_shared_ptr predicate, expression_shared_ptr if_true, expression_shared_ptr if_false)
-    : element_expression(type_id, nullptr)
-{
-    if (if_true->actual_type != if_false->actual_type)
-    {
-        assert(!"the resulting type of the two branches of an if-expression must be the same");
-    }
-
-    actual_type = if_true->actual_type;
-
-    m_dependents.emplace_back(std::move(predicate));
-    m_dependents.emplace_back(std::move(if_true));
-    m_dependents.emplace_back(std::move(if_false));
+    }*/
 }

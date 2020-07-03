@@ -2,382 +2,318 @@
 
 //STD
 #include <iostream>
-#include <memory>
 
 //SELF
-#include "object.hpp"
-#include "ast/ast_indexes.hpp"
-#include "ast/ast_internal.hpp"
-#include "declarations.hpp"
 #include "expressions.hpp"
 #include "configuration.hpp"
 #include "intrinsics.hpp"
 
-void build_scope(element_ast* ast, const element::declaration& declaration);
-
-void log(const std::string& message)
+namespace element
 {
-    //do something better
-    std::cout << message << std::endl;
-}
+    void build_scope(element_ast* ast, const declaration& declaration);
 
-void log(element_ast* ast)
-{
-    log(ast->identifier);
-}
-
-std::unique_ptr<element::type_annotation> build_type_annotation(const element_ast* ast)
-{
-    if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE)
-        return nullptr;
-
-    if (ast->type == ELEMENT_AST_NODE_TYPENAME) 
+    void log(const std::string& message)
     {
-        auto* const identifier = ast->children[ast_idx::port::type].get();
-        if (identifier->type != ELEMENT_AST_NODE_IDENTIFIER)
-            throw;
-
-        return std::make_unique<element::type_annotation>(element::identifier(identifier->identifier));
+        //do something better
+        std::cout << message << std::endl;
     }
-    
-    throw;
-}
 
-void build_output(element_ast* ast, element::declaration& declaration)
-{
-    auto* const output = ast->children[ast_idx::declaration::outputs].get();
-    auto type_annotation = build_type_annotation(output);
-    declaration.output.emplace(element::port{ element::identifier::return_identifier, std::move(type_annotation) });
-}
-
-void build_inputs(element_ast* ast, element::declaration& declaration)
-{
-    auto* const inputs = ast->children[ast_idx::declaration::inputs].get();
-
-    for (auto& input : inputs->children) 
+    void log(element_ast* ast)
     {
-        if (input->type != ELEMENT_AST_NODE_PORT)
-            throw;
+        log(ast->identifier);
+    }
 
-        auto identifier = element::identifier(input->identifier);
+    std::unique_ptr<type_annotation> build_type_annotation(const element_ast* ast)
+    {
+        if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE)
+            return nullptr;
 
-        const auto has_type_annotation = input->children.size() > ast_idx::port::type;
-        if (!has_type_annotation) 
+        if (ast->type == ELEMENT_AST_NODE_TYPENAME)
         {
-            declaration.inputs.emplace_back(identifier, nullptr);
-            continue;
+            auto* const ident = ast->children[ast_idx::port::type].get();
+            if (ident->type != ELEMENT_AST_NODE_IDENTIFIER)
+                throw;
+
+            return std::make_unique<type_annotation>(identifier(ident->identifier));
         }
 
-        auto* const output = input->children[ast_idx::port::type].get();
+        throw;
+    }
+
+    void build_output(element_ast* ast, declaration& declaration)
+    {
+        auto* const output = ast->children[ast_idx::declaration::outputs].get();
         auto type_annotation = build_type_annotation(output);
-        declaration.inputs.emplace_back(identifier, std::move(type_annotation));
-    }
-}
-
-std::shared_ptr<element::declaration> element::build_struct_declaration(const element_ast* const ast, const scope* const parent_scope)
-{
-    auto* const decl = ast->children[ast_idx::function::declaration].get();
-    auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-
-    auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
-
-    //fields
-    build_inputs(decl, *struct_decl);
-    build_output(decl, *struct_decl);
-
-    //log(struct_decl->to_string());
-
-    if (ast->children.size() > ast_idx::function::body)
-    {
-        auto* body = ast->children[ast_idx::function::body].get();
-        if (body->type == ELEMENT_AST_NODE_SCOPE)
-            build_scope(body, *struct_decl);
+        declaration.output.emplace(port{ identifier::return_identifier, std::move(type_annotation) });
     }
 
-    return std::move(struct_decl);
-}
-
-std::shared_ptr<element::declaration> element::build_constraint_declaration(const element_ast* const ast, const scope* const parent_scope)
-{
-    auto* const decl = ast->children[ast_idx::function::declaration].get();
-    auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-
-    auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), intrinsic);
-
-    //ports
-    build_inputs(decl, *constraint_decl);
-    build_output(decl, *constraint_decl);
-
-    //log(constraint_decl->to_string());
-
-    return std::move(constraint_decl);
-}
-
-std::shared_ptr<element::declaration> element::build_function_declaration(const element_ast* const ast, const scope* const parent_scope)
-{
-    auto* const decl = ast->children[ast_idx::function::declaration].get();
-    auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-
-    auto function_decl = std::make_shared<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
-
-    build_inputs(decl, *function_decl);
-    build_output(decl, *function_decl);
-
-    auto* const body = ast->children[ast_idx::function::body].get();
-
-    if (body->type == ELEMENT_AST_NODE_SCOPE)
+    void build_inputs(element_ast* ast, declaration& declaration)
     {
-        assert(!intrinsic);
-        build_scope(body, *function_decl);
-        function_decl->body = function_decl->our_scope->find(identifier::return_identifier, false);
-        if (!function_decl->body)
+        auto* const inputs = ast->children[ast_idx::declaration::inputs].get();
+
+        for (auto& input : inputs->children)
         {
-            //todo: commented out as parsing files that contain lambdas etc cause issues even if not used
-            //assert(!"scope-bodied function is missing a return");
+            if (input->type != ELEMENT_AST_NODE_PORT)
+                throw;
+
+            auto ident = identifier(input->identifier);
+
+            const auto has_type_annotation = input->children.size() > ast_idx::port::type;
+            if (!has_type_annotation)
+            {
+                declaration.inputs.emplace_back(ident, nullptr);
+                continue;
+            }
+
+            auto* const output = input->children[ast_idx::port::type].get();
+            auto type_annotation = build_type_annotation(output);
+            declaration.inputs.emplace_back(ident, std::move(type_annotation));
         }
     }
-    else if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL)
+
+    std::shared_ptr<declaration> build_struct_declaration(const element_ast* const ast, const scope* const parent_scope)
     {
-        assert(!intrinsic);
-        auto expression = std::make_unique<element::expression>(function_decl->our_scope.get());
-        build_expression(body, expression.get());
-        function_decl->body = std::move(expression);
-    }
-    else if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
-    {
-        assert(intrinsic);
-        function_decl->body = intrinsic::get_intrinsic(*function_decl);
-    }
-    else
-    {
-        function_decl = nullptr;
+        auto* const decl = ast->children[ast_idx::function::declaration].get();
+        auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+
+        auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
+
+        //fields
+        build_inputs(decl, *struct_decl);
+        build_output(decl, *struct_decl);
+
+        //log(struct_decl->to_string());
+
+        if (ast->children.size() > ast_idx::function::body)
+        {
+            auto* body = ast->children[ast_idx::function::body].get();
+            if (body->type == ELEMENT_AST_NODE_SCOPE)
+                build_scope(body, *struct_decl);
+        }
+
+        return std::move(struct_decl);
     }
 
-    return function_decl;
-}
+    std::shared_ptr<declaration> build_constraint_declaration(const element_ast* const ast, const scope* const parent_scope)
+    {
+        auto* const decl = ast->children[ast_idx::function::declaration].get();
+        auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-[[nodiscard]] std::shared_ptr<element::expression> build_literal_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
-{
-	const auto literal_expression = std::make_shared<element::literal_expression>(ast->literal, parent->enclosing_scope);
-    parent->children.push_back(literal_expression);
-    return parent;
-}
+        auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), intrinsic);
 
-[[nodiscard]] std::shared_ptr<element::expression> build_call_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
-{
-    return nullptr;
+        //ports
+        build_inputs(decl, *constraint_decl);
+        build_output(decl, *constraint_decl);
+
+        //log(constraint_decl->to_string());
+
+        return std::move(constraint_decl);
+    }
+
+    std::shared_ptr<declaration> build_function_declaration(const element_ast* const ast, const scope* const parent_scope)
+    {
+        auto* const decl = ast->children[ast_idx::function::declaration].get();
+        auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+
+        auto function_decl = std::make_shared<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
+
+        build_inputs(decl, *function_decl);
+        build_output(decl, *function_decl);
+
+        auto* const body = ast->children[ast_idx::function::body].get();
+
+        if (body->type == ELEMENT_AST_NODE_SCOPE)
+        {
+            assert(!intrinsic);
+            build_scope(body, *function_decl);
+            function_decl->body = function_decl->our_scope->find(identifier::return_identifier, false);
+            if (!function_decl->body)
+            {
+                //todo: commented out as parsing files that contain lambdas etc cause issues even if not used
+                //assert(!"scope-bodied function is missing a return");
+            }
+        }
+        else if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL)
+        {
+            assert(!intrinsic);
+            auto chain = std::make_unique<expression_chain>(function_decl.get());
+            build_expression(body, chain.get());
+            function_decl->body = std::move(chain);
+        }
+        else if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
+        {
+            assert(intrinsic);
+            function_decl->body = intrinsic::get_intrinsic(*function_decl);
+        }
+        else
+        {
+            function_decl = nullptr;
+        }
+
+        return function_decl;
+    }
 
     /*
-	//create call expression to represent the nested expression
-    const auto call_expression = std::make_shared<element::call_expression>(parent->enclosing_scope);
-	
-    auto* const expressions = ast->children[ast_idx::call::args].get();
-    for (auto& child_expression : expressions->children) {
+    std::shared_ptr<expression_chain> build_scope_bodied_lambda_expression_chain(const element_ast* const ast, std::shared_ptr<expression_chain> parent_scope)
+    {
 
-    	//then create an expression for each comma separated value in the call expression 
-        const auto expression = std::make_shared<element::expression>(parent->enclosing_scope);
-        auto child = build_expression(child_expression.get(), expression);
-        call_expression->children.push_back(child);
+        return nullptr;
     }
 
-    //auto body = element::build_function_declaration(ast, parent);
-
-    parent->children.push_back(call_expression);
-    return parent;*/
-}
-
-std::shared_ptr<element::expression> build_scope_bodied_lambda_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent_scope)
-{
-
-    return nullptr;
-}
-
-std::shared_ptr<element::expression> build_expression_bodied_lambda_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent_scope)
-{
-
-    return nullptr;
-}
-
-[[nodiscard]] std::shared_ptr<element::expression> build_lambda_expression(const element_ast* const ast, std::shared_ptr<element::expression> parent)
-{
-    //log("LAMBDA NOT IMPLEMENTED");
-    return nullptr;
-}
-
-void element::build_expression(const element_ast* const ast, expression* expr)
-{
-    assert(expr);
-    const auto is_literal = ast->type == ELEMENT_AST_NODE_LITERAL;
-    const auto is_lambda = ast->type == ELEMENT_AST_NODE_LAMBDA;
-    const auto is_identifier = ast->type == ELEMENT_AST_NODE_CALL;
-    const auto is_call = ast->type == ELEMENT_AST_NODE_EXPRLIST;
-
-    if (is_lambda)
+    std::shared_ptr<expression_chain> build_expression_chain_bodied_lambda_expression_chain(const element_ast* const ast, std::shared_ptr<expression_chain> parent_scope)
     {
-        //todo: lambdas are not supported
-        return;
+
+        return nullptr;
     }
 
-    if (is_literal)
+    [[nodiscard]] std::shared_ptr<expression_chain> build_lambda_expression_chain(const element_ast* const ast, std::shared_ptr<expression_chain> parent)
     {
-        if (!expr->children.empty())
+        //log("LAMBDA NOT IMPLEMENTED");
+        return nullptr;
+    }*/
+
+    void build_call_expression(const element_ast* const ast, expression_chain* chain)
+    {
+        if (chain->expressions.empty())
         {
-            assert(!"found literal in the middle of a chain");
-        }
-
-        expr->children.push_back(std::make_shared<literal_expression>(ast->literal, expr->enclosing_scope));
-    }
-    else if (is_identifier)
-    {
-        if (expr->children.empty())
-            expr->children.push_back(std::make_shared<identifier_expression>(ast->identifier, expr->enclosing_scope));
-        else
-            expr->children.push_back(std::make_shared<indexing_expression>(ast->identifier, expr->enclosing_scope));
-    }
-    else if (is_call)
-    {
-        if (expr->children.empty())
-        {
-            assert(!"found a call expression at the start of a chain");
+            assert(!"found a call expression_chain at the start of a chain");
             return;
         }
 
         if (ast->children.empty())
         {
-            assert(!"found a call expression with no children (arguments)");
+            assert(!"found a call expression_chain with no children (arguments)");
             return;
         }
 
-        expr->children.push_back(std::make_shared<call_expression>(expr->enclosing_scope));
-    }
+        auto call_expr = std::make_unique<call_expression>(chain);
 
-    //start of an expression chain
-    if (expr->children.size() == 1)
-    {
-        //every child of the first AST node is part of the chain
+        //every child of the current AST node (EXPRLIST) is the start of another expression_chain, comma separated
         for (auto& child : ast->children)
         {
-            build_expression(child.get(), expr);
-        }
-    }
-    else if (is_call)
-    {
-        //every child of the current AST node (EXPRLIST) is the start of another expression, comma separated
-        for (auto& child : ast->children)
-        {
-            auto argument = std::make_shared<expression>(expr->enclosing_scope);
+            auto argument = std::make_unique<expression_chain>(chain->declarer);
             build_expression(child.get(), argument.get());
-            expr->children.back()->children.push_back(std::move(argument));
+            call_expr->arguments.push_back(std::move(argument));
+        }
+
+        chain->expressions.push_back(std::move(call_expr));
+    }
+
+    void build_expression(const element_ast* const ast, expression_chain* chain)
+    {
+        assert(chain);
+        assert(chain->declarer);
+        const auto is_literal = ast->type == ELEMENT_AST_NODE_LITERAL;
+        const auto is_lambda = ast->type == ELEMENT_AST_NODE_LAMBDA;
+        const auto is_identifier = ast->type == ELEMENT_AST_NODE_CALL;
+        const auto is_call = ast->type == ELEMENT_AST_NODE_EXPRLIST;
+
+        if (is_lambda)
+        {
+            //todo: lambdas are not supported
+            return;
+        }
+
+        if (is_call)
+        {
+            build_call_expression(ast, chain);
+        }
+
+        if (is_literal)
+        {
+            if (!chain->expressions.empty())
+            {
+                assert(!"found literal in the middle of a chain");
+            }
+
+            chain->expressions.push_back(std::make_unique<literal_expression>(ast->literal, chain));
+        }
+        else if (is_identifier)
+        {
+            if (chain->expressions.empty())
+                chain->expressions.push_back(std::make_unique<identifier_expression>(ast->identifier, chain));
+            else
+                chain->expressions.push_back(std::make_unique<indexing_expression>(ast->identifier, chain));
+        }
+
+        //start of an expression chain, build the rest of it
+        if (chain->expressions.size() == 1)
+        {
+            //every child of the first AST node is part of the chain
+            for (auto& child : ast->children)
+            {
+                build_expression(child.get(), chain);
+            }
         }
     }
 
-    /*const auto has_parent =
-        ast->children.size() > ast_idx::call::parent && ast->children[ast_idx::call::parent]->type != ELEMENT_AST_NODE_NONE;
-
-	const auto has_arguments = 
-        ast->children.size() > ast_idx::call::args && ast->children[ast_idx::call::args]->type == ELEMENT_AST_NODE_EXPRLIST;
-
-    //recurse up to parent to reverse ast definition
-    if (has_parent) 
-        parent = build_expression(ast->children[ast_idx::call::parent].get(), parent);
-
-    const auto is_literal = ast->type == ELEMENT_AST_NODE_LITERAL;
-    if (is_literal)
-        return build_literal_expression(ast, std::move(parent));
-
-
-    //const auto is_lambda = ast->type == ELEMENT_AST_NODE_LAMBDA;
-    //if (is_lambda)
-    //    return build_lambda_expression(ast, std::move(parent));
-
-    //indexing shouldn't return early, as it *might* be followed by a call expression,
-    //since indexing and call expressions are combined in the ast stage
-    const auto is_indexing = has_parent
-        && (ast->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_CALL || ast->children[ast_idx::call::parent]->type == ELEMENT_AST_NODE_LITERAL);
-
-	if (is_indexing)
+    std::shared_ptr<declaration> build_namespace_declaration(const element_ast* const ast, const scope* const parent_scope)
     {
-	    auto indexing_expression = std::make_unique<element::indexing_expression>(identifier(ast->identifier), parent->enclosing_scope);
-	    parent->children.push_back(std::move(indexing_expression));
-    }
-    else
-    {
-	    const auto identifier_expression = std::make_shared<element::identifier_expression>(identifier(ast->identifier), parent->enclosing_scope);
-	    parent->children.push_back(identifier_expression);
+        auto namespace_decl = std::make_unique<namespace_declaration>(identifier(ast->identifier), parent_scope);
+
+        if (ast->children.size() > ast_idx::ns::body)
+        {
+            auto* body = ast->children[ast_idx::ns::body].get();
+            if (body->type == ELEMENT_AST_NODE_SCOPE)
+                build_scope(body, *namespace_decl);
+        }
+
+        //log(namespace_decl->to_string());
+
+        return std::move(namespace_decl);
     }
 
-	if(has_arguments)
-        return build_call_expression(ast, std::move(parent));
-	
-    return parent;*/
-}
-
-std::shared_ptr<element::declaration> element::build_namespace_declaration(const element_ast* const ast, const scope* const parent_scope)
-{
-    auto namespace_decl = std::make_unique<namespace_declaration>(identifier(ast->identifier), parent_scope);
-
-    if (ast->children.size() > ast_idx::ns::body)
+    std::shared_ptr<declaration> build_declaration(const element_ast* const ast, const scope* const parent_scope)
     {
-        auto* body = ast->children[ast_idx::ns::body].get();
-        if (body->type == ELEMENT_AST_NODE_SCOPE)
-            build_scope(body, *namespace_decl);
-    }
+        if (ast->type == ELEMENT_AST_NODE_STRUCT)
+            return build_struct_declaration(ast, parent_scope);
 
-    //log(namespace_decl->to_string());
+        if (ast->type == ELEMENT_AST_NODE_CONSTRAINT)
+            return build_constraint_declaration(ast, parent_scope);
 
-    return std::move(namespace_decl);
-}
+        if (ast->type == ELEMENT_AST_NODE_FUNCTION)
+            return build_function_declaration(ast, parent_scope);
 
-std::shared_ptr<element::declaration> element::build_declaration(const element_ast* const ast, const scope* const parent_scope)
-{
-    if (ast->type == ELEMENT_AST_NODE_STRUCT)
-        return build_struct_declaration(ast, parent_scope);
+        if (ast->type == ELEMENT_AST_NODE_NAMESPACE)
+            return build_namespace_declaration(ast, parent_scope);
 
-    if (ast->type == ELEMENT_AST_NODE_CONSTRAINT)
-        return build_constraint_declaration(ast, parent_scope);
-
-    if (ast->type == ELEMENT_AST_NODE_FUNCTION)
-        return build_function_declaration(ast, parent_scope);
-
-    if (ast->type == ELEMENT_AST_NODE_NAMESPACE)
-        return build_namespace_declaration(ast, parent_scope);
-
-    //log("Not a declaration");
-    return nullptr;
-}
-
-void build_scope(element_ast* ast, const element::declaration& declaration)
-{
-    for (auto& child : ast->children)
-    {
-        auto child_decl = build_declaration(child.get(), declaration.our_scope.get());
-        if (child_decl)
-            declaration.our_scope->add_declaration(std::move(child_decl));
-    }
-}
-
-std::unique_ptr<element::scope> element::build_root_scope(const element_ast* const ast)
-{
-    if (ast->type != ELEMENT_AST_NODE_ROOT) {
-
-        //log("Not a root");
+        //log("Not a declaration");
         return nullptr;
     }
 
-    auto root = std::make_unique<element::scope>(nullptr, nullptr);
-
-    for (auto& child : ast->children)
+    void build_scope(element_ast* ast, const declaration& declaration)
     {
-        auto decl = build_declaration(child.get(), root.get());
-        if (decl)
-            root->add_declaration(std::move(decl));
+        for (auto& child : ast->children)
+        {
+            auto child_decl = build_declaration(child.get(), declaration.our_scope.get());
+            if (child_decl)
+                declaration.our_scope->add_declaration(std::move(child_decl));
+        }
     }
 
-    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_object_model_as_code)) {
-        log("\n<CODE>");
-        log(root->to_code());
-        log("</CODE>\n");
-    }
+    std::unique_ptr<scope> build_root_scope(const element_ast* const ast)
+    {
+        if (ast->type != ELEMENT_AST_NODE_ROOT) {
 
-    return root;
+            //log("Not a root");
+            return nullptr;
+        }
+
+        auto root = std::make_unique<scope>(nullptr, nullptr);
+
+        for (auto& child : ast->children)
+        {
+            auto decl = build_declaration(child.get(), root.get());
+            if (decl)
+                root->add_declaration(std::move(decl));
+        }
+
+        if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_object_model_as_code)) {
+            log("\n<CODE>");
+            log(root->to_code());
+            log("</CODE>\n");
+        }
+
+        return root;
+    }
 }
