@@ -26,6 +26,16 @@
         CU_ASSERT_EQUAL(lmnt_update_args((ctx), (fndata).def, (lmnt_offset)(offset), args, (lmnt_offset)args_count), LMNT_OK);\
     }
 
+#define MAKE_REGISTER_SUITE_FUNCTION(suite, ...) \
+void register_suite_ ## suite() { \
+    CU_CI_add_suite(TEST_NAME_PREFIX #suite TEST_NAME_SUFFIX, \
+    __cu_suite_setup,            \
+    __cu_suite_teardown,         \
+    __cu_test_setup,             \
+    __cu_test_teardown);         \
+    __VA_ARGS__; }
+
+
 typedef struct
 {
     char* buf;

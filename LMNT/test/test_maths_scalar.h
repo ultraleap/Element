@@ -100,6 +100,8 @@ static void test_subss(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_TRUE(isnan(rvals[0]));
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
 static void test_mulss(void)
@@ -150,8 +152,9 @@ static void test_mulss(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_TRUE(isnan(rvals[0]));
-}
 
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+}
 
 static void test_divss(void)
 {
@@ -202,6 +205,8 @@ static void test_divss(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_TRUE(isnan(rvals[0]));
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
 static void test_modss(void)
@@ -260,10 +265,11 @@ static void test_modss(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_TRUE(isnan(rvals[0]));
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-
-CUNIT_CI_RUN(TEST_NAME_PREFIX "maths_scalar" TEST_NAME_SUFFIX,
+MAKE_REGISTER_SUITE_FUNCTION(maths_scalar,
     CUNIT_CI_TEST(test_addss),
     CUNIT_CI_TEST(test_subss),
     CUNIT_CI_TEST(test_mulss),
