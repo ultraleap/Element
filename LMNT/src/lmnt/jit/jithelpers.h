@@ -1,6 +1,8 @@
 #ifndef LMNT_JITHELPERS_H
 #define LMNT_JITHELPERS_H
 
+#include <stdlib.h>
+#include <stdbool.h>
 #include "lmnt/config.h"
 #include "lmnt/interpreter.h"
 #include "lmnt/jit.h"
@@ -133,22 +135,22 @@ static void* targetLinkAndEncode(dasm_State** d, size_t* sz)
 
 
 // Target-specific implementations
-static int allowIndividualLaneAccess(jit_compile_state* state);
-static int chooseExistingScalarRegister(jit_compile_state* state, size_t* reg, int importance);
-static int chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, int importance);
+static bool allowIndividualLaneAccess(jit_compile_state* state);
+static bool chooseExistingScalarRegister(jit_compile_state* state, size_t* reg, int importance);
+static bool chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, int importance);
 static inline void updateRegister(jit_compile_state* state, size_t reg, lmnt_offset spos, size_t scount, int importance, access_type modified);
 static inline void updateRegisterState(jit_compile_state* state, size_t reg, int importance, access_type modified);
 static inline size_t getRegisterCount(jit_compile_state* state, size_t reg);
-static inline int isRegisterInitialised(jit_compile_state* state, size_t reg);
+static inline bool isRegisterInitialised(jit_compile_state* state, size_t reg);
 static void initialiseRegister(jit_compile_state* state, size_t reg);
-static int flushRegister(jit_compile_state* state, size_t reg);
+static bool flushRegister(jit_compile_state* state, size_t reg);
 static inline void notifyRegisterWritten(jit_compile_state* state, size_t reg, size_t writeSize);
 static void writeAndEvictRegister(jit_compile_state* state, size_t reg);
 static void writeAndEvictRegisters(jit_compile_state* state, size_t reg, size_t scount);
 static overlap_type checkForOverlap(jit_compile_state* state, lmnt_offset spos, size_t scount, size_t* reg, int* importance);
 
 
-static int acquireScalarRegister(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access)
+static bool acquireScalarRegister(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access)
 {
 #if !defined(LMNT_JIT_DEBUG_NO_REGCACHE)
     const size_t scount = 1;
@@ -173,7 +175,7 @@ static int acquireScalarRegister(jit_compile_state* state, lmnt_offset spos, siz
             JIT_DEBUG_PRINTF(
                 "acquireScalarRegister: aligned, returning existing %s%zu\n",
                 LMNT_FPREG_PREFIX, *reg);
-            return 1;
+            return true;
         }
         else if (overlap == OVERLAP_SUBSET && allowIndividualLaneAccess(state))
         {
@@ -185,7 +187,7 @@ static int acquireScalarRegister(jit_compile_state* state, lmnt_offset spos, siz
             JIT_DEBUG_PRINTF(
                 "acquireScalarRegister: unaligned subset, returning existing %s%zu\n",
                 LMNT_FPREG_PREFIX, *reg);
-            return 1;
+            return true;
         }
         else if (overlap != OVERLAP_NONE)
         {
@@ -194,7 +196,7 @@ static int acquireScalarRegister(jit_compile_state* state, lmnt_offset spos, siz
                 LMNT_FPREG_PREFIX, overlap_reg);
             // Make sure this is flushed if applicable so our subsequent read is not stale
             flushRegister(state, overlap_reg);
-            return 0;
+            return false;
         }
     } while (overlap != OVERLAP_NONE);
 
@@ -206,15 +208,15 @@ static int acquireScalarRegister(jit_compile_state* state, lmnt_offset spos, siz
         if (access & ACCESSTYPE_READ)
             initialiseRegister(state, *reg);
         JIT_DEBUG_PRINTF("acquireScalarRegister: acquired new %s%zu\n", LMNT_FPREG_PREFIX, *reg);
-        return 1;
+        return true;
     }
 
     JIT_DEBUG_PRINTF("acquireScalarRegister: no match\n");
 #endif
-    return 0;
+    return false;
 }
 
-static int acquireVectorRegister(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access)
+static bool acquireVectorRegister(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access)
 {
 #if !defined(LMNT_JIT_DEBUG_NO_REGCACHE)
     const size_t scount = 4;
@@ -239,7 +241,7 @@ static int acquireVectorRegister(jit_compile_state* state, lmnt_offset spos, siz
             JIT_DEBUG_PRINTF(
                 "acquireVectorRegister: aligned, returning existing %s%zu\n",
                 LMNT_FPREG_PREFIX, *reg);
-            return 1;
+            return true;
         }
         else if (overlap != OVERLAP_NONE)
         {
@@ -262,7 +264,7 @@ static int acquireVectorRegister(jit_compile_state* state, lmnt_offset spos, siz
                     LMNT_FPREG_PREFIX, overlap_reg);
                 // Make sure this is flushed if applicable so our subsequent read is not stale
                 flushRegister(state, overlap_reg);
-                return 0;
+                return false;
             }
         }
     } while (overlap != OVERLAP_NONE);
@@ -275,33 +277,33 @@ static int acquireVectorRegister(jit_compile_state* state, lmnt_offset spos, siz
         if (access & ACCESSTYPE_READ)
             initialiseRegister(state, *reg);
         JIT_DEBUG_PRINTF("acquireVectorRegister: acquired new %s%zu\n", LMNT_FPREG_PREFIX, *reg);
-        return 1;
+        return true;
     }
 
     JIT_DEBUG_PRINTF("acquireVectorRegister: no match\n");
 #endif
-    return 0;
+    return false;
 }
 
-static int acquireScalarRegisterOrDefault(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access, size_t def)
+static bool acquireScalarRegisterOrDefault(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access, size_t def)
 {
-    int result = acquireScalarRegister(state, spos, reg, access);
+    bool result = acquireScalarRegister(state, spos, reg, access);
     if (!result)
         *reg = def;
     return result;
 }
 
-static int acquireVectorRegisterOrDefault(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access, size_t def)
+static bool acquireVectorRegisterOrDefault(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access, size_t def)
 {
-    int result = acquireVectorRegister(state, spos, reg, access);
+    bool result = acquireVectorRegister(state, spos, reg, access);
     if (!result)
         *reg = def;
     return result;
 }
 
-static int acquireScalarRegisterOrLoad(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access, size_t regToLoad)
+static bool acquireScalarRegisterOrLoad(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access, size_t regToLoad)
 {
-    int result = acquireScalarRegister(state, spos, reg, access);
+    bool result = acquireScalarRegister(state, spos, reg, access);
     if (!result) {
         platformReadScalarToRegister(state, regToLoad, spos);
         *reg = regToLoad;
@@ -309,9 +311,9 @@ static int acquireScalarRegisterOrLoad(jit_compile_state* state, lmnt_offset spo
     return result;
 }
 
-static int acquireVectorRegisterOrLoad(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access, size_t regToLoad)
+static bool acquireVectorRegisterOrLoad(jit_compile_state* state, lmnt_offset spos, size_t* reg, access_type access, size_t regToLoad)
 {
-    int result = acquireVectorRegister(state, spos, reg, access);
+    bool result = acquireVectorRegister(state, spos, reg, access);
     if (!result) {
         platformReadVectorToRegister(state, regToLoad, spos);
         *reg = regToLoad;

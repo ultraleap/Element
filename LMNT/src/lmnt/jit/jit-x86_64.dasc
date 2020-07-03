@@ -172,13 +172,13 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     state->cpuflags = get_x86_cpu_flags();
     print_x86_cpu_flags(state->cpuflags);
 
-    int use_nv = 0;
+    bool use_nv = false;
     state->fpreg->start = LMNT_FPREG_V_START;
     state->fpreg->end = LMNT_FPREG_V_END;
     // TODO: decide this at runtime (based on code size?)
     #if defined(LMNT_JIT_X86_64_ALLOW_NV_REGISTERS)
     // if (some_condition) {
-        use_nv = 1;
+        use_nv = true;
         state->fpreg->start = LMNT_FPREG_V_START;
         state->fpreg->end = LMNT_FPREG_NV_END;
         state->fpreg->preferred.start = LMNT_FPREG_NV_START;

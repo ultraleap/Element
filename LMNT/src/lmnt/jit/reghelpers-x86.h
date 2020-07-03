@@ -51,7 +51,7 @@ struct jit_fpreg_data_s
 };
 
 
-static int chooseExistingRegister(jit_compile_state* state, size_t* reg, size_t scount, int importance)
+static bool chooseExistingRegister(jit_compile_state* state, size_t* reg, size_t scount, int importance)
 {
     int lowprio = INT_MAX;
     size_t lowreg = 0;
@@ -59,14 +59,14 @@ static int chooseExistingRegister(jit_compile_state* state, size_t* reg, size_t 
         if (state->fpreg->xmm[i].count == 0) {
             // It's free real estate
             *reg = i;
-            return 1;
+            return true;
         }
     }
     for (size_t i = state->fpreg->fallback.start; i < state->fpreg->fallback.end; ++i) {
         if (state->fpreg->xmm[i].count == 0) {
             // It's free real estate in a more volatile part of town
             *reg = i;
-            return 1;
+            return true;
         }
     }
     for (size_t i = state->fpreg->start; i < state->fpreg->end; ++i) {
@@ -77,19 +77,18 @@ static int chooseExistingRegister(jit_compile_state* state, size_t* reg, size_t 
     }
     if (importance > lowprio) {
         *reg = lowreg;
-        return 1;
-    }
-    else {
-        return 0;
+        return true;
+    } else {
+        return false;
     }
 }
 
-static int chooseExistingScalarRegister(jit_compile_state* state, size_t* reg, int importance)
+static bool chooseExistingScalarRegister(jit_compile_state* state, size_t* reg, int importance)
 {
     return chooseExistingRegister(state, reg, 1, importance);
 }
 
-static int chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, int importance)
+static bool chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, int importance)
 {
     return chooseExistingRegister(state, reg, 4, importance);
 }
@@ -114,14 +113,14 @@ static inline size_t getRegisterCount(jit_compile_state* state, size_t reg)
     return state->fpreg->xmm[reg].count;
 }
 
-static inline int isRegisterInitialised(jit_compile_state* state, size_t reg)
+static inline bool isRegisterInitialised(jit_compile_state* state, size_t reg)
 {
     return (state->fpreg->xmm[reg].flags & REGST_INITIALISED);
 }
 
-static inline int allowIndividualLaneAccess(jit_compile_state* state)
+static inline bool allowIndividualLaneAccess(jit_compile_state* state)
 {
-    return 0;
+    return false;
 }
 
 static void initialiseRegister(jit_compile_state* state, size_t reg)
@@ -137,7 +136,7 @@ static void initialiseRegister(jit_compile_state* state, size_t reg)
     state->fpreg->xmm[reg].flags |= REGST_INITIALISED;
 }
 
-static int flushRegister(jit_compile_state* state, size_t reg)
+static bool flushRegister(jit_compile_state* state, size_t reg)
 {
     const lmnt_offset spos = state->fpreg->xmm[reg].stackpos;
     const size_t sz = state->fpreg->xmm[reg].count;
@@ -151,9 +150,9 @@ static int flushRegister(jit_compile_state* state, size_t reg)
         else if (sz == 1)
             platformWriteScalarFromRegister(state, spos, reg);
         state->fpreg->xmm[reg].flags &= (~REGST_MODIFIED);
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
 static inline void notifyRegisterWritten(jit_compile_state* state, size_t reg, size_t writeSize)
