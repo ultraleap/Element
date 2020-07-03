@@ -485,11 +485,82 @@ static void test_modvv(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
+static void test_powvv(void)
+{
+    archive a = create_archive_array("test", 8, 4, 12, 1, 0,
+        LMNT_OP_BYTES(LMNT_OP_POWVV, 0x00, 0x04, 0x08)
+    );
+    test_function_data fndata;
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    lmnt_value rvals[4];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0,
+        3.0f, 3.0f, 3.0f, 3.0f,
+        1.0f, 2.0f, 3.0f, 4.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 3.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 9.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 27.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 81.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 2.0f, 3.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 0.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 0.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 0.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0,
+        1.0f, 1.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 3.5f, -3.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 1.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 1.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0,
+        1.5f, 1.5f, 3.2f, 5.1f,
+        2.0f, 1.5f, 3.0f, 1.4f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 2.25, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 1.8371173070873836, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 32.768, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 9.785843060783371, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0,
+        5.0f, 5.0f, 5.0f, 5.0f,
+        0.0f, -1.0f, -2.0f, -5.5f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 0.2, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 0.04, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 0.00014310835055998653, FLOAT_ERROR_MARGIN);
+
+    // NaN
+    TEST_UPDATE_ARGS(ctx, fndata, 0,
+        nanf(""), nanf(""), nanf(""), nanf(""),
+        1.0f, 0.0f, 4.0f, -3.4f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isnan(rvals[0]));
+    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 1.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_TRUE(isnan(rvals[2]));
+    CU_ASSERT_TRUE(isnan(rvals[3]));
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+}
+
 
 MAKE_REGISTER_SUITE_FUNCTION(maths_vector,
     CUNIT_CI_TEST(test_addvv),
     CUNIT_CI_TEST(test_subvv),
     CUNIT_CI_TEST(test_mulvv),
     CUNIT_CI_TEST(test_divvv),
-    CUNIT_CI_TEST(test_modvv)
+    CUNIT_CI_TEST(test_modvv),
+    CUNIT_CI_TEST(test_powvv)
 );
