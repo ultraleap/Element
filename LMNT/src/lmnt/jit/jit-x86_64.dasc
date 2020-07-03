@@ -209,6 +209,10 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     | .dword 0x7FFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
     | ->absvbits:
     | .dword 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF
+    | ->nanbits:
+    | .dword 0x7FC00000, 0x7FC00000, 0x7FC00000, 0x7FC00000
+    | ->inftonanbits:
+    | .dword 0x00400000, 0x00400000, 0x00400000, 0x00400000
     | .code
     | ->lmnt_main:
     | prologue, use_nv
@@ -438,8 +442,8 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             // | extern2 fmodf,  8,  8,  8
             // | extern2 fmodf, 12, 12, 12
             // manual SSE2 version
-            int arg1hasreg = acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
-            int arg2hasreg = acquireVectorRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
+            bool arg1hasreg = acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
+            bool arg2hasreg = acquireVectorRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
             if (arg1hasreg) {
                 | movaps xmm(xmmtmp1), xmm(reg1)
             } else {
@@ -450,10 +454,22 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 ||reg2 = xmmtmp2;
             }
             | divps xmm(xmmtmp1), xmm(reg2)
+            // NaN check: also gather infinities
+            | movups xmm(xmmtmp2), oword [->inftonanbits]
+            | orps xmm(xmmtmp2), xmm(xmmtmp1)
+            | cmpps xmm(xmmtmp2), xmm(xmmtmp1), 0x3  // CMPUNORD
+            // float -> int -> float
             | cvttps2dq xmm(xmmtmp1), xmm(xmmtmp1)
             | cvtdq2ps xmm(xmmtmp1), xmm(xmmtmp1)
+            // reintroduce any NaNs
+            | andps xmm(xmmtmp2), oword [->nanbits]
+            | orps xmm(xmmtmp1), xmm(xmmtmp2)
+            // if we wiped out arg2 due to the NaN check, re-read it
+            ||if (reg2 == xmmtmp2) {
+                | readv xmm(xmmtmp2), in.arg2
+            ||}
             | mulps xmm(xmmtmp1), xmm(reg2)
-            // we don't need xmmtmp2's current value from this point
+            // we can now reuse xmmtmp2 if needed
             ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
             if (arg1hasreg) {
                 | movaps xmm(reg3), xmm(reg1)
