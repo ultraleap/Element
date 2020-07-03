@@ -78,54 +78,6 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_assignibv(lmnt_ictx* ctx, lmnt_offset arg1, l
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_minss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
-{
-    ctx->stack[arg3] = fminf(ctx->stack[arg1], ctx->stack[arg2]);
-    return LMNT_OK;
-}
-
-LMNT_ATTR_FAST lmnt_result lmnt_op_minvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
-{
-    ctx->stack[arg3 + 0] = fminf(ctx->stack[arg1 + 0], ctx->stack[arg2 + 0]);
-    ctx->stack[arg3 + 1] = fminf(ctx->stack[arg1 + 1], ctx->stack[arg2 + 1]);
-    ctx->stack[arg3 + 2] = fminf(ctx->stack[arg1 + 2], ctx->stack[arg2 + 2]);
-    ctx->stack[arg3 + 3] = fminf(ctx->stack[arg1 + 3], ctx->stack[arg2 + 3]);
-    return LMNT_OK;
-}
-
-LMNT_ATTR_FAST lmnt_result lmnt_op_maxss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
-{
-    ctx->stack[arg3] = fmaxf(ctx->stack[arg1], ctx->stack[arg2]);
-    return LMNT_OK;
-}
-
-LMNT_ATTR_FAST lmnt_result lmnt_op_maxvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
-{
-    ctx->stack[arg3 + 0] = fmaxf(ctx->stack[arg1 + 0], ctx->stack[arg2 + 0]);
-    ctx->stack[arg3 + 1] = fmaxf(ctx->stack[arg1 + 1], ctx->stack[arg2 + 1]);
-    ctx->stack[arg3 + 2] = fmaxf(ctx->stack[arg1 + 2], ctx->stack[arg2 + 2]);
-    ctx->stack[arg3 + 3] = fmaxf(ctx->stack[arg1 + 3], ctx->stack[arg2 + 3]);
-    return LMNT_OK;
-}
-
-LMNT_ATTR_FAST lmnt_result lmnt_op_minvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
-{
-    ctx->stack[arg3 + 0] = fminf(ctx->stack[arg1 + 0], ctx->stack[arg2]);
-    ctx->stack[arg3 + 1] = fminf(ctx->stack[arg1 + 1], ctx->stack[arg2]);
-    ctx->stack[arg3 + 2] = fminf(ctx->stack[arg1 + 2], ctx->stack[arg2]);
-    ctx->stack[arg3 + 3] = fminf(ctx->stack[arg1 + 3], ctx->stack[arg2]);
-    return LMNT_OK;
-}
-
-LMNT_ATTR_FAST lmnt_result lmnt_op_maxvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
-{
-    ctx->stack[arg3 + 0] = fmaxf(ctx->stack[arg1 + 0], ctx->stack[arg2]);
-    ctx->stack[arg3 + 1] = fmaxf(ctx->stack[arg1 + 1], ctx->stack[arg2]);
-    ctx->stack[arg3 + 2] = fmaxf(ctx->stack[arg1 + 2], ctx->stack[arg2]);
-    ctx->stack[arg3 + 3] = fmaxf(ctx->stack[arg1 + 3], ctx->stack[arg2]);
-    return LMNT_OK;
-}
-
 LMNT_ATTR_FAST lmnt_result lmnt_op_indexdis(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     lmnt_offset arg1v = value_to_offset(ctx->stack[arg1]);

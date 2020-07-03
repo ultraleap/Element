@@ -390,7 +390,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
 
         // TODO: THIS IS BROKEN FOR VECTOR OPS
-        | .macro extern1, fn, offset
+        | .macro extern1, fn, offset, outarg, outreg
         ||if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
             | movaps xmm0, xmm(reg1)
         ||} else {
@@ -399,11 +399,11 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         ||platformWriteAndEvictVolatile(state);
         | mov64 rax, (const intptr_t)(&fn)
         | call rax
-        ||if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
-            | movaps xmm(reg3), xmm0
-            ||notifyRegisterWritten(state, reg3, 1);
+        ||if (acquireScalarRegister(state, outarg, &outreg, ACCESSTYPE_WRITE)) {
+            | movaps xmm(outreg), xmm0
+            ||notifyRegisterWritten(state, outreg, 1);
         ||} else {
-            | writes in.arg3, xmm0
+            | writes outarg, xmm0
         ||}
         | .endmacro
 
@@ -481,23 +481,28 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
         }
 
+        // TODO: https://github.com/divideconcept/FastTrigo/blob/master/fasttrigo.cpp
         case LMNT_OP_SIN:
-            | extern1 sinf, 0
+            | extern1 sinf, 0, in.arg3, reg3
             break;
         case LMNT_OP_COS:
-            | extern1 cosf, 0
+            | extern1 cosf, 0, in.arg3, reg3
             break;
         case LMNT_OP_TAN:
-            | extern1 tanf, 0
+            | extern1 tanf, 0, in.arg3, reg3
             break;
         case LMNT_OP_ASIN:
-            | extern1 asinf, 0
+            | extern1 asinf, 0, in.arg3, reg3
             break;
         case LMNT_OP_ACOS:
-            | extern1 acosf, 0
+            | extern1 acosf, 0, in.arg3, reg3
             break;
         case LMNT_OP_ATAN:
-            | extern1 atanf, 0
+            | extern1 atanf, 0, in.arg3, reg3
+            break;
+        case LMNT_OP_SINCOS:
+            | extern1 sinf, 0, in.arg2, reg2
+            | extern1 cosf, 0, in.arg3, reg3
             break;
 
         case LMNT_OP_POWSS:
@@ -663,7 +668,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundss xmm(reg3), xmm(reg1), 0x00
                 | writes_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 roundf,  0
+                | extern1 roundf,  0, in.arg3, reg3
             }
             break;
         case LMNT_OP_ROUNDV:
@@ -673,10 +678,10 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundps xmm(reg3), xmm(reg1), 0x00
                 | writev_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 roundf,  0
-                | extern1 roundf,  4
-                | extern1 roundf,  8
-                | extern1 roundf, 12
+                | extern1 roundf,  0, in.arg3, reg3
+                | extern1 roundf,  4, in.arg3, reg3
+                | extern1 roundf,  8, in.arg3, reg3
+                | extern1 roundf, 12, in.arg3, reg3
             }
             break;
         case LMNT_OP_CEILS:
@@ -686,7 +691,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundss xmm(reg3), xmm(reg1), 0x02
                 | writes_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 ceilf,  0
+                | extern1 ceilf,  0, in.arg3, reg3
             }
             break;
         case LMNT_OP_CEILV:
@@ -696,10 +701,10 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundps xmm(reg3), xmm(reg1), 0x02
                 | writev_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 ceilf,  0
-                | extern1 ceilf,  4
-                | extern1 ceilf,  8
-                | extern1 ceilf, 12
+                | extern1 ceilf,  0, in.arg3, reg3
+                | extern1 ceilf,  4, in.arg3, reg3
+                | extern1 ceilf,  8, in.arg3, reg3
+                | extern1 ceilf, 12, in.arg3, reg3
             }
             break;
 

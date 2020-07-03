@@ -20,6 +20,7 @@ set(lmnt_sources
     "src/lmnt/ops_math.c"
     "src/lmnt/ops_misc.c"
     "src/lmnt/ops_trig.c"
+    "src/lmnt/ops_util.c"
 
     "src/lmnt/helpers.h"
 
@@ -35,6 +36,7 @@ set(lmnt_sources
     "include/lmnt/ops_math.h"
     "include/lmnt/ops_misc.h"
     "include/lmnt/ops_trig.h"
+    "include/lmnt/ops_util.h"
 )
 
 if (LMNT_TARGET_ARCH STREQUAL "x86_64")

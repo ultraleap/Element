@@ -5,6 +5,7 @@
 #include "lmnt/ops_math.h"
 #include "lmnt/ops_misc.h"
 #include "lmnt/ops_trig.h"
+#include "lmnt/ops_util.h"
 
 LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     0, // noop
@@ -31,6 +32,7 @@ LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_asin,
     lmnt_op_acos,
     lmnt_op_atan,
+    lmnt_op_sincos,
     lmnt_op_powss,
     lmnt_op_powvv,
     lmnt_op_powvs,
@@ -83,6 +85,7 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "ASIN",      LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK1  },
     { "ACOS",      LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK1  },
     { "ATAN",      LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK1  },
+    { "SINCOS",    LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK1  },
     { "POWSS",     LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK1  },
     { "POWVV",     LMNT_OPERAND_STACK4,  LMNT_OPERAND_STACK4,  LMNT_OPERAND_STACK4  },
     { "POWVS",     LMNT_OPERAND_STACK4,  LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK4  },
@@ -111,6 +114,7 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
 };
 
 lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END] = {
+    lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
