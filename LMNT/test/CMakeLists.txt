@@ -1,7 +1,7 @@
 include(FetchCUnit)
 
 add_executable(test_lmnt
-    "test_maths_scalar.c"
+    "test_interpreter.c"
 )
 target_link_libraries(test_lmnt PRIVATE lmnt cunit)
 

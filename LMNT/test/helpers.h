@@ -8,28 +8,43 @@
 #include <assert.h>
 #include <stdarg.h>
 
+// Default: may be overridden by individual testsetup configs
+#define FLOAT_ERROR_MARGIN 0.00001
 
-#define TEST_LOAD_ARCHIVE(ctx, name, def, a) \
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);\
-    {\
-        lmnt_validation_result vr;\
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_OK);\
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VALIDATION_OK);\
-    }\
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_find_def((ctx), (name), &(def)), LMNT_OK);
+// Must be overridden by individual testsetup configs
+// Present here to avoid spurious Intellisense errors
+#define TEST_NAME_PREFIX ""
+#define TEST_NAME_SUFFIX ""
+#define TEST_LOAD_ARCHIVE(ctx, name, a, fndata)
+#define TEST_UNLOAD_ARCHIVE(ctx, a, fndata)
+#define TEST_EXECUTE(ctx, fndata, rvals, rvals_count) (-1)
 
-#define TEST_UPDATE_ARGS(ctx, def, offset, ...) \
+#define TEST_UPDATE_ARGS(ctx, fndata, offset, ...) \
     {\
         lmnt_value args[] = {__VA_ARGS__};\
         const size_t args_count = sizeof(args)/sizeof(lmnt_value);\
-        CU_ASSERT_EQUAL(lmnt_update_args((ctx), (def), (offset), args, (lmnt_offset)args_count), LMNT_OK);\
+        CU_ASSERT_EQUAL(lmnt_update_args((ctx), (fndata).def, (lmnt_offset)(offset), args, (lmnt_offset)args_count), LMNT_OK);\
     }
+
+typedef struct
+{
+    char* buf;
+    size_t size;
+} archive;
+
+typedef struct test_function_data
+{
+    lmnt_def* def;
+    void* data;
+} test_function_data;
+
+lmnt_ictx* ctx;
 
 
 static lmnt_ictx* create_interpreter_with_size(size_t bufsize)
 {
     lmnt_ictx* ictx = (lmnt_ictx*)malloc(sizeof(lmnt_ictx));
-    char* mem = calloc(bufsize, sizeof(char));
+    char* mem = (char*)calloc(bufsize, sizeof(char));
     if (lmnt_ictx_init(ictx, mem, bufsize) == LMNT_OK) {
         return ictx;
     } else {
@@ -51,12 +66,6 @@ static void delete_interpreter(lmnt_ictx* ictx)
     free(ictx);
 }
 
-typedef struct
-{
-    char* buf;
-    size_t size;
-} archive;
-
 static archive create_archive_array(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t consts_count, ...)
 {
     const size_t name_len = strlen(def_name);
@@ -73,7 +82,7 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
     const uint32_t consts_len = consts_count * sizeof(lmnt_value);
 
     const size_t total_size = header_len + strings_len + defs_len + code_len + consts_len;
-    char* buf = calloc(total_size, sizeof(char));
+    char* buf = (char*)calloc(total_size, sizeof(char));
 
     size_t idx = 0;
     const char header[] = {
@@ -123,7 +132,7 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
     idx += padding;
     for (size_t i = 0; i < consts_count; ++i) {
         // TODO: handle lmnt_value not being float
-        lmnt_value val = va_arg(args, double); // actually lmnt_value, but va_arg requires double
+        lmnt_value val = (lmnt_value)va_arg(args, double); // actually lmnt_value, but va_arg requires double
         memcpy(buf + idx, (const char*)(&val), sizeof(val));
         idx += sizeof(val);
     }
