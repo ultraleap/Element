@@ -679,22 +679,23 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                     | roundss xmm(reg3), dword [rStack + in.arg1*4], 0x01
                 }
             } else {
+                // Stick to vector ops as they're faster
                 if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
-                    | cvttss2si ecx, xmm(reg1)
+                    | cvttps2dq xmm(reg3), xmm(reg1)
                 } else {
-                    | cvttss2si ecx, dword [rStack + in.arg1*4]
+                    | readv xmm(reg3), in.arg1
+                    | cvttps2dq xmm(reg3), xmm(reg3)
                 }
-                | cvtsi2ss xmm(reg3), ecx
+                | cvtdq2ps xmm(reg3), xmm(reg3)
             }
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         case LMNT_OP_FLOORV:
             ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
+            ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
             if (state->cpuflags & SIMD_X86_SSE41) {
-                ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
                 | roundps xmm(reg3), xmm(reg1), 0x01
             } else {
-                ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
                 | cvttps2dq xmm(reg3), xmm(reg1)
                 | cvtdq2ps xmm(reg3), xmm(reg3)
             }
