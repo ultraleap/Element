@@ -611,7 +611,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | readv xmm(xmmtmp1), in.arg1
             }
             | movaps xmm(xmmtmp2), xmm(xmmtmp1)
-            | shufps xmm(xmmtmp2), xmm(xmmtmp1), 0xB1
+            | shufps xmm(xmmtmp2), xmm(xmmtmp2), 0xB1
             | addps xmm(xmmtmp1), xmm(xmmtmp2)
             | movhlps xmm(xmmtmp2), xmm(xmmtmp1)
             | addss xmm(xmmtmp1), xmm(xmmtmp2)

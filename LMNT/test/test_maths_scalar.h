@@ -363,6 +363,8 @@ static void test_sqrts(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
+
+
 MAKE_REGISTER_SUITE_FUNCTION(maths_scalar,
     CUNIT_CI_TEST(test_addss),
     CUNIT_CI_TEST(test_subss),

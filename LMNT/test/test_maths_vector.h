@@ -625,7 +625,6 @@ static void test_powvs(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-
 static void test_sqrtv(void)
 {
     archive a = create_archive_array("test", 4, 4, 8, 1, 0,
