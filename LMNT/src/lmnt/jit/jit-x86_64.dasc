@@ -539,6 +539,9 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_ATAN:
             | extern1 atanf, 0, in.arg3, 0, reg3
             break;
+        case LMNT_OP_ATAN2:
+            | extern2 atan2f, 0, 0, 0
+            break;
         case LMNT_OP_SINCOS:
             | extern1 sinf, 0, in.arg2, 0, reg2
             | extern1 cosf, 0, in.arg3, 0, reg3

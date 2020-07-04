@@ -41,6 +41,7 @@ enum
     LMNT_OP_ACOS,
     LMNT_OP_ATAN,
     // trig: stack, stack, stack
+    LMNT_OP_ATAN2,
     LMNT_OP_SINCOS,
     // pow: stack, stack, stack
     LMNT_OP_POWSS,
