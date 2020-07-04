@@ -431,9 +431,48 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         | .endmacro
 
         case LMNT_OP_MODSS:
+        {
             // call to C
-            | extern2 fmodf,  0,  0,  0
+            // | extern2 fmodf,  0,  0,  0
+            // manual SSE2 version
+            bool arg1hasreg = acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
+            bool arg2hasreg = acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
+            if (arg1hasreg) {
+                | movss xmm(xmmtmp1), xmm(reg1)
+            } else {
+                | reads xmm(xmmtmp1), in.arg1
+            }
+            if (!arg2hasreg) {
+                | reads xmm(xmmtmp2), in.arg2
+                ||reg2 = xmmtmp2;
+            }
+            | divss xmm(xmmtmp1), xmm(reg2)
+            // NaN check: also gather infinities
+            | movss xmm(xmmtmp2), dword [->inftonanbits]
+            | orps xmm(xmmtmp2), xmm(xmmtmp1)
+            | cmpss xmm(xmmtmp2), xmm(xmmtmp1), 0x3  // CMPUNORDSS
+            // float -> int -> float (stick to vector versions, faster)
+            | cvttps2dq xmm(xmmtmp1), xmm(xmmtmp1)
+            | cvtdq2ps xmm(xmmtmp1), xmm(xmmtmp1)
+            // reintroduce any NaNs
+            | andps xmm(xmmtmp2), oword [->nanbits]
+            | orps xmm(xmmtmp1), xmm(xmmtmp2)
+            // if we wiped out arg2 due to the NaN check, re-read it
+            ||if (reg2 == xmmtmp2) {
+                | reads xmm(xmmtmp2), in.arg2
+            ||}
+            | mulss xmm(xmmtmp1), xmm(reg2)
+            // we can now reuse xmmtmp2 if needed
+            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
+            if (arg1hasreg) {
+                | movss xmm(reg3), xmm(reg1)
+            } else {
+                | reads xmm(reg3), in.arg1
+            }
+            | subss xmm(reg3), xmm(xmmtmp1)
+            | writes_or_notify reg3, in.arg3, xmmtmp2
             break;
+        }
         case LMNT_OP_MODVV:
         {
             // call to C
