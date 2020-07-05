@@ -39,9 +39,10 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_assignsv(lmnt_ictx* ctx, lmnt_offset arg1, lm
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_assigniis(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    _Static_assert(sizeof(lmnt_loffset) == sizeof(lmnt_value),
-        "lmnt_loffset must be the same size as lmnt_value or ASSIGNI* must be reworked");
-    const lmnt_loffset val = LMNT_COMBINE_OFFSET(arg1, arg2);
+    _Static_assert(sizeof(lmnt_loffset) == sizeof(lmnt_value) && sizeof(lmnt_loffset) == sizeof(int32_t),
+        "lmnt_loffset, lmnt_value and int32_t must be the same size or ASSIGNI* must be reworked");
+    const lmnt_loffset uval = LMNT_COMBINE_OFFSET(arg1, arg2);
+    const int32_t val = *(const int32_t*)(&uval);
     ctx->stack[arg3] = (lmnt_value)val;
     return LMNT_OK;
 }
@@ -59,9 +60,10 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_assignibs(lmnt_ictx* ctx, lmnt_offset arg1, l
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_assigniiv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    _Static_assert(sizeof(lmnt_loffset) == sizeof(lmnt_value),
-        "lmnt_loffset must be the same size as lmnt_value or ASSIGNI* must be reworked");
-    const lmnt_loffset val = LMNT_COMBINE_OFFSET(arg1, arg2);
+    _Static_assert(sizeof(lmnt_loffset) == sizeof(lmnt_value) && sizeof(lmnt_loffset) == sizeof(int32_t),
+        "lmnt_loffset, lmnt_value and int32_t must be the same size or ASSIGNI* must be reworked");
+    const lmnt_loffset uval = LMNT_COMBINE_OFFSET(arg1, arg2);
+    const int32_t val = *(const int32_t*)(&uval);
     ctx->stack[arg3 + 0] = (lmnt_value)val;
     ctx->stack[arg3 + 1] = (lmnt_value)val;
     ctx->stack[arg3 + 2] = (lmnt_value)val;

@@ -277,7 +277,8 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
         case LMNT_OP_ASSIGNIIS:
         {
-            const lmnt_loffset off = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const lmnt_loffset uoff = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const int32_t off = *(const int32_t*)(&uoff);
             const lmnt_value val = (const lmnt_value)off;
             const lmnt_loffset bin = *(const lmnt_loffset*)(&val);
             | .rodata
@@ -303,7 +304,8 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_ASSIGNIIV:
         {
             // TOOPT
-            const lmnt_loffset off = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const lmnt_loffset uoff = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const int32_t off = *(const int32_t*)(&uoff);
             const lmnt_value val = (const lmnt_value)off;
             const lmnt_loffset bin = *(const lmnt_loffset*)(&val);
             | .rodata
