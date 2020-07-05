@@ -288,6 +288,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             | movss xmm(reg3), dword [<1]
             | writes_or_notify reg3, in.arg3, xmmtmp1
+            break;
         }
         case LMNT_OP_ASSIGNIBS:
         {
