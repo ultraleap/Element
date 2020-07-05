@@ -8,7 +8,7 @@
 #include "lmnt/ops_util.h"
 
 LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
-    0, // noop
+    lmnt_op_noop,
     lmnt_op_assignss,
     lmnt_op_assignvv,
     lmnt_op_assignsv,

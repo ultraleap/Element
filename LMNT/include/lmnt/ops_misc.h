@@ -5,6 +5,8 @@
 #include "lmnt/opcodes.h"
 #include "lmnt/interpreter.h"
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_noop(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+
 LMNT_ATTR_FAST lmnt_result lmnt_op_assignss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 LMNT_ATTR_FAST lmnt_result lmnt_op_assignvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 LMNT_ATTR_FAST lmnt_result lmnt_op_assignsv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
