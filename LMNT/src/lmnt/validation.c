@@ -132,23 +132,10 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, arg2, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
-    case LMNT_OP_INDEXDSD:
+    case LMNT_OP_INDEXDID:
         // args are validated at runtime, but we can check stackrefs are valid
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
-        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg3, 1, constants_count, rw_stack_count));
-        return LMNT_VALIDATION_OK;
-    case LMNT_OP_INDEXSSS:
-        // we can at least sanity-check the stack addresses and stackrefs
-        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 0, constants_count, rw_stack_count));
-        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
-        LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 0, constants_count, rw_stack_count));
-        return LMNT_VALIDATION_OK;
-    case LMNT_OP_INDEXDSS:
-        // we can at least sanity-check the stack addresses and stackrefs
-        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
-        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
-        LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 0, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
     // stack, null, stack
     case LMNT_OP_ASSIGNSS:

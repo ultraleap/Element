@@ -787,16 +787,57 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         }
-        case LMNT_OP_INDEXSSS:
+        case LMNT_OP_INDEXDID:
         {
-            break;
-        }
-        case LMNT_OP_INDEXDSS:
-        {
-            break;
-        }
-        case LMNT_OP_INDEXDSD:
-        {
+            // Unknown at compile-time what stack addresses this is going to read from OR WRITE TO. So...
+            platformWriteAndEvictAll(state);
+
+            const uint32_t offset = (uint32_t)in.arg2;
+            | .rodata
+            |1:
+            | .dword offset
+            | .code
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
+            // arg1: check for NaN/infinities
+            | movd rdx, xmm(reg1)
+            | or edx, dword [->inftonanbits]
+            | and edx, dword [->nanbits]
+            | cmp edx, dword [->nanbits]
+            | je ->invalid_access
+            ||acquireScalarRegisterOrLoad(state, in.arg3, &reg3, ACCESSTYPE_READ, xmmtmp1);
+            // arg3: check for NaN/infinities
+            | movd rdx, xmm(reg3)
+            | or edx, dword [->inftonanbits]
+            | and edx, dword [->nanbits]
+            | cmp edx, dword [->nanbits]
+            | je ->invalid_access
+            // arg1: float -> int
+            | cvtss2si rdx, xmm(reg1)
+            // arg1: index += offset
+            | add edx, dword [<1]
+            // arg1: index >= stack_count?
+            | cmp rdx, qword [rArg1 + ctx_stack_count_offset]
+            | jae ->invalid_access
+            // arg1: address = stack_address + index*sizeof(lmnt_value)
+            | shl rdx, (int)log2f(sizeof(lmnt_value))
+            | add rdx, rStack
+            | movss xmm(xmmtmp2), dword [rdx]
+
+            // arg3: float -> int
+            | cvtss2si rdx, xmm(reg3)
+            // arg3: index += offset
+            | add edx, dword [<1]
+            // arg3: index >= stack_count?
+            | cmp rdx, qword [rArg1 + ctx_stack_count_offset]
+            | jae ->invalid_access
+            // arg3: address = stack_address + index*sizeof(lmnt_value)
+            | shl rdx, (int)log2f(sizeof(lmnt_value))
+            | add rdx, rStack
+            | movss dword [rdx], xmm(xmmtmp2)
+
+            // We could just have overwritten any of the stack we loaded into registers, so...
+            // This won't write anything since we were only reading
+            platformWriteAndEvictAll(state);
             break;
         }
 

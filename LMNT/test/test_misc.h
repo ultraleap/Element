@@ -365,19 +365,58 @@ static void test_indexdis(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-static void test_indexsss(void)
+static void test_indexdid(void)
 {
-    // TODO: this, once implemented
-}
+    archive a = create_archive_array("test", 2, 1, 4, 1, 4,
+        LMNT_OP_BYTES(LMNT_OP_INDEXDID, 0x04, 0x00, 0x05),
+        350.0f, 700.0f, -100.0f, 50.0f
+    );
+    test_function_data fndata;
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
 
-static void test_indexdss(void)
-{
-    // TODO: this, once implemented
-}
+    lmnt_value rvals[1];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
 
-static void test_indexdsd(void)
-{
-    // TODO: this, once implemented
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f, 6.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 350.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 2.0f, 6.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -100.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -1.0f, 6.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 10.0f, 6.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f, -6.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f, 16.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), 6.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY, 6.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
 static void test_interrupt(void)
@@ -396,8 +435,6 @@ MAKE_REGISTER_SUITE_FUNCTION(misc,
     CUNIT_CI_TEST(test_assigniiv),
     CUNIT_CI_TEST(test_assignibv),
     CUNIT_CI_TEST(test_indexdis),
-    CUNIT_CI_TEST(test_indexsss),
-    CUNIT_CI_TEST(test_indexdss),
-    CUNIT_CI_TEST(test_indexdsd)
+    CUNIT_CI_TEST(test_indexdid)
     // CUNIT_CI_TEST(test_interrupt)
 );

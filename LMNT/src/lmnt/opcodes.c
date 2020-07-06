@@ -55,9 +55,7 @@ LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_ceils,
     lmnt_op_ceilv,
     lmnt_op_indexdis,
-    lmnt_op_indexsss,
-    lmnt_op_indexdss,
-    lmnt_op_indexdsd,
+    lmnt_op_indexdid,
     lmnt_op_extcall,
 };
 
@@ -109,15 +107,11 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "CEILS",     LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK1  },
     { "CEILV",     LMNT_OPERAND_STACK4,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK4  },
     { "INDEXDIS",  LMNT_OPERAND_DYNAMIC, LMNT_OPERAND_IMM,     LMNT_OPERAND_STACK1  },
-    { "INDEXSSS",  LMNT_OPERAND_STACKN,  LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK1  },
-    { "INDEXDSS",  LMNT_OPERAND_DYNAMIC, LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK1  },
-    { "INDEXDSD",  LMNT_OPERAND_DYNAMIC, LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK1  },
+    { "INDEXDID",  LMNT_OPERAND_DYNAMIC, LMNT_OPERAND_IMM,     LMNT_OPERAND_DYNAMIC },
     { "EXTCALL",   LMNT_OPERAND_DEFPTR,  LMNT_OPERAND_DEFPTR,  LMNT_OPERAND_STACKN  },
 };
 
 lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END] = {
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
