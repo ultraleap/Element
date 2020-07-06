@@ -9,7 +9,7 @@
 #include <stdarg.h>
 
 // Default: may be overridden by individual testsetup configs
-#define FLOAT_ERROR_MARGIN 0.00001
+#define FLOAT_ERROR_MARGIN 0.0001
 
 // Must be overridden by individual testsetup configs
 // Present here to avoid spurious Intellisense errors
@@ -44,7 +44,7 @@ typedef struct
 
 typedef struct test_function_data
 {
-    lmnt_def* def;
+    const lmnt_def* def;
     void* data;
 } test_function_data;
 
