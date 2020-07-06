@@ -45,24 +45,12 @@ namespace element
         return const_cast<struct_instance*>(this)->shared_from_this();
     }
 
-    std::string struct_instance::to_string() const
-    {
-        return "Instance:" + declarer->to_string();
-    }
-
     //function_instance
     function_instance::function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<object>> args)
         : declarer(declarer)
         , stack(std::move(stack))
         , provided_arguments(std::move(args))
     {
-    }
-
-    std::string function_instance::to_string() const
-    {
-        //todo: element test expects Function, not FunctionInstance
-        //return declarer->location() + ":FunctionInstance";
-        return declarer->location() + ":Function";
     }
 
     std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const

@@ -829,7 +829,7 @@ element_result element_metainfo_for_evaluable(const element_evaluable* evaluable
 
     *metainfo = new element_metainfo();
     (*metainfo)->typeof = evaluable->evaluable->to_string();
-    //(*metainfo)->code = evaluable->evaluable->to_code(0);
+    (*metainfo)->code = evaluable->evaluable->to_code(0);
 
     return ELEMENT_OK;
 }
