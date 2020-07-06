@@ -2,6 +2,7 @@
 #include "element/token.h"
 #include "element/ast.h"
 #include "element/interpreter.h"
+#include "element/common.h"
 
 #include <stdlib.h>
 #include <memory.h>
@@ -9,10 +10,16 @@
 #include <stdint.h>
 #include <time.h>
 
+void log_callback(const element_log_message* msg)
+{
+    printf("%s", msg->message);
+}
+
 element_result eval(const char* evaluate)
 {
     element_interpreter_ctx* context;
     element_interpreter_create(&context);
+    element_interpreter_set_log_callback(context, log_callback);
     element_interpreter_load_prelude(context);
 
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
@@ -134,12 +141,13 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;*/
 
-    // todo: asserts as expected, but no way to do error handling
-    /*
     result = eval("one = two; two = one; evaluate = one;");
-    if (result != ELEMENT_OK)
+    if (result != ELEMENT_ERROR_CIRCULAR_COMPILATION)
         return result;
-    */
+
+    result = eval("evaluate = one;");
+    if (result != ELEMENT_ERROR_UNKNOWN)
+        return result;
 
     result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).a;");
     if (result != ELEMENT_OK)

@@ -1,5 +1,8 @@
 #include "declarations.hpp"
 
+//LIBS
+#include <fmt/format.h>
+
 //SELF
 #include "object.hpp"
 #include "scope.hpp"
@@ -190,9 +193,14 @@ namespace element
 
     std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
+        //todo: this and compile are almost identical
+
         if (context.is_recursive(this))
         {
-            assert(!"recursive");
+            return std::make_shared<error>(
+                fmt::format("failed at {}. recursion detected.\n", to_string()),
+                ELEMENT_ERROR_CIRCULAR_COMPILATION,
+                this);
         }
 
         call_stack::frame frame;
@@ -202,7 +210,10 @@ namespace element
 
         if (!body)
         {
-            assert(!"failed to call scope-bodied function as it's missing a return");
+            return std::make_shared<error>(
+                fmt::format("failed at {}. scope bodied functions must contain a return function.\n", to_string()),
+                ELEMENT_ERROR_MISSING_FUNCTION_BODY,
+                this);
         }
 
         //todo: we don't need args passed since it's in the stack
@@ -221,7 +232,10 @@ namespace element
             //Nullary, compile the body
             if (context.is_recursive(this))
             {
-                assert(!"recursive");
+                return std::make_shared<error>(
+                    fmt::format("failed at {}. recursion detected.\n", to_string()),
+                    ELEMENT_ERROR_CIRCULAR_COMPILATION,
+                    this);
             }
 
             call_stack::frame frame;
@@ -230,7 +244,10 @@ namespace element
 
             if (!body)
             {
-                assert(!"failed to compile scope-bodied function as it's missing a return");
+                return std::make_shared<error>(
+                    fmt::format("failed at {}. scope bodied functions must contain a return function.\n", to_string()),
+                    ELEMENT_ERROR_MISSING_FUNCTION_BODY,
+                    this);
             }
 
             ret = body->compile(context);
