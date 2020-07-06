@@ -485,3 +485,6 @@ pip-selfcheck.json
 build*/
 
 # End of https://www.gitignore.io/api/python,csharp,visualstudiocode
+
+# vim swap files
+*.swp
