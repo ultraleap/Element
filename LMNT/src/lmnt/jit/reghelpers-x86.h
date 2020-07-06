@@ -140,6 +140,7 @@ static bool flushRegister(jit_compile_state* state, size_t reg)
 {
     const lmnt_offset spos = state->fpreg->xmm[reg].stackpos;
     const size_t sz = state->fpreg->xmm[reg].count;
+    if (sz == 0) return false;
     assert(sz == 4 || sz == 1);
 
     // If not modified, we have nothing to do here
@@ -153,6 +154,13 @@ static bool flushRegister(jit_compile_state* state, size_t reg)
         return true;
     }
     return false;
+}
+
+static inline void flushAllRegisters(jit_compile_state* state)
+{
+    for (size_t i = state->fpreg->start; i != state->fpreg->end; ++i) {
+        flushRegister(state, i);
+    }
 }
 
 static inline void notifyRegisterWritten(jit_compile_state* state, size_t reg, size_t writeSize)

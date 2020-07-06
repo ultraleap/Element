@@ -219,6 +219,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
 
     // store LMNT stack base
     const size_t ctx_stack_offset = offsetof(lmnt_ictx, stack);
+    const size_t ctx_stack_count_offset = offsetof(lmnt_ictx, cur_stack_count);
     | mov rStack, [rArg1 + ctx_stack_offset]
 
     lmnt_result result = LMNT_OK;
@@ -755,11 +756,49 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
 
         case LMNT_OP_INDEXDIS:
-        case LMNT_OP_INDEXSSS:
-        case LMNT_OP_INDEXDSS:
-        case LMNT_OP_INDEXDSD:
-            // not up to these yet :(
+        {
+            // Unknown at compile-time what stack addresses this is going to read from. So...
+            flushAllRegisters(state);
+
+            const uint32_t offset = (uint32_t)in.arg2;
+            | .rodata
+            |1:
+            | .dword offset
+            | .code
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
+            // Check for NaN/infinities
+            | movd rdx, xmm(reg1)
+            | or edx, dword [->inftonanbits]
+            | and edx, dword [->nanbits]
+            | cmp edx, dword [->nanbits]
+            | je ->invalid_access
+            // float -> int
+            | cvtss2si rdx, xmm(reg1)
+            // index += offset
+            | add edx, dword [<1]
+            // index >= stack_count?
+            | cmp rdx, qword [rArg1 + ctx_stack_count_offset]
+            | jae ->invalid_access
+            // address = stack_address + index*sizeof(lmnt_value)
+            | shl rdx, (int)log2f(sizeof(lmnt_value))
+            | add rdx, rStack
+            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
+            | movd xmm(reg3), dword [rdx]
+            | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
+        }
+        case LMNT_OP_INDEXSSS:
+        {
+            break;
+        }
+        case LMNT_OP_INDEXDSS:
+        {
+            break;
+        }
+        case LMNT_OP_INDEXDSD:
+        {
+            break;
+        }
 
         case LMNT_OP_EXTCALL:
             // keep these or not?
@@ -779,6 +818,9 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     | mov rax, LMNT_OK
     | ->return:
     | epilogue, use_nv
+    | ->invalid_access:
+    | mov rax, LMNT_ERROR_ACCESS_VIOLATION
+    | jmp ->return
     fndata->buffer = targetLinkAndEncode(&state->dasm_state, &fndata->codesize);
     dasm_free(&state->dasm_state);
     fndata->function = (lmnt_jit_fn)labels[lbl_lmnt_main];

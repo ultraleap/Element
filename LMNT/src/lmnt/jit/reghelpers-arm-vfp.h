@@ -263,6 +263,13 @@ static bool flushRegister(jit_compile_state* state, size_t reg)
     return false;
 }
 
+static inline void flushAllRegisters(jit_compile_state* state)
+{
+    for (size_t i = state->fpreg->start; i != state->fpreg->end; ++i) {
+        flushRegister(state, i);
+    }
+}
+
 static inline void notifyRegisterWritten(jit_compile_state* state, size_t reg, size_t writeSize)
 {
     assert(reg + writeSize <= FPREG_MAX);

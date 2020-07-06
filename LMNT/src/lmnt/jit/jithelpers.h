@@ -144,6 +144,7 @@ static inline size_t getRegisterCount(jit_compile_state* state, size_t reg);
 static inline bool isRegisterInitialised(jit_compile_state* state, size_t reg);
 static void initialiseRegister(jit_compile_state* state, size_t reg);
 static bool flushRegister(jit_compile_state* state, size_t reg);
+static void flushAllRegisters(jit_compile_state* state);
 static inline void notifyRegisterWritten(jit_compile_state* state, size_t reg, size_t writeSize);
 static void writeAndEvictRegister(jit_compile_state* state, size_t reg);
 static void writeAndEvictRegisters(jit_compile_state* state, size_t reg, size_t scount);

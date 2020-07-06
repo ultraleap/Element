@@ -331,7 +331,38 @@ static void test_assignibv(void)
 
 static void test_indexdis(void)
 {
-    // TODO: this, once implemented
+    archive a = create_archive_array("test", 1, 1, 2, 1, 4,
+        LMNT_OP_BYTES(LMNT_OP_INDEXDIS, 0x04, 0x00, 0x05),
+        350.0f, 700.0f, -100.0f, 50.0f
+    );
+    test_function_data fndata;
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    lmnt_value rvals[1];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 350.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 2.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -100.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 8.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), LMNT_ERROR_ACCESS_VIOLATION);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
 static void test_indexsss(void)
@@ -363,10 +394,10 @@ MAKE_REGISTER_SUITE_FUNCTION(misc,
     CUNIT_CI_TEST(test_assigniis),
     CUNIT_CI_TEST(test_assignibs),
     CUNIT_CI_TEST(test_assigniiv),
-    CUNIT_CI_TEST(test_assignibv)
-    // CUNIT_CI_TEST(test_indexdis),
-    // CUNIT_CI_TEST(test_indexsss),
-    // CUNIT_CI_TEST(test_indexdss),
-    // CUNIT_CI_TEST(test_indexdsd),
+    CUNIT_CI_TEST(test_assignibv),
+    CUNIT_CI_TEST(test_indexdis),
+    CUNIT_CI_TEST(test_indexsss),
+    CUNIT_CI_TEST(test_indexdss),
+    CUNIT_CI_TEST(test_indexdsd)
     // CUNIT_CI_TEST(test_interrupt)
 );
