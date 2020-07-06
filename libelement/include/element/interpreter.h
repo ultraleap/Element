@@ -122,7 +122,7 @@ element_result element_interpreter_evaluate_expression(
     const char* expression_string,
     const element_outputs* outputs);
 
-element_result element_metainfo_for_evalutable(
+element_result element_metainfo_for_evaluable(
     const element_evaluable* evaluable,
     element_metainfo** metainfo);
 

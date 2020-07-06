@@ -823,7 +823,7 @@ element_result element_interpreter_evaluate(
     return result;
 }
 
-element_result element_metainfo_for_evalutable(const element_evaluable* evaluable, element_metainfo** metainfo)
+element_result element_metainfo_for_evaluable(const element_evaluable* evaluable, element_metainfo** metainfo)
 {
     //todo: error checking and stuff
 

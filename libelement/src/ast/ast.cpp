@@ -803,10 +803,6 @@ element_result element_parser_ctx::parse(size_t* tindex, element_ast* ast)
 
 element_result element_parser_ctx::validate(element_ast* ast)
 {
-#ifndef NDEBUG
-    ast->ast_node_to_code();
-#endif
-	
     element_result result = ELEMENT_OK;
     result = validate_type(ast);
 	if(result != ELEMENT_OK)
@@ -964,14 +960,6 @@ void element_ast_delete(element_ast* ast)
         ast_clear(ast);
     delete ast;
 }
-
-#ifndef NDEBUG
-void element_ast::ast_node_to_code()
-{
-	if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast_node_as_code))
-		ast_node_as_code = ast_to_code(this);
-}
-#endif
 
 element_ast::walk_step element_ast::walk(const element_ast::walker& fn)
 {

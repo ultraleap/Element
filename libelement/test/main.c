@@ -94,7 +94,12 @@ int main(int argc, char** argv)
         return result;
 
     //indexing intrinsic function
-    result = eval("evaluate = Num.cos(0).degrees;");
+    result = eval("evaluate = Num.acos(0).degrees;");
+    if (result != ELEMENT_OK)
+        return result;
+
+    //indexing nested instance function
+    result = eval("evaluate = Num.cos(Num.pi.div(4));");
     if (result != ELEMENT_OK)
         return result;
 
