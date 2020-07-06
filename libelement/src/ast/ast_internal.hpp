@@ -57,7 +57,7 @@ struct element_ast
         return (flags & flag) == flag;
     }
 
-//	//use for ast_node_as_code and ast_print at some point
+//	//use for ast_print at some point
 //    void visit(ast_visitor& visitor)
 //    {
 //        visit_node(visitor , this);
@@ -93,12 +93,6 @@ struct element_ast
 //        case ELEMENT_AST_NODE_UNSPECIFIED_TYPE: visitor.visit_unspecified_type(ast); break;
 //	    }
 //    }
-
-#ifndef NDEBUG
-    std::string ast_node_as_code;
-
-    void ast_node_to_code();
-#endif
 
 private:
 
