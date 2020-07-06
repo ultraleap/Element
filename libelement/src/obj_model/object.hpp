@@ -9,6 +9,7 @@
 
 //SELF
 #include "fwd.hpp"
+#include "element/interpreter.h"
 
 struct element_expression;
 struct element_interpreter_ctx;
@@ -94,30 +95,55 @@ namespace element
         /*
          * Namespace, element_expression, struct declaration, struct instance, function declaration if nullary
          */
-        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { assert(!"make abs"); throw;  return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const;
         /*
          * struct declaration, function declaration, function instance
          */
-        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const { assert(!"make abs"); throw;  return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const;
         /*
          * expression, anything that remains after an expression is compiled, anything that a user tries to compile using the C API
          */
-        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const { assert(!"make abs"); throw;  return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const;
 
     protected:
         object() = default;
     };
 
-    //struct error : object
-    // {
-    //    static const object_model_id type_id;
-    //
-    //    std::string message;
+    class error : public object, public std::enable_shared_from_this<error>
+    {
+    public:
+        explicit error(std::string message, element_result code, const declaration* location)
+            : message{ std::move(message) }
+            , code(code)
+            , location(location)
+        {
 
-    //    explicit error(std::string message)
-    //        : object(nullptr, type_id)
-    //        , message{std::move(message)}
-    //    {
-    //    }
-    //};
+        }
+
+        explicit error(std::string message, element_result code, const declaration* location, std::shared_ptr<error> err)
+            : message(std::move(message))
+            , code(code)
+            , location(location)
+            , err(std::move(err))
+        {
+            
+        }
+
+        [[nodiscard]] virtual std::string to_string() const { return message; }
+        [[nodiscard]] virtual std::string to_code(int depth) const { return to_string(); }
+        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { return const_cast<error*>(this)->shared_from_this(); };
+        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const { return const_cast<error*>(this)->shared_from_this(); };
+        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const { return const_cast<error*>(this)->shared_from_this(); };
+
+        [[nodiscard]] element_result get_result() const;
+        [[nodiscard]] const std::string& get_message() const;
+        [[nodiscard]] const declaration* get_declaration() const;
+        [[nodiscard]] const std::shared_ptr<error>& get_wrapped_error() const;
+
+    private:
+        std::string message;
+        element_result code = ELEMENT_ERROR_UNKNOWN;
+        const declaration* location;
+        std::shared_ptr<error> err;
+    };
  }

@@ -1,5 +1,7 @@
 #include "expressions.hpp"
 
+#include <fmt/format.h>
+
 #include "etree/expressions.hpp"
 #include "scope.hpp"
 #include "intermediaries.hpp"
@@ -44,8 +46,20 @@ namespace element
         for (const auto& expression : expressions)
         {
             auto previous = std::move(current);
-            current = expression->resolve(context, std::move(previous));
+            current = expression->resolve(context, previous);
             assert(current);
+
+            auto err = std::dynamic_pointer_cast<error>(current);
+            if (err)
+            {
+                context.interpreter->log(err->get_result(), err->get_message());
+
+                return std::make_shared<error>(
+                    fmt::format("failed at {} when resolving {}{}\n", declarer->to_string(), previous ? previous->to_string() : "", expression->to_code()),
+                    err->get_result(),
+                    declarer,
+                    err);
+            }
         }
 
         return current->compile(context);
@@ -64,7 +78,7 @@ namespace element
         assert(parent);
     }
 
-    [[nodiscard]] std::shared_ptr<object> identifier_expression::resolve(const compilation_context& context, std::shared_ptr<object> obj)
+    [[nodiscard]] std::shared_ptr<object> identifier_expression::resolve(const compilation_context& context, std::shared_ptr<object>& obj)
     {
         if (obj)
         {
@@ -107,9 +121,10 @@ namespace element
         if (found)
             return found->compile(context);
 
-        assert(false);
-        throw;
-        return nullptr;
+        return std::make_shared<error>(
+            fmt::format("failed to find {}.\n", name.value),
+            ELEMENT_ERROR_UNKNOWN,
+            nullptr);
     }
 
     literal_expression::literal_expression(element_value value, const expression_chain* parent)
@@ -119,7 +134,7 @@ namespace element
         assert(parent);
     }
 
-    [[nodiscard]] std::shared_ptr<object> literal_expression::resolve(const compilation_context& context, std::shared_ptr<object> obj)
+    [[nodiscard]] std::shared_ptr<object> literal_expression::resolve(const compilation_context& context, std::shared_ptr<object>& obj)
     {
         if (obj)
         {
@@ -143,7 +158,7 @@ namespace element
         assert(parent);
     }
 
-    [[nodiscard]] std::shared_ptr<object> indexing_expression::resolve(const compilation_context& context, std::shared_ptr<object> obj)
+    [[nodiscard]] std::shared_ptr<object> indexing_expression::resolve(const compilation_context& context, std::shared_ptr<object>& obj)
     {
         if (!obj)
         {
@@ -171,7 +186,7 @@ namespace element
         return "(" + expressions + ")";
     }
 
-    [[nodiscard]] std::shared_ptr<object> call_expression::resolve(const compilation_context& context, std::shared_ptr<object> obj)
+    [[nodiscard]] std::shared_ptr<object> call_expression::resolve(const compilation_context& context, std::shared_ptr<object>& obj)
     {
         if (!obj)
         {
