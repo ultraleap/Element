@@ -48,7 +48,6 @@ set(element_sources
     "src/obj_model/port.hpp"
     "src/obj_model/port.cpp"
     "src/obj_model/type_annotation.hpp"
-    "src/obj_model/type_annotation.cpp"
     
     "src/obj_model/declarations.hpp"
     "src/obj_model/declarations.cpp"
@@ -70,6 +69,8 @@ set(element_sources
 
     "src/obj_model/scope.hpp"
     "src/obj_model/scope.cpp"
+
+    "src/obj_model/metainfo.cpp"
 
     #Expression tree
     "src/etree/compiler.cpp"

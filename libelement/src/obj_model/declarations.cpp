@@ -58,37 +58,6 @@ namespace element
             body = std::make_shared<intrinsic_user_constructor>(this);
     }
 
-    std::string struct_declaration::to_string() const
-    {
-        return location() + ":Struct";
-    }
-
-    std::string struct_declaration::to_code(const int depth) const
-    {
-        std::string ports;
-
-        const std::string offset = "    ";
-        std::string declaration_offset;
-
-        for (auto i = 0; i < depth; ++i)
-            declaration_offset += offset;
-
-        if (has_inputs()) {
-            static auto accumulate = [depth](std::string accumulator, const port& port)
-            {
-                return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
-            };
-
-            const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
-            ports = "(" + input_ports + ")";
-        }
-
-        if (_intrinsic)
-            return declaration_offset + "intrinsic struct " + name.value + ports + our_scope->to_code(depth);
-
-        return declaration_offset + "struct " + name.value + ports + our_scope->to_code(depth);
-    }
-
     std::shared_ptr<object> struct_declaration::index(const compilation_context& context, const identifier& identifier) const
     {
         return our_scope->find(identifier, false);
@@ -108,40 +77,6 @@ namespace element
         _intrinsic = is_intrinsic;
     }
 
-    std::string constraint_declaration::to_string() const
-    {
-        return location() + ":Constraint";
-    }
-
-    std::string constraint_declaration::to_code(const int depth) const
-    {
-        std::string ports;
-
-        const std::string offset = "    ";
-        std::string declaration_offset;
-
-        for (auto i = 0; i < depth; ++i)
-            declaration_offset += offset;
-
-        if (has_inputs()) {
-            static auto accumulate = [depth](std::string accumulator, const port& port)
-            {
-                return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
-            };
-
-            const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
-            ports = "(" + input_ports + ")";
-        }
-
-        if (output)
-            ports += output->to_code(depth);
-
-        if (_intrinsic)
-            return declaration_offset + "intrinsic constraint " + name.value + ports;
-
-        return declaration_offset + "constraint " + name.value + ports;
-    }
-
     //function
     function_declaration::function_declaration(identifier identifier, const scope* parent_scope, const bool is_intrinsic)
         : declaration(std::move(identifier)
@@ -149,41 +84,6 @@ namespace element
     {
         qualifier = function_qualifier;
         _intrinsic = is_intrinsic;
-    }
-
-    std::string function_declaration::to_string() const
-    {
-        return location() + ":Function";
-    }
-
-    std::string function_declaration::to_code(int depth) const
-    {
-        auto declaration = name.value;
-        std::string ports;
-
-        const std::string offset = "    ";
-        std::string declaration_offset;
-
-        for (auto i = 0; i < depth; ++i)
-            declaration_offset += offset;
-
-        if (has_inputs()) {
-            static auto accumulate = [depth](std::string accumulator, const port& port)
-            {
-                return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
-            };
-
-            const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
-            ports = "(" + input_ports + ")";
-        }
-
-        if (output)
-            ports += output->to_code(depth);
-
-        if (_intrinsic)
-            return declaration_offset + "intrinsic " + name.value + ports + ";";
-
-        return declaration_offset + name.value + ports + our_scope->to_code(depth);
     }
 
     std::shared_ptr<object> function_declaration::index(const compilation_context& context, const identifier& name) const
@@ -270,16 +170,6 @@ namespace element
     {
         qualifier = namespace_qualifier;
         _intrinsic = false;
-    }
-
-    std::string namespace_declaration::to_string() const
-    {
-        return location() + ":Namespace";
-    }
-
-    std::string namespace_declaration::to_code(const int depth) const
-    {
-        return "namespace " + name.value + our_scope->to_code(depth);
     }
 
     std::shared_ptr<object> namespace_declaration::index(const compilation_context& context, const element::identifier& identifier) const

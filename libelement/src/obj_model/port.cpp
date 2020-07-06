@@ -7,12 +7,4 @@ namespace element
         , annotation{ std::move(annotation) }
     {
     }
-
-    std::string port::to_code(int depth) const
-    {
-        if (annotation)
-            return annotation->to_code(depth);
-
-        return "";
-    }
 }

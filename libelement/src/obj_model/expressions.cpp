@@ -14,16 +14,6 @@ namespace element
         assert(declarer);
     }
 
-    std::string expression_chain::to_code(int depth) const
-    {
-        static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression>& expression)
-        {
-            return std::move(accumulator) + expression->to_code();
-        };
-
-        return std::accumulate(std::next(std::begin(expressions)), std::end(expressions), expressions[0]->to_code(), accumulate);
-    }
-
     std::shared_ptr<object> expression_chain::call(
         const compilation_context& context,
         std::vector<std::shared_ptr<object>> compiled_args) const
@@ -175,17 +165,6 @@ namespace element
         assert(parent);
     }
 
-    std::string call_expression::to_code(int depth) const
-    {
-        static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression_chain>& chain)
-        {
-            return std::move(accumulator) + ", " + chain->to_code();
-        };
-
-        const auto expressions = std::accumulate(std::next(std::begin(arguments)), std::end(arguments), arguments[0]->to_code(), accumulate);
-        return "(" + expressions + ")";
-    }
-
     [[nodiscard]] std::shared_ptr<object> call_expression::resolve(const compilation_context& context, std::shared_ptr<object>& obj)
     {
         if (!obj)
@@ -208,28 +187,9 @@ namespace element
 
     }
 
-    [[nodiscard]] std::string lambda_expression::to_string() const
-    {
-        return "_";
-    }
-
-    [[nodiscard]] std::string lambda_expression::to_code(int depth) const
-    {
-        return "_";
-    }
-
     expression_bodied_lambda_expression::expression_bodied_lambda_expression(const scope* parent_scope)
         : lambda_expression(parent_scope)
     {
     }
-
-    [[nodiscard]] std::string expression_bodied_lambda_expression::to_string() const
-    {
-        return "_";
-    }
-
-    [[nodiscard]] std::string expression_bodied_lambda_expression::to_code(int depth) const
-    {
-        return "_";
-    }*/
+    */
 }

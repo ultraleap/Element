@@ -82,8 +82,6 @@ namespace element
         build_inputs(decl, *struct_decl);
         build_output(decl, *struct_decl);
 
-        //log(struct_decl->to_string());
-
         if (ast->children.size() > ast_idx::function::body)
         {
             auto* body = ast->children[ast_idx::function::body].get();
@@ -104,8 +102,6 @@ namespace element
         //ports
         build_inputs(decl, *constraint_decl);
         build_output(decl, *constraint_decl);
-
-        //log(constraint_decl->to_string());
 
         return std::move(constraint_decl);
     }
@@ -257,8 +253,6 @@ namespace element
             if (body->type == ELEMENT_AST_NODE_SCOPE)
                 build_scope(body, *namespace_decl);
         }
-
-        //log(namespace_decl->to_string());
 
         return std::move(namespace_decl);
     }
