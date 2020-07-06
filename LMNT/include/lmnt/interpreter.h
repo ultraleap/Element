@@ -27,6 +27,7 @@ struct lmnt_ictx
     // current def data
     const lmnt_def* cur_def;
     lmnt_loffset cur_instr;
+    size_t cur_stack_count;
     const lmnt_op_fn* op_functions;
 };
 

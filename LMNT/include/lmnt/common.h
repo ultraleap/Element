@@ -91,7 +91,7 @@ typedef struct lmnt_ictx lmnt_ictx;
         return ok_or_return_result; \
 }
 
-#define LMNT_COMBINE_OFFSET(lo, hi) (lo | (hi << sizeof(lmnt_offset) * CHAR_BIT))
+#define LMNT_COMBINE_OFFSET(lo, hi) (lo | (hi << (sizeof(lmnt_offset) * CHAR_BIT)))
 
 // MSVC does not currently include the C11-standard _Static_assert, only the C++-style variant
 #if defined(_MSC_VER)

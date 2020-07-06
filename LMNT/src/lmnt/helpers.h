@@ -47,4 +47,10 @@ static inline lmnt_offset value_to_offset(lmnt_value v)
     return ((lmnt_offset)v) - (v < (lmnt_offset)v);
 }
 
+static inline size_t value_to_size_t(lmnt_value v)
+{
+    // fast floor
+    return ((size_t)v) - (v < (size_t)v);
+}
+
 #endif
