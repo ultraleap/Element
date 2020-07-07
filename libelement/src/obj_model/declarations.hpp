@@ -59,7 +59,7 @@ namespace element
     class struct_declaration final : public declaration, public std::enable_shared_from_this<struct_declaration>
     {
     public:
-        struct_declaration(identifier identifier, const scope* parent_scope, bool is_intrinsic);
+        struct_declaration(identifier name, const scope* parent_scope, bool is_intrinsic);
         virtual ~struct_declaration() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
@@ -71,15 +71,15 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const element::identifier&) const override;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const override;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const final { return const_cast<struct_declaration*>(this)->shared_from_this(); }
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override { return const_cast<struct_declaration*>(this)->shared_from_this(); }
     };
 
     class constraint_declaration final : public declaration
     {
     public:
-        constraint_declaration(element::identifier identifier, bool is_intrinsic);
+        constraint_declaration(identifier name, bool is_intrinsic);
         virtual ~constraint_declaration() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
@@ -95,7 +95,7 @@ namespace element
     class function_declaration final : public declaration
     {
     public:
-        function_declaration(identifier identifier, const scope* parent_scope, bool is_intrinsic);
+        function_declaration(identifier name, const scope* parent_scope, bool is_intrinsic);
         virtual ~function_declaration() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
@@ -107,7 +107,7 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const final;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
     };
@@ -115,7 +115,7 @@ namespace element
     class namespace_declaration final : public declaration, public std::enable_shared_from_this<namespace_declaration>
     {
     public:
-        namespace_declaration(identifier identifier, const element::scope* parent_scope);
+        namespace_declaration(identifier name, const scope* parent_scope);
         virtual ~namespace_declaration() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
@@ -126,8 +126,8 @@ namespace element
 
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const element::identifier&) const override;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const override;
         //todo: required because typeof does compilation, might need to change that?
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const final { return const_cast<namespace_declaration*>(this)->shared_from_this(); }
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override { return const_cast<namespace_declaration*>(this)->shared_from_this(); }
     };
 }

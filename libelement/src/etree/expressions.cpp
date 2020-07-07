@@ -20,11 +20,11 @@ std::shared_ptr<element::object> element_expression::compile(const element::comp
     return const_cast<element_expression*>(this)->shared_from_this();
 }
 
-std::shared_ptr<element::object> element_expression::index(const element::compilation_context& context, const element::identifier& identifier) const
+std::shared_ptr<element::object> element_expression::index(const element::compilation_context& context, const element::identifier& name) const
 {
     assert(actual_type);
 
-    const auto declarer = actual_type->index(context, identifier);
+    const auto declarer = actual_type->index(context, name);
 
     if (!declarer)
     {

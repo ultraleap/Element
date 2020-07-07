@@ -134,7 +134,7 @@ namespace element
         /*
          * Namespace, element_expression, struct declaration, struct instance, function declaration if nullary
          */
-        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const;
+        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const;
         /*
          * struct declaration, function declaration, function instance
          */
