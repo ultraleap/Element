@@ -76,8 +76,7 @@ std::string element::error::typeof_info() const
 
 std::string element_expression::typeof_info() const
 {
-    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
-    return "";
+    return actual_type->get_identifier().value;
 }
 
 //to_code
