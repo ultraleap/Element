@@ -1,5 +1,8 @@
 #include "expressions.hpp"
 
+//LIBS
+#include <fmt/format.h>
+
 //SELF
 #include "obj_model/types.hpp"
 #include "obj_model/intermediaries.hpp"
@@ -32,16 +35,50 @@ std::shared_ptr<element::object> element_expression::index(const element::compil
         return nullptr;
     }
 
-    auto args = std::vector<std::shared_ptr<object>>();
-    args.push_back(const_cast<element_expression*>(this)->shared_from_this());
+    auto* func = dynamic_cast<element::function_declaration*>(declarer.get());
 
-    auto* function_declaration = dynamic_cast<element::function_declaration*>(declarer.get());
     //todo: not real typechecking. also, kinda duplicated from struct instance.
-    if (function_declaration && function_declaration->has_inputs() && function_declaration->inputs[0].annotation && function_declaration->inputs[0].annotation->name.value == actual_type->get_identifier().value)
-        return std::make_shared<element::function_instance>(function_declaration, context.stack, args);
+    const bool has_inputs = func && func->has_inputs();
+    const bool has_type = has_inputs && func->inputs[0].annotation.get();
+    const bool types_match = has_type && func->inputs[0].annotation->name.value == actual_type->get_identifier().value;
 
-    assert(!"tried to index on an expression but found a function that is not an instance function");
-    throw;
+    if (types_match)
+    {
+        std::vector<std::shared_ptr<object>> args = { const_cast<element_expression*>(this)->shared_from_this() };
+        return std::make_shared<element::function_instance>(func, context.stack, args);
+    }
+
+    if (func)
+    {
+        if (!has_inputs)
+        {
+            return std::make_shared<element::error>(
+                fmt::format("error: '{}' was found when indexing '{}' but it is not an instance function as it has no parameters.\n",
+                    func->typeof_info(), typeof_info()),
+                ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION,
+                nullptr);
+        }
+
+        if (!has_type)
+        {
+            return std::make_shared<element::error>(
+                fmt::format("error: '{}' was found when indexing '{}' but it is not an instance function as it does not have an explicit type defined for its first parameter '{}'.\n",
+                    func->typeof_info(), typeof_info(), func->inputs[0].name.value),
+                ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION,
+                nullptr);
+        }
+
+        if (!types_match)
+        {
+            return std::make_shared<element::error>(
+                fmt::format("error: '{}' was found when indexing '{}' but it is not an instance function as the first parameter '{}' is of type '{}', when it needs to be '{}' to be considered an instance function.\n",
+                    func->typeof_info(), typeof_info(), func->inputs[0].name.value, func->inputs[0].annotation->name.value, actual_type->get_identifier().value),
+                ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION,
+                nullptr);
+        }
+    }
+
+    return nullptr;
 }
 
 element_expression_constant::element_expression_constant(element_value val)

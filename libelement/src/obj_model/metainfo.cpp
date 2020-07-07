@@ -79,6 +79,14 @@ std::string element_expression::typeof_info() const
     return actual_type->get_identifier().value;
 }
 
+std::string element::port::typeof_info() const
+{
+    if (has_annotation())
+        return name.value + ":" + annotation->typeof_info();
+
+    return name.value;
+}
+
 //to_code
 std::string element::struct_declaration::to_code(const int depth) const
 {
