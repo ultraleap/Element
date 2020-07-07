@@ -35,7 +35,7 @@ namespace element
     std::shared_ptr<object> object::compile(const compilation_context& context) const
     {
         return std::make_shared<error>(
-            fmt::format("failed to compile {}. it is not compileable.\n"),
+            fmt::format("failed to compile {}. it is not compilable.\n"),
             ELEMENT_ERROR_UNKNOWN,
             nullptr);
     }

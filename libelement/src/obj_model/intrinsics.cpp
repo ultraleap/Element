@@ -212,6 +212,7 @@ namespace element
 
         return outputs[0] > 0 ? frame.compiled_arguments[1] : frame.compiled_arguments[2];
 
+        //TODO: Remove zombie code
         auto true_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[1]);
         auto false_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[2]);
         assert(true_expr);
@@ -248,8 +249,8 @@ namespace element
         auto& true_decl = *context.get_global_scope()->find(identifier("True"), false);
         auto& false_decl = *context.get_global_scope()->find(identifier("False"), false);
 
-        auto true_expr = get_intrinsic(true_decl)->call(context, {});
-        auto false_expr = get_intrinsic(false_decl)->call(context, {});
+        const auto true_expr = get_intrinsic(true_decl)->call(context, {});
+        const auto false_expr = get_intrinsic(false_decl)->call(context, {});
 
         auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
         

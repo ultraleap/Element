@@ -4,7 +4,6 @@
 
 #include "etree/expressions.hpp"
 #include "scope.hpp"
-#include "intermediaries.hpp"
 
 namespace element
 {
