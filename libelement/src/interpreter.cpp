@@ -173,9 +173,23 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
     auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(tokeniser, element_tokeniser_delete);
 
-    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, filename))
+    file_information info;
+    info.file_name = std::make_unique<std::string>(filename);
+    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()))
     if (tokeniser->tokens.empty())
         return ELEMENT_OK;
+
+    //create the file info struct to be used by the object model later
+    const int total_lines_parsed = tokeniser->line;
+
+    for (int i = 0; i < total_lines_parsed; ++i)
+    {
+        //lines start at 1
+        info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
+    }
+
+    char* data = info.file_name->data();
+    file_info[data] = std::move(info);
 
     auto log_tokens = starts_with_prelude
         ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
@@ -227,7 +241,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     update_scopes(names.get());
 #else
 
-    auto object_model = element::build_root_scope(parser.root);
+    auto object_model = element::build_root_scope(this, parser.root);
     result = global_scope->merge(std::move(object_model));
     if (result != ELEMENT_OK) {
         log(result, std::string("build_root_scope failed with element_result " + std::to_string(result)), filename);
@@ -814,7 +828,7 @@ element_result element_interpreter_evaluate(
         outputs->values,
         count,
         opts);
-    outputs->count = count;
+    outputs->count = static_cast<int>(count);
 
     if (result != ELEMENT_OK) {
         context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->typeof_info()), "<input>");

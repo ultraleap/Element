@@ -10,7 +10,22 @@
 
 namespace element
 {
-    void build_scope(element_ast* ast, const declaration& declaration);
+    void build_scope(const element_interpreter_ctx* context, element_ast* ast, const declaration& declaration);
+
+    template <typename T>
+    void assign_source_information(const element_interpreter_ctx* context, T& t, const element_ast* ast)
+    {
+        const auto& file_info = context->file_info.at(ast->nearest_token->file_name);
+        const std::string* filename = file_info.file_name.get();
+        const std::string* line_in_source = file_info.source_lines[ast->nearest_token->line - 1].get();
+        t->source_info = source_information(
+            ast->nearest_token->line,
+            ast->nearest_token->character,
+            ast->nearest_token->character + ast->nearest_token->tok_len,
+            line_in_source,
+            filename->data()
+        );
+    }
 
     void log(const std::string& message)
     {
@@ -23,8 +38,9 @@ namespace element
         log(ast->identifier);
     }
 
-    std::unique_ptr<type_annotation> build_type_annotation(const element_ast* ast)
+    std::unique_ptr<type_annotation> build_type_annotation(const element_interpreter_ctx* context, const element_ast* ast)
     {
+        //todo: we need to decide how to handle any and num as types when they're not included (as the prelude is missing)
         if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE)
             return nullptr;
 
@@ -40,14 +56,14 @@ namespace element
         throw;
     }
 
-    void build_output(element_ast* ast, declaration& declaration)
+    void build_output(const element_interpreter_ctx* context, element_ast* ast, declaration& declaration)
     {
         auto* const output = ast->children[ast_idx::declaration::outputs].get();
-        auto type_annotation = build_type_annotation(output);
+        auto type_annotation = build_type_annotation(context, output);
         declaration.output.emplace(port{ identifier::return_identifier, std::move(type_annotation) });
     }
 
-    void build_inputs(element_ast* ast, declaration& declaration)
+    void build_inputs(const element_interpreter_ctx* context, element_ast* ast, declaration& declaration)
     {
         auto* const inputs = ast->children[ast_idx::declaration::inputs].get();
 
@@ -66,12 +82,12 @@ namespace element
             }
 
             auto* const output = input->children[ast_idx::port::type].get();
-            auto type_annotation = build_type_annotation(output);
+            auto type_annotation = build_type_annotation(context, output);
             declaration.inputs.emplace_back(ident, std::move(type_annotation));
         }
     }
 
-    std::shared_ptr<declaration> build_struct_declaration(const element_ast* const ast, const scope* const parent_scope)
+    std::shared_ptr<declaration> build_struct_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
         auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -79,20 +95,20 @@ namespace element
         auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
 
         //fields
-        build_inputs(decl, *struct_decl);
-        build_output(decl, *struct_decl);
+        build_inputs(context, decl, *struct_decl);
+        build_output(context, decl, *struct_decl);
 
         if (ast->children.size() > ast_idx::function::body)
         {
             auto* body = ast->children[ast_idx::function::body].get();
             if (body->type == ELEMENT_AST_NODE_SCOPE)
-                build_scope(body, *struct_decl);
+                build_scope(context, body, *struct_decl);
         }
 
         return std::move(struct_decl);
     }
 
-    std::shared_ptr<declaration> build_constraint_declaration(const element_ast* const ast, const scope* const parent_scope)
+    std::shared_ptr<declaration> build_constraint_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
         auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -100,28 +116,29 @@ namespace element
         auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), intrinsic);
 
         //ports
-        build_inputs(decl, *constraint_decl);
-        build_output(decl, *constraint_decl);
+        build_inputs(context, decl, *constraint_decl);
+        build_output(context, decl, *constraint_decl);
 
         return std::move(constraint_decl);
     }
 
-    std::shared_ptr<declaration> build_function_declaration(const element_ast* const ast, const scope* const parent_scope)
+    std::shared_ptr<declaration> build_function_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
         auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
         auto function_decl = std::make_shared<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
+        assign_source_information(context, function_decl, decl);
 
-        build_inputs(decl, *function_decl);
-        build_output(decl, *function_decl);
+        build_inputs(context, decl, *function_decl);
+        build_output(context, decl, *function_decl);
 
         auto* const body = ast->children[ast_idx::function::body].get();
 
         if (body->type == ELEMENT_AST_NODE_SCOPE)
         {
             assert(!intrinsic);
-            build_scope(body, *function_decl);
+            build_scope(context, body, *function_decl);
             function_decl->body = function_decl->our_scope->find(identifier::return_identifier, false);
             if (!function_decl->body)
             {
@@ -133,7 +150,8 @@ namespace element
         {
             assert(!intrinsic);
             auto chain = std::make_unique<expression_chain>(function_decl.get());
-            build_expression(body, chain.get());
+            assign_source_information(context, chain, body);
+            build_expression(context, body, chain.get());
             function_decl->body = std::move(chain);
         }
         else if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
@@ -150,7 +168,7 @@ namespace element
         return function_decl;
     }
 
-    void build_call_expression(const element_ast* const ast, expression_chain* chain)
+    void build_call_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain)
     {
         if (chain->expressions.empty())
         {
@@ -170,14 +188,16 @@ namespace element
         for (const auto& child : ast->children)
         {
             auto argument = std::make_unique<expression_chain>(chain->declarer);
-            build_expression(child.get(), argument.get());
+            assign_source_information(context, argument, child.get());
+
+            build_expression(context, child.get(), argument.get());
             call_expr->arguments.push_back(std::move(argument));
         }
 
         chain->expressions.push_back(std::move(call_expr));
     }
 
-    void build_expression(const element_ast* const ast, expression_chain* chain)
+    void build_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain)
     {
         assert(chain);
         assert(chain->declarer);
@@ -188,15 +208,14 @@ namespace element
 
         if (is_lambda)
         {
-            if (chain->expressions.empty())
-                chain->expressions.push_back(std::make_unique<lambda_expression>(chain));
-
+            chain->expressions.push_back(std::make_unique<lambda_expression>(chain));
+            assign_source_information(context, chain->expressions.back(), ast);
             return;
         }
 
         if (is_call)
         {
-            build_call_expression(ast, chain);
+            build_call_expression(context, ast, chain);
         }
 
         if (is_literal)
@@ -207,6 +226,7 @@ namespace element
             }
 
             chain->expressions.push_back(std::make_unique<literal_expression>(ast->literal, chain));
+            assign_source_information(context, chain->expressions.back(), ast);
         }
         else if (is_identifier)
         {
@@ -214,6 +234,8 @@ namespace element
                 chain->expressions.push_back(std::make_unique<identifier_expression>(ast->identifier, chain));
             else
                 chain->expressions.push_back(std::make_unique<indexing_expression>(ast->identifier, chain));
+
+            assign_source_information(context, chain->expressions.back(), ast);
         }
 
         //start of an expression chain, build the rest of it
@@ -222,54 +244,55 @@ namespace element
             //every child of the first AST node is part of the chain
             for (const auto& child : ast->children)
             {
-                build_expression(child.get(), chain);
+                build_expression(context, child.get(), chain);
             }
         }
     }
 
-    std::shared_ptr<declaration> build_namespace_declaration(const element_ast* const ast, const scope* const parent_scope)
+    std::shared_ptr<declaration> build_namespace_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope)
     {
         auto namespace_decl = std::make_unique<namespace_declaration>(identifier(ast->identifier), parent_scope);
+        assign_source_information(context, namespace_decl, ast);
 
         if (ast->children.size() > ast_idx::ns::body)
         {
             auto* body = ast->children[ast_idx::ns::body].get();
             if (body->type == ELEMENT_AST_NODE_SCOPE)
-                build_scope(body, *namespace_decl);
+                build_scope(context, body, *namespace_decl);
         }
 
         return std::move(namespace_decl);
     }
 
-    std::shared_ptr<declaration> build_declaration(const element_ast* const ast, const scope* const parent_scope)
+    std::shared_ptr<declaration> build_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope)
     {
         if (ast->type == ELEMENT_AST_NODE_STRUCT)
-            return build_struct_declaration(ast, parent_scope);
+            return build_struct_declaration(context, ast, parent_scope);
 
         if (ast->type == ELEMENT_AST_NODE_CONSTRAINT)
-            return build_constraint_declaration(ast, parent_scope);
+            return build_constraint_declaration(context, ast, parent_scope);
 
         if (ast->type == ELEMENT_AST_NODE_FUNCTION)
-            return build_function_declaration(ast, parent_scope);
+            return build_function_declaration(context, ast, parent_scope);
 
         if (ast->type == ELEMENT_AST_NODE_NAMESPACE)
-            return build_namespace_declaration(ast, parent_scope);
+            return build_namespace_declaration(context, ast, parent_scope);
 
         //log("Not a declaration");
         return nullptr;
     }
 
-    void build_scope(element_ast* ast, const declaration& declaration)
+    void build_scope(const element_interpreter_ctx* context, element_ast* ast, const declaration& declaration)
     {
         for (const auto& child : ast->children)
         {
-            auto child_decl = build_declaration(child.get(), declaration.our_scope.get());
+            auto child_decl = build_declaration(context, child.get(), declaration.our_scope.get());
             if (child_decl)
                 declaration.our_scope->add_declaration(std::move(child_decl));
         }
     }
 
-    std::unique_ptr<scope> build_root_scope(const element_ast* const ast)
+    std::unique_ptr<scope> build_root_scope(const element_interpreter_ctx* context, const element_ast* const ast)
     {
         if (ast->type != ELEMENT_AST_NODE_ROOT) {
 
@@ -278,10 +301,11 @@ namespace element
         }
 
         auto root = std::make_unique<scope>(nullptr, nullptr);
+        assign_source_information(context, root, ast);
 
         for (const auto& child : ast->children)
         {
-            auto decl = build_declaration(child.get(), root.get());
+            auto decl = build_declaration(context, child.get(), root.get());
             if (decl)
                 root->add_declaration(std::move(decl));
         }
