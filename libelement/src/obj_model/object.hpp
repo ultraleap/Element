@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <cassert>
 
 //SELF
 #include "fwd.hpp"
@@ -80,6 +81,45 @@ namespace element
         }
     };
 
+    struct source_information
+    {
+    public:
+        source_information()
+        {
+            
+        }
+
+        source_information(int line, int character_start, int character_end, const std::string* line_in_source, const char* filename)
+            : line(line)
+        , character_start(character_start)
+        , character_end(character_end)
+        , line_in_source(line_in_source)
+        , filename(filename)
+        {}
+
+        const std::string& get_text()
+        {
+            if (text.empty())
+            {
+                //todo: UTF8 concerns?
+                assert(character_end - character_start >= 0);
+                text = line_in_source->substr(character_start - 1, character_end - character_start);
+            }
+
+            return text;
+        }
+
+        int line = 0;
+        int character_start = 0;
+        int character_end = 0;
+
+        const std::string* line_in_source = nullptr;
+        const char* filename = nullptr;
+
+    private:
+        std::string text;
+    };
+
     class object
     {
     public:
@@ -104,6 +144,8 @@ namespace element
          */
         [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const;
 
+        source_information source_info;
+
     protected:
         object() = default;
     };
@@ -125,7 +167,6 @@ namespace element
             , location(location)
             , err(std::move(err))
         {
-            
         }
 
         [[nodiscard]] std::string typeof_info() const override;

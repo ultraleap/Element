@@ -50,6 +50,8 @@ namespace element
         [[nodiscard]] virtual std::string to_code(int depth = 0) const = 0;
         [[nodiscard]] virtual std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) = 0;
 
+        source_information source_info;
+
     protected:
         const expression_chain* parent;
     };

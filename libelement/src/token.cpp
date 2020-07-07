@@ -56,7 +56,8 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
     if (index >= state->tokens.size()) {
         const auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens",
             index, state->tokens.size());
-        
+
+        *token = nullptr;
         state->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
         return ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
     }
@@ -90,6 +91,7 @@ static void reset_token(element_tokeniser_ctx* state)
     state->cur_token.line = -1;
     state->cur_token.character = -1;
     state->cur_token.line_start_position = -1;
+    state->cur_token.file_name = state->raw_filename;
 }
 
 // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
@@ -280,6 +282,7 @@ element_result element_tokeniser_clear(element_tokeniser_ctx* state)
 
 element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* cinput, const char* cfilename)
 {
+    state->raw_filename = cfilename;
     state->filename = cfilename;
     state->input = cinput;
     state->pos = 0;

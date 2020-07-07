@@ -12,6 +12,7 @@
 struct element_tokeniser_ctx
 {
     std::shared_ptr<element_log_ctx> logger = nullptr;
+    const char* raw_filename = nullptr;
     std::string filename;
     std::string input;
     int pos = 0; //position in the source file
