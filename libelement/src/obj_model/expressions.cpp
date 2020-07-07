@@ -155,7 +155,15 @@ namespace element
             return nullptr;
         }
 
-        return obj->index(context, name);
+        auto element = obj->index(context, name);
+
+        if (!element)
+            return std::make_shared<error>(
+                fmt::format("Failed to find {}.\n", name.value),
+                ELEMENT_ERROR_IDENTIFIER_NOT_FOUND,
+                nullptr);
+
+        return element;
     }
 
     call_expression::call_expression(const expression_chain* parent)
