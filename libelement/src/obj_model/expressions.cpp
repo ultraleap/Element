@@ -180,16 +180,16 @@ namespace element
         return obj->call(context, std::move(compiled_arguments));
     }
 
-    /*
-    lambda_expression::lambda_expression(const scope* parent_scope)
-        : expression(parent_scope)
-    {
 
+    lambda_expression::lambda_expression(const expression_chain* parent)
+        : expression(parent)
+        , name(unidentifier)
+    {
+        assert(parent);
     }
 
-    expression_bodied_lambda_expression::expression_bodied_lambda_expression(const scope* parent_scope)
-        : lambda_expression(parent_scope)
+    std::shared_ptr<object> lambda_expression::resolve(const compilation_context& context, std::shared_ptr<object>& obj)
     {
+        throw;
     }
-    */
 }

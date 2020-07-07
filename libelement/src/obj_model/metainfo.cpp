@@ -48,10 +48,10 @@ std::string element::struct_declaration::to_code(const int depth) const
     std::string ports;
 
     const std::string offset = "    ";
-    std::string declaration_offset;
+    std::string result;
 
     for (auto i = 0; i < depth; ++i)
-        declaration_offset += offset;
+        result += offset;
 
     if (has_inputs()) {
         static auto accumulate = [depth](std::string accumulator, const port& port)
@@ -63,10 +63,10 @@ std::string element::struct_declaration::to_code(const int depth) const
         ports = "(" + input_ports + ")";
     }
 
-    if (_intrinsic)
-        return declaration_offset + "intrinsic struct " + name.value + ports + our_scope->to_code(depth);
-
-    return declaration_offset + "struct " + name.value + ports + our_scope->to_code(depth);
+    result += is_intrinsic() ? "intrinsic struct " : "struct ";
+    result += name.value + ports;
+    result += has_scope() ? our_scope->to_code(depth) : ";";
+    return result;
 }
 
 std::string element::constraint_declaration::to_code(const int depth) const
@@ -74,10 +74,10 @@ std::string element::constraint_declaration::to_code(const int depth) const
     std::string ports;
 
     const std::string offset = "    ";
-    std::string declaration_offset;
+    std::string result;
 
     for (auto i = 0; i < depth; ++i)
-        declaration_offset += offset;
+        result += offset;
 
     if (has_inputs()) {
         static auto accumulate = [depth](std::string accumulator, const port& port)
@@ -89,13 +89,12 @@ std::string element::constraint_declaration::to_code(const int depth) const
         ports = "(" + input_ports + ")";
     }
 
-    if (output)
+    if (has_output())
         ports += output->to_code(depth);
 
-    if (_intrinsic)
-        return declaration_offset + "intrinsic constraint " + name.value + ports;
-
-    return declaration_offset + "constraint " + name.value + ports;
+    result += is_intrinsic() ? "intrinsic constraint " : "constraint ";
+    result += name.value + ports + ";";
+    return result;
 }
 
 std::string element::function_declaration::to_code(int depth) const
@@ -104,10 +103,10 @@ std::string element::function_declaration::to_code(int depth) const
     std::string ports;
 
     const std::string offset = "    ";
-    std::string declaration_offset;
+    std::string result;
 
     for (auto i = 0; i < depth; ++i)
-        declaration_offset += offset;
+        result += offset;
 
     if (has_inputs()) {
         static auto accumulate = [depth](std::string accumulator, const port& port)
@@ -119,13 +118,19 @@ std::string element::function_declaration::to_code(int depth) const
         ports = "(" + input_ports + ")";
     }
 
-    if (output)
+    if (has_output())
         ports += output->to_code(depth);
 
-    if (_intrinsic)
-        return declaration_offset + "intrinsic " + name.value + ports + ";";
+    //intrinsic declaration
+    if (is_intrinsic())
+        return result + "intrinsic " + name.value + ports + ";";
 
-    return declaration_offset + name.value + ports + our_scope->to_code(depth);
+    //scope-bodied
+    if (has_scope())
+        return result + name.value + ports + our_scope->to_code(depth);
+
+    //expression-bodied
+    return result + name.value + ports + " = " + body->to_code(depth) + ";";
 }
 
 std::string element::namespace_declaration::to_code(const int depth) const
@@ -143,6 +148,11 @@ std::string element::expression_chain::to_code(int depth) const
     return std::accumulate(std::next(std::begin(expressions)), std::end(expressions), expressions[0]->to_code(), accumulate);
 }
 
+std::string element::identifier_expression::to_code(int depth) const
+{
+    return name.value;
+}
+
 std::string element::call_expression::to_code(int depth) const
 {
     static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression_chain>& chain)
@@ -154,9 +164,19 @@ std::string element::call_expression::to_code(int depth) const
     return "(" + expressions + ")";
 }
 
+std::string element::indexing_expression::to_code(int depth) const
+{
+    return "." + name.value;
+}
+
+std::string element::lambda_expression::to_code(int depth) const
+{
+    return "_() = lambda.todo";
+}
+
 std::string element::port::to_code(int depth) const
 {
-    if (annotation)
+    if (has_annotation())
         return annotation->to_code(depth);
 
     return "";
@@ -186,23 +206,3 @@ std::string element::type_annotation::to_code(const int depth) const
 {
     return ":" + name.value;
 }
-
-//std::string lambda_expression::to_string() const
-//{
-//    return "_";
-//}
-//
-//std::string lambda_expression::to_code(int depth) const
-//{
-//    return "_";
-//}
-//
-//std::string expression_bodied_lambda_expression::to_string() const
-//{
-//    return "_";
-//}
-//
-//std::string expression_bodied_lambda_expression::to_code(int depth) const
-//{
-//    return "_";
-//}
