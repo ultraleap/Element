@@ -51,6 +51,7 @@ namespace element
         qualifier = struct_qualifier;
         _intrinsic = is_intrinsic;
 
+        //TODO: If get_intrinsic returns null return error ELEMENT_ERROR_INTRINSIC_NOT_IMPLEMENTED
         if (_intrinsic)
             body = intrinsic::get_intrinsic(*this);
         else

@@ -139,6 +139,7 @@ namespace element
         else if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
         {
             assert(intrinsic);
+            //TODO: If get_intrinsic returns null return error ELEMENT_ERROR_INTRINSIC_NOT_IMPLEMENTED
             function_decl->body = intrinsic::get_intrinsic(*function_decl);
         }
         else
