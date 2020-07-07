@@ -42,10 +42,10 @@ namespace element
 
     public:
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context,
-            const element::identifier& identifier) const override;
+            const identifier& name) const override;
 
     private:
-        static element::identifier identifier;
+        static identifier identifier;
     };
 
     class boolean_type : public type {
@@ -57,10 +57,10 @@ namespace element
 
     public:
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context,
-            const element::identifier& identifier) const override;
+            const identifier& name) const override;
 
     private:
-        static element::identifier identifier;
+        static identifier identifier;
     };
 
     class constraint : public rtti_type<constraint>

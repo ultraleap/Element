@@ -16,7 +16,7 @@ namespace element
 
     }
 
-    std::shared_ptr<object> object::index(const compilation_context& context, const identifier&) const
+    std::shared_ptr<object> object::index(const compilation_context&, const identifier&) const
     {
         return std::make_shared<error>(
             fmt::format("failed to index {}. it is not indexable.\n"),
@@ -24,7 +24,7 @@ namespace element
             nullptr);
     }
 
-    std::shared_ptr<object> object::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
+    std::shared_ptr<object> object::call(const compilation_context&, std::vector<std::shared_ptr<object>>) const
     {
         return std::make_shared<error>(
             fmt::format("failed to call {}. it is not callable.\n"),
@@ -32,7 +32,7 @@ namespace element
             nullptr);
     }
 
-    std::shared_ptr<object> object::compile(const compilation_context& context) const
+    std::shared_ptr<object> object::compile(const compilation_context&) const
     {
         return std::make_shared<error>(
             fmt::format("failed to compile {}. it is not compilable.\n"),

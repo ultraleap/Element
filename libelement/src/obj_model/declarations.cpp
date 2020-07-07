@@ -45,8 +45,8 @@ namespace element
     }
 
     //struct
-    struct_declaration::struct_declaration(identifier identifier, const scope* parent_scope, const bool is_intrinsic)
-        : declaration(std::move(identifier), parent_scope)
+    struct_declaration::struct_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
+        : declaration(std::move(name), parent_scope)
     {
         qualifier = struct_qualifier;
         _intrinsic = is_intrinsic;
@@ -58,9 +58,9 @@ namespace element
             body = std::make_shared<intrinsic_user_constructor>(this);
     }
 
-    std::shared_ptr<object> struct_declaration::index(const compilation_context& context, const identifier& identifier) const
+    std::shared_ptr<object> struct_declaration::index(const compilation_context& context, const identifier& name) const
     {
-        return our_scope->find(identifier, false);
+        return our_scope->find(name, false);
     }
 
     std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
@@ -70,16 +70,16 @@ namespace element
     }
 
     //constraint
-    constraint_declaration::constraint_declaration(identifier identifier, const bool is_intrinsic)
-        : declaration(std::move(identifier))
+    constraint_declaration::constraint_declaration(identifier name, const bool is_intrinsic)
+        : declaration(std::move(name))
     {
         qualifier = constraint_qualifier;
         _intrinsic = is_intrinsic;
     }
 
     //function
-    function_declaration::function_declaration(identifier identifier, const scope* parent_scope, const bool is_intrinsic)
-        : declaration(std::move(identifier)
+    function_declaration::function_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
+        : declaration(std::move(name)
         , parent_scope)
     {
         qualifier = function_qualifier;
@@ -165,15 +165,15 @@ namespace element
     }
 
     //namespace
-    namespace_declaration::namespace_declaration(identifier identifier, const scope* parent_scope)
-        : declaration(std::move(identifier), parent_scope)
+    namespace_declaration::namespace_declaration(identifier name, const scope* parent_scope)
+        : declaration(std::move(name), parent_scope)
     {
         qualifier = namespace_qualifier;
         _intrinsic = false;
     }
 
-    std::shared_ptr<object> namespace_declaration::index(const compilation_context& context, const element::identifier& identifier) const
+    std::shared_ptr<object> namespace_declaration::index(const compilation_context& context, const element::identifier& name) const
     {
-        return our_scope->find(identifier, false);
+        return our_scope->find(name, false);
     }
 }

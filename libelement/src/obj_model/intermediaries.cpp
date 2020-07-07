@@ -16,19 +16,19 @@ namespace element
         }
     }
 
-    std::shared_ptr<object> struct_instance::index(const compilation_context& context, const identifier& identifier) const
+    std::shared_ptr<object> struct_instance::index(const compilation_context& context, const identifier& name) const
     {
         //this is how we do partial application. if we index a struct instance and find it's an instance function
         //then we create a function_instance of that function, with ourselves as the first provided argument
         //when we return that function_instance, either the next expression is a call which fills the remaining arguments and then calls it
         //or we just return it/store it, to be used later
-        const auto found_field = fields.find(identifier.value);
+        const auto found_field = fields.find(name.value);
 
         //found it as a field
         if (found_field != fields.end())
             return found_field->second;
 
-        auto func = std::dynamic_pointer_cast<function_declaration>(declarer->our_scope->find(identifier, false));
+        auto func = std::dynamic_pointer_cast<function_declaration>(declarer->our_scope->find(name, false));
         //todo: not exactly working type checking, good enough for now though
         if (func && func->has_inputs() && func->inputs[0].annotation && func->inputs[0].annotation->name.value == declarer->name.value)
         {

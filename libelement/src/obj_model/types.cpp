@@ -27,20 +27,20 @@ namespace element
     const constraint_const_shared_ptr constraint::unary = std::make_shared<unary_constraint>();
     const constraint_const_shared_ptr constraint::binary = std::make_shared<binary_constraint>();
 
-    std::shared_ptr<object> num_type::index(const compilation_context& context, const element::identifier& identifier) const
+    std::shared_ptr<object> num_type::index(const compilation_context& context, const element::identifier& name) const
     {
         //todo: cache, but don't use static
         const auto declaration = context.get_global_scope()->find(num_type::identifier, false);
         assert(declaration);
-        return declaration->index(context, identifier);
+        return declaration->index(context, name);
     }
 
-    std::shared_ptr<object> boolean_type::index(const compilation_context& context, const element::identifier& identifier) const
+    std::shared_ptr<object> boolean_type::index(const compilation_context& context, const element::identifier& name) const
     {
         //todo: cache, but don't use static
         const auto  declaration = context.get_global_scope()->find(boolean_type::identifier, false);
         assert(declaration);
-        return declaration->index(context, identifier);
+        return declaration->index(context, name);
     }
 }
 

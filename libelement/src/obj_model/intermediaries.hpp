@@ -22,7 +22,7 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth = 0) const override;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
 
         const struct_declaration* const declarer;
@@ -49,7 +49,7 @@ namespace element
         [[nodiscard]] static bool is_instance_function() { return true; }
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const override;
   
         const function_declaration* const declarer;
         std::vector<std::shared_ptr<object>> provided_arguments;
