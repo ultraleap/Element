@@ -3,43 +3,74 @@
 #include "port.hpp"
 #include "scope.hpp"
 #include "intermediaries.hpp"
+#include "intrinsics.hpp"
 
 //to_string
-std::string element::scope::to_string() const
+std::string element::scope::typeof_info() const
 {
-    return declarer->to_string();
+    return declarer->typeof_info();
 }
 
-std::string element::struct_declaration::to_string() const
+std::string element::struct_declaration::typeof_info() const
 {
     return location() + ":Struct";
 }
 
-std::string element::constraint_declaration::to_string() const
+std::string element::constraint_declaration::typeof_info() const
 {
     return location() + ":Constraint";
 }
 
-std::string element::function_declaration::to_string() const
+std::string element::function_declaration::typeof_info() const
 {
     return location() + ":Function";
 }
 
-std::string element::namespace_declaration::to_string() const
+std::string element::namespace_declaration::typeof_info() const
 {
     return location() + ":Namespace";
 }
 
-std::string element::struct_instance::to_string() const
+std::string element::expression_chain::typeof_info() const
 {
-    return "Instance:" + declarer->to_string();
+    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+    return "";
 }
 
-std::string element::function_instance::to_string() const
+std::string element::struct_instance::typeof_info() const
+{
+    return "Instance:" + declarer->typeof_info();
+}
+
+std::string element::function_instance::typeof_info() const
 {
     //todo: element test expects Function, not FunctionInstance
     //return declarer->location() + ":FunctionInstance";
     return declarer->location() + ":Function";
+}
+
+std::string element::type_annotation::typeof_info() const
+{
+    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+    return "";
+}
+
+std::string element::intrinsic::typeof_info() const
+{
+    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+    return "";
+}
+
+std::string element::type::typeof_info() const
+{
+    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+    return "";
+}
+
+std::string element_expression::typeof_info() const
+{
+    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+    return "";
 }
 
 //to_code
@@ -56,10 +87,10 @@ std::string element::struct_declaration::to_code(const int depth) const
     if (has_inputs()) {
         static auto accumulate = [depth](std::string accumulator, const port& port)
         {
-            return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
+            return std::move(accumulator) + ", " + port.typeof_info() + port.to_code(depth);
         };
 
-        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
+        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].typeof_info() + inputs[0].to_code(depth), accumulate);
         ports = "(" + input_ports + ")";
     }
 
@@ -82,10 +113,10 @@ std::string element::constraint_declaration::to_code(const int depth) const
     if (has_inputs()) {
         static auto accumulate = [depth](std::string accumulator, const port& port)
         {
-            return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
+            return std::move(accumulator) + ", " + port.typeof_info() + port.to_code(depth);
         };
 
-        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
+        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].typeof_info() + inputs[0].to_code(depth), accumulate);
         ports = "(" + input_ports + ")";
     }
 
@@ -111,10 +142,10 @@ std::string element::function_declaration::to_code(int depth) const
     if (has_inputs()) {
         static auto accumulate = [depth](std::string accumulator, const port& port)
         {
-            return std::move(accumulator) + ", " + port.to_string() + port.to_code(depth);
+            return std::move(accumulator) + ", " + port.typeof_info() + port.to_code(depth);
         };
 
-        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].to_string() + inputs[0].to_code(depth), accumulate);
+        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].typeof_info() + inputs[0].to_code(depth), accumulate);
         ports = "(" + input_ports + ")";
     }
 
@@ -202,7 +233,37 @@ std::string element::scope::to_code(int depth) const
     return "\n" + scope_offset + "{\n" + code + "\n" + scope_offset + "}";
 }
 
+std::string element::struct_instance::to_code(const int depth) const
+{
+    //We need an override here since object::to_code is pure virtual, but this object has no associated code
+    return "";
+}
+
+std::string element::function_instance::to_code(const int depth) const
+{
+    //We need an override here since object::to_code is pure virtual, but this object has no associated code
+    return "";
+}
+
 std::string element::type_annotation::to_code(const int depth) const
 {
     return ":" + name.value;
+}
+
+std::string element::intrinsic::to_code(const int depth) const
+{
+    //We need an override here since object::to_code is pure virtual, but this object has no associated code
+    return "";
+}
+
+std::string element::type::to_code(const int depth) const
+{
+    //We need an override here since object::to_code is pure virtual, but this object has no associated code
+    return "";
+}
+
+std::string element_expression::to_code(const int depth) const
+{
+    //We need an override here since object::to_code is pure virtual, but this object has no associated code
+    return "";
 }

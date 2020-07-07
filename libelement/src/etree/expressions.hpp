@@ -20,6 +20,9 @@ struct element_expression : element::object, rtti_type<element_expression>, std:
 
     [[nodiscard]] virtual size_t get_size() const { return m_size; }
 
+    [[nodiscard]] std::string typeof_info() const override;
+    [[nodiscard]] std::string to_code(int depth = 0) const override;
+
     std::shared_ptr<const element::type> actual_type;
 
 protected:

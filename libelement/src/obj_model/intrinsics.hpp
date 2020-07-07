@@ -15,6 +15,9 @@ namespace element
     public:
         intrinsic(element_type_id id);
 
+        [[nodiscard]] std::string typeof_info() const override;
+        [[nodiscard]] std::string to_code(int depth = 0) const override;
+
     public:
         static std::shared_ptr<const intrinsic> get_intrinsic(const declaration& declaration);
     };

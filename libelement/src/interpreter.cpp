@@ -772,7 +772,7 @@ element_result element_interpreter_evaluate(
             assert(sub_outputs.count > 0);
             const auto result = element_interpreter_evaluate(context, options, &sub_evaluable, &sub_inputs, &sub_outputs);
             if (result != ELEMENT_OK) {
-                context->log(result, fmt::format("Failed to evaluate {}", f.second->to_string()), "<input>");
+                context->log(result, fmt::format("Failed to evaluate {}", f.second->typeof_info()), "<input>");
                 return result;
             }
 
@@ -817,7 +817,7 @@ element_result element_interpreter_evaluate(
     outputs->count = count;
 
     if (result != ELEMENT_OK) {
-        context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->to_string()), "<input>");
+        context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->typeof_info()), "<input>");
     }
 
     return result;
@@ -828,7 +828,7 @@ element_result element_metainfo_for_evaluable(const element_evaluable* evaluable
     //todo: error checking and stuff
 
     *metainfo = new element_metainfo();
-    (*metainfo)->typeof = evaluable->evaluable->to_string();
+    (*metainfo)->typeof = evaluable->evaluable->typeof_info();
     (*metainfo)->code = evaluable->evaluable->to_code(0);
 
     return ELEMENT_OK;

@@ -45,7 +45,7 @@ namespace element
                 context.interpreter->log(err->get_result(), err->get_message());
 
                 return std::make_shared<error>(
-                    fmt::format("failed at {} when resolving {}{}\n", declarer->to_string(), previous ? previous->to_string() : "", expression->to_code()),
+                    fmt::format("failed at {} when resolving {}{}\n", declarer->typeof_info(), previous ? previous->typeof_info() : "", expression->to_code()),
                     err->get_result(),
                     declarer,
                     err);
@@ -179,7 +179,6 @@ namespace element
 
         return obj->call(context, std::move(compiled_arguments));
     }
-
 
     lambda_expression::lambda_expression(const expression_chain* parent)
         : expression(parent)

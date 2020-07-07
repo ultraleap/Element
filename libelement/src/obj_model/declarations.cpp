@@ -98,7 +98,7 @@ namespace element
         if (context.is_recursive(this))
         {
             return std::make_shared<error>(
-                fmt::format("failed at {}. recursion detected.\n", to_string()),
+                fmt::format("failed at {}. recursion detected.\n", typeof_info()),
                 ELEMENT_ERROR_CIRCULAR_COMPILATION,
                 this);
         }
@@ -111,7 +111,7 @@ namespace element
         if (!body)
         {
             return std::make_shared<error>(
-                fmt::format("failed at {}. scope bodied functions must contain a return function.\n", to_string()),
+                fmt::format("failed at {}. scope bodied functions must contain a return function.\n", typeof_info()),
                 ELEMENT_ERROR_MISSING_FUNCTION_BODY,
                 this);
         }
@@ -133,7 +133,7 @@ namespace element
             if (context.is_recursive(this))
             {
                 return std::make_shared<error>(
-                    fmt::format("failed at {}. recursion detected.\n", to_string()),
+                    fmt::format("failed at {}. recursion detected.\n", typeof_info()),
                     ELEMENT_ERROR_CIRCULAR_COMPILATION,
                     this);
             }
@@ -145,7 +145,7 @@ namespace element
             if (!body)
             {
                 return std::make_shared<error>(
-                    fmt::format("failed at {}. scope bodied functions must contain a return function.\n", to_string()),
+                    fmt::format("failed at {}. scope bodied functions must contain a return function.\n", typeof_info()),
                     ELEMENT_ERROR_MISSING_FUNCTION_BODY,
                     this);
             }

@@ -19,7 +19,9 @@ namespace element
         struct_instance& operator=(const struct_instance&) = delete;
         struct_instance& operator=(struct_instance&&) = delete;
 
-        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string typeof_info() const override;
+        [[nodiscard]] std::string to_code(int depth = 0) const override;
+
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
 
@@ -41,7 +43,9 @@ namespace element
         function_instance& operator=(const function_instance&) = delete;
         function_instance& operator=(function_instance&&) = delete;
 
-        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string typeof_info() const override;
+        [[nodiscard]] std::string to_code(int depth = 0) const override;
+
         [[nodiscard]] static bool is_instance_function() { return true; }
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
