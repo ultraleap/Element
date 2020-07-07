@@ -112,7 +112,7 @@ namespace element
 
         return std::make_shared<error>(
             fmt::format("failed to find {}.\n", name.value),
-            ELEMENT_ERROR_UNKNOWN,
+            ELEMENT_ERROR_IDENTIFIER_NOT_FOUND,
             nullptr);
     }
 
@@ -159,7 +159,7 @@ namespace element
 
         if (!element)
             return std::make_shared<error>(
-                fmt::format("Failed to find {}.\n", name.value),
+                fmt::format("failed to find {} when indexing {}.\n", name.value, obj->typeof_info()),
                 ELEMENT_ERROR_IDENTIFIER_NOT_FOUND,
                 nullptr);
 
