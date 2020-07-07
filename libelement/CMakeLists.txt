@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.11)
 # For VS
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-project(element)
+project(libelement)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -14,7 +14,7 @@ configure_file (
     "${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp"
 )
 
-set(element_sources
+set(libelement_sources
     "src/token.cpp"
     "src/interpreter.cpp"
     "src/construct.cpp"
@@ -99,13 +99,13 @@ set(element_sources
 
 add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
 
-add_library(element STATIC ${element_sources})
+add_library(libelement STATIC ${libelement_sources})
 
 # For VS
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${element_sources})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${libelement_sources})
 
 # Don't rely on compiler extensions
-set_property(TARGET element PROPERTY CMAKE_CXX_EXTENSIONS OFF)
+set_property(TARGET libelement PROPERTY CMAKE_CXX_EXTENSIONS OFF)
 
 IF (WIN32)
     set(debug_dir "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
@@ -115,12 +115,12 @@ ENDIF()
 
 # Copy prelude alongside built library
 add_custom_command (
-	TARGET element POST_BUILD 
+	TARGET libelement POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	"${CMAKE_CURRENT_SOURCE_DIR}/../Common"
 	"${debug_dir}")
 
-target_include_directories(element
+target_include_directories(libelement
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
     PRIVATE
@@ -131,22 +131,22 @@ target_include_directories(element
         "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
         "${CMAKE_CURRENT_BINARY_DIR}"
 )
-target_link_libraries(element PRIVATE utf8cpp fmt::fmt-header-only)
+target_link_libraries(libelement PRIVATE utf8cpp fmt::fmt-header-only)
 
 if (UNIX)
-    target_link_libraries(element PRIVATE "m")
+    target_link_libraries(libelement PRIVATE "m")
 endif ()
 
 if (BUILD_TESTING)
-    add_executable(element_test_app
+    add_executable(libelement_test_app
         "test/main.c")
-    target_link_libraries(element_test_app PRIVATE element)
+    target_link_libraries(libelement_test_app PRIVATE libelement)
 
-    set_target_properties(element_test_app PROPERTIES
+    set_target_properties(libelement_test_app PROPERTIES
         VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
 endif ()
 
-target_compile_definitions(element
+target_compile_definitions(libelement
     PRIVATE
         ${LEGACY_COMPILER}
 )
