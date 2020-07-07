@@ -151,7 +151,7 @@ int main(int argc, char** argv)
         return result;
 
     result = eval("evaluate = one;");
-    if (result != ELEMENT_ERROR_UNKNOWN)
+    if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
         return result;
 
     result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).a;");
@@ -168,6 +168,15 @@ int main(int argc, char** argv)
 
     result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct, s2:MyStruct) = MyStruct(s.a.add(s2.a), s.b.add(s2.b));} evaluate = MyStruct(1, 2).add(MyStruct(1, 2)).b;");
     if (result != ELEMENT_OK)
+        return result;
+
+    //todo: missing an semi colon is an unfriendly error
+    result = eval("struct MyStruct(crap) { f(a:Num) = a; } evaluate = MyStruct(1).f;");
+    if (result != ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION)
+        return result;
+
+    result = eval("struct MyStruct(crap) { f(a:Num) = a; } evaluate = MyStruct(1).a;");
+    if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
         return result;
 
     return 0;
