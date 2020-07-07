@@ -30,7 +30,7 @@ namespace element
     std::shared_ptr<object> num_type::index(const compilation_context& context, const element::identifier& identifier) const
     {
         //todo: cache, but don't use static
-        std::shared_ptr<declaration> declaration = context.get_global_scope()->find(num_type::identifier, false);
+        const auto declaration = context.get_global_scope()->find(num_type::identifier, false);
         assert(declaration);
         return declaration->index(context, identifier);
     }
@@ -38,7 +38,7 @@ namespace element
     std::shared_ptr<object> boolean_type::index(const compilation_context& context, const element::identifier& identifier) const
     {
         //todo: cache, but don't use static
-        std::shared_ptr<declaration> declaration = context.get_global_scope()->find(boolean_type::identifier, false);
+        const auto  declaration = context.get_global_scope()->find(boolean_type::identifier, false);
         assert(declaration);
         return declaration->index(context, identifier);
     }

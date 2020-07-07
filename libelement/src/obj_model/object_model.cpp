@@ -149,25 +149,6 @@ namespace element
         return function_decl;
     }
 
-    /*
-    std::shared_ptr<expression_chain> build_scope_bodied_lambda_expression_chain(const element_ast* const ast, std::shared_ptr<expression_chain> parent_scope)
-    {
-
-        return nullptr;
-    }
-
-    std::shared_ptr<expression_chain> build_expression_chain_bodied_lambda_expression_chain(const element_ast* const ast, std::shared_ptr<expression_chain> parent_scope)
-    {
-
-        return nullptr;
-    }
-
-    [[nodiscard]] std::shared_ptr<expression_chain> build_lambda_expression_chain(const element_ast* const ast, std::shared_ptr<expression_chain> parent)
-    {
-        //log("LAMBDA NOT IMPLEMENTED");
-        return nullptr;
-    }*/
-
     void build_call_expression(const element_ast* const ast, expression_chain* chain)
     {
         if (chain->expressions.empty())
@@ -185,7 +166,7 @@ namespace element
         auto call_expr = std::make_unique<call_expression>(chain);
 
         //every child of the current AST node (EXPRLIST) is the start of another expression_chain, comma separated
-        for (auto& child : ast->children)
+        for (const auto& child : ast->children)
         {
             auto argument = std::make_unique<expression_chain>(chain->declarer);
             build_expression(child.get(), argument.get());
@@ -238,7 +219,7 @@ namespace element
         if (chain->expressions.size() == 1)
         {
             //every child of the first AST node is part of the chain
-            for (auto& child : ast->children)
+            for (const auto& child : ast->children)
             {
                 build_expression(child.get(), chain);
             }
@@ -279,7 +260,7 @@ namespace element
 
     void build_scope(element_ast* ast, const declaration& declaration)
     {
-        for (auto& child : ast->children)
+        for (const auto& child : ast->children)
         {
             auto child_decl = build_declaration(child.get(), declaration.our_scope.get());
             if (child_decl)
@@ -297,7 +278,7 @@ namespace element
 
         auto root = std::make_unique<scope>(nullptr, nullptr);
 
-        for (auto& child : ast->children)
+        for (const auto& child : ast->children)
         {
             auto decl = build_declaration(child.get(), root.get());
             if (decl)

@@ -22,7 +22,7 @@ namespace element
         //then we create a function_instance of that function, with ourselves as the first provided argument
         //when we return that function_instance, either the next expression is a call which fills the remaining arguments and then calls it
         //or we just return it/store it, to be used later
-        auto found_field = fields.find(identifier.value);
+        const auto found_field = fields.find(identifier.value);
 
         //found it as a field
         if (found_field != fields.end())
@@ -48,8 +48,8 @@ namespace element
     //function_instance
     function_instance::function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<object>> args)
         : declarer(declarer)
-        , stack(std::move(stack))
         , provided_arguments(std::move(args))
+        , stack(std::move(stack))
     {
     }
 
@@ -60,11 +60,11 @@ namespace element
         if (compiled_args.size() == declarer->inputs.size())
         {
             //we have the exact arguments we need, so now we just need to perform the call
-            //we also need to swap the callstacks so that the call can use the one at the point the instance was created
+            //we also need to swap the call stacks so that the call can use the one at the point the instance was created
             std::swap(stack, context.stack);
             auto ret = declarer->call(context, compiled_args);
             //we then swap them back, in case our instance is called multiple times.
-            //Technically the call we did could have modified the callstack, but if it's behaving correctly it will be identical due to popping frames
+            //Technically the call we did could have modified the call stack, but if it's behaving correctly it will be identical due to popping frames
             std::swap(stack, context.stack);
             return ret;
         }
@@ -85,7 +85,7 @@ namespace element
     std::shared_ptr<object> function_instance::index(const compilation_context& context, const identifier& name) const
     {
         //if we're a fully applied instance function (essentially a nullary), then we need to compile ourselves to index what we return
-        auto compiled = compile(context);
+        const auto compiled = compile(context);
         //because our compile can return ourselves we check it didn't before indexing it (infinite loops)
         return compiled.get() == this ? nullptr : compiled->index(context, name);
     }

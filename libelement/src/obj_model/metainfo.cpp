@@ -4,6 +4,7 @@
 #include "scope.hpp"
 #include "intermediaries.hpp"
 #include "intrinsics.hpp"
+#include "object.hpp"
 
 //to_string
 std::string element::scope::typeof_info() const
@@ -62,6 +63,12 @@ std::string element::intrinsic::typeof_info() const
 }
 
 std::string element::type::typeof_info() const
+{
+    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+    return "";
+}
+
+std::string element::error::typeof_info() const
 {
     //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
     return "";
@@ -257,6 +264,12 @@ std::string element::intrinsic::to_code(const int depth) const
 }
 
 std::string element::type::to_code(const int depth) const
+{
+    //We need an override here since object::to_code is pure virtual, but this object has no associated code
+    return "";
+}
+
+std::string element::error::to_code(const int depth) const
 {
     //We need an override here since object::to_code is pure virtual, but this object has no associated code
     return "";

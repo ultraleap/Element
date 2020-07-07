@@ -9,7 +9,6 @@
 #include "expressions.hpp"
 #include "intermediaries.hpp"
 #include "functions.hpp"
-#include "etree/expressions.hpp"
 #include "intrinsics.hpp"
 
 namespace element

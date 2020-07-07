@@ -5,7 +5,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <cassert>
 
 //SELF
 #include "fwd.hpp"
@@ -42,7 +41,7 @@ namespace element
         [[nodiscard]] const scope* get_global_scope() const { return global_scope; }
         [[nodiscard]] bool is_recursive(const declaration* declaration) const
         {
-            for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); it++)
+            for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
             {
                 if (it->function == declaration)
                     return true;
@@ -129,11 +128,12 @@ namespace element
             
         }
 
-        [[nodiscard]] virtual std::string typeof_info() const { return message; }
-        [[nodiscard]] virtual std::string to_code(int depth) const { return typeof_info(); }
-        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { return const_cast<error*>(this)->shared_from_this(); };
-        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const { return const_cast<error*>(this)->shared_from_this(); };
-        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const { return const_cast<error*>(this)->shared_from_this(); };
+        [[nodiscard]] std::string typeof_info() const override;
+        [[nodiscard]] std::string to_code(int depth) const override;
+
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override { return const_cast<error*>(this)->shared_from_this(); };
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override { return const_cast<error*>(this)->shared_from_this(); };
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override { return const_cast<error*>(this)->shared_from_this(); };
 
         [[nodiscard]] element_result get_result() const;
         [[nodiscard]] const std::string& get_message() const;
