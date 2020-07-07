@@ -206,7 +206,9 @@ namespace element
 
         if (is_lambda)
         {
-            //todo: lambdas are not supported
+            if (chain->expressions.empty())
+                chain->expressions.push_back(std::make_unique<lambda_expression>(chain));
+
             return;
         }
 

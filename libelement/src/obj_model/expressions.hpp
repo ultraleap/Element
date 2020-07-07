@@ -71,7 +71,7 @@ namespace element
     public:
         identifier_expression(identifier name, const expression_chain* parent);
 
-        [[nodiscard]] std::string to_code(int depth = 0) const override { return name.value; }
+        [[nodiscard]] std::string to_code(int depth = 0) const override;
         [[nodiscard]] std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) override;
 
     private:
@@ -95,31 +95,29 @@ namespace element
     public:
         indexing_expression(identifier name, const expression_chain* parent);
 
-        [[nodiscard]] std::string to_code(int depth = 0) const override { return "." + name.value; }
+        [[nodiscard]] std::string to_code(int depth = 0) const override;
         [[nodiscard]] std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) override;
 
     private:
         identifier name;
     };
 
-    /*class lambda_expression : public object
+    //lambdas are basically function declarations and expressions, can we combine/simplify in some way?
+    class lambda_expression final : public expression
     {
     public:
-        lambda_expression(const scope* parent_scope);
-        virtual ~lambda_expression() = default;
+        lambda_expression(const expression_chain* parent);
 
-        //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
-        lambda_expression(const lambda_expression&) = delete;
-        lambda_expression(lambda_expression&&) = delete;
-        lambda_expression& operator=(const lambda_expression&) = delete;
-        lambda_expression& operator=(lambda_expression&&) = delete;
-
-        [[nodiscard]] std::string to_string() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
+        [[nodiscard]] std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) override;
 
+        //need to think about what this requires
         std::vector<port> inputs;
-        std::unique_ptr<port> output;
+        std::optional<port> output;
+        std::unique_ptr<scope> our_scope;
+        std::shared_ptr<const object> body;
 
     private:
-    };*/
+        identifier name;
+    };
 }

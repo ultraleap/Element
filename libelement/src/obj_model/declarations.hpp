@@ -21,6 +21,7 @@ namespace element
     static const std::string struct_qualifier = "struct";
     static const std::string function_qualifier; //empty string
     static const std::string return_keyword = "return";
+    static const std::string unidentifier = "_";
 
     class declaration : public object
     {
