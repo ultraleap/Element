@@ -17,6 +17,7 @@ namespace element
         {
         }
 
+        [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
         identifier name;

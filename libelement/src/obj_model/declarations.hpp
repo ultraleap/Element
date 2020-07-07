@@ -68,7 +68,7 @@ namespace element
         struct_declaration& operator=(const struct_declaration& scope) = delete;
         struct_declaration& operator=(struct_declaration&& scope) = delete;
         
-        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const element::identifier&) const override;
@@ -88,7 +88,7 @@ namespace element
         constraint_declaration& operator=(const constraint_declaration& scope) = delete;
         constraint_declaration& operator=(constraint_declaration&& scope) = delete;
 
-        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
     };
 
@@ -104,7 +104,7 @@ namespace element
         function_declaration& operator=(const function_declaration& scope) = delete;
         function_declaration& operator=(function_declaration&& scope) = delete;
 
-        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const final;
@@ -124,7 +124,7 @@ namespace element
         namespace_declaration& operator=(const namespace_declaration& scope) = delete;
         namespace_declaration& operator=(namespace_declaration&& scope) = delete;
 
-        [[nodiscard]] std::string to_string() const override;
+        [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const element::identifier&) const override;
         //todo: required because typeof does compilation, might need to change that?

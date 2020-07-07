@@ -25,6 +25,7 @@ namespace element
         expression_chain& operator=(const expression_chain&) = delete;
         expression_chain& operator=(expression_chain&&) = delete;
 
+        [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth = 0) const override;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;

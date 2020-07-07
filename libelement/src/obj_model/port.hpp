@@ -21,7 +21,7 @@ namespace element
 
         [[nodiscard]] bool has_annotation() const { return annotation != nullptr; };
 
-        [[nodiscard]] std::string to_string() const override { return name.value; }
+        [[nodiscard]] std::string typeof_info() const override { return name.value; }
         [[nodiscard]] std::string to_code(int depth) const override;
 
         identifier name;

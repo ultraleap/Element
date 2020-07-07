@@ -86,8 +86,8 @@ namespace element
     public:
         virtual ~object() = default;
 
-        [[nodiscard]] virtual std::string to_string() const { assert(!"make abs"); throw;  return "make abs"; }
-        [[nodiscard]] virtual std::string to_code(int depth) const { assert(!"make abs"); throw;  return "make abs"; }
+        [[nodiscard]] virtual std::string typeof_info() const = 0;
+        [[nodiscard]] virtual std::string to_code(int depth) const = 0;
 
         //TODO: Add constraints
         //bool matches_constraint(constraint& constraint);
@@ -129,8 +129,8 @@ namespace element
             
         }
 
-        [[nodiscard]] virtual std::string to_string() const { return message; }
-        [[nodiscard]] virtual std::string to_code(int depth) const { return to_string(); }
+        [[nodiscard]] virtual std::string typeof_info() const { return message; }
+        [[nodiscard]] virtual std::string to_code(int depth) const { return typeof_info(); }
         [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier&) const { return const_cast<error*>(this)->shared_from_this(); };
         [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const { return const_cast<error*>(this)->shared_from_this(); };
         [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const { return const_cast<error*>(this)->shared_from_this(); };
