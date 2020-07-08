@@ -15,6 +15,9 @@ namespace element
 {
     enum class error_message_code
     {
+        not_indexable,
+        not_callable,
+        not_compilable,
         failed_to_find_when_resolving_indexing_expr,
         failed_to_find_when_resolving_identifier_expr,
         recursion_detected,
@@ -48,6 +51,34 @@ namespace element
             }
 
             return it->second(location, args...);
+        }
+    };
+
+    //specialisation for zero parameters
+    template <>
+    struct error_map<> {
+        using func = std::function<std::shared_ptr<error>(const declaration*)>;
+        using map = std::map<error_message_code, func>;
+
+        static inline map func_map;
+
+        static void register_func(error_message_code code, func&& b)
+        {
+            auto& [it, success] = func_map.insert({ code, std::move(b) });
+            if (!success)
+                throw;
+        }
+
+        static std::shared_ptr<error> build_error(error_message_code code, const declaration* location)
+        {
+            auto it = func_map.find(code);
+            if (it == func_map.end())
+            {
+                //todo: not valid so do something better
+                throw;
+            }
+
+            return it->second(location);
         }
     };
 

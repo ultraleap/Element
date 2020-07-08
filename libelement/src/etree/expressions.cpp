@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 
 //SELF
+//#include "obj_model/errors.hpp"
 #include "obj_model/types.hpp"
 #include "obj_model/intermediaries.hpp"
 
@@ -31,8 +32,10 @@ std::shared_ptr<element::object> element_expression::index(const element::compil
 
     if (!declarer)
     {
+        //TODO: Handle as error
         assert(!"failed to index on type, user error?");
         return nullptr;
+        //return element::build_error(element::error_message_code::not_indexable);
     }
 
     auto* func = dynamic_cast<element::function_declaration*>(declarer.get());

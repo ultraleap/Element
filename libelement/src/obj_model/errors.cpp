@@ -7,6 +7,36 @@ bool element::detail::register_errors()
         return registered_errors;
     registered_errors = true;
 
+    element::register_error<>(
+        error_message_code::not_indexable,
+        "failed to index, it is not indexable.\n",
+        ELEMENT_ERROR_UNKNOWN);
+
+    element::register_error<>(
+        error_message_code::not_callable,
+        "failed to call, it is not callable.\n",
+        ELEMENT_ERROR_UNKNOWN);
+
+    element::register_error<>(
+        error_message_code::not_compilable,
+        "failed to compile, it is not compilable.\n",
+        ELEMENT_ERROR_UNKNOWN);
+
+    element::register_error<std::string>(
+        error_message_code::not_indexable,
+        "failed to index {}, it is not indexable.\n",
+        ELEMENT_ERROR_UNKNOWN);
+
+    element::register_error<std::string>(
+        error_message_code::not_callable,
+        "failed to call {}, it is not callable.\n",
+        ELEMENT_ERROR_UNKNOWN);
+
+    element::register_error<std::string>(
+        error_message_code::not_compilable,
+        "failed to compile {}, it is not compilable.\n",
+        ELEMENT_ERROR_UNKNOWN);
+
     element::register_error<std::string, std::string>(
         error_message_code::failed_to_find_when_resolving_indexing_expr,
         "failed to find {} when indexing {}.\n",
