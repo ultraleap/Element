@@ -11,6 +11,7 @@ enum class log_flags : int {
 	output_object_model_as_code = 1 << 3,
 	output_expression_tree      = 1 << 4,
 	output_prelude              = 1 << 5,
+	output_typeof_information   = 1 << 6,
 };
 
 constexpr log_flags operator|(log_flags lhs, log_flags rhs) 

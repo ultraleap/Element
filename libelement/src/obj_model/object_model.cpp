@@ -27,17 +27,6 @@ namespace element
         );
     }
 
-    void log(const std::string& message)
-    {
-        //do something better
-        std::cout << message << std::endl;
-    }
-
-    void log(element_ast* ast)
-    {
-        log(ast->identifier);
-    }
-
     std::unique_ptr<type_annotation> build_type_annotation(const element_interpreter_ctx* context, const element_ast* ast)
     {
         //todo: we need to decide how to handle any and num as types when they're not included (as the prelude is missing)
@@ -266,20 +255,23 @@ namespace element
 
     std::shared_ptr<declaration> build_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope)
     {
+        std::shared_ptr<declaration> result;
         if (ast->type == ELEMENT_AST_NODE_STRUCT)
-            return build_struct_declaration(context, ast, parent_scope);
+            result = build_struct_declaration(context, ast, parent_scope);
 
         if (ast->type == ELEMENT_AST_NODE_CONSTRAINT)
-            return build_constraint_declaration(context, ast, parent_scope);
+            result = build_constraint_declaration(context, ast, parent_scope);
 
         if (ast->type == ELEMENT_AST_NODE_FUNCTION)
-            return build_function_declaration(context, ast, parent_scope);
+            result = build_function_declaration(context, ast, parent_scope);
 
         if (ast->type == ELEMENT_AST_NODE_NAMESPACE)
-            return build_namespace_declaration(context, ast, parent_scope);
+            result = build_namespace_declaration(context, ast, parent_scope);
 
-        //log("Not a declaration");
-        return nullptr;
+        if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_typeof_information))
+            std::cout << result->typeof_info() + "\n";
+
+        return result;
     }
 
     void build_scope(const element_interpreter_ctx* context, element_ast* ast, const declaration& declaration)
@@ -294,11 +286,8 @@ namespace element
 
     std::unique_ptr<scope> build_root_scope(const element_interpreter_ctx* context, const element_ast* const ast)
     {
-        if (ast->type != ELEMENT_AST_NODE_ROOT) {
-
-            //log("Not a root");
+        if (ast->type != ELEMENT_AST_NODE_ROOT)
             return nullptr;
-        }
 
         auto root = std::make_unique<scope>(nullptr, nullptr);
         assign_source_information(context, root, ast);
@@ -311,9 +300,9 @@ namespace element
         }
 
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_object_model_as_code)) {
-            log("\n<CODE>");
-            log(root->to_code());
-            log("</CODE>\n");
+            std::cout << "\n<CODE>\n";
+            std::cout << root->to_code();
+            std::cout << "\n</CODE>\n\n";
         }
 
         return root;
