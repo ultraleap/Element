@@ -39,6 +39,7 @@ namespace element
         {
             auto previous = std::move(current);
             current = expression->resolve(context, previous);
+            //TODO: Handle as error
             assert(current);
 
             auto err = std::dynamic_pointer_cast<error>(current);
