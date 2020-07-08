@@ -37,7 +37,7 @@ namespace element
             }
         }
 
-        static std::shared_ptr<error> call(error_message_code code, Args... args)
+        static std::shared_ptr<error> build_error(error_message_code code, Args... args)
         {
             auto it = func_map.find(code);
             if (it == func_map.end())
@@ -50,20 +50,20 @@ namespace element
         }
     };
 
-    //template methods to register and log errors, log_error is intended to fall back on template argument deduction to avoid the need for silly template parameters everywhere
+    //template methods to register and log errors, build_error is intended to fall back on template argument deduction to avoid the need for silly template parameters everywhere
     template <typename... Args>
     void register_error(error_message_code code, std::string format)
     {
         error_map<Args...>::register_func(code, [format = std::move(format)](Args... args)
         {
-            std::cout << fmt::format(format, args...);
+            //std::cout << fmt::format(format, args...);
             return std::make_shared<error>(fmt::format(format, args...), 0, nullptr); //todo
         });
     }
 
     template <typename... Args>
-    std::shared_ptr<error> log_error(error_message_code code, Args... args)
+    std::shared_ptr<error> build_error(error_message_code code, Args... args)
     {
-        return error_map<Args...>::call(code, args...);
+        return error_map<Args...>::build_error(code, args...);
     }
 }
