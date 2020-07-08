@@ -10,6 +10,7 @@
 #include "intermediaries.hpp"
 #include "functions.hpp"
 #include "intrinsics.hpp"
+#include "errors.hpp"
 
 namespace element
 {
@@ -97,10 +98,7 @@ namespace element
 
         if (context.is_recursive(this))
         {
-            return std::make_shared<error>(
-                fmt::format("failed at {}. recursion detected.\n", typeof_info()),
-                ELEMENT_ERROR_CIRCULAR_COMPILATION,
-                this);
+            return build_error(error_message_code::recursion_detected, this, typeof_info());
         }
 
         call_stack::frame frame;

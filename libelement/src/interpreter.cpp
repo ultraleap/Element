@@ -1,5 +1,6 @@
 #include "interpreter_internal.hpp"
 
+//STD
 #include <algorithm>
 #include <functional>
 #include <cassert>
@@ -7,8 +8,10 @@
 #include <fstream>
 #include <iostream>
 
+//LIBS
 #include <fmt/format.h>
 
+//SELF
 #include "common_internal.hpp"
 #include "etree/compiler.hpp"
 #include "etree/evaluator.hpp"
@@ -18,6 +21,7 @@
 #include "obj_model/object_model.hpp"
 #include "obj_model/declarations.hpp"
 #include "obj_model/intermediaries.hpp"
+#include "obj_model/errors.hpp"
 
 bool file_exists(const std::string& file)
 {
@@ -391,6 +395,8 @@ void element_interpreter_ctx::log(const std::string& message) const
 
 element_interpreter_ctx::element_interpreter_ctx()
 {
+    element::detail::register_errors();
+
     // TODO: hack, remove
     global_scope = std::make_unique<element::scope>(nullptr, nullptr);
     clear();
