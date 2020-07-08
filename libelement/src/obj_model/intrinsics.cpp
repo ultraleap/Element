@@ -1,5 +1,9 @@
 #include "intrinsics.hpp"
 
+//LIBS
+#include <fmt/format.h>
+
+//SELF
 #include "functions.hpp"
 #include "types.hpp"
 #include "intermediaries.hpp"
@@ -272,6 +276,35 @@ namespace element
 
     std::shared_ptr<object> intrinsic_user_constructor::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
     {
+        if (compiled_args.size() != declarer->inputs.size())
+        {
+            std::string input_params;
+            for (unsigned i = 0 ; i < declarer->inputs.size(); ++i)
+            {
+                const auto& input = declarer->inputs[i];
+                input_params += fmt::format("({}) {}:{}", i, input.name.value, input.annotation->name.value);
+                if (i != declarer->inputs.size() - 1)
+                    input_params += ", ";
+            }
+
+            std::string given_params;
+            for (unsigned i = 0; i < compiled_args.size(); ++i)
+            {
+                const auto& input = compiled_args[i];
+                given_params += fmt::format("({}) {}", i, input->typeof_info());
+                if (i != compiled_args.size() - 1)
+                    given_params += ", ";
+            }
+
+            return std::make_shared<error>(
+                fmt::format("error: attempted to construct an instance of '{}' which requires the parameters '{}', but the parameters of type '{}' were used instead.\n",
+                    declarer->location(), input_params, given_params),
+                ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH,
+                nullptr);
+        }
+
+        //todo: check the types of each argument
+
         return std::make_shared<struct_instance>(declarer, compiled_args);
     }
 }
