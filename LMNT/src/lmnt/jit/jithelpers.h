@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "lmnt/config.h"
+#include "lmnt/jitconfig.h"
 #include "lmnt/interpreter.h"
 #include "lmnt/jit.h"
 #include "lmnt/jit/hosthelpers.h"
@@ -125,11 +126,12 @@ static int lookahead(jit_compile_state* state, lmnt_offset spos, size_t scount)
 
 static void* targetLinkAndEncode(dasm_State** d, size_t* sz)
 {
-    void* buf;
     dasm_link(d, sz);
-    buf = hostAllocMemory(*sz);
-    dasm_encode(d, buf);
-    hostProtectMemory(buf, *sz);
+    void* buf = LMNT_JIT_ALLOC_CFN_MEMORY(*sz);
+    if (buf) {
+        dasm_encode(d, buf);
+        LMNT_JIT_PROTECT_CFN_MEMORY(buf, *sz);
+    }
     return buf;
 }
 

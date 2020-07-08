@@ -115,6 +115,6 @@ lmnt_result lmnt_jit_compile_with_stats(lmnt_ictx* ctx, const lmnt_def* def, lmn
 
 lmnt_result lmnt_jit_delete_function(lmnt_jit_fn_data* fndata)
 {
-    hostFreeCompiledBuffer(fndata->buffer, fndata->codesize);
+    LMNT_JIT_FREE_CFN_MEMORY(fndata->buffer, fndata->codesize);
     return LMNT_OK;
 }

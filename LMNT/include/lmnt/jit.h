@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "lmnt/config.h"
+#include "lmnt/jitconfig.h"
+
 typedef lmnt_result(*lmnt_jit_fn)(lmnt_ictx* ctx);
 
 typedef struct
