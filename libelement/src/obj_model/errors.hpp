@@ -17,7 +17,10 @@ namespace element
     {
         failed_to_find_when_resolving_indexing_expr,
         failed_to_find_when_resolving_identifier_expr,
-        recursion_detected
+        recursion_detected,
+        instance_function_cannot_be_nullary,
+        is_not_an_instance_function,
+
     };
 
     template <typename... Args>

@@ -22,5 +22,20 @@ bool element::detail::register_errors()
         "failed at {}. recursion detected.\n",
         ELEMENT_ERROR_CIRCULAR_COMPILATION);
 
+    element::register_error<std::string, std::string>(
+        error_message_code::instance_function_cannot_be_nullary,
+        "error: '{}' was found when indexing '{}' but it is not an instance function as it has no parameters.\n",
+        ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION);
+
+    element::register_error<std::string, std::string, std::string>(
+        error_message_code::is_not_an_instance_function,
+        "error: '{}' was found when indexing '{}' but it is not an instance function as it does not have an explicit type defined for its first parameter '{}'.\n",
+        ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION);
+
+    element::register_error<std::string, std::string, std::string, std::string, std::string>(
+        error_message_code::is_not_an_instance_function,
+        "error: '{}' was found when indexing '{}' but it is not an instance function as the first parameter '{}' is of type '{}', when it needs to be '{}' to be considered an instance function.\n",
+        ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION);
+
     return registered_errors;
 }
