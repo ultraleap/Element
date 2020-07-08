@@ -3,6 +3,8 @@
 //LIBS
 #include <fmt/format.h>
 
+
+#include "errors.hpp"
 #include "scope.hpp"
 
 namespace element
@@ -18,26 +20,17 @@ namespace element
 
     std::shared_ptr<object> object::index(const compilation_context&, const identifier&) const
     {
-        return std::make_shared<error>(
-            fmt::format("failed to index {}. it is not indexable.\n"),
-            ELEMENT_ERROR_UNKNOWN,
-            nullptr);
+        return build_error<>(error_message_code::not_indexable);
     }
 
     std::shared_ptr<object> object::call(const compilation_context&, std::vector<std::shared_ptr<object>>) const
     {
-        return std::make_shared<error>(
-            fmt::format("failed to call {}. it is not callable.\n"),
-            ELEMENT_ERROR_UNKNOWN,
-            nullptr);
+        return build_error<>(error_message_code::not_callable);
     }
 
     std::shared_ptr<object> object::compile(const compilation_context&) const
     {
-        return std::make_shared<error>(
-            fmt::format("failed to compile {}. it is not compilable.\n"),
-            ELEMENT_ERROR_UNKNOWN,
-            nullptr);
+        return build_error<>(error_message_code::not_compilable);
     }
 
     element_result error::get_result() const

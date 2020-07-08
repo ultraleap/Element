@@ -771,6 +771,7 @@ element_result element_interpreter_evaluate(
         auto struct_instance = std::dynamic_pointer_cast<element::struct_instance>(evaluable->evaluable);
         if (!struct_instance)
         {
+            //TODO: Handle as error
             assert(!"tried to evaluate something but it's not an element_expression or struct instance");
             return ELEMENT_ERROR_UNKNOWN;
         }
@@ -778,6 +779,7 @@ element_result element_interpreter_evaluate(
         //doesn't calc space of fields :b
         if (static_cast<int>(struct_instance->fields.size()) > outputs->count)
         {
+            //TODO: Handle as error
             assert(!"tried to evaluate a struct instance but not enough output space to deserialize it");
             return ELEMENT_ERROR_UNKNOWN;
         }
@@ -792,6 +794,7 @@ element_result element_interpreter_evaluate(
             assert(sub_outputs.count > 0);
             const auto result = element_interpreter_evaluate(context, options, &sub_evaluable, &sub_inputs, &sub_outputs);
             if (result != ELEMENT_OK) {
+                //TODO: Handle as error
                 context->log(result, fmt::format("Failed to evaluate {}", f.second->typeof_info()), "<input>");
                 return result;
             }
