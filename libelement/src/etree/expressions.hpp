@@ -23,10 +23,10 @@ struct element_expression : element::object, rtti_type<element_expression>, std:
     [[nodiscard]] std::string typeof_info() const override;
     [[nodiscard]] std::string to_code(int depth = 0) const override;
 
-    std::shared_ptr<const element::type> actual_type;
+    element::type_const_ptr actual_type;
 
 protected:
-    explicit element_expression(element_type_id t, std::shared_ptr<const element::type> actual_type)
+    explicit element_expression(element_type_id t, element::type_const_ptr actual_type)
         : rtti_type(t)
         , actual_type(std::move(actual_type))
     {
@@ -108,7 +108,7 @@ struct element_expression_nullary final : public element_expression
 
     using op = element_nullary_op;
 
-    explicit element_expression_nullary(op t, std::shared_ptr<const element::type> actual_type)
+    explicit element_expression_nullary(op t, element::type_const_ptr actual_type)
         : element_expression(type_id, std::move(actual_type))
         , m_op(t)
     {
@@ -127,7 +127,7 @@ struct element_expression_unary final : public element_expression
 
     using op = element_unary_op;
 
-    explicit element_expression_unary(op t, expression_shared_ptr input, std::shared_ptr<const element::type> actual_type)
+    explicit element_expression_unary(op t, expression_shared_ptr input, element::type_const_ptr actual_type)
         : element_expression(type_id, std::move(actual_type))
         , m_op(t)
     {
@@ -149,7 +149,7 @@ struct element_expression_binary final : public element_expression
 
     using op = element_binary_op;
 
-    explicit element_expression_binary(op t, expression_shared_ptr in1, expression_shared_ptr in2, std::shared_ptr<const element::type> actual_type)
+    explicit element_expression_binary(op t, expression_shared_ptr in1, expression_shared_ptr in2, element::type_const_ptr actual_type)
         : element_expression(type_id, std::move(actual_type))
         , m_op(t)
     {

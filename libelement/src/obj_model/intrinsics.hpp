@@ -26,10 +26,10 @@ namespace element
     {
     protected:
         //TODO: this might need to be a constraint_const_shared_ptr
-        type_const_shared_ptr return_type;
+        type_const_ptr return_type;
 
     public:
-        intrinsic_function(element_type_id id, type_const_shared_ptr return_type);
+        intrinsic_function(element_type_id id, type_const_ptr return_type);
     };
 
     class intrinsic_nullary final : public intrinsic_function
@@ -41,7 +41,7 @@ namespace element
         element_nullary_op operation;
 
     public:
-        explicit intrinsic_nullary(element_nullary_op operation, type_const_shared_ptr return_type);
+        explicit intrinsic_nullary(element_nullary_op operation, type_const_ptr return_type);
 
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
@@ -56,10 +56,10 @@ namespace element
     private:
         element_unary_op operation;
         //TODO: this might need to be a constraint_const_shared_ptr
-        type_const_shared_ptr argument_type;
+        type_const_ptr argument_type;
 
     public:
-        explicit intrinsic_unary(element_unary_op operation, type_const_shared_ptr return_type, type_const_shared_ptr argument_type);
+        explicit intrinsic_unary(element_unary_op operation, type_const_ptr return_type, type_const_ptr argument_type);
 
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
         [[nodiscard]] element_unary_op get_operation() const { return operation; }
@@ -73,12 +73,12 @@ namespace element
     private:
         element_binary_op operation;
         //TODO: this might need to be a constraint_const_shared_ptr
-        type_const_shared_ptr first_argument_type;
+        type_const_ptr first_argument_type;
         //TODO: this might need to be a constraint_const_shared_ptr
-        type_const_shared_ptr second_argument_type;
+        type_const_ptr second_argument_type;
 
     public:
-        explicit intrinsic_binary(element_binary_op operation, type_const_shared_ptr return_type, type_const_shared_ptr first_argument_type, type_const_shared_ptr second_argument_type);
+        explicit intrinsic_binary(element_binary_op operation, type_const_ptr return_type, type_const_ptr first_argument_type, type_const_ptr second_argument_type);
 
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
         [[nodiscard]] element_binary_op get_operation() const { return operation; }

@@ -26,12 +26,12 @@ namespace element
     class namespace_declaration;
 
     class constraint;
-    using constraint_shared_ptr = std::shared_ptr<constraint>;
-    using constraint_const_shared_ptr = std::shared_ptr<const constraint>;
+    using constraint_const_ptr = const constraint*;
+    using constraint_const_unique_ptr = std::unique_ptr<const constraint>;
 
     class type;
-    using type_shared_ptr = std::shared_ptr<type>;
-    using type_const_shared_ptr = std::shared_ptr<const type>;
+    using type_const_ptr = const type*;
+    using type_const_unique_ptr = std::unique_ptr<const type>;
 
     struct element_function;
     using function_shared_ptr = std::shared_ptr<element_function>;
