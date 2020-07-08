@@ -67,5 +67,10 @@ bool element::detail::register_errors()
         "error: '{}' was found when indexing '{}' but it is not an instance function as the first parameter '{}' is of type '{}', when it needs to be '{}' to be considered an instance function.\n",
         ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION);
 
+    element::register_error<std::string, std::string, std::string>(
+        error_message_code::argument_count_mismatch,
+        "error: attempted to construct an instance of '{}' which requires the parameters '{}', but the parameters of type '{}' were used instead.\n",
+        ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH);
+
     return registered_errors;
 }
