@@ -15,32 +15,38 @@ namespace element
     DEFINE_TYPE_ID(unary_constraint, 1U << 6);
     DEFINE_TYPE_ID(binary_constraint, 1U << 7);
 
-    identifier num_type::identifier{ "Num" };
-    identifier boolean_type::identifier{ "Bool" };
+    DEFINE_TYPE_ID(user_type, 1U << 8);
 
-    const type_const_shared_ptr type::num = std::make_shared<num_type>();
-    const type_const_shared_ptr type::boolean = std::make_shared<boolean_type>();
+    identifier num_type::name{ "Num" };
+    identifier boolean_type::name{ "Bool" };
 
-    const constraint_const_shared_ptr constraint::any = std::make_shared<any_constraint>();
-    const constraint_const_shared_ptr constraint::function = std::make_shared<function_constraint>();
-    const constraint_const_shared_ptr constraint::nullary = std::make_shared<nullary_constraint>();
-    const constraint_const_shared_ptr constraint::unary = std::make_shared<unary_constraint>();
-    const constraint_const_shared_ptr constraint::binary = std::make_shared<binary_constraint>();
+    const type_const_unique_ptr type::num = std::make_unique<num_type>();
+    const type_const_unique_ptr type::boolean = std::make_unique<boolean_type>();
 
-    std::shared_ptr<object> num_type::index(const compilation_context& context, const element::identifier& name) const
+    const constraint_const_unique_ptr constraint::any = std::make_unique<any_constraint>();
+    const constraint_const_unique_ptr constraint::function = std::make_unique<function_constraint>();
+    const constraint_const_unique_ptr constraint::nullary = std::make_unique<nullary_constraint>();
+    const constraint_const_unique_ptr constraint::unary = std::make_unique<unary_constraint>();
+    const constraint_const_unique_ptr constraint::binary = std::make_unique<binary_constraint>();
+
+    std::shared_ptr<object> num_type::index(const compilation_context& context, const identifier& name) const
     {
         //todo: cache, but don't use static
-        const auto declaration = context.get_global_scope()->find(num_type::identifier, false);
+        const auto declaration = context.get_global_scope()->find(num_type::name, false);
         assert(declaration);
         return declaration->index(context, name);
     }
 
-    std::shared_ptr<object> boolean_type::index(const compilation_context& context, const element::identifier& name) const
+    std::shared_ptr<object> boolean_type::index(const compilation_context& context, const identifier& name) const
     {
         //todo: cache, but don't use static
-        const auto  declaration = context.get_global_scope()->find(boolean_type::identifier, false);
+        const auto declaration = context.get_global_scope()->find(boolean_type::name, false);
         assert(declaration);
         return declaration->index(context, name);
+    }
+    std::shared_ptr<object> user_type::index(const compilation_context& context, const identifier& name) const
+    {
+        return std::shared_ptr<object>();
     }
 }
 

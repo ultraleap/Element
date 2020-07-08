@@ -82,7 +82,7 @@ std::shared_ptr<element::object> element_expression::index(const element::compil
 }
 
 element_expression_constant::element_expression_constant(element_value val)
-    : element_expression(type_id, element::type::num)
+    : element_expression(type_id, element::type::num.get())
     , m_value(val)
 {
 }

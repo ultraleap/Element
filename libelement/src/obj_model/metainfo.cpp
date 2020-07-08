@@ -7,6 +7,11 @@
 #include "object.hpp"
 
 //to_string
+std::string element::constraint::typeof_info() const
+{
+    return "";
+}
+
 std::string element::scope::typeof_info() const
 {
     return declarer->typeof_info();
@@ -88,6 +93,11 @@ std::string element::port::typeof_info() const
 }
 
 //to_code
+std::string element::constraint::to_code(int depth) const
+{
+    return "";
+}
+
 std::string element::struct_declaration::to_code(const int depth) const
 {
     std::string ports;

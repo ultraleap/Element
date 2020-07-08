@@ -8,75 +8,23 @@
 
 namespace element
 {
-    class type : public object, public rtti_type<type>
+    class constraint : public object, public rtti_type<constraint>
     {
     public:
-        DECLARE_TYPE_ID();
+        static const constraint_const_unique_ptr nullary;
+        static const constraint_const_unique_ptr unary;
+        static const constraint_const_unique_ptr binary;
 
-        static const type_const_shared_ptr num;      // the absolute unit
-        static const type_const_shared_ptr boolean;
-
-        [[nodiscard]] identifier get_identifier() const { return name; }
-
-        [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth = 0) const override;
-
-    protected:
-        type(element_type_id id, identifier name)
-            : rtti_type(type_id)
-            , name(std::move(name))
-        {
-        }
-
-        identifier name;
-    };
-
-    class num_type : public type
-    {
-
-    public:
-        DECLARE_TYPE_ID();
-        num_type() : type(type_id, identifier)
-        {
-        }
-
-    public:
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context,
-            const identifier& name) const override;
-
-    private:
-        static identifier identifier;
-    };
-
-    class boolean_type : public type {
-    public:
-        DECLARE_TYPE_ID();
-        boolean_type() : type(type_id, identifier)
-        {
-        }
-
-    public:
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context,
-            const identifier& name) const override;
-
-    private:
-        static identifier identifier;
-    };
-
-    class constraint : public rtti_type<constraint>
-    {
-    public:
-        static const constraint_const_shared_ptr nullary;
-        static const constraint_const_shared_ptr unary;
-        static const constraint_const_shared_ptr binary;
-
-        static const constraint_const_shared_ptr any;
-        static const constraint_const_shared_ptr function;
+        static const constraint_const_unique_ptr any;
+        static const constraint_const_unique_ptr function;
 
         constraint(element_type_id id)
             : rtti_type(id)
         {
         }
+
+        [[nodiscard]] std::string typeof_info() const override;
+        [[nodiscard]] std::string to_code(int depth) const override;
     };
 
     class any_constraint : public constraint
@@ -121,6 +69,72 @@ namespace element
         }
     };
 
+    class type : public constraint
+    {
+    public:
+        DECLARE_TYPE_ID();
+
+        static const type_const_unique_ptr num;      // the absolute unit
+        static const type_const_unique_ptr boolean;
+
+        [[nodiscard]] identifier get_identifier() const { return name; }
+
+        [[nodiscard]] std::string typeof_info() const override;
+        [[nodiscard]] std::string to_code(int depth = 0) const override;
+
+    protected:
+        type(element_type_id id, identifier name)
+            : constraint(type_id)
+            , name(std::move(name))
+        {
+        }
+
+        identifier name;
+    };
+
+    class num_type : public type
+    {
+    public:
+        DECLARE_TYPE_ID();
+        num_type() : type(type_id, name)
+        {
+        }
+
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const override;
+
+    private:
+        static identifier name;
+    };
+
+    class boolean_type : public type
+    {
+    public:
+        DECLARE_TYPE_ID();
+        boolean_type() : type(type_id, name)
+        {
+        }
+
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const override;
+
+    private:
+        static identifier name;
+    };
+
+    class user_type : public type
+    {
+    public:
+        DECLARE_TYPE_ID();
+        user_type(identifier name)
+            : type(type_id, name)
+            , name(name)
+        {
+        }
+
+        [[nodiscard]] std::shared_ptr<object> index( const compilation_context& context, const identifier& name) const override;
+
+    private:
+        identifier name;
+    };
 }
 
 #else
