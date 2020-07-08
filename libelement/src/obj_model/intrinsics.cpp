@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 
 //SELF
+#include "errors.hpp"
 #include "functions.hpp"
 #include "types.hpp"
 #include "intermediaries.hpp"
@@ -296,11 +297,8 @@ namespace element
                     given_params += ", ";
             }
 
-            return std::make_shared<error>(
-                fmt::format("error: attempted to construct an instance of '{}' which requires the parameters '{}', but the parameters of type '{}' were used instead.\n",
-                    declarer->location(), input_params, given_params),
-                ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH,
-                nullptr);
+            return build_error<std::string, std::string, std::string>(error_message_code::argument_count_mismatch,
+                declarer->location(), input_params, given_params);
         }
 
         //todo: check the types of each argument

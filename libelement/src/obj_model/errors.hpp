@@ -23,7 +23,7 @@ namespace element
         recursion_detected,
         instance_function_cannot_be_nullary,
         is_not_an_instance_function,
-
+        argument_count_mismatch
     };
 
     template <typename... Args>
