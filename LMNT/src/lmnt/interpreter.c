@@ -21,7 +21,7 @@ lmnt_result lmnt_ictx_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
     ctx->memory_area_size = mem_size;
 
     // Determine how much space we want to use for frames/stack
-    const size_t min_stack_count = 256;
+    const size_t min_stack_count = 16;
     if (mem_size < min_stack_count * sizeof(lmnt_value))
         return LMNT_ERROR_MEMORY_SIZE;
 
