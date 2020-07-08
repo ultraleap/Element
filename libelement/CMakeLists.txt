@@ -36,6 +36,7 @@ set(libelement_sources
     #Object model
     "src/obj_model/fwd.hpp"
     "src/obj_model/errors.hpp"
+    "src/obj_model/errors.cpp"
 
     "src/obj_model/object_model.hpp"
     "src/obj_model/object_model.cpp"

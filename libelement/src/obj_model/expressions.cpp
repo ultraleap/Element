@@ -1,9 +1,12 @@
 #include "expressions.hpp"
 
+//LIBS
 #include <fmt/format.h>
 
+//SELF
 #include "etree/expressions.hpp"
 #include "scope.hpp"
+#include "errors.hpp"
 
 namespace element
 {
@@ -43,6 +46,7 @@ namespace element
             {
                 context.interpreter->log(err->get_result(), err->get_message());
 
+                //todo: remove and let recursion handle the trace
                 return std::make_shared<error>(
                     fmt::format("failed at {} when resolving {}{}\n", declarer->typeof_info(), previous ? previous->typeof_info() : "", expression->to_code()),
                     err->get_result(),
@@ -110,10 +114,7 @@ namespace element
         if (found)
             return found->compile(context);
 
-        return std::make_shared<error>(
-            fmt::format("failed to find {}.\n", name.value),
-            ELEMENT_ERROR_IDENTIFIER_NOT_FOUND,
-            nullptr);
+        return build_error(error_message_code::failed_to_find_when_resolving_identifier_expr, name.value);
     }
 
     literal_expression::literal_expression(element_value value, const expression_chain* parent)
@@ -158,10 +159,7 @@ namespace element
         auto element = obj->index(context, name);
 
         if (!element)
-            return std::make_shared<error>(
-                fmt::format("failed to find {} when indexing {}.\n", name.value, obj->typeof_info()),
-                ELEMENT_ERROR_IDENTIFIER_NOT_FOUND,
-                nullptr);
+            return build_error(error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, obj->typeof_info());
 
         return element;
     }
