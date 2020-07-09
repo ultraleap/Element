@@ -323,13 +323,14 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     msg.related_log_message = nullptr;
 
     std::string new_log_message;
+    std::string source_line;
     if (nearest_ast && nearest_ast->nearest_token) {
         msg.line = nearest_ast->nearest_token->line;
         msg.character = nearest_ast->nearest_token->character;
         msg.length = nearest_ast->nearest_token->tok_len;
 
         if (msg.line > 0) {
-            std::string source_line = context.tokeniser->text_on_line(msg.line) + "\n";
+            source_line = context.tokeniser->text_on_line(msg.line) + "\n";
 
             //todo: doesn't handle UTF8 I'm guessing
             if (msg.character >= 0) {
@@ -363,7 +364,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     }
 	
     msg.message = new_log_message.c_str();
-	
+    msg.line_in_source = source_line.c_str();
     log(msg);
 }
 
