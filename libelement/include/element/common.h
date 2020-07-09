@@ -105,6 +105,8 @@ struct element_log_message {
     const char* message;
     // filename
     const char* filename;
+    // line of code in the source
+    const char* line_in_source;
     // separate but related log messages. e.g. a callstack for cascading errors, or null
     element_log_message* related_log_message;
 };

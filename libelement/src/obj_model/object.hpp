@@ -19,6 +19,45 @@ namespace element
     struct identifier;
     class intrinsic;
 
+    struct source_information
+    {
+    public:
+        source_information()
+        {
+
+        }
+
+        source_information(int line, int character_start, int character_end, const std::string* line_in_source, const char* filename)
+            : line(line)
+            , character_start(character_start)
+            , character_end(character_end)
+            , line_in_source(line_in_source)
+            , filename(filename)
+        {}
+
+        const std::string& get_text()
+        {
+            if (text.empty())
+            {
+                //todo: UTF8 concerns?
+                assert(character_end - character_start >= 0);
+                text = line_in_source->substr(character_start - 1, character_end - character_start);
+            }
+
+            return text;
+        }
+
+        int line = 0;
+        int character_start = 0;
+        int character_end = 0;
+
+        const std::string* line_in_source = nullptr;
+        const char* filename = nullptr;
+
+    private:
+        std::string text;
+    };
+
     class call_stack
     {
     public:
@@ -52,6 +91,7 @@ namespace element
         }
         mutable call_stack stack;
         element_interpreter_ctx* interpreter;
+        mutable source_information source_info;
     };
 
     struct identifier
@@ -81,45 +121,6 @@ namespace element
         }
     };
 
-    struct source_information
-    {
-    public:
-        source_information()
-        {
-            
-        }
-
-        source_information(int line, int character_start, int character_end, const std::string* line_in_source, const char* filename)
-            : line(line)
-        , character_start(character_start)
-        , character_end(character_end)
-        , line_in_source(line_in_source)
-        , filename(filename)
-        {}
-
-        const std::string& get_text()
-        {
-            if (text.empty())
-            {
-                //todo: UTF8 concerns?
-                assert(character_end - character_start >= 0);
-                text = line_in_source->substr(character_start - 1, character_end - character_start);
-            }
-
-            return text;
-        }
-
-        int line = 0;
-        int character_start = 0;
-        int character_end = 0;
-
-        const std::string* line_in_source = nullptr;
-        const char* filename = nullptr;
-
-    private:
-        std::string text;
-    };
-
     class object
     {
     public:
@@ -134,15 +135,16 @@ namespace element
         /*
          * Namespace, element_expression, struct declaration, struct instance, function declaration if nullary
          */
-        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const;
+        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const;
         /*
          * struct declaration, function declaration, function instance
          */
-        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const;
+        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                           source_info) const;
         /*
          * expression, anything that remains after an expression is compiled, anything that a user tries to compile using the C API
          */
-        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context) const;
+        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const;
 
         source_information source_info;
 
@@ -163,9 +165,9 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&) const override { return const_cast<error*>(this)->shared_from_this(); };
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override { return const_cast<error*>(this)->shared_from_this(); };
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override { return const_cast<error*>(this)->shared_from_this(); };
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&, const source_information& source_info) const override { return const_cast<error*>(this)->shared_from_this(); };
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override { return const_cast<error*>(this)->shared_from_this(); };
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<error*>(this)->shared_from_this(); };
 
         [[nodiscard]] element_result get_result() const;
         [[nodiscard]] const std::string& get_message() const;

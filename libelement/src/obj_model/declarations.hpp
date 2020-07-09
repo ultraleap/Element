@@ -71,9 +71,10 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const override;
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override { return const_cast<struct_declaration*>(this)->shared_from_this(); }
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                   source_info) const override;
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<struct_declaration*>(this)->shared_from_this(); }
     };
 
     class constraint_declaration final : public declaration
@@ -107,9 +108,10 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const;
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                   source_info) const override;
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
     };
 
     class namespace_declaration final : public declaration, public std::enable_shared_from_this<namespace_declaration>
@@ -126,8 +128,8 @@ namespace element
 
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name) const override;
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
         //todo: required because typeof does compilation, might need to change that?
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override { return const_cast<namespace_declaration*>(this)->shared_from_this(); }
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<namespace_declaration*>(this)->shared_from_this(); }
     };
 }

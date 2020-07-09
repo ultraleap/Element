@@ -43,8 +43,9 @@ namespace element
     public:
         explicit intrinsic_nullary(element_nullary_op operation, type_const_ptr return_type);
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                   source_info) const override;
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
         [[nodiscard]] element_nullary_op get_operation() const { return operation; }
     };
 
@@ -61,7 +62,8 @@ namespace element
     public:
         explicit intrinsic_unary(element_unary_op operation, type_const_ptr return_type, type_const_ptr argument_type);
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                   source_info) const override;
         [[nodiscard]] element_unary_op get_operation() const { return operation; }
     };
 
@@ -80,7 +82,8 @@ namespace element
     public:
         explicit intrinsic_binary(element_binary_op operation, type_const_ptr return_type, type_const_ptr first_argument_type, type_const_ptr second_argument_type);
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                   source_info) const override;
         [[nodiscard]] element_binary_op get_operation() const { return operation; }
     };
 
@@ -92,7 +95,8 @@ namespace element
 
         intrinsic_if();
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                   source_info) const override;
     };
 
     class intrinsic_num_constructor final : public intrinsic_function
@@ -102,7 +106,8 @@ namespace element
 
         intrinsic_num_constructor();
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                   source_info) const override;
     };
 
     class intrinsic_bool_constructor final : public intrinsic_function
@@ -112,7 +117,8 @@ namespace element
 
         intrinsic_bool_constructor();
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                   source_info) const override;
     };
 
     //seems almost strange to think of them as intrinsic, but technically they're not in the source, so..
@@ -123,7 +129,8 @@ namespace element
 
         intrinsic_user_constructor(const struct_declaration* declarer);
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                   source_info) const override;
         const struct_declaration* declarer;
     };
 }

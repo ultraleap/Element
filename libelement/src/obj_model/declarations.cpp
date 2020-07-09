@@ -59,15 +59,16 @@ namespace element
             body = std::make_shared<intrinsic_user_constructor>(this);
     }
 
-    std::shared_ptr<object> struct_declaration::index(const compilation_context& context, const identifier& name) const
+    std::shared_ptr<object> struct_declaration::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
         return our_scope->find(name, false);
     }
 
-    std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
+    std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                     source_info) const
     {
         //todo: add frame instead of using arguments?
-        return body->call(context, compiled_args);
+        return body->call(context, compiled_args, source_info);
     }
 
     //constraint
@@ -87,12 +88,13 @@ namespace element
         _intrinsic = is_intrinsic;
     }
 
-    std::shared_ptr<object> function_declaration::index(const compilation_context& context, const identifier& name) const
+    std::shared_ptr<object> function_declaration::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
-        return call(context, {})->index(context, name);
+        return call(context, {}, source_info)->index(context, name, source_info);
     }
 
-    std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
+    std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                       source_info) const
     {
         //todo: this and compile are almost identical
 
@@ -117,7 +119,8 @@ namespace element
                     func->source_info.filename, func->source_info.line, func->typeof_info(), params);
                 if (func == this)
                     trace += " <-- here";
-                trace += "\n";
+                if (it != context.stack.frames.rend() - 1)
+                    trace += "\n";
             }
 
             return build_error(source_info, error_message_code::recursion_detected, typeof_info(), trace);
@@ -137,13 +140,13 @@ namespace element
         }
 
         //todo: we don't need args passed since it's in the stack
-        auto ret = body->call(context, context.stack.frames.back().compiled_arguments);
+        auto ret = body->call(context, context.stack.frames.back().compiled_arguments, source_info);
 
         context.stack.frames.pop_back();
         return ret;
     }
 
-    std::shared_ptr<object> function_declaration::compile(const compilation_context& context) const
+    std::shared_ptr<object> function_declaration::compile(const compilation_context& context, const source_information& source_info) const
     {
         std::shared_ptr<object> ret;
 
@@ -171,7 +174,8 @@ namespace element
                         func->source_info.filename, func->source_info.line, func->typeof_info(), params);
                     if (func == this)
                         trace += " <-- here";
-                    trace += "\n";
+                    if (it != context.stack.frames.rend() - 1)
+                        trace += "\n";
                 }
 
                 return build_error(source_info, error_message_code::recursion_detected, typeof_info(), trace);
@@ -189,7 +193,7 @@ namespace element
                     source_info);
             }
 
-            ret = body->compile(context);
+            ret = body->compile(context, source_info);
 
             context.stack.frames.pop_back();
         }
@@ -211,7 +215,7 @@ namespace element
         _intrinsic = false;
     }
 
-    std::shared_ptr<object> namespace_declaration::index(const compilation_context& context, const element::identifier& name) const
+    std::shared_ptr<object> namespace_declaration::index(const compilation_context& context, const element::identifier& name, const source_information& source_info) const
     {
         return our_scope->find(name, false);
     }

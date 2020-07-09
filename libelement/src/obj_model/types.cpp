@@ -29,22 +29,22 @@ namespace element
     const constraint_const_unique_ptr constraint::unary = std::make_unique<unary_constraint>();
     const constraint_const_unique_ptr constraint::binary = std::make_unique<binary_constraint>();
 
-    std::shared_ptr<object> num_type::index(const compilation_context& context, const identifier& name) const
+    std::shared_ptr<object> num_type::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
         //todo: cache, but don't use static
         const auto declaration = context.get_global_scope()->find(num_type::name, false);
         assert(declaration);
-        return declaration->index(context, name);
+        return declaration->index(context, name, source_info);
     }
 
-    std::shared_ptr<object> boolean_type::index(const compilation_context& context, const identifier& name) const
+    std::shared_ptr<object> boolean_type::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
         //todo: cache, but don't use static
         const auto declaration = context.get_global_scope()->find(boolean_type::name, false);
         assert(declaration);
-        return declaration->index(context, name);
+        return declaration->index(context, name, source_info);
     }
-    std::shared_ptr<object> user_type::index(const compilation_context& context, const identifier& name) const
+    std::shared_ptr<object> user_type::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
         return std::shared_ptr<object>();
     }

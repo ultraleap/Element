@@ -12,7 +12,37 @@
 
 void log_callback(const element_log_message* msg)
 {
-    printf("%s", msg->message);
+    char buffer[512];
+    buffer[0] = '^';
+    buffer[1] = '\0';
+    const char* buffer_str = NULL;
+    if (msg->character - 1 > 0)
+    {
+        const int padding_count = msg->character - 1;
+        for (int i = 0; i < padding_count; ++i)
+        {
+            buffer[i] = ' ';
+        }
+
+        int end = padding_count + msg->length;
+        for (int i = padding_count; i < end; ++i)
+        {
+            buffer[i] = '^';
+        }
+
+        buffer[end] = '\0';
+
+        buffer_str = &buffer[0];
+    }
+
+    printf("\n----------ELE%d-%s\n%d| %s\n%d| %s\n\n%s----------\n\n",
+        msg->message_code,
+        msg->filename,
+        msg->line,
+        msg->line_in_source ? msg->line_in_source : "",
+        msg->line,
+        buffer_str,
+        msg->message);
 }
 
 element_result eval(const char* evaluate)
