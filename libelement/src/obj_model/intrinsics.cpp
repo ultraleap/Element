@@ -297,7 +297,7 @@ namespace element
                     given_params += ", ";
             }
 
-            return build_error<std::string, std::string, std::string>(source_info, error_message_code::argument_count_mismatch,
+            return build_error(source_info, error_message_code::argument_count_mismatch,
                 declarer->location(), input_params, given_params);
         }
 
