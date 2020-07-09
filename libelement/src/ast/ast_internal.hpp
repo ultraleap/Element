@@ -283,7 +283,6 @@ struct element_parser_ctx
     std::shared_ptr<element_log_ctx> logger = nullptr;
     element_tokeniser_ctx* tokeniser = nullptr;
 
-    //todo: owning raw pointer causing memory leak. does it need to be owning? if so, delete in destructor
     element_ast* root = nullptr;
 
     // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
