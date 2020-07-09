@@ -44,16 +44,7 @@ namespace element
 
             auto err = std::dynamic_pointer_cast<error>(current);
             if (err)
-            {
-                context.interpreter->log(err->get_result(), err->get_message());
-
-                //todo: remove and let recursion handle the trace
-                return std::make_shared<error>(
-                    fmt::format("failed at {} when resolving {}{}\n", declarer->typeof_info(), previous ? previous->typeof_info() : "", expression->to_code()),
-                    err->get_result(),
-                    declarer,
-                    err);
-            }
+                return err;
         }
 
         return current->compile(context);
@@ -115,7 +106,7 @@ namespace element
         if (found)
             return found->compile(context);
 
-        return build_error(error_message_code::failed_to_find_when_resolving_identifier_expr, name.value);
+        return build_error(source_info, error_message_code::failed_to_find_when_resolving_identifier_expr, name.value);
     }
 
     literal_expression::literal_expression(element_value value, const expression_chain* parent)
@@ -160,7 +151,7 @@ namespace element
         auto element = obj->index(context, name);
 
         if (!element)
-            return build_error(error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, obj->typeof_info());
+            return build_error(source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, obj->typeof_info());
 
         return element;
     }

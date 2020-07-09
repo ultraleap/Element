@@ -760,7 +760,7 @@ element_result element_interpreter_evaluate(
     const auto err = std::dynamic_pointer_cast<element::error>(evaluable->evaluable);
     if (err)
     {
-        context->log(err->get_result(), err->get_message());
+        context->logger->log(err->get_log_message());
         return err->get_result();
     }
 

@@ -20,17 +20,17 @@ namespace element
 
     std::shared_ptr<object> object::index(const compilation_context&, const identifier&) const
     {
-        return build_error<>(error_message_code::not_indexable);
+        return build_error<>(source_info, error_message_code::not_indexable);
     }
 
     std::shared_ptr<object> object::call(const compilation_context&, std::vector<std::shared_ptr<object>>) const
     {
-        return build_error<>(error_message_code::not_callable);
+        return build_error<>(source_info, error_message_code::not_callable);
     }
 
     std::shared_ptr<object> object::compile(const compilation_context&) const
     {
-        return build_error<>(error_message_code::not_compilable);
+        return build_error<>(source_info, error_message_code::not_compilable);
     }
 
     element_result error::get_result() const
@@ -43,13 +43,17 @@ namespace element
         return message;
     }
 
-    const declaration* error::get_declaration() const
+    const element_log_message error::get_log_message() const
     {
-        return location;
-    }
-
-    const std::shared_ptr<error>& error::get_wrapped_error() const
-    {
-        return err;
+        element_log_message msg;
+        msg.filename = source_info.filename;
+        msg.line = source_info.line;
+        msg.character = source_info.character_start;
+        msg.message = message.c_str();
+        msg.length = source_info.character_end - source_info.character_start;
+        msg.message_code = code;
+        msg.related_log_message = nullptr;
+        msg.stage = ELEMENT_STAGE_COMPILER;
+        return msg;
     }
 }

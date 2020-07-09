@@ -146,7 +146,10 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;*/
 
-    result = eval("one = two; two = one; evaluate = one;");
+    result = eval(
+        "c(d) = a(d);\n"
+        "a(b:Num) = c(b.mul(b));\n"
+        "evaluate = a(5);\n");
     if (result != ELEMENT_ERROR_CIRCULAR_COMPILATION)
         return result;
 
