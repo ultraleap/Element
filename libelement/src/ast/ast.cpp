@@ -301,7 +301,25 @@ element_result element_parser_ctx::parse_exprlist(size_t* tindex, element_ast* a
         //todo: not really sure what these errors mean...
         return ELEMENT_ERROR_INVALID_ARCHIVE;
     }
-    assert(token->type == ELEMENT_TOK_BRACKETR);
+
+    if (token->type != ELEMENT_TOK_BRACKETR)
+    {
+        element_log_message msg;
+        const std::string message = fmt::format("expected to find a ')' at the end of the call to '{}', but found '{}' instead\n",
+            ast->parent->identifier, tokeniser->text(token));
+        const std::string line_in_source = tokeniser->text_on_line(token->line);
+        msg.line_in_source = line_in_source.c_str();
+        msg.message = message.c_str();
+        msg.filename = token->file_name;
+        msg.length = token->tok_len;
+        msg.line = token->line;
+        msg.message_code = ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL;
+        msg.related_log_message = nullptr;
+        msg.stage = ELEMENT_STAGE_PARSER;
+        msg.character = token->character;
+        tokeniser->logger->log(msg);
+        return ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL;
+    }
     tokenlist_advance(tokeniser, tindex);
     return ELEMENT_OK;
 }
@@ -555,7 +573,21 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
             if (token->type == ELEMENT_TOK_SEMICOLON) {
                 tokenlist_advance(tokeniser, tindex);
             } else {
-                return ELEMENT_ERROR_INVALID_ARCHIVE;
+                element_log_message msg;
+                const std::string message = fmt::format("expected to find a ';' at the end of the expression for '{}', but found '{}' instead\n",
+                    ast->parent->children[ast_idx::function::declaration]->identifier, tokeniser->text(token));
+                const std::string line_in_source = tokeniser->text_on_line(token->line);
+                msg.line_in_source = line_in_source.c_str();
+                msg.message = message.c_str();
+                msg.filename = token->file_name;
+                msg.length = token->tok_len;
+                msg.line = token->line;
+                msg.message_code = ELEMENT_ERROR_MISSING_SEMICOLON;
+                msg.related_log_message = nullptr;
+                msg.stage = ELEMENT_STAGE_PARSER;
+                msg.character = token->character;
+                tokeniser->logger->log(msg);
+                return ELEMENT_ERROR_MISSING_SEMICOLON;
             }
         }
     } else {

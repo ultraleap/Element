@@ -227,7 +227,8 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
 
     assert(isid_alpha(c));
 
-    while (it != end && isid_alnum(UTF8_PEEK_NEXT(it, end))) {
+    while (it != end
+        && (isid_alnum(UTF8_PEEK_NEXT(it, end)) || UTF8_PEEK_NEXT(it, end) == '_')) {
         c = UTF8_NEXT(it, end);
     }
 

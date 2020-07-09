@@ -712,6 +712,7 @@ element_result element_interpreter_find(element_interpreter_ctx* context, const 
     if (!obj)
     {
         assert(!"failed to find user's request");
+        *compilable = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
