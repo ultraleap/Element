@@ -172,6 +172,7 @@ namespace element
         }
 
         auto call_expr = std::make_unique<call_expression>(chain);
+        assign_source_information(context, call_expr, ast);
 
         //every child of the current AST node (EXPRLIST) is the start of another expression_chain, comma separated
         for (const auto& child : ast->children)

@@ -22,7 +22,7 @@ namespace element
         }
     }
 
-    std::shared_ptr<object> struct_instance::index(const compilation_context& context, const identifier& name) const
+    std::shared_ptr<object> struct_instance::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
         //this is how we do partial application. if we index a struct instance and find it's an instance function
         //then we create a function_instance of that function, with ourselves as the first provided argument
@@ -70,7 +70,7 @@ namespace element
         return nullptr;
     }
 
-    std::shared_ptr<object> struct_instance::compile(const compilation_context& context) const
+    std::shared_ptr<object> struct_instance::compile(const compilation_context& context, const source_information& source_info) const
     {
         return const_cast<struct_instance*>(this)->shared_from_this();
     }
@@ -83,7 +83,8 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args) const
+    std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
+                                                    source_info) const
     {
         compiled_args.insert(compiled_args.begin(), provided_arguments.begin(), provided_arguments.end());
 
@@ -92,7 +93,7 @@ namespace element
             //we have the exact arguments we need, so now we just need to perform the call
             //we also need to swap the call stacks so that the call can use the one at the point the instance was created
             std::swap(stack, context.stack);
-            auto ret = declarer->call(context, compiled_args);
+            auto ret = declarer->call(context, compiled_args, source_info);
             //we then swap them back, in case our instance is called multiple times.
             //Technically the call we did could have modified the call stack, but if it's behaving correctly it will be identical due to popping frames
             std::swap(stack, context.stack);
@@ -103,20 +104,20 @@ namespace element
         return nullptr;
     }
 
-    std::shared_ptr<object> function_instance::compile(const compilation_context& context) const
+    std::shared_ptr<object> function_instance::compile(const compilation_context& context, const source_information& source_info) const
     {
         //the last thing in an expression was an instance function with everything fully applied
         if (provided_arguments.size() == declarer->inputs.size())
-            return call(context, {});
+            return call(context, {}, source_info);
 
         return const_cast<function_instance*>(this)->shared_from_this();
     }
 
-    std::shared_ptr<object> function_instance::index(const compilation_context& context, const identifier& name) const
+    std::shared_ptr<object> function_instance::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
         //if we're a fully applied instance function (essentially a nullary), then we need to compile ourselves to index what we return
-        const auto compiled = compile(context);
+        const auto compiled = compile(context, source_info);
         //because our compile can return ourselves we check it didn't before indexing it (infinite loops)
-        return compiled.get() == this ? nullptr : compiled->index(context, name);
+        return compiled.get() == this ? nullptr : compiled->index(context, name, source_info);
     }
 }

@@ -726,7 +726,7 @@ element_result element_interpreter_compile(
     element_evaluable** evaluable)
 {
     const element::compilation_context compilation_context(context->global_scope.get(), context);
-    auto compiled = compilable->object->compile(compilation_context);
+    auto compiled = compilable->object->compile(compilation_context, {});
 
     if (!compiled)
     {

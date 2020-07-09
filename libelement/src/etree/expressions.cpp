@@ -18,17 +18,18 @@ DEFINE_TYPE_ID(element_expression_if,              1U << 6);
 //DEFINE_TYPE_ID(element_expression_group,           1U << 7);
 //DEFINE_TYPE_ID(element_expression_unbound_arg,     1U << 8);
 
-std::shared_ptr<element::object> element_expression::compile(const element::compilation_context& context) const
+std::shared_ptr<element::object> element_expression::compile(const element::compilation_context& context, const element::source_information& source_info) const
 {
     //TODO: THIS IS AFWUL! FIX!
     return const_cast<element_expression*>(this)->shared_from_this();
 }
 
-std::shared_ptr<element::object> element_expression::index(const element::compilation_context& context, const element::identifier& name) const
+std::shared_ptr<element::object> element_expression::index(const element::compilation_context& context, const element::identifier& name, const element::source_information&
+                                                           source_info) const
 {
     assert(actual_type);
 
-    const auto declarer = actual_type->index(context, name);
+    const auto declarer = actual_type->index(context, name, source_info);
 
     if (!declarer)
     {

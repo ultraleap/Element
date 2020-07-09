@@ -18,17 +18,17 @@ namespace element
 
     }
 
-    std::shared_ptr<object> object::index(const compilation_context&, const identifier&) const
+    std::shared_ptr<object> object::index(const compilation_context&, const identifier&, const source_information& source_info) const
     {
         return build_error(source_info, error_message_code::not_indexable);
     }
 
-    std::shared_ptr<object> object::call(const compilation_context&, std::vector<std::shared_ptr<object>>) const
+    std::shared_ptr<object> object::call(const compilation_context&, std::vector<std::shared_ptr<object>>, const source_information& source_info) const
     {
         return build_error(source_info, error_message_code::not_callable);
     }
 
-    std::shared_ptr<object> object::compile(const compilation_context&) const
+    std::shared_ptr<object> object::compile(const compilation_context&, const source_information& source_info) const
     {
         return build_error(source_info, error_message_code::not_compilable);
     }
@@ -54,6 +54,7 @@ namespace element
         msg.message_code = code;
         msg.related_log_message = nullptr;
         msg.stage = ELEMENT_STAGE_COMPILER;
+        msg.line_in_source = source_info.line_in_source ? source_info.line_in_source->c_str() : nullptr;
         return msg;
     }
 }

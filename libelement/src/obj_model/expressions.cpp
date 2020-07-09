@@ -18,7 +18,7 @@ namespace element
 
     std::shared_ptr<object> expression_chain::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<object>> compiled_args) const
+        std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const
     {
         //todo: can't think of a reason this would be empty, even without having a global, the declaration should have added itself
         assert(!context.stack.frames.empty());
@@ -26,10 +26,10 @@ namespace element
         //todo: for now, just some error checking to make sure we're not doing something too crazy, but all of this is a problem
         assert(compiled_args.size() == context.stack.frames.back().compiled_arguments.size());
 
-        return compile(context);
+        return compile(context, source_info);
     }
 
-    std::shared_ptr<object> expression_chain::compile(const compilation_context& context) const
+    std::shared_ptr<object> expression_chain::compile(const compilation_context& context, const source_information& source_info) const
     {
         if (expressions.empty())
             return nullptr; //todo: error_object
@@ -47,7 +47,7 @@ namespace element
                 return err;
         }
 
-        return current->compile(context);
+        return current->compile(context, source_info);
     }
 
     expression::expression(const expression_chain* parent)
@@ -82,7 +82,7 @@ namespace element
         const auto& enclosing_scope = parent->declarer->our_scope;
         auto found = enclosing_scope->find(name.value, false);
         if (found)
-            return found->compile(context);
+            return found->compile(context, source_info);
 
         //todo: make it nice and on the callstack itself
         for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
@@ -104,7 +104,7 @@ namespace element
         //todo: this has to be merged with the callstack I think, i.e. each level of scopage has its own locals + arguments to do lookups with
         found = enclosing_scope->get_parent_scope()->find(name.value, true);
         if (found)
-            return found->compile(context);
+            return found->compile(context, source_info);
 
         return build_error(source_info, error_message_code::failed_to_find_when_resolving_identifier_expr, name.value);
     }
@@ -148,7 +148,7 @@ namespace element
             return nullptr;
         }
 
-        auto element = obj->index(context, name);
+        auto element = obj->index(context, name, source_info);
 
         if (!element)
             return build_error(source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, obj->typeof_info());
@@ -172,9 +172,9 @@ namespace element
 
         std::vector<std::shared_ptr<object>> compiled_arguments;
         for (const auto& arg : arguments)
-            compiled_arguments.push_back(arg->compile(context));
+            compiled_arguments.push_back(arg->compile(context, source_info));
 
-        return obj->call(context, std::move(compiled_arguments));
+        return obj->call(context, std::move(compiled_arguments), source_info);
     }
 
     lambda_expression::lambda_expression(const expression_chain* parent)
