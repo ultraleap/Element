@@ -98,6 +98,10 @@ element_result element_delete_compilable(
     element_interpreter_ctx* context,
     element_compilable** compilable);
 
+element_result element_delete_evaluable(
+    element_interpreter_ctx* context,
+    element_evaluable** evaluable);
+
 element_result element_interpreter_find(
     element_interpreter_ctx* context,
     const char* path,

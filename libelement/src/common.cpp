@@ -262,6 +262,7 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
     msg.stage = ELEMENT_STAGE_TOKENISER;
     msg.filename = context.filename.c_str();
     msg.related_log_message = nullptr;
+    msg.line_in_source = nullptr;
 
     msg.message_code = code;
     msg.length = length;
@@ -288,6 +289,7 @@ void element_log_ctx::log(const element_interpreter_ctx& context, element_result
     msg.stage = ELEMENT_STAGE_EVALUATOR;
     msg.filename = filename.c_str();
     msg.related_log_message = nullptr;
+    msg.line_in_source = nullptr;
 	
     log(msg);
 }
@@ -302,6 +304,7 @@ void element_log_ctx::log(const std::string& message, const element_stage stage)
     msg.length = -1;
     msg.stage = stage;
     msg.related_log_message = nullptr;
+    msg.line_in_source = nullptr;
 	
     log(msg);
 }
@@ -380,6 +383,7 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
     msg.stage = ELEMENT_STAGE_COMPILER;
     msg.filename = "<unknown>"; //todo: get from scope/ast?
     msg.related_log_message = nullptr;
+    msg.line_in_source = nullptr;
 
     std::string new_log_message;
     if (nearest_ast && nearest_ast->nearest_token) {
