@@ -591,7 +591,6 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
         ret->nearest_token = tok;
         ret->flags = ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN;	    
     }
-
 	
     return ELEMENT_OK;
 }
@@ -890,26 +889,52 @@ element_result element_parser_ctx::parse(size_t* tindex, element_ast* ast)
     return ELEMENT_OK;
 }
 
+element_result element_parser_ctx::ast_build()
+{
+    // don't use ast_new here, as we need to return this pointer to the user
+    root = new element_ast(nullptr);
+    size_t index = 0;
+    auto result = parse(&index, root);
+    if (result != ELEMENT_OK) {
+        element_ast_delete(root);
+        root = nullptr;
+        return result;
+    }
+
+    result = validate(root);
+    return result;
+}
+
+void element_ast_delete(element_ast* ast)
+{
+    if (ast)
+        ast_clear(ast);
+    delete ast;
+}
+
+#pragma region validation
+
+//TODO: Consider shifting validation from ast to obj_model
 element_result element_parser_ctx::validate(element_ast* ast)
 {
     element_result result = ELEMENT_OK;
     result = validate_type(ast);
-	if(result != ELEMENT_OK)
+    if (result != ELEMENT_OK)
         return result;
-	
-	const auto length = ast->children.size();
+
+    const auto length = ast->children.size();
     if (length == 0)
         return result;
 
-	for (auto i = 0; i < length; i++)
-	{
-		//special case validation
-		auto* const child = ast->children[i].get();
-		const auto validate_result = validate(child);
+    for (auto i = 0; i < length; i++)
+    {
+        //special case validation
+        auto* const child = ast->children[i].get();
+        const auto validate_result = validate(child);
         if (result == ELEMENT_OK)
             result = validate_result;
-	}
-	
+    }
+
     return result;
 }
 
@@ -923,7 +948,7 @@ element_result element_parser_ctx::validate_type(element_ast* ast)
 
     case ELEMENT_AST_NODE_STRUCT:
         return validate_struct(ast);
-    	
+
     case ELEMENT_AST_NODE_ROOT:
     case ELEMENT_AST_NODE_SCOPE:
         return validate_scope(ast);
@@ -966,17 +991,17 @@ element_result element_parser_ctx::validate_struct(element_ast* ast)
 {
     element_result result = ELEMENT_OK;
     assert(ast->children.size() > ast_idx::function::declaration);
-    if (ast->children.size() > ast_idx::function::body) 
+    if (ast->children.size() > ast_idx::function::body)
     {
         auto* declaration = ast->children[ast_idx::function::declaration].get();
         assert(declaration->type == ELEMENT_AST_NODE_DECLARATION);
-    	
+
         auto identifier = declaration->identifier;
         auto* body = ast->children[ast_idx::function::body].get();
-    	
-        if (body->type == ELEMENT_AST_NODE_SCOPE) 
+
+        if (body->type == ELEMENT_AST_NODE_SCOPE)
         {
-            for (auto& child : body->children) 
+            for (auto& child : body->children)
             {
                 assert(child->children.size() > ast_idx::function::declaration);
                 auto* child_declaration = child->children[ast_idx::function::declaration].get();
@@ -1006,86 +1031,66 @@ element_result element_parser_ctx::validate_scope(element_ast* ast)
 
         if (child->type != ELEMENT_AST_NODE_FUNCTION)
             continue; //TODO: Handle other types
-    	
+
         auto* child_declaration = child->children[ast_idx::function::declaration].get();
         auto child_identifier = child_declaration->identifier;
         auto it = std::find(names.begin(), names.end(), child_identifier);
-    	if(it != names.end())
-    	{
+        if (it != names.end())
+        {
             log(ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
                 fmt::format("duplicate declaration '{}' detected in scope", child_identifier),
                 child_declaration);
             result = ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
-    	}
+        }
         else
         {
             names.push_back(child_declaration->identifier);
         }
     }
-	
+
     return result;
 }
 
-element_result element_parser_ctx::ast_build()
-{
-    // don't use ast_new here, as we need to return this pointer to the user
-    root = new element_ast(nullptr);
-    size_t index = 0;
-    auto result = parse(&index, root);
-    if (result != ELEMENT_OK) {
-        element_ast_delete(root);
-        root = nullptr;
-        return result;
-    }
+#pragma endregion validation
 
-    result = validate(root);
-    return result;
-}
-
-void element_ast_delete(element_ast* ast)
-{
-    if (ast)
-        ast_clear(ast);
-    delete ast;
-}
-
-element_ast::walk_step element_ast::walk(const element_ast::walker& fn)
-{
-    walk_step s = fn(this);
-    switch (s) {
-    case walk_step::step_in:
-    {
-        auto it = children.begin();
-        while (it != children.end() && fn(it->get()) == walk_step::next)
-            ++it;
-        return walk_step::next;
-    }
-    case walk_step::next:
-    case walk_step::step_out:
-    case walk_step::stop:
-    default:
-        return s;
-    }
-}
-
-element_ast::walk_step element_ast::walk(const element_ast::const_walker& fn) const
-{
-    walk_step s = fn(this);
-    switch (s) {
-    case walk_step::step_in:
-    {
-        auto it = children.begin();
-        while (it != children.end() && static_cast<const element_ast*>(it->get())->walk(fn) == walk_step::next)
-            ++it;
-        return walk_step::next;
-    }
-    case walk_step::next:
-    case walk_step::step_out:
-    case walk_step::stop:
-    default:
-        return s;
-    }
-}
+//TODO: Potential zombie code
+//element_ast::walk_step element_ast::walk(const element_ast::walker& fn)
+//{
+//    walk_step s = fn(this);
+//    switch (s) {
+//    case walk_step::step_in:
+//    {
+//        auto it = children.begin();
+//        while (it != children.end() && fn(it->get()) == walk_step::next)
+//            ++it;
+//        return walk_step::next;
+//    }
+//    case walk_step::next:
+//    case walk_step::step_out:
+//    case walk_step::stop:
+//    default:
+//        return s;
+//    }
+//}
+//
+//element_ast::walk_step element_ast::walk(const element_ast::const_walker& fn) const
+//{
+//    walk_step s = fn(this);
+//    switch (s) {
+//    case walk_step::step_in:
+//    {
+//        auto it = children.begin();
+//        while (it != children.end() && static_cast<const element_ast*>(it->get())->walk(fn) == walk_step::next)
+//            ++it;
+//        return walk_step::next;
+//    }
+//    case walk_step::next:
+//    case walk_step::step_out:
+//    case walk_step::stop:
+//    default:
+//        return s;
+//    }
+//}
 
 void element_parser_ctx::log(int message_code, const std::string& message, const element_ast* nearest_ast) const
 {
