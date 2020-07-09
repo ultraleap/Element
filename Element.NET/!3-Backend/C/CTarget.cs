@@ -120,7 +120,7 @@ namespace Element
 			// Function declaration + evaluation
 			sb.Append("void ").Append(function.Name).Append('(');
 			var argumentsList = new List<IFunction>();
-			foreach (var port in function.Inputs)
+			foreach (var port in function.InputPorts)
 			{
 				if (argumentsList.Count > 0)
 				{

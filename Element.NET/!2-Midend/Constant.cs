@@ -10,7 +10,7 @@ namespace Element.AST
         // ReSharper disable once UnusedMember.Global - Used by Lexico
         public Constant() {}
         public Constant(float value) => Value = value;
-        private Constant(float value, IntrinsicType typeOverride) : base(typeOverride) => Value = value;
+        private Constant(float value, IntrinsicStructImplementation structImplementationOverride) : base(structImplementationOverride) => Value = value;
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         [Term] public float Value { get; private set; }
@@ -25,8 +25,8 @@ namespace Element.AST
             False
         }
         
-        public static Constant True { get; } = new Constant(1f,  BoolType.Instance);
-        public static Constant False { get; } = new Constant(0f, BoolType.Instance);
+        public static Constant True { get; } = new Constant(1f,  BoolStructImplementation.Instance);
+        public static Constant False { get; } = new Constant(0f, BoolStructImplementation.Instance);
         public static Constant Zero { get; } = new Constant(0f);
         public static Constant One { get; } = new Constant(1f);
         public static Constant NaN { get; } = new Constant(float.NaN);
@@ -39,6 +39,6 @@ namespace Element.AST
         public override bool Equals(Element.Expression other) => (other as Constant)?.Value == Value;
         // ReSharper disable once NonReadonlyMemberInGetHashCode
 
-        public override int GetHashCode() => new {Value, Type}.GetHashCode();
+        public override int GetHashCode() => new {Value, Type = StructImplementation}.GetHashCode();
     }
 }

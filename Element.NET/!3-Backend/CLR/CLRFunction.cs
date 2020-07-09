@@ -268,13 +268,12 @@ namespace Element.CLR
 		/// <remarks>
 		/// All the inputs to the function must be serializable and constant size (No dynamic lists).
 		/// </remarks>
-		/// <param name="functionSignature"></param>
-		/// <param name="array">The resultant pre-allocated array. The function inputs are mapped directly to its contents.</param>
-		/// <param name="context"></param>
-		/// <returns>The result of calling `function` with all its inputs, or compilation error where there was an error.</returns>
-		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IFunctionSignature functionSignature, CompilationContext context) =>
-			functionSignature.Inputs.Select(p => p.ResolveConstraint(context)
-			                                      .Bind(c => c.DefaultValue(context)))
+		/// <returns>
+		/// The result of calling the given function with all its inputs and a pre-allocated argument array.
+		/// The function inputs are mapped directly to the arrays contents.
+		/// </returns>
+		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IFunctionValue function, CompilationContext context) =>
+			function.InputPorts.Select(c => c.DefaultValue(context))
 			        .BindEnumerable(defaultValues =>
 			        {
 				        var defaults = defaultValues as IValue[] ?? defaultValues.ToArray();
@@ -292,18 +291,20 @@ namespace Element.CLR
 
 				        return Enumerable.Range(0, totalSerializedSize)
 				                         // For each array index, create an ArrayIndex expression
-				                         .Select(i => NumberConverter.Instance.LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), null!, context).Cast<Expression>(context))
-				                         // Change from array of results to a result of an array
+				                         .Select(i => NumberConverter.Instance
+				                                                     .LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), null!, context)
+				                                                     .Cast<Expression>(context))
+				                         // Aggregate enumerable of results into single result
 				                         .ToResultArray()
 				                         .Bind(expressions =>
 				                         {
-					                         // Create a func for accessing the 
+					                         // Create a func for accessing the array items
 					                         var flattenedValIdx = 0;
 					                         Expression NextValue() => expressions[flattenedValIdx++];
 					                         return defaultValues.Select(v => v.Deserialize(NextValue, context))
-					                                             .BindEnumerable(arguments => functionSignature.Call(arguments.ToArray(), context)
-					                                                                                  .Map(result => (result, array)));
-				                         });
+					                                             .BindEnumerable(arguments => function.Call(arguments.ToArray(), context));
+				                         })
+				                         .Map(result => (result, array));
 			        });
 
 		public static Result<TDelegate> Compile<TDelegate>(this IValue value, CompilationContext context, IBoundaryConverter? boundaryConverter = default)
@@ -331,7 +332,7 @@ namespace Element.CLR
             var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
             
-            if (value is IFunctionSignature fn && fn.Inputs.Count != delegateParameters.Length)
+            if (value is IFunctionSignature fn && fn.InputPorts.Count != delegateParameters.Length)
             {
 	            return context.Trace(MessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
             }
@@ -341,8 +342,8 @@ namespace Element.CLR
             // If input value is not a function we just try to use it directly
             if (value is IFunctionSignature function)
             {
-	            var outputExpr = function.Inputs.Select((f, idx) => boundaryConverter.LinqToElement(parameterExpressions[idx], boundaryConverter, context))
-	                                     .BindEnumerable(args => function.Call(args.ToArray(), context));
+	            var outputExpr = function.InputPorts.Select((f, idx) => boundaryConverter.LinqToElement(parameterExpressions[idx], boundaryConverter, context))
+	                                     .BindEnumerable(args => value.Call(args.ToArray(), context));
 	            resultBuilder.Append(in outputExpr);
 	            if (outputExpr.IsError) return resultBuilder.ToResult();
 	            outputExpression = outputExpr.ResultOr(default!);
@@ -367,7 +368,7 @@ namespace Element.CLR
 			{
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == value)
 				{
-					return context.Trace(MessageCode.CircularCompilation, $"Circular dependency when compiling '{value}'");
+					return context.Trace(MessageCode.RecursionNotAllowed, $"Circular dependency when compiling '{value}'");
 				}
 
 				// If this value is serializable then serialize and use it

@@ -33,6 +33,22 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Remove="Tests\L3-Prelude\For.ele" />
+    <Content Update="Tests\L0-Parsing\Functions\EmptyPortlist-fail.ele">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Tests\L1-Validation\Functions\MissingReturn-fail-31.ele">
+      <Link>L1-Validation\Functions\MissingReturn-fail.ele</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Tests\L0-Parsing\Functions\ScopeBodyConstant-pass.ele">
+      <Link>L0-Parsing\Functions\ScopeBodyConstant-pass.ele</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Tests\L1-Validation\Structs\StructCannotContainDiscards-fail-32.ele">
+      <Link>L1-Validation\Structs\StructCannotContainDiscards-fail-32.ele</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   
   <ItemGroup>

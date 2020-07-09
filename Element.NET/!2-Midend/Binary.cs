@@ -65,14 +65,14 @@ namespace Element
 		public Binary(Op operation, Expression opA, Expression opB)
 			: base(operation switch
 			{
-				Op.And => BoolType.Instance,
-				Op.Or => BoolType.Instance,
-				Op.Eq => BoolType.Instance,
-				Op.NEq => BoolType.Instance,
-				Op.Lt => BoolType.Instance,
-				Op.LEq => BoolType.Instance,
-				Op.Gt => BoolType.Instance,
-				Op.GEq => BoolType.Instance,
+				Op.And => BoolStructImplementation.Instance,
+				Op.Or => BoolStructImplementation.Instance,
+				Op.Eq => BoolStructImplementation.Instance,
+				Op.NEq => BoolStructImplementation.Instance,
+				Op.Lt => BoolStructImplementation.Instance,
+				Op.LEq => BoolStructImplementation.Instance,
+				Op.Gt => BoolStructImplementation.Instance,
+				Op.GEq => BoolStructImplementation.Instance,
 				_ => default
 			})
 		{

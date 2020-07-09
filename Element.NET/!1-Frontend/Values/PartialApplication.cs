@@ -1,0 +1,43 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Element.AST
+{
+    public static class PartialApplication
+    {
+        public static Result<IValue> PartiallyApply(this IFunctionValue function, IValue[] arguments, CompilationContext context)
+        {
+            var appliedFunction = function switch
+            {
+                AppliedFunction a => a.ApplyMoreArguments(arguments),
+                _ => new AppliedFunction(arguments, function)
+            };
+            return appliedFunction.CanBeFullyApplied ? appliedFunction.Call(Array.Empty<IValue>(), context) : appliedFunction;
+        }
+
+        private class AppliedFunction : Function
+        {
+            private readonly IFunctionValue _definition;
+            private readonly List<IValue> _appliedArguments;
+            public AppliedFunction(IEnumerable<IValue> arguments, IFunctionValue definition)
+            {
+                _appliedArguments = arguments.ToList();
+                _definition = definition;
+            }
+
+            public AppliedFunction ApplyMoreArguments(IEnumerable<IValue> arguments)
+            {
+                _appliedArguments.AddRange(arguments);
+                return this;
+            }
+
+            public bool CanBeFullyApplied => _appliedArguments.Count >= _definition.InputPorts.Count;
+
+            protected override string ToStringInternal() => $"{_definition} <with {_appliedArguments.Count} applied args>";
+            protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) => _definition.Call(_appliedArguments.Concat(arguments).ToArray(), context);
+            public override IReadOnlyList<ResolvedPort> InputPorts => _definition.InputPorts.Skip(_appliedArguments.Count).ToList();
+            public override IValue ReturnConstraint => _definition.ReturnConstraint;
+        }
+    }
+}

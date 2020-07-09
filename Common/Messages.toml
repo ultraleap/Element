@@ -49,7 +49,7 @@ name = "InvalidBoundaryFunction"
 level = "Error"
 
 [ELE11]
-name = "CircularCompilation"
+name = "RecursionNotAllowed"
 level = "Error"
 
 [ELE12]
@@ -126,6 +126,22 @@ level = "Warning"
 
 [ELE30]
 name = "InvalidCast"
+level = "Error"
+
+[ELE31]
+name = "FunctionMissingReturn"
+level = "Error"
+
+[ELE32]
+name = "PortListCannotContainDiscards"
+level = "Error"
+
+[ELE33]
+name = "PortListDeclaresDefaultArgumentBeforeNonDefault"
+level = "Error"
+
+[ELE34]
+name = "IntrinsicConstraintCannotHavePortList"
 level = "Error"
 
 [ELE9999]

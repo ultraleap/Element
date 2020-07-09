@@ -58,7 +58,7 @@ namespace Element
 
 		private static void LoadBlock(INamedFunction function, Stream stream, CompilationContext context)
 		{
-			var inputs = function.Inputs;
+			var inputs = function.InputPorts;
 			var outputs = function.Outputs;
 
 			var inputSize = 0;

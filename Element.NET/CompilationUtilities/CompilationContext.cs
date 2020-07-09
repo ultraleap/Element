@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Element.AST;
 
 namespace Element
@@ -31,11 +32,6 @@ namespace Element
         public override IReadOnlyCollection<TraceSite>? TraceStack => null;
     }
     
-    public interface ITraceSink
-    {
-        void Flush(CompilerMessage message);
-    }
-    
     /// <summary>
     /// Contains the status of the compilation process including call stack and logging messages.
     /// </summary>
@@ -47,10 +43,16 @@ namespace Element
         public SourceContext SourceContext { get; }
         
         private readonly Stack<TraceSite> _traceStack = new Stack<TraceSite>();
+        private readonly Stack<Declaration> _declarationStack = new Stack<Declaration>();
         private readonly Stack<IValue> _callStack = new Stack<IValue>();
 
         public void PushTrace(in TraceSite traceSite) => _traceStack.Push(traceSite);
         public void PopTrace() => _traceStack.Pop();
+
+        public void PushDeclaration(Declaration declaration) => _declarationStack.Push(declaration);
+        public void PopDeclaration() => _declarationStack.Pop();
+        public Declaration PeekDeclaration() => _declarationStack.Peek();
+        public string CurrentDeclarationLocation => _declarationStack.Aggregate("<root>", (s, declaration) => $"{s}.{declaration.Identifier}");
 
         public void PushFunction(IValue functionSignature) => _callStack.Push(functionSignature);
         public void PopFunction() => _callStack.Pop();

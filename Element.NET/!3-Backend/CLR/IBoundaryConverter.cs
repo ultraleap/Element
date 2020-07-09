@@ -24,7 +24,7 @@ namespace Element.CLR
         public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext context) =>
             parameter.Type switch
         {
-            {} t when t == typeof(bool) => new NumberExpression(LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)), BoolType.Instance),
+            {} t when t == typeof(bool) => new NumberExpression(LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)), BoolStructImplementation.Instance),
             _ => new NumberExpression(LExpression.Convert(parameter, typeof(float)))
         };
 
@@ -41,7 +41,7 @@ namespace Element.CLR
 
         private class NumberExpression : Expression, ICLRExpression
         {
-            public NumberExpression(LExpression parameter, IntrinsicType? typeOverride = default)
+            public NumberExpression(LExpression parameter, IntrinsicStructImplementation? typeOverride = default)
                 : base(typeOverride) =>
                 Parameter = parameter;
 
@@ -50,7 +50,7 @@ namespace Element.CLR
             public LExpression Compile(Func<Expression, LExpression> compileOther) => Parameter;
             protected override string ToStringInternal() => Parameter.ToString();
             public override bool Equals(Expression other) => other == this;
-            public override int GetHashCode() => new {Parameter, InstanceTypeOverride = Type}.GetHashCode();
+            public override int GetHashCode() => new {Parameter, InstanceTypeOverride = StructImplementation}.GetHashCode();
         }
     }
 
@@ -83,7 +83,7 @@ namespace Element.CLR
 
         public Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext context) =>
             context.SourceContext.EvaluateExpression(_elementTypeExpression)
-                   .Cast<StructDeclaration>(context)
+                   .Cast<Struct>(context)
                    .Map(structDeclaration => (IValue)new StructInstance(structDeclaration, _elementToClrFieldMapping.Select(pair => new FieldExpression(root, parameter, pair.Value))));
 
         private class FieldExpression : Expression, ICLRExpression

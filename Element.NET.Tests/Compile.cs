@@ -46,7 +46,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         private static Result<(TDelegate Delegate, float[] ArgumentArray)> CompileAndSourceArguments<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
             context.EvaluateExpression(expression)
-                   .Cast<IFunctionSignature>(context)
+                   .Cast<IFunctionValue>(context)
                    .Bind(function => function.SourceArgumentsFromSerializedArray(new CompilationContext(context)))
                    .Bind(tuple =>
                    {
@@ -58,7 +58,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         private void CompileWithSourcedArgsAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate, float[]> checkFunc)
             where TDelegate : Delegate =>
             CompileAndSourceArguments<TDelegate>(sourceContext, expression)
-                .Match((t, messages) =>
+                .Switch((t, messages) =>
                 {
                     LogMessages(messages);
                     checkFunc(t.Delegate, t.ArgumentArray);
@@ -72,7 +72,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         private void CompileAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate> checkFunc)
             where TDelegate : Delegate =>
             CompileDelegate<TDelegate>(sourceContext, expression)
-                .Match((fn, messages) =>
+                .Switch((fn, messages) =>
                 {
                     LogMessages(messages);
                     checkFunc(fn);

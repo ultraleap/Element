@@ -17,29 +17,13 @@ namespace Element
         public ITrace Trace { get; }
         public IReadOnlyList<CompilerMessage> Messages => _messages;
         
-        public ResultBuilder Append(CompilerMessage message)
+        public void Append(CompilerMessage message) => _messages.Add(message);
+        public void Append(MessageCode messageCode, string? context)
         {
-            _messages.Add(message);
-            return this;
+            if (Trace.Trace(messageCode, context) is {} msg) _messages.Add(msg);
         }
-
-        public ResultBuilder Append(MessageCode messageCode, string context)
-        {
-            if(Trace.Trace(messageCode, context) is {} msg) _messages.Add(msg);
-            return this;
-        }
-
-        public ResultBuilder Append(Result result)
-        {
-            _messages.AddRange(result.Messages);
-            return this;
-        }
-
-        public ResultBuilder Append<T>(in Result<T> result) where T : notnull
-        {
-            _messages.AddRange(result.Messages);
-            return this;
-        }
+        public void Append(Result result) => _messages.AddRange(result.Messages);
+        public void Append<T>(in Result<T> result) => _messages.AddRange(result.Messages);
 
         public Result ToResult() => new Result(_messages);
     }
@@ -59,35 +43,15 @@ namespace Element
         public T Result { get; set; }
         public IReadOnlyList<CompilerMessage> Messages => _messages;
         
-        public ResultBuilder<T> Append(CompilerMessage message)
-        {
-            _messages.Add(message);
-            return this;
-        }
-
-        public ResultBuilder<T> Append(MessageCode messageCode, string context)
+        public void Append(CompilerMessage message) => _messages.Add(message);
+        public void Append(MessageCode messageCode, string? context)
         {
             if (Trace.Trace(messageCode, context) is {} msg) _messages.Add(msg);
-            return this;
         }
-        
-        public ResultBuilder<T> Append(Result result)
-        {
-            _messages.AddRange(result.Messages);
-            return this;
-        }
-
-        public ResultBuilder<T> Append<TResult>(in Result<TResult> result) where TResult : notnull
-        {
-            _messages.AddRange(result.Messages);
-            return this;
-        }
-
-        public ResultBuilder<T> Append(IEnumerable<CompilerMessage> messages)
-        {
-            _messages.AddRange(messages);
-            return this;
-        }
+        public void Append(Result result) => _messages.AddRange(result.Messages);
+        public void Append<TResult>(in Result<TResult> result) => _messages.AddRange(result.Messages);
+        public void Append(IEnumerable<CompilerMessage> messages) => _messages.AddRange(messages);
+        public void Append(IReadOnlyCollection<CompilerMessage> messages) => _messages.AddRange(messages);
 
         public Result<T> ToResult() => Result == null
                                            ? new Result<T>(Trace.Trace(MessageCode.InvalidCast, "Cannot cast null value to Result type") is {} error
@@ -113,18 +77,16 @@ namespace Element
         public bool IsError { get; } // Defaults to false, default Result constructor will be success
         public IReadOnlyCollection<CompilerMessage> Messages { get; }
             
+        public void Switch(Action<IReadOnlyCollection<CompilerMessage>> onResult, Action<IReadOnlyCollection<CompilerMessage>> onError)
+        {
+            if (IsSuccess) onResult(Messages);
+            else onError(Messages);
+        }
         public TResult Match<TResult>(Func<IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(Messages) : onError(Messages);
-        
         public Result And(Func<Result> action) => IsSuccess ? new Result(Messages.Combine(action().Messages)) : this;
-        public Result And(Func<IReadOnlyCollection<CompilerMessage>, Result> action) => IsSuccess ? action(Messages) : this;
-        
-        public Result<TResult> Map<TResult>(Func<TResult> mapFunc) where TResult : notnull => IsSuccess ? Merge(new Result<TResult>(mapFunc())) : new Result<TResult>(Messages);
-        public Result<TResult> Map<TResult>(Func<IReadOnlyCollection<CompilerMessage>, TResult> mapFunc) where TResult : notnull => IsSuccess ? new Result<TResult>(mapFunc(Messages)) : new Result<TResult>(Messages);
-
-        public Result<TResult> Bind<TResult>(Func<Result<TResult>> bindFunc) where TResult : notnull => IsSuccess ? Merge(bindFunc()) : new Result<TResult>(Messages);
-        public Result<TResult> Bind<TResult>(Func<IReadOnlyCollection<CompilerMessage>, Result<TResult>> bindFunc) where TResult : notnull => IsSuccess ? bindFunc(Messages) : new Result<TResult>(Messages);
-        
-        public Result<TResult> Merge<TResult>(in Result<TResult> newResult) where TResult : notnull => new Result<TResult>(newResult, Messages.Combine(newResult.Messages));
+        public Result<TResult> Map<TResult>(Func<TResult> mapFunc) => IsSuccess ? Merge(new Result<TResult>(mapFunc())) : new Result<TResult>(Messages);
+        public Result<TResult> Bind<TResult>(Func<Result<TResult>> bindFunc) => IsSuccess ? Merge(bindFunc()) : new Result<TResult>(Messages);
+        public Result<TResult> Merge<TResult>(in Result<TResult> newResult) => new Result<TResult>(newResult, Messages.Combine(newResult.Messages));
     }
 
     public static class ResultExtensions
@@ -157,54 +119,50 @@ namespace Element
         public static IReadOnlyCollection<CompilerMessage> Combine(this IReadOnlyCollection<CompilerMessage> a, params IReadOnlyCollection<CompilerMessage>[] others) =>
             a.Concat(others.SelectMany(m => m)).ToList();
 
-        public static Result Fold<TIn>(this IEnumerable<Result<TIn>> enumerable) where TIn : notnull => enumerable.Select(r => (Result)r).Fold();
+        public static Result Fold<TIn>(this IEnumerable<Result<TIn>> enumerable) => enumerable.Select(r => (Result)r).Fold();
 
         public static Result<TResult> BindEnumerable<TIn, TResult>(this IEnumerable<Result<TIn>> enumerable, Func<IEnumerable<TIn>, Result<TResult>> bindFunc)
-            where TIn : notnull
-            where TResult : notnull
         {
             var inputs = enumerable as Result<TIn>[] ?? enumerable.ToArray();
             return inputs.Any(i => i.IsError)
                        ? new Result<TResult>(inputs.Fold().Messages)
-                       : inputs.Fold().Merge(bindFunc(inputs.Select(i => i.ResultOr(default!)))); // Or value will never be selected, we already checked for any errors
+                       : inputs.Fold().Merge(bindFunc(inputs.Select(i => i.ResultOr(default)))); // Or value will never be selected, we already checked for any errors
         }
         
         public static Result<TResult> MapEnumerable<TIn, TResult>(this IEnumerable<Result<TIn>> enumerable, Func<IEnumerable<TIn>, TResult> mapFunc)
-            where TIn : notnull
-            where TResult : notnull
         {
             var inputs = enumerable as Result<TIn>[] ?? enumerable.ToArray();
             return inputs.Any(i => i.IsError)
                        ? new Result<TResult>(inputs.Fold().Messages)
-                       : inputs.Fold().Merge(new Result<TResult>(mapFunc(inputs.Select(i => i.ResultOr(default!))))); // Or value will never be selected, we already checked for any errors
+                       : inputs.Fold().Merge(new Result<TResult>(mapFunc(inputs.Select(i => i.ResultOr(default))))); // Or value will never be selected, we already checked for any errors
         }
         
-        
-
         public static Result<TResult> FoldArray<TIn, TResult>(in this Result<TIn[]> enumerable, TResult initial, Func<TResult, TIn, Result<TResult>> foldFunc)
-            where TIn : notnull
-            where TResult : notnull
         {
             if (!enumerable.IsSuccess) return new Result<TResult>();
-            var inputs = enumerable.ResultOr(default!);
+            var inputs = enumerable.ResultOr(default);
             List<CompilerMessage> messages = new List<CompilerMessage>(enumerable.Messages);
             var previous = foldFunc(initial, inputs[0]);
             messages.AddRange(previous.Messages);
             foreach (var item in inputs)
             {
                 if (!previous.IsSuccess) return new Result<TResult>(messages);
-                previous = foldFunc(previous.ResultOr(default!), item);
+                previous = foldFunc(previous.ResultOr(default), item);
                 messages.AddRange(previous.Messages);
             }
 
             return previous;
         }
         
-        public static Result<TResult[]> ToResultArray<TResult>(this IEnumerable<Result<TResult>> enumerable)
-            where TResult : notnull => MapEnumerable(enumerable, e => e as TResult[] ?? e.ToArray());
+        public static Result<IEnumerable<TResult>> ToResultEnumerable<TResult>(this IEnumerable<Result<TResult>> enumerable) =>
+            MapEnumerable(enumerable, e => e);
+        public static Result<TResult[]> ToResultArray<TResult>(this IEnumerable<Result<TResult>> enumerable) =>
+            MapEnumerable(enumerable, e => e as TResult[] ?? e.ToArray());
+        public static Result<IReadOnlyList<TResult>> ToResultReadOnlyList<TResult>(this IEnumerable<Result<TResult>> enumerable) =>
+            MapEnumerable(enumerable, e => (IReadOnlyList<TResult>)(e as TResult[] ?? e.ToArray()));
     }
     
-    public readonly struct Result<T> : IEquatable<Result<T>> where T : notnull
+    public readonly struct Result<T> : IEquatable<Result<T>>
     {
         public Result(T value)
         {
@@ -229,11 +187,7 @@ namespace Element
         public Result(IReadOnlyCollection<CompilerMessage> messages)
         {
             IsSuccess = false; // No value was passed, a result with no messages is an error whether there are any error messages or not
-            
-#pragma warning disable 8601
-            _value = default; // Might assign null if T is reference type but there's no way to retrieve this accidentally so it's ok!
-#pragma warning restore 8601
-            
+            _value = default!; // Might assign null if T is reference type but there's no way to retrieve it accidentally so it's ok!
             Messages = messages;
         }
         
@@ -246,7 +200,7 @@ namespace Element
         public IReadOnlyCollection<CompilerMessage> Messages { get; }
         private readonly T _value;
         
-        public void Match(Action<T, IReadOnlyCollection<CompilerMessage>> onResult, Action<IReadOnlyCollection<CompilerMessage>> onError)
+        public void Switch(Action<T, IReadOnlyCollection<CompilerMessage>> onResult, Action<IReadOnlyCollection<CompilerMessage>> onError)
         {
             if (IsSuccess) onResult(_value, Messages);
             else onError(Messages);
@@ -254,23 +208,13 @@ namespace Element
 
         public TResult Match<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(_value, Messages) : onError(Messages);
         
-        public Result Do(Func<T, Result> action) => IsSuccess ? new Result(Messages.Combine(action(_value).Messages)) : new Result(Messages);
-        public Result Do(Func<T, IReadOnlyCollection<CompilerMessage>, Result> action) => IsSuccess ? action(_value, Messages) : new Result(Messages);
-        
         public Result Do(Action<T> action)
         {
             if (IsSuccess) action(_value);
             return (Result)this;
         }
 
-        public Result Do(Action<T, IReadOnlyCollection<CompilerMessage>> action)
-        {
-            if (IsSuccess) action(_value, Messages);
-            return (Result) this;
-        }
-
         public Result<(T, T1)> Accumulate<T1>(Func<Result<T1>> a)
-            where T1 : notnull
         {
             if (!IsSuccess) return new Result<(T, T1)>(Messages);
             var t1 = a();
@@ -278,8 +222,6 @@ namespace Element
         }
         
         public Result<(T, T1, T2)> Accumulate<T1, T2>(Func<Result<T1>> a, Func<Result<T2>> b)
-            where T1 : notnull
-            where T2 : notnull
         {
             if (!IsSuccess) return new Result<(T, T1, T2)>(Messages);
             var t1 = a();
@@ -291,9 +233,6 @@ namespace Element
         }
         
         public Result<(T, T1, T2, T3)> Accumulate<T1, T2, T3>(Func<Result<T1>> a, Func<Result<T2>> b, Func<Result<T3>> c)
-            where T1 : notnull
-            where T2 : notnull
-            where T3 : notnull
         {
             if (!IsSuccess) return new Result<(T, T1, T2, T3)>(Messages);
             var t1 = a();
@@ -306,22 +245,19 @@ namespace Element
                        : new Result<(T, T1, T2, T3)>(Messages.Combine(t1.Messages, t2.Messages, t3.Messages));
         }
         
-        public Result<TResult> Map<TResult>(Func<T, TResult> mapFunc) where TResult : notnull => IsSuccess ? Merge(new Result<TResult>(mapFunc(_value))) : new Result<TResult>(Messages);
-        public Result<TResult> Map<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, TResult> mapFunc) where TResult : notnull => IsSuccess ? new Result<TResult>(mapFunc(_value, Messages)) : new Result<TResult>(Messages);
-
-        public Result<TResult> Bind<TResult>(Func<T, Result<TResult>> bindFunc) where TResult : notnull  => IsSuccess ? Merge(bindFunc(_value)) : new Result<TResult>(Messages);
-        public Result<TResult> Bind<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, Result<TResult>> bindFunc) where TResult : notnull => IsSuccess ? bindFunc(_value, Messages) : new Result<TResult>(Messages);
-
+        public Result<TResult> Map<TResult>(Func<T, TResult> mapFunc) => IsSuccess ? Merge(new Result<TResult>(mapFunc(_value))) : new Result<TResult>(Messages);
+        public Result Bind(Func<T, Result> action) => IsSuccess ? new Result(Messages.Combine(action(_value).Messages)) : new Result(Messages);
+        public Result<TResult> Bind<TResult>(Func<T, Result<TResult>> bindFunc)  => IsSuccess ? Merge(bindFunc(_value)) : new Result<TResult>(Messages);
         public Result<T> Check(Func<T, Result> checkFunc) => new Result<T>(Messages.Combine(checkFunc(_value).Messages));
 
-        public Result<TResult> Cast<TResult>(Func<CompilerMessage?> castFailFunc) where TResult : notnull
+        public Result<TResult> Cast<TResult>(Func<CompilerMessage?> castFailFunc)
         {
             if (_value is TResult casted) return new Result<TResult>(casted, Messages);
             var msg = castFailFunc();
             return msg != null ? new Result<TResult>(Messages.Append(msg).ToArray()) : new Result<TResult>(Messages);
         }
         
-        public Result<TResult> Cast<TResult>(ITrace trace, string? context = null) where TResult : notnull
+        public Result<TResult> Cast<TResult>(ITrace trace, string? context = null)
         {
             if (_value is TResult casted) return new Result<TResult>(casted, Messages);
             var msg = trace.Trace(MessageCode.InvalidCast, context ?? $"'{_value}' failed to cast to '{typeof(TResult)}'");
@@ -333,7 +269,7 @@ namespace Element
         
         public T ResultOr(T alternative) => IsSuccess ? _value : alternative;
 
-        public Result<TResult> Merge<TResult>(in Result<TResult> newResult) where TResult : notnull => new Result<TResult>(newResult._value, Messages.Combine(newResult.Messages));
+        public Result<TResult> Merge<TResult>(in Result<TResult> newResult) => new Result<TResult>(newResult._value, Messages.Combine(newResult.Messages));
         
         public bool Equals(Result<T> other) => IsSuccess && EqualityComparer<T>.Default.Equals(_value, other._value);
 

@@ -18,7 +18,7 @@ namespace Element
         public Result<float[]> Evaluate(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
                     .Bind(() => _context.EvaluateExpression(expression))
-                    .Bind(value => value.Serialize(_context))
+                    .Bind(value => value.Serialize(new CompilationContext(_context)))
                     .Bind(serialized => serialized.ToFloatArray(_context));
 
         public Result<string> Typeof(CompilationInput input, string expression) =>

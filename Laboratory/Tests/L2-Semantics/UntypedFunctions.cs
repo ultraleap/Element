@@ -30,9 +30,9 @@ namespace Laboratory.Tests.L2.Semantics
         public void IncorrectArgCountFails(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.ArgumentCountMismatch, expression);
 
         [Test]
-        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.CircularCompilation, "recurse(5)");
+        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.RecursionNotAllowed, "recurse(5)");
         [Test]
-        public void IndirectRecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.CircularCompilation, "recurseIndirect(5)");
+        public void IndirectRecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.RecursionNotAllowed, "recurseIndirect(5)");
         
         [Test]
         public void InvalidReturn() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.IdentifierNotFound, "invalidReturn(5, 5)");

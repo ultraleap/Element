@@ -50,8 +50,8 @@ namespace Element
 		public Unary(Op operation, Expression operand)
 			: base(operation switch
 			{
-				Op.Not => BoolType.Instance,
-				_ => NumType.Instance
+				Op.Not => BoolStructImplementation.Instance,
+				_ => NumStructImplementation.Instance
 			})
 		{
 			Operation = operation;

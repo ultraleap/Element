@@ -23,6 +23,6 @@ namespace Laboratory.Tests.L2.Semantics
         public void EIsC() => AssertApproxEqual(CompilationInput, "e", "c");
 
         [Test]
-        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.CircularCompilation, "f");
+        public void RecursionDisallowed() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.RecursionNotAllowed, "f");
     }
 }

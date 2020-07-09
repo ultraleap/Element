@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using Element;
 using Element.AST;
@@ -24,21 +23,25 @@ namespace Laboratory.Tests.L0.Parsing
                 (nameof(Terminal), ";", typeof(Terminal)),
                 (nameof(ExpressionBody), "= 5", typeof(ExpressionBody)),
                 (nameof(Binding), "= 5;", typeof(Binding)),
-                (nameof(TypeAnnotation), ":Foo.Bar", typeof(TypeAnnotation)),
+                ("Empty Block", "{ }", typeof(Block)),
+                ("Block with Declaration", "{ a = 5 }", typeof(Block)),
+                (nameof(ReturnConstraint), ":Foo.Bar", typeof(ReturnConstraint)),
                 (nameof(Expression), "a.b(c).d.e(5)", typeof(Expression)),
-                (nameof(CallExpression), "(5, a(10, c))", typeof(CallExpression)),
-                (nameof(IndexingExpression), ".identifier", typeof(IndexingExpression)),
+                (nameof(ExpressionChain.CallExpression), "(5, a(10, c))", typeof(ExpressionChain.CallExpression)),
+                (nameof(ExpressionChain.IndexingExpression), ".identifier", typeof(ExpressionChain.IndexingExpression)),
                 (nameof(Lambda), "_(_a) = 5", typeof(Lambda)),
-                ($"{nameof(CustomFunctionSignatureDeclaration)}-ExpressionBody", "a(a):Num = 5;", typeof(CustomFunctionSignatureDeclaration)),
-                ($"{nameof(CustomFunctionSignatureDeclaration)}-ScopeBody", "a(a):Num {return = 5;}", typeof(CustomFunctionSignatureDeclaration)),
-                ($"{nameof(IntrinsicFunctionSignatureDeclaration)}", "intrinsic a(a):Num;", typeof(IntrinsicFunctionSignatureDeclaration)),
+                ($"{nameof(ExpressionBodiedFunctionDeclaration)}", "a(a):Num = 5;", typeof(ExpressionBodiedFunctionDeclaration)),
+                ($"{nameof(ScopeBodiedFunctionDeclaration)}", "a(a):Num {return = 5;}", typeof(ScopeBodiedFunctionDeclaration)),
+                ($"{nameof(IntrinsicFunctionDeclaration)}", "intrinsic a(a):Num;", typeof(IntrinsicFunctionDeclaration)),
                 (nameof(CustomConstraintDeclaration), "constraint a(a):Num;", typeof(CustomConstraintDeclaration)),
                 ($"{nameof(IntrinsicConstraintDeclaration)}", "intrinsic constraint a;", typeof(IntrinsicConstraintDeclaration)),
                 (nameof(CustomStructDeclaration), "struct a(a);", typeof(CustomStructDeclaration)),
-                ($"{nameof(CustomStructDeclaration)}-WithScope", "struct a(a) {}", typeof(CustomStructDeclaration)),
+                ($"{nameof(CustomStructDeclaration)}-WithAssociatedScope", "struct a(a) {}", typeof(CustomStructDeclaration)),
                 ($"{nameof(IntrinsicStructDeclaration)}", "intrinsic struct a(a);", typeof(IntrinsicStructDeclaration)),
                 (nameof(Port), "a:foo", typeof(Port)),
+                ($"{nameof(Port)}-WithDefaultArgument", "a:foo = 15", typeof(Port)),
                 (nameof(PortList), "(a:foo, b:bar)", typeof(PortList)),
+                ($"{nameof(PortList)}-WithDefaultArguments", "(a:foo = 15, b:bar = Vector3(1, 2, 3))", typeof(PortList)),
                 (nameof(NamespaceDeclaration), "namespace foo {}", typeof(NamespaceDeclaration)),
             };
             foreach (var (name, partialExpression, type) in data)
@@ -51,7 +54,7 @@ namespace Laboratory.Tests.L0.Parsing
         public void Parse((FileInfo fileInfo, MessageCode? messageCode) info) => SyntaxTest(info, true);
         
         // TODO: Force consuming the whole text in all of these parsers
-        // TODO: Make this test use host so that it can test process hosts!
+        // TODO: Make this test use an IHost so that it can test process hosts!
         [TestCaseSource(nameof(PartialSyntaxTestData))]
         public void ParsePartialSyntaxItems((string text, Type syntaxItem) info)
         {

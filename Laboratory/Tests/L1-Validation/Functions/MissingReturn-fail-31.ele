@@ -1,0 +1,4 @@
+myFunction(a, b)
+{
+    notReturn = a;
+}

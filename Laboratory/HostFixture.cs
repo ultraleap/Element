@@ -69,7 +69,7 @@ namespace Laboratory
 
         private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params float[][] results) =>
             EvaluateControlExpression(compilationInput, controlExpression)
-                .Match((control, messages) =>
+                .Switch((control, messages) =>
                        {
                            LogMessages(messages);
                            foreach (var result in results)
@@ -82,7 +82,7 @@ namespace Laboratory
         private void AssertApproxEqual(CompilationInput compilationInput, string controlExpression, IComparer comparer, params string[] expressions) =>
             EvaluateControlExpression(compilationInput, controlExpression)
                 .Accumulate(() => EvaluateExpressions(compilationInput, expressions))
-                .Match((evaluated, messages) =>
+                .Switch((evaluated, messages) =>
                        {
                            var (control, results) = evaluated;
                            LogMessages(messages);
@@ -104,7 +104,7 @@ namespace Laboratory
 
         protected void AssertTypeof(CompilationInput compilationInput, string expression, string typeStr) =>
             Host.Typeof(compilationInput, expression)
-                .Match((result, messages) =>
+                .Switch((result, messages) =>
                 {
                     LogMessages(messages);
                     Assert.That(result, Is.EqualTo(typeStr));

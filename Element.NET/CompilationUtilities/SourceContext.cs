@@ -22,29 +22,13 @@ namespace Element
             return context.LoadPackagesAndExtraSourceFiles().Map(() => context);
         }
 
-        public Result<IValue> EvaluateExpression(string expression) =>
-            Parser.Parse<AST.Expression>(expression, this, CompilationInput.NoParseTrace)
-                  .Bind(expressionObject =>
-                  {
-                      expressionObject.InitializeUsingStubDeclaration(expression, GlobalScope);
-                      var validationResultBuilder = new ResultBuilder(this);
-                      expressionObject.Validate(validationResultBuilder);
-                      return validationResultBuilder.ToResult()
-                                          .Bind(() => expressionObject.ResolveExpression(GlobalScope, new CompilationContext(this)));
-                  });
+        public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
+            Parser.Parse<AST.Expression>(new SourceInfo("<evaluated expression>", expression), this, CompilationInput.NoParseTrace)
+                  .Check(expressionObject => expressionObject.Validate(new CompilationContext(this)))
+                  .Bind(expressionObject => expressionObject.ResolveExpression(scopeToEvaluateIn ?? GlobalScope, new CompilationContext(this)));
 
         public Result<SourceContext> LoadElementSourceFile(FileInfo file) => LoadElementSourceString(new SourceInfo(file.FullName, File.ReadAllText(file.FullName)));
-
-        public Result<SourceContext> LoadElementSourceString(SourceInfo info) =>
-            GlobalScope.ContainsSource(info.Name)
-                ? Trace(MessageCode.DuplicateSourceFile, $"'{info.Name}' already added")
-                : Parser.Parse<SourceBlob>(info.PreprocessedText, this, CompilationInput.NoParseTrace)
-                        .Do(sourceScope =>
-                        {
-                            sourceScope.Initialize(in info, GlobalScope);
-                            return GlobalScope.AddSource(info.Name, sourceScope, this);
-                        })
-                        .Map(() => this);
+        public Result<SourceContext> LoadElementSourceString(SourceInfo info) => GlobalScope.AddSource(info, this).Map(() => this);
 
         /// <summary>
         /// Parses all the given files as Element source files into the source context

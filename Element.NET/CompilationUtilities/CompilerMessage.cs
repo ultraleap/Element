@@ -21,7 +21,7 @@ namespace Element
         ConstraintNotSatisfied = 8,
         ParseError= 9,
         InvalidBoundaryFunction = 10,
-        CircularCompilation = 11,
+        RecursionNotAllowed = 11,
         MissingBoundaryConverter = 12,
         MissingPorts = 13,
         TypeError = 14,
@@ -41,6 +41,10 @@ namespace Element
         ArgumentOutOfRange = 28,
         MultipleIntrinsicLocations = 29,
         InvalidCast = 30,
+        FunctionMissingReturn = 31,
+        PortListCannotContainDiscards = 32,
+        PortListDeclaresDefaultArgumentBeforeNonDefault = 33,
+        IntrinsicConstraintCannotSpecifyFunctionSignature = 34,
         UnknownError = 9999,
     }
     

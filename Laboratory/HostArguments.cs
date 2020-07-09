@@ -231,7 +231,7 @@ namespace Laboratory
             {
                 var trace = new BasicTrace(input.Verbosity);
                 return RunHostProcess(trace, BeginCommand(input, "parse").ToString())
-                    .Do(resultString => bool.TryParse(resultString, out var result)
+                    .Bind(resultString => bool.TryParse(resultString, out var result)
                                             ? result
                                                   ? Result.Success
                                                   : trace.Trace(MessageCode.ParseError, "Parsing failed - see log for details")

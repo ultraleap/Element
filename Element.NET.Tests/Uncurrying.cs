@@ -12,15 +12,15 @@ namespace Element.NET.Tests
         public void UncurryAddMul()
         {
             var srcContext = MakeSourceContext();
-            srcContext.EvaluateExpression("Num.add").Cast<IFunctionSignature>(srcContext)
-                                   .Accumulate(() => srcContext.EvaluateExpression("Num.sqr").Cast<IFunctionSignature>(srcContext))
+            srcContext.EvaluateExpression("Num.add").Cast<IFunctionValue>(srcContext)
+                                   .Accumulate(() => srcContext.EvaluateExpression("Num.sqr").Cast<IFunctionValue>(srcContext))
                                    .Bind(tuple =>
                                    {
                                        var (add, sqr) = tuple;
                                        return add.Uncurry(sqr, srcContext);
                                    })
                                    .Bind(uncurried => uncurried.Compile<AddSqr>(new CompilationContext(srcContext)))
-                                   .Match((sqr, messages) =>
+                                   .Switch((sqr, messages) =>
                                    {
                                        LogMessages(messages);
                                        var result = sqr(5f, 10f);
