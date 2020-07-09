@@ -703,8 +703,15 @@ element_result element_compiled_function_get_typeof_compilation(element_compiled
 
 element_result element_delete_compilable(element_interpreter_ctx* context, element_compilable** compilable)
 {
-    delete* compilable;
+    delete *compilable;
     *compilable = nullptr;
+    return ELEMENT_OK;
+}
+
+element_result element_delete_evaluable(element_interpreter_ctx* context, element_evaluable** evaluable)
+{
+    delete *evaluable;
+    *evaluable = nullptr;
     return ELEMENT_OK;
 }
 

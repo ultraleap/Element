@@ -84,6 +84,7 @@ element_result eval(const char* evaluate)
 
     //todo
     element_delete_compilable(context, &compilable);
+    element_delete_evaluable(context, &evaluable);
     element_interpreter_delete(context);
     return ELEMENT_OK;
 }
@@ -132,7 +133,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
 
 cleanup:
     element_delete_compilable(context, &compilable);
-    //todo, delete evaluable, etc
+    element_delete_evaluable(context, &evaluable);
     element_interpreter_delete(context);
     return result;
 }
@@ -163,19 +164,36 @@ element_result test_failing_evals()
     if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
         return result;
 
-    char MyVec[] =
+    char my_vec[] =
         "struct MyVec(x:Num, y:Num)\n"
         "{\n"
         "    add(a:MyVec, b:MyVec) = MyVec(a.x.add(b.x), a.y.add(b.y));\n"
         "    transform_components(a:MyVec, func) = MyVec(func(a.x), func(a.y), func(a.z));\n"
         "}\n";
 
-    result = eval_with_source(MyVec, "evaluate = MyStruct(1, 2, 3).add(MyStruct(4, 5, 6);\n");
+    result = eval_with_source(my_vec, "evaluate = MyStruct(1, 2, 3).add(MyStruct(4, 5, 6);\n");
     if (result != ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL)
         return result;
 
-    result = eval_with_source(MyVec, "evaluate = MyStruct(1, 2, 3).add(MyStruct4, 5, 6));\n");
+    result = eval_with_source(my_vec, "evaluate = MyStruct(1, 2, 3).add(MyStruct4, 5, 6));\n");
     if (result != ELEMENT_ERROR_MISSING_SEMICOLON)
+        return result;
+
+    //todo: we should say what the opening bracket was/specifically which "MyStruct" it is referring to
+    result = eval_with_source(my_vec, "evaluate = MyStruct(1, 2, 3.add(MyStruct(4, 5, 6));\n");
+    if (result != ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL)
+        return result;
+
+    result = eval_with_source(my_vec, "evaluate MyStruct(1, 2, 3).add(MyStruct(4, 5, 6));\n");
+    if (result != ELEMENT_ERROR_MISSING_FUNCTION_BODY)
+        return result;
+
+    result = eval_with_source(my_vec, "evaluate\n");
+    if (result != ELEMENT_ERROR_MISSING_FUNCTION_BODY)
+        return result;
+
+    result = eval_with_source(my_vec, "evaluate;\n");
+    if (result != ELEMENT_ERROR_MISSING_FUNCTION_BODY)
         return result;
 
     printf("#######Failed successfully#######\n");
@@ -271,6 +289,7 @@ int main(int argc, char** argv)
         return result;*/
 
 
+    //struct fields
     result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).a;");
     if (result != ELEMENT_OK)
         return result;
@@ -279,10 +298,12 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
+    //struct instance function
     result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct) = s.a.add(s.b);} evaluate = MyStruct(1, 2).add;");
     if (result != ELEMENT_OK)
         return result;
 
+    //struct instance function called with more parameters
     result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct, s2:MyStruct) = MyStruct(s.a.add(s2.a), s.b.add(s2.b));} evaluate = MyStruct(1, 2).add(MyStruct(1, 2)).b;");
     if (result != ELEMENT_OK)
         return result;
