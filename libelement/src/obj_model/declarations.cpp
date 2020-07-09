@@ -98,7 +98,29 @@ namespace element
 
         if (context.is_recursive(this))
         {
-            return build_error(error_message_code::recursion_detected, this, typeof_info());
+            std::string trace;
+            //todo: have it on the stack?
+            for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
+            {
+                auto& func = it->function;
+                std::string params;
+                for (unsigned i = 0; i < func->inputs.size(); ++i)
+                {
+                    const auto& input = func->inputs[i];
+                    params += fmt::format("{}{} = {}",
+                        input.name.value, input.annotation ? ":" + input.annotation->name.value : "", it->compiled_arguments[i]->typeof_info())
+                    ;
+                    if (i != func->inputs.size() - 1)
+                        params += ", ";
+                }
+                trace += fmt::format("{}:{} at {}({})",
+                    func->source_info.filename, func->source_info.line, func->typeof_info(), params);
+                if (func == this)
+                    trace += " <-- here";
+                trace += "\n";
+            }
+
+            return build_error(source_info, error_message_code::recursion_detected, typeof_info(), trace);
         }
 
         call_stack::frame frame;
@@ -111,7 +133,7 @@ namespace element
             return std::make_shared<error>(
                 fmt::format("failed at {}. scope bodied functions must contain a return function.\n", typeof_info()),
                 ELEMENT_ERROR_MISSING_FUNCTION_BODY,
-                this);
+                source_info);
         }
 
         //todo: we don't need args passed since it's in the stack
@@ -130,10 +152,29 @@ namespace element
             //Nullary, compile the body
             if (context.is_recursive(this))
             {
-                return std::make_shared<error>(
-                    fmt::format("failed at {}. recursion detected.\n", typeof_info()),
-                    ELEMENT_ERROR_CIRCULAR_COMPILATION,
-                    this);
+                std::string trace;
+                //todo: have it on the stack?
+                for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
+                {
+                    auto& func = it->function;
+                    std::string params;
+                    for (unsigned i = 0; i < func->inputs.size(); ++i)
+                    {
+                        const auto& input = func->inputs[i];
+                        //todo: instead of typeof info for the compiled arg, see if we can evaluate it and print the value
+                        params += fmt::format("{}{} = {}",
+                            input.name.value, input.annotation ? ":" + input.annotation->name.value : "", it->compiled_arguments[i]->typeof_info());
+                        if (i != func->inputs.size() - 1)
+                            params += ", ";
+                    }
+                    trace += fmt::format("{}:{} at {}({})",
+                        func->source_info.filename, func->source_info.line, func->typeof_info(), params);
+                    if (func == this)
+                        trace += " <-- here";
+                    trace += "\n";
+                }
+
+                return build_error(source_info, error_message_code::recursion_detected, typeof_info(), trace);
             }
 
             call_stack::frame frame;
@@ -145,7 +186,7 @@ namespace element
                 return std::make_shared<error>(
                     fmt::format("failed at {}. scope bodied functions must contain a return function.\n", typeof_info()),
                     ELEMENT_ERROR_MISSING_FUNCTION_BODY,
-                    this);
+                    source_info);
             }
 
             ret = body->compile(context);

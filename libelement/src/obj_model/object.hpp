@@ -153,20 +153,11 @@ namespace element
     class error : public object, public std::enable_shared_from_this<error>
     {
     public:
-        explicit error(std::string message, element_result code, const declaration* location)
+        explicit error(std::string message, element_result code, source_information src_info)
             : message{ std::move(message) }
             , code(code)
-            , location(location)
         {
-
-        }
-
-        explicit error(std::string message, element_result code, const declaration* location, std::shared_ptr<error> err)
-            : message(std::move(message))
-            , code(code)
-            , location(location)
-            , err(std::move(err))
-        {
+            source_info = std::move(src_info);
         }
 
         [[nodiscard]] std::string typeof_info() const override;
@@ -178,13 +169,10 @@ namespace element
 
         [[nodiscard]] element_result get_result() const;
         [[nodiscard]] const std::string& get_message() const;
-        [[nodiscard]] const declaration* get_declaration() const;
-        [[nodiscard]] const std::shared_ptr<error>& get_wrapped_error() const;
+        [[nodiscard]] const element_log_message get_log_message() const;
 
     private:
         std::string message;
         element_result code = ELEMENT_ERROR_UNKNOWN;
-        const declaration* location;
-        std::shared_ptr<error> err;
     };
  }

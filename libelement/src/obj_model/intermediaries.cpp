@@ -50,19 +50,19 @@ namespace element
         {
             if (!has_inputs)
             {
-                return build_error<std::string, std::string>(error_message_code::instance_function_cannot_be_nullary, 
+                return build_error<std::string, std::string>(source_info, error_message_code::instance_function_cannot_be_nullary, 
                     func->typeof_info(), typeof_info());
             }
 
             if (!has_type)
             {
-                return build_error<std::string, std::string>(error_message_code::is_not_an_instance_function,
+                return build_error<std::string, std::string>(source_info, error_message_code::is_not_an_instance_function,
                     func->typeof_info(), typeof_info(), func->inputs[0].name.value);
             }
 
             if (!types_match)
             {
-                return build_error<std::string, std::string, std::string, std::string, std::string>(error_message_code::is_not_an_instance_function,
+                return build_error<std::string, std::string, std::string, std::string, std::string>(source_info, error_message_code::is_not_an_instance_function,
                     func->typeof_info(), typeof_info(), func->inputs[0].name.value, func->inputs[0].annotation->name.value, declarer->name.value);
             }
         }

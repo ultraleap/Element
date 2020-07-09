@@ -59,7 +59,7 @@ std::shared_ptr<element::object> element_expression::index(const element::compil
                 fmt::format("error: '{}' was found when indexing '{}' but it is not an instance function as it has no parameters.\n",
                     func->typeof_info(), typeof_info()),
                 ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION,
-                nullptr);
+                source_info);
         }
 
         if (!has_type)
@@ -68,7 +68,7 @@ std::shared_ptr<element::object> element_expression::index(const element::compil
                 fmt::format("error: '{}' was found when indexing '{}' but it is not an instance function as it does not have an explicit type defined for its first parameter '{}'.\n",
                     func->typeof_info(), typeof_info(), func->inputs[0].name.value),
                 ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION,
-                nullptr);
+                source_info);
         }
 
         if (!types_match)
@@ -77,7 +77,7 @@ std::shared_ptr<element::object> element_expression::index(const element::compil
                 fmt::format("error: '{}' was found when indexing '{}' but it is not an instance function as the first parameter '{}' is of type '{}', when it needs to be '{}' to be considered an instance function.\n",
                     func->typeof_info(), typeof_info(), func->inputs[0].name.value, func->inputs[0].annotation->name.value, actual_type->get_identifier().value),
                 ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION,
-                nullptr);
+                source_info);
         }
     }
 

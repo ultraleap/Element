@@ -49,7 +49,7 @@ bool element::detail::register_errors()
 
     element::register_error<std::string, std::string>(
         error_message_code::recursion_detected,
-        "failed at {}. recursion detected.\n",
+        "failed at {}. recursion detected.\n{}\n",
         ELEMENT_ERROR_CIRCULAR_COMPILATION);
 
     element::register_error<std::string, std::string>(
