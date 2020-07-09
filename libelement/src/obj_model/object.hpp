@@ -171,7 +171,7 @@ namespace element
 
         [[nodiscard]] element_result get_result() const;
         [[nodiscard]] const std::string& get_message() const;
-        [[nodiscard]] const element_log_message get_log_message() const;
+        [[nodiscard]] element_log_message get_log_message() const;
 
     private:
         std::string message;

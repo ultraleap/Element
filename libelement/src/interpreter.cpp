@@ -246,6 +246,8 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 #else
 
     auto object_model = element::build_root_scope(this, parser.root);
+    element_ast_delete(parser.root);
+
     result = global_scope->merge(std::move(object_model));
     if (result != ELEMENT_OK) {
         log(result, std::string("build_root_scope failed with element_result " + std::to_string(result)), filename);
