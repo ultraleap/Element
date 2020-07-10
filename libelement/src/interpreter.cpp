@@ -177,13 +177,14 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
     auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(tokeniser, element_tokeniser_delete);
 
+    //create the file info struct to be used by the object model later
     file_information info;
     info.file_name = std::make_unique<std::string>(filename);
+    //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
     ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()))
     if (tokeniser->tokens.empty())
         return ELEMENT_OK;
 
-    //create the file info struct to be used by the object model later
     const int total_lines_parsed = tokeniser->line;
 
     for (int i = 0; i < total_lines_parsed; ++i)
