@@ -45,10 +45,10 @@ typedef enum message_type
     ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION = 22,
     ELEMENT_ERROR_UNKNOWN = 9999,
 
-	//INTERNAL
-	//Errors specific to libelement should be negative for now, but ideally covered in the Messages.toml
+    //INTERNAL
+    //Errors specific to libelement should be negative for now, but ideally covered in the Messages.toml
 
-	//LEGACY
+    //LEGACY
     ELEMENT_INTERRUPTED = -1,
     ELEMENT_ERROR_INVALID_PTR = -2,
     ELEMENT_ERROR_INVALID_SIZE = -3,
@@ -63,7 +63,7 @@ typedef enum message_type
     ELEMENT_ERROR_MISSING_EXTCALL = -15,
     ELEMENT_ERROR_INVALID_OPERATION = -16,
 
-	//NEW
+    //NEW
     ELEMENT_ERROR_PRELUDE_ALREADY_LOADED = -100,
     ELEMENT_ERROR_DIRECTORY_NOT_FOUND = -101,
     ELEMENT_ERROR_FILE_NOT_FOUND = -102,
@@ -74,6 +74,10 @@ typedef enum message_type
     ELEMENT_ERROR_BAD_NUMBER_EXPONENT = -204,
     ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL = -205,
     ELEMENT_ERROR_MISSING_SEMICOLON = -206,
+    ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL = -207,
+    ELEMENT_ERROR_INVALID_CONTENTS_FOR_CALL = -208,
+    ELEMENT_ERROR_INVALID_PORT = -209,
+    ELEMENT_ERROR_INVALID_TYPENAME = -209,
 } message_type;
 
 typedef int32_t element_result;

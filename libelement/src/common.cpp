@@ -314,9 +314,11 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     assert(context.tokeniser);
 
     const bool starts_with_prelude = context.tokeniser->filename.rfind("Prelude\\", 0) == 0;
-	
+    if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude)) {
+        return; //early out if prelude logging disabled
+    }
+
     auto msg = element_log_message();
-    msg.message = message.c_str();
     msg.message_code = code;
     msg.line = -1;
     msg.character = -1;
@@ -325,31 +327,15 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     msg.filename = context.tokeniser->filename.c_str();
     msg.related_log_message = nullptr;
 
-    std::string new_log_message;
+    std::string new_log_message = message;
     std::string source_line;
     if (nearest_ast && nearest_ast->nearest_token) {
         msg.line = nearest_ast->nearest_token->line;
         msg.character = nearest_ast->nearest_token->character;
         msg.length = nearest_ast->nearest_token->tok_len;
 
-        if (msg.line > 0) {
-            source_line = context.tokeniser->text_on_line(msg.line) + "\n";
-
-            //todo: doesn't handle UTF8 I'm guessing
-            if (msg.character >= 0) {
-                for (int i = 0; i < msg.character - 1; ++i)
-                    source_line += " ";
-
-                source_line += "^";
-
-                for (int i = 0; i < msg.length - 1; ++i)
-                    source_line += "^";
-            }
-
-            new_log_message = "\n\n" + source_line + " " + message;
-        }
-    } else {
-        new_log_message = message;
+        if (msg.line > 0)
+            source_line = context.tokeniser->text_on_line(msg.line);
     }
 
     //Only print ast/token prelude info if it's forced on or if a non-zero code is being logged
@@ -362,12 +348,8 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
 			new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast ? nearest_ast : nullptr);
     }
 	
-    if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude)) {
-        return; //early out if prelude logging disabled
-    }
-	
     msg.message = new_log_message.c_str();
-    msg.line_in_source = source_line.c_str();
+    msg.line_in_source = source_line.empty() ? nullptr : source_line.c_str();
     log(msg);
 }
 

@@ -20,17 +20,17 @@ namespace element
 
     std::shared_ptr<object> object::index(const compilation_context&, const identifier&, const source_information& source_info) const
     {
-        return build_error(source_info, error_message_code::not_indexable);
+        return build_error(source_info, error_message_code::not_indexable, typeof_info());
     }
 
     std::shared_ptr<object> object::call(const compilation_context&, std::vector<std::shared_ptr<object>>, const source_information& source_info) const
     {
-        return build_error(source_info, error_message_code::not_callable);
+        return build_error(source_info, error_message_code::not_callable, typeof_info());
     }
 
     std::shared_ptr<object> object::compile(const compilation_context&, const source_information& source_info) const
     {
-        return build_error(source_info, error_message_code::not_compilable);
+        return build_error(source_info, error_message_code::not_compilable, typeof_info());
     }
 
     element_result error::get_result() const

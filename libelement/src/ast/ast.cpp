@@ -28,12 +28,16 @@ static std::unordered_set<std::string> reserved_names {"return"};
 
 static element_result check_reserved_words(const std::string& text, bool allow_reserved_arg, bool allow_reserved_names)
 {
-    return (qualifiers.count(text) == 0 &&
-        constructs.count(text) == 0 &&
-        (allow_reserved_arg || reserved_args.count(text) == 0) &&
-        (allow_reserved_names || reserved_names.count(text) == 0))
-        ? ELEMENT_OK
-        : ELEMENT_ERROR_INVALID_ARCHIVE; // TODO: errcode
+    const bool is_not_a_reserved_qualifier = qualifiers.count(text) == 0;
+    const bool is_not_a_reserved_construct = constructs.count(text) == 0;
+    const bool is_not_a_reserved_arg = allow_reserved_arg || reserved_args.count(text) == 0;
+    const bool is_not_a_reserved_name = allow_reserved_names || reserved_names.count(text) == 0;
+    const bool valid = is_not_a_reserved_qualifier
+                    && is_not_a_reserved_construct
+                    && is_not_a_reserved_arg
+                    && is_not_a_reserved_name;
+
+    return valid ? ELEMENT_OK : ELEMENT_ERROR_INVALID_ARCHIVE; // TODO: errcode
 }
 
 //
@@ -193,15 +197,24 @@ element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast*
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
-    assert(token->type == ELEMENT_TOK_IDENTIFIER);
+
     ast->nearest_token = token;
     ast->identifier.assign(tokeniser->text(token));
+
+    if (token->type != ELEMENT_TOK_IDENTIFIER)
+    {
+        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
+            fmt::format("invalid identifier '{}'", ast->identifier),
+            ast);
+        return ELEMENT_ERROR_INVALID_IDENTIFIER;
+    }
+
     tokenlist_advance(tokeniser, tindex);
 
     auto result = check_reserved_words(ast->identifier, allow_reserved_args, allow_reserved_names);
     if (result != ELEMENT_OK) {
         log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-            fmt::format("Invalid identifier '{}'", ast->identifier),
+            fmt::format("invalid identifier '{}'", ast->identifier),
             ast);
         return ELEMENT_ERROR_INVALID_IDENTIFIER;
     }
@@ -213,9 +226,14 @@ element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* a
 {
     const element_token* tok;
     GET_TOKEN(tokeniser, *tindex, tok);
-    assert(tok->type == ELEMENT_TOK_IDENTIFIER);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_TYPENAME;
+
+    if (tok->type != ELEMENT_TOK_IDENTIFIER) {
+        log(ELEMENT_ERROR_INVALID_TYPENAME, 
+            fmt::format("found '{}' when a type was expected.\nnote: a type must be an identifier.", tokeniser->text(tok)), ast);
+        return ELEMENT_ERROR_INVALID_TYPENAME;
+    }
 
     element_result result = ELEMENT_OK;
 
@@ -243,14 +261,17 @@ element_result element_parser_ctx::parse_port(size_t* tindex, element_ast* ast)
 {
     const element_token* tok;
     GET_TOKEN(tokeniser, *tindex, tok);
-    assert(tok->type == ELEMENT_TOK_IDENTIFIER || tok->type == ELEMENT_TOK_UNDERSCORE);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_PORT;
     if (tok->type == ELEMENT_TOK_IDENTIFIER) {
 	    ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, true));
-    } else {
+    } else if (tok->type == ELEMENT_TOK_UNDERSCORE) {
         // no name, advance
         tokenlist_advance(tokeniser, tindex);
+    } else {
+        log(ELEMENT_ERROR_INVALID_PORT, 
+            fmt::format("found '{}' when a port was expected.\nnote: a port must be either an identifier or an underscore.", tokeniser->text(tok)), ast);
+        return ELEMENT_ERROR_INVALID_PORT;
     }
 
     GET_TOKEN(tokeniser, *tindex, tok);
@@ -260,6 +281,7 @@ element_result element_parser_ctx::parse_port(size_t* tindex, element_ast* ast)
         type->nearest_token = tok;
         ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
     }
+
     return ELEMENT_OK;
 }
 
@@ -267,7 +289,6 @@ element_result element_parser_ctx::parse_portlist(size_t* tindex, element_ast* a
 {
     const element_token* tok;
     GET_TOKEN(tokeniser, *tindex, tok);
-    assert(tok->type == ELEMENT_TOK_IDENTIFIER || tok->type == ELEMENT_TOK_UNDERSCORE);
     element_tokeniser_get_token(tokeniser, *tindex-1, &ast->nearest_token); //the previous token is the bracket
     ast->type = ELEMENT_AST_NODE_PORTLIST;
     ast->flags = 0;
@@ -298,14 +319,30 @@ element_result element_parser_ctx::parse_exprlist(size_t* tindex, element_ast* a
         } while (token->type == ELEMENT_TOK_COMMA && tokenlist_advance(tokeniser, tindex));
     }
     else {
-        //todo: not really sure what these errors mean...
-        return ELEMENT_ERROR_INVALID_ARCHIVE;
+        element_log_message msg;
+        const std::string message =
+            fmt::format("expected to find something in the contents of the call to '{}', but nothing is contained within the parenthesis.\nnote: perhaps you meant to call a function with no arguments, in which case you must omit the parenthesis.",
+            ast->parent->identifier);
+        const std::string line_in_source = tokeniser->text_on_line(token->line);
+        msg.line_in_source = line_in_source.c_str();
+        msg.message = message.c_str();
+        msg.filename = token->file_name;
+        const element_token* previous_token;
+        GET_TOKEN(tokeniser, *tindex - 1, previous_token);
+        msg.character = previous_token->character;
+        msg.length = previous_token->tok_len + token->tok_len;
+        msg.line = token->line;
+        msg.message_code = ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL;
+        msg.related_log_message = nullptr;
+        msg.stage = ELEMENT_STAGE_PARSER;
+        tokeniser->logger->log(msg);
+        return ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL;
     }
 
     if (token->type != ELEMENT_TOK_BRACKETR)
     {
         element_log_message msg;
-        const std::string message = fmt::format("expected to find a ')' at the end of the call to '{}', but found '{}' instead\n",
+        const std::string message = fmt::format("expected to find a ')' at the end of the call to '{}', but found '{}' instead",
             ast->parent->identifier, tokeniser->text(token));
         const std::string line_in_source = tokeniser->text_on_line(token->line);
         msg.line_in_source = line_in_source.c_str();
@@ -328,7 +365,6 @@ element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
-    assert(token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_NUMBER);
 
     /* The first AST node is either LITERAL or CALL
      * LITERAL or CALL can have children, which indicates that they are the start of a chain (literals are always at the start of a chain)
@@ -369,8 +405,22 @@ element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
         // this will change root's type to LITERAL
         ELEMENT_OK_OR_RETURN(parse_literal(tindex, root));
     } else {
-        assert(false);
-        return ELEMENT_ERROR_INVALID_ARCHIVE; // TODO: error code
+        element_log_message msg;
+        const std::string message =
+            fmt::format("expected to find an identifier or number in the contents of the call to '{}', but found '{}' instead.",
+                ast->parent->identifier, tokeniser->text(token));
+        const std::string line_in_source = tokeniser->text_on_line(token->line);
+        msg.line_in_source = line_in_source.c_str();
+        msg.message = message.c_str();
+        msg.filename = token->file_name;
+        msg.character = token->character;
+        msg.length = token->tok_len;
+        msg.line = token->line;
+        msg.message_code = ELEMENT_ERROR_INVALID_CONTENTS_FOR_CALL;
+        msg.related_log_message = nullptr;
+        msg.stage = ELEMENT_STAGE_PARSER;
+        tokeniser->logger->log(msg);
+        return ELEMENT_ERROR_INVALID_CONTENTS_FOR_CALL;
     }
 
     GET_TOKEN(tokeniser, *tindex, token);
@@ -436,13 +486,17 @@ element_result element_parser_ctx::parse_expression(size_t* tindex, element_ast*
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token); //TODO: JM - CommentInline-fail.ele
-    assert(token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_UNDERSCORE || token->type == ELEMENT_TOK_NUMBER);
     ast->nearest_token = token;
+
     if (token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_NUMBER)
         return parse_call(tindex, ast);
+
     if (token->type == ELEMENT_TOK_UNDERSCORE)
         return parse_lambda(tindex, ast);
-    return ELEMENT_ERROR_INVALID_OPERATION; // TODO: better error code...
+
+    log(ELEMENT_ERROR_INVALID_EXPRESSION, fmt::format("failed to parse the expression '{}'.\nnote: it must be either an identifier, an underscore, or a number.",
+        tokeniser->text(token)), ast);
+    return ELEMENT_ERROR_INVALID_EXPRESSION;
 }
 
 element_result element_parser_ctx::parse_qualifiers(size_t* tindex, element_ast_flags* flags)
@@ -504,7 +558,10 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
         tokenlist_advance(tokeniser, tindex);
         ELEMENT_OK_OR_RETURN(parse_portlist(tindex, args));
         GET_TOKEN(tokeniser, *tindex, tok);
-        assert(tok->type == ELEMENT_TOK_BRACKETR);
+        if (tok->type != ELEMENT_TOK_BRACKETR) {
+            log(ELEMENT_ERROR_UNKNOWN, fmt::format("found '{}' at the end of a declaration with a portlist, expected ')'", tokeniser->text(tok)), args);
+            return ELEMENT_ERROR_UNKNOWN;
+        }
         TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
     }
     else {
@@ -574,7 +631,7 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
                 tokenlist_advance(tokeniser, tindex);
             } else {
                 element_log_message msg;
-                const std::string message = fmt::format("expected to find a ';' at the end of the expression for '{}', but found '{}' instead\n",
+                const std::string message = fmt::format("expected to find a ';' at the end of the expression for '{}', but found '{}' instead.",
                     ast->parent->children[ast_idx::function::declaration]->identifier, tokeniser->text(token));
                 const std::string line_in_source = tokeniser->text_on_line(token->line);
                 msg.line_in_source = line_in_source.c_str();
@@ -622,7 +679,7 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
         }
         else {
             log(ELEMENT_ERROR_MISSING_FUNCTION_BODY, 
-                "Non-intrinsic functions must declare a body",
+                "non-intrinsic functions must declare a body",
                 ast);
             return ELEMENT_ERROR_MISSING_FUNCTION_BODY;
         }
@@ -661,7 +718,7 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
     if (!is_intrinsic && !has_portlist)
     {
         log(ELEMENT_ERROR_MISSING_PORTS,
-            fmt::format("Port list for struct '{}' is required as it is not intrinsic",
+            fmt::format("portlist for struct '{}' is required as it is not intrinsic.",
                 tokeniser->text(ast->nearest_token)),
             ast);
         return ELEMENT_ERROR_MISSING_PORTS;
@@ -702,7 +759,7 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_CONSTRAINT;
-    auto declaration = ast_new_child(ast);
+    auto* declaration = ast_new_child(ast);
     declaration->flags = declflags;
 
     // constraints can have return types
@@ -880,8 +937,7 @@ element_result element_parser_ctx::validate_portlist(element_ast* ast)
 {
     const auto length = ast->children.size();
     if (length == 0) {
-
-        log(ELEMENT_ERROR_MISSING_PORTS, fmt::format("Port list cannot be empty"), ast);
+        log(ELEMENT_ERROR_MISSING_PORTS, "portlist cannot be empty", ast);
         return ELEMENT_ERROR_MISSING_PORTS;
     }
 
@@ -895,7 +951,7 @@ element_result element_parser_ctx::validate_portlist(element_ast* ast)
                 ast->children[i]->identifier == ast->children[j]->identifier)
             {
                 log(ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
-                    fmt::format("Parameter {} and {} in the port list of function '{}' have the same identifier '{}'",
+                    fmt::format("parameter '{}' and '{}' in the portlist of function '{}' have the same identifier '{}'",
                         i, j, ast->parent->identifier, ast->children[i]->identifier),
                     ast->children[i].get());
                 result = ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
@@ -929,7 +985,7 @@ element_result element_parser_ctx::validate_struct(element_ast* ast)
                 if (identifier == child_declaration->identifier)
                 {
                     log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-                        fmt::format("Struct identifier '{}' detected in scope '{}'",
+                        fmt::format("struct identifier '{}' detected in scope '{}'",
                             ast->identifier, ast->identifier),
                         ast);
                     result = ELEMENT_ERROR_INVALID_IDENTIFIER;
@@ -957,7 +1013,7 @@ element_result element_parser_ctx::validate_scope(element_ast* ast)
     	if(it != names.end())
     	{
             log(ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
-                fmt::format("Duplicate declaration '{}' detected in scope", child_identifier),
+                fmt::format("duplicate declaration '{}' detected in scope", child_identifier),
                 child_declaration);
             result = ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
     	}

@@ -35,7 +35,7 @@ void log_callback(const element_log_message* msg)
         buffer_str = &buffer[0];
     }
 
-    printf("\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s----------\n\n",
+    printf("\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
         msg->message_code,
         msg->filename,
         msg->line,
@@ -164,6 +164,25 @@ element_result test_failing_evals()
     if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
         return result;
 
+    //todo: namespace is "compilable" because that's how the CLI implements typeof, which throws an assert at evaluation (rightly so, shouldn't be an error, because trying to compile it should fail at that stage)
+    /*result = eval("namespace MyNamespace {} evaluate = MyNamespace;");
+    if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
+        return result;*/
+
+    result = eval("namespace MyNamespace {} evaluate = MyNamespace();");
+    if (result != ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL)
+        return result;
+
+    //todo: namspace should have a specific error message for calling a namespace, with a specific error code
+    result = eval("namespace MyNamespace {} evaluate = MyNamespace(1);");
+    if (result != ELEMENT_ERROR_UNKNOWN)
+        return result;
+
+    //todo: this should return an error for trying to index a function (only nullaries can be "index", as it actually indexes the thing it returs)
+    result = eval("func(a) = 1; evaluate = func.a;");
+    if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
+        return result;
+
     char my_vec[] =
         "struct MyVec(x:Num, y:Num)\n"
         "{\n"
@@ -184,16 +203,70 @@ element_result test_failing_evals()
     if (result != ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL)
         return result;
 
+    //todo: we should print that we expect '=' or '{' when defining the function 'evaluate' but found 'MyStruct' instead
     result = eval_with_source(my_vec, "evaluate MyStruct(1, 2, 3).add(MyStruct(4, 5, 6));\n");
     if (result != ELEMENT_ERROR_MISSING_FUNCTION_BODY)
         return result;
 
-    result = eval_with_source(my_vec, "evaluate\n");
+    //todo: broken
+    result = eval("evaluate\n");
+    if (result != ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END)
+        return result;
+
+    result = eval("evaluate;\n");
     if (result != ELEMENT_ERROR_MISSING_FUNCTION_BODY)
         return result;
 
-    result = eval_with_source(my_vec, "evaluate;\n");
-    if (result != ELEMENT_ERROR_MISSING_FUNCTION_BODY)
+    result = eval(";");
+    if (result != ELEMENT_ERROR_INVALID_IDENTIFIER)
+        return result;
+
+    result = eval("func = 1; evaluate = func(;);");
+    if (result != ELEMENT_ERROR_INVALID_EXPRESSION)
+        return result;
+
+    result = eval("func = 1; evaluate = func(a.;);");
+    if (result != ELEMENT_ERROR_INVALID_IDENTIFIER)
+        return result;
+
+    result = eval("func = 1; evaluate = func(a;);");
+    if (result != ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL)
+        return result;
+
+    result = eval("func = 1; evaluate = func(a,,);");
+    if (result != ELEMENT_ERROR_INVALID_EXPRESSION)
+        return result;
+
+    result = eval("func = 1; evaluate = func(a,);");
+    if (result != ELEMENT_ERROR_INVALID_EXPRESSION)
+        return result;
+
+    result = eval("func = 1; evaluate = func(,);");
+    if (result != ELEMENT_ERROR_INVALID_EXPRESSION)
+        return result;
+
+    result = eval("func(,) = 1; evaluate = func;");
+    if (result != ELEMENT_ERROR_INVALID_PORT)
+        return result;
+
+    result = eval("func(a:,) = 1; evaluate = func;");
+    if (result != ELEMENT_ERROR_INVALID_TYPENAME)
+        return result;
+
+    result = eval("func(a::) = 1; evaluate = func;");
+    if (result != ELEMENT_ERROR_INVALID_TYPENAME)
+        return result;
+
+    result = eval("func(a:) = 1; evaluate = func;");
+    if (result != ELEMENT_ERROR_INVALID_TYPENAME)
+        return result;
+
+    result = eval("func(a: = 1; evaluate = func;");
+    if (result != ELEMENT_ERROR_INVALID_TYPENAME)
+        return result;
+
+    result = eval("func(a:func(a)) = 1; evaluate = func;");
+    if (result != ELEMENT_ERROR_INVALID_TYPENAME)
         return result;
 
     printf("#######Failed successfully#######\n");
@@ -287,7 +360,6 @@ int main(int argc, char** argv)
     result = eval("mul(a) { return(b) = a.mul(b); } evaluate = mul(5)(2);");
     if (result != ELEMENT_OK)
         return result;*/
-
 
     //struct fields
     result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).a;");
