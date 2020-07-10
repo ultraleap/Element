@@ -227,17 +227,18 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
 
     // store LMNT stack base
     const size_t ctx_stack_offset = offsetof(lmnt_ictx, stack);
+    const size_t ctx_stack_count_offset = offsetof(lmnt_ictx, cur_stack_count);
     | ldr rStack, [rArg1, #(ctx_stack_offset)]
 
     const lmnt_loffset icount = defcode->instructions_count;
     size_t reg1, reg2, reg3; // scratch
     size_t rmode; // VFP rounding mode
     // Set rounding mode and clear any FP exceptions
-    | vmrs r0
-    | bic r0, r0, #0x00C00000
-    | bic r0, r0, #0x1F
-    | orr r0, r0, #(RMODE_NEGINF)
-    | vmsr r0
+    | vmrs rtmp1
+    | bic rtmp1, rtmp1, #0x00C00000
+    | bic rtmp1, rtmp1, #0x1F
+    | orr rtmp1, rtmp1, #(RMODE_NEGINF)
+    | vmsr rtmp1
     ||rmode = RMODE_NEGINF;
 
     lmnt_result result = LMNT_OK;
@@ -740,7 +741,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         |.macro rounds1, mode
         ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
         ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps2);
-        | ensurermode mode, r0
+        | ensurermode mode, rtmp1
         | round_with_nan_check reg3, reg1, >2
         |2:
         | writes_or_notify reg3, in.arg3, vtmps1
@@ -749,7 +750,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         |.macro roundv1, mode
         ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
         ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv2);
-        | ensurermode mode, r0
+        | ensurermode mode, rtmp1
         | round_with_nan_check reg3 + 0, reg1 + 0, >2
         |2:
         | round_with_nan_check reg3 + 1, reg1 + 1, >2
@@ -781,9 +782,105 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
 
         case LMNT_OP_INDEXDIS:
-        case LMNT_OP_INDEXDID:
-            // not up to these yet :(
+        {
+            // Unknown at compile-time what stack addresses this is going to read from. So...
+            flushAllRegisters(state);
+
+            const uint32_t offset = (uint32_t)in.arg2;
+            | .rodata
+            |1:
+            | .long offset
+            | .code
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps2);
+            // Check for NaN/infinities
+            | vmov rtmp1, s(reg1)
+            | ldr rtmp2, ->inftonanbits
+            | orr rtmp1, rtmp1, rtmp2
+            | ldr rtmp2, ->nanbits
+            | and rtmp1, rtmp1, rtmp2
+            | cmp rtmp1, rtmp2
+            | beq ->invalid_access
+            // float -> int
+            | vcvt.s32.f32 s(vtmps2), s(reg1)
+            | vmov rtmp1, s(vtmps2)
+            // index += offset
+            | ldr rtmp2, <1
+            | add rtmp1, rtmp1, rtmp2
+            // index >= stack_count?
+            | ldr rtmp2, [rArg1, #(ctx_stack_count_offset)]
+            | cmp rtmp2, rtmp1
+            | bls ->invalid_access
+            // address = stack_address + index*sizeof(lmnt_value)
+            | lsl rtmp1, rtmp1, #((int)log2f(sizeof(lmnt_value)))
+            | add rtmp1, rtmp1, rStack
+            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
+            | vldr s(reg3), [rtmp1]
+            | writes_or_notify reg3, in.arg3, vtmps1
             break;
+        }
+        case LMNT_OP_INDEXDID:
+        {
+            // Unknown at compile-time what stack addresses this is going to read from OR WRITE TO. So...
+            platformWriteAndEvictAll(state);
+
+            const uint32_t offset = (uint32_t)in.arg2;
+            | .rodata
+            |1:
+            | .long offset
+            | .code
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps2);
+            // arg1: check for NaN/infinities
+            | vmov rtmp1, s(reg1)
+            | ldr rtmp2, ->inftonanbits
+            | orr rtmp1, rtmp1, rtmp2
+            | ldr rtmp2, ->nanbits
+            | and rtmp1, rtmp1, rtmp2
+            | cmp rtmp1, rtmp2
+            | beq ->invalid_access
+            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_READ, vtmps1);
+            // arg3: check for NaN/infinities
+            | vmov rtmp1, s(reg3)
+            | ldr rtmp2, ->inftonanbits
+            | orr rtmp1, rtmp1, rtmp2
+            | ldr rtmp2, ->nanbits
+            | and rtmp1, rtmp1, rtmp2
+            | cmp rtmp1, rtmp2
+            | beq ->invalid_access
+            // arg1: float -> int
+            | vcvt.s32.f32 s(vtmps2), s(reg1)
+            | vmov rtmp1, s(vtmps2)
+            // arg1: index += offset
+            | ldr rtmp2, <1
+            | add rtmp1, rtmp1, rtmp2
+            // arg1: index >= stack_count?
+            | ldr rtmp2, [rArg1, #(ctx_stack_count_offset)]
+            | cmp rtmp2, rtmp1
+            | bls ->invalid_access
+            // arg1: address = stack_address + index*sizeof(lmnt_value)
+            | lsl rtmp1, rtmp1, #((int)log2f(sizeof(lmnt_value)))
+            | add rtmp1, rtmp1, rStack
+            | vldr s(vtmps2), [rtmp1]
+
+            // arg3: float -> int
+            | vcvt.s32.f32 s(vtmps1), s(reg3)
+            | vmov rtmp1, s(vtmps1)
+            // arg3: index += offset
+            | ldr rtmp2, <1
+            | add rtmp1, rtmp1, rtmp2
+            // arg3: index >= stack_count?
+            | ldr rtmp2, [rArg1, #(ctx_stack_count_offset)]
+            | cmp rtmp2, rtmp1
+            | bls ->invalid_access
+            // arg3: address = stack_address + index*sizeof(lmnt_value)
+            | lsl rtmp1, rtmp1, #((int)log2f(sizeof(lmnt_value)))
+            | add rtmp1, rtmp1, rStack
+            | vstr s(vtmps2), [rtmp1]
+
+            // We could just have overwritten any of the stack we loaded into registers, so...
+            // This won't write anything since we were only reading
+            platformWriteAndEvictAll(state);
+            break;
+        }
 
         case LMNT_OP_EXTCALL:
             // keep these or not?
