@@ -208,7 +208,7 @@ namespace Element
 
         public TResult Match<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(_value, Messages) : onError(Messages);
         
-        public Result Do(Action<T> action)
+        public Result Then(Action<T> action)
         {
             if (IsSuccess) action(_value);
             return (Result)this;

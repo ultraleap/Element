@@ -10,42 +10,49 @@ namespace Element
 {
     public enum MessageCode
     {
+        // GENERAL PURPOSE
         Success = 0,
-        SerializationError = 1,
-        MultipleDefinitions = 2,
-        InvalidCompileTarget = 3,
-        IntrinsicNotFound = 4,
-        LocalShadowing = 5,
-        ArgumentCountMismatch = 6,
-        IdentifierNotFound = 7,
-        ConstraintNotSatisfied = 8,
+        FileAccessError = 25,
+        ArgumentNotFound = 26,
+        ArgumentOutOfRange = 28,
+        InvalidCast = 30,
+        UnknownError = 9999,
+        
+        // PARSE
         ParseError= 9,
-        InvalidBoundaryFunction = 10,
-        RecursionNotAllowed = 11,
-        MissingBoundaryConverter = 12,
+        DuplicateSourceFile = 27,
+        
+        // VALIDATION
+        MultipleDefinitions = 2,
+        IntrinsicNotFound = 4,
         MissingPorts = 13,
-        TypeError = 14,
         InvalidIdentifier = 15,
-        InvalidExpression = 16,
-        InvalidReturnType = 17,
-        InvalidBoundaryData = 18,
         StructCannotHaveReturnType = 19,
         IntrinsicCannotHaveBody = 20,
         MissingFunctionBody = 21,
-        CannotBeUsedAsInstanceFunction = 22,
-        FunctionCannotBeUncurried = 23,
-        NotCompileConstant = 24,
-        FileAccessError = 25,
-        ArgumentNotFound = 26,
-        DuplicateSourceFile = 27,
-        ArgumentOutOfRange = 28,
         MultipleIntrinsicLocations = 29,
-        InvalidCast = 30,
         FunctionMissingReturn = 31,
         PortListCannotContainDiscards = 32,
         PortListDeclaresDefaultArgumentBeforeNonDefault = 33,
         IntrinsicConstraintCannotSpecifyFunctionSignature = 34,
-        UnknownError = 9999,
+        
+        // COMPILATION
+        SerializationError = 1,
+        InvalidCompileTarget = 3,
+        LocalShadowing = 5,
+        ArgumentCountMismatch = 6,
+        IdentifierNotFound = 7,
+        ConstraintNotSatisfied = 8,
+        InvalidBoundaryFunction = 10,
+        RecursionNotAllowed = 11,
+        MissingBoundaryConverter = 12,
+        TypeError = 14,
+        InvalidExpression = 16,
+        InvalidReturnType = 17,
+        InvalidBoundaryData = 18,
+        CannotBeUsedAsInstanceFunction = 22,
+        FunctionCannotBeUncurried = 23,
+        NotCompileConstant = 24,
     }
     
     public class CompilerMessage
@@ -65,7 +72,7 @@ namespace Element
         }
 
         public static bool TryGetMessageLevel(MessageCode messageCode, out MessageLevel level) =>
-            Enum.TryParse(TryGetMessageToml(messageCode, out var table) ? (string) table!["level"] : null, out level);
+            Enum.TryParse(TryGetMessageToml(messageCode, out var table) ? (string) table!["level"] : string.Empty, out level);
 
         public CompilerMessage(string message, MessageLevel? messageLevel = null) : this(null, messageLevel, message, null) {}
         public CompilerMessage(MessageCode messageCode, string? context, IReadOnlyCollection<TraceSite>? traceStack = null) : this((int)messageCode, null, context, traceStack) {}

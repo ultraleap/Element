@@ -30,10 +30,10 @@ namespace Element.NET.Tests
 
         private static readonly IntrinsicImplementation[] _intrinsics =
         {
-            NumStructImplementation.Instance,
-            BoolStructImplementation.Instance,
-            ListStructImplementation.Instance, 
-            TupleStructImplementation.Instance,
+            NumStruct.Instance,
+            BoolStruct.Instance,
+            ListStruct.Instance, 
+            TupleStruct.Instance,
         };
         
         [TestCaseSource(nameof(_intrinsics))]

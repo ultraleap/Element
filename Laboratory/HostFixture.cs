@@ -57,7 +57,7 @@ namespace Laboratory
             {
                 var expr = expressions[i];
                 var exprResult = Host.Evaluate(compilationInput, expr);
-                resultBuilder.Append(exprResult.Do(results =>
+                resultBuilder.Append(exprResult.Then(results =>
                 {
                     // ReSharper disable once AccessToModifiedClosure
                     resultBuilder.Result[i] = results;

@@ -13,7 +13,7 @@ namespace Element
     {
         public CompilerMessage? Trace(MessageCode messageCode, string? context) =>
             CompilerMessage.TryGetMessageLevel(messageCode, out var level)
-            && Verbosity >= level
+            && level >= Verbosity
                 ? new CompilerMessage(messageCode, context, TraceStack)
                 : null;
 

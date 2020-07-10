@@ -4,7 +4,6 @@ Element code runs using a host which can interpret or compile it to other format
 One of these formats is the bytecode format, [LMNTIL (Element Intermediate Language)](LMNT/Bytecode.md), for use in native and embedded applications.
 
 ## Element Language
-This is a brief summary, see the [Element Reference Manual](Language/ElementReferenceManual.md) for full details.
 * Single number data type `Num`
 * Structured types using `struct`
 * First class functions and local functions
@@ -17,11 +16,12 @@ sum(list) = list.fold(0, Num.add);
 factorial(n) = List.range(0, n).fold(1, Num.mul);
 ```
 
+For full details see the [Element Reference Manual](Language/ElementReferenceManual.md).
+
 ### Element Libraries
-Element includes a library of core functionality called [Prelude](Common/Prelude).
+Element includes a core set of functionality in the base library [Prelude](Common/Prelude).
 
 Element also comes with a [Standard Library](Common/StandardLibrary).
-New features will generally be implemented as part of the standard library rather than as language features.
 
 ## Repository Layout
 * [Laboratory - The Element Host Test Suite](Laboratory) - .NET Core 2.1 CLI

@@ -15,6 +15,8 @@ namespace Element.NET.Tests
                 TestContext.WriteLine(string.Empty);
             }
         }
+
+        private static string NameOrUnknown(MessageCode messageCode) => CompilerMessage.TryGetMessageName(messageCode, out var name) ? name! : "?";
         
         protected static void ExpectingError(IReadOnlyCollection<CompilerMessage> messages, bool success, MessageCode messageCode)
         {
@@ -27,15 +29,14 @@ namespace Element.NET.Tests
             
             if (success) 
                 Assert.Fail("Expected error ELE{0} '{1}' but succeeded",
-                    messageCode, CompilerMessage.TryGetMessageName(messageCode, out var name) ? name : "?");
+                    (int)messageCode, NameOrUnknown(messageCode));
 
             if (hasErrors) 
                 Assert.Fail("Expected error ELE{0} '{1}' but got following error codes instead: {2}",
-                    messageCode, CompilerMessage.TryGetMessageName(messageCode, out var name) ? name : "?",
-                    string.Join(", ", errors.Select(err => (MessageCode)err.MessageCode!.Value)));
+                    (int)messageCode, NameOrUnknown(messageCode),
+                    string.Join(", ", errors.Select(err => $"ELE{err.MessageCode!.Value} {NameOrUnknown((MessageCode)err.MessageCode!.Value)}")));
             
-            Assert.Fail("Expected message code {0} '{1}', but success was false and no errors were received", messageCode,
-                CompilerMessage.TryGetMessageName(messageCode, out var msg) ? msg : "?");
+            Assert.Fail("Expected message code {0} '{1}', but success was false and no errors were received", (int)messageCode, NameOrUnknown(messageCode));
         }
         
         protected static void ExpectingSuccess(IReadOnlyCollection<CompilerMessage> messages, bool success)
@@ -46,12 +47,12 @@ namespace Element.NET.Tests
             
             if (hasErrors) 
                 Assert.Fail("Expected success and got following code(s): {0}", 
-                    string.Join(",", errors.Select(err => err.MessageCode)));
+                    string.Join(",", errors.Select(err => $"ELE{err.MessageCode!.Value} {NameOrUnknown((MessageCode)err.MessageCode!.Value)}")));
             
             if(success)
-                Assert.Pass($"Received success");
+                Assert.Pass("Received success");
             else
-                Assert.Fail($"Received failure");
+                Assert.Fail("Received failure");
         }
 
         protected static SourceContext MakeSourceContext(CompilationInput compilationInput = default, string extraSource = default) =>
