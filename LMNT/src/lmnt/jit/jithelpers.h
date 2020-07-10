@@ -124,15 +124,23 @@ static int lookahead(jit_compile_state* state, lmnt_offset spos, size_t scount)
     return count;
 }
 
-static void* targetLinkAndEncode(dasm_State** d, size_t* sz)
+static lmnt_result targetLinkAndEncode(dasm_State** d, void** buf, size_t* sz)
 {
-    dasm_link(d, sz);
-    void* buf = LMNT_JIT_ALLOC_CFN_MEMORY(*sz);
-    if (buf) {
-        dasm_encode(d, buf);
-        LMNT_JIT_PROTECT_CFN_MEMORY(buf, *sz);
+    if (dasm_link(d, sz) != DASM_S_OK) return LMNT_ERROR_INTERNAL;
+    *buf = LMNT_JIT_ALLOC_CFN_MEMORY(*sz);
+    if (*buf) {
+        if (dasm_encode(d, *buf) == DASM_S_OK) {
+            LMNT_JIT_PROTECT_CFN_MEMORY(*buf, *sz);
+            return LMNT_OK;
+        } else {
+            LMNT_JIT_FREE_CFN_MEMORY(*buf, *sz);
+            *buf = NULL;
+            *sz = 0;
+            return LMNT_ERROR_INTERNAL;
+        }
+    } else {
+        return LMNT_ERROR_MEMORY_SIZE;
     }
-    return buf;
 }
 
 

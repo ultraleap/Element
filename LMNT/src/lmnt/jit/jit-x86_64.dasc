@@ -863,9 +863,14 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     | ->invalid_access:
     | mov rax, LMNT_ERROR_ACCESS_VIOLATION
     | jmp ->return
-    fndata->buffer = targetLinkAndEncode(&state->dasm_state, &fndata->codesize);
-    dasm_free(&state->dasm_state);
-    fndata->function = (lmnt_jit_fn)labels[lbl_lmnt_main];
+
+    if (result == LMNT_OK) {
+        result = targetLinkAndEncode(&state->dasm_state, &fndata->buffer, &fndata->codesize);
+        if (result == LMNT_OK) {
+            fndata->function = (lmnt_jit_fn)labels[lbl_lmnt_main];
+        }
+        dasm_free(&state->dasm_state);
+    }
 
 #if defined(LMNT_JIT_COLLECT_STATS)
     if (stats)
