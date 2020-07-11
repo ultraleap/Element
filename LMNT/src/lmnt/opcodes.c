@@ -1,6 +1,7 @@
 #include "lmnt/opcodes.h"
 
 #include "lmnt/interpreter.h"
+#include "lmnt/ops_branch.h"
 #include "lmnt/ops_fncall.h"
 #include "lmnt/ops_math.h"
 #include "lmnt/ops_misc.h"
@@ -9,6 +10,7 @@
 
 LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_noop,
+    lmnt_op_return,
     lmnt_op_assignss,
     lmnt_op_assignvv,
     lmnt_op_assignsv,
@@ -56,11 +58,25 @@ LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_ceilv,
     lmnt_op_indexdis,
     lmnt_op_indexdid,
+    lmnt_op_cmp,
+    lmnt_op_branch,
+    lmnt_op_brancheq,
+    lmnt_op_branchne,
+    lmnt_op_branchlt,
+    lmnt_op_branchle,
+    lmnt_op_branchgt,
+    lmnt_op_branchge,
+    lmnt_op_branchun,
+    lmnt_op_branchz,
+    lmnt_op_branchnz,
+    lmnt_op_branchpos,
+    lmnt_op_branchneg,
     lmnt_op_extcall,
 };
 
 const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "NOOP",      LMNT_OPERAND_UNUSED,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_UNUSED  },
+    { "RETURN",    LMNT_OPERAND_UNUSED,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_UNUSED  },
     { "ASSIGNSS",  LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK1  },
     { "ASSIGNVV",  LMNT_OPERAND_STACK4,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK4  },
     { "ASSIGNSV",  LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK4  },
@@ -108,10 +124,37 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "CEILV",     LMNT_OPERAND_STACK4,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK4  },
     { "INDEXDIS",  LMNT_OPERAND_DYNAMIC, LMNT_OPERAND_IMM,     LMNT_OPERAND_STACK1  },
     { "INDEXDID",  LMNT_OPERAND_DYNAMIC, LMNT_OPERAND_IMM,     LMNT_OPERAND_DYNAMIC },
+    { "CMP",       LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED  },
+    { "BRANCH",    LMNT_OPERAND_UNUSED,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHEQ",  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHNE",  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHLT",  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHLE",  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHGT",  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHGE",  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHUN",  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHZ",   LMNT_OPERAND_STACK1,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHNZ",  LMNT_OPERAND_STACK1,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHPOS", LMNT_OPERAND_STACK1,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
+    { "BRANCHNEG", LMNT_OPERAND_STACK1,  LMNT_OPERAND_CODEPTR, LMNT_OPERAND_CODEPTR },
     { "EXTCALL",   LMNT_OPERAND_DEFPTR,  LMNT_OPERAND_DEFPTR,  LMNT_OPERAND_STACKN  },
 };
 
 lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END] = {
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,

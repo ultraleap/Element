@@ -9,6 +9,7 @@ enum
 {
     // no-op: null, null, null
     LMNT_OP_NOOP = 0,
+    LMNT_OP_RETURN,
     // assign variants: stack, null, stack
     LMNT_OP_ASSIGNSS,
     LMNT_OP_ASSIGNVV,
@@ -74,6 +75,22 @@ enum
     LMNT_OP_INDEXDIS,
     // indexing: stackref, immediate, stackref
     LMNT_OP_INDEXDID,
+    // compare: stack, stack, null
+    LMNT_OP_CMP,
+    // branch: null, codelo, codehi
+    LMNT_OP_BRANCH,
+    LMNT_OP_BRANCHEQ,
+    LMNT_OP_BRANCHNE,
+    LMNT_OP_BRANCHLT,
+    LMNT_OP_BRANCHLE,
+    LMNT_OP_BRANCHGT,
+    LMNT_OP_BRANCHGE,
+    LMNT_OP_BRANCHUN,
+    // branch: stack, codelo, codehi
+    LMNT_OP_BRANCHZ,
+    LMNT_OP_BRANCHNZ,
+    LMNT_OP_BRANCHPOS,
+    LMNT_OP_BRANCHNEG,
     // extern call: deflo, defhi, imm
     LMNT_OP_EXTCALL,
     // placeholder end operation
@@ -89,6 +106,7 @@ typedef enum
     LMNT_OPERAND_IMM,     // I
     LMNT_OPERAND_DYNAMIC, // D
     LMNT_OPERAND_DEFPTR,
+    LMNT_OPERAND_CODEPTR,
 } lmnt_operand_type;
 
 typedef struct

@@ -121,11 +121,20 @@ static inline lmnt_validation_result validate_operand_defptr(const lmnt_archive*
     return LMNT_VALIDATION_OK;
 }
 
+static inline lmnt_validation_result validate_operand_codeptr(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+{
+    const lmnt_loffset target_offset = LMNT_COMBINE_OFFSET(arglo, arghi);
+    const lmnt_code* code;
+    LMNT_OK_OR_RETURN(lmnt_get_code(archive, def->code, &code));
+    return (target_offset < code->instructions_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
+}
+
 static lmnt_validation_result validate_instruction(const lmnt_archive* archive, const lmnt_def* def, lmnt_opcode code, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3, lmnt_offset constants_count, lmnt_offset rw_stack_count)
 {
     switch (code)
     {
     case LMNT_OP_NOOP:
+    case LMNT_OP_RETURN:
         return LMNT_VALIDATION_OK;
     case LMNT_OP_INDEXDIS:
         // arg1 is validated at runtime, but we can check stackref is valid
@@ -232,6 +241,25 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 4, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
+    case LMNT_OP_CMP:
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
+        return LMNT_VALIDATION_OK;
+    case LMNT_OP_BRANCHZ:
+    case LMNT_OP_BRANCHNZ:
+    case LMNT_OP_BRANCHPOS:
+    case LMNT_OP_BRANCHNEG:
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
+        // fallthrough
+    case LMNT_OP_BRANCH:
+    case LMNT_OP_BRANCHEQ:
+    case LMNT_OP_BRANCHNE:
+    case LMNT_OP_BRANCHLT:
+    case LMNT_OP_BRANCHLE:
+    case LMNT_OP_BRANCHGT:
+    case LMNT_OP_BRANCHGE:
+    case LMNT_OP_BRANCHUN:
+        return validate_operand_codeptr(archive, def, arg2, arg3, constants_count, rw_stack_count);
     // extern call: deflo, defhi, imm
     case LMNT_OP_EXTCALL:
         return validate_operand_defptr(archive, def, arg1, arg2, arg3, constants_count, rw_stack_count);
