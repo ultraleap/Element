@@ -419,11 +419,6 @@ static void test_indexdid(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-static void test_interrupt(void)
-{
-    // TODO: funky things with ucontext/SetThreadContext?
-}
-
 
 
 MAKE_REGISTER_SUITE_FUNCTION(misc,
@@ -436,5 +431,4 @@ MAKE_REGISTER_SUITE_FUNCTION(misc,
     CUNIT_CI_TEST(test_assignibv),
     CUNIT_CI_TEST(test_indexdis),
     CUNIT_CI_TEST(test_indexdid)
-    // CUNIT_CI_TEST(test_interrupt)
 );
