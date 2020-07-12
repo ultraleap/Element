@@ -79,23 +79,27 @@ enum
     LMNT_OP_CMP,
     // branch: null, codelo, codehi
     LMNT_OP_BRANCH,
-    LMNT_OP_BRANCHEQ,
-    LMNT_OP_BRANCHNE,
-    LMNT_OP_BRANCHLT,
-    LMNT_OP_BRANCHLE,
-    LMNT_OP_BRANCHGT,
-    LMNT_OP_BRANCHGE,
-    LMNT_OP_BRANCHUN,
+    LMNT_OP_BRANCHCEQ,
+    LMNT_OP_BRANCHCNE,
+    LMNT_OP_BRANCHCLT,
+    LMNT_OP_BRANCHCLE,
+    LMNT_OP_BRANCHCGT,
+    LMNT_OP_BRANCHCGE,
+    LMNT_OP_BRANCHCUN,
     // branch: stack, codelo, codehi
     LMNT_OP_BRANCHZ,
     LMNT_OP_BRANCHNZ,
     LMNT_OP_BRANCHPOS,
     LMNT_OP_BRANCHNEG,
+    LMNT_OP_BRANCHUN,
     // extern call: deflo, defhi, imm
     LMNT_OP_EXTCALL,
     // placeholder end operation
     LMNT_OP_END,
 };
+
+#define LMNT_IS_BRANCH_OP(opcode) ((opcode) >= LMNT_OP_BRANCH && (opcode) <= LMNT_OP_BRANCHUN)
+
 
 typedef enum
 {

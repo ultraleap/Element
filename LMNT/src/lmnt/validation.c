@@ -249,16 +249,17 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_BRANCHNZ:
     case LMNT_OP_BRANCHPOS:
     case LMNT_OP_BRANCHNEG:
+    case LMNT_OP_BRANCHUN:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         // fallthrough
     case LMNT_OP_BRANCH:
-    case LMNT_OP_BRANCHEQ:
-    case LMNT_OP_BRANCHNE:
-    case LMNT_OP_BRANCHLT:
-    case LMNT_OP_BRANCHLE:
-    case LMNT_OP_BRANCHGT:
-    case LMNT_OP_BRANCHGE:
-    case LMNT_OP_BRANCHUN:
+    case LMNT_OP_BRANCHCEQ:
+    case LMNT_OP_BRANCHCNE:
+    case LMNT_OP_BRANCHCLT:
+    case LMNT_OP_BRANCHCLE:
+    case LMNT_OP_BRANCHCGT:
+    case LMNT_OP_BRANCHCGE:
+    case LMNT_OP_BRANCHCUN:
         return validate_operand_codeptr(archive, def, arg2, arg3, constants_count, rw_stack_count);
     // extern call: deflo, defhi, imm
     case LMNT_OP_EXTCALL:

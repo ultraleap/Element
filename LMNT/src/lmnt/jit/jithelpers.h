@@ -143,6 +143,16 @@ static lmnt_result targetLinkAndEncode(dasm_State** d, void** buf, size_t* sz)
     }
 }
 
+static lmnt_loffset getNextBranchTarget(lmnt_loffset* targets, size_t tcount, lmnt_loffset prev)
+{
+    lmnt_loffset mint = UINT32_MAX;
+    for (size_t i = 0; i < tcount; ++i) {
+        if ((prev == UINT32_MAX || targets[i] > prev) && targets[i] < mint)
+            mint = targets[i];
+    }
+    return mint;
+}
+
 
 // Target-specific implementations
 static bool allowIndividualLaneAccess(jit_compile_state* state);
