@@ -31,6 +31,7 @@
     if ((fndata).data) {\
         lmnt_jit_delete_function((lmnt_jit_fn_data*)((fndata).data));\
         free((fndata).data);\
+        (fndata).data = NULL;\
     }
 
 #undef  TEST_EXECUTE
