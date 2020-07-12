@@ -107,6 +107,8 @@ static void test_branchceq(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
         LMNT_OP_BYTES(LMNT_OP_BRANCHCEQ,   0x00, 0x01, 0x00)
@@ -158,6 +160,8 @@ static void test_branchcne(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
@@ -219,6 +223,8 @@ static void test_branchclt(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLT,   0x00, 0x01, 0x00)
@@ -278,6 +284,8 @@ static void test_branchcle(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
@@ -339,6 +347,8 @@ static void test_branchcgt(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
         LMNT_OP_BYTES(LMNT_OP_BRANCHCGT,   0x00, 0x01, 0x00)
@@ -398,6 +408,8 @@ static void test_branchcge(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
@@ -459,6 +471,8 @@ static void test_branchcun(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
         LMNT_OP_BYTES(LMNT_OP_BRANCHCUN,   0x00, 0x01, 0x00)
@@ -515,6 +529,8 @@ static void test_branchz(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
         LMNT_OP_BYTES(LMNT_OP_BRANCHZ,    0x00, 0x01, 0x00)
@@ -570,6 +586,8 @@ static void test_branchnz(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
@@ -635,6 +653,8 @@ static void test_branchpos(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
         LMNT_OP_BYTES(LMNT_OP_BRANCHPOS,  0x00, 0x01, 0x00)
@@ -698,6 +718,8 @@ static void test_branchneg(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, -INFINITY);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
@@ -763,6 +785,8 @@ static void test_branchun(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0,
         LMNT_OP_BYTES(LMNT_OP_BRANCHUN,   0x00, 0x01, 0x00)
@@ -778,7 +802,6 @@ static void test_branchun(void)
 
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
-
 
 
 
