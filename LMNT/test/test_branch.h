@@ -13,6 +13,7 @@ static void test_branch(void)
 {
     lmnt_value rvals[1];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+    test_function_data fndata;
 
     archive a = create_archive_array("test", 0, 1, 1, 4, 0,
         LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x03, 0x00),
@@ -20,12 +21,39 @@ static void test_branch(void)
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x00)
     );
-    test_function_data fndata;
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
+    a = create_archive_array("test", 0, 1, 1, 16, 0,
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0xFF, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x0C, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x44, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x34, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x24, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x14, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x04, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x16, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x26, 0x00, 0x00)
+    );
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 4.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 0, 0, 0, 1, 0,

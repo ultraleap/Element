@@ -922,7 +922,6 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_BRANCHCEQ:
             platformWriteAndEvictAll(state);
             | beq =>cur_branch
-            |1:
             ++cur_branch;
             break;
         case LMNT_OP_BRANCHCNE:
@@ -933,7 +932,6 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_BRANCHCLT:
             platformWriteAndEvictAll(state);
             | bcc =>cur_branch
-            |1:
             ++cur_branch;
             break;
         case LMNT_OP_BRANCHCLE:
@@ -945,13 +943,11 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_BRANCHCGT:
             platformWriteAndEvictAll(state);
             | bgt =>cur_branch
-            |1:
             ++cur_branch;
             break;
         case LMNT_OP_BRANCHCGE:
             platformWriteAndEvictAll(state);
             | bge =>cur_branch
-            |1:
             ++cur_branch;
             break;
         case LMNT_OP_BRANCHCUN:
