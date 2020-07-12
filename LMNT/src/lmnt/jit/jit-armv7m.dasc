@@ -205,8 +205,22 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // }
     #endif
 
-    unsigned npc = 8;
-    unsigned nextpc = 0;
+    unsigned int npc = 0;
+    // Make PC label space for any branch instructions
+    for (size_t i = 0; i < state->in_count; ++i) {
+        npc += LMNT_IS_BRANCH_OP(state->instructions[i].opcode);
+    }
+
+    lmnt_loffset branch_targets[32]; // TODO: dynamically allocate to match npc
+    unsigned int cur_branch = 0;
+    for (size_t i = 0; i < state->in_count; ++i) {
+        if (LMNT_IS_BRANCH_OP(state->instructions[i].opcode)) {
+            branch_targets[cur_branch++] = LMNT_COMBINE_OFFSET(state->instructions[i].arg2, state->instructions[i].arg3);
+        }
+    }
+    cur_branch = 0;
+
+    lmnt_loffset next_target = getNextBranchTarget(branch_targets, npc, UINT32_MAX);
 
     dasm_init(&state->dasm_state, DASM_MAXSECTION);
     void* labels[lbl__MAX];
@@ -246,8 +260,24 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     for (state->cur_in = 0; state->cur_in < state->in_count; ++state->cur_in)
     {
         const lmnt_instruction in = state->instructions[state->cur_in];
+        // is this instruction a branch target? make a label if so
+        if (state->cur_in == next_target) {
+            // if we may have just jumped here, our cache status is unknown, so nuke everything
+            platformWriteAndEvictAll(state);
+            // find which label(s) we're meant to be
+            for (size_t t = 0; t < npc; ++t) {
+                if (state->cur_in == branch_targets[t]) {
+                    | =>t:
+                }
+            }
+            next_target = getNextBranchTarget(branch_targets, npc, next_target);
+        }
+        // encode instruction
         switch (in.opcode) {
         case LMNT_OP_NOOP:
+            break;
+        case LMNT_OP_RETURN:
+            | b ->ok_return
             break;
         case LMNT_OP_ASSIGNSS:
             if (in.arg1 != in.arg3) {
@@ -882,6 +912,101 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
         }
 
+        case LMNT_OP_CMP:
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
+            ||acquireScalarRegisterOrLoad(state, in.arg2, &reg2, ACCESSTYPE_READ, vtmps2);
+            | vcmp.f32 s(reg1), s(reg2)
+            | vmrs
+            break;
+
+        case LMNT_OP_BRANCHCEQ:
+            platformWriteAndEvictAll(state);
+            | beq =>cur_branch
+            |1:
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHCNE:
+            platformWriteAndEvictAll(state);
+            | bne =>cur_branch
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHCLT:
+            platformWriteAndEvictAll(state);
+            | bcc =>cur_branch
+            |1:
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHCLE:
+            platformWriteAndEvictAll(state);
+            | bls =>cur_branch
+            |1:
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHCGT:
+            platformWriteAndEvictAll(state);
+            | bgt =>cur_branch
+            |1:
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHCGE:
+            platformWriteAndEvictAll(state);
+            | bge =>cur_branch
+            |1:
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHCUN:
+            platformWriteAndEvictAll(state);
+            | bvs =>cur_branch
+            ++cur_branch;
+            break;
+
+        case LMNT_OP_BRANCH:
+            platformWriteAndEvictAll(state);
+            | b =>cur_branch
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHZ:
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
+            platformWriteAndEvictAll(state);
+            | vcmpz.f32 s(reg1)
+            | vmrs
+            | beq =>cur_branch
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHNZ:
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
+            platformWriteAndEvictAll(state);
+            | vcmpz.f32 s(reg1)
+            | vmrs
+            | bvs >1
+            | bne =>cur_branch
+            |1:
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHPOS:
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
+            platformWriteAndEvictAll(state);
+            | vmov rtmp1, s(reg1)
+            | cmp rtmp1, #0
+            | bge =>cur_branch
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHNEG:
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
+            platformWriteAndEvictAll(state);
+            | vmov rtmp1, s(reg1)
+            | cmp rtmp1, #0
+            | blt =>cur_branch
+            ++cur_branch;
+            break;
+        case LMNT_OP_BRANCHUN:
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
+            platformWriteAndEvictAll(state);
+            | vcmp.f32 s(reg1), s(reg1)
+            | bvs =>cur_branch
+            ++cur_branch;
+            break;
+
         case LMNT_OP_EXTCALL:
             // keep these or not?
             break;
@@ -896,6 +1021,8 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
 #endif
     }
+
+    | ->ok_return:
     platformWriteAndEvictAll(state);
     | mov r0, #LMNT_OK
     | ->return:

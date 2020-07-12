@@ -2,7 +2,7 @@ include(FetchContent)
 
 FetchContent_Declare(dynasm
     GIT_REPOSITORY https://github.com/Esvandiary/dynasm
-    GIT_TAG        141de6b19afc137953d15ed2c720934ad4899ea9
+    GIT_TAG        80b89aa759279b5902d7d07835338ff2c28a7caf
     GIT_SHALLOW    true)
 FetchContent_GetProperties(dynasm)
 if (NOT dynasm_POPULATED)
