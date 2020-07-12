@@ -110,7 +110,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_branchz(lmnt_ictx* ctx, lmnt_offset arg1, lmn
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_branchnz(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    if (fabsf(ctx->stack[arg1]) != 0.0f) {
+    if (!isnan(ctx->stack[arg1]) && fabsf(ctx->stack[arg1]) != 0.0f) {
         ctx->cur_instr = LMNT_COMBINE_OFFSET(arg2, arg3);
         return LMNT_BRANCHING;
     } else {
