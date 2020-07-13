@@ -33,7 +33,7 @@ namespace element
 
         static void register_func(log_error_message_code code, func&& b)
         {
-            auto& [it, success] = func_map.insert({ code, std::move(b) });
+            auto [it, success] = func_map.insert({ code, std::move(b) });
             if (!success)
                 throw;
         }
@@ -61,7 +61,7 @@ namespace element
 
         static void register_func(log_error_message_code code, func&& b)
         {
-            auto& [it, success] = func_map.insert({ code, std::move(b) });
+            auto [it, success] = func_map.insert({ code, std::move(b) });
             if (!success)
                 throw;
         }
