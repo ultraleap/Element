@@ -63,18 +63,11 @@ struct element_metainfo
     std::string source_type; //the type as it is in source, i.e. something the user could use in an element source file
 };
 
-struct file_information
-{
-    //note: unique_ptr so it's on the heap and the memory address doesn't change
-    std::vector<std::unique_ptr<std::string>> source_lines;
-    std::unique_ptr<std::string> file_name;
-};
-
 struct element_interpreter_ctx
 {
     bool prelude_loaded = false;
     std::shared_ptr<element_log_ctx> logger;
-
+    std::shared_ptr<element::source_context> src_context;
     std::unique_ptr<element::scope> global_scope;
 
     element_interpreter_ctx();
@@ -89,9 +82,6 @@ struct element_interpreter_ctx
     void set_log_callback(LogCallback callback);
     void log(int message_code, const std::string& message, const std::string& filename = std::string()) const;
     void log(const std::string& message) const;
-
-    //note: the key is a pointer to the first character of filename stored in the value
-    std::map<const char*, file_information> file_info;
 };
 
 #endif

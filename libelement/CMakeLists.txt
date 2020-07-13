@@ -15,6 +15,11 @@ configure_file (
 )
 
 set(libelement_sources
+    "src/source_information.hpp"
+
+    "src/log_errors.hpp"
+    "src/log_errors.cpp"
+
     "src/token.cpp"
     "src/interpreter.cpp"
     "src/construct.cpp"

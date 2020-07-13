@@ -1,19 +1,23 @@
 #include "element/ast.h"
-#include "element/token.h"
 
-#include <fmt/format.h>
-
+//STD
 #include <vector>
 #include <string>
 #include <cassert>
 #include <memory>
 #include <unordered_set>
 
+//LIBS
+#include <fmt/format.h>
+#include "MemoryPool.h"
+
+//SELF
+#include "element/token.h"
 #include "ast/ast_internal.hpp"
 #include "ast/ast_indexes.hpp"
 #include "token_internal.hpp"
-#include "MemoryPool.h"
 #include "configuration.hpp"
+#include "log_errors.hpp"
 
 //static const std::string intrinsic_qualifier = "intrinsic";
 //static const std::string namespace_qualifier = "namespace";
@@ -204,10 +208,13 @@ element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast*
 
     if (token->type != ELEMENT_TOK_IDENTIFIER)
     {
-        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-            fmt::format("invalid identifier '{}'", ast->identifier),
-            ast);
-        return ELEMENT_ERROR_INVALID_IDENTIFIER;
+        const auto error = build_log_error(
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_identifier_failed,
+            ast->identifier);
+        logger->log(error);
+        return error.result;
     }
 
     tokenlist_advance(tokeniser, tindex);

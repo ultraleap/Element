@@ -397,3 +397,11 @@ void element_log_ctx::log(const element_log_message& log) const
 
     callback(&log);
 }
+
+void element_log_ctx::log(const element::log_message& log) const
+{
+    if (callback == nullptr)
+        return;
+
+    callback(&log.get_log_message());
+}

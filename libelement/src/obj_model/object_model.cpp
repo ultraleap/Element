@@ -15,7 +15,7 @@ namespace element
     template <typename T>
     void assign_source_information(const element_interpreter_ctx* context, T& t, const element_ast* ast)
     {
-        const auto& file_info = context->file_info.at(ast->nearest_token->file_name);
+        const auto& file_info = context->src_context->file_info.at(ast->nearest_token->file_name);
         const std::string* filename = file_info.file_name.get();
         const std::string* line_in_source = file_info.source_lines[ast->nearest_token->line - 1].get();
         t->source_info = source_information(
