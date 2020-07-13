@@ -1,16 +1,18 @@
-#pragma once
+#include "common_internal.hpp"
 
+//STD
 #include <iostream>
 
-#include "common_internal.hpp"
+//LIBS
+#include <fmt/format.h>
+
+//SELF
 #include "token_internal.hpp"
 #include "ast/ast_internal.hpp"
 
 #ifdef LEGACY_COMPILER
 #include "etree/compiler.hpp"
 #endif
-
-#include <fmt/format.h>
 
 #include "configuration.hpp"
 #include "ast/fwd.hpp"
