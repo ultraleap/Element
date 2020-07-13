@@ -40,16 +40,20 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_floorv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_rounds(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3] = roundf(ctx->stack[arg1]);
+    // roundf does not use round-to-even, rintf and nearbyintf do
+    // we assume nobody's doing weird things with the FP environment
+    ctx->stack[arg3] = nearbyintf(ctx->stack[arg1]);
     return LMNT_OK;
 }
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_roundv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3 + 0] = roundf(ctx->stack[arg1 + 0]);
-    ctx->stack[arg3 + 1] = roundf(ctx->stack[arg1 + 1]);
-    ctx->stack[arg3 + 2] = roundf(ctx->stack[arg1 + 2]);
-    ctx->stack[arg3 + 3] = roundf(ctx->stack[arg1 + 3]);
+    // roundf does not use round-to-even, rintf and nearbyintf do
+    // we assume nobody's doing weird things with the FP environment
+    ctx->stack[arg3 + 0] = nearbyintf(ctx->stack[arg1 + 0]);
+    ctx->stack[arg3 + 1] = nearbyintf(ctx->stack[arg1 + 1]);
+    ctx->stack[arg3 + 2] = nearbyintf(ctx->stack[arg1 + 2]);
+    ctx->stack[arg3 + 3] = nearbyintf(ctx->stack[arg1 + 3]);
     return LMNT_OK;
 }
 
