@@ -9,7 +9,8 @@
 
 //SELF
 #include "fwd.hpp"
-#include "element/interpreter.h"
+#include "ast/fwd.hpp"
+#include "source_information.hpp"
 
 struct element_expression;
 struct element_interpreter_ctx;
@@ -18,45 +19,6 @@ namespace element
 {
     struct identifier;
     class intrinsic;
-
-    struct source_information
-    {
-    public:
-        source_information()
-        {
-
-        }
-
-        source_information(int line, int character_start, int character_end, const std::string* line_in_source, const char* filename)
-            : line(line)
-            , character_start(character_start)
-            , character_end(character_end)
-            , line_in_source(line_in_source)
-            , filename(filename)
-        {}
-
-        const std::string& get_text()
-        {
-            if (text.empty())
-            {
-                //todo: UTF8 concerns?
-                assert(character_end - character_start >= 0);
-                text = line_in_source->substr(character_start - 1, character_end - character_start);
-            }
-
-            return text;
-        }
-
-        int line = 0;
-        int character_start = 0;
-        int character_end = 0;
-
-        const std::string* line_in_source = nullptr;
-        const char* filename = nullptr;
-
-    private:
-        std::string text;
-    };
 
     class call_stack
     {

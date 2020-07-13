@@ -280,7 +280,8 @@ inline const element_ast* get_root_from_ast(const element_ast* ast)
 
 struct element_parser_ctx
 {
-    std::shared_ptr<element_log_ctx> logger = nullptr;
+    std::shared_ptr<element_log_ctx> logger;
+    std::shared_ptr<element::source_context> src_context;
     element_tokeniser_ctx* tokeniser = nullptr;
 
     element_ast* root = nullptr;

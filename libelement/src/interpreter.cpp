@@ -22,6 +22,7 @@
 #include "obj_model/declarations.hpp"
 #include "obj_model/intermediaries.hpp"
 #include "obj_model/errors.hpp"
+#include "log_errors.hpp"
 
 bool file_exists(const std::string& file)
 {
@@ -177,8 +178,9 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
     auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(tokeniser, element_tokeniser_delete);
 
+    src_context = std::make_shared<element::source_context>();
     //create the file info struct to be used by the object model later
-    file_information info;
+    element::file_information info;
     info.file_name = std::make_unique<std::string>(filename);
     //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
     ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()))
@@ -194,7 +196,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     }
 
     char* data = info.file_name->data();
-    file_info[data] = std::move(info);
+    src_context->file_info[data] = std::move(info);
 
     auto log_tokens = starts_with_prelude
         ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
@@ -207,6 +209,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     element_parser_ctx parser;
     parser.tokeniser = tokeniser;
     parser.logger = logger;
+    parser.src_context = src_context;
      
     auto result = parser.ast_build();
     ELEMENT_OK_OR_RETURN(result)
@@ -395,6 +398,7 @@ void element_interpreter_ctx::log(const std::string& message) const
 element_interpreter_ctx::element_interpreter_ctx()
 {
     element::detail::register_errors();
+    element::detail::register_log_errors();
 
     // TODO: hack, remove
     global_scope = std::make_unique<element::scope>(nullptr, nullptr);
