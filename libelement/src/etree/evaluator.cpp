@@ -1,6 +1,9 @@
 #include "etree/evaluator.hpp"
+
+//SELF
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 
 struct evaluator_ctx
 {
