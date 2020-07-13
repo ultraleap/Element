@@ -9,9 +9,9 @@
 #include "lmnt/common.h"
 #include "lmnt/interpreter.h"
 #include "lmnt/jit.h"
-#include "lmnt/jit/hosthelpers.h"
-#include "lmnt/jit/targethelpers-arm.h" // includes dasm_proto
-#include "lmnt/jit/reghelpers-arm-vfp.h"
+#include "jit/hosthelpers.h"
+#include "jit/targethelpers-arm.h" // includes dasm_proto
+#include "jit/reghelpers-arm-vfp.h"
 
 | .arch armv7m
 | .section rodata, code

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "lmnt/x86_64/platform.h"
-#include "lmnt/jit/jithelpers.h"
+#include "jit/jithelpers.h"
 
 
 // Required for __cpuid

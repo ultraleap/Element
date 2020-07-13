@@ -7,7 +7,7 @@
 #include "lmnt/jitconfig.h"
 #include "lmnt/interpreter.h"
 #include "lmnt/jit.h"
-#include "lmnt/jit/hosthelpers.h"
+#include "jit/hosthelpers.h"
 
 #ifndef DASM_FDECL
 #define DASM_FDECL static

@@ -12,9 +12,9 @@
 #include "lmnt/common.h"
 #include "lmnt/interpreter.h"
 #include "lmnt/jit.h"
-#include "lmnt/jit/hosthelpers.h"
-#include "lmnt/jit/targethelpers-x86.h" // includes dasm_proto
-#include "lmnt/jit/reghelpers-x86.h"
+#include "jit/hosthelpers.h"
+#include "jit/targethelpers-x86.h" // includes dasm_proto
+#include "jit/reghelpers-x86.h"
 
 
 | .arch x64

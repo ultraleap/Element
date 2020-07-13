@@ -11,19 +11,19 @@ option(LMNT_BUILD_JIT "Build the DynASM-based JIT" ON)
 set(LMNT_JIT_ARCHITECTURES "NATIVE" CACHE STRING "List of architectures to build the JIT for")
 
 set(lmnt_sources
-    "src/lmnt/archive.c"
-    "src/lmnt/validation.c"
-    "src/lmnt/extcalls.c"
-    "src/lmnt/interpreter.c"
-    "src/lmnt/opcodes.c"
-    "src/lmnt/ops_branch.c"
-    "src/lmnt/ops_fncall.c"
-    "src/lmnt/ops_math.c"
-    "src/lmnt/ops_misc.c"
-    "src/lmnt/ops_trig.c"
-    "src/lmnt/ops_util.c"
+    "src/archive.c"
+    "src/validation.c"
+    "src/extcalls.c"
+    "src/interpreter.c"
+    "src/opcodes.c"
+    "src/ops_branch.c"
+    "src/ops_fncall.c"
+    "src/ops_math.c"
+    "src/ops_misc.c"
+    "src/ops_trig.c"
+    "src/ops_util.c"
 
-    "src/lmnt/helpers.h"
+    "src/helpers.h"
 
     "include/lmnt/common.h"
     "include/lmnt/config.h"
@@ -45,14 +45,14 @@ if (LMNT_TARGET_ARCH STREQUAL "x86_64")
     list(APPEND lmnt_sources
         "include/lmnt/x86_64/platform.h"
         "include/lmnt/x86_64/memcpy_fast.h"
-        "src/lmnt/jit/targethelpers-x86.h"
-        "src/lmnt/jit/reghelpers-x86.h"
+        "src/jit/targethelpers-x86.h"
+        "src/jit/reghelpers-x86.h"
     )
 elseif (LMNT_TARGET_ARCH STREQUAL "armv7a" OR LMNT_TARGET_ARCH STREQUAL "armv7m")
     list(APPEND lmnt_sources
         "include/lmnt/arm/platform.h"
-        "src/lmnt/jit/targethelpers-arm.h"
-        "src/lmnt/jit/reghelpers-arm-vfp.h"
+        "src/jit/targethelpers-arm.h"
+        "src/jit/reghelpers-arm-vfp.h"
     )
 endif ()
 
@@ -66,10 +66,10 @@ if(LMNT_BUILD_JIT)
     message(STATUS "Building JIT for: ${jit_arch_list}")
 
     list(APPEND lmnt_sources
-        "src/lmnt/jit.c"
+        "src/jit.c"
 
-        "src/lmnt/jit/jithelpers.h"
-        "src/lmnt/jit/hosthelpers.h"
+        "src/jit/jithelpers.h"
+        "src/jit/hosthelpers.h"
 
         "include/lmnt/jit.h"
     )
@@ -77,8 +77,9 @@ if(LMNT_BUILD_JIT)
     set (jit_inputs)
     set (jit_outputs)
     foreach (arch IN LISTS LMNT_JIT_ARCHITECTURES)
-        set(lmnt_jit_input "${CMAKE_CURRENT_SOURCE_DIR}/src/lmnt/jit/jit-${arch}.dasc")
-        set(lmnt_jit_output "${CMAKE_CURRENT_BINARY_DIR}/jit-${arch}.c")
+        string(TOLOWER "${arch}" arch_lower)
+        set(lmnt_jit_input "${CMAKE_CURRENT_SOURCE_DIR}/src/jit/jit-${arch_lower}.dasc")
+        set(lmnt_jit_output "${CMAKE_CURRENT_BINARY_DIR}/jit-${arch_lower}.c")
 
         set (lmnt_jit_flags "TARGET_${arch}" "HOST_${LMNT_TARGET_ARCH}")
         if (WIN32)
