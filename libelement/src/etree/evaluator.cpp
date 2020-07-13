@@ -141,7 +141,7 @@ element_value element_evaluate_unary(element_expression_unary::op op, element_va
     case element_expression_unary::op::tan:   return std::tan(a);
 
     //boolean
-    case element_expression_unary::op::not :  return !a;
+    case element_expression_unary::op::not_ :  return !a;
     default: assert(false);                   return static_cast<element_value>(std::nan(""));
     }
 }
@@ -162,8 +162,8 @@ element_value element_evaluate_binary(element_expression_binary::op op, element_
     case element_expression_binary::op::sub:   return a - b;
 
     //boolean
-    case element_expression_binary::op::and :  return a && b;
-    case element_expression_binary::op:: or :  return a || b;
+    case element_expression_binary::op::and_ :  return a && b;
+    case element_expression_binary::op:: or_ :  return a || b;
 
     //comparison
     case element_expression_binary::op::eq :   return a == b;

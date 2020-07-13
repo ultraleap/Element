@@ -53,8 +53,8 @@ enum class element_binary_op
     atan2,
 
 	//boolean
-    and,
-    or,
+    and_, //reserved keyword
+    or_, //reserved keyword
 
 	//comparison
 	eq,
