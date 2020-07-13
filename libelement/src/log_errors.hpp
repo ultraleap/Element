@@ -19,6 +19,8 @@ namespace element
     enum class log_error_message_code
     {
         parse_identifier_failed,
+        parse_identifier_reserved,
+        parse_typename_not_identifier,
     };
 
     template <typename... Args>

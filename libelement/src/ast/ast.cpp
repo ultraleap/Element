@@ -221,7 +221,13 @@ element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast*
 
     const auto result = check_reserved_words(ast->identifier, allow_reserved_args, allow_reserved_names);
     if (result != ELEMENT_OK) {
-        log(result, fmt::format("identifier '{}' is reserved", ast->identifier), ast);
+        const auto error = build_log_error(
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_identifier_reserved,
+            ast->identifier);
+        logger->log(error);
+        return error.result;
     }
 
     return result;
@@ -235,9 +241,13 @@ element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* a
     ast->type = ELEMENT_AST_NODE_TYPENAME;
 
     if (tok->type != ELEMENT_TOK_IDENTIFIER) {
-        log(ELEMENT_ERROR_INVALID_TYPENAME, 
-            fmt::format("found '{}' when a type was expected.\nnote: a type must be an identifier or a chain of them, such as 'MyNamespace.MyStruct'.", tokeniser->text(tok)), ast);
-        return ELEMENT_ERROR_INVALID_TYPENAME;
+        const auto error = build_log_error(
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_typename_not_identifier,
+            tokeniser->text(tok));
+        logger->log(error);
+        return error.result;
     }
 
     element_result result = ELEMENT_OK;
