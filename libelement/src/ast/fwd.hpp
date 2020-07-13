@@ -22,7 +22,7 @@ enum class element_nullary_op {
 
 enum class element_unary_op
 {
-	//num
+    //num
     sin,
     cos,
     tan,
@@ -34,8 +34,8 @@ enum class element_unary_op
     ceil,
     floor,
 
-	//boolean
-    not,
+    //boolean
+    not_, //reserved keyword
 };
 
 enum class element_binary_op
