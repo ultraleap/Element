@@ -12,7 +12,6 @@ struct evaluator_ctx
     element_evaluator_options options;
 };
 
-
 static element_result do_evaluate(evaluator_ctx& context, const expression_const_shared_ptr& expr, element_value* outputs, size_t outputs_count, size_t& outputs_written)
 {
     if (const auto* ec = expr->as<element_expression_constant>()) {
@@ -161,7 +160,7 @@ element_value element_evaluate_binary(element_expression_binary::op op, element_
     case element_expression_binary::op::min:   return (std::min)(a, b);
     case element_expression_binary::op::mul:   return a * b;
     case element_expression_binary::op::pow:   return std::pow(a, b);
-    case element_expression_binary::op::rem:   return std::fmodf(a, b);
+    case element_expression_binary::op::rem:   return std::modf(a, &b);
     case element_expression_binary::op::sub:   return a - b;
 
     //boolean
