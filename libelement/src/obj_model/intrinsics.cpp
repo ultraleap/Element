@@ -72,9 +72,9 @@ namespace element
             { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, type::boolean.get(), type::num.get(), type::num.get()) },
 
             { "Bool.if", std::make_shared<intrinsic_if>() },
-            { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not, type::boolean.get(), type::boolean.get()) },
-            { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and, type::boolean.get(), type::boolean.get()) },
-            { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op:: or , type::boolean.get(), type::boolean.get()) },
+            { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not_, type::boolean.get(), type::boolean.get()) },
+            { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and_, type::boolean.get(), type::boolean.get()) },
+            { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op:: or_ , type::boolean.get(), type::boolean.get()) },
 
             { "True", std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, type::boolean.get()) },
             { "False", std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, type::boolean.get()) },
@@ -146,7 +146,7 @@ namespace element
     {
         auto type = type::num.get();
 
-        if (operation == element_unary_op::not)
+        if (operation == element_unary_op::not_)
             type = type::boolean.get();
 
         auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
@@ -175,8 +175,8 @@ namespace element
 
         switch (operation)
         {
-            case element_binary_op::and:
-            case element_binary_op::or:
+            case element_binary_op::and_:
+            case element_binary_op::or_:
             case element_binary_op::eq:
             case element_binary_op::neq:
             case element_binary_op::lt:
