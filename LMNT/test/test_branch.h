@@ -107,6 +107,14 @@ static void test_branchceq(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), 1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     // TODO: separate into "invalid" test suite
@@ -158,6 +166,14 @@ static void test_branchcne(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), 1.0f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
 
@@ -223,6 +239,14 @@ static void test_branchclt(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), 1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     // TODO: separate into "invalid" test suite
@@ -282,6 +306,14 @@ static void test_branchcle(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
 
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), 1.0f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
@@ -347,6 +379,14 @@ static void test_branchcgt(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), 1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     // TODO: separate into "invalid" test suite
@@ -406,6 +446,14 @@ static void test_branchcge(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
 
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""), 1.0f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
 
