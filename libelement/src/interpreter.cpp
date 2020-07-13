@@ -873,7 +873,9 @@ element_result element_metainfo_get_typeof(const element_metainfo* metainfo, cha
     if (buffer_size < static_cast<int>(metainfo->typeof.size()))
         return ELEMENT_ERROR_UNKNOWN;
 
-    strncpy_s(buffer, buffer_size, metainfo->typeof.c_str(), buffer_size);
+    #define _CRT_SECURE_NO_WARNINGS
+    strncpy(buffer, metainfo->typeof.c_str(), metainfo->typeof.size());
+    #undef _CRT_SECURE_NO_WARNINGS
 
     return ELEMENT_OK;
 }
