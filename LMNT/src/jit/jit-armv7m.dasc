@@ -810,6 +810,12 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_CEILV:
             | roundv1 RMODE_POSINF
             break;
+        case LMNT_OP_TRUNCS:
+            | rounds1 RMODE_ZERO
+            break;
+        case LMNT_OP_TRUNCV:
+            | roundv1 RMODE_ZERO
+            break;
 
         case LMNT_OP_INDEXDIS:
         {

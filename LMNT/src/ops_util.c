@@ -72,6 +72,21 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_ceilv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
     return LMNT_OK;
 }
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_truncs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    ctx->stack[arg3] = truncf(ctx->stack[arg1]);
+    return LMNT_OK;
+}
+
+LMNT_ATTR_FAST lmnt_result lmnt_op_truncv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    ctx->stack[arg3 + 0] = truncf(ctx->stack[arg1 + 0]);
+    ctx->stack[arg3 + 1] = truncf(ctx->stack[arg1 + 1]);
+    ctx->stack[arg3 + 2] = truncf(ctx->stack[arg1 + 2]);
+    ctx->stack[arg3 + 3] = truncf(ctx->stack[arg1 + 3]);
+    return LMNT_OK;
+}
+
 LMNT_ATTR_FAST lmnt_result lmnt_op_minss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = fminf(ctx->stack[arg1], ctx->stack[arg2]);
