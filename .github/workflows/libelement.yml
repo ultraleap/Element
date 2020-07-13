@@ -19,7 +19,7 @@ jobs:
       - name: Run tests
         run: |
           cd Laboratory
-          export CC=g++-8
+          export CC=gcc-8
           export CXX=g++-8
           dotnet test --test-adapter-path:. --logger:trx -s "libelement_cli - Debug.runsettings"
       - name: Uploaded test results on fail
