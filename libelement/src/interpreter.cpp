@@ -209,10 +209,6 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     parser.logger = logger;
      
     auto result = parser.ast_build();
-    //todo: hacky message to help with unit tests until we add logging for all error cases
-    if (result < ELEMENT_OK) {
-        log(result, std::string("element_ast_build failed with element_result " + std::to_string(result)), filename);
-    }
     ELEMENT_OK_OR_RETURN(result)
 
     auto log_ast = starts_with_prelude
@@ -721,9 +717,9 @@ element_result element_interpreter_find(element_interpreter_ctx* context, const 
     auto obj = context->global_scope->find(element::identifier(path), false);
     if (!obj)
     {
-        assert(!"failed to find user's request");
         *compilable = nullptr;
-        return ELEMENT_ERROR_UNKNOWN;
+        context->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("failed to find '{}'.", path));
+        return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND;
     }
 
     *compilable = new element_compilable{std::move(obj)};

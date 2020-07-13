@@ -16,7 +16,7 @@ void log_callback(const element_log_message* msg)
     buffer[0] = '^';
     buffer[1] = '\0';
     const char* buffer_str = NULL;
-    if (msg->character - 1 > 0)
+    if (msg->character - 1 >= 0)
     {
         const int padding_count = msg->character - 1;
         for (int i = 0; i < padding_count; ++i)
@@ -208,9 +208,8 @@ element_result test_failing_evals()
     if (result != ELEMENT_ERROR_MISSING_FUNCTION_BODY)
         return result;
 
-    //todo: broken
     result = eval("evaluate\n");
-    if (result != ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END)
+    if (result != ELEMENT_ERROR_PARTIAL_GRAMMAR)
         return result;
 
     result = eval("evaluate;\n");
@@ -265,8 +264,22 @@ element_result test_failing_evals()
     if (result != ELEMENT_ERROR_INVALID_TYPENAME)
         return result;
 
+    //note: expressions aren't valid in a typename, might change?
     result = eval("func(a:func(a)) = 1; evaluate = func;");
+    if (result != ELEMENT_ERROR_MISSING_CLOSING_PARENTHESIS_FOR_PORTLIST)
+        return result;
+
+    result = eval("func(a:123) = 1; evaluate = func;");
     if (result != ELEMENT_ERROR_INVALID_TYPENAME)
+        return result;
+
+    result = eval("123 = 1;");
+    if (result != ELEMENT_ERROR_INVALID_IDENTIFIER)
+        return result;
+
+    //empty is okay, but we look for "evaluate", which produces an error
+    result = eval("");
+    if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
         return result;
 
     printf("#######Failed successfully#######\n");
@@ -377,6 +390,11 @@ int main(int argc, char** argv)
 
     //struct instance function called with more parameters
     result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct, s2:MyStruct) = MyStruct(s.a.add(s2.a), s.b.add(s2.b));} evaluate = MyStruct(1, 2).add(MyStruct(1, 2)).b;");
+    if (result != ELEMENT_OK)
+        return result;
+
+    //typename can refer to things inside scopes
+    result = eval("namespace Space { struct Thing(a){}} func(a:Space.Thing) = a.a; evaluate = func(Space.Thing(1));");
     if (result != ELEMENT_OK)
         return result;
 

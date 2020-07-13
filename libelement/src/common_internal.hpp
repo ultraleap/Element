@@ -21,7 +21,7 @@ struct element_log_ctx
     LogCallback callback;
 	
     void log(const std::string& message, const element_stage stage) const;
-    void log(const element_tokeniser_ctx& context, element_result code, const std::string& message, int length = -1, element_log_message* related_message = nullptr) const;
+    void log(const element_tokeniser_ctx& context, element_result code, const std::string& message, int length = 0, element_log_message* related_message = nullptr) const;
     void log(const element_interpreter_ctx& context, element_result code, const std::string& message, const std::string& filename) const;
     void log(const element_parser_ctx& context, element_result code, const std::string& message, const element_ast* nearest_ast = nullptr) const;
     void log(const element_compiler_ctx& context, element_result code, const std::string& message, const element_ast* nearest_ast = nullptr) const;

@@ -35,7 +35,11 @@ namespace libelement::cli
 		{
 			auto result = setup(compilation_input);
 			if (result != ELEMENT_OK)
-			{				
+			{
+				//todo: the test runner expects at least one PARSE_ERROR
+				auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "failed when parsing");
+				std::cout << parse_error.serialize() << std::endl;
+				//expects the last thing to be True/False (not json)
 				return compiler_message("False");
 			}
 

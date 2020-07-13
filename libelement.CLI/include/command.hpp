@@ -188,7 +188,7 @@ namespace libelement::cli
 			case ELEMENT_OK:
 				return compiler_message(value, trace_stack);
 			default:
-				return compiler_message(ELEMENT_ERROR_UNKNOWN, value, trace_stack);
+				return compiler_message(error_conversion(result), value, trace_stack);
 			}
 		}
 
@@ -205,8 +205,8 @@ namespace libelement::cli
 				result = element_interpreter_load_prelude(context);
 				if (result != ELEMENT_OK) 
 				{
-					//TODO: Better solution for this? Forces a parse error on any file load error
-					auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "Parsing failed");
+				    //TODO: Better solution for this? Forces a parse error on any file load error
+					auto parse_error = compiler_message(error_conversion(result), "failed when loading prelude");
 					std::cout << parse_error.serialize() << std::endl;
 					
 					return result;
@@ -219,8 +219,7 @@ namespace libelement::cli
 				result = element_interpreter_load_packages(context, &packages[0], packages_count);
 				if (result != ELEMENT_OK)
 				{
-					//TODO: Better solution for this? Forces a parse error on any file load error
-					auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "Parsing failed");
+					auto parse_error = compiler_message(error_conversion(result), "failed when loading packages");
 					std::cout << parse_error.serialize() << std::endl;
 
 					return result;
@@ -234,8 +233,7 @@ namespace libelement::cli
 				result = element_interpreter_load_files(context, &source_files[0], source_file_count);
 				if (result != ELEMENT_OK) 
 				{
-					//TODO: Better solution for this? Forces a parse error on any file load error
-					auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "Parsing failed");
+					auto parse_error = compiler_message(error_conversion(result), "failed when loading files");
 					std::cout << parse_error.serialize() << std::endl;
 					
 					return result;
