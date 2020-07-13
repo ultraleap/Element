@@ -4,7 +4,7 @@
 The bytecode should above all be fast to execute, and minimise additional memory usage. The bytecode should also be as compact as is feasible.
 
 ## Format (v0, unstable)
-A single bytecode archive can contain multiple functions to be executed.
+A single bytecode archive can contain multiple functions to be executed. All integers are encoded as little-endian.
 
 The structure of the file is made up of multiple segments:
 * File Header
@@ -13,10 +13,12 @@ The structure of the file is made up of multiple segments:
 * Code Table
 * Constants Table
 
+
 ### File Header
+
 The file header is a constant size, and contains information about the file:
-* Magic (4 bytes, `'L' 'M' 'N' 'T'`)
-* File format version (2 x uint8, currently `0, 0`)
+* Magic (4 bytes, `['L' 'M' 'N' 'T']`)
+* File format version (2 x uint8, currently `[0, 0]`)
 * Two reserved bytes
 * Length (in bytes) of all other segments
 
@@ -35,7 +37,9 @@ struct {
 }
 ```
 
+
 ### Strings Table
+
 The strings table contains a deduplicated list of all strings required by the archive. This typically consists of function names for searching at runtime.
 
 The format of each entry can be summarised as:
@@ -45,11 +49,13 @@ struct {
 	char value[length];
 }
 ```
-Note that all strings are stored as UTF-8 and are C-strings (i.e. the last character must be '\0'). The length field's value includes this null.
+Note that all strings are stored as UTF-8 and are C-strings (i.e. the last character must be '\0'). The length field is in bytes, **not** characters and its value includes the null terminator.
 
 The table consists of a set of these entries. There must not be any padding between entries or at the end of the table.
 
+
 ### Definitions Table
+
 The definitions table contains details of each function which can be executed within this archive.
 
 The format can be summarised as:
@@ -81,7 +87,9 @@ struct {
 
 The table consists of a set of these entries. There must not be any padding between entries or at the end of the table.
 
+
 ### Code Table
+
 The code table contains a set of instructions to be executed.
 
 The format can be summarised as:
@@ -100,11 +108,13 @@ struct {
 	uint16_t arg3;
 }
 ```
-`arg3` is used for return values; in cases where there is only one input argument, `arg2` is unused.
+Inputs are filled from the left, and outputs are filled from the right; thus, `arg1` and `arg2` are most commonly used for inputs and `arg3` is typically for results. For some instructions, inputs or outputs are specified across two arguments (`arg1` and `arg2` for inputs, `arg2` and `arg3` for outputs). In all of these cases, the first argument is the low half, and the second argument is the high half.
 
 The table consists of a set of these entries. Padding is allowed between entries as well as at the end of the table, where it may be necessary (see next).
 
+
 ### Constants Table
+
 This is a table of constants used by functions within this archive. When loaded by the interpreter, the start of a function's stack will be the start of this table.
 
 The table consists of a set of deduplicated element values, with no other metadata.
@@ -112,9 +122,6 @@ The table consists of a set of deduplicated element values, with no other metada
 **This table must be aligned to a minimum of 8 bytes within the archive data. Pad the end of the previous table if needed to achieve this.**
 
 
-## Instructions
-Instructions generally take 1-2 arguments and return one argument. Note, however, that in some cases these arguments may be the first element in an operation involving multiple elements.
+### Instructions
 
-Many opcodes will have variants taking different types of arguments: for example, `ADDSS` adds two scalars, whilst `ADDVV` adds two 4-element vectors.
-
-TODO: more details.
+A detailed list of instructions and their arguments can be found [here](Instructions.md).

@@ -94,7 +94,7 @@ enum
     LMNT_OP_BRANCHPOS,
     LMNT_OP_BRANCHNEG,
     LMNT_OP_BRANCHUN,
-    // extern call: deflo, defhi, imm
+    // extern call: deflo, defhi, stack
     LMNT_OP_EXTCALL,
     // placeholder end operation
     LMNT_OP_END,
