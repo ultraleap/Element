@@ -66,7 +66,7 @@ if(LMNT_BUILD_JIT)
     message(STATUS "Building JIT for: ${jit_arch_list}")
 
     list(APPEND lmnt_sources
-        "src/jit.c"
+        "src/jit/jit.c"
 
         "src/jit/jithelpers.h"
         "src/jit/hosthelpers.h"
