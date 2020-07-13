@@ -53,7 +53,7 @@ void log_callback(const element_log_message* const message)
 
 void command_callback(const command& command) 
 {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && defined(WIN32)
 	//TODO: JM - TEMPORARY - Remove me later
 	SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
 
