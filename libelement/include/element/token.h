@@ -51,7 +51,7 @@ element_result element_tokeniser_delete(element_tokeniser_ctx* state);
 element_result element_tokeniser_get_filename(const element_tokeniser_ctx* state, const char** filename);
 element_result element_tokeniser_get_input(const element_tokeniser_ctx* state, const char** input);
 element_result element_tokeniser_get_token_count(const element_tokeniser_ctx* state, size_t* count);
-element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, const size_t index, const element_token** token);
+element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, const size_t index, const element_token** token, const char* msg);
 
 void element_tokeniser_set_log_callback(element_tokeniser_ctx* state, void (*log_callback)(const element_log_message*));
 

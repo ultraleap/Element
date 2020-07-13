@@ -48,18 +48,49 @@ element_result element_tokeniser_get_token_count(const element_tokeniser_ctx* st
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, const size_t index, const element_token** token)
+element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, const size_t index, const element_token** token, const char* msg)
 {
     assert(state);
     assert(token);
+    std::string message = msg ? msg : "";
 
     if (index >= state->tokens.size()) {
-        const auto msg = fmt::format("Internal Error - Tried to access token at index {} but there are only {} tokens",
-            index, state->tokens.size());
+        if (message.empty()) {
+            message = fmt::format("tried to access token at index {} but there are only {} tokens.",
+                index, state->tokens.size());
+
+            //if the token requested is only one after the end
+            if (!state->tokens.empty() && index == state->tokens.size()) {
+                message += "\nnote: perhaps your source code is incomplete.";
+            } else {
+                message += "\nnote: perhaps an internal compiler error.";
+            }
+        }
 
         *token = nullptr;
-        state->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
-        return ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
+        if (state->tokens.empty())
+        {
+            state->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
+            return ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
+        }
+        else
+        {
+            auto& last_token = state->tokens[state->tokens.size() - 1];
+            element_log_message log_msg;
+            const std::string line_in_source = state->text_on_line(last_token.line);
+            log_msg.line_in_source = line_in_source.c_str();
+            log_msg.message = message.c_str();
+            log_msg.filename = last_token.file_name;
+            log_msg.length = last_token.tok_len;
+            log_msg.line = last_token.line;
+            log_msg.message_code = ELEMENT_ERROR_PARTIAL_GRAMMAR;
+            log_msg.related_log_message = nullptr;
+            log_msg.stage = ELEMENT_STAGE_PARSER; //todo: could be tokeniser
+            log_msg.character = last_token.character;
+
+            state->logger->log(log_msg);
+            return ELEMENT_ERROR_PARTIAL_GRAMMAR;
+        }
     }
 
     *token = &state->tokens[index];

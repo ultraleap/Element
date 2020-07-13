@@ -37,13 +37,14 @@ static element_result check_reserved_words(const std::string& text, bool allow_r
                     && is_not_a_reserved_arg
                     && is_not_a_reserved_name;
 
-    return valid ? ELEMENT_OK : ELEMENT_ERROR_INVALID_ARCHIVE; // TODO: errcode
+    return valid ? ELEMENT_OK : ELEMENT_ERROR_RESERVED_IDENTIFIER;
 }
 
 //
 // Token helpers
 //
-#define GET_TOKEN(tctx, tindex, tok) ELEMENT_OK_OR_RETURN(element_tokeniser_get_token((tctx), (tindex), &(tok)))
+#define GET_TOKEN(tctx, tindex, tok) ELEMENT_OK_OR_RETURN(element_tokeniser_get_token((tctx), (tindex), &(tok), nullptr))
+#define GET_TOKEN_CUSTOM_MSG(tctx, tindex, tok, msg) ELEMENT_OK_OR_RETURN(element_tokeniser_get_token((tctx), (tindex), &(tok), msg))
 #define GET_TOKEN_COUNT(tctx, tcount) ELEMENT_OK_OR_RETURN(element_tokeniser_get_token_count((tctx), &(tcount)))
 
 static int tokenlist_advance(element_tokeniser_ctx* tctx, size_t* tindex)
@@ -67,7 +68,7 @@ static int tokenlist_advance(element_tokeniser_ctx* tctx, size_t* tindex)
 }
 
 #define TOKENLIST_ADVANCE_AND_UPDATE(tctx, tindex, tok) \
-{ tokenlist_advance((tctx), (tindex)); ELEMENT_OK_OR_RETURN(element_tokeniser_get_token((tctx), *(tindex), &(tok))); }
+{ tokenlist_advance((tctx), (tindex)); ELEMENT_OK_OR_RETURN(element_tokeniser_get_token((tctx), *(tindex), &(tok), nullptr)); }
 
 //
 // AST memory pool
@@ -143,7 +144,6 @@ element_result element_ast_get_child(const element_ast* ast, const size_t index,
     return ELEMENT_OK;
 }
 
-
 static void ast_clear(element_ast* n)
 {
     assert(n);
@@ -186,6 +186,7 @@ element_result element_parser_ctx::parse_literal(size_t* tindex, element_ast* as
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
+    //the caller should ensure it's a number
     assert(token->type == ELEMENT_TOK_NUMBER);
     ast->type = ELEMENT_AST_NODE_LITERAL;
     ast->literal = std::stof(tokeniser->text(token));
@@ -211,12 +212,9 @@ element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast*
 
     tokenlist_advance(tokeniser, tindex);
 
-    auto result = check_reserved_words(ast->identifier, allow_reserved_args, allow_reserved_names);
+    const auto result = check_reserved_words(ast->identifier, allow_reserved_args, allow_reserved_names);
     if (result != ELEMENT_OK) {
-        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-            fmt::format("invalid identifier '{}'", ast->identifier),
-            ast);
-        return ELEMENT_ERROR_INVALID_IDENTIFIER;
+        log(result, fmt::format("identifier '{}' is reserved", ast->identifier), ast);
     }
 
     return result;
@@ -231,7 +229,7 @@ element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* a
 
     if (tok->type != ELEMENT_TOK_IDENTIFIER) {
         log(ELEMENT_ERROR_INVALID_TYPENAME, 
-            fmt::format("found '{}' when a type was expected.\nnote: a type must be an identifier.", tokeniser->text(tok)), ast);
+            fmt::format("found '{}' when a type was expected.\nnote: a type must be an identifier or a chain of them, such as 'MyNamespace.MyStruct'.", tokeniser->text(tok)), ast);
         return ELEMENT_ERROR_INVALID_TYPENAME;
     }
 
@@ -250,8 +248,9 @@ element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* a
 
         GET_TOKEN(tokeniser, *tindex, tok);
         child->nearest_token = tok;
-        if (tok->type == ELEMENT_TOK_DOT)
+        if (tok->type == ELEMENT_TOK_DOT) {
             TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
+        }
     }
 
     return result;
@@ -289,7 +288,8 @@ element_result element_parser_ctx::parse_portlist(size_t* tindex, element_ast* a
 {
     const element_token* tok;
     GET_TOKEN(tokeniser, *tindex, tok);
-    element_tokeniser_get_token(tokeniser, *tindex-1, &ast->nearest_token); //the previous token is the bracket
+    //the previous token is the bracket
+    element_tokeniser_get_token(tokeniser, *tindex-1, &ast->nearest_token, nullptr); 
     ast->type = ELEMENT_AST_NODE_PORTLIST;
     ast->flags = 0;
     do
@@ -306,6 +306,7 @@ element_result element_parser_ctx::parse_exprlist(size_t* tindex, element_ast* a
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
+    //the caller should ensure it's a '('
     assert(token->type == ELEMENT_TOK_BRACKETL);
     TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, token);
     ast->nearest_token = token;
@@ -451,17 +452,20 @@ element_result element_parser_ctx::parse_lambda(size_t* tindex, element_ast* ast
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
+    //the caller should ensure it's an underscore
     assert(token->type == ELEMENT_TOK_UNDERSCORE);
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_LAMBDA;
 
     TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, token);
+    //todo: logging
     if (token->type != ELEMENT_TOK_BRACKETL)
         return ELEMENT_ERROR_INVALID_OPERATION;
     tokenlist_advance(tokeniser, tindex);
     element_ast* ports = ast_new_child(ast);
     ELEMENT_OK_OR_RETURN(parse_portlist(tindex, ports));
     GET_TOKEN(tokeniser, *tindex, token);
+    //todo: logging
     if (token->type != ELEMENT_TOK_BRACKETR)
         return ELEMENT_ERROR_INVALID_OPERATION;
     tokenlist_advance(tokeniser, tindex);
@@ -494,7 +498,7 @@ element_result element_parser_ctx::parse_expression(size_t* tindex, element_ast*
     if (token->type == ELEMENT_TOK_UNDERSCORE)
         return parse_lambda(tindex, ast);
 
-    log(ELEMENT_ERROR_INVALID_EXPRESSION, fmt::format("failed to parse the expression '{}'.\nnote: it must be either an identifier, an underscore, or a number.",
+    log(ELEMENT_ERROR_INVALID_EXPRESSION, fmt::format("failed to parse the expression '{}'.\nnote: it must start with an identifier, an underscore, or a number.",
         tokeniser->text(token)), ast);
     return ELEMENT_ERROR_INVALID_EXPRESSION;
 }
@@ -536,9 +540,14 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
 {
     const element_token* tok;
     GET_TOKEN(tokeniser, *tindex, tok);
-    assert(tok->type == ELEMENT_TOK_IDENTIFIER);
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_DECLARATION;
+
+    if (tok->type != ELEMENT_TOK_IDENTIFIER)
+    {
+        log(ELEMENT_ERROR_INVALID_IDENTIFIER, "found '{}' when parsing a declaration instead of a valid identifier", ast);
+        return ELEMENT_ERROR_INVALID_IDENTIFIER;
+    }
 
     bool function_declaration = false;
     if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION)
@@ -548,7 +557,6 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
     const auto allow_reserved_names = function_declaration && (ast_node_in_function_scope(ast->parent) || ast_node_in_lambda_scope(ast->parent));
     ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, allow_reserved_names));
 
-
     GET_TOKEN(tokeniser, *tindex, tok);
     // always create the args node, even if it ends up being none/empty
     element_ast* args = ast_new_child(ast);
@@ -557,11 +565,27 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
         // argument list
         tokenlist_advance(tokeniser, tindex);
         ELEMENT_OK_OR_RETURN(parse_portlist(tindex, args));
+
         GET_TOKEN(tokeniser, *tindex, tok);
         if (tok->type != ELEMENT_TOK_BRACKETR) {
-            log(ELEMENT_ERROR_UNKNOWN, fmt::format("found '{}' at the end of a declaration with a portlist, expected ')'", tokeniser->text(tok)), args);
-            return ELEMENT_ERROR_UNKNOWN;
+            //todo: log function for tokens
+            element_log_message msg;
+            const std::string message = fmt::format("found '{}' at the end of the declaration for '{}' with a portlist. expected ')'",
+                tokeniser->text(tok), ast->identifier);
+            const std::string line_in_source = tokeniser->text_on_line(tok->line);
+            msg.line_in_source = line_in_source.c_str();
+            msg.message = message.c_str();
+            msg.filename = tok->file_name;
+            msg.length = tok->tok_len;
+            msg.line = tok->line;
+            msg.message_code = ELEMENT_ERROR_MISSING_CLOSING_PARENTHESIS_FOR_PORTLIST;
+            msg.related_log_message = nullptr;
+            msg.stage = ELEMENT_STAGE_PARSER;
+            msg.character = tok->character;
+            tokeniser->logger->log(msg);
+            return ELEMENT_ERROR_MISSING_CLOSING_PARENTHESIS_FOR_PORTLIST;
         }
+
         TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
     }
     else {
@@ -591,7 +615,7 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
         ret->nearest_token = tok;
         ret->flags = ELEMENT_AST_FLAG_DECL_IMPLICIT_RETURN;	    
     }
-	
+
     return ELEMENT_OK;
 }
 
@@ -629,6 +653,7 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
             if (token->type == ELEMENT_TOK_SEMICOLON) {
                 tokenlist_advance(tokeniser, tindex);
             } else {
+                //todo: log function for token
                 element_log_message msg;
                 const std::string message = fmt::format("expected to find a ';' at the end of the expression for '{}', but found '{}' instead.",
                     ast->parent->children[ast_idx::function::declaration]->identifier, tokeniser->text(token));
@@ -648,11 +673,13 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
         }
     } else {
         if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION) {
-            log(ELEMENT_ERROR_MISSING_FUNCTION_BODY, "Expecting function body, but none was found", ast);
+            log(ELEMENT_ERROR_MISSING_FUNCTION_BODY, "expecting function body but none was found.", ast);
             return ELEMENT_ERROR_MISSING_FUNCTION_BODY;
         }
-        return ELEMENT_ERROR_UNKNOWN;
+        log(ELEMENT_ERROR_MISSING_BODY, "expected to find a body but none was found.", ast);
+        return ELEMENT_ERROR_MISSING_BODY;
     }
+
     return ELEMENT_OK;
 }
 
@@ -736,8 +763,8 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
         ELEMENT_OK_OR_RETURN(parse_scope(tindex, body_node));
     } else {
         log(ELEMENT_ERROR_UNKNOWN, 
-            "unknown error in parse_struct",
-            ast);
+            "unknown error when parsing the body of a struct",
+            body_node);
         return ELEMENT_ERROR_UNKNOWN;
     }
     return ELEMENT_OK;
@@ -832,19 +859,12 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
     ast->nearest_token = token;
-    
-    if (token->type == ELEMENT_TOK_UNDERSCORE || token->type == ELEMENT_TOK_SEMICOLON) {
-        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-            fmt::format("Invalid identifier '{}'", tokeniser->text(token)),
-            ast);
-        return ELEMENT_ERROR_INVALID_IDENTIFIER;
-    }
 
     // either a qualifier, 'struct', 'namespace' or a name; either way...
 	if(token->type != ELEMENT_TOK_IDENTIFIER)
 	{
         log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-            fmt::format("Expected identifier, but found '{}' instead", tokeniser->text(token)),
+            fmt::format("expected identifier, but found '{}' instead.", tokeniser->text(token)),
             ast);
         return ELEMENT_ERROR_INVALID_IDENTIFIER;
 	}

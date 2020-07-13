@@ -91,4 +91,15 @@ namespace libelement::cli
 	private:
 		std::map<message_type, message_code> code_map;
 	};
+
+	inline message_type error_conversion(element_result result)
+    {
+		if (result > 0)
+			return static_cast<message_type>(result);
+
+		if (result == ELEMENT_ERROR_RESERVED_IDENTIFIER)
+			return static_cast<message_type>(ELEMENT_ERROR_INVALID_IDENTIFIER);
+
+		return static_cast<message_type>(ELEMENT_ERROR_UNKNOWN);
+	};
 }

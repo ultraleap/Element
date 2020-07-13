@@ -35,7 +35,7 @@ namespace libelement::cli
 		{
 			auto result = setup(compilation_input);
 			if (result != ELEMENT_OK)
-				return compiler_message(ELEMENT_ERROR_PARSE, "Failed to setup context");
+				return compiler_message(error_conversion(result), "Failed to setup context"); //todo
 		
 			const std::vector<trace_site> trace_site{};
 
@@ -43,28 +43,19 @@ namespace libelement::cli
 			const auto evaluate = "evaluate = " + custom_arguments.expression + ";";
 			result = element_interpreter_load_string(context, evaluate.c_str(), "<input>");
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
+				return compiler_message(error_conversion(result), "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
 			element_compilable* compilable;
 			result = element_interpreter_find(context, "evaluate", &compilable);
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
+				return compiler_message(error_conversion(result), "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
 			struct element_evaluable* evaluable;
 			result = element_interpreter_compile(context, nullptr, compilable, &evaluable);
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to compile: " + evaluate + " with element_result " + std::to_string(result));
+				return compiler_message(error_conversion(result), "Failed to compile: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
 			element_value inputs[] = { 1, 2 };
@@ -79,10 +70,7 @@ namespace libelement::cli
 
 			result = element_interpreter_evaluate(context, nullptr, evaluable, &input, &output);
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to evaluate: " + evaluate + " with element_result " + std::to_string(result));
+				return compiler_message(error_conversion(result), "Failed to evaluate: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
 			return generate_response(result, output, trace_site);
