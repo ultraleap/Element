@@ -142,7 +142,7 @@ target_include_directories(libelement
 target_link_libraries(libelement PRIVATE utf8cpp fmt::fmt-header-only)
 
 if (UNIX)
-    target_link_libraries(libelement PRIVATE "m")
+    target_link_libraries(libelement PRIVATE "m" "atomic" "pthread")
 endif ()
 
 if (BUILD_TESTING)
