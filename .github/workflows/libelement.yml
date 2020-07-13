@@ -19,7 +19,7 @@ jobs:
       - name: Run tests
         run: |
           cd Laboratory
-          dotnet test -v q --test-adapter-path:. --logger:trx -s "libelement_cli - Debug.runsettings"
+          dotnet test --test-adapter-path:. --logger:trx -s "libelement_cli - Debug.runsettings"
       - name: Uploaded test results on fail
         if: failure()
         uses: actions/upload-artifact@v1.0.0
