@@ -2,16 +2,16 @@ using System.Collections.Generic;
 
 namespace Element.AST
 {
-    public sealed class BoolStruct : IntrinsicStructImplementation
+    public sealed class BoolStruct : IIntrinsicStructImplementation
     {
         private BoolStruct() { }
         public static BoolStruct Instance { get; } = new BoolStruct();
-        public override Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, CompilationContext context) =>
-            IfIntrinsicFunctionImplementation.Instance.Call(new IValue[]{new Binary(Binary.Op.Gt, (Element.Expression)arguments[0], Constant.Zero),
+        public Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, CompilationContext context) =>
+            If.Instance.Call(new IValue[]{new Element.Binary(Element.Binary.Op.Gt, (Element.Expression)arguments[0], Constant.Zero),
                                       Constant.True,
                                       Constant.False}, context);
-        public override Result<IValue> DefaultValue(CompilationContext _) => Constant.False;
-        public override Result<bool> MatchesConstraint(Struct @struct, IValue value, CompilationContext context) => value is Element.Expression expr && expr.StructImplementation == Instance;
-        public override Identifier Identifier { get; } = new Identifier("Bool");
+        public Result<IValue> DefaultValue(CompilationContext _) => Constant.False;
+        public Result<bool> MatchesConstraint(Struct @struct, IValue value, CompilationContext context) => value is Element.Expression expr && expr.StructImplementation == Instance;
+        public Identifier Identifier { get; } = new Identifier("Bool");
     }
 }

@@ -17,17 +17,17 @@ namespace Element.AST
         public Identifier? Identifier => _identifier is Identifier id ? (Identifier?)id : null;
         public override string ToString() => $"{_identifier}{ReturnConstraint}";
 
-        protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
         {
-            if (_identifier is Identifier id) id.Validate(resultBuilder, Array.Empty<Identifier>(), Array.Empty<Identifier>()); // Don't validate identifier if this port has none
-            ReturnConstraint?.Validate(resultBuilder, context);
-            DefaultArgument?.Expression.Validate(resultBuilder, context);
+            if (_identifier is Identifier id) id.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>()); // Don't validate identifier if this port has none
+            ReturnConstraint?.Validate(builder, context);
+            DefaultArgument?.Expression.Validate(builder, context);
         }
 
         public Result<ResolvedPort> Resolve(IScope scope, CompilationContext compilationContext)
         {
             Result<IValue> ResolveConstraint() => ReturnConstraint?.Expression.ResolveExpression(scope, compilationContext)
-                                                  ?? scope.Lookup(AnyConstraint.Instance.Identifier, compilationContext);
+                                                  ?? AnyConstraint.Instance;
             Result<IValue> ResolveDefaultArgument() => DefaultArgument.Expression.ResolveExpression(scope, compilationContext);
             
             Result<ResolvedPort> WithDefaultArgument()

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class ListStruct : IntrinsicStructImplementation
+    public sealed class ListStruct : IIntrinsicStructImplementation
     {
         public static readonly Identifier IndexerId = new Identifier("at");
         public static readonly Identifier CountId = new Identifier("count");
@@ -15,11 +15,11 @@ namespace Element.AST
         }
 
         public static ListStruct Instance { get; } = new ListStruct();
-        public override Identifier Identifier { get; }
+        public Identifier Identifier { get; }
 
-        public override Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, CompilationContext context) => new StructInstance(@struct, arguments);
-        public override Result<bool> MatchesConstraint(Struct @struct, IValue value, CompilationContext context) => @struct.IsInstanceOfStruct(value, context);
-        public override Result<IValue> DefaultValue(CompilationContext context) => ListIntrinsicFunctionImplementation.Instance.Call(Array.Empty<IValue>(), context);
+        public Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, CompilationContext context) => new StructInstance(@struct, arguments);
+        public Result<bool> MatchesConstraint(Struct @struct, IValue value, CompilationContext context) => @struct.IsInstanceOfStruct(value, context);
+        public Result<IValue> DefaultValue(CompilationContext context) => List.Instance.Call(Array.Empty<IValue>(), context);
 
         public static Result<int> ConstantCount(StructInstance listInstance, CompilationContext context) =>
             listInstance.DeclaringStruct.IsIntrinsic<ListStruct>()

@@ -14,7 +14,7 @@ namespace Element.AST
 
         public override string ToString() => Ports.ToString();
 
-        protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
         {
             if (Ports.List.Count <= 0) return;
             
@@ -23,12 +23,12 @@ namespace Element.AST
             foreach (var port in Ports.List)
             {
                 if (port.DefaultArgument != null) anyDefaultArgumentsSoFar = true;
-                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) resultBuilder.Append(MessageCode.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{context.CurrentDeclarationLocation}' is unreachable");
-                port.Validate(resultBuilder, context);
+                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) builder.Append(MessageCode.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{context.CurrentDeclarationLocation}' is unreachable");
+                port.Validate(builder, context);
                 if (!(port.Identifier is { } id)) continue;
-                if (!distinctPortIdentifiers.Add(id))
+                if (!distinctPortIdentifiers.Add(id.String))
                 {
-                    resultBuilder.Append(MessageCode.MultipleDefinitions, $"'{context.CurrentDeclarationLocation}' has duplicate input ports named '{id}'");
+                    builder.Append(MessageCode.MultipleDefinitions, $"'{context.CurrentDeclarationLocation}' has duplicate input ports named '{id}'");
                 }
             }
         }

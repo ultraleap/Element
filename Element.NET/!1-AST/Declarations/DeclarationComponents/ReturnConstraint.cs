@@ -13,9 +13,9 @@ namespace Element.AST
         
         public override string ToString() => $":{Expression}";
 
-        protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
         {
-            Expression.Validate(resultBuilder, context);
+            Expression.Validate(builder, context);
             // TODO: Disallow complex expressions e.g. calls
         }
     }
@@ -23,7 +23,6 @@ namespace Element.AST
     public static class ReturnConstraintExtensions
     {
         public static Result<IValue> ResolveReturnConstraint(this ReturnConstraint? returnConstraint, IScope scope, CompilationContext context) =>
-            returnConstraint?.Expression.ResolveExpression(scope, context)
-            ?? scope.Lookup(AnyConstraint.Instance.Identifier, context);
+            returnConstraint?.Expression.ResolveExpression(scope, context) ?? AnyConstraint.Instance;
     }
 }

@@ -24,7 +24,7 @@ namespace Element
 				{
 					if (input.Identifier.HasValue)
 					{
-						if (jObject.TryGetValue(input.Identifier.Value, out var jToken))
+						if (jObject.TryGetValue(input.Identifier.Value.String, out var jToken))
 						{
 							ProvisionSingleField(input.Identifier.Value, input.ResolvedConstraint, jToken);
 						}

@@ -3,18 +3,19 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class IfIntrinsicFunctionImplementation : IntrinsicFunctionImplementation
+    public sealed class If : IntrinsicValue, IIntrinsicFunctionImplementation
     {
-        private IfIntrinsicFunctionImplementation()
+        private If()
         {
-            Identifier = new Identifier("if");
+            _identifier = new Identifier("if");
         }
         
-        public static IfIntrinsicFunctionImplementation Instance { get; } = new IfIntrinsicFunctionImplementation();
-        public override Identifier Identifier { get; }
+        public static If Instance { get; } = new If();
+        protected override Identifier _identifier { get; }
+
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
             // Make a list out of the true and false options
-            ListIntrinsicFunctionImplementation.Instance.Call(arguments.Skip(1).ToArray(), context)
+            List.Instance.Call(arguments.Skip(1).ToArray(), context)
                          .Cast<StructInstance>(context)
                          // Get the option lists indexer (field 0)
                          .Bind(optionListInstance => optionListInstance.Index(ListStruct.IndexerId, context))

@@ -22,13 +22,13 @@ namespace Element.NET.Tests
         public void EnumerateByName(string nameContains)
         {
             var sourceContext = MakeSourceContext();
-            var results = sourceContext.GlobalScope.EnumerateValues(new CompilationContext(sourceContext), d => d.Identifier.Value.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
+            var results = sourceContext.GlobalScope.EnumerateValues(new CompilationContext(sourceContext), d => d.Identifier.String.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
             Assert.That(results.IsSuccess);
             CollectionAssert.IsNotEmpty(results.ResultOr(default));
             // TODO: Actually check collection contents are correct
         }
 
-        private static readonly IntrinsicImplementation[] _intrinsics =
+        private static readonly IIntrinsicImplementation[] _intrinsics =
         {
             NumStruct.Instance,
             BoolStruct.Instance,
@@ -37,7 +37,7 @@ namespace Element.NET.Tests
         };
         
         [TestCaseSource(nameof(_intrinsics))]
-        public void EnumerateByReturnType(IntrinsicImplementation intrinsic)
+        public void EnumerateByReturnType(IIntrinsicImplementation intrinsic)
         {
             var sourceContext = MakeSourceContext();
             bool Filter(IValue v) => v is IFunctionSignature fn

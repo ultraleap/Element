@@ -46,4 +46,7 @@
   <ItemGroup>
     <DeployManifest Remove="obj\Debug\netstandard2.0\Element.NET.application" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="!2-ValueObjectModel\Scopes" />
+  </ItemGroup>
 </Project>

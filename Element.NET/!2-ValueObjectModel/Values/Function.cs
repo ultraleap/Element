@@ -13,7 +13,7 @@ namespace Element.AST
 
         protected abstract Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context);
         
-        protected IScope MakeArgumentScope(IReadOnlyList<IValue> arguments, IScope? parent)
+        protected IReadOnlyList<(Identifier Identifier, IValue Value)> MakeNamedArgumentList(IReadOnlyList<IValue> arguments)
         {
             var namedArguments = new List<(Identifier Identifier, IValue Value)>(InputPorts.Count);
 
@@ -28,11 +28,29 @@ namespace Element.AST
                 }
             }
 
-            return new Scope(namedArguments, parent);
+            return namedArguments;
         }
 
         public abstract IReadOnlyList<ResolvedPort> InputPorts { get; }
         public abstract IValue ReturnConstraint { get; }
+    }
+    
+    public class IntrinsicFunction : Function, IIntrinsicValue
+    {
+        IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
+        private readonly IIntrinsicFunctionImplementation _implementation;
+
+        public IntrinsicFunction(IIntrinsicFunctionImplementation implementation, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, string? location = null)
+            : base(location)
+        {
+            _implementation = implementation;
+            InputPorts = inputPorts;
+            ReturnConstraint = returnConstraint;
+        }
+
+        protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) => _implementation.Call(arguments, context);
+        public override IReadOnlyList<ResolvedPort> InputPorts { get; }
+        public override IValue ReturnConstraint { get; }
     }
     
     public class ExpressionBodiedFunction : Function
@@ -50,7 +68,7 @@ namespace Element.AST
         }
         
         protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-            _expressionBody.Expression.ResolveExpression(MakeArgumentScope(arguments, _parent), context);
+            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent), context);
 
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
@@ -71,27 +89,9 @@ namespace Element.AST
         }
 
         protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-            _scopeBody.Resolve(null, context)
-                      .Bind(scopeBody => MakeArgumentScope(arguments, null).CombineScopes(scopeBody, _parent, context))
+            _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context)
                       .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context));
 
-        public override IReadOnlyList<ResolvedPort> InputPorts { get; }
-        public override IValue ReturnConstraint { get; }
-    }
-    
-    public class IntrinsicFunction : Function
-    {
-        public IntrinsicFunctionImplementation Implementation { get; }
-
-        public IntrinsicFunction(IntrinsicFunctionImplementation implementation, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, string? location = null)
-            : base(location)
-        {
-            Implementation = implementation;
-            InputPorts = inputPorts;
-            ReturnConstraint = returnConstraint;
-        }
-
-        protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) => Implementation.Call(arguments, context);
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
     }

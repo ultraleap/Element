@@ -3,16 +3,12 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public class IntrinsicConstraint : Value
+    public class IntrinsicConstraint : Value, IIntrinsicValue
     {
-        public IntrinsicConstraintImplementation Implementation { get; }
-
-        public IntrinsicConstraint(IntrinsicConstraintImplementation implementation, string? location = null) :base(location)
-        {
-            Implementation = implementation;
-        }
-
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => Implementation.MatchesConstraint(value, context);
+        IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
+        private readonly IIntrinsicConstraintImplementation _implementation;
+        public IntrinsicConstraint(IIntrinsicConstraintImplementation implementation, string? location = null) :base(location) => _implementation = implementation;
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => _implementation.MatchesConstraint(value, context);
     }
     
     public class FunctionConstraint : Value, IFunctionSignature

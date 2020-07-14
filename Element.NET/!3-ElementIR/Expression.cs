@@ -11,12 +11,12 @@ namespace Element
 	// TODO: Make a wrapper Value class for expressions to remove Value logic from Expression implementation
 	public abstract class Expression : Value, IEquatable<Expression>
 	{
-		protected Expression(IntrinsicStructImplementation? instanceStructImplementationOverride = default) => StructImplementation = instanceStructImplementationOverride ?? NumStruct.Instance;
+		protected Expression(IIntrinsicStructImplementation? instanceStructImplementationOverride = default) => StructImplementation = instanceStructImplementationOverride ?? NumStruct.Instance;
 		
 		/// <summary>
 		/// The primitive type of the expression
 		/// </summary>
-		public readonly IntrinsicStructImplementation StructImplementation;
+		public readonly IIntrinsicStructImplementation StructImplementation;
 
 		public abstract IEnumerable<Expression> Dependent { get; }
 

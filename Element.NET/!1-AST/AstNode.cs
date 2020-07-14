@@ -34,6 +34,6 @@ namespace Element.AST
             _hasBeenValidated = true;
         }
 
-        protected abstract void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context);
+        protected abstract void ValidateImpl(ResultBuilder builder, CompilationContext context);
     }
 }

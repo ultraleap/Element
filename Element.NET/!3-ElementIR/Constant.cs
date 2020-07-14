@@ -10,7 +10,7 @@ namespace Element.AST
         // ReSharper disable once UnusedMember.Global - Used by Lexico
         public Constant() {}
         public Constant(float value) => Value = value;
-        private Constant(float value, IntrinsicStructImplementation structImplementationOverride) : base(structImplementationOverride) => Value = value;
+        private Constant(float value, IIntrinsicStructImplementation structImplementationOverride) : base(structImplementationOverride) => Value = value;
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         [Term] public float Value { get; private set; }

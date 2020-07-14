@@ -4,62 +4,13 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public interface IDeclarationScope
-    {
-        IReadOnlyList<Declaration> Declarations { get; }
-        Result<IScope> ResolveScope(IScope? parentScope, CompilationContext context);
-    }
-
-    public static class LexicalScopeExtensions
-    {
-        /// <summary>
-        /// Enumerates top-level and nested declarations that match the filter, resolving them to IValues.
-        /// Will not recurse into function scopes.
-        /// </summary>
-        public static Result<List<IValue>> EnumerateValues(this IDeclarationScope declarationScope, CompilationContext context, Predicate<Declaration> declarationFilter = null, Predicate<IValue> resolvedValueFilter = null)
-        {
-            var builder = new ResultBuilder<List<IValue>>(context, new List<IValue>());
-            
-            void Recurse(IScope? parentScope, IDeclarationScope declScope)
-            {
-                void ResolveScopeValues(IScope containingScope)
-                {
-                    foreach (var decl in declScope.Declarations)
-                    {
-                        if (declarationFilter?.Invoke(decl) ?? true)
-                        {
-                            void AddResolvedValueToResults(IValue v)
-                            {
-                                if (resolvedValueFilter?.Invoke(v) ?? true) builder.Result.Add(v);
-                            }
-
-                            builder.Append(decl.Resolve(containingScope, context).Then(AddResolvedValueToResults));
-                        }
-
-                        if (!(decl.Body is IDeclarationScope childScope)) continue;
-                        
-                        void RecurseIntoChildScope(IScope resolvedBlockScope) => Recurse(resolvedBlockScope, childScope);
-                        
-                        builder.Append(childScope.ResolveScope(containingScope, context).Then(RecurseIntoChildScope));
-                    }
-                }
-
-                builder.Append(declScope.ResolveScope(parentScope, context)
-                                               .Then(ResolveScopeValues));
-            }
-
-            builder.Append(declarationScope.ResolveScope(null, context)
-                                           .Then(scope => Recurse(scope, declarationScope)));
-            return builder.ToResult();
-        }
-    }
-    
     public sealed class GlobalScope : IScope, IDeclarationScope
     {
         private readonly Dictionary<string, SourceBlob> _sourceScopes = new Dictionary<string, SourceBlob>();
         private IReadOnlyList<Declaration>? _cachedList;
+        private readonly Dictionary<Identifier, Result<IValue>> _resolvedValueCache = new Dictionary<Identifier, Result<IValue>>();
         public IReadOnlyList<Declaration> Declarations => _cachedList ??= _sourceScopes.Values.SelectMany(blob => blob).ToList();
-        public Result<IScope> ResolveScope(IScope? parentScope, CompilationContext context) => this;
+        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext context) => throw new NotImplementedException();
 
         public bool ContainsSource(string sourceName) => _sourceScopes.ContainsKey(sourceName);
         
@@ -73,6 +24,7 @@ namespace Element.AST
             if (!_sourceScopes.Remove(sourceName)) return false;
             // Don't need to validate again, removing source cannot invalidate the global scope
             _cachedList = null;
+            _resolvedValueCache.Clear(); // TODO: Only remove identifiers from the removed sourced
             return true;
         }
 
@@ -89,13 +41,12 @@ namespace Element.AST
                             return validateResult;
                         });
 
-        public Result<IValue> Index(Identifier id, CompilationContext context) =>
-            Declarations.FirstOrDefault(d => d.Identifier == id)
-                               ?.Resolve(this, context) // Top-level declarations can be resolved with the global scope since outer captures are impossible!
-            ?? (Result<IValue>)context.Trace(MessageCode.IdentifierNotFound, $"'{id}' not found in global scope");
-
-        public Result<IValue> Lookup(Identifier id, CompilationContext context) => Index(id, context); // Nowhere up to go from here!
-        public IReadOnlyList<Identifier> Members => Declarations.Select(d => d.Identifier).ToList();
+        public Result<IValue> Lookup(Identifier id, CompilationContext context) =>
+            _resolvedValueCache.TryGetValue(id, out var result)
+                ? result
+                : _resolvedValueCache[id] = Declarations.FirstOrDefault(d => d.Identifier.Equals(id))
+                                                        ?.Resolve(this, context) // Top-level declarations can be resolved with the global scope since outer captures are impossible!
+                                            ?? (Result<IValue>) context.Trace(MessageCode.IdentifierNotFound, $"'{id}' not found in global scope");
 
         public Result Validate(CompilationContext context)
         {

@@ -15,17 +15,18 @@ namespace Element.AST
 
         public override string ToString() => "Lambda";
 
-        protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
         {
-            PortList.Validate(resultBuilder, context);
-            ReturnConstraint?.Validate(resultBuilder, context);
+            PortList.Validate(builder, context);
+            ReturnConstraint?.Validate(builder, context);
             switch(Body)
             {
-                case ExpressionBody b:
-                    b.Expression.Validate(resultBuilder, context);
+                case ExpressionBody exprBody:
+                    exprBody.Expression.Validate(builder, context);
                     break;
-                case BlockBase s:
-                    s.Validate(resultBuilder, context);
+                case FunctionBlock block:
+                    block.Validate(builder, context);
+                    block.ValidateIdentifiers(builder);
                     break;
             }
         }

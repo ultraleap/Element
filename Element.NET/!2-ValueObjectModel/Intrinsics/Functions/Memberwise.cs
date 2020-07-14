@@ -3,15 +3,15 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class MemberwiseIntrinsicFunctionImplementation : IntrinsicFunctionImplementation
+    public sealed class Memberwise : IntrinsicValue, IIntrinsicFunctionImplementation
     {
-        private MemberwiseIntrinsicFunctionImplementation()
+        private Memberwise()
         {
-            Identifier =  new Identifier("memberwise");
+            _identifier =  new Identifier("memberwise");
         }
-        public static MemberwiseIntrinsicFunctionImplementation Instance { get; } = new MemberwiseIntrinsicFunctionImplementation();
-
-        public override Identifier Identifier { get; }
+        
+        public static Memberwise Instance { get; } = new Memberwise();
+        protected override Identifier _identifier { get; }
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
         {
             var func = arguments[0];

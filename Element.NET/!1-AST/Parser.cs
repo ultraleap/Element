@@ -37,12 +37,12 @@ namespace Element.AST
 
         public static void Validate(this Identifier identifier, ResultBuilder builder, Identifier[] blacklist, Identifier[] whitelist)
         {
-            if (string.IsNullOrEmpty(identifier))
+            if (string.IsNullOrEmpty(identifier.String))
             {
                 builder.Append(MessageCode.InvalidIdentifier, "Null or empty identifier is invalid");
             }
 
-            bool Predicate(Identifier reserved) => string.Equals(identifier, reserved, StringComparison.OrdinalIgnoreCase);
+            bool Predicate(Identifier reserved) => string.Equals(identifier.String, reserved.String, StringComparison.OrdinalIgnoreCase);
             if (GloballyReservedIdentifiers.Except(whitelist).Any(Predicate) || blacklist.Any(Predicate))
             {
                 builder.Append(MessageCode.InvalidIdentifier, $"'{identifier}' is a reserved identifier");

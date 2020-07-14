@@ -31,27 +31,13 @@ namespace Element.AST
 
         protected abstract Result<IValue> ResolveImpl(IScope scope, CompilationContext context);
 
-        protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context)
+        protected sealed override void ValidateImpl(ResultBuilder builder, CompilationContext context)
         {
             context.PushDeclaration(this);
-            
-            // We do additional validation first as some validation errors produced below 
-            AdditionalValidation(resultBuilder, context);
-            
-            // Containing scope validates identifiers as they are sometimes context sensitive (e.g. 'return' within function scopes)
-            PortList?.Validate(resultBuilder, context);
-            ReturnConstraint?.Validate(resultBuilder, context);
-            switch (Body)
-            {
-                case ExpressionBody expressionBody:
-                    expressionBody.Expression.Validate(resultBuilder, context);
-                    break;
-                case BlockBase block:
-                    block.Validate(resultBuilder, context);
-                    break;
-            }
+            ValidateDeclaration(builder, context);
             context.PopDeclaration();
         }
-        protected virtual void AdditionalValidation(ResultBuilder builder, CompilationContext context) {}
+
+        protected abstract void ValidateDeclaration(ResultBuilder builder, CompilationContext context);
     }
 }

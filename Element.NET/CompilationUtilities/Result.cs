@@ -62,8 +62,7 @@ namespace Element
     
     public readonly struct Result
     {
-        public static Result Success { get; } = new Result();
-        
+        public static Result Success { get; } = new Result(Array.Empty<CompilerMessage>());
         public Result(CompilerMessage? message) : this(message == null ? Array.Empty<CompilerMessage>() : new []{message}) {}
         public Result(IReadOnlyCollection<CompilerMessage> messages)
         {
@@ -248,7 +247,7 @@ namespace Element
         public Result<TResult> Map<TResult>(Func<T, TResult> mapFunc) => IsSuccess ? Merge(new Result<TResult>(mapFunc(_value))) : new Result<TResult>(Messages);
         public Result Bind(Func<T, Result> action) => IsSuccess ? new Result(Messages.Combine(action(_value).Messages)) : new Result(Messages);
         public Result<TResult> Bind<TResult>(Func<T, Result<TResult>> bindFunc)  => IsSuccess ? Merge(bindFunc(_value)) : new Result<TResult>(Messages);
-        public Result<T> Check(Func<T, Result> checkFunc) => new Result<T>(Messages.Combine(checkFunc(_value).Messages));
+        public Result<T> Check(Func<T, Result> checkFunc) => new Result<T>(_value, Messages.Combine(checkFunc(_value).Messages));
 
         public Result<TResult> Cast<TResult>(Func<CompilerMessage?> castFailFunc)
         {

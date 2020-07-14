@@ -4,15 +4,15 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public sealed class ForIntrinsicFunctionImplementation : IntrinsicFunctionImplementation
+    public sealed class For : IntrinsicValue, IIntrinsicFunctionImplementation
     {
-        private ForIntrinsicFunctionImplementation()
+        private For()
         {
-            Identifier = new Identifier("for");
+            _identifier = new Identifier("for");
         }
-
-        public static ForIntrinsicFunctionImplementation Instance { get; } = new ForIntrinsicFunctionImplementation();
-
+        
+        public static For Instance { get; } = new For();
+        protected override Identifier _identifier { get; }
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
         {
             var initial = arguments[0];
@@ -35,6 +35,5 @@ namespace Element.AST
                           .Bind(loop => initial.Deserialize(Enumerable.Range(0, loop.Size).Select(i => new ExpressionGroupElement(loop, i)), context))
                           .Cast<IValue>(context);
         }
-        public override Identifier Identifier { get; }
     }
 }

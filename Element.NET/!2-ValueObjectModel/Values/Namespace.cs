@@ -4,15 +4,15 @@ namespace Element.AST
 {
     public class Namespace : Value
     {
-        private readonly IScope _scope;
-        public Namespace(IScope scope, Identifier identifier, string? location = null) : base(location)
+        private readonly ResolvedBlock _resolvedBlock;
+        public Namespace(ResolvedBlock resolvedBlock, Identifier identifier, string? location = null) : base(location)
         {
-            _scope = scope;
+            _resolvedBlock = resolvedBlock;
             Identifier = identifier;
         }
         
         public override Identifier? Identifier { get; }
-        public override IReadOnlyList<Identifier> Members => _scope.Members;
-        public override Result<IValue> Index(Identifier id, CompilationContext context) => _scope.Index(id, context);
+        public override IReadOnlyList<Identifier> Members => _resolvedBlock.Members;
+        public override Result<IValue> Index(Identifier id, CompilationContext context) => _resolvedBlock.Index(id, context);
     }
 }

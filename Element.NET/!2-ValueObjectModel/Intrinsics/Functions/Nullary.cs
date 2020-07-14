@@ -4,28 +4,27 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public class NullaryIntrinsicsFunctionImplementation : IntrinsicFunctionImplementation
+    public class Nullary : IntrinsicValue, IIntrinsicFunctionImplementation
     {
-        static NullaryIntrinsicsFunctionImplementation()
+        static Nullary()
         {
             Instances = Enum.GetValues(typeof(Constant.Intrinsic))
                             .Cast<Constant.Intrinsic>()
-                            .Select(v => new NullaryIntrinsicsFunctionImplementation(v))
+                            .Select(v => new Nullary(v))
                             .ToDictionary(i => i._value);
         }
         
-        public static IReadOnlyDictionary<Constant.Intrinsic, NullaryIntrinsicsFunctionImplementation> Instances { get; }
+        public static IReadOnlyDictionary<Constant.Intrinsic, Nullary> Instances { get; }
         
         private readonly Constant.Intrinsic _value;
         
-        private NullaryIntrinsicsFunctionImplementation(Constant.Intrinsic value)
+        private Nullary(Constant.Intrinsic value)
         {
             _value = value;
-            Identifier = new Identifier(value.ToString());
+            _identifier = new Identifier(value.ToString());
         }
 
-        public override Identifier Identifier { get; }
-
+        protected override Identifier _identifier { get; }
         public override Result<IValue> Call(IReadOnlyList<IValue> _, CompilationContext __) =>
             _value switch
             {

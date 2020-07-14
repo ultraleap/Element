@@ -6,12 +6,12 @@ namespace Element.AST
 {
     public abstract class Struct : Value, IScope, IFunctionValue
     {
-        private readonly IScope? _associatedScope;
+        private readonly ResolvedBlock? _associatedBlock;
         private readonly IScope _parent;
 
-        protected Struct(IReadOnlyList<ResolvedPort> fields, IScope? associatedScope, IScope parent, string? location = null) : base(location)
+        protected Struct(IReadOnlyList<ResolvedPort> fields, ResolvedBlock? associatedBlock, IScope parent, string? location = null) : base(location)
         {
-            _associatedScope = associatedScope;
+            _associatedBlock = associatedBlock;
             _parent = parent;
             Fields = fields;
         }
@@ -22,37 +22,32 @@ namespace Element.AST
 
         public abstract override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
         public abstract override Result<bool> MatchesConstraint(IValue value, CompilationContext context);
-        public override Result<IValue> Index(Identifier id, CompilationContext context) => _associatedScope?.Index(id, context)
+        public override Result<IValue> Index(Identifier id, CompilationContext context) => _associatedBlock?.Index(id, context)
                                                                                            ?? (Result<IValue>)context.Trace(MessageCode.InvalidExpression, $"'{this}' has no associated scope - it cannot be indexed");
-        public Result<IValue> Lookup(Identifier id, CompilationContext context) => (_associatedScope ?? _parent).Lookup(id, context);
-        public override IReadOnlyList<Identifier> Members => _associatedScope?.Members ?? Array.Empty<Identifier>();
+        public Result<IValue> Lookup(Identifier id, CompilationContext context) => (_associatedBlock ?? _parent).Lookup(id, context);
+        public override IReadOnlyList<Identifier> Members => _associatedBlock?.Members ?? Array.Empty<Identifier>();
         public abstract override Result<IValue> DefaultValue(CompilationContext context);
         public Result<bool> IsInstanceOfStruct(IValue value, CompilationContext context) => value.FullyResolveValue(context).Map(v => v is StructInstance instance && instance.DeclaringStruct == this);
     }
     
     public class IntrinsicStruct : Struct, IIntrinsicValue
     {
-        IntrinsicImplementation IIntrinsicValue.Implementation => Implementation;
-        public IntrinsicStructImplementation Implementation { get; }
+        IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
+        private readonly IIntrinsicStructImplementation _implementation;
 
-        public IntrinsicStruct(IntrinsicStructImplementation implementation, IReadOnlyList<ResolvedPort> fields, IScope? associatedScope, IScope parent, string location)
-            : base(fields, associatedScope, parent, location)
-        {
-            Implementation = implementation;
-        }
+        public IntrinsicStruct(IIntrinsicStructImplementation implementation, IReadOnlyList<ResolvedPort> fields, ResolvedBlock? associatedBlock, IScope parent, string location)
+            : base(fields, associatedBlock, parent, location) =>
+            _implementation = implementation;
 
-        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => Implementation.Construct(this, arguments, context);
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => Implementation.MatchesConstraint(this, value, context);
-        public override Result<IValue> DefaultValue(CompilationContext context) => Implementation.DefaultValue(context);
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => _implementation.Construct(this, arguments, context);
+        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => _implementation.MatchesConstraint(this, value, context);
+        public override Result<IValue> DefaultValue(CompilationContext context) => _implementation.DefaultValue(context);
     }
 
     public class CustomStruct : Struct
     {
-        public CustomStruct(IReadOnlyList<ResolvedPort> fields, IScope? associatedScope, IScope parent, string location)
-            : base(fields, associatedScope, parent, location)
-        {
-            
-        }
+        public CustomStruct(IReadOnlyList<ResolvedPort> fields, ResolvedBlock? associatedBlock, IScope parent, string location)
+            : base(fields, associatedBlock, parent, location) { }
         
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => new StructInstance(this, arguments);
         public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => IsInstanceOfStruct(value, context);
@@ -65,12 +60,12 @@ namespace Element.AST
     {
         public Struct DeclaringStruct { get; }
 
-        private readonly Scope _scope;
+        private readonly ResolvedBlock _resolvedBlock;
         
         public StructInstance(Struct declaringStruct, IEnumerable<IValue> fieldValues)
         {
             DeclaringStruct = declaringStruct;
-            _scope = new Scope(declaringStruct.Fields.Zip(fieldValues, (port, value) => (port.Identifier!.Value, value)).ToArray(), null);
+            _resolvedBlock = new ResolvedBlock(declaringStruct.Fields.Zip(fieldValues, (port, value) => (port.Identifier!.Value, value)).ToArray(), null);
         }
 
         protected override string ToStringInternal() => $"{DeclaringStruct}:Instance";
@@ -88,11 +83,11 @@ namespace Element.AST
                                    null => throw new InternalCompilerException($"Indexing '{this}' with '{id}' returned null IValue - this should not occur from user input")
                                });
 
-            return _scope.Index(id, context)
+            return _resolvedBlock.Index(id, context)
                          .Else(ResolveInstanceFunction);
         }
 
-        public override IReadOnlyList<Identifier> Members => _scope.Members;
+        public override IReadOnlyList<Identifier> Members => _resolvedBlock.Members;
 
         public override void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, CompilationContext context)
         {
@@ -103,10 +98,10 @@ namespace Element.AST
                 return;
             }
             
-            _scope.Serialize(resultBuilder, context);
+            _resolvedBlock.Serialize(resultBuilder, context);
         }
 
-        public override Result<IValue> Deserialize(Func<Element.Expression> nextValue, CompilationContext context) => _scope.DeserializeMembers(nextValue, context)
+        public override Result<IValue> Deserialize(Func<Element.Expression> nextValue, CompilationContext context) => _resolvedBlock.DeserializeMembers(nextValue, context)
                                                                                                                             .Map(deserializedFields => (IValue) new StructInstance(DeclaringStruct, deserializedFields));
     }
 }

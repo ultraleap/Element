@@ -6,67 +6,50 @@ using Lexico;
 namespace Element.AST
 {
     [WhitespaceSurrounded, MultiLine]
-    public abstract class BlockBase : AstNode
+    public class Block : AstNode
     {
 #pragma warning disable 649, 169
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
         [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional] public List<Declaration>? Items { get; protected set; }
 #pragma warning restore 649, 169
         
-        protected abstract bool IsFunctionBlock { get; }
-
-        protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
         {
             var idHashSet = new HashSet<Identifier>();
             foreach (var decl in Items ?? Enumerable.Empty<Declaration>())
             {
-                decl.Identifier.Validate(resultBuilder,
-                                         Array.Empty<Identifier>(),
-                                         IsFunctionBlock
-                                             ? new []{Parser.ReturnIdentifier}
-                                             : Array.Empty<Identifier>());
-                decl.Validate(resultBuilder, context);
+                decl.Validate(builder, context);
                 if (!idHashSet.Add(decl.Identifier))
                 {
-                    resultBuilder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{decl.Identifier}' defined in '{context.CurrentDeclarationLocation}'");
+                    builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{decl.Identifier}' defined in '{context.CurrentDeclarationLocation}'");
                 }
             }
-
-            if (IsFunctionBlock && !idHashSet.Contains(Parser.ReturnIdentifier))
+            
+            if (this is FunctionBlock && !idHashSet.Contains(Parser.ReturnIdentifier))
             {
-                resultBuilder.Append(MessageCode.FunctionMissingReturn, $"Scope-bodied function '{context.CurrentDeclarationLocation}' is missing Return declaration");
+                builder.Append(MessageCode.FunctionMissingReturn, $"Scope-bodied function '{context.CurrentDeclarationLocation}' is missing Return declaration");
             }
         }
 
-        public Result<IScope> Resolve(IScope? parentScope, CompilationContext compilationContext) =>
+        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext compilationContext) => ResolveBlockWithCaptures(parentScope, Array.Empty<(Identifier Identifier, IValue Value)>(), compilationContext);
+
+        public Result<ResolvedBlock> ResolveBlockWithCaptures(IScope? parentScope, IReadOnlyList<(Identifier Identifier, IValue Value)> capturedValues, CompilationContext compilationContext) =>
             Validate(compilationContext)
                 .Map(() =>
                 {
-                    var indexingCache = new Dictionary<Identifier, Result<IValue>>();
+                    Result<IValue> IndexFunc(IScope scope, Identifier identifier, CompilationContext context) =>
+                        Items.FirstOrDefault(d => d.Identifier.Equals(identifier))?.Resolve(scope, context)
+                        ?? (Result<IValue>) context.Trace(MessageCode.IdentifierNotFound, $"'{identifier}' not found in '{context.CurrentDeclarationLocation}'");
 
-                    Result<IValue> IndexFunc(IScope scope, Identifier identifier, CompilationContext context)
-                    {
-                        if (indexingCache.TryGetValue(identifier, out var result)) return result;
-                        result = Items.FirstOrDefault(d => d.Identifier == identifier)?.Resolve(scope, context)
-                                 ?? (Result<IValue>) context.Trace(MessageCode.IdentifierNotFound, $"'{identifier}' not found in '{context.CurrentDeclarationLocation}'");
-                        return indexingCache[identifier] = result;
-                    }
-
-                    return (IScope) new Scope(Items?.Select(d => d.Identifier).ToArray() ?? Array.Empty<Identifier>(),
-                                              IndexFunc,
-                                              parentScope);
+                    return new ResolvedBlock(Items?.Select(d => d.Identifier).ToArray() ?? Array.Empty<Identifier>(),
+                                     capturedValues,
+                                     IndexFunc,
+                                     parentScope);
                 });
     }
 
-    public class FunctionBlock : BlockBase
+    public class DeclarationBlock : Block, IDeclarationScope
     {
-        protected override bool IsFunctionBlock => true;
-    }
-
-    public class Block : BlockBase, IDeclarationScope
-    {
-        protected override bool IsFunctionBlock => false;
         public IReadOnlyList<Declaration> Declarations => Items as IReadOnlyList<Declaration> ?? Array.Empty<Declaration>();
-        public Result<IScope> ResolveScope(IScope? parentScope, CompilationContext context) => Resolve(parentScope, context);
     }
 }

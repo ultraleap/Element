@@ -23,20 +23,12 @@ namespace Element.AST
         IReadOnlyList<ResolvedPort> InputPorts { get; }
         IValue ReturnConstraint { get; }
     }
-
-    public interface IIntrinsicValue
-    {
-        IntrinsicImplementation Implementation { get; }
-    }
     
     public interface IFunctionValue : IValue, IFunctionSignature {}
 
     public abstract class Value : IValue
     {
-        protected Value(string? location = null)
-        {
-            _location = location;
-        }
+        protected Value(string? location = null) => _location = location;
         private readonly string? _location;
         private string? _cachedString;
         protected virtual string ToStringInternal() => string.IsNullOrEmpty(_location) ? GetType().Name : $"{_location}:{GetType().Name}";
@@ -64,11 +56,11 @@ namespace Element.AST
             .Bind(v => v != value ? v.FullyResolveValue(context) : new Result<IValue>(v)); // Recurse until the resolved value is the same
         
         public static bool IsIntrinsic<TIntrinsicImplementation>(this IValue value)
-            where TIntrinsicImplementation : IntrinsicImplementation =>
+            where TIntrinsicImplementation : IIntrinsicImplementation =>
             value is IIntrinsicValue c
             && c.Implementation.GetType() == typeof(TIntrinsicImplementation);
         
-        public static bool IsIntrinsic(this IValue value, IntrinsicImplementation implementation) =>
+        public static bool IsIntrinsic(this IValue value, IIntrinsicImplementation implementation) =>
             value is IIntrinsicValue intrinsic
             && intrinsic.Implementation == implementation;
 

@@ -2,16 +2,15 @@ using System.Collections.Generic;
 
 namespace Element.AST
 {
-	public sealed class FoldIntrinsicFunctionImplementation : IntrinsicFunctionImplementation
+	public sealed class Fold : IntrinsicValue, IIntrinsicFunctionImplementation
 	{
-		private FoldIntrinsicFunctionImplementation()
+		private Fold()
 		{
-			Identifier = new Identifier("fold");
+			_identifier = new Identifier("fold");
 		}
 		
-		public static FoldIntrinsicFunctionImplementation Instance { get; } = new FoldIntrinsicFunctionImplementation();
-
-		public override Identifier Identifier { get; }
+		public static Fold Instance { get; } = new Fold();
+		protected override Identifier _identifier { get; }
 		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
 		{
 			var list = (StructInstance) arguments[0];
@@ -35,7 +34,7 @@ namespace Element.AST
 				                                   .Bind(t =>
 				                                   {
 					                                   var (initial, predicateLambda, bodyLambda) = t;
-					                                   var captureScope = new Scope(new (Identifier, IValue)[]
+					                                   var captureScope = new ResolvedBlock(new (Identifier, IValue)[]
 					                                   {
 						                                   (new Identifier("list"), list),
 						                                   (new Identifier("aggregator"), aggregator)
@@ -52,7 +51,7 @@ namespace Element.AST
 			return ListStruct.EvaluateElements(list, context)
 			               .FoldArray(workingValue, (current, e) => aggregator.Call(new[] {current, e}, context))
 			               .Else(() => CreateDynamicFoldArguments()
-			                           .Bind(args => ForIntrinsicFunctionImplementation.Instance.Call(args, context))
+			                           .Bind(args => For.Instance.Call(args, context))
 			                           .Cast<StructInstance>(context)
 			                           .Bind(instance => instance.IndexPositionally(1, context)));
 		}

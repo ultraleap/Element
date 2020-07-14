@@ -8,12 +8,12 @@ namespace Element.AST
         protected override string Qualifier { get; } = "constraint";
         protected override Type[] BodyAlternatives { get; } = {typeof(Terminal)};
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
-            IntrinsicCache.Get<IntrinsicConstraintImplementation>(Identifier, context)
+            IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, context)
                           .Map(intrinsic => (IValue)new IntrinsicConstraint(intrinsic, context.CurrentDeclarationLocation));
 
-        protected override void AdditionalValidation(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
         {
-            builder.Append(IntrinsicCache.Get<IntrinsicConstraintImplementation>(Identifier, builder.Trace));
+            builder.Append(IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, builder.Trace));
             if (PortList != null) builder.Append(MessageCode.IntrinsicConstraintCannotSpecifyFunctionSignature, "Intrinsic constraint cannot specify ports");
             if (ReturnConstraint != null) builder.Append(MessageCode.IntrinsicConstraintCannotSpecifyFunctionSignature, "Intrinsic constraint cannot specify a return constraint");
         }
@@ -34,12 +34,14 @@ namespace Element.AST
                         return (IValue)new FunctionConstraint(inputPorts, returnConstraint, context.CurrentDeclarationLocation);
                     });
 
-        protected override void AdditionalValidation(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
         {
             if (PortList == null || PortList.Ports.List.Count == 0)
             {
                 builder.Append(MessageCode.MissingPorts, $"Non-intrinsic constraint '{context.CurrentDeclarationLocation}' must have a port list");
             }
+            PortList?.Validate(builder, context);
+            ReturnConstraint?.Validate(builder, context);
         }
     }
 }

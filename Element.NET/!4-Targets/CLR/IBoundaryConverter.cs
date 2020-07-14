@@ -41,7 +41,7 @@ namespace Element.CLR
 
         private class NumberExpression : Expression, ICLRExpression
         {
-            public NumberExpression(LExpression parameter, IntrinsicStructImplementation? typeOverride = default)
+            public NumberExpression(LExpression parameter, IIntrinsicStructImplementation? typeOverride = default)
                 : base(typeOverride) =>
                 Parameter = parameter;
 

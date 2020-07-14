@@ -17,11 +17,11 @@ namespace Element.AST
 
         public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
-        protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
         {
             foreach (var expr in Expressions ?? Enumerable.Empty<SubExpression>())
             {
-                expr.Validate(resultBuilder, context);
+                expr.Validate(builder, context);
             }
         }
 
@@ -69,11 +69,11 @@ namespace Element.AST
 
             public override string ToString() => Expressions.ToString();
 
-            protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context)
+            protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
             {
                 foreach (var expr in Expressions.List)
                 {
-                    expr.Validate(resultBuilder, context);
+                    expr.Validate(builder, context);
                 }
             }
 
@@ -92,7 +92,7 @@ namespace Element.AST
 #pragma warning restore 169
 
             public override string ToString() => $".{Identifier}";
-            protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context) => Identifier.Validate(resultBuilder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
+            protected override void ValidateImpl(ResultBuilder builder, CompilationContext context) => Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
             protected override Result<IValue> SubExpressionImpl(IValue previous, IScope _, CompilationContext compilationContext) => previous.Index(Identifier, compilationContext);
         }
     }

@@ -52,7 +52,21 @@ namespace Element
         public void PushDeclaration(Declaration declaration) => _declarationStack.Push(declaration);
         public void PopDeclaration() => _declarationStack.Pop();
         public Declaration PeekDeclaration() => _declarationStack.Peek();
-        public string CurrentDeclarationLocation => _declarationStack.Aggregate("<root>", (s, declaration) => $"{s}.{declaration.Identifier}");
+        public string CurrentDeclarationLocation
+        {
+            get
+            {
+                var decls = _declarationStack.ToArray();
+                string result = decls.Length > 0 ? decls[0].Identifier.String : string.Empty;
+                for (var i = 1; i < decls.Length; i++)
+                {
+                    var decl = decls[i];
+                    result = $"{result}.{decl.Identifier}";
+                }
+
+                return result;
+            }
+        }
 
         public void PushFunction(IValue functionSignature) => _callStack.Push(functionSignature);
         public void PopFunction() => _callStack.Pop();

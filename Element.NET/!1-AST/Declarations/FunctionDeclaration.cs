@@ -11,7 +11,7 @@ namespace Element.AST
         protected override Type[] BodyAlternatives { get; } = {typeof(Terminal)};
 
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
-            IntrinsicCache.Get<IntrinsicFunctionImplementation>(Identifier, context)
+            IntrinsicImplementationCache.Get<IIntrinsicFunctionImplementation>(Identifier, context)
                           .Accumulate(() => PortList.ResolveInputConstraints(scope, context, true, true),
                               () => ReturnConstraint.ResolveReturnConstraint(scope, context))
                           .Map(t =>
@@ -20,14 +20,15 @@ namespace Element.AST
                               return (IValue) new IntrinsicFunction(functionImpl, inputPorts, returnConstraint, context.CurrentDeclarationLocation);
                           });
 
-        protected override void AdditionalValidation(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
         {
-            builder.Append(IntrinsicCache.Get<IntrinsicFunctionImplementation>(Identifier, builder.Trace));
-            
+            builder.Append(IntrinsicImplementationCache.Get<IIntrinsicFunctionImplementation>(Identifier, builder.Trace));
+            PortList?.Validate(builder, context);
             if (PortList != null && PortList.Ports.List.Any(port => !port.Identifier.HasValue))
             {
                 builder.Append(MessageCode.PortListCannotContainDiscards, $"Intrinsic '{context.CurrentDeclarationLocation}' port list contains discards");
             }
+            ReturnConstraint?.Validate(builder, context);
         }
     }
     
@@ -45,6 +46,13 @@ namespace Element.AST
                         var (inputPort, returnConstraint) = t;
                         return (IValue) new ExpressionBodiedFunction(inputPort, returnConstraint, (Binding)Body, scope, context.CurrentDeclarationLocation);
                     });
+
+        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
+        {
+            PortList?.Validate(builder, context);
+            ReturnConstraint?.Validate(builder, context);
+            if (Body is ExpressionBody expressionBody) expressionBody.Expression.Validate(builder, context);
+        }
     }
     
     public sealed class ScopeBodiedFunctionDeclaration : Declaration
@@ -53,8 +61,9 @@ namespace Element.AST
         protected override string Qualifier => string.Empty; // Functions don't have a qualifier
         protected override Type[] BodyAlternatives { get; } = {typeof(FunctionBlock)};
         
-        protected override void AdditionalValidation(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
         {
+            PortList?.Validate(builder, context);
             if (PortList != null)
             {
                 var distinctLocalIdentifiers = new HashSet<Identifier>();
@@ -69,6 +78,13 @@ namespace Element.AST
                     }
                 }
             }
+            
+            ReturnConstraint?.Validate(builder, context);
+            if (Body is FunctionBlock block)
+            {
+                block.Validate(builder, context);
+                block.ValidateIdentifiers(builder);
+            }
         }
 
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
@@ -79,5 +95,16 @@ namespace Element.AST
                         var (inputPort, returnConstraint) = t;
                         return (IValue) new ScopeBodiedFunction(inputPort, returnConstraint, (FunctionBlock)Body, scope, context.CurrentDeclarationLocation);
                     });
+    }
+    
+    public class FunctionBlock : Block
+    {
+        public void ValidateIdentifiers(ResultBuilder builder)
+        {
+            foreach (var decl in Items ?? Enumerable.Empty<Declaration>())
+            {
+                decl.Identifier.Validate(builder,Array.Empty<Identifier>(), new[] {Parser.ReturnIdentifier});
+            }
+        }
     }
 }

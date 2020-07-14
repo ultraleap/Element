@@ -3,28 +3,26 @@ using System.Linq;
 
 namespace Element.AST
 {
-	public class ListIntrinsicFunctionImplementation : IntrinsicFunctionImplementation
+	public class List : IntrinsicValue, IIntrinsicFunctionImplementation
 	{
-		private ListIntrinsicFunctionImplementation()
+		private List()
 		{
-			Identifier = new Identifier("list");
+			_identifier = new Identifier("list");
 		}
 		
-		public static ListIntrinsicFunctionImplementation Instance { get; } = new ListIntrinsicFunctionImplementation();
-
-		public override Identifier Identifier { get; }
+		public static List Instance { get; } = new List();
+		protected override Identifier _identifier { get; }
 
 		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
 			context.SourceContext.GlobalScope.Lookup(ListStruct.Instance.Identifier, context)
 			       .Cast<IntrinsicStruct>(context)
-			       .Accumulate(() => context.SourceContext.GlobalScope.Lookup(AnyConstraint.Instance.Identifier, context),
-			                   () => context.SourceContext.GlobalScope.Lookup(NumStruct.Instance.Identifier, context))
+			       .Accumulate(() => context.SourceContext.GlobalScope.Lookup(NumStruct.Instance.Identifier, context))
 			       .Bind(t =>
 			       {
-				       var (listStruct, anyConstraint, numStruct) = t;
+				       var (listStruct, numStruct) = t;
 				       return listStruct.Call(new IValue[]
 				       {
-					       new ListIndexer(arguments, new[]{new ResolvedPort(numStruct)}, anyConstraint),
+					       new ListIndexer(arguments, new[]{new ResolvedPort(numStruct)}, AnyConstraint.Instance),
 					       new Constant(arguments.Count)
 				       }, context);
 			       });
@@ -51,7 +49,7 @@ namespace Element.AST
 		                               : new[] {ResolvedPort.VariadicPort},
 	                               _elements[0] is IFunctionSignature fn
 		                               ? fn.ReturnConstraint
-		                               : new IntrinsicConstraint(AnyConstraint.Instance)));
+		                               : AnyConstraint.Instance));
         }
 
         private class ListElement : Function
