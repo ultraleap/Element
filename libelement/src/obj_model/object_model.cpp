@@ -143,7 +143,7 @@ namespace element
             build_expression(context, body, chain.get());
             function_decl->body = std::move(chain);
         }
-        else if (body->type == ELEMENT_AST_NODE_CONSTRAINT)
+        else if (intrinsic && body->type == ELEMENT_AST_NODE_NO_BODY)
         {
             assert(intrinsic);
             //TODO: If get_intrinsic returns null return error ELEMENT_ERROR_INTRINSIC_NOT_IMPLEMENTED

@@ -708,7 +708,7 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
     GET_TOKEN(tokeniser, *tindex, body);
     body_node->nearest_token = body;
     if (body->type == ELEMENT_TOK_SEMICOLON) {
-        body_node->type = ELEMENT_AST_NODE_CONSTRAINT;
+        body_node->type = ELEMENT_AST_NODE_NO_BODY;
         if (declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
             tokenlist_advance(tokeniser, tindex);
         }
@@ -766,7 +766,7 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
     tokenlist_advance(tokeniser, tindex);
     if (body->type == ELEMENT_TOK_SEMICOLON) {
         // constraint
-        body_node->type = ELEMENT_AST_NODE_CONSTRAINT;
+        body_node->type = ELEMENT_AST_NODE_NO_BODY;
     } else if (body->type == ELEMENT_TOK_BRACEL) {
         // scope (struct body)
         ELEMENT_OK_OR_RETURN(parse_scope(tindex, body_node));
@@ -820,7 +820,7 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
     tokenlist_advance(tokeniser, tindex);
 
     if (body->type == ELEMENT_TOK_SEMICOLON) {
-        body_node->type = ELEMENT_AST_NODE_CONSTRAINT;
+        body_node->type = ELEMENT_AST_NODE_NO_BODY;
     }
     else if (body->type == ELEMENT_TOK_BRACEL) {
         log(ELEMENT_ERROR_CONSTRAINT_HAS_BODY, 

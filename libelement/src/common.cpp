@@ -103,6 +103,9 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_DECLARATION) {
         string += "IMPLICIT RETURN";
     }
+    else if (ast->type == ELEMENT_AST_NODE_NO_BODY) {
+        string += "NO BODY";
+    }
     else if (ast->type == ELEMENT_AST_NODE_NONE) {
         if (ast->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT))
             string += "EMPTY INPUT";
