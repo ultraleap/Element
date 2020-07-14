@@ -1,6 +1,7 @@
 #include "lmnt/interpreter.h"
 #include "lmnt/config.h"
 #include "lmnt/validation.h"
+#include "helpers.h"
 
 #include <assert.h>
 #include <math.h>
@@ -99,22 +100,16 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
     if (LMNT_UNLIKELY(rvals && rvals_count < def->rvals_count))
         return LMNT_ERROR_RVALS_MISMATCH;
 
-    // Work out if we're executing a locally-defined block or an extern one
-    const lmnt_code* defcode;
-    const lmnt_instruction* instructions;
-    if ((def->flags & LMNT_DEFFLAG_EXTERN) == 0)
-    {
-        // Get code
-        LMNT_OK_OR_RETURN(lmnt_get_code(&ctx->archive, def->code, &defcode));
-        LMNT_OK_OR_RETURN(lmnt_get_code_instructions(&ctx->archive, def->code, &instructions));
-    }
-
-    // Make sure the context is set up to use the real ops
-    ctx->op_functions = lmnt_op_functions;
-
     lmnt_result opresult = LMNT_OK;
     if ((def->flags & LMNT_DEFFLAG_EXTERN) == 0)
     {
+        // Get code
+        const lmnt_code* defcode = validated_get_code(&ctx->archive, def->code);
+        const lmnt_instruction* instructions = validated_get_code_instructions(&ctx->archive, def->code);
+
+        // Make sure the context is set up to use the real ops
+        ctx->op_functions = lmnt_op_functions;
+
         // Grab the current instruction as a local rather than updating the ctx every time - faster
         lmnt_loffset instr;
         const lmnt_loffset icount = defcode->instructions_count;
@@ -174,9 +169,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_execute(
     // Set our current instruction to be the start of the requested def
     ctx->cur_def = def;
     ctx->cur_instr = 0;
-    lmnt_offset consts_count = 0;
-    LMNT_OK_OR_RETURN(lmnt_get_constants_count(&ctx->archive, &consts_count));
-    ctx->cur_stack_count = (size_t)consts_count + def->stack_count_unaligned;
+    ctx->cur_stack_count = (size_t)validated_get_constants_count(&ctx->archive) + (size_t)def->stack_count_unaligned;
     // Run main execute loop
     return execute(ctx, rvals, rvals_count);
 }
