@@ -16,6 +16,8 @@ configure_file (
 )
 
 set(libelement_sources
+    "notes.txt"
+
     "src/source_information.hpp"
 
     "src/log_errors.hpp"
