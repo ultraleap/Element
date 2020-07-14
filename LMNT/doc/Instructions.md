@@ -8,6 +8,7 @@ These are the possible valid instructions in LMNT and their meaning. Any argumen
 * **Scalar (S)**: a single value occupying one stack location
 * **Vector (V)**: a 4-wide array of values occupying four contiguous stack locations
 * **Immediate (I)**: a value encoded in the instruction, either as an integer (II) or a binary value (IB)
+* **Stack Ref (R)**: a single value occupying one stack location, whose value (cast to integer) is another stack location
 
 ## Argument types
 * **Stack Loc**: an integer representing a location on the function's stack
@@ -721,7 +722,7 @@ Takes the next integer towards zero to the given value for each lane of a 4-wide
 ```
 
 
-## `INDEXDIS`
+## `INDEXRIS`
 Reads a value from the stack, adds a constant to it, and then reads from *that* stack index, writing it to another stack location.
 
 **Safety**: this instruction allows for dynamically choosing a stack location to read from; as a result it is possible for this instruction to cause an access violation error (which will result in the function immediately returning with the `LMNT_ERROR_ACCESS_VIOLATION` code).
@@ -739,7 +740,7 @@ Reads a value from the stack, adds a constant to it, and then reads from *that* 
 ```
 
 
-## `INDEXDID`
+## `INDEXRIR`
 Reads a value from the stack, adds a constant to it, and then reads from *that* stack index; then reads the output index from the stack, before writing it to that retrieved location.
 
 **Safety**: this instruction allows for dynamically choosing a stack location to read from and write to; as a result it is possible for this instruction to cause an access violation error (which will result in the function immediately returning with the `LMNT_ERROR_ACCESS_VIOLATION` code).

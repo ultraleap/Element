@@ -329,10 +329,10 @@ static void test_assignibv(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-static void test_indexdis(void)
+static void test_indexris(void)
 {
     archive a = create_archive_array("test", 1, 1, 2, 1, 4,
-        LMNT_OP_BYTES(LMNT_OP_INDEXDIS, 0x04, 0x00, 0x05),
+        LMNT_OP_BYTES(LMNT_OP_INDEXRIS, 0x04, 0x00, 0x05),
         350.0f, 700.0f, -100.0f, 50.0f
     );
     test_function_data fndata;
@@ -365,10 +365,10 @@ static void test_indexdis(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-static void test_indexdid(void)
+static void test_indexrir(void)
 {
     archive a = create_archive_array("test", 2, 1, 4, 1, 4,
-        LMNT_OP_BYTES(LMNT_OP_INDEXDID, 0x04, 0x00, 0x05),
+        LMNT_OP_BYTES(LMNT_OP_INDEXRIR, 0x04, 0x00, 0x05),
         350.0f, 700.0f, -100.0f, 50.0f
     );
     test_function_data fndata;
@@ -429,6 +429,6 @@ MAKE_REGISTER_SUITE_FUNCTION(misc,
     CUNIT_CI_TEST(test_assignibs),
     CUNIT_CI_TEST(test_assigniiv),
     CUNIT_CI_TEST(test_assignibv),
-    CUNIT_CI_TEST(test_indexdis),
-    CUNIT_CI_TEST(test_indexdid)
+    CUNIT_CI_TEST(test_indexris),
+    CUNIT_CI_TEST(test_indexrir)
 );
