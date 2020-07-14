@@ -404,12 +404,6 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         {
             const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
             const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
-            | .rodata
-            |1:
-            | .aword values
-            |2:
-            | .dword sec->count
-            | .code
             | xor rtmp2, rtmp2
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
             if (isLocationInRegisterCache(state, in.arg2, 1)) {
@@ -418,7 +412,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             } else {
                 | cvttss2si etmp2, dword [rStack + in.arg2*4]
             }
-            | cmp etmp2, dword [<2]
+            | cmp etmp2, (sec->count)
             | jge ->invalid_access
             | test etmp2, etmp2
             | js ->invalid_access
@@ -433,12 +427,6 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         {
             const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
             const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
-            | .rodata
-            |1:
-            | .aword values
-            |2:
-            | .dword sec->count
-            | .code
             | xor rtmp2, rtmp2
             ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
             if (isLocationInRegisterCache(state, in.arg2, 1)) {
@@ -449,7 +437,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             }
             | mov etmp1, etmp2
             | add etmp1, 4
-            | cmp etmp1, dword [<2]
+            | cmp etmp1, (sec->count)
             | jg ->invalid_access
             | test etmp2, etmp2
             | js ->invalid_access
