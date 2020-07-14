@@ -65,7 +65,7 @@ typedef struct lmnt_code
 
 typedef struct lmnt_data_header
 {
-    lmnt_offset sections_count;
+    lmnt_loffset sections_count;
 } lmnt_data_header;
 
 typedef struct lmnt_data_section

@@ -1021,6 +1021,7 @@ static const char filedata_simple1k[] = {
     LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x02, 0x01, 0x02),
     LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x02, 0x01, 0x02),
     LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x02, 0x01, 0x02),
+    // pad to multiple of 4
     // data
-    0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00
 };

@@ -42,9 +42,10 @@ static const char filedata_circle[] = {
     LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x999A, 0x3E19, 0x08),
     //stack[9] = 1.0
     LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x09),
-    // data
+    // pad to multiple of 4
     0x00, 0x00,
-    // pad to multiple of 8
+    // data
+    0x00, 0x00, 0x00, 0x00,
     // constants
     0xDB, 0x0F, 0xC9, 0x40, // tau
     0x00, 0x00, 0x80, 0x3F, // 1.0
