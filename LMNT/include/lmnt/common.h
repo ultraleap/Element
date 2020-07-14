@@ -26,6 +26,9 @@ enum
     LMNT_ERROR_MEMORY_SIZE      = -14,
     LMNT_ERROR_MISSING_EXTCALL  = -15,
     LMNT_ERROR_INTERNAL         = -16,
+    // These error codes are only used internally
+    LMNT_BRANCHING              = -65536,
+    LMNT_RETURNING              = -65537,
 };
 
 // Possible enum values for lmnt_validation_result

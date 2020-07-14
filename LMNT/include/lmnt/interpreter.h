@@ -10,6 +10,14 @@
 // Declare op function signature
 typedef lmnt_result(*lmnt_op_fn)(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
+enum
+{
+    LMNT_ISTATUS_CMP_EQ = (1 << 0),  // equal
+    LMNT_ISTATUS_CMP_LT = (1 << 1),  // less than
+    LMNT_ISTATUS_CMP_GT = (1 << 2),  // greater than
+    LMNT_ISTATUS_CMP_UN = (1 << 7),  // unordered (i.e. NaNs present)
+};
+
 // Main interpreter context struct
 struct lmnt_ictx
 {
@@ -29,6 +37,7 @@ struct lmnt_ictx
     lmnt_loffset cur_instr;
     size_t cur_stack_count;
     const lmnt_op_fn* op_functions;
+    uint32_t status_flags;
 };
 
 

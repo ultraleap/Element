@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 
 extern lmnt_op_fn lmnt_op_functions[LMNT_OP_END];
 extern lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END];
@@ -17,6 +18,8 @@ static lmnt_result get_stack_start(const lmnt_ictx* ctx, lmnt_value** value)
 
 lmnt_result lmnt_ictx_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
 {
+    memset(ctx, 0, sizeof(lmnt_ictx));
+
     ctx->memory_area = mem;
     ctx->memory_area_size = mem_size;
 
@@ -25,11 +28,6 @@ lmnt_result lmnt_ictx_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
     if (mem_size < min_stack_count * sizeof(lmnt_value))
         return LMNT_ERROR_MEMORY_SIZE;
 
-    ctx->archive.data = NULL;
-    ctx->archive.size = 0;
-    ctx->cur_def = NULL;
-    ctx->cur_instr = 0;
-    ctx->cur_stack_count = 0;
     return LMNT_OK;
 }
 
@@ -126,7 +124,15 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
         for (instr = ctx->cur_instr; instr < icount; ++instr)
         {
             opresult = execute_instruction(ctx, instructions[instr]);
-            if (LMNT_UNLIKELY(opresult != LMNT_OK)) break;
+            if (LMNT_UNLIKELY(opresult != LMNT_OK)) {
+                if (opresult == LMNT_BRANCHING) {
+                    // the context's instruction pointer has been updated, refresh
+                    instr = ctx->cur_instr - 1; // will be incremented by loop
+                    continue;
+                } else {
+                    break;
+                }
+            }
         }
         ctx->cur_instr = instr;
     }
@@ -144,6 +150,10 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
     if (LMNT_LIKELY(opresult != LMNT_INTERRUPTED)) {
         ctx->cur_def = NULL;
         ctx->cur_stack_count = 0;
+    }
+    // If we hit a return instruction, that's an OK return
+    if (opresult == LMNT_RETURNING) {
+        opresult = LMNT_OK;
     }
 
     // If OK and we have a buffer to write to, copy out return values and return the count populated

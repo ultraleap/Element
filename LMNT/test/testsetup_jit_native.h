@@ -28,8 +28,11 @@
 
 #undef  TEST_UNLOAD_ARCHIVE
 #define TEST_UNLOAD_ARCHIVE(ctx, a, fndata) \
-    lmnt_jit_delete_function((lmnt_jit_fn_data*)((fndata).data));\
-    free((fndata).data);
+    if ((fndata).data) {\
+        lmnt_jit_delete_function((lmnt_jit_fn_data*)((fndata).data));\
+        free((fndata).data);\
+        (fndata).data = NULL;\
+    }
 
 #undef  TEST_EXECUTE
 #define TEST_EXECUTE(ctx, fndata, rvals, rvals_count) \
