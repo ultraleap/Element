@@ -109,7 +109,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiss(lmnt_ictx* ctx, lmnt_offset arg1, lm
     const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
     const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
     size_t arg2v = value_to_size_t(ctx->stack[arg2]);
-    if (arg2v + 1 <= sec->count) {
+    if (arg2v < sec->count) {
         ctx->stack[arg3] = values[arg2v];
         return LMNT_OK;
     } else {
@@ -122,7 +122,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_dloadisv(lmnt_ictx* ctx, lmnt_offset arg1, lm
     const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
     const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
     size_t arg2v = value_to_size_t(ctx->stack[arg2]);
-    if (arg2v + 4 <= sec->count) {
+    if (sec->count >= 4 && arg2v <= sec->count - 4) {
         ctx->stack[arg3 + 0] = values[arg2v + 0];
         ctx->stack[arg3 + 1] = values[arg2v + 1];
         ctx->stack[arg3 + 2] = values[arg2v + 2];
