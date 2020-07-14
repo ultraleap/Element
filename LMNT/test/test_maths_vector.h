@@ -10,7 +10,7 @@
 
 static void test_addvv(void)
 {
-    archive a = create_archive_array("test", 8, 4, 12, 1, 0,
+    archive a = create_archive_array("test", 8, 4, 12, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ADDVV, 0x00, 0x04, 0x08)
     );
     test_function_data fndata;
@@ -98,7 +98,7 @@ static void test_addvv(void)
 
 static void test_subvv(void)
 {
-    archive a = create_archive_array("test", 8, 4, 12, 1, 0,
+    archive a = create_archive_array("test", 8, 4, 12, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_SUBVV, 0x00, 0x04, 0x08)
     );
     test_function_data fndata;
@@ -186,7 +186,7 @@ static void test_subvv(void)
 
 static void test_mulvv(void)
 {
-    archive a = create_archive_array("test", 8, 4, 12, 1, 0,
+    archive a = create_archive_array("test", 8, 4, 12, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MULVV, 0x00, 0x04, 0x08)
     );
     test_function_data fndata;
@@ -283,7 +283,7 @@ static void test_mulvv(void)
 
 static void test_divvv(void)
 {
-    archive a = create_archive_array("test", 8, 4, 12, 1, 0,
+    archive a = create_archive_array("test", 8, 4, 12, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_DIVVV, 0x00, 0x04, 0x08)
     );
     test_function_data fndata;
@@ -381,7 +381,7 @@ static void test_divvv(void)
 
 static void test_modvv(void)
 {
-    archive a = create_archive_array("test", 8, 4, 12, 1, 0,
+    archive a = create_archive_array("test", 8, 4, 12, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MODVV, 0x00, 0x04, 0x08)
     );
     test_function_data fndata;
@@ -487,7 +487,7 @@ static void test_modvv(void)
 
 static void test_powvv(void)
 {
-    archive a = create_archive_array("test", 8, 4, 12, 1, 0,
+    archive a = create_archive_array("test", 8, 4, 12, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_POWVV, 0x00, 0x04, 0x08)
     );
     test_function_data fndata;
@@ -557,7 +557,7 @@ static void test_powvv(void)
 
 static void test_powvs(void)
 {
-    archive a = create_archive_array("test", 5, 4, 9, 1, 0,
+    archive a = create_archive_array("test", 5, 4, 9, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_POWVS, 0x00, 0x04, 0x05)
     );
     test_function_data fndata;
@@ -627,7 +627,7 @@ static void test_powvs(void)
 
 static void test_sqrtv(void)
 {
-    archive a = create_archive_array("test", 4, 4, 8, 1, 0,
+    archive a = create_archive_array("test", 4, 4, 8, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_SQRTV, 0x00, 0x00, 0x04)
     );
     test_function_data fndata;

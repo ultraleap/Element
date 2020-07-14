@@ -11,7 +11,7 @@
 
 static void test_abss(void)
 {
-    archive a = create_archive_array("test", 1, 1, 2, 1, 0,
+    archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ABSS, 0x00, 0x00, 0x01)
     );
     test_function_data fndata;
@@ -54,7 +54,7 @@ static void test_abss(void)
 
 static void test_absv(void)
 {
-    archive a = create_archive_array("test", 4, 4, 8, 1, 0,
+    archive a = create_archive_array("test", 4, 4, 8, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ABSV, 0x00, 0x00, 0x04)
     );
     test_function_data fndata;
@@ -83,7 +83,7 @@ static void test_absv(void)
 
 static void test_sumv(void)
 {
-    archive a = create_archive_array("test", 4, 1, 5, 1, 0,
+    archive a = create_archive_array("test", 4, 1, 5, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_SUMV, 0x00, 0x00, 0x04)
     );
     test_function_data fndata;
@@ -118,7 +118,7 @@ static void test_sumv(void)
 
 static void test_floors(void)
 {
-    archive a = create_archive_array("test", 1, 1, 2, 1, 0,
+    archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_FLOORS, 0x00, 0x00, 0x01)
     );
     test_function_data fndata;
@@ -157,7 +157,7 @@ static void test_floors(void)
 
 static void test_floorv(void)
 {
-    archive a = create_archive_array("test", 4, 4, 8, 1, 0,
+    archive a = create_archive_array("test", 4, 4, 8, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_FLOORV, 0x00, 0x00, 0x04)
     );
     test_function_data fndata;
@@ -186,7 +186,7 @@ static void test_floorv(void)
 
 static void test_rounds(void)
 {
-    archive a = create_archive_array("test", 1, 1, 2, 1, 0,
+    archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ROUNDS, 0x00, 0x00, 0x01)
     );
     test_function_data fndata;
@@ -241,7 +241,7 @@ static void test_rounds(void)
 
 static void test_roundv(void)
 {
-    archive a = create_archive_array("test", 4, 4, 8, 1, 0,
+    archive a = create_archive_array("test", 4, 4, 8, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ROUNDV, 0x00, 0x00, 0x04)
     );
     test_function_data fndata;
@@ -277,7 +277,7 @@ static void test_roundv(void)
 
 static void test_ceils(void)
 {
-    archive a = create_archive_array("test", 1, 1, 2, 1, 0,
+    archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CEILS, 0x00, 0x00, 0x01)
     );
     test_function_data fndata;
@@ -316,7 +316,7 @@ static void test_ceils(void)
 
 static void test_ceilv(void)
 {
-    archive a = create_archive_array("test", 4, 4, 8, 1, 0,
+    archive a = create_archive_array("test", 4, 4, 8, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CEILV, 0x00, 0x00, 0x04)
     );
     test_function_data fndata;
@@ -345,7 +345,7 @@ static void test_ceilv(void)
 
 static void test_truncs(void)
 {
-    archive a = create_archive_array("test", 1, 1, 2, 1, 0,
+    archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_TRUNCS, 0x00, 0x00, 0x01)
     );
     test_function_data fndata;
@@ -392,7 +392,7 @@ static void test_truncs(void)
 
 static void test_truncv(void)
 {
-    archive a = create_archive_array("test", 4, 4, 8, 1, 0,
+    archive a = create_archive_array("test", 4, 4, 8, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_TRUNCV, 0x00, 0x00, 0x04)
     );
     test_function_data fndata;
@@ -421,7 +421,7 @@ static void test_truncv(void)
 
 static void test_minss(void)
 {
-    archive a = create_archive_array("test", 2, 1, 3, 1, 0,
+    archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MINSS, 0x00, 0x01, 0x02)
     );
     test_function_data fndata;
@@ -462,7 +462,7 @@ static void test_minss(void)
 
 static void test_minvv(void)
 {
-    archive a = create_archive_array("test", 8, 4, 12, 1, 0,
+    archive a = create_archive_array("test", 8, 4, 12, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MINVV, 0x00, 0x04, 0x08)
     );
     test_function_data fndata;
@@ -513,7 +513,7 @@ static void test_minvv(void)
 
 static void test_maxss(void)
 {
-    archive a = create_archive_array("test", 2, 1, 3, 1, 0,
+    archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MAXSS, 0x00, 0x01, 0x02)
     );
     test_function_data fndata;
@@ -554,7 +554,7 @@ static void test_maxss(void)
 
 static void test_maxvv(void)
 {
-    archive a = create_archive_array("test", 8, 4, 12, 1, 0,
+    archive a = create_archive_array("test", 8, 4, 12, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MAXVV, 0x00, 0x04, 0x08)
     );
     test_function_data fndata;
@@ -605,7 +605,7 @@ static void test_maxvv(void)
 
 static void test_minvs(void)
 {
-    archive a = create_archive_array("test", 5, 4, 9, 1, 0,
+    archive a = create_archive_array("test", 5, 4, 9, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MINVS, 0x00, 0x04, 0x05)
     );
     test_function_data fndata;
@@ -656,7 +656,7 @@ static void test_minvs(void)
 
 static void test_maxvs(void)
 {
-    archive a = create_archive_array("test", 5, 4, 9, 1, 0,
+    archive a = create_archive_array("test", 5, 4, 9, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MAXVS, 0x00, 0x04, 0x05)
     );
     test_function_data fndata;

@@ -6,14 +6,14 @@
 #include "lmnt/opcodes.h"
 #include "lmnt/extcalls.h"
 
-typedef struct
+typedef struct lmnt_archive
 {
     const char* data;
     size_t size;
 } lmnt_archive;
 
 #pragma pack(push, 1)
-typedef struct
+typedef struct lmnt_archive_header
 {
     char magic[4];
     uint8_t version_major;
@@ -23,6 +23,7 @@ typedef struct
     uint32_t strings_length;
     uint32_t defs_length;
     uint32_t code_length;
+    uint32_t data_length;
     uint32_t constants_length;
 } lmnt_archive_header;
 
@@ -35,7 +36,7 @@ enum
     LMNT_DEFFLAG_LAMBDA    = 0x04,
 };
 
-typedef struct
+typedef struct lmnt_def
 {
     uint16_t length;
     lmnt_offset name; // string
@@ -49,7 +50,7 @@ typedef struct
     uint8_t bases_count;
 } lmnt_def;
 
-typedef struct
+typedef struct lmnt_instruction
 {
     lmnt_opcode opcode;
     lmnt_offset arg1; // various
@@ -57,10 +58,21 @@ typedef struct
     lmnt_offset arg3; // various
 } lmnt_instruction;
 
-typedef struct
+typedef struct lmnt_code
 {
     lmnt_loffset instructions_count;
 } lmnt_code;
+
+typedef struct lmnt_data_header
+{
+    lmnt_offset sections_count;
+} lmnt_data_header;
+
+typedef struct lmnt_data_section
+{
+    lmnt_loffset offset;
+    lmnt_loffset count;
+} lmnt_data_section;
 #pragma pack(pop)
 
 lmnt_result lmnt_archive_init(lmnt_archive* archive, const char* data, size_t size);
@@ -79,6 +91,10 @@ lmnt_result lmnt_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset,
 
 lmnt_result lmnt_get_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code);
 lmnt_result lmnt_get_code_instructions(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_instruction** instrs);
+
+lmnt_result lmnt_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count);
+lmnt_result lmnt_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section);
+lmnt_result lmnt_get_data_block(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_value** block);
 
 lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count);
 

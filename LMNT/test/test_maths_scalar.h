@@ -10,7 +10,7 @@
 
 static void test_addss(void)
 {
-    archive a = create_archive_array("test", 2, 1, 3, 1, 0,
+    archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x00, 0x01, 0x02)
     );
     test_function_data fndata;
@@ -58,7 +58,7 @@ static void test_addss(void)
 
 static void test_subss(void)
 {
-    archive a = create_archive_array("test", 2, 1, 3, 1, 0,
+    archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_SUBSS, 0x00, 0x01, 0x02)
     );
     test_function_data fndata;
@@ -106,7 +106,7 @@ static void test_subss(void)
 
 static void test_mulss(void)
 {
-    archive a = create_archive_array("test", 2, 1, 3, 1, 0,
+    archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MULSS, 0x00, 0x01, 0x02)
     );
     test_function_data fndata;
@@ -158,7 +158,7 @@ static void test_mulss(void)
 
 static void test_divss(void)
 {
-    archive a = create_archive_array("test", 2, 1, 3, 1, 0,
+    archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_DIVSS, 0x00, 0x01, 0x02)
     );
     test_function_data fndata;
@@ -211,7 +211,7 @@ static void test_divss(void)
 
 static void test_modss(void)
 {
-    archive a = create_archive_array("test", 2, 1, 3, 1, 0,
+    archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MODSS, 0x00, 0x01, 0x02)
     );
     test_function_data fndata;
@@ -271,7 +271,7 @@ static void test_modss(void)
 
 static void test_powss(void)
 {
-    archive a = create_archive_array("test", 2, 1, 3, 1, 0,
+    archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_POWSS, 0x00, 0x01, 0x02)
     );
     test_function_data fndata;
@@ -320,7 +320,7 @@ static void test_powss(void)
 
 static void test_sqrts(void)
 {
-    archive a = create_archive_array("test", 1, 1, 2, 1, 0,
+    archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_SQRTS, 0x00, 0x00, 0x01)
     );
     test_function_data fndata;

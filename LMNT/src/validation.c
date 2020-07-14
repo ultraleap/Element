@@ -296,12 +296,12 @@ lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, lmnt_o
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)(archive->data);
     if (strcmp(hdr->magic, "LMNT") != 0)
         return LMNT_VERROR_HEADER_MAGIC;
-    const size_t segs_len = (size_t)hdr->strings_length + (size_t)hdr->defs_length + (size_t)hdr->code_length + (size_t)hdr->constants_length;
+    const size_t segs_len = (size_t)hdr->strings_length + (size_t)hdr->defs_length + (size_t)hdr->code_length + (size_t)hdr->data_length + (size_t)hdr->constants_length;
     if (archive->size != sizeof(lmnt_archive_header) + segs_len)
         return LMNT_VERROR_SEGMENTS_SIZE;
 
     // The constants table MUST be 8-byte aligned within the archive
-    const size_t constants_idx = sizeof(lmnt_archive_header) + hdr->strings_length + hdr->defs_length + hdr->code_length;
+    const size_t constants_idx = sizeof(lmnt_archive_header) + hdr->strings_length + hdr->defs_length + hdr->code_length + hdr->data_length;
     if ((constants_idx % 8) != 0)
         return LMNT_VERROR_CONSTANTS_ALIGN;
 
@@ -314,6 +314,19 @@ lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, lmnt_o
             str_index += svresult;
         else
             return svresult;
+    }
+
+    // Data
+    lmnt_offset data_section_count;
+    LMNT_V_OK_OR_RETURN(lmnt_get_data_sections_count(archive, &data_section_count));
+    for (lmnt_offset s = 0; s < data_section_count; ++s)
+    {
+        const lmnt_data_section* section;
+        LMNT_V_OK_OR_RETURN(lmnt_get_data_section(archive, s, &section));
+        if (section->offset < sizeof(lmnt_data_header) + sizeof(lmnt_data_section) * data_section_count)
+            return LMNT_VERROR_ACCESS_VIOLATION;
+        if ((size_t)section->offset + (size_t)section->count >= hdr->data_length)
+            return LMNT_VERROR_ACCESS_VIOLATION;
     }
 
     // Defs
