@@ -105,12 +105,12 @@ namespace element
     }
 
     intrinsic_function::intrinsic_function(const element_type_id id, type_const_ptr return_type)
-        : intrinsic(id), return_type(std::move(return_type))
+        : intrinsic(id), return_type(return_type)
     {
     }
 
     intrinsic_nullary::intrinsic_nullary(const element_nullary_op operation, type_const_ptr return_type = type::num.get()):
-        intrinsic_function(type_id, std::move(return_type))
+        intrinsic_function(type_id, return_type)
         , operation(operation)
     {
     }
@@ -123,71 +123,44 @@ namespace element
 
     std::shared_ptr<object> intrinsic_nullary::compile(const compilation_context& context, const source_information& source_info) const
     {
-        auto type = type::num.get();
-
-        if (operation == element_nullary_op::true_value || operation == element_nullary_op::false_value)
-            type = type::boolean.get();
-
         return std::make_shared<element_expression_nullary>(
-            operation, type);
+            operation, return_type);
     }
 
     intrinsic_unary::intrinsic_unary(element_unary_op operation, 
                                      type_const_ptr return_type = type::num.get(), 
                                      type_const_ptr argument_type = type::num.get())
-        : intrinsic_function(type_id, std::move(return_type))
+        : intrinsic_function(type_id, return_type)
         , operation(operation)
-        , argument_type{std::move(argument_type)}
+        , argument_type{argument_type}
     {
     }
 
     std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
                                                   source_info) const
     {
-        auto type = type::num.get();
-
-        if (operation == element_unary_op::not_)
-            type = type::boolean.get();
-
         auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
         assert(expr);
 
         return std::make_shared<element_expression_unary>(
             operation,
             std::move(expr),
-            type);
+            return_type);
     }
 
     intrinsic_binary::intrinsic_binary(const element_binary_op operation, type_const_ptr return_type = type::num.get(),
                                        type_const_ptr first_argument_type = type::num.get(),
                                        type_const_ptr second_argument_type = type::num.get()):
-        intrinsic_function(type_id, std::move(return_type))
+        intrinsic_function(type_id, return_type)
         , operation(operation)
-        , first_argument_type{std::move(first_argument_type)}
-        , second_argument_type{std::move(second_argument_type)}
+        , first_argument_type{first_argument_type}
+        , second_argument_type{second_argument_type}
     {
     }
 
     std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
                                                    source_info) const
     {
-        auto type = type::num.get();
-
-        switch (operation)
-        {
-            case element_binary_op::and_:
-            case element_binary_op::or_:
-            case element_binary_op::eq:
-            case element_binary_op::neq:
-            case element_binary_op::lt:
-            case element_binary_op::leq:
-            case element_binary_op::gt:
-            case element_binary_op::geq:
-            {
-                type = type::boolean.get();
-            }
-        }
-
         auto expr1 = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
         auto expr2 = std::dynamic_pointer_cast<element_expression>(compiled_args[1]);
         assert(expr1);
@@ -197,7 +170,7 @@ namespace element
             operation,
             expr1,
             expr2,
-            std::move(type));
+            return_type);
     }
 
     intrinsic_if::intrinsic_if()

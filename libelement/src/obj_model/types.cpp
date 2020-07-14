@@ -44,6 +44,7 @@ namespace element
         assert(declaration);
         return declaration->index(context, name, source_info);
     }
+
     std::shared_ptr<object> user_type::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
         return std::shared_ptr<object>();
