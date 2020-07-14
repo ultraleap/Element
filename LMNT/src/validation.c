@@ -22,10 +22,10 @@ static int32_t validate_string(const lmnt_archive* archive, lmnt_offset str_inde
     return sizeof(archive_string_header) + shdr->size;
 }
 
-static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset code_index, lmnt_offset constants_count, lmnt_offset rw_stack_count);
+static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset code_index, size_t constants_count, size_t rw_stack_count);
 
 #define DEFSTACK_LIMIT 16
-static int32_t validate_def_inner(const lmnt_archive* archive, lmnt_offset def_index, lmnt_offset constants_count, lmnt_offset rw_stack_count, lmnt_offset* defstack, size_t defstack_count, lmnt_offset disallowed_flags)
+static int32_t validate_def_inner(const lmnt_archive* archive, lmnt_offset def_index, size_t constants_count, size_t rw_stack_count, lmnt_offset* defstack, size_t defstack_count, lmnt_offset disallowed_flags)
 {
     defstack[defstack_count] = def_index;
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
@@ -83,18 +83,18 @@ static int32_t validate_def_inner(const lmnt_archive* archive, lmnt_offset def_i
     return sizeof(lmnt_def) + (sizeof(lmnt_loffset) * dhdr->bases_count);
 }
 
-static int32_t validate_def(const lmnt_archive* archive, lmnt_offset def_index, lmnt_offset constants_count, lmnt_offset rw_stack_count, lmnt_offset disallowed_flags)
+static int32_t validate_def(const lmnt_archive* archive, lmnt_offset def_index, size_t constants_count, size_t rw_stack_count, lmnt_offset disallowed_flags)
 {
     lmnt_offset defstack[DEFSTACK_LIMIT];
     return validate_def_inner(archive, def_index, constants_count, rw_stack_count, defstack, 0, disallowed_flags);
 }
 
-static inline lmnt_validation_result validate_operand_stack_read(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg, lmnt_offset count, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+static inline lmnt_validation_result validate_operand_stack_read(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg, lmnt_offset count, size_t constants_count, size_t rw_stack_count)
 {
     return (arg + count <= constants_count + rw_stack_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
-static inline lmnt_validation_result validate_operand_stack_write(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg, lmnt_offset count, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+static inline lmnt_validation_result validate_operand_stack_write(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg, lmnt_offset count, size_t constants_count, size_t rw_stack_count)
 {
     // Old: ensure we're not writing to a constant
     // return (arg >= constants_count && arg + count <= constants_count + rw_stack_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
@@ -102,19 +102,19 @@ static inline lmnt_validation_result validate_operand_stack_write(const lmnt_arc
     return (arg + count <= constants_count + rw_stack_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
-static inline lmnt_validation_result validate_operand_immediate(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+static inline lmnt_validation_result validate_operand_immediate(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, size_t constants_count, size_t rw_stack_count)
 {
     return LMNT_VALIDATION_OK;
 }
 
-static inline lmnt_validation_result validate_operand_dataload_section(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg1, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+static inline lmnt_validation_result validate_operand_dataload_section(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg1, size_t constants_count, size_t rw_stack_count)
 {
     lmnt_offset sec_count;
     lmnt_result sresult = lmnt_get_data_sections_count(archive, &sec_count);
     return (sresult == LMNT_OK && arg1 < sec_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
-static inline lmnt_validation_result validate_operand_dataload_imm(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset size, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+static inline lmnt_validation_result validate_operand_dataload_imm(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset size, size_t constants_count, size_t rw_stack_count)
 {
     LMNT_V_OK_OR_RETURN(validate_operand_dataload_section(archive, def, arg1, constants_count, rw_stack_count));
     const lmnt_data_section* sec;
@@ -122,7 +122,7 @@ static inline lmnt_validation_result validate_operand_dataload_imm(const lmnt_ar
     return (sresult == LMNT_OK && (lmnt_loffset)arg2 + (lmnt_loffset)size <= sec->count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
-static inline lmnt_validation_result validate_operand_defptr(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, lmnt_offset stack, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+static inline lmnt_validation_result validate_operand_defptr(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, lmnt_offset stack, size_t constants_count, size_t rw_stack_count)
 {
     const lmnt_loffset target_offset = LMNT_COMBINE_OFFSET(arglo, arghi);
     // Disallow the target being an interface: you can't call those...
@@ -137,7 +137,7 @@ static inline lmnt_validation_result validate_operand_defptr(const lmnt_archive*
     return LMNT_VALIDATION_OK;
 }
 
-static inline lmnt_validation_result validate_operand_codeptr(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+static inline lmnt_validation_result validate_operand_codeptr(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, size_t constants_count, size_t rw_stack_count)
 {
     const lmnt_loffset target_offset = LMNT_COMBINE_OFFSET(arglo, arghi);
     const lmnt_code* code;
@@ -145,7 +145,7 @@ static inline lmnt_validation_result validate_operand_codeptr(const lmnt_archive
     return (target_offset < code->instructions_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
-static lmnt_validation_result validate_instruction(const lmnt_archive* archive, const lmnt_def* def, lmnt_opcode code, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+static lmnt_validation_result validate_instruction(const lmnt_archive* archive, const lmnt_def* def, lmnt_opcode code, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3, size_t constants_count, size_t rw_stack_count)
 {
     switch (code)
     {
@@ -305,7 +305,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     }
 }
 
-static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset code_index, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset code_index, size_t constants_count, size_t rw_stack_count)
 {
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
     if (code_index + sizeof(lmnt_code) > hdr->code_length)
@@ -322,7 +322,7 @@ static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, l
 }
 
 
-lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, lmnt_offset constants_count, lmnt_offset rw_stack_count)
+lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, size_t total_stack_count)
 {
     if (archive->size < sizeof(lmnt_archive_header))
         return LMNT_VERROR_HEADER_MAGIC;
@@ -339,6 +339,9 @@ lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, lmnt_o
     if ((constants_idx % 8) != 0)
         return LMNT_VERROR_CONSTANTS_ALIGN;
 
+    const size_t constants_count = (hdr->constants_length / sizeof(lmnt_value));
+    const size_t rw_stack_count = total_stack_count - constants_count;
+
     // Strings
     lmnt_offset str_index = 0;
     while (str_index < hdr->strings_length)
@@ -350,13 +353,14 @@ lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, lmnt_o
             return svresult;
     }
 
-    // Data
-    lmnt_offset data_section_count;
-    LMNT_V_OK_OR_RETURN(lmnt_get_data_sections_count(archive, &data_section_count));
+    // Data - use validated functions as we know we can read *some* data from here
+    lmnt_offset data_section_count = validated_get_data_sections_count(archive);
+    if (sizeof(lmnt_data_header) + data_section_count * sizeof(lmnt_data_section) > hdr->data_length)
+        return LMNT_VERROR_ACCESS_VIOLATION;
+
     for (lmnt_offset s = 0; s < data_section_count; ++s)
     {
-        const lmnt_data_section* section;
-        LMNT_V_OK_OR_RETURN(lmnt_get_data_section(archive, s, &section));
+        const lmnt_data_section* section = validated_get_data_section(archive, s);
         if (section->offset < sizeof(lmnt_data_header) + sizeof(lmnt_data_section) * data_section_count)
             return LMNT_VERROR_ACCESS_VIOLATION;
         if ((size_t)section->offset + (size_t)section->count >= hdr->data_length)

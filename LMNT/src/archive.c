@@ -26,20 +26,19 @@ lmnt_result lmnt_archive_init(lmnt_archive* archive, const char* data, size_t si
 
 lmnt_result lmnt_get_constant(const lmnt_archive* archive, uint32_t offset, lmnt_value* value)
 {
-    *value = *(lmnt_value*)(get_constants_segment(archive) + offset);
+    *value = validated_get_constant(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_constants(const lmnt_archive* archive, uint32_t offset, const lmnt_value** value)
 {
-    *value = (const lmnt_value*)(get_constants_segment(archive) + offset);
+    *value = validated_get_constants(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_constants_count(const lmnt_archive* archive, lmnt_offset* value)
 {
-    const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
-    *value = (lmnt_offset)(hdr->constants_length / sizeof(lmnt_value));
+    *value = validated_get_constants_count(archive);
     return LMNT_OK;
 }
 
@@ -53,13 +52,13 @@ int32_t lmnt_get_string(const lmnt_archive* archive, uint32_t offset, const char
 
 lmnt_result lmnt_get_def(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_def** def)
 {
-    *def = (const lmnt_def*)(get_defs_segment(archive) + offset);
+    *def = validated_get_def(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_loffset** bases)
 {
-    *bases = (const lmnt_loffset*)(get_defs_segment(archive) + offset + sizeof(lmnt_def));
+    *bases = validated_get_def_bases(archive, offset);
     return LMNT_OK;
 }
 
@@ -67,8 +66,9 @@ lmnt_result lmnt_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, 
 {
     const char* const base = get_defs_segment(archive) + offset;
     const lmnt_def* hdr = (const lmnt_def*)base;
-    LMNT_OK_OR_RETURN(lmnt_get_code(archive, hdr->code, code));
-    return lmnt_get_code_instructions(archive, hdr->code, instrs);
+    *code = validated_get_code(archive, hdr->code);
+    *instrs = validated_get_code_instructions(archive, hdr->code);
+    return LMNT_OK;
 }
 
 lmnt_result lmnt_find_def(const lmnt_archive* archive, const char* name, const lmnt_def** def)
@@ -93,31 +93,31 @@ lmnt_result lmnt_find_def(const lmnt_archive* archive, const char* name, const l
 
 lmnt_result lmnt_get_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code)
 {
-    *code = (const lmnt_code*)(get_code_segment(archive) + offset);
+    *code = validated_get_code(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_code_instructions(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_instruction** instrs)
 {
-    *instrs = (const lmnt_instruction*)(get_code_segment(archive) + offset + sizeof(lmnt_code));
+    *instrs = validated_get_code_instructions(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count)
 {
-    *count = ((const lmnt_data_header*)get_data_segment(archive))->sections_count;
+    *count = validated_get_data_sections_count(archive);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section)
 {
-    *section = ((const lmnt_data_section*)(get_data_segment(archive) + sizeof(lmnt_data_header) + sizeof(lmnt_data_section) * index));
+    *section = validated_get_data_section(archive, index);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_data_block(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_value** block)
 {
-    *block = (const lmnt_value*)(get_data_segment(archive) + offset);
+    *block = validated_get_data_block(archive, offset);
     return LMNT_OK;
 }
 

@@ -63,10 +63,7 @@ lmnt_result lmnt_ictx_load_archive_end(lmnt_ictx* ctx)
 
 lmnt_result lmnt_ictx_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* vresult)
 {
-    lmnt_offset constants_count;
-    LMNT_OK_OR_RETURN(lmnt_get_constants_count(&ctx->archive, &constants_count));
-    const lmnt_offset writable_stack_count = (lmnt_offset)(ctx->stack_count - constants_count);
-    lmnt_validation_result vr = lmnt_archive_validate(&ctx->archive, constants_count, writable_stack_count);
+    lmnt_validation_result vr = lmnt_archive_validate(&ctx->archive, ctx->stack_count);
     if (vresult)
         *vresult = vr;
     if (vr != LMNT_VALIDATION_OK)
