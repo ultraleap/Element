@@ -141,6 +141,7 @@ namespace Laboratory
                 }
                 catch (Exception e)
                 {
+                    messages.Add(e.ToString());
                     _hostBuildErrors.Add(info, messages);
                 }
             }
