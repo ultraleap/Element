@@ -60,14 +60,8 @@ static void test_branch(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -122,14 +116,8 @@ static void test_branchceq(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHCEQ,   0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -184,14 +172,8 @@ static void test_branchcne(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHCNE,   0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -254,14 +236,8 @@ static void test_branchclt(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLT,   0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -324,14 +300,8 @@ static void test_branchcle(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLE,   0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -394,14 +364,8 @@ static void test_branchcgt(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHCGT,   0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -464,14 +428,8 @@ static void test_branchcge(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHCGE,   0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -526,14 +484,8 @@ static void test_branchcun(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHCUN,   0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -584,14 +536,8 @@ static void test_branchz(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHZ,    0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -642,14 +588,8 @@ static void test_branchnz(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHNZ,   0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -708,14 +648,8 @@ static void test_branchpos(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHPOS,  0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -774,14 +708,8 @@ static void test_branchneg(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHNEG,  0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -840,14 +768,8 @@ static void test_branchun(void)
         LMNT_OP_BYTES(LMNT_OP_BRANCHUN,   0x00, 0x01, 0x00)
     );
 
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);
-    {
-        lmnt_validation_result vr;
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_ERROR_INVALID_ARCHIVE);
-        CU_ASSERT_EQUAL_FATAL(vr, LMNT_VERROR_ACCESS_VIOLATION);
-    }
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
-
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
