@@ -136,12 +136,12 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_NOOP:
     case LMNT_OP_RETURN:
         return LMNT_VALIDATION_OK;
-    case LMNT_OP_INDEXDIS:
+    case LMNT_OP_INDEXRIS:
         // arg1 is validated at runtime, but we can check stackref is valid
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, arg2, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
-    case LMNT_OP_INDEXDID:
+    case LMNT_OP_INDEXRIR:
         // args are validated at runtime, but we can check stackrefs are valid
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg3, 1, constants_count, rw_stack_count));

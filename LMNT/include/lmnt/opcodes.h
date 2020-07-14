@@ -74,9 +74,9 @@ enum
     LMNT_OP_TRUNCS,
     LMNT_OP_TRUNCV,
     // indexing: stackref, immediate, stack
-    LMNT_OP_INDEXDIS,
+    LMNT_OP_INDEXRIS,
     // indexing: stackref, immediate, stackref
-    LMNT_OP_INDEXDID,
+    LMNT_OP_INDEXRIR,
     // compare: stack, stack, null
     LMNT_OP_CMP,
     // branch: null, codelo, codehi
@@ -106,11 +106,11 @@ enum
 typedef enum
 {
     LMNT_OPERAND_UNUSED,
-    LMNT_OPERAND_STACK1,  // S
-    LMNT_OPERAND_STACK4,  // V
+    LMNT_OPERAND_STACK1,   // S
+    LMNT_OPERAND_STACK4,   // V
     LMNT_OPERAND_STACKN,
-    LMNT_OPERAND_IMM,     // I
-    LMNT_OPERAND_DYNAMIC, // D
+    LMNT_OPERAND_IMM,      // I
+    LMNT_OPERAND_STACKREF, // R
     LMNT_OPERAND_DEFPTR,
     LMNT_OPERAND_CODEPTR,
 } lmnt_operand_type;

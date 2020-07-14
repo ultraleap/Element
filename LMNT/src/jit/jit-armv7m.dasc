@@ -817,7 +817,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | roundv1 RMODE_ZERO
             break;
 
-        case LMNT_OP_INDEXDIS:
+        case LMNT_OP_INDEXRIS:
         {
             // Unknown at compile-time what stack addresses this is going to read from. So...
             flushAllRegisters(state);
@@ -854,7 +854,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | writes_or_notify reg3, in.arg3, vtmps1
             break;
         }
-        case LMNT_OP_INDEXDID:
+        case LMNT_OP_INDEXRIR:
         {
             // Unknown at compile-time what stack addresses this is going to read from OR WRITE TO. So...
             platformWriteAndEvictAll(state);
