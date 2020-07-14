@@ -160,7 +160,7 @@ element_value element_evaluate_binary(element_expression_binary::op op, element_
     case element_expression_binary::op::min:   return (std::min)(a, b);
     case element_expression_binary::op::mul:   return a * b;
     case element_expression_binary::op::pow:   return std::pow(a, b);
-    case element_expression_binary::op::rem:   return std::modf(a, &b);
+    case element_expression_binary::op::rem:   return std::fmod(a, b);
     case element_expression_binary::op::sub:   return a - b;
 
     //boolean
