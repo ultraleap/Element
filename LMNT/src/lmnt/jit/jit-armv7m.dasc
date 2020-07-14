@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <math.h>
 #include <limits.h>
 #include <assert.h>
@@ -176,13 +177,13 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // Nothing fancy on ARMv7-M :(
     state->cpuflags = 0;
 
-    int use_nv = 0;
+    bool use_nv = false;
     state->fpreg->start = LMNT_FPREG_V_START;
     state->fpreg->end = LMNT_FPREG_V_END;
     // TODO: decide this at runtime (based on code size?)
     #if defined(LMNT_JIT_ARM_ALLOW_NV_REGISTERS)
     // if (some_condition) {
-        use_nv = 1;
+        use_nv = true;
         state->fpreg->start = LMNT_FPREG_V_START;
         state->fpreg->end = LMNT_FPREG_NV_END;
         state->fpreg->preferred.start = LMNT_FPREG_NV_START;
@@ -288,6 +289,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
             | vldr s(reg3), <1
             | writes_or_notify reg3, in.arg3, vtmps1
+            break;
         }
         case LMNT_OP_ASSIGNIBS:
         {
@@ -415,7 +417,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | mathv2serial vdiv.f32
             break;
 
-        | .macro extern1, fn, offset
+        | .macro extern1, fn, offset, outarg, outreg
         ||if (acquireScalarRegisterOrLoad(state, in.arg1 + offset, &reg1, ACCESSTYPE_READ, 0)) {
             | vmov.f32 s0, s(reg1)
         ||}
@@ -426,11 +428,11 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         |.code
         | ldr r0, <1
         | blx r0
-        ||if (acquireScalarRegister(state, in.arg3 + offset, &reg3, ACCESSTYPE_WRITE)) {
-            | vmov.f32 s(reg3), s0
-            ||notifyRegisterWritten(state, reg3, 1);
+        ||if (acquireScalarRegister(state, outarg + offset, &outreg, ACCESSTYPE_WRITE)) {
+            | vmov.f32 s(outreg), s0
+            ||notifyRegisterWritten(state, outreg, 1);
         ||} else {
-            | writes in.arg3, 0
+            | writes outarg, 0
         ||}
         | .endmacro
 
@@ -471,28 +473,35 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         }
 
         case LMNT_OP_SIN:
-            | extern1 sinf, 0
+            | extern1 sinf, 0, in.arg3, reg3
             break;
         case LMNT_OP_COS:
-            | extern1 cosf, 0
+            | extern1 cosf, 0, in.arg3, reg3
             break;
         case LMNT_OP_TAN:
-            | extern1 tanf, 0
+            | extern1 tanf, 0, in.arg3, reg3
             break;
         case LMNT_OP_ASIN:
-            | extern1 asinf, 0
+            | extern1 asinf, 0, in.arg3, reg3
             break;
         case LMNT_OP_ACOS:
-            | extern1 acosf, 0
+            | extern1 acosf, 0, in.arg3, reg3
             break;
         case LMNT_OP_ATAN:
-            | extern1 atanf, 0
+            | extern1 atanf, 0, in.arg3, reg3
             break;
+        case LMNT_OP_ATAN2:
+            | extern2 atan2f, 0, 0, 0
+            break;
+        case LMNT_OP_SINCOS:
+            | extern1 sinf, 0, in.arg2, reg2
+            | extern1 cosf, 0, in.arg3, reg3
+            break;
+
 
         case LMNT_OP_POWSS:
             | extern2 powf,  0,  0,  0
             break;
-        // TODO: SSE?
         case LMNT_OP_POWVV:
             | extern2 powf,  0,  0,  0
             | extern2 powf,  4,  4,  4

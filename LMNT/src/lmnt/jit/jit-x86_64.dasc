@@ -172,13 +172,13 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     state->cpuflags = get_x86_cpu_flags();
     print_x86_cpu_flags(state->cpuflags);
 
-    int use_nv = 0;
+    bool use_nv = false;
     state->fpreg->start = LMNT_FPREG_V_START;
     state->fpreg->end = LMNT_FPREG_V_END;
     // TODO: decide this at runtime (based on code size?)
     #if defined(LMNT_JIT_X86_64_ALLOW_NV_REGISTERS)
     // if (some_condition) {
-        use_nv = 1;
+        use_nv = true;
         state->fpreg->start = LMNT_FPREG_V_START;
         state->fpreg->end = LMNT_FPREG_NV_END;
         state->fpreg->preferred.start = LMNT_FPREG_NV_START;
@@ -209,6 +209,10 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     | .dword 0x7FFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
     | ->absvbits:
     | .dword 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF
+    | ->nanbits:
+    | .dword 0x7FC00000, 0x7FC00000, 0x7FC00000, 0x7FC00000
+    | ->inftonanbits:
+    | .dword 0x00400000, 0x00400000, 0x00400000, 0x00400000
     | .code
     | ->lmnt_main:
     | prologue, use_nv
@@ -273,7 +277,8 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
         case LMNT_OP_ASSIGNIIS:
         {
-            const lmnt_loffset off = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const lmnt_loffset uoff = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const int32_t off = *(const int32_t*)(&uoff);
             const lmnt_value val = (const lmnt_value)off;
             const lmnt_loffset bin = *(const lmnt_loffset*)(&val);
             | .rodata
@@ -283,6 +288,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             | movss xmm(reg3), dword [<1]
             | writes_or_notify reg3, in.arg3, xmmtmp1
+            break;
         }
         case LMNT_OP_ASSIGNIBS:
         {
@@ -299,7 +305,8 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_ASSIGNIIV:
         {
             // TOOPT
-            const lmnt_loffset off = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const lmnt_loffset uoff = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const int32_t off = *(const int32_t*)(&uoff);
             const lmnt_value val = (const lmnt_value)off;
             const lmnt_loffset bin = *(const lmnt_loffset*)(&val);
             | .rodata
@@ -385,61 +392,100 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | mathv2 divps
             break;
 
-        // TODO: THIS IS BROKEN FOR VECTOR OPS
-        | .macro extern1, fn, offset
-        ||if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
-            | movaps xmm0, xmm(reg1)
+        // TODO: this is slow for vector ops but we should phase it out anyway
+        | .macro extern1, fn, offset, outarg, outoffset, outreg
+        ||if (acquireScalarRegister(state, in.arg1 + offset, &reg1, ACCESSTYPE_READ)) {
+            | movss xmm0, xmm(reg1)
         ||} else {
-            | reads xmm0, in.arg1
+            | reads xmm0, in.arg1 + offset
         ||}
         ||platformWriteAndEvictVolatile(state);
         | mov64 rax, (const intptr_t)(&fn)
         | call rax
-        ||if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
-            | movaps xmm(reg3), xmm0
-            ||notifyRegisterWritten(state, reg3, 1);
+        ||if (acquireScalarRegister(state, outarg + outoffset, &outreg, ACCESSTYPE_WRITE)) {
+            | movss xmm(outreg), xmm0
+            ||notifyRegisterWritten(state, outreg, 1);
         ||} else {
-            | writes in.arg3, xmm0
+            | writes outarg + outoffset, xmm0
         ||}
         | .endmacro
 
-        // TODO: THIS IS BROKEN FOR VECTOR OPS
+        // TODO: this is slow for vector ops but we should phase it out anyway
         | .macro extern2, fn, offset1, offset2, offset3
-        ||if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
-            | movaps xmm0, xmm(reg1)
+        ||if (acquireScalarRegister(state, in.arg1 + offset1, &reg1, ACCESSTYPE_READ)) {
+            | movss xmm0, xmm(reg1)
         ||} else {
-            | reads xmm0, in.arg1
+            | reads xmm0, in.arg1 + offset1
         ||}
-        ||if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
-            | movaps xmm1, xmm(reg2)
+        ||if (acquireScalarRegister(state, in.arg2 + offset2, &reg2, ACCESSTYPE_READ)) {
+            | movss xmm1, xmm(reg2)
         ||} else {
-            | reads xmm1, in.arg2
+            | reads xmm1, in.arg2 + offset2
         ||}
         ||platformWriteAndEvictVolatile(state);
         | mov64 rax, (const intptr_t)(&fn)
         | call rax
-        ||if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
-            | movaps xmm(reg3), xmm0
+        ||if (acquireScalarRegister(state, in.arg3 + offset3, &reg3, ACCESSTYPE_WRITE)) {
+            | movss xmm(reg3), xmm0
             ||notifyRegisterWritten(state, reg3, 1);
         ||} else {
-            | writes in.arg3, xmm0
+            | writes in.arg3 + offset3, xmm0
         ||}
         | .endmacro
 
         case LMNT_OP_MODSS:
-            // call to C
-            | extern2 fmodf,  0,  0,  0
-            break;
-        case LMNT_OP_MODVV:
         {
             // call to C
             // | extern2 fmodf,  0,  0,  0
-            // | extern2 fmodf,  4,  4,  4
-            // | extern2 fmodf,  8,  8,  8
-            // | extern2 fmodf, 12, 12, 12
             // manual SSE2 version
-            int arg1hasreg = acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
-            int arg2hasreg = acquireVectorRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
+            bool arg1hasreg = acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
+            bool arg2hasreg = acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
+            if (arg1hasreg) {
+                | movss xmm(xmmtmp1), xmm(reg1)
+            } else {
+                | reads xmm(xmmtmp1), in.arg1
+            }
+            if (!arg2hasreg) {
+                | reads xmm(xmmtmp2), in.arg2
+                ||reg2 = xmmtmp2;
+            }
+            | divss xmm(xmmtmp1), xmm(reg2)
+            // NaN check: also gather infinities
+            | movss xmm(xmmtmp2), dword [->inftonanbits]
+            | orps xmm(xmmtmp2), xmm(xmmtmp1)
+            | cmpss xmm(xmmtmp2), xmm(xmmtmp1), 0x3  // CMPUNORDSS
+            // float -> int -> float (stick to vector versions, faster)
+            | cvttps2dq xmm(xmmtmp1), xmm(xmmtmp1)
+            | cvtdq2ps xmm(xmmtmp1), xmm(xmmtmp1)
+            // reintroduce any NaNs
+            | andps xmm(xmmtmp2), oword [->nanbits]
+            | orps xmm(xmmtmp1), xmm(xmmtmp2)
+            // if we wiped out arg2 due to the NaN check, re-read it
+            ||if (reg2 == xmmtmp2) {
+                | reads xmm(xmmtmp2), in.arg2
+            ||}
+            | mulss xmm(xmmtmp1), xmm(reg2)
+            // we can now reuse xmmtmp2 if needed
+            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
+            if (arg1hasreg) {
+                | movss xmm(reg3), xmm(reg1)
+            } else {
+                | reads xmm(reg3), in.arg1
+            }
+            | subss xmm(reg3), xmm(xmmtmp1)
+            | writes_or_notify reg3, in.arg3, xmmtmp2
+            break;
+        }
+        case LMNT_OP_MODVV:
+        {
+            // call to C
+            // | extern2 fmodf, 0, 0, 0
+            // | extern2 fmodf, 1, 1, 1
+            // | extern2 fmodf, 2, 2, 2
+            // | extern2 fmodf, 3, 3, 3
+            // manual SSE2 version
+            bool arg1hasreg = acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
+            bool arg2hasreg = acquireVectorRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
             if (arg1hasreg) {
                 | movaps xmm(xmmtmp1), xmm(reg1)
             } else {
@@ -450,10 +496,22 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 ||reg2 = xmmtmp2;
             }
             | divps xmm(xmmtmp1), xmm(reg2)
+            // NaN check: also gather infinities
+            | movups xmm(xmmtmp2), oword [->inftonanbits]
+            | orps xmm(xmmtmp2), xmm(xmmtmp1)
+            | cmpps xmm(xmmtmp2), xmm(xmmtmp1), 0x3  // CMPUNORD
+            // float -> int -> float
             | cvttps2dq xmm(xmmtmp1), xmm(xmmtmp1)
             | cvtdq2ps xmm(xmmtmp1), xmm(xmmtmp1)
+            // reintroduce any NaNs
+            | andps xmm(xmmtmp2), oword [->nanbits]
+            | orps xmm(xmmtmp1), xmm(xmmtmp2)
+            // if we wiped out arg2 due to the NaN check, re-read it
+            ||if (reg2 == xmmtmp2) {
+                | readv xmm(xmmtmp2), in.arg2
+            ||}
             | mulps xmm(xmmtmp1), xmm(reg2)
-            // we don't need xmmtmp2's current value from this point
+            // we can now reuse xmmtmp2 if needed
             ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
             if (arg1hasreg) {
                 | movaps xmm(reg3), xmm(reg1)
@@ -465,40 +523,48 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
         }
 
+        // TODO: https://github.com/divideconcept/FastTrigo/blob/master/fasttrigo.cpp
         case LMNT_OP_SIN:
-            | extern1 sinf, 0
+            | extern1 sinf, 0, in.arg3, 0, reg3
             break;
         case LMNT_OP_COS:
-            | extern1 cosf, 0
+            | extern1 cosf, 0, in.arg3, 0, reg3
             break;
         case LMNT_OP_TAN:
-            | extern1 tanf, 0
+            | extern1 tanf, 0, in.arg3, 0, reg3
             break;
         case LMNT_OP_ASIN:
-            | extern1 asinf, 0
+            | extern1 asinf, 0, in.arg3, 0, reg3
             break;
         case LMNT_OP_ACOS:
-            | extern1 acosf, 0
+            | extern1 acosf, 0, in.arg3, 0, reg3
             break;
         case LMNT_OP_ATAN:
-            | extern1 atanf, 0
+            | extern1 atanf, 0, in.arg3, 0, reg3
+            break;
+        case LMNT_OP_ATAN2:
+            | extern2 atan2f, 0, 0, 0
+            break;
+        case LMNT_OP_SINCOS:
+            | extern1 sinf, 0, in.arg2, 0, reg2
+            | extern1 cosf, 0, in.arg3, 0, reg3
             break;
 
         case LMNT_OP_POWSS:
-            | extern2 powf,  0,  0,  0
+            | extern2 powf, 0, 0, 0
             break;
         // TODO: SSE?
         case LMNT_OP_POWVV:
-            | extern2 powf,  0,  0,  0
-            | extern2 powf,  4,  4,  4
-            | extern2 powf,  8,  8,  8
-            | extern2 powf, 12, 12, 12
+            | extern2 powf, 0, 0, 0
+            | extern2 powf, 1, 1, 1
+            | extern2 powf, 2, 2, 2
+            | extern2 powf, 3, 3, 3
             break;
         case LMNT_OP_POWVS:
-            | extern2 powf,  0,  0,  0
-            | extern2 powf,  4,  0,  4
-            | extern2 powf,  8,  0,  8
-            | extern2 powf, 12,  0, 12
+            | extern2 powf, 0, 0, 0
+            | extern2 powf, 1, 0, 1
+            | extern2 powf, 2, 0, 2
+            | extern2 powf, 3, 0, 3
             break;
         case LMNT_OP_SQRTS:
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
@@ -551,7 +617,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | readv xmm(xmmtmp1), in.arg1
             }
             | movaps xmm(xmmtmp2), xmm(xmmtmp1)
-            | shufps xmm(xmmtmp2), xmm(xmmtmp1), 0xB1
+            | shufps xmm(xmmtmp2), xmm(xmmtmp2), 0xB1
             | addps xmm(xmmtmp1), xmm(xmmtmp2)
             | movhlps xmm(xmmtmp2), xmm(xmmtmp1)
             | addss xmm(xmmtmp1), xmm(xmmtmp2)
@@ -619,22 +685,23 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                     | roundss xmm(reg3), dword [rStack + in.arg1*4], 0x01
                 }
             } else {
+                // Stick to vector ops as they're faster
                 if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
-                    | cvttss2si ecx, xmm(reg1)
+                    | cvttps2dq xmm(reg3), xmm(reg1)
                 } else {
-                    | cvttss2si ecx, dword [rStack + in.arg1*4]
+                    | readv xmm(reg3), in.arg1
+                    | cvttps2dq xmm(reg3), xmm(reg3)
                 }
-                | cvtsi2ss xmm(reg3), ecx
+                | cvtdq2ps xmm(reg3), xmm(reg3)
             }
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         case LMNT_OP_FLOORV:
             ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
+            ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
             if (state->cpuflags & SIMD_X86_SSE41) {
-                ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
                 | roundps xmm(reg3), xmm(reg1), 0x01
             } else {
-                ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
                 | cvttps2dq xmm(reg3), xmm(reg1)
                 | cvtdq2ps xmm(reg3), xmm(reg3)
             }
@@ -647,7 +714,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundss xmm(reg3), xmm(reg1), 0x00
                 | writes_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 roundf,  0
+                | extern1 roundf, 0, in.arg3, 0, reg3
             }
             break;
         case LMNT_OP_ROUNDV:
@@ -657,10 +724,10 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundps xmm(reg3), xmm(reg1), 0x00
                 | writev_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 roundf,  0
-                | extern1 roundf,  4
-                | extern1 roundf,  8
-                | extern1 roundf, 12
+                | extern1 roundf, 0, in.arg3, 0, reg3
+                | extern1 roundf, 1, in.arg3, 1, reg3
+                | extern1 roundf, 2, in.arg3, 2, reg3
+                | extern1 roundf, 3, in.arg3, 3, reg3
             }
             break;
         case LMNT_OP_CEILS:
@@ -670,7 +737,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundss xmm(reg3), xmm(reg1), 0x02
                 | writes_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 ceilf,  0
+                | extern1 ceilf, 0, in.arg3, 0, reg3
             }
             break;
         case LMNT_OP_CEILV:
@@ -680,10 +747,10 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundps xmm(reg3), xmm(reg1), 0x02
                 | writev_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 ceilf,  0
-                | extern1 ceilf,  4
-                | extern1 ceilf,  8
-                | extern1 ceilf, 12
+                | extern1 ceilf, 0, in.arg3, 0, reg3
+                | extern1 ceilf, 1, in.arg3, 1, reg3
+                | extern1 ceilf, 2, in.arg3, 2, reg3
+                | extern1 ceilf, 3, in.arg3, 3, reg3
             }
             break;
 

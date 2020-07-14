@@ -60,7 +60,7 @@ struct jit_fpreg_data_s
 
 #define S(i) state->fpreg->s[i]
 
-static int chooseExistingScalarRegister(jit_compile_state* state, size_t* reg, int importance)
+static bool chooseExistingScalarRegister(jit_compile_state* state, size_t* reg, int importance)
 {
     int lowprio = INT_MAX;
     size_t lowreg = 0;
@@ -68,14 +68,14 @@ static int chooseExistingScalarRegister(jit_compile_state* state, size_t* reg, i
         if (S(i).count == 0) {
             // It's free real estate
             *reg = i;
-            return 1;
+            return true;
         }
     }
     for (size_t i = state->fpreg->fallback.start; i < state->fpreg->fallback.end; ++i) {
         if (S(i).count == 0) {
             // It's free real estate in a more volatile part of town
             *reg = i;
-            return 1;
+            return true;
         }
     }
 
@@ -88,7 +88,7 @@ static int chooseExistingScalarRegister(jit_compile_state* state, size_t* reg, i
     }
     if (importance > lowprio) {
         *reg = lowreg;
-        return 1;
+        return true;
     }
 
     // Try to clear out other vector registers
@@ -102,13 +102,13 @@ static int chooseExistingScalarRegister(jit_compile_state* state, size_t* reg, i
     }
     if (importance > lowprio) {
         *reg = lowreg;
-        return 1;
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
-static int chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, int importance)
+static bool chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, int importance)
 {
     int lowprio = INT_MAX;
     size_t lowreg = 0;
@@ -121,7 +121,7 @@ static int chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, i
         if (count == 0) {
             // It's free real estate
             *reg = i;
-            return 1;
+            return true;
         }
     }
     size_t fstart = nextbank(state->fpreg->fallback.start);
@@ -133,7 +133,7 @@ static int chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, i
         if (count == 0) {
             // It's free real estate in a more volatile part of town
             *reg = i;
-            return 1;
+            return true;
         }
     }
 
@@ -148,7 +148,7 @@ static int chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, i
     }
     if (importance > lowprio) {
         *reg = lowreg;
-        return 1;
+        return true;
     }
 
     // Try to clear out other scalar registers
@@ -164,10 +164,10 @@ static int chooseExistingVectorRegister(jit_compile_state* state, size_t* reg, i
     }
     if (importance > lowprio) {
         *reg = lowreg;
-        return 1;
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
 
@@ -212,14 +212,14 @@ static inline size_t getRegisterCount(jit_compile_state* state, size_t reg)
     return state->fpreg->s[reg].count;
 }
 
-static inline int isRegisterInitialised(jit_compile_state* state, size_t reg)
+static inline bool isRegisterInitialised(jit_compile_state* state, size_t reg)
 {
     return (state->fpreg->s[reg].flags & REGST_INITIALISED);
 }
 
-static int allowIndividualLaneAccess(jit_compile_state* state)
+static bool allowIndividualLaneAccess(jit_compile_state* state)
 {
-    return 1;
+    return true;
 }
 
 static void initialiseRegister(jit_compile_state* state, size_t reg)
@@ -237,7 +237,7 @@ static void initialiseRegister(jit_compile_state* state, size_t reg)
     }
 }
 
-static int flushRegister(jit_compile_state* state, size_t reg)
+static bool flushRegister(jit_compile_state* state, size_t reg)
 {
     size_t sz = S(reg).count;
     if (sz == FPREG_BANK_SIZE) {
@@ -250,17 +250,17 @@ static int flushRegister(jit_compile_state* state, size_t reg)
             platformWriteVectorFromRegister(state, S(breg).stackpos, breg);
             for (size_t i = breg; i < breg + FPREG_BANK_SIZE; ++i)
                 S(i).flags &= (~REGST_MODIFIED);
-            return 1;
+            return true;
         }
     } else if (sz == 1) {
         // If not modified, we have nothing to do here
         if (S(reg).flags & REGST_MODIFIED) {
             platformWriteScalarFromRegister(state, S(reg).stackpos, reg);
             S(reg).flags &= (~REGST_MODIFIED);
-            return 1;
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
 static inline void notifyRegisterWritten(jit_compile_state* state, size_t reg, size_t writeSize)

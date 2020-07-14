@@ -36,7 +36,7 @@ lmnt_result lmnt_jit_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit_targe
 lmnt_result lmnt_jit_compile_with_stats(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit_target target, lmnt_jit_fn_data* fn, lmnt_jit_compile_stats* stats);
 #endif
 
-lmnt_result lmnt_jit_free_function(lmnt_jit_fn_data* fndata);
+lmnt_result lmnt_jit_delete_function(lmnt_jit_fn_data* fndata);
 
 LMNT_ATTR_FAST lmnt_result lmnt_jit_execute(
     lmnt_ictx* ctx, const lmnt_def* def, const lmnt_jit_fn_data* fndata,

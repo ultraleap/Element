@@ -20,6 +20,7 @@ set(lmnt_sources
     "src/lmnt/ops_math.c"
     "src/lmnt/ops_misc.c"
     "src/lmnt/ops_trig.c"
+    "src/lmnt/ops_util.c"
 
     "src/lmnt/helpers.h"
 
@@ -35,6 +36,7 @@ set(lmnt_sources
     "include/lmnt/ops_math.h"
     "include/lmnt/ops_misc.h"
     "include/lmnt/ops_trig.h"
+    "include/lmnt/ops_util.h"
 )
 
 if (LMNT_TARGET_ARCH STREQUAL "x86_64")
@@ -56,6 +58,8 @@ list(TRANSFORM LMNT_JIT_ARCHITECTURES REPLACE "NATIVE" "${LMNT_TARGET_ARCH}")
 list(REMOVE_DUPLICATES LMNT_JIT_ARCHITECTURES)
 
 if(LMNT_BUILD_JIT)
+    include(FetchDynASM)
+
     string(REPLACE ";" ", " jit_arch_list "${LMNT_JIT_ARCHITECTURES}")
     message(STATUS "Building JIT for: ${jit_arch_list}")
 
@@ -68,10 +72,8 @@ if(LMNT_BUILD_JIT)
         "include/lmnt/jit.h"
     )
 
-
     set (jit_inputs)
     set (jit_outputs)
-    add_subdirectory("dependencies/dynasm")
     foreach (arch IN LISTS LMNT_JIT_ARCHITECTURES)
         set(lmnt_jit_input "${CMAKE_CURRENT_SOURCE_DIR}/src/lmnt/jit/jit-${arch}.dasc")
         set(lmnt_jit_output "${CMAKE_CURRENT_BINARY_DIR}/jit-${arch}.c")
@@ -108,16 +110,10 @@ if (UNIX)
     target_link_libraries(lmnt PRIVATE "m")
 endif ()
 
-
+option(BUILD_TESTING "Build tests" OFF)
+include(CTest)
 if (BUILD_TESTING)
-    add_executable(lmnt_test_app
-        "test/main.c"
-        "test/simple.h"
-        "test/circle.h"
-        "test/circle_ht.h"
-        "test/simple125.h"
-        "test/simple250.h"
-        "test/simple500.h"
-        "test/simple1000.h")
-    target_link_libraries(lmnt_test_app PRIVATE lmnt)
+    enable_testing()
+    add_subdirectory("test")
+    add_subdirectory("testapp")
 endif ()

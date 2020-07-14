@@ -221,6 +221,17 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
+    // trig: stack, stack, stack
+    case LMNT_OP_ATAN2:
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
+        return LMNT_VALIDATION_OK;
+    case LMNT_OP_SINCOS:
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg2, 1, constants_count, rw_stack_count));
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
+        return LMNT_VALIDATION_OK;
     // sqrt: stack, null, stack
     case LMNT_OP_SQRTV:
     case LMNT_OP_ABSV:

@@ -11,7 +11,7 @@
 typedef lmnt_result(*lmnt_op_fn)(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
 // Main interpreter context struct
-struct lmnt_ictx_s
+struct lmnt_ictx
 {
     // user-provided data
     char* memory_area;
@@ -60,13 +60,19 @@ lmnt_result lmnt_ictx_load_archive_end(lmnt_ictx* ctx);
 // Returns: LMNT_OK or an error
 lmnt_result lmnt_ictx_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* validation_result);
 
-LMNT_ATTR_FAST lmnt_result lmnt_update_arg(
-    lmnt_ictx* ctx, const lmnt_def* def,
-    const lmnt_value arg, const lmnt_offset offset);
+// Convenience function for lmnt_find_def
+lmnt_result lmnt_ictx_find_def(const lmnt_ictx* ctx, const char* name, const lmnt_def** def);
 
 LMNT_ATTR_FAST lmnt_result lmnt_update_args(
     lmnt_ictx* ctx, const lmnt_def* def,
-    const lmnt_value* args, const lmnt_offset count, const lmnt_offset offset);
+    const lmnt_offset offset, const lmnt_value* args, const lmnt_offset count);
+
+static lmnt_result lmnt_update_arg(
+    lmnt_ictx* ctx, const lmnt_def* def,
+    const lmnt_offset offset, const lmnt_value arg)
+{
+    return lmnt_update_args(ctx, def, offset, &arg, 1);
+}
 
 // Executes the specified LMNT function in the provided interpreter context
 // args_count must exactly match the number of arguments expected by the LMNT function
