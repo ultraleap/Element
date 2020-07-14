@@ -11,7 +11,7 @@
 
 static void test_assignss(void)
 {
-    archive a = create_archive_array("test", 1, 1, 2, 1, 0,
+    archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNSS, 0x00, 0x00, 0x01)
     );
     test_function_data fndata;
@@ -38,7 +38,7 @@ static void test_assignss(void)
 
 static void test_assignvv(void)
 {
-    archive a = create_archive_array("test", 4, 4, 8, 1, 0,
+    archive a = create_archive_array("test", 4, 4, 8, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNVV, 0x00, 0x00, 0x04)
     );
     test_function_data fndata;
@@ -67,7 +67,7 @@ static void test_assignvv(void)
 
 static void test_assignsv(void)
 {
-    archive a = create_archive_array("test", 1, 4, 5, 1, 0,
+    archive a = create_archive_array("test", 1, 4, 5, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNSV, 0x00, 0x00, 0x01)
     );
     test_function_data fndata;
@@ -115,7 +115,7 @@ static void test_assigniis(void)
     archive a;
     test_function_data fndata;
 
-    a = create_archive_array("test", 0, 1, 1, 1, 0,
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x002A, 0x0000, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -124,7 +124,7 @@ static void test_assigniis(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 42.0, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 1, 1, 1, 0,
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0xFFD6, 0xFFFF, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -133,7 +133,7 @@ static void test_assigniis(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], -42.0, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 1, 1, 1, 0,
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x0000, 0x0000, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -142,7 +142,7 @@ static void test_assigniis(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 0.0, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 1, 1, 1, 0,
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x58CB, 0xFFA9, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -159,7 +159,7 @@ static void test_assignibs(void)
     archive a;
     test_function_data fndata;
 
-    a = create_archive_array("test", 0, 1, 1, 1, 0,
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -168,7 +168,7 @@ static void test_assignibs(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 1, 1, 1, 0,
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x3D71, 0x422A, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -177,7 +177,7 @@ static void test_assignibs(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 42.56, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 1, 1, 1, 0,
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x0000, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -186,7 +186,7 @@ static void test_assignibs(void)
     CU_ASSERT_EQUAL(rvals[0], 0.0);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 1, 1, 1, 0,
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x8000, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -195,7 +195,7 @@ static void test_assignibs(void)
     CU_ASSERT_EQUAL(rvals[0], -0.0);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 1, 1, 1, 0,
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x4E6A, 0xCAAD, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -212,7 +212,7 @@ static void test_assigniiv(void)
     archive a;
     test_function_data fndata;
 
-    a = create_archive_array("test", 0, 4, 4, 1, 0,
+    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIV, 0x002A, 0x0000, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -224,7 +224,7 @@ static void test_assigniiv(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[3], 42.0, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 4, 4, 1, 0,
+    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIV, 0xFFD6, 0xFFFF, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -236,7 +236,7 @@ static void test_assigniiv(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[3], -42.0, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 4, 4, 1, 0,
+    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIV, 0x0000, 0x0000, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -248,7 +248,7 @@ static void test_assigniiv(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[3], 0.0, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 4, 4, 1, 0,
+    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIV, 0x58CB, 0xFFA9, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -268,7 +268,7 @@ static void test_assignibv(void)
     archive a;
     test_function_data fndata;
 
-    a = create_archive_array("test", 0, 4, 4, 1, 0,
+    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBV, 0x0000, 0x3F80, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -280,7 +280,7 @@ static void test_assignibv(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[3], 1.0, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 4, 4, 1, 0,
+    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBV, 0x3D71, 0x422A, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -292,7 +292,7 @@ static void test_assignibv(void)
     CU_ASSERT_DOUBLE_EQUAL(rvals[3], 42.56, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 4, 4, 1, 0,
+    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBV, 0x0000, 0x0000, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -304,7 +304,7 @@ static void test_assignibv(void)
     CU_ASSERT_EQUAL(rvals[3], 0.0);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 4, 4, 1, 0,
+    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBV, 0x0000, 0x8000, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -316,7 +316,7 @@ static void test_assignibv(void)
     CU_ASSERT_EQUAL(rvals[3], -0.0);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
-    a = create_archive_array("test", 0, 4, 4, 1, 0,
+    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBV, 0x4E6A, 0xCAAD, 0x00)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -331,7 +331,7 @@ static void test_assignibv(void)
 
 static void test_indexris(void)
 {
-    archive a = create_archive_array("test", 1, 1, 2, 1, 4,
+    archive a = create_archive_array("test", 1, 1, 2, 1, 0, 4,
         LMNT_OP_BYTES(LMNT_OP_INDEXRIS, 0x04, 0x00, 0x05),
         350.0f, 700.0f, -100.0f, 50.0f
     );
@@ -367,7 +367,7 @@ static void test_indexris(void)
 
 static void test_indexrir(void)
 {
-    archive a = create_archive_array("test", 2, 1, 4, 1, 4,
+    archive a = create_archive_array("test", 2, 1, 4, 1, 0, 4,
         LMNT_OP_BYTES(LMNT_OP_INDEXRIR, 0x04, 0x00, 0x05),
         350.0f, 700.0f, -100.0f, 50.0f
     );

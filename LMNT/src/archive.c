@@ -103,6 +103,24 @@ lmnt_result lmnt_get_code_instructions(const lmnt_archive* archive, lmnt_loffset
     return LMNT_OK;
 }
 
+lmnt_result lmnt_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count)
+{
+    *count = ((const lmnt_data_header*)get_data_segment(archive))->sections_count;
+    return LMNT_OK;
+}
+
+lmnt_result lmnt_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section)
+{
+    *section = ((const lmnt_data_section*)(get_data_segment(archive) + sizeof(lmnt_data_header) + sizeof(lmnt_data_section) * index));
+    return LMNT_OK;
+}
+
+lmnt_result lmnt_get_data_block(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_value** block)
+{
+    *block = (const lmnt_value*)(get_data_segment(archive) + offset);
+    return LMNT_OK;
+}
+
 
 lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count)
 {

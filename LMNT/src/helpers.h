@@ -36,9 +36,14 @@ static inline const char* get_code_segment(const lmnt_archive* archive)
     return get_defs_segment(archive) + get_header(archive)->defs_length;
 }
 
-static inline const char* get_constants_segment(const lmnt_archive* archive)
+static inline const char* get_data_segment(const lmnt_archive* archive)
 {
     return get_code_segment(archive) + get_header(archive)->code_length;
+}
+
+static inline const char* get_constants_segment(const lmnt_archive* archive)
+{
+    return get_data_segment(archive) + get_header(archive)->data_length;
 }
 
 static inline lmnt_offset value_to_offset(lmnt_value v)

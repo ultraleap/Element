@@ -76,22 +76,24 @@ static void delete_interpreter(lmnt_ictx* ictx)
     free(ictx);
 }
 
-static archive create_archive_array(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t consts_count, ...)
+static archive create_archive_array(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t data_count, uint32_t consts_count, ...)
 {
     const size_t name_len = strlen(def_name);
     assert(name_len <= 0xFE);
     assert(instr_count <= 0x3FFFFFF0);
     assert(consts_count <= 0x3FFFFFFF);
 
-    const size_t header_len = 0x18;
+    const size_t header_len = 0x1C;
     const size_t strings_len = 0x02 + name_len + 1;
     const size_t defs_len = 0x15;
-    uint32_t code_len = 0x04 + instr_count * sizeof(lmnt_instruction);
-    const uint32_t padding = (8 - ((header_len + strings_len + defs_len + code_len) % 8)) % 8;
-    code_len += padding;
+    const uint32_t code_len = 0x04 + instr_count * sizeof(lmnt_instruction);
+    const lmnt_offset data_sec_count = (data_count > 0);
+    uint32_t data_len = 0x02 + data_sec_count * (0x08 + 0x04 * data_count);
+    const uint32_t padding = (8 - ((header_len + strings_len + defs_len + code_len + data_len) % 8)) % 8;
+    data_len += padding;
     const uint32_t consts_len = consts_count * sizeof(lmnt_value);
 
-    const size_t total_size = header_len + strings_len + defs_len + code_len + consts_len;
+    const size_t total_size = header_len + strings_len + defs_len + code_len + data_len + consts_len;
     char* buf = (char*)calloc(total_size, sizeof(char));
 
     size_t idx = 0;
@@ -101,6 +103,7 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
         strings_len & 0xFF, (strings_len >> 8) & 0xFF, (strings_len >> 16) & 0xFF, (strings_len >> 24) & 0xFF, // strings length
         defs_len & 0xFF, (defs_len >> 8) & 0xFF, (defs_len >> 16) & 0xFF, (defs_len >> 24) & 0xFF, // defs length
         code_len & 0xFF, (code_len >> 8) & 0xFF, (code_len >> 16) & 0xFF, (code_len >> 24) & 0xFF, // code length
+        data_len & 0xFF, (data_len >> 8) & 0xFF, (data_len >> 16) & 0xFF, (data_len >> 24) & 0xFF, // data length
         consts_len & 0xFF, (consts_len >> 8) & 0xFF, (consts_len >> 16) & 0xFF, (consts_len >> 24) & 0xFF // constants_length
     };
     memcpy(buf + idx, header, sizeof(header));
@@ -136,6 +139,20 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
     for (size_t i = 0; i < instr_count; ++i) {
         for (size_t j = 0; j < 8; ++j) {
             buf[idx++] = va_arg(args, int); // actually char, but va_arg requires int
+        }
+    }
+
+    memcpy(buf + idx, (const char*)(&data_sec_count), sizeof(lmnt_offset));
+    idx += sizeof(lmnt_offset);
+    if (data_sec_count) {
+        const lmnt_data_section sec = {sizeof(lmnt_data_header) + sizeof(lmnt_data_section), data_count};
+        memcpy(buf + idx, (const char*)(&sec), sizeof(lmnt_data_section));
+        idx += sizeof(lmnt_data_section);
+
+        for (size_t i = 0; i < data_count; ++i) {
+            lmnt_value val = (lmnt_value)va_arg(args, double); // actually lmnt_value, but va_arg requires double
+            memcpy(buf + idx, (const char*)(&val), sizeof(val));
+            idx += sizeof(val);
         }
     }
 
