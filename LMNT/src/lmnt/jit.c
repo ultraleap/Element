@@ -25,7 +25,11 @@ LMNT_ATTR_FAST lmnt_result lmnt_jit_execute(
     assert(ctx && ctx->archive.data);
     assert(ctx->stack && ctx->stack_count);
 
-    // const lmnt_def* const def = ctx->cur_def;
+    ctx->cur_def = def;
+    ctx->cur_instr = (lmnt_loffset)-1;
+    lmnt_offset consts_count = 0;
+    LMNT_OK_OR_RETURN(lmnt_get_constants_count(&ctx->archive, &consts_count));
+    ctx->cur_stack_count = (size_t)consts_count + def->stack_count_unaligned;
 
     if (LMNT_UNLIKELY(rvals && rvals_count < def->rvals_count))
         return LMNT_ERROR_RVALS_MISMATCH;
@@ -46,8 +50,10 @@ LMNT_ATTR_FAST lmnt_result lmnt_jit_execute(
     }
 
     // If we finished or hit an error, clear the context's current def
-    if (LMNT_LIKELY(opresult != LMNT_INTERRUPTED))
+    if (LMNT_LIKELY(opresult != LMNT_INTERRUPTED)) {
         ctx->cur_def = NULL;
+        ctx->cur_stack_count = 0;
+    }
 
     // If OK and we have a buffer to write to, copy out return values and return the count populated
     if (LMNT_LIKELY(opresult == LMNT_OK && rvals))
@@ -109,6 +115,6 @@ lmnt_result lmnt_jit_compile_with_stats(lmnt_ictx* ctx, const lmnt_def* def, lmn
 
 lmnt_result lmnt_jit_delete_function(lmnt_jit_fn_data* fndata)
 {
-    hostFreeCompiledBuffer(fndata->buffer, fndata->codesize);
+    LMNT_JIT_FREE_CFN_MEMORY(fndata->buffer, fndata->codesize);
     return LMNT_OK;
 }

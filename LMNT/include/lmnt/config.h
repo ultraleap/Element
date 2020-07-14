@@ -35,14 +35,4 @@
 #define LMNT_PRINTF printf
 #endif
 
-
-//
-// JIT settings
-//
-
-#define LMNT_JIT_COLLECT_STATS
-// #define LMNT_JIT_DEBUG_PRINT
-// #define LMNT_JIT_DEBUG_NO_REGCACHE
-// #define LMNT_JIT_DEBUG_VALIDATE_REGCACHE
-
 #endif

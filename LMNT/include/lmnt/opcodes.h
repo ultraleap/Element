@@ -72,12 +72,8 @@ enum
     LMNT_OP_CEILV,
     // indexing: stackref, immediate, stack
     LMNT_OP_INDEXDIS,
-    // indexing: stack, stack, stack
-    LMNT_OP_INDEXSSS,
-    // indexing: stackref, stack, stack
-    LMNT_OP_INDEXDSS,
-    // indexing: stackref, stack, stackref
-    LMNT_OP_INDEXDSD,
+    // indexing: stackref, immediate, stackref
+    LMNT_OP_INDEXDID,
     // extern call: deflo, defhi, imm
     LMNT_OP_EXTCALL,
     // placeholder end operation

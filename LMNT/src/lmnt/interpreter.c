@@ -21,12 +21,15 @@ lmnt_result lmnt_ictx_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
     ctx->memory_area_size = mem_size;
 
     // Determine how much space we want to use for frames/stack
-    const size_t min_stack_count = 256;
+    const size_t min_stack_count = 16;
     if (mem_size < min_stack_count * sizeof(lmnt_value))
         return LMNT_ERROR_MEMORY_SIZE;
 
     ctx->archive.data = NULL;
     ctx->archive.size = 0;
+    ctx->cur_def = NULL;
+    ctx->cur_instr = 0;
+    ctx->cur_stack_count = 0;
     return LMNT_OK;
 }
 
@@ -138,8 +141,10 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
     }
 
     // If we finished or hit an error, clear the context's current def
-    if (LMNT_LIKELY(opresult != LMNT_INTERRUPTED))
+    if (LMNT_LIKELY(opresult != LMNT_INTERRUPTED)) {
         ctx->cur_def = NULL;
+        ctx->cur_stack_count = 0;
+    }
 
     // If OK and we have a buffer to write to, copy out return values and return the count populated
     if (LMNT_LIKELY(opresult == LMNT_OK && rvals))
@@ -162,6 +167,9 @@ LMNT_ATTR_FAST lmnt_result lmnt_execute(
     // Set our current instruction to be the start of the requested def
     ctx->cur_def = def;
     ctx->cur_instr = 0;
+    lmnt_offset consts_count = 0;
+    LMNT_OK_OR_RETURN(lmnt_get_constants_count(&ctx->archive, &consts_count));
+    ctx->cur_stack_count = (size_t)consts_count + def->stack_count_unaligned;
     // Run main execute loop
     return execute(ctx, rvals, rvals_count);
 }
