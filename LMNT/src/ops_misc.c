@@ -85,6 +85,62 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_assignibv(lmnt_ictx* ctx, lmnt_offset arg1, l
     return LMNT_OK;
 }
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiis(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    const lmnt_data_section* sec;
+    LMNT_OK_OR_RETURN(lmnt_get_data_section(&ctx->archive, arg1, &sec));
+    const lmnt_value* values;
+    LMNT_OK_OR_RETURN(lmnt_get_data_block(&ctx->archive, sec->offset, &values));
+    ctx->stack[arg3] = values[arg2];
+    return LMNT_OK;
+}
+
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiiv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    const lmnt_data_section* sec;
+    LMNT_OK_OR_RETURN(lmnt_get_data_section(&ctx->archive, arg1, &sec));
+    const lmnt_value* values;
+    LMNT_OK_OR_RETURN(lmnt_get_data_block(&ctx->archive, sec->offset, &values));
+    ctx->stack[arg3 + 0] = values[arg2 + 0];
+    ctx->stack[arg3 + 1] = values[arg2 + 1];
+    ctx->stack[arg3 + 2] = values[arg2 + 2];
+    ctx->stack[arg3 + 3] = values[arg2 + 3];
+    return LMNT_OK;
+}
+
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    const lmnt_data_section* sec;
+    LMNT_OK_OR_RETURN(lmnt_get_data_section(&ctx->archive, arg1, &sec));
+    const lmnt_value* values;
+    LMNT_OK_OR_RETURN(lmnt_get_data_block(&ctx->archive, sec->offset, &values));
+    size_t arg2v = value_to_size_t(ctx->stack[arg2]);
+    if (arg2v + 1 <= sec->count) {
+        ctx->stack[arg3] = values[arg2v];
+        return LMNT_OK;
+    } else {
+        return LMNT_ERROR_ACCESS_VIOLATION;
+    }
+}
+
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadisv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    const lmnt_data_section* sec;
+    LMNT_OK_OR_RETURN(lmnt_get_data_section(&ctx->archive, arg1, &sec));
+    const lmnt_value* values;
+    LMNT_OK_OR_RETURN(lmnt_get_data_block(&ctx->archive, sec->offset, &values));
+    size_t arg2v = value_to_size_t(ctx->stack[arg2]);
+    if (arg2v + 4 <= sec->count) {
+        ctx->stack[arg3 + 0] = values[arg2v + 0];
+        ctx->stack[arg3 + 1] = values[arg2v + 1];
+        ctx->stack[arg3 + 2] = values[arg2v + 2];
+        ctx->stack[arg3 + 3] = values[arg2v + 3];
+        return LMNT_OK;
+    } else {
+        return LMNT_ERROR_ACCESS_VIOLATION;
+    }
+}
+
 LMNT_ATTR_FAST lmnt_result lmnt_op_indexris(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     if (isnan(ctx->stack[arg1]) || isinf(ctx->stack[arg1])) return LMNT_ERROR_ACCESS_VIOLATION;
