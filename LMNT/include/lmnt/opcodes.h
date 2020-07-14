@@ -19,6 +19,12 @@ enum
     LMNT_OP_ASSIGNIBS,
     LMNT_OP_ASSIGNIIV,
     LMNT_OP_ASSIGNIBV,
+    // data load: immediate, immediate, stack
+    LMNT_OP_DLOADIIS,
+    LMNT_OP_DLOADIIV,
+    // data load: immediate, stack, stack
+    LMNT_OP_DLOADISS,
+    LMNT_OP_DLOADISV,
     // add: stack, stack, stack
     LMNT_OP_ADDSS,
     LMNT_OP_ADDVV,

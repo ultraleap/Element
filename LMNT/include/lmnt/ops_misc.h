@@ -15,6 +15,11 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_assignibs(lmnt_ictx* ctx, lmnt_offset arg1, l
 LMNT_ATTR_FAST lmnt_result lmnt_op_assigniiv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 LMNT_ATTR_FAST lmnt_result lmnt_op_assignibv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiis(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiiv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadisv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+
 LMNT_ATTR_FAST lmnt_result lmnt_op_indexris(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 LMNT_ATTR_FAST lmnt_result lmnt_op_indexrir(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 

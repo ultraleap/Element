@@ -18,6 +18,10 @@ LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_assignibs,
     lmnt_op_assigniiv,
     lmnt_op_assignibv,
+    lmnt_op_dloadiis,
+    lmnt_op_dloadiiv,
+    lmnt_op_dloadiss,
+    lmnt_op_dloadisv,
     lmnt_op_addss,
     lmnt_op_addvv,
     lmnt_op_subss,
@@ -87,6 +91,10 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "ASSIGNIBS", LMNT_OPERAND_IMM,      LMNT_OPERAND_IMM,      LMNT_OPERAND_STACK1   },
     { "ASSIGNIIV", LMNT_OPERAND_IMM,      LMNT_OPERAND_IMM,      LMNT_OPERAND_STACK4   },
     { "ASSIGNIBV", LMNT_OPERAND_IMM,      LMNT_OPERAND_IMM,      LMNT_OPERAND_STACK4   },
+    { "DLOADIIS",  LMNT_OPERAND_IMM,      LMNT_OPERAND_IMM,      LMNT_OPERAND_STACK1   },
+    { "DLOADIIV",  LMNT_OPERAND_IMM,      LMNT_OPERAND_IMM,      LMNT_OPERAND_STACK4   },
+    { "DLOADISS",  LMNT_OPERAND_IMM,      LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK1   },
+    { "DLOADISV",  LMNT_OPERAND_IMM,      LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK4   },
     { "ADDSS",     LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK1   },
     { "ADDVV",     LMNT_OPERAND_STACK4,   LMNT_OPERAND_STACK4,   LMNT_OPERAND_STACK4   },
     { "SUBSS",     LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK1   },
@@ -147,6 +155,10 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
 };
 
 lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END] = {
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
