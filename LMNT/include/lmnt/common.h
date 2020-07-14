@@ -25,7 +25,8 @@ enum
     LMNT_ERROR_ACCESS_VIOLATION = -13,
     LMNT_ERROR_MEMORY_SIZE      = -14,
     LMNT_ERROR_MISSING_EXTCALL  = -15,
-    LMNT_ERROR_INTERNAL         = -16,
+    LMNT_ERROR_FEATURE_DISABLED = -16,
+    LMNT_ERROR_INTERNAL         = -1024,
     // These error codes are only used internally
     LMNT_BRANCHING              = -65536,
     LMNT_RETURNING              = -65537,

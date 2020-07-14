@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "lmnt/arm/platform.h"
-#include "lmnt/jit/jithelpers.h"
+#include "jit/jithelpers.h"
 
 
 enum

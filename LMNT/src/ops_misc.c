@@ -6,7 +6,7 @@
 #include <math.h>
 #include "lmnt/common.h"
 #include "lmnt/config.h"
-#include "lmnt/helpers.h"
+#include "helpers.h"
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_noop(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
