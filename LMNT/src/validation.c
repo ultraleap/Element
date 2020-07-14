@@ -334,9 +334,12 @@ lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, size_t
     if (archive->size != sizeof(lmnt_archive_header) + segs_len)
         return LMNT_VERROR_SEGMENTS_SIZE;
 
-    // The constants table MUST be 8-byte aligned within the archive
+    // The data and constants tables MUST be 4-byte aligned within the archive
+    const size_t data_idx = sizeof(lmnt_archive_header) + hdr->strings_length + hdr->defs_length + hdr->code_length;
+    if ((data_idx % 4) != 0)
+        return LMNT_VERROR_CONSTANTS_ALIGN;
     const size_t constants_idx = sizeof(lmnt_archive_header) + hdr->strings_length + hdr->defs_length + hdr->code_length + hdr->data_length;
-    if ((constants_idx % 8) != 0)
+    if ((constants_idx % 4) != 0)
         return LMNT_VERROR_CONSTANTS_ALIGN;
 
     const size_t constants_count = (hdr->constants_length / sizeof(lmnt_value));

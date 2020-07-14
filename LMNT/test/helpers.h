@@ -86,11 +86,11 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
     const size_t header_len = 0x1C;
     const size_t strings_len = 0x02 + name_len + 1;
     const size_t defs_len = 0x15;
-    const uint32_t code_len = 0x04 + instr_count * sizeof(lmnt_instruction);
-    const lmnt_offset data_sec_count = (data_count > 0);
-    uint32_t data_len = 0x02 + data_sec_count * (0x08 + 0x04 * data_count);
-    const uint32_t padding = (8 - ((header_len + strings_len + defs_len + code_len + data_len) % 8)) % 8;
-    data_len += padding;
+    uint32_t code_len = 0x04 + instr_count * sizeof(lmnt_instruction);
+    const uint32_t code_padding = (4 - ((header_len + strings_len + defs_len + code_len) % 4)) % 4;
+    code_len += code_padding;
+    const lmnt_loffset data_sec_count = (data_count > 0);
+    uint32_t data_len = 0x04 + data_sec_count * (0x08 + 0x04 * data_count);
     const uint32_t consts_len = consts_count * sizeof(lmnt_value);
 
     const size_t total_size = header_len + strings_len + defs_len + code_len + data_len + consts_len;
@@ -142,8 +142,9 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
         }
     }
 
-    memcpy(buf + idx, (const char*)(&data_sec_count), sizeof(lmnt_offset));
-    idx += sizeof(lmnt_offset);
+    idx += code_padding;
+    memcpy(buf + idx, (const char*)(&data_sec_count), sizeof(lmnt_loffset));
+    idx += sizeof(lmnt_loffset);
     if (data_sec_count) {
         const lmnt_data_section sec = {sizeof(lmnt_data_header) + sizeof(lmnt_data_section), data_count};
         memcpy(buf + idx, (const char*)(&sec), sizeof(lmnt_data_section));
@@ -156,7 +157,6 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
         }
     }
 
-    idx += padding;
     for (size_t i = 0; i < consts_count; ++i) {
         // TODO: handle lmnt_value not being float
         lmnt_value val = (lmnt_value)va_arg(args, double); // actually lmnt_value, but va_arg requires double

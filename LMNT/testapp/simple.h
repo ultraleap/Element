@@ -25,7 +25,8 @@ static const char filedata_simple[] = {
     // code
     0x01, 0x00, 0x00, 0x00, // ops_count
     LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x00, 0x01, 0x02),
-    // data
+    // pad to multiple of 4
     0x00, 0x00,
-    // 8-byte alignment
+    // data
+    0x00, 0x00, 0x00, 0x00
 };
