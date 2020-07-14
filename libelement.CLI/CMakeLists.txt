@@ -61,5 +61,5 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libelement CLI11::CLI11 fmt::fmt-header-only)
 
 if (UNIX)
-    target_link_libraries(libelement PRIVATE "m" "atomic" "pthread")
+    target_link_libraries(libelement_cli PRIVATE "m" "atomic" "pthread")
 endif ()
