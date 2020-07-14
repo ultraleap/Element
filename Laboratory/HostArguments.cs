@@ -141,10 +141,19 @@ namespace Laboratory
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.ToString());
-                    Debug.WriteLine(e.ToString());
-                    messages.Add(e.ToString());
-                    _hostBuildErrors.Add(info, messages);
+                    try
+                    {
+                        Console.WriteLine(e.ToString());
+                        Debug.WriteLine(e.ToString());
+                        messages.Add(e.ToString());
+                        _hostBuildErrors.Add(info, messages);
+                    }
+                    catch (Exception e2)
+                    {
+                        Console.WriteLine(e2.ToString());
+                        Debug.WriteLine(e2.ToString());
+                        messages.Add(e2.ToString());
+                    }
                 }
             }
 
