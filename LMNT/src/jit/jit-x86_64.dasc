@@ -785,6 +785,29 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | extern1 ceilf, 3, in.arg3, 3, reg3
             }
             break;
+        case LMNT_OP_TRUNCS:
+            if (state->cpuflags & SIMD_X86_SSE41) {
+                ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
+                ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
+                | roundss xmm(reg3), xmm(reg1), 0x03
+                | writes_or_notify reg3, in.arg3, xmmtmp1
+            } else {
+                | extern1 truncf, 0, in.arg3, 0, reg3
+            }
+            break;
+        case LMNT_OP_TRUNCV:
+            if (state->cpuflags & SIMD_X86_SSE41) {
+                ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
+                ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
+                | roundps xmm(reg3), xmm(reg1), 0x03
+                | writev_or_notify reg3, in.arg3, xmmtmp1
+            } else {
+                | extern1 truncf, 0, in.arg3, 0, reg3
+                | extern1 truncf, 1, in.arg3, 1, reg3
+                | extern1 truncf, 2, in.arg3, 2, reg3
+                | extern1 truncf, 3, in.arg3, 3, reg3
+            }
+            break;
 
         case LMNT_OP_INDEXDIS:
         {

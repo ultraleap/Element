@@ -71,6 +71,8 @@ enum
     LMNT_OP_ROUNDV,
     LMNT_OP_CEILS,
     LMNT_OP_CEILV,
+    LMNT_OP_TRUNCS,
+    LMNT_OP_TRUNCV,
     // indexing: stackref, immediate, stack
     LMNT_OP_INDEXDIS,
     // indexing: stackref, immediate, stackref
@@ -92,7 +94,7 @@ enum
     LMNT_OP_BRANCHPOS,
     LMNT_OP_BRANCHNEG,
     LMNT_OP_BRANCHUN,
-    // extern call: deflo, defhi, imm
+    // extern call: deflo, defhi, stack
     LMNT_OP_EXTCALL,
     // placeholder end operation
     LMNT_OP_END,

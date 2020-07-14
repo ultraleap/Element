@@ -56,6 +56,8 @@ LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_roundv,
     lmnt_op_ceils,
     lmnt_op_ceilv,
+    lmnt_op_truncs,
+    lmnt_op_truncv,
     lmnt_op_indexdis,
     lmnt_op_indexdid,
     lmnt_op_cmp,
@@ -123,6 +125,8 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "ROUNDV",    LMNT_OPERAND_STACK4,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK4  },
     { "CEILS",     LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK1  },
     { "CEILV",     LMNT_OPERAND_STACK4,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK4  },
+    { "TRUNCS",    LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK1  },
+    { "TRUNCV",    LMNT_OPERAND_STACK4,  LMNT_OPERAND_UNUSED,  LMNT_OPERAND_STACK4  },
     { "INDEXDIS",  LMNT_OPERAND_DYNAMIC, LMNT_OPERAND_IMM,     LMNT_OPERAND_STACK1  },
     { "INDEXDID",  LMNT_OPERAND_DYNAMIC, LMNT_OPERAND_IMM,     LMNT_OPERAND_DYNAMIC },
     { "CMP",       LMNT_OPERAND_STACK1,  LMNT_OPERAND_STACK1,  LMNT_OPERAND_UNUSED  },
@@ -143,6 +147,8 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
 };
 
 lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END] = {
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,

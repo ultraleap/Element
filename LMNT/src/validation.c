@@ -214,6 +214,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_FLOORS:
     case LMNT_OP_ROUNDS:
     case LMNT_OP_CEILS:
+    case LMNT_OP_TRUNCS:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
@@ -234,6 +235,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_FLOORV:
     case LMNT_OP_ROUNDV:
     case LMNT_OP_CEILV:
+    case LMNT_OP_TRUNCV:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 4, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 4, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
