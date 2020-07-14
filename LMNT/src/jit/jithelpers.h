@@ -342,6 +342,13 @@ static bool acquireVectorRegisterOrLoad(jit_compile_state* state, lmnt_offset sp
     return result;
 }
 
+static bool isLocationInRegisterCache(jit_compile_state* state, lmnt_offset spos, size_t scount)
+{
+    size_t overlap_reg;
+    int overlap_importance;
+    return (checkForOverlap(state, spos, scount, &overlap_reg, &overlap_importance) != OVERLAP_NONE);
+}
+
 #undef LMNT_FPREG_PREFIX
 
 #endif
