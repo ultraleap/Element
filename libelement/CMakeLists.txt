@@ -10,6 +10,29 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(LOG_VERBOSITY "log_flags::none" CACHE STRING "logging flags")
 
+# Code Coverage Configuration
+add_library(coverage_config INTERFACE)
+option(CODE_COVERAGE "Enable coverage reporting" OFF)
+if (CODE_COVERAGE)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(STATUS "CODE_COVERAGE ON")
+        # Add required flags (GCC & LLVM/Clang)
+        target_compile_options(coverage_config INTERFACE
+            -O0        # no optimization
+            -g         # generate debug info
+            --coverage # sets all required flags
+        )
+
+        if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
+            target_link_options(coverage_config INTERFACE --coverage)
+        else()
+            target_link_libraries(coverage_config INTERFACE --coverage)
+        endif()
+    else()
+        message(FATAL_ERROR "CODE_COVERAGE is ON but the compiler is not GNU|Clang")
+    endif()
+endif()
+
 configure_file (
     "src/configuration.hpp.in"
     "${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp"
@@ -141,16 +164,18 @@ target_include_directories(libelement
         "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
         "${CMAKE_CURRENT_BINARY_DIR}"
 )
-target_link_libraries(libelement PRIVATE utf8cpp fmt::fmt-header-only)
+target_link_libraries(libelement PRIVATE utf8cpp fmt::fmt-header-only )
+target_link_libraries(libelement PUBLIC coverage_config)
 
 if (UNIX)
-    target_link_libraries(libelement PRIVATE "m" "atomic" "pthread")
+    target_link_libraries(libelement PRIVATE "m" "atomic" "pthread" "stdc++fs")
 endif ()
 
 if (BUILD_TESTING)
     add_executable(libelement_test_app
         "test/main.c")
     target_link_libraries(libelement_test_app PRIVATE libelement)
+    target_link_libraries(libelement_test_app PUBLIC coverage_config)
 
     set_target_properties(libelement_test_app PROPERTIES
         VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
