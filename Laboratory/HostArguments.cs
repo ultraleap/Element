@@ -135,25 +135,17 @@ namespace Laboratory
                         if (process.ExitCode != 0)
                         {
                             Task.WhenAll(readingStdOut, readingStdErr).Wait();
-                            _hostBuildErrors.Add(info, messages);
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    try
-                    {
-                        Console.WriteLine(e.ToString());
-                        Debug.WriteLine(e.ToString());
-                        messages.Add(e.ToString());
-                        _hostBuildErrors.Add(info, messages);
-                    }
-                    catch (Exception e2)
-                    {
-                        Console.WriteLine(e2.ToString());
-                        Debug.WriteLine(e2.ToString());
-                        messages.Add(e2.ToString());
-                    }
+                    messages.Add(e.ToString());
+                }
+
+                finally
+                {
+                    _hostBuildErrors.Add(info, messages);
                 }
             }
 
