@@ -11,11 +11,11 @@ set(ELEMENT_LIB_DIR "../libelement")
 set(DEPENDENCIES_DIR "../dependencies")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 find_package(RapidJSON)
-add_subdirectory("dependencies" EXCLUDE_FROM_ALL) 
+add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
 
 set(libelement_cli_sources
-
     "include/compiler_message.hpp"
     "include/command.hpp"
     "include/evaluate_command.hpp"
@@ -61,5 +61,9 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libelement CLI11::CLI11 fmt::fmt-header-only)
 
 if (UNIX)
-    target_link_libraries(libelement_cli PRIVATE "m" "atomic" "pthread")
+    target_link_libraries(libelement_cli PRIVATE "m" "atomic" "pthread" "stdc++fs")
 endif ()
+
+if (CODE_COVERAGE)
+    add_test(NAME test_cli COMMAND libelement_cli)
+endif()

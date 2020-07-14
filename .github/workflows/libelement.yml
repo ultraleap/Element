@@ -5,7 +5,6 @@ on: [push]
 jobs:
   run-laboratory-tests:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Checkout submodules
@@ -28,3 +27,86 @@ jobs:
         with:
           name: libelement Results
           path: Laboratory/TestResults
+
+  code-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Run tests with code coverage
+        env:
+          SONARQUBE_URL: ${{ secrets.SONARQUBE_URL }}
+          SONARQUBE_LIBELEMENT: ${{ secrets.SONARQUBE_LIBELEMENT }}
+        run: |
+          #todo: this only has code coverage using the test runner, we may also want to check it via the test app/future libelement-specific unit tests
+          cd Laboratory
+
+          #specify compiler version for cmake
+          export CC=gcc-8
+          export CXX=g++-8
+          
+          #specify gcov version to match compiler version
+          sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-8 90
+          sudo ln -sf /usr/bin/gcov-8 /usr/bin/gcov
+          
+          #download lcov, used for outputting basic summary (and may be used in the future)
+          mkdir lcov
+          wget -c https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz -O - | tar -xz -C lcov/
+          cd lcov/lcov-1.14
+          sudo make install
+          cd ../..
+
+          #run laboratory tests, without failing the build on error
+          set +e
+          dotnet test -v q --test-adapter-path:. --logger:trx -s "libelement_cli_unix_ci_debug_codecoverage.runsettings"
+          set -e
+
+          cd ../libelement.CLI/build
+          
+          #run lcov, gathering coverage info and outputting a basic summary
+          ../../Laboratory/lcov/lcov-1.14/bin/lcov --capture --directory . --output-file coverage.info
+          ../../Laboratory/lcov/lcov-1.14/bin/lcov --remove coverage.info '/usr/*' "${HOME}"'/.cache/*' --output-file coverage.info
+          ../../Laboratory/lcov/lcov-1.14/bin/lcov --list coverage.info
+          
+          #install gcovr, used to generate the sonarqube coverage
+          pip install gcovr
+          python -m gcovr -v
+
+          #run gcvor using python as it's not in PATH. root is the entire element repo. exclude using regex, libraries and paths that don't matter.
+          #note: we have to exclude c files as sonarqube doesn't like them
+          #we output the coverage file at the root of the repository
+          python -m gcovr -r "../../" -e ".*dependencies\/.*" -e ".*_deps\/.*" -e ".*build\/.*" -e ".*\.c$" --sonarqube ../../coverage.xml -s
+
+          cd ../..
+
+          #download sonarqube code scanner
+          mkdir codescanner
+          cd codescanner
+          sudo wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-linux.zip
+          sudo unzip sonar-scanner-cli-4.4.0.2170-linux.zip
+          sudo rm sonar-scanner-cli-4.4.0.2170-linux.zip
+          sudo chmod +x sonar-scanner-4.4.0.2170-linux/bin/sonar-scanner
+          cd ..
+
+          #run the code scanner
+          #sources include libelement and libelement.CLI (the CLI is what we run to generate the coverage, useful to see coverage for it as well)
+          #the entire repo is the project. all of these path settings are required for sonarqube and gcovr to understand the same relative paths
+          #if paths break, look at contents of coverage file for the paths used
+          #exclude looking at dependencies and other unrelated things, sonarqubes custom wildcard formatting
+          ./codescanner/sonar-scanner-4.4.0.2170-linux/bin/sonar-scanner \
+            -Dsonar.login=$SONARQUBE_LIBELEMENT \
+            -Dsonar.host.url=$SONARQUBE_URL \
+            -Dsonar.projectKey=libelement \
+            -Dsonar.sources=libelement,libelement.CLI \
+            -Dsonar.projectName="libelement" \
+            -Dsonar.coverageReportPaths="coverage.xml" \
+            -Dsonar.projectBaseDir="." \
+            -Dsonar.exclusions=**/dependencies/**/*,**/_deps/**/*,**/build/**/* \
+            -Dsonar.coverage.exclusions=**/dependencies/**/*,**/_deps/**/*,**/build/**/*
