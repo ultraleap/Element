@@ -87,20 +87,16 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_assignibv(lmnt_ictx* ctx, lmnt_offset arg1, l
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiis(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_data_section* sec;
-    LMNT_OK_OR_RETURN(lmnt_get_data_section(&ctx->archive, arg1, &sec));
-    const lmnt_value* values;
-    LMNT_OK_OR_RETURN(lmnt_get_data_block(&ctx->archive, sec->offset, &values));
+    const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
+    const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
     ctx->stack[arg3] = values[arg2];
     return LMNT_OK;
 }
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiiv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_data_section* sec;
-    LMNT_OK_OR_RETURN(lmnt_get_data_section(&ctx->archive, arg1, &sec));
-    const lmnt_value* values;
-    LMNT_OK_OR_RETURN(lmnt_get_data_block(&ctx->archive, sec->offset, &values));
+    const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
+    const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
     ctx->stack[arg3 + 0] = values[arg2 + 0];
     ctx->stack[arg3 + 1] = values[arg2 + 1];
     ctx->stack[arg3 + 2] = values[arg2 + 2];
@@ -110,10 +106,8 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiiv(lmnt_ictx* ctx, lmnt_offset arg1, lm
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_data_section* sec;
-    LMNT_OK_OR_RETURN(lmnt_get_data_section(&ctx->archive, arg1, &sec));
-    const lmnt_value* values;
-    LMNT_OK_OR_RETURN(lmnt_get_data_block(&ctx->archive, sec->offset, &values));
+    const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
+    const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
     size_t arg2v = value_to_size_t(ctx->stack[arg2]);
     if (arg2v + 1 <= sec->count) {
         ctx->stack[arg3] = values[arg2v];
@@ -125,10 +119,8 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiss(lmnt_ictx* ctx, lmnt_offset arg1, lm
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_dloadisv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_data_section* sec;
-    LMNT_OK_OR_RETURN(lmnt_get_data_section(&ctx->archive, arg1, &sec));
-    const lmnt_value* values;
-    LMNT_OK_OR_RETURN(lmnt_get_data_block(&ctx->archive, sec->offset, &values));
+    const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
+    const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
     size_t arg2v = value_to_size_t(ctx->stack[arg2]);
     if (arg2v + 4 <= sec->count) {
         ctx->stack[arg3 + 0] = values[arg2v + 0];

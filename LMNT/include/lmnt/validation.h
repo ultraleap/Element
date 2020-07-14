@@ -5,6 +5,6 @@
 #include "lmnt/common.h"
 #include "lmnt/archive.h"
 
-lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, lmnt_offset ro_stack_count, lmnt_offset rw_stack_count);
+lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, size_t total_stack_count);
 
 #endif

@@ -3,6 +3,7 @@
 #include "lmnt/jit.h"
 #include "lmnt/platform.h"
 #include "jit/hosthelpers.h"
+#include "helpers.h"
 
 #if defined(LMNT_JIT_HAS_X86_64)
 lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit_fn_data* fndata, lmnt_jit_compile_stats* stats);
@@ -27,8 +28,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_jit_execute(
 
     ctx->cur_def = def;
     ctx->cur_instr = (lmnt_loffset)-1;
-    lmnt_offset consts_count = 0;
-    LMNT_OK_OR_RETURN(lmnt_get_constants_count(&ctx->archive, &consts_count));
+    lmnt_offset consts_count = validated_get_constants_count(&ctx->archive);
     ctx->cur_stack_count = (size_t)consts_count + def->stack_count_unaligned;
 
     if (LMNT_UNLIKELY(rvals && rvals_count < def->rvals_count))
