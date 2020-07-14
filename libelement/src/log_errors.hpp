@@ -21,6 +21,8 @@ namespace element
         parse_identifier_failed,
         parse_identifier_reserved,
         parse_typename_not_identifier,
+        parse_port_failed,
+        parse_exprlist_empty,
     };
 
     template <typename... Args>
@@ -111,24 +113,36 @@ namespace element
         return log_error_map<Args...>::build_error(source_info, code, args...);
     }
 
-    template <typename... Args>
-    log_message build_log_error(const source_context* context, const element_token* token, log_error_message_code code, Args... args)
+    inline source_information build_source_info(const source_context* context, const element_token* token, int extra_length)
     {
         source_information source_info;
-        if (token)
+
+        if (context && token)
         {
             const auto& file_info = context->file_info.at(token->file_name);
             const std::string* filename = file_info.file_name.get();
-            const std::string* line_in_source = file_info.source_lines[token->line - 1].get();
+            const int actual_line = token->line - 1;
+            const std::string* line_in_source = actual_line >= 0 ? file_info.source_lines[actual_line].get() : nullptr;
             source_info = source_information(
                 token->line,
                 token->character,
-                token->character + token->tok_len,
+                token->character + token->tok_len + extra_length,
                 line_in_source,
-                filename->data()
-                );
+                filename->data());
         }
-        return log_error_map<Args...>::build_error(source_info, code, args...);
+
+        return source_info;
+    }
+
+    inline source_information build_source_info(const source_context* context, const element_token* token)
+    {
+        return build_source_info(context, token, 0);
+    }
+
+    template <typename... Args>
+    log_message build_log_error(const source_context* context, const element_token* token, log_error_message_code code, Args... args)
+    {
+        return log_error_map<Args...>::build_error(build_source_info(context, token), code, args...);
     }
 
     template <typename... Args>
@@ -140,6 +154,14 @@ namespace element
         }
 
         return log_error_map<Args...>::build_error({}, code, args...);
+    }
+
+    template <typename... Args>
+    element_result log_error(element_log_ctx* logger, Args&&... args)
+    {
+        const auto error = build_log_error(args...);
+        logger->log(error);
+        return error.result;
     }
 
     namespace detail

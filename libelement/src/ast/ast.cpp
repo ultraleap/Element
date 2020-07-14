@@ -208,26 +208,24 @@ element_result element_parser_ctx::parse_identifier(size_t* tindex, element_ast*
 
     if (token->type != ELEMENT_TOK_IDENTIFIER)
     {
-        const auto error = build_log_error(
+        return log_error(
+            logger.get(),
             src_context.get(),
             ast,
             element::log_error_message_code::parse_identifier_failed,
             ast->identifier);
-        logger->log(error);
-        return error.result;
     }
 
     tokenlist_advance(tokeniser, tindex);
 
     const auto result = check_reserved_words(ast->identifier, allow_reserved_args, allow_reserved_names);
     if (result != ELEMENT_OK) {
-        const auto error = build_log_error(
+        return log_error(
+            logger.get(),
             src_context.get(),
             ast,
             element::log_error_message_code::parse_identifier_reserved,
             ast->identifier);
-        logger->log(error);
-        return error.result;
     }
 
     return result;
@@ -241,13 +239,12 @@ element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* a
     ast->type = ELEMENT_AST_NODE_TYPENAME;
 
     if (tok->type != ELEMENT_TOK_IDENTIFIER) {
-        const auto error = build_log_error(
+        return log_error(
+            logger.get(),
             src_context.get(),
             ast,
             element::log_error_message_code::parse_typename_not_identifier,
             tokeniser->text(tok));
-        logger->log(error);
-        return error.result;
     }
 
     element_result result = ELEMENT_OK;
@@ -285,9 +282,12 @@ element_result element_parser_ctx::parse_port(size_t* tindex, element_ast* ast)
         // no name, advance
         tokenlist_advance(tokeniser, tindex);
     } else {
-        log(ELEMENT_ERROR_INVALID_PORT, 
-            fmt::format("found '{}' when a port was expected.\nnote: a port must be either an identifier or an underscore.", tokeniser->text(tok)), ast);
-        return ELEMENT_ERROR_INVALID_PORT;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_port_failed,
+            tokeniser->text(tok));
     }
 
     GET_TOKEN(tokeniser, *tindex, tok);
@@ -337,24 +337,16 @@ element_result element_parser_ctx::parse_exprlist(size_t* tindex, element_ast* a
         } while (token->type == ELEMENT_TOK_COMMA && tokenlist_advance(tokeniser, tindex));
     }
     else {
-        element_log_message msg;
-        const std::string message =
-            fmt::format("expected to find something in the contents of the call to '{}', but nothing is contained within the parenthesis.\nnote: perhaps you meant to call a function with no arguments, in which case you must omit the parenthesis.",
-            ast->parent->identifier);
-        const std::string line_in_source = tokeniser->text_on_line(token->line);
-        msg.line_in_source = line_in_source.c_str();
-        msg.message = message.c_str();
-        msg.filename = token->file_name;
+        //should be '(' for previous and ')' for current
         const element_token* previous_token;
         GET_TOKEN(tokeniser, *tindex - 1, previous_token);
-        msg.character = previous_token->character;
-        msg.length = previous_token->tok_len + token->tok_len;
-        msg.line = token->line;
-        msg.message_code = ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL;
-        msg.related_log_message = nullptr;
-        msg.stage = ELEMENT_STAGE_PARSER;
-        tokeniser->logger->log(msg);
-        return ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL;
+        auto info = build_source_info(src_context.get(), previous_token, token->tok_len);
+
+        return log_error(
+            logger.get(),
+            info,
+            element::log_error_message_code::parse_exprlist_empty,
+            ast->parent->identifier);
     }
 
     if (token->type != ELEMENT_TOK_BRACKETR)
