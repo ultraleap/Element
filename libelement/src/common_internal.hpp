@@ -49,11 +49,11 @@ namespace element
     {
     public:
         log_message(element_log_message log_msg, std::string msg)
-            : log_msg(std::move(log_msg))
+            : result(log_msg.message_code)
+            , log_msg(std::move(log_msg))
             , msg(std::move(msg))
-            , result(log_msg.message_code)
         {
-            log_msg.message = msg.c_str();
+            this->log_msg.message = msg.c_str();
         }
 
         [[nodiscard]] const element_log_message& get_log_message() const
