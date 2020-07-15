@@ -104,7 +104,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiiv(lmnt_ictx* ctx, lmnt_offset arg1, lm
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadirs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
     const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
@@ -117,7 +117,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_dloadiss(lmnt_ictx* ctx, lmnt_offset arg1, lm
     }
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_dloadisv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST lmnt_result lmnt_op_dloadirv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
     const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);

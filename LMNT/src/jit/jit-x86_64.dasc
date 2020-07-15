@@ -400,7 +400,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | writev_or_notify reg3, in.arg3, xmmtmp1
             break;
         }
-        case LMNT_OP_DLOADISS:
+        case LMNT_OP_DLOADIRS:
         {
             const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
             const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
@@ -423,7 +423,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | writes_or_notify reg3, in.arg3, xmmtmp2
             break;
         }
-        case LMNT_OP_DLOADISV:
+        case LMNT_OP_DLOADIRV:
         {
             const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
             const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
