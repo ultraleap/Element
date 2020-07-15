@@ -133,6 +133,13 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_dloadisv(lmnt_ictx* ctx, lmnt_offset arg1, lm
     }
 }
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_dseclen(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
+    ctx->stack[arg3] = (lmnt_value)(sec->count);
+    return LMNT_OK;
+}
+
 LMNT_ATTR_FAST lmnt_result lmnt_op_indexris(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     if (isnan(ctx->stack[arg1]) || isinf(ctx->stack[arg1])) return LMNT_ERROR_ACCESS_VIOLATION;

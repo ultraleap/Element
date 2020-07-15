@@ -470,6 +470,16 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | writev_or_notify reg3, in.arg3, vtmpv2
             break;
         }
+        case LMNT_OP_DSECLEN:
+        {
+            const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
+            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps2);
+            | mov rtmp1, #(sec->count)
+            | vmov s(reg3), rtmp1
+            | vcvt.f32.u32 s(reg3), s(reg3)
+            | writes_or_notify reg3, in.arg3, vtmps2
+            break;
+        }
 
         | .macro maths1, op
         ||// We don't care if both reg1 and reg3 are vtmps1, it's a temp register anyway
