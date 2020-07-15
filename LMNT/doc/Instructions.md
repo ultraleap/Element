@@ -187,7 +187,8 @@ Reads a constant from the specified data section, using an index sourced from a 
 | 3   | Output    | Stack Loc  | Scalar     | Stack location to write value to              |
 
 ```c
-    data_index = (uint32)(ctx->stack[arg2])
+    data_index = (int32)(stack[arg2])
+    if (data_index < 0 || data_index + 1 > len(data[arg1])) error(LMNT_ERROR_ACCESS_VIOLATION)
     stack[arg3] = data[arg1][data_index]
 ```
 
@@ -204,7 +205,8 @@ Reads a 4-wide vector of constants from the specified data section and index and
 | 3   | Output    | Stack Loc  | Vector     | First stack location to write value to        |
 
 ```c
-    data_index = (uint32)(ctx->stack[arg2])
+    data_index = (int32)(stack[arg2])
+    if (data_index < 0 || data_index + 4 > len(data[arg1])) error(LMNT_ERROR_ACCESS_VIOLATION)
     for (i=0..3)
         stack[arg3+i] = data[arg1][data_index+i]
 ```
@@ -219,7 +221,7 @@ Writes the length, in entries, of the specified data section to a stack location
 | 3   | Output    | Stack Loc  | Scalar     | Stack location to write value to        |
 
 ```c
-    stack[arg3] = len(data[arg1])
+    stack[arg3] = (lmnt_value)(len(data[arg1]))
 ```
 
 
@@ -816,8 +818,8 @@ Reads a value from the stack, adds a constant to it, and then reads from *that* 
 | 3   | Output    | Stack Loc  | Scalar | Stack location to write result to                        |
 
 ```c
-    read_index = (uint32)(stack[arg1]) + arg2
-    if (read_index < 0 || read_index >= stack_size) error(LMNT_ERROR_ACCESS_VIOLATION)
+    read_index = (int32)(stack[arg1]) + arg2
+    if (read_index < 0 || read_index >= len(stack)) error(LMNT_ERROR_ACCESS_VIOLATION)
     stack[arg3] = stack[read_index]
 ```
 
@@ -834,10 +836,10 @@ Reads a value from the stack, adds a constant to it, and then reads from *that* 
 | 3   | Input     | Stack Ref  | Scalar | Stack location of stack value representing index to store result |
 
 ```c
-    read_index = (uint32)(stack[arg1]) + arg2
-    write_index = (uint32)(stack[arg3])
-    if (read_index < 0 || read_index >= stack_size)   error(LMNT_ERROR_ACCESS_VIOLATION)
-    if (write_index < 0 || write_index >= stack_size) error(LMNT_ERROR_ACCESS_VIOLATION)
+    read_index = (int32)(stack[arg1]) + arg2
+    write_index = (int32)(stack[arg3])
+    if (read_index < 0 || read_index >= len(stack))   error(LMNT_ERROR_ACCESS_VIOLATION)
+    if (write_index < 0 || write_index >= len(stack)) error(LMNT_ERROR_ACCESS_VIOLATION)
     stack[write_index] = stack[read_index]
 ```
 
