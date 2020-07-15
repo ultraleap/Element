@@ -108,6 +108,7 @@
 |.define RMODE_POSINF,  0x00400000
 |.define RMODE_NEGINF,  0x00800000
 |.define RMODE_ZERO,    0x00C00000
+|.define RMODE_UNKNOWN, 0xFFFFFFFF
 
 // Set rounding mode
 |.macro setrmode, mode, reg
@@ -570,6 +571,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         ||} else {
             | writes outarg, 0
         ||}
+        ||rmode = RMODE_UNKNOWN;
         | .endmacro
 
         | .macro extern2, fn, offset1, offset2, offset3
@@ -592,6 +594,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         ||} else {
             | writes in.arg3, 0
         ||}
+        ||rmode = RMODE_UNKNOWN;
         | .endmacro
 
         case LMNT_OP_MODSS:
