@@ -434,7 +434,7 @@ static void test_dloadiiv(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-static void test_dloadiss(void)
+static void test_dloadirs(void)
 {
     lmnt_value rvals[3];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
@@ -443,9 +443,9 @@ static void test_dloadiss(void)
     archive a;
 
     a = create_archive_array("test", 3, 3, 6, 3, 8, 0,
-        LMNT_OP_BYTES(LMNT_OP_DLOADISS, 0x00, 0x00, 0x03),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISS, 0x00, 0x01, 0x04),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISS, 0x00, 0x02, 0x05),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRS, 0x00, 0x00, 0x03),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRS, 0x00, 0x01, 0x04),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRS, 0x00, 0x02, 0x05),
         10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f
     );
 
@@ -467,9 +467,9 @@ static void test_dloadiss(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     a = create_archive_array("test", 0, 3, 3, 3, 8, 0,
-        LMNT_OP_BYTES(LMNT_OP_DLOADISS, 0x01, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISS, 0x01, 0x01, 0x01),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISS, 0x01, 0x02, 0x02),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRS, 0x01, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRS, 0x01, 0x01, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRS, 0x01, 0x02, 0x02),
         10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f
     );
 
@@ -478,9 +478,9 @@ static void test_dloadiss(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     a = create_archive_array("test", 0, 3, 3, 3, 8, 0,
-        LMNT_OP_BYTES(LMNT_OP_DLOADISS, 0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISS, 0x00, 0x03, 0x01),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISS, 0x00, 0x07, 0x02),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRS, 0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRS, 0x00, 0x03, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRS, 0x00, 0x07, 0x02),
         10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f
     );
 
@@ -489,7 +489,7 @@ static void test_dloadiss(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-static void test_dloadisv(void)
+static void test_dloadirv(void)
 {
     lmnt_value rvals[12];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
@@ -498,9 +498,9 @@ static void test_dloadisv(void)
     archive a;
 
     a = create_archive_array("test", 3, 12, 15, 3, 8, 0,
-        LMNT_OP_BYTES(LMNT_OP_DLOADISV, 0x00, 0x00, 0x03),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISV, 0x00, 0x01, 0x07),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISV, 0x00, 0x02, 0x0B),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRV, 0x00, 0x00, 0x03),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRV, 0x00, 0x01, 0x07),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRV, 0x00, 0x02, 0x0B),
         10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f
     );
 
@@ -531,9 +531,9 @@ static void test_dloadisv(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
     a = create_archive_array("test", 0, 12, 12, 3, 8, 0,
-        LMNT_OP_BYTES(LMNT_OP_DLOADISV, 0x01, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISV, 0x01, 0x01, 0x04),
-        LMNT_OP_BYTES(LMNT_OP_DLOADISV, 0x01, 0x02, 0x08),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRV, 0x01, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRV, 0x01, 0x01, 0x04),
+        LMNT_OP_BYTES(LMNT_OP_DLOADIRV, 0x01, 0x02, 0x08),
         10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f
     );
 
@@ -702,8 +702,8 @@ MAKE_REGISTER_SUITE_FUNCTION(misc,
     CUNIT_CI_TEST(test_assignibv),
     CUNIT_CI_TEST(test_dloadiis),
     CUNIT_CI_TEST(test_dloadiiv),
-    CUNIT_CI_TEST(test_dloadiss),
-    CUNIT_CI_TEST(test_dloadisv),
+    CUNIT_CI_TEST(test_dloadirs),
+    CUNIT_CI_TEST(test_dloadirv),
     CUNIT_CI_TEST(test_dseclen),
     CUNIT_CI_TEST(test_indexris),
     CUNIT_CI_TEST(test_indexrir)
