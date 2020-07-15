@@ -8,13 +8,14 @@ These are the possible valid instructions in LMNT and their meaning. Any argumen
 * **Scalar (S)**: a single value occupying one stack location
 * **Vector (V)**: a 4-wide array of values occupying four contiguous stack locations
 * **Immediate (I)**: a value encoded in the instruction, either as an integer (II) or a binary value (IB)
-* **Stack Ref (R)**: a single value occupying one stack location, whose value (cast to integer) is another stack location
+* **Reference (R)**: a single value occupying one stack location whose value (cast to integer) is another location, either on the stack or in another table
 
 ## Argument types
 * **Stack Loc**: an integer representing a location on the function's stack
 * **Immediate**: a value encoded into the argument itself
 * **Stack Ref**: an integer location on the stack, the value contained in which (cast to integer) is the stack location to act upon
-* **Def Pointer**: an integer address in the archive's defs table representing a function
+* **Data Ref**: an integer location on the stack, the value contained in which (cast to integer) is the index to act upon in a separately-specified data section
+* **Def Pointer**: an integer offset into the archive's defs table, representing a function
 * **Code Index**: an integer index into the current function's code entry, effectively pointing to an instruction
 
 ## Default assumptions
@@ -138,6 +139,87 @@ Note: use of this instruction requires that `sizeof(arg1) + sizeof(arg2) == size
 ```c
     for (i=0..3)
         stack[arg3+i] = bit_cast(arg1 | (arg2 << sizeof(arg1)))
+```
+
+
+## `DLOADIIS`
+Reads a constant from the specified data section and index and writes it to a stack location.
+
+This instruction has a limit on the indexes accessible to it, due to the argument size. `DLOADIRS` can be used to read from the end of larger sections.
+
+| Arg | Direction | Type       | Size       | Meaning                                  |
+| --: | :-------- | :--------- | :--------  | :--------------------------------------- |
+| 1   | Input     | Immediate  | UInt16     | Index of data section to read from       |
+| 2   | Input     | Immediate  | UInt16     | Index of data element in section to read |
+| 3   | Output    | Stack Loc  | Scalar     | Stack location to write value to         |
+
+```c
+    stack[arg3] = data[arg1][arg2]
+```
+
+
+## `DLOADIIV`
+Reads a 4-wide vector of constants from the specified data section and index and writes them to four stack locations.
+
+This instruction has a limit on the indexes accessible to it, due to the argument size. `DLOADIRV` can be used to read from the end of larger sections.
+
+| Arg | Direction | Type       | Size       | Meaning                                  |
+| --: | :-------- | :--------- | :--------  | :--------------------------------------- |
+| 1   | Input     | Immediate  | UInt16     | Index of data section to read from       |
+| 2   | Input     | Immediate  | UInt16     | Index of data element in section to read |
+| 3   | Output    | Stack Loc  | Vector     | First stack location to write value to   |
+
+```c
+    for (i=0..3)
+        stack[arg3+i] = data[arg1][arg2+i]
+```
+
+
+## `DLOADIRS`
+Reads a constant from the specified data section, using an index sourced from a stack location, and writes it to a stack location.
+
+**Safety**: this instruction allows for dynamically choosing a location to read from in a data section; as a result it is possible for this instruction to cause an access violation error (which will result in the function immediately returning with the `LMNT_ERROR_ACCESS_VIOLATION` code).
+
+| Arg | Direction | Type       | Size       | Meaning                                       |
+| --: | :-------- | :--------- | :--------  | :-------------------------------------------- |
+| 1   | Input     | Immediate  | UInt16     | Index of data section to read from            |
+| 2   | Input     | Data Ref   | Scalar     | Stack location to read data index from        |
+| 3   | Output    | Stack Loc  | Scalar     | Stack location to write value to              |
+
+```c
+    data_index = (uint32)(ctx->stack[arg2])
+    stack[arg3] = data[arg1][data_index]
+```
+
+
+## `DLOADIRV`
+Reads a 4-wide vector of constants from the specified data section and index and writes them to four stack locations.
+
+**Safety**: this instruction allows for dynamically choosing a location to read from in a data section; as a result it is possible for this instruction to cause an access violation error (which will result in the function immediately returning with the `LMNT_ERROR_ACCESS_VIOLATION` code).
+
+| Arg | Direction | Type       | Size       | Meaning                                       |
+| --: | :-------- | :--------- | :--------  | :-------------------------------------------- |
+| 1   | Input     | Immediate  | UInt16     | Index of data section to read from            |
+| 2   | Input     | Data Ref   | UInt16     | Stack location to read first data index from  |
+| 3   | Output    | Stack Loc  | Vector     | First stack location to write value to        |
+
+```c
+    data_index = (uint32)(ctx->stack[arg2])
+    for (i=0..3)
+        stack[arg3+i] = data[arg1][data_index+i]
+```
+
+
+## `DSECLEN`
+Writes the length, in entries, of the specified data section to a stack location.
+
+| Arg | Direction | Type       | Size       | Meaning                                 |
+| --: | :-------- | :--------- | :--------  | :-------------------------------------- |
+| 1   | Input     | Immediate  | UInt16     | Index of data section to query          |
+| 3   | Output    | Stack Loc  | Scalar     | Stack location to write value to        |
+
+```c
+    stack[arg3] = len(data[arg1])
 ```
 
 
@@ -727,11 +809,11 @@ Reads a value from the stack, adds a constant to it, and then reads from *that* 
 
 **Safety**: this instruction allows for dynamically choosing a stack location to read from; as a result it is possible for this instruction to cause an access violation error (which will result in the function immediately returning with the `LMNT_ERROR_ACCESS_VIOLATION` code).
 
-| Arg | Direction | Type       | Size   | Meaning                                            |
-| --: | :-------- | :--------- | :----- | :------------------------------------------------- |
-| 1   | Input     | Stack Ref  | Scalar | Location of stack value representing index to read |
-| 2   | Input     | Immediate  | UInt16 | Constant to add to retrieved index                 |
-| 3   | Output    | Stack Loc  | Scalar | Stack location to write result to                  |
+| Arg | Direction | Type       | Size   | Meaning                                                  |
+| --: | :-------- | :--------- | :----- | :------------------------------------------------------- |
+| 1   | Input     | Stack Ref  | Scalar | Stack location of stack value representing index to read |
+| 2   | Input     | Immediate  | UInt16 | Constant to add to retrieved index                       |
+| 3   | Output    | Stack Loc  | Scalar | Stack location to write result to                        |
 
 ```c
     read_index = (uint32)(stack[arg1]) + arg2
@@ -745,11 +827,11 @@ Reads a value from the stack, adds a constant to it, and then reads from *that* 
 
 **Safety**: this instruction allows for dynamically choosing a stack location to read from and write to; as a result it is possible for this instruction to cause an access violation error (which will result in the function immediately returning with the `LMNT_ERROR_ACCESS_VIOLATION` code).
 
-| Arg | Direction | Type       | Size   | Meaning                                                    |
-| --: | :-------- | :--------- | :----- | :--------------------------------------------------------- |
-| 1   | Input     | Stack Ref  | Scalar | Location of stack value representing index to read         |
-| 2   | Input     | Immediate  | UInt16 | Constant to add to retrieved index                         |
-| 3   | Input     | Stack Ref  | Scalar | Location of stack value representing index to store result |
+| Arg | Direction | Type       | Size   | Meaning                                                          |
+| --: | :-------- | :--------- | :----- | :--------------------------------------------------------------- |
+| 1   | Input     | Stack Ref  | Scalar | Stack location of stack value representing index to read         |
+| 2   | Input     | Immediate  | UInt16 | Constant to add to retrieved index                               |
+| 3   | Input     | Stack Ref  | Scalar | Stack location of stack value representing index to store result |
 
 ```c
     read_index = (uint32)(stack[arg1]) + arg2

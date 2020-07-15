@@ -11,6 +11,7 @@ The structure of the file is made up of multiple segments:
 * Strings Table
 * Definitions Table
 * Code Table
+* Data Table
 * Constants Table
 
 
@@ -23,7 +24,7 @@ The file header is a constant size, and contains information about the file:
 * Length (in bytes) of all other segments
 
 The header can be summarised as:
-```
+```c
 struct {
     const char magic[4];
     uint8_t version_major;
@@ -33,6 +34,7 @@ struct {
     uint32_t strings_length;
     uint32_t defs_length;
     uint32_t code_length;
+    uint32_t data_length;
     uint32_t constants_length;
 }
 ```
@@ -43,7 +45,7 @@ struct {
 The strings table contains a deduplicated list of all strings required by the archive. This typically consists of function names for searching at runtime.
 
 The format of each entry can be summarised as:
-```
+```c
 struct {
 	uint16_t length;
 	char value[length];
@@ -59,7 +61,7 @@ The table consists of a set of these entries. There must not be any padding betw
 The definitions table contains details of each function which can be executed within this archive.
 
 The format can be summarised as:
-```
+```c
 struct {
     uint16_t length;
     uint16_t name;
@@ -93,14 +95,14 @@ The table consists of a set of these entries. There must not be any padding betw
 The code table contains a set of instructions to be executed.
 
 The format can be summarised as:
-```
+```c
 struct {
 	uint32_t instructions_count;
 	instruction instructions[instructions_count];
 }
 ```
 ... where `instruction` is ...
-```
+```c
 struct {
 	uint16_t opcode;
 	uint16_t arg1;
@@ -113,13 +115,38 @@ Inputs are filled from the left, and outputs are filled from the right; thus, `a
 The table consists of a set of these entries. Padding is allowed between entries as well as at the end of the table, where it may be necessary (see next).
 
 
+### Data Table
+
+This is a table of data sections, each of which has a defined length, and consists entirely of LMNT value constants. These sections have LMNT instructions to retrieve data from them.
+
+The start of the table is a header, which can be summarised as:
+
+```c
+struct {
+    uint32_t section_count;
+}
+```
+
+After the header, there are `section_count` entries describing each section, with its byte offset into the table and the number of constants in the section:
+
+```c
+struct {
+    uint32_t offset;
+    uint32_t count;
+}
+```
+
+The remainder of the table consists of the constants present in the various sections. Sections _are_ permitted to overlap, as long as the entire section starts after the metadata at the start of the table, and ends before the end of the table.
+
+**This table must be aligned to a minimum of 4 bytes within the archive data. Pad the end of the previous table if needed to achieve this.**
+
 ### Constants Table
 
-This is a table of constants used by functions within this archive. When loaded by the interpreter, the start of a function's stack will be the start of this table.
+This is a table of constants used by functions within this archive. When loaded by the interpreter, the start of a function's stack will be the start of this table, allowing for easy "inline" access to these constants.
 
-The table consists of a set of deduplicated element values, with no other metadata.
+The table consists of a set of deduplicated LMNT values, with no other metadata.
 
-**This table must be aligned to a minimum of 8 bytes within the archive data. Pad the end of the previous table if needed to achieve this.**
+**This table must be aligned to a minimum of 4 bytes within the archive data. Pad the end of the previous table if needed to achieve this.**
 
 
 ### Instructions
