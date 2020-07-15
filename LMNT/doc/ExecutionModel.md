@@ -11,10 +11,12 @@ These are the steps that take an LMNT runtime from having an archive sat in exte
 1. Archive is loaded into the interpreter using `lmnt_ictx_load_archive`
 1. Archive is "prepared"/validated using `lmnt_ictx_prepare_archive`
    * This performs extensive validation on the archive's contents
-     * The archive header describes the size of the archive's sections
-     * Each string in the strings section is checked to ensure that its length matches and that it ends with a null terminator
+     * The archive header describes the size of the archive's tables
+     * Each string in the strings table is checked to ensure that its length matches and that it ends with a null terminator
      * Each def entry is checked to ensure it is internally consistent and any bases described are also valid defs
      * Code for every def is checked to ensure it does not attempt to run any illegal instructions or perform any out-of-bounds access
+     * The data table is checked for consistency
+     * The alignment of the data table and constants table is verified
 1. A def is located via `lmnt_ictx_find_def`
 1. The def's inputs are set via `lmnt_update_args`
 1. Either:
@@ -32,49 +34,28 @@ The layout of the LMNT memory area (handed to the interpreter on initialisation)
 
 * Memory area size is 2048 bytes
 * Total archive size is 384 bytes, and contains one function
-* Header, strings, defs and code total 256 bytes
+* Header, strings, defs, code and data total 256 bytes
 * Constants and persistent variables make up 128 bytes (32 values, half each)
 * There are 8 arguments and 8 return values in the function
 
 ### Current Model
 
-| Address            | Contents                              | Stack Index   |
-| -----------------: | :------------------------------------ | :------------ |
-| `0x01C0 - 0x07FF`  | Ephemeral stack area                  | `0x0030`      |
-| `0x01A0 - 0x01BF`  | Function return values                | `0x0028`      |
-| `0x0180 - 0x019F`  | Function arguments                    | `0x0020`      |
-| `0x0100 - 0x017F`  | Persistent stack area (constants)     | `0x0000`      |
-| `0x0000 - 0x00FF`  | Archive (header, strings, defs, code) |               |
+| Address            | Contents                                    | Stack Index       |
+| -----------------: | :------------------------------------------ | :---------------- |
+| `0x01C0 - 0x07FF`  | Ephemeral stack area                        | `0x0030 - 0x01BF` |
+| `0x01A0 - 0x01BF`  | Function return values                      | `0x0028 - 0x002F` |
+| `0x0180 - 0x019F`  | Function arguments                          | `0x0020 - 0x0027` |
+| `0x0100 - 0x017F`  | Persistent stack area (constants)           | `0x0000 - 0x001F` |
+| `0x0000 - 0x00FF`  | Archive (header, strings, defs, code, data) |                   |
 
-This may be surprising - the constants are on the stack?! This is **currently** how this is implemented (to be discussed!), and it does come with some upsides:
+This may be surprising - the constants are on the stack?! This comes with some upsides:
 * Access to constants located in the archive is free - they already have a stack location
 * Loading the constants in is remarkably easy - we already did it when we loaded the archive
+* Constants used by multiple functions can be deduplicated
 
-It does, however, bring some issues:
-* It effectively limits the number of constants we can have around based on the stack addressing mechanism
-* Large numbers of constants could potentially mean there is no ephemeral stack to work with
+It does, however, bring some limitations:
+* It effectively limits the number of constants we can have around based on the stack addressing mechanism (the data table can be used for larger numbers of constants)
 * It complicates generating archives - you have to know how many constants are in the entire archive before you can compile any functions!
-* The constants section has to be at least word-aligned (although we would probably want to keep this regardless)
-
-### Alternative Model
-
-The main alternative is to have dedicated load instructions for constants, and have a separate persistent stack area with a size defined in each def:
-* Would simplify compiling/generating archives
-* Loading a constant would cost an extra instruction, but the existence of the `ASSIGNIxx` instructions can help mitigate this
-* Would mean that initial values of persist variables would have to be copied from constants section on first function execution (or enforce pre-selection of function?)
-* Would use more memory, since the initial values of persistent variables would need to exist separately
-
-That would result in a memory area like so:
-
-| Address            | Contents                              | Stack Index   |
-| -----------------: | :------------------------------------ | :------------ |
-| `0x0200 - 0x07FF`  | Ephemeral stack area                  | `0x0020`      |
-| `0x01E0 - 0x01FF`  | Function return values                | `0x0018`      |
-| `0x01C0 - 0x01DF`  | Function arguments                    | `0x0010`      |
-| `0x0180 - 0x1BFF`  | Persistent stack area                 | `0x0000`      |
-| `0x0100 - 0x017F`  | Constants/initial persist values      |               |
-| `0x0000 - 0x00FF`  | Archive (header, strings, defs, code) |               |
-
 
 ## Execution
 
