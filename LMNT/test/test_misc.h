@@ -542,6 +542,64 @@ static void test_dloadisv(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
+
+static void test_dseclen(void)
+{
+    lmnt_value rvals[1];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+
+    test_function_data fndata;
+    archive a;
+
+    a = create_archive_array("test", 0, 1, 1, 1, 8, 0,
+        LMNT_OP_BYTES(LMNT_OP_DSECLEN, 0x00, 0x00, 0x00),
+        10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f
+    );
+
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 8.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+    
+    a = create_archive_array("test", 0, 1, 1, 1, 8, 0,
+        LMNT_OP_BYTES(LMNT_OP_DSECLEN, 0x01, 0x00, 0x00),
+        10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f
+    );
+
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
+    delete_archive_array(a);
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
+    a = create_archive_array("test", 0, 1, 1, 1, 8, 0,
+        LMNT_OP_BYTES(LMNT_OP_DSECLEN, 0x00, 0x00, 0x01),
+        10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f
+    );
+
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
+    delete_archive_array(a);
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
+        LMNT_OP_BYTES(LMNT_OP_DSECLEN, 0x00, 0x00, 0x01)
+    );
+
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
+    delete_archive_array(a);
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
+    a = create_archive_array("test", 0, 1, 1, 1, 0, 8,
+        LMNT_OP_BYTES(LMNT_OP_DSECLEN, 0x00, 0x00, 0x01),
+        10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f
+    );
+
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
+    delete_archive_array(a);
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+}
+
 static void test_indexris(void)
 {
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 4,
@@ -646,6 +704,7 @@ MAKE_REGISTER_SUITE_FUNCTION(misc,
     CUNIT_CI_TEST(test_dloadiiv),
     CUNIT_CI_TEST(test_dloadiss),
     CUNIT_CI_TEST(test_dloadisv),
+    CUNIT_CI_TEST(test_dseclen),
     CUNIT_CI_TEST(test_indexris),
     CUNIT_CI_TEST(test_indexrir)
 );

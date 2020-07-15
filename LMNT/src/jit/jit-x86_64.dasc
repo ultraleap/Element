@@ -448,6 +448,15 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | writes_or_notify reg3, in.arg3, xmmtmp2
             break;
         }
+        case LMNT_OP_DSECLEN:
+        {
+            const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
+            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
+            | mov etmp1, (sec->count)
+            | cvtsi2ss xmm(reg3), etmp1
+            | writes_or_notify reg3, in.arg3, xmmtmp2
+            break;
+        }
 
         | .macro maths2, op
         ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);

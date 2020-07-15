@@ -25,6 +25,8 @@ enum
     // data load: immediate, stack, stack
     LMNT_OP_DLOADISS,
     LMNT_OP_DLOADISV,
+    // data section get count: immediate, null, stack
+    LMNT_OP_DSECLEN,
     // add: stack, stack, stack
     LMNT_OP_ADDSS,
     LMNT_OP_ADDVV,
