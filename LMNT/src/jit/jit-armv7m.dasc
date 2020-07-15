@@ -9,6 +9,7 @@
 #include "lmnt/common.h"
 #include "lmnt/interpreter.h"
 #include "lmnt/jit.h"
+#include "helpers.h"
 #include "jit/hosthelpers.h"
 #include "jit/targethelpers-arm.h" // includes dasm_proto
 #include "jit/reghelpers-arm-vfp.h"
@@ -391,6 +392,81 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | adr rtmp1, <1
             | vldm rtmp1, {s(reg3)-s(reg3+3)}
             | writev_or_notify reg3, in.arg3, vtmpv1
+            break;
+        }
+        case LMNT_OP_DLOADIIS:
+        {
+            const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
+            const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
+            const lmnt_loffset bin = *(const lmnt_loffset*)(values + in.arg2);
+            | .rodata
+            |1:
+            | .long bin
+            | .code
+            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
+            | vldr s(reg3), <1
+            | writes_or_notify reg3, in.arg3, vtmps1
+            break;
+        }
+        case LMNT_OP_DLOADIIV:
+        {
+            const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
+            const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
+            const lmnt_loffset* bin = (const lmnt_loffset*)(values + in.arg2);
+            | .rodata
+            |1:
+            | .long bin[0], bin[1], bin[2], bin[3]
+            | .code
+            ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
+            | adr rtmp1, <1
+            | vldm rtmp1, {s(reg3)-s(reg3+3)}
+            | writev_or_notify reg3, in.arg3, vtmpv1
+            break;
+        }
+        case LMNT_OP_DLOADISS:
+        {
+            const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
+            const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
+            | .rodata
+            |1:
+            | .long values
+            | .code
+            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps2);
+            ||acquireScalarRegisterOrDefault(state, in.arg2, &reg2, ACCESSTYPE_READ, vtmps1);
+            | vcvt.s32.f32 s(reg3), s(reg2)
+            | vmov rtmp2, s(reg3)
+            | cmp rtmp2, #(sec->count-1)
+            | bgt ->invalid_access
+            | cmp rtmp2, #0
+            | blt ->invalid_access
+            | lsl rtmp2, rtmp2, #((int)log2f(sizeof(lmnt_value)))
+            | ldr rtmp1, <1
+            | add rtmp1, rtmp1, rtmp2
+            | vldr s(reg3), [rtmp1]
+            | writes_or_notify reg3, in.arg3, vtmps2
+            break;
+        }
+        case LMNT_OP_DLOADISV:
+        {
+            const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
+            const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
+            | .rodata
+            |1:
+            | .long values
+            | .code
+            ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv2);
+            ||acquireScalarRegisterOrDefault(state, in.arg2, &reg2, ACCESSTYPE_READ, vtmps1);
+            | vcvt.s32.f32 s(reg3), s(reg2)
+            | vmov rtmp2, s(reg3)
+            | cmp rtmp2, #(sec->count-4)
+            | bgt ->invalid_access
+            | cmp rtmp2, #0
+            | blt ->invalid_access
+            | lsl rtmp2, rtmp2, #((int)log2f(sizeof(lmnt_value)))
+            | ldr rtmp1, <1
+            | add rtmp1, rtmp1, rtmp2
+            | vldm rtmp1, {s(reg3)-s(reg3+3)}
+            | writev_or_notify reg3, in.arg3, vtmpv2
             break;
         }
 
