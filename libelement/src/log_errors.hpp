@@ -23,6 +23,7 @@ namespace element
         parse_typename_not_identifier,
         parse_port_failed,
         parse_exprlist_empty,
+        parse_exprlist_missing_closing_parenthesis
     };
 
     template <typename... Args>

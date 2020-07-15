@@ -351,22 +351,15 @@ element_result element_parser_ctx::parse_exprlist(size_t* tindex, element_ast* a
 
     if (token->type != ELEMENT_TOK_BRACKETR)
     {
-        element_log_message msg;
-        const std::string message = fmt::format("expected to find a ')' at the end of the call to '{}', but found '{}' instead",
-            ast->parent->identifier, tokeniser->text(token));
-        const std::string line_in_source = tokeniser->text_on_line(token->line);
-        msg.line_in_source = line_in_source.c_str();
-        msg.message = message.c_str();
-        msg.filename = token->file_name;
-        msg.length = token->tok_len;
-        msg.line = token->line;
-        msg.message_code = ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL;
-        msg.related_log_message = nullptr;
-        msg.stage = ELEMENT_STAGE_PARSER;
-        msg.character = token->character;
-        tokeniser->logger->log(msg);
-        return ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            token,
+            element::log_error_message_code::parse_exprlist_missing_closing_parenthesis,
+            ast->parent->identifier,
+            tokeniser->text(token));
     }
+
     tokenlist_advance(tokeniser, tindex);
     return ELEMENT_OK;
 }
