@@ -35,6 +35,11 @@ namespace element::detail
             ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL,
             ELEMENT_STAGE_PARSER);
 
+        register_log_error<std::string, std::string>(log_error_message_code::parse_exprlist_missing_closing_parenthesis,
+            "expected to find a ')' at the end of the call to '{}', but found '{}' instead\n",
+            ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL,
+            ELEMENT_STAGE_PARSER);
+
         return true;
     }
 }
