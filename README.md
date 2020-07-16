@@ -30,7 +30,7 @@ Element also comes with a [Standard Library](Common/StandardLibrary).
 
 ### Host Libraries
 * [Element.NET](Element.NET) - .NET Standard 2.0 ![](https://github.com/ultraleap/Element/workflows/Element.NET.yml/badge.svg)
-    * Element parser using [Eto.Parse](https://github.com/picoe/Eto.Parse)
+    * Element parser using [Lexico](https://github.com/hamish-milne/Lexico)
     * Element function evaluation via:
         * Direct evaluation (slow)
         * Compilation to CLR Function using [LINQ Expressions](https://docs.microsoft.com/en-us/dotnet/api/system.linq.expressions.expression) (very fast)
@@ -55,6 +55,8 @@ Element also comes with a [Standard Library](Common/StandardLibrary).
 ### Command Line Interfaces (CLIs)
 * [Alchemist](Alchemist) - .NET Core 2.1 using [Element.NET](Element.NET) ![](https://github.com/ultraleap/Element/workflows/Alchemist.yml/badge.svg)
     * CLI for executing Element via a REPL or compiling to other targets
+* [libelement.CLI](libelement.CLI) - C++ using [libelement](libelement)
+    * CLI for executing Element via a REPL or compiling to other targets
 
 ### Integrations/Tooling
 * [Element.Unity](Element.Unity) - Unity using [Element.NET](Element.NET)
@@ -65,5 +67,5 @@ Element also comes with a [Standard Library](Common/StandardLibrary).
     * Syntax highlighting for .ele files
     * Installation guide:
         * Download or clone this repo
-        * Extract `element-vscode` to `%UserProfile/.vscode/extensions`
+        * Extract `element-vscode` to `%UserProfile%/.vscode/extensions`
         * Restart VS Code and enjoy!

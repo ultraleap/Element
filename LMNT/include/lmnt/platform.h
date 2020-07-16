@@ -23,7 +23,7 @@
 #define LMNT_ARCH_ARMV7A
 #endif
 #if defined(__ARM_ARCH_7M__)
-#define LMNT_ARCH_ARMv7M
+#define LMNT_ARCH_ARMV7M
 #endif
 #else
 #define LMNT_ARCH_UNKNOWN
