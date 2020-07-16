@@ -781,10 +781,12 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
 
     if (token->type == ELEMENT_TOK_EQUALS)
     {
-        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-            "invalid identifier found, cannot use '=' after a constraint without an identifier",
-            ast);
-        return ELEMENT_ERROR_INVALID_IDENTIFIER;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_constraint_invalid_identifier,
+            tokeniser->text(token));
     }
 
     ast->nearest_token = token;
@@ -801,11 +803,12 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
     //todo: ask craig, port list for struct 
     if (!is_intrinsic && !has_portlist)
     {
-        log(ELEMENT_ERROR_MISSING_PORTS,
-            fmt::format("Port list for constraint '{}' is required as it is not intrinsic",
-                tokeniser->text(ast->nearest_token)),
-            ast);
-        return ELEMENT_ERROR_MISSING_PORTS;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_constraint_nonintrinsic_missing_portlist,
+            tokeniser->text(ast->nearest_token));
     }
 
     element_ast* body_node = ast_new_child(ast);
@@ -818,16 +821,20 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
         body_node->type = ELEMENT_AST_NODE_NO_BODY;
     }
     else if (body->type == ELEMENT_TOK_BRACEL) {
-        log(ELEMENT_ERROR_CONSTRAINT_HAS_BODY, 
-            fmt::format("a body was found for constraint '{}', but constraints cannot have bodies", 
-                ast->identifier),
-            ast);
-        return ELEMENT_ERROR_CONSTRAINT_HAS_BODY;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_constraint_has_body,
+            ast->identifier);
     } else {
-        log(ELEMENT_ERROR_UNKNOWN, 
-            "unknown error parsing constraint",
-            ast);
-        return ELEMENT_ERROR_UNKNOWN;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            body_node,
+            element::log_error_message_code::parse_constraint_invalid_body,
+            tokeniser->text(ast->nearest_token),
+            tokeniser->text(body));
     }
 
     return ELEMENT_OK;

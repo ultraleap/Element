@@ -83,6 +83,7 @@ typedef enum message_type
     ELEMENT_ERROR_MISSING_BODY = -212,
     ELEMENT_ERROR_PARTIAL_GRAMMAR = -213,
     ELEMENT_ERROR_STRUCT_INVALID_BODY = -214,
+    ELEMENT_ERROR_CONSTRAINT_INVALID_BODY = -215,
 } message_type;
 
 typedef int32_t element_result;
