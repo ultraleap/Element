@@ -35,7 +35,11 @@ namespace element
         parse_function_missing_body,
         parse_struct_missing_identifier,
         parse_struct_nonintrinsic_missing_portlist,
-        parse_struct_invalid_body
+        parse_struct_invalid_body,
+        parse_constraint_invalid_identifier,
+        parse_constraint_nonintrinsic_missing_portlist,
+        parse_constraint_has_body,
+        parse_constraint_invalid_body,
     };
 
     template <typename... Args>

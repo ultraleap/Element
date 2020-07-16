@@ -51,7 +51,7 @@ namespace element::detail
             ELEMENT_STAGE_PARSER);
 
         register_log_error<std::string>(log_error_message_code::parse_declaration_invalid_identifier,
-            "found '{}' when parsing a declaration instead of a valid identifier.",
+            "found '{}' when parsing a declaration, expected a valid identifier.",
             ELEMENT_ERROR_INVALID_IDENTIFIER,
             ELEMENT_STAGE_PARSER);
 
@@ -99,6 +99,27 @@ namespace element::detail
             "expected to find '{' or '=' before the body of the struct '{}' but found '{}' instead.",
             ELEMENT_ERROR_STRUCT_INVALID_BODY,
             ELEMENT_STAGE_PARSER);
+
+        register_log_error<std::string>(log_error_message_code::parse_constraint_invalid_identifier,
+            "found '{}' when parsing a constraint, expected a valid identifier.",
+            ELEMENT_ERROR_INVALID_IDENTIFIER,
+            ELEMENT_STAGE_PARSER);
+
+        register_log_error<std::string>(log_error_message_code::parse_constraint_nonintrinsic_missing_portlist,
+            "portlist for constraint '{}' is required as it is not intrinsic.",
+            ELEMENT_ERROR_MISSING_PORTS,
+            ELEMENT_STAGE_PARSER);
+
+        register_log_error<std::string>(log_error_message_code::parse_constraint_has_body,
+            "a body was found for constraint '{}', but constraints cannot have bodies.",
+            ELEMENT_ERROR_CONSTRAINT_HAS_BODY,
+            ELEMENT_STAGE_PARSER);
+
+        register_log_error<std::string, std::string>(log_error_message_code::parse_constraint_invalid_body,
+            "expected to find '{' or '=' before the body of the constraint '{}' but found '{}' instead.",
+            ELEMENT_ERROR_CONSTRAINT_INVALID_BODY,
+            ELEMENT_STAGE_PARSER);
+
         return true;
     }
 }
