@@ -23,7 +23,19 @@ namespace element
         parse_typename_not_identifier,
         parse_port_failed,
         parse_exprlist_empty,
-        parse_exprlist_missing_closing_parenthesis
+        parse_exprlist_missing_closing_parenthesis,
+        parse_call_invalid_expression,
+        parse_expression_failed,
+        parse_declaration_invalid_identifier,
+        parse_declaration_missing_portlist_closing_parenthesis,
+        parse_declaration_invalid_struct_return_type,
+        parse_body_missing_semicolon,
+        parse_body_missing_body_for_function,
+        parse_body_missing_body,
+        parse_function_missing_body,
+        parse_struct_missing_identifier,
+        parse_struct_nonintrinsic_missing_portlist,
+        parse_struct_invalid_body
     };
 
     template <typename... Args>
@@ -100,7 +112,7 @@ namespace element
             msg.message = nullptr;
 
             auto our_string = fmt::format(f, args...);
-            return log_message(std::move(msg), std::move(our_string));;
+            return log_message(std::move(msg), std::move(our_string));
         };
 
         log_error_map<Args...>::register_func(code, std::move(builder));

@@ -53,7 +53,7 @@ namespace element
             , log_msg(std::move(log_msg))
             , msg(std::move(msg))
         {
-            this->log_msg.message = msg.c_str();
+            this->log_msg.message = this->msg.c_str();
         }
 
         [[nodiscard]] const element_log_message& get_log_message() const

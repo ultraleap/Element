@@ -408,22 +408,13 @@ element_result element_parser_ctx::parse_call(size_t* tindex, element_ast* ast)
         // this will change root's type to LITERAL
         ELEMENT_OK_OR_RETURN(parse_literal(tindex, root));
     } else {
-        element_log_message msg;
-        const std::string message =
-            fmt::format("expected to find an identifier or number in the contents of the call to '{}', but found '{}' instead.",
-                ast->parent->identifier, tokeniser->text(token));
-        const std::string line_in_source = tokeniser->text_on_line(token->line);
-        msg.line_in_source = line_in_source.c_str();
-        msg.message = message.c_str();
-        msg.filename = token->file_name;
-        msg.character = token->character;
-        msg.length = token->tok_len;
-        msg.line = token->line;
-        msg.message_code = ELEMENT_ERROR_INVALID_CONTENTS_FOR_CALL;
-        msg.related_log_message = nullptr;
-        msg.stage = ELEMENT_STAGE_PARSER;
-        tokeniser->logger->log(msg);
-        return ELEMENT_ERROR_INVALID_CONTENTS_FOR_CALL;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            token,
+            element::log_error_message_code::parse_call_invalid_expression,
+            ast->parent->identifier,
+            tokeniser->text(token));
     }
 
     GET_TOKEN(tokeniser, *tindex, token);
@@ -500,9 +491,12 @@ element_result element_parser_ctx::parse_expression(size_t* tindex, element_ast*
     if (token->type == ELEMENT_TOK_UNDERSCORE)
         return parse_lambda(tindex, ast);
 
-    log(ELEMENT_ERROR_INVALID_EXPRESSION, fmt::format("failed to parse the expression '{}'.\nnote: it must start with an identifier, an underscore, or a number.",
-        tokeniser->text(token)), ast);
-    return ELEMENT_ERROR_INVALID_EXPRESSION;
+    return log_error(
+        logger.get(),
+        src_context.get(),
+        ast,
+        element::log_error_message_code::parse_expression_failed,
+        tokeniser->text(token));
 }
 
 element_result element_parser_ctx::parse_qualifiers(size_t* tindex, element_ast_flags* flags)
@@ -547,8 +541,12 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
 
     if (tok->type != ELEMENT_TOK_IDENTIFIER)
     {
-        log(ELEMENT_ERROR_INVALID_IDENTIFIER, "found '{}' when parsing a declaration instead of a valid identifier", ast);
-        return ELEMENT_ERROR_INVALID_IDENTIFIER;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_declaration_invalid_identifier,
+            ast->identifier);
     }
 
     bool function_declaration = false;
@@ -570,22 +568,13 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
 
         GET_TOKEN(tokeniser, *tindex, tok);
         if (tok->type != ELEMENT_TOK_BRACKETR) {
-            //todo: log function for tokens
-            element_log_message msg;
-            const std::string message = fmt::format("found '{}' at the end of the declaration for '{}' with a portlist. expected ')'",
-                tokeniser->text(tok), ast->identifier);
-            const std::string line_in_source = tokeniser->text_on_line(tok->line);
-            msg.line_in_source = line_in_source.c_str();
-            msg.message = message.c_str();
-            msg.filename = tok->file_name;
-            msg.length = tok->tok_len;
-            msg.line = tok->line;
-            msg.message_code = ELEMENT_ERROR_MISSING_CLOSING_PARENTHESIS_FOR_PORTLIST;
-            msg.related_log_message = nullptr;
-            msg.stage = ELEMENT_STAGE_PARSER;
-            msg.character = tok->character;
-            tokeniser->logger->log(msg);
-            return ELEMENT_ERROR_MISSING_CLOSING_PARENTHESIS_FOR_PORTLIST;
+            return log_error(
+                logger.get(),
+                src_context.get(),
+                tok,
+                element::log_error_message_code::parse_declaration_missing_portlist_closing_parenthesis,
+                tokeniser->text(tok),
+                ast->identifier);
         }
 
         TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
@@ -604,10 +593,12 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
             ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
         }
         else {
-            log(ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE, 
-                    "A struct cannot have a return type",
-                ast);
-            return ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE;
+            return log_error(
+                logger.get(),
+                src_context.get(),
+                ast,
+                element::log_error_message_code::parse_declaration_invalid_struct_return_type,
+                ast->identifier);
         }
     }
     else
@@ -655,31 +646,33 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
             if (token->type == ELEMENT_TOK_SEMICOLON) {
                 tokenlist_advance(tokeniser, tindex);
             } else {
-                //todo: log function for token
-                element_log_message msg;
-                const std::string message = fmt::format("expected to find a ';' at the end of the expression for '{}', but found '{}' instead.",
-                    ast->parent->children[ast_idx::function::declaration]->identifier, tokeniser->text(token));
-                const std::string line_in_source = tokeniser->text_on_line(token->line);
-                msg.line_in_source = line_in_source.c_str();
-                msg.message = message.c_str();
-                msg.filename = token->file_name;
-                msg.length = token->tok_len;
-                msg.line = token->line;
-                msg.message_code = ELEMENT_ERROR_MISSING_SEMICOLON;
-                msg.related_log_message = nullptr;
-                msg.stage = ELEMENT_STAGE_PARSER;
-                msg.character = token->character;
-                tokeniser->logger->log(msg);
-                return ELEMENT_ERROR_MISSING_SEMICOLON;
+                return log_error(
+                    logger.get(),
+                    src_context.get(),
+                    token,
+                    element::log_error_message_code::parse_body_missing_semicolon,
+                    ast->parent->children[ast_idx::function::declaration]->identifier,
+                    tokeniser->text(token));
             }
         }
     } else {
         if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION) {
-            log(ELEMENT_ERROR_MISSING_FUNCTION_BODY, "expecting function body but none was found.", ast);
-            return ELEMENT_ERROR_MISSING_FUNCTION_BODY;
+            return log_error(
+                logger.get(),
+                src_context.get(),
+                token,
+                element::log_error_message_code::parse_body_missing_body_for_function,
+                ast->parent->children[ast_idx::function::declaration]->identifier,
+                tokeniser->text(token));
         }
-        log(ELEMENT_ERROR_MISSING_BODY, "expected to find a body but none was found.", ast);
-        return ELEMENT_ERROR_MISSING_BODY;
+
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            token,
+            element::log_error_message_code::parse_body_missing_body,
+            ast->parent->children[ast_idx::function::declaration]->identifier,
+            tokeniser->text(token));
     }
 
     return ELEMENT_OK;
@@ -706,10 +699,12 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
             tokenlist_advance(tokeniser, tindex);
         }
         else {
-            log(ELEMENT_ERROR_MISSING_FUNCTION_BODY, 
-                "non-intrinsic functions must declare a body",
-                ast);
-            return ELEMENT_ERROR_MISSING_FUNCTION_BODY;
+            return log_error(
+                logger.get(),
+                src_context.get(),
+                ast,
+                element::log_error_message_code::parse_function_missing_body,
+                declaration->identifier);
         }
     } else {
         // real body of some sort
@@ -724,13 +719,15 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
 
-	if(token->type == ELEMENT_TOK_EQUALS)
-	{
-        log(ELEMENT_ERROR_INVALID_IDENTIFIER, 
-            "invalid identifier found, cannot use '=' after a struct without an identifier",
-            ast);
-        return ELEMENT_ERROR_INVALID_IDENTIFIER;
-	}
+    if (token->type != ELEMENT_TOK_IDENTIFIER)
+    {
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_struct_missing_identifier,
+            tokeniser->text(token));
+    }
 
     ast->nearest_token = token;
     ast->type = ELEMENT_AST_NODE_STRUCT;
@@ -745,11 +742,12 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
     //todo: ask craig
     if (!is_intrinsic && !has_portlist)
     {
-        log(ELEMENT_ERROR_MISSING_PORTS,
-            fmt::format("portlist for struct '{}' is required as it is not intrinsic.",
-                tokeniser->text(ast->nearest_token)),
-            ast);
-        return ELEMENT_ERROR_MISSING_PORTS;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            ast,
+            element::log_error_message_code::parse_struct_nonintrinsic_missing_portlist,
+            tokeniser->text(ast->nearest_token));
     }
 
     element_ast* body_node = ast_new_child(ast);
@@ -764,11 +762,15 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
         // scope (struct body)
         ELEMENT_OK_OR_RETURN(parse_scope(tindex, body_node));
     } else {
-        log(ELEMENT_ERROR_UNKNOWN, 
-            "unknown error when parsing the body of a struct",
-            body_node);
-        return ELEMENT_ERROR_UNKNOWN;
+        return log_error(
+            logger.get(),
+            src_context.get(),
+            body_node,
+            element::log_error_message_code::parse_struct_invalid_body,
+            tokeniser->text(ast->nearest_token),
+            tokeniser->text(body));
     }
+
     return ELEMENT_OK;
 }
 
