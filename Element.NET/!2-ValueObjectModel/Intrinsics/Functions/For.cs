@@ -8,11 +8,11 @@ namespace Element.AST
     {
         private For()
         {
-            _identifier = new Identifier("for");
+            Identifier = new Identifier("for");
         }
         
         public static For Instance { get; } = new For();
-        protected override Identifier _identifier { get; }
+        public override Identifier Identifier { get; }
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
         {
             var initial = arguments[0];

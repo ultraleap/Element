@@ -1,0 +1,1 @@
+myFunction(argA = 5) = argA;

@@ -51,7 +51,6 @@ namespace Element
 
         public void PushDeclaration(Declaration declaration) => _declarationStack.Push(declaration);
         public void PopDeclaration() => _declarationStack.Pop();
-        public Declaration PeekDeclaration() => _declarationStack.Peek();
         public string CurrentDeclarationLocation
         {
             get

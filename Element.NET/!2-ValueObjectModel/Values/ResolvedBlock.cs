@@ -9,7 +9,10 @@ namespace Element.AST
         private readonly Func<IScope, Identifier, CompilationContext, Result<IValue>> _indexFunc;
         private readonly Dictionary<Identifier, Result<IValue>> _resultCache;
       
-        public ResolvedBlock(IReadOnlyList<Identifier> allMembers, IEnumerable<(Identifier Identifier, IValue Value)> resolvedValues, Func<IScope, Identifier, CompilationContext, Result<IValue>> indexFunc, IScope? parent)
+        public ResolvedBlock(IReadOnlyList<Identifier> allMembers,
+                             IEnumerable<(Identifier Identifier, IValue Value)> resolvedValues,
+                             Func<IScope, Identifier, CompilationContext, Result<IValue>> indexFunc,
+                             IScope? parent)
         {
             Members = allMembers;
             _indexFunc = indexFunc;
@@ -28,7 +31,7 @@ namespace Element.AST
                                  : context.Trace(MessageCode.IdentifierNotFound, $"'{id}' not found in '{resolvedBlock}'");
                   }, parent)
         { }
-        
+
         public override Result<IValue> Index(Identifier id, CompilationContext context) => 
             _resultCache.TryGetValue(id, out var result)
                 ? result
@@ -49,6 +52,10 @@ namespace Element.AST
                                          .Then(v => v.Serialize(resultBuilder, context)));
             }
         }
+
+        public override Result<IValue> Deserialize(Func<Element.Expression> nextValue, CompilationContext context) =>
+            DeserializeMembers(nextValue, context)
+                .Map(memberValues => (IValue)new ResolvedBlock(memberValues.Zip(Members, (value, identifier) => (identifier, value)).ToArray(), null));
 
         public Result<IEnumerable<IValue>> DeserializeMembers(Func<Element.Expression> nextValue, CompilationContext context) =>
             Members.Select(m => Index(m, context))

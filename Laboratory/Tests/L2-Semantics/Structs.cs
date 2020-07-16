@@ -20,10 +20,13 @@ namespace Laboratory.Tests.L2.Semantics
         public void InstanceMemberAccess() => AssertApproxEqual(CompilationInput, "MyStruct(5).a", "5");
 
         [Test]
-        public void InvalidMemberAccess() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.IdentifierNotFound, "MyStruct(10).invalid");
+        public void CantIndexStructWithNoAssociatedScope() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.InvalidExpression, "MyStruct(10).invalid");
+        
+        [Test]
+        public void MissingMemberAccess() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.IdentifierNotFound, "Vector3(10, 10, 10).invalid");
 
         [Test]
-        public void FunctionAsMember() => AssertTypeof(CompilationInput, "MyStruct(pickSecond)", "Instance:MyStruct:Struct");
+        public void FunctionAsMember() => AssertTypeof(CompilationInput, "MyStruct(pickSecond).a", "ExpressionBodiedFunction");
 
         [Test]
         public void ConstrainedMembers() => AssertTypeof(CompilationInput, "Vector3(5, 10, 15)", "Instance:Vector3:Struct");

@@ -7,7 +7,7 @@ namespace Element.AST
     {
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicConstraintImplementation _implementation;
-        public IntrinsicConstraint(IIntrinsicConstraintImplementation implementation, string? location = null) :base(location) => _implementation = implementation;
+        public IntrinsicConstraint(IIntrinsicConstraintImplementation implementation) => _implementation = implementation;
         public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => _implementation.MatchesConstraint(value, context);
     }
     
@@ -16,7 +16,7 @@ namespace Element.AST
         public IReadOnlyList<ResolvedPort> InputPorts { get; }
         public IValue ReturnConstraint { get; }
 
-        public FunctionConstraint(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, string? location = null) :base(location)
+        public FunctionConstraint(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint)
         {
             InputPorts = inputPorts;
             ReturnConstraint = returnConstraint;

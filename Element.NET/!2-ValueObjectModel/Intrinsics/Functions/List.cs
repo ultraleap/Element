@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,11 +8,11 @@ namespace Element.AST
 	{
 		private List()
 		{
-			_identifier = new Identifier("list");
+			Identifier = new Identifier("list");
 		}
 		
 		public static List Instance { get; } = new List();
-		protected override Identifier _identifier { get; }
+		public override Identifier Identifier { get; }
 
 		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
 			context.SourceContext.GlobalScope.Lookup(ListStruct.Instance.Identifier, context)
@@ -41,28 +42,28 @@ namespace Element.AST
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
 
-            protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-	            new Result<IValue>(ListElement.Create(arguments[0],
-	                               _elements,
-	                               _elements[0] is IFunctionSignature f
-		                               ? f.InputPorts
-		                               : new[] {ResolvedPort.VariadicPort},
-	                               _elements[0] is IFunctionSignature fn
-		                               ? fn.ReturnConstraint
-		                               : AnyConstraint.Instance));
+            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+	            arguments[0] is Element.Expression indexIr
+		                               ? new Result<IValue>(ListElement.Create(indexIr,
+		                                                                       _elements,
+		                                                                       _elements[0] is IFunctionSignature f ? f.InputPorts : new[] {ResolvedPort.VariadicPort},
+		                                                                       _elements[0] is IFunctionSignature fn ? fn.ReturnConstraint : AnyConstraint.Instance))
+		                               : context.Trace(MessageCode.ConstraintNotSatisfied, "List indexer must be an Element IR value");
         }
 
         private class ListElement : Function
         {
-            public static IValue Create(IValue index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputConstraints, IValue outputConstraint) =>
+            public static IValue Create(Element.Expression index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputConstraints, IValue outputConstraint) =>
                 index switch
                 {
-                    Element.Expression indexExpr when elements.All(e => e is Element.Expression) => new Mux(indexExpr, elements.Cast<Element.Expression>()),
-                    Constant constantIndex => elements[(int)constantIndex.Value],
-                    _ => new ListElement(index, elements, inputConstraints, outputConstraint)
+	                Constant constantIndex => elements[(int) constantIndex.Value],
+	                {} indexExpr => elements.All(e => e is Element.Expression)
+		                                ? (IValue) new Mux(indexExpr, elements.Cast<Element.Expression>())
+		                                : new ListElement(index, elements, inputConstraints, outputConstraint),
+	                _ => throw new ArgumentNullException(nameof(index))
                 };
 
-            private ListElement(IValue index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputPorts, IValue output)
+            private ListElement(Element.Expression index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputPorts, IValue output)
             {
                 _index = index;
                 _elements = elements;
@@ -70,16 +71,16 @@ namespace Element.AST
                 ReturnConstraint = output;
             }
 
-            private readonly IValue _index;
+            private readonly Element.Expression _index;
             private readonly IReadOnlyList<IValue> _elements;
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
-            
+
             public override Result<IValue> Index(Identifier id, CompilationContext context) =>
 	            _elements.Select(e => e.Index(id, context))
 	                     .MapEnumerable(elements => Create(_index, elements.ToList(), InputPorts, ReturnConstraint));
             
-            protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
 	            _elements.Select(e => e.Call(arguments.ToArray(), context))
 	                     .MapEnumerable(v => Create(_index, v.ToList(), InputPorts, ReturnConstraint));
         }

@@ -9,7 +9,7 @@ namespace Element.AST
         protected override Type[] BodyAlternatives { get; } = {typeof(Terminal)};
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
             IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, context)
-                          .Map(intrinsic => (IValue)new IntrinsicConstraint(intrinsic, context.CurrentDeclarationLocation));
+                          .Map(intrinsic => (IValue)new IntrinsicConstraint(intrinsic));
 
         protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
         {
@@ -31,7 +31,7 @@ namespace Element.AST
                     .Map(t =>
                     {
                         var (inputPorts, returnConstraint) = t;
-                        return (IValue)new FunctionConstraint(inputPorts, returnConstraint, context.CurrentDeclarationLocation);
+                        return (IValue)new FunctionConstraint(inputPorts, returnConstraint);
                     });
 
         protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)

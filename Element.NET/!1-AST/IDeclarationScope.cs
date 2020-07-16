@@ -21,6 +21,9 @@ namespace Element.AST
             
             void Recurse(IScope? parentScope, IDeclarationScope declScope)
             {
+                builder.Append(declScope.ResolveBlock(parentScope, context)
+                                        .Then(ResolveBlockValues));
+                
                 void ResolveBlockValues(IScope containingScope)
                 {
                     foreach (var decl in declScope.Declarations)
@@ -42,9 +45,6 @@ namespace Element.AST
                         builder.Append(childScope.ResolveBlock(containingScope, context).Then(RecurseIntoChildScope));
                     }
                 }
-
-                builder.Append(declScope.ResolveBlock(parentScope, context)
-                                        .Then(ResolveBlockValues));
             }
 
             builder.Append(declarationScope.ResolveBlock(null, context)

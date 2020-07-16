@@ -25,11 +25,11 @@ namespace Element.AST
             }
         }
 
-        protected override Result<IValue> ExpressionImpl(IScope scope, CompilationContext compilationContext) =>
+        protected override Result<IValue> ExpressionImpl(IScope parentScope, CompilationContext compilationContext) =>
             (LitOrId switch
                 {
                     // If the start of the list is an identifier, find the value that it identifies
-                    Identifier id => scope.Lookup(id, compilationContext).Map(v => v),
+                    Identifier id => parentScope.Lookup(id, compilationContext).Map(v => v),
                     Constant constant => constant,
                     _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
                 })
@@ -43,15 +43,15 @@ namespace Element.AST
 
                 Result<IValue> ResolveSubExpression(Result<IValue> current, SubExpression subExpr) =>
                     current.Bind(v => v.FullyResolveValue(compilationContext))
-                           .Bind(fullyResolvedSubExpr => subExpr.ResolveSubExpression(fullyResolvedSubExpr, scope, compilationContext));
+                           .Bind(fullyResolvedSubExpr => subExpr.ResolveSubExpression(fullyResolvedSubExpr, parentScope, compilationContext));
             });
 
         public abstract class SubExpression : AstNode
         {
-            public Result<IValue> ResolveSubExpression(IValue previous, IScope scope, CompilationContext compilationContext)
+            public Result<IValue> ResolveSubExpression(IValue previous, IScope parentScope, CompilationContext compilationContext)
             {
-                compilationContext.PushTrace(MakeTraceSite(ToString()));
-                var result = SubExpressionImpl(previous, scope, compilationContext);
+                compilationContext.PushTrace(this.MakeTraceSite($"    while resolving {GetType().Name} '{ToString()}'"));
+                var result = SubExpressionImpl(previous, parentScope, compilationContext);
                 compilationContext.PopTrace();
                 return result;
             }

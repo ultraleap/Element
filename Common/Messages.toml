@@ -141,7 +141,7 @@ name = "PortListDeclaresDefaultArgumentBeforeNonDefault"
 level = "Error"
 
 [ELE34]
-name = "IntrinsicConstraintCannotHavePortList"
+name = "IntrinsicConstraintCannotSpecifyFunctionSignature"
 level = "Error"
 
 [ELE9999]

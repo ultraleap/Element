@@ -17,7 +17,7 @@ namespace Element.AST
                           .Map(t =>
                           {
                               var (functionImpl, inputPorts, returnConstraint) = t;
-                              return (IValue) new IntrinsicFunction(functionImpl, inputPorts, returnConstraint, context.CurrentDeclarationLocation);
+                              return (IValue) new IntrinsicFunction(functionImpl, inputPorts, returnConstraint);
                           });
 
         protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
@@ -44,7 +44,7 @@ namespace Element.AST
                     .Map(t =>
                     {
                         var (inputPort, returnConstraint) = t;
-                        return (IValue) new ExpressionBodiedFunction(inputPort, returnConstraint, (Binding)Body, scope, context.CurrentDeclarationLocation);
+                        return (IValue) new ExpressionBodiedFunction(inputPort, returnConstraint, (Binding)Body, scope);
                     });
 
         protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
@@ -74,7 +74,7 @@ namespace Element.AST
                 {
                     if (!distinctLocalIdentifiers.Add(id))
                     {
-                        builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{id}' defined in '{context.CurrentDeclarationLocation}' local scope or arguments");
+                        builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{id}' defined in function '{context.CurrentDeclarationLocation}' local scope or arguments");
                     }
                 }
             }
@@ -93,7 +93,7 @@ namespace Element.AST
                     .Map(t =>
                     {
                         var (inputPort, returnConstraint) = t;
-                        return (IValue) new ScopeBodiedFunction(inputPort, returnConstraint, (FunctionBlock)Body, scope, context.CurrentDeclarationLocation);
+                        return (IValue) new ScopeBodiedFunction(inputPort, returnConstraint, (FunctionBlock)Body, scope);
                     });
     }
     

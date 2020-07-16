@@ -15,7 +15,7 @@ namespace Element.AST
                           {
                               var (structImpl, inputPorts) = t;
                               
-                              Result<IValue> ToIntrinsicStructResult(ResolvedBlock? associatedBlock) => new Result<IValue>(new IntrinsicStruct(structImpl, inputPorts, associatedBlock, scope, context.CurrentDeclarationLocation));
+                              Result<IValue> ToIntrinsicStructResult(ResolvedBlock? associatedBlock) => new Result<IValue>(new IntrinsicStruct(structImpl, inputPorts, associatedBlock, scope));
                               
                               return Body is StructBlock b
                                          ? b.ResolveBlock(scope, context).Bind(ToIntrinsicStructResult)
@@ -53,11 +53,11 @@ namespace Element.AST
             PortList.ResolveInputConstraints(scope, context, true, false)
                     .Bind(inputPorts =>
                     {
-                        Result<IValue> ToIntrinsicStructResult(ResolvedBlock? associatedBlock) => new Result<IValue>(new CustomStruct(inputPorts, associatedBlock, scope, context.CurrentDeclarationLocation));
+                        Result<IValue> ToCustomStruct(ResolvedBlock? associatedBlock) => new Result<IValue>(new CustomStruct(Identifier, inputPorts, associatedBlock, scope));
                               
                         return Body is StructBlock b
-                                   ? b.ResolveBlock(scope, context).Bind(ToIntrinsicStructResult)
-                                   : ToIntrinsicStructResult(null);
+                                   ? b.ResolveBlock(scope, context).Bind(ToCustomStruct)
+                                   : ToCustomStruct(null);
                     });
         
         protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)

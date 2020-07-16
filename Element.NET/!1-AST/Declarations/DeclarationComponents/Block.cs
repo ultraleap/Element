@@ -27,13 +27,16 @@ namespace Element.AST
             
             if (this is FunctionBlock && !idHashSet.Contains(Parser.ReturnIdentifier))
             {
-                builder.Append(MessageCode.FunctionMissingReturn, $"Scope-bodied function '{context.CurrentDeclarationLocation}' is missing Return declaration");
+                builder.Append(MessageCode.FunctionMissingReturn, $"Scope-bodied function '{context.CurrentDeclarationLocation}' is missing return declaration");
             }
         }
 
-        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext compilationContext) => ResolveBlockWithCaptures(parentScope, Array.Empty<(Identifier Identifier, IValue Value)>(), compilationContext);
+        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext compilationContext) =>
+            ResolveBlockWithCaptures(parentScope, Array.Empty<(Identifier Identifier, IValue Value)>(), compilationContext);
 
-        public Result<ResolvedBlock> ResolveBlockWithCaptures(IScope? parentScope, IReadOnlyList<(Identifier Identifier, IValue Value)> capturedValues, CompilationContext compilationContext) =>
+        public Result<ResolvedBlock> ResolveBlockWithCaptures(IScope? parentScope,
+                                                              IReadOnlyList<(Identifier Identifier, IValue Value)> capturedValues,
+                                                              CompilationContext compilationContext) =>
             Validate(compilationContext)
                 .Map(() =>
                 {

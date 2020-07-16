@@ -6,14 +6,14 @@ namespace Element.AST
     // ReSharper disable once ClassNeverInstantiated.Global
     public abstract class Expression : AstNode
     {
-        public Result<IValue> ResolveExpression(IScope scope, CompilationContext compilationContext)
+        public Result<IValue> ResolveExpression(IScope parentScope, CompilationContext compilationContext)
         {
-            compilationContext.PushTrace(MakeTraceSite(ToString()));
-            var result = ExpressionImpl(scope, compilationContext);
+            compilationContext.PushTrace(this.MakeTraceSite($"while resolving '{ToString()}'"));
+            var result = ExpressionImpl(parentScope, compilationContext);
             compilationContext.PopTrace();
             return result;
         }
 
-        protected abstract Result<IValue> ExpressionImpl(IScope scope, CompilationContext context);
+        protected abstract Result<IValue> ExpressionImpl(IScope parentScope, CompilationContext context);
     }
 }

@@ -2,7 +2,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    public abstract class AstNode
+    public abstract class AstNode : ISourceLocation
     {
 #pragma warning disable 8618
         // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -10,12 +10,6 @@ namespace Element.AST
         [UserObject] public SourceInfo SourceInfo { get; protected set; } // Filled by Lexico
         // ReSharper restore UnusedAutoPropertyAccessor.Global
 #pragma warning restore 8618
-        
-        public TraceSite MakeTraceSite(string what)
-        {
-            var (line, column, lineCharacterIndex) = SourceInfo.CountLinesAndColumns(IndexInSource);
-            return new TraceSite(what, SourceInfo.Name, line, lineCharacterIndex);
-        }
 
         public Result Validate(CompilationContext context)
         {
@@ -35,5 +29,20 @@ namespace Element.AST
         }
 
         protected abstract void ValidateImpl(ResultBuilder builder, CompilationContext context);
+    }
+
+    public interface ISourceLocation
+    {
+        int IndexInSource { get; }
+        SourceInfo SourceInfo { get; }
+    }
+
+    public static class SourceLocatableExtensions
+    {
+        public static TraceSite MakeTraceSite(this ISourceLocation location, string what)
+        {
+            var (line, column, lineCharacterIndex) = location.SourceInfo.CalculateLineAndColumnFromIndex(location.IndexInSource);
+            return new TraceSite(what, location.SourceInfo.Name, line, lineCharacterIndex);
+        }
     }
 }

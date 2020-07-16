@@ -18,8 +18,3 @@ recurse(a) = recurse(a);
 
 recurseIndirect(a) = recurseIndirectOther(a);
 recurseIndirectOther(a) = recurseIndirect(a);
-
-invalidReturn(a:Num, b:Num):Num 
-{
-   c = Num.add(a.x, b.x);
-}

@@ -6,12 +6,10 @@ namespace Element.AST
 {
     public abstract class Function : Value, IFunctionValue
     {
-        protected Function(string? location = null) : base(location) { }
-
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-            this.VerifyArgumentsAndApplyFunction(arguments, () => ResolveFunctionBody(arguments, context), context);
+            this.VerifyArgumentsAndApplyFunction(arguments, () => ResolveCall(arguments, context), context);
 
-        protected abstract Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context);
+        protected abstract Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context);
         
         protected IReadOnlyList<(Identifier Identifier, IValue Value)> MakeNamedArgumentList(IReadOnlyList<IValue> arguments)
         {
@@ -40,60 +38,56 @@ namespace Element.AST
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicFunctionImplementation _implementation;
 
-        public IntrinsicFunction(IIntrinsicFunctionImplementation implementation, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, string? location = null)
-            : base(location)
+        public IntrinsicFunction(IIntrinsicFunctionImplementation implementation, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint)
         {
             _implementation = implementation;
             InputPorts = inputPorts;
             ReturnConstraint = returnConstraint;
         }
 
-        protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) => _implementation.Call(arguments, context);
+        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) => _implementation.Call(arguments, context);
+        public override IReadOnlyList<ResolvedPort> InputPorts { get; }
+        public override IValue ReturnConstraint { get; }
+    }
+
+    public abstract class CustomFunction : Function
+    {
+        protected readonly IScope _parent;
+
+        protected CustomFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, IScope parent)
+        {
+            _parent = parent;
+            InputPorts = inputPorts;
+            ReturnConstraint = returnConstraint;
+        }
+
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
     }
     
-    public class ExpressionBodiedFunction : Function
+    public class ExpressionBodiedFunction : CustomFunction
     {
         private readonly ExpressionBody _expressionBody;
-        private readonly IScope _parent;
 
-        public ExpressionBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, ExpressionBody expressionBody, IScope parent, string? location = null)
-            : base(location)
-        {
+        public ExpressionBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, ExpressionBody expressionBody, IScope parent)
+            : base(inputPorts, returnConstraint, parent) =>
             _expressionBody = expressionBody;
-            _parent = parent;
-            InputPorts = inputPorts;
-            ReturnConstraint = returnConstraint;
-        }
-        
-        protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent), context);
 
-        public override IReadOnlyList<ResolvedPort> InputPorts { get; }
-        public override IValue ReturnConstraint { get; }
+        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent), context);
     }
     
-    public class ScopeBodiedFunction : Function
+    public class ScopeBodiedFunction : CustomFunction
     {
         private readonly FunctionBlock _scopeBody;
-        private readonly IScope _parent;
 
-        public ScopeBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, FunctionBlock scopeBody, IScope parent, string? location = null)
-            : base(location)
-        {
-            InputPorts = inputPorts;
-            ReturnConstraint = returnConstraint;
+        public ScopeBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, FunctionBlock scopeBody, IScope parent)
+            : base(inputPorts, returnConstraint, parent) =>
             _scopeBody = scopeBody;
-            _parent = parent;
-        }
 
-        protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
             _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context)
                       .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context));
-
-        public override IReadOnlyList<ResolvedPort> InputPorts { get; }
-        public override IValue ReturnConstraint { get; }
     }
 
     public static class FunctionExtensions

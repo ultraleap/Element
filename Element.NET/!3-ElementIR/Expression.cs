@@ -32,7 +32,7 @@ namespace Element
 
 		// TODO: This allows indexing constants from an expression, see note about wrapper class above to fix
 		public override Result<IValue> Index(Identifier id, CompilationContext context) =>
-			context.SourceContext.GlobalScope.Lookup(StructImplementation.Identifier, context).Bind(v => v.Index(id, context));
+			context.SourceContext.GlobalScope.Lookup(StructImplementation.Identifier, context).Cast<Struct>(context).Bind(v => v.ResolveInstanceFunction(this, id, context));
 
 		public override void Serialize(ResultBuilder<List<Expression>> resultBuilder, CompilationContext context) => resultBuilder.Result.Add(this);
 

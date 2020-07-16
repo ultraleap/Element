@@ -13,8 +13,6 @@ namespace Element.AST
         // ReSharper restore UnassignedField.Global UnusedAutoPropertyAccessor.Local
 #pragma warning restore 649, 169, 8618
 
-        public override string ToString() => "Lambda";
-
         protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
         {
             PortList.Validate(builder, context);
@@ -31,17 +29,17 @@ namespace Element.AST
             }
         }
 
-        protected override Result<IValue> ExpressionImpl(IScope scope, CompilationContext compilationContext) =>
-            PortList.ResolveInputConstraints(scope, compilationContext, false, false)
-                    .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, compilationContext))
+        protected override Result<IValue> ExpressionImpl(IScope parentScope, CompilationContext compilationContext) =>
+            PortList.ResolveInputConstraints(parentScope, compilationContext, false, false)
+                    .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(parentScope, compilationContext))
                     .Map(t =>
                     {
                         var (inputPorts, returnConstraint) = t;
                         return Body switch
                         {
                             // ReSharper disable once RedundantCast
-                            ExpressionBody exprBody => (IValue)new ExpressionBodiedFunction(inputPorts, returnConstraint, exprBody, scope, compilationContext.CurrentDeclarationLocation),
-                            FunctionBlock functionBlock => new ScopeBodiedFunction(inputPorts, returnConstraint, functionBlock, scope, compilationContext.CurrentDeclarationLocation),
+                            ExpressionBody exprBody => (IValue)new ExpressionBodiedFunction(inputPorts, returnConstraint, exprBody, parentScope),
+                            FunctionBlock functionBlock => new ScopeBodiedFunction(inputPorts, returnConstraint, functionBlock, parentScope),
                             _ => throw new InternalCompilerException($"Unknown function body type '{Body}'")
                         };
                     });

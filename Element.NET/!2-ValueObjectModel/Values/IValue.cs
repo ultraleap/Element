@@ -8,7 +8,6 @@ namespace Element.AST
     {
         string ToString();
         //string NormalFormString { get; }
-        Identifier? Identifier { get; }
         Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
         Result<IValue> Index(Identifier id, CompilationContext context);
         IReadOnlyList<Identifier> Members { get; }
@@ -28,14 +27,11 @@ namespace Element.AST
 
     public abstract class Value : IValue
     {
-        protected Value(string? location = null) => _location = location;
-        private readonly string? _location;
         private string? _cachedString;
-        protected virtual string ToStringInternal() => string.IsNullOrEmpty(_location) ? GetType().Name : $"{_location}:{GetType().Name}";
+        protected virtual string ToStringInternal() => GetType().Name;
         public sealed override string ToString() => _cachedString ??= ToStringInternal();
         
         //public abstract string NormalFormString { get; }
-        public virtual Identifier? Identifier => null;
         public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' cannot be called, it is not a function");
         public virtual Result<IValue> Index(Identifier id, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' is not indexable");
         public virtual IReadOnlyList<Identifier> Members => Array.Empty<Identifier>();

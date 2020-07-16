@@ -15,7 +15,7 @@ namespace Element
         public readonly string OriginalText;
         public readonly string PreprocessedText;
         
-        public (int Line, int Column, int LineCharacterIndex) CountLinesAndColumns(int index, bool indexInPreprocessedText = true)
+        public (int Line, int Column, int LineCharacterIndex) CalculateLineAndColumnFromIndex(int index, bool indexInPreprocessedText = true)
         {
             var text = indexInPreprocessedText ? PreprocessedText : OriginalText;
             

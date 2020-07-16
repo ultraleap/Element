@@ -4,20 +4,15 @@ namespace Element.AST
 {
     public abstract class IntrinsicValue : Value, IIntrinsicValue, IIntrinsicImplementation
     {
-        protected IntrinsicValue(string? location = null) : base(location){}
         public IIntrinsicImplementation Implementation => this;
-        
-        // Force intrinsic values to implement non-null identifiers
-        Identifier IIntrinsicImplementation.Identifier => _identifier;
-        public override Identifier? Identifier => _identifier;
-        protected abstract Identifier _identifier { get; }
+        public abstract Identifier Identifier { get; }
     }
     
     public interface IIntrinsicValue
     {
         IIntrinsicImplementation Implementation { get; }
     }
-    
+
     public interface IIntrinsicImplementation
     {
         Identifier Identifier { get; }

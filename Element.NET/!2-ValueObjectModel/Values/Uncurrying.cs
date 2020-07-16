@@ -45,7 +45,7 @@ namespace Element.AST
             public override IValue ReturnConstraint { get; }
             protected override string ToStringInternal() => $"({_a} << {_b}):Function";
 
-            protected override Result<IValue> ResolveFunctionBody(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
                 _a.Call(arguments.Take(_a.InputPorts.Count).ToArray(), context)
                   // Now resolve B, skip arguments used in A
                   .Bind(resultOfA => _b.Call(arguments.Skip(_a.InputPorts.Count).Prepend(resultOfA).ToArray(), context));

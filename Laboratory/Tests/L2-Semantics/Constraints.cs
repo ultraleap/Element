@@ -38,7 +38,6 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("a", "Num")] // TODO: Fails because it's not possible to prevent full resolution of the expr!
         public void TypeofIs(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
 
-        [TestCase("MySpace")]
         [TestCase("NumFunction")]
         [TestCase("Num")]
         [TestCase("Any")]
