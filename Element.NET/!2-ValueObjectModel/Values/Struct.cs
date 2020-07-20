@@ -80,7 +80,7 @@ namespace Element.AST
             _resolvedBlock = new ResolvedBlock(declaringStruct.Fields.Zip(fieldValues, (port, value) => (port.Identifier!.Value, value)).ToArray(), null);
         }
 
-        protected override string ToStringInternal() => $"StructInstance:{DeclaringStruct.Identifier}";
+        protected override string ToStringInternal() => DeclaringStruct.Identifier.String;
 
         public override Result<IValue> Index(Identifier id, CompilationContext context) =>
             _resolvedBlock.Index(id, context)

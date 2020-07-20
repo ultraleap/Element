@@ -1,9 +1,17 @@
 intrinsic struct Num
 {
 	intrinsic add(a:Num, b:Num):Num;
+	intrinsic mul(a:Num, b:Num):Num;
+	intrinsic div(a:Num, b:Num):Num;
+	
+	intrinsic cos(a:Num):Num;
+	
+    pi = 3.14159265359;
+	degrees(theta:Num):Num = theta.mul(180.div(pi));
+	
 	addFive(a:Num) = 5.add(a);
 	addTen(a) = a.add(10); # Cannot be used as an instance function since first argument is not explicitly Num
-
+	
 	struct NumNum(n:Num)
 	{
 		addNumNum(a:NumNum, b:Num) = Num(a).add(b);
@@ -13,6 +21,7 @@ struct NumNum(n:Num);
 struct NumNumNum(n:NumNum);
 
 struct MyStruct(a);
+MyInstance = MyStruct(5);
 struct NestedStruct(m:MyStruct);
 struct Vector3(x:Num, y:Num, z:Num)
 {

@@ -49,11 +49,11 @@ namespace Element.AST
 				                                   }));
 
 			return ListStruct.EvaluateElements(list, context)
-			               .FoldArray(workingValue, (current, e) => aggregator.Call(new[] {current, e}, context))
-			               .Else(() => CreateDynamicFoldArguments()
-			                           .Bind(args => For.Instance.Call(args, context))
-			                           .Cast<StructInstance>(context)
-			                           .Bind(instance => instance.IndexPositionally(1, context)));
+			                 .FoldArray(workingValue, (current, e) => aggregator.Call(new[] {current, e}, context))
+			                 .Else(() => CreateDynamicFoldArguments()
+			                             .Bind(args => For.Instance.Call(args, context))
+			                             .Cast<StructInstance>(context)
+			                             .Bind(instance => instance.IndexPositionally(1, context)));
 		}
 	}
 }

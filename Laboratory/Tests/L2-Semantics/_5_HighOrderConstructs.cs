@@ -3,12 +3,12 @@ using NUnit.Framework;
 
 namespace Laboratory.Tests.L2.Semantics
 {
-    internal class HighOrderConstructs : SemanticsFixture
+    internal class _5_HighOrderConstructs : SemanticsFixture
     {
-        public HighOrderConstructs() : base("HighOrderFunctions") { }
+        public _5_HighOrderConstructs() : base("_5_HighOrderConstructs") { }
 
         [Test]
-        public void BindFunctionViaIndexing() => AssertTypeof(CompilationInput, "add", "Num.add:Function");
+        public void BindFunctionViaIndexing() => AssertTypeof(CompilationInput, "add", "IntrinsicFunction");
 
         [Test]
         public void BindInstanceFunctionViaIndexing() => AssertTypeof(CompilationInput, "addFromInstanceFunction", "Num.add:Function");
@@ -84,5 +84,14 @@ namespace Laboratory.Tests.L2.Semantics
 
         [Test]
         public void HighOrderFunctionSum() => AssertApproxEqual(CompilationInput, "sum(list(3, -5, 8, 20))", "26");
+        
+        
+        [TestCase("Indexer", "FunctionConstraint")]
+        [TestCase("Binary", "FunctionConstraint")]
+        public void Typeof(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
+        
+        [TestCase("Indexer")]
+        [TestCase("Binary")]
+        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.SerializationError, expression);
     }
 }

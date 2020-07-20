@@ -3,18 +3,23 @@ using NUnit.Framework;
 
 namespace Laboratory.Tests.L2.Semantics
 {
-    internal class Structs : SemanticsFixture
+    internal class _4_CustomStructs : SemanticsFixture
     {
-        public Structs() : base("Structs") { }
+        public _4_CustomStructs() : base("_4_CustomStructs") { }
+
+        [TestCase("MyStruct", "CustomStruct")]
+        [TestCase("MyInstance", "MyStruct")]
+        public void Typeof(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
+        
+        [TestCase("MyStruct")]
+        [TestCase("Vector3")]
+        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.SerializationError, expression);
 
         [Test]
-        public void TypeofStruct() => AssertTypeof(CompilationInput, "MyStruct", "MyStruct:Struct");
-
-        [Test]
-        public void ConstructInstance() => AssertTypeof(CompilationInput, "MyStruct(5)", "Instance:MyStruct:Struct");
+        public void ConstructInstance() => AssertTypeof(CompilationInput, "MyStruct(5)", "MyStruct");
         
         [Test]
-        public void ConstructInstanceWithNestedStruct() => AssertTypeof(CompilationInput, "NestedStruct(MyStruct(5))", "Instance:NestedStruct:Struct");
+        public void ConstructInstanceWithNestedStruct() => AssertTypeof(CompilationInput, "NestedStruct(MyStruct(5))", "NestedStruct");
 
         [Test]
         public void InstanceMemberAccess() => AssertApproxEqual(CompilationInput, "MyStruct(5).a", "5");
@@ -27,7 +32,12 @@ namespace Laboratory.Tests.L2.Semantics
 
         [Test]
         public void FunctionAsMember() => AssertTypeof(CompilationInput, "MyStruct(pickSecond).a", "ExpressionBodiedFunction");
-
+        
+        [
+            TestCase("Num.cos(0).degrees", "90"),
+        ]
+        public void ResolvesCorrectLiteralAfterIndexingIntrinsicFunction(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
+        
         [Test]
         public void ConstrainedMembers() => AssertTypeof(CompilationInput, "Vector3(5, 10, 15)", "Instance:Vector3:Struct");
 

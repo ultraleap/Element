@@ -39,4 +39,4 @@ intrinsic for(initial, condition:Predicate, body:Unary);
 # Body is a Unary function supplied with the output from the previous body starting with initial
 # Thus the types of initial and both the parameter and return of Unary must have compatible interfaces
 # NOTE: Body is evaluated between calls to the compiled element function, not between separate references to the persist return expression
-intrinsic persist(initial, body:Unary);
+# intrinsic persist(initial, body:Unary);

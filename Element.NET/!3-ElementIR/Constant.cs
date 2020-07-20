@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Lexico;
 
 namespace Element.AST
@@ -33,12 +32,11 @@ namespace Element.AST
         public static Constant PositiveInfinity { get; } = new Constant(float.PositiveInfinity);
         public static Constant NegativeInfinity { get; } = new Constant(float.NegativeInfinity);
         
-        
         public override IEnumerable<Element.Expression> Dependent { get; } = Array.Empty<Element.Expression>();
-        protected override string ToStringInternal() => Value.ToString(CultureInfo.CurrentCulture);
+        protected override string ToStringInternal() => StructImplementation.Identifier.String;
+        // For normalized form: Value.ToString(CultureInfo.CurrentCulture)
         public override bool Equals(Element.Expression other) => (other as Constant)?.Value == Value;
         // ReSharper disable once NonReadonlyMemberInGetHashCode
-
         public override int GetHashCode() => new {Value, Type = StructImplementation}.GetHashCode();
     }
 }
