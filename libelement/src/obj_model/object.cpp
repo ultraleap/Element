@@ -69,7 +69,7 @@ namespace element
 
     std::shared_ptr<error> error_for_invalid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
     {
-        assert(valid_call(declarer, compiled_args));
+        assert(!valid_call(declarer, compiled_args));
 
         if (compiled_args.size() != declarer->inputs.size())
         {
