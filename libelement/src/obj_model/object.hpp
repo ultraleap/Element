@@ -19,6 +19,8 @@ namespace element
 {
     struct identifier;
     class intrinsic;
+    class error;
+    class compilation_context;
 
     class call_stack
     {
@@ -29,6 +31,16 @@ namespace element
             std::vector<std::shared_ptr<object>> compiled_arguments;
         };
 
+        frame& push(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments);
+        void pop();
+
+        [[nodiscard]] bool is_recursive(const declaration* declaration) const;
+        [[nodiscard]] std::shared_ptr<error> build_recursive_error(
+            const declaration* decl,
+            const compilation_context& context,
+            const source_information& source_info);
+
+        //todo: private
         std::vector<frame> frames;
     };
 
@@ -41,16 +53,7 @@ namespace element
         explicit compilation_context(const scope* scope, element_interpreter_ctx* interpreter);
 
         [[nodiscard]] const scope* get_global_scope() const { return global_scope; }
-        [[nodiscard]] bool is_recursive(const declaration* declaration) const
-        {
-            for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
-            {
-                if (it->function == declaration)
-                    return true;
-            }
 
-            return false;
-        }
         mutable call_stack stack;
         element_interpreter_ctx* interpreter;
         mutable source_information source_info;

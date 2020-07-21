@@ -51,6 +51,8 @@ namespace element
                                                    source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
 
+        std::shared_ptr<object> is_recursive(const compilation_context& context) const;
+
         const function_declaration* const declarer;
 
     private:

@@ -368,7 +368,7 @@ int main(int argc, char** argv)
         return result;
     */
 
-    result = eval("mula(a) { return(b) = a.mul(b); } evaluate = mula(5)(2);");
+    result = eval("mul(a) { return(b) = a.mul(b); } evaluate = mul(5)(2);");
     if (result != ELEMENT_OK)
         return result;
 

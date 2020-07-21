@@ -41,10 +41,6 @@ namespace element
             assert(current);
         }
 
-        auto err = std::dynamic_pointer_cast<error>(current);
-        if (err)
-            return err;
-
         return current;
     }
 

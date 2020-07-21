@@ -98,4 +98,65 @@ namespace element
         assert(!"the call is valid");
         return nullptr;
     }
+
+    call_stack::frame& call_stack::push(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments)
+    {
+        return frames.emplace_back(frame{ function, std::move(compiled_arguments) });
+    }
+
+    void call_stack::pop()
+    {
+        frames.pop_back();
+    }
+
+    bool call_stack::is_recursive(const declaration* declaration) const
+    {
+        for (auto it = frames.rbegin(); it != frames.rend(); ++it)
+        {
+            if (it->function == declaration)
+                return true;
+        }
+
+        return false;
+    }
+
+    std::shared_ptr<error> call_stack::build_recursive_error(
+        const declaration* decl,
+        const compilation_context& context,
+        const source_information& source_info)
+    {
+        std::string trace;
+
+        for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
+        {
+            auto& func = it->function;
+
+            std::string params;
+            for (unsigned i = 0; i < func->inputs.size(); ++i)
+            {
+                const auto& input = func->inputs[i];
+                params += fmt::format("{}{} = {}",
+                    input.name.value,
+                    input.annotation ? ":" + input.annotation->name.value : "",
+                    it->compiled_arguments[i]->typeof_info());
+
+                if (i != func->inputs.size() - 1)
+                    params += ", ";
+            }
+
+            trace += fmt::format("{}:{} at {}({})",
+                func->source_info.filename,
+                func->source_info.line,
+                func->typeof_info(),
+                params);
+
+            if (func == decl)
+                trace += " <-- here";
+
+            if (it != context.stack.frames.rend() - 1)
+                trace += "\n";
+        }
+
+        return build_error(source_info, error_message_code::recursion_detected, decl->typeof_info(), trace);
+    }
 }

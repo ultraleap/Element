@@ -46,28 +46,25 @@ namespace element
             return std::make_shared<function_instance>(func.get(), context.stack, std::move(args));
         }
 
-        if (func)
-        {
-            if (!has_inputs)
-            {
-                return build_error(source_info, error_message_code::instance_function_cannot_be_nullary, 
-                    func->typeof_info(), typeof_info());
-            }
-
-            if (!has_type)
-            {
-                return build_error(source_info, error_message_code::is_not_an_instance_function,
-                    func->typeof_info(), typeof_info(), func->inputs[0].name.value);
-            }
-
-            if (!types_match)
-            {
-                return build_error(source_info, error_message_code::is_not_an_instance_function,
-                    func->typeof_info(), typeof_info(), func->inputs[0].name.value, func->inputs[0].annotation->name.value, declarer->name.value);
-            }
-        }
-
         //todo: instead of relying on generic error handling for nullptr, build a specific error
+        if (!func)
+            return nullptr;
+
+        if (!has_inputs)
+            return build_error(source_info, error_message_code::instance_function_cannot_be_nullary,
+                func->typeof_info(), typeof_info());
+
+        if (!has_type)
+            return build_error(source_info, error_message_code::is_not_an_instance_function,
+                func->typeof_info(), typeof_info(), func->inputs[0].name.value);
+
+        if (!types_match)
+            return build_error(source_info, error_message_code::is_not_an_instance_function,
+                func->typeof_info(), typeof_info(),
+                func->inputs[0].name.value, func->inputs[0].annotation->name.value, declarer->name.value);
+
+        //did we miss an error that we need to handle?
+        assert(false);
         return nullptr;
     }
 
@@ -85,8 +82,8 @@ namespace element
 
     function_instance::function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<object>> args)
         : declarer(declarer)
-        , provided_arguments(std::move(args))
         , stack(std::move(stack))
+        , provided_arguments(std::move(args))
     {
     }
 
@@ -101,41 +98,21 @@ namespace element
 
     std::shared_ptr<object> function_instance::compile(const compilation_context& context, const source_information& source_info) const
     {
-        if (provided_arguments.size() == declarer->inputs.size())
-        {
-            //we have the exact arguments we need, so now we just need to perform the call
-            //we also need to swap the call stacks so that the call can use the one at the point the instance was created
-            std::swap(stack, context.stack);
+        //todo: error for assert
+        assert(provided_arguments.size() <= declarer->inputs.size());
 
-            if (context.is_recursive(declarer))
-                return declarer->is_recursive(context);
+        if (provided_arguments.size() != declarer->inputs.size())
+            return const_cast<function_instance*>(this)->shared_from_this();
 
-            call_stack::frame frame;
-            frame.function = declarer;
-            frame.compiled_arguments = std::move(provided_arguments);
-            context.stack.frames.emplace_back(std::move(frame));
+        if (context.stack.is_recursive(declarer))
+            return context.stack.build_recursive_error(declarer, context, source_info);
 
-            if (!declarer->body)
-            {
-                return std::make_shared<error>(
-                    fmt::format("failed at {}. scope bodied functions must contain a return function.\n", typeof_info()),
-                    ELEMENT_ERROR_MISSING_FUNCTION_BODY,
-                    source_info);
-            }
-
-            //arguments are in the callstack
-            std::shared_ptr<object> ret = declarer->body->compile(context, source_info);
-
-            context.stack.frames.pop_back();
-
-            //we then swap them back, in case our instance is called multiple times.
-            //Technically the call we did could have modified the call stack, but if it's behaving correctly it will be identical due to popping frames
-            std::swap(stack, context.stack);
-            return ret;
-        }
-
-        assert(provided_arguments.size() < declarer->inputs.size());
-
-        return const_cast<function_instance*>(this)->shared_from_this();
+        //todo: the callstack doesn't need to swap, what does is the capture stack, which is hackily implemented as part of the callstack right now
+        std::swap(stack, context.stack);
+        context.stack.push(declarer, std::move(provided_arguments));
+        auto ret = declarer->body->compile(context, source_info);
+        context.stack.pop();
+        std::swap(stack, context.stack);
+        return ret;
     }
 }
