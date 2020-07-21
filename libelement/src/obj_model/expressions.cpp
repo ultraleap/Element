@@ -38,15 +38,16 @@ namespace element
         for (const auto& expression : expressions)
         {
             auto previous = std::move(current);
-            current = expression->resolve(context, previous);
+            current = expression->resolve(context, previous)->compile(context, source_info);
             //TODO: Handle as error
             assert(current);
-
-            auto err = std::dynamic_pointer_cast<error>(current);
-            if (err)
-                return err;
         }
 
+        auto err = std::dynamic_pointer_cast<error>(current);
+        if (err)
+            return err;
+
+        //todo: look in to why we need to compile here, otherwise how much do we need to compile
         return current->compile(context, source_info);
     }
 
