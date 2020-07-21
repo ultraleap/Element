@@ -51,12 +51,6 @@ namespace element
     {
         qualifier = struct_qualifier;
         _intrinsic = is_intrinsic;
-
-        //TODO: If get_intrinsic returns null return error ELEMENT_ERROR_INTRINSIC_NOT_IMPLEMENTED
-        if (_intrinsic)
-            body = intrinsic::get_intrinsic(*this);
-        else
-            body = std::make_shared<intrinsic_user_constructor>(this);
     }
 
     std::shared_ptr<object> struct_declaration::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
@@ -64,11 +58,19 @@ namespace element
         return our_scope->find(name, false);
     }
 
-    std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                     source_info) const
+    std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const
     {
-        //todo: add frame instead of using arguments?
-        return body->call(context, compiled_args, source_info);
+        //this function handles construction of an intrinsic struct instance (get_intrinsic(...)->call(...)) or a user struct instance (make_shared<struct_instance>(...))
+        if (is_intrinsic()) 
+        {
+            const auto intrinsic = intrinsic::get_intrinsic(*this);
+            if(intrinsic) 
+                return intrinsic->call(context, compiled_args, source_info);
+
+            return build_error(source_info, error_message_code::is_not_an_instance_function);
+        }
+        
+        return std::make_shared<struct_instance>(this, compiled_args);
     }
 
     //constraint
@@ -88,6 +90,7 @@ namespace element
         _intrinsic = is_intrinsic;
     }
 
+    //TODO: This makes no sense
     std::shared_ptr<object> function_declaration::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
         return call(context, {}, source_info)->index(context, name, source_info);
@@ -155,30 +158,7 @@ namespace element
             //Nullary, compile the body
             if (context.is_recursive(this))
             {
-                std::string trace;
-                //todo: have it on the stack?
-                for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
-                {
-                    auto& func = it->function;
-                    std::string params;
-                    for (unsigned i = 0; i < func->inputs.size(); ++i)
-                    {
-                        const auto& input = func->inputs[i];
-                        //todo: instead of typeof info for the compiled arg, see if we can evaluate it and print the value
-                        params += fmt::format("{}{} = {}",
-                            input.name.value, input.annotation ? ":" + input.annotation->name.value : "", it->compiled_arguments[i]->typeof_info());
-                        if (i != func->inputs.size() - 1)
-                            params += ", ";
-                    }
-                    trace += fmt::format("{}:{} at {}({})",
-                        func->source_info.filename, func->source_info.line, func->typeof_info(), params);
-                    if (func == this)
-                        trace += " <-- here";
-                    if (it != context.stack.frames.rend() - 1)
-                        trace += "\n";
-                }
-
-                return build_error(source_info, error_message_code::recursion_detected, typeof_info(), trace);
+                return is_recursive(context);
             }
 
             call_stack::frame frame;
@@ -206,6 +186,33 @@ namespace element
         }
 
         return ret;
+    }
+
+    std::shared_ptr<object> function_declaration::is_recursive(const compilation_context& context) const
+    {
+        std::string trace;
+        //todo: have it on the stack?
+        for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
+        {
+            auto& func = it->function;
+            std::string params;
+            for (unsigned i = 0; i < func->inputs.size(); ++i)
+            {
+                const auto& input = func->inputs[i];
+                params += fmt::format("{}{} = {}",
+                    input.name.value, input.annotation ? ":" + input.annotation->name.value : "", it->compiled_arguments[i]->typeof_info())
+                    ;
+                if (i != func->inputs.size() - 1)
+                    params += ", ";
+            }
+            trace += fmt::format("{}:{} at {}({})",
+                func->source_info.filename, func->source_info.line, func->typeof_info(), params);
+            if (func == this)
+                trace += " <-- here";
+            if (it != context.stack.frames.rend() - 1)
+                trace += "\n";
+        }
+        return build_error(source_info, error_message_code::recursion_detected, typeof_info(), trace);
     }
 
     //namespace
