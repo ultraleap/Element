@@ -45,8 +45,7 @@ namespace element
         if (err)
             return err;
 
-        //todo: look in to why we need to compile here, otherwise how much do we need to compile
-        return current->compile(context, source_info);
+        return current;
     }
 
     expression::expression(const expression_chain* parent)

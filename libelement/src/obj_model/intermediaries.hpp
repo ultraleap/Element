@@ -34,6 +34,7 @@ namespace element
     class function_instance final : public object, public std::enable_shared_from_this<function_instance>
     {
     public:
+        explicit function_instance(const function_declaration* declarer, call_stack stack);
         explicit function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<object>> args);
         virtual ~function_instance() = default;
 
@@ -46,15 +47,14 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth = 0) const override;
 
-        [[nodiscard]] static bool is_instance_function() { return true; }
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
                                                    source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
 
         const function_declaration* const declarer;
-        std::vector<std::shared_ptr<object>> provided_arguments;
 
     private:
         mutable call_stack stack;
+        mutable std::vector<std::shared_ptr<object>> provided_arguments;
     };
 }
