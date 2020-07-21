@@ -120,17 +120,4 @@ namespace element
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
                                                    source_info) const override;
     };
-
-    //seems almost strange to think of them as intrinsic, but technically they're not in the source, so..
-    class intrinsic_user_constructor final : public intrinsic_function
-    {
-    public:
-        DECLARE_TYPE_ID();
-
-        intrinsic_user_constructor(const struct_declaration* declarer);
-
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                   source_info) const override;
-        const struct_declaration* declarer;
-    };
 }

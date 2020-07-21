@@ -201,6 +201,7 @@ namespace element
         {
             //Not nullary, create function instance for higher order function stuff
             //We don't create a new frame here since when the function instance is called, it'll call the declaration which will create the frame
+            //This is because the last thing in an expression is to compile the thing being returned, e.g. a function declaration.
             ret = std::make_shared<function_instance>(this, context.stack, std::vector<std::shared_ptr<object>>{});
         }
 

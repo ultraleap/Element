@@ -57,4 +57,45 @@ namespace element
         msg.line_in_source = source_info.line_in_source ? source_info.line_in_source->c_str() : nullptr;
         return msg;
     }
+
+    bool valid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
+    {
+        if (compiled_args.size() != declarer->inputs.size())
+            return false;
+
+        //todo: check the types of each argument
+        return true;
+    }
+
+    std::shared_ptr<error> error_for_invalid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
+    {
+        assert(valid_call(declarer, compiled_args));
+
+        if (compiled_args.size() != declarer->inputs.size())
+        {
+            std::string input_params;
+            for (unsigned i = 0; i < declarer->inputs.size(); ++i)
+            {
+                const auto& input = declarer->inputs[i];
+                input_params += fmt::format("({}) {}:{}", i, input.name.value, input.annotation->name.value);
+                if (i != declarer->inputs.size() - 1)
+                    input_params += ", ";
+            }
+
+            std::string given_params;
+            for (unsigned i = 0; i < compiled_args.size(); ++i)
+            {
+                const auto& input = compiled_args[i];
+                given_params += fmt::format("({}) {}", i, input->typeof_info());
+                if (i != compiled_args.size() - 1)
+                    given_params += ", ";
+            }
+
+            return build_error(declarer->source_info, error_message_code::argument_count_mismatch,
+                declarer->location(), input_params, given_params);
+        }
+
+        assert(!"the call is valid");
+        return nullptr;
+    }
 }
