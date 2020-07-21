@@ -73,6 +73,7 @@ namespace element
             if (intrinsic) 
                 return intrinsic->call(context, compiled_args, source_info);
 
+            //todo: could we validate this when creating the object model? then there's less to check during compilation
             return build_error(source_info, error_message_code::intrinsic_not_implemented);
         }
 
@@ -104,42 +105,23 @@ namespace element
         std::vector<std::shared_ptr<object>> compiled_args,
         const source_information& source_info) const
     {
+        //todo: could we validate this when creating the object model? then there's less to check during compilation
+        if (!body)
+        {
+            return std::make_shared<error>(
+                fmt::format("failed at {}. scope bodied functions must contain a return function.\n", typeof_info()),
+                ELEMENT_ERROR_MISSING_FUNCTION_BODY,
+                source_info);
+        }
+
         const auto ret = std::make_shared<function_instance>(this, context.stack, compiled_args);
+        ret->source_info = source_info;
         return ret->compile(context, source_info);
     }
 
     std::shared_ptr<object> function_declaration::compile(const compilation_context& context, const source_information& source_info) const
     {
-        const auto ret = std::make_shared<function_instance>(this, context.stack);
-        return ret->compile(context, source_info);
-    }
-
-    std::shared_ptr<object> function_declaration::is_recursive(const compilation_context& context) const
-    {
-        std::string trace;
-        //todo: have it on the stack?
-        for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
-        {
-            auto& func = it->function;
-            std::string params;
-            for (unsigned i = 0; i < func->inputs.size(); ++i)
-            {
-                const auto& input = func->inputs[i];
-                params += fmt::format("{}{} = {}",
-                    input.name.value, input.annotation ? ":" + input.annotation->name.value : "", it->compiled_arguments[i]->typeof_info())
-                    ;
-                if (i != func->inputs.size() - 1)
-                    params += ", ";
-            }
-            trace += fmt::format("{}:{} at {}({})",
-                func->source_info.filename, func->source_info.line, func->typeof_info(), params);
-            if (func == this)
-                trace += " <-- here";
-            if (it != context.stack.frames.rend() - 1)
-                trace += "\n";
-        }
-
-        return build_error(source_info, error_message_code::recursion_detected, typeof_info(), trace);
+        return call(context, {}, source_info);
     }
 
     //namespace
@@ -152,7 +134,7 @@ namespace element
 
     std::shared_ptr<object> namespace_declaration::index(
         const compilation_context& context,
-        const element::identifier& name,
+        const identifier& name,
         const source_information& source_info) const
     {
         return our_scope->find(name, false);
