@@ -93,15 +93,35 @@ namespace element
             //we have the exact arguments we need, so now we just need to perform the call
             //we also need to swap the call stacks so that the call can use the one at the point the instance was created
             std::swap(stack, context.stack);
-            auto ret = declarer->call(context, compiled_args, source_info);
+
+            if (context.is_recursive(declarer))
+                return declarer->is_recursive(context);
+
+            call_stack::frame frame;
+            frame.function = declarer;
+            frame.compiled_arguments = std::move(compiled_args);
+            context.stack.frames.emplace_back(std::move(frame));
+
+            if (!declarer->body)
+            {
+                return std::make_shared<error>(
+                    fmt::format("failed at {}. scope bodied functions must contain a return function.\n", typeof_info()),
+                    ELEMENT_ERROR_MISSING_FUNCTION_BODY,
+                    source_info);
+            }
+
+            //todo: we don't need args passed since it's in the stack
+            auto ret = declarer->body->call(context, context.stack.frames.back().compiled_arguments, source_info);
+
+            context.stack.frames.pop_back();
+
             //we then swap them back, in case our instance is called multiple times.
             //Technically the call we did could have modified the call stack, but if it's behaving correctly it will be identical due to popping frames
             std::swap(stack, context.stack);
             return ret;
         }
 
-        assert(false);
-        return nullptr;
+        return const_cast<function_instance*>(this)->shared_from_this();
     }
 
     std::shared_ptr<object> function_instance::compile(const compilation_context& context, const source_information& source_info) const
@@ -111,13 +131,5 @@ namespace element
             return call(context, {}, source_info);
 
         return const_cast<function_instance*>(this)->shared_from_this();
-    }
-
-    std::shared_ptr<object> function_instance::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
-    {
-        //if we're a fully applied instance function (essentially a nullary), then we need to compile ourselves to index what we return
-        const auto compiled = compile(context, source_info);
-        //because our compile can return ourselves we check it didn't before indexing it (infinite loops)
-        return compiled.get() == this ? nullptr : compiled->index(context, name, source_info);
     }
 }
