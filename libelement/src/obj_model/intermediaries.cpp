@@ -111,7 +111,11 @@ namespace element
             }
 
             //todo: we don't need args passed since it's in the stack
-            auto ret = declarer->body->call(context, context.stack.frames.back().compiled_arguments, source_info);
+            std::shared_ptr<object> ret;
+            if (declarer->is_intrinsic())
+                ret = declarer->body->call(context, context.stack.frames.back().compiled_arguments, source_info);
+            else
+                ret = declarer->body->call(context, {}, source_info);
 
             context.stack.frames.pop_back();
 
