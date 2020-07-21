@@ -114,7 +114,7 @@ namespace element
         object() = default;
     };
 
-    class error : public object, public std::enable_shared_from_this<error>
+    class error final : public object, public std::enable_shared_from_this<error>
     {
     public:
         explicit error(std::string message, element_result code, source_information src_info)
@@ -139,4 +139,7 @@ namespace element
         std::string message;
         element_result code = ELEMENT_ERROR_UNKNOWN;
     };
+
+    bool valid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
+    std::shared_ptr<error> error_for_invalid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
  }
