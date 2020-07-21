@@ -67,10 +67,13 @@ namespace element
             if (intrinsic) 
                 return intrinsic->call(context, compiled_args, source_info);
 
-            return build_error(source_info, error_message_code::is_not_an_instance_function);
+            return build_error(source_info, error_message_code::intrinsic_not_implemented);
         }
-        
-        return std::make_shared<struct_instance>(this, compiled_args);
+
+        if (valid_call(this, compiled_args))
+            return std::make_shared<struct_instance>(this, compiled_args);
+
+        return error_for_invalid_call(this, compiled_args);
     }
 
     //constraint
