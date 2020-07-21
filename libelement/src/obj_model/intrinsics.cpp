@@ -114,12 +114,6 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_nullary::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                    source_info) const
-    {
-        return compile(context, source_info);
-    }
-
     std::shared_ptr<object> intrinsic_nullary::compile(const compilation_context& context, const source_information& source_info) const
     {
         return std::make_shared<element_expression_nullary>(
@@ -135,10 +129,18 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_unary::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                  source_info) const
+    std::shared_ptr<object> intrinsic_unary::compile(const compilation_context& context, const source_information& source_info) const
     {
-        auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
+        const auto& frame = context.stack.frames.back();
+        const auto& declarer = *frame.function;
+        assert(declarer.inputs.size() == 1);
+        assert(frame.compiled_arguments.size() == 1);
+
+        const auto intrinsic = get_intrinsic(declarer);
+        assert(intrinsic);
+        assert(intrinsic.get() == this);
+
+        auto expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
         assert(expr);
 
         return std::make_shared<element_expression_unary>(
@@ -157,11 +159,19 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_binary::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                   source_info) const
+    std::shared_ptr<object> intrinsic_binary::compile(const compilation_context& context, const source_information& source_info) const
     {
-        auto expr1 = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
-        auto expr2 = std::dynamic_pointer_cast<element_expression>(compiled_args[1]);
+        const auto& frame = context.stack.frames.back();
+        const auto& declarer = *frame.function;
+        assert(declarer.inputs.size() == 2);
+        assert(frame.compiled_arguments.size() == 2);
+
+        const auto intrinsic = get_intrinsic(declarer);
+        assert(intrinsic);
+        assert(intrinsic.get() == this);
+        
+        auto expr1 = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
+        auto expr2 = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[1]);
         assert(expr1);
         assert(expr2);
 
@@ -177,10 +187,16 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_if::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                               source_info) const
+    std::shared_ptr<object> intrinsic_if::compile(const compilation_context& context, const source_information& source_info) const
     {
-        auto& frame = context.stack.frames.back();
+        const auto& frame = context.stack.frames.back();
+        const auto& declarer = *frame.function;
+        assert(declarer.inputs.size() == 3);
+        assert(frame.compiled_arguments.size() == 3);
+
+        const auto intrinsic = get_intrinsic(declarer);
+        assert(intrinsic);
+        assert(intrinsic.get() == this);
 
         auto pred_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
         assert(pred_expr);
@@ -212,8 +228,10 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_num_constructor::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                            source_info) const
+    std::shared_ptr<object> intrinsic_num_constructor::call(
+        const compilation_context& context,
+        std::vector<std::shared_ptr<object>> compiled_args,
+        const source_information& source_info) const
     {
         auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
         assert(expr); //todo: I don't think it could be anything but an expression?
@@ -226,14 +244,16 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_bool_constructor::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                             source_info) const
+    std::shared_ptr<object> intrinsic_bool_constructor::call(
+        const compilation_context& context,
+        std::vector<std::shared_ptr<object>> compiled_args,
+        const source_information& source_info) const
     {
         auto& true_decl = *context.get_global_scope()->find(identifier("True"), false);
         auto& false_decl = *context.get_global_scope()->find(identifier("False"), false);
 
-        const auto true_expr = get_intrinsic(true_decl)->call(context, {}, source_info);
-        const auto false_expr = get_intrinsic(false_decl)->call(context, {}, source_info);
+        const auto true_expr = get_intrinsic(true_decl)->compile(context, source_info);
+        const auto false_expr = get_intrinsic(false_decl)->compile(context, source_info);
 
         auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
         

@@ -67,6 +67,7 @@ namespace element
             }
         }
 
+        //todo: instead of relying on generic error handling for nullptr, build a specific error
         return nullptr;
     }
 
@@ -76,6 +77,12 @@ namespace element
     }
 
     //function_instance
+    function_instance::function_instance(const function_declaration* declarer, call_stack stack)
+        : declarer(declarer)
+        , stack(std::move(stack))
+    {
+    }
+
     function_instance::function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<object>> args)
         : declarer(declarer)
         , provided_arguments(std::move(args))
@@ -83,12 +90,18 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> function_instance::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                    source_info) const
+    std::shared_ptr<object> function_instance::call(
+        const compilation_context& context,
+        std::vector<std::shared_ptr<object>> compiled_args,
+        const source_information& source_info) const
     {
-        compiled_args.insert(compiled_args.begin(), provided_arguments.begin(), provided_arguments.end());
+        provided_arguments.insert(provided_arguments.end(), compiled_args.begin(), compiled_args.end());
+        return compile(context, source_info);
+    }
 
-        if (compiled_args.size() == declarer->inputs.size())
+    std::shared_ptr<object> function_instance::compile(const compilation_context& context, const source_information& source_info) const
+    {
+        if (provided_arguments.size() == declarer->inputs.size())
         {
             //we have the exact arguments we need, so now we just need to perform the call
             //we also need to swap the call stacks so that the call can use the one at the point the instance was created
@@ -99,7 +112,7 @@ namespace element
 
             call_stack::frame frame;
             frame.function = declarer;
-            frame.compiled_arguments = std::move(compiled_args);
+            frame.compiled_arguments = std::move(provided_arguments);
             context.stack.frames.emplace_back(std::move(frame));
 
             if (!declarer->body)
@@ -110,12 +123,8 @@ namespace element
                     source_info);
             }
 
-            //todo: we don't need args passed since it's in the stack
-            std::shared_ptr<object> ret;
-            if (declarer->is_intrinsic())
-                ret = declarer->body->call(context, context.stack.frames.back().compiled_arguments, source_info);
-            else
-                ret = declarer->body->call(context, {}, source_info);
+            //arguments are in the callstack
+            std::shared_ptr<object> ret = declarer->body->compile(context, source_info);
 
             context.stack.frames.pop_back();
 
@@ -125,14 +134,7 @@ namespace element
             return ret;
         }
 
-        return const_cast<function_instance*>(this)->shared_from_this();
-    }
-
-    std::shared_ptr<object> function_instance::compile(const compilation_context& context, const source_information& source_info) const
-    {
-        //the last thing in an expression was an instance function with everything fully applied
-        if (provided_arguments.size() == declarer->inputs.size())
-            return call(context, {}, source_info);
+        assert(provided_arguments.size() < declarer->inputs.size());
 
         return const_cast<function_instance*>(this)->shared_from_this();
     }

@@ -53,12 +53,18 @@ namespace element
         _intrinsic = is_intrinsic;
     }
 
-    std::shared_ptr<object> struct_declaration::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
+    std::shared_ptr<object> struct_declaration::index(
+        const compilation_context& context,
+        const identifier& name,
+        const source_information& source_info) const
     {
         return our_scope->find(name, false);
     }
 
-    std::shared_ptr<object> struct_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const
+    std::shared_ptr<object> struct_declaration::call(
+        const compilation_context& context,
+        std::vector<std::shared_ptr<object>> compiled_args,
+        const source_information& source_info) const
     {
         //this function handles construction of an intrinsic struct instance (get_intrinsic(...)->call(...)) or a user struct instance (make_shared<struct_instance>(...))
         if (is_intrinsic()) 
@@ -93,16 +99,18 @@ namespace element
         _intrinsic = is_intrinsic;
     }
 
-    std::shared_ptr<object> function_declaration::call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                       source_info) const
+    std::shared_ptr<object> function_declaration::call(
+        const compilation_context& context,
+        std::vector<std::shared_ptr<object>> compiled_args,
+        const source_information& source_info) const
     {
-        const auto ret = std::make_shared<function_instance>(this, context.stack, std::vector<std::shared_ptr<object>>{});
-        return ret->call(context, compiled_args, source_info);
+        const auto ret = std::make_shared<function_instance>(this, context.stack, compiled_args);
+        return ret->compile(context, source_info);
     }
 
     std::shared_ptr<object> function_declaration::compile(const compilation_context& context, const source_information& source_info) const
     {
-        const auto ret = std::make_shared<function_instance>(this, context.stack, std::vector<std::shared_ptr<object>>{});
+        const auto ret = std::make_shared<function_instance>(this, context.stack);
         return ret->compile(context, source_info);
     }
 
@@ -142,7 +150,10 @@ namespace element
         _intrinsic = false;
     }
 
-    std::shared_ptr<object> namespace_declaration::index(const compilation_context& context, const element::identifier& name, const source_information& source_info) const
+    std::shared_ptr<object> namespace_declaration::index(
+        const compilation_context& context,
+        const element::identifier& name,
+        const source_information& source_info) const
     {
         return our_scope->find(name, false);
     }
