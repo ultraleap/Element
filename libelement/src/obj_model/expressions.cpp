@@ -20,12 +20,10 @@ namespace element
         const compilation_context& context,
         std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const
     {
-        //todo: can't think of a reason this would be empty, even without having a global, the declaration should have added itself
+        //can't think of a reason this would be empty, even without having a global, the declaration should have added itself
+        //todo: maybe re-evaluate when we get to compiling arbitrary expression chains, without a declaration for them
         assert(!context.stack.frames.empty());
-
-        //todo: for now, just some error checking to make sure we're not doing something too crazy, but all of this is a problem
-        assert(compiled_args.size() == context.stack.frames.back().compiled_arguments.size());
-
+        //todo: we ignore the arguments passed in as we don't need them (they should be on the stack), but they get passed anyway (because intrinsics look for them from the call)
         return compile(context, source_info);
     }
 

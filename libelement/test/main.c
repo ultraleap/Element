@@ -178,9 +178,9 @@ element_result test_failing_evals()
     if (result != ELEMENT_ERROR_UNKNOWN)
         return result;
 
-    //todo: this should return an error for trying to index a function (only nullaries can be "index", as it actually indexes the thing it returs)
+    //todo: this should return an error for trying to index a function
     result = eval("func(a) = 1; evaluate = func.a;");
-    if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
+    if (result != ELEMENT_ERROR_UNKNOWN)
         return result;
 
     char my_vec[] =
@@ -368,11 +368,9 @@ int main(int argc, char** argv)
         return result;
     */
 
-    //todo: fails
-    /*
-    result = eval("mul(a) { return(b) = a.mul(b); } evaluate = mul(5)(2);");
+    result = eval("mula(a) { return(b) = a.mul(b); } evaluate = mula(5)(2);");
     if (result != ELEMENT_OK)
-        return result;*/
+        return result;
 
     //struct fields
     result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).a;");
