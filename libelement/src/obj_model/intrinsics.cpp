@@ -17,7 +17,6 @@ DEFINE_TYPE_ID(element::intrinsic_binary, 1U << 2);
 DEFINE_TYPE_ID(element::intrinsic_if, 1U << 3);
 DEFINE_TYPE_ID(element::intrinsic_num_constructor, 1U << 4);
 DEFINE_TYPE_ID(element::intrinsic_bool_constructor, 1U << 5);
-DEFINE_TYPE_ID(element::intrinsic_user_constructor, 1U << 6);
 
 namespace element
 {

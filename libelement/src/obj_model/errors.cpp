@@ -63,5 +63,11 @@ bool element::detail::register_errors()
         "attempted to construct an instance of '{}' which requires the parameters '{}', but the parameters of type '{}' were used instead.",
         ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH);
 
+    //expand on this
+    element::register_error<>(
+        error_message_code::intrinsic_not_implemented,
+        "intrinsic not implemented.",
+        ELEMENT_ERROR_INTRINSIC_NOT_IMPLEMENTED);
+
     return registered_errors;
 }

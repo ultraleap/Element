@@ -49,7 +49,6 @@ namespace element
         std::vector<port> inputs;
         std::unique_ptr<scope> our_scope; //needed to merge object model
         std::optional<port> output;
-        std::shared_ptr<const object> body;
         //std::unique_ptr<element_constraint> constraint;
 
     protected:
@@ -107,11 +106,14 @@ namespace element
 
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
+        std::shared_ptr<object> is_recursive(const compilation_context& context) const;
 
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
                                                    source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
+
+        std::shared_ptr<const object> body;
     };
 
     class namespace_declaration final : public declaration, public std::enable_shared_from_this<namespace_declaration>
