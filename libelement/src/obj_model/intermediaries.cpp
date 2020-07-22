@@ -48,15 +48,17 @@ namespace element
     }
 
     //function_instance
-    function_instance::function_instance(const function_declaration* declarer, call_stack stack)
+    function_instance::function_instance(const function_declaration* declarer, call_stack calls, capture_stack captures)
         : declarer(declarer)
-        , stack(std::move(stack))
+        , calls(std::move(calls))
+        , captures(std::move(captures))
     {
     }
 
-    function_instance::function_instance(const function_declaration* declarer, call_stack stack, std::vector<std::shared_ptr<object>> args)
+    function_instance::function_instance(const function_declaration* declarer, call_stack calls, capture_stack captures, std::vector<std::shared_ptr<object>> args)
         : declarer(declarer)
-        , stack(std::move(stack))
+        , calls(std::move(calls))
+        , captures(std::move(captures))
         , provided_arguments(std::move(args))
     {
     }
@@ -78,15 +80,15 @@ namespace element
         if (provided_arguments.size() != declarer->inputs.size())
             return const_cast<function_instance*>(this)->shared_from_this();
 
-        if (context.stack.is_recursive(declarer))
-            return context.stack.build_recursive_error(declarer, context, source_info);
+        if (context.calls.is_recursive(declarer))
+            return context.calls.build_recursive_error(declarer, context, source_info);
 
-        //todo: the callstack doesn't need to swap, what does is the capture stack, which is hackily implemented as part of the callstack right now
-        std::swap(stack, context.stack);
-        context.stack.push(declarer, std::move(provided_arguments));
+        //todo: capture stack is recreated based on the call stack, so it needs to swap, but realistically we should be swapping capture stacks
+        std::swap(calls, context.calls);
+        context.calls.push(declarer, std::move(provided_arguments));
         auto ret = declarer->body->compile(context, source_info);
-        context.stack.pop();
-        std::swap(stack, context.stack);
+        context.calls.pop();
+        std::swap(calls, context.calls);
         return ret;
     }
 }

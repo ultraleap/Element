@@ -68,34 +68,13 @@ namespace element
             return nullptr;
         }
 
-        //todo: all below this is broke innit
-
-        const auto& enclosing_scope = parent->declarer->our_scope;
-        auto found = enclosing_scope->find(name.value, false);
-        if (found)
-            return found->compile(context, source_info);
-
-        //todo: make it nice and on the callstack itself
-        for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
-        {
-            const auto& frame = *it;
-            for (std::size_t i = 0; i < frame.function->inputs.size(); i++)
-            {
-                const auto& input = frame.function->inputs[i];
-                if (input.name.value == name.value)
-                {
-                    if (i < frame.compiled_arguments.size())
-                        return frame.compiled_arguments[i];
-                    else
-                        break;
-                }
-            }
-        }
-
-        //todo: this has to be merged with the callstack I think, i.e. each level of scopage has its own locals + arguments to do lookups with
-        found = enclosing_scope->get_parent_scope()->find(name.value, true);
-        if (found)
-            return found->compile(context, source_info);
+        //todo: don't build the capture stack every time
+        auto captures = capture_stack(parent->declarer, {}, context.calls);
+        //insert the arguments of the last call (todo: might not be correct, and if it is, it's messy)
+        captures.frames.insert(captures.frames.begin(), { context.calls.frames.back().function, context.calls.frames.back().compiled_arguments });
+        auto ret = captures.find(parent->declarer->our_scope.get(), name);
+        if (ret)
+            return ret;
 
         return build_error(source_info, error_message_code::failed_to_find_when_resolving_identifier_expr, name.value);
     }

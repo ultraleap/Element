@@ -166,7 +166,7 @@ namespace element
     {
         std::string trace;
 
-        for (auto it = context.stack.frames.rbegin(); it < context.stack.frames.rend(); ++it)
+        for (auto it = context.calls.frames.rbegin(); it < context.calls.frames.rend(); ++it)
         {
             auto& func = it->function;
 
@@ -192,10 +192,65 @@ namespace element
             if (func == decl)
                 trace += " <-- here";
 
-            if (it != context.stack.frames.rend() - 1)
+            if (it != context.calls.frames.rend() - 1)
                 trace += "\n";
         }
 
         return build_error(source_info, error_message_code::recursion_detected, decl->typeof_info(), trace);
+    }
+
+    capture_stack::capture_stack(
+        const declaration* function,
+        std::vector<std::shared_ptr<object>> compiled_arguments,
+        const call_stack& calls)
+    {
+        //build up a list of declarations with their captures, using each parent scope of the passed in declaration
+        //frames.emplace_back(function, compiled_arguments);
+
+        const scope* s = function->our_scope->get_parent_scope();
+        while (s)
+        {
+            const declaration* decl = s->declarer;
+
+            auto found_it = std::find_if(calls.frames.begin(), calls.frames.end(), 
+                [decl](const auto& frame) {
+                    return frame.function == decl;
+            });
+
+            if (found_it != calls.frames.end())
+                frames.emplace_back(frame{ found_it->function, found_it->compiled_arguments });
+            
+            s = s->get_parent_scope();
+        }
+    }
+
+    std::shared_ptr<object> capture_stack::find(const scope* s, const identifier& name)
+    {
+        while (s)
+        {
+            auto found = s->find(name, false);
+            if (found)
+                return found;
+
+            auto found_it = std::find_if(frames.begin(), frames.end(), [function = s->declarer](const auto& frame) {
+                return function == frame.function;
+            });
+
+            if (found_it != frames.end())
+            {
+                const auto* func = found_it->function;
+                for (unsigned i = 0; i < func->inputs.size(); ++i)
+                {
+                    const auto& input = func->inputs[i];
+                    if (input.name.value == name.value)
+                        return found_it->compiled_arguments[i];
+                }
+            }
+
+            s = s->get_parent_scope();
+        }
+
+        //todo: build error?
+        return nullptr;
     }
 }
