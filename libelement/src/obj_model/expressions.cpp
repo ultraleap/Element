@@ -31,6 +31,8 @@ namespace element
         if (expressions.empty())
             return nullptr; //todo: error_object
 
+        captures = context.captures;
+
         std::shared_ptr<object> current = nullptr;
         for (const auto& expression : expressions)
         {
@@ -69,8 +71,7 @@ namespace element
         }
 
         //todo: don't build the capture stack every time
-        auto captures = capture_stack(parent->declarer, context.calls);
-        auto ret = captures.find(parent->declarer->our_scope.get(), name);
+        auto ret = parent->captures.find(parent->declarer->our_scope.get(), name);
         if (ret)
             return ret;
 

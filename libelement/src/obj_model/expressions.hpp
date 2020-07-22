@@ -33,6 +33,7 @@ namespace element
 
         const declaration* declarer;
         std::vector<std::unique_ptr<expression>> expressions;
+        mutable capture_stack captures;
     private:
     };
 

@@ -204,19 +204,17 @@ namespace element
         const call_stack& calls)
     {
         //build up a list of declarations with their captures, using each parent scope of the passed in declaration
-        //frames.emplace_back(function, compiled_arguments);
-
         const scope* s = function->our_scope.get();
         while (s)
         {
             const declaration* decl = s->declarer;
 
-            auto found_it = std::find_if(calls.frames.begin(), calls.frames.end(), 
+            auto found_it = std::find_if(std::rbegin(calls.frames), std::rend(calls.frames),
                 [decl](const auto& frame) {
                     return frame.function == decl;
             });
 
-            if (found_it != calls.frames.end())
+            if (found_it != std::rend(calls.frames))
                 frames.emplace_back(frame{ found_it->function, found_it->compiled_arguments });
             
             s = s->get_parent_scope();
@@ -231,8 +229,9 @@ namespace element
             if (found)
                 return found;
 
-            auto found_it = std::find_if(frames.begin(), frames.end(), [function = s->declarer](const auto& frame) {
-                return function == frame.function;
+            auto found_it = std::find_if(std::begin(frames), std::end(frames), 
+                [function = s->declarer](const auto& frame) {
+                    return function == frame.function;
             });
 
             if (found_it != frames.end())
