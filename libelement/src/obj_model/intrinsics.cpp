@@ -131,7 +131,7 @@ namespace element
 
     std::shared_ptr<object> intrinsic_unary::compile(const compilation_context& context, const source_information& source_info) const
     {
-        const auto& frame = context.stack.frames.back();
+        const auto& frame = context.calls.frames.back();
         const auto& declarer = *frame.function;
         assert(declarer.inputs.size() == 1);
         assert(frame.compiled_arguments.size() == 1);
@@ -161,7 +161,7 @@ namespace element
 
     std::shared_ptr<object> intrinsic_binary::compile(const compilation_context& context, const source_information& source_info) const
     {
-        const auto& frame = context.stack.frames.back();
+        const auto& frame = context.calls.frames.back();
         const auto& declarer = *frame.function;
         assert(declarer.inputs.size() == 2);
         assert(frame.compiled_arguments.size() == 2);
@@ -189,7 +189,7 @@ namespace element
 
     std::shared_ptr<object> intrinsic_if::compile(const compilation_context& context, const source_information& source_info) const
     {
-        const auto& frame = context.stack.frames.back();
+        const auto& frame = context.calls.frames.back();
         const auto& declarer = *frame.function;
         assert(declarer.inputs.size() == 3);
         assert(frame.compiled_arguments.size() == 3);

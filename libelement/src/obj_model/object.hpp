@@ -44,6 +44,23 @@ namespace element
         std::vector<frame> frames;
     };
 
+    class capture_stack
+    {
+    public:
+        struct frame
+        {
+            const declaration* function;
+            std::vector<std::shared_ptr<object>> compiled_arguments;
+        };
+
+        capture_stack(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments, const call_stack& calls);
+
+        [[nodiscard]] std::shared_ptr<object> find(const scope* s, const identifier& name);
+
+        //todo: private
+        std::vector<frame> frames;
+    };
+
     class compilation_context
     {
     private:
@@ -54,9 +71,10 @@ namespace element
 
         [[nodiscard]] const scope* get_global_scope() const { return global_scope; }
 
-        mutable call_stack stack;
-        element_interpreter_ctx* interpreter;
+        mutable call_stack calls;
         mutable source_information source_info;
+
+        element_interpreter_ctx* interpreter;
     };
 
     struct identifier
