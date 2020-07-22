@@ -221,6 +221,16 @@ namespace element
         }
     }
 
+    void capture_stack::push(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments)
+    {
+        frames.emplace_back(frame{function, std::move(compiled_arguments)});
+    }
+
+    void capture_stack::pop()
+    {
+        frames.pop_back();
+    }
+
     std::shared_ptr<object> capture_stack::find(const scope* s, const identifier& name)
     {
         while (s)

@@ -48,17 +48,19 @@ namespace element
     }
 
     //function_instance
-    function_instance::function_instance(const function_declaration* declarer, capture_stack captures)
+    function_instance::function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info)
         : declarer(declarer)
         , captures(std::move(captures))
     {
+        this->source_info = std::move(source_info);
     }
 
-    function_instance::function_instance(const function_declaration* declarer, capture_stack captures, std::vector<std::shared_ptr<object>> args)
+    function_instance::function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info, std::vector<std::shared_ptr<object>> args)
         : declarer(declarer)
         , captures(std::move(captures))
         , provided_arguments(std::move(args))
     {
+        this->source_info = std::move(source_info);
     }
 
     std::shared_ptr<object> function_instance::call(
@@ -72,26 +74,32 @@ namespace element
 
     std::shared_ptr<object> function_instance::compile(const compilation_context& context, const source_information& source_info) const
     {
-        //todo: error for assert
+        //todo: error for assert, can't have more provided than declaration allows
         assert(provided_arguments.size() <= declarer->inputs.size());
 
         if (provided_arguments.size() != declarer->inputs.size())
-            return const_cast<function_instance*>(this)->shared_from_this();
+        {
+            if (provided_arguments.size() <= 1)
+                return const_cast<function_instance*>(this)->shared_from_this();
+
+            //element doesn't allow applying arbitrary arguments, only parent partial application
+            //internal compiler error? shouldn't be possible to get here
+            assert(false);
+            return nullptr;
+        }
 
         if (context.calls.is_recursive(declarer))
             return context.calls.build_recursive_error(declarer, context, source_info);
 
-        //todo: capture stack is recreated based on the call stack, so it needs to swap, but realistically we should be swapping capture stacks
-        //TODO: ARGH!!! Can we simplify this...
         context.calls.push(declarer, provided_arguments);
-        captures.frames.emplace_back(capture_stack::frame{declarer, provided_arguments });
+        captures.push(declarer, provided_arguments);
 
         std::swap(captures, context.captures);
-        auto ret = declarer->body->compile(context, source_info);
+        auto element = declarer->body->compile(context, source_info);
         std::swap(captures, context.captures);
 
-        captures.frames.pop_back();
+        captures.pop();
         context.calls.pop();
-        return ret;
+        return element;
     }
 }

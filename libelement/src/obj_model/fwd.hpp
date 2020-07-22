@@ -5,6 +5,10 @@
 namespace element
 {
     class object;
+    struct identifier;
+    class error;
+    class compilation_context;
+
     class scope;
     class type_annotation;
     class port;
@@ -36,4 +40,6 @@ namespace element
     struct element_function;
     using function_shared_ptr = std::shared_ptr<element_function>;
     using function_const_shared_ptr = std::shared_ptr<const element_function>;
+
+    class intrinsic;
 }

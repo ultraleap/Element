@@ -283,6 +283,7 @@ element_result test_failing_evals()
         return result;
 
     printf("#######Failed successfully#######\n");
+    return ELEMENT_OK;
 }
 
 int main(int argc, char** argv)

@@ -17,11 +17,6 @@ struct element_interpreter_ctx;
 
 namespace element
 {
-    struct identifier;
-    class intrinsic;
-    class error;
-    class compilation_context;
-
     class call_stack
     {
     public:
@@ -53,9 +48,11 @@ namespace element
             std::vector<std::shared_ptr<object>> compiled_arguments;
         };
 
-        capture_stack() {}
+        capture_stack() = default;
         capture_stack(const declaration* function, const call_stack& calls);
 
+        void push(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments);
+        void pop();
         [[nodiscard]] std::shared_ptr<object> find(const scope* s, const identifier& name);
 
         //todo: private
