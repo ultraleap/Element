@@ -35,8 +35,8 @@ namespace element
     class function_instance final : public object, public std::enable_shared_from_this<function_instance>
     {
     public:
-        explicit function_instance(const function_declaration* declarer, call_stack calls, capture_stack captures);
-        explicit function_instance(const function_declaration* declarer, call_stack calls, capture_stack captures, std::vector<std::shared_ptr<object>> args);
+        explicit function_instance(const function_declaration* declarer, capture_stack captures);
+        explicit function_instance(const function_declaration* declarer, capture_stack captures, std::vector<std::shared_ptr<object>> args);
         virtual ~function_instance() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
@@ -52,12 +52,9 @@ namespace element
                                                    source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
 
-        std::shared_ptr<object> is_recursive(const compilation_context& context) const;
-
         const function_declaration* const declarer;
 
     private:
-        mutable call_stack calls;
         mutable capture_stack captures;
         mutable std::vector<std::shared_ptr<object>> provided_arguments;
     };

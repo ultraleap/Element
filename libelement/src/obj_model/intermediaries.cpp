@@ -48,16 +48,14 @@ namespace element
     }
 
     //function_instance
-    function_instance::function_instance(const function_declaration* declarer, call_stack calls, capture_stack captures)
+    function_instance::function_instance(const function_declaration* declarer, capture_stack captures)
         : declarer(declarer)
-        , calls(std::move(calls))
         , captures(std::move(captures))
     {
     }
 
-    function_instance::function_instance(const function_declaration* declarer, call_stack calls, capture_stack captures, std::vector<std::shared_ptr<object>> args)
+    function_instance::function_instance(const function_declaration* declarer, capture_stack captures, std::vector<std::shared_ptr<object>> args)
         : declarer(declarer)
-        , calls(std::move(calls))
         , captures(std::move(captures))
         , provided_arguments(std::move(args))
     {
@@ -84,11 +82,13 @@ namespace element
             return context.calls.build_recursive_error(declarer, context, source_info);
 
         //todo: capture stack is recreated based on the call stack, so it needs to swap, but realistically we should be swapping capture stacks
-        std::swap(calls, context.calls);
-        context.calls.push(declarer, std::move(provided_arguments));
+        context.calls.push(declarer, provided_arguments);
+        captures.frames.emplace_back(capture_stack::frame{declarer, provided_arguments });
+        std::swap(captures, context.captures);
         auto ret = declarer->body->compile(context, source_info);
+        std::swap(captures, context.captures);
+        captures.frames.pop_back();
         context.calls.pop();
-        std::swap(calls, context.calls);
         return ret;
     }
 }

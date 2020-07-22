@@ -115,7 +115,7 @@ namespace element
         }
 
         auto captures = capture_stack(this, context.calls);
-        const auto ret = std::make_shared<function_instance>(this, context.calls, std::move(captures), compiled_args);
+        const auto ret = std::make_shared<function_instance>(this, std::move(captures), compiled_args);
         ret->source_info = source_info;
         return ret->compile(context, source_info);
     }
