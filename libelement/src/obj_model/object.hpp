@@ -53,7 +53,7 @@ namespace element
             std::vector<std::shared_ptr<object>> compiled_arguments;
         };
 
-        capture_stack(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments, const call_stack& calls);
+        capture_stack(const declaration* function, const call_stack& calls);
 
         [[nodiscard]] std::shared_ptr<object> find(const scope* s, const identifier& name);
 

@@ -201,13 +201,12 @@ namespace element
 
     capture_stack::capture_stack(
         const declaration* function,
-        std::vector<std::shared_ptr<object>> compiled_arguments,
         const call_stack& calls)
     {
         //build up a list of declarations with their captures, using each parent scope of the passed in declaration
         //frames.emplace_back(function, compiled_arguments);
 
-        const scope* s = function->our_scope->get_parent_scope();
+        const scope* s = function->our_scope.get();
         while (s)
         {
             const declaration* decl = s->declarer;
