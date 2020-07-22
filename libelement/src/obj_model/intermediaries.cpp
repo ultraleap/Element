@@ -82,11 +82,14 @@ namespace element
             return context.calls.build_recursive_error(declarer, context, source_info);
 
         //todo: capture stack is recreated based on the call stack, so it needs to swap, but realistically we should be swapping capture stacks
+        //TODO: ARGH!!! Can we simplify this...
         context.calls.push(declarer, provided_arguments);
         captures.frames.emplace_back(capture_stack::frame{declarer, provided_arguments });
+
         std::swap(captures, context.captures);
         auto ret = declarer->body->compile(context, source_info);
         std::swap(captures, context.captures);
+
         captures.frames.pop_back();
         context.calls.pop();
         return ret;
