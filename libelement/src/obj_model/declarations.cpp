@@ -114,7 +114,7 @@ namespace element
                 source_info);
         }
 
-        auto captures = capture_stack(this, compiled_args, context.calls);
+        auto captures = capture_stack(this, context.calls);
         const auto ret = std::make_shared<function_instance>(this, context.calls, std::move(captures), compiled_args);
         ret->source_info = source_info;
         return ret->compile(context, source_info);
