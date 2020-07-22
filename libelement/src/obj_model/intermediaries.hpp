@@ -10,6 +10,7 @@ namespace element
     class struct_instance final : public object, public std::enable_shared_from_this<struct_instance>
     {
     public:
+        explicit struct_instance(const struct_declaration* declarer);
         explicit struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<object>>& expressions);
         virtual ~struct_instance() = default;
 

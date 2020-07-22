@@ -80,7 +80,7 @@ namespace element
         if (valid_call(this, compiled_args))
             return std::make_shared<struct_instance>(this, compiled_args);
 
-        return error_for_invalid_call(this, compiled_args);
+        return build_error_for_invalid_call(this, compiled_args);
     }
 
     //constraint

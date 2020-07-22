@@ -144,5 +144,6 @@ namespace element
     };
 
     bool valid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
-    std::shared_ptr<error> error_for_invalid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
+    std::shared_ptr<error> build_error_for_invalid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
+    std::shared_ptr<object> index_type(const declaration* type, std::shared_ptr<object> instance, const compilation_context& context, const identifier& name, const source_information& source_info);
  }
