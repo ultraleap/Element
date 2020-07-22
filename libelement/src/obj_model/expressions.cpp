@@ -18,13 +18,12 @@ namespace element
 
     std::shared_ptr<object> expression_chain::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const
+        std::vector<std::shared_ptr<object>> compiled_args,
+        const source_information& source_info) const
     {
-        //can't think of a reason this would be empty, even without having a global, the declaration should have added itself
-        //todo: maybe re-evaluate when we get to compiling arbitrary expression chains, without a declaration for them
-        assert(!context.stack.frames.empty());
-        //todo: we ignore the arguments passed in as we don't need them (they should be on the stack), but they get passed anyway (because intrinsics look for them from the call)
-        return compile(context, source_info);
+        //expression_chains are no longer called, instead, the callstack has the arguments and chains are compiled
+        assert(false);
+        return object::call(context, compiled_args, source_info);
     }
 
     std::shared_ptr<object> expression_chain::compile(const compilation_context& context, const source_information& source_info) const
@@ -35,10 +34,8 @@ namespace element
         std::shared_ptr<object> current = nullptr;
         for (const auto& expression : expressions)
         {
-            auto previous = std::move(current);
+            auto previous = std::move(current); //for debugging
             current = expression->resolve(context, previous)->compile(context, source_info);
-            //TODO: Handle as error
-            assert(current);
         }
 
         return current;
@@ -168,7 +165,13 @@ namespace element
         for (const auto& arg : arguments)
             compiled_arguments.push_back(arg->compile(context, source_info));
 
-        return obj->call(context, std::move(compiled_arguments), source_info);
+        auto ret = obj->call(context, std::move(compiled_arguments), source_info);
+        if (ret)
+            return ret;
+
+        //todo: build error, but in theory this shouldn't happen
+        assert(false);
+        return nullptr;
     }
 
     lambda_expression::lambda_expression(const expression_chain* parent)
