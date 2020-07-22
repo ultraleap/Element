@@ -67,7 +67,7 @@ namespace element
         return true;
     }
 
-    std::shared_ptr<error> error_for_invalid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
+    std::shared_ptr<error> build_error_for_invalid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
     {
         assert(!valid_call(declarer, compiled_args));
 
@@ -96,6 +96,45 @@ namespace element
         }
 
         assert(!"the call is valid");
+        return nullptr;
+    }
+
+    std::shared_ptr<object> index_type(
+        const declaration* type,
+        std::shared_ptr<object> instance,
+        const compilation_context& context,
+        const identifier& name,
+        const source_information& source_info)
+    {
+        auto func = std::dynamic_pointer_cast<function_declaration>(type->our_scope->find(name, false));
+
+        //todo: not exactly working type checking, good enough for now though
+        const bool has_inputs = func && func->has_inputs();
+        const bool has_type = has_inputs && func->inputs[0].annotation.get();
+        const bool types_match = has_type && func->inputs[0].annotation->name.value == type->name.value;
+
+        if (types_match)
+            return func->call(context, { std::move(instance) }, source_info);
+
+        //todo: instead of relying on generic error handling for nullptr, build a specific error
+        if (!func)
+            return nullptr;
+
+        if (!has_inputs)
+            return build_error(source_info, error_message_code::instance_function_cannot_be_nullary,
+                func->typeof_info(), instance->typeof_info());
+
+        if (!has_type)
+            return build_error(source_info, error_message_code::is_not_an_instance_function,
+                func->typeof_info(), instance->typeof_info(), func->inputs[0].name.value);
+
+        if (!types_match)
+            return build_error(source_info, error_message_code::is_not_an_instance_function,
+                func->typeof_info(), instance->typeof_info(),
+                func->inputs[0].name.value, func->inputs[0].annotation->name.value, type->name.value);
+
+        //did we miss an error that we need to handle?
+        assert(false);
         return nullptr;
     }
 

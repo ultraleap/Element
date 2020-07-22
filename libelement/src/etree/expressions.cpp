@@ -4,7 +4,7 @@
 #include <fmt/format.h>
 
 //SELF
-//#include "obj_model/errors.hpp"
+#include "obj_model/errors.hpp"
 #include "obj_model/types.hpp"
 #include "obj_model/intermediaries.hpp"
 
@@ -20,69 +20,30 @@ DEFINE_TYPE_ID(element_expression_if,              1U << 6);
 
 std::shared_ptr<element::object> element_expression::compile(const element::compilation_context& context, const element::source_information& source_info) const
 {
-    //TODO: THIS IS AFWUL! FIX!
     return const_cast<element_expression*>(this)->shared_from_this();
 }
 
-std::shared_ptr<element::object> element_expression::index(const element::compilation_context& context, const element::identifier& name, const element::source_information&
-                                                           source_info) const
+std::shared_ptr<element::object> element_expression::index(
+    const element::compilation_context& context,
+    const element::identifier& name,
+    const element::source_information& source_info) const
 {
-    assert(actual_type);
+    if (!actual_type)
+    {
+        assert(false);
+        return nullptr;
+    }
 
-    const auto declarer = actual_type->index(context, name, source_info);
-
-    if (!declarer)
+    //find the declaration of the type that we are
+    const auto actual_type_decl = context.get_global_scope()->find(actual_type->get_identifier(), false);
+    if (!actual_type_decl)
     {
         //TODO: Handle as error
-        assert(!"failed to index on type, user error?");
+        assert(!"failed to find declaration of our actual type, did the user declare the intrinsic?");
         return nullptr;
-        //return element::build_error(element::error_message_code::not_indexable);
     }
 
-    auto* func = dynamic_cast<element::function_declaration*>(declarer.get());
-
-    //todo: not real typechecking. also, kinda duplicated from struct instance.
-    const bool has_inputs = func && func->has_inputs();
-    const bool has_type = has_inputs && func->inputs[0].annotation.get();
-    const bool types_match = has_type && func->inputs[0].annotation->name.value == actual_type->get_identifier().value;
-
-    if (types_match)
-    {
-        std::vector<std::shared_ptr<object>> args = { const_cast<element_expression*>(this)->shared_from_this() };
-        return std::make_shared<element::function_instance>(func, context.stack, args);
-    }
-
-    if (func)
-    {
-        if (!has_inputs)
-        {
-            return std::make_shared<element::error>(
-                fmt::format("error: '{}' was found when indexing '{}' but it is not an instance function as it has no parameters.\n",
-                    func->typeof_info(), typeof_info()),
-                ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION,
-                source_info);
-        }
-
-        if (!has_type)
-        {
-            return std::make_shared<element::error>(
-                fmt::format("error: '{}' was found when indexing '{}' but it is not an instance function as it does not have an explicit type defined for its first parameter '{}'.\n",
-                    func->typeof_info(), typeof_info(), func->inputs[0].name.value),
-                ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION,
-                source_info);
-        }
-
-        if (!types_match)
-        {
-            return std::make_shared<element::error>(
-                fmt::format("error: '{}' was found when indexing '{}' but it is not an instance function as the first parameter '{}' is of type '{}', when it needs to be '{}' to be considered an instance function.\n",
-                    func->typeof_info(), typeof_info(), func->inputs[0].name.value, func->inputs[0].annotation->name.value, actual_type->get_identifier().value),
-                ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION,
-                source_info);
-        }
-    }
-
-    return nullptr;
+    return index_type(actual_type_decl.get(), const_cast<element_expression*>(this)->shared_from_this(), context, name, source_info);
 }
 
 element_expression_constant::element_expression_constant(element_value val)

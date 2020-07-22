@@ -10,9 +10,14 @@
 
 namespace element
 {
+    struct_instance::struct_instance(const struct_declaration* declarer)
+        : declarer(declarer)
+    {
+    }
+
     //struct_instance
     struct_instance::struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<object>>& expressions)
-        : declarer{ declarer }
+        : declarer(declarer)
     {
         //TODO: JM - variadics
         assert(declarer->inputs.size() == expressions.size());
@@ -34,38 +39,7 @@ namespace element
         if (found_field != fields.end())
             return found_field->second;
 
-        auto func = std::dynamic_pointer_cast<function_declaration>(declarer->our_scope->find(name, false));
-        //todo: not exactly working type checking, good enough for now though
-        const bool has_inputs = func && func->has_inputs();
-        const bool has_type = has_inputs && func->inputs[0].annotation.get();
-        const bool types_match = has_type && func->inputs[0].annotation->name.value == declarer->name.value;
-
-        if (types_match)
-        {
-            std::vector<std::shared_ptr<object>> args = { const_cast<struct_instance*>(this)->shared_from_this() };
-            return std::make_shared<function_instance>(func.get(), context.stack, std::move(args));
-        }
-
-        //todo: instead of relying on generic error handling for nullptr, build a specific error
-        if (!func)
-            return nullptr;
-
-        if (!has_inputs)
-            return build_error(source_info, error_message_code::instance_function_cannot_be_nullary,
-                func->typeof_info(), typeof_info());
-
-        if (!has_type)
-            return build_error(source_info, error_message_code::is_not_an_instance_function,
-                func->typeof_info(), typeof_info(), func->inputs[0].name.value);
-
-        if (!types_match)
-            return build_error(source_info, error_message_code::is_not_an_instance_function,
-                func->typeof_info(), typeof_info(),
-                func->inputs[0].name.value, func->inputs[0].annotation->name.value, declarer->name.value);
-
-        //did we miss an error that we need to handle?
-        assert(false);
-        return nullptr;
+        return index_type(declarer, const_cast<struct_instance*>(this)->shared_from_this(), context, name, source_info);
     }
 
     std::shared_ptr<object> struct_instance::compile(const compilation_context& context, const source_information& source_info) const
