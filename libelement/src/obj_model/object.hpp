@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 #include <cassert>
+#include <optional>
 
 //SELF
 #include "fwd.hpp"
@@ -114,20 +115,12 @@ namespace element
 
         //TODO: Add constraints
         //bool matches_constraint(constraint& constraint);
-
-        /*
-         * Namespace, element_expression, struct declaration, struct instance, function declaration if nullary
-         */
         [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const;
-        /*
-         * struct declaration, function declaration, function instance
-         */
-        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                           source_info) const;
-        /*
-         * expression, anything that remains after an expression is compiled, anything that a user tries to compile using the C API
-         */
+        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&source_info) const;
         [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const;
+        [[nodiscard]] virtual const std::vector<port>& get_inputs() const { return {}; };
+        [[nodiscard]] virtual const scope* get_scope() const { return nullptr; };
+        [[nodiscard]] virtual const std::optional<port>& get_output() const { return {}; };
 
         source_information source_info;
 
