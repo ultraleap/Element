@@ -63,6 +63,13 @@ lmnt_result lmnt_ictx_load_archive_append(lmnt_ictx* ctx, const char* data, size
 // Returns: LMNT_OK or an error
 lmnt_result lmnt_ictx_load_archive_end(lmnt_ictx* ctx);
 
+// Load an archive into the specified intepreter context, using the archive data in place
+// This copies the archive's constants table into the context's memory space
+// The archive data passed in must remain alive for the duration this archive is loaded
+// Note that essentially no validation is performed on the archive by loading it
+// Returns: LMNT_OK or an error
+lmnt_result lmnt_ictx_load_inplace_archive(lmnt_ictx* ctx, const char* data, size_t data_size);
+
 // Validates the archive's contents and fills in some information only available at runtime
 // The validation_result argument is optional and can be NULL
 // If a validation error occurs, this function will return LMNT_ERROR_INVALID_ARCHIVE

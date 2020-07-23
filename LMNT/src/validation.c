@@ -327,7 +327,7 @@ static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, l
 }
 
 
-lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, size_t total_stack_count)
+lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, size_t memory_size, size_t* stack_count)
 {
     if (archive->size < sizeof(lmnt_archive_header))
         return LMNT_VERROR_HEADER_MAGIC;
@@ -347,6 +347,8 @@ lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, size_t
     if ((constants_idx % 4) != 0)
         return LMNT_VERROR_CONSTANTS_ALIGN;
 
+    // Determine our total stack count based on available memory space and how far in the constants are
+    const size_t total_stack_count = (memory_size - (get_constants_segment(archive) - archive->data)) / sizeof(lmnt_value);
     const size_t constants_count = (hdr->constants_length / sizeof(lmnt_value));
     const size_t rw_stack_count = total_stack_count - constants_count;
 
@@ -385,6 +387,9 @@ lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, size_t
         else
             return dvresult;
     }
+
+    if (stack_count)
+        *stack_count = total_stack_count;
 
     return LMNT_VALIDATION_OK;
 }

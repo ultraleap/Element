@@ -10,13 +10,6 @@
 extern lmnt_op_fn lmnt_op_functions[LMNT_OP_END];
 extern lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END];
 
-static lmnt_result get_stack_start(const lmnt_ictx* ctx, lmnt_value** value)
-{
-    // Slightly naughty: we need to return a non-const pointer
-    // to the stack start since everything after the constants read-write
-    return lmnt_get_constants(&ctx->archive, 0, (const lmnt_value**)value);
-}
-
 lmnt_result lmnt_ictx_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
 {
     memset(ctx, 0, sizeof(lmnt_ictx));
@@ -56,19 +49,38 @@ lmnt_result lmnt_ictx_load_archive_append(lmnt_ictx* ctx, const char* data, size
 
 lmnt_result lmnt_ictx_load_archive_end(lmnt_ictx* ctx)
 {
-    LMNT_OK_OR_RETURN(get_stack_start(ctx, &ctx->stack));
-    ctx->writable_stack = (lmnt_value*)(ctx->memory_area + ctx->archive.size);
-    ctx->stack_count = ((ctx->memory_area + ctx->memory_area_size) - (const char*)(ctx->stack)) / sizeof(lmnt_value);
     return LMNT_OK;
+}
+
+lmnt_result lmnt_ictx_load_inplace_archive(lmnt_ictx* ctx, const char* data, size_t data_size)
+{
+    // Don't copy the archive in, just use it where it is
+    return lmnt_archive_init(&ctx->archive, data, data_size);
 }
 
 lmnt_result lmnt_ictx_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* vresult)
 {
-    lmnt_validation_result vr = lmnt_archive_validate(&ctx->archive, ctx->stack_count);
+    lmnt_validation_result vr = lmnt_archive_validate(&ctx->archive, ctx->memory_area_size, &ctx->stack_count);
     if (vresult)
         *vresult = vr;
     if (vr != LMNT_VALIDATION_OK)
         return LMNT_ERROR_INVALID_ARCHIVE;
+
+    const size_t constants_count = validated_get_constants_count(&ctx->archive);
+    if ((ctx->archive.data >= ctx->memory_area) && (ctx->archive.data < ctx->memory_area + ctx->memory_area_size))
+    {
+        // Archive is loaded into our memory space
+        // Constants are therefore already in the right place, and the stack starts with them
+        ctx->stack = (lmnt_value*)validated_get_constants(&ctx->archive, 0);
+    }
+    else
+    {
+        // Archive is loaded in-place, so the stack starts at zero and we must copy the constants over
+        ctx->stack = (lmnt_value*)(ctx->memory_area);
+        const lmnt_value* constants = validated_get_constants(&ctx->archive, 0);
+        LMNT_MEMCPY(ctx->stack, constants, constants_count * sizeof(lmnt_value));
+    }
+    ctx->writable_stack = ctx->stack + constants_count;
 
     // fill in extern defs' code value to point to the right extcall
     lmnt_result er = lmnt_update_def_extcalls(&ctx->archive, ctx->extcalls, ctx->extcalls_count);
@@ -92,8 +104,8 @@ LMNT_ATTR_FAST static inline lmnt_result execute_instruction(lmnt_ictx* ctx, con
 LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, const lmnt_offset rvals_count)
 {
     assert(ctx && ctx->archive.data);
-    assert(ctx->stack && ctx->stack_count);
-    assert(ctx->cur_def);
+    assert(ctx && ctx->stack && ctx->stack_count);
+    assert(ctx && ctx->cur_def);
 
     const lmnt_def* const def = ctx->cur_def;
 
@@ -151,8 +163,7 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
     // If OK and we have a buffer to write to, copy out return values and return the count populated
     if (LMNT_LIKELY(opresult == LMNT_OK && rvals))
     {
-        // TODO: make this more robust
-        LMNT_MEMCPY(rvals, &ctx->writable_stack[def->args_count], def->rvals_count * sizeof(lmnt_value));
+        LMNT_MEMCPY(rvals, ctx->writable_stack + def->args_count, def->rvals_count * sizeof(lmnt_value));
         return def->rvals_count;
     }
     // Otherwise, just return OK or a failure code
@@ -163,8 +174,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_execute(
     lmnt_ictx* ctx, const lmnt_def* def,
     lmnt_value* rvals, const lmnt_offset rvals_count)
 {
-    assert(ctx);
-    assert(ctx->stack && ctx->stack_count);
+    assert(ctx && ctx->stack && ctx->stack_count);
     assert(def);
     // Set our current instruction to be the start of the requested def
     ctx->cur_def = def;
