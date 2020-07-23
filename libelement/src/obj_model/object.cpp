@@ -114,7 +114,10 @@ namespace element
         const bool types_match = has_type && func->inputs[0].annotation->name.value == type->name.value;
 
         if (types_match)
-            return func->call(context, { std::move(instance) }, source_info);
+        {
+            const auto func_instance = func->compile(context, source_info);
+            return func_instance->call(context, { std::move(instance) }, source_info);
+        }
 
         //todo: instead of relying on generic error handling for nullptr, build a specific error
         if (!func)
