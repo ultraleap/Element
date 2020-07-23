@@ -442,21 +442,41 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         return result;
 
-    //double using input
-    float inputs[] = { 2 };
-    element_inputs input;
-    input.values = inputs;
-    input.count = 2;
 
-    element_outputs output;
-    float outputs[] = { 0 };
-    output.values = outputs;
-    output.count = 1;
-    result = eval_with_inputs("evaluate(a:Num) = a.mul(2);", &input, &output);
-    if (result != ELEMENT_OK)
-        return result;
-    if (output.values[0] != input.values[0] * 2)
-        return result;
+    {
+        //double using input
+        float inputs[] = { 2 };
+        element_inputs input;
+        input.values = inputs;
+        input.count = 1;
+        element_outputs output;
+        float outputs[] = { 0 };
+        output.values = outputs;
+        output.count = 1;
+        result = eval_with_inputs("evaluate(a:Num) = a.mul(2);", &input, &output);
+        if (result != ELEMENT_OK)
+            return result;
+        if (output.values[0] != input.values[0] * 2)
+            return result;
+    }
+
+    {
+        //multiply using inputs
+        float inputs[] = { 20, 20 };
+        element_inputs input;
+        input.values = inputs;
+        input.count = 2;
+        element_outputs output;
+        float outputs[] = { 0 };
+        output.values = outputs;
+        output.count = 1;
+        result = eval_with_inputs("evaluate(a:Num, b:Num) = a.mul(b);", &input, &output);
+        if (result != ELEMENT_OK)
+            return result;
+        if (output.values[0] != input.values[0] * input.values[1])
+            return result;
+    }
+
 
     printf("#######Passed Successfully#######\n");
 
