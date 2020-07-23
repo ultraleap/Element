@@ -138,6 +138,41 @@ cleanup:
     return result;
 }
 
+element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, element_outputs* outputs)
+{
+    element_interpreter_ctx* context = NULL;
+    element_compilable* compilable = NULL;
+    element_evaluable* evaluable = NULL;
+
+    element_interpreter_create(&context);
+    element_interpreter_set_log_callback(context, log_callback);
+    element_interpreter_load_prelude(context);
+
+    element_result result = element_interpreter_load_string(context, evaluate, "<input>");
+    if (result != ELEMENT_OK)
+        goto cleanup;
+
+    result = element_interpreter_find(context, "evaluate", &compilable);
+    if (result != ELEMENT_OK)
+        goto cleanup;
+
+    result = element_interpreter_compile(context, NULL, compilable, &evaluable);
+    if (result != ELEMENT_OK)
+        goto cleanup;
+
+    result = element_interpreter_evaluate(context, NULL, evaluable, inputs, outputs);
+    if (result != ELEMENT_OK)
+        goto cleanup;
+
+    printf("%s -> %f\n", evaluate, outputs->values[0]);
+
+cleanup:
+    element_delete_compilable(context, &compilable);
+    element_delete_evaluable(context, &evaluable);
+    element_interpreter_delete(context);
+    return result;
+}
+
 element_result test_failing_evals()
 {
     printf("#######Expected to fail#######\n");
@@ -405,6 +440,22 @@ int main(int argc, char** argv)
     //typename can refer to things inside scopes
     result = eval("namespace Space { struct Thing(a){}} func(a:Space.Thing) = a.a; evaluate = func(Space.Thing(1));");
     if (result != ELEMENT_OK)
+        return result;
+
+    //double using input
+    float inputs[] = { 2 };
+    element_inputs input;
+    input.values = inputs;
+    input.count = 2;
+
+    element_outputs output;
+    float outputs[] = { 0 };
+    output.values = outputs;
+    output.count = 1;
+    result = eval_with_inputs("evaluate(a:Num) = a.mul(2);", &input, &output);
+    if (result != ELEMENT_OK)
+        return result;
+    if (output.values[0] != input.values[0] * 2)
         return result;
 
     printf("#######Passed Successfully#######\n");

@@ -40,6 +40,9 @@ namespace element
         [[nodiscard]] bool has_constraint() const { return false; }; //TODO: JM - nonsense, this needs to be a constraint::something OR constraint::any
         [[nodiscard]] bool has_scope() const;
         [[nodiscard]] bool is_intrinsic() const { return _intrinsic; }
+        [[nodiscard]] const std::vector<port>& get_inputs() const override { return inputs; }
+        [[nodiscard]] const scope* get_scope() const override { return our_scope.get(); };
+        [[nodiscard]] const std::optional<port>& get_output() const override { return output; };
 
         [[nodiscard]] virtual std::string location() const;
 
