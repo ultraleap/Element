@@ -73,8 +73,8 @@ namespace element
             if (intrinsic) 
                 return intrinsic->call(context, compiled_args, source_info);
 
-            //todo: could we validate this when creating the object model? then there's less to check during compilation
-            return build_error(source_info, error_message_code::intrinsic_not_implemented);
+            ////todo: could we validate this when creating the object model? then there's less to check during compilation
+            //return build_error(source_info, error_message_code::intrinsic_not_implemented);
         }
 
         if (valid_call(this, compiled_args))

@@ -87,6 +87,11 @@ namespace element
         build_inputs(context, decl, *struct_decl);
         build_output(context, decl, *struct_decl);
 
+        if(intrinsic)
+        {
+            intrinsic::register_intrinsic<struct_declaration>(context, ast, *struct_decl);
+        }
+
         if (ast->children.size() > ast_idx::function::body)
         {
             auto* body = ast->children[ast_idx::function::body].get();
@@ -146,8 +151,8 @@ namespace element
         else if (intrinsic && body->type == ELEMENT_AST_NODE_NO_BODY)
         {
             assert(intrinsic);
-            //TODO: If get_intrinsic returns null return error ELEMENT_ERROR_INTRINSIC_NOT_IMPLEMENTED
-            function_decl->body = intrinsic::get_intrinsic(*function_decl);
+            if (intrinsic::register_intrinsic<function_declaration>(context, ast, *function_decl))
+                function_decl->body = intrinsic::get_intrinsic(*function_decl);
         }
         else
         {

@@ -1,5 +1,7 @@
 #include "log_errors.hpp"
 
+#include "obj_model/errors.hpp"
+
 namespace element::detail
 {
     bool register_log_errors()
@@ -118,6 +120,18 @@ namespace element::detail
         register_log_error<std::string, std::string>(log_error_message_code::parse_constraint_invalid_body,
             "expected to find '{' or '=' before the body of the constraint '{}' but found '{}' instead.",
             ELEMENT_ERROR_CONSTRAINT_INVALID_BODY,
+            ELEMENT_STAGE_PARSER);
+
+        register_log_error<>(
+            log_error_message_code::intrinsic_not_implemented,
+            "intrinsic not implemented.",
+            ELEMENT_ERROR_INTRINSIC_NOT_IMPLEMENTED,
+            ELEMENT_STAGE_PARSER);
+
+        register_log_error<std::string>(
+            log_error_message_code::intrinsic_type_mismatch,
+            "intrinsic {} type mismatch",
+            ELEMENT_ERROR_TYPE_ERROR,
             ELEMENT_STAGE_PARSER);
 
         return true;
