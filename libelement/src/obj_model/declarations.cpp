@@ -105,12 +105,6 @@ namespace element
         std::vector<std::shared_ptr<object>> compiled_args,
         const source_information& source_info) const
     {
-        assert(false);
-        return nullptr;
-    }
-
-    std::shared_ptr<object> function_declaration::compile(const compilation_context& context, const source_information& source_info) const
-    {
         //todo: could we validate this when creating the object model? then there's less to check during compilation
         if (!body)
         {
@@ -121,8 +115,14 @@ namespace element
                 source_info);
         }
 
-        const auto instance = std::make_shared<function_instance>(this, context.captures, source_info);
+        const auto instance = std::make_shared<function_instance>(this, context.captures, source_info, compiled_args);
         return instance->compile(context, source_info);
+    }
+
+    std::shared_ptr<object> function_declaration::compile(const compilation_context& context, const source_information& source_info) const
+    {
+        //todo: after moving validation of body existing elsewhere, we can just return the function instance here, not too dupey
+        return call(context, {}, source_info);
     }
 
     //namespace
