@@ -11,9 +11,6 @@
 #include "circle.h"
 #include "circle_double.h"
 #include "circle_ht.h"
-#include "simple1000.h"
-#include "simple500.h"
-#include "simple250.h"
 #include "simple125.h"
 
 #ifdef _WIN32
@@ -170,10 +167,18 @@ int main(int argc, char** argv)
     lmnt_validation_result lvr;
     lmnt_result vr = lmnt_ictx_prepare_archive(&ctx, &lvr);
     assert(vr == LMNT_OK);
+    if (vr != LMNT_OK) {
+        printf("VALIDATION FAILED: %u\n", lvr);
+        return 1;
+    }
     
     const lmnt_def* def;
     lmnt_result dr = lmnt_find_def(&ctx.archive, THE_TEST_DEF, &def);
     assert(dr == LMNT_OK);
+    if (dr != LMNT_OK) {
+        printf("FAILED TO FIND DEF: %s\n", THE_TEST_DEF);
+        return 2;
+    }
 
     const lmnt_code* defcode;
     const lmnt_instruction* instructions;
