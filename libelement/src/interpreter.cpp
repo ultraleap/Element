@@ -753,20 +753,18 @@ element_result element_interpreter_compile(
 {
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
-    std::vector<std::shared_ptr<element_expression>> placeholder_inputs;
+    std::vector<std::shared_ptr<element::object>> placeholder_inputs;
     for (unsigned i = 0; i < compilable->object->get_inputs().size(); ++i)
     {
         const auto& input = compilable->object->get_inputs()[i];
 
-        const auto& type = compilable->object->get_scope()->find(input.annotation->name, true);
-        auto expression = std::make_shared<element_expression_input>(i, input.annotation->.type->get_size());
-        auto constraint = t->inputs()[i].type; //todo: have a look and see if these types make sense
-        results.emplace_back(compilation{ std::move(expression), std::move(constraint) });
-
-        placeholder_inputs.push_back(std::make_shared<element_)
+        //const auto& type = compilable->object->get_scope()->find(input->annotation->name, true);
+        auto expression = std::make_shared<element_expression_input>(i, 1);
+        expression->actual_type = element::type::num.get();
+        placeholder_inputs.push_back(std::move(expression));
     }
 
-    auto compiled = compilable->object->call(compilation_context, {});
+    auto compiled = compilable->object->call(compilation_context, placeholder_inputs, {});
 
     if (!compiled)
     {

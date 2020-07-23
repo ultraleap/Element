@@ -67,6 +67,8 @@ struct element_expression_input final : public element_expression
 
     [[nodiscard]] size_t index() const { return m_index; }
     [[nodiscard]] size_t get_size() const override { return m_size; }
+
+
 private:
     size_t m_index;
     size_t m_size;
