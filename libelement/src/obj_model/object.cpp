@@ -113,6 +113,7 @@ namespace element
         const bool has_type = has_inputs && func->inputs[0].annotation.get();
         const bool types_match = has_type && func->inputs[0].annotation->name.value == type->name.value;
 
+        //call as instance function, filling in first argument
         if (types_match)
             return func->call(context, { std::move(instance) }, source_info);
 
