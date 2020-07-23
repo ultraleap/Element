@@ -56,6 +56,6 @@ namespace element
 
     private:
         mutable capture_stack captures;
-        mutable std::vector<std::shared_ptr<object>> provided_arguments;
+        std::vector<std::shared_ptr<object>> provided_arguments;
     };
 }

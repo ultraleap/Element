@@ -68,18 +68,14 @@ namespace element
         std::vector<std::shared_ptr<object>> compiled_args,
         const source_information& source_info) const
     {
-        provided_arguments.insert(provided_arguments.end(), compiled_args.begin(), compiled_args.end());
-        return compile(context, source_info);
-    }
+        compiled_args.insert(std::begin(compiled_args), std::begin(provided_arguments), std::end(provided_arguments));
 
-    std::shared_ptr<object> function_instance::compile(const compilation_context& context, const source_information& source_info) const
-    {
         //todo: error for assert, can't have more provided than declaration allows
-        assert(provided_arguments.size() <= declarer->inputs.size());
+        assert(compiled_args.size() <= declarer->inputs.size());
 
-        if (provided_arguments.size() != declarer->inputs.size())
+        if (compiled_args.size() != declarer->inputs.size())
         {
-            if (provided_arguments.size() <= 1)
+            if (compiled_args.size() <= 1)
                 return const_cast<function_instance*>(this)->shared_from_this();
 
             //element doesn't allow applying arbitrary arguments, only parent partial application
@@ -91,8 +87,8 @@ namespace element
         if (context.calls.is_recursive(declarer))
             return context.calls.build_recursive_error(declarer, context, source_info);
 
-        context.calls.push(declarer, provided_arguments);
-        captures.push(declarer, provided_arguments);
+        context.calls.push(declarer, compiled_args);
+        captures.push(declarer, compiled_args);
 
         std::swap(captures, context.captures);
         auto element = declarer->body->compile(context, source_info);
@@ -101,5 +97,10 @@ namespace element
         captures.pop();
         context.calls.pop();
         return element;
+    }
+
+    std::shared_ptr<object> function_instance::compile(const compilation_context& context, const source_information& source_info) const
+    {
+        return call(context, {}, source_info);
     }
 }
