@@ -25,8 +25,7 @@ namespace element
         instance_function_cannot_be_nullary,
         is_not_an_instance_function,
         argument_count_mismatch,
-        failed_to_find,
-        intrinsic_not_implemented
+        failed_to_find
     };
 
     template <typename... Args>

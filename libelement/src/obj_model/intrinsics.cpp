@@ -20,83 +20,80 @@ DEFINE_TYPE_ID(element::intrinsic_bool_constructor, 1U << 5);
 
 namespace element
 {
-    std::shared_ptr<const intrinsic> intrinsic::get_intrinsic(const declaration& declaration)
+    template<typename T>
+    static bool is_type_of(const declaration* decl)
     {
-        const static std::unordered_map<std::string, const std::shared_ptr<const intrinsic>> intrinsic_map
-        {
-            //types
-            { "Num", std::make_shared<intrinsic_num_constructor>() },
-            { "Bool", std::make_shared<intrinsic_bool_constructor>() },
-            { "List", nullptr },
-            { "Tuple", nullptr },
-
-            //functions
-            { "Num.add", std::make_shared<intrinsic_binary>(element_binary_op::add) },
-            { "Num.sub", std::make_shared<intrinsic_binary>(element_binary_op::sub) },
-            { "Num.mul", std::make_shared<intrinsic_binary>(element_binary_op::mul) },
-            { "Num.div", std::make_shared<intrinsic_binary>(element_binary_op::div) },
-
-            { "Num.pow", std::make_shared<intrinsic_binary>(element_binary_op::pow) },
-            { "Num.rem", std::make_shared<intrinsic_binary>(element_binary_op::rem) },
-
-            { "Num.min", std::make_shared<intrinsic_binary>(element_binary_op::min) },
-            { "Num.max", std::make_shared<intrinsic_binary>(element_binary_op::max) },
-
-            { "Num.abs", std::make_shared<intrinsic_unary>(element_unary_op::abs) },
-            { "Num.ceil", std::make_shared<intrinsic_unary>(element_unary_op::ceil) },
-            { "Num.floor", std::make_shared<intrinsic_unary>(element_unary_op::floor) },
-
-            { "Num.sin", std::make_shared<intrinsic_unary>(element_unary_op::sin) },
-            { "Num.cos", std::make_shared<intrinsic_unary>(element_unary_op::cos) },
-            { "Num.tan", std::make_shared<intrinsic_unary>(element_unary_op::tan) },
-
-            { "Num.asin", std::make_shared<intrinsic_unary>(element_unary_op::asin) },
-            { "Num.acos", std::make_shared<intrinsic_unary>(element_unary_op::acos) },
-            { "Num.atan", std::make_shared<intrinsic_unary>(element_unary_op::atan) },
-
-            { "Num.atan2", std::make_shared<intrinsic_binary>(element_binary_op::atan2) },
-
-            { "Num.ln", std::make_shared<intrinsic_unary>(element_unary_op::ln) },
-            { "Num.log", std::make_shared<intrinsic_binary>(element_binary_op::log) },
-
-            { "Num.NaN", std::make_shared<intrinsic_nullary>(element_nullary_op::nan) },
-            { "Num.PositiveInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::positive_infinity) },
-            { "Num.NegativeInfinity", std::make_shared<intrinsic_nullary>(element_nullary_op::negative_infinity) },
-
-            { "Num.eq", std::make_shared<intrinsic_binary>(element_binary_op::eq, type::boolean.get(), type::num.get(), type::num.get()) },
-            { "Num.neq", std::make_shared<intrinsic_binary>(element_binary_op::neq, type::boolean.get(), type::num.get(), type::num.get()) },
-            { "Num.lt", std::make_shared<intrinsic_binary>(element_binary_op::lt, type::boolean.get(), type::num.get(), type::num.get()) },
-            { "Num.leq", std::make_shared<intrinsic_binary>(element_binary_op::leq, type::boolean.get(), type::num.get(), type::num.get()) },
-            { "Num.gt", std::make_shared<intrinsic_binary>(element_binary_op::gt, type::boolean.get(), type::num.get(), type::num.get()) },
-            { "Num.geq", std::make_shared<intrinsic_binary>(element_binary_op::geq, type::boolean.get(), type::num.get(), type::num.get()) },
-
-            { "Bool.if", std::make_shared<intrinsic_if>() },
-            { "Bool.not", std::make_shared<intrinsic_unary>(element_unary_op::not_, type::boolean.get(), type::boolean.get()) },
-            { "Bool.and", std::make_shared<intrinsic_binary>(element_binary_op::and_, type::boolean.get(), type::boolean.get()) },
-            { "Bool.or", std::make_shared<intrinsic_binary>(element_binary_op:: or_ , type::boolean.get(), type::boolean.get()) },
-
-            { "True", std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, type::boolean.get()) },
-            { "False", std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, type::boolean.get()) },
-
-            { "list", nullptr },
-            { "List.fold", nullptr },
-
-            { "memberwise", nullptr },
-            { "for", nullptr },
-            //{ "persist", nullptr }, //todo: unlikely to be part of the language
-
-            //constraints
-            { "Any", nullptr },
-        };
-
-        const auto location = declaration.location();
-
-        const auto it = intrinsic_map.find(location);
-        if (it != intrinsic_map.end())
-            return it->second;
-
-        return nullptr;
+        return dynamic_cast<const T*>(decl) ? true : false;
     }
+    
+    const std::unordered_map<std::string, std::function<std::shared_ptr<const intrinsic>(const declaration*)>> intrinsic::validation_func_map
+    {
+        //type
+        { "Num", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? std::make_shared<intrinsic_num_constructor>() : nullptr); } },
+        { "Bool", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? std::make_shared<intrinsic_bool_constructor>() : nullptr); } },
+        { "List", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+        { "Tuple", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+
+        //functions
+        { "Num.add", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::add, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.sub", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::sub, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.mul", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::mul, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.div", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::div, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+
+        { "Num.pow", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::pow, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.rem", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::rem, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+
+        { "Num.min", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::min, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.max", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::max, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+
+    
+        { "Num.abs",   [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::abs, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.ceil",  [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::ceil, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.floor", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::floor, type::num.get(), type::num.get()) : nullptr); } },
+
+
+        { "Num.sin", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::sin, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.cos", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::cos, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.tan", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::tan, type::num.get(), type::num.get()) : nullptr); } },
+
+        { "Num.asin", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::asin, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.acos", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::acos, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.atan", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::atan, type::num.get(), type::num.get()) : nullptr); } },
+
+        { "Num.atan2", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::atan2, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+
+        { "Num.ln", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::ln, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.log", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::log, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+
+        { "Num.NaN", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::nan, type::num.get()) : nullptr); } },
+        { "Num.PositiveInfinity", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::positive_infinity, type::num.get()) : nullptr); } },
+        { "Num.NegativeInfinity", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::negative_infinity, type::num.get()) : nullptr); } },
+
+        { "Num.eq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::eq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.neq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::neq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.lt", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::lt, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.leq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::leq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.gt", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::gt, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.geq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::geq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+     
+        { "Bool.if", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_if>() : nullptr); } },
+        { "Bool.not", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::not_, type::boolean.get(), type::boolean.get()) : nullptr); } },
+        { "Bool.and", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::and_, type::boolean.get(), type::boolean.get(), type::boolean.get()) : nullptr); } },
+        { "Bool.or", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::or_, type::boolean.get(), type::boolean.get(), type::boolean.get()) : nullptr); } },
+
+        { "True", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, type::boolean.get()) : nullptr); } },
+        { "False", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, type::boolean.get()) : nullptr); } },
+
+        { "list", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+        { "List.fold", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+
+        { "memberwise", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+        { "for", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+        { "persist", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+
+        ////constraints
+        { "Any", [&](const declaration* decl) { return (is_type_of<constraint_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+    };
 
     intrinsic::intrinsic(const element_type_id id)
         : rtti_type(id)

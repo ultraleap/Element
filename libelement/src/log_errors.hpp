@@ -40,6 +40,8 @@ namespace element
         parse_constraint_nonintrinsic_missing_portlist,
         parse_constraint_has_body,
         parse_constraint_invalid_body,
+        intrinsic_not_implemented,
+        intrinsic_type_mismatch
     };
 
     template <typename... Args>
