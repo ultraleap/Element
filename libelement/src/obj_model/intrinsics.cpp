@@ -25,7 +25,8 @@ namespace element
     {
         return dynamic_cast<const T*>(decl) ? true : false;
     }
-    
+
+    //TODO: This is a horrible, temporary hack. Remove and replace once we start dealing with constraints
     const std::unordered_map<std::string, std::function<std::shared_ptr<const intrinsic>(const declaration*)>> intrinsic::validation_func_map
     {
         //type
