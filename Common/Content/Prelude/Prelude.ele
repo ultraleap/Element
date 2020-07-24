@@ -9,8 +9,6 @@ constraint Ternary(a, b, c);
 constraint Indexer(i:Num);
 constraint Predicate(a):Bool;
 
-intrinsic struct Tuple;
-
 # Calls function by nominative argument matching the functions parameters with the supplied instances fields
 # Typically used with memberwise to cast an untyped variadic return back into a type instance, e.g.
 #   Vector3Add(a, b) = infer(Vector3, memberwise(Num.add, a, b));
@@ -33,10 +31,3 @@ intrinsic memberwise;
 # Thus the types of initial and both the parameter and return of Unary must have compatible interfaces
 # List.fold is recommended as a constant-time alternative when iteration count is known
 intrinsic for(initial, condition:Predicate, body:Unary);
-
-# Keeps a persistent structure around between program invocations
-# WARNING: Usage of this function breaks referential transparency and pure function guarantees
-# Body is a Unary function supplied with the output from the previous body starting with initial
-# Thus the types of initial and both the parameter and return of Unary must have compatible interfaces
-# NOTE: Body is evaluated between calls to the compiled element function, not between separate references to the persist return expression
-# intrinsic persist(initial, body:Unary);
