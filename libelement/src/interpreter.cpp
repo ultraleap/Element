@@ -247,19 +247,24 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 
     //parse only enabled, skip object model generation to avoid error codes with positive values
     //i.e. errors returned other than ELEMENT_ERROR_PARSE
-    if(parse_only)
+    if (parse_only)
+    {
+        element_ast_delete(parser.root);
         return ELEMENT_OK;
+    }
 
-    auto object_model = element::build_root_scope(this, parser.root);
-    element_ast_delete(parser.root);
+    auto object_model = element::build_root_scope(this, parser.root, result);
+    if (result != ELEMENT_OK) {
+        log(result, fmt::format("building object model failed with element_result {}", result), filename);
+    }
 
     result = global_scope->merge(std::move(object_model));
     if (result != ELEMENT_OK) {
-        log(result, std::string("build_root_scope failed with element_result " + std::to_string(result)), filename);
+        log(result, fmt::format("merging object models failed with element_result {}", result), filename);
     }
 #endif
 
-    return ELEMENT_OK;
+    return result;
 }
 
 element_result element_interpreter_ctx::load_file(const std::string& file)

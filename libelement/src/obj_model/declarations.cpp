@@ -105,16 +105,6 @@ namespace element
         std::vector<std::shared_ptr<object>> compiled_args,
         const source_information& source_info) const
     {
-        //todo: could we validate this when creating the object model? then there's less to check during compilation
-        if (!body)
-        {
-            //todo: move to errors.cpp, and change from missing to invalid
-            return std::make_shared<error>(
-                fmt::format("failed at {}. scope bodied functions must contain a return function.\n", typeof_info()),
-                ELEMENT_ERROR_MISSING_FUNCTION_BODY,
-                source_info);
-        }
-
         const auto instance = std::make_shared<function_instance>(this, context.captures, source_info, compiled_args);
         return instance->compile(context, source_info);
     }
