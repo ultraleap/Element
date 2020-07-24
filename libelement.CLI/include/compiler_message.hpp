@@ -30,7 +30,7 @@ namespace libelement::cli
 			message = ss.str();
 		}
 
-		const std::string& get_message() const 
+		[[nodiscard]] const std::string& get_message() const
 		{
 			return message; //$"{What} in {Source}:{Line},{Column}"
 		}
@@ -68,7 +68,7 @@ namespace libelement::cli
 			//TODO: set trace_stack based on expression_cache frame list?
 		}
 
-		message_level get_level() const;
-		std::string serialize() const;
+        [[nodiscard]] message_level get_level() const;
+		[[nodiscard]] std::string serialize() const;
 	};
 }

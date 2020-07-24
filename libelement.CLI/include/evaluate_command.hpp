@@ -13,7 +13,7 @@ namespace libelement::cli
 	{
 		std::string expression;
 
-		std::string as_string() const
+		[[nodiscard]] std::string as_string() const
 		{
 			std::stringstream ss;
 			ss << "evaluate --expression " << expression << " ";
@@ -31,7 +31,7 @@ namespace libelement::cli
 		{
 		}
 
-		compiler_message execute(const compilation_input& compilation_input) const override
+		[[nodiscard]] compiler_message execute(const compilation_input& compilation_input) const override
 		{
 			auto result = setup(compilation_input);
 			if (result != ELEMENT_OK)
@@ -76,7 +76,7 @@ namespace libelement::cli
 			return generate_response(result, output, trace_site);
 		}
 
-		std::string as_string() const override
+		[[nodiscard]] std::string as_string() const override
 		{
 			std::stringstream ss;
 			ss << custom_arguments.as_string() << " " << common_arguments.as_string();

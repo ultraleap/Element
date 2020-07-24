@@ -65,6 +65,7 @@ struct element_metainfo
 
 struct element_interpreter_ctx
 {
+    bool parse_only = false;
     bool prelude_loaded = false;
     std::shared_ptr<element_log_ctx> logger;
     std::shared_ptr<element::source_context> src_context;

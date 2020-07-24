@@ -167,7 +167,7 @@ static element_result merge_names(scope_unique_ptr& a, scope_unique_ptr b, const
 element_result element_interpreter_ctx::load(const char* str, const char* filename)
 {
 	//HACK: JM - Not a fan of this...
-    std::string file = filename;
+    const std::string file = filename;
     const auto starts_with_prelude = file.rfind("Prelude\\", 0) == 0;
 	
     element_tokeniser_ctx* tokeniser;
@@ -187,20 +187,20 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     if (tokeniser->tokens.empty())
         return ELEMENT_OK;
 
-    const int total_lines_parsed = tokeniser->line;
+    const auto total_lines_parsed = tokeniser->line;
 
-    for (int i = 0; i < total_lines_parsed; ++i)
+    for (auto i = 0; i < total_lines_parsed; ++i)
     {
         //lines start at 1
         info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
     }
 
-    char* data = info.file_name->data();
+    auto* const data = info.file_name->data();
     src_context->file_info[data] = std::move(info);
 
-    auto log_tokens = starts_with_prelude
-        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
-        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+    const auto log_tokens = starts_with_prelude
+                                ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
+                                : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
 	
     if (log_tokens) {
 			log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
@@ -214,7 +214,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     auto result = parser.ast_build();
     ELEMENT_OK_OR_RETURN(result)
 
-    auto log_ast = starts_with_prelude
+    const auto log_ast = starts_with_prelude
         ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
         : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
 	
@@ -245,6 +245,11 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     update_scopes(names.get());
 #else
 
+    //parse only enabled, skip object model generation to avoid error codes with positive values
+    //i.e. errors returned other than ELEMENT_ERROR_PARSE
+    if(parse_only)
+        return ELEMENT_OK;
+
     auto object_model = element::build_root_scope(this, parser.root);
     element_ast_delete(parser.root);
 
@@ -274,7 +279,7 @@ element_result element_interpreter_ctx::load_file(const std::string& file)
     f.seekg(0);
     f.read(buffer.data(), buffer.size());
 
-    element_result result = load(buffer.c_str(), file.c_str());
+    const auto result = load(buffer.c_str(), file.c_str());
     if (result != ELEMENT_OK) {
         //std::cout << fmt::format("interpreter failed to parse file {}. element_result = {}\n", 
         //    file, result); //todo: proper logging
@@ -359,7 +364,7 @@ element_result element_interpreter_ctx::load_prelude()
     if (prelude_loaded)
         return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
 
-    element_result result = load_package("Prelude");
+    auto result = load_package("Prelude");
     if (result == ELEMENT_OK) {
         prelude_loaded = true;
         return result;
@@ -437,13 +442,13 @@ element_result element_interpreter_load_file(element_interpreter_ctx* context, c
     return context->load_file(file);
 }
 
-element_result element_interpreter_load_files(element_interpreter_ctx* context, const char** files, int files_count)
+element_result element_interpreter_load_files(element_interpreter_ctx* context, const char** files, const int files_count)
 {
     assert(context);
 
     std::vector<std::string> actual_files;
     actual_files.resize(files_count);
-    for (int i = 0; i < files_count; ++i) {
+    for (auto i = 0; i < files_count; ++i) {
         //std::cout << fmt::format("load_file {}\n", files[i]); //todo: proper logging
         actual_files[i] = files[i];
     }
@@ -458,13 +463,13 @@ element_result element_interpreter_load_package(element_interpreter_ctx* context
     return context->load_package(package);
 }
 
-element_result element_interpreter_load_packages(element_interpreter_ctx* context, const char** packages, int packages_count)
+element_result element_interpreter_load_packages(element_interpreter_ctx* context, const char** packages, const int packages_count)
 {
     assert(context);
 
     std::vector<std::string> actual_packages;
     actual_packages.resize(packages_count);
-    for (int i = 0; i < packages_count; ++i) {
+    for (auto i = 0; i < packages_count; ++i) {
         //std::cout << fmt::format("load_packages {}\n", packages[i]); //todo: proper logging
         actual_packages[i] = packages[i];
     }
@@ -476,6 +481,12 @@ element_result element_interpreter_load_prelude(element_interpreter_ctx* context
 {
     assert(context);
     return context->load_prelude();
+}
+
+void element_interpreter_parse_only_mode(element_interpreter_ctx* context, bool parse_only)
+{
+    assert(context);
+    context->parse_only = parse_only;
 }
 
 void element_interpreter_set_log_callback(element_interpreter_ctx* context, void (*log_callback)(const element_log_message* const))
@@ -795,7 +806,7 @@ element_result element_interpreter_evaluate(
             return ELEMENT_ERROR_UNKNOWN;
         }
 
-        int c = 0;
+        auto c = 0;
 
         for (auto& f : struct_instance->fields)
         {
@@ -868,7 +879,7 @@ element_result element_metainfo_for_evaluable(const element_evaluable* evaluable
     return ELEMENT_OK;
 }
 
-element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size)
+element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, const int buffer_size)
 {
     if (buffer_size < static_cast<int>(metainfo->typeof.size()))
         return ELEMENT_ERROR_UNKNOWN;
