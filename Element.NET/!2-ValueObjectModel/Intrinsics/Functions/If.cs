@@ -12,14 +12,16 @@ namespace Element.AST
         
         public static If Instance { get; } = new If();
         public override Identifier Identifier { get; }
+        public bool IsVariadic => false;
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
             // Make a list out of the true and false options
             List.Instance.Call(arguments.Skip(1).ToArray(), context)
-                         .Cast<StructInstance>(context)
-                         // Get the option lists indexer (field 0)
-                         .Bind(optionListInstance => optionListInstance.Index(ListStruct.IndexerId, context))
-                         // Call the list indexer to get option 0 if true or option 1 if false.
-                         .Bind(optionListIndexer => optionListIndexer.Call(new IValue[] {arguments[0] == Constant.True ? Constant.Zero : Constant.One}, context));
+                .Cast<StructInstance>(context)
+                // Get the option lists indexer (field 0)
+                .Bind(optionListInstance => optionListInstance.Index(ListStruct.IndexerId, context))
+                // Call the list indexer to get option 0 if true or option 1 if false.
+                .Bind(optionListIndexer => arguments[0].FullyResolveValue(context)
+                                                       .Bind(choice => optionListIndexer.Call(new IValue[] {choice == Constant.True ? Constant.Zero : Constant.One}, context)));
     }
 }

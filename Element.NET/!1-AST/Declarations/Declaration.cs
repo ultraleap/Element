@@ -24,7 +24,7 @@ namespace Element.AST
         public Result<IValue> Resolve(IScope scope, CompilationContext compilationContext)
         {
             compilationContext.PushDeclaration(this);
-            var result = Validate(compilationContext).Bind(() => ResolveImpl(scope, compilationContext));
+            var result = Validate(compilationContext).Bind(() => ResolveImpl(scope, compilationContext).Bind(v => v.FullyResolveValue(compilationContext)));
             compilationContext.PopDeclaration();
             return result;
         }

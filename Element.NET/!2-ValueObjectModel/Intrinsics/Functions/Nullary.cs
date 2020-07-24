@@ -25,6 +25,7 @@ namespace Element.AST
         }
 
         public override Identifier Identifier { get; }
+        public bool IsVariadic => false;
         public override Result<IValue> Call(IReadOnlyList<IValue> _, CompilationContext __) =>
             _value switch
             {

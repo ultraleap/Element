@@ -143,7 +143,7 @@ namespace Element
             List<CompilerMessage> messages = new List<CompilerMessage>(enumerable.Messages);
             var previous = foldFunc(initial, inputs[0]);
             messages.AddRange(previous.Messages);
-            foreach (var item in inputs)
+            foreach (var item in inputs.Skip(1))
             {
                 if (!previous.IsSuccess) return new Result<TResult>(messages);
                 previous = foldFunc(previous.ResultOr(default), item);

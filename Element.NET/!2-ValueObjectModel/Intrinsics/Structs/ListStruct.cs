@@ -17,7 +17,7 @@ namespace Element.AST
         public static ListStruct Instance { get; } = new ListStruct();
         public Identifier Identifier { get; }
 
-        public Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, CompilationContext context) => new StructInstance(@struct, arguments);
+        public Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, CompilationContext context) => StructInstance.Create(@struct, arguments, context).Cast<IValue>(context);
         public Result<bool> MatchesConstraint(Struct @struct, IValue value, CompilationContext context) => @struct.IsInstanceOfStruct(value, context);
         public Result<IValue> DefaultValue(CompilationContext context) => List.Instance.Call(Array.Empty<IValue>(), context);
 

@@ -21,6 +21,7 @@ namespace Element.AST
     public interface IIntrinsicFunctionImplementation : IIntrinsicImplementation
     {
         public abstract Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
+        public bool IsVariadic { get; }
     }
     
     public interface IIntrinsicConstraintImplementation : IIntrinsicImplementation

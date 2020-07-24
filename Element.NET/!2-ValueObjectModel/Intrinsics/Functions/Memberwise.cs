@@ -12,6 +12,7 @@ namespace Element.AST
         
         public static Memberwise Instance { get; } = new Memberwise();
         public override Identifier Identifier { get; }
+        public bool IsVariadic => true;
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
         {
             var func = arguments[0];
@@ -28,7 +29,8 @@ namespace Element.AST
 
             return structType.Fields
                              .Select(ApplyFuncToMemberPair)
-                             .MapEnumerable(resultFields => (IValue)new StructInstance(structType, resultFields));
+                             .BindEnumerable(resultFields => StructInstance.Create(structType, resultFields.ToArray(), context)
+                                                                           .Cast<IValue>(context));
         }
     }
 }

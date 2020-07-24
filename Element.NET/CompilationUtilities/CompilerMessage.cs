@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using Tomlyn;
@@ -85,7 +86,8 @@ namespace Element
                                ? level
                                : messageLevel ?? Element.MessageLevel.Information;
             Context = context;
-            TraceStack = traceStack ?? Array.Empty<TraceSite>();
+            TraceStack = traceStack.ToArray() // Force a copy
+                         ?? Array.Empty<TraceSite>();
             _message = null;
         }
         private string? _message;

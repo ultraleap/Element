@@ -12,13 +12,14 @@ namespace Element.AST
 
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
             IntrinsicImplementationCache.Get<IIntrinsicFunctionImplementation>(Identifier, context)
-                          .Accumulate(() => PortList.ResolveInputConstraints(scope, context, true, true),
-                              () => ReturnConstraint.ResolveReturnConstraint(scope, context))
-                          .Map(t =>
-                          {
-                              var (functionImpl, inputPorts, returnConstraint) = t;
-                              return (IValue) new IntrinsicFunction(functionImpl, inputPorts, returnConstraint);
-                          });
+                                        .Bind(impl => PortList.ResolveInputConstraints(scope, context, true, impl.IsVariadic)
+                                                              .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
+                                                              .Map(t => (impl, t.Item1, t.Item2)))
+                                        .Map(t =>
+                                        {
+                                            var (functionImpl, inputPorts, returnConstraint) = t;
+                                            return (IValue)new IntrinsicFunction(functionImpl, inputPorts, returnConstraint);
+                                        });
 
         protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
         {

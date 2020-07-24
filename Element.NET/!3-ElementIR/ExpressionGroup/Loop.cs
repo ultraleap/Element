@@ -1,6 +1,5 @@
 namespace Element
 {
-	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
@@ -15,11 +14,12 @@ namespace Element
 		public Expression Condition { get; }
 		public ReadOnlyCollection<Expression> Body { get; }
 
-		public static Result<Loop> TryCreate(IReadOnlyCollection<Expression> initialValue, ResultConditionFunction conditionFunc, ResultNewValueFunction bodyFunc)
+		public static Result<Loop> TryCreate(IReadOnlyCollection<Expression> initialValues, ResultConditionFunction conditionFunc, ResultNewValueFunction bodyFunc)
 		{
-			var state = initialValue.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
+			var state = initialValues.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
 			Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> EvaluateState() =>
-				bodyFunc(state).Map(bodyExprs => new ReadOnlyCollection<Expression>(bodyExprs.ToArray())).Accumulate(() => conditionFunc(state));
+				bodyFunc(state).Map(bodyExprs => new ReadOnlyCollection<Expression>(bodyExprs.ToArray()))
+				               .Accumulate(() => conditionFunc(state));
 			
 			return EvaluateState()
 				.Bind(e =>
@@ -35,7 +35,7 @@ namespace Element
 					                .FirstOrDefault();
 					if (scope != null)
 					{
-						state = initialValue.Select((v, i) => new State(i, scope.Id + 1, v)).ToList().AsReadOnly();
+						state = initialValues.Select((v, i) => new State(i, scope.Id + 1, v)).ToList().AsReadOnly();
 						return EvaluateState().Map(e1 => new Loop(state, e1.Condition, e1.Body));
 					}
 

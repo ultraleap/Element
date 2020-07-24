@@ -74,7 +74,9 @@ namespace Element.AST
             _expressionBody = expressionBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent), context);
+            _expressionBody.Expression.ResolveExpression(arguments.Count > 0
+                                                             ? new ResolvedBlock(MakeNamedArgumentList(arguments), _parent)
+                                                             : _parent, context);
     }
     
     public class ScopeBodiedFunction : CustomFunction

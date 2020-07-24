@@ -35,14 +35,16 @@ namespace Element.AST
                 })
             .Bind(previous =>
             {
-                var fullyResolved = previous.FullyResolveValue(compilationContext);
+                Result<IValue> FullyResolveValue(IValue v) => v.FullyResolveValue(compilationContext);
+                
+                var fullyResolved = FullyResolveValue(previous);
                 // Evaluate all expressions for this chain if there are any
                 return Expressions?.Aggregate(fullyResolved, ResolveSubExpression)
-                                  .Bind(result => result.FullyResolveValue(compilationContext)) // Make sure to fully resolve the result of the chain
+                                  .Bind(FullyResolveValue) // Make sure to fully resolve the result of the chain
                        ?? fullyResolved; // If there's no subexpressions just return what we found
 
                 Result<IValue> ResolveSubExpression(Result<IValue> current, SubExpression subExpr) =>
-                    current.Bind(v => v.FullyResolveValue(compilationContext))
+                    current.Bind(FullyResolveValue)
                            .Bind(fullyResolvedSubExpr => subExpr.ResolveSubExpression(fullyResolvedSubExpr, parentScope, compilationContext));
             });
 
@@ -50,7 +52,7 @@ namespace Element.AST
         {
             public Result<IValue> ResolveSubExpression(IValue previous, IScope parentScope, CompilationContext compilationContext)
             {
-                compilationContext.PushTrace(this.MakeTraceSite($"    while resolving {GetType().Name} '{ToString()}'"));
+                compilationContext.PushTrace(this.MakeTraceSite($"while resolving {GetType().Name} '{ToString()}'"));
                 var result = SubExpressionImpl(previous, parentScope, compilationContext);
                 compilationContext.PopTrace();
                 return result;

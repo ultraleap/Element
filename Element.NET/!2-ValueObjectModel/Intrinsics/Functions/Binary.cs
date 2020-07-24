@@ -28,5 +28,6 @@ namespace Element.AST
         public Element.Binary.Op Operation { get; }
         public override Identifier Identifier { get; }
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => new Element.Binary(Operation, (Element.Expression) arguments[0], (Element.Expression) arguments[1]);
+        public bool IsVariadic => false;
     }
 }

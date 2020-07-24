@@ -84,7 +84,10 @@ namespace Element.CLR
         public Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext context) =>
             context.SourceContext.EvaluateExpression(_elementTypeExpression)
                    .Cast<Struct>(context)
-                   .Map(structDeclaration => (IValue)new StructInstance(structDeclaration, _elementToClrFieldMapping.Select(pair => new FieldExpression(root, parameter, pair.Value))));
+                   .Bind(structDeclaration => StructInstance.Create(structDeclaration, _elementToClrFieldMapping
+                                                                                       .Select(pair => new FieldExpression(root, parameter, pair.Value))
+                                                                                       .ToArray(), context)
+                                                            .Cast<IValue>(context));
 
         private class FieldExpression : Expression, ICLRExpression
         {

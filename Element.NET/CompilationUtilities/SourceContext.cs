@@ -5,6 +5,9 @@ using Element.AST;
 
 namespace Element
 {
+    /// <summary>
+    /// Represents a bundle of loaded source files.
+    /// </summary>
     public class SourceContext : TraceBase
     {
         private SourceContext(CompilationInput compilationInput)

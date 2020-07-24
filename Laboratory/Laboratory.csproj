@@ -32,14 +32,6 @@
     <Content Include="Alchemist.runsettings">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Update="Tests\L2-Semantics\TypeOf.ele">
-      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Tests\L2-Semantics\Serialization.ele">
-      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   
   <ItemGroup>

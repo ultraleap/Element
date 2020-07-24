@@ -32,7 +32,6 @@ namespace Element.AST
                     return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
                 }
 
-                // TODO: Disallow variadics as A
                 if (a.InputPorts.Contains(ResolvedPort.VariadicPort))
                 {
                     return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");

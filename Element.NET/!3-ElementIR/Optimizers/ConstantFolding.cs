@@ -109,13 +109,6 @@ namespace Element
 				case ExpressionGroupElement e1:
 					switch (e1.Group)
 					{
-						// TODO: Merge these
-						/*case Persist p:
-							if (p.NewValue[e1.Index].AllDependent.All(v => (v as State)?.Scope != p.State[0].Scope))
-							{
-								return p.NewValue[e1.Index];
-							}
-							break;*/
 						case Loop l:
 							if (l.Body[e1.Index].AllDependent.All(v => (v as State)?.Scope != l.State[0].Scope))
 							{
@@ -134,8 +127,6 @@ namespace Element
 			{
 				// TODO: Cut out state values that aren't used
 				// TODO: Nested scopes properly
-				/*Persist p => new Persist(p.State.Select(s => Optimize(s.InitialValue, cache)),
-				                         _ => p.NewValue.Select(e => Optimize(e, cache))),*/
 				Loop l => Loop.Create(l.State.Select(s => FoldConstants(s.InitialValue, cache)),
 				                   _ => FoldConstants(l.Condition, cache),
 				                   _ => l.Body.Select(e => FoldConstants(e, cache))),

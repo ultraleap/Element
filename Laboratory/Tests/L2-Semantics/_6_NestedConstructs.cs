@@ -2,9 +2,9 @@ using NUnit.Framework;
 
 namespace Laboratory.Tests.L2.Semantics
 {
-    internal class NestedConstructs : SemanticsFixture
+    internal class _6_NestedConstructs : SemanticsFixture
     {
-        public NestedConstructs() : base("NestedConstructs") { }
+        public _6_NestedConstructs() : base("_6_NestedConstructs") { }
 
         [Test]
         public void AddUsingLocal() => AssertApproxEqual(CompilationInput, "12", "addUsingLocal(6, 6)");
@@ -22,7 +22,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void AddUsingLocalWithShadowing() => AssertApproxEqual(CompilationInput, "12", "addUsingLocalWithShadowing(6, 6)");
 
         [Test]
-        public void LocalStructInstance() => AssertTypeof(CompilationInput, "returnLocalStructInstance(5)", "Instance:returnLocalStructInstance.Vector2:Struct");
+        public void LocalStructInstance() => AssertTypeof(CompilationInput, "returnLocalStructInstance(5)", "Vector2");
 
         [Test]
         public void LocalStructInstanceFunction() => AssertApproxEqual(CompilationInput, "15", "returnLocalStructInstance(5).add(10).x");
@@ -40,6 +40,6 @@ namespace Laboratory.Tests.L2.Semantics
         public void AddUsingDeepNestedCaptureWithLambda() => AssertApproxEqual(CompilationInput, "13", "addUsingDeepNestedCaptureWithLambda(5, 8)");
         
         [Test]
-        public void NestedNamespacesInStructBody() => AssertTypeof(CompilationInput, "rootStruct.nestedNamespace", "rootStruct.nestedNamespace:Namespace");
+        public void NestedNamespacesInStructBody() => AssertTypeof(CompilationInput, "rootStruct.nestedNamespace", "Namespace");
     }
 }

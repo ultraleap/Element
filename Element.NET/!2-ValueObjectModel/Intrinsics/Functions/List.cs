@@ -13,6 +13,7 @@ namespace Element.AST
 		
 		public static List Instance { get; } = new List();
 		public override Identifier Identifier { get; }
+		public bool IsVariadic => true;
 
 		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
 			context.SourceContext.GlobalScope.Lookup(ListStruct.Instance.Identifier, context)

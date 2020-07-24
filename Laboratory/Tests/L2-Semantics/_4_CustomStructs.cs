@@ -34,12 +34,12 @@ namespace Laboratory.Tests.L2.Semantics
         public void FunctionAsMember() => AssertTypeof(CompilationInput, "MyStruct(pickSecond).a", "ExpressionBodiedFunction");
         
         [
-            TestCase("Num.cos(0).degrees", "90"),
+            TestCase("Num.acos(0).degrees", "90"),
         ]
         public void ResolvesCorrectLiteralAfterIndexingIntrinsicFunction(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
         
         [Test]
-        public void ConstrainedMembers() => AssertTypeof(CompilationInput, "Vector3(5, 10, 15)", "Instance:Vector3:Struct");
+        public void ConstrainedMembers() => AssertTypeof(CompilationInput, "Vector3(5, 10, 15)", "Vector3");
 
         [
             TestCase("Vector3(1)"),

@@ -11,6 +11,7 @@ namespace Element.AST
 		
 		public static Fold Instance { get; } = new Fold();
 		public override Identifier Identifier { get; }
+		public bool IsVariadic => false;
 		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
 		{
 			var list = (StructInstance) arguments[0];

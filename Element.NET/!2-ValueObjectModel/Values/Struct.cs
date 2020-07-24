@@ -61,11 +61,12 @@ namespace Element.AST
         public CustomStruct(Identifier identifier, IReadOnlyList<ResolvedPort> fields, ResolvedBlock? associatedBlock, IScope parent)
             : base(identifier, fields, associatedBlock, parent) { }
 
-        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => new StructInstance(this, arguments);
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => StructInstance.Create(this, arguments, context).Cast<IValue>(context);
         public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => IsInstanceOfStruct(value, context);
         public override Result<IValue> DefaultValue(CompilationContext context) =>
             Fields.Select(field => field.DefaultValue(context))
-                  .MapEnumerable(defaults => (IValue)new StructInstance(this, defaults.ToArray()));
+                  .BindEnumerable(defaults => StructInstance.Create(this, defaults.ToArray(), context)
+                                                            .Cast<IValue>(context));
     }
     
     public sealed class StructInstance : Value
@@ -73,8 +74,12 @@ namespace Element.AST
         public Struct DeclaringStruct { get; }
 
         private readonly ResolvedBlock _resolvedBlock;
+
+        public static Result<StructInstance> Create(Struct declaringStruct, IReadOnlyList<IValue> fieldValues, CompilationContext context) =>
+            declaringStruct.VerifyArgumentsAndApplyFunction(fieldValues, () => new StructInstance(declaringStruct, fieldValues), context)
+                           .Cast<StructInstance>(context);
         
-        public StructInstance(Struct declaringStruct, IEnumerable<IValue> fieldValues)
+        private StructInstance(Struct declaringStruct, IEnumerable<IValue> fieldValues)
         {
             DeclaringStruct = declaringStruct;
             _resolvedBlock = new ResolvedBlock(declaringStruct.Fields.Zip(fieldValues, (port, value) => (port.Identifier!.Value, value)).ToArray(), null);
