@@ -113,6 +113,11 @@ namespace element
         build_inputs(context, decl, *constraint_decl);
         build_output(context, decl, *constraint_decl);
 
+        if (intrinsic)
+        {
+            intrinsic::register_intrinsic<struct_declaration>(context, ast, *constraint_decl);
+        }
+
         return std::move(constraint_decl);
     }
 
