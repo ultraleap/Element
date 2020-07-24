@@ -71,6 +71,8 @@ struct element_interpreter_ctx
     std::shared_ptr<element::source_context> src_context;
     std::unique_ptr<element::scope> global_scope;
 
+    mutable std::unordered_map<const element::declaration*, const std::shared_ptr<const element::intrinsic>> intrinsic_map;
+
     element_interpreter_ctx();
 
     element_result load(const char* str, const char* filename = "<input>");
