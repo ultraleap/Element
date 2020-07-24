@@ -756,6 +756,10 @@ element_result element_interpreter_compile(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
+    const auto err = std::dynamic_pointer_cast<element::error>(compiled);
+    if (err)
+        return err->log_once(context->logger.get());
+
     *evaluable = new element_evaluable{ std::move(compiled) };
 
     return ELEMENT_OK;
@@ -781,10 +785,7 @@ element_result element_interpreter_evaluate(
 
     const auto err = std::dynamic_pointer_cast<element::error>(evaluable->evaluable);
     if (err)
-    {
-        context->logger->log(err->get_log_message());
-        return err->get_result();
-    }
+        return err->log_once(context->logger.get());
 
     auto expr = std::dynamic_pointer_cast<element_expression>(evaluable->evaluable);
     if (!expr)

@@ -25,7 +25,10 @@ namespace element
         instance_function_cannot_be_nullary,
         is_not_an_instance_function,
         argument_count_mismatch,
-        failed_to_find
+        failed_to_find,
+        intrinsic_not_implemented,
+        not_enough_arguments,
+        too_many_arguments,
     };
 
     template <typename... Args>
@@ -45,7 +48,7 @@ namespace element
 
         static std::shared_ptr<error> build_error(error_message_code code, const source_information& source_info, Args... args)
         {
-            auto it = func_map.find(code);
+            const auto it = func_map.find(code);
             if (it == func_map.end())
             {
                 //todo: not valid so do something better
@@ -73,7 +76,7 @@ namespace element
 
         static std::shared_ptr<error> build_error(error_message_code code, const source_information& source_info)
         {
-            auto it = func_map.find(code);
+            const auto it = func_map.find(code);
             if (it == func_map.end())
             {
                 //todo: not valid so do something better
@@ -103,6 +106,14 @@ namespace element
         std::shared_ptr<error> build_error(const source_information& source_info, error_message_code code, Args... args)
     {
         return error_map<Args...>::build_error(code, source_info, args...);
+    }
+
+    template <typename... Args>
+    std::shared_ptr<error> build_error_and_log(element_log_ctx* logger, Args&&... args)
+    {
+        auto error = build_error(args...);
+        error->log_once(logger);
+        return error;
     }
 
     namespace detail

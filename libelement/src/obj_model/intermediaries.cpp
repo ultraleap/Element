@@ -70,19 +70,16 @@ namespace element
     {
         compiled_args.insert(std::begin(compiled_args), std::begin(provided_arguments), std::end(provided_arguments));
 
-        //todo: error for assert, can't have more provided than declaration allows
-        assert(compiled_args.size() <= declarer->inputs.size());
+        //element doesn't allow partial application generally
+        //todo: more helpful information than the number of arguments expected
+        if (compiled_args.size() < declarer->inputs.size())
+            return build_error_and_log(context.interpreter->logger.get(), source_info, error_message_code::not_enough_arguments,
+                declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
-        if (compiled_args.size() != declarer->inputs.size())
-        {
-            if (compiled_args.size() <= 1)
-                return const_cast<function_instance*>(this)->shared_from_this();
-
-            //element doesn't allow applying arbitrary arguments, only parent partial application
-            //internal compiler error? shouldn't be possible to get here
-            assert(false);
-            return nullptr;
-        }
+        //todo: more helpful information than the number of arguments expected
+        if (compiled_args.size() > declarer->inputs.size())
+            return build_error_and_log(context.interpreter->logger.get(), source_info, error_message_code::too_many_arguments,
+                declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
         if (context.calls.is_recursive(declarer))
             return context.calls.build_recursive_error(declarer, context, source_info);
@@ -101,6 +98,9 @@ namespace element
 
     std::shared_ptr<object> function_instance::compile(const compilation_context& context, const source_information& source_info) const
     {
-        return call(context, {}, source_info);
+        if (provided_arguments.size() == declarer->inputs.size())
+            return call(context, {}, source_info);
+
+        return const_cast<function_instance*>(this)->shared_from_this();
     }
 }

@@ -155,9 +155,12 @@ namespace element
         [[nodiscard]] const std::string& get_message() const;
         [[nodiscard]] element_log_message get_log_message() const;
 
+        element_result log_once(const element_log_ctx* logger);
+
     private:
         std::string message;
         element_result code = ELEMENT_ERROR_UNKNOWN;
+        bool logged = false;
     };
 
     bool valid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);

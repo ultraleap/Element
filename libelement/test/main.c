@@ -282,6 +282,16 @@ element_result test_failing_evals()
     if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
         return result;
 
+    //should log two errors, though we'll only be told the error code for one of them in our API
+    result = eval("evaluate = Num.add(1).add(Num.add(1, 2, 3));");
+    if (result != ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH)
+        return result;
+
+    //todo: better error message
+    result = eval("evaluate = 5.add.add(1);");
+    if (result != ELEMENT_ERROR_UNKNOWN)
+        return result;
+
     printf("#######Failed successfully#######\n");
     return ELEMENT_OK;
 }

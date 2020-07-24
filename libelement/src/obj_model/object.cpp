@@ -58,6 +58,17 @@ namespace element
         return msg;
     }
 
+    element_result error::log_once(const element_log_ctx* logger)
+    {
+        if (!logged)
+        {
+            logged = true;
+            logger->log(get_log_message());
+        }
+
+        return code;
+    }
+
     bool valid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
     {
         if (compiled_args.size() != declarer->inputs.size())
