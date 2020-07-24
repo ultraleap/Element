@@ -28,7 +28,7 @@ namespace libelement::cli
 		{
 		}
 
-		compiler_message execute(const compilation_input& compilation_input) const override
+		[[nodiscard]] compiler_message execute(const compilation_input& compilation_input) const override
 		{
 			element_result result = ELEMENT_OK;
 			result = setup(compilation_input);
@@ -55,7 +55,7 @@ namespace libelement::cli
 			const auto evaluate = "evaluate = " + custom_arguments.expression + ";";
 			result = element_interpreter_load_string(context, evaluate.c_str(), "<input>");
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
+                auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
 					type = static_cast<message_type>(result);
 				return compiler_message(type, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
@@ -64,7 +64,7 @@ namespace libelement::cli
 			element_compilable* compilable;
 			result = element_interpreter_find(context, "evaluate", &compilable);
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
+				auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
 					type = static_cast<message_type>(result);
 				return compiler_message(type, "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
@@ -73,7 +73,7 @@ namespace libelement::cli
 			element_evaluable* evaluable;
 			result = element_interpreter_compile(context, nullptr, compilable, &evaluable);
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
+				auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
 					type = static_cast<message_type>(result);
 				return compiler_message(type, "Failed to compile: " + evaluate + " with element_result " + std::to_string(result));
@@ -82,7 +82,7 @@ namespace libelement::cli
 			element_metainfo* metainfo;
 			result = element_metainfo_for_evaluable(evaluable, &metainfo);
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
+				auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
 					type = static_cast<message_type>(result);
 				return compiler_message(type, "Failed to get metainfo for: " + evaluate + " with element_result " + std::to_string(result));
@@ -90,7 +90,7 @@ namespace libelement::cli
 
 			result = element_metainfo_for_evaluable(evaluable, &metainfo);
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
+				auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
 					type = static_cast<message_type>(result);
 				return compiler_message(type, "Failed to get metainfo for: " + evaluate + " with element_result " + std::to_string(result));
@@ -98,7 +98,7 @@ namespace libelement::cli
 
 			result = element_metainfo_get_typeof(metainfo, internaltypeof_string.data(), internaltypeof_string.size());
 			if (result != ELEMENT_OK) {
-				message_type type = ELEMENT_ERROR_UNKNOWN;
+				auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
 					type = static_cast<message_type>(result);
 				return compiler_message(type, "Failed to get typeof for: " + evaluate + " with element_result " + std::to_string(result));
@@ -107,7 +107,7 @@ namespace libelement::cli
 			return generate_response(result, internaltypeof_string);
 		}
 
-		std::string as_string() const override
+		[[nodiscard]] std::string as_string() const override
 		{
 			std::stringstream ss;
 			ss << custom_arguments.as_string() << " " << common_arguments.as_string();

@@ -9,7 +9,7 @@ namespace libelement::cli
 	{
 		bool no_validation;
 
-		std::string as_string() const
+		[[nodiscard]] std::string as_string() const
 		{
 			std::stringstream ss;
 			ss << "parse ";
@@ -29,15 +29,16 @@ namespace libelement::cli
 		parse_command(common_command_arguments common_arguments, parse_command_arguments custom_arguments)
 			: command(std::move(common_arguments)), custom_arguments{ std::move(custom_arguments) }
 		{
+			element_interpreter_parse_only_mode(context, custom_arguments.no_validation);
 		}
 
-		compiler_message execute(const compilation_input& compilation_input) const override
+		[[nodiscard]] compiler_message execute(const compilation_input& compilation_input) const override
 		{
-			auto result = setup(compilation_input);
+            const auto result = setup(compilation_input);
 			if (result != ELEMENT_OK)
 			{
 				//todo: the test runner expects at least one PARSE_ERROR
-				auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "failed when parsing");
+                const auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "failed when parsing");
 				std::cout << parse_error.serialize() << std::endl;
 				//expects the last thing to be True/False (not json)
 				return compiler_message("False");
@@ -46,7 +47,7 @@ namespace libelement::cli
 			return compiler_message("True");
 		}
 
-		std::string as_string() const override
+        [[nodiscard]] std::string as_string() const override
 		{
 			std::stringstream ss;
 			ss << custom_arguments.as_string() << " " << common_arguments.as_string();
@@ -57,7 +58,7 @@ namespace libelement::cli
 		{
 			const auto arguments = std::make_shared<parse_command_arguments>();
 
-			const auto command = app.add_subcommand("parse")->fallthrough();
+            auto* const command = app.add_subcommand("parse")->fallthrough();
 			command->add_flag("--no-validation", arguments->no_validation, "Expression to evaluate.");
 
 			command->callback([callback, common_arguments, arguments]() { callback(parse_command(*common_arguments, *arguments)); });
