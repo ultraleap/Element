@@ -63,5 +63,21 @@ bool element::detail::register_errors()
         "attempted to construct an instance of '{}' which requires the parameters '{}', but the parameters of type '{}' were used instead.",
         ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH);
 
+    //expand on this
+    element::register_error<>(
+        error_message_code::intrinsic_not_implemented,
+        "intrinsic not implemented.",
+        ELEMENT_ERROR_INTRINSIC_NOT_IMPLEMENTED);
+
+    element::register_error<std::string, size_t, size_t>(
+        error_message_code::not_enough_arguments,
+        "the call to '{0}' does not contain enough arguments.\nnote: '{0}' was called with {1} arguments, when {2} arguments were expected.",
+        ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH);
+
+    element::register_error<std::string, size_t, size_t>(
+        error_message_code::too_many_arguments,
+        "the call to '{0}' contains too many arguments.\nnote: '{0}' was called with {1} arguments, when {2} arguments were expected.",
+        ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH);
+
     return registered_errors;
 }

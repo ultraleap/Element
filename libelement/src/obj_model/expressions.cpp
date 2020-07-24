@@ -41,6 +41,10 @@ namespace element
             current = expression->resolve(context, previous)->compile(context, source_info);
         }
 
+        auto* err = dynamic_cast<error*>(current.get());
+        if (err)
+            err->log_once(context.interpreter->logger.get());
+
         return current;
     }
 
@@ -151,7 +155,7 @@ namespace element
 
         //todo: build error, but in theory this shouldn't happen
         assert(false);
-        return nullptr;
+        return obj->call(context, {}, source_info);
     }
 
     lambda_expression::lambda_expression(const expression_chain* parent)
