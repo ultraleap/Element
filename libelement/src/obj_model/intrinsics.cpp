@@ -134,7 +134,7 @@ namespace element
         assert(declarer.inputs.size() == 1);
         assert(frame.compiled_arguments.size() == 1);
 
-        const auto intrinsic = get_intrinsic(declarer);
+        const auto intrinsic = get_intrinsic(context.interpreter, declarer);
         assert(intrinsic);
         assert(intrinsic.get() == this);
 
@@ -164,7 +164,7 @@ namespace element
         assert(declarer.inputs.size() == 2);
         assert(frame.compiled_arguments.size() == 2);
 
-        const auto intrinsic = get_intrinsic(declarer);
+        const auto intrinsic = get_intrinsic(context.interpreter, declarer);
         assert(intrinsic);
         assert(intrinsic.get() == this);
         
@@ -192,7 +192,7 @@ namespace element
         assert(declarer.inputs.size() == 3);
         assert(frame.compiled_arguments.size() == 3);
 
-        const auto intrinsic = get_intrinsic(declarer);
+        const auto intrinsic = get_intrinsic(context.interpreter, declarer);
         assert(intrinsic);
         assert(intrinsic.get() == this);
 
@@ -250,8 +250,8 @@ namespace element
         auto& true_decl = *context.get_global_scope()->find(identifier("True"), false);
         auto& false_decl = *context.get_global_scope()->find(identifier("False"), false);
 
-        const auto true_expr = get_intrinsic(true_decl)->compile(context, source_info);
-        const auto false_expr = get_intrinsic(false_decl)->compile(context, source_info);
+        const auto true_expr = get_intrinsic(context.interpreter, true_decl)->compile(context, source_info);
+        const auto false_expr = get_intrinsic(context.interpreter, false_decl)->compile(context, source_info);
 
         auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
         

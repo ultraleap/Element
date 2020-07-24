@@ -157,7 +157,7 @@ namespace element
         {
             assert(intrinsic);
             if (intrinsic::register_intrinsic<function_declaration>(context, ast, *function_decl))
-                function_decl->body = intrinsic::get_intrinsic(*function_decl);
+                function_decl->body = intrinsic::get_intrinsic(context, *function_decl);
         }
         else
         {

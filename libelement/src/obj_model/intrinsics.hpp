@@ -56,20 +56,18 @@ namespace element
                 return false;
             }
 
-            intrinsic_map.insert(std::unordered_map<const element::declaration*, const std::shared_ptr<const element::intrinsic>>::value_type { &declaration, std::move(intrinsic) });
+            context->intrinsic_map.insert(std::unordered_map<const element::declaration*, const std::shared_ptr<const element::intrinsic>>::value_type { &declaration, std::move(intrinsic) });
             return true;
         }
 
-        static std::shared_ptr<const intrinsic> get_intrinsic(const declaration& declaration)
+        static std::shared_ptr<const intrinsic> get_intrinsic(const element_interpreter_ctx* context, const declaration& declaration)
         {
-            const auto it = intrinsic_map.find(&declaration);
-            if (it != intrinsic_map.end())
+            const auto it = context->intrinsic_map.find(&declaration);
+            if (it != context->intrinsic_map.end())
                 return it->second;
 
             return nullptr;
         }
-
-        static inline std::unordered_map<const declaration*, const std::shared_ptr<const intrinsic>> intrinsic_map;
 
     private:
         const static std::unordered_map<std::string, std::function<std::shared_ptr<const intrinsic>(const declaration*)>> validation_func_map;

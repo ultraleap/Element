@@ -69,7 +69,7 @@ namespace element
         //this function handles construction of an intrinsic struct instance (get_intrinsic(...)->call(...)) or a user struct instance (make_shared<struct_instance>(...))
         if (is_intrinsic()) 
         {
-            const auto intrinsic = intrinsic::get_intrinsic(*this);
+            const auto intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
             if (intrinsic) 
                 return intrinsic->call(context, compiled_args, source_info);
 
