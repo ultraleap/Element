@@ -68,6 +68,7 @@ namespace element
         explicit compilation_context(const scope* scope, element_interpreter_ctx* interpreter);
 
         [[nodiscard]] const scope* get_global_scope() const { return global_scope; }
+        [[nodiscard]] const element_log_ctx* get_logger() const;
 
         mutable call_stack calls;
         mutable capture_stack captures;
