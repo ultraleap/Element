@@ -73,12 +73,12 @@ namespace element
         //element doesn't allow partial application generally
         //todo: more helpful information than the number of arguments expected
         if (compiled_args.size() < declarer->inputs.size())
-            return build_error_and_log(context.interpreter->logger.get(), source_info, error_message_code::not_enough_arguments,
+            return build_error_and_log(context, source_info, error_message_code::not_enough_arguments,
                 declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
         //todo: more helpful information than the number of arguments expected
         if (compiled_args.size() > declarer->inputs.size())
-            return build_error_and_log(context.interpreter->logger.get(), source_info, error_message_code::too_many_arguments,
+            return build_error_and_log(context, source_info, error_message_code::too_many_arguments,
                 declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
         if (context.calls.is_recursive(declarer))

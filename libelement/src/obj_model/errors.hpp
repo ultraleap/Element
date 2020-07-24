@@ -109,10 +109,10 @@ namespace element
     }
 
     template <typename... Args>
-    std::shared_ptr<error> build_error_and_log(element_log_ctx* logger, Args&&... args)
+    std::shared_ptr<error> build_error_and_log(const compilation_context& context, Args&&... args)
     {
         auto error = build_error(args...);
-        error->log_once(logger);
+        error->log_once(context.get_logger());
         return error;
     }
 

@@ -80,7 +80,7 @@ namespace element
         auto element = context.captures.find(parent->declarer->our_scope.get(), name);
         if (element) return element;
 
-        return build_error(source_info, error_message_code::failed_to_find_when_resolving_identifier_expr, name.value);
+        return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_identifier_expr, name.value);
     }
 
     literal_expression::literal_expression(element_value value, const expression_chain* parent)
@@ -128,7 +128,7 @@ namespace element
         auto element = obj->index(context, name, source_info);
         if (element) return element;
 
-        return build_error(source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, obj->typeof_info());
+        return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, obj->typeof_info());
     }
 
     call_expression::call_expression(const expression_chain* parent)

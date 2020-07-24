@@ -18,19 +18,24 @@ namespace element
 
     }
 
-    std::shared_ptr<object> object::index(const compilation_context&, const identifier&, const source_information& source_info) const
+    const element_log_ctx* compilation_context::get_logger() const
     {
-        return build_error(source_info, error_message_code::not_indexable, typeof_info());
+        return interpreter->logger.get();
     }
 
-    std::shared_ptr<object> object::call(const compilation_context&, std::vector<std::shared_ptr<object>>, const source_information& source_info) const
+    std::shared_ptr<object> object::index(const compilation_context& context, const identifier&, const source_information& source_info) const
     {
-        return build_error(source_info, error_message_code::not_callable, typeof_info());
+        return build_error_and_log(context, source_info, error_message_code::not_indexable, typeof_info());
     }
 
-    std::shared_ptr<object> object::compile(const compilation_context&, const source_information& source_info) const
+    std::shared_ptr<object> object::call(const compilation_context& context, std::vector<std::shared_ptr<object>>, const source_information& source_info) const
     {
-        return build_error(source_info, error_message_code::not_compilable, typeof_info());
+        return build_error_and_log(context, source_info, error_message_code::not_callable, typeof_info());
+    }
+
+    std::shared_ptr<object> object::compile(const compilation_context& context, const source_information& source_info) const
+    {
+        return build_error_and_log(context, source_info, error_message_code::not_compilable, typeof_info());
     }
 
     element_result error::get_result() const
@@ -133,15 +138,15 @@ namespace element
             return nullptr;
 
         if (!has_inputs)
-            return build_error(source_info, error_message_code::instance_function_cannot_be_nullary,
+            return build_error_and_log(context, source_info, error_message_code::instance_function_cannot_be_nullary,
                 func->typeof_info(), instance->typeof_info());
 
         if (!has_type)
-            return build_error(source_info, error_message_code::is_not_an_instance_function,
+            return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
                 func->typeof_info(), instance->typeof_info(), func->inputs[0].name.value);
 
         if (!types_match)
-            return build_error(source_info, error_message_code::is_not_an_instance_function,
+            return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
                 func->typeof_info(), instance->typeof_info(),
                 func->inputs[0].name.value, func->inputs[0].annotation->name.value, type->name.value);
 
@@ -208,7 +213,7 @@ namespace element
                 trace += "\n";
         }
 
-        return build_error(source_info, error_message_code::recursion_detected, decl->typeof_info(), trace);
+        return build_error_and_log(context, source_info, error_message_code::recursion_detected, decl->typeof_info(), trace);
     }
 
     capture_stack::capture_stack(
