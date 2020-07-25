@@ -561,9 +561,6 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
 
         case LMNT_OP_MODSS:
         {
-            // call to C
-            // | extern2 fmodf,  0,  0,  0
-            // manual SSE2 version
             bool arg1hasreg = acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
             bool arg2hasreg = acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
             if (arg1hasreg) {
@@ -604,12 +601,6 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         }
         case LMNT_OP_MODVV:
         {
-            // call to C
-            // | extern2 fmodf, 0, 0, 0
-            // | extern2 fmodf, 1, 1, 1
-            // | extern2 fmodf, 2, 2, 2
-            // | extern2 fmodf, 3, 3, 3
-            // manual SSE2 version
             bool arg1hasreg = acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
             bool arg2hasreg = acquireVectorRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
             if (arg1hasreg) {
