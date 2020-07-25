@@ -203,13 +203,13 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // }
     #endif
 
-    unsigned int npc = 0;
+    unsigned int num_pc_labels = 0;
     // Make PC label space for any branch instructions
     for (size_t i = 0; i < state->in_count; ++i) {
-        npc += LMNT_IS_BRANCH_OP(state->instructions[i].opcode);
+        num_pc_labels += LMNT_IS_BRANCH_OP(state->instructions[i].opcode);
     }
 
-    lmnt_loffset branch_targets[32]; // TODO: dynamically allocate to match npc
+    lmnt_loffset branch_targets[32]; // TODO: dynamically allocate to match num_pc_labels
     unsigned int cur_branch = 0;
     for (size_t i = 0; i < state->in_count; ++i) {
         if (LMNT_IS_BRANCH_OP(state->instructions[i].opcode)) {
@@ -218,13 +218,13 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     }
     cur_branch = 0;
 
-    lmnt_loffset next_target = getNextBranchTarget(branch_targets, npc, UINT32_MAX);
+    lmnt_loffset next_target = getNextBranchTarget(branch_targets, num_pc_labels, UINT32_MAX);
 
     dasm_init(&state->dasm_state, DASM_MAXSECTION);
     void* labels[lbl__MAX];
     dasm_setupglobal(&state->dasm_state, labels, lbl__MAX);
     dasm_setup(&state->dasm_state, lmnt_actions);
-    dasm_growpc(&state->dasm_state, npc);
+    dasm_growpc(&state->dasm_state, num_pc_labels);
 
     dasm_State** Dst = &state->dasm_state;
     | .rodata
@@ -258,12 +258,12 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             // if we may have just jumped here, our cache status is unknown, so nuke everything
             platformWriteAndEvictAll(state);
             // find which label(s) we're meant to be
-            for (size_t t = 0; t < npc; ++t) {
+            for (size_t t = 0; t < num_pc_labels; ++t) {
                 if (state->cur_in == branch_targets[t]) {
                     | =>t:
                 }
             }
-            next_target = getNextBranchTarget(branch_targets, npc, next_target);
+            next_target = getNextBranchTarget(branch_targets, num_pc_labels, next_target);
         }
         // encode instruction
         switch (in.opcode) {
