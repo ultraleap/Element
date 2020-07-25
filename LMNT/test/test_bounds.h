@@ -672,7 +672,7 @@ static void test_maxvs(void)
 
 
 
-MAKE_REGISTER_SUITE_FUNCTION(util,
+MAKE_REGISTER_SUITE_FUNCTION(bounds,
     CUNIT_CI_TEST(test_abss),
     CUNIT_CI_TEST(test_absv),
     CUNIT_CI_TEST(test_floors),

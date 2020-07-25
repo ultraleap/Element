@@ -1,5 +1,5 @@
-#ifndef LMNT_OPS_UTIL_H
-#define LMNT_OPS_UTIL_H
+#ifndef LMNT_OPS_BOUNDS_H
+#define LMNT_OPS_BOUNDS_H
 
 #include "lmnt/common.h"
 #include "lmnt/opcodes.h"
