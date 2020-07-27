@@ -50,7 +50,11 @@ namespace element
         internal_compiler_error,
         missing_declaration_scope,
         expression_chain_cannot_be_empty,
-        invalid_function_declaration
+        invalid_function_declaration,
+        invalid_call_expression_placement,
+        invalid_literal_expression_placement,
+        empty_expression
+
     };
 
     template <typename... Args>

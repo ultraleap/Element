@@ -242,9 +242,8 @@ namespace element
         const auto is_empty = chain->expressions.empty();
         if (!is_empty)
         {
-            //todo: log error
-            //somehow a literal was not the first thing in the chain
-            output_result = ELEMENT_ERROR_UNKNOWN;
+            log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_literal_expression_placement);
+            output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
             return;
         }
 
@@ -274,17 +273,15 @@ namespace element
         const auto is_empty = chain->expressions.empty();
         if (is_empty)
         {
-            //todo: log error
-           //found a call expression_chain at the start of a chain
-            output_result = ELEMENT_ERROR_UNKNOWN;
+            log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_call_expression_placement);
+            output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
             return;
         }
 
         if (ast->children.empty())
         {
-            //todo: log error
-            //found a call expression_chain with no children (arguments)
-            output_result = ELEMENT_ERROR_UNKNOWN;
+            log_error(context, context->src_context.get(), ast, log_error_message_code::empty_expression);
+            output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
             return;
         }
 

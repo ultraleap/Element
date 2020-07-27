@@ -205,6 +205,27 @@ namespace element::detail
             ELEMENT_ERROR_UNKNOWN,
             ELEMENT_STAGE_PARSER);
 
+        //todo: element_result
+        register_log_error<>(
+            log_error_message_code::invalid_call_expression_placement,
+            "call expression cannot appear as the first item in an expression chain",
+            ELEMENT_ERROR_UNKNOWN,
+            ELEMENT_STAGE_PARSER);
+
+        //todo: element_result
+        register_log_error<>(
+            log_error_message_code::invalid_literal_expression_placement,
+            "literal expression cannot appear as anything other than the first item in an expression chain",
+            ELEMENT_ERROR_UNKNOWN,
+            ELEMENT_STAGE_PARSER);
+
+        //todo: element_result
+        register_log_error<>(
+            log_error_message_code::empty_expression,
+            "no expression found",
+            ELEMENT_ERROR_UNKNOWN,
+            ELEMENT_STAGE_PARSER);
+
         return true;
     }
 }
