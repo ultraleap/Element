@@ -161,6 +161,7 @@ namespace element
             if (!function_decl->body)
             {
                 //todo: log error
+                //non-intrinsic function declaration missing body
                 output_result = ELEMENT_ERROR_MISSING_FUNCTION_BODY;
                 return nullptr;
             }
@@ -168,9 +169,26 @@ namespace element
         else if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL || body->type == ELEMENT_AST_NODE_LAMBDA)
         {
             assert(!intrinsic);
+            if (!function_decl->our_scope)
+            {
+                //todo: log error
+                //somehow an expression chains declarer has no scope
+                output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
+                return nullptr;
+            }
+
             auto chain = std::make_unique<expression_chain>(function_decl.get());
             assign_source_information(context, chain, body);
             build_expression(context, body, chain.get(), output_result);
+
+            if(chain->expressions.empty())
+            {
+                //todo: log error
+                //expression chain cannot be empty
+                output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
+                return nullptr;
+            }
+
             function_decl->body = std::move(chain);
         }
         else if (intrinsic && body->type == ELEMENT_AST_NODE_NO_BODY)
@@ -182,6 +200,7 @@ namespace element
         else
         {
             //todo: log error
+            //invalid ast body type found
             function_decl = nullptr;
             output_result = ELEMENT_ERROR_UNKNOWN;
         }
@@ -189,18 +208,69 @@ namespace element
         return function_decl;
     }
 
+    void build_literal_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    {
+        const auto is_empty = chain->expressions.empty();
+        if(!is_empty)
+        {
+            //todo: log error
+            //somehow a literal was not the first thing in the chain
+            output_result = ELEMENT_ERROR_UNKNOWN;
+            return;
+        }
+
+        auto expression = std::make_unique<literal_expression>(ast->literal, chain);
+        assign_source_information(context, expression, ast);
+        chain->expressions.push_back(std::move(expression));
+    }
+
+    void build_identifier_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    {
+        const auto is_empty = chain->expressions.empty();
+        if (!is_empty)
+        {
+            //todo: log error
+            //somehow an identifier was not the first thing in the chain
+            output_result = ELEMENT_ERROR_UNKNOWN;
+            return;
+        }
+
+        auto expression = std::make_unique<identifier_expression>(ast->identifier, chain);
+        assign_source_information(context, expression, ast);
+        chain->expressions.push_back(std::move(expression));
+    }
+
+    void build_indexing_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    {
+        const auto is_empty = chain->expressions.empty();
+        if (is_empty)
+        {
+            //todo: log error
+            //somehow an indexing expression was the first thing in the chain
+            output_result = ELEMENT_ERROR_UNKNOWN;
+            return;
+        }
+
+        auto expression = std::make_unique<indexing_expression>(ast->identifier, chain);
+        assign_source_information(context, expression, ast);
+        chain->expressions.push_back(std::move(expression));
+    }
+
     void build_call_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
     {
-        if (chain->expressions.empty())
+        const auto is_empty = chain->expressions.empty();
+        if (is_empty)
         {
-            assert(!"found a call expression_chain at the start of a chain");
+            //todo: log error
+           //found a call expression_chain at the start of a chain
             output_result = ELEMENT_ERROR_UNKNOWN;
             return;
         }
 
         if (ast->children.empty())
         {
-            assert(!"found a call expression_chain with no children (arguments)");
+            //todo: log error
+            //found a call expression_chain with no children (arguments)
             output_result = ELEMENT_ERROR_UNKNOWN;
             return;
         }
@@ -213,56 +283,45 @@ namespace element
         {
             auto argument = std::make_unique<expression_chain>(chain->declarer);
             assign_source_information(context, argument, child.get());
-
             build_expression(context, child.get(), argument.get(), output_result);
+
             call_expr->arguments.push_back(std::move(argument));
         }
 
         chain->expressions.push_back(std::move(call_expr));
     }
 
+
+    void build_lambda_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    {
+        auto expression = std::make_unique<lambda_expression>(chain);
+        assign_source_information(context, expression, ast);
+        chain->expressions.push_back(std::move(expression));
+    }
+
     void build_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
     {
         assert(chain);
         assert(chain->declarer);
-        const auto is_literal = ast->type == ELEMENT_AST_NODE_LITERAL;
-        const auto is_lambda = ast->type == ELEMENT_AST_NODE_LAMBDA;
-        const auto is_identifier = ast->type == ELEMENT_AST_NODE_CALL;
-        const auto is_call = ast->type == ELEMENT_AST_NODE_EXPRLIST;
 
-        if (is_lambda)
-        {
-            chain->expressions.push_back(std::make_unique<lambda_expression>(chain));
-            assign_source_information(context, chain->expressions.back(), ast);
+        const auto is_empty = chain->expressions.empty();
+
+        if (ast->type == ELEMENT_AST_NODE_LAMBDA) {
+            build_lambda_expression(context, ast, chain, output_result);
             return;
         }
 
-        if (is_call)
-        {
+        if (ast->type == ELEMENT_AST_NODE_LITERAL)
+            build_literal_expression(context, ast, chain, output_result);
+
+        if (is_empty && ast->type == ELEMENT_AST_NODE_CALL)
+            build_identifier_expression(context, ast, chain, output_result);
+
+        if (!is_empty && ast->type == ELEMENT_AST_NODE_CALL)
+            build_indexing_expression(context, ast, chain, output_result);
+
+        if (ast->type == ELEMENT_AST_NODE_EXPRLIST)
             build_call_expression(context, ast, chain, output_result);
-        }
-
-        if (is_literal)
-        {
-            if (!chain->expressions.empty())
-            {
-                assert(!"found literal in the middle of a chain");
-                output_result = ELEMENT_ERROR_UNKNOWN;
-                return;
-            }
-
-            chain->expressions.push_back(std::make_unique<literal_expression>(ast->literal, chain));
-            assign_source_information(context, chain->expressions.back(), ast);
-        }
-        else if (is_identifier)
-        {
-            if (chain->expressions.empty())
-                chain->expressions.push_back(std::make_unique<identifier_expression>(ast->identifier, chain));
-            else
-                chain->expressions.push_back(std::make_unique<indexing_expression>(ast->identifier, chain));
-
-            assign_source_information(context, chain->expressions.back(), ast);
-        }
 
         //start of an expression chain, build the rest of it
         if (chain->expressions.size() == 1)
