@@ -6,7 +6,6 @@
 
 namespace element
 {
-
     class struct_instance final : public object, public std::enable_shared_from_this<struct_instance>
     {
     public:

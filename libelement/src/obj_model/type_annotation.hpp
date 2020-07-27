@@ -8,7 +8,7 @@
 
 namespace element
 {
-    class type_annotation : public object
+    class type_annotation final
     {
     public:
         //TODO: This should be an expression, not an identifier
@@ -17,11 +17,12 @@ namespace element
         {
         }
 
-        [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth) const override;
+        [[nodiscard]] std::string to_code() const;
+        [[nodiscard]] const std::string& to_string() const { return name.value; };
 
-        identifier name;
+        source_information source_info;
 
     private:
+        identifier name;
     };
 }

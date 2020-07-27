@@ -93,7 +93,7 @@ namespace element
             for (unsigned i = 0; i < declarer->inputs.size(); ++i)
             {
                 const auto& input = declarer->inputs[i];
-                input_params += fmt::format("({}) {}:{}", i, input.name.value, input.annotation->name.value);
+                input_params += fmt::format("({}) {}{}", i, input.get_name(), input.has_annotation() ? ":" + input.get_annotation()->to_string() : "");
                 if (i != declarer->inputs.size() - 1)
                     input_params += ", ";
             }
@@ -102,7 +102,7 @@ namespace element
             for (unsigned i = 0; i < compiled_args.size(); ++i)
             {
                 const auto& input = compiled_args[i];
-                given_params += fmt::format("({}) {}", i, input->typeof_info());
+                given_params += fmt::format("({}) _:{}", i, input->typeof_info());
                 if (i != compiled_args.size() - 1)
                     given_params += ", ";
             }
@@ -126,8 +126,8 @@ namespace element
 
         //todo: not exactly working type checking, good enough for now though
         const bool has_inputs = func && func->has_inputs();
-        const bool has_type = has_inputs && func->inputs[0].annotation.get();
-        const bool types_match = has_type && func->inputs[0].annotation->name.value == type->name.value;
+        const bool has_type = has_inputs && func->inputs[0].get_annotation();
+        const bool types_match = has_type && func->inputs[0].get_annotation()->to_string() == type->name.value;
 
         //call as instance function, filling in first argument
         if (types_match)
@@ -143,12 +143,12 @@ namespace element
 
         if (!has_type)
             return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
-                func->typeof_info(), instance->typeof_info(), func->inputs[0].name.value);
+                func->typeof_info(), instance->typeof_info(), func->inputs[0].get_name());
 
         if (!types_match)
             return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
                 func->typeof_info(), instance->typeof_info(),
-                func->inputs[0].name.value, func->inputs[0].annotation->name.value, type->name.value);
+                func->inputs[0].get_name(), func->inputs[0].get_annotation()->to_string(), type->name.value);
 
         //did we miss an error that we need to handle?
         assert(false);
@@ -192,8 +192,8 @@ namespace element
             {
                 const auto& input = func->inputs[i];
                 params += fmt::format("{}{} = {}",
-                    input.name.value,
-                    input.annotation ? ":" + input.annotation->name.value : "",
+                    input.get_name(),
+                    input.has_annotation() ? ":" + input.get_annotation()->to_string() : "",
                     it->compiled_arguments[i]->typeof_info());
 
                 if (i != func->inputs.size() - 1)
@@ -267,7 +267,7 @@ namespace element
                 for (unsigned i = 0; i < func->inputs.size(); ++i)
                 {
                     const auto& input = func->inputs[i];
-                    if (input.name.value == name.value)
+                    if (input.get_name() == name.value)
                         return found_it->compiled_arguments[i];
                 }
             }
@@ -275,7 +275,6 @@ namespace element
             s = s->get_parent_scope();
         }
 
-        //todo: build error?
         return nullptr;
     }
 }

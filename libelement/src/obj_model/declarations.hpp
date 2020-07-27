@@ -26,7 +26,6 @@ namespace element
     class declaration : public object
     {
     public:
-        explicit declaration(identifier name);
         explicit declaration(identifier name, const scope* parent);
         virtual ~declaration() = default;
 
@@ -79,7 +78,7 @@ namespace element
     class constraint_declaration final : public declaration
     {
     public:
-        constraint_declaration(identifier name, bool is_intrinsic);
+        constraint_declaration(identifier name, const scope* parent_scope, bool is_intrinsic);
         virtual ~constraint_declaration() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr

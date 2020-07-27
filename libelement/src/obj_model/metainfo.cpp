@@ -55,12 +55,6 @@ std::string element::function_instance::typeof_info() const
     return declarer->location() + ":Function";
 }
 
-std::string element::type_annotation::typeof_info() const
-{
-    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
-    return "";
-}
-
 std::string element::intrinsic::typeof_info() const
 {
     //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
@@ -87,7 +81,7 @@ std::string element_expression::typeof_info() const
 std::string element::port::typeof_info() const
 {
     if (has_annotation())
-        return name.value + ":" + annotation->typeof_info();
+        return name.value + ":" + annotation->to_string();
 
     return name.value;
 }
@@ -229,10 +223,10 @@ std::string element::lambda_expression::to_code(int depth) const
     return "_() = lambda.todo";
 }
 
-std::string element::port::to_code(int depth) const
+std::string element::port::to_code(int) const
 {
     if (has_annotation())
-        return annotation->to_code(depth);
+        return annotation->to_code();
 
     return "";
 }
@@ -269,7 +263,7 @@ std::string element::function_instance::to_code(const int depth) const
     return "";
 }
 
-std::string element::type_annotation::to_code(const int depth) const
+std::string element::type_annotation::to_code() const
 {
     return ":" + name.value;
 }

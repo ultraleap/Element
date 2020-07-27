@@ -14,35 +14,29 @@
 
 namespace element
 {
-    //declaration
-    declaration::declaration(identifier name)
-        : declaration(std::move(name), nullptr)
-    {
-    }
-
     declaration::declaration(identifier name, const scope* parent)
         : name(std::move(name))
         , our_scope(std::make_unique<scope>(parent, this))
     {
+        assert(parent);
     }
 
     bool declaration::has_scope() const
     {
-        return our_scope && !our_scope->is_empty();
+        return !our_scope->is_empty();
     }
 
     std::string declaration::location() const
     {
-        auto declaration = name.value;
+        assert(our_scope && our_scope->get_parent_scope());
 
-        if (!our_scope)
-            return declaration;
-        
-        if (!our_scope->get_parent_scope() || our_scope->get_parent_scope()->is_root())
+        auto& declaration = name.value;
+
+        if (our_scope->get_parent_scope()->is_root())
             return declaration;
 
         //recursive construction
-        return our_scope->get_parent_scope()->location() + "." + declaration;
+        return fmt::format("{}.{}", our_scope->get_parent_scope()->location(), declaration);
     }
 
     //struct
@@ -84,8 +78,8 @@ namespace element
     }
 
     //constraint
-    constraint_declaration::constraint_declaration(identifier name, const bool is_intrinsic)
-        : declaration(std::move(name))
+    constraint_declaration::constraint_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
+        : declaration(std::move(name), parent_scope)
     {
         qualifier = constraint_qualifier;
         _intrinsic = is_intrinsic;
@@ -93,8 +87,7 @@ namespace element
 
     //function
     function_declaration::function_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
-        : declaration(std::move(name)
-        , parent_scope)
+        : declaration(std::move(name), parent_scope)
     {
         qualifier = function_qualifier;
         _intrinsic = is_intrinsic;
@@ -111,8 +104,8 @@ namespace element
 
     std::shared_ptr<object> function_declaration::compile(const compilation_context& context, const source_information& source_info) const
     {
-        //todo: after moving validation of body existing elsewhere, we can just return the function instance here, not too dupey
-        return call(context, {}, source_info);
+        const auto instance = std::make_shared<function_instance>(this, context.captures, source_info);
+        return instance->compile(context, source_info);
     }
 
     //namespace

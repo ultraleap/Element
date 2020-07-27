@@ -79,5 +79,10 @@ bool element::detail::register_errors()
         "the call to '{0}' contains too many arguments.\nnote: '{0}' was called with {1} arguments, when {2} arguments were expected.",
         ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH);
 
+    element::register_error<>(
+        error_message_code::invalid_errorless_call,
+        "the call to '{}' caused an internal compiler error.",
+        ELEMENT_ERROR_UNKNOWN);
+
     return registered_errors;
 }

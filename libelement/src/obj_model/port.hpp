@@ -6,28 +6,21 @@
 
 namespace element
 {
-    class port final : public object
+    class port final
     {
     public:
-        port() = default;
         explicit port(identifier name, std::unique_ptr<type_annotation> annotation);
-        virtual ~port() = default;
-
-        //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
-        port(const port& scope) = delete;
-        port(port&& scope) = default;
-        port& operator=(const port& scope) = delete;
-        port& operator=(port&& scope) = delete;
 
         [[nodiscard]] bool has_annotation() const { return annotation != nullptr; };
 
-        [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth) const override;
+        [[nodiscard]] std::string typeof_info() const;
+        [[nodiscard]] std::string to_code(int depth) const;
 
-        identifier name;
-        std::unique_ptr<type_annotation> annotation;
+        [[nodiscard]] const std::string& get_name() const { return name.value;  };
+        [[nodiscard]] const type_annotation* get_annotation() const { return annotation.get(); };
 
     private:
-        //todo
+        identifier name;
+        std::unique_ptr<type_annotation> annotation;
     };
 }
