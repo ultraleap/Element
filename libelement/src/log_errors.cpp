@@ -156,6 +156,34 @@ namespace element::detail
             ELEMENT_ERROR_TYPE_ERROR,
             ELEMENT_STAGE_PARSER);
 
+        //todo: element_result
+        register_log_error<std::string>(
+            log_error_message_code::invalid_grammar_in_portlist,
+            "portlist for '{}' contains invalid grammar",
+            ELEMENT_ERROR_UNKNOWN,
+            ELEMENT_STAGE_PARSER);
+
+        //todo: element_result
+        register_log_error<std::string>(
+            log_error_message_code::failed_to_build_declaration,
+            "failed to build declaration '{}'",
+            ELEMENT_ERROR_UNKNOWN,
+            ELEMENT_STAGE_PARSER);
+
+        //todo: element_result
+        register_log_error<std::string>(
+            log_error_message_code::failed_to_build_root,
+            "failed to build global scope for '{}'",
+            ELEMENT_ERROR_UNKNOWN,
+            ELEMENT_STAGE_PARSER);
+
+        //todo: element_result
+        register_log_error<>(
+            log_error_message_code::internal_compiler_error,
+            "internal compiler error",
+            ELEMENT_ERROR_UNKNOWN,
+            ELEMENT_STAGE_PARSER);
+
         return true;
     }
 }

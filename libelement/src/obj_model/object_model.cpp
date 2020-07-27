@@ -26,7 +26,7 @@ namespace element
     }
 
     void build_scope(const element_interpreter_ctx* context, const element_ast* ast, const declaration& declaration, element_result& output_result);
-    void build_scope(const element_interpreter_ctx* context, const element_ast* ast, scope* parent_scope, element_result& output_result);
+    void build_scope(const element_interpreter_ctx* context, const element_ast* ast, scope* our_scope, element_result& output_result);
     std::shared_ptr<declaration> build_struct_declaration(const element_interpreter_ctx* context, const element_ast* ast, const scope* parent_scope, element_result& output_result);
     std::shared_ptr<declaration> build_constraint_declaration(const element_interpreter_ctx* context, const element_ast* ast, const scope* parent_scope, element_result& output_result);
     std::shared_ptr<declaration> build_function_declaration(const element_interpreter_ctx* context, const element_ast* ast, const scope* parent_scope, element_result& output_result);
@@ -36,6 +36,7 @@ namespace element
 
     std::unique_ptr<type_annotation> build_type_annotation(const element_interpreter_ctx* context, const element_ast* ast, element_result& output_result)
     {
+        //todo: instead of nullptr, use an object to represent nothing? can't use Any, as user might not have it in source
         if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE)
             return nullptr;
 
@@ -44,8 +45,7 @@ namespace element
             auto* const ident = ast->children[ast_idx::port::type].get();
             if (ident->type != ELEMENT_AST_NODE_IDENTIFIER)
             {
-                //todo: log error
-                output_result = ELEMENT_ERROR_UNKNOWN;
+                output_result = log_error(context, context->src_context.get(), ident, log_error_message_code::invalid_type_annotation, ast->parent->parent->identifier);
                 return nullptr;
             }
 
@@ -54,8 +54,7 @@ namespace element
             return element;
         }
 
-        //todo: log error
-        output_result = ELEMENT_ERROR_UNKNOWN;
+        output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_type_annotation, ast->parent->parent->identifier);
         return nullptr;
     }
 
@@ -74,16 +73,17 @@ namespace element
         {
             if (input->type != ELEMENT_AST_NODE_PORT)
             {
-                //todo: log error
-                output_result = ELEMENT_ERROR_UNKNOWN;
+                output_result = log_error(context, context->src_context.get(), input.get(), log_error_message_code::invalid_grammar_in_portlist, declaration.name.value);
                 return;
             }
 
             auto ident = identifier(input->identifier);
 
+            //todo: is either not there, or is UNSPECIFIED_TYPE, need to clean up AST to only do one or the other. seems like inputs are always missing the child, outputs have unspecified type
             const auto has_type_annotation = input->children.size() > ast_idx::port::type;
             if (!has_type_annotation)
             {
+                //todo: instead of nullptr, use an object to represent nothing? can't use Any, as user might not have it in source
                 declaration.inputs.emplace_back(ident, nullptr);
                 continue;
             }
@@ -97,16 +97,17 @@ namespace element
     std::shared_ptr<declaration> build_struct_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
-        auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+        const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-        auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
+        auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, is_intrinsic);
 
         //fields
         build_inputs(context, decl, *struct_decl, output_result);
         build_output(context, decl, *struct_decl, output_result);
 
-        if (intrinsic)
+        if (is_intrinsic)
         {
+            //todo: handle the intrinsic not existing once we have them all (don't break using the prelude for everything else)
             intrinsic::register_intrinsic<struct_declaration>(context, ast, *struct_decl);
         }
 
@@ -317,22 +318,31 @@ namespace element
             element_result result = ELEMENT_OK;
             auto decl = build_declaration(context, child.get(), our_scope, result);
 
+            if (!decl && result == ELEMENT_OK)
+                result = ELEMENT_ERROR_UNKNOWN;
+
             if (result != ELEMENT_OK)
             {
+                std::string identifier = child->children.empty() ? "<unknown>" : child->children[0]->identifier;
+                log_error(context, context->src_context.get(), child.get(), log_error_message_code::failed_to_build_declaration, std::move(identifier));
+
                 if (output_result == ELEMENT_OK)
                     output_result = result;
 
                 continue;
             }
 
+            //only reaches here if the declaration is nullptr, and no error was reported. should never happen.
             if (!decl)
             {
-                output_result = ELEMENT_ERROR_UNKNOWN;
+                result = log_error(context, context->src_context.get(), child.get(), log_error_message_code::internal_compiler_error);
+                if (output_result == ELEMENT_OK)
+                    output_result = result;
                 continue;
             }
 
-            if (decl)
-                our_scope->add_declaration(std::move(decl));
+            assert(decl);
+            our_scope->add_declaration(std::move(decl));
         }
     }
 
@@ -345,7 +355,7 @@ namespace element
     {
         if (ast->type != ELEMENT_AST_NODE_ROOT)
         {
-            output_result = ELEMENT_ERROR_UNKNOWN;
+            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::failed_to_build_declaration, ast->nearest_token->file_name);
             return nullptr;
         }
 

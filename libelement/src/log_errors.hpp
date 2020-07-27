@@ -13,6 +13,7 @@
 #include "common_internal.hpp"
 #include "ast/ast_internal.hpp"
 #include "source_information.hpp"
+#include "interpreter_internal.hpp"
 
 namespace element
 {
@@ -41,7 +42,12 @@ namespace element
         parse_constraint_has_body,
         parse_constraint_invalid_body,
         intrinsic_not_implemented,
-        intrinsic_type_mismatch
+        intrinsic_type_mismatch,
+        invalid_grammar_in_portlist,
+        invalid_type_annotation,
+        failed_to_build_declaration,
+        failed_to_build_root,
+        internal_compiler_error,
     };
 
     template <typename... Args>
@@ -87,7 +93,7 @@ namespace element
                 throw;
         }
 
-        static log_message build_error(log_error_message_code code, const source_information& source_info)
+        static log_message build_error(const source_information& source_info, log_error_message_code code)
         {
             const auto it = func_map.find(code);
             if (it == func_map.end())
@@ -172,15 +178,21 @@ namespace element
             return build_log_error(context, ast->nearest_token, code, std::forward<Args>(args)...);
         }
 
-        return log_error_map<Args...>::build_error({}, code, args...);
+        return log_error_map<Args...>::build_error(source_information{}, code, args...);
     }
 
     template <typename... Args>
-    element_result log_error(element_log_ctx* logger, Args&&... args)
+    element_result log_error(const element_log_ctx* logger, Args&&... args)
     {
         const auto error = build_log_error(args...);
         logger->log(error);
         return error.result;
+    }
+
+    template <typename... Args>
+    element_result log_error(const element_interpreter_ctx* context, Args&&... args)
+    {
+        return log_error(context->logger.get(), std::forward<Args>(args)...);
     }
 
     namespace detail
