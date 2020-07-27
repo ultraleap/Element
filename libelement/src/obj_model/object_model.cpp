@@ -157,8 +157,7 @@ namespace element
             if (!function_decl->body)
             {
                 //todo: check if this is covered during parsing? I think it likely is already
-                log_error(context, context->src_context.get(), decl, log_error_message_code::parse_function_missing_body, function_decl->name.value);
-                output_result = ELEMENT_ERROR_MISSING_FUNCTION_BODY;
+                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::parse_function_missing_body, function_decl->name.value);
                 return nullptr;
             }
         }
@@ -167,8 +166,7 @@ namespace element
             assert(!intrinsic);
             if (!function_decl->our_scope)
             {
-                log_error(context, context->src_context.get(), body, log_error_message_code::missing_declaration_scope, function_decl->name.value);
-                output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
+                output_result = log_error(context, context->src_context.get(), body, log_error_message_code::missing_declaration_scope, function_decl->name.value);
                 return nullptr;
             }
 
@@ -178,8 +176,7 @@ namespace element
 
             if (chain->expressions.empty())
             {
-                log_error(context, context->src_context.get(), body, log_error_message_code::expression_chain_cannot_be_empty, function_decl->name.value);
-                output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
+                output_result = log_error(context, context->src_context.get(), body, log_error_message_code::expression_chain_cannot_be_empty, function_decl->name.value);
                 return nullptr;
             }
 
@@ -193,8 +190,7 @@ namespace element
         }
         else
         {
-            log_error(context, context->src_context.get(), decl, log_error_message_code::invalid_function_declaration, function_decl->name.value);
-            output_result = ELEMENT_ERROR_UNKNOWN;
+            output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::invalid_function_declaration, function_decl->name.value);
             return nullptr;
         }
 
@@ -242,8 +238,7 @@ namespace element
         const auto is_empty = chain->expressions.empty();
         if (!is_empty)
         {
-            log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_literal_expression_placement);
-            output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
+            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_literal_expression_placement);
             return;
         }
 
@@ -273,15 +268,13 @@ namespace element
         const auto is_empty = chain->expressions.empty();
         if (is_empty)
         {
-            log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_call_expression_placement);
-            output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
+            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_call_expression_placement);
             return;
         }
 
         if (ast->children.empty())
         {
-            log_error(context, context->src_context.get(), ast, log_error_message_code::empty_expression);
-            output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
+            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::empty_expression);
             return;
         }
 
