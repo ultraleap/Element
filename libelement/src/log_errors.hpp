@@ -48,6 +48,9 @@ namespace element
         failed_to_build_declaration,
         failed_to_build_root,
         internal_compiler_error,
+        missing_declaration_scope,
+        expression_chain_cannot_be_empty,
+        invalid_function_declaration
     };
 
     template <typename... Args>

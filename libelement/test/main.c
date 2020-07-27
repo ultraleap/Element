@@ -155,7 +155,7 @@ element_result test_failing_evals()
     if (result != ELEMENT_ERROR_IDENTIFIER_NOT_FOUND)
         return result;
 
-    //todo: missing an semi colon is an unfriendly error
+    //todo: missing a semi colon is an unfriendly error
     result = eval("struct MyStruct(crap) { f(a:Num) = a; } evaluate = MyStruct(1).f;");
     if (result != ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION)
         return result;

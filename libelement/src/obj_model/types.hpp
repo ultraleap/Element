@@ -152,9 +152,6 @@ namespace element
 #include "typeutil.hpp"
 
 
-
-// TODO
-// HACK
 void update_scopes(const element_scope* names);
 
 

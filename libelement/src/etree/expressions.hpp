@@ -36,7 +36,6 @@ protected:
     element_type_id m_type_id = 0;
     int m_size = 0;
 
-    //TODO: THIS IS AFWUL! FIX!
     [[nodiscard]] std::shared_ptr<object> compile(const element::compilation_context& context, const element::source_information& source_info) const override;
     [[nodiscard]] std::shared_ptr<object> index(const element::compilation_context& context, const element::identifier& name, const element::source_information&
                                                 source_info) const override;
