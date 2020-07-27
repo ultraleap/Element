@@ -29,6 +29,7 @@ namespace element
         intrinsic_not_implemented,
         not_enough_arguments,
         too_many_arguments,
+        invalid_errorless_call,
     };
 
     template <typename... Args>

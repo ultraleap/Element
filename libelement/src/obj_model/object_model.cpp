@@ -122,7 +122,7 @@ namespace element
         auto* const decl = ast->children[ast_idx::function::declaration].get();
         auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-        auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), intrinsic);
+        auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
 
         //ports
         build_inputs(context, decl, *constraint_decl, output_result);
@@ -130,7 +130,7 @@ namespace element
 
         if (intrinsic)
         {
-            intrinsic::register_intrinsic<struct_declaration>(context, ast, *constraint_decl);
+            intrinsic::register_intrinsic<constraint_declaration>(context, ast, *constraint_decl);
         }
 
         return std::move(constraint_decl);

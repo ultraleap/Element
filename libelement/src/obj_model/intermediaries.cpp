@@ -23,7 +23,7 @@ namespace element
         assert(declarer->inputs.size() == expressions.size());
         for (size_t i = 0; i < declarer->inputs.size(); ++i)
         {
-            fields.emplace(declarer->inputs[i].name.value, expressions[i]);
+            fields.emplace(declarer->inputs[i].get_name(), expressions[i]);
         }
     }
 
