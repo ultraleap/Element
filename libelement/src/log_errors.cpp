@@ -184,6 +184,27 @@ namespace element::detail
             ELEMENT_ERROR_UNKNOWN,
             ELEMENT_STAGE_PARSER);
 
+        //todo: element_result
+        register_log_error<std::string>(
+            log_error_message_code::missing_declaration_scope,
+            "'{}' must have a scope",
+            ELEMENT_ERROR_INVALID_EXPRESSION,
+            ELEMENT_STAGE_PARSER);
+
+        //todo: element_result
+        register_log_error<>(
+            log_error_message_code::expression_chain_cannot_be_empty,
+            "an expression chain cannot be empty",
+            ELEMENT_ERROR_INVALID_EXPRESSION,
+            ELEMENT_STAGE_PARSER);
+
+        //todo: element_result
+        register_log_error<>(
+            log_error_message_code::invalid_function_declaration,
+            "invalid function declaration",
+            ELEMENT_ERROR_UNKNOWN,
+            ELEMENT_STAGE_PARSER);
+
         return true;
     }
 }

@@ -96,7 +96,6 @@ static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
             element_ast* outputnode = declnode->children[ast_idx::declaration::outputs].get();
             // these should typically already exist from the body, so just try
             if (node->children.size() > ast_idx::function::body) {
-            	//TODO: JM - What does this do?
                 if (outputnode->type == ELEMENT_AST_NODE_PORTLIST) {
                     for (const auto& t : outputnode->children) {
                         auto cptr = get_names(item.get(), t.get());

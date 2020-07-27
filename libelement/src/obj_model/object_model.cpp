@@ -156,8 +156,8 @@ namespace element
             function_decl->body = function_decl->our_scope->find(identifier::return_identifier, false);
             if (!function_decl->body)
             {
-                //todo: log error
-                //non-intrinsic function declaration missing body
+                //todo: check if this is covered during parsing? I think it likely is already
+                log_error(context, context->src_context.get(), decl, log_error_message_code::parse_function_missing_body, function_decl->name.value);
                 output_result = ELEMENT_ERROR_MISSING_FUNCTION_BODY;
                 return nullptr;
             }
@@ -167,8 +167,7 @@ namespace element
             assert(!intrinsic);
             if (!function_decl->our_scope)
             {
-                //todo: log error
-                //somehow an expression chains declarer has no scope
+                log_error(context, context->src_context.get(), body, log_error_message_code::missing_declaration_scope, function_decl->name.value);
                 output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
                 return nullptr;
             }
@@ -179,8 +178,7 @@ namespace element
 
             if (chain->expressions.empty())
             {
-                //todo: log error
-                //expression chain cannot be empty
+                log_error(context, context->src_context.get(), body, log_error_message_code::expression_chain_cannot_be_empty, function_decl->name.value);
                 output_result = ELEMENT_ERROR_INVALID_EXPRESSION;
                 return nullptr;
             }
@@ -195,10 +193,9 @@ namespace element
         }
         else
         {
-            //todo: log error
-            //invalid ast body type found
-            function_decl = nullptr;
+            log_error(context, context->src_context.get(), decl, log_error_message_code::invalid_function_declaration, function_decl->name.value);
             output_result = ELEMENT_ERROR_UNKNOWN;
+            return nullptr;
         }
 
         return function_decl;
@@ -410,5 +407,4 @@ namespace element
 
         return root;
     }
-
 }
