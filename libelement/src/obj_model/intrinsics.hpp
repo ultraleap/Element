@@ -69,6 +69,8 @@ namespace element
             return nullptr;
         }
 
+        [[nodiscard]] virtual type_const_ptr get_type() const { return nullptr; };
+
     private:
         const static std::unordered_map<std::string, std::function<std::shared_ptr<const intrinsic>(const declaration*)>> validation_func_map;
     };
@@ -81,6 +83,7 @@ namespace element
 
     public:
         intrinsic_function(element_type_id id, type_const_ptr return_type);
+        [[nodiscard]] type_const_ptr get_type() const final { return return_type; };
     };
 
     class intrinsic_nullary final : public intrinsic_function
@@ -152,8 +155,10 @@ namespace element
 
         intrinsic_num_constructor();
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                   source_info) const override;
+        [[nodiscard]] std::shared_ptr<object> call(
+            const compilation_context& context,
+            std::vector<std::shared_ptr<object>> compiled_args,
+            const source_information& source_info) const override;
     };
 
     class intrinsic_bool_constructor final : public intrinsic_function
@@ -163,8 +168,10 @@ namespace element
 
         intrinsic_bool_constructor();
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                   source_info) const override;
+        [[nodiscard]] std::shared_ptr<object> call(
+            const compilation_context& context,
+            std::vector<std::shared_ptr<object>>
+            compiled_args, const source_information& source_info) const override;
     };
 
     class intrinsic_not_implemented final : public intrinsic {
