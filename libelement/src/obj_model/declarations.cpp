@@ -77,6 +77,37 @@ namespace element
         return build_error_for_invalid_call(this, compiled_args);
     }
 
+    std::shared_ptr<object> struct_declaration::generate_placeholder(const compilation_context& context, int& placeholder_index) const
+    {
+        if (inputs.empty())
+        {
+            assert(is_intrinsic());
+            const auto intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
+            auto expr = std::make_shared<element_expression_input>(placeholder_index);
+            expr->actual_type = intrinsic->get_type();
+            return expr;
+        }
+
+        std::vector<std::shared_ptr<object>> placeholder_inputs;
+        for (unsigned i = 0; i < get_inputs().size(); ++i)
+        {
+            const auto& input = get_inputs()[i];
+            const auto& type = get_scope()->find(input.get_annotation()->to_string(), true);
+            auto placeholder = type->generate_placeholder(context, placeholder_index);
+
+            if (!placeholder)
+            {
+                assert(!"this type can't be deserialised");
+                return nullptr;
+            }
+
+            placeholder_inputs.push_back(std::move(placeholder));
+            placeholder_index++;
+        }
+
+        return call(context, std::move(placeholder_inputs), {});
+    }
+
     //constraint
     constraint_declaration::constraint_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
         : declaration(std::move(name), parent_scope)

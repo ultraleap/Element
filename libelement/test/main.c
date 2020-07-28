@@ -80,7 +80,16 @@ element_result eval(const char* evaluate)
     if (result != ELEMENT_OK)
         return result;
 
-    printf("%s -> %f\n", evaluate, output.values[0]);
+    printf("%s -> {", evaluate);
+    for (int i = 0; i < output.count; ++i)
+    {
+        printf("%f", output.values[i]);
+        if (i != output.count - 1)
+        {
+            printf(", ");
+        }
+    }
+    printf("}\n");
 
     //todo
     element_delete_compilable(context, &compilable);
@@ -129,7 +138,16 @@ element_result eval_with_source(const char* source, const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    printf("%s -> %f\n", evaluate, output.values[0]);
+    printf("%s -> {", evaluate);
+    for (int i = 0; i < output.count; ++i)
+    {
+        printf("%f", output.values[i]);
+        if (i != output.count - 1)
+        {
+            printf(", ");
+        }
+    }
+    printf("}\n");
 
 cleanup:
     element_delete_compilable(context, &compilable);
@@ -164,7 +182,16 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    printf("%s -> %f\n", evaluate, outputs->values[0]);
+    printf("%s -> {", evaluate);
+    for (int i = 0; i < outputs->count; ++i)
+    {
+        printf("%f", outputs->values[i]);
+        if (i != outputs->count - 1)
+        {
+            printf(", ");
+        }
+    }
+    printf("}\n");
 
 cleanup:
     element_delete_compilable(context, &compilable);
@@ -478,7 +505,7 @@ int main(int argc, char** argv)
     }
 
     {
-        float inputs[] = { 1, 2, 3, 4 };
+        float inputs[] = { 2, 2, 3, 4 };
         element_inputs input;
         input.values = inputs;
         input.count = 4;
@@ -497,72 +524,12 @@ int main(int argc, char** argv)
             "}\n";
 
         result = eval_with_inputs(source, &input, &output);
-        /*
-         *
-         * compile should create placeholder inputs like so
-         *      vector<expression> expressions
-         *      there is 1 input
-         *          that input is of type quaternion
-         *          quaternion.size() == 4
-         *          expressions.push(element_expression_input(index 0, size 4))
-         *      return expressions
-         *      
-         * function_instance->call(context, expressions, source_info);
-         *      result of that call is ?
-         * return it
-         * 
-         */
-
-        /* 
-         * compile should create placeholder inputs like so
-         *      vector<object> objects
-         *      there is 1 input
-         *          that input is of type quaternion
-         *          current index is 0
-         *          objects.push(Quaternion::Deserialize(current_index))
-         *              there are 2 fields, scalar and vector
-         *                  scalar becomes element_expression_input, index 0, size 1
-         *                  current_index++
-         *                  vector becomes Vector3::Deserialize(current_index)
-         *                      there are 3 fields, x y and z
-         *                          x becomes element_expression_input, index 1, size 1
-         *                          current_index++
-         *                          y becomes element_expression_input, index 2, size 1
-         *                          current_index++
-         *                          z becomes element_expression_input, index 3, size 1
-         *                          current_index++
-         *                      return instance of vector 3
-         *             return instance of quaternion
-         *      return objects
-         *      function_instance->call(context, objects, source_info);
-         *      result of that call is a Vector3 struct instance
-         *          x = mul([1], [0])
-         *          y = mul([2], [0])
-         *          z = mul([3], [0])
-         *      struct_instance->serialize
-         *          all that does is turn it in to element_expression_structure
-         *      return it
-
-
-         * element_interpreter_compile should result in the following expression tree
-         *      element_expression_structure
-         *          mul
-         *              [1]
-         *              [0]
-         *          mul
-         *              [2]
-         *              [0]
-         *          mul
-         *              [3]
-         *              [0]
-         *
-         * evaluate with float array inputs {1, 2, 3, 4}
-         *      {2 * 1, 3 * 1, 4 *1}
-         *      float array {2, 3, 4}
-         */
         if (result != ELEMENT_OK)
             return result;
-        if (output.values[0] != input.values[0] * input.values[1])
+
+        if (output.values[0] != input.values[0] * input.values[1] ||
+            output.values[1] != input.values[0] * input.values[2] ||
+            output.values[2] != input.values[0] * input.values[3])
             return result;
     }
 

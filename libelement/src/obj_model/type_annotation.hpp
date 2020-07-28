@@ -4,7 +4,8 @@
 #include <utility>
 
 //SELF
-#include "object.hpp"
+#include "fwd.hpp"
+#include "source_information.hpp"
 
 namespace element
 {

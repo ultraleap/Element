@@ -15,6 +15,7 @@
 
 struct element_expression : element::object, rtti_type<element_expression>, std::enable_shared_from_this<element_expression>
 {
+public:
     [[nodiscard]] const std::vector<expression_shared_ptr>& dependents() const { return m_dependents; }
     std::vector<expression_shared_ptr>& dependents() { return m_dependents; }
 
@@ -22,6 +23,8 @@ struct element_expression : element::object, rtti_type<element_expression>, std:
 
     [[nodiscard]] std::string typeof_info() const override;
     [[nodiscard]] std::string to_code(int depth = 0) const override;
+
+    [[nodiscard]] std::shared_ptr<element_expression> to_expression() const final { return const_cast<element_expression*>(this)->shared_from_this(); };
 
     element::type_const_ptr actual_type;
 
@@ -36,9 +39,14 @@ protected:
     element_type_id m_type_id = 0;
     int m_size = 0;
 
-    [[nodiscard]] std::shared_ptr<object> compile(const element::compilation_context& context, const element::source_information& source_info) const override;
-    [[nodiscard]] std::shared_ptr<object> index(const element::compilation_context& context, const element::identifier& name, const element::source_information&
-                                                source_info) const override;
+    [[nodiscard]] std::shared_ptr<object> compile(
+        const element::compilation_context& context,
+        const element::source_information& source_info) const override;
+
+    [[nodiscard]] std::shared_ptr<object> index(
+        const element::compilation_context& context,
+        const element::identifier& name,
+        const element::source_information& source_info) const override;
 };
 
 struct element_expression_constant final : public element_expression
@@ -58,20 +66,17 @@ struct element_expression_input final : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    explicit element_expression_input(size_t input_index, size_t input_size)
+    explicit element_expression_input(size_t input_index)
         : element_expression(type_id, nullptr)
         , m_index(input_index)
-        , m_size(input_size)
     {
     }
 
     [[nodiscard]] size_t index() const { return m_index; }
-    [[nodiscard]] size_t get_size() const override { return m_size; }
-
+    [[nodiscard]] size_t get_size() const override { return 1; }
 
 private:
     size_t m_index;
-    size_t m_size;
 };
 
 struct element_expression_structure final : public element_expression

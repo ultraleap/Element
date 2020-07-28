@@ -754,17 +754,23 @@ element_result element_interpreter_compile(
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
     std::vector<std::shared_ptr<element::object>> placeholder_inputs;
+    int placeholder_index = 0;
     for (unsigned i = 0; i < compilable->object->get_inputs().size(); ++i)
     {
         const auto& input = compilable->object->get_inputs()[i];
+        const auto& type = compilable->object->get_scope()->find(input.get_annotation()->to_string(), true);
+        auto placeholder = type->generate_placeholder(compilation_context, placeholder_index);
 
-        //const auto& type = compilable->object->get_scope()->find(input->annotation->name, true);
-        auto expression = std::make_shared<element_expression_input>(i, 1);
-        expression->actual_type = element::type::num.get();
-        placeholder_inputs.push_back(std::move(expression));
+        if (!placeholder)
+        {
+            assert(!"this type can't be deserialised");
+            return ELEMENT_ERROR_UNKNOWN;
+        }
+
+        placeholder_inputs.push_back(std::move(placeholder));
     }
 
-    auto compiled = compilable->object->call(compilation_context, placeholder_inputs, {});
+    const auto compiled = compilable->object->call(compilation_context, placeholder_inputs, {});
 
     if (!compiled)
     {
@@ -776,7 +782,16 @@ element_result element_interpreter_compile(
     if (err)
         return err->log_once(context->logger.get());
 
-    *evaluable = new element_evaluable{ std::move(compiled) };
+    auto expression = compiled->to_expression();
+    if (!expression)
+    {
+        //in theory we would do this check on the return type up front, so if we hit this case, then the actual type doesn't match the expected one, which is a different error
+        //for now we don't, so leave it
+        assert(!"this type can't be serialised");
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    *evaluable = new element_evaluable{ std::move(expression) };
 
     return ELEMENT_OK;
 }

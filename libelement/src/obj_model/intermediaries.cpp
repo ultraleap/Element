@@ -47,6 +47,26 @@ namespace element
         return const_cast<struct_instance*>(this)->shared_from_this();
     }
 
+    std::shared_ptr<element_expression> struct_instance::to_expression() const
+    {
+        //todo: I don't think the expression needs names for the dependents, it's just location based
+        std::vector<std::pair<std::string, expression_shared_ptr>> dependents;
+        for (auto& input : declarer->inputs)
+        {
+            assert(fields.count(input.get_name()));
+            const auto field = fields.at(input.get_name());
+            assert(field);
+
+            auto expr = field->to_expression();
+            if (!expr)
+                return nullptr;
+
+            dependents.push_back({ input.get_name(), std::move(expr)});
+        }
+
+        return std::make_shared<element_expression_structure>(std::move(dependents));
+    }
+
     //function_instance
     function_instance::function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info)
         : declarer(declarer)

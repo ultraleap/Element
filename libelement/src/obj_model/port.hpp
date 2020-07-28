@@ -2,7 +2,6 @@
 
 //SELF
 #include "type_annotation.hpp"
-#include "object.hpp"
 
 namespace element
 {
