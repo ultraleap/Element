@@ -1,14 +1,14 @@
-intrinsic constraint Any;
-intrinsic struct Num;
-struct NotNum(a);
-a = 5;
-b = NotNum(a);
+intrinsic constraint Any
+intrinsic struct Num
+struct NotNum(a)
+a = 5
+b = NotNum(a)
 
-explicitAny(a:Any) = a;
-onlyNum(a:Num) = a;
+explicitAny(a:Any) = a
+onlyNum(a:Num) = a
 
-returnsNum(a):Num = a;
+returnsNum(a):Num = a
 returnsNotNum(a):NotNum
 {
-    return = a;
+    return = a
 }

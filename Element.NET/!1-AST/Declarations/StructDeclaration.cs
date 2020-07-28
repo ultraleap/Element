@@ -7,7 +7,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic";
         protected override string Qualifier { get; } = "struct";
-        protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Terminal)};
+        protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
             IntrinsicImplementationCache.Get<IIntrinsicStructImplementation>(Identifier, context)
                           .Accumulate(() => PortList.ResolveInputConstraints(scope, context, true, true))
@@ -48,7 +48,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;
         protected override string Qualifier { get; } = "struct";
-        protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Terminal)};
+        protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
             PortList.ResolveInputConstraints(scope, context, true, false)
                     .Bind(inputPorts =>

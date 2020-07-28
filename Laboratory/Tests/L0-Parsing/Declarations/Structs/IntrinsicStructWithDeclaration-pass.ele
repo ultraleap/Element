@@ -1,1 +1,1 @@
-intrinsic struct MyIntrinsicStruct(a, b);
+intrinsic struct MyIntrinsicStruct(a, b)

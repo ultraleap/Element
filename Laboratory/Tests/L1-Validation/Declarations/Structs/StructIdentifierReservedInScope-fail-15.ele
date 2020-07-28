@@ -1,4 +1,4 @@
 struct MyStruct(a:Num)
 {
-	MyStruct = 20;
+	MyStruct = 20
 }

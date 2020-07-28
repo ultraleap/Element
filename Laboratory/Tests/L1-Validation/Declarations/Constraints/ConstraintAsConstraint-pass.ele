@@ -1,2 +1,2 @@
-constraint Foo(a);
-constraint Bar(b:Foo):Bar;
+constraint Foo(a)
+constraint Bar(b:Foo):Bar

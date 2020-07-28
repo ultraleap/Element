@@ -7,8 +7,8 @@ namespace Element.AST
     public sealed class IntrinsicFunctionDeclaration : Declaration
     {
         protected override string IntrinsicQualifier => "intrinsic";
-        protected override string Qualifier => string.Empty; // Functions don't have a qualifier
-        protected override Type[] BodyAlternatives { get; } = {typeof(Terminal)};
+        protected override string Qualifier => "function";
+        protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
 
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
             IntrinsicImplementationCache.Get<IIntrinsicFunctionImplementation>(Identifier, context)
@@ -37,7 +37,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier => string.Empty;
         protected override string Qualifier => string.Empty; // Functions don't have a qualifier
-        protected override Type[] BodyAlternatives { get; } = {typeof(Binding)};
+        protected override Type[] BodyAlternatives { get; } = {typeof(ExpressionBody)};
 
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
             PortList.ResolveInputConstraints(scope, context, true, false)
@@ -45,7 +45,7 @@ namespace Element.AST
                     .Map(t =>
                     {
                         var (inputPort, returnConstraint) = t;
-                        return (IValue) new ExpressionBodiedFunction(inputPort, returnConstraint, (Binding)Body, scope);
+                        return (IValue) new ExpressionBodiedFunction(inputPort, returnConstraint, (ExpressionBody)Body, scope);
                     });
 
         protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)

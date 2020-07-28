@@ -1,1 +1,1 @@
-MyFunction(a, namespace, c, d) = d;
+MyFunction(a, namespace, c, d) = d

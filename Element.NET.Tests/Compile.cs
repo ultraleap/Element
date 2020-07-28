@@ -12,10 +12,10 @@ namespace Element.NET.Tests
     {
         private const string _compileSource = @"struct Vector3(x:Num, y:Num, z:Num)
 {
-    add(a:Vector3, b:Vector3) = memberwise(Num.add, a, b);
+    add(a:Vector3, b:Vector3) = memberwise(Num.add, a, b)
 }
-struct MyCustomElementStruct(floatField:Num, vector3Field:Vector3);
-struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vector3Field:Vector3);
+struct MyCustomElementStruct(floatField:Num, vector3Field:Vector3)
+struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vector3Field:Vector3)
 ";
 
         [ElementStructTemplate("MyCustomElementStruct")]
@@ -55,7 +55,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
                                             .Map(compiled => (compiled, captureArray));
                    });
         
-        private void CompileWithSourcedArgsAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate, float[]> checkFunc)
+        private static void CompileWithSourcedArgsAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate, float[]> checkFunc)
             where TDelegate : Delegate =>
             CompileAndSourceArguments<TDelegate>(sourceContext, expression)
                 .Switch((t, messages) =>
@@ -69,7 +69,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
             context.EvaluateExpression(expression)
                    .Bind(fn => fn.Compile<TDelegate>(new CompilationContext(context)));
         
-        private void CompileAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate> checkFunc)
+        private static void CompileAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate> checkFunc)
             where TDelegate : Delegate =>
             CompileDelegate<TDelegate>(sourceContext, expression)
                 .Switch((fn, messages) =>
@@ -78,7 +78,9 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
                     checkFunc(fn);
                 }, messages => ExpectingSuccess(messages, false));
 
-        private void CompileAndCheck<TDelegate>(string expression, Action<TDelegate> checkFunc) where TDelegate : Delegate => CompileAndCheck(MakeSourceContext(), expression, checkFunc);
+        private static void CompileAndCheck<TDelegate>(string expression, Action<TDelegate> checkFunc)
+            where TDelegate : Delegate =>
+            CompileAndCheck(MakeSourceContext(), expression, checkFunc);
 
         [Test]
         public void ConstantPi() => CompileAndCheck<Constant>("Num.pi", piFn => Assert.AreEqual(3.14159265359f, piFn()));
@@ -153,9 +155,9 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         private static string _customStructOperationSource = @"
 _(f:Num, v3:Vector3):MyCustomElementStruct
 {
-    fsqr = f.sqr;
-    vadded = v3.add(Vector3(fsqr, fsqr, fsqr));
-    return = MyCustomElementStruct(fsqr, vadded);
+    fsqr = f.sqr
+    vadded = v3.add(Vector3(fsqr, fsqr, fsqr))
+    return = MyCustomElementStruct(fsqr, vadded)
 }
 ";
 
@@ -175,22 +177,22 @@ _(f:Num, v3:Vector3):MyCustomElementStruct
         [Test]
         public void SourceArgumentFromSerializedArray() =>
             CompileWithSourcedArgsAndCheck<CustomStructDelegateNoArgs>(MakeSourceContext(extraSource: _compileSource),
-                                                        _customStructOperationSource,
-                                                        (fn, args) =>
-                                                        {
-                                                            Assert.AreEqual(4, args.Length);
-                                                            args[0] = 5f;
-                                                            args[1] = 3f;
-                                                            args[2] = 6f;
-                                                            args[3] = -10f;
+                                                                       _customStructOperationSource,
+                                                                       (fn, args) =>
+                                                                       {
+                                                                           Assert.AreEqual(4, args.Length);
+                                                                           args[0] = 5f;
+                                                                           args[1] = 3f;
+                                                                           args[2] = 6f;
+                                                                           args[3] = -10f;
                                                             
-                                                            var result = fn();
+                                                                           var result = fn();
             
-                                                            Assert.AreEqual(25f, result.floatField);
-                                                            Assert.AreEqual(28f, result.vector3Field.X);
-                                                            Assert.AreEqual(31f, result.vector3Field.Y);
-                                                            Assert.AreEqual(15f, result.vector3Field.Z);
-                                                        });
+                                                                           Assert.AreEqual(25f, result.floatField);
+                                                                           Assert.AreEqual(28f, result.vector3Field.X);
+                                                                           Assert.AreEqual(31f, result.vector3Field.Y);
+                                                                           Assert.AreEqual(15f, result.vector3Field.Z);
+                                                                       });
 
         private static readonly (float, float)[] _factorialArguments =
         {
@@ -210,7 +212,7 @@ _(f:Num, v3:Vector3):MyCustomElementStruct
 
         [TestCaseSource(nameof(_factorialArguments))]
         public void FactorialUsingFor((float fac, float result) f) =>
-            CompileAndCheck<UnaryOp>("_(a:Num):Num = for(Tuple(a, 1), _(tup):Bool = tup.varg0.gt(0), _(tup) = Tuple(tup.varg0.sub(1), tup.varg1.mul(tup.varg0))).varg1",
+            CompileAndCheck<UnaryOp>("_(a:Num):Num = for({n = a i = 1}, _(tup):Bool = tup.n.gt(0), _(tup) = {n = tup.n.sub(1) i = tup.i.mul(tup.n)}).i",
                                      fn => Assert.AreEqual(f.result, fn(f.fac)));
     }
 }

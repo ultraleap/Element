@@ -1,43 +1,43 @@
 namespace A
 {
-    x = 5;
+    x = 5
     namespace A
     {
-        x = 10;
+        x = 10
         namespace A
         {
-            x = 15;
+            x = 15
             namespace A
             {
-                x = 20;
+                x = 20
             }
         }
         
         # Local A -> x = 15
-        a = A.x;
+        a = A.x
         
         # Local A -> nested A -> x = 20
-        b = A.A.x;
+        b = A.A.x
         
         # Local A -> nested A -> error A not found
         # Does not fall back! Matching is greedy.
-        c = A.A.A.x;
+        c = A.A.A.x
     }
 }
 
 namespace X
 {
-    x = 5;
+    x = 5
     namespace Y
     {
-        x = 10;
+        x = 10
         namespace Z
         {
-            x = 15;
+            x = 15
         }
         
-        a = X.x;
-        b = Y.x;
-        c = Z.x;
+        a = X.x
+        b = Y.x
+        c = Z.x
     }
 }

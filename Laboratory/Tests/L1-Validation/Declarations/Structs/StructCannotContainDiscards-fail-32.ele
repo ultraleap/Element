@@ -1,1 +1,1 @@
-struct myStruct(a, _, c);
+struct myStruct(a, _, c)

@@ -1,1 +1,1 @@
-intrinsic function(g, h);
+intrinsic function function(g, h)

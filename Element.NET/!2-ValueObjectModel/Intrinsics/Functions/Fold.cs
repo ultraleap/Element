@@ -24,10 +24,10 @@ namespace Element.AST
 			//			_(tup):Bool = tup.i.lt(count),
 			//			_(tup) = {i = tup.i.add(1); value = aggregator(tup.value, list.at(tup.i); };)
 
-			static SourceInfo ConditionSourceCode() =>new SourceInfo("<compiler generated dynamic fold condition>",
+			static SourceInfo ConditionSourceCode() => new SourceInfo("<compiler generated dynamic fold condition>",
 			                                                         "_(tup):Bool = tup.i.lt(list.count)");
 			static SourceInfo BodySourceCode() => new SourceInfo("<compiler generated dynamic fold body",
-			                                                     "_(tup) = {i = tup.i.add(1); value = aggregator(tup.value, list.at(tup.i); };)");
+			                                                     "_(tup) = {i = tup.i.add(1) value = aggregator(tup.value, list.at(tup.i)) }");
 			Result<IValue[]> CreateDynamicFoldArguments() =>
 				Parser.Parse<Lambda>(ConditionSourceCode(), context)
 				      .Accumulate(() => Parser.Parse<Lambda>(BodySourceCode(), context))
@@ -36,14 +36,15 @@ namespace Element.AST
 					      var (predicateLambda, bodyLambda) = t;
 					      var initial = new ResolvedBlock(new (Identifier, IValue)[]
 					      {
-						      (new Identifier(""), Constant.Zero),
-						      (new Identifier(""), workingValue)
+						      (new Identifier("i"), Constant.Zero),
+						      (new Identifier("value"), workingValue)
 					      }, null);
 					      var captureBlock = new ResolvedBlock(new (Identifier, IValue)[]
 					      {
 						      (new Identifier("list"), list),
+						      (new Identifier("initial"), initial),
 						      (new Identifier("aggregator"), aggregator)
-					      }, null);
+					      }, context.SourceContext.GlobalScope);
 					      return predicateLambda.ResolveExpression(captureBlock, context)
 					                            .Accumulate(() => bodyLambda.ResolveExpression(captureBlock, context))
 					                            .Map(r =>
@@ -57,7 +58,6 @@ namespace Element.AST
 			                 .FoldArray(workingValue, (current, e) => aggregator.Call(new[] {current, e}, context))
 			                 .Else(() => CreateDynamicFoldArguments()
 			                             .Bind(args => For.Instance.Call(args, context))
-			                             .Cast<StructInstance>(context)
 			                             .Bind(instance => instance.IndexPositionally(1, context)));
 		}
 	}

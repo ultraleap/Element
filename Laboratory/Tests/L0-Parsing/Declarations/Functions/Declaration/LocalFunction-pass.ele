@@ -1,11 +1,11 @@
 function
 {
-    local(a, b) = add(a, b);
-    return = local(5, 10);
+    local(a, b) = add(a, b)
+    return = local(5, 10)
 }
 
 withParams(a, b)
 {
-    local(a, b) = add(a, b);
-    return = local(a, b);
+    local(a, b) = add(a, b)
+    return = local(a, b)
 }

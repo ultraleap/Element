@@ -1,2 +1,2 @@
-struct MyStruct(a);
-a = MyStruct(5).a;
+struct MyStruct(a)
+a = MyStruct(5).a

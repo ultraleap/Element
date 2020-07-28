@@ -1,1 +1,1 @@
-intrinsic Any;
+intrinsic function Any

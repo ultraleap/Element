@@ -6,21 +6,21 @@ struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
             Vector4(1, 0, 0, 0),
             Vector4(0, 1, 0, 0),
             Vector4(0, 0, 1, 0),
-            Vector4(0, 0, 0, 1));
+            Vector4(0, 0, 0, 1))
        
     transpose(m:Matrix4x4):Matrix4x4 = 
         Matrix4x4(
             Vector4(m.x.x, m.y.x, m.z.x, m.w.x),
             Vector4(m.x.y, m.y.y, m.z.y, m.w.y),
             Vector4(m.x.z, m.y.z, m.z.z, m.w.z),
-            Vector4(m.x.w, m.y.w, m.z.w, m.w.w));
+            Vector4(m.x.w, m.y.w, m.z.w, m.w.w))
 
-    position(m:Matrix4x4):Vector3 = Vector3(m.w.x, m.w.y, m.w.z);
+    position(m:Matrix4x4):Vector3 = Vector3(m.w.x, m.w.y, m.w.z)
 
 #    translation(translation:Vector3):Matrix4x4 = 
 #        Matrix4x4(
 #            Vector4(1, 0, 0, 0),
 #            Vector4(0, 1, 0, 0),
 #            Vector4(0, 0, 1, 0),
-#            Vector4Position(translation));
+#            Vector4Position(translation))
 }

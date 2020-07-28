@@ -1,1 +1,1 @@
-constraint Predicate(a:Num):Bool;
+constraint Predicate(a:Num):Bool

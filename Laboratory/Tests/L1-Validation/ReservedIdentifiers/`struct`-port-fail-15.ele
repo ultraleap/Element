@@ -1,1 +1,1 @@
-MyFunction(a, b, c, struct) = b;
+MyFunction(a, b, c, struct) = b

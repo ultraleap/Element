@@ -2,6 +2,6 @@ struct MyStruct(a:Num)
 {
 	namespace Nested
 	{
-		MyStruct = 20;
+		MyStruct = 20
 	}
 }

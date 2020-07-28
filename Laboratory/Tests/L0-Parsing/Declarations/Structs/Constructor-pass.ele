@@ -1,2 +1,2 @@
-struct MyStruct(a, b);
-instance = MyStruct(5, 10);
+struct MyStruct(a, b)
+instance = MyStruct(5, 10)

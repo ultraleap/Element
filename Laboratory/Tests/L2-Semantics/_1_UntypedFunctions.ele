@@ -1,17 +1,17 @@
-intrinsic add(a, b);
-intrinsic sub(a, b);
+intrinsic function add(a, b)
+intrinsic function sub(a, b)
 
-pi = 3.14;
+pi = 3.14
 
-addThree(a, b, c) = add(a, add(b, c));
+addThree(a, b, c) = add(a, add(b, c))
 addFive(a, b, c, d, e)
 {
-	cd = add(c, d);
-	abcd = add(add(a, b), cd);
-	return = add(abcd, e);
+	cd = add(c, d)
+	abcd = add(add(a, b), cd)
+	return = add(abcd, e)
 }
 
-recurse(a) = recurse(a);
+recurse(a) = recurse(a)
 
-recurseIndirect(a) = recurseIndirectOther(a);
-recurseIndirectOther(a) = recurseIndirect(a);
+recurseIndirect(a) = recurseIndirectOther(a)
+recurseIndirectOther(a) = recurseIndirect(a)

@@ -1,6 +1,6 @@
 struct MyStruct(a, b)
 {
-	foo(s:MyStruct) = s.a;
+	foo(s:MyStruct) = s.a
 }
 
-a = MyStruct(5, 10).foo;
+a = MyStruct(5, 10).foo

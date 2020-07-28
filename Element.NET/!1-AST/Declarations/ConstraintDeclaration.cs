@@ -6,7 +6,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic";
         protected override string Qualifier { get; } = "constraint";
-        protected override Type[] BodyAlternatives { get; } = {typeof(Terminal)};
+        protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
             IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, context)
                           .Map(intrinsic => (IValue)new IntrinsicConstraint(intrinsic));
@@ -24,7 +24,7 @@ namespace Element.AST
         protected override string IntrinsicQualifier { get; } = string.Empty;
 
         protected override string Qualifier { get; } = "constraint";
-        protected override Type[] BodyAlternatives { get; } = {typeof(Terminal)};
+        protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
             PortList.ResolveInputConstraints(scope, context, false, false)
                     .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))

@@ -4,16 +4,16 @@ namespace Bob
 	{
 		namespace Sam
 		{
-			a = 3.1415926535;
+			a = 3.1415926535
 		}
 
-		b = 1.618;
+		b = 1.618
 	}
 
-	c = 42;
+	c = 42
 }
 
 namespace Craig
 {
-	e = 2.718;
+	e = 2.718
 }

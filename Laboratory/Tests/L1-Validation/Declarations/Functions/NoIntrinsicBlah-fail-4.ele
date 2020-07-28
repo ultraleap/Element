@@ -1,1 +1,1 @@
-intrinsic Blah;
+intrinsic function Blah
