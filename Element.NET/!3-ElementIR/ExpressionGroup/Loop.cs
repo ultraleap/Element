@@ -43,7 +43,7 @@ namespace Element
 					Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> EvaluateIteration(IReadOnlyCollection<Expression> iterationState) =>
 						bodyFunc(iterationState).Map(bodyExprs => new ReadOnlyCollection<Expression>(bodyExprs.ToArray()))
 						                        .Accumulate(() => conditionFunc(iterationState))
-						                        .Assert(e => iterationState.Count != e.Item1.Count, "Iteration state counts are different");
+						                        .Assert(e => iterationState.Count == e.Item1.Count, "Iteration state counts are different");
 
 					Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> IncrementScopeIndexIfAnyNestedLoops((ReadOnlyCollection<Expression> Body, Expression Condition) e)
 					{
