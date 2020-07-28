@@ -477,6 +477,95 @@ int main(int argc, char** argv)
             return result;
     }
 
+    {
+        float inputs[] = { 1, 2, 3, 4 };
+        element_inputs input;
+        input.values = inputs;
+        input.count = 4;
+        element_outputs output;
+        float outputs[] = { 0, 0, 0 };
+        output.values = outputs;
+        output.count = 3;
+
+        char source[] =
+            "struct Vector3(x:Num, y:Num, z:Num) {}\n"
+            "struct Quaternion(scalar:Num, vector:Vector3) {}\n"
+            "evaluate(q:Quaternion)\n"
+            "{\n"
+            "    scale(vec:Vector3, s:Num) = Vector3(vec.x.mul(s), vec.y.mul(s), vec.z.mul(s));\n"
+            "    return = scale(q.vector, q.scalar);\n"
+            "}\n";
+
+        result = eval_with_inputs(source, &input, &output);
+        /*
+         *
+         * compile should create placeholder inputs like so
+         *      vector<expression> expressions
+         *      there is 1 input
+         *          that input is of type quaternion
+         *          quaternion.size() == 4
+         *          expressions.push(element_expression_input(index 0, size 4))
+         *      return expressions
+         *      
+         * function_instance->call(context, expressions, source_info);
+         *      result of that call is ?
+         * return it
+         * 
+         */
+
+        /* 
+         * compile should create placeholder inputs like so
+         *      vector<object> objects
+         *      there is 1 input
+         *          that input is of type quaternion
+         *          current index is 0
+         *          objects.push(Quaternion::Deserialize(current_index))
+         *              there are 2 fields, scalar and vector
+         *                  scalar becomes element_expression_input, index 0, size 1
+         *                  current_index++
+         *                  vector becomes Vector3::Deserialize(current_index)
+         *                      there are 3 fields, x y and z
+         *                          x becomes element_expression_input, index 1, size 1
+         *                          current_index++
+         *                          y becomes element_expression_input, index 2, size 1
+         *                          current_index++
+         *                          z becomes element_expression_input, index 3, size 1
+         *                          current_index++
+         *                      return instance of vector 3
+         *             return instance of quaternion
+         *      return objects
+         *      function_instance->call(context, objects, source_info);
+         *      result of that call is a Vector3 struct instance
+         *          x = mul([1], [0])
+         *          y = mul([2], [0])
+         *          z = mul([3], [0])
+         *      struct_instance->serialize
+         *          all that does is turn it in to element_expression_structure
+         *      return it
+
+
+         * element_interpreter_compile should result in the following expression tree
+         *      element_expression_structure
+         *          mul
+         *              [1]
+         *              [0]
+         *          mul
+         *              [2]
+         *              [0]
+         *          mul
+         *              [3]
+         *              [0]
+         *
+         * evaluate with float array inputs {1, 2, 3, 4}
+         *      {2 * 1, 3 * 1, 4 *1}
+         *      float array {2, 3, 4}
+         */
+        if (result != ELEMENT_OK)
+            return result;
+        if (output.values[0] != input.values[0] * input.values[1])
+            return result;
+    }
+
 
     printf("#######Passed Successfully#######\n");
 
