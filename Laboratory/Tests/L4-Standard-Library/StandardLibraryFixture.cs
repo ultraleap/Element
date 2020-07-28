@@ -7,12 +7,12 @@ namespace Laboratory.Tests.L4.StandardLibrary
     {
         protected CompilationInput ValidatedCompilationInput { get; } = new CompilationInput
         {
-            Packages = new[] { new DirectoryInfo("StandardLibrary") },
+            Packages = new[] { "StandardLibrary" },
         };
         
         protected CompilationInput NonValidatedCompilationInput { get; } = new CompilationInput
         {
-            Packages = new[] { new DirectoryInfo("StandardLibrary") },
+            Packages = new[] { "StandardLibrary" },
             SkipValidation = true
         };
     }

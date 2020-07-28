@@ -124,7 +124,10 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
             });
 
         [Test]
-        public void IntermediateStructVectorAdd() => CompileAndCheck<BinaryOp>("_(a:Num, b:Num):Num = Vector3(a, a, a).add(Vector3(b, b, b)).x", fn => Assert.AreEqual(15f, fn(5f, 10f)));
+        public void IntermediateStructVectorAdd() =>
+            CompileAndCheck<BinaryOp>(MakeSourceContext(extraSource: _compileSource),
+                                      "_(a:Num, b:Num):Num = Vector3(a, a, a).add(Vector3(b, b, b)).x",
+                                      fn => Assert.AreEqual(15f, fn(5f, 10f)));
 
         [Test]
         public void StructVectorAdd() =>

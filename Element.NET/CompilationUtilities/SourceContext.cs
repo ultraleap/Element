@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Element.AST;
+using Newtonsoft.Json;
 
 namespace Element
 {
@@ -43,50 +45,81 @@ namespace Element
             if (CompilationInput == input) return Result.Success; // CompilationInput is immutable so this is a no-op
             lock (_syncRoot)
             {
-                CompilationInput.Packages = CompilationInput.Packages.Union(input.Packages, _directoryComparer).ToArray();
+                CompilationInput.Packages = CompilationInput.Packages.Union(input.Packages).ToArray();
                 CompilationInput.ExtraSourceFiles = CompilationInput.ExtraSourceFiles.Union(input.ExtraSourceFiles, _fileComparer).ToArray();
 
                 return LoadPackagesAndExtraSourceFiles();
             }
         }
 
-        private static readonly LambdaEqualityComparer<DirectoryInfo> _directoryComparer = new LambdaEqualityComparer<DirectoryInfo>((a, b) => a.FullName == b.FullName, info => info.GetHashCode());
         private static readonly LambdaEqualityComparer<FileInfo> _fileComparer = new LambdaEqualityComparer<FileInfo>((a, b) => a.FullName == b.FullName, info => info.GetHashCode());
         private static readonly object _syncRoot = new object();
+
+        private struct PackageManifest
+        {
+            public PackageManifest(string name)
+            {
+                Name = name;
+            }
+
+            public string Name { get; }
+        }
         
         private Result LoadPackagesAndExtraSourceFiles()
         {
             lock (_syncRoot)
             {
-                static IEnumerable<FileInfo> LoadPackage(DirectoryInfo packageDirectory) =>
-                    packageDirectory.GetFiles("*.ele", SearchOption.AllDirectories);
+                var builder = new ResultBuilder(this);
                 
-                // TODO: Have prelude/standard library provided by compiler itself rather than found in packages
-                IEnumerable<FileInfo> preludeSourceFiles;
-                if (CompilationInput.ExcludePrelude) preludeSourceFiles = Enumerable.Empty<FileInfo>();
-                else
+                PackageManifest? ParseFromJsonString(string json)
                 {
-                    var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
-                    var prelude = currentDir.GetDirectories("Prelude", SearchOption.AllDirectories);
-                    if (prelude.Length == 1)
+                    try
                     {
-                        preludeSourceFiles = LoadPackage(prelude[0]);
+                        return JsonConvert.DeserializeObject<PackageManifest>(json);
                     }
-                    else if (prelude.Length > 1)
+                    catch (Exception e)
                     {
-                        return Trace(MessageCode.FileAccessError, $"Multiple Prelude packages found: \n{string.Join("    \\n", prelude.Select(d => d.FullName))}");
-                    }
-                    else
-                    {
-                        return Trace(MessageCode.FileAccessError, "Prelude package not found");
+                        builder.Append(MessageCode.ParseError, e.ToString());
+                        return null;
                     }
                 }
                 
-                return (Result)LoadElementSourceFiles(CompilationInput.Packages
-                                                              .SelectMany(LoadPackage)
-                                                              .Concat(preludeSourceFiles)
-                                                              .Concat(CompilationInput.ExtraSourceFiles)
-                                                              .Distinct(_fileComparer));
+                var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
+                var packageManifests = currentDir.GetFiles("*.elepkg", SearchOption.AllDirectories)
+                                                 .ToDictionary(f => f, f => ParseFromJsonString(File.ReadAllText(f.FullName)));
+                var packageToDirectoryMap = new Dictionary<string, DirectoryInfo>();
+                foreach (var package in packageManifests)
+                {
+                    if (!package.Value.HasValue) continue;
+                    if (packageToDirectoryMap.ContainsKey(package.Value.Value.Name))
+                    {
+                        builder.Append(MessageCode.DuplicateSourceFile, $"Multiple definitions for package '{package.Value.Value.Name}'");
+                    }
+                    else
+                    {
+                        packageToDirectoryMap.Add(package.Value.Value.Name, package.Key.Directory);
+                    }
+                }
+
+                var packagesNamesToLoad = CompilationInput.ExcludePrelude
+                                              ? CompilationInput.Packages
+                                              : CompilationInput.Packages.Prepend("Prelude");
+
+                var packagesToLoad = packagesNamesToLoad.Select(pkgName =>
+                                                        {
+                                                            if (!packageToDirectoryMap.TryGetValue(pkgName, out var pkgDir))
+                                                            {
+                                                                builder.Append(MessageCode.FileAccessError, $"No package '{pkgName}' found");
+                                                            }
+
+                                                            return pkgDir;
+                                                        });
+
+                builder.Append(LoadElementSourceFiles(packagesToLoad
+                                                      .SelectMany(pkg => pkg.GetFiles("*.ele", SearchOption.AllDirectories))
+                                                      .Concat(CompilationInput.ExtraSourceFiles)
+                                                      .Distinct(_fileComparer)));
+                return builder.ToResult();
             }
         }
 

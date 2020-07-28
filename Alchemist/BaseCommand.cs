@@ -35,14 +35,6 @@ namespace Alchemist
 		
 		protected abstract bool _noParseTrace { get; }
 
-		private DirectoryInfo GetPackageDirectories(string package)
-		{
-			var directoryInfo = Directory.Exists(package) ? new DirectoryInfo(package) : null;
-			if (directoryInfo != null) return directoryInfo;
-			Log($"Package directory \"{package}\" doesn't exist.", MessageLevel.Error);
-			return null;
-		}
-
 		public int Invoke(string args)
 		{
 			Log(args);
@@ -53,7 +45,7 @@ namespace Alchemist
 				NoParseTrace = _noParseTrace,
 				Verbosity = Verbosity,
 				ExcludePrelude = ExcludePrelude,
-				Packages = Packages.Select(GetPackageDirectories).ToList(),
+				Packages = Packages.ToArray(),
 				ExtraSourceFiles = ExtraSourceFiles.Select(file => new FileInfo(file)).ToList()
 			});
 			foreach (var msg in result.Messages)
