@@ -10,7 +10,11 @@ namespace Element.AST
         private IReadOnlyList<Declaration>? _cachedList;
         private readonly Dictionary<Identifier, Result<IValue>> _resolvedValueCache = new Dictionary<Identifier, Result<IValue>>();
         public IReadOnlyList<Declaration> Declarations => _cachedList ??= _sourceScopes.Values.SelectMany(blob => blob).ToList();
-        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext context) => throw new NotImplementedException();
+        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext context) =>
+            new Result<ResolvedBlock>(
+                new ResolvedBlock(Declarations.Select(d => d.Identifier).ToArray(),
+                                  Enumerable.Empty<(Identifier Identifier, IValue Value)>(),
+                    (resolvedBlock, identifier, context) => Lookup(identifier, context), null));
 
         public bool ContainsSource(string sourceName) => _sourceScopes.ContainsKey(sourceName);
         
