@@ -247,23 +247,17 @@ namespace Element
         public Result<TResult> Map<TResult>(Func<T, TResult> mapFunc) => IsSuccess ? Merge(new Result<TResult>(mapFunc(_value))) : new Result<TResult>(Messages);
         public Result Bind(Func<T, Result> action) => IsSuccess ? new Result(Messages.Combine(action(_value).Messages)) : new Result(Messages);
         public Result<TResult> Bind<TResult>(Func<T, Result<TResult>> bindFunc)  => IsSuccess ? Merge(bindFunc(_value)) : new Result<TResult>(Messages);
-        public Result<T> Check(Func<T, Result> checkFunc) => new Result<T>(_value, Messages.Combine(checkFunc(_value).Messages));
+        public Result<T> Check(Func<T, Result> checkFunc) => IsSuccess ? new Result<T>(_value, Messages.Combine(checkFunc(_value).Messages)) : this;
 
         public Result<T> Assert(Predicate<T> assertPredicate, string exceptionErrorMessageIfFalse)
         {
-            if (!assertPredicate(_value)) throw new InternalCompilerException(exceptionErrorMessageIfFalse);
+            if (IsSuccess && !assertPredicate(_value)) throw new InternalCompilerException(exceptionErrorMessageIfFalse);
             return this;
-        }
-
-        public Result<TResult> Cast<TResult>(Func<CompilerMessage?> castFailFunc)
-        {
-            if (_value is TResult casted) return new Result<TResult>(casted, Messages);
-            var msg = castFailFunc();
-            return msg != null ? new Result<TResult>(Messages.Append(msg).ToArray()) : new Result<TResult>(Messages);
         }
         
         public Result<TResult> Cast<TResult>(ITrace trace, string? context = null)
         {
+            if (!IsSuccess) return new Result<TResult>(Messages);
             if (_value is TResult casted) return new Result<TResult>(casted, Messages);
             var msg = trace.Trace(MessageCode.InvalidCast, context ?? $"'{_value}' failed to cast to '{typeof(TResult)}'");
             return msg != null ? new Result<TResult>(Messages.Append(msg).ToArray()) : new Result<TResult>(Messages);
@@ -274,7 +268,7 @@ namespace Element
         
         public T ResultOr(T alternative) => IsSuccess ? _value : alternative;
 
-        public Result<TResult> Merge<TResult>(in Result<TResult> newResult) => new Result<TResult>(newResult._value, Messages.Combine(newResult.Messages));
+        private Result<TResult> Merge<TResult>(in Result<TResult> newResult) => new Result<TResult>(newResult._value, Messages.Combine(newResult.Messages));
         
         public bool Equals(Result<T> other) => IsSuccess && EqualityComparer<T>.Default.Equals(_value, other._value);
 
