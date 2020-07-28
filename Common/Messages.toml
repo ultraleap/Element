@@ -144,6 +144,10 @@ level = "Error"
 name = "IntrinsicConstraintCannotSpecifyFunctionSignature"
 level = "Error"
 
+[ELE35]
+name = "InfiniteLoop"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

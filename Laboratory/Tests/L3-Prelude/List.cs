@@ -1,4 +1,3 @@
-using System.Linq;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L3.Prelude
@@ -46,6 +45,6 @@ namespace Laboratory.Tests.L3.Prelude
 		
 		[TestCaseSource(nameof(_factorialArguments))]
 		public void FactorialUsingForWithTupleAndLambdas((float factorial, float expectedResult) f) =>
-			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(), $"factorialUsingTuple({f.factorial.ToString()})");
+			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(), $"factorialExpressionBodied({f.factorial.ToString()})");
 	}
 }

@@ -2,7 +2,6 @@ namespace Element
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
 
 	/// <summary>
 	/// Base class for expressions which include multiple grouped expressions requiring evaluation
@@ -12,11 +11,20 @@ namespace Element
 		public abstract int Size { get; }
 	}
 
-	public delegate Expression ConditionFunction(ReadOnlyCollection<State> state);
-	public delegate Result<Expression> ResultConditionFunction(ReadOnlyCollection<State> state);
+	public class BasicExpressionGroup : ExpressionGroup
+	{
+		private readonly IReadOnlyCollection<Expression> _expressions;
 
-	public delegate IEnumerable<Expression> NewValueFunction(ReadOnlyCollection<State> previous);
-	public delegate Result<IEnumerable<Expression>> ResultNewValueFunction(ReadOnlyCollection<State> previous);
+		public BasicExpressionGroup(IReadOnlyCollection<Expression> expressions) => _expressions = expressions;
+
+		public override IEnumerable<Expression> Dependent => _expressions;
+		protected override string ToStringInternal() => $"Group({ListJoin(_expressions)})";
+
+		public override int Size => _expressions.Count;
+	}
+
+	public delegate Result<Expression> ConditionFunction(IReadOnlyCollection<Expression> state);
+	public delegate Result<IEnumerable<Expression>> IterationFunction(IReadOnlyCollection<Expression> previous);
 
 	/// <summary>
 	/// A single expression within an expression group

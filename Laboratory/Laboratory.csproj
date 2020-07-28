@@ -19,19 +19,15 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="..\Common\**" Link="%(RecursiveDir)%(Filename)%(Extension)">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="Tests\**\*.ele" Link="%(RecursiveDir)%(Filename)%(Extension)">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tests\**\*.toml" Link="%(RecursiveDir)%(Filename)%(Extension)">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Remove="Alchemist.runsettings" />
     <Content Include="Alchemist.runsettings">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Remove="Tests\L0-Parsing\Declarations\Structs\MissingTerminalOrScope-fail.ele" />
+    <None Remove="Tests\L0-Parsing\Declarations\Functions\Declaration\TerminalMissing-fail.ele" />
   </ItemGroup>
   
   <ItemGroup>

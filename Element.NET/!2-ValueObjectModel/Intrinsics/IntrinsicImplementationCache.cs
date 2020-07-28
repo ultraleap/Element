@@ -13,7 +13,6 @@ namespace Element.AST
                     NumStruct.Instance,
                     BoolStruct.Instance,
                     ListStruct.Instance,
-                    TupleStruct.Instance,
                     For.Instance,
                     Fold.Instance,
                     List.Instance,

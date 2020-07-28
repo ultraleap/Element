@@ -30,4 +30,19 @@ intrinsic memberwise;
 # Body is a Unary function supplied with the output from the previous body starting with initial
 # Thus the types of initial and both the parameter and return of Unary must have compatible interfaces
 # List.fold is recommended as a constant-time alternative when iteration count is known
-intrinsic for(initial, condition:Predicate, body:Unary);
+intrinsic for(initial, condition:Predicate, body:Unary)
+
+
+namespace Loop
+{    
+    struct IterationState(state, index:Num)
+    constraint IterationFunction(state:IterationState)
+    
+    count(initial, count:Num, body:IterationFunction)
+    {
+        return = for(IterationState(initial, 0),
+                     _(s):Bool = s.index.lt(count),
+                     _(s) = IterationState(body(s), s.index.add(1))
+                     ).state
+    }
+}

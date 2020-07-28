@@ -21,12 +21,13 @@ namespace Element
 		public abstract IEnumerable<Expression> Dependent { get; }
 
 		public static string ListJoin(IEnumerable<Expression> list) => string.Join(", ", list.Select(e => e.ToString()));
-
 		public static string StateListJoin(IEnumerable<State> list) => string.Join(", ", list.Select(e => e.InitialValue.ToString()));
 		protected abstract override string ToStringInternal();
+		
 		public override bool Equals(object obj) => obj is Expression expression && Equals(expression);
 		public virtual bool Equals(Expression other) => other?.ToString() == ToString();
 		public override int GetHashCode() => ToString().GetHashCode();
+		
 		public IEnumerable<Expression> AllDependent => Dependent.SelectMany(d => new[] {d}.Concat(d.AllDependent));
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
 

@@ -106,31 +106,8 @@ namespace Element
 						return m.Operands[(int)idx];
 					}
 					return m;
-				case ExpressionGroupElement e1:
-					switch (e1.Group)
-					{
-						case Loop l:
-							if (l.Body[e1.Index].AllDependent.All(v => (v as State)?.Scope != l.State[0].Scope))
-							{
-								return l.Body[e1.Index];
-							}
-							break;
-					}
-					return new ExpressionGroupElement(FoldConstants(e1.Group, cache), e1.Index);
 			}
 			return input;
 		}
-
-		public static ExpressionGroup FoldConstants(this ExpressionGroup group,
-			Dictionary<Expression, Expression> cache = null) =>
-			group switch
-			{
-				// TODO: Cut out state values that aren't used
-				// TODO: Nested scopes properly
-				Loop l => Loop.Create(l.State.Select(s => FoldConstants(s.InitialValue, cache)),
-				                   _ => FoldConstants(l.Condition, cache),
-				                   _ => l.Body.Select(e => FoldConstants(e, cache))),
-				_ => group
-			};
 	}
 }

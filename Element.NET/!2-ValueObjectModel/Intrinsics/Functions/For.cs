@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace Element.AST
@@ -20,20 +19,20 @@ namespace Element.AST
             var condition = arguments[1];
             var body = arguments[2];
 
-            Result<Element.Expression> Condition(ReadOnlyCollection<State> state) =>
+            Result<Element.Expression> Condition(IReadOnlyCollection<Element.Expression> state) =>
                 initial.Deserialize(state, context)
                        .Bind(value => condition.Call(new[] {value}, context))
                        .Cast<Element.Expression>(context);
             
-            Result<IEnumerable<Element.Expression>> Body(ReadOnlyCollection<State> state) =>
+            Result<IEnumerable<Element.Expression>> Body(IReadOnlyCollection<Element.Expression> state) =>
                 initial.Deserialize(state, context)
                        .Bind(value => body.Call(new[] {value}, context))
                        .Bind(result => result.Serialize(context))
                        .Cast<IEnumerable<Element.Expression>>(context);
 
             return initial.Serialize(context)
-                          .Bind(initialSerialized => Loop.TryCreate(initialSerialized, Condition, Body))
-                          .Bind(loop => initial.Deserialize(Enumerable.Range(0, loop.Size).Select(i => new ExpressionGroupElement(loop, i)), context))
+                          .Bind(initialSerialized => Loop.CreateAndOptimize(initialSerialized, Condition, Body, context))
+                          .Bind(expressionGroup => initial.Deserialize(Enumerable.Range(0, expressionGroup.Size).Select(i => new ExpressionGroupElement(expressionGroup, i)), context))
                           .Cast<IValue>(context);
         }
     }

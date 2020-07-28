@@ -1,3 +1,7 @@
+using System;
+using System.Globalization;
+using Element.AST;
+
 namespace Element
 {
 	using System.Collections.Generic;
@@ -14,59 +18,92 @@ namespace Element
 		public Expression Condition { get; }
 		public ReadOnlyCollection<Expression> Body { get; }
 
-		public static Result<Loop> TryCreate(IReadOnlyCollection<Expression> initialValues, ResultConditionFunction conditionFunc, ResultNewValueFunction bodyFunc)
+		private class DummyExpression : Expression
 		{
-			var state = initialValues.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
-			Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> EvaluateState() =>
-				bodyFunc(state).Map(bodyExprs => new ReadOnlyCollection<Expression>(bodyExprs.ToArray()))
-				               .Accumulate(() => conditionFunc(state));
-			
-			return EvaluateState()
-				.Bind(e =>
-				{
-					var (body, condition) = e;
-					if (state.Count != body.Count) throw new InternalCompilerException("State and body expression counts are different");
+			public static DummyExpression Instance { get; } = new DummyExpression();
+			public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
+			protected override string ToStringInternal() => "<dummy>";
+		}
 
-					// Increment the scope number if there's nested loops
-					var scope = body.SelectMany(n => n.AllDependent)
-					                .Concat(condition.AllDependent)
-					                .OfType<State>()
-					                .OrderBy(s => s.Scope)
-					                .FirstOrDefault();
-					if (scope != null)
+		private static ReadOnlyCollection<State> ToState(IEnumerable<Expression> exprs) => exprs.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
+
+		public static Result<ExpressionGroup> CreateAndOptimize(IReadOnlyCollection<Expression> initialSerialized, ConditionFunction conditionFunc, IterationFunction bodyFunc, CompilationContext context) =>
+			conditionFunc(ToState(Enumerable.Repeat(DummyExpression.Instance, initialSerialized.Count)))
+				.Bind(dummyConditionResult =>
+				{
+					// Check the condition function with non-constant dummy expressions
+					if (dummyConditionResult is Constant c)
 					{
-						state = initialValues.Select((v, i) => new State(i, scope.Id + 1, v)).ToList().AsReadOnly();
-						return EvaluateState().Map(e1 => new Loop(state, e1.Condition, e1.Body));
+						if (c == Constant.True) return context.Trace(MessageCode.InfiniteLoop, "Loop condition function always returns true");
+						//if (c == Constant.False) return new BasicExpressionGroup(initialSerialized); // TODO: Warn that loop is redundant
 					}
 
-					return new Loop(state, condition, body);
+					var initialState = ToState(initialSerialized);
+
+					Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> EvaluateIteration(IReadOnlyCollection<Expression> iterationState) =>
+						bodyFunc(iterationState).Map(bodyExprs => new ReadOnlyCollection<Expression>(bodyExprs.ToArray()))
+						                        .Accumulate(() => conditionFunc(iterationState))
+						                        .Assert(e => iterationState.Count != e.Item1.Count, "Iteration state counts are different");
+
+					Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> IncrementScopeIndexIfAnyNestedLoops((ReadOnlyCollection<Expression> Body, Expression Condition) e)
+					{
+						var (body, condition) = e;
+
+						// Increment the scope number if there's nested loops
+						var scope = body.SelectMany(n => n.AllDependent)
+						                .Concat(condition.AllDependent)
+						                .OfType<State>()
+						                .OrderBy(s => s.Scope)
+						                .FirstOrDefault();
+						if (scope != null)
+						{
+							initialState = initialSerialized.Select((v, i) => new State(i, scope.Scope + 1, v)).ToList().AsReadOnly();
+							return EvaluateIteration(initialState);
+						}
+
+						return e;
+					}
+
+					Result<ExpressionGroup> UnrollCompileTimeConstantLoop((ReadOnlyCollection<Expression> Body, Expression Condition) e)
+					{
+						var (body, condition) = e;
+						var builder = new ResultBuilder<ExpressionGroup>(context, null);
+						if (initialSerialized.All(e => e is Constant))
+						{
+							var iterationCount = 1; // We already did first iteration above
+							while (condition == Constant.True)
+							{
+								if (body.Append(condition)
+								        .Any(e => !(e is Constant)))
+								{
+									goto NotCompileTimeConstant;
+								}
+
+								var iterationResult = EvaluateIteration(body);
+								builder.Append(in iterationResult);
+								if (!iterationResult.IsSuccess) return builder.ToResult();
+								(body, condition) = iterationResult.ResultOr(default); // Will never pick default alternative
+								
+								iterationCount++;
+								if (iterationCount > 100000)
+								{
+									return context.Trace(MessageCode.InfiniteLoop, "Iteration count exceeded 100000, likely to be an infinite loop");
+								}
+							}
+
+							builder.Result = new BasicExpressionGroup(body);
+							return builder.ToResult();
+						}
+
+						NotCompileTimeConstant:
+						return new Result<ExpressionGroup>(new Loop(initialState, condition, body));
+					}
+
+					return EvaluateIteration(initialState)
+					       .Bind(IncrementScopeIndexIfAnyNestedLoops)
+					       .Bind(UnrollCompileTimeConstantLoop);
 				});
-		}
 
-		public static Loop Create(IEnumerable<Expression> initialValue, ConditionFunction conditionFunc, NewValueFunction bodyFunc)
-		{
-			var initialExpressions = initialValue as Expression[] ?? initialValue.ToArray();
-			var state = initialExpressions.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
-			(ReadOnlyCollection<Expression> Body, Expression Condition) EvaluateState() => (new ReadOnlyCollection<Expression>(bodyFunc(state).ToArray()), conditionFunc(state));
-			
-			var (body, condition) = EvaluateState();
-			if (state.Count != body.Count) throw new InternalCompilerException("State and body expression counts are different");
-
-			// Increment the scope number if there's nested loops
-			var scope = body.SelectMany(n => n.AllDependent)
-			                .Concat(condition.AllDependent)
-			                .OfType<State>()
-			                .OrderBy(s => s.Scope)
-			                .FirstOrDefault();
-			if (scope != null)
-			{
-				state = initialExpressions.Select((v, i) => new State(i, scope.Id + 1, v)).ToList().AsReadOnly();
-				(body, condition) = EvaluateState();
-			}
-
-			return new Loop(state, condition, body);
-		}
-		
 		private Loop(ReadOnlyCollection<State> state, Expression condition, ReadOnlyCollection<Expression> body)
 		{
 			State = state;

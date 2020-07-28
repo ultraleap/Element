@@ -55,9 +55,12 @@ namespace Element
 		private static ExpressionGroup OptimizeGroup(Dictionary<Expression, CachedExpression> cache, ExpressionGroup group) =>
 			group switch
 			{
-				// TODO: Generalise this somehow?
-				//Persist p => new Persist(p.State.Select(s => OptimizeSingle(cache, s.InitialValue)), _ => p.NewValue.Select(n => OptimizeSingle(cache, n))),
-				Loop l => Loop.Create(l.State.Select(s => CacheExpressions(s.InitialValue, cache)), _ => CacheExpressions(l.Condition, cache), _ => l.Body.Select(n => CacheExpressions(n, cache))),
+				/*Loop l => Loop.CreateAndOptimize(l.State.Select(s => CacheExpressions(s.InitialValue, cache)).ToArray(),
+				                                 _ => CacheExpressions(l.Condition, cache),
+				                                 _ => new Result<IEnumerable<Expression>>(l.Body.Select(n => CacheExpressions(n, cache))),
+				                                 )
+				              .Match((expression, messages) => (Loop)expression, // TODO: Do something with any potential warnings
+				                     messages => throw new InternalCompilerException("Subexpression extraction should not cause errors")),*/
 				_ => group
 			};
 

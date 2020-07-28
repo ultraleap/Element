@@ -32,8 +32,7 @@ namespace Element.NET.Tests
         {
             NumStruct.Instance,
             BoolStruct.Instance,
-            ListStruct.Instance, 
-            TupleStruct.Instance,
+            ListStruct.Instance,
         };
         
         [TestCaseSource(nameof(_intrinsics))]

@@ -54,6 +54,7 @@ namespace Element
         CannotBeUsedAsInstanceFunction = 22,
         FunctionCannotBeUncurried = 23,
         NotCompileConstant = 24,
+        InfiniteLoop = 35
     }
     
     public class CompilerMessage
@@ -86,7 +87,7 @@ namespace Element
                                ? level
                                : messageLevel ?? Element.MessageLevel.Information;
             Context = context;
-            TraceStack = traceStack.ToArray() // Force a copy
+            TraceStack = traceStack?.ToArray() // Force a copy
                          ?? Array.Empty<TraceSite>();
             _message = null;
         }

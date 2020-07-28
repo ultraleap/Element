@@ -249,6 +249,12 @@ namespace Element
         public Result<TResult> Bind<TResult>(Func<T, Result<TResult>> bindFunc)  => IsSuccess ? Merge(bindFunc(_value)) : new Result<TResult>(Messages);
         public Result<T> Check(Func<T, Result> checkFunc) => new Result<T>(_value, Messages.Combine(checkFunc(_value).Messages));
 
+        public Result<T> Assert(Predicate<T> assertPredicate, string exceptionErrorMessageIfFalse)
+        {
+            if (!assertPredicate(_value)) throw new InternalCompilerException(exceptionErrorMessageIfFalse);
+            return this;
+        }
+
         public Result<TResult> Cast<TResult>(Func<CompilerMessage?> castFailFunc)
         {
             if (_value is TResult casted) return new Result<TResult>(casted, Messages);
