@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using Element.AST;
 using Lexico;
 
-namespace Element.AST
+namespace Element
 {
-    public class Constant : Element.Expression
+    public class Constant : Expression, IExpressionChainStart
     {
         // ReSharper disable once UnusedMember.Global - Used by Lexico
         public Constant() {}
@@ -26,17 +28,20 @@ namespace Element.AST
         
         public static Constant True { get; } = new Constant(1f,  BoolStruct.Instance);
         public static Constant False { get; } = new Constant(0f, BoolStruct.Instance);
+        public static Constant BoolNaN { get; } = new Constant(float.NaN, BoolStruct.Instance); // TODO: Find another solution for propagating NaNs and remove this
         public static Constant Zero { get; } = new Constant(0f);
         public static Constant One { get; } = new Constant(1f);
         public static Constant NaN { get; } = new Constant(float.NaN);
         public static Constant PositiveInfinity { get; } = new Constant(float.PositiveInfinity);
         public static Constant NegativeInfinity { get; } = new Constant(float.NegativeInfinity);
         
-        public override IEnumerable<Element.Expression> Dependent { get; } = Array.Empty<Element.Expression>();
-        protected override string ToStringInternal() => StructImplementation.Identifier.String;
-        // For normalized form: Value.ToString(CultureInfo.CurrentCulture)
-        public override bool Equals(Element.Expression other) => (other as Constant)?.Value == Value;
+        public override IEnumerable<Expression> Dependent { get; } = Array.Empty<Expression>();
+        public override string TypeOf => StructImplementation.Identifier.String;
+        public override string SummaryString => NormalizedFormString;
+        public override string NormalizedFormString => Value.ToString(CultureInfo.CurrentCulture);
+        public override bool Equals(Expression other) => (other as Constant)?.Value == Value;
         // ReSharper disable once NonReadonlyMemberInGetHashCode
         public override int GetHashCode() => new {Value, Type = StructImplementation}.GetHashCode();
+        public string TraceString => NormalizedFormString;
     }
 }

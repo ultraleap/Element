@@ -40,6 +40,7 @@ namespace Element.AST
 	            ReturnConstraint = output;
             }
 
+            public override string SummaryString => TypeOf;
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
 
@@ -59,7 +60,7 @@ namespace Element.AST
                 {
 	                Constant constantIndex => elements[(int) constantIndex.Value],
 	                {} indexExpr => elements.All(e => e is Element.Expression)
-		                                ? (IValue) new Mux(indexExpr, elements.Cast<Element.Expression>())
+		                                ? (IValue) Mux.CreateAndOptimize(indexExpr, elements.Cast<Element.Expression>())
 		                                : new ListElement(index, elements, inputConstraints, outputConstraint),
 	                _ => throw new ArgumentNullException(nameof(index))
                 };
@@ -74,6 +75,7 @@ namespace Element.AST
 
             private readonly Element.Expression _index;
             private readonly IReadOnlyList<IValue> _elements;
+            public override string SummaryString => $"List[{_index}]";
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
 

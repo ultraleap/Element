@@ -6,6 +6,7 @@ namespace Element.AST
     {
         public IIntrinsicImplementation Implementation => this;
         public abstract Identifier Identifier { get; }
+        public override string SummaryString => $"{Identifier}:{TypeOf}";
     }
     
     public interface IIntrinsicValue

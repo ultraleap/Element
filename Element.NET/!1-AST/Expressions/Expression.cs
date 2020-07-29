@@ -8,7 +8,7 @@ namespace Element.AST
     {
         public Result<IValue> ResolveExpression(IScope parentScope, CompilationContext compilationContext)
         {
-            compilationContext.PushTrace(this.MakeTraceSite($"while resolving '{ToString()}'"));
+            compilationContext.PushTrace(this.MakeTraceSite($"{GetType().Name} '{ToString()}'"));
             var result = ExpressionImpl(parentScope, compilationContext).Bind(v => v.FullyResolveValue(compilationContext));
             compilationContext.PopTrace();
             return result;

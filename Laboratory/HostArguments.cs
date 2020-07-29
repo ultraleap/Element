@@ -258,6 +258,9 @@ namespace Laboratory
                     });
             }
 
+            public Result<string> NormalForm(CompilationInput input, string expression) =>
+                RunHostProcess(new BasicTrace(input.Verbosity), BeginCommand(input, "normalform").Append($" -e \"{expression}\"").ToString());
+
             Result<string> IHost.Typeof(CompilationInput input, string expression) =>
                 RunHostProcess(new BasicTrace(input.Verbosity), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
         }

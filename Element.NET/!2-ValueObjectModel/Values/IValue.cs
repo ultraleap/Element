@@ -7,7 +7,9 @@ namespace Element.AST
     public interface IValue
     {
         string ToString();
-        //string NormalFormString { get; }
+        string TypeOf { get; }
+        string SummaryString { get; }
+        string NormalizedFormString { get; }
         Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
         Result<IValue> Index(Identifier id, CompilationContext context);
         IReadOnlyList<Identifier> Members { get; }
@@ -28,10 +30,10 @@ namespace Element.AST
     public abstract class Value : IValue
     {
         private string? _cachedString;
-        protected virtual string ToStringInternal() => GetType().Name;
-        public sealed override string ToString() => _cachedString ??= ToStringInternal();
-        
-        //public abstract string NormalFormString { get; }
+        public sealed override string ToString() => _cachedString ??= SummaryString;
+        public virtual string SummaryString => TypeOf;
+        public virtual string TypeOf => GetType().Name;
+        public virtual string NormalizedFormString => SummaryString;
         public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' cannot be called, it is not a function");
         public virtual Result<IValue> Index(Identifier id, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' is not indexable");
         public virtual IReadOnlyList<Identifier> Members => Array.Empty<Identifier>();
@@ -47,7 +49,6 @@ namespace Element.AST
             (value is IFunctionSignature fn && fn.IsNullary()
                  ? value.Call(Array.Empty<IValue>(), context)
                  : new Result<IValue>(value))
-            .Map(v => v is Element.Expression expr ? expr.FoldConstants() : v)
             // ReSharper disable once PossibleUnintendedReferenceComparison
             .Bind(v => v != value ? v.FullyResolveValue(context) : new Result<IValue>(v)); // Recurse until the resolved value is the same
         

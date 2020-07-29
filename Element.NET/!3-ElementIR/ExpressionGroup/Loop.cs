@@ -22,7 +22,7 @@ namespace Element
 		{
 			public static DummyExpression Instance { get; } = new DummyExpression();
 			public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
-			protected override string ToStringInternal() => "<dummy>";
+			public override string SummaryString => "<dummy>";
 		}
 
 		private static ReadOnlyCollection<State> ToState(IEnumerable<Expression> exprs) => exprs.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
@@ -114,7 +114,7 @@ namespace Element
 
 		public override IEnumerable<Expression> Dependent => State.Concat(Body).Concat(new[] {Condition});
 
-		protected override string ToStringInternal() => $"Loop({StateListJoin(State)}; {Condition}; {ListJoin(Body)})";
+		public override string SummaryString => $"Loop({StateListJoin(State)}; {Condition}; {ListJoinToString(Body)})";
 		// public override bool Equals(Expression other) => this == other || other is Loop && other.ToString() == ToString();
 	}
 }

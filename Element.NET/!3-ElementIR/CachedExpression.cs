@@ -16,7 +16,7 @@ namespace Element
 
 		public override IEnumerable<Expression> Dependent => new[] {Value};
 
-		protected override string ToStringInternal() => $"C{Id}";
+		public override string SummaryString => $"C{Id}";
 		public override int GetHashCode() => GetType().GetHashCode() ^ Id.GetHashCode();
 
 		public override bool Equals(Expression other)

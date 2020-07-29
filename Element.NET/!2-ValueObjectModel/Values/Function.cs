@@ -29,6 +29,8 @@ namespace Element.AST
             return namedArguments;
         }
 
+        public abstract override string SummaryString { get; }
+
         public abstract IReadOnlyList<ResolvedPort> InputPorts { get; }
         public abstract IValue ReturnConstraint { get; }
     }
@@ -46,6 +48,7 @@ namespace Element.AST
         }
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) => _implementation.Call(arguments, context);
+        public override string SummaryString => $"{_implementation.Identifier}:{TypeOf}";
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
     }
@@ -53,14 +56,19 @@ namespace Element.AST
     public abstract class CustomFunction : Function
     {
         protected readonly IScope _parent;
+        private Identifier? _identifier;
 
-        protected CustomFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, IScope parent)
+        protected CustomFunction(Identifier? identifier, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, IScope parent)
         {
+            _identifier = identifier;
             _parent = parent;
             InputPorts = inputPorts;
             ReturnConstraint = returnConstraint;
         }
 
+        public override string SummaryString => _identifier.HasValue
+                                                    ? $"{_identifier.Value}:{TypeOf}"
+                                                    : $"<unidentified>:{TypeOf}";
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
     }
@@ -69,8 +77,8 @@ namespace Element.AST
     {
         private readonly ExpressionBody _expressionBody;
 
-        public ExpressionBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, ExpressionBody expressionBody, IScope parent)
-            : base(inputPorts, returnConstraint, parent) =>
+        public ExpressionBodiedFunction(Identifier? identifier, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, ExpressionBody expressionBody, IScope parent)
+            : base(identifier, inputPorts, returnConstraint, parent) =>
             _expressionBody = expressionBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
@@ -83,8 +91,8 @@ namespace Element.AST
     {
         private readonly FunctionBlock _scopeBody;
 
-        public ScopeBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, FunctionBlock scopeBody, IScope parent)
-            : base(inputPorts, returnConstraint, parent) =>
+        public ScopeBodiedFunction(Identifier? identifier, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, FunctionBlock scopeBody, IScope parent)
+            : base(identifier, inputPorts, returnConstraint, parent) =>
             _scopeBody = scopeBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>

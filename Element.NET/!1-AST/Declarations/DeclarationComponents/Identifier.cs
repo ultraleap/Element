@@ -3,7 +3,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    public struct Identifier : IEquatable<Identifier>
+    public struct Identifier : IEquatable<Identifier>, IExpressionChainStart
     {
         public Identifier(string value) => String = value;
 
@@ -18,5 +18,7 @@ namespace Element.AST
             !ReferenceEquals(null, obj)
             && obj.GetType() == GetType()
             && Equals((Identifier) obj);
+
+        public string TraceString => String;
     }
 }

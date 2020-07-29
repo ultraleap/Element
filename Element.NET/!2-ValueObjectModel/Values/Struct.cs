@@ -17,7 +17,8 @@ namespace Element.AST
             _parent = parent;
             Fields = fields;
         }
-        
+
+        public override string SummaryString => $"{Identifier}:{TypeOf}";
         IReadOnlyList<ResolvedPort> IFunctionSignature.InputPorts => Fields;
         IValue IFunctionSignature.ReturnConstraint => this;
         public IReadOnlyList<ResolvedPort> Fields { get; }
@@ -85,8 +86,7 @@ namespace Element.AST
             _resolvedBlock = new ResolvedBlock(declaringStruct.Fields.Zip(fieldValues, (port, value) => (port.Identifier!.Value, value)).ToArray(), null);
         }
 
-        protected override string ToStringInternal() => DeclaringStruct.Identifier.String;
-
+        public override string TypeOf => DeclaringStruct.Identifier.String;
         public override Result<IValue> Index(Identifier id, CompilationContext context) =>
             _resolvedBlock.Index(id, context)
                           .Else(() => DeclaringStruct.ResolveInstanceFunction(this, id, context));

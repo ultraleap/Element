@@ -28,7 +28,7 @@ namespace Element.AST
                       var (foundId, value) = resolvedValues.FirstOrDefault(m => m.Identifier.Equals(id));
                       return !foundId.Equals(default)
                                  ? new Result<IValue>(value)
-                                 : context.Trace(MessageCode.IdentifierNotFound, $"'{id}' not found in '{resolvedBlock}'");
+                                 : context.Trace(MessageCode.IdentifierNotFound, $"'{id}' not found when indexing {resolvedBlock}");
                   }, parent)
         { }
 

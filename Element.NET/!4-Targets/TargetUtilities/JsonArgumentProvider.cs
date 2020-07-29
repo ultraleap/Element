@@ -87,12 +87,22 @@ namespace Element
 			return builder.ToResult();
 		}
 
-		public (bool Success, string Error) ParseFromJsonFile(string filePath) =>
-			!File.Exists(filePath)
-				? (false, $"\"{filePath}\" JSON file not found.")
-				: ParseFromJsonString(File.ReadAllText(filePath));
+		public Result ParseFromJsonFile(string filePath, ITrace trace)
+		{
+			if (!File.Exists(filePath)) return trace.Trace(MessageCode.FileAccessError, $"\"{filePath}\" JSON file not found.");
+			string fileText;
+			try
+			{
+				fileText = File.ReadAllText(filePath);
+			}
+			catch (Exception e)
+			{
+				return trace.Trace(MessageCode.FileAccessError, e.ToString());
+			}
+			return ParseFromJsonString(fileText, trace);
+		}
 
-		public (bool Success, string Error) ParseFromJsonString(string json)
+		public Result ParseFromJsonString(string json, ITrace trace)
 		{
 			try
 			{
@@ -100,10 +110,10 @@ namespace Element
 			}
 			catch (Exception e)
 			{
-				return (false, e.ToString());
+				return trace.Trace(MessageCode.ParseError, e.ToString());
 			}
 
-			return (true, string.Empty);
+			return Result.Success;
 		}
 	}
 }

@@ -30,7 +30,7 @@ namespace Element
 
 		public static Constant Evaluate(Op op, float a) => op switch
 		{
-			Op.Not => (a + 1f) % 2f > 0f ? Constant.True : Constant.False,
+			Op.Not => float.IsNaN(a) ? Constant.BoolNaN : (a + 1f) % 2f > 0f ? Constant.True : Constant.False,
 			_ => new Constant(op switch
 			{
 				Op.Sin => (float) Math.Sin(a),
@@ -47,7 +47,11 @@ namespace Element
 			})
 		};
 
-		public Unary(Op operation, Expression operand)
+		public static Expression CreateAndOptimize(Op op, Expression operand) => operand is Constant c
+			                                                                         ? (Expression) Evaluate(op, c.Value)
+			                                                                         : new Unary(op, operand);
+		
+		private Unary(Op operation, Expression operand)
 			: base(operation switch
 			{
 				Op.Not => BoolStruct.Instance,
@@ -62,7 +66,7 @@ namespace Element
 		public Expression Operand { get; }
 
 		public override IEnumerable<Expression> Dependent => new[] {Operand};
-		protected override string ToStringInternal() => $"{Operation}({Operand})";
+		public override string SummaryString => $"{Operation}({Operand})";
 		public override int GetHashCode() => (int)Operation ^ Operand.GetHashCode();
 		public override bool Equals(Expression other) =>
 			this == other || other is Unary bOther

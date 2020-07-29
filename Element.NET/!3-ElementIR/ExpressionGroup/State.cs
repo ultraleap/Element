@@ -17,7 +17,7 @@ namespace Element
 			InitialValue = initialValue ?? throw new ArgumentNullException(nameof(initialValue));
 		}
 
-		protected override string ToStringInternal() => $"$State<{Id}>";
+		public override string SummaryString => $"$State<{Id}>";
 		public override int GetHashCode() => GetType().GetHashCode() ^ Id.GetHashCode() ^ Scope.GetHashCode();
 
 		public override bool Equals(Expression other)

@@ -11,10 +11,10 @@ namespace Laboratory.Tests.L2.Semantics
         public void BindFunctionViaIndexing() => AssertTypeof(CompilationInput, "add", "IntrinsicFunction");
 
         [Test]
-        public void BindInstanceFunctionViaIndexing() => AssertTypeof(CompilationInput, "addFromInstanceFunction", "IntrinsicFunction <with 1/2 args applied>");
+        public void BindInstanceFunctionViaIndexing() => AssertTypeof(CompilationInput, "addFromInstanceFunction", "AppliedFunction");
 
         [Test]
-        public void CallFunctionWithFunctionResult() => AssertTypeof(CompilationInput, "getAdd(0)", "IntrinsicFunction <with 1/2 args applied>");
+        public void CallFunctionWithFunctionResult() => AssertTypeof(CompilationInput, "getAdd(0)", "AppliedFunction");
 
         [
             TestCase("returnsNumFunction(numFunctionInstance)", true, "ExpressionBodiedFunction"),

@@ -24,6 +24,6 @@ namespace Element
         public Result<string> Typeof(CompilationInput input, string expression) =>
             _context.ApplyExtraInput(input)
                     .Bind(() => _context.EvaluateExpression(expression))
-                    .Map(value => value.ToString());
+                    .Map(value => value.TypeOf);
     }
 }

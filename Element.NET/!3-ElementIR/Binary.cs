@@ -35,6 +35,17 @@ namespace Element
 			Atan2,
 		}
 
+		private static readonly HashSet<Op> BoolOps = new HashSet<Op>{
+			Op.And,
+			Op.Or,
+			Op.Eq,
+			Op.NEq,
+			Op.Lt,
+			Op.LEq,
+			Op.Gt,
+			Op.GEq
+		};
+
 		public static Constant Evaluate(Op op, float a, float b) =>
 			op switch
 			{
@@ -56,13 +67,58 @@ namespace Element
 					Op.Pow => (float) Math.Pow(a, b),
 					Op.Min => Math.Min(a, b),
 					Op.Max => Math.Max(a, b),
-					Op.Log => (float) Math.Log(a, b),
+					Op.Log => Math.Sign(a) < 0f ? float.NaN : (float) Math.Log(a, b),
 					Op.Atan2 => (float) Math.Atan2(a, b),
 					_ => throw new ArgumentOutOfRangeException(nameof(op), op, null)
 				})
 			};
 
-		public Binary(Op operation, Expression opA, Expression opB)
+		public static Expression CreateAndOptimize(Op op, Expression opA, Expression opB)
+		{
+            Constant NaN() => BoolOps.Contains(op) ? Constant.BoolNaN : Constant.NaN;
+            
+            var cA = (opA as Constant)?.Value;
+            var cB = (opB as Constant)?.Value;
+            if (float.IsNaN(cA.GetValueOrDefault()) || float.IsNaN(cB.GetValueOrDefault())) return NaN();
+            if (cA.HasValue && cB.HasValue) return Evaluate(op, cA.Value, cB.Value);
+            switch (op)
+            {
+            	case Op.Pow:
+            		if (cB == 0f || cA == 1f) { return Constant.One; }
+            		if (cA == 0f) { return Constant.Zero; }
+            		if (cB == 1f) { return opA; }
+            		if (cB == 2f) { return new Binary(Op.Mul, opA, opA); }
+            		break;
+            	case Op.Add:
+            		if (cA == 0f) { return opB; }
+            		if (cB == 0f) { return opA; }
+            		break;
+            	case Op.Sub:
+            		if (cB == 0f) { return opA; }
+            		break;
+            	case Op.Mul:
+            		if (cA == 0f || cB == 0f) { return Constant.Zero; }
+            		if (cA == 1f) { return opB; }
+            		if (cB == 1f) { return opA; }
+            		break;
+            	case Op.Div:
+            		// TODO: Divide by zero warning?
+            		if (cB == 1f) { return opA; }
+            		if (cB.HasValue) { return new Binary(Op.Mul, opA, new Constant(1/cB.Value)); }
+            		break;
+            	case Op.Rem:
+            		// TODO: Divide by zero warning?
+            		if (cA == 0f) { return Constant.Zero; }
+            		break;
+                case Op.Log:
+	                if (cA == 1f) { return Constant.Zero; } // Log_n(1) is always 0
+	                if (cA.HasValue && Math.Sign(cA.Value) < 0f) { return NaN(); } // Log_n of any negative is undefined
+	                break;
+            }
+            return new Binary(op, opA, opB);
+		}
+
+		private Binary(Op operation, Expression opA, Expression opB)
 			: base(operation switch
 			{
 				Op.And => BoolStruct.Instance,
@@ -87,7 +143,7 @@ namespace Element
 
 		public override IEnumerable<Expression> Dependent => new[] {OpA, OpB};
 
-		protected override string ToStringInternal() => $"{Operation}({OpA}, {OpB})";
+		public override string SummaryString => $"{Operation}({OpA}, {OpB})";
 		public override int GetHashCode() => (int)Operation ^ OpA.GetHashCode() ^ OpB.GetHashCode();
 
 		public override bool Equals(Expression other) =>

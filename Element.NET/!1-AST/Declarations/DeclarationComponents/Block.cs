@@ -42,7 +42,7 @@ namespace Element.AST
                 {
                     Result<IValue> IndexFunc(IScope scope, Identifier identifier, CompilationContext context) =>
                         Items.FirstOrDefault(d => d.Identifier.Equals(identifier))?.Resolve(scope, context)
-                        ?? (Result<IValue>) context.Trace(MessageCode.IdentifierNotFound, $"'{identifier}' not found in '{context.CurrentDeclarationLocation}'");
+                        ?? (Result<IValue>) context.Trace(MessageCode.IdentifierNotFound, $"'{identifier}' not found when indexing {scope}");
 
                     return new ResolvedBlock(Items?.Select(d => d.Identifier).ToArray() ?? Array.Empty<Identifier>(),
                                      capturedValues,

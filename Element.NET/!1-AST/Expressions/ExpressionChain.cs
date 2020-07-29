@@ -5,17 +5,22 @@ using Lexico;
 
 namespace Element.AST
 {
-    // ReSharper disable once UnusedType.Global
+    public interface IExpressionChainStart
+    {
+        string TraceString { get; }
+    }
+    
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class ExpressionChain : Expression
     {
         // ReSharper disable UnusedAutoPropertyAccessor.Local
 #pragma warning disable 8618
-        [field: Alternative(typeof(Identifier), typeof(Constant))] public object LitOrId { get; private set; }
+        [field: Alternative(typeof(Identifier), typeof(Constant))] public IExpressionChainStart LitOrId { get; private set; }
         [field: Optional] public List<SubExpression>? Expressions { get; private set; }
 #pragma warning restore 8618
         // ReSharper restore UnusedAutoPropertyAccessor.Local
 
-        public override string ToString() => $"{LitOrId}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
+        public override string ToString() => $"{LitOrId.TraceString}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
         protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
         {
@@ -52,7 +57,7 @@ namespace Element.AST
         {
             public Result<IValue> ResolveSubExpression(IValue previous, IScope parentScope, CompilationContext compilationContext)
             {
-                compilationContext.PushTrace(this.MakeTraceSite($"while resolving {GetType().Name} '{ToString()}'"));
+                compilationContext.PushTrace(this.MakeTraceSite($"{GetType().Name} '{ToString()}'"));
                 var result = SubExpressionImpl(previous, parentScope, compilationContext);
                 compilationContext.PopTrace();
                 return result;

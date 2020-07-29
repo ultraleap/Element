@@ -48,8 +48,18 @@ namespace Element
         public void PushTrace(in TraceSite traceSite) => _traceStack.Push(traceSite);
         public void PopTrace() => _traceStack.Pop();
 
-        public void PushDeclaration(Declaration declaration) => _declarationStack.Push(declaration);
-        public void PopDeclaration() => _declarationStack.Pop();
+        public void PushDeclaration(Declaration declaration)
+        {
+            _declarationStack.Push(declaration);
+            _traceStack.Push(declaration.MakeTraceSite($"{declaration.GetType().Name} '{declaration.Identifier}'"));
+        }
+
+        public void PopDeclaration()
+        {
+            _declarationStack.Pop();
+            _traceStack.Pop();
+        }
+
         public string CurrentDeclarationLocation
         {
             get

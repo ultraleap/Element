@@ -48,7 +48,7 @@ namespace Element.CLR
             public LExpression Parameter { get; }
             public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
             public LExpression Compile(Func<Expression, LExpression> compileOther) => Parameter;
-            protected override string ToStringInternal() => Parameter.ToString();
+            public override string SummaryString => Parameter.ToString();
             public override bool Equals(Expression other) => other == this;
             public override int GetHashCode() => new {Parameter, InstanceTypeOverride = StructImplementation}.GetHashCode();
         }
@@ -106,7 +106,7 @@ namespace Element.CLR
             public LExpression Compile(Func<Expression, LExpression> compileOther) =>
                 LExpression.PropertyOrField(_parameter, _clrField);
             public override IEnumerable<Expression> Dependent { get; }
-            protected override string ToStringInternal() => $"{_parameter}.{_clrField}";
+            public override string SummaryString => $"{_parameter}.{_clrField}";
             /*public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
                 _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, context);*/
         }

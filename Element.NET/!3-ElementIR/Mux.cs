@@ -10,7 +10,23 @@ namespace Element
 	/// </summary>
 	public class Mux : Expression
 	{
-		public Mux(Expression selector, IEnumerable<Expression> operands)
+		public static Expression CreateAndOptimize(Expression selector, IEnumerable<Expression> operands)
+		{
+			var options = operands as Expression[] ?? operands.ToArray();
+			if (options.Length == 1 || options.All(o => o.Equals(options[0]))) return options[0];
+			if (selector is Constant index)
+			{
+				var idx = index.Value >= options.Length
+					          ? options.Length - 1
+					          : index.Value < 0
+						          ? 0
+						          : index.Value;
+				return options[(int)idx];
+			}
+			return new Mux(selector, options);
+		}
+		
+		private Mux(Expression selector, IEnumerable<Expression> operands)
 		{
 			Selector = selector ?? throw new ArgumentNullException(nameof(selector));
 			Operands = new ReadOnlyCollection<Expression>(operands.ToArray());
@@ -24,7 +40,7 @@ namespace Element
 		public ReadOnlyCollection<Expression> Operands { get; }
 
 		public override IEnumerable<Expression> Dependent => Operands.Concat(new[] {Selector});
-		protected override string ToStringInternal() => $"[{ListJoin(Operands)}]:{Selector}";
+		public override string SummaryString => $"[{ListJoinToString(Operands)}]:{Selector}";
 
 		private int? _hashCode;
 

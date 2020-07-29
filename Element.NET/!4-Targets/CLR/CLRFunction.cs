@@ -70,10 +70,10 @@ namespace Element.CLR
 			public Dictionary<CachedExpression, ParameterExpression> Cache;
 			public Dictionary<ExpressionGroup, LinqExpression[]> GroupCache;
 			public Func<State, LinqExpression> ResolveState;
-			public List<float> StateValues;
-			public ParameterExpression StateArray;
+			//public List<float> StateValues;
+			//public ParameterExpression StateArray;
 			public Dictionary<ElementExpression, CachedExpression> CSECache;
-			public Dictionary<ElementExpression, ElementExpression> ConstantCache;
+			//public Dictionary<ElementExpression, ElementExpression> ConstantCache;
 		}
 
 		private static LinqExpression Compile(ElementExpression value, CompilationData data)
@@ -351,13 +351,13 @@ namespace Element.CLR
 
             var data = new CompilationData
             {
-                StateArray = LinqExpression.Variable(typeof(float[])),
-                StateValues = new List<float>(),
+                //StateArray = LinqExpression.Variable(typeof(float[])),
+                //StateValues = new List<float>(),
                 Statements = new List<LinqExpression>(),
                 Variables = new List<ParameterExpression>(),
                 Cache = new Dictionary<CachedExpression, ParameterExpression>(),
                 CSECache = new Dictionary<ElementExpression, CachedExpression>(),
-                ConstantCache = new Dictionary<ElementExpression, ElementExpression>()
+                //ConstantCache = new Dictionary<ElementExpression, ElementExpression>()
             };
 
             static bool IsPrimitiveElementType(Type t) => t == typeof(float) || t == typeof(bool);
@@ -377,7 +377,7 @@ namespace Element.CLR
 					return value.Serialize(context)
 					         .Bind(serialized => serialized.Count switch
 					         {
-						         1 when IsPrimitiveElementType(outputType) => Compile(serialized[0].FoldConstants(data.ConstantCache).CacheExpressions(data.CSECache), data),
+						         1 when IsPrimitiveElementType(outputType) => Compile(serialized[0].CacheExpressions(data.CSECache), data),
 						         _ => boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context)
 					         });
 				}

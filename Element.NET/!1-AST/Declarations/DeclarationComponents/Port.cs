@@ -75,7 +75,7 @@ namespace Element.AST
 
     public class VariadicPortMarker : Value
     {
-        protected override string ToStringInternal() => "<variadic port marker>";
+        public override string SummaryString => "<variadic port marker>";
         private VariadicPortMarker() {}
         public static VariadicPortMarker Instance { get; } = new VariadicPortMarker();
     }

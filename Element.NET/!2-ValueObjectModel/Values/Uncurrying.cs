@@ -42,7 +42,7 @@ namespace Element.AST
 
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
-            protected override string ToStringInternal() => $"({_a} << {_b}):Function";
+            public override string SummaryString => $"<uncurried function {_a} << {_b}>";
 
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
                 _a.Call(arguments.Take(_a.InputPorts.Count).ToArray(), context)

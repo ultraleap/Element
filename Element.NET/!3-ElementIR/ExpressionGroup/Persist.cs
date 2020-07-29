@@ -36,7 +36,7 @@
 
 		public override IEnumerable<Expression> Dependent => State.Concat(NewValue);
 
-		protected override string ToStringInternal() => $"Persist({StateListJoin(State)}; {ListJoin(NewValue)})";
+		protected override string ToStringInternal() => $"Persist({StateListJoin(State)}; {ListJoinToString(NewValue)})";
 		// public override bool Equals(Expression other) => this == other || other is Persist && other.ToString() == ToString();
 	}
 }*/

@@ -28,7 +28,7 @@ namespace Element.AST
 
             public bool CanBeFullyApplied => _appliedArguments.Count >= _definition.InputPorts.Count;
 
-            protected override string ToStringInternal() => $"{_definition} <with {_appliedArguments.Count}/{_definition.InputPorts.Count} args applied>";
+            public override string SummaryString => $"{_definition} <partially applied {_appliedArguments.Count}/{_definition.InputPorts.Count}>";
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) => _definition.Call(_appliedArguments.Concat(arguments).ToArray(), context);
             public override IReadOnlyList<ResolvedPort> InputPorts => _definition.InputPorts.Skip(_appliedArguments.Count).ToList();
             public override IValue ReturnConstraint => _definition.ReturnConstraint;

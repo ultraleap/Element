@@ -38,8 +38,8 @@ namespace Element.AST
                         return Body switch
                         {
                             // ReSharper disable once RedundantCast
-                            ExpressionBody exprBody => (IValue)new ExpressionBodiedFunction(inputPorts, returnConstraint, exprBody, parentScope),
-                            FunctionBlock functionBlock => new ScopeBodiedFunction(inputPorts, returnConstraint, functionBlock, parentScope),
+                            ExpressionBody exprBody => (IValue)new ExpressionBodiedFunction(null, inputPorts, returnConstraint, exprBody, parentScope),
+                            FunctionBlock functionBlock => new ScopeBodiedFunction(null, inputPorts, returnConstraint, functionBlock, parentScope),
                             _ => throw new InternalCompilerException($"Unknown function body type '{Body}'")
                         };
                     });

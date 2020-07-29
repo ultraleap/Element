@@ -28,7 +28,7 @@ namespace Element
         }
 
         public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
-            Parser.Parse<AST.Expression>(new SourceInfo("<evaluated expression>", expression), this, CompilationInput.NoParseTrace)
+            Parser.Parse<AST.Expression>(new SourceInfo("<input expression>", expression), this, CompilationInput.NoParseTrace)
                   .Check(expressionObject => expressionObject.Validate(new CompilationContext(this)))
                   .Bind(expressionObject => expressionObject.ResolveExpression(scopeToEvaluateIn ?? GlobalScope, new CompilationContext(this)));
 
@@ -85,7 +85,7 @@ namespace Element
                 }
                 
                 var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
-                var packageManifests = currentDir.GetFiles("*.elepkg", SearchOption.AllDirectories)
+                var packageManifests = currentDir.GetFiles("*.bond", SearchOption.AllDirectories)
                                                  .ToDictionary(f => f, f => ParseFromJsonString(File.ReadAllText(f.FullName)));
                 var packageToDirectoryMap = new Dictionary<string, DirectoryInfo>();
                 foreach (var package in packageManifests)

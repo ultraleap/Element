@@ -1,5 +1,3 @@
-using Element.AST;
-
 namespace Element
 {
 	using System.Linq;
@@ -34,13 +32,13 @@ namespace Element
 				switch (value)
 				{
 					case Unary u:
-						newValue = new Unary(u.Operation, CacheExpressions(u.Operand, cache));
+						newValue = Unary.CreateAndOptimize(u.Operation, CacheExpressions(u.Operand, cache));
 						break;
 					case Binary b:
-						newValue = new Binary(b.Operation, CacheExpressions(b.OpA, cache), CacheExpressions(b.OpB, cache));
+						newValue = Binary.CreateAndOptimize(b.Operation, CacheExpressions(b.OpA, cache), CacheExpressions(b.OpB, cache));
 						break;
 					case Mux m:
-						newValue = new Mux(CacheExpressions(m.Selector, cache), m.Operands.Select(o => CacheExpressions(o, cache)));
+						newValue = Mux.CreateAndOptimize(CacheExpressions(m.Selector, cache), m.Operands.Select(o => CacheExpressions(o, cache)));
 						break;
 					case ExpressionGroupElement ge:
 						return new ExpressionGroupElement(OptimizeGroup(cache, ge.Group), ge.Index);
@@ -68,8 +66,8 @@ namespace Element
 			value switch
 			{
 				CachedExpression c when System.Array.IndexOf(singleUses, c) > 0 => c.Value,
-				Unary u => new Unary(u.Operation, FoldBackSingleUses(singleUses, u.Operand)),
-				Binary b => new Binary(b.Operation, FoldBackSingleUses(singleUses, b.OpA), FoldBackSingleUses(singleUses, b.OpB)),
+				Unary u => Unary.CreateAndOptimize(u.Operation, FoldBackSingleUses(singleUses, u.Operand)),
+				Binary b => Binary.CreateAndOptimize(b.Operation, FoldBackSingleUses(singleUses, b.OpA), FoldBackSingleUses(singleUses, b.OpB)),
 				_ => value
 			};
 	}

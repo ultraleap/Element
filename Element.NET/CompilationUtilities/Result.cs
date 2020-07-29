@@ -263,9 +263,15 @@ namespace Element
             return msg != null ? new Result<TResult>(Messages.Append(msg).ToArray()) : new Result<TResult>(Messages);
         }
 
-        public Result<T> Else(Func<Result<T>> elseFunc) => IsSuccess ? this : elseFunc();
-        public Result<T> ElseIf(bool condition, Func<Result<T>> elseFunc) => condition && !IsSuccess ? elseFunc() : this;
-        
+        public Result<T> Else(Func<Result<T>> elseFunc)
+        {
+            if (IsSuccess) return this;
+            var alternative = elseFunc();
+            return alternative.IsSuccess ? alternative : Merge(in alternative);
+        }
+
+        public Result<T> ElseIf(bool condition, Func<Result<T>> elseFunc) => IsSuccess || !condition ? this : Else(elseFunc);
+
         public T ResultOr(T alternative) => IsSuccess ? _value : alternative;
 
         private Result<TResult> Merge<TResult>(in Result<TResult> newResult) => new Result<TResult>(newResult._value, Messages.Combine(newResult.Messages));

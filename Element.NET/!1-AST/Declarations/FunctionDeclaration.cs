@@ -45,7 +45,7 @@ namespace Element.AST
                     .Map(t =>
                     {
                         var (inputPort, returnConstraint) = t;
-                        return (IValue) new ExpressionBodiedFunction(inputPort, returnConstraint, (ExpressionBody)Body, scope);
+                        return (IValue) new ExpressionBodiedFunction(Identifier, inputPort, returnConstraint, (ExpressionBody)Body, scope);
                     });
 
         protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
@@ -94,7 +94,7 @@ namespace Element.AST
                     .Map(t =>
                     {
                         var (inputPort, returnConstraint) = t;
-                        return (IValue) new ScopeBodiedFunction(inputPort, returnConstraint, (FunctionBlock)Body, scope);
+                        return (IValue) new ScopeBodiedFunction(Identifier, inputPort, returnConstraint, (FunctionBlock)Body, scope);
                     });
     }
     

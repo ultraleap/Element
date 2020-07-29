@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Element
 {
 	using System;
@@ -9,6 +11,8 @@ namespace Element
 	public abstract class ExpressionGroup : Expression
 	{
 		public abstract int Size { get; }
+		public override string TypeOf => "ExpressionGroup";
+		public static string StateListJoin(IEnumerable<State> list) => string.Join(", ", list.Select(e => e.InitialValue.ToString()));
 	}
 
 	public class BasicExpressionGroup : ExpressionGroup
@@ -18,7 +22,7 @@ namespace Element
 		public BasicExpressionGroup(IReadOnlyCollection<Expression> expressions) => _expressions = expressions;
 
 		public override IEnumerable<Expression> Dependent => _expressions;
-		protected override string ToStringInternal() => $"Group({ListJoin(_expressions)})";
+		public override string SummaryString => $"Group({ListJoinToString(_expressions)})";
 
 		public override int Size => _expressions.Count;
 	}
@@ -45,7 +49,7 @@ namespace Element
 		public int Index { get; }
 
 		public override IEnumerable<Expression> Dependent => Group.Dependent;
-		protected override string ToStringInternal() => $"{Group}.{Index}";
+		public override string SummaryString => $"{Group}.{Index}";
 		public override int GetHashCode() => GetType().GetHashCode() ^ Group.GetHashCode() ^ Index;
 
 		public override bool Equals(Expression other)

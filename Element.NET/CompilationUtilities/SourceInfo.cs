@@ -21,14 +21,14 @@ namespace Element
             
             var line = 1;
             var column = 1;
-            var lineCharacterIndex = 0;
+            var lineCharacterIndex = 1;
             for (var i = 0; i < index; i++)
             {
                 if (text[i] == '\r')
                 {
                     line++;
                     column = 1;
-                    lineCharacterIndex = 0;
+                    lineCharacterIndex = 1;
                     if (i + 1 < text.Length && text[i + 1] == '\n')
                     {
                         i++;
@@ -38,7 +38,7 @@ namespace Element
                 {
                     line++;
                     column = 1;
-                    lineCharacterIndex = 0;
+                    lineCharacterIndex = 1;
                 }
                 else if (text[i] == '\t')
                 {
