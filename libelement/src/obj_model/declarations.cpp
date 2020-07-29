@@ -77,6 +77,39 @@ namespace element
         return build_error_for_invalid_call(this, compiled_args);
     }
 
+    bool struct_declaration::serializable(const compilation_context& context) const
+    {
+        //if it's a type (struct) and it can be deserialized (can be represented as a flat array of floats via placeholder expressions), then it can also be serialized (converted to an expression tree)
+        return deserializable(context);
+    }
+
+    bool struct_declaration::deserializable(const compilation_context& context) const
+    {
+        //todo: cache deserializabilit
+
+        if (inputs.empty())
+        {
+            assert(is_intrinsic());
+            const auto intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
+            assert(intrinsic);
+            //todo: ask intrinsic if it's deserializable
+            if (intrinsic->get_type() == type::num.get() || intrinsic->get_type() == type::boolean.get())
+                return true;
+
+            return false;
+        }
+
+        for (const auto& input : get_inputs())
+        {
+            //todo: we can cache all of the resolving annotation things everywhere
+            const auto& type = get_scope()->find(input.get_annotation()->to_string(), true);
+            if (!type->deserializable(context))
+                return false;
+        }
+
+        return true;
+    }
+
     std::shared_ptr<object> struct_declaration::generate_placeholder(const compilation_context& context, int& placeholder_index) const
     {
         if (inputs.empty())
@@ -89,9 +122,8 @@ namespace element
         }
 
         std::vector<std::shared_ptr<object>> placeholder_inputs;
-        for (unsigned i = 0; i < get_inputs().size(); ++i)
+        for (const auto& input : get_inputs())
         {
-            const auto& input = get_inputs()[i];
             const auto& type = get_scope()->find(input.get_annotation()->to_string(), true);
             auto placeholder = type->generate_placeholder(context, placeholder_index);
 

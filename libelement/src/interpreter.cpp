@@ -745,6 +745,58 @@ element_result element_interpreter_find(element_interpreter_ctx* context, const 
     return ELEMENT_OK;
 }
 
+element_result valid_boundary_function(
+    element_interpreter_ctx* context,
+    const element::compilation_context& compilation_context,
+    const element_compiler_options* options,
+    const element_compilable* compilable)
+{
+    const auto func_decl = std::dynamic_pointer_cast<element::function_declaration>(compilable->object);
+    if (!func_decl)
+        return ELEMENT_ERROR_UNKNOWN;
+
+    if (!func_decl->get_output())
+        return ELEMENT_ERROR_UNKNOWN;
+
+    if (!func_decl->get_output()->has_annotation())
+        return ELEMENT_ERROR_UNKNOWN;
+
+    //outputs must be serializable
+    const auto return_type = func_decl->get_scope()->find(func_decl->get_output()->get_annotation()->to_string(), true);
+    if (!return_type->serializable(compilation_context))
+        return ELEMENT_ERROR_UNKNOWN;
+
+    //inputs must be deserializable
+    for (const auto& input : func_decl->get_inputs())
+    {
+        const auto* annotation = input.get_annotation();
+        if (!annotation)
+            return ELEMENT_ERROR_UNKNOWN;
+
+        const auto& type = func_decl->get_scope()->find(annotation->to_string(), true);
+        if (!type->deserializable(compilation_context))
+            return ELEMENT_ERROR_UNKNOWN;
+    }
+}
+
+std::vector<std::shared_ptr<element::object>> generate_placeholder_inputs(
+    element_interpreter_ctx* context,
+    const element::compilation_context& compilation_context,
+    const element_compiler_options* options,
+    const element_compilable* compilable)
+{
+    std::vector<std::shared_ptr<element::object>> placeholder_inputs;
+    int placeholder_index = 0;
+
+    for (const auto& input : compilable->object->get_inputs())
+    {
+        const auto& type = compilable->object->get_scope()->find(input.get_annotation()->to_string(), true);
+        placeholder_inputs.push_back(type->generate_placeholder(compilation_context, placeholder_index));
+    }
+
+    return placeholder_inputs;
+}
+
 element_result element_interpreter_compile(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
@@ -753,34 +805,30 @@ element_result element_interpreter_compile(
 {
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
-    std::vector<std::shared_ptr<element::object>> placeholder_inputs;
-    int placeholder_index = 0;
-    for (unsigned i = 0; i < compilable->object->get_inputs().size(); ++i)
+    const auto result = valid_boundary_function(context, compilation_context, options, compilable);
+    if (result != ELEMENT_OK)
     {
-        const auto& input = compilable->object->get_inputs()[i];
-        const auto& type = compilable->object->get_scope()->find(input.get_annotation()->to_string(), true);
-        auto placeholder = type->generate_placeholder(compilation_context, placeholder_index);
-
-        if (!placeholder)
-        {
-            assert(!"this type can't be deserialised");
-            return ELEMENT_ERROR_UNKNOWN;
-        }
-
-        placeholder_inputs.push_back(std::move(placeholder));
+        assert(!"this is not a valid boundary function");
+        *evaluable = nullptr;
+        return result;
     }
 
-    const auto compiled = compilable->object->call(compilation_context, placeholder_inputs, {});
+    auto placeholder_inputs = generate_placeholder_inputs(context, compilation_context, options, compilable);
+    const auto compiled = compilable->object->call(compilation_context, std::move(placeholder_inputs), {});
 
     if (!compiled)
     {
         assert(!"tried to compile something but it resulted in a nullptr");
+        *evaluable = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
     const auto err = std::dynamic_pointer_cast<element::error>(compiled);
     if (err)
+    {
+        *evaluable = nullptr;
         return err->log_once(context->logger.get());
+    }
 
     auto expression = compiled->to_expression();
     if (!expression)
@@ -788,6 +836,7 @@ element_result element_interpreter_compile(
         //in theory we would do this check on the return type up front, so if we hit this case, then the actual type doesn't match the expected one, which is a different error
         //for now we don't, so leave it
         assert(!"this type can't be serialised");
+        *evaluable = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
