@@ -88,14 +88,6 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to get metainfo for: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			result = element_metainfo_for_evaluable(evaluable, &metainfo);
-			if (result != ELEMENT_OK) {
-				auto type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to get metainfo for: " + evaluate + " with element_result " + std::to_string(result));
-			}
-
 			result = element_metainfo_get_typeof(metainfo, internaltypeof_string.data(), internaltypeof_string.size());
 			if (result != ELEMENT_OK) {
 				auto type = ELEMENT_ERROR_UNKNOWN;
