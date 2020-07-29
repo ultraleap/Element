@@ -35,7 +35,7 @@ namespace Element
 					if (dummyConditionResult is Constant c)
 					{
 						if (c == Constant.True) return context.Trace(MessageCode.InfiniteLoop, "Loop condition function always returns true");
-						//if (c == Constant.False) return new BasicExpressionGroup(initialSerialized); // TODO: Warn that loop is redundant
+						//if (c == Constant.False) return new BasicExpressionGroup(initialSerialized); // TODO: Implement compilation of BasicExpressionGroup and re-enable this, warn that loop is redundant
 					}
 
 					var initialState = ToState(initialSerialized);
@@ -67,9 +67,10 @@ namespace Element
 					Result<ExpressionGroup> UnrollCompileTimeConstantLoop((ReadOnlyCollection<Expression> Body, Expression Condition) e)
 					{
 						var (body, condition) = e;
-						var builder = new ResultBuilder<ExpressionGroup>(context, null);
-						if (initialSerialized.All(e => e is Constant))
+						// TODO: Implement compilation of BasicExpressionGroup and re-enable this
+						/*if (initialSerialized.All(e => e is Constant))
 						{
+							var builder = new ResultBuilder<ExpressionGroup>(context, null);
 							var iterationCount = 1; // We already did first iteration above
 							while (condition == Constant.True)
 							{
@@ -93,7 +94,7 @@ namespace Element
 
 							builder.Result = new BasicExpressionGroup(body);
 							return builder.ToResult();
-						}
+						}*/
 
 						NotCompileTimeConstant:
 						return new Result<ExpressionGroup>(new Loop(initialState, condition, body));
