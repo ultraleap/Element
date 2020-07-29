@@ -125,7 +125,7 @@ element_result element_interpreter_evaluate_expression(
     element_interpreter_ctx* context,
     const element_evaluator_options* options,
     const char* expression_string,
-    const element_outputs* outputs);
+    element_outputs* outputs);
 
 element_result element_metainfo_for_evaluable(
     const element_evaluable* evaluable,

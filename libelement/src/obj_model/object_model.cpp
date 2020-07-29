@@ -12,23 +12,8 @@ namespace element
 {
     //declarations
     void build_scope(const element_interpreter_ctx* context, const element_ast* ast, const declaration& declaration, element_result& output_result);
-    void build_expression(const element_interpreter_ctx* context, const element_ast* ast, expression_chain* chain, element_result& output_result);
-
+    
     //definitions
-    template <typename T>
-    void assign_source_information(const element_interpreter_ctx* context, T& t, const element_ast* ast)
-    {
-        const auto& file_info = context->src_context->file_info.at(ast->nearest_token->file_name);
-        const std::string* filename = file_info.file_name.get();
-        const std::string* line_in_source = file_info.source_lines[ast->nearest_token->line - 1].get();
-        t->source_info = source_information(
-            ast->nearest_token->line,
-            ast->nearest_token->character,
-            ast->nearest_token->character + ast->nearest_token->tok_len,
-            line_in_source,
-            filename->data()
-        );
-    }
 
     std::unique_ptr<type_annotation> build_type_annotation(const element_interpreter_ctx* context, const element_ast* ast, element_result& output_result)
     {
@@ -170,10 +155,7 @@ namespace element
                 return nullptr;
             }
 
-            auto chain = std::make_unique<expression_chain>(function_decl.get());
-            assign_source_information(context, chain, body);
-            build_expression(context, body, chain.get(), output_result);
-
+            auto chain = build_expression_chain(context, body, function_decl.get(), output_result);
             if (chain->expressions.empty())
             {
                 output_result = log_error(context, context->src_context.get(), body, log_error_message_code::expression_chain_cannot_be_empty, function_decl->name.value);
@@ -233,49 +215,49 @@ namespace element
         return result;
     }
 
-    void build_literal_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    std::unique_ptr<expression> build_literal_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
     {
         const auto is_empty = chain->expressions.empty();
         if (!is_empty)
         {
             output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_literal_expression_placement);
-            return;
+            return nullptr;
         }
 
         auto expression = std::make_unique<literal_expression>(ast->literal, chain);
         assign_source_information(context, expression, ast);
-        chain->expressions.push_back(std::move(expression));
+        return std::move(expression);
     }
 
-    void build_identifier_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    std::unique_ptr<expression> build_identifier_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
     {
         //no need to test for !chain->expressions.empty() since build_indexing_expression code path will always be taken in this case
         auto expression = std::make_unique<identifier_expression>(ast->identifier, chain);
         assign_source_information(context, expression, ast);
-        chain->expressions.push_back(std::move(expression));
+        return std::move(expression);
     }
 
-    void build_indexing_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    std::unique_ptr<expression> build_indexing_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
     {
         //no need to test for chain->expressions.empty() since build_identifier_expression code path will always be taken in this case
         auto expression = std::make_unique<indexing_expression>(ast->identifier, chain);
         assign_source_information(context, expression, ast);
-        chain->expressions.push_back(std::move(expression));
+        return std::move(expression);
     }
 
-    void build_call_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    std::unique_ptr<expression> build_call_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
     {
         const auto is_empty = chain->expressions.empty();
         if (is_empty)
         {
             output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_call_expression_placement);
-            return;
+            return nullptr;
         }
 
         if (ast->children.empty())
         {
             output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::empty_expression);
-            return;
+            return nullptr;
         }
 
         auto call_expr = std::make_unique<call_expression>(chain);
@@ -284,24 +266,41 @@ namespace element
         //every child of the current AST node (EXPRLIST) is the start of another expression_chain, comma separated
         for (const auto& child : ast->children)
         {
-            auto argument = std::make_unique<expression_chain>(chain->declarer);
-            assign_source_information(context, argument, child.get());
-            build_expression(context, child.get(), argument.get(), output_result);
-
-            call_expr->arguments.push_back(std::move(argument));
+            auto nested_chain = build_expression_chain(context, child.get(), chain->declarer, output_result);
+            call_expr->arguments.push_back(std::move(nested_chain));
         }
 
-        chain->expressions.push_back(std::move(call_expr));
+        return std::move(call_expr);
     }
 
-    void build_lambda_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    std::unique_ptr<expression>  build_lambda_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
     {
         auto expression = std::make_unique<lambda_expression>(chain);
         assign_source_information(context, expression, ast);
-        chain->expressions.push_back(std::move(expression));
+        return std::move(expression);
     }
 
-    void build_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+
+    std::unique_ptr<expression_chain> build_expression_chain(const element_interpreter_ctx* context, const element_ast* const ast, const declaration* declarer, element_result& output_result)
+    {
+        auto chain = std::make_unique<expression_chain>(declarer);
+        assign_source_information(context, chain, ast);
+
+        //start of an expression chain, then build the rest of it
+        auto first_expression = build_expression(context, ast, chain.get(), output_result);
+        chain->expressions.push_back(std::move(first_expression));
+
+        //every child of the first AST node is part of the chain
+        for (const auto& child : ast->children)
+        {
+            auto chained_expression = build_expression(context, child.get(), chain.get(), output_result);
+            chain->expressions.push_back(std::move(chained_expression));
+        }
+
+        return std::move(chain);
+    }
+
+    std::unique_ptr<expression> build_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
     {
         assert(chain);
         assert(chain->declarer);
@@ -309,31 +308,22 @@ namespace element
         const auto is_empty = chain->expressions.empty();
 
         if (ast->type == ELEMENT_AST_NODE_LITERAL)
-            build_literal_expression(context, ast, chain, output_result);
+            return build_literal_expression(context, ast, chain, output_result);
 
         if (is_empty && ast->type == ELEMENT_AST_NODE_CALL)
-            build_identifier_expression(context, ast, chain, output_result);
+            return build_identifier_expression(context, ast, chain, output_result);
 
         if (!is_empty && ast->type == ELEMENT_AST_NODE_CALL)
-            build_indexing_expression(context, ast, chain, output_result);
+            return build_indexing_expression(context, ast, chain, output_result);
 
         if (ast->type == ELEMENT_AST_NODE_EXPRLIST)
-            build_call_expression(context, ast, chain, output_result);
+            return build_call_expression(context, ast, chain, output_result);
 
-        if (ast->type == ELEMENT_AST_NODE_LAMBDA) {
-            build_lambda_expression(context, ast, chain, output_result);
-            return;
-        }
+        if (ast->type == ELEMENT_AST_NODE_LAMBDA)
+            return build_lambda_expression(context, ast, chain, output_result);
 
-        //start of an expression chain, build the rest of it
-        if (chain->expressions.size() == 1)
-        {
-            //every child of the first AST node is part of the chain
-            for (const auto& child : ast->children)
-            {
-                build_expression(context, child.get(), chain, output_result);
-            }
-        }
+        //todo: error
+        return nullptr;
     }
 
     void build_scope(const element_interpreter_ctx* context, const element_ast* ast, scope* our_scope, element_result& output_result)
