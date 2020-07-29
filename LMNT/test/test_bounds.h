@@ -117,6 +117,14 @@ static void test_floors(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_TRUE(isnan(rvals[0]));
 
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isinf(rvals[0]) && !signbit(rvals[0]));
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isinf(rvals[0]) && signbit(rvals[0]));
+
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -201,6 +209,14 @@ static void test_rounds(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_TRUE(isnan(rvals[0]));
 
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isinf(rvals[0]) && !signbit(rvals[0]));
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isinf(rvals[0]) && signbit(rvals[0]));
+
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -275,6 +291,14 @@ static void test_ceils(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""));
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_TRUE(isnan(rvals[0]));
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isinf(rvals[0]) && !signbit(rvals[0]));
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isinf(rvals[0]) && signbit(rvals[0]));
 
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
@@ -351,6 +375,14 @@ static void test_truncs(void)
     TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""));
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_TRUE(isnan(rvals[0]));
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isinf(rvals[0]) && !signbit(rvals[0]));
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isinf(rvals[0]) && signbit(rvals[0]));
 
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
