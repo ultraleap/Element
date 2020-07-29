@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 
 //LIBS
 #include <fmt/format.h>
@@ -23,6 +24,7 @@
 #include "obj_model/intermediaries.hpp"
 #include "obj_model/errors.hpp"
 #include "log_errors.hpp"
+#include "element/ast.h"
 
 bool file_exists(const std::string& file)
 {
@@ -759,6 +761,7 @@ element_result valid_boundary_function(
     if (!is_valid)
         return ELEMENT_ERROR_UNKNOWN;
 
+
     return ELEMENT_OK;
 }
 
@@ -939,6 +942,131 @@ element_result element_interpreter_evaluate(
     if (result != ELEMENT_OK) {
         context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->typeof_info()), "<input>");
     }
+
+    return result;
+}
+
+element_result element_interpreter_evaluate_expression(
+    element_interpreter_ctx* context,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    element_outputs* outputs)
+{
+    const element::compilation_context compilation_context(context->global_scope.get(), context);
+
+    element_tokeniser_ctx* tokeniser;
+    auto result = element_tokeniser_create(&tokeniser);
+    if (result != ELEMENT_OK)
+        return result;
+
+    tokeniser->logger = context->logger;
+
+    // Make a smart pointer out of the tokeniser so it's deleted on an early return
+    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(tokeniser, element_tokeniser_delete);
+
+    //create the file info struct to be used by the object model later
+    element::file_information info;
+    info.file_name = std::make_unique<std::string>("<REMOVE>");
+
+    std::string hack = std::string(expression_string) + ";";
+    //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
+    result = element_tokeniser_run(tokeniser, hack.c_str(), info.file_name->data());
+    if (result != ELEMENT_OK)
+        return result;
+
+    if (tokeniser->tokens.empty())
+        return ELEMENT_OK;
+
+    const auto total_lines_parsed = tokeniser->line;
+    
+    //lines start at 1
+    for (auto i = 0; i < total_lines_parsed; ++i)
+        info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
+
+    auto* const data = info.file_name->data();
+    context->src_context->file_info[data] = std::move(info);
+
+    const auto log_tokens = flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+	
+    if (log_tokens)
+		context->log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+
+    element_parser_ctx parser;
+    parser.tokeniser = tokeniser;
+    parser.logger = context->logger;
+    parser.src_context = context->src_context;
+
+    element_ast root(nullptr);
+    //root.nearest_token = &tokeniser->cur_token;
+    parser.root = &root;
+
+    size_t first_token = 0;
+    auto* ast = ast_new_child(&root, ELEMENT_AST_NODE_EXPRESSION);
+    result = parser.parse_expression(&first_token, ast);
+    if (result != ELEMENT_OK)
+        return result;
+
+    const auto log_ast = flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+	
+    if (log_ast)
+        context->log("\n---\nAST\n---\n" + ast_to_string(parser.root));
+
+    //parse only enabled, skip object model generation to avoid error codes with positive values
+    //i.e. errors returned other than ELEMENT_ERROR_PARSE
+    if (context->parse_only)
+    {
+        root.children.clear();
+        return ELEMENT_OK;
+    }
+
+    auto dummy_declaration = std::make_unique<element::function_declaration>(element::identifier{ "<REMOVE>" }, context->global_scope.get(), false);
+    parser.root->nearest_token = &tokeniser->tokens[0];
+    element::assign_source_information(context, dummy_declaration, parser.root);
+    auto expression_chain = element::build_expression_chain(context, ast, dummy_declaration.get(), result);
+    dummy_declaration->body = std::move(expression_chain);
+    root.children.clear();
+
+    if (result != ELEMENT_OK)
+    {
+        outputs->count = 0;
+        context->log(result, fmt::format("building object model failed with element_result {}", result), info.file_name->data());
+        return result;
+    }
+
+    context->global_scope->add_declaration(std::move(dummy_declaration));
+
+    auto found_dummy_decl = context->global_scope->find(element::identifier{"<REMOVE>"}, false);
+    auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
+
+    auto evaluable = std::make_unique<element_evaluable>();
+    evaluable->evaluable = compiled->to_expression();
+
+    const auto err = std::dynamic_pointer_cast<element::error>(compiled);
+    if (err)
+    {
+        outputs->count = 0;
+        return err->log_once(context->logger.get());
+    }
+
+    if (!evaluable->evaluable)
+    {
+        assert(!"expression returned something that isn't serializable");
+        //todo: log
+        outputs->count = 0;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    float inputs[] = { 0 };
+    element_inputs input;
+    input.values = inputs;
+    input.count = 1;
+
+    result = element_interpreter_evaluate(context, options, evaluable.get(), &input, outputs);
+
+    evaluable.reset(nullptr);
+
+    //todo: remove declaration added to global scope
+    //todo: remove file_info added to interpreter source context
 
     return result;
 }

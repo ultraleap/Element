@@ -178,7 +178,7 @@ static element_ast* ast_add_child(element_ast* parent, ast_unique_ptr child)
     return childr;
 }
 
-static element_ast* ast_new_child(element_ast* parent, element_ast_node_type type = ELEMENT_AST_NODE_NONE)
+element_ast* ast_new_child(element_ast* parent, element_ast_node_type type = ELEMENT_AST_NODE_NONE)
 {
     auto c = ast_new(parent, type);
     element_ast* cr = c.get();
