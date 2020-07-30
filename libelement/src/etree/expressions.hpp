@@ -11,6 +11,7 @@
 #include "etree/fwd.hpp"
 #include "construct.hpp"
 #include "typeutil.hpp"
+#include "obj_model/types.hpp"
 #include "obj_model/object.hpp"
 
 struct element_expression : element::object, rtti_type<element_expression>, std::enable_shared_from_this<element_expression>
@@ -20,6 +21,9 @@ public:
     std::vector<expression_shared_ptr>& dependents() { return m_dependents; }
 
     [[nodiscard]] virtual size_t get_size() const { return m_size; }
+
+    [[nodiscard]] bool matches_constraint(const element::compilation_context& context, const element::constraint* constraint) const final { return actual_type ? actual_type->matches_constraint(context, constraint) : false; };
+    [[nodiscard]] const element::constraint* get_constraint() const final { return actual_type; };
 
     [[nodiscard]] std::string typeof_info() const override;
     [[nodiscard]] std::string to_code(int depth = 0) const override;

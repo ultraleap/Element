@@ -2,9 +2,9 @@
 
 #ifndef LEGACY_COMPILER
 
+//SELF
 #include "typeutil.hpp"
-
-#include "interpreter_internal.hpp"
+#include "object.hpp"
 
 namespace element
 {
@@ -16,12 +16,16 @@ namespace element
         static const constraint_const_unique_ptr binary;
 
         static const constraint_const_unique_ptr any;
+        //todo: what is a function constraint and what uses? not something a user has access to, so something internal?
         static const constraint_const_unique_ptr function;
 
         constraint(element_type_id id)
             : rtti_type(id)
         {
         }
+
+        [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
+        [[nodiscard]] const constraint* get_constraint() const override { return this; }
 
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
@@ -124,15 +128,17 @@ namespace element
     {
     public:
         DECLARE_TYPE_ID();
-        user_type(identifier name)
+        user_type(identifier name, const declaration* declarer)
             : type(type_id, name)
             , name(name)
+            , declarer(declarer)
         {
         }
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
+        [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
 
     private:
+        const declaration* declarer;
         identifier name;
     };
 }

@@ -4,9 +4,9 @@
 #include <fmt/format.h>
 
 //SELF
-#include "etree/expressions.hpp"
 #include "scope.hpp"
 #include "errors.hpp"
+#include "interpreter_internal.hpp"
 
 namespace element
 {
