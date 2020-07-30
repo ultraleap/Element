@@ -1129,8 +1129,8 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             // + 1 to indicate the function is THUMB not ARM
             fndata->function = (lmnt_jit_fn)((intptr_t)labels[lbl_lmnt_main] + 1);
         }
-        dasm_free(&state->dasm_state);
     }
+    dasm_free(&state->dasm_state);
 
 #if defined(LMNT_JIT_COLLECT_STATS)
     if (stats)
