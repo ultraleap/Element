@@ -96,6 +96,18 @@ namespace element
         { "Any", [&](const declaration* decl) { return (is_type_of<constraint_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
     };
 
+    std::shared_ptr<element_expression> evaluate(const compilation_context& context, std::shared_ptr<element_expression> expr)
+    {
+        std::vector<element_value> outputs = { 0 };
+        const auto result = element_evaluate(*context.interpreter, expr, {}, outputs, {});
+        if (result != ELEMENT_OK)
+            return expr;
+
+        auto new_expr = std::make_shared<element_expression_constant>(outputs[0]);
+        new_expr->actual_type = expr->actual_type;
+        return new_expr;
+    }
+
     intrinsic::intrinsic(const element_type_id id)
         : rtti_type(id)
     {
@@ -141,10 +153,12 @@ namespace element
         auto expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
         assert(expr);
 
-        return std::make_shared<element_expression_unary>(
+        auto new_expr = std::make_shared<element_expression_unary>(
             operation,
             std::move(expr),
             return_type);
+
+        return evaluate(context, std::move(new_expr));
     }
 
     intrinsic_binary::intrinsic_binary(const element_binary_op operation, type_const_ptr return_type = type::num.get(),
@@ -173,11 +187,13 @@ namespace element
         assert(expr1);
         assert(expr2);
 
-        return std::make_shared<element_expression_binary>(
+        auto new_expr = std::make_shared<element_expression_binary>(
             operation,
             expr1,
             expr2,
             return_type);
+
+        return evaluate(context, std::move(new_expr));
     }
 
     intrinsic_if::intrinsic_if()
@@ -234,7 +250,8 @@ namespace element
         auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
         assert(expr); //todo: I don't think it could be anything but an expression?
         expr->actual_type = type::num.get();
-        return expr;
+
+        return evaluate(context, std::move(expr));
     }
 
     intrinsic_bool_constructor::intrinsic_bool_constructor()
@@ -259,9 +276,11 @@ namespace element
         assert(std::dynamic_pointer_cast<element_expression>(true_expr));
         assert(std::dynamic_pointer_cast<element_expression>(false_expr));
 
-        return std::make_shared<element_expression_if>(
+        auto new_expr = std::make_shared<element_expression_if>(
             expr,
             std::dynamic_pointer_cast<element_expression>(true_expr),
             std::dynamic_pointer_cast<element_expression>(false_expr));
+
+        return evaluate(context, std::move(new_expr));
     }
 }
