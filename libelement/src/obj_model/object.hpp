@@ -93,9 +93,9 @@ namespace element
         [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&source_info) const;
         [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const;
 
-        [[nodiscard]] virtual const std::vector<port>& get_inputs() const { return {}; };
+        [[nodiscard]] virtual const std::vector<port>& get_inputs() const { static std::vector<port> empty; return empty; };
         [[nodiscard]] virtual const scope* get_scope() const { return nullptr; };
-        [[nodiscard]] virtual const std::optional<port>& get_output() const { return {}; };
+        [[nodiscard]] virtual const std::optional<port>& get_output() const { static std::optional<port> empty; return empty; };
         
         [[nodiscard]] virtual std::shared_ptr<element_expression> to_expression() const { return nullptr; };
 

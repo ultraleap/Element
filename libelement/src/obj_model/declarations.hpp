@@ -119,6 +119,8 @@ namespace element
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
 
+        [[nodiscard]] bool valid_at_boundary(const compilation_context& context) const;
+
         std::shared_ptr<const object> body;
     };
 

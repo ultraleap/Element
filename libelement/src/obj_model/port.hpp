@@ -8,7 +8,7 @@ namespace element
     class port final
     {
     public:
-        explicit port(identifier name, std::unique_ptr<type_annotation> annotation);
+        explicit port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation);
 
         [[nodiscard]] bool has_annotation() const { return annotation != nullptr; };
 
@@ -18,7 +18,11 @@ namespace element
         [[nodiscard]] const std::string& get_name() const { return name.value;  };
         [[nodiscard]] const type_annotation* get_annotation() const { return annotation.get(); };
 
+        [[nodiscard]] std::shared_ptr<declaration> resolve_annotation(const compilation_context& context) const;
+        [[nodiscard]] std::shared_ptr<object> generate_placeholder(const compilation_context& context, int& placeholder_index) const;
+
     private:
+        const declaration* declarer;
         identifier name;
         std::unique_ptr<type_annotation> annotation;
     };
