@@ -39,8 +39,7 @@ namespace Element.NET.Tests
         public void EnumerateByReturnType(IIntrinsicImplementation intrinsic)
         {
             var sourceContext = MakeSourceContext();
-            bool Filter(IValue v) => v is IFunctionSignature fn
-                                     && fn.ReturnConstraint.IsIntrinsic(intrinsic);
+            bool Filter(IValue v) => v.ReturnConstraint.IsIntrinsic(intrinsic);
             var results = sourceContext.GlobalScope.EnumerateValues(new CompilationContext(sourceContext), resolvedValueFilter: Filter);
             Assert.That(results.IsSuccess);
             CollectionAssert.IsNotEmpty(results.ResultOr(default));

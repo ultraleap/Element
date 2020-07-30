@@ -1,5 +1,4 @@
-﻿using System.IO;
-using Element;
+﻿using Element;
 
 namespace Laboratory.Tests.L4.StandardLibrary
 {

@@ -69,6 +69,7 @@ namespace Element
 		public override string SummaryString => $"{Operation}({Operand})";
 		public override int GetHashCode() => (int)Operation ^ Operand.GetHashCode();
 		public override bool Equals(Expression other) =>
+			// ReSharper disable once PossibleUnintendedReferenceComparison
 			this == other || other is Unary bOther
 			&& bOther.Operation == Operation
 			&& bOther.Operand.Equals(Operand);

@@ -272,40 +272,42 @@ namespace Element.CLR
 		/// The result of calling the given function with all its inputs and a pre-allocated argument array.
 		/// The function inputs are mapped directly to the arrays contents.
 		/// </returns>
-		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IFunctionValue function, CompilationContext context) =>
-			function.InputPorts.Select(c => c.DefaultValue(context))
-			        .BindEnumerable(defaultValues =>
-			        {
-				        var defaults = defaultValues as IValue[] ?? defaultValues.ToArray();
-				        return defaults.Select(value => value.SerializedSize(context))
-				                       .MapEnumerable(argSizes => (defaults, argSizes));
-			        })
-			        .Bind(tuple =>
-			        {
-				        var (defaultValues, argSizes) = tuple;
-				        var totalSerializedSize = argSizes.Sum();
+		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, CompilationContext context) =>
+			function.IsFunction()
+				? function.InputPorts.Select(c => c.DefaultValue(context))
+				          .BindEnumerable(defaultValues =>
+				          {
+					          var defaults = defaultValues as IValue[] ?? defaultValues.ToArray();
+					          return defaults.Select(value => value.SerializedSize(context))
+					                         .MapEnumerable(argSizes => (defaults, argSizes));
+				          })
+				          .Bind(tuple =>
+				          {
+					          var (defaultValues, argSizes) = tuple;
+					          var totalSerializedSize = argSizes.Sum();
 
-				        // Allocate the array and make an expression for it
-				        var array = new float[totalSerializedSize];
-				        var arrayObjectExpr = LinqExpression.Constant(array);
+					          // Allocate the array and make an expression for it
+					          var array = new float[totalSerializedSize];
+					          var arrayObjectExpr = LinqExpression.Constant(array);
 
-				        return Enumerable.Range(0, totalSerializedSize)
-				                         // For each array index, create an ArrayIndex expression
-				                         .Select(i => NumberConverter.Instance
-				                                                     .LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), null!, context)
-				                                                     .Cast<Expression>(context))
-				                         // Aggregate enumerable of results into single result
-				                         .ToResultArray()
-				                         .Bind(expressions =>
-				                         {
-					                         // Create a func for accessing the array items
-					                         var flattenedValIdx = 0;
-					                         Expression NextValue() => expressions[flattenedValIdx++];
-					                         return defaultValues.Select(v => v.Deserialize(NextValue, context))
-					                                             .BindEnumerable(arguments => function.Call(arguments.ToArray(), context));
-				                         })
-				                         .Map(result => (result, array));
-			        });
+					          return Enumerable.Range(0, totalSerializedSize)
+					                           // For each array index, create an ArrayIndex expression
+					                           .Select(i => NumberConverter.Instance
+					                                                       .LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), null!, context)
+					                                                       .Cast<Expression>(context))
+					                           // Aggregate enumerable of results into single result
+					                           .ToResultArray()
+					                           .Bind(expressions =>
+					                           {
+						                           // Create a func for accessing the array items
+						                           var flattenedValIdx = 0;
+						                           Expression NextValue() => expressions[flattenedValIdx++];
+						                           return defaultValues.Select(v => v.Deserialize(NextValue, context))
+						                                               .BindEnumerable(arguments => function.Call(arguments.ToArray(), context));
+					                           })
+					                           .Map(result => (result, array));
+				          })
+				: context.Trace(MessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
 
 		public static Result<TDelegate> Compile<TDelegate>(this IValue value, CompilationContext context, IBoundaryConverter? boundaryConverter = default)
 			where TDelegate : Delegate =>
@@ -332,7 +334,7 @@ namespace Element.CLR
             var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
             
-            if (value is IFunctionSignature fn && fn.InputPorts.Count != delegateParameters.Length)
+            if (value.IsFunction() && value.InputPorts.Count != delegateParameters.Length)
             {
 	            return context.Trace(MessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
             }
@@ -340,10 +342,11 @@ namespace Element.CLR
             var resultBuilder = new ResultBuilder<Delegate>(context, default!);
             IValue outputExpression = value;
             // If input value is not a function we just try to use it directly
-            if (value is IFunctionSignature function)
+            if (value.IsFunction())
             {
-	            var outputExpr = function.InputPorts.Select((f, idx) => boundaryConverter.LinqToElement(parameterExpressions[idx], boundaryConverter, context))
-	                                     .BindEnumerable(args => value.Call(args.ToArray(), context));
+	            var outputExpr = value.InputPorts
+	                                  .Select((f, idx) => boundaryConverter.LinqToElement(parameterExpressions[idx], boundaryConverter, context))
+	                                  .BindEnumerable(args => value.Call(args.ToArray(), context));
 	            resultBuilder.Append(in outputExpr);
 	            if (outputExpr.IsError) return resultBuilder.ToResult();
 	            outputExpression = outputExpr.ResultOr(default!);

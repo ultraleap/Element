@@ -7,11 +7,11 @@ namespace Element.AST
     {
         private If()
         {
-            Identifier = new Identifier("if");
+            _identifier = new Identifier("if");
         }
         
         public static If Instance { get; } = new If();
-        public override Identifier Identifier { get; }
+        protected override Identifier _identifier { get; }
         public bool IsVariadic => false;
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
@@ -22,6 +22,7 @@ namespace Element.AST
                 .Bind(optionListInstance => optionListInstance.Index(ListStruct.IndexerId, context))
                 // Call the list indexer to get option 0 if true or option 1 if false.
                 .Bind(optionListIndexer => arguments[0].FullyResolveValue(context)
+                                                       // ReSharper disable once PossibleUnintendedReferenceComparison
                                                        .Bind(choice => optionListIndexer.Call(new IValue[] {choice == Constant.True ? Constant.Zero : Constant.One}, context)));
     }
 }

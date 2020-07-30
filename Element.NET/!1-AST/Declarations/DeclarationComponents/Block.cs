@@ -44,7 +44,7 @@ namespace Element.AST
                         Items.FirstOrDefault(d => d.Identifier.Equals(identifier))?.Resolve(scope, context)
                         ?? (Result<IValue>) context.Trace(MessageCode.IdentifierNotFound, $"'{identifier}' not found when indexing {scope}");
 
-                    return new ResolvedBlock(Items?.Select(d => d.Identifier).ToArray() ?? Array.Empty<Identifier>(),
+                    return new ResolvedBlock(null, Items?.Select(d => d.Identifier).ToArray() ?? Array.Empty<Identifier>(),
                                      capturedValues,
                                      IndexFunc,
                                      parentScope);

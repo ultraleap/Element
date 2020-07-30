@@ -125,7 +125,7 @@ namespace Element
             var inputs = enumerable as Result<TIn>[] ?? enumerable.ToArray();
             return inputs.Any(i => i.IsError)
                        ? new Result<TResult>(inputs.Fold().Messages)
-                       : inputs.Fold().Merge(bindFunc(inputs.Select(i => i.ResultOr(default)))); // Or value will never be selected, we already checked for any errors
+                       : inputs.Fold().Merge(bindFunc(inputs.Select(i => i.ResultOr(default!)))); // Or value will never be selected, we already checked for any errors
         }
         
         public static Result<TResult> MapEnumerable<TIn, TResult>(this IEnumerable<Result<TIn>> enumerable, Func<IEnumerable<TIn>, TResult> mapFunc)
@@ -133,20 +133,20 @@ namespace Element
             var inputs = enumerable as Result<TIn>[] ?? enumerable.ToArray();
             return inputs.Any(i => i.IsError)
                        ? new Result<TResult>(inputs.Fold().Messages)
-                       : inputs.Fold().Merge(new Result<TResult>(mapFunc(inputs.Select(i => i.ResultOr(default))))); // Or value will never be selected, we already checked for any errors
+                       : inputs.Fold().Merge(new Result<TResult>(mapFunc(inputs.Select(i => i.ResultOr(default!))))); // Or value will never be selected, we already checked for any errors
         }
         
         public static Result<TResult> FoldArray<TIn, TResult>(in this Result<TIn[]> enumerable, TResult initial, Func<TResult, TIn, Result<TResult>> foldFunc)
         {
             if (!enumerable.IsSuccess) return new Result<TResult>();
-            var inputs = enumerable.ResultOr(default);
+            var inputs = enumerable.ResultOr(default!);
             List<CompilerMessage> messages = new List<CompilerMessage>(enumerable.Messages);
             var previous = foldFunc(initial, inputs[0]);
             messages.AddRange(previous.Messages);
             foreach (var item in inputs.Skip(1))
             {
                 if (!previous.IsSuccess) return new Result<TResult>(messages);
-                previous = foldFunc(previous.ResultOr(default), item);
+                previous = foldFunc(previous.ResultOr(default!), item);
                 messages.AddRange(previous.Messages);
             }
 

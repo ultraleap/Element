@@ -1,6 +1,4 @@
 using System;
-using System.Globalization;
-using Element.AST;
 
 namespace Element
 {
@@ -34,6 +32,7 @@ namespace Element
 					// Check the condition function with non-constant dummy expressions
 					if (dummyConditionResult is Constant c)
 					{
+						// ReSharper disable once PossibleUnintendedReferenceComparison
 						if (c == Constant.True) return context.Trace(MessageCode.InfiniteLoop, "Loop condition function always returns true");
 						//if (c == Constant.False) return new BasicExpressionGroup(initialSerialized); // TODO: Implement compilation of BasicExpressionGroup and re-enable this, warn that loop is redundant
 					}
@@ -41,9 +40,9 @@ namespace Element
 					var initialState = ToState(initialSerialized);
 
 					Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> EvaluateIteration(IReadOnlyCollection<Expression> iterationState) =>
-						bodyFunc(iterationState).Map(bodyExprs => new ReadOnlyCollection<Expression>(bodyExprs.ToArray()))
-						                        .Accumulate(() => conditionFunc(iterationState))
-						                        .Assert(e => iterationState.Count == e.Item1.Count, "Iteration state counts are different");
+						bodyFunc(iterationState!).Map(bodyExprs => new ReadOnlyCollection<Expression>(bodyExprs.ToArray()))
+						                        .Accumulate(() => conditionFunc(iterationState!))
+						                        .Assert(e => iterationState!.Count == e.Item1.Count, "Iteration state counts are different");
 
 					Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> IncrementScopeIndexIfAnyNestedLoops((ReadOnlyCollection<Expression> Body, Expression Condition) e)
 					{
@@ -94,9 +93,9 @@ namespace Element
 
 							builder.Result = new BasicExpressionGroup(body);
 							return builder.ToResult();
-						}*/
+						}
 
-						NotCompileTimeConstant:
+						NotCompileTimeConstant:*/
 						return new Result<ExpressionGroup>(new Loop(initialState, condition, body));
 					}
 

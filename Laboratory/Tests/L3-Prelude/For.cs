@@ -19,7 +19,7 @@ namespace Laboratory.Tests.L3.Prelude
         
         // TODO: Somehow test non-constant loops, how can we define a non-constant loop as an expression here? 
 
-        [TestCase()]
-        public void NestedLoop(string expr, string result) => AssertApproxEqual(ValidatedCompilationInput, expr, result);
+        // TODO: Nested loop test
+        //public void NestedLoop(string expr, string result) => AssertApproxEqual(ValidatedCompilationInput, expr, result);
     }
 }

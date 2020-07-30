@@ -31,7 +31,7 @@ namespace Laboratory.Tests.L3.Prelude
 				string.Format(functionPair.ElementFunction, arg0),
 				new[]{functionPair.CLRFunction(arg0)});
 
-		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] BinaryOpMap =
+		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] _binaryOpMap =
 		{
 			("Num.add({0}, {1})", (a, b) => a + b),
 			("Num.sub({0}, {1})", (a, b) => a - b),
@@ -43,7 +43,7 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.atan2({0}, {1})", MathF.Atan2),
 		};
 		[Test, Pairwise]
-		public void BinaryMathOpRandom([ValueSource(nameof(BinaryOpMap))]
+		public void BinaryMathOpRandom([ValueSource(nameof(_binaryOpMap))]
 			(string ElementFunction, Func<float, float, float> CLRFunction) functionPair,
 			[Random(-1.0e6f, 1.0e6f, 5)] float arg0,
 			[Random(-1.0e6f, 1.0e6f, 5)] float arg1) =>
@@ -51,14 +51,14 @@ namespace Laboratory.Tests.L3.Prelude
 				string.Format(functionPair.ElementFunction, arg0, arg1),
 				new[]{functionPair.CLRFunction(arg0, arg1)});
 		
-		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] AdditionalBinaryOpMap =
+		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] _additionalBinaryOpMap =
 		{
 			("Num.pow({0}, {1})", MathF.Pow),
 			("Num.log({0}, {1})", MathF.Log),
 		};
 
 		[Test, Pairwise]
-		public void AdditionalBinaryMathOpRandom([ValueSource(nameof(AdditionalBinaryOpMap))]
+		public void AdditionalBinaryMathOpRandom([ValueSource(nameof(_additionalBinaryOpMap))]
 		                               (string ElementFunction, Func<float, float, float> CLRFunction) functionPair,
 		                               [Random(2f, 10f, 5)] float arg0,
 		                               [Random(2f, 10f, 5)] float arg1) =>
@@ -310,7 +310,7 @@ namespace Laboratory.Tests.L3.Prelude
 		private static object GenerateLogData(int index, int baseValue) 
 			=> new object[] {$"Num.log({MathF.Pow(baseValue, index - 1)}, {baseValue})", $"{(index - 1)}"};
 
-		private static IEnumerable<object> LogCaseData =
+		private static IEnumerable<object> _logCaseData =
 			Enumerable.Range(1, 10)
 				.SelectMany(index => Enumerable.Range(2, 9) .Select(baseValue => GenerateLogData(index, baseValue)));
 		
@@ -318,7 +318,7 @@ namespace Laboratory.Tests.L3.Prelude
 			TestCase("Num.log(0, 0)", "Num.NaN"),
 			TestCase("Num.log(0, 10)", "Num.NegativeInfinity"),
 			TestCase("Num.log(10, 0)", "Num.NaN"),
-			TestCaseSource(nameof(LogCaseData))
+			TestCaseSource(nameof(_logCaseData))
 		]
 		public void Log(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilationInput, expected, expression);

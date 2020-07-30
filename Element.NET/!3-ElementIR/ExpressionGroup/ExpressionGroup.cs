@@ -54,6 +54,7 @@ namespace Element
 
 		public override bool Equals(Expression other)
 		{
+			// ReSharper disable once PossibleUnintendedReferenceComparison
 			if (this == other) return true;
 			return other is ExpressionGroupElement bOther && bOther.Index == Index && bOther.Group.Equals(Group);
 		}

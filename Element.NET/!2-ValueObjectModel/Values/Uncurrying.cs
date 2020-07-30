@@ -5,19 +5,19 @@ namespace Element.AST
 {
     public static class Uncurrying
     {
-        public static Result<IValue> Uncurry(this IFunctionValue a, IFunctionValue b, ITrace trace) =>
+        public static Result<IValue> Uncurry(this IValue a, IValue b, ITrace trace) =>
             UncurriedFunction.Create(a, b, trace);
 
-        public static Result<IValue> Uncurry(this IFunctionValue a, string bFunctionExpression,
+        public static Result<IValue> Uncurry(this IValue a, string bFunctionExpression,
                                                   SourceContext context) =>
-            context.EvaluateExpression(bFunctionExpression).Cast<IFunctionValue>(context).Bind(fn => a.Uncurry(fn, context));
+            context.EvaluateExpression(bFunctionExpression).Bind(fn => a.Uncurry(fn, context));
 
         private class UncurriedFunction : Function
         {
-            private readonly IFunctionValue _a;
-            private readonly IFunctionValue _b;
+            private readonly IValue _a;
+            private readonly IValue _b;
 
-            private UncurriedFunction(IFunctionValue a, IFunctionValue b)
+            private UncurriedFunction(IValue a, IValue b)
             {
                 _a = a;
                 _b = b;
@@ -25,8 +25,18 @@ namespace Element.AST
                 ReturnConstraint = _b.ReturnConstraint;
             }
             
-            public static Result<IValue> Create(IFunctionValue a, IFunctionValue b, ITrace trace)
+            public static Result<IValue> Create(IValue a, IValue b, ITrace trace)
             {
+                if (!a.IsFunction())
+                {
+                    return trace.Trace(MessageCode.NotFunction, $"'{a}' is not a function, only functions can be uncurried");
+                }
+                
+                if (!b.IsFunction())
+                {
+                    return trace.Trace(MessageCode.NotFunction, $"'{b}' is not a function, only functions can be uncurried");
+                }
+                
                 if (b.InputPorts.Count < 1)
                 {
                     return trace.Trace(MessageCode.FunctionCannotBeUncurried, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
@@ -40,6 +50,7 @@ namespace Element.AST
                 return new UncurriedFunction(a, b);
             }
 
+            public override Identifier? Identifier => null;
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
             public override string SummaryString => $"<uncurried function {_a} << {_b}>";

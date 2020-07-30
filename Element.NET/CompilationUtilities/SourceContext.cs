@@ -55,7 +55,7 @@ namespace Element
         private static readonly LambdaEqualityComparer<FileInfo> _fileComparer = new LambdaEqualityComparer<FileInfo>((a, b) => a.FullName == b.FullName, info => info.GetHashCode());
         private static readonly object _syncRoot = new object();
 
-        private struct PackageManifest
+        private readonly struct PackageManifest
         {
             public PackageManifest(string name)
             {

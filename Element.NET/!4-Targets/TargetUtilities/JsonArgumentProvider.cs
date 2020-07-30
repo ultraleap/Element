@@ -4,16 +4,14 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json.Linq;
 
-namespace Element
+namespace Element.JsonArgument
 {
 	/// <summary>
 	/// Provides function arguments from a JObject loaded from file or a json string.
 	/// </summary>
-	public class JsonArgumentProvider
+	public static class JsonArgumentProvider
 	{
-		public JObject JsonConfiguration { get; private set; }
-
-		public Result ProvideArguments(IReadOnlyList<ResolvedPort> topLevelFunctionPorts, float[] arguments, ITrace trace)
+		public static Result ProvideArguments(this JObject configuration, IReadOnlyList<ResolvedPort> topLevelFunctionPorts, float[] arguments, ITrace trace)
 		{
 			var builder = new ResultBuilder(trace);
 			var idx = 0;
@@ -83,11 +81,11 @@ namespace Element
 				}
 			}
 
-			ProvisionObject(topLevelFunctionPorts, JsonConfiguration);
+			ProvisionObject(topLevelFunctionPorts, configuration);
 			return builder.ToResult();
 		}
 
-		public Result ParseFromJsonFile(string filePath, ITrace trace)
+		public static Result<JObject> ParseFromJsonFile(this string filePath, ITrace trace)
 		{
 			if (!File.Exists(filePath)) return trace.Trace(MessageCode.FileAccessError, $"\"{filePath}\" JSON file not found.");
 			string fileText;
@@ -102,18 +100,16 @@ namespace Element
 			return ParseFromJsonString(fileText, trace);
 		}
 
-		public Result ParseFromJsonString(string json, ITrace trace)
+		public static Result<JObject> ParseFromJsonString(this string json, ITrace trace)
 		{
 			try
 			{
-				JsonConfiguration = JObject.Parse(json);
+				return JObject.Parse(json);
 			}
 			catch (Exception e)
 			{
 				return trace.Trace(MessageCode.ParseError, e.ToString());
 			}
-
-			return Result.Success;
 		}
 	}
 }

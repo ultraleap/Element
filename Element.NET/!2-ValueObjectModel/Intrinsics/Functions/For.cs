@@ -7,11 +7,11 @@ namespace Element.AST
     {
         private For()
         {
-            Identifier = new Identifier("for");
+            _identifier = new Identifier("for");
         }
         
         public static For Instance { get; } = new For();
-        public override Identifier Identifier { get; }
+        protected override Identifier _identifier { get; }
         public bool IsVariadic => false;
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
         {

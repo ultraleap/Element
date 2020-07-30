@@ -12,8 +12,8 @@ namespace Element.NET.Tests
         public void UncurryAddMul()
         {
             var srcContext = MakeSourceContext();
-            srcContext.EvaluateExpression("Num.add").Cast<IFunctionValue>(srcContext)
-                                   .Accumulate(() => srcContext.EvaluateExpression("Num.sqr").Cast<IFunctionValue>(srcContext))
+            srcContext.EvaluateExpression("Num.add")
+                                   .Accumulate(() => srcContext.EvaluateExpression("Num.sqr"))
                                    .Bind(tuple =>
                                    {
                                        var (add, sqr) = tuple;

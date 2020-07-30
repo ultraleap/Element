@@ -35,7 +35,7 @@ namespace Element
 			Atan2,
 		}
 
-		private static readonly HashSet<Op> BoolOps = new HashSet<Op>{
+		private static readonly HashSet<Op> _boolOps = new HashSet<Op>{
 			Op.And,
 			Op.Or,
 			Op.Eq,
@@ -75,7 +75,7 @@ namespace Element
 
 		public static Expression CreateAndOptimize(Op op, Expression opA, Expression opB)
 		{
-            Constant NaN() => BoolOps.Contains(op) ? Constant.BoolNaN : Constant.NaN;
+            Constant NaN() => _boolOps.Contains(op) ? Constant.BoolNaN : Constant.NaN;
             
             var cA = (opA as Constant)?.Value;
             var cB = (opB as Constant)?.Value;
@@ -147,6 +147,7 @@ namespace Element
 		public override int GetHashCode() => (int)Operation ^ OpA.GetHashCode() ^ OpB.GetHashCode();
 
 		public override bool Equals(Expression other) =>
+			// ReSharper disable once PossibleUnintendedReferenceComparison
 			this == other || other is Binary bOther
 			&& bOther.Operation == Operation
 			&& bOther.OpA.Equals(OpA)

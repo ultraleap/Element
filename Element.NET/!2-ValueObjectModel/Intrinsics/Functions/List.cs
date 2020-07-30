@@ -8,11 +8,11 @@ namespace Element.AST
 	{
 		private List()
 		{
-			Identifier = new Identifier("list");
+			_identifier = new Identifier("list");
 		}
 		
 		public static List Instance { get; } = new List();
-		public override Identifier Identifier { get; }
+		protected override Identifier _identifier { get; }
 		public bool IsVariadic => true;
 
 		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
@@ -40,17 +40,17 @@ namespace Element.AST
 	            ReturnConstraint = output;
             }
 
-            public override string SummaryString => TypeOf;
+            public override Identifier? Identifier => ListStruct.IndexerId;
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
 
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-	            arguments[0] is Element.Expression indexIr
-		                               ? new Result<IValue>(ListElement.Create(indexIr,
+	            arguments[0] is Element.Expression index
+		                               ? new Result<IValue>(ListElement.Create(index,
 		                                                                       _elements,
-		                                                                       _elements[0] is IFunctionSignature f ? f.InputPorts : new[] {ResolvedPort.VariadicPort},
-		                                                                       _elements[0] is IFunctionSignature fn ? fn.ReturnConstraint : AnyConstraint.Instance))
-		                               : context.Trace(MessageCode.ConstraintNotSatisfied, "List indexer must be an Element IR value");
+		                                                                       _elements[0].IsFunction() ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort},
+		                                                                       _elements[0].IsFunction() ? _elements[0].ReturnConstraint : AnyConstraint.Instance))
+		                               : context.Trace(MessageCode.ConstraintNotSatisfied, "List Index must be a Num");
         }
 
         private class ListElement : Function
@@ -75,6 +75,7 @@ namespace Element.AST
 
             private readonly Element.Expression _index;
             private readonly IReadOnlyList<IValue> _elements;
+            public override Identifier? Identifier => null;
             public override string SummaryString => $"List[{_index}]";
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }

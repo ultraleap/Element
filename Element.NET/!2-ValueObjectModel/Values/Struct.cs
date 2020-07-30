@@ -4,9 +4,8 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class Struct : Value, IScope, IFunctionValue
+    public abstract class Struct : Value, IScope
     {
-        public readonly Identifier Identifier;
         private readonly ResolvedBlock? _associatedBlock;
         private readonly IScope _parent;
 
@@ -18,9 +17,9 @@ namespace Element.AST
             Fields = fields;
         }
 
-        public override string SummaryString => $"{Identifier}:{TypeOf}";
-        IReadOnlyList<ResolvedPort> IFunctionSignature.InputPorts => Fields;
-        IValue IFunctionSignature.ReturnConstraint => this;
+        public override Identifier? Identifier { get; }
+        public override IReadOnlyList<ResolvedPort> InputPorts => Fields;
+        public override IValue ReturnConstraint => this;
         public IReadOnlyList<ResolvedPort> Fields { get; }
 
         public abstract override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
@@ -35,10 +34,11 @@ namespace Element.AST
             Index(id, context)
                 .Bind(v => v switch
                 {
-                    IFunctionValue function when function.IsNullary() => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Constant '{function}' cannot be accessed by indexing an instance"),
-                    IFunctionValue function when function.InputPorts[0].ResolvedConstraint == this => function.PartiallyApply(new[] {instance}, context),
-                    IFunctionValue function => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Found function '{function}' <{function.InputPorts[0]}> must be of type <{Identifier}> to be used as an instance function"),
-                    {} notFunction => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"'{notFunction}' found by indexing '{instance}' is not a function"),
+                    {} when !v.IsFunction() => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"'{v}' found by indexing '{instance}' is not a function"),
+                    {} when v.IsNullaryFunction() => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Constant '{v}' cannot be accessed by indexing an instance"),
+                    // ReSharper disable once PossibleUnintendedReferenceComparison
+                    {} when v.InputPorts[0].ResolvedConstraint == this => v.PartiallyApply(new[] {instance}, context),
+                    {} => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Found function '{v}' <{v.InputPorts[0]}> must be of type <{Identifier}> to be used as an instance function"),
                     null => throw new InternalCompilerException($"Indexing '{instance}' with '{id}' returned null IValue - this should not occur from user input")
                 });
     }
@@ -83,10 +83,11 @@ namespace Element.AST
         private StructInstance(Struct declaringStruct, IEnumerable<IValue> fieldValues)
         {
             DeclaringStruct = declaringStruct;
-            _resolvedBlock = new ResolvedBlock(declaringStruct.Fields.Zip(fieldValues, (port, value) => (port.Identifier!.Value, value)).ToArray(), null);
+            _resolvedBlock = new ResolvedBlock(null, declaringStruct.Fields.Zip(fieldValues, (port, value) => (port.Identifier!.Value, value)).ToArray(), null);
         }
 
-        public override string TypeOf => DeclaringStruct.Identifier.String;
+        public override Identifier? Identifier => null;
+        public override string TypeOf => DeclaringStruct.Identifier?.String ?? "<unknown>";
         public override Result<IValue> Index(Identifier id, CompilationContext context) =>
             _resolvedBlock.Index(id, context)
                           .Else(() => DeclaringStruct.ResolveInstanceFunction(this, id, context));

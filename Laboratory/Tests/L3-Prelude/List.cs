@@ -1,3 +1,4 @@
+using System.Globalization;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L3.Prelude
@@ -41,10 +42,10 @@ namespace Laboratory.Tests.L3.Prelude
 		
 		[TestCaseSource(nameof(_factorialArguments))]
 		public void FactorialUsingForWithVector2((float factorial, float expectedResult) f) =>
-			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(), $"factorial({f.factorial.ToString()})");
+			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(CultureInfo.InvariantCulture), $"factorial({f.factorial.ToString(CultureInfo.InvariantCulture)})");
 		
 		[TestCaseSource(nameof(_factorialArguments))]
 		public void FactorialUsingForWithTupleAndLambdas((float factorial, float expectedResult) f) =>
-			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(), $"factorialExpressionBodied({f.factorial.ToString()})");
+			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(CultureInfo.InvariantCulture), $"factorialExpressionBodied({f.factorial.ToString(CultureInfo.InvariantCulture)})");
 	}
 }

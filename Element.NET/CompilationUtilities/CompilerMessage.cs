@@ -54,7 +54,10 @@ namespace Element
         CannotBeUsedAsInstanceFunction = 22,
         FunctionCannotBeUncurried = 23,
         NotCompileConstant = 24,
-        InfiniteLoop = 35
+        InfiniteLoop = 35,
+        NotFunction = 36,
+        NotIndexable = 37,
+        NotConstraint = 38,
     }
     
     public class CompilerMessage
@@ -96,13 +99,13 @@ namespace Element
         public int? MessageCode { get; }
         public MessageLevel? MessageLevel { get; }
         public string? Context { get; }
-        public IReadOnlyCollection<TraceSite> TraceStack { get; }
+        public IReadOnlyCollection<TraceSite>? TraceStack { get; }
 
         public override string ToString()
         {
             if (_message == null)
             {
-                if (MessageCode.HasValue || TraceStack.Count > 0)
+                if (MessageCode.HasValue || TraceStack?.Count > 0)
                 {
                     var builder = new StringBuilder();
                     if (MessageCode.HasValue)
@@ -114,7 +117,7 @@ namespace Element
                     }
 
                     builder.Append(Context);
-                    if (TraceStack.Count > 0)
+                    if (TraceStack?.Count > 0)
                     {
                         builder.AppendLine();
                         builder.AppendLine("Element source trace:");

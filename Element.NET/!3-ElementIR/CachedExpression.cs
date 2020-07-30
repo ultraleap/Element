@@ -21,6 +21,7 @@ namespace Element
 
 		public override bool Equals(Expression other)
 		{
+			// ReSharper disable once PossibleUnintendedReferenceComparison
 			if (this == other) return true;
 			return other is CachedExpression bOther && bOther.Id == Id;
 		}

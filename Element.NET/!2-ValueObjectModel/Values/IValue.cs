@@ -7,10 +7,14 @@ namespace Element.AST
     public interface IValue
     {
         string ToString();
+        Identifier? Identifier { get; }
         string TypeOf { get; }
         string SummaryString { get; }
         string NormalizedFormString { get; }
+        
         Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
+        IReadOnlyList<ResolvedPort> InputPorts { get; }
+        IValue ReturnConstraint { get; }
         Result<IValue> Index(Identifier id, CompilationContext context);
         IReadOnlyList<Identifier> Members { get; }
         Result<bool> MatchesConstraint(IValue value, CompilationContext context);
@@ -18,26 +22,27 @@ namespace Element.AST
         void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, CompilationContext context);
         Result<IValue> Deserialize(Func<Element.Expression> nextValue, CompilationContext context);
     }
-    
-    public interface IFunctionSignature
-    {
-        IReadOnlyList<ResolvedPort> InputPorts { get; }
-        IValue ReturnConstraint { get; }
-    }
-    
-    public interface IFunctionValue : IValue, IFunctionSignature {}
 
     public abstract class Value : IValue
     {
         private string? _cachedString;
         public sealed override string ToString() => _cachedString ??= SummaryString;
-        public virtual string SummaryString => TypeOf;
+        public abstract Identifier? Identifier { get; }
+        public virtual string SummaryString => Identifier.HasValue
+                                                   ? $"{Identifier.Value}:{TypeOf}"
+                                                   : $"<unidentified>:{TypeOf}";
         public virtual string TypeOf => GetType().Name;
         public virtual string NormalizedFormString => SummaryString;
-        public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' cannot be called, it is not a function");
-        public virtual Result<IValue> Index(Identifier id, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' is not indexable");
+        public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => context.Trace(MessageCode.NotFunction, $"'{this}' cannot be called, it is not a function");
+        
+        public virtual IReadOnlyList<ResolvedPort> InputPorts => Array.Empty<ResolvedPort>();
+        public virtual IValue ReturnConstraint => NothingConstraint.Instance;
+        
+        public virtual Result<IValue> Index(Identifier id, CompilationContext context) => context.Trace(MessageCode.NotIndexable, $"'{this}' is not indexable");
         public virtual IReadOnlyList<Identifier> Members => Array.Empty<Identifier>();
-        public virtual Result<bool> MatchesConstraint(IValue value, CompilationContext context) => context.Trace(MessageCode.InvalidExpression, $"'{this}' cannot be used as a port annotation, it is not a constraint");
+        
+        public virtual Result<bool> MatchesConstraint(IValue value, CompilationContext context) => context.Trace(MessageCode.NotConstraint, $"'{this}' cannot be used as a port annotation, it is not a constraint");
+        
         public virtual Result<IValue> DefaultValue(CompilationContext context) => context.Trace(MessageCode.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
         public virtual void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, CompilationContext context) => resultBuilder.Append(MessageCode.SerializationError, $"'{this}' is not serializable");
         public virtual Result<IValue> Deserialize(Func<Element.Expression> nextValue, CompilationContext context) => context.Trace(MessageCode.SerializationError, $"'{this}' cannot be deserialized");
@@ -45,8 +50,11 @@ namespace Element.AST
 
     public static class ValueExtensions
     {
+        // ReSharper disable once PossibleUnintendedReferenceComparison
+        public static bool IsFunction(this IValue value) => value.ReturnConstraint != NothingConstraint.Instance;
+        public static bool IsNullaryFunction(this IValue functionValue) => functionValue.IsFunction() && functionValue.InputPorts.Count == 0;
         public static Result<IValue> FullyResolveValue(this IValue value, CompilationContext context) =>
-            (value is IFunctionSignature fn && fn.IsNullary()
+            (value.IsNullaryFunction()
                  ? value.Call(Array.Empty<IValue>(), context)
                  : new Result<IValue>(value))
             // ReSharper disable once PossibleUnintendedReferenceComparison

@@ -12,9 +12,9 @@ namespace Element.AST
         public IReadOnlyList<Declaration> Declarations => _cachedList ??= _sourceScopes.Values.SelectMany(blob => blob).ToList();
         public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext context) =>
             new Result<ResolvedBlock>(
-                new ResolvedBlock(Declarations.Select(d => d.Identifier).ToArray(),
+                new ResolvedBlock(null, Declarations.Select(d => d.Identifier).ToArray(),
                                   Enumerable.Empty<(Identifier Identifier, IValue Value)>(),
-                    (resolvedBlock, identifier, context) => Lookup(identifier, context), null));
+                    (resolvedBlock, identifier, indexingContext) => Lookup(identifier, indexingContext), null));
 
         public bool ContainsSource(string sourceName) => _sourceScopes.ContainsKey(sourceName);
         

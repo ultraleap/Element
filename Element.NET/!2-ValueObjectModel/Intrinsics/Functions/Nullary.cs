@@ -21,10 +21,10 @@ namespace Element.AST
         private Nullary(Constant.Intrinsic value)
         {
             _value = value;
-            Identifier = new Identifier(value.ToString());
+            _identifier = new Identifier(value.ToString());
         }
 
-        public override Identifier Identifier { get; }
+        protected override Identifier _identifier { get; }
         public bool IsVariadic => false;
         public override Result<IValue> Call(IReadOnlyList<IValue> _, CompilationContext __) =>
             _value switch

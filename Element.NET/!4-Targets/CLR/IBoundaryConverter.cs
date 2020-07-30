@@ -49,6 +49,7 @@ namespace Element.CLR
             public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
             public LExpression Compile(Func<Expression, LExpression> compileOther) => Parameter;
             public override string SummaryString => Parameter.ToString();
+            // ReSharper disable once PossibleUnintendedReferenceComparison
             public override bool Equals(Expression other) => other == this;
             public override int GetHashCode() => new {Parameter, InstanceTypeOverride = StructImplementation}.GetHashCode();
         }
@@ -198,7 +199,7 @@ namespace Element.CLR
             TryGetValue(parameter.Type, out var converter)
                 ? converter!.LinqToElement(parameter, root, context)
                 : TryAddStructConverter(parameter.Type, context)
-                    .Bind(converter => converter!.LinqToElement(parameter, root, context));
+                    .Bind(structConverter => structConverter.LinqToElement(parameter, root, context));
 
         public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
                                                  CompilationContext context) =>
@@ -206,6 +207,6 @@ namespace Element.CLR
             TryGetValue(outputType, out var output)
                 ? output!.ElementToLinq(value, outputType, convertFunction, context)
                 : TryAddStructConverter(outputType, context)
-                    .Bind(converter => converter!.ElementToLinq(value, outputType, convertFunction, context));
+                    .Bind(converter => converter.ElementToLinq(value, outputType, convertFunction, context));
     }
 }

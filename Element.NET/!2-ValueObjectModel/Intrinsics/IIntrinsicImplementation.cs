@@ -5,8 +5,9 @@ namespace Element.AST
     public abstract class IntrinsicValue : Value, IIntrinsicValue, IIntrinsicImplementation
     {
         public IIntrinsicImplementation Implementation => this;
-        public abstract Identifier Identifier { get; }
-        public override string SummaryString => $"{Identifier}:{TypeOf}";
+        protected abstract Identifier _identifier { get; }
+        Identifier IIntrinsicImplementation.Identifier => _identifier;
+        public override Identifier? Identifier => _identifier;
     }
     
     public interface IIntrinsicValue

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Element.AST
 {
-    public abstract class Function : Value, IFunctionValue
+    public abstract class Function : Value
     {
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
             this.VerifyArgumentsAndApplyFunction(arguments, () => ResolveCall(arguments, context), context);
@@ -29,10 +29,8 @@ namespace Element.AST
             return namedArguments;
         }
 
-        public abstract override string SummaryString { get; }
-
-        public abstract IReadOnlyList<ResolvedPort> InputPorts { get; }
-        public abstract IValue ReturnConstraint { get; }
+        public abstract override IReadOnlyList<ResolvedPort> InputPorts { get; }
+        public abstract override IValue ReturnConstraint { get; }
     }
     
     public class IntrinsicFunction : Function, IIntrinsicValue
@@ -48,7 +46,7 @@ namespace Element.AST
         }
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) => _implementation.Call(arguments, context);
-        public override string SummaryString => $"{_implementation.Identifier}:{TypeOf}";
+        public override Identifier? Identifier => _implementation.Identifier;
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
     }
@@ -56,19 +54,16 @@ namespace Element.AST
     public abstract class CustomFunction : Function
     {
         protected readonly IScope _parent;
-        private Identifier? _identifier;
 
         protected CustomFunction(Identifier? identifier, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, IScope parent)
         {
-            _identifier = identifier;
+            Identifier = identifier;
             _parent = parent;
             InputPorts = inputPorts;
             ReturnConstraint = returnConstraint;
         }
 
-        public override string SummaryString => _identifier.HasValue
-                                                    ? $"{_identifier.Value}:{TypeOf}"
-                                                    : $"<unidentified>:{TypeOf}";
+        public override Identifier? Identifier { get; }
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
     }
@@ -83,7 +78,7 @@ namespace Element.AST
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
             _expressionBody.Expression.ResolveExpression(arguments.Count > 0
-                                                             ? new ResolvedBlock(MakeNamedArgumentList(arguments), _parent)
+                                                             ? new ResolvedBlock(null, MakeNamedArgumentList(arguments), _parent)
                                                              : _parent, context);
     }
     
@@ -102,9 +97,8 @@ namespace Element.AST
 
     public static class FunctionExtensions
     {
-        public static bool IsNullary(this IFunctionSignature functionSignature) => functionSignature.InputPorts.Count == 0;
         
-        public static Result<IValue> VerifyArgumentsAndApplyFunction(this IFunctionValue function,
+        public static Result<IValue> VerifyArgumentsAndApplyFunction(this IValue function,
                                                                      IEnumerable<IValue> arguments,
                                                                      Func<Result<IValue>> resolveFunc,
                                                                      CompilationContext context)

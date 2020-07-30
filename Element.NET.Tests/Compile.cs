@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Element.AST;
 using Element.CLR;
 using NUnit.Framework;
 
@@ -46,7 +45,6 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         private static Result<(TDelegate Delegate, float[] ArgumentArray)> CompileAndSourceArguments<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
             context.EvaluateExpression(expression)
-                   .Cast<IFunctionValue>(context)
                    .Bind(function => function.SourceArgumentsFromSerializedArray(new CompilationContext(context)))
                    .Bind(tuple =>
                    {

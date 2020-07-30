@@ -9,19 +9,22 @@ namespace Element.AST
         private readonly Func<IScope, Identifier, CompilationContext, Result<IValue>> _indexFunc;
         private readonly Dictionary<Identifier, Result<IValue>> _resultCache;
       
-        public ResolvedBlock(IReadOnlyList<Identifier> allMembers,
+        public ResolvedBlock(Identifier? identifier,
+                             IReadOnlyList<Identifier> allMembers,
                              IEnumerable<(Identifier Identifier, IValue Value)> resolvedValues,
                              Func<IScope, Identifier, CompilationContext, Result<IValue>> indexFunc,
                              IScope? parent)
         {
+            Identifier = identifier;
             Members = allMembers;
             _indexFunc = indexFunc;
             Parent = parent;
             _resultCache = resolvedValues.ToDictionary(t => t.Identifier, t => new Result<IValue>(t.Value));
         }
         
-        public ResolvedBlock(IReadOnlyList<(Identifier Identifier, IValue Value)> resolvedValues, IScope? parent)
-            :this(resolvedValues.Select(m => m.Identifier).ToArray(),
+        public ResolvedBlock(Identifier? identifier, IReadOnlyList<(Identifier Identifier, IValue Value)> resolvedValues, IScope? parent)
+            :this(identifier,
+                  resolvedValues.Select(m => m.Identifier).ToArray(),
                   resolvedValues,
                   (resolvedBlock, id, context) =>
                   {
@@ -31,6 +34,8 @@ namespace Element.AST
                                  : context.Trace(MessageCode.IdentifierNotFound, $"'{id}' not found when indexing {resolvedBlock}");
                   }, parent)
         { }
+
+        public override Identifier? Identifier { get; }
 
         public override Result<IValue> Index(Identifier id, CompilationContext context) => 
             _resultCache.TryGetValue(id, out var result)
@@ -55,7 +60,7 @@ namespace Element.AST
 
         public override Result<IValue> Deserialize(Func<Element.Expression> nextValue, CompilationContext context) =>
             DeserializeMembers(nextValue, context)
-                .Map(memberValues => (IValue)new ResolvedBlock(memberValues.Zip(Members, (value, identifier) => (identifier, value)).ToArray(), null));
+                .Map(memberValues => (IValue)new ResolvedBlock(null, memberValues.Zip(Members, (value, identifier) => (identifier, value)).ToArray(), null));
 
         public Result<IEnumerable<IValue>> DeserializeMembers(Func<Element.Expression> nextValue, CompilationContext context) =>
             Members.Select(m => Index(m, context))

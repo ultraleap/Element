@@ -1,4 +1,3 @@
-using Laboratory;
 using NUnit.Framework;
 
 namespace Laboratory.FloatingPoint.Tests
