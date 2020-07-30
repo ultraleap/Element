@@ -1,0 +1,255 @@
+constraint PathFunc(u:Num):Vector3
+
+struct Segment(a:Vector3, b:Vector3)
+
+struct Path(at:PathFunc, length:Num)
+{	
+	#Paths
+    Circle(position:Vector3, radius:Num):Path
+    {
+        at(u:Num):Vector3
+        {
+            x = radius.mul(Num.sin(u.mul(Num.tau)))
+            y = radius.mul(Num.cos(u.mul(Num.tau)))
+            return = position.add(Vector3(x, y, 0))
+        }
+        
+        length = Num.mul(radius, Num.tau)
+        return = Path(at, length)
+    }    
+
+	RepeatingLine(endpointA:Vector3, endpointB:Vector3):Path
+	{
+		return = BoundedPath.Repeat(BoundedPath.Line(endpointA, endpointB))
+	}
+
+	PingPongLine(endpointA:Vector3, endpointB:Vector3):Path
+	{
+		return = BoundedPath.PingPong(BoundedPath.Line(endpointA, endpointB))
+	}
+
+	Rectangle(width:Num, height:Num):Path
+	{
+		at(u:Num):Vector3
+		{
+            t = Bool.if(u.lt(0), u.rem(1).add(1).abs, u.rem(1))
+            u1 = Num.mul(width.add(height), t.mul(2).rem(1))
+			
+			pos = Bool.if(u1.lt(width),
+				Vector3(u1, 0, 0),
+				Vector3(width, u1.sub(width), 0)
+			)
+			
+			return = Bool.if(t.rem(1).lt(0.5),
+				pos,
+				Vector3.add(Vector3(0, 0, 0).sub(pos), Vector3(width, height, 0))
+			)
+		}
+		
+		return = Path.Translate(Path(at, width.add(height).mul(2)), Vector3(width.div(-2), height.div(-2), 0))
+	}
+
+    #UNTESTED
+#	Lissajous(size:Vector2, frequency:Vector2, delta:Vector2):Path
+#	{
+#		at(u:Num):Vector3
+#		{
+#			t = Vector2(u, u)
+#			v = Vector2.mul(size, zip(Num.cos, frequency.mul(t).sub(delta)))
+#			return = Vector3(v.x, v.y, 0)
+#		}
+#		l = Vector2.mul(size, frequency)
+#		return = Path(at, Num.mul(Num.div(2, Num.pi), ellipse(l.x, l.y)))
+#	}
+
+#	Rose(diameter:Num, n:Num, d:Num, frequency:Num):Path
+#	{
+#		k = Num.div(n, d)
+#		at(u:Num):Vector3
+#		{
+#			ut = Num.mul(u, tau)
+#			r = Num.mul(diameter, Num.cos(Num.mul(ut, k)))
+#			
+#			return = Vector3(Num.mul(r, Num.cos(Num.mul(ut, frequency))), Num.mul(r, Num.sin(Num.mul(ut, frequency))), 0)
+#		}
+#		return = Path(at, Num.mul(Num.mul(diameter, 4), ellipse(k, 1)))
+#	}   
+	
+#   #Modifiers
+#   WithBounds(path:Path, start:Num, end:Num):BoundedPath
+#   {
+#       segment = sub(end, start)
+#       at(u:Num):Vector3 = path.at(Num.mul(Num.add(u, start), segment))
+#       return = BoundedPath(at, mul(path.length, segment))
+#   }
+  
+#   LineBetween(a:Path, aPeriod:Num, b:Path, bPeriod:Num, time:Num):Path
+#   {
+#       pointA = a.at(rem(div(time, aPeriod), 1))
+#       pointB = b.at(rem(div(time, bPeriod), 1))
+#       return = BoundedPath.Easing(Path.Line(pointA, pointB))
+#   }
+   
+#   Concatenate(a:Path, b:Path):Path
+#   {
+#       at(u:Num):Vector3 = Bool.if(Num.lt(u, 0.5), a.at(Num.mul(u, 2)), b.at(Num.mul(u, 2)))
+#       length = Num.add(a.length, b.length)
+#       return = Path(at, length)
+#   }
+
+#   Animate(path:Path, trajectory:Path, duration:Num, time:Num):Path
+#   {
+#       offset = trajectory.at(Num.div(time, duration))
+#       at(u:Num):Vector3 = Vector3.add(path.at(u), offset)
+#       return = Path(at, path.length)
+#   }
+
+#   Offset(path:Path, amount:Num):Path
+#   {
+#       at(u:Num):Vector3 = path.at(Num.rem(Num.add(u, amount), 1))
+#       return = Path(at, path.length)
+#   }
+
+#   Reverse(path:Path):Path
+#   {
+#       at(u:Num):Vector3 = path.at(Num.sub(1, u))
+#       return = Path(at, path.length)
+#   }
+
+   Translate(path:Path, position:Vector3):Path
+   {
+       at(u:Num):Vector3 = Vector3.add(position, path.at(u))
+       return = Path(at, path.length)
+   }
+
+#   Transform(path:Path, matrix:Matrix4x4):Path
+#   {
+#      at(u:Num):Vector3 = Vector3.TransformPosition(path.at(u), matrix)
+#       return = Path(at, path.length)
+#   } 
+}
+
+struct BoundedPath(atBounded:PathFunc, length:Num)
+{
+    #Paths
+	Line(endpointA:Vector3, endpointB:Vector3):BoundedPath
+	{
+		at(u:Num):Vector3 = Vector3.lerp(u.clamp(0,1), endpointA, endpointB)
+		length = Vector3.distance(endpointA, endpointB)
+		return = BoundedPath(at, length)
+	}
+
+#   #UNTESTED
+#	PolyLineSimple(points:Vec3Array) : BoundedPath
+#	{
+#		segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)))
+#		segments = TArray(sub(points.count, 1), segment)
+#		return = PolySegmentSimple(segments)
+#	}
+#
+#   #UNTESTED
+#	PolySegmentSimple(segments:SegmentArray) : BoundedPath
+#	{
+#		segmentLength(s:Segment) = V3.Distance(s.a, s.b)
+#		totalLength = aggregate(add, Array.Select(segments, segmentLength), 0)
+#
+#		at(u:Num)
+#		{
+#			adjustedU = mul(u, segments.count)
+#			target = segments.index(adjustedU)
+#			return = Vec.Lerp(rem(adjustedU, 1), target.a, target.b)
+#		}
+#		return = BoundedPath(at, totalLength)
+#	}
+#
+#   #UNTESTED
+#	PolyLine(points:Vec3Array) : BoundedPath
+#	{
+#		segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)))
+#		segments = TArray(sub(points.count, 1), segment)
+#		return = PolySegment(segments)
+#	}
+#
+#   #UNTESTED
+#	PolySegment(segments:SegmentArray) : BoundedPath
+#	{
+#		segmentLength(s:Segment) = V3.Distance(s.a, s.b)
+#		totalLength = aggregate(add, Array.Select(segments, segmentLength), 0)
+#
+#		at(u:Num)
+#		{
+#			adjustedU = mul(u, totalLength)
+#			SegmentIteration -> s:Segment, distance:Num, continue:Num
+#			segmentFinder(current:SegmentIteration, next:Segment) : SegmentIteration =
+#				if (current.continue,
+#					if(lt(current.distance, segmentLength(next)),
+#						SegmentIteration(next, current.distance, 0),
+#						SegmentIteration(current.s, sub(current.distance, segmentLength(next)), 1)
+#					),
+#					current
+#				)
+#			findResult = aggregate(segmentFinder, Array.Skip(segments, 1), SegmentIteration(segments.index(0), adjustedU, 1))
+#			targetU = div(findResult.distance, segmentLength(findResult.s))
+#			return = Vec.Lerp(targetU, findResult.s.a, findResult.s.b)
+#		}
+#		return = BoundedPath(at, totalLength)
+#	}
+	
+	#Modifiers
+	PingPong(path:BoundedPath):Path
+	{
+		at(u:Num):Vector3 = path.atBounded(u.abs.add(1).rem(2).sub(1).abs)
+		length = path.length.mul(2)
+		return = Path(at, length)
+	}
+
+	Repeat(path:BoundedPath):Path
+	{
+		at(u:Num):Vector3
+		{
+		    #not mirrored about x = 0, but repeating sawtooth irrespective of +ve or -ve interpolant u
+		    t = Bool.if(u.lt(0), u.rem(1).add(1), u.rem(1))
+		    return = path.atBounded(t)
+		}
+		return = Path(at, path.length)
+	}
+	
+    #UNTESTED
+    WithBounds(path:Path, start:Num, end:Num):BoundedPath
+    {
+        segment = end.sub(start)
+        at(u:Num):Vector3 = path.at(u.add(start).mul(segment))
+        return = BoundedPath(at, path.length.mul(segment))
+    }
+   
+    #UNTESTED
+    LineBetween(a:Path, aPeriod:Num, b:Path, bPeriod:Num, time:Num):Path
+    {
+        pointA = a.at(time.div(aPeriod).rem(1))
+        pointB = b.at(time.div(bPeriod),rem(1))
+        return = Path.Easing(BoundedPath.Line(pointA, pointB))
+    }
+       
+#    #UNTESTED
+#	Join(pathArray:PathArray) : BoundedPath
+#	{
+#		pathLength(p:BoundedPath) = p.length
+#		length = aggregate(add, Array.Select(pathArray, pathLength), 0)
+#		return = BoundedPath(at, length)
+#		at(u:Num)
+#		{
+#			adjustedU = mul(u, pathArray.count)
+#			currentPath = pathArray.index(adjustedU)
+#			localU = rem(adjustedU, 1)
+#			return = currentPath.atBounded(localU)
+#		}
+#	}
+#
+#    #UNTESTED
+#	PathSegment(path:BoundedPath, start:Num, end:Num):BoundedPath
+#	{
+#		segment = Num.sub(end, start)
+#		at(u:Num):Vector3 = path.atBounded(Num.mul(Num.add(u, start), segment))
+#		return = BoundedPath(at, Num.mul(path.length, segment))
+#	}
+}

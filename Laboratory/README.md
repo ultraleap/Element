@@ -1,5 +1,5 @@
 # Laboratory - The Element Host Test Suite
-Laboratory is an NUnit-based .NET test application capable of testing Element Hosts.
+Laboratory is an NUnit-based .NET test application for testing Element Hosts.
 
 ## Error Handling in Element
 

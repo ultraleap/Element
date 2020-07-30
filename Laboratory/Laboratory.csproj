@@ -8,27 +8,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.3.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="NUnit.Console" Version="3.10.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="NunitXml.TestLogger" Version="2.1.41" />
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="..\Common\**" Link="%(RecursiveDir)%(Filename)%(Extension)">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="Tests\**\*.ele" Link="%(RecursiveDir)%(Filename)%(Extension)">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tests\**\*.toml" Link="%(RecursiveDir)%(Filename)%(Extension)">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Remove="Alchemist.runsettings" />
     <Content Include="Alchemist.runsettings">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Remove="Tests\L0-Parsing\Declarations\Structs\MissingTerminalOrScope-fail.ele" />
+    <None Remove="Tests\L0-Parsing\Declarations\Functions\Declaration\TerminalMissing-fail.ele" />
   </ItemGroup>
   
   <ItemGroup>
@@ -60,6 +59,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Element.NET.Tests\Element.NET.Tests.csproj" />
     <ProjectReference Include="..\Element.NET\Element.NET.csproj" />
   </ItemGroup>
 

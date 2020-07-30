@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,10 +15,10 @@ namespace Laboratory
     /// <summary>
     /// Implements hosts types and enumerates hosts for host fixtures
     /// </summary>
-    internal class HostArguments
+    internal static class HostArguments
     {
         public static IHost MakeHost() => _processHostInfo != null
-                                            ? (IHost)new ProcessHost(_processHostInfo.Value)
+                                            ? (IHost)new ProcessHost(_processHostInfo)
                                             : new AtomicHost();
         
         static HostArguments()
@@ -27,9 +28,10 @@ namespace Laboratory
             
             _processHostInfo = string.IsNullOrEmpty(name)
                                    ? (ProcessHostInfo?)null
-                                   : new ProcessHostInfo(name,
-                                                         Get<string>("build-command"),
-                                                         Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path")));
+                                   : new ProcessHostInfo(name, 
+                                       new []{Get<string>("build-command") ,Get<string>("additional-build-command")},
+                                       Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path")), 
+                                       Get<string>("working-directory"));
         }
 
         private static readonly Lazy<string> _elementRootDirectory = new Lazy<string>(() =>
@@ -55,21 +57,32 @@ namespace Laboratory
             }
         }
 
-        private readonly struct ProcessHostInfo
+        private class ProcessHostInfo
         {
-            public ProcessHostInfo(string name, string buildCommand, string executablePath)
+            public ProcessHostInfo(string name, string[] buildCommands, string executablePath, string workingDirectory)
             {
                 Name = name;
-                BuildCommand = buildCommand;
+                BuildCommands = buildCommands;
                 ExecutablePath = executablePath;
+                WorkingDirectory = workingDirectory;
             }
 
             public string Name { get; }
-            public string BuildCommand { get; }
+            public string[] BuildCommands { get; }
             public string ExecutablePath { get; }
+            public string WorkingDirectory { get; }
         }
 
         private static readonly ProcessHostInfo? _processHostInfo;
+        static async Task ReadStream(List<string> messages, Process proc, StreamReader streamReader)
+        {
+            while (!proc.HasExited || !streamReader.EndOfStream)
+            {
+                var msg = await streamReader.ReadLineAsync();
+                if (!string.IsNullOrEmpty(msg))
+                    messages.Add(msg);
+            }
+        }
 
         /// <summary>
         /// Implements commands by calling external process defined using a command string.
@@ -79,21 +92,12 @@ namespace Laboratory
             private static List<string> Run(Process process)
             {
                 var messages = new List<string>();
-                async Task ReadStream(Process proc, StreamReader streamReader)
-                {
-                    while (!proc.HasExited || !streamReader.EndOfStream)
-                    {
-                        var msg = await streamReader.ReadLineAsync();
-                        if(!string.IsNullOrEmpty(msg))
-                            messages.Add(msg);
-                    }
-                }
 
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
                 process.Start();
-                var readingStdOut = ReadStream(process, process.StandardOutput);
-                var readingStdErr = ReadStream(process, process.StandardError);
+                var readingStdOut = ReadStream(messages, process, process.StandardOutput);
+                var readingStdErr = ReadStream(messages, process, process.StandardError);
                 process.WaitForExit();
                 Task.WhenAll(readingStdOut, readingStdErr).Wait();
                 return messages;
@@ -101,35 +105,43 @@ namespace Laboratory
 
             static ProcessHost()
             {
-                if (!_processHostInfo.HasValue) return;
+                if (_processHostInfo == null) return;
 
                 // Perform build command - within static constructor so it's only performed once per test run
-                var info = _processHostInfo.Value;
+                var messages = new List<string>();
                 try
                 {
-                    var splitCommand = info.BuildCommand.Split(' ', 2);
-                    var process = new Process
+                    foreach(var command in _processHostInfo.BuildCommands.Where(s => !string.IsNullOrWhiteSpace(s)))
                     {
-                        StartInfo = new ProcessStartInfo
+                        var splitCommand = command.Split(' ', 2);
+                        var process = new Process
                         {
-                            FileName = splitCommand[0],
-                            Arguments = splitCommand[1],
-                            WorkingDirectory = _elementRootDirectory.Value
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = splitCommand[0],
+                                Arguments = splitCommand[1],
+                                WorkingDirectory = _elementRootDirectory.Value
+                            }
+                        };
+
+                        process.StartInfo.RedirectStandardError = true;
+                        process.StartInfo.RedirectStandardOutput = true;
+                        process.Start();
+                        var readingStdOut = ReadStream(messages, process, process.StandardOutput);
+                        var readingStdErr = ReadStream(messages, process, process.StandardError);
+                        process.WaitForExit();
+
+                        if (process.ExitCode != 0)
+                        {
+                            Task.WhenAll(readingStdOut, readingStdErr).Wait();
+                            _hostBuildErrors.Add(_processHostInfo, messages);
                         }
-                    };
-
-                    process.StartInfo.RedirectStandardError = true;
-                    process.Start();
-                    process.WaitForExit();
-
-                    if (process.ExitCode != 0)
-                    {
-                        _hostBuildErrors.Add(info, process.StandardError.ReadToEnd());
                     }
                 }
                 catch (Exception e)
                 {
-                    _hostBuildErrors.Add(info, e.ToString());
+                    messages.Add(e.ToString());
+                    _hostBuildErrors.Add(_processHostInfo, messages);
                 }
             }
 
@@ -146,7 +158,7 @@ namespace Laboratory
                 {
                     result = JsonConvert.DeserializeObject<T>(json, settings);
                 }
-                catch
+                catch(Exception e)
                 {
                     result = default;
                     success = false;
@@ -155,7 +167,7 @@ namespace Laboratory
                 return success;
             }
 
-            private static readonly Dictionary<ProcessHostInfo, string> _hostBuildErrors = new Dictionary<ProcessHostInfo, string>();
+            private static readonly Dictionary<ProcessHostInfo, List<string>> _hostBuildErrors = new Dictionary<ProcessHostInfo, List<string>>();
 
             public ProcessHost(ProcessHostInfo info) => _info = info;
 
@@ -163,11 +175,11 @@ namespace Laboratory
 
             private readonly ProcessHostInfo _info;
 
-            private string RunHostProcess(CompilationInput input, string arguments)
+            private Result<string> RunHostProcess(ITrace trace, string arguments)
             {
                 if (_hostBuildErrors.TryGetValue(_info, out var buildError))
                 {
-                    Assert.Fail(buildError);
+                    Assert.Fail(string.Join("\n", buildError));
                 }
 
                 var process = new Process
@@ -175,33 +187,31 @@ namespace Laboratory
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = _info.ExecutablePath,
-                        Arguments = arguments
+                        Arguments = arguments,
+                        WorkingDirectory = Path.Combine(_elementRootDirectory.Value, _info.WorkingDirectory)
                     }
                 };
 
                 var messages = Run(process);
 
-                var compilerMessages = messages.Select(msg => TryParseJson(msg, out CompilerMessage compilerMessage)
-                    ? compilerMessage
-                    : new CompilerMessage(msg)).ToArray();
+                var resultBuilder = new ResultBuilder<string>(trace, string.Empty);
 
-                if (process.ExitCode != 0)
+                foreach (var msg in messages)
                 {
-                    Assert.Fail(compilerMessages
-                        .Aggregate(new StringBuilder($"{_info.Name} process quit with exit code '{process.ExitCode}'.").AppendLine().AppendLine($"Beginning of {_info.Name} output"),
-                            (builder, s) => builder.Append("    ").AppendLine(s.ToString())).AppendLine($"End of {_info.Name} output").ToString());
+                    resultBuilder.Append(TryParseJson(msg, out CompilerMessage compilerMessage)
+                                             ? compilerMessage
+                                             : new CompilerMessage(msg));
                 }
-                else
+
+                if (process.ExitCode != 0 && !resultBuilder.Messages.Any(m => m.MessageLevel.HasValue && m.MessageLevel.Value >= MessageLevel.Error))
                 {
-                    foreach (var msg in compilerMessages)
-                    {
-                        input.LogCallback?.Invoke(msg);
-                    }
+                    resultBuilder.Append(MessageCode.UnknownError, $"{_info.Name} process quit with exit code '{process.ExitCode}'.");
                 }
 
                 process.Close();
+                resultBuilder.Result = resultBuilder.Messages.Last().ToString();
 
-                return compilerMessages.Last().ToString();
+                return resultBuilder.ToResult();
             }
 
             private static StringBuilder BeginCommand(CompilationInput input, string command)
@@ -213,27 +223,34 @@ namespace Laboratory
                 if (input.ExtraSourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.ExtraSourceFiles);
                 if (input.Debug) processArgs.Append(" --debug ");
                 if (input.SkipValidation) processArgs.Append(" --no-validation ");
+                if (input.NoParseTrace) processArgs.Append(" --no-parse-trace ");
                 return processArgs;
             }
 
-            bool IHost.Parse(CompilationInput input) => bool.Parse(RunHostProcess(input, BeginCommand(input, "parse").ToString()));
+            Result IHost.Parse(CompilationInput input) => (Result)RunHostProcess(new BasicTrace(input.Verbosity), BeginCommand(input, "parse").ToString());
 
-            (bool Success, float[] Result) IHost.Evaluate(CompilationInput input, string expression)
+            Result<float[]> IHost.Evaluate(CompilationInput input, string expression)
             {
-                var success = true;
-                var result = RunHostProcess(input, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString());
-                var values = result.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(s =>
+                var resultBuilder = new ResultBuilder<float[]>(new BasicTrace(input.Verbosity), Array.Empty<float>());
+                return RunHostProcess(resultBuilder.Trace, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString())
+                    .Bind(resultString =>
                     {
-                        success &= float.TryParse(s, out var value);
-                        return value;
-                    })
-                    .ToArray();
-                return (success, values);
+                        resultBuilder.Result = resultString.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                                           .Select(s =>
+                                                           {
+                                                               if (!float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+                                                               {
+                                                                   resultBuilder.Append(MessageCode.ParseError, $"Could not parse result string '{s}' as a float");
+                                                               }
+                                                               return value;
+                                                           })
+                                                           .ToArray();
+                        return resultBuilder.ToResult();
+                    });
             }
 
-            (bool Success, string Result) IHost.Typeof(CompilationInput input, string expression) =>
-                (true, RunHostProcess(input, BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString()));
+            Result<string> IHost.Typeof(CompilationInput input, string expression) =>
+                RunHostProcess(new BasicTrace(input.Verbosity), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
         }
     }
 }

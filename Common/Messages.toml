@@ -21,7 +21,7 @@ name = "InvalidCompileTarget"
 level = "Error"
 
 [ELE4]
-name = "IntrinsicNotImplemented"
+name = "IntrinsicNotFound"
 level = "Error"
 
 [ELE5]
@@ -45,15 +45,15 @@ name = "ParseError"
 level = "Error"
 
 [ELE10]
-name = "InvalidBoundaryFunctionInterface"
+name = "InvalidBoundaryFunction"
 level = "Error"
 
 [ELE11]
-name = "CircularCompilation"
+name = "RecursionNotAllowed"
 level = "Error"
 
 [ELE12]
-name = "BoundaryMapMissing"
+name = "MissingBoundaryConverter"
 level = "Error"
 
 [ELE13]
@@ -77,8 +77,8 @@ name = "InvalidReturnType"
 level = "Error"
 
 [ELE18]
-name = "RedundantQualifier"
-level = "Warning"
+name = "InvalidBoundaryData"
+level = "Error"
 
 [ELE19]
 name = "StructCannotHaveReturnType"
@@ -94,6 +94,58 @@ level = "Error"
 
 [ELE22]
 name = "CannotBeUsedAsInstanceFunction"
+level = "Error"
+
+[ELE23]
+name = "FunctionCannotBeUncurried"
+level = "Error"
+
+[ELE24]
+name = "NotCompileConstant"
+level = "Error"
+
+[ELE25]
+name = "FileAccessError"
+level = "Error"
+
+[ELE26]
+name = "ArgumentNotFound"
+level = "Error"
+
+[ELE27]
+name = "DuplicateSourceFile"
+level = "Error"
+
+[ELE28]
+name = "ArgumentOutOfRange"
+level = "Error"
+
+[ELE29]
+name = "MultipleIntrinsicLocations"
+level = "Warning"
+
+[ELE30]
+name = "InvalidCast"
+level = "Error"
+
+[ELE31]
+name = "FunctionMissingReturn"
+level = "Error"
+
+[ELE32]
+name = "PortListCannotContainDiscards"
+level = "Error"
+
+[ELE33]
+name = "PortListDeclaresDefaultArgumentBeforeNonDefault"
+level = "Error"
+
+[ELE34]
+name = "IntrinsicConstraintCannotSpecifyFunctionSignature"
+level = "Error"
+
+[ELE35]
+name = "InfiniteLoop"
 level = "Error"
 
 [ELE9999]

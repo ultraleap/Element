@@ -1,10 +1,10 @@
 using Element;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.L3.Prelude
 {
     internal abstract class PreludeFixture : HostFixture
     {
-        protected CompilationInput ValidatedCompilationInput { get; } = new CompilationInput(FailOnError);
-        protected CompilationInput NonValidatedCompilationInput { get; } = new CompilationInput(FailOnError) {SkipValidation = true};
+        protected CompilationInput ValidatedCompilationInput => new CompilationInput {ExtraSourceFiles = new[]{GetEleFile("PreludeTestCode")}};
+        protected CompilationInput NonValidatedCompilationInput => new CompilationInput {SkipValidation = true};
     }
 }

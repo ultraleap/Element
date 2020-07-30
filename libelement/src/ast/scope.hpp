@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <vector>
 #include <cstdint>
-#include <cstdlib>
 
 #include "element/interpreter.h"
 #include "ast_internal.hpp"
@@ -40,6 +39,8 @@ struct element_scope
     std::string qualified_name() const;
 
     function_const_shared_ptr function() const;
+
+    const element_scope* root() const { return (parent ? parent->root() : this); }
 
 private:
     const element_scope* lookup(const std::vector<std::string>& search, size_t idx, bool recurse) const;

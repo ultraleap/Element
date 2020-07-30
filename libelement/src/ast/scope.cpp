@@ -1,6 +1,5 @@
 #include "ast/scope.hpp"
 
-#include <algorithm>
 #include <functional>
 #include <cassert>
 #include "common_internal.hpp"
@@ -9,7 +8,7 @@
 #include "ast/ast_indexes.hpp"
 #include "stringutil.hpp"
 
-
+//todo: optimise all of this to use string_view
 const element_scope* element_scope::lookup(std::string search, bool recurse) const
 {
     return lookup(split<'.'>(search), 0, recurse);
@@ -50,11 +49,11 @@ element_item_type element_scope::item_type() const
         return ELEMENT_ITEM_ROOT;
     case ELEMENT_AST_NODE_FUNCTION:
         assert(node->children.size() > ast_idx::fn::body);
-        return (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_INTERFACE)
-            ? ELEMENT_ITEM_INTERFACE
+        return (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_CONSTRAINT)
+            ? ELEMENT_ITEM_CONSTRAINT
             : ELEMENT_ITEM_FUNCTION;
     case ELEMENT_AST_NODE_STRUCT:
-        return ELEMENT_ITEM_TYPE;
+        return ELEMENT_ITEM_STRUCT;
     case ELEMENT_AST_NODE_NAMESPACE:
         return ELEMENT_ITEM_NAMESPACE;
     default:
@@ -72,7 +71,7 @@ function_const_shared_ptr element_scope::function() const
     // TODO: this needs to change
     if (node->children.size() > ast_idx::fn::declaration) {
         auto decl = node->children[ast_idx::fn::declaration].get();
-        if (decl->type == ELEMENT_AST_NODE_DECLARATION && (decl->flags & ELEMENT_AST_FLAG_DECL_INTRINSIC) != 0) {
+        if (decl->type == ELEMENT_AST_NODE_DECLARATION && decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
             // Check name against builtins
             m_function = element_function::get_builtin(node->children[0]->identifier);
             if (!m_function) {
@@ -85,7 +84,7 @@ function_const_shared_ptr element_scope::function() const
         if (node->type == ELEMENT_AST_NODE_FUNCTION) {
             m_function = std::make_shared<element_custom_function>(this);
         } else if (node->type == ELEMENT_AST_NODE_STRUCT) {
-            auto type = std::make_shared<element_custom_type>(this);
+            auto type = std::make_shared<element_type_named>(this);
             m_function = std::make_shared<element_type_ctor>(type);
         }
     }

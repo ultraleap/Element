@@ -9,13 +9,12 @@ namespace Element
     /// </summary>
     public class CompilationInput // TODO: Change to record type when available
     {
-        public CompilationInput(Action<CompilerMessage>? logCallback) { LogCallback = logCallback; }
-        public Action<CompilerMessage>? LogCallback { get; set; }
         public bool ExcludePrelude { get; set; } = false;
-        public IReadOnlyList<DirectoryInfo> Packages { get; set; } = Array.Empty<DirectoryInfo>();
+        public IReadOnlyList<string> Packages { get; set; } = Array.Empty<string>();
         public IReadOnlyList<FileInfo> ExtraSourceFiles { get; set; } = Array.Empty<FileInfo>();
-        public bool Debug { get; set; } = false;
+        public bool Debug { get; set; } = true;
         public bool SkipValidation { get; set; } = false;
+        public bool NoParseTrace { get; set; } = false;
         public MessageLevel Verbosity { get; set; } = MessageLevel.Information;
     }
 }

@@ -1,4 +1,0 @@
-struct MyStruct(a:Num)
-{
-	MyStruct = 20;
-}
