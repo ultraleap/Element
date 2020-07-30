@@ -58,7 +58,7 @@ namespace element
     {
         auto* const output = ast->children[ast_idx::declaration::outputs].get();
         auto type_annotation = build_type_annotation(context, output, output_result);
-        declaration.output.emplace(port{ identifier::return_identifier, std::move(type_annotation) });
+        declaration.output.emplace(port{&declaration, identifier::return_identifier, std::move(type_annotation) });
     }
 
     void build_inputs(const element_interpreter_ctx* context, element_ast* ast, declaration& declaration, element_result& output_result)
@@ -80,13 +80,13 @@ namespace element
             if (!has_type_annotation)
             {
                 //todo: instead of nullptr, use an object to represent nothing? can't use Any, as user might not have it in source
-                declaration.inputs.emplace_back(ident, nullptr);
+                declaration.inputs.emplace_back(&declaration, ident, nullptr);
                 continue;
             }
 
             auto* const output = input->children[ast_idx::port::type].get();
             auto type_annotation = build_type_annotation(context, output, output_result);
-            declaration.inputs.emplace_back(ident, std::move(type_annotation));
+            declaration.inputs.emplace_back(&declaration, ident, std::move(type_annotation));
         }
     }
 

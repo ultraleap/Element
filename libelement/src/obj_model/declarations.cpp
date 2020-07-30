@@ -171,6 +171,27 @@ namespace element
         return instance->compile(context, source_info);
     }
 
+    bool function_declaration::valid_at_boundary(const compilation_context& context) const
+    {
+        if (!output)
+            return false;
+
+        //outputs must be serializable
+        const auto return_type = output->resolve_annotation(context);
+        if (!return_type || !return_type->serializable(context))
+            return false;
+
+        //inputs must be deserializable
+        for (const auto& input : inputs)
+        {
+            const auto& type = input.resolve_annotation(context);
+            if (!type || !type->deserializable(context))
+                return false;
+        }
+
+        return true;
+    }
+
     //namespace
     namespace_declaration::namespace_declaration(identifier name, const scope* parent_scope)
         : declaration(std::move(name), parent_scope)
