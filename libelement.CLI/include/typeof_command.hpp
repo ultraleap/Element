@@ -35,12 +35,8 @@ namespace libelement::cli
 			if (result != ELEMENT_OK)
 				return compiler_message(ELEMENT_ERROR_PARSE,"Failed to setup context");
 
-			//call into libelement
-			const std::vector<trace_site> trace_site{};
-
-			std::string typeof(256, '\0');
-
 			const auto expression = custom_arguments.expression;
+			std::string typeof(256, '\0');
 
 			result = element_interpreter_typeof_expression(context, nullptr, expression.c_str(), typeof.data(), typeof.size());
 			if (result != ELEMENT_OK) {
@@ -51,14 +47,6 @@ namespace libelement::cli
 			}
 
 			return generate_response(result, typeof);
-
-#ifdef LEGACY_COMPILER
-			result = element_interpreter_get_internal_typeof(context, typeof.c_str(), "<input>", internal_typeof_string.data(), 256);
-			if (result != ELEMENT_OK)
-				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to get internal type of '" + typeof + "'");
-
-			return generate_response(result, internal_typeof_string, trace_site);
-#endif
 		}
 
 		[[nodiscard]] std::string as_string() const override
