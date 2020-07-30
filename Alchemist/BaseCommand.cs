@@ -50,7 +50,7 @@ namespace Alchemist
 			});
 			foreach (var msg in result.Messages)
 			{
-				Log(msg.ToString());
+				Log(msg);
 			}
 			if (result.IsSuccess) Log(result.ResultOr(string.Empty));
 			return result.IsSuccess ? 0 : 1;

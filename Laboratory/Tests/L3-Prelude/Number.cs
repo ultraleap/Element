@@ -26,7 +26,7 @@ namespace Laboratory.Tests.L3.Prelude
 		[Test, Pairwise]
 		public void UnaryMathOpRandom([ValueSource(nameof(_unaryOpTestValues))]
 		                              (string ElementFunction, Func<float, float> CLRFunction) functionPair,
-		                              [Random(-1.0e6f, 1.0e6f, 20)] float arg0) =>
+		                              [Random(-1.0e6f, 1.0e6f, 5)] float arg0) =>
 			AssertApproxEqual(ValidatedCompilationInput,
 				string.Format(functionPair.ElementFunction, arg0),
 				new[]{functionPair.CLRFunction(arg0)});
@@ -45,8 +45,8 @@ namespace Laboratory.Tests.L3.Prelude
 		[Test, Pairwise]
 		public void BinaryMathOpRandom([ValueSource(nameof(BinaryOpMap))]
 			(string ElementFunction, Func<float, float, float> CLRFunction) functionPair,
-			[Random(-1.0e6f, 1.0e6f, 20)] float arg0,
-			[Random(-1.0e6f, 1.0e6f, 20)] float arg1) =>
+			[Random(-1.0e6f, 1.0e6f, 5)] float arg0,
+			[Random(-1.0e6f, 1.0e6f, 5)] float arg1) =>
 			AssertApproxEqual(ValidatedCompilationInput,
 				string.Format(functionPair.ElementFunction, arg0, arg1),
 				new[]{functionPair.CLRFunction(arg0, arg1)});
@@ -60,8 +60,8 @@ namespace Laboratory.Tests.L3.Prelude
 		[Test, Pairwise]
 		public void AdditionalBinaryMathOpRandom([ValueSource(nameof(AdditionalBinaryOpMap))]
 		                               (string ElementFunction, Func<float, float, float> CLRFunction) functionPair,
-		                               [Random(2f, 10f, 10)] float arg0,
-		                               [Random(2f, 10f, 10)] float arg1) =>
+		                               [Random(2f, 10f, 5)] float arg0,
+		                               [Random(2f, 10f, 5)] float arg1) =>
 			AssertApproxEqual(ValidatedCompilationInput,
 				string.Format(functionPair.ElementFunction, arg0, arg1),
 				new[]{functionPair.CLRFunction(arg0, arg1)});

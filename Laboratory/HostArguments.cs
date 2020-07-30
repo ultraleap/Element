@@ -203,7 +203,7 @@ namespace Laboratory
                                              : new CompilerMessage(msg));
                 }
 
-                if (process.ExitCode != 0)
+                if (process.ExitCode != 0 && !resultBuilder.Messages.Any(m => m.MessageLevel.HasValue && m.MessageLevel.Value >= MessageLevel.Error))
                 {
                     resultBuilder.Append(MessageCode.UnknownError, $"{_info.Name} process quit with exit code '{process.ExitCode}'.");
                 }
@@ -227,16 +227,7 @@ namespace Laboratory
                 return processArgs;
             }
 
-            Result IHost.Parse(CompilationInput input)
-            {
-                var trace = new BasicTrace(input.Verbosity);
-                return RunHostProcess(trace, BeginCommand(input, "parse").ToString())
-                    .Bind(resultString => bool.TryParse(resultString, out var result)
-                                            ? result
-                                                  ? Result.Success
-                                                  : trace.Trace(MessageCode.ParseError, "Parsing failed - see log for details")
-                                            : trace.Trace(MessageCode.ParseError, $"Could not parse result string '{resultString}' as a Bool"));
-            }
+            Result IHost.Parse(CompilationInput input) => (Result)RunHostProcess(new BasicTrace(input.Verbosity), BeginCommand(input, "parse").ToString());
 
             Result<float[]> IHost.Evaluate(CompilationInput input, string expression)
             {
@@ -257,9 +248,6 @@ namespace Laboratory
                         return resultBuilder.ToResult();
                     });
             }
-
-            public Result<string> NormalForm(CompilationInput input, string expression) =>
-                RunHostProcess(new BasicTrace(input.Verbosity), BeginCommand(input, "normalform").Append($" -e \"{expression}\"").ToString());
 
             Result<string> IHost.Typeof(CompilationInput input, string expression) =>
                 RunHostProcess(new BasicTrace(input.Verbosity), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());

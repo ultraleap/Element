@@ -6,6 +6,5 @@ namespace Element
         Information,
         Warning,
         Error,
-        Fatal,
     }
 }
