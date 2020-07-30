@@ -627,6 +627,7 @@ element_result element_interpreter_compile_expression(
     element::file_information info;
     info.file_name = std::make_unique<std::string>("<REMOVE>");
 
+    //hack: forcing terminal on expression
     std::string hack = std::string(expression_string) + ";";
     //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
     result = element_tokeniser_run(tokeniser, hack.c_str(), info.file_name->data());
@@ -747,11 +748,12 @@ element_result element_interpreter_evaluate_expression(
     return result;
 }
 
-element_result element_interpreter_evaluate_expression_but_without_the_serialisation_bit(
+element_result element_interpreter_typeof_expression(
     element_interpreter_ctx* context,
     const element_evaluator_options* options,
     const char* expression_string,
-    element_outputs* outputs)
+    char* buffer,
+    const int buffer_size)
 {
     //sure there is a shorthand for this
     element_evaluable evaluable;
@@ -762,62 +764,48 @@ element_result element_interpreter_evaluate_expression_but_without_the_serialisa
     {
         assert(!"tried to evaluate an expression that failed to compile");
         //todo: log
-        outputs->count = 0;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
     const auto err = std::dynamic_pointer_cast<element::error>(evaluable_ptr->evaluable);
     if (err)
     {
-        outputs->count = 0;
         return err->log_once(context->logger.get());
     }
 
-    //commented this bit out, didn't think any more... literally the only difference atm
-    //const auto compiled = evaluable_ptr->evaluable->to_expression();
-    //if (!compiled)
-    //{
-    //    assert(false);
-    //    outputs->count = 0;
-    //    return ELEMENT_ERROR_UNKNOWN;
-    //}
-
-    float inputs[] = { 0 };
-    element_inputs input;
-    input.values = inputs;
-    input.count = 1;
-
-    const auto result = element_interpreter_evaluate(context, options, evaluable_ptr, &input, outputs);
-
-    //todo: remove declaration added to global scope
-    //todo: remove file_info added to interpreter source context
-
-    return result;
-}
-
-
-element_result element_metainfo_for_evaluable(const element_evaluable* evaluable, element_metainfo** metainfo)
-{
-    //todo: error checking and stuff
-
-    *metainfo = new element_metainfo();
-    (*metainfo)->typeof = evaluable->evaluable->typeof_info();
-    (*metainfo)->code = evaluable->evaluable->to_code(0);
-
-    return ELEMENT_OK;
-}
-
-element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, const int buffer_size)
-{
-    if (buffer_size < static_cast<int>(metainfo->typeof.size()))
+    const auto typeof = evaluable.evaluable->typeof_info();
+    if (buffer_size < static_cast<int>(typeof.size()))
         return ELEMENT_ERROR_UNKNOWN;
 
     #define _CRT_SECURE_NO_WARNINGS
-    strncpy(buffer, metainfo->typeof.c_str(), metainfo->typeof.size());
+    strncpy(buffer, typeof.c_str(), typeof.size());
     #undef _CRT_SECURE_NO_WARNINGS
 
     return ELEMENT_OK;
 }
+
+//element_result element_metainfo_for_evaluable(const element_evaluable* evaluable, element_metainfo** metainfo)
+//{
+//    //todo: error checking and stuff
+//
+//    *metainfo = new element_metainfo();
+//    (*metainfo)->typeof = evaluable->evaluable->typeof_info();
+//    (*metainfo)->code = evaluable->evaluable->to_code(0);
+//
+//    return ELEMENT_OK;
+//}
+//
+//element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, const int buffer_size)
+//{
+//    if (buffer_size < static_cast<int>(metainfo->typeof.size()))
+//        return ELEMENT_ERROR_UNKNOWN;
+//
+//    #define _CRT_SECURE_NO_WARNINGS
+//    strncpy(buffer, metainfo->typeof.c_str(), metainfo->typeof.size());
+//    #undef _CRT_SECURE_NO_WARNINGS
+//
+//    return ELEMENT_OK;
+//}
 
 
 

@@ -121,24 +121,24 @@ element_result element_interpreter_evaluate(
     const element_inputs* inputs,
     element_outputs* outputs);
 
-element_result element_interpreter_compile_expression(
-    element_interpreter_ctx* context,
-    const element_compiler_options* options,
-    const char* expression_string,
-    element_evaluable** evaluable);
-
 element_result element_interpreter_evaluate_expression(
     element_interpreter_ctx* context,
     const element_evaluator_options* options,
     const char* expression_string,
-    const element_evaluable* evaluable,
     element_outputs* outputs);
 
-element_result element_metainfo_for_evaluable(
-    const element_evaluable* evaluable,
-    element_metainfo** metainfo);
-
-element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size);
+element_result element_interpreter_typeof_expression(
+    element_interpreter_ctx* context,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    char* buffer,
+    int buffer_size);
+//
+//element_result element_metainfo_for_evaluable(
+//    const element_evaluable* evaluable,
+//    element_metainfo** metainfo);
+//
+//element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size);
 
 #endif
 
