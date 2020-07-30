@@ -16,135 +16,31 @@
 
 using ast_unique_ptr = std::unique_ptr<element_ast, void(*)(element_ast*)>;
 
-//class ast_visitor
-//{
-//public:
-//    virtual void visit_none(element_ast* ast) = 0;
-//    virtual void visit_root(element_ast* ast) = 0;
-//    virtual void visit_function(element_ast* ast) = 0;
-//    virtual void visit_struct(element_ast* ast) = 0;
-//    virtual void visit_namespace(element_ast* ast) = 0;
-//    virtual void visit_declaration(element_ast* ast) = 0;
-//    virtual void visit_scope(element_ast* ast) = 0;
-//    virtual void visit_constraint(element_ast* ast) = 0;
-//    virtual void visit_expression(element_ast* ast) = 0;
-//    virtual void visit_expression_list(element_ast* ast) = 0;
-//    virtual void visit_port_list(element_ast* ast) = 0;
-//    virtual void visit_port(element_ast* ast) = 0;
-//    virtual void visit_typename(element_ast* ast) = 0;
-//    virtual void visit_call(element_ast* ast) = 0;
-//    virtual void visit_lambda(element_ast* ast) = 0;
-//    virtual void visit_identifier(element_ast* ast) = 0;
-//    virtual void visit_literal(element_ast* ast) = 0;
-//    virtual void visit_unspecified_type(element_ast* ast) = 0;
-//};
+element_ast* ast_new_child(element_ast* parent, element_ast_node_type type);
 
-//PRINTCASE(ELEMENT_TOK_NONE);
 struct element_ast
 {
-    element_ast_node_type type;
-    std::string identifier;
-    union {
+    element_ast(element_ast* ast_parent)
+        : parent(ast_parent)
+        , type(ELEMENT_AST_NODE_NONE)
+    { }
+
+    union
+    {
         element_value literal = 0;   // active for AST_NODE_LITERAL
         element_ast_flags flags; // active for all other node types
     };
+
+    element_ast_node_type type;
+    std::string identifier;
     element_ast* parent = nullptr;
     std::vector<ast_unique_ptr> children;
     const element_token* nearest_token = nullptr;
 
-    bool has_flag(element_ast_flags flag) const 
+    [[nodiscard]] bool has_flag(element_ast_flags flag) const 
     {
         return (flags & flag) == flag;
     }
-
-//	//use for ast_print at some point
-//    void visit(ast_visitor& visitor)
-//    {
-//        visit_node(visitor , this);
-//    	
-//        for(auto& child : children)
-//        {
-//            child->visit(visitor);
-//        }
-//    }
-//	
-//private:
-//    static void visit_node(ast_visitor& visitor, element_ast* ast)
-//    {
-//        switch(ast->type)
-//        {
-//        case ELEMENT_AST_NODE_NONE: visitor.visit_none(ast); break;
-//        case ELEMENT_AST_NODE_ROOT: visitor.visit_root(ast); break;
-//        case ELEMENT_AST_NODE_FUNCTION: visitor.visit_function(ast); break;
-//        case ELEMENT_AST_NODE_STRUCT: visitor.visit_struct(ast); break;
-//        case ELEMENT_AST_NODE_NAMESPACE: visitor.visit_namespace(ast); break;
-//        case ELEMENT_AST_NODE_DECLARATION: visitor.visit_declaration(ast); break;
-//        case ELEMENT_AST_NODE_SCOPE: visitor.visit_scope(ast); break;
-//        case ELEMENT_AST_NODE_CONSTRAINT: visitor.visit_constraint(ast); break;
-//        case ELEMENT_AST_NODE_EXPRESSION: visitor.visit_expression(ast); break;
-//        case ELEMENT_AST_NODE_EXPRLIST: visitor.visit_expression_list(ast); break;
-//        case ELEMENT_AST_NODE_PORTLIST: visitor.visit_port_list(ast); break;
-//        case ELEMENT_AST_NODE_PORT: visitor.visit_port(ast); break;
-//        case ELEMENT_AST_NODE_TYPENAME: visitor.visit_typename(ast); break;
-//        case ELEMENT_AST_NODE_CALL: visitor.visit_call(ast); break;
-//        case ELEMENT_AST_NODE_LAMBDA: visitor.visit_lambda(ast); break;
-//        case ELEMENT_AST_NODE_IDENTIFIER: visitor.visit_identifier(ast); break;
-//        case ELEMENT_AST_NODE_LITERAL: visitor.visit_literal(ast); break;
-//        case ELEMENT_AST_NODE_UNSPECIFIED_TYPE: visitor.visit_unspecified_type(ast); break;
-//	    }
-//    }
-
-private:
-
-public:
-    //element_ast* find_child(std::function<bool(const element_ast* elem)> function)
-    //{
-    //    for (const auto& t : children) {
-    //        if (function(t.get()))
-    //            return t.get();
-    //    }
-    //    return nullptr;
-    //}
-
-    //element_ast* first_child_of_type(element_ast_node_type type) const
-    //{
-    //    for (const auto& t : children) {
-    //        if (t->type == type)
-    //            return t.get();
-    //    }
-    //    return nullptr;
-    //}
-
-    //template <size_t N>
-    //element_ast* nth_parent()
-    //{
-    //    element_ast* p = this;
-    //    for (size_t i = 0; i < N; ++i) {
-    //        if (!p) break;
-    //        p = p->parent;
-    //    }
-    //    return p;
-    //}
-
-    //template <size_t N>
-    //const element_ast* nth_parent() const
-    //{
-    //    const element_ast* p = this;
-    //    for (size_t i = 0; i < N; ++i) {
-    //        if (!p) break;
-    //        p = p->parent;
-    //    }
-    //    return p;
-    //}
-
-    enum class walk_step { stop, step_in, next, step_out };
-    using walker = std::function<walk_step(element_ast*)>;
-    using const_walker = std::function<walk_step(const element_ast*)>;
-
-    walk_step walk(const walker& fn);
-    walk_step walk(const const_walker& fn) const;
-
-    element_ast(element_ast* iparent) : parent(iparent) {}
 };
 
 inline bool ast_node_has_identifier(const element_ast* n)
@@ -161,7 +57,6 @@ inline bool ast_node_has_literal(const element_ast* n)
 }
 
 //SCOPE
-
 inline bool ast_node_in_function_scope(const element_ast* n)
 {
     return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE &&
@@ -175,7 +70,6 @@ inline bool ast_node_in_lambda_scope(const element_ast* n)
 }
 
 //STRUCT
-
 [[nodiscard]] inline bool ast_node_struct_is_valid(const element_ast* n)
 {
     return n && n->type == ELEMENT_AST_NODE_STRUCT && n->children.size() > ast_idx::function::declaration;
@@ -202,7 +96,6 @@ inline bool ast_node_in_lambda_scope(const element_ast* n)
 }
 
 //FUNCTION
-
 [[nodiscard]] inline bool ast_node_function_is_valid(const element_ast* n)
 {
     return n && n->type == ELEMENT_AST_NODE_FUNCTION &&
@@ -230,7 +123,6 @@ inline bool ast_node_in_lambda_scope(const element_ast* n)
 }
 
 //DECLARATION
-
 [[nodiscard]] inline bool ast_node_declaration_is_valid(const element_ast* n)
 {
     //todo: do all valid declarations have inputs?
@@ -264,7 +156,6 @@ inline bool ast_node_in_lambda_scope(const element_ast* n)
 }
 
 //MISC
-
 inline const element_ast* get_root_from_ast(const element_ast* ast)
 {
     if (!ast)
@@ -327,7 +218,7 @@ struct element_parser_ctx
     element_result parse(size_t* tindex, element_ast* ast);
     element_result ast_build();
 
-	//TODO: Move to another class as this one is already disgustingly large
+	//TODO: Move to object model as this one is already disgustingly large
     element_result validate(element_ast* ast);
 
 private:

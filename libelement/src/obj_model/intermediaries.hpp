@@ -25,6 +25,8 @@ namespace element
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
 
+        [[nodiscard]] std::shared_ptr<element_expression> to_expression() const final;
+
         const struct_declaration* const declarer;
         std::map<std::string, std::shared_ptr<object>> fields;
 

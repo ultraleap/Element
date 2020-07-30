@@ -10,7 +10,7 @@ namespace libelement::cli
 	{
 		std::string expression;
 
-		std::string as_string() const
+		[[nodiscard]] std::string as_string() const
 		{
 			std::stringstream ss;
 			ss << "typeof --expression " << expression << " ";
@@ -35,76 +35,18 @@ namespace libelement::cli
 			if (result != ELEMENT_OK)
 				return compiler_message(ELEMENT_ERROR_PARSE,"Failed to setup context");
 
-			//call into libelement
-			const std::vector<trace_site> trace_site{};
+			const auto expression = custom_arguments.expression;
+			std::string typeof(256, '\0');
 
-			//Not handling error responses properly yet
-			const auto typeof = custom_arguments.expression;
-			//todo: rename to normal typeof
-			std::string internaltypeof_string(256, '\0');
-
-#ifdef LEGACY_COMPILER
-			result = element_interpreter_get_internal_typeof(context, typeof.c_str(), "<input>", internaltypeof_string.data(), 256);
-			if (result != ELEMENT_OK)
-				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to get internal type of '" + typeof + "'");
-
-			return generate_response(result, internaltypeof_string, trace_site);
-#endif
-
-			//Not handling error responses properly yet
-			const auto evaluate = "evaluate = " + custom_arguments.expression + ";";
-			result = element_interpreter_load_string(context, evaluate.c_str(), "<input>");
-			if (result != ELEMENT_OK) {
-                auto type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
-			}
-
-			element_compilable* compilable;
-			result = element_interpreter_find(context, "evaluate", &compilable);
+			result = element_interpreter_typeof_expression(context, nullptr, expression.c_str(), typeof.data(), typeof.size());
 			if (result != ELEMENT_OK) {
 				auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
 					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
+				return compiler_message(type, "Failed to compile: " + expression + " with element_result " + std::to_string(result));
 			}
 
-			element_evaluable* evaluable;
-			result = element_interpreter_compile(context, nullptr, compilable, &evaluable);
-			if (result != ELEMENT_OK) {
-				auto type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to compile: " + evaluate + " with element_result " + std::to_string(result));
-			}
-
-			element_metainfo* metainfo;
-			result = element_metainfo_for_evaluable(evaluable, &metainfo);
-			if (result != ELEMENT_OK) {
-				auto type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to get metainfo for: " + evaluate + " with element_result " + std::to_string(result));
-			}
-
-			result = element_metainfo_for_evaluable(evaluable, &metainfo);
-			if (result != ELEMENT_OK) {
-				auto type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to get metainfo for: " + evaluate + " with element_result " + std::to_string(result));
-			}
-
-			result = element_metainfo_get_typeof(metainfo, internaltypeof_string.data(), internaltypeof_string.size());
-			if (result != ELEMENT_OK) {
-				auto type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to get typeof for: " + evaluate + " with element_result " + std::to_string(result));
-			}
-
-			return generate_response(result, internaltypeof_string);
+			return generate_response(result, typeof);
 		}
 
 		[[nodiscard]] std::string as_string() const override

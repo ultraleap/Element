@@ -40,6 +40,13 @@ namespace element
         [[nodiscard]] bool has_constraint() const { return false; }; //TODO: JM - nonsense, this needs to be a constraint::something OR constraint::any
         [[nodiscard]] bool has_scope() const;
         [[nodiscard]] bool is_intrinsic() const { return _intrinsic; }
+        [[nodiscard]] const std::vector<port>& get_inputs() const override { return inputs; }
+        [[nodiscard]] const scope* get_scope() const override { return our_scope.get(); };
+        [[nodiscard]] const std::optional<port>& get_output() const override { return output; };
+
+        [[nodiscard]] virtual bool serializable(const compilation_context& context) const { return false; };
+        [[nodiscard]] virtual bool deserializable(const compilation_context& context) const { return false; };
+        [[nodiscard]] virtual std::shared_ptr<object> generate_placeholder(const compilation_context& context, int& placeholder_index) const { return nullptr; };
 
         [[nodiscard]] virtual std::string location() const;
 
@@ -70,9 +77,12 @@ namespace element
         [[nodiscard]] std::string to_code(int depth) const override;
 
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                   source_info) const override;
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<struct_declaration*>(this)->shared_from_this(); }
+
+        [[nodiscard]] bool serializable(const compilation_context& context) const override;
+        [[nodiscard]] bool deserializable(const compilation_context& context) const override;
+        [[nodiscard]] std::shared_ptr<object> generate_placeholder(const compilation_context& context, int& placeholder_index) const override;
     };
 
     class constraint_declaration final : public declaration
@@ -108,6 +118,8 @@ namespace element
 
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
+
+        [[nodiscard]] bool valid_at_boundary(const compilation_context& context) const;
 
         std::shared_ptr<const object> body;
     };

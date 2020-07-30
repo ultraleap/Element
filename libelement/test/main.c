@@ -80,7 +80,16 @@ element_result eval(const char* evaluate)
     if (result != ELEMENT_OK)
         return result;
 
-    printf("%s -> %f\n", evaluate, output.values[0]);
+    printf("%s -> {", evaluate);
+    for (int i = 0; i < output.count; ++i)
+    {
+        printf("%f", output.values[i]);
+        if (i != output.count - 1)
+        {
+            printf(", ");
+        }
+    }
+    printf("}\n");
 
     //todo
     element_delete_compilable(context, &compilable);
@@ -129,7 +138,60 @@ element_result eval_with_source(const char* source, const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    printf("%s -> %f\n", evaluate, output.values[0]);
+    printf("%s -> {", evaluate);
+    for (int i = 0; i < output.count; ++i)
+    {
+        printf("%f", output.values[i]);
+        if (i != output.count - 1)
+        {
+            printf(", ");
+        }
+    }
+    printf("}\n");
+
+cleanup:
+    element_delete_compilable(context, &compilable);
+    element_delete_evaluable(context, &evaluable);
+    element_interpreter_delete(context);
+    return result;
+}
+
+element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, element_outputs* outputs)
+{
+    element_interpreter_ctx* context = NULL;
+    element_compilable* compilable = NULL;
+    element_evaluable* evaluable = NULL;
+
+    element_interpreter_create(&context);
+    element_interpreter_set_log_callback(context, log_callback);
+    element_interpreter_load_prelude(context);
+
+    element_result result = element_interpreter_load_string(context, evaluate, "<input>");
+    if (result != ELEMENT_OK)
+        goto cleanup;
+
+    result = element_interpreter_find(context, "evaluate", &compilable);
+    if (result != ELEMENT_OK)
+        goto cleanup;
+
+    result = element_interpreter_compile(context, NULL, compilable, &evaluable);
+    if (result != ELEMENT_OK)
+        goto cleanup;
+
+    result = element_interpreter_evaluate(context, NULL, evaluable, inputs, outputs);
+    if (result != ELEMENT_OK)
+        goto cleanup;
+
+    printf("%s -> {", evaluate);
+    for (int i = 0; i < outputs->count; ++i)
+    {
+        printf("%f", outputs->values[i]);
+        if (i != outputs->count - 1)
+        {
+            printf(", ");
+        }
+    }
+    printf("}\n");
 
 cleanup:
     element_delete_compilable(context, &compilable);
@@ -406,6 +468,71 @@ int main(int argc, char** argv)
     result = eval("namespace Space { struct Thing(a){}} func(a:Space.Thing) = a.a; evaluate = func(Space.Thing(1));");
     if (result != ELEMENT_OK)
         return result;
+
+
+    {
+        //double using input
+        float inputs[] = { 2 };
+        element_inputs input;
+        input.values = inputs;
+        input.count = 1;
+        element_outputs output;
+        float outputs[] = { 0 };
+        output.values = outputs;
+        output.count = 1;
+        result = eval_with_inputs("evaluate(a:Num) = a.mul(2);", &input, &output);
+        if (result != ELEMENT_OK)
+            return result;
+        if (output.values[0] != input.values[0] * 2)
+            return result;
+    }
+
+    {
+        //multiply using inputs
+        float inputs[] = { 20, 20 };
+        element_inputs input;
+        input.values = inputs;
+        input.count = 2;
+        element_outputs output;
+        float outputs[] = { 0 };
+        output.values = outputs;
+        output.count = 1;
+        result = eval_with_inputs("evaluate(a:Num, b:Num) = a.mul(b);", &input, &output);
+        if (result != ELEMENT_OK)
+            return result;
+        if (output.values[0] != input.values[0] * input.values[1])
+            return result;
+    }
+
+    {
+        float inputs[] = { 2, 2, 3, 4 };
+        element_inputs input;
+        input.values = inputs;
+        input.count = 4;
+        element_outputs output;
+        float outputs[] = { 0, 0, 0 };
+        output.values = outputs;
+        output.count = 3;
+
+        char source[] =
+            "struct Vector3(x:Num, y:Num, z:Num) {}\n"
+            "struct Quaternion(scalar:Num, vector:Vector3) {}\n"
+            "evaluate(q:Quaternion)\n"
+            "{\n"
+            "    scale(vec:Vector3, s:Num) = Vector3(vec.x.mul(s), vec.y.mul(s), vec.z.mul(s));\n"
+            "    return = scale(q.vector, q.scalar);\n"
+            "}\n";
+
+        result = eval_with_inputs(source, &input, &output);
+        if (result != ELEMENT_OK)
+            return result;
+
+        if (output.values[0] != input.values[0] * input.values[1] ||
+            output.values[1] != input.values[0] * input.values[2] ||
+            output.values[2] != input.values[0] * input.values[3])
+            return result;
+    }
+
 
     printf("#######Passed Successfully#######\n");
 

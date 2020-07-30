@@ -36,44 +36,20 @@ namespace libelement::cli
 			auto result = setup(compilation_input);
 			if (result != ELEMENT_OK)
 				return compiler_message(error_conversion(result), "Failed to setup context"); //todo
-		
-			const std::vector<trace_site> trace_site{};
 
-			//Not handling error responses properly yet
-			const auto evaluate = "evaluate = " + custom_arguments.expression + ";";
-			result = element_interpreter_load_string(context, evaluate.c_str(), "<input>");
-			if (result != ELEMENT_OK) {
-				return compiler_message(error_conversion(result), "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
-			}
-
-			element_compilable* compilable;
-			result = element_interpreter_find(context, "evaluate", &compilable);
-			if (result != ELEMENT_OK) {
-				return compiler_message(error_conversion(result), "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
-			}
-
-			struct element_evaluable* evaluable;
-			result = element_interpreter_compile(context, nullptr, compilable, &evaluable);
-			if (result != ELEMENT_OK) {
-				return compiler_message(error_conversion(result), "Failed to compile: " + evaluate + " with element_result " + std::to_string(result));
-			}
-
-			element_value inputs[] = { 1, 2 };
-			element_inputs input;
-			input.values = inputs;
-			input.count = 2;
-
-			element_value outputs[512];
+			const auto expression = custom_arguments.expression;
+			constexpr auto max_output_size = 512;
+			element_value outputs_buffer[max_output_size];
 			element_outputs output;
-			output.values = outputs;
-			output.count = 512;
+			output.values = outputs_buffer;
+			output.count = max_output_size;
 
-			result = element_interpreter_evaluate(context, nullptr, evaluable, &input, &output);
+			result = element_interpreter_evaluate_expression(context, nullptr, expression.c_str(), &output);
 			if (result != ELEMENT_OK) {
-				return compiler_message(error_conversion(result), "Failed to evaluate: " + evaluate + " with element_result " + std::to_string(result));
+				return compiler_message(error_conversion(result), "Failed to evaluate: " + expression + " with element_result " + std::to_string(result));
 			}
 
-			return generate_response(result, output, trace_site);
+			return generate_response(result, output);
 		}
 
 		[[nodiscard]] std::string as_string() const override

@@ -125,13 +125,20 @@ element_result element_interpreter_evaluate_expression(
     element_interpreter_ctx* context,
     const element_evaluator_options* options,
     const char* expression_string,
-    const element_outputs* outputs);
+    element_outputs* outputs);
 
-element_result element_metainfo_for_evaluable(
-    const element_evaluable* evaluable,
-    element_metainfo** metainfo);
-
-element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size);
+element_result element_interpreter_typeof_expression(
+    element_interpreter_ctx* context,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    char* buffer,
+    int buffer_size);
+//
+//element_result element_metainfo_for_evaluable(
+//    const element_evaluable* evaluable,
+//    element_metainfo** metainfo);
+//
+//element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size);
 
 #endif
 

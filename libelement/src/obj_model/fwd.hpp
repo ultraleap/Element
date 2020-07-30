@@ -1,6 +1,8 @@
 #pragma once
 
+//STD
 #include <memory>
+#include <string>
 
 namespace element
 {
@@ -42,4 +44,32 @@ namespace element
     using function_const_shared_ptr = std::shared_ptr<const element_function>;
 
     class intrinsic;
+
+    //todo: move somewhere else
+    struct identifier
+    {
+        identifier() = default;
+
+        identifier(std::string value)
+            : value{ std::move(value) }
+        {
+        }
+
+        static identifier return_identifier;
+
+        identifier(identifier const& other) = default;
+        identifier& operator=(identifier const& other) = default;
+
+        identifier(identifier&& other) = default;
+        identifier& operator=(identifier&& other) = default;
+
+        ~identifier() = default;
+
+        std::string value;
+
+        bool operator <(const identifier& rhs) const
+        {
+            return value < rhs.value;
+        }
+    };
 }
