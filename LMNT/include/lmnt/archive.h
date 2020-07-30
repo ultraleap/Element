@@ -94,7 +94,7 @@ lmnt_result lmnt_get_code_instructions(const lmnt_archive* archive, lmnt_loffset
 
 lmnt_result lmnt_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count);
 lmnt_result lmnt_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section);
-lmnt_result lmnt_get_data_block(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_value** block);
+lmnt_result lmnt_get_data_block(const lmnt_archive* archive, const lmnt_data_section* section, const lmnt_value** block);
 
 lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count);
 
