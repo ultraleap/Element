@@ -3,9 +3,10 @@
 //LIBS
 #include <fmt/format.h>
 
-
+//SELF
 #include "errors.hpp"
 #include "scope.hpp"
+#include "interpreter_internal.hpp"
 
 namespace element
 {
@@ -74,18 +75,37 @@ namespace element
         return code;
     }
 
-    bool valid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
+    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
     {
         if (compiled_args.size() != declarer->inputs.size())
             return false;
 
-        //todo: check the types of each argument
+        for (unsigned int i = 0; i < compiled_args.size(); ++i)
+        {
+            const auto& arg = compiled_args[i];
+            const auto& input = declarer->inputs[i];
+
+            //no annotation always matches
+            if (!input.has_annotation())
+                return true;
+
+            const auto type = input.resolve_annotation(context);
+            if (!type)
+            {
+                assert(!"failed to resolve annotation, couldn't be found");
+                return false;
+            }
+
+            if (!arg->matches_constraint(context, type->get_constraint()))
+                return false;
+        }
+
         return true;
     }
 
-    std::shared_ptr<error> build_error_for_invalid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
+    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
     {
-        assert(!valid_call(declarer, compiled_args));
+        assert(!valid_call(context, declarer, compiled_args));
 
         if (compiled_args.size() != declarer->inputs.size())
         {
@@ -111,8 +131,8 @@ namespace element
                 declarer->location(), input_params, given_params);
         }
 
-        assert(!"the call is valid");
-        return nullptr;
+        //todo: proper logging
+        return std::make_shared<error>("constraint not satisfied", ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
     }
 
     std::shared_ptr<object> index_type(

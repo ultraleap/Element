@@ -2,6 +2,7 @@
 
 //SELF
 #include "declarations.hpp"
+#include "scope.hpp"
 
 namespace element
 {

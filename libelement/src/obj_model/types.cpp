@@ -1,5 +1,10 @@
-#include <string>
 #include "types.hpp"
+
+//STD
+#include <string>
+
+//self
+#include "scope.hpp"
 
 #ifndef LEGACY_COMPILER
 
@@ -45,9 +50,71 @@ namespace element
         return declaration->index(context, name, source_info);
     }
 
-    std::shared_ptr<object> user_type::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
+    bool constraint::matches_constraint(const compilation_context& context, const constraint* constraint) const
     {
-        return std::shared_ptr<object>();
+        if (!constraint || constraint == any.get())
+            return true;
+
+        return this == constraint;
+    }
+
+    bool user_type::matches_constraint(const compilation_context& context, const constraint* constraint) const
+    {
+        if (!constraint || constraint == any.get())
+            return true;
+
+        if (constraint != this)
+            return false;
+
+        const auto* other = static_cast<const user_type*>(constraint);
+
+        //we're the same type so check signature matches, only applicable once we allow for expressions in type annotations
+        //todo: check that resolve annotation uses appropriate capture stack
+        for (unsigned i = 0; i < declarer->inputs.size(); ++i)
+        {
+            const auto& our_input = declarer->inputs[i];
+            const auto& their_input = other->declarer->inputs[i];
+            const auto* our_input_constraint = our_input.resolve_annotation(context)->get_constraint();
+            const auto* their_input_constraint = their_input.resolve_annotation(context)->get_constraint();
+
+            //matches constraint doesn't do a perfect match, and we're looking for a perfect match, so handle nullptr/any manually
+            const bool both_unspecified = !our_input_constraint && !their_input_constraint;
+            const bool both_any = our_input_constraint == any.get() && their_input_constraint == any.get();
+            if (both_unspecified || both_any)
+                return true;
+
+            if (our_input_constraint != their_input_constraint)
+                return false;
+
+            //even if the pointers match, we need to call matches_constraint to make sure
+            return our_input_constraint->matches_constraint(context, their_input_constraint);
+        }
+
+        //no one has a return constraint
+        if (!declarer->output && !other->declarer->output)
+            return true;
+
+        //check return types match since at least one of them has one
+        if (declarer->output || other->declarer->output)
+        {
+            const auto* our_return_constraint = declarer->output->resolve_annotation(context)->get_constraint();
+            const auto* their_return_constraint = other->declarer->output->resolve_annotation(context)->get_constraint();
+
+            //matches constraint doesn't do a perfect match, and we're looking for a perfect match, so handle nullptr/any manually
+            const bool both_unspecified = !our_return_constraint && !their_return_constraint;
+            const bool both_any = our_return_constraint == any.get() && their_return_constraint == any.get();
+            if (both_unspecified || both_any)
+                return true;
+
+            if (our_return_constraint != their_return_constraint)
+                return false;
+
+            //even if the pointers match, we need to call matches_constraint to make sure
+            return our_return_constraint->matches_constraint(context, their_return_constraint);
+        }
+
+        //one has a return constraint, the other doesn't, so they don't match
+        return false;
     }
 }
 

@@ -6,7 +6,9 @@
 //LIBS
 #include <fmt/format.h>
 
+//SELF
 #include "errors.hpp"
+#include "etree/expressions.hpp"
 
 namespace element
 {
@@ -15,7 +17,17 @@ namespace element
     {
     }
 
-    //struct_instance
+
+    bool struct_instance::matches_constraint(const compilation_context& context, const constraint* constraint) const
+    {
+        return declarer->get_constraint()->matches_constraint(context, constraint);
+    }
+
+    const constraint* struct_instance::get_constraint() const
+    {
+        return declarer->get_constraint();
+    }
+
     struct_instance::struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<object>>& expressions)
         : declarer(declarer)
     {
@@ -100,6 +112,10 @@ namespace element
         if (compiled_args.size() > declarer->inputs.size())
             return build_error_and_log(context, source_info, error_message_code::too_many_arguments,
                 declarer->name.value, compiled_args.size(), declarer->inputs.size());
+
+        //todo: check this works and is a useful error message (stolen from struct declaration call)
+        if (!valid_call(context, declarer, compiled_args))
+            return build_error_for_invalid_call(context, declarer, compiled_args);
 
         if (context.calls.is_recursive(declarer))
             return context.calls.build_recursive_error(declarer, context, source_info);

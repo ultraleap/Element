@@ -87,8 +87,9 @@ namespace element
         [[nodiscard]] virtual std::string typeof_info() const = 0;
         [[nodiscard]] virtual std::string to_code(int depth) const = 0;
 
-        //TODO: Add constraints
-        //bool matches_constraint(constraint& constraint);
+        [[nodiscard]] virtual bool matches_constraint(const compilation_context& context, const constraint* constraint) const { return false; };
+        [[nodiscard]] virtual const constraint* get_constraint() const { return nullptr; };
+
         [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const;
         [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&source_info) const;
         [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const;
@@ -134,7 +135,7 @@ namespace element
         bool logged = false;
     };
 
-    bool valid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
-    std::shared_ptr<error> build_error_for_invalid_call(const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
+    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
+    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
     std::shared_ptr<object> index_type(const declaration* type, std::shared_ptr<object> instance, const compilation_context& context, const identifier& name, const source_information& source_info);
  }

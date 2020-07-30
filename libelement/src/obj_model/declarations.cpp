@@ -41,7 +41,8 @@ namespace element
 
     //struct
     struct_declaration::struct_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
-        : declaration(std::move(name), parent_scope)
+        : declaration(name, parent_scope)
+        , type(std::make_unique<user_type>(std::move(name), this))
     {
         qualifier = struct_qualifier;
         _intrinsic = is_intrinsic;
@@ -71,10 +72,36 @@ namespace element
             return build_error_and_log(context, source_info, error_message_code::intrinsic_not_implemented);
         }
 
-        if (valid_call(this, compiled_args))
+        if (valid_call(context, this, compiled_args))
             return std::make_shared<struct_instance>(this, compiled_args);
 
-        return build_error_for_invalid_call(this, compiled_args);
+        return build_error_for_invalid_call(context, this, compiled_args);
+    }
+
+    bool struct_declaration::matches_constraint(const compilation_context& context, const constraint* constraint) const
+    {
+        if (is_intrinsic())
+        {
+            const auto intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
+            if (!intrinsic)
+                return type->matches_constraint(context, constraint);
+
+            return intrinsic->matches_constraint(context, constraint);
+        }
+
+        return type->matches_constraint(context, constraint);
+    }
+
+    const constraint* struct_declaration::get_constraint() const
+    {
+        //todo: need context to grab intrinsic
+        if (name.value == "Num")
+            return type::num.get();
+
+        if (name.value == "Bool")
+            return type::boolean.get();
+
+        return type.get();
     }
 
     bool struct_declaration::serializable(const compilation_context& context) const
@@ -161,6 +188,8 @@ namespace element
         std::vector<std::shared_ptr<object>> compiled_args,
         const source_information& source_info) const
     {
+        //todo: check, if there is a first argument, that this is a valid instance function
+        //todo: check that there is only one argument
         const auto instance = std::make_shared<function_instance>(this, context.captures, source_info, compiled_args);
         return instance->compile(context, source_info);
     }

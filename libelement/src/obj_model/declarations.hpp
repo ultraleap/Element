@@ -11,6 +11,7 @@
 #include "port.hpp"
 #include "object.hpp"
 #include "expressions.hpp"
+#include "types.hpp"
 #include "fwd.hpp"
 
 namespace element
@@ -76,6 +77,9 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
+        [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
+        [[nodiscard]] const constraint* get_constraint() const override;
+
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<struct_declaration*>(this)->shared_from_this(); }
@@ -83,6 +87,9 @@ namespace element
         [[nodiscard]] bool serializable(const compilation_context& context) const override;
         [[nodiscard]] bool deserializable(const compilation_context& context) const override;
         [[nodiscard]] std::shared_ptr<object> generate_placeholder(const compilation_context& context, int& placeholder_index) const override;
+
+    private:
+        std::unique_ptr<user_type> type;
     };
 
     class constraint_declaration final : public declaration
