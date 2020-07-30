@@ -946,11 +946,11 @@ element_result element_interpreter_evaluate(
     return result;
 }
 
-element_result element_interpreter_evaluate_expression(
+element_result element_interpreter_compile_expression(
     element_interpreter_ctx* context,
-    const element_evaluator_options* options,
+    const element_compiler_options* options,
     const char* expression_string,
-    element_outputs* outputs)
+    element_evaluable** evaluable)
 {
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
@@ -978,7 +978,7 @@ element_result element_interpreter_evaluate_expression(
         return ELEMENT_OK;
 
     const auto total_lines_parsed = tokeniser->line;
-    
+
     //lines start at 1
     for (auto i = 0; i < total_lines_parsed; ++i)
         info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
@@ -987,9 +987,9 @@ element_result element_interpreter_evaluate_expression(
     context->src_context->file_info[data] = std::move(info);
 
     const auto log_tokens = flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
-	
+
     if (log_tokens)
-		context->log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+        context->log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
 
     element_parser_ctx parser;
     parser.tokeniser = tokeniser;
@@ -1007,7 +1007,7 @@ element_result element_interpreter_evaluate_expression(
         return result;
 
     const auto log_ast = flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
-	
+
     if (log_ast)
         context->log("\n---\nAST\n---\n" + ast_to_string(parser.root));
 
@@ -1028,30 +1028,49 @@ element_result element_interpreter_evaluate_expression(
 
     if (result != ELEMENT_OK)
     {
-        outputs->count = 0;
         context->log(result, fmt::format("building object model failed with element_result {}", result), info.file_name->data());
         return result;
     }
 
     context->global_scope->add_declaration(std::move(dummy_declaration));
 
-    auto found_dummy_decl = context->global_scope->find(element::identifier{"<REMOVE>"}, false);
+    auto found_dummy_decl = context->global_scope->find(element::identifier{ "<REMOVE>" }, false);
     auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
 
-    auto evaluable = std::make_unique<element_evaluable>();
-    evaluable->evaluable = compiled->to_expression();
+    //stuff from below
+    (*evaluable)->evaluable = compiled;
+}
 
-    const auto err = std::dynamic_pointer_cast<element::error>(compiled);
+element_result element_interpreter_evaluate_expression(
+    element_interpreter_ctx* context,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    element_outputs* outputs)
+{
+    //sure there is a shorthand for this
+    element_evaluable evaluable;
+    auto evaluable_ptr = &evaluable;
+    element_interpreter_compile_expression(context, nullptr, expression_string, &evaluable_ptr);
+
+    if (!evaluable_ptr->evaluable)
+    {
+        assert(!"tried to evaluate an expression that failed to compile");
+        //todo: log
+        outputs->count = 0;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    const auto err = std::dynamic_pointer_cast<element::error>(evaluable_ptr->evaluable);
     if (err)
     {
         outputs->count = 0;
         return err->log_once(context->logger.get());
     }
 
-    if (!evaluable->evaluable)
+    const auto compiled = evaluable_ptr->evaluable->to_expression();
+    if (!compiled)
     {
-        assert(!"expression returned something that isn't serializable");
-        //todo: log
+        assert(false);
         outputs->count = 0;
         return ELEMENT_ERROR_UNKNOWN;
     }
@@ -1061,15 +1080,62 @@ element_result element_interpreter_evaluate_expression(
     input.values = inputs;
     input.count = 1;
 
-    result = element_interpreter_evaluate(context, options, evaluable.get(), &input, outputs);
-
-    evaluable.reset(nullptr);
+    const auto result = element_interpreter_evaluate(context, options, evaluable_ptr, &input, outputs);
 
     //todo: remove declaration added to global scope
     //todo: remove file_info added to interpreter source context
 
     return result;
 }
+
+element_result element_interpreter_evaluate_expression_but_without_the_serialisation_bit(
+    element_interpreter_ctx* context,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    element_outputs* outputs)
+{
+    //sure there is a shorthand for this
+    element_evaluable evaluable;
+    auto* evaluable_ptr = &evaluable;
+    element_interpreter_compile_expression(context, nullptr, expression_string, &evaluable_ptr);
+
+    if (!evaluable_ptr->evaluable)
+    {
+        assert(!"tried to evaluate an expression that failed to compile");
+        //todo: log
+        outputs->count = 0;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    const auto err = std::dynamic_pointer_cast<element::error>(evaluable_ptr->evaluable);
+    if (err)
+    {
+        outputs->count = 0;
+        return err->log_once(context->logger.get());
+    }
+
+    //commented this bit out, didn't think any more... literally the only difference atm
+    //const auto compiled = evaluable_ptr->evaluable->to_expression();
+    //if (!compiled)
+    //{
+    //    assert(false);
+    //    outputs->count = 0;
+    //    return ELEMENT_ERROR_UNKNOWN;
+    //}
+
+    float inputs[] = { 0 };
+    element_inputs input;
+    input.values = inputs;
+    input.count = 1;
+
+    const auto result = element_interpreter_evaluate(context, options, evaluable_ptr, &input, outputs);
+
+    //todo: remove declaration added to global scope
+    //todo: remove file_info added to interpreter source context
+
+    return result;
+}
+
 
 element_result element_metainfo_for_evaluable(const element_evaluable* evaluable, element_metainfo** metainfo)
 {

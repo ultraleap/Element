@@ -10,7 +10,7 @@ namespace libelement::cli
 	{
 		std::string expression;
 
-		std::string as_string() const
+		[[nodiscard]] std::string as_string() const
 		{
 			std::stringstream ss;
 			ss << "typeof --expression " << expression << " ";
@@ -38,40 +38,40 @@ namespace libelement::cli
 			//call into libelement
 			const std::vector<trace_site> trace_site{};
 
-			//Not handling error responses properly yet
+			//todo: not handling error responses properly yet
 			const auto typeof = custom_arguments.expression;
 			//todo: rename to normal typeof
-			std::string internaltypeof_string(256, '\0');
+			std::string internal_typeof_string(256, '\0');
 
 #ifdef LEGACY_COMPILER
-			result = element_interpreter_get_internal_typeof(context, typeof.c_str(), "<input>", internaltypeof_string.data(), 256);
+			result = element_interpreter_get_internal_typeof(context, typeof.c_str(), "<input>", internal_typeof_string.data(), 256);
 			if (result != ELEMENT_OK)
 				return compiler_message(ELEMENT_ERROR_UNKNOWN, "Failed to get internal type of '" + typeof + "'");
 
-			return generate_response(result, internaltypeof_string, trace_site);
+			return generate_response(result, internal_typeof_string, trace_site);
 #endif
 
-			//Not handling error responses properly yet
-			const auto evaluate = "evaluate = " + custom_arguments.expression + ";";
-			result = element_interpreter_load_string(context, evaluate.c_str(), "<input>");
-			if (result != ELEMENT_OK) {
-                auto type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
-			}
+			//todo: not handling error responses properly yet
+			const auto evaluate = custom_arguments.expression + ";";
+			//result = element_interpreter_load_string(context, evaluate.c_str(), "<input>");
+			//if (result != ELEMENT_OK) {
+   //             auto type = ELEMENT_ERROR_UNKNOWN;
+			//	if (result > 0)
+			//		type = static_cast<message_type>(result);
+			//	return compiler_message(type, "Failed to parse: " + evaluate + " with element_result " + std::to_string(result));
+			//}
 
-			element_compilable* compilable;
-			result = element_interpreter_find(context, "evaluate", &compilable);
-			if (result != ELEMENT_OK) {
-				auto type = ELEMENT_ERROR_UNKNOWN;
-				if (result > 0)
-					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
-			}
+			//element_compilable* compilable;
+			//result = element_interpreter_find(context, "evaluate", &compilable);
+			//if (result != ELEMENT_OK) {
+			//	auto type = ELEMENT_ERROR_UNKNOWN;
+			//	if (result > 0)
+			//		type = static_cast<message_type>(result);
+			//	return compiler_message(type, "Failed to find: " + evaluate + " with element_result " + std::to_string(result));
+			//}
 
 			element_evaluable* evaluable;
-			result = element_interpreter_compile(context, nullptr, compilable, &evaluable);
+			result = element_interpreter_compile_expression(context, nullptr, evaluate.c_str(), &evaluable);
 			if (result != ELEMENT_OK) {
 				auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
@@ -88,7 +88,7 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to get metainfo for: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			result = element_metainfo_get_typeof(metainfo, internaltypeof_string.data(), internaltypeof_string.size());
+			result = element_metainfo_get_typeof(metainfo, internal_typeof_string.data(), internal_typeof_string.size());
 			if (result != ELEMENT_OK) {
 				auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
@@ -96,7 +96,7 @@ namespace libelement::cli
 				return compiler_message(type, "Failed to get typeof for: " + evaluate + " with element_result " + std::to_string(result));
 			}
 
-			return generate_response(result, internaltypeof_string);
+			return generate_response(result, internal_typeof_string);
 		}
 
 		[[nodiscard]] std::string as_string() const override
