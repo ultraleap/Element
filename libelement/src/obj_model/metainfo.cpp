@@ -9,7 +9,7 @@
 //to_string
 std::string element::constraint::typeof_info() const
 {
-    return "";
+    return declarer->location() + ":Constraint";
 }
 
 std::string element::scope::typeof_info() const
@@ -40,7 +40,7 @@ std::string element::namespace_declaration::typeof_info() const
 std::string element::expression_chain::typeof_info() const
 {
     //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
-    return "";
+    return declarer->typeof_info() + ":ExpressionChain";
 }
 
 std::string element::struct_instance::typeof_info() const
@@ -64,13 +64,13 @@ std::string element::intrinsic::typeof_info() const
 std::string element::type::typeof_info() const
 {
     //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
-    return "";
+    return declarer->location() + ":Type";
 }
 
 std::string element::error::typeof_info() const
 {
     //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
-    return "";
+    return "Error: " + message;
 }
 
 std::string element_expression::typeof_info() const
@@ -89,7 +89,7 @@ std::string element::port::typeof_info() const
 //to_code
 std::string element::constraint::to_code(int depth) const
 {
-    return "";
+    return "?";
 }
 
 std::string element::struct_declaration::to_code(const int depth) const
@@ -254,13 +254,13 @@ std::string element::scope::to_code(int depth) const
 std::string element::struct_instance::to_code(const int depth) const
 {
     //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "";
+    return "?";
 }
 
 std::string element::function_instance::to_code(const int depth) const
 {
     //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "";
+    return "?";
 }
 
 std::string element::type_annotation::to_code() const
@@ -271,23 +271,23 @@ std::string element::type_annotation::to_code() const
 std::string element::intrinsic::to_code(const int depth) const
 {
     //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "";
+    return "?";
 }
 
 std::string element::type::to_code(const int depth) const
 {
     //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "";
+    return "?";
 }
 
 std::string element::error::to_code(const int depth) const
 {
     //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "";
+    return "?";
 }
 
 std::string element_expression::to_code(const int depth) const
 {
     //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "";
+    return "?";
 }

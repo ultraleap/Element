@@ -169,15 +169,42 @@ namespace element
 
     //constraint
     constraint_declaration::constraint_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
-        : declaration(std::move(name), parent_scope)
+        : declaration(name, parent_scope)
+        , constraint_(std::make_unique<constraint>(4, this)) //todo: what to use
     {
         qualifier = constraint_qualifier;
         _intrinsic = is_intrinsic;
     }
 
+    bool constraint_declaration::matches_constraint(const compilation_context& context, const constraint* constraint) const
+    {
+        return constraint_->matches_constraint(context, constraint);
+    }
+
+    const constraint* constraint_declaration::get_constraint() const
+    {
+        if (is_intrinsic())
+            return constraint::any.get();
+
+        return constraint_.get();
+    }
+
+    /*   
+    constraint func_constraint(a:Num):Num;
+    do_nothing(a:Num):Num = a;
+    do_more_nothing(a:Num):Num = a;
+
+    call_func(func:func_constraint, b:Num) = func(b);
+    
+    evaluate = call_func(do_nothing, 1); //returns 1
+    evaluate = call_func(do_more_nothing, 1); //returns 1
+    */
+
+
     //function
     function_declaration::function_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
         : declaration(std::move(name), parent_scope)
+        , constraint_ (std::make_unique<user_function_constraint>(this)) //todo: what to use
     {
         qualifier = function_qualifier;
         _intrinsic = is_intrinsic;
@@ -198,6 +225,16 @@ namespace element
     {
         const auto instance = std::make_shared<function_instance>(this, context.captures, source_info);
         return instance->compile(context, source_info);
+    }
+
+    bool function_declaration::matches_constraint(const compilation_context& context, const constraint* constraint) const
+    {
+        return constraint_->matches_constraint(context, constraint);
+    }
+
+    const constraint* function_declaration::get_constraint() const
+    {
+        return constraint_.get();
     }
 
     bool function_declaration::valid_at_boundary(const compilation_context& context) const

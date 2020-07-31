@@ -730,9 +730,9 @@ element_result element_interpreter_evaluate_expression(
     const auto compiled = evaluable_ptr->evaluable->to_expression();
     if (!compiled)
     {
-        assert(false);
+        context->log(ELEMENT_ERROR_SERIALISATION, "failed to serialise", "<REMOVE>");
         outputs->count = 0;
-        return ELEMENT_ERROR_UNKNOWN;
+        return ELEMENT_ERROR_SERIALISATION;
     }
 
     float inputs[] = { 0 };

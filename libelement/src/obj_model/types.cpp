@@ -15,10 +15,10 @@ namespace element
     DEFINE_TYPE_ID(boolean_type, 1U << 2);
 
     DEFINE_TYPE_ID(any_constraint, 1U << 3);
-    DEFINE_TYPE_ID(function_constraint, 1U << 4);
-    DEFINE_TYPE_ID(nullary_constraint, 1U << 5);
-    DEFINE_TYPE_ID(unary_constraint, 1U << 6);
-    DEFINE_TYPE_ID(binary_constraint, 1U << 7);
+    DEFINE_TYPE_ID(user_function_constraint, 1U << 4);
+    //DEFINE_TYPE_ID(nullary_constraint, 1U << 5);
+    //DEFINE_TYPE_ID(unary_constraint, 1U << 6);
+    //DEFINE_TYPE_ID(binary_constraint, 1U << 7);
 
     DEFINE_TYPE_ID(user_type, 1U << 8);
 
@@ -29,10 +29,10 @@ namespace element
     const type_const_unique_ptr type::boolean = std::make_unique<boolean_type>();
 
     const constraint_const_unique_ptr constraint::any = std::make_unique<any_constraint>();
-    const constraint_const_unique_ptr constraint::function = std::make_unique<function_constraint>();
-    const constraint_const_unique_ptr constraint::nullary = std::make_unique<nullary_constraint>();
-    const constraint_const_unique_ptr constraint::unary = std::make_unique<unary_constraint>();
-    const constraint_const_unique_ptr constraint::binary = std::make_unique<binary_constraint>();
+    //const constraint_const_unique_ptr constraint::function = std::make_unique<function_constraint>();
+    //const constraint_const_unique_ptr constraint::nullary = std::make_unique<nullary_constraint>();
+    //const constraint_const_unique_ptr constraint::unary = std::make_unique<unary_constraint>();
+    //const constraint_const_unique_ptr constraint::binary = std::make_unique<binary_constraint>();
 
     std::shared_ptr<object> num_type::index(const compilation_context& context, const identifier& name, const source_information& source_info) const
     {
@@ -58,29 +58,28 @@ namespace element
         return this == constraint;
     }
 
-    bool user_type::matches_constraint(const compilation_context& context, const constraint* constraint) const
+    bool user_function_constraint::matches_constraint(const compilation_context& context, const constraint* constraint_) const
     {
-        if (!constraint || constraint == any.get())
-            return true;
-
-        if (constraint != this)
-            return false;
-
-        const auto* other = static_cast<const user_type*>(constraint);
-
-        //we're the same type so check signature matches, only applicable once we allow for expressions in type annotations
-        //todo: check that resolve annotation uses appropriate capture stack
-        for (unsigned i = 0; i < declarer->inputs.size(); ++i)
+        const auto check_match = [&context](const port& our_input, const const port& their_input)
         {
-            const auto& our_input = declarer->inputs[i];
-            const auto& their_input = other->declarer->inputs[i];
-            const auto* our_input_constraint = our_input.resolve_annotation(context)->get_constraint();
-            const auto* their_input_constraint = their_input.resolve_annotation(context)->get_constraint();
+            const declaration* our_input_type = nullptr;
+            const declaration* their_input_type = nullptr;
+            const constraint* our_input_constraint = nullptr;
+            const constraint* their_input_constraint = nullptr;
 
-            //matches constraint doesn't do a perfect match, and we're looking for a perfect match, so handle nullptr/any manually
-            const bool both_unspecified = !our_input_constraint && !their_input_constraint;
-            const bool both_any = our_input_constraint == any.get() && their_input_constraint == any.get();
-            if (both_unspecified || both_any)
+            if (our_input.has_annotation())
+                our_input_type = our_input.resolve_annotation(context).get();
+
+            if (their_input.has_annotation())
+                their_input_type = their_input.resolve_annotation(context).get();
+
+            if (our_input_type)
+                our_input_constraint = our_input_type->get_constraint();
+
+            if (their_input_type)
+                their_input_constraint = their_input_type->get_constraint();
+
+            if (!their_input_constraint || their_input_constraint == any.get())
                 return true;
 
             if (our_input_constraint != their_input_constraint)
@@ -88,33 +87,38 @@ namespace element
 
             //even if the pointers match, we need to call matches_constraint to make sure
             return our_input_constraint->matches_constraint(context, their_input_constraint);
+        };
+
+        if (!constraint_ || constraint_ == any.get())
+            return true;
+
+        //todo: if there is no declarer it's num or bool (types), which can't match a function constraint
+        const auto* other = constraint_->declarer;
+        if (!other)
+            return false;
+
+        for (unsigned i = 0; i < declarer->inputs.size(); ++i)
+        {
+            const auto& our_input = declarer->inputs[i];
+            const auto& their_input = other->inputs[i];
+
+            if (!check_match(our_input, their_input))
+                return false;
         }
 
         //no one has a return constraint
-        if (!declarer->output && !other->declarer->output)
+        if (!declarer->output && !other->output)
             return true;
 
         //check return types match since at least one of them has one
-        if (declarer->output || other->declarer->output)
+        if (declarer->output && other->output)
         {
-            const auto* our_return_constraint = declarer->output->resolve_annotation(context)->get_constraint();
-            const auto* their_return_constraint = other->declarer->output->resolve_annotation(context)->get_constraint();
-
-            //matches constraint doesn't do a perfect match, and we're looking for a perfect match, so handle nullptr/any manually
-            const bool both_unspecified = !our_return_constraint && !their_return_constraint;
-            const bool both_any = our_return_constraint == any.get() && their_return_constraint == any.get();
-            if (both_unspecified || both_any)
-                return true;
-
-            if (our_return_constraint != their_return_constraint)
+            //todo: nullptr checks?
+            if (!check_match(declarer->output.value(), other->output.value()))
                 return false;
-
-            //even if the pointers match, we need to call matches_constraint to make sure
-            return our_return_constraint->matches_constraint(context, their_return_constraint);
         }
 
-        //one has a return constraint, the other doesn't, so they don't match
-        return false;
+        return true;
     }
 }
 

@@ -92,7 +92,7 @@ namespace element
         std::unique_ptr<user_type> type;
     };
 
-    class constraint_declaration final : public declaration
+    class constraint_declaration final : public declaration, public std::enable_shared_from_this<constraint_declaration>
     {
     public:
         constraint_declaration(identifier name, const scope* parent_scope, bool is_intrinsic);
@@ -104,8 +104,16 @@ namespace element
         constraint_declaration& operator=(const constraint_declaration& scope) = delete;
         constraint_declaration& operator=(constraint_declaration&& scope) = delete;
 
+        [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
+        [[nodiscard]] const constraint* get_constraint() const override;
+
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
+
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<constraint_declaration*>(this)->shared_from_this(); }
+
+    private:
+        std::unique_ptr<constraint> constraint_;
     };
 
     class function_declaration final : public declaration
@@ -120,6 +128,9 @@ namespace element
         function_declaration& operator=(const function_declaration& scope) = delete;
         function_declaration& operator=(function_declaration&& scope) = delete;
 
+        [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
+        [[nodiscard]] const constraint* get_constraint() const override;
+
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
@@ -129,6 +140,9 @@ namespace element
         [[nodiscard]] bool valid_at_boundary(const compilation_context& context) const;
 
         std::shared_ptr<const object> body;
+
+    private:
+        std::unique_ptr<constraint> constraint_;
     };
 
     class namespace_declaration final : public declaration, public std::enable_shared_from_this<namespace_declaration>

@@ -95,6 +95,16 @@ namespace element
         this->source_info = std::move(source_info);
     }
 
+    bool function_instance::matches_constraint(const compilation_context& context, const constraint* constraint) const
+    {
+        return declarer->get_constraint()->matches_constraint(context, constraint);
+    }
+
+    const constraint* function_instance::get_constraint() const
+    {
+        return declarer->get_constraint();
+    }
+
     std::shared_ptr<object> function_instance::call(
         const compilation_context& context,
         std::vector<std::shared_ptr<object>> compiled_args,
@@ -129,6 +139,24 @@ namespace element
 
         captures.pop();
         context.calls.pop();
+
+        //type check return
+        //todo: nicer?
+        const constraint* constraint = nullptr;
+        std::shared_ptr<declaration> type = nullptr;
+        if (declarer->output)
+            type = declarer->output->resolve_annotation(context);
+
+        if (type)
+            constraint = type->get_constraint();
+
+        //todo: nicer error logs
+        if (!element->matches_constraint(context, constraint))
+            return std::make_shared<error>(
+                fmt::format("the return of '{}' was '{}' which doesn't match the constraint '{}'",
+                declarer->name.value, element->typeof_info(), constraint ? type->name.value : "Any"),
+                ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
+
         return element;
     }
 
