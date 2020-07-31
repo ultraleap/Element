@@ -52,8 +52,10 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth = 0) const override;
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                   source_info) const override;
+        [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
+        [[nodiscard]] const constraint* get_constraint() const override;
+
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override;
         [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
 
         const function_declaration* const declarer;

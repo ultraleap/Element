@@ -86,8 +86,7 @@ namespace element
 
         [[nodiscard]] virtual std::string typeof_info() const = 0;
         [[nodiscard]] virtual std::string to_code(int depth) const = 0;
-
-        [[nodiscard]] virtual bool matches_constraint(const compilation_context& context, const constraint* constraint) const { return false; };
+        [[nodiscard]] virtual bool matches_constraint(const compilation_context& context, const constraint* constraint) const;
         [[nodiscard]] virtual const constraint* get_constraint() const { return nullptr; };
 
         [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const;
@@ -126,6 +125,8 @@ namespace element
         [[nodiscard]] element_result get_result() const;
         [[nodiscard]] const std::string& get_message() const;
         [[nodiscard]] element_log_message get_log_message() const;
+
+        [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override { return true; };
 
         element_result log_once(const element_log_ctx* logger);
 

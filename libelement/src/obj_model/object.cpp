@@ -7,6 +7,7 @@
 #include "errors.hpp"
 #include "scope.hpp"
 #include "interpreter_internal.hpp"
+#include "types.hpp"
 
 namespace element
 {
@@ -22,6 +23,14 @@ namespace element
     const element_log_ctx* compilation_context::get_logger() const
     {
         return interpreter->logger.get();
+    }
+
+    bool object::matches_constraint(const compilation_context& context, const constraint* constraint) const
+    {
+        if (!constraint || constraint == constraint::any.get())
+            return true;
+
+        return false;
     }
 
     std::shared_ptr<object> object::index(const compilation_context& context, const identifier&, const source_information& source_info) const
