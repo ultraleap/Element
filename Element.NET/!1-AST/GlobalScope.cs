@@ -12,7 +12,7 @@ namespace Element.AST
         public IReadOnlyList<Declaration> Declarations => _cachedList ??= _sourceScopes.Values.SelectMany(blob => blob).ToList();
         public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context) =>
             new Result<ResolvedBlock>(
-                new ResolvedBlock(null, Declarations.Select(d => d.Identifier).ToArray(),
+                new ResolvedBlock(Declarations.Select(d => d.Identifier).ToArray(),
                                   Enumerable.Empty<(Identifier Identifier, IValue Value)>(),
                     (resolvedBlock, identifier, indexingContext) => Lookup(identifier, indexingContext), null));
 

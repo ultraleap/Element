@@ -27,8 +27,6 @@ namespace Element.AST
             public readonly IValue Function;
             public readonly List<IValue> AppliedArguments;
             public bool CanBeFullyApplied => AppliedArguments.Count >= Function.InputPorts.Count;
-
-            public override Identifier? Identifier => null;
             public override string SummaryString => $"{Function} <partially applied {AppliedArguments.Count}/{Function.InputPorts.Count}>";
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) => Function.Call(AppliedArguments.Concat(arguments).ToArray(), context);
             public override IReadOnlyList<ResolvedPort> InputPorts => Function.InputPorts.Skip(AppliedArguments.Count).ToList();

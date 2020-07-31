@@ -6,11 +6,11 @@ namespace Element.AST
 	{
 		private Fold()
 		{
-			_identifier = new Identifier("fold");
+			Identifier = new Identifier("fold");
 		}
 		
 		public static Fold Instance { get; } = new Fold();
-		protected override Identifier _identifier { get; }
+		public override Identifier Identifier { get; }
 		public bool IsVariadic => false;
 		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context)
 		{
@@ -34,15 +34,15 @@ namespace Element.AST
 				      .Bind(t =>
 				      {
 					      var (predicateLambda, bodyLambda) = t;
-					      var initial = new ResolvedBlock(new Identifier("initial"), new (Identifier, IValue)[]
+					      var initial = new ResolvedBlock(new (Identifier, IValue)[]
 					      {
 						      (new Identifier("i"), Constant.Zero),
 						      (new Identifier("value"), workingValue)
 					      }, null);
-					      var captureBlock = new ResolvedBlock(null, new (Identifier, IValue)[]
+					      var captureBlock = new ResolvedBlock(new (Identifier, IValue)[]
 					      {
 						      (new Identifier("list"), list),
-						      (initial.Identifier!.Value, initial),
+						      (new Identifier("initial"), initial),
 						      (new Identifier("aggregator"), aggregator)
 					      }, context.RootScope);
 					      return predicateLambda.ResolveExpression(captureBlock, context)

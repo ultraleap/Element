@@ -7,7 +7,6 @@ namespace Element.AST
     public interface IValue
     {
         string ToString();
-        Identifier? Identifier { get; }
         string TypeOf { get; }
         string SummaryString { get; }
         string NormalizedFormString { get; }
@@ -27,10 +26,7 @@ namespace Element.AST
     {
         private string? _cachedString;
         public sealed override string ToString() => _cachedString ??= SummaryString;
-        public abstract Identifier? Identifier { get; }
-        public virtual string SummaryString => Identifier.HasValue
-                                                   ? $"{Identifier.Value}:{TypeOf}"
-                                                   : $"<unidentified>:{TypeOf}";
+        public virtual string SummaryString => TypeOf;
         public virtual string TypeOf => GetType().Name;
         public virtual string NormalizedFormString => SummaryString;
         public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => context.Trace(MessageCode.NotFunction, $"'{this}' cannot be called, it is not a function");
@@ -50,15 +46,7 @@ namespace Element.AST
 
     public static class ValueExtensions
     {
-        // ReSharper disable once PossibleUnintendedReferenceComparison
         public static bool IsFunction(this IValue value) => value.InputPorts.Count > 0;
-        //public static bool IsNullaryFunction(this IValue functionValue) => functionValue.IsFunction() && functionValue.InputPorts.Count == 0;
-        /*public static Result<IValue> FullyResolveValue(this IValue value, Context context) =>
-            (value.IsNullaryFunction()
-                 ? value.Call(Array.Empty<IValue>(), context)
-                 : new Result<IValue>(value))
-            // ReSharper disable once PossibleUnintendedReferenceComparison
-            .Bind(v => v != value ? v.FullyResolveValue(context) : new Result<IValue>(v)); // Recurse until the resolved value is the same*/
         
         public static bool IsIntrinsic<TIntrinsicImplementation>(this IValue value)
             where TIntrinsicImplementation : IIntrinsicImplementation =>

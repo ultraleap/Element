@@ -8,10 +8,10 @@ namespace Element.AST
         // Can be IntrinsicValue directly because it doesn't rely on anything declared in source to function
         private NothingConstraint()
         {
-            _identifier = new Identifier("Nothing");
+            Identifier = new Identifier("Nothing");
         }
         public static NothingConstraint Instance { get; } = new NothingConstraint();
         public override Result<bool> MatchesConstraint(IValue value, Context context) => false;
-        protected override Identifier _identifier { get; }
+        public override Identifier Identifier { get; }
     }
 }

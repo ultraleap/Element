@@ -7,11 +7,11 @@ namespace Element.AST
     {
         private Memberwise()
         {
-            _identifier =  new Identifier("memberwise");
+            Identifier =  new Identifier("memberwise");
         }
         
         public static Memberwise Instance { get; } = new Memberwise();
-        protected override Identifier _identifier { get; }
+        public override Identifier Identifier { get; }
         public bool IsVariadic => true;
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context)
         {

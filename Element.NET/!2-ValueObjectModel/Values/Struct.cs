@@ -17,7 +17,7 @@ namespace Element.AST
             Fields = fields;
         }
 
-        public override Identifier? Identifier { get; }
+        public Identifier Identifier { get; }
         public override IReadOnlyList<ResolvedPort> InputPorts => Fields;
         public override IValue ReturnConstraint => this;
         public IReadOnlyList<ResolvedPort> Fields { get; }
@@ -82,11 +82,10 @@ namespace Element.AST
         private StructInstance(Struct declaringStruct, IEnumerable<IValue> fieldValues)
         {
             DeclaringStruct = declaringStruct;
-            _resolvedBlock = new ResolvedBlock(null, declaringStruct.Fields.Zip(fieldValues, (port, value) => (port.Identifier!.Value, value)).ToArray(), null);
+            _resolvedBlock = new ResolvedBlock(declaringStruct.Fields.Zip(fieldValues, (port, value) => (port.Identifier!.Value, value)).ToArray(), null);
         }
 
-        public override Identifier? Identifier => null;
-        public override string TypeOf => DeclaringStruct.Identifier?.String ?? "<unknown>";
+        public override string TypeOf => DeclaringStruct.Identifier.String;
         public override Result<IValue> Index(Identifier id, Context context) =>
             _resolvedBlock.Index(id, context)
                           .Else(() => DeclaringStruct.ResolveInstanceFunction(this, id, context));

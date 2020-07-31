@@ -31,7 +31,7 @@ namespace Element.AST
                     .Map(t =>
                     {
                         var (inputPorts, returnConstraint) = t;
-                        return (IValue)new FunctionConstraint(Identifier, inputPorts, returnConstraint);
+                        return (IValue)new FunctionConstraint(inputPorts, returnConstraint);
                     });
 
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)

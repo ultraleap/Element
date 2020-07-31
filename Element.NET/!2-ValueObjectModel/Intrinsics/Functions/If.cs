@@ -7,11 +7,11 @@ namespace Element.AST
     {
         private If()
         {
-            _identifier = new Identifier("if");
+            Identifier = new Identifier("if");
         }
         
         public static If Instance { get; } = new If();
-        protected override Identifier _identifier { get; }
+        public override Identifier Identifier { get; }
         public bool IsVariadic => false;
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>

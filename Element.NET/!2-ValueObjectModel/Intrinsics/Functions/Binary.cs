@@ -22,11 +22,11 @@ namespace Element.AST
         private Binary(Element.Binary.Op operation)
         {
             Operation = operation;
-            _identifier = new Identifier(operation.ToString().ToLowerInvariant());
+            Identifier = new Identifier(operation.ToString().ToLowerInvariant());
         }
 
         public Element.Binary.Op Operation { get; }
-        protected override Identifier _identifier { get; }
+        public override Identifier Identifier { get; }
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => Element.Binary.CreateAndOptimize(Operation, (Element.Expression) arguments[0], (Element.Expression) arguments[1]);
         public bool IsVariadic => false;
     }

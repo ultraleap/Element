@@ -8,19 +8,16 @@ namespace Element.AST
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicConstraintImplementation _implementation;
         public IntrinsicConstraint(IIntrinsicConstraintImplementation implementation) => _implementation = implementation;
-        public override Identifier? Identifier => _implementation.Identifier;
         public override Result<bool> MatchesConstraint(IValue value, Context context) => _implementation.MatchesConstraint(value, context);
     }
     
     public class FunctionConstraint : Value
     {
-        public override Identifier? Identifier { get; }
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
 
-        public FunctionConstraint(Identifier identifier, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint)
+        public FunctionConstraint(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint)
         {
-            Identifier = identifier;
             InputPorts = inputPorts;
             ReturnConstraint = returnConstraint;
         }

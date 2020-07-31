@@ -49,7 +49,7 @@ namespace Element.AST
                         var (inputPort, returnConstraint) = t;
                         return PortList == null
                                    ? ((ExpressionBody) Body).Expression.ResolveExpression(scope, context)
-                                   : new Result<IValue>(new ExpressionBodiedFunction(Identifier, inputPort, returnConstraint, (ExpressionBody)Body, scope));
+                                   : new Result<IValue>(new ExpressionBodiedFunction(inputPort, returnConstraint, (ExpressionBody)Body, scope));
                     });
 
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)
@@ -101,7 +101,7 @@ namespace Element.AST
                         return PortList == null
                                    ? ((FunctionBlock) Body).ResolveBlock(scope, context)
                                                            .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context))
-                                   : new Result<IValue>(new ScopeBodiedFunction(Identifier, inputPort, returnConstraint, (FunctionBlock) Body, scope));
+                                   : new Result<IValue>(new ScopeBodiedFunction(inputPort, returnConstraint, (FunctionBlock) Body, scope));
                     });
     }
     

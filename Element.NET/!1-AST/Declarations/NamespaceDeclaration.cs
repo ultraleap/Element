@@ -10,7 +10,7 @@ namespace Element.AST
         protected override Type[] BodyAlternatives { get; } = {typeof(NamespaceBlock)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             ((NamespaceBlock)Body).ResolveBlock(scope, context)
-                    .Map(resolvedScope => (IValue)new Namespace(Identifier, resolvedScope));
+                    .Map(resolvedScope => (IValue)new Namespace(resolvedScope));
 
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {

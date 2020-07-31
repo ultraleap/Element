@@ -53,7 +53,6 @@ namespace Element.AST
                 return new UncurriedFunction(a, b);
             }
 
-            public override Identifier? Identifier => null;
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
             public override string SummaryString => $"<uncurried function {_a} << {_b}>";

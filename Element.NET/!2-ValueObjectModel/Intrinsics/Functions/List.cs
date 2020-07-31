@@ -8,11 +8,11 @@ namespace Element.AST
 	{
 		private List()
 		{
-			_identifier = new Identifier("list");
+			Identifier = new Identifier("list");
 		}
 		
 		public static List Instance { get; } = new List();
-		protected override Identifier _identifier { get; }
+		public override Identifier Identifier { get; }
 		public bool IsVariadic => true;
 
 		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
@@ -39,7 +39,6 @@ namespace Element.AST
 	            ReturnConstraint = output;
             }
 
-            public override Identifier? Identifier => ListStruct.IndexerId;
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
 
@@ -74,7 +73,6 @@ namespace Element.AST
 
             private readonly Element.Expression _index;
             private readonly IReadOnlyList<IValue> _elements;
-            public override Identifier? Identifier => null;
             public override string SummaryString => $"List[{_index}]";
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }

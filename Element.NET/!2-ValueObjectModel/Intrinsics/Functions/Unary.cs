@@ -19,11 +19,11 @@ namespace Element.AST
         private Unary(Element.Unary.Op operation)
         {
             Operation = operation;
-            _identifier = new Identifier(operation.ToString().ToLowerInvariant());
+            Identifier = new Identifier(operation.ToString().ToLowerInvariant());
         }
 
         public Element.Unary.Op Operation { get; }
-        protected override Identifier _identifier { get; }
+        public override Identifier Identifier { get; }
         public bool IsVariadic => false;
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => Element.Unary.CreateAndOptimize(Operation, (Element.Expression) arguments[0]);
     }

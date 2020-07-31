@@ -46,7 +46,6 @@ namespace Element.AST
         }
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) => _implementation.Call(arguments, context);
-        public override Identifier? Identifier => _implementation.Identifier;
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
     }
@@ -55,15 +54,13 @@ namespace Element.AST
     {
         protected readonly IScope _parent;
 
-        protected CustomFunction(Identifier? identifier, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, IScope parent)
+        protected CustomFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, IScope parent)
         {
-            Identifier = identifier;
             _parent = parent;
             InputPorts = inputPorts;
             ReturnConstraint = returnConstraint;
         }
 
-        public override Identifier? Identifier { get; }
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
     }
@@ -72,20 +69,20 @@ namespace Element.AST
     {
         private readonly ExpressionBody _expressionBody;
 
-        public ExpressionBodiedFunction(Identifier? identifier, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, ExpressionBody expressionBody, IScope parent)
-            : base(identifier, inputPorts, returnConstraint, parent) =>
+        public ExpressionBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, ExpressionBody expressionBody, IScope parent)
+            : base(inputPorts, returnConstraint, parent) =>
             _expressionBody = expressionBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(null, MakeNamedArgumentList(arguments), _parent), context);
+            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent), context);
     }
     
     public class ScopeBodiedFunction : CustomFunction
     {
         private readonly FunctionBlock _scopeBody;
 
-        public ScopeBodiedFunction(Identifier? identifier, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, FunctionBlock scopeBody, IScope parent)
-            : base(identifier, inputPorts, returnConstraint, parent) =>
+        public ScopeBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, FunctionBlock scopeBody, IScope parent)
+            : base(inputPorts, returnConstraint, parent) =>
             _scopeBody = scopeBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>

@@ -20,9 +20,9 @@ namespace Element
 
 		public abstract IEnumerable<Expression> Dependent { get; }
 
-		public static string ListJoinToString(IEnumerable<Expression> list) => string.Join(", ", list.Select(e => e.ToString()));
-		public static string ListJoinNormalizedForm(IEnumerable<Expression> list) => string.Join(", ", list.Select(e => e.NormalizedFormString));
-		public override Identifier? Identifier => null;
+		protected static string ListJoinToString(IEnumerable<Expression> list) => string.Join(", ", list.Select(e => e.ToString()));
+		protected static string ListJoinNormalizedForm(IEnumerable<Expression> list) => string.Join(", ", list.Select(e => e.NormalizedFormString));
+		
 		public abstract override string SummaryString { get; }
 		public override string TypeOf => StructImplementation.Identifier.String;
 		public override string NormalizedFormString => ListJoinNormalizedForm(Dependent);
