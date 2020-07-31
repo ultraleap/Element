@@ -8,12 +8,12 @@ using LExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
 {
-    public delegate Result<System.Linq.Expressions.Expression> ConvertFunction(IValue value, Type outputType, ITrace trace);
+    public delegate Result<System.Linq.Expressions.Expression> ConvertFunction(IValue value, Type outputType, Context context);
     
     public interface IBoundaryConverter
     {
-        Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext context);
-        Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext context);
+        Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, Context context);
+        Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, Context context);
     }
 
     public class NumberConverter : IBoundaryConverter
@@ -21,14 +21,14 @@ namespace Element.CLR
         private NumberConverter(){}
         public static NumberConverter Instance { get; } = new NumberConverter();
 
-        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext context) =>
+        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, Context context) =>
             parameter.Type switch
         {
             {} t when t == typeof(bool) => new NumberExpression(LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)), BoolStruct.Instance),
             _ => new NumberExpression(LExpression.Convert(parameter, typeof(float)))
         };
 
-        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext context) =>
+        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, Context context) =>
             convertFunction(value, typeof(float), context)
                 .Map(convertedValue =>
                           (outputType, convertedValue) switch
@@ -82,8 +82,8 @@ namespace Element.CLR
             _elementToClrFieldMapping = structType.GetFields().ToDictionary(f => f.Name, f => $"{char.ToLower(f.Name[0])}{f.Name.Substring(1)}");
         }
 
-        public Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, CompilationContext context) =>
-            context.SourceContext.EvaluateExpression(_elementTypeExpression)
+        public Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, Context context) =>
+            context.EvaluateExpression(_elementTypeExpression)
                    .Cast<Struct>(context)
                    .Bind(structDeclaration => StructInstance.Create(structDeclaration, _elementToClrFieldMapping
                                                                                        .Select(pair => new FieldExpression(root, parameter, pair.Value))
@@ -108,11 +108,11 @@ namespace Element.CLR
                 LExpression.PropertyOrField(_parameter, _clrField);
             public override IEnumerable<Expression> Dependent { get; }
             public override string SummaryString => $"{_parameter}.{_clrField}";
-            /*public Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+            /*public Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
                 _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, context);*/
         }
 
-        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, CompilationContext context)
+        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, Context context)
         {
             var obj = LExpression.Variable(outputType);
             var assigns = new List<LExpression>();
@@ -185,16 +185,16 @@ namespace Element.CLR
             };
         }
 
-        private Result<IBoundaryConverter> TryAddStructConverter(Type clrStructType, ITrace trace)
+        private Result<IBoundaryConverter> TryAddStructConverter(Type clrStructType, Context context)
         {
             if (!(clrStructType.GetCustomAttribute<ElementStructTemplateAttribute>() is {} attr))
-                return trace.Trace(MessageCode.MissingBoundaryConverter, $"Could not find or create {nameof(IBoundaryConverter)} for CLR type '{clrStructType}'");
+                return context.Trace(MessageCode.MissingBoundaryConverter, $"Could not find or create {nameof(IBoundaryConverter)} for CLR type '{clrStructType}'");
             var boundaryConverter = new StructConverter(attr.ElementTypeExpression, clrStructType);
             Add(clrStructType, boundaryConverter);
             return boundaryConverter;
         }
 
-        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, CompilationContext context) =>
+        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, Context context) =>
             // TODO: Detect circular conversion
             TryGetValue(parameter.Type, out var converter)
                 ? converter!.LinqToElement(parameter, root, context)
@@ -202,7 +202,7 @@ namespace Element.CLR
                     .Bind(structConverter => structConverter.LinqToElement(parameter, root, context));
 
         public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
-                                                 CompilationContext context) =>
+                                                 Context context) =>
             // TODO: Detect circular conversion
             TryGetValue(outputType, out var output)
                 ? output!.ElementToLinq(value, outputType, convertFunction, context)

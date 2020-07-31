@@ -26,7 +26,7 @@ namespace Element.AST
 
         protected override Identifier _identifier { get; }
         public bool IsVariadic => false;
-        public override Result<IValue> Call(IReadOnlyList<IValue> _, CompilationContext __) =>
+        public override Result<IValue> Call(IReadOnlyList<IValue> _, Context __) =>
             _value switch
             {
                 Constant.Intrinsic.True => Constant.True,

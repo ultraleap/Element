@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Element.AST;
+using Lexico;
 using Newtonsoft.Json;
 
 namespace Element
@@ -10,7 +11,7 @@ namespace Element
     /// <summary>
     /// Represents a bundle of loaded source files.
     /// </summary>
-    public class SourceContext : TraceBase
+    public class SourceContext
     {
         private SourceContext(CompilationInput compilationInput)
         {
@@ -19,7 +20,7 @@ namespace Element
         
         public GlobalScope GlobalScope { get; } = new GlobalScope();
         public CompilationInput CompilationInput { get; }
-        
+
 
         public static Result<SourceContext> Create(CompilationInput compilationInput)
         {
@@ -27,13 +28,8 @@ namespace Element
             return context.LoadPackagesAndExtraSourceFiles().Map(() => context);
         }
 
-        public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
-            Parser.Parse<AST.Expression>(new SourceInfo("<input expression>", expression), this, CompilationInput.NoParseTrace)
-                  .Check(expressionObject => expressionObject.Validate(new CompilationContext(this)))
-                  .Bind(expressionObject => expressionObject.ResolveExpression(scopeToEvaluateIn ?? GlobalScope, new CompilationContext(this)));
-
         public Result<SourceContext> LoadElementSourceFile(FileInfo file) => LoadElementSourceString(new SourceInfo(file.FullName, File.ReadAllText(file.FullName)));
-        public Result<SourceContext> LoadElementSourceString(SourceInfo info) => GlobalScope.AddSource(info, this).Map(() => this);
+        public Result<SourceContext> LoadElementSourceString(SourceInfo info) => GlobalScope.AddSource(info, new Context(this)).Map(() => this);
 
         /// <summary>
         /// Parses all the given files as Element source files into the source context
@@ -69,7 +65,7 @@ namespace Element
         {
             lock (_syncRoot)
             {
-                var builder = new ResultBuilder(this);
+                var builder = new ResultBuilder(new Context(this));
                 
                 PackageManifest? ParseFromJsonString(string json)
                 {
@@ -122,8 +118,5 @@ namespace Element
                 return builder.ToResult();
             }
         }
-
-        public override MessageLevel Verbosity => CompilationInput.Verbosity;
-        public override IReadOnlyCollection<TraceSite>? TraceStack => null;
     }
 }

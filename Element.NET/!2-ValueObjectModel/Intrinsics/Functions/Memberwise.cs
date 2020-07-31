@@ -13,7 +13,7 @@ namespace Element.AST
         public static Memberwise Instance { get; } = new Memberwise();
         protected override Identifier _identifier { get; }
         public bool IsVariadic => true;
-        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context)
         {
             var func = arguments[0];
             var structs = arguments.Skip(1).Select(arg => arg as StructInstance).ToArray();

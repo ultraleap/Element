@@ -17,26 +17,26 @@ namespace Element.AST
         public Identifier? Identifier => _identifier is Identifier id ? (Identifier?)id : null;
         public override string ToString() => $"{_identifier}{ReturnConstraint}";
 
-        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, Context context)
         {
             if (_identifier is Identifier id) id.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>()); // Don't validate identifier if this port has none
             ReturnConstraint?.Validate(builder, context);
             DefaultArgument?.Expression.Validate(builder, context);
         }
 
-        public Result<ResolvedPort> Resolve(IScope scope, CompilationContext compilationContext)
+        public Result<ResolvedPort> Resolve(IScope scope, Context context)
         {
-            Result<IValue> ResolveConstraint() => ReturnConstraint?.Expression.ResolveExpression(scope, compilationContext)
+            Result<IValue> ResolveConstraint() => ReturnConstraint?.Expression.ResolveExpression(scope, context)
                                                   ?? AnyConstraint.Instance;
-            Result<IValue> ResolveDefaultArgument() => DefaultArgument.Expression.ResolveExpression(scope, compilationContext);
+            Result<IValue> ResolveDefaultArgument() => DefaultArgument.Expression.ResolveExpression(scope, context);
             
             Result<ResolvedPort> WithDefaultArgument()
             {
                 Result DefaultArgumentMatchesPortConstraint((IValue Constraint, IValue DefaultArgument) t) =>
-                    t.Constraint.MatchesConstraint(t.DefaultArgument, compilationContext)
+                    t.Constraint.MatchesConstraint(t.DefaultArgument, context)
                      .Bind(matches => matches
                                           ? Result.Success
-                                          : compilationContext.Trace(MessageCode.ConstraintNotSatisfied, $"Default argument value '{t.DefaultArgument}' does not match port constraint '{t.Constraint}'"));
+                                          : context.Trace(MessageCode.ConstraintNotSatisfied, $"Default argument value '{t.DefaultArgument}' does not match port constraint '{t.Constraint}'"));
 
                 ResolvedPort ToResolvedPort((IValue Constraint, IValue DefaultArgument) t) => new ResolvedPort(Identifier, t.Constraint, t.DefaultArgument);
 
@@ -70,7 +70,7 @@ namespace Element.AST
         public Identifier? Identifier { get; }
         public IValue ResolvedConstraint { get; }
         public IValue? ResolvedDefaultArgument { get; }
-        public Result<IValue> DefaultValue(CompilationContext context) => ResolvedDefaultArgument != null ? new Result<IValue>(ResolvedDefaultArgument) : ResolvedConstraint.DefaultValue(context);
+        public Result<IValue> DefaultValue(Context context) => ResolvedDefaultArgument != null ? new Result<IValue>(ResolvedDefaultArgument) : ResolvedConstraint.DefaultValue(context);
     }
 
     public class VariadicPortMarker : Value

@@ -76,8 +76,12 @@ namespace Element
             return name != null;
         }
 
-        public static bool TryGetMessageLevel(MessageCode messageCode, out MessageLevel level) =>
-            Enum.TryParse(TryGetMessageToml(messageCode, out var table) ? (string) table!["level"] : string.Empty, out level);
+        public static bool TryGetMessageLevel(MessageCode messageCode, out MessageLevel level)
+        {
+            if (Enum.TryParse(TryGetMessageToml(messageCode, out var table) ? (string) table!["level"] : string.Empty, out level)) return true;
+            level = Element.MessageLevel.Error;
+            return false;
+        }
 
         public CompilerMessage(string message, MessageLevel? messageLevel = null) : this(null, messageLevel, message, null) {}
         public CompilerMessage(MessageCode messageCode, string? context, IReadOnlyCollection<TraceSite>? traceStack = null) : this((int)messageCode, null, context, traceStack) {}
@@ -86,9 +90,12 @@ namespace Element
         public CompilerMessage(int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? traceStack)
         {
             MessageCode = messageCode;
-            MessageLevel = messageCode.HasValue && TryGetMessageLevel((MessageCode)messageCode.Value, out var level)
-                               ? level
-                               : messageLevel ?? Element.MessageLevel.Information;
+            MessageLevel = (messageCode.HasValue, TryGetMessageLevel((MessageCode)messageCode.GetValueOrDefault(0), out var level)) switch
+            {
+                (true, true) => level,
+                (true, false) => null,
+                (false, _) => messageLevel
+            };
             Context = context;
             TraceStack = traceStack?.ToArray() // Force a copy
                          ?? Array.Empty<TraceSite>();

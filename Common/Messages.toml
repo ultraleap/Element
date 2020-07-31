@@ -148,6 +148,18 @@ level = "Error"
 name = "InfiniteLoop"
 level = "Error"
 
+[ELE36]
+name = "NotFunction"
+level = "Error"
+
+[ELE37]
+name = "NotIndexable"
+level = "Error"
+
+[ELE38]
+name = "NotConstraint"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

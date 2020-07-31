@@ -29,5 +29,9 @@ namespace Laboratory.Tests.L2.Semantics
         
         [TestCase("A", "Namespace")]
         public void Typeof(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
+
+        [TestCase("Any.a")]
+        [TestCase("add.b")]
+        public void IndexingNonIndexable(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.NotIndexable, expression);
     }
 }

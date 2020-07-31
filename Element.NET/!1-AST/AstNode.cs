@@ -11,9 +11,9 @@ namespace Element.AST
         // ReSharper restore UnusedAutoPropertyAccessor.Global
 #pragma warning restore 8618
 
-        public Result Validate(CompilationContext context)
+        public Result Validate(Context context)
         {
-            if (context.SourceContext.CompilationInput.SkipValidation || _hasBeenValidated) return Result.Success;
+            if ((context.CompilationInput?.SkipValidation ?? false) || _hasBeenValidated) return Result.Success;
             var resultBuilder = new ResultBuilder(context);
             Validate(resultBuilder, context);
             return resultBuilder.ToResult();
@@ -21,14 +21,14 @@ namespace Element.AST
 
         private bool _hasBeenValidated;
 
-        public void Validate(ResultBuilder resultBuilder, CompilationContext context)
+        public void Validate(ResultBuilder resultBuilder, Context context)
         {
-            if (context.SourceContext.CompilationInput.SkipValidation || _hasBeenValidated) return;
+            if ((context.CompilationInput?.SkipValidation ?? false) || _hasBeenValidated) return;
             ValidateImpl(resultBuilder, context);
             _hasBeenValidated = true;
         }
 
-        protected abstract void ValidateImpl(ResultBuilder builder, CompilationContext context);
+        protected abstract void ValidateImpl(ResultBuilder builder, Context context);
     }
 
     public interface ISourceLocation

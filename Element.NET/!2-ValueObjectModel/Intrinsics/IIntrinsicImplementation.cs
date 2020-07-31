@@ -22,19 +22,19 @@ namespace Element.AST
     
     public interface IIntrinsicFunctionImplementation : IIntrinsicImplementation
     {
-        public abstract Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
+        public abstract Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context);
         public bool IsVariadic { get; }
     }
     
     public interface IIntrinsicConstraintImplementation : IIntrinsicImplementation
     {
-        public abstract Result<bool> MatchesConstraint(IValue value, CompilationContext context);
+        public abstract Result<bool> MatchesConstraint(IValue value, Context context);
     }
     
     public interface IIntrinsicStructImplementation : IIntrinsicImplementation
     {
-        public abstract Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, CompilationContext context);
-        public abstract Result<IValue> DefaultValue(CompilationContext _);
-        public abstract Result<bool> MatchesConstraint(Struct @struct, IValue value, CompilationContext context);
+        public abstract Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, Context context);
+        public abstract Result<IValue> DefaultValue(Context _);
+        public abstract Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context);
     }
 }

@@ -6,13 +6,13 @@ namespace Element.AST
 {
     public class ResolvedBlock : Value, IScope
     {
-        private readonly Func<IScope, Identifier, CompilationContext, Result<IValue>> _indexFunc;
+        private readonly Func<IScope, Identifier, Context, Result<IValue>> _indexFunc;
         private readonly Dictionary<Identifier, Result<IValue>> _resultCache;
       
         public ResolvedBlock(Identifier? identifier,
                              IReadOnlyList<Identifier> allMembers,
                              IEnumerable<(Identifier Identifier, IValue Value)> resolvedValues,
-                             Func<IScope, Identifier, CompilationContext, Result<IValue>> indexFunc,
+                             Func<IScope, Identifier, Context, Result<IValue>> indexFunc,
                              IScope? parent)
         {
             Identifier = identifier;
@@ -37,19 +37,19 @@ namespace Element.AST
 
         public override Identifier? Identifier { get; }
 
-        public override Result<IValue> Index(Identifier id, CompilationContext context) => 
+        public override Result<IValue> Index(Identifier id, Context context) => 
             _resultCache.TryGetValue(id, out var result)
                 ? result
                 : _resultCache[id] = _indexFunc(this, id, context); // Cache result from calling the index function
 
-        public Result<IValue> Lookup(Identifier id, CompilationContext context) =>
+        public Result<IValue> Lookup(Identifier id, Context context) =>
             Index(id, context)
                 .ElseIf(Parent != null, () => Parent!.Lookup(id, context));
 
         public override IReadOnlyList<Identifier> Members { get; }
         private IScope? Parent { get; }
 
-        public override void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, CompilationContext context)
+        public override void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, Context context)
         {
             foreach (var member in Members)
             {
@@ -58,11 +58,11 @@ namespace Element.AST
             }
         }
 
-        public override Result<IValue> Deserialize(Func<Element.Expression> nextValue, CompilationContext context) =>
+        public override Result<IValue> Deserialize(Func<Element.Expression> nextValue, Context context) =>
             DeserializeMembers(nextValue, context)
                 .Map(memberValues => (IValue)new ResolvedBlock(null, memberValues.Zip(Members, (value, identifier) => (identifier, value)).ToArray(), null));
 
-        public Result<IEnumerable<IValue>> DeserializeMembers(Func<Element.Expression> nextValue, CompilationContext context) =>
+        public Result<IEnumerable<IValue>> DeserializeMembers(Func<Element.Expression> nextValue, Context context) =>
             Members.Select(m => Index(m, context))
                    .BindEnumerable(resolvedMembers => resolvedMembers.Select(m => m.Deserialize(nextValue, context)).ToResultEnumerable());
     }

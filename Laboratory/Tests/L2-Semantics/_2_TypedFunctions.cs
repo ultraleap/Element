@@ -45,5 +45,12 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("Num")]
         [TestCase("NotNum")]
         public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.SerializationError, expression);
+
+        [TestCase("literalNumNotAConstraint(5)")]
+        [TestCase("literalFunctionNotAConstraint(5)")]
+        public void ConstraintWithNonConstraint(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.NotConstraint, expression);
+
+        [TestCase("Any(20)")]
+        public void CallNonFunction(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.NotFunction, expression);
     }
 }

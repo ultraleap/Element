@@ -11,9 +11,9 @@ namespace Element.JsonArgument
 	/// </summary>
 	public static class JsonArgumentProvider
 	{
-		public static Result ProvideArguments(this JObject configuration, IReadOnlyList<ResolvedPort> topLevelFunctionPorts, float[] arguments, ITrace trace)
+		public static Result ProvideArguments(this JObject configuration, IReadOnlyList<ResolvedPort> topLevelFunctionPorts, float[] arguments, Context context)
 		{
-			var builder = new ResultBuilder(trace);
+			var builder = new ResultBuilder(context);
 			var idx = 0;
 
 			void ProvisionObject(IReadOnlyList<ResolvedPort> ports, JObject jObject)
@@ -85,9 +85,9 @@ namespace Element.JsonArgument
 			return builder.ToResult();
 		}
 
-		public static Result<JObject> ParseFromJsonFile(this string filePath, ITrace trace)
+		public static Result<JObject> ParseFromJsonFile(this string filePath, Context context)
 		{
-			if (!File.Exists(filePath)) return trace.Trace(MessageCode.FileAccessError, $"\"{filePath}\" JSON file not found.");
+			if (!File.Exists(filePath)) return context.Trace(MessageCode.FileAccessError, $"\"{filePath}\" JSON file not found.");
 			string fileText;
 			try
 			{
@@ -95,12 +95,12 @@ namespace Element.JsonArgument
 			}
 			catch (Exception e)
 			{
-				return trace.Trace(MessageCode.FileAccessError, e.ToString());
+				return context.Trace(MessageCode.FileAccessError, e.ToString());
 			}
-			return ParseFromJsonString(fileText, trace);
+			return ParseFromJsonString(fileText, context);
 		}
 
-		public static Result<JObject> ParseFromJsonString(this string json, ITrace trace)
+		public static Result<JObject> ParseFromJsonString(this string json, Context context)
 		{
 			try
 			{
@@ -108,7 +108,7 @@ namespace Element.JsonArgument
 			}
 			catch (Exception e)
 			{
-				return trace.Trace(MessageCode.ParseError, e.ToString());
+				return context.Trace(MessageCode.ParseError, e.ToString());
 			}
 		}
 	}

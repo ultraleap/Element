@@ -9,7 +9,7 @@ namespace Element.AST
         [Term] public CommaSeparatedBlock Block { get; private set; }
 #pragma warning restore 8618
 
-        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context) => Block.Validate(builder, context);
-        protected override Result<IValue> ExpressionImpl(IScope parentScope, CompilationContext context) => Block.ResolveBlock(parentScope, context).Cast<IValue>(context);
+        protected override void ValidateImpl(ResultBuilder builder, Context context) => Block.Validate(builder, context);
+        protected override Result<IValue> ExpressionImpl(IScope parentScope, Context context) => Block.ResolveBlock(parentScope, context).Cast<IValue>(context);
     }
 }

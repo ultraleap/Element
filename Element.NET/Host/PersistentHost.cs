@@ -9,21 +9,21 @@ namespace Element
     {
         public static Result<PersistentHost> Create(CompilationInput input) => SourceContext.Create(input).Map(context => new PersistentHost(context));
 
-        private PersistentHost(SourceContext context) => _context = context;
+        private PersistentHost(SourceContext context) => _srcContext = context;
 
-        private readonly SourceContext _context;
+        private readonly SourceContext _srcContext;
 
-        public Result Parse(CompilationInput input) => _context.ApplyExtraInput(input);
+        public Result Parse(CompilationInput input) => _srcContext.ApplyExtraInput(input);
 
         public Result<float[]> Evaluate(CompilationInput input, string expression) =>
-            _context.ApplyExtraInput(input)
-                    .Bind(() => _context.EvaluateExpression(expression))
-                    .Bind(value => value.Serialize(new CompilationContext(_context)))
-                    .Bind(serialized => serialized.ToFloatArray(_context));
+            _srcContext.ApplyExtraInput(input)
+                    .Bind(() => new Context(_srcContext).EvaluateExpression(expression))
+                    .Bind(value => value.Serialize(new Context(_srcContext)))
+                    .Bind(serialized => serialized.ToFloatArray(new Context(_srcContext)));
 
         public Result<string> Typeof(CompilationInput input, string expression) =>
-            _context.ApplyExtraInput(input)
-                    .Bind(() => _context.EvaluateExpression(expression))
+            _srcContext.ApplyExtraInput(input)
+                    .Bind(() => new Context(_srcContext).EvaluateExpression(expression))
                     .Map(value => value.TypeOf);
     }
 }

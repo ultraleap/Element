@@ -10,7 +10,7 @@ namespace Element.AST
         private IReadOnlyList<Declaration>? _cachedList;
         private readonly Dictionary<Identifier, Result<IValue>> _resolvedValueCache = new Dictionary<Identifier, Result<IValue>>();
         public IReadOnlyList<Declaration> Declarations => _cachedList ??= _sourceScopes.Values.SelectMany(blob => blob).ToList();
-        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext context) =>
+        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context) =>
             new Result<ResolvedBlock>(
                 new ResolvedBlock(null, Declarations.Select(d => d.Identifier).ToArray(),
                                   Enumerable.Empty<(Identifier Identifier, IValue Value)>(),
@@ -18,10 +18,10 @@ namespace Element.AST
 
         public bool ContainsSource(string sourceName) => _sourceScopes.ContainsKey(sourceName);
         
-        public Result<SourceBlob> GetSource(string sourceName, ITrace trace) =>
+        public Result<SourceBlob> GetSource(string sourceName, Context context) =>
             _sourceScopes.TryGetValue(sourceName, out var found)
                 ? new Result<SourceBlob>(found)
-                : trace.Trace(MessageCode.ArgumentNotFound, $"No source named '{sourceName}'");
+                : context.Trace(MessageCode.ArgumentNotFound, $"No source named '{sourceName}'");
 
         public bool RemoveSource(string sourceName)
         {
@@ -32,27 +32,27 @@ namespace Element.AST
             return true;
         }
 
-        public Result AddSource(SourceInfo source, SourceContext sourceContext) =>
+        public Result AddSource(SourceInfo source, Context context) =>
             ContainsSource(source.Name)
-                ? sourceContext.Trace(MessageCode.DuplicateSourceFile, $"Duplicate source '{source.Name}'")
-                : Parser.Parse<SourceBlob>(source, sourceContext, sourceContext.CompilationInput.NoParseTrace)
+                ? context.Trace(MessageCode.DuplicateSourceFile, $"Duplicate source '{source.Name}'")
+                : Parser.Parse<SourceBlob>(source, context, context.CompilationInput?.NoParseTrace ?? false)
                         .Bind(blob =>
                         {
                             _sourceScopes[source.Name] = blob;
                             _cachedList = null;
-                            var validateResult = Validate(new CompilationContext(sourceContext));
+                            var validateResult = Validate(context);
                             if (validateResult.IsError) RemoveSource(source.Name);
                             return validateResult;
                         });
 
-        public Result<IValue> Lookup(Identifier id, CompilationContext context) =>
+        public Result<IValue> Lookup(Identifier id, Context context) =>
             _resolvedValueCache.TryGetValue(id, out var result)
                 ? result
                 : _resolvedValueCache[id] = Declarations.FirstOrDefault(d => d.Identifier.Equals(id))
                                                         ?.Resolve(this, context) // Top-level declarations can be resolved with the global scope since outer captures are impossible!
                                             ?? (Result<IValue>) context.Trace(MessageCode.IdentifierNotFound, $"'{id}' not found in global scope");
 
-        public Result Validate(CompilationContext context)
+        public Result Validate(Context context)
         {
             var resultBuilder = new ResultBuilder(context);
             var idHashSet = new HashSet<Identifier>();

@@ -26,13 +26,13 @@ namespace Element.AST
             }
         }
 
-        public static Result<TIntrinsic> Get<TIntrinsic>(Identifier name, ITrace trace)
+        public static Result<TIntrinsic> Get<TIntrinsic>(Identifier name, Context context)
             where TIntrinsic : IIntrinsicImplementation =>
             (_intrinsics.TryGetValue(name.String, out var intrinsic), intrinsic) switch
             {
                 (true, TIntrinsic t) => t,
-                (false, _) => trace.Trace(MessageCode.IntrinsicNotFound, $"Intrinsic '{name}' is not implemented"),
-                (true, _) => trace.Trace(MessageCode.TypeError, $"Found intrinsic '{name}' but it is not '{typeof(TIntrinsic)}'")
+                (false, _) => context.Trace(MessageCode.IntrinsicNotFound, $"Intrinsic '{name}' is not implemented"),
+                (true, _) => context.Trace(MessageCode.TypeError, $"Found intrinsic '{name}' but it is not '{typeof(TIntrinsic)}'")
             };
 
         private static readonly Dictionary<string, IIntrinsicImplementation> _intrinsics = new Dictionary<string, IIntrinsicImplementation>();

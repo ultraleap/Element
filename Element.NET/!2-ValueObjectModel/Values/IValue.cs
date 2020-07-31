@@ -12,15 +12,15 @@ namespace Element.AST
         string SummaryString { get; }
         string NormalizedFormString { get; }
         
-        Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context);
+        Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context);
         IReadOnlyList<ResolvedPort> InputPorts { get; }
         IValue ReturnConstraint { get; }
-        Result<IValue> Index(Identifier id, CompilationContext context);
+        Result<IValue> Index(Identifier id, Context context);
         IReadOnlyList<Identifier> Members { get; }
-        Result<bool> MatchesConstraint(IValue value, CompilationContext context);
-        Result<IValue> DefaultValue(CompilationContext context);
-        void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, CompilationContext context);
-        Result<IValue> Deserialize(Func<Element.Expression> nextValue, CompilationContext context);
+        Result<bool> MatchesConstraint(IValue value, Context context);
+        Result<IValue> DefaultValue(Context context);
+        void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, Context context);
+        Result<IValue> Deserialize(Func<Element.Expression> nextValue, Context context);
     }
 
     public abstract class Value : IValue
@@ -33,19 +33,19 @@ namespace Element.AST
                                                    : $"<unidentified>:{TypeOf}";
         public virtual string TypeOf => GetType().Name;
         public virtual string NormalizedFormString => SummaryString;
-        public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => context.Trace(MessageCode.NotFunction, $"'{this}' cannot be called, it is not a function");
+        public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => context.Trace(MessageCode.NotFunction, $"'{this}' cannot be called, it is not a function");
         
         public virtual IReadOnlyList<ResolvedPort> InputPorts => Array.Empty<ResolvedPort>();
         public virtual IValue ReturnConstraint => NothingConstraint.Instance;
         
-        public virtual Result<IValue> Index(Identifier id, CompilationContext context) => context.Trace(MessageCode.NotIndexable, $"'{this}' is not indexable");
+        public virtual Result<IValue> Index(Identifier id, Context context) => context.Trace(MessageCode.NotIndexable, $"'{this}' is not indexable");
         public virtual IReadOnlyList<Identifier> Members => Array.Empty<Identifier>();
         
-        public virtual Result<bool> MatchesConstraint(IValue value, CompilationContext context) => context.Trace(MessageCode.NotConstraint, $"'{this}' cannot be used as a port annotation, it is not a constraint");
+        public virtual Result<bool> MatchesConstraint(IValue value, Context context) => context.Trace(MessageCode.NotConstraint, $"'{this}' cannot be used as a port annotation, it is not a constraint");
         
-        public virtual Result<IValue> DefaultValue(CompilationContext context) => context.Trace(MessageCode.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
-        public virtual void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, CompilationContext context) => resultBuilder.Append(MessageCode.SerializationError, $"'{this}' is not serializable");
-        public virtual Result<IValue> Deserialize(Func<Element.Expression> nextValue, CompilationContext context) => context.Trace(MessageCode.SerializationError, $"'{this}' cannot be deserialized");
+        public virtual Result<IValue> DefaultValue(Context context) => context.Trace(MessageCode.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
+        public virtual void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, Context context) => resultBuilder.Append(MessageCode.SerializationError, $"'{this}' is not serializable");
+        public virtual Result<IValue> Deserialize(Func<Element.Expression> nextValue, Context context) => context.Trace(MessageCode.SerializationError, $"'{this}' cannot be deserialized");
     }
 
     public static class ValueExtensions
@@ -53,7 +53,7 @@ namespace Element.AST
         // ReSharper disable once PossibleUnintendedReferenceComparison
         public static bool IsFunction(this IValue value) => value.ReturnConstraint != NothingConstraint.Instance;
         public static bool IsNullaryFunction(this IValue functionValue) => functionValue.IsFunction() && functionValue.InputPorts.Count == 0;
-        public static Result<IValue> FullyResolveValue(this IValue value, CompilationContext context) =>
+        public static Result<IValue> FullyResolveValue(this IValue value, Context context) =>
             (value.IsNullaryFunction()
                  ? value.Call(Array.Empty<IValue>(), context)
                  : new Result<IValue>(value))
@@ -69,7 +69,7 @@ namespace Element.AST
             value is IIntrinsicValue intrinsic
             && intrinsic.Implementation == implementation;
 
-        public static Result<IValue> IndexPositionally(this IValue value, int index, CompilationContext context)
+        public static Result<IValue> IndexPositionally(this IValue value, int index, Context context)
         {
             var members = value.Members;
             return index < members.Count
@@ -77,29 +77,29 @@ namespace Element.AST
                        : context.Trace(MessageCode.ArgumentOutOfRange, $"Cannot access member {index} - '{value}' has {members.Count} members");
         }
 
-        public static Result<List<Element.Expression>> Serialize(this IValue value, CompilationContext context)
+        public static Result<List<Element.Expression>> Serialize(this IValue value, Context context)
         {
             var result = new ResultBuilder<List<Element.Expression>>(context, new List<Element.Expression>());
             value.Serialize(result, context);
             return result.ToResult();
         }
 
-        public static bool IsSerializable(this IValue value, CompilationContext context) => value.Serialize(context).IsSuccess;
+        public static bool IsSerializable(this IValue value, Context context) => value.Serialize(context).IsSuccess;
 
-        public static Result<int> SerializedSize(this IValue value, ITrace trace)
+        public static Result<int> SerializedSize(this IValue value, Context context)
         {
             var size = 0;
             return value.Deserialize(() =>
             {
                 size++;
                 return Constant.Zero;
-            }, (CompilationContext) trace).Map(_ => size); // Discard the value and just check the size
+            }, context).Map(_ => size); // Discard the value and just check the size
         }
 
-        public static Result<IValue> Deserialize(this IValue value, IEnumerable<Element.Expression> expressions, ITrace trace) =>
-            value.Deserialize(new Queue<Element.Expression>(expressions).Dequeue, (CompilationContext) trace);
+        public static Result<IValue> Deserialize(this IValue value, IEnumerable<Element.Expression> expressions, Context context) =>
+            value.Deserialize(new Queue<Element.Expression>(expressions).Dequeue, context);
 
-        public static Result<float[]> ToFloatArray(this IEnumerable<Element.Expression> expressions, ITrace trace)
+        public static Result<float[]> ToFloatArray(this IEnumerable<Element.Expression> expressions, Context context)
         {
             var exprs = expressions as Element.Expression[] ?? expressions.ToArray();
             var result = new float[exprs.Length];
@@ -113,7 +113,7 @@ namespace Element.AST
                 }
                 else
                 {
-                    return trace.Trace(MessageCode.SerializationError, $"Non-constant expression '{expr}' cannot be evaluated to a float");
+                    return context.Trace(MessageCode.SerializationError, $"Non-constant expression '{expr}' cannot be evaluated to a float");
                 }
             }
 

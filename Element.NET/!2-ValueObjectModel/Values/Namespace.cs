@@ -14,6 +14,6 @@ namespace Element.AST
 
         public override Identifier? Identifier { get; }
         public override IReadOnlyList<Identifier> Members => _resolvedBlock.Members;
-        public override Result<IValue> Index(Identifier id, CompilationContext context) => _resolvedBlock.Index(id, context);
+        public override Result<IValue> Index(Identifier id, Context context) => _resolvedBlock.Index(id, context);
     }
 }

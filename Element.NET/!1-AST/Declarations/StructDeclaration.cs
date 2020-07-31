@@ -8,7 +8,7 @@ namespace Element.AST
         protected override string IntrinsicQualifier { get; } = "intrinsic";
         protected override string Qualifier { get; } = "struct";
         protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Nothing)};
-        protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
+        protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             IntrinsicImplementationCache.Get<IIntrinsicStructImplementation>(Identifier, context)
                           .Accumulate(() => PortList.ResolveInputConstraints(scope, context, true, true))
                           .Bind(t =>
@@ -22,12 +22,12 @@ namespace Element.AST
                                          : ToIntrinsicStructResult(null);
                           });
         
-        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {
-            builder.Append(IntrinsicImplementationCache.Get<IIntrinsicStructImplementation>(Identifier, builder.Trace));
+            builder.Append(IntrinsicImplementationCache.Get<IIntrinsicStructImplementation>(Identifier, builder.Context));
             if (ReturnConstraint != null)
             {
-                builder.Append(MessageCode.StructCannotHaveReturnType, $"Struct '{context.CurrentDeclarationLocation}' cannot have declared return type");
+                builder.Append(MessageCode.StructCannotHaveReturnType, $"Struct '{context.DeclarationStack.Peek()}' cannot have declared return type");
             }
             
             PortList?.Validate(builder, context);
@@ -39,7 +39,7 @@ namespace Element.AST
 
             if (PortList?.Ports.List.Any(port => !port.Identifier.HasValue) ?? false)
             {
-                builder.Append(MessageCode.PortListCannotContainDiscards, $"Struct '{context.CurrentDeclarationLocation}' contains discards");
+                builder.Append(MessageCode.PortListCannotContainDiscards, $"Struct '{context.DeclarationStack.Peek()}' contains discards");
             }
         }
     }
@@ -49,7 +49,7 @@ namespace Element.AST
         protected override string IntrinsicQualifier { get; } = string.Empty;
         protected override string Qualifier { get; } = "struct";
         protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Nothing)};
-        protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
+        protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             PortList.ResolveInputConstraints(scope, context, true, false)
                     .Bind(inputPorts =>
                     {
@@ -60,16 +60,16 @@ namespace Element.AST
                                    : ToCustomStruct(null);
                     });
         
-        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {
             if (!(PortList?.Ports.List.Count > 0))
             {
-                builder.Append(MessageCode.MissingPorts, $"Non intrinsic '{context.CurrentDeclarationLocation}' must have ports");
+                builder.Append(MessageCode.MissingPorts, $"Non intrinsic '{context.DeclarationStack.Peek()}' must have ports");
             }
             
             if (ReturnConstraint != null)
             {
-                builder.Append(MessageCode.StructCannotHaveReturnType, $"Struct '{context.CurrentDeclarationLocation}' cannot have declared return type");
+                builder.Append(MessageCode.StructCannotHaveReturnType, $"Struct '{context.DeclarationStack.Peek()}' cannot have declared return type");
             }
             
             PortList?.Validate(builder, context);
@@ -81,7 +81,7 @@ namespace Element.AST
 
             if (PortList?.Ports.List.Any(port => !port.Identifier.HasValue) ?? false)
             {
-                builder.Append(MessageCode.PortListCannotContainDiscards, $"Struct '{context.CurrentDeclarationLocation}' contains discards");
+                builder.Append(MessageCode.PortListCannotContainDiscards, $"Struct '{context.DeclarationStack.Peek()}' contains discards");
             }
         }
     }

@@ -13,7 +13,7 @@ namespace Element.AST
         
         public override string ToString() => $":{Expression}";
 
-        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, Context context)
         {
             Expression.Validate(builder, context);
             // TODO: Disallow complex expressions e.g. calls
@@ -22,7 +22,7 @@ namespace Element.AST
     
     public static class ReturnConstraintExtensions
     {
-        public static Result<IValue> ResolveReturnConstraint(this ReturnConstraint? returnConstraint, IScope scope, CompilationContext context) =>
+        public static Result<IValue> ResolveReturnConstraint(this ReturnConstraint? returnConstraint, IScope scope, Context context) =>
             returnConstraint?.Expression.ResolveExpression(scope, context) ?? AnyConstraint.Instance;
     }
 }

@@ -96,7 +96,7 @@ namespace Element
 			protected override string ToStringInternal() => Index.HasValue ? $"{Name}[{Index}]" : Name;
 		}
 
-		private static IFunction PortToArgument(PortInfo port, CompilationContext context, out int size)
+		private static IFunction PortToArgument(PortInfo port, Context context, out int size)
 		{
 			// Special case for singles where we don't want an array at all
 			if (port.Type == NumberType.Instance)
@@ -111,7 +111,7 @@ namespace Element
 			return ret;
 		}
 
-		public static string Compile(INamedFunction function, CompilationContext context)
+		public static string Compile(INamedFunction function, Context context)
 		{
 			// Header
 			var sb = new StringBuilder();

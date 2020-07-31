@@ -10,7 +10,7 @@ namespace Element.NET.Tests
         public void EnumerateAll()
         {
             var sourceContext = MakeSourceContext();
-            var results = sourceContext.GlobalScope.EnumerateValues(new CompilationContext(sourceContext));
+            var results = sourceContext.GlobalScope.EnumerateValues(new Context(sourceContext));
             Assert.That(results.IsSuccess);
             CollectionAssert.IsNotEmpty(results.ResultOr(default));
         }
@@ -22,7 +22,7 @@ namespace Element.NET.Tests
         public void EnumerateByName(string nameContains)
         {
             var sourceContext = MakeSourceContext();
-            var results = sourceContext.GlobalScope.EnumerateValues(new CompilationContext(sourceContext), d => d.Identifier.String.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
+            var results = sourceContext.GlobalScope.EnumerateValues(new Context(sourceContext), d => d.Identifier.String.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
             Assert.That(results.IsSuccess);
             CollectionAssert.IsNotEmpty(results.ResultOr(default));
             // TODO: Actually check collection contents are correct
@@ -40,7 +40,7 @@ namespace Element.NET.Tests
         {
             var sourceContext = MakeSourceContext();
             bool Filter(IValue v) => v.ReturnConstraint.IsIntrinsic(intrinsic);
-            var results = sourceContext.GlobalScope.EnumerateValues(new CompilationContext(sourceContext), resolvedValueFilter: Filter);
+            var results = sourceContext.GlobalScope.EnumerateValues(new Context(sourceContext), resolvedValueFilter: Filter);
             Assert.That(results.IsSuccess);
             CollectionAssert.IsNotEmpty(results.ResultOr(default));
             // TODO: Actually check collection contents are correct

@@ -1,3 +1,6 @@
+intrinsic constraint Any
+intrinsic function add(a, b)
+
 namespace A
 {
     x = 5

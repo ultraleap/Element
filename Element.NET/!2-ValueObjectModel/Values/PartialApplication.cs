@@ -6,7 +6,7 @@ namespace Element.AST
 {
     public static class PartialApplication
     {
-        public static Result<IValue> PartiallyApply(this IValue function, IValue[] arguments, CompilationContext context)
+        public static Result<IValue> PartiallyApply(this IValue function, IValue[] arguments, Context context)
         {
             var appliedFunction = function switch
             {
@@ -30,7 +30,7 @@ namespace Element.AST
 
             public override Identifier? Identifier => null;
             public override string SummaryString => $"{Function} <partially applied {AppliedArguments.Count}/{Function.InputPorts.Count}>";
-            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) => Function.Call(AppliedArguments.Concat(arguments).ToArray(), context);
+            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) => Function.Call(AppliedArguments.Concat(arguments).ToArray(), context);
             public override IReadOnlyList<ResolvedPort> InputPorts => Function.InputPorts.Skip(AppliedArguments.Count).ToList();
             public override IValue ReturnConstraint => Function.ReturnConstraint;
         }

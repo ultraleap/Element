@@ -44,14 +44,14 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
 
         private static Result<(TDelegate Delegate, float[] ArgumentArray)> CompileAndSourceArguments<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
-            context.EvaluateExpression(expression)
-                   .Bind(function => function.SourceArgumentsFromSerializedArray(new CompilationContext(context)))
-                   .Bind(tuple =>
-                   {
-                       var (capturingValue, captureArray) = tuple;
-                       return capturingValue.Compile<TDelegate>(new CompilationContext(context))
-                                            .Map(compiled => (compiled, captureArray));
-                   });
+            new Context(context).EvaluateExpression(expression)
+                                .Bind(function => function.SourceArgumentsFromSerializedArray(new Context(context)))
+                                .Bind(tuple =>
+                                {
+                                    var (capturingValue, captureArray) = tuple;
+                                    return capturingValue.Compile<TDelegate>(new Context(context))
+                                                         .Map(compiled => (compiled, captureArray));
+                                });
         
         private static void CompileWithSourcedArgsAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate, float[]> checkFunc)
             where TDelegate : Delegate =>
@@ -64,8 +64,8 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         
         private static Result<TDelegate> CompileDelegate<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
-            context.EvaluateExpression(expression)
-                   .Bind(fn => fn.Compile<TDelegate>(new CompilationContext(context)));
+            new Context(context).EvaluateExpression(expression)
+                                .Bind(fn => fn.Compile<TDelegate>(new Context(context)));
         
         private static void CompileAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate> checkFunc)
             where TDelegate : Delegate =>
@@ -210,7 +210,7 @@ _(f:Num, v3:Vector3):MyCustomElementStruct
 
         [TestCaseSource(nameof(_factorialArguments))]
         public void FactorialUsingFor((float fac, float result) f) =>
-            CompileAndCheck<UnaryOp>("_(a:Num):Num = for({n = a i = 1}, _(tup):Bool = tup.n.gt(0), _(tup) = {n = tup.n.sub(1) i = tup.i.mul(tup.n)}).i",
+            CompileAndCheck<UnaryOp>("_(a:Num):Num = for({n = a, i = 1}, _(tup):Bool = tup.n.gt(0), _(tup) = {n = tup.n.sub(1), i = tup.i.mul(tup.n)}).i",
                                      fn => Assert.AreEqual(f.result, fn(f.fac)));
     }
 }

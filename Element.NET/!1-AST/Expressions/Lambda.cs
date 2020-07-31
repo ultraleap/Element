@@ -13,7 +13,7 @@ namespace Element.AST
         // ReSharper restore UnassignedField.Global UnusedAutoPropertyAccessor.Local
 #pragma warning restore 649, 169, 8618
 
-        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, Context context)
         {
             PortList.Validate(builder, context);
             ReturnConstraint?.Validate(builder, context);
@@ -29,9 +29,9 @@ namespace Element.AST
             }
         }
 
-        protected override Result<IValue> ExpressionImpl(IScope parentScope, CompilationContext compilationContext) =>
-            PortList.ResolveInputConstraints(parentScope, compilationContext, false, false)
-                    .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(parentScope, compilationContext))
+        protected override Result<IValue> ExpressionImpl(IScope parentScope, Context context) =>
+            PortList.ResolveInputConstraints(parentScope, context, false, false)
+                    .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(parentScope, context))
                     .Map(t =>
                     {
                         var (inputPorts, returnConstraint) = t;

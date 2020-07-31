@@ -6,7 +6,7 @@ namespace Element.AST
     public interface IDeclarationScope
     {
         IReadOnlyList<Declaration> Declarations { get; }
-        Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext context);
+        Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context);
     }
     
     public static class DeclarationScopeExtensions
@@ -15,7 +15,7 @@ namespace Element.AST
         /// Enumerates top-level and nested declarations that match the filter, resolving them to IValues.
         /// Will not recurse into function scopes.
         /// </summary>
-        public static Result<List<IValue>> EnumerateValues(this IDeclarationScope declarationScope, CompilationContext context, Predicate<Declaration> declarationFilter = null, Predicate<IValue> resolvedValueFilter = null)
+        public static Result<List<IValue>> EnumerateValues(this IDeclarationScope declarationScope, Context context, Predicate<Declaration> declarationFilter = null, Predicate<IValue> resolvedValueFilter = null)
         {
             var builder = new ResultBuilder<List<IValue>>(context, new List<IValue>());
             

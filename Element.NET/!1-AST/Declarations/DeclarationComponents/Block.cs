@@ -13,7 +13,7 @@ namespace Element.AST
         public abstract List<Declaration>? Items { get; protected set; }
 #pragma warning restore 649, 169
         
-        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, Context context)
         {
             var idHashSet = new HashSet<Identifier>();
             foreach (var decl in Items ?? Enumerable.Empty<Declaration>())
@@ -21,26 +21,26 @@ namespace Element.AST
                 decl.Validate(builder, context);
                 if (!idHashSet.Add(decl.Identifier))
                 {
-                    builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{decl.Identifier}' defined in '{context.CurrentDeclarationLocation}'");
+                    builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{this}'");
                 }
             }
             
             if (this is FunctionBlock && !idHashSet.Contains(Parser.ReturnIdentifier))
             {
-                builder.Append(MessageCode.FunctionMissingReturn, $"Scope-bodied function '{context.CurrentDeclarationLocation}' is missing return declaration");
+                builder.Append(MessageCode.FunctionMissingReturn, $"Scope-bodied function '{this}' is missing return declaration");
             }
         }
 
-        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, CompilationContext compilationContext) =>
-            ResolveBlockWithCaptures(parentScope, Array.Empty<(Identifier Identifier, IValue Value)>(), compilationContext);
+        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context) =>
+            ResolveBlockWithCaptures(parentScope, Array.Empty<(Identifier Identifier, IValue Value)>(), context);
 
         public Result<ResolvedBlock> ResolveBlockWithCaptures(IScope? parentScope,
                                                               IReadOnlyList<(Identifier Identifier, IValue Value)> capturedValues,
-                                                              CompilationContext compilationContext) =>
-            Validate(compilationContext)
+                                                              Context context) =>
+            Validate(context)
                 .Map(() =>
                 {
-                    Result<IValue> IndexFunc(IScope scope, Identifier identifier, CompilationContext context) =>
+                    Result<IValue> IndexFunc(IScope scope, Identifier identifier, Context context) =>
                         Items.FirstOrDefault(d => d.Identifier.Equals(identifier))?.Resolve(scope, context)
                         ?? (Result<IValue>) context.Trace(MessageCode.IdentifierNotFound, $"'{identifier}' not found when indexing {scope}");
 

@@ -15,10 +15,10 @@ namespace Element.AST
 		protected override Identifier _identifier { get; }
 		public bool IsVariadic => true;
 
-		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
-			context.SourceContext.GlobalScope.Lookup(ListStruct.Instance.Identifier, context)
+		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
+			context.RootScope.Lookup(ListStruct.Instance.Identifier, context)
 			       .Cast<IntrinsicStruct>(context)
-			       .Accumulate(() => context.SourceContext.GlobalScope.Lookup(NumStruct.Instance.Identifier, context))
+			       .Accumulate(() => context.RootScope.Lookup(NumStruct.Instance.Identifier, context))
 			       .Bind(t =>
 			       {
 				       var (listStruct, numStruct) = t;
@@ -44,7 +44,7 @@ namespace Element.AST
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
 
-            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
 	            arguments[0] is Element.Expression index
 		                               ? new Result<IValue>(ListElement.Create(index,
 		                                                                       _elements,
@@ -80,11 +80,11 @@ namespace Element.AST
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
 
-            public override Result<IValue> Index(Identifier id, CompilationContext context) =>
+            public override Result<IValue> Index(Identifier id, Context context) =>
 	            _elements.Select(e => e.Index(id, context))
 	                     .MapEnumerable(elements => Create(_index, elements.ToList(), InputPorts, ReturnConstraint));
             
-            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
 	            _elements.Select(e => e.Call(arguments.ToArray(), context))
 	                     .MapEnumerable(v => Create(_index, v.ToList(), InputPorts, ReturnConstraint));
         }

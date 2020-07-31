@@ -7,13 +7,13 @@ namespace Element.AST
         protected override string IntrinsicQualifier { get; } = "intrinsic";
         protected override string Qualifier { get; } = "constraint";
         protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
-        protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
+        protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, context)
                           .Map(intrinsic => (IValue)new IntrinsicConstraint(intrinsic));
 
-        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {
-            builder.Append(IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, builder.Trace));
+            builder.Append(IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, builder.Context));
             if (PortList != null) builder.Append(MessageCode.IntrinsicConstraintCannotSpecifyFunctionSignature, "Intrinsic constraint cannot specify ports");
             if (ReturnConstraint != null) builder.Append(MessageCode.IntrinsicConstraintCannotSpecifyFunctionSignature, "Intrinsic constraint cannot specify a return constraint");
         }
@@ -25,7 +25,7 @@ namespace Element.AST
 
         protected override string Qualifier { get; } = "constraint";
         protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
-        protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
+        protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             PortList.ResolveInputConstraints(scope, context, false, false)
                     .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
                     .Map(t =>
@@ -34,11 +34,11 @@ namespace Element.AST
                         return (IValue)new FunctionConstraint(Identifier, inputPorts, returnConstraint);
                     });
 
-        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {
             if (PortList == null || PortList.Ports.List.Count == 0)
             {
-                builder.Append(MessageCode.MissingPorts, $"Non-intrinsic constraint '{context.CurrentDeclarationLocation}' must have a port list");
+                builder.Append(MessageCode.MissingPorts, $"Non-intrinsic constraint '{this}' must have a port list");
             }
             PortList?.Validate(builder, context);
             ReturnConstraint?.Validate(builder, context);

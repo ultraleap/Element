@@ -12,7 +12,7 @@ namespace Element.AST
 		public static Fold Instance { get; } = new Fold();
 		protected override Identifier _identifier { get; }
 		public bool IsVariadic => false;
-		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
+		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context)
 		{
 			var list = (StructInstance) arguments[0];
 			var workingValue = arguments[1];
@@ -27,7 +27,7 @@ namespace Element.AST
 			static SourceInfo ConditionSourceCode() => new SourceInfo("<compiler generated dynamic fold condition>",
 			                                                         "_(tup):Bool = tup.i.lt(list.count)");
 			static SourceInfo BodySourceCode() => new SourceInfo("<compiler generated dynamic fold body",
-			                                                     "_(tup) = {i = tup.i.add(1) value = aggregator(tup.value, list.at(tup.i)) }");
+			                                                     "_(tup) = {i = tup.i.add(1), value = aggregator(tup.value, list.at(tup.i)) }");
 			Result<IValue[]> CreateDynamicFoldArguments() =>
 				Parser.Parse<Lambda>(ConditionSourceCode(), context)
 				      .Accumulate(() => Parser.Parse<Lambda>(BodySourceCode(), context))
@@ -44,7 +44,7 @@ namespace Element.AST
 						      (new Identifier("list"), list),
 						      (initial.Identifier!.Value, initial),
 						      (new Identifier("aggregator"), aggregator)
-					      }, context.SourceContext.GlobalScope);
+					      }, context.RootScope);
 					      return predicateLambda.ResolveExpression(captureBlock, context)
 					                            .Accumulate(() => bodyLambda.ResolveExpression(captureBlock, context))
 					                            .Map(r =>

@@ -35,12 +35,12 @@ namespace Element
 		public int CountUses(Expression other) => Equals(other) ? 1 : Dependent.Sum(d => d.CountUses(other));
 
 		// TODO: This allows indexing constants from an expression, see note about wrapper class above to fix
-		public override Result<IValue> Index(Identifier id, CompilationContext context) =>
-			context.SourceContext.GlobalScope.Lookup(StructImplementation.Identifier, context).Cast<Struct>(context).Bind(v => v.ResolveInstanceFunction(this, id, context));
+		public override Result<IValue> Index(Identifier id, Context context) =>
+			context.RootScope.Lookup(StructImplementation.Identifier, context).Cast<Struct>(context).Bind(v => v.ResolveInstanceFunction(this, id, context));
 
-		public override void Serialize(ResultBuilder<List<Expression>> resultBuilder, CompilationContext context) => resultBuilder.Result.Add(this);
+		public override void Serialize(ResultBuilder<List<Expression>> resultBuilder, Context context) => resultBuilder.Result.Add(this);
 
-		public override Result<IValue> Deserialize(Func<Expression> nextValue, CompilationContext context)
+		public override Result<IValue> Deserialize(Func<Expression> nextValue, Context context)
 		{
 			var result = nextValue();
 			return result.StructImplementation == StructImplementation

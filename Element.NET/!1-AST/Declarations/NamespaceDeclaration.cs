@@ -8,11 +8,11 @@ namespace Element.AST
         protected override string IntrinsicQualifier => string.Empty;
         protected override string Qualifier { get; } = "namespace";
         protected override Type[] BodyAlternatives { get; } = {typeof(NamespaceBlock)};
-        protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
+        protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             ((NamespaceBlock)Body).ResolveBlock(scope, context)
                     .Map(resolvedScope => (IValue)new Namespace(Identifier, resolvedScope));
 
-        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {
             PortList?.Validate(builder, context);
             ReturnConstraint?.Validate(builder, context);

@@ -22,7 +22,7 @@ namespace Element.AST
 
         public override string ToString() => $"{LitOrId.TraceString}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
 
-        protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder builder, Context context)
         {
             foreach (var expr in Expressions ?? Enumerable.Empty<SubExpression>())
             {
@@ -30,17 +30,17 @@ namespace Element.AST
             }
         }
 
-        protected override Result<IValue> ExpressionImpl(IScope parentScope, CompilationContext compilationContext) =>
+        protected override Result<IValue> ExpressionImpl(IScope parentScope, Context context) =>
             (LitOrId switch
                 {
                     // If the start of the list is an identifier, find the value that it identifies
-                    Identifier id => parentScope.Lookup(id, compilationContext).Map(v => v),
+                    Identifier id => parentScope.Lookup(id, context).Map(v => v),
                     Constant constant => constant,
                     _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
                 })
             .Bind(previous =>
             {
-                Result<IValue> FullyResolveValue(IValue v) => v.FullyResolveValue(compilationContext);
+                Result<IValue> FullyResolveValue(IValue v) => v.FullyResolveValue(context);
                 
                 var fullyResolved = FullyResolveValue(previous);
                 // Evaluate all expressions for this chain if there are any
@@ -50,20 +50,20 @@ namespace Element.AST
 
                 Result<IValue> ResolveSubExpression(Result<IValue> current, SubExpression subExpr) =>
                     current.Bind(FullyResolveValue)
-                           .Bind(fullyResolvedSubExpr => subExpr.ResolveSubExpression(fullyResolvedSubExpr, parentScope, compilationContext));
+                           .Bind(fullyResolvedSubExpr => subExpr.ResolveSubExpression(fullyResolvedSubExpr, parentScope, context));
             });
 
         public abstract class SubExpression : AstNode
         {
-            public Result<IValue> ResolveSubExpression(IValue previous, IScope parentScope, CompilationContext compilationContext)
+            public Result<IValue> ResolveSubExpression(IValue previous, IScope parentScope, Context context)
             {
-                compilationContext.PushTrace(this.MakeTraceSite($"{GetType().Name} '{ToString()}'"));
-                var result = SubExpressionImpl(previous, parentScope, compilationContext);
-                compilationContext.PopTrace();
+                context.TraceStack.Push(this.MakeTraceSite($"{GetType().Name} '{ToString()}'"));
+                var result = SubExpressionImpl(previous, parentScope, context);
+                context.TraceStack.Pop();
                 return result;
             }
 
-            protected abstract Result<IValue> SubExpressionImpl(IValue previous, IScope scope, CompilationContext context);
+            protected abstract Result<IValue> SubExpressionImpl(IValue previous, IScope scope, Context context);
         }
         
         // ReSharper disable once UnusedType.Global
@@ -76,7 +76,7 @@ namespace Element.AST
 
             public override string ToString() => Expressions.ToString();
 
-            protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
+            protected override void ValidateImpl(ResultBuilder builder, Context context)
             {
                 foreach (var expr in Expressions.List)
                 {
@@ -84,7 +84,7 @@ namespace Element.AST
                 }
             }
 
-            protected override Result<IValue> SubExpressionImpl(IValue previous, IScope scope, CompilationContext context) =>
+            protected override Result<IValue> SubExpressionImpl(IValue previous, IScope scope, Context context) =>
                 Expressions.List
                            .Select(argExpr => argExpr.ResolveExpression(scope, context))
                            .BindEnumerable(args => previous.Call(args.ToArray(), context));
@@ -99,8 +99,8 @@ namespace Element.AST
 #pragma warning restore 169
 
             public override string ToString() => $".{Identifier}";
-            protected override void ValidateImpl(ResultBuilder builder, CompilationContext context) => Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
-            protected override Result<IValue> SubExpressionImpl(IValue previous, IScope _, CompilationContext compilationContext) => previous.Index(Identifier, compilationContext);
+            protected override void ValidateImpl(ResultBuilder builder, Context context) => Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
+            protected override Result<IValue> SubExpressionImpl(IValue previous, IScope _, Context context) => previous.Index(Identifier, context);
         }
     }
 }

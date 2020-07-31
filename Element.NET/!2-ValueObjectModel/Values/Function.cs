@@ -6,10 +6,10 @@ namespace Element.AST
 {
     public abstract class Function : Value
     {
-        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
             this.VerifyArgumentsAndApplyFunction(arguments, () => ResolveCall(arguments, context), context);
 
-        protected abstract Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context);
+        protected abstract Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context);
         
         protected IReadOnlyList<(Identifier Identifier, IValue Value)> MakeNamedArgumentList(IReadOnlyList<IValue> arguments)
         {
@@ -45,7 +45,7 @@ namespace Element.AST
             ReturnConstraint = returnConstraint;
         }
 
-        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) => _implementation.Call(arguments, context);
+        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) => _implementation.Call(arguments, context);
         public override Identifier? Identifier => _implementation.Identifier;
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
@@ -76,7 +76,7 @@ namespace Element.AST
             : base(identifier, inputPorts, returnConstraint, parent) =>
             _expressionBody = expressionBody;
 
-        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
             _expressionBody.Expression.ResolveExpression(arguments.Count > 0
                                                              ? new ResolvedBlock(null, MakeNamedArgumentList(arguments), _parent)
                                                              : _parent, context);
@@ -90,7 +90,7 @@ namespace Element.AST
             : base(identifier, inputPorts, returnConstraint, parent) =>
             _scopeBody = scopeBody;
 
-        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
             _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context)
                       .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context));
     }
@@ -101,10 +101,10 @@ namespace Element.AST
         public static Result<IValue> VerifyArgumentsAndApplyFunction(this IValue function,
                                                                      IEnumerable<IValue> arguments,
                                                                      Func<Result<IValue>> resolveFunc,
-                                                                     CompilationContext context)
+                                                                     Context context)
         {
-            if (context.ContainsFunction(function)) return context.Trace(MessageCode.RecursionNotAllowed, $"Multiple references to {function} in same call stack - recursion is not allowed");
-            context.PushFunction(function);
+            if (context.CallStack.Contains(function)) return context.Trace(MessageCode.RecursionNotAllowed, $"Multiple references to {function} in same call stack - recursion is not allowed");
+            context.CallStack.Push(function);
 
             try
             {
@@ -123,11 +123,11 @@ namespace Element.AST
             }
             finally
             {
-                context.PopFunction();
+                context.CallStack.Pop();
             }
         }
         
-        private static Result CheckInputConstraints(IReadOnlyList<ResolvedPort> ports, IReadOnlyList<IValue> arguments, CompilationContext context)
+        private static Result CheckInputConstraints(IReadOnlyList<ResolvedPort> ports, IReadOnlyList<IValue> arguments, Context context)
         {
             if (arguments.Count <= 0) return Result.Success;
             var resultBuilder = new ResultBuilder(context);

@@ -175,7 +175,7 @@ namespace Laboratory
 
             private readonly ProcessHostInfo _info;
 
-            private Result<string> RunHostProcess(ITrace trace, string arguments)
+            private Result<string> RunHostProcess(Context context, string arguments)
             {
                 if (_hostBuildErrors.TryGetValue(_info, out var buildError))
                 {
@@ -194,7 +194,7 @@ namespace Laboratory
 
                 var messages = Run(process);
 
-                var resultBuilder = new ResultBuilder<string>(trace, string.Empty);
+                var resultBuilder = new ResultBuilder<string>(context, string.Empty);
 
                 foreach (var msg in messages)
                 {
@@ -227,12 +227,12 @@ namespace Laboratory
                 return processArgs;
             }
 
-            Result IHost.Parse(CompilationInput input) => (Result)RunHostProcess(new BasicTrace(input.Verbosity), BeginCommand(input, "parse").ToString());
+            Result IHost.Parse(CompilationInput input) => (Result)RunHostProcess(new Context(null, input), BeginCommand(input, "parse").ToString());
 
             Result<float[]> IHost.Evaluate(CompilationInput input, string expression)
             {
-                var resultBuilder = new ResultBuilder<float[]>(new BasicTrace(input.Verbosity), Array.Empty<float>());
-                return RunHostProcess(resultBuilder.Trace, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString())
+                var resultBuilder = new ResultBuilder<float[]>(new Context(null, input), Array.Empty<float>());
+                return RunHostProcess(resultBuilder.Context, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString())
                     .Bind(resultString =>
                     {
                         resultBuilder.Result = resultString.Split(' ', StringSplitOptions.RemoveEmptyEntries)
@@ -250,7 +250,7 @@ namespace Laboratory
             }
 
             Result<string> IHost.Typeof(CompilationInput input, string expression) =>
-                RunHostProcess(new BasicTrace(input.Verbosity), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
+                RunHostProcess(new Context(null, input), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
         }
     }
 }

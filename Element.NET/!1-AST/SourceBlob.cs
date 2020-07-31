@@ -20,7 +20,7 @@ namespace Element.AST
         public IEnumerator<Declaration> GetEnumerator() => _items?.GetEnumerator() ?? Enumerable.Empty<Declaration>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        protected override void ValidateImpl(ResultBuilder resultBuilder, CompilationContext context)
+        protected override void ValidateImpl(ResultBuilder resultBuilder, Context context)
         {
             foreach (var decl in _items ?? Enumerable.Empty<Declaration>())
             {

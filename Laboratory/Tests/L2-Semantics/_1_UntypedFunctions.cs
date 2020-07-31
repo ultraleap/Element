@@ -41,5 +41,9 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("addThree")]
         [TestCase("addFive")]
         public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.SerializationError, expression);
+
+        [TestCase("5(10)")]
+        [TestCase("pi(2)")]
+        public void CallNonFunction(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.NotFunction, expression);
     }
 }

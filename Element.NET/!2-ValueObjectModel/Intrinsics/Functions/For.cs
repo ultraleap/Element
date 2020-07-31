@@ -13,7 +13,7 @@ namespace Element.AST
         public static For Instance { get; } = new For();
         protected override Identifier _identifier { get; }
         public bool IsVariadic => false;
-        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context)
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context)
         {
             var initial = arguments[0];
             var condition = arguments[1];

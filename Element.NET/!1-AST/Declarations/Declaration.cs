@@ -21,23 +21,29 @@ namespace Element.AST
         protected abstract string Qualifier { get; }
         protected abstract Type[] BodyAlternatives { get; }
 
-        public Result<IValue> Resolve(IScope scope, CompilationContext compilationContext)
+        public override string ToString() => $"{GetType().Name} '{Identifier}'";
+
+        public Result<IValue> Resolve(IScope scope, Context context)
         {
-            compilationContext.PushDeclaration(this);
-            var result = Validate(compilationContext).Bind(() => ResolveImpl(scope, compilationContext).Bind(v => v.FullyResolveValue(compilationContext)));
-            compilationContext.PopDeclaration();
+            context.DeclarationStack.Push(this);
+            context.TraceStack.Push(this.MakeTraceSite(ToString()));
+            var result = Validate(context).Bind(() => ResolveImpl(scope, context).Bind(v => v.FullyResolveValue(context)));
+            context.TraceStack.Pop();
+            context.DeclarationStack.Pop();
             return result;
         }
 
-        protected abstract Result<IValue> ResolveImpl(IScope scope, CompilationContext context);
+        protected abstract Result<IValue> ResolveImpl(IScope scope, Context context);
 
-        protected sealed override void ValidateImpl(ResultBuilder builder, CompilationContext context)
+        protected sealed override void ValidateImpl(ResultBuilder builder, Context context)
         {
-            context.PushDeclaration(this);
+            context.DeclarationStack.Push(this);
+            context.TraceStack.Push(this.MakeTraceSite(ToString()));
             ValidateDeclaration(builder, context);
-            context.PopDeclaration();
+            context.TraceStack.Pop();
+            context.DeclarationStack.Pop();
         }
 
-        protected abstract void ValidateDeclaration(ResultBuilder builder, CompilationContext context);
+        protected abstract void ValidateDeclaration(ResultBuilder builder, Context context);
     }
 }

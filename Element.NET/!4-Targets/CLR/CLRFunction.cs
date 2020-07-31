@@ -272,7 +272,7 @@ namespace Element.CLR
 		/// The result of calling the given function with all its inputs and a pre-allocated argument array.
 		/// The function inputs are mapped directly to the arrays contents.
 		/// </returns>
-		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, CompilationContext context) =>
+		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, Context context) =>
 			function.IsFunction()
 				? function.InputPorts.Select(c => c.DefaultValue(context))
 				          .BindEnumerable(defaultValues =>
@@ -309,11 +309,11 @@ namespace Element.CLR
 				          })
 				: context.Trace(MessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
 
-		public static Result<TDelegate> Compile<TDelegate>(this IValue value, CompilationContext context, IBoundaryConverter? boundaryConverter = default)
+		public static Result<TDelegate> Compile<TDelegate>(this IValue value, Context context, IBoundaryConverter? boundaryConverter = default)
 			where TDelegate : Delegate =>
 			Compile(value, context, typeof(TDelegate), boundaryConverter).Map(result => (TDelegate)result);
 
-		private static Result<Delegate> Compile(IValue value, CompilationContext context, 
+		private static Result<Delegate> Compile(IValue value, Context context, 
 		                                 Type delegateType, IBoundaryConverter? boundaryConverter = default)
         {
 	        boundaryConverter ??= new BoundaryConverter();
@@ -367,7 +367,7 @@ namespace Element.CLR
             
             // Compile delegate
             var detectCircular = new Stack<IValue>();
-            Result<LinqExpression> ConvertFunction(IValue value, Type outputType, ITrace trace)
+            Result<LinqExpression> ConvertFunction(IValue value, Type outputType, Context context)
 			{
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == value)
 				{

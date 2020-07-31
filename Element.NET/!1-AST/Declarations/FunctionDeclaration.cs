@@ -10,7 +10,7 @@ namespace Element.AST
         protected override string Qualifier => "function";
         protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
 
-        protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
+        protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             IntrinsicImplementationCache.Get<IIntrinsicFunctionImplementation>(Identifier, context)
                                         .Bind(impl => PortList.ResolveInputConstraints(scope, context, true, impl.IsVariadic)
                                                               .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
@@ -21,13 +21,13 @@ namespace Element.AST
                                             return (IValue)new IntrinsicFunction(functionImpl, inputPorts, returnConstraint);
                                         });
 
-        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {
-            builder.Append(IntrinsicImplementationCache.Get<IIntrinsicFunctionImplementation>(Identifier, builder.Trace));
+            builder.Append(IntrinsicImplementationCache.Get<IIntrinsicFunctionImplementation>(Identifier, builder.Context));
             PortList?.Validate(builder, context);
             if (PortList != null && PortList.Ports.List.Any(port => !port.Identifier.HasValue))
             {
-                builder.Append(MessageCode.PortListCannotContainDiscards, $"Intrinsic '{context.CurrentDeclarationLocation}' port list contains discards");
+                builder.Append(MessageCode.PortListCannotContainDiscards, $"Intrinsic '{context.DeclarationStack.Peek()}' port list contains discards");
             }
             ReturnConstraint?.Validate(builder, context);
         }
@@ -39,7 +39,7 @@ namespace Element.AST
         protected override string Qualifier => string.Empty; // Functions don't have a qualifier
         protected override Type[] BodyAlternatives { get; } = {typeof(ExpressionBody)};
 
-        protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
+        protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             PortList.ResolveInputConstraints(scope, context, true, false)
                     .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
                     .Map(t =>
@@ -48,7 +48,7 @@ namespace Element.AST
                         return (IValue) new ExpressionBodiedFunction(Identifier, inputPort, returnConstraint, (ExpressionBody)Body, scope);
                     });
 
-        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {
             PortList?.Validate(builder, context);
             ReturnConstraint?.Validate(builder, context);
@@ -62,7 +62,7 @@ namespace Element.AST
         protected override string Qualifier => string.Empty; // Functions don't have a qualifier
         protected override Type[] BodyAlternatives { get; } = {typeof(FunctionBlock)};
         
-        protected override void ValidateDeclaration(ResultBuilder builder, CompilationContext context)
+        protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {
             PortList?.Validate(builder, context);
             if (PortList != null)
@@ -75,7 +75,7 @@ namespace Element.AST
                 {
                     if (!distinctLocalIdentifiers.Add(id))
                     {
-                        builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{id}' defined in function '{context.CurrentDeclarationLocation}' local scope or arguments");
+                        builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{id}' defined in function '{context.DeclarationStack.Peek()}' local scope or arguments");
                     }
                 }
             }
@@ -88,7 +88,7 @@ namespace Element.AST
             }
         }
 
-        protected override Result<IValue> ResolveImpl(IScope scope, CompilationContext context) =>
+        protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             PortList.ResolveInputConstraints(scope, context, true, false)
                     .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
                     .Map(t =>

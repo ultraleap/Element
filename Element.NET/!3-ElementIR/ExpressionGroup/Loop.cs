@@ -25,7 +25,7 @@ namespace Element
 
 		private static ReadOnlyCollection<State> ToState(IEnumerable<Expression> exprs) => exprs.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
 
-		public static Result<ExpressionGroup> CreateAndOptimize(IReadOnlyCollection<Expression> initialSerialized, ConditionFunction conditionFunc, IterationFunction bodyFunc, CompilationContext context) =>
+		public static Result<ExpressionGroup> CreateAndOptimize(IReadOnlyCollection<Expression> initialSerialized, ConditionFunction conditionFunc, IterationFunction bodyFunc, Context context) =>
 			conditionFunc(ToState(Enumerable.Repeat(DummyExpression.Instance, initialSerialized.Count)))
 				.Bind(dummyConditionResult =>
 				{

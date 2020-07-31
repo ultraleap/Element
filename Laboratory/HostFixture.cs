@@ -51,7 +51,7 @@ namespace Laboratory
 
         private Result<float[][]> EvaluateExpressions(CompilationInput compilationInput, string[] expressions)
         {
-            var resultBuilder = new ResultBuilder<float[][]>(new BasicTrace(compilationInput.Verbosity), new float[expressions.Length][]);
+            var resultBuilder = new ResultBuilder<float[][]>(new Context(null, compilationInput), new float[expressions.Length][]);
 
             for (var i = 0; i < expressions.Length; i++)
             {

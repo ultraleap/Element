@@ -14,7 +14,7 @@ namespace Element.AST
         protected override Identifier _identifier { get; }
         public bool IsVariadic => false;
 
-        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) =>
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
             // Make a list out of the true and false options
             List.Instance.Call(arguments.Skip(1).ToArray(), context)
                 .Cast<StructInstance>(context)

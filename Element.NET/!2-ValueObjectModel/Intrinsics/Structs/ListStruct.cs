@@ -17,11 +17,11 @@ namespace Element.AST
         public static ListStruct Instance { get; } = new ListStruct();
         public Identifier Identifier { get; }
 
-        public Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, CompilationContext context) => StructInstance.Create(@struct, arguments, context).Cast<IValue>(context);
-        public Result<bool> MatchesConstraint(Struct @struct, IValue value, CompilationContext context) => @struct.IsInstanceOfStruct(value, context);
-        public Result<IValue> DefaultValue(CompilationContext context) => List.Instance.Call(Array.Empty<IValue>(), context);
+        public Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, Context context) => StructInstance.Create(@struct, arguments, context).Cast<IValue>(context);
+        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => @struct.IsInstanceOfStruct(value, context);
+        public Result<IValue> DefaultValue(Context context) => List.Instance.Call(Array.Empty<IValue>(), context);
 
-        public static Result<int> ConstantCount(StructInstance listInstance, CompilationContext context) =>
+        public static Result<int> ConstantCount(StructInstance listInstance, Context context) =>
             listInstance.DeclaringStruct.IsIntrinsic<ListStruct>()
                 ? listInstance.Index(CountId, context)
                               .Bind(countValue => countValue switch
@@ -32,7 +32,7 @@ namespace Element.AST
                               })
                 : context.Trace(MessageCode.TypeError, "Struct instance is not a list");
 
-        public static Result<IValue[]> EvaluateElements(StructInstance listInstance, CompilationContext context) =>
+        public static Result<IValue[]> EvaluateElements(StructInstance listInstance, Context context) =>
             ConstantCount(listInstance, context)
                 .Accumulate(() => listInstance.Index(IndexerId, context))
                 .Bind(tuple =>

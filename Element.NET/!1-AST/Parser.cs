@@ -24,15 +24,15 @@ namespace Element.AST
 
         public static string Preprocess(string text) => Regex.Replace(text, @"#.*", string.Empty, RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public static Result<T> Parse<T>(SourceInfo source, ITrace trace, bool noParseTrace = false) where T : notnull
+        public static Result<T> Parse<T>(SourceInfo source, Context context, bool noParseTrace = false) where T : notnull
         {
             if (Lexico.Lexico.TryParse(source.PreprocessedText, out T output, userObject: source)) return new Result<T>(output);
-            if (noParseTrace) return trace.Trace(MessageCode.ParseError, $"Parsing failed within source '{source.Name}' - enable parse trace and run again for details.");
+            if (noParseTrace) return context.Trace(MessageCode.ParseError, $"Parsing failed within source '{source.Name}' - enable parse trace and run again for details.");
             
             // Using StringBuilder as there's potentially a lot of trace lines
             var sb = new StringBuilder();
             Lexico.Lexico.TryParse<T>(source.PreprocessedText, out _, new DelegateTextTrace(msg => { if (!string.IsNullOrEmpty(msg)) sb.AppendLine(msg); }), source);
-            return trace.Trace(MessageCode.ParseError, $"Parsing failed within '{source.Name}' - see parse trace below for details.\n{sb}");
+            return context.Trace(MessageCode.ParseError, $"Parsing failed within '{source.Name}' - see parse trace below for details.\n{sb}");
         }
 
         public static void Validate(this Identifier identifier, ResultBuilder builder, Identifier[] blacklist, Identifier[] whitelist)

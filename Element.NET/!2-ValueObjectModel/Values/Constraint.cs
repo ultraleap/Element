@@ -9,7 +9,7 @@ namespace Element.AST
         private readonly IIntrinsicConstraintImplementation _implementation;
         public IntrinsicConstraint(IIntrinsicConstraintImplementation implementation) => _implementation = implementation;
         public override Identifier? Identifier => _implementation.Identifier;
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) => _implementation.MatchesConstraint(value, context);
+        public override Result<bool> MatchesConstraint(IValue value, Context context) => _implementation.MatchesConstraint(value, context);
     }
     
     public class FunctionConstraint : Value
@@ -25,7 +25,7 @@ namespace Element.AST
             ReturnConstraint = returnConstraint;
         }
 
-        public override Result<bool> MatchesConstraint(IValue value, CompilationContext context) =>
+        public override Result<bool> MatchesConstraint(IValue value, Context context) =>
             value.FullyResolveValue(context)
                  .Bind(fn =>
                  {

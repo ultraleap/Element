@@ -12,20 +12,21 @@ namespace Element.NET.Tests
         public void UncurryAddMul()
         {
             var srcContext = MakeSourceContext();
-            srcContext.EvaluateExpression("Num.add")
-                                   .Accumulate(() => srcContext.EvaluateExpression("Num.sqr"))
-                                   .Bind(tuple =>
-                                   {
-                                       var (add, sqr) = tuple;
-                                       return add.Uncurry(sqr, srcContext);
-                                   })
-                                   .Bind(uncurried => uncurried.Compile<AddSqr>(new CompilationContext(srcContext)))
-                                   .Switch((sqr, messages) =>
-                                   {
-                                       LogMessages(messages);
-                                       var result = sqr(5f, 10f);
-                                       Assert.AreEqual(225f, result);
-                                   }, messages => ExpectingSuccess(messages, false));
+            var context = new Context(srcContext);
+            context.EvaluateExpression("Num.add")
+                   .Accumulate(() => context.EvaluateExpression("Num.sqr"))
+                   .Bind(tuple =>
+                   {
+                       var (add, sqr) = tuple;
+                       return add.Uncurry(sqr, context);
+                   })
+                   .Bind(uncurried => uncurried.Compile<AddSqr>(context))
+                   .Switch((sqr, messages) =>
+                   {
+                       LogMessages(messages);
+                       var result = sqr(5f, 10f);
+                       Assert.AreEqual(225f, result);
+                   }, messages => ExpectingSuccess(messages, false));
         }
         
         // TODO: cannot uncurry variadic function as param a

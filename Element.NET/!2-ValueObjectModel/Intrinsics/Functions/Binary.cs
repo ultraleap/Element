@@ -27,7 +27,7 @@ namespace Element.AST
 
         public Element.Binary.Op Operation { get; }
         protected override Identifier _identifier { get; }
-        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, CompilationContext context) => Element.Binary.CreateAndOptimize(Operation, (Element.Expression) arguments[0], (Element.Expression) arguments[1]);
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => Element.Binary.CreateAndOptimize(Operation, (Element.Expression) arguments[0], (Element.Expression) arguments[1]);
         public bool IsVariadic => false;
     }
 }

@@ -10,7 +10,7 @@ namespace Element
 
 	public static class LMNT
 	{
-		public static void Compile(INamedFunction block, Stream stream, CompilationContext compilationContext) => LoadBlock(block, stream, compilationContext);
+		public static void Compile(INamedFunction block, Stream stream, Context compilationContext) => LoadBlock(block, stream, compilationContext);
 
 		private static uint Pad(int rawSize, int align, out int padding)
 		{
@@ -56,7 +56,7 @@ namespace Element
 			}
 		}
 
-		private static void LoadBlock(INamedFunction function, Stream stream, CompilationContext context)
+		private static void LoadBlock(INamedFunction function, Stream stream, Context context)
 		{
 			var inputs = function.InputPorts;
 			var outputs = function.Outputs;
