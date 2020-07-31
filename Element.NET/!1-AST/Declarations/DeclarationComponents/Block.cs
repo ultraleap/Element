@@ -6,11 +6,11 @@ using Lexico;
 namespace Element.AST
 {
     [WhitespaceSurrounded, MultiLine]
-    public class Block : AstNode
+    public abstract class Block : AstNode
     {
 #pragma warning disable 649, 169
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
-        [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional] public List<Declaration>? Items { get; protected set; }
+        public abstract List<Declaration>? Items { get; protected set; }
 #pragma warning restore 649, 169
         
         protected override void ValidateImpl(ResultBuilder builder, CompilationContext context)
@@ -51,7 +51,17 @@ namespace Element.AST
                 });
     }
 
-    public class DeclarationBlock : Block, IDeclarationScope
+    public class FreeformBlock : Block
+    {
+        [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional] public override List<Declaration>? Items { get; protected set; }
+    }
+
+    public class CommaSeparatedBlock : Block
+    {
+        [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional, SeparatedBy(typeof(ListSeparator))] public override List<Declaration>? Items { get; protected set; }
+    }
+
+    public class DeclarationBlock : FreeformBlock, IDeclarationScope
     {
         public IReadOnlyList<Declaration> Declarations => Items as IReadOnlyList<Declaration> ?? Array.Empty<Declaration>();
     }

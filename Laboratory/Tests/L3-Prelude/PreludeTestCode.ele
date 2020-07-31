@@ -16,7 +16,7 @@ factorial(a:Num):Num
     body(v) = Vector2(v.x.add(1), v.y.mul(v.x))
 }
 
-factorialExpressionBodied(a:Num):Num = for({i = a v = 1},
+factorialExpressionBodied(a:Num):Num = for({i = a, v = 1},
                                      _(tup):Bool = tup.i.gt(0),
-                                     _(tup) = {i = tup.i.sub(1) v = tup.v.mul(tup.i)})
+                                     _(tup) = {i = tup.i.sub(1), v = tup.v.mul(tup.i)})
                                  .v

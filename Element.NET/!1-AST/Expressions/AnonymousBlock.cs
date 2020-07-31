@@ -6,7 +6,7 @@ namespace Element.AST
     {
 #pragma warning disable 8618
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [Term] public Block Block { get; private set; }
+        [Term] public CommaSeparatedBlock Block { get; private set; }
 #pragma warning restore 8618
 
         protected override void ValidateImpl(ResultBuilder builder, CompilationContext context) => Block.Validate(builder, context);

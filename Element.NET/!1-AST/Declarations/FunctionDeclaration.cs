@@ -98,7 +98,7 @@ namespace Element.AST
                     });
     }
     
-    public class FunctionBlock : Block
+    public class FunctionBlock : FreeformBlock
     {
         public void ValidateIdentifiers(ResultBuilder builder)
         {
