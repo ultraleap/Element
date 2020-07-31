@@ -21,8 +21,7 @@ namespace Element.AST
                 // Get the option lists indexer (field 0)
                 .Bind(optionListInstance => optionListInstance.Index(ListStruct.IndexerId, context))
                 // Call the list indexer to get option 0 if true or option 1 if false.
-                .Bind(optionListIndexer => arguments[0].FullyResolveValue(context)
-                                                       // ReSharper disable once PossibleUnintendedReferenceComparison
-                                                       .Bind(choice => optionListIndexer.Call(new IValue[] {choice == Constant.True ? Constant.Zero : Constant.One}, context)));
+                // ReSharper disable once PossibleUnintendedReferenceComparison
+                .Bind(optionListIndexer => optionListIndexer.Call(new IValue[] {arguments[0] == Constant.True ? Constant.Zero : Constant.One}, context));
     }
 }

@@ -17,7 +17,6 @@ namespace Element.AST
 
 		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
 			context.RootScope.Lookup(ListStruct.Instance.Identifier, context)
-			       .Cast<IntrinsicStruct>(context)
 			       .Accumulate(() => context.RootScope.Lookup(NumStruct.Instance.Identifier, context))
 			       .Bind(t =>
 			       {

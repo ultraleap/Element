@@ -25,33 +25,32 @@ namespace Element.AST
             ReturnConstraint = returnConstraint;
         }
 
-        public override Result<bool> MatchesConstraint(IValue value, Context context) =>
-            value.FullyResolveValue(context)
-                 .Bind(fn =>
-                 {
-                     // Function arity must match the constraint
-                     if (fn.InputPorts.Count != InputPorts.Count) return false;
-                     
-                     var resultBuilder = new ResultBuilder<bool>(context, true);
-                     
-                     void CompareConstraints(IValue argConstraint, IValue declConstraint)
-                     {
-                         // This port pair passes if the declarations port is Any (all constraints are narrower than Any)
-                         // otherwise it must be exactly the same constraint since there is no type/constraint hierarchy
-                         // ReSharper disable once PossibleUnintendedReferenceComparison
-                         // TODO: Does Nothing need to be handled specially here?
-                         resultBuilder.Result &=
-                             declConstraint.IsIntrinsic<AnyConstraint>()
-                             || argConstraint == declConstraint;
-                     }
+        public override Result<bool> MatchesConstraint(IValue fn, Context context)
+        {
+            // Function arity must match the constraint
+            if (fn.InputPorts.Count != InputPorts.Count) return false;
 
-                     foreach (var (argumentPort, matchingPort) in fn.InputPorts.Zip(InputPorts, (argumentPort, matchingPort) => (argumentPort, matchingPort)))
-                     {
-                         CompareConstraints(argumentPort.ResolvedConstraint, matchingPort.ResolvedConstraint);
-                     }
-                     CompareConstraints(fn.ReturnConstraint, ReturnConstraint);
+            var resultBuilder = new ResultBuilder<bool>(context, true);
 
-                     return resultBuilder.ToResult();
-                 });
+            void CompareConstraints(IValue argConstraint, IValue declConstraint)
+            {
+                // This port pair passes if the declarations port is Any (all constraints are narrower than Any)
+                // otherwise it must be exactly the same constraint since there is no type/constraint hierarchy
+                // ReSharper disable once PossibleUnintendedReferenceComparison
+                // TODO: Does Nothing need to be handled specially here?
+                resultBuilder.Result &=
+                    declConstraint.IsIntrinsic<AnyConstraint>()
+                    || argConstraint == declConstraint;
+            }
+
+            foreach (var (argumentPort, matchingPort) in fn.InputPorts.Zip(InputPorts, (argumentPort, matchingPort) => (argumentPort, matchingPort)))
+            {
+                CompareConstraints(argumentPort.ResolvedConstraint, matchingPort.ResolvedConstraint);
+            }
+
+            CompareConstraints(fn.ReturnConstraint, ReturnConstraint);
+
+            return resultBuilder.ToResult();
+        }
     }
 }

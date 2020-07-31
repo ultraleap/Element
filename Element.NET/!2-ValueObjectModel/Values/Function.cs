@@ -77,9 +77,7 @@ namespace Element.AST
             _expressionBody = expressionBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _expressionBody.Expression.ResolveExpression(arguments.Count > 0
-                                                             ? new ResolvedBlock(null, MakeNamedArgumentList(arguments), _parent)
-                                                             : _parent, context);
+            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(null, MakeNamedArgumentList(arguments), _parent), context);
     }
     
     public class ScopeBodiedFunction : CustomFunction
@@ -114,11 +112,9 @@ namespace Element.AST
                                                  ? Result.Success
                                                  : context.Trace(MessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
 
-                Result<IValue> FullyResolveResult(IValue returnValue) => returnValue.FullyResolveValue(context);
 
                 return CheckInputConstraints(function.InputPorts, arguments as IValue[] ?? arguments.ToArray(), context)
                        .Bind(resolveFunc)
-                       .Bind(FullyResolveResult)
                        .Check(ResultMatchesReturnConstraint);
             }
             finally

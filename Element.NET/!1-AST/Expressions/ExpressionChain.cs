@@ -40,17 +40,12 @@ namespace Element.AST
                 })
             .Bind(previous =>
             {
-                Result<IValue> FullyResolveValue(IValue v) => v.FullyResolveValue(context);
-                
-                var fullyResolved = FullyResolveValue(previous);
+                var previousAsResult = new Result<IValue>(previous);
                 // Evaluate all expressions for this chain if there are any
-                return Expressions?.Aggregate(fullyResolved, ResolveSubExpression)
-                                  .Bind(FullyResolveValue) // Make sure to fully resolve the result of the chain
-                       ?? fullyResolved; // If there's no subexpressions just return what we found
+                return Expressions?.Aggregate(previousAsResult, ResolveSubExpression) ?? previousAsResult; // If there's no subexpressions just return what we found
 
-                Result<IValue> ResolveSubExpression(Result<IValue> current, SubExpression subExpr) =>
-                    current.Bind(FullyResolveValue)
-                           .Bind(fullyResolvedSubExpr => subExpr.ResolveSubExpression(fullyResolvedSubExpr, parentScope, context));
+                Result<IValue> ResolveSubExpression(Result<IValue> previousResult, SubExpression subExpr) =>
+                    previousResult.Bind(previousResult => subExpr.ResolveSubExpression(previousResult, parentScope, context));
             });
 
         public abstract class SubExpression : AstNode

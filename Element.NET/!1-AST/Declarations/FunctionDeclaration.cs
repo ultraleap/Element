@@ -15,10 +15,12 @@ namespace Element.AST
                                         .Bind(impl => PortList.ResolveInputConstraints(scope, context, true, impl.IsVariadic)
                                                               .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
                                                               .Map(t => (impl, t.Item1, t.Item2)))
-                                        .Map(t =>
+                                        .Bind(t =>
                                         {
                                             var (functionImpl, inputPorts, returnConstraint) = t;
-                                            return (IValue)new IntrinsicFunction(functionImpl, inputPorts, returnConstraint);
+                                            return PortList == null && !functionImpl.IsVariadic
+                                                       ? functionImpl.Call(Array.Empty<IValue>(), context)
+                                                       : new Result<IValue>(new IntrinsicFunction(functionImpl, inputPorts, returnConstraint));
                                         });
 
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)
@@ -42,10 +44,12 @@ namespace Element.AST
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             PortList.ResolveInputConstraints(scope, context, true, false)
                     .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
-                    .Map(t =>
+                    .Bind(t =>
                     {
                         var (inputPort, returnConstraint) = t;
-                        return (IValue) new ExpressionBodiedFunction(Identifier, inputPort, returnConstraint, (ExpressionBody)Body, scope);
+                        return PortList == null
+                                   ? ((ExpressionBody) Body).Expression.ResolveExpression(scope, context)
+                                   : new Result<IValue>(new ExpressionBodiedFunction(Identifier, inputPort, returnConstraint, (ExpressionBody)Body, scope));
                     });
 
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)
@@ -91,10 +95,13 @@ namespace Element.AST
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             PortList.ResolveInputConstraints(scope, context, true, false)
                     .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
-                    .Map(t =>
+                    .Bind(t =>
                     {
                         var (inputPort, returnConstraint) = t;
-                        return (IValue) new ScopeBodiedFunction(Identifier, inputPort, returnConstraint, (FunctionBlock)Body, scope);
+                        return PortList == null
+                                   ? ((FunctionBlock) Body).ResolveBlock(scope, context)
+                                                           .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context))
+                                   : new Result<IValue>(new ScopeBodiedFunction(Identifier, inputPort, returnConstraint, (FunctionBlock) Body, scope));
                     });
     }
     

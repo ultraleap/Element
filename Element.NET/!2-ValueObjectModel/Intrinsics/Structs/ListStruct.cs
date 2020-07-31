@@ -18,7 +18,7 @@ namespace Element.AST
         public Identifier Identifier { get; }
 
         public Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, Context context) => StructInstance.Create(@struct, arguments, context).Cast<IValue>(context);
-        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => @struct.IsInstanceOfStruct(value, context);
+        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => @struct.IsInstanceOfStruct(value);
         public Result<IValue> DefaultValue(Context context) => List.Instance.Call(Array.Empty<IValue>(), context);
 
         public static Result<int> ConstantCount(StructInstance listInstance, Context context) =>

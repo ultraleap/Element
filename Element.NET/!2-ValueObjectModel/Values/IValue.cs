@@ -51,14 +51,14 @@ namespace Element.AST
     public static class ValueExtensions
     {
         // ReSharper disable once PossibleUnintendedReferenceComparison
-        public static bool IsFunction(this IValue value) => value.ReturnConstraint != NothingConstraint.Instance;
-        public static bool IsNullaryFunction(this IValue functionValue) => functionValue.IsFunction() && functionValue.InputPorts.Count == 0;
-        public static Result<IValue> FullyResolveValue(this IValue value, Context context) =>
+        public static bool IsFunction(this IValue value) => value.InputPorts.Count > 0;
+        //public static bool IsNullaryFunction(this IValue functionValue) => functionValue.IsFunction() && functionValue.InputPorts.Count == 0;
+        /*public static Result<IValue> FullyResolveValue(this IValue value, Context context) =>
             (value.IsNullaryFunction()
                  ? value.Call(Array.Empty<IValue>(), context)
                  : new Result<IValue>(value))
             // ReSharper disable once PossibleUnintendedReferenceComparison
-            .Bind(v => v != value ? v.FullyResolveValue(context) : new Result<IValue>(v)); // Recurse until the resolved value is the same
+            .Bind(v => v != value ? v.FullyResolveValue(context) : new Result<IValue>(v)); // Recurse until the resolved value is the same*/
         
         public static bool IsIntrinsic<TIntrinsicImplementation>(this IValue value)
             where TIntrinsicImplementation : IIntrinsicImplementation =>

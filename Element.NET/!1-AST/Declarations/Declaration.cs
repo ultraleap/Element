@@ -27,7 +27,7 @@ namespace Element.AST
         {
             context.DeclarationStack.Push(this);
             context.TraceStack.Push(this.MakeTraceSite(ToString()));
-            var result = Validate(context).Bind(() => ResolveImpl(scope, context).Bind(v => v.FullyResolveValue(context)));
+            var result = Validate(context).Bind(() => ResolveImpl(scope, context));
             context.TraceStack.Pop();
             context.DeclarationStack.Pop();
             return result;

@@ -29,13 +29,12 @@ namespace Element.AST
         public Result<IValue> Lookup(Identifier id, Context context) => (_associatedBlock ?? _parent).Lookup(id, context);
         public override IReadOnlyList<Identifier> Members => _associatedBlock?.Members ?? Array.Empty<Identifier>();
         public abstract override Result<IValue> DefaultValue(Context context);
-        public Result<bool> IsInstanceOfStruct(IValue value, Context context) => value.FullyResolveValue(context).Map(v => v is StructInstance instance && instance.DeclaringStruct == this);
+        public Result<bool> IsInstanceOfStruct(IValue value) => value is StructInstance instance && instance.DeclaringStruct == this;
         public Result<IValue> ResolveInstanceFunction(IValue instance, Identifier id, Context context) =>
             Index(id, context)
                 .Bind(v => v switch
                 {
                     {} when !v.IsFunction() => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"'{v}' found by indexing '{instance}' is not a function"),
-                    {} when v.IsNullaryFunction() => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Constant '{v}' cannot be accessed by indexing an instance"),
                     // ReSharper disable once PossibleUnintendedReferenceComparison
                     {} when v.InputPorts[0].ResolvedConstraint == this => v.PartiallyApply(new[] {instance}, context),
                     {} => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Found function '{v}' <{v.InputPorts[0]}> must be of type <{Identifier}> to be used as an instance function"),
@@ -63,7 +62,7 @@ namespace Element.AST
             : base(identifier, fields, associatedBlock, parent) { }
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => StructInstance.Create(this, arguments, context).Cast<IValue>(context);
-        public override Result<bool> MatchesConstraint(IValue value, Context context) => IsInstanceOfStruct(value, context);
+        public override Result<bool> MatchesConstraint(IValue value, Context context) => IsInstanceOfStruct(value);
         public override Result<IValue> DefaultValue(Context context) =>
             Fields.Select(field => field.DefaultValue(context))
                   .BindEnumerable(defaults => StructInstance.Create(this, defaults.ToArray(), context)
