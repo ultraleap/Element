@@ -1,5 +1,3 @@
-#ifdef LEGACY_COMPILER
-
 #include "lmnt/compiler.hpp"
 #include "lmnt/common.h"
 #include "interpreter_internal.hpp"
@@ -192,6 +190,9 @@ static element_result lmnt_compile(
     element_lmnt_archive_ctx& archive)
 {
     // generate LMNT function from etree
+    //todo: fix
+    throw;
+#if 0
     compiler_ctx result { context, opts, archive };
     result.archive.functions.emplace_back();
     result.function = &result.archive.functions.back();
@@ -203,6 +204,7 @@ static element_result lmnt_compile(
     result.function->outputs_size = compiled_function.expression->get_size();
 
     ELEMENT_OK_OR_RETURN(generate_lmnt_ops(result, compiled_function.expression));
+#endif
 
     return ELEMENT_OK;
 }
@@ -226,7 +228,11 @@ static element_result build_archive(
     code_indexes.reserve(archive.functions.size());
     for (const auto& fn : archive.functions) {
         string_indexes.push_back(strings_size);
+        //todo: fix
+        throw;
+#if 0
         strings_size += lmnt_offset(fn.function->name().length() + sizeof('\0') + sizeof(lmnt_offset));
+#endif
         code_indexes.push_back(code_size);
         code_size += lmnt_loffset(fn.ops.size() * sizeof(lmnt_instruction) + sizeof(lmnt_loffset));
     }
@@ -263,9 +269,12 @@ static element_result build_archive(
 
     // write strings
     for (const auto& fn : archive.functions) {
+        throw;
+#if 0
         std::string name = fn.function->name();
         ELEMENT_OK_OR_RETURN(buf_write_and_update(buffer, size, idx, uint16_t(name.length() + 1)));
         ELEMENT_OK_OR_RETURN(buf_raw_write_and_update(buffer, size, idx, name.c_str(), name.length() + 1));
+#endif
     }
 
     // write defs
@@ -354,5 +363,3 @@ element_result element_lmnt_archive_build(
     assert(size);
     return build_archive(*archive, buffer, *size);
 }
-
-#endif

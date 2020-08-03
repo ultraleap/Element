@@ -50,34 +50,6 @@ void element_interpreter_parse_only_mode(element_interpreter_ctx* context, bool 
 
 element_result element_interpreter_clear(element_interpreter_ctx* context);
 
-#ifdef LEGACY_COMPILER
-element_result element_interpreter_get_function(element_interpreter_ctx* context, const char* name, const element_function** function);
-
-element_result element_interpreter_compile_function(
-    element_interpreter_ctx* context,
-    const element_function* function,
-    element_compiled_function** compiled_function,
-    const element_compiler_options* opts);
-
-void element_interpreter_delete_compiled_function(element_compiled_function* compiled_function);
-
-size_t get_outputs_size(
-    element_interpreter_ctx* context,
-    const element_compiled_function* compiled_function);
-	
-element_result element_interpreter_evaluate_function(
-    element_interpreter_ctx* context,
-    const element_compiled_function* fn,
-    const element_value* inputs, size_t inputs_count,
-    element_value* outputs, size_t outputs_count,
-    const element_evaluator_options* opts);
-
-
-element_result element_interpreter_test_eval(element_interpreter_ctx* context, const char* fn_name, const element_value* inputs, size_t inputs_size, element_value* outputs, size_t outputs_size);
-element_result element_interpreter_get_internal_typeof(element_interpreter_ctx* context, const char* string, const char* filename, char* output_string_buffer, unsigned intoutput_string_buffer_size);
-element_result element_compiled_function_get_typeof_compilation(element_compiled_function* cfn, char* string_buffer, unsigned int string_buffer_size);
-#else
-
 typedef struct element_compilable element_compilable;
 typedef struct element_evaluable element_evaluable;
 
@@ -133,14 +105,12 @@ element_result element_interpreter_typeof_expression(
     const char* expression_string,
     char* buffer,
     int buffer_size);
-//
+
 //element_result element_metainfo_for_evaluable(
 //    const element_evaluable* evaluable,
 //    element_metainfo** metainfo);
 //
 //element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size);
-
-#endif
 
 #if defined(__cplusplus)
 }

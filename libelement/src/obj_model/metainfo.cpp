@@ -5,6 +5,7 @@
 #include "intermediaries.hpp"
 #include "intrinsics.hpp"
 #include "object.hpp"
+#include "etree/expressions.hpp"
 
 //to_string
 std::string element::constraint::typeof_info() const

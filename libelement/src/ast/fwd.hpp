@@ -1,13 +1,10 @@
 #pragma once
 
-
+//STD
 #include <memory>
-#include "common_internal.hpp"
 
-#ifdef LEGACY_COMPILER
-struct element_scope;
-using scope_unique_ptr = std::unique_ptr<element_scope>;
-#endif
+//SELF
+#include "common_internal.hpp"
 
 enum class element_nullary_op {
 	//num

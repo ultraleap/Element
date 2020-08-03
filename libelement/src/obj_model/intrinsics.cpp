@@ -5,7 +5,6 @@
 
 //SELF
 #include "errors.hpp"
-#include "functions.hpp"
 #include "types.hpp"
 #include "intermediaries.hpp"
 #include "etree/expressions.hpp"

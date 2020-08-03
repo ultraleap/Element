@@ -8,9 +8,9 @@
 #include "scope.hpp"
 #include "expressions.hpp"
 #include "intermediaries.hpp"
-#include "functions.hpp"
 #include "intrinsics.hpp"
 #include "errors.hpp"
+#include "etree/expressions.hpp"
 
 namespace element
 {
