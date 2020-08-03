@@ -7,6 +7,7 @@
 #include "scope.hpp"
 #include "errors.hpp"
 #include "interpreter_internal.hpp"
+#include "obj_model/intrinsics.hpp"
 
 namespace element
 {
@@ -58,7 +59,7 @@ namespace element
 
     [[nodiscard]] std::shared_ptr<object> identifier_expression::resolve(const compilation_context& context, std::shared_ptr<object>& obj)
     {
-        auto element = context.captures.find(parent->declarer->our_scope.get(), name);
+        auto element = context.captures.find(parent->declarer->our_scope.get(), name, context, parent->source_info);
         if (element) return element;
 
         return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_identifier_expr, name.value);

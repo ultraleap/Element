@@ -55,7 +55,7 @@ namespace element
 
         void push(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments);
         void pop();
-        [[nodiscard]] std::shared_ptr<object> find(const scope* s, const identifier& name);
+        [[nodiscard]] std::shared_ptr<object> find(const scope* s, const identifier& name, const compilation_context& context, const source_information& source_info);
 
         //todo: private
         std::vector<frame> frames;

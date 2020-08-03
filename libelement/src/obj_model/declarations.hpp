@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <variant>
 
 //SELF
 #include "port.hpp"
@@ -23,6 +24,8 @@ namespace element
     static const std::string function_qualifier; //empty string
     static const std::string return_keyword = "return";
     static const std::string unidentifier = "_";
+
+    class declaration_compilation_wrapper;
 
     class declaration : public object
     {
@@ -60,9 +63,43 @@ namespace element
 
     protected:
         bool _intrinsic = false; //todo: we need to decide on coding standards, if our types are lowercase like our variables and functions, we need some way to differentiate them
+        //the wrapper is used to return declarations within the object model
+        std::shared_ptr<declaration_compilation_wrapper> wrapper;
     };
 
-    class struct_declaration final : public declaration, public std::enable_shared_from_this<struct_declaration>
+    class declaration_compilation_wrapper final : public object
+    {
+    public:
+        declaration_compilation_wrapper(const declaration* declarer)
+            : declarer(declarer)
+        {}
+
+        [[nodiscard]] std::string typeof_info() const override { return declarer->typeof_info(); }
+        [[nodiscard]] std::string to_code(int depth) const override { return declarer->to_code(depth); }
+        [[nodiscard]] bool has_inputs() const { return declarer->has_inputs(); }
+        [[nodiscard]] bool has_output() const { return declarer->has_output(); }
+        [[nodiscard]] bool has_constraint() const { return declarer->has_constraint(); }; //TODO: JM - nonsense, this needs to be a constraint::something OR constraint::any
+        [[nodiscard]] bool has_scope() const { return declarer->has_scope(); }
+        [[nodiscard]] bool is_intrinsic() const { return declarer->is_intrinsic(); }
+        [[nodiscard]] const std::vector<port>& get_inputs() const override { return declarer->get_inputs(); }
+        [[nodiscard]] const scope* get_scope() const override { return declarer->get_scope(); };
+        [[nodiscard]] const std::optional<port>& get_output() const override { return declarer->get_output(); }
+
+        [[nodiscard]] bool serializable(const compilation_context& context) const { return declarer->serializable(context); }
+        [[nodiscard]] bool deserializable(const compilation_context& context) const { return declarer->deserializable(context); }
+        [[nodiscard]] std::shared_ptr<object> generate_placeholder(const compilation_context& context, int& placeholder_index) const { return declarer->generate_placeholder(context, placeholder_index); }
+
+        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const { return declarer->index(context, name, source_info); }
+        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const { return declarer->call(context, std::move(compiled_args), source_info); }
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const { return declarer->compile(context, source_info); }
+
+        [[nodiscard]] std::string location() const { return declarer->location(); }
+
+    private:
+        const declaration* declarer = nullptr;
+    };
+
+    class struct_declaration final : public declaration
     {
     public:
         struct_declaration(identifier name, const scope* parent_scope, bool is_intrinsic);
@@ -82,7 +119,7 @@ namespace element
 
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
         [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<struct_declaration*>(this)->shared_from_this(); }
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return wrapper; }
 
         [[nodiscard]] bool serializable(const compilation_context& context) const override;
         [[nodiscard]] bool deserializable(const compilation_context& context) const override;
@@ -92,7 +129,7 @@ namespace element
         std::unique_ptr<user_type> type;
     };
 
-    class constraint_declaration final : public declaration, public std::enable_shared_from_this<constraint_declaration>
+    class constraint_declaration final : public declaration
     {
     public:
         constraint_declaration(identifier name, const scope* parent_scope, bool is_intrinsic);
@@ -110,7 +147,7 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<constraint_declaration*>(this)->shared_from_this(); }
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return wrapper; }
 
     private:
         std::unique_ptr<constraint> constraint_;
@@ -139,13 +176,13 @@ namespace element
 
         [[nodiscard]] bool valid_at_boundary(const compilation_context& context) const;
 
-        std::shared_ptr<const object> body;
+        std::variant<std::unique_ptr<object>, const object*> body;
 
     private:
         std::unique_ptr<constraint> constraint_;
     };
 
-    class namespace_declaration final : public declaration, public std::enable_shared_from_this<namespace_declaration>
+    class namespace_declaration final : public declaration
     {
     public:
         namespace_declaration(identifier name, const scope* parent_scope);
@@ -161,6 +198,6 @@ namespace element
         [[nodiscard]] std::string to_code(int depth) const override;
         [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
         //todo: required because typeof does compilation, might need to change that?
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<namespace_declaration*>(this)->shared_from_this(); }
+        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return wrapper; }
     };
 }

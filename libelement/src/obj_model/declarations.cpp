@@ -17,6 +17,7 @@ namespace element
     declaration::declaration(identifier name, const scope* parent)
         : name(std::move(name))
         , our_scope(std::make_unique<scope>(parent, this))
+        , wrapper(std::make_shared<declaration_compilation_wrapper>(this))
     {
         assert(parent);
     }
@@ -53,7 +54,7 @@ namespace element
         const identifier& name,
         const source_information& source_info) const
     {
-        return our_scope->find(name, false);
+        return our_scope->find(name, false)->compile(context, source_info);
     }
 
     std::shared_ptr<object> struct_declaration::call(
@@ -271,6 +272,6 @@ namespace element
         const identifier& name,
         const source_information& source_info) const
     {
-        return our_scope->find(name, false);
+        return our_scope->find(name, false)->compile(context, source_info);
     }
 }

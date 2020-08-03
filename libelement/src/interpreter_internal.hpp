@@ -46,7 +46,7 @@ struct element_compiled_function
 
 struct element_compilable
 {
-    std::shared_ptr<element::object> object;
+    const element::declaration* decl;
 };
 
 struct element_evaluable
@@ -71,9 +71,16 @@ struct element_interpreter_ctx
     std::shared_ptr<element::source_context> src_context;
     std::unique_ptr<element::scope> global_scope;
 
-    mutable std::unordered_map<const element::declaration*, const std::shared_ptr<const element::intrinsic>> intrinsic_map;
+    struct Deleter {
+        void operator()(element::intrinsic* i);
+        void operator()(const element::intrinsic* i);
+    };
+
+    using intrinsic_map_type = std::unordered_map<const element::declaration*, std::unique_ptr<const element::intrinsic, Deleter>>;
+    mutable intrinsic_map_type intrinsic_map;
 
     element_interpreter_ctx();
+    ~element_interpreter_ctx() = default;
 
     element_result load(const char* str, const char* filename = "<input>");
     element_result load_file(const std::string& file);

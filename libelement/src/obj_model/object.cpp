@@ -151,7 +151,7 @@ namespace element
         const identifier& name,
         const source_information& source_info)
     {
-        auto func = std::dynamic_pointer_cast<function_declaration>(type->our_scope->find(name, false));
+        const auto func = dynamic_cast<const function_declaration*>(type->our_scope->find(name, false));
 
         //todo: not exactly working type checking, good enough for now though
         const bool has_inputs = func && func->has_inputs();
@@ -277,13 +277,13 @@ namespace element
         frames.pop_back();
     }
 
-    std::shared_ptr<object> capture_stack::find(const scope* s, const identifier& name)
+    std::shared_ptr<object> capture_stack::find(const scope* s, const identifier& name, const compilation_context& context, const source_information& source_info)
     {
         while (s)
         {
-            auto found = s->find(name, false);
+            const auto found = s->find(name, false);
             if (found)
-                return found;
+                return found->compile(context, source_info);
 
             auto found_it = std::find_if(std::begin(frames), std::end(frames), 
                 [function = s->declarer](const auto& frame) {

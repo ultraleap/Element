@@ -56,15 +56,16 @@ namespace element
                 return false;
             }
 
-            context->intrinsic_map.insert(std::unordered_map<const element::declaration*, const std::shared_ptr<const element::intrinsic>>::value_type { &declaration, std::move(intrinsic) });
+            using value_type = element_interpreter_ctx::intrinsic_map_type::value_type;
+            context->intrinsic_map.insert(value_type{ &declaration, std::move(intrinsic) });
             return true;
         }
 
-        static std::shared_ptr<const intrinsic> get_intrinsic(const element_interpreter_ctx* context, const declaration& declaration)
+        static const intrinsic* get_intrinsic(const element_interpreter_ctx* context, const declaration& declaration)
         {
             const auto it = context->intrinsic_map.find(&declaration);
             if (it != context->intrinsic_map.end())
-                return it->second;
+                return it->second.get();
 
             return nullptr;
         }
@@ -72,7 +73,7 @@ namespace element
         [[nodiscard]] virtual type_const_ptr get_type() const { return nullptr; };
 
     private:
-        const static std::unordered_map<std::string, std::function<std::shared_ptr<const intrinsic>(const declaration*)>> validation_func_map;
+        const static std::unordered_map<std::string, std::function<std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter>(const declaration*)>> validation_func_map;
     };
 
     class intrinsic_function : public intrinsic

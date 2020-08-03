@@ -26,74 +26,88 @@ namespace element
         return dynamic_cast<const T*>(decl) ? true : false;
     }
 
+    template <typename Class, typename... Args>
+    std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter> make_unique(Args&&... args)
+    {
+        static_assert(std::is_base_of_v<intrinsic, Class>, "must be derived from intrinsic");
+        return std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter>(static_cast<const intrinsic*>(new Class(std::forward<Args>(args)...)));
+    }
+
+    template <typename Class>
+    std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter> make_unique()
+    {
+        static_assert(std::is_base_of_v<intrinsic, Class>, "must be derived from intrinsic");
+        return std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter>(static_cast<const intrinsic*>(new Class()));
+    }
+
     //TODO: This is a horrible, temporary hack. Remove and replace once we start dealing with constraints
-    const std::unordered_map<std::string, std::function<std::shared_ptr<const intrinsic>(const declaration*)>> intrinsic::validation_func_map
+    const std::unordered_map<std::string, std::function<std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter>(const declaration*)>> intrinsic::validation_func_map
     {
         //type
-        { "Num", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? std::make_shared<intrinsic_num_constructor>() : nullptr); } },
-        { "Bool", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? std::make_shared<intrinsic_bool_constructor>() : nullptr); } },
-        { "List", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
-        { "Tuple", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+        { "Num", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_num_constructor>() : nullptr); } },
+        { "Bool", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_bool_constructor>() : nullptr); } },
+        { "List", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
+        { "Tuple", [&](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
 
         //functions
-        { "Num.add", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::add, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.sub", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::sub, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.mul", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::mul, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.div", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::div, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.add", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::add, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.sub", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::sub, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.mul", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::mul, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.div", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::div, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
 
-        { "Num.pow", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::pow, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.rem", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::rem, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.pow", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::pow, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.rem", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::rem, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
 
-        { "Num.min", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::min, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.max", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::max, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.min", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::min, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.max", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::max, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
 
     
-        { "Num.abs",   [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::abs, type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.ceil",  [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::ceil, type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.floor", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::floor, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.abs",   [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::abs, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.ceil",  [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::ceil, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.floor", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::floor, type::num.get(), type::num.get()) : nullptr); } },
 
 
-        { "Num.sin", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::sin, type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.cos", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::cos, type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.tan", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::tan, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.sin", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::sin, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.cos", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::cos, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.tan", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::tan, type::num.get(), type::num.get()) : nullptr); } },
 
-        { "Num.asin", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::asin, type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.acos", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::acos, type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.atan", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::atan, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.asin", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::asin, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.acos", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::acos, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.atan", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::atan, type::num.get(), type::num.get()) : nullptr); } },
 
-        { "Num.atan2", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::atan2, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.atan2", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::atan2, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
 
-        { "Num.ln", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::ln, type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.log", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::log, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.ln", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::ln, type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.log", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::log, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
 
-        { "Num.NaN", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::nan, type::num.get()) : nullptr); } },
-        { "Num.PositiveInfinity", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::positive_infinity, type::num.get()) : nullptr); } },
-        { "Num.NegativeInfinity", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::negative_infinity, type::num.get()) : nullptr); } },
+        { "Num.NaN", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_nullary>(element_nullary_op::nan, type::num.get()) : nullptr); } },
+        { "Num.PositiveInfinity", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_nullary>(element_nullary_op::positive_infinity, type::num.get()) : nullptr); } },
+        { "Num.NegativeInfinity", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_nullary>(element_nullary_op::negative_infinity, type::num.get()) : nullptr); } },
 
-        { "Num.eq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::eq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.neq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::neq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.lt", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::lt, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.leq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::leq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.gt", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::gt, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
-        { "Num.geq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::geq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.eq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::eq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.neq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::neq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.lt", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::lt, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.leq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::leq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.gt", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::gt, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
+        { "Num.geq", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::geq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
      
-        { "Bool.if", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_if>() : nullptr); } },
-        { "Bool.not", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_unary>(element_unary_op::not_, type::boolean.get(), type::boolean.get()) : nullptr); } },
-        { "Bool.and", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::and_, type::boolean.get(), type::boolean.get(), type::boolean.get()) : nullptr); } },
-        { "Bool.or", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_binary>(element_binary_op::or_, type::boolean.get(), type::boolean.get(), type::boolean.get()) : nullptr); } },
+        { "Bool.if", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_if>() : nullptr); } },
+        { "Bool.not", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::not_, type::boolean.get(), type::boolean.get()) : nullptr); } },
+        { "Bool.and", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::and_, type::boolean.get(), type::boolean.get(), type::boolean.get()) : nullptr); } },
+        { "Bool.or", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::or_, type::boolean.get(), type::boolean.get(), type::boolean.get()) : nullptr); } },
 
-        { "True", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::true_value, type::boolean.get()) : nullptr); } },
-        { "False", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_nullary>(element_nullary_op::false_value, type::boolean.get()) : nullptr); } },
+        { "True", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_nullary>(element_nullary_op::true_value, type::boolean.get()) : nullptr); } },
+        { "False", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_nullary>(element_nullary_op::false_value, type::boolean.get()) : nullptr); } },
 
-        { "list", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
-        { "List.fold", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+        { "list", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
+        { "List.fold", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
 
-        { "memberwise", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
-        { "for", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
-        { "persist", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+        { "memberwise", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
+        { "for", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
+        { "persist", [&](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
 
         ////constraints
-        { "Any", [&](const declaration* decl) { return (is_type_of<constraint_declaration>(decl) ? std::make_shared<intrinsic_not_implemented>() : nullptr); } },
+        { "Any", [&](const declaration* decl) { return (is_type_of<constraint_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
     };
 
     std::shared_ptr<element_expression> evaluate(const compilation_context& context, std::shared_ptr<element_expression> expr)
@@ -103,7 +117,7 @@ namespace element
         if (result != ELEMENT_OK)
             return expr;
 
-        auto new_expr = std::make_shared<element_expression_constant>(outputs[0]);
+        auto new_expr = std::make_unique<element_expression_constant>(outputs[0]);
         new_expr->actual_type = expr->actual_type;
         return new_expr;
     }
@@ -126,7 +140,7 @@ namespace element
 
     std::shared_ptr<object> intrinsic_nullary::compile(const compilation_context& context, const source_information& source_info) const
     {
-        return std::make_shared<element_expression_nullary>(
+        return std::make_unique<element_expression_nullary>(
             operation, return_type);
     }
 
@@ -148,12 +162,12 @@ namespace element
 
         const auto intrinsic = get_intrinsic(context.interpreter, declarer);
         assert(intrinsic);
-        assert(intrinsic.get() == this);
+        assert(intrinsic == this);
 
         auto expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
         assert(expr);
 
-        auto new_expr = std::make_shared<element_expression_unary>(
+        auto new_expr = std::make_unique<element_expression_unary>(
             operation,
             std::move(expr),
             return_type);
@@ -180,14 +194,14 @@ namespace element
 
         const auto intrinsic = get_intrinsic(context.interpreter, declarer);
         assert(intrinsic);
-        assert(intrinsic.get() == this);
+        assert(intrinsic == this);
         
         auto expr1 = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
         auto expr2 = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[1]);
         assert(expr1);
         assert(expr2);
 
-        auto new_expr = std::make_shared<element_expression_binary>(
+        auto new_expr = std::make_unique<element_expression_binary>(
             operation,
             expr1,
             expr2,
@@ -210,7 +224,7 @@ namespace element
 
         const auto intrinsic = get_intrinsic(context.interpreter, declarer);
         assert(intrinsic);
-        assert(intrinsic.get() == this);
+        assert(intrinsic == this);
 
         auto pred_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
         assert(pred_expr);
@@ -229,7 +243,7 @@ namespace element
         assert(true_expr);
         assert(false_expr);
 
-        auto ret = std::make_shared<element_expression_if>(
+        auto ret = std::make_unique<element_expression_if>(
             pred_expr,
             true_expr,
             false_expr);
@@ -276,7 +290,7 @@ namespace element
         assert(std::dynamic_pointer_cast<element_expression>(true_expr));
         assert(std::dynamic_pointer_cast<element_expression>(false_expr));
 
-        auto new_expr = std::make_shared<element_expression_if>(
+        auto new_expr = std::make_unique<element_expression_if>(
             expr,
             std::dynamic_pointer_cast<element_expression>(true_expr),
             std::dynamic_pointer_cast<element_expression>(false_expr));

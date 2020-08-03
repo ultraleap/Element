@@ -13,7 +13,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<declaration> port::resolve_annotation(const compilation_context& context) const
+    const declaration* port::resolve_annotation(const compilation_context& context) const
     {
         if (!annotation)
             return context.get_global_scope()->find(identifier{ "Any" }, false);
