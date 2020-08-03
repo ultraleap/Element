@@ -158,8 +158,11 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
         c = UTF8_NEXT(it, end);
 
-    if (it == end)
-    {
+    if (it == end) {
+        const size_t len = std::distance(it_begin, it);
+        state->pos += (int)len;
+        state->character += (int)len;
+        state->cur_token.tok_len += (int)len;
         reset_token(state);
         return ELEMENT_OK;
     }
