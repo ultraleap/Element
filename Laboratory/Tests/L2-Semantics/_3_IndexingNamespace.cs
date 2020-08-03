@@ -21,17 +21,17 @@ namespace Laboratory.Tests.L2.Semantics
             TestCase("X.Y.b", "10"),
             TestCase("X.Y.c", "15"),
         ]
-        public void IndexingNamespace(string expression, string expected) => AssertApproxEqual(CompilationInput, expression, expected);
+        public void IndexingNamespace(string expression, string expected) => AssertApproxEqual(CompilerInput, expression, expected);
 
         [TestCase("A.foo")]
         [TestCase("A.A.c")]
-        public void IndexingIdentifierNotFound(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.IdentifierNotFound, expression);
+        public void IndexingIdentifierNotFound(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.IdentifierNotFound, expression);
         
         [TestCase("A", "Namespace")]
-        public void Typeof(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
+        public void Typeof(string expression, string type) => AssertTypeof(CompilerInput, expression, type);
 
         [TestCase("Any.a")]
         [TestCase("add.b")]
-        public void IndexingNonIndexable(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.NotIndexable, expression);
+        public void IndexingNonIndexable(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.NotIndexable, expression);
     }
 }

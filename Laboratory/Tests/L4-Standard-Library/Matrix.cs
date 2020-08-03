@@ -13,7 +13,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 "Vector4(0, 0, 0, 1))"),
         ]
         public void CheckIdentity(string expression, string expected) =>
-            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
             TestCase("Matrix4x4(" +
@@ -28,7 +28,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
                  "Vector4(4, 3, 3, 1))"),
         ]
         public void Transpose(string expression, string expected) =>
-            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
             TestCase("Matrix4x4(" +
@@ -39,6 +39,6 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 "Vector3(0, 2, 9)"),
         ]
         public void Position(string expression, string expected) =>
-            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
     }
 }

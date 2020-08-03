@@ -5,12 +5,12 @@ namespace Element
     /// </summary>
     public class AtomicHost : IHost
     {
-        public Result Parse(CompilationInput compilationInput) => (Result)SourceContext.Create(compilationInput);
+        public Result Parse(CompilerInput compilerInput) => (Result)SourceContext.CreateAndLoad(compilerInput);
 
-        public Result<float[]> Evaluate(CompilationInput compilationInput, string expression) =>
-            PersistentHost.Create(compilationInput).Bind(host => host.Evaluate(compilationInput, expression));
+        public Result<float[]> Evaluate(CompilerInput compilerInput, string expression) =>
+            PersistentHost.Create(compilerInput).Bind(host => host.Evaluate(compilerInput, expression));
 
-        public Result<string> Typeof(CompilationInput input, string expression) =>
+        public Result<string> Typeof(CompilerInput input, string expression) =>
             PersistentHost.Create(input).Bind(host => host.Typeof(input, expression));
     }
 }

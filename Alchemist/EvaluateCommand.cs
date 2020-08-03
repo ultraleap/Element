@@ -12,7 +12,7 @@ namespace Alchemist
 		protected override bool _skipValidation => false; // Skipping validation during evaluate may cause indirect compiler errors
 		protected override bool _noParseTrace => false;
 
-		protected override Result<string> CommandImplementation(CompilationInput input) =>
+		protected override Result<string> CommandImplementation(CompilerInput input) =>
 			new AtomicHost()
 				.Evaluate(input, Expression)
 				.Map(result => string.Join(" ", result)

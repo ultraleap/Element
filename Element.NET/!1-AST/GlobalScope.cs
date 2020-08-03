@@ -35,7 +35,7 @@ namespace Element.AST
         public Result AddSource(SourceInfo source, Context context) =>
             ContainsSource(source.Name)
                 ? context.Trace(MessageCode.DuplicateSourceFile, $"Duplicate source '{source.Name}'")
-                : Parser.Parse<SourceBlob>(source, context, context.CompilationInput?.NoParseTrace ?? false)
+                : Parser.Parse<SourceBlob>(source, context, context.CompilerOptions.NoParseTrace)
                         .Bind(blob =>
                         {
                             _sourceScopes[source.Name] = blob;

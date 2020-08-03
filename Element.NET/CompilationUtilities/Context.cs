@@ -20,33 +20,35 @@ namespace Element
                 throw new InternalCompilerException($"Context '{_scopelessContext}' has no root scope, performing lookup is not possible");
         }
         
-        public Context(IScope? rootScope, CompilationInput? compilationInput)
+        public Context(IScope? rootScope, CompilerOptions? compilerOptions)
         {
             RootScope = rootScope ?? new NoScope(this);
-            CompilationInput = compilationInput;
+            CompilerOptions = compilerOptions.GetValueOrDefault();
         }
-        public Context(SourceContext sourceContext) : this(sourceContext.GlobalScope, sourceContext.CompilationInput) { }
+        public Context(SourceContext sourceContext) : this(sourceContext.GlobalScope, sourceContext.CompilerOptions) { }
         
         public static Context None { get; } = new Context(null, null);
 
         public IScope RootScope { get; }
-        public CompilationInput? CompilationInput { get; }
+        public CompilerOptions CompilerOptions { get; }
         public Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
         public Stack<IValue> CallStack { get; } = new Stack<IValue>();
         public Stack<Declaration> DeclarationStack { get; } = new Stack<Declaration>();
         
         public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
-            Parser.Parse<TopLevelExpression>(new SourceInfo("<input expression>", expression), this, CompilationInput?.NoParseTrace ?? false)
+            Parser.Parse<TopLevelExpression>(new SourceInfo("<input expression>", expression), this, CompilerOptions.NoParseTrace)
                   .Map(tle => tle.Expression)
                   .Check(expressionObject => expressionObject.Validate(this))
                   .Bind(expressionObject => expressionObject.ResolveExpression(scopeToEvaluateIn ?? RootScope, this));
 
         public CompilerMessage? Trace(MessageCode messageCode, string? contextString) =>
-            (CompilerMessage.TryGetMessageLevel(messageCode, out var level),  level >= CompilationInput?.Verbosity) switch
+            (CompilerMessage.TryGetMessageLevel(messageCode, out var level), level >= CompilerOptions.Verbosity) switch
             {
-                (true, false) => new CompilerMessage(messageCode, contextString, TraceStack),
-                (true, true) => null, // No message should be produced 
+                (true, true) => new CompilerMessage(messageCode, contextString, TraceStack),
+                (true, false) => null, // No message should be produced 
                 (false, _) => new CompilerMessage(null, MessageLevel.Error, $"Couldn't get {nameof(MessageLevel)} for {messageCode}", null),
             };
+
+        public CompilerMessage Trace(MessageLevel messageLevel, string message) => new CompilerMessage(null, messageLevel, message, TraceStack);
     }
 }

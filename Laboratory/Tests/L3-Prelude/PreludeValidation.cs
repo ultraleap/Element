@@ -8,14 +8,14 @@ namespace Laboratory.Tests.L3.Prelude
         // Only parses, does not validate
         public void Parse()
         {
-            var result = Host.Parse(NonValidatedCompilationInput);
+            var result = Host.Parse(NonValidatedCompilerInput);
             ExpectingSuccess(result.Messages, result.IsSuccess);
         }
 
         [Test]
         public void Validate()
         {
-            var result = Host.Parse(ValidatedCompilationInput);
+            var result = Host.Parse(ValidatedCompilerInput);
             ExpectingSuccess(result.Messages, result.IsSuccess);
         }
     }

@@ -12,13 +12,13 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("c", "3.14")]
         [TestCase("d", "1.618")]
         [TestCase("e", "3.14")]
-        public void Num(string expression, string expectedExpression) => AssertApproxEqual(CompilationInput, expression, expectedExpression);
+        public void Num(string expression, string expectedExpression) => AssertApproxEqual(CompilerInput, expression, expectedExpression);
 
         [Test]
-        public void IdentifierNotFound() => EvaluateExpectingErrorCode(CompilationInput, MessageCode.IdentifierNotFound, "z");
+        public void IdentifierNotFound() => EvaluateExpectingErrorCode(CompilerInput, MessageCode.IdentifierNotFound, "z");
         
         [TestCase("5", "Num")]
         [TestCase("a", "Num")]
-        public void Typeof(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
+        public void Typeof(string expression, string type) => AssertTypeof(CompilerInput, expression, type);
     }
 }

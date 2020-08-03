@@ -2,8 +2,8 @@ namespace Element
 {
     public enum MessageLevel
     {
-        Verbose,
-        Information,
+        Verbose = -1,
+        Information = 0, // Information is the default level
         Warning,
         Error,
     }

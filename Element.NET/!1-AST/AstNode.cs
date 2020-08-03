@@ -13,7 +13,7 @@ namespace Element.AST
 
         public Result Validate(Context context)
         {
-            if ((context.CompilationInput?.SkipValidation ?? false) || _hasBeenValidated) return Result.Success;
+            if (context.CompilerOptions.SkipValidation || _hasBeenValidated) return Result.Success;
             var resultBuilder = new ResultBuilder(context);
             Validate(resultBuilder, context);
             return resultBuilder.ToResult();
@@ -23,7 +23,7 @@ namespace Element.AST
 
         public void Validate(ResultBuilder resultBuilder, Context context)
         {
-            if ((context.CompilationInput?.SkipValidation ?? false) || _hasBeenValidated) return;
+            if (context.CompilerOptions.SkipValidation || _hasBeenValidated) return;
             ValidateImpl(resultBuilder, context);
             _hasBeenValidated = true;
         }

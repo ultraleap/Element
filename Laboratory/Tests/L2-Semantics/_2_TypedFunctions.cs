@@ -17,8 +17,8 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("onlyNum(b)", false)]
         public void CallWithInputConstraints(string expression, bool succeeds)
         {
-            if (succeeds) AssertApproxEqual(CompilationInput, expression, "5");
-            else EvaluateExpectingErrorCode(CompilationInput, MessageCode.ConstraintNotSatisfied, expression);
+            if (succeeds) AssertApproxEqual(CompilerInput, expression, "5");
+            else EvaluateExpectingErrorCode(CompilerInput, MessageCode.ConstraintNotSatisfied, expression);
         }
         
         [TestCase("returnsNum(5)", true)]
@@ -27,8 +27,8 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("returnsNotNum(NotNum(5))", true)]
         public void CallWithReturnConstraint(string expression, bool succeeds)
         {
-            if (succeeds) AssertApproxEqual(CompilationInput, expression, "5");
-            else EvaluateExpectingErrorCode(CompilationInput, MessageCode.ConstraintNotSatisfied, expression);
+            if (succeeds) AssertApproxEqual(CompilerInput, expression, "5");
+            else EvaluateExpectingErrorCode(CompilerInput, MessageCode.ConstraintNotSatisfied, expression);
         }
         
         [TestCase("Any", "IntrinsicConstraint")]
@@ -39,18 +39,18 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("onlyNum", "ExpressionBodiedFunction")]
         [TestCase("returnsNum", "ExpressionBodiedFunction")]
         [TestCase("returnsNotNum", "ScopeBodiedFunction")]
-        public void Typeof(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
+        public void Typeof(string expression, string type) => AssertTypeof(CompilerInput, expression, type);
         
         [TestCase("Any")]
         [TestCase("Num")]
         [TestCase("NotNum")]
-        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.SerializationError, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.SerializationError, expression);
 
         [TestCase("literalNumNotAConstraint(5)")]
         [TestCase("literalFunctionNotAConstraint(5)")]
-        public void ConstraintWithNonConstraint(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.NotConstraint, expression);
+        public void ConstraintWithNonConstraint(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.NotConstraint, expression);
 
         [TestCase("Any(20)")]
-        public void CallNonFunction(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.NotFunction, expression);
+        public void CallNonFunction(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.NotFunction, expression);
     }
 }

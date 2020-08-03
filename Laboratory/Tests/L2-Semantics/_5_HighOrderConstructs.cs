@@ -8,13 +8,13 @@ namespace Laboratory.Tests.L2.Semantics
         public _5_HighOrderConstructs() : base("_5_HighOrderConstructs") { }
 
         [Test]
-        public void BindFunctionViaIndexing() => AssertTypeof(CompilationInput, "add", "IntrinsicFunction");
+        public void BindFunctionViaIndexing() => AssertTypeof(CompilerInput, "add", "IntrinsicFunction");
 
         [Test]
-        public void BindInstanceFunctionViaIndexing() => AssertTypeof(CompilationInput, "addFromInstanceFunction", "AppliedFunction");
+        public void BindInstanceFunctionViaIndexing() => AssertTypeof(CompilerInput, "addFromInstanceFunction", "AppliedFunction");
 
         [Test]
-        public void CallFunctionWithFunctionResult() => AssertTypeof(CompilationInput, "getAdd(0)", "AppliedFunction");
+        public void CallFunctionWithFunctionResult() => AssertTypeof(CompilerInput, "getAdd(0)", "AppliedFunction");
 
         [
             TestCase("returnsNumFunction(numFunctionInstance)", true, "ExpressionBodiedFunction"),
@@ -75,25 +75,25 @@ namespace Laboratory.Tests.L2.Semantics
         ]
         public void ConstraintChecking(string expression, bool succeeds, string type = default)
         {
-            if (succeeds) AssertTypeof(CompilationInput, expression, type);
-            else EvaluateExpectingErrorCode(CompilationInput, MessageCode.ConstraintNotSatisfied, expression);
+            if (succeeds) AssertTypeof(CompilerInput, expression, type);
+            else EvaluateExpectingErrorCode(CompilerInput, MessageCode.ConstraintNotSatisfied, expression);
         }
 
         [Test]
-        public void CaptureLifetimeExtendsForReturnedFunction() => AssertApproxEqual(CompilationInput, "addAndGetSub(5, 10)(20)", "-5");
+        public void CaptureLifetimeExtendsForReturnedFunction() => AssertApproxEqual(CompilerInput, "addAndGetSub(5, 10)(20)", "-5");
 
         [Test]
-        public void HighOrderFunctionSum() => AssertApproxEqual(CompilationInput, "sum(list(3, -5, 8, 20))", "26");
+        public void HighOrderFunctionSum() => AssertApproxEqual(CompilerInput, "sum(list(3, -5, 8, 20))", "26");
         
         [Test]
-        public void ApplyHighOrderFunctionMultipleTimes() => AssertApproxEqual(CompilationInput, "usePartiallyAppliedFunctionMultipleTimes", "35"); 
+        public void ApplyHighOrderFunctionMultipleTimes() => AssertApproxEqual(CompilerInput, "usePartiallyAppliedFunctionMultipleTimes", "35"); 
         
         [TestCase("Indexer", "FunctionConstraint")]
         [TestCase("Binary", "FunctionConstraint")]
-        public void Typeof(string expression, string type) => AssertTypeof(CompilationInput, expression, type);
+        public void Typeof(string expression, string type) => AssertTypeof(CompilerInput, expression, type);
         
         [TestCase("Indexer")]
         [TestCase("Binary")]
-        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilationInput, MessageCode.SerializationError, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.SerializationError, expression);
     }
 }

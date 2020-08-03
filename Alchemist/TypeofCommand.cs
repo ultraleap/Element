@@ -12,6 +12,6 @@ namespace Alchemist
         protected override bool _skipValidation => false;
         protected override bool _noParseTrace => false;
 
-        protected override Result<string> CommandImplementation(CompilationInput input) => new AtomicHost().Typeof(input, Expression);
+        protected override Result<string> CommandImplementation(CompilerInput input) => new AtomicHost().Typeof(input, Expression);
     }
 }

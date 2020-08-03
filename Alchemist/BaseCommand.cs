@@ -38,16 +38,13 @@ namespace Alchemist
 		public int Invoke(string args)
 		{
 			Log(args);
-			var result = CommandImplementation(new CompilationInput
+			var result = CommandImplementation(new CompilerInput(
+				                                   new CompilerSource
 			{
-				Debug = Debug,
-				SkipValidation = _skipValidation,
-				NoParseTrace = _noParseTrace,
-				Verbosity = Verbosity,
 				ExcludePrelude = ExcludePrelude,
 				Packages = Packages.ToArray(),
 				ExtraSourceFiles = ExtraSourceFiles.Select(file => new FileInfo(file)).ToList()
-			});
+			}, new CompilerOptions(!Debug, _skipValidation, _noParseTrace, Verbosity)));
 			foreach (var msg in result.Messages)
 			{
 				Log(msg);
@@ -65,6 +62,6 @@ namespace Alchemist
 			else Console.WriteLine(msg);
 		}
 
-		protected abstract Result<string> CommandImplementation(CompilationInput input);
+		protected abstract Result<string> CommandImplementation(CompilerInput input);
 	}
 }

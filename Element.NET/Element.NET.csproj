@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
 
     <PackageId>Element.NET</PackageId>
-    <PackageVersion>1.0.0-alpha.15</PackageVersion>
+    <PackageVersion>1.0.0-alpha.17</PackageVersion>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Authors>Ultraleap</Authors>
     <Company>Ultraleap</Company>

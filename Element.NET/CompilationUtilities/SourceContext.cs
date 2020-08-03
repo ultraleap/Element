@@ -3,30 +3,30 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Element.AST;
-using Lexico;
 using Newtonsoft.Json;
 
 namespace Element
 {
     /// <summary>
-    /// Represents a bundle of loaded source files.
+    /// Represents a bundle of loaded element source
     /// </summary>
     public class SourceContext
     {
-        private SourceContext(CompilationInput compilationInput)
+        private SourceContext(CompilerOptions compilerOptions)
         {
-            CompilationInput = compilationInput;
+            CompilerOptions = compilerOptions;
         }
         
         public GlobalScope GlobalScope { get; } = new GlobalScope();
-        public CompilationInput CompilationInput { get; }
+        public CompilerOptions CompilerOptions { get; }
 
-
-        public static Result<SourceContext> Create(CompilationInput compilationInput)
+        public static Result<SourceContext> CreateAndLoad(CompilerInput compilerInput)
         {
-            var context = new SourceContext(compilationInput);
-            return context.LoadPackagesAndExtraSourceFiles().Map(() => context);
+            var context = new SourceContext(compilerInput.Options);
+            return context.LoadInputFiles(compilerInput.Source).Map(() => context);
         }
+
+        public static SourceContext Create(CompilerOptions compilerOptions) => new SourceContext(compilerOptions);
 
         public Result<SourceContext> LoadElementSourceFile(FileInfo file) => LoadElementSourceString(new SourceInfo(file.FullName, File.ReadAllText(file.FullName)));
         public Result<SourceContext> LoadElementSourceString(SourceInfo info) => GlobalScope.AddSource(info, new Context(this)).Map(() => this);
@@ -34,18 +34,13 @@ namespace Element
         /// <summary>
         /// Parses all the given files as Element source files into the source context
         /// </summary>
-        public Result<SourceContext> LoadElementSourceFiles(IEnumerable<FileInfo> files) => files.Select(LoadElementSourceFile).Fold().Map(() => this);
-        
-        public Result ApplyExtraInput(CompilationInput input)
+        public Result<SourceContext> LoadElementSourceFiles(IEnumerable<FileInfo> files)
         {
-            if (CompilationInput == input) return Result.Success; // CompilationInput is immutable so this is a no-op
-            lock (_syncRoot)
-            {
-                CompilationInput.Packages = CompilationInput.Packages.Union(input.Packages).ToArray();
-                CompilationInput.ExtraSourceFiles = CompilationInput.ExtraSourceFiles.Union(input.ExtraSourceFiles, _fileComparer).ToArray();
-
-                return LoadPackagesAndExtraSourceFiles();
-            }
+            files = files as FileInfo[] ?? files.ToArray(); // Ensure multiple enumeration isn't an issue
+            var alreadyLoadedFiles = files.Where(f => GlobalScope.ContainsSource(f.FullName)).ToArray();
+            var context = new Context(this);
+            var alreadyLoadedMsgs = alreadyLoadedFiles.Select(f => context.Trace(MessageLevel.Information, $"Skipping loading '{f.FullName}' as a source with this name is already loaded")).ToArray();
+            return files.Except(alreadyLoadedFiles).Select(LoadElementSourceFile).Fold().Bind(() => new Result<SourceContext>(this, alreadyLoadedMsgs));
         }
 
         private static readonly LambdaEqualityComparer<FileInfo> _fileComparer = new LambdaEqualityComparer<FileInfo>((a, b) => a.FullName == b.FullName, info => info.GetHashCode());
@@ -61,7 +56,7 @@ namespace Element
             public string Name { get; }
         }
         
-        private Result LoadPackagesAndExtraSourceFiles()
+        public Result LoadInputFiles(CompilerSource source)
         {
             lock (_syncRoot)
             {
@@ -97,9 +92,9 @@ namespace Element
                     }
                 }
 
-                var packagesNamesToLoad = CompilationInput.ExcludePrelude
-                                              ? CompilationInput.Packages
-                                              : CompilationInput.Packages.Prepend("Prelude");
+                var packagesNamesToLoad = source.ExcludePrelude
+                                              ? source.Packages
+                                              : source.Packages.Prepend("Prelude");
 
                 var packagesToLoad = packagesNamesToLoad.Select(pkgName =>
                                                         {
@@ -111,10 +106,18 @@ namespace Element
                                                             return pkgDir;
                                                         });
 
+                // Load package source files and extra source files
                 builder.Append(LoadElementSourceFiles(packagesToLoad
                                                       .SelectMany(pkg => pkg.GetFiles("*.ele", SearchOption.AllDirectories))
-                                                      .Concat(CompilationInput.ExtraSourceFiles)
+                                                      .Concat(source.ExtraSourceFiles)
                                                       .Distinct(_fileComparer)));
+                
+                // Load extra element source blobs
+                foreach (var src in source.ExtraElementSource)
+                {
+                    builder.Append( LoadElementSourceString(src));
+                }
+                
                 return builder.ToResult();
             }
         }

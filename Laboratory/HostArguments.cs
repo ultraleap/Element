@@ -214,24 +214,24 @@ namespace Laboratory
                 return resultBuilder.ToResult();
             }
 
-            private static StringBuilder BeginCommand(CompilationInput input, string command)
+            private static StringBuilder BeginCommand(CompilerInput input, string command)
             {
                 var processArgs = new StringBuilder();
                 processArgs.Append($"{command} --logjson");
-                if (input.ExcludePrelude) processArgs.Append(" --no-prelude ");
-                if (input.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Packages);
-                if (input.ExtraSourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.ExtraSourceFiles);
-                if (input.Debug) processArgs.Append(" --debug ");
-                if (input.SkipValidation) processArgs.Append(" --no-validation ");
-                if (input.NoParseTrace) processArgs.Append(" --no-parse-trace ");
+                if (input.Source.ExcludePrelude) processArgs.Append(" --no-prelude ");
+                if (input.Source.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Source.Packages);
+                if (input.Source.ExtraSourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.Source.ExtraSourceFiles);
+                if (!input.Options.ReleaseMode) processArgs.Append(" --debug ");
+                if (input.Options.SkipValidation) processArgs.Append(" --no-validation ");
+                if (input.Options.NoParseTrace) processArgs.Append(" --no-parse-trace ");
                 return processArgs;
             }
 
-            Result IHost.Parse(CompilationInput input) => (Result)RunHostProcess(new Context(null, input), BeginCommand(input, "parse").ToString());
+            Result IHost.Parse(CompilerInput input) => (Result)RunHostProcess(new Context(null, input.Options), BeginCommand(input, "parse").ToString());
 
-            Result<float[]> IHost.Evaluate(CompilationInput input, string expression)
+            Result<float[]> IHost.Evaluate(CompilerInput input, string expression)
             {
-                var resultBuilder = new ResultBuilder<float[]>(new Context(null, input), Array.Empty<float>());
+                var resultBuilder = new ResultBuilder<float[]>(new Context(null, input.Options), Array.Empty<float>());
                 return RunHostProcess(resultBuilder.Context, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString())
                     .Bind(resultString =>
                     {
@@ -249,8 +249,8 @@ namespace Laboratory
                     });
             }
 
-            Result<string> IHost.Typeof(CompilationInput input, string expression) =>
-                RunHostProcess(new Context(null, input), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
+            Result<string> IHost.Typeof(CompilerInput input, string expression) =>
+                RunHostProcess(new Context(null, input.Options), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
         }
     }
 }

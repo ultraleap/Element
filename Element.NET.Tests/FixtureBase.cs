@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 
@@ -55,11 +57,14 @@ namespace Element.NET.Tests
                 Assert.Fail("Received failure");
         }
 
-        protected static SourceContext MakeSourceContext(CompilationInput compilationInput = default, string extraSource = default) =>
-            SourceContext.Create(compilationInput ?? new CompilationInput())
-                         .Bind(context => string.IsNullOrEmpty(extraSource)
-                                              ? context
-                                              : context.LoadElementSourceString(new SourceInfo("ExtraTestSource", extraSource)))
+        protected static SourceContext MakeSourceContext(CompilerOptions compilerOptions = default, string extraSource = default) =>
+            SourceContext.CreateAndLoad(new CompilerInput(
+                                            new CompilerSource
+                                            {
+                                                ExtraElementSource = string.IsNullOrEmpty(extraSource)
+                                                                         ? Array.Empty<SourceInfo>()
+                                                                         : new[] {new SourceInfo("ExtraTestSource", extraSource)}
+                                            }, compilerOptions))
                          .Match((context, messages) =>
                          {
                              LogMessages(messages);

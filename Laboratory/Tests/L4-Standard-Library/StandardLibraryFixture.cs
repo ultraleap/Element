@@ -4,15 +4,16 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal abstract class StandardLibraryFixture : HostFixture
     {
-        protected CompilationInput ValidatedCompilationInput { get; } = new CompilationInput
+        protected CompilerInput ValidatedCompilerInput { get; } = new CompilerInput(
+            new CompilerSource
+            {
+                Packages = new[] {"StandardLibrary"},
+            }, default);
+
+        protected CompilerInput NonValidatedCompilerInput { get; } = new CompilerInput(
+            new CompilerSource
         {
-            Packages = new[] { "StandardLibrary" },
-        };
-        
-        protected CompilationInput NonValidatedCompilationInput { get; } = new CompilationInput
-        {
-            Packages = new[] { "StandardLibrary" },
-            SkipValidation = true
-        };
+            Packages = new[] { "StandardLibrary" }
+        }, new CompilerOptions(default, true, default, default));
     }
 }

@@ -8,7 +8,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         // Evaluates an arbitrary expression since creating the prelude will be parsed implicitly when not excluded
         public void Parse()
         {
-            var result = Host.Parse(NonValidatedCompilationInput);
+            var result = Host.Parse(NonValidatedCompilerInput);
             ExpectingSuccess(result.Messages, result.IsSuccess);
         }
 
@@ -16,7 +16,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         // Evaluates an arbitrary expression since creating the prelude will be parsed implicitly when not excluded
         public void Validate()
         {
-            var result = Host.Parse(ValidatedCompilationInput);
+            var result = Host.Parse(ValidatedCompilerInput);
             ExpectingSuccess(result.Messages, result.IsSuccess);
         }
     }

@@ -22,6 +22,7 @@ namespace Element
         {
             if (Context.Trace(messageCode, context) is {} msg) _messages.Add(msg);
         }
+        public void Append(MessageLevel messageLevel, string message) => _messages.Add(Context.Trace(messageLevel, message));
         public void Append(Result result) => _messages.AddRange(result.Messages);
         public void Append<T>(in Result<T> result) => _messages.AddRange(result.Messages);
 
@@ -48,6 +49,7 @@ namespace Element
         {
             if (Context.Trace(messageCode, context) is {} msg) _messages.Add(msg);
         }
+        public void Append(MessageLevel messageLevel, string message) => _messages.Add(Context.Trace(messageLevel, message));
         public void Append(Result result) => _messages.AddRange(result.Messages);
         public void Append<TResult>(in Result<TResult> result) => _messages.AddRange(result.Messages);
         public void Append(IEnumerable<CompilerMessage> messages) => _messages.AddRange(messages);
