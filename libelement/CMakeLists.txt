@@ -48,8 +48,6 @@ set(libelement_sources
 
     "src/token.cpp"
     "src/interpreter.cpp"
-    "src/construct.cpp"
-    "src/construct.hpp"
     "src/common.cpp"
 
     "src/common_internal.hpp"
@@ -61,8 +59,6 @@ set(libelement_sources
     "src/ast/ast_internal.hpp"
     "src/ast/ast_indexes.hpp"
     "src/ast/fwd.hpp"
-    "src/ast/scope.cpp"
-    "src/ast/scope.hpp"
     
     #Object model
     "src/obj_model/fwd.hpp"
@@ -91,9 +87,6 @@ set(libelement_sources
     "src/obj_model/intrinsics.cpp"
     "src/obj_model/intrinsics.hpp"
 
-    "src/obj_model/functions.cpp"
-    "src/obj_model/functions.hpp"
-
     "src/obj_model/types.cpp"
     "src/obj_model/types.hpp"
 
@@ -106,8 +99,6 @@ set(libelement_sources
     "src/obj_model/metainfo.cpp"
 
     #Expression tree
-    "src/etree/compiler.cpp"
-    "src/etree/compiler.hpp"
     "src/etree/evaluator.cpp"
     "src/etree/evaluator.hpp"
     "src/etree/expressions.cpp"

@@ -1,21 +1,12 @@
 #include "common_internal.hpp"
 
-//STD
-#include <iostream>
-
 //LIBS
 #include <fmt/format.h>
 
 //SELF
 #include "token_internal.hpp"
 #include "ast/ast_internal.hpp"
-
-#ifdef LEGACY_COMPILER
-#include "etree/compiler.hpp"
-#endif
-
 #include "configuration.hpp"
-#include "ast/fwd.hpp"
 #include "etree/expressions.hpp"
 
 #define PRINTCASE(a) case a: c = #a; break;
@@ -145,7 +136,8 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     return string;
 }
 
-#ifdef LEGACY_COMPILER
+//todo: reenable at some point
+#if 0
 
 std::string expression_to_string(const element_expression& expression, int depth)
 {

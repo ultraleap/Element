@@ -9,7 +9,6 @@
 #include "ast/ast_internal.hpp"
 #include "ast/fwd.hpp"
 #include "etree/fwd.hpp"
-#include "construct.hpp"
 #include "typeutil.hpp"
 #include "obj_model/types.hpp"
 #include "obj_model/object.hpp"
