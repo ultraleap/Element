@@ -21,6 +21,7 @@ typedef enum
     ELEMENT_TOK_BRACEL,
     ELEMENT_TOK_BRACER,
     ELEMENT_TOK_EQUALS,
+    ELEMENT_TOK_EOF,
 } element_token_type;
 
 typedef struct

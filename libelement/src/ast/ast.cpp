@@ -582,6 +582,7 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
     ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, false, allow_reserved_names));
 
     GET_TOKEN(tokeniser, *tindex, tok);
+
     // always create the args node, even if it ends up being none/empty
     element_ast* args = ast_new_child(ast);
     args->nearest_token = tok;
@@ -649,7 +650,7 @@ element_result element_parser_ctx::parse_scope(size_t* tindex, element_ast* ast)
         element_ast* item = ast_new_child(ast);
         item->nearest_token = token;
         ELEMENT_OK_OR_RETURN(parse_item(tindex, item));
-        //GET_TOKEN(tokeniser, *tindex, token);
+        GET_TOKEN(tokeniser, *tindex, token);
     }
     tokenlist_advance(tokeniser, tindex);
     return ELEMENT_OK;
@@ -826,9 +827,8 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
     GET_TOKEN(tokeniser, *tindex, body);
     body_node->nearest_token = body;
     tokenlist_advance(tokeniser, tindex);
-    body_node->type = ELEMENT_AST_NODE_NO_BODY;
 
-    if (body->type == ELEMENT_TOK_BRACEL || body->type == ELEMENT_TOK_EQUALS) {
+    if (body->type == ELEMENT_TOK_BRACEL) {
         return log_error(
             logger.get(),
             src_context.get(),
@@ -836,13 +836,7 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
             element::log_error_message_code::parse_constraint_has_body,
             ast->identifier);
     } else {
-        return log_error(
-            logger.get(),
-            src_context.get(),
-            body_node,
-            element::log_error_message_code::parse_constraint_invalid_body,
-            tokeniser->text(ast->nearest_token),
-            tokeniser->text(body));
+        body_node->type = ELEMENT_AST_NODE_NO_BODY;
     }
 
     return ELEMENT_OK;
@@ -920,6 +914,11 @@ element_result element_parser_ctx::parse(size_t* tindex, element_ast* ast)
     if (*tindex < tcount && tok->type == ELEMENT_TOK_NONE)
         TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
     while (*tindex < tcount) {
+
+        GET_TOKEN(tokeniser, *tindex, tok);
+        if (tok->type == ELEMENT_TOK_EOF)
+            return ELEMENT_OK;
+
         element_ast* item = ast_new_child(ast);
         ELEMENT_OK_OR_RETURN(parse_item(tindex, item));
         if (*tindex < tcount && tok->type == ELEMENT_TOK_NONE)

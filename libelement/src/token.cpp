@@ -159,7 +159,10 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         c = UTF8_NEXT(it, end);
 
     if (it == end)
+    {
+        reset_token(state);
         return ELEMENT_OK;
+    }
 
     c = UTF8_PEEK_NEXT(it, end);
     if (c == '.') {
@@ -419,6 +422,7 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 }
             }
         }
+        add_token(state, ELEMENT_TOK_EOF, 0);
         return ELEMENT_OK;
     }
     catch (const std::exception& e)
