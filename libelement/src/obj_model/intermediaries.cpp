@@ -9,6 +9,8 @@
 //SELF
 #include "errors.hpp"
 #include "etree/expressions.hpp"
+#include "obj_model/declarations.hpp"
+#include "obj_model/intrinsics.hpp"
 
 namespace element
 {
@@ -134,7 +136,12 @@ namespace element
         captures.push(declarer, compiled_args);
 
         std::swap(captures, context.captures);
-        auto element = declarer->body->compile(context, source_info);
+
+        const auto visitor = [&context, &source_info](auto& body) {
+            return body->compile(context, source_info);
+        };
+
+        auto element = std::visit(visitor, declarer->body);
         std::swap(captures, context.captures);
 
         captures.pop();
@@ -143,7 +150,7 @@ namespace element
         //type check return
         //todo: nicer?
         const constraint* constraint = nullptr;
-        std::shared_ptr<declaration> type = nullptr;
+        const declaration* type = nullptr;
         if (declarer->output)
             type = declarer->output->resolve_annotation(context);
 

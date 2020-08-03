@@ -25,6 +25,10 @@
 #include "obj_model/errors.hpp"
 #include "log_errors.hpp"
 #include "element/ast.h"
+#include "obj_model/intrinsics.hpp"
+
+void element_interpreter_ctx::Deleter::operator()(element::intrinsic* i) { delete i; }
+void element_interpreter_ctx::Deleter::operator()(const element::intrinsic* i) { delete i; }
 
 bool file_exists(const std::string& file)
 {
@@ -394,7 +398,7 @@ element_result element_delete_evaluable(element_interpreter_ctx* context, elemen
 
 element_result element_interpreter_find(element_interpreter_ctx* context, const char* path, element_compilable** compilable)
 {
-    auto obj = context->global_scope->find(element::identifier(path), false);
+    const auto obj = context->global_scope->find(element::identifier(path), false);
     if (!obj)
     {
         *compilable = nullptr;
@@ -402,7 +406,8 @@ element_result element_interpreter_find(element_interpreter_ctx* context, const 
         return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND;
     }
 
-    *compilable = new element_compilable{std::move(obj)};
+    //todo: don't need to new
+    *compilable = new element_compilable{obj};
     return ELEMENT_OK;
 }
 
@@ -412,14 +417,13 @@ element_result valid_boundary_function(
     const element_compiler_options* options,
     const element_compilable* compilable)
 {
-    const auto func_decl = std::dynamic_pointer_cast<element::function_declaration>(compilable->object);
+    const auto func_decl = dynamic_cast<const element::function_declaration*>(compilable->decl);
     if (!func_decl)
         return ELEMENT_ERROR_UNKNOWN;
 
     const bool is_valid = func_decl->valid_at_boundary(compilation_context);
     if (!is_valid)
         return ELEMENT_ERROR_UNKNOWN;
-
 
     return ELEMENT_OK;
 }
@@ -434,7 +438,7 @@ std::vector<std::shared_ptr<element::object>> generate_placeholder_inputs(
     std::vector<std::shared_ptr<element::object>> placeholder_inputs;
     int placeholder_index = 0;
 
-    for (const auto& input : compilable->object->get_inputs())
+    for (const auto& input : compilable->decl->get_inputs())
     {
         auto placeholder = input.generate_placeholder(compilation_context, placeholder_index);
         if (!placeholder)
@@ -470,7 +474,7 @@ element_result element_interpreter_compile(
         return result;
     }
 
-    const auto compiled = compilable->object->call(compilation_context, std::move(placeholder_inputs), {});
+    const auto compiled = compilable->decl->call(compilation_context, std::move(placeholder_inputs), {});
 
     if (!compiled)
     {

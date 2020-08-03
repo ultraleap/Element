@@ -60,7 +60,7 @@ namespace element
 
     bool user_function_constraint::matches_constraint(const compilation_context& context, const constraint* constraint_) const
     {
-        const auto check_match = [&context](const port& our_input, const const port& their_input)
+        const auto check_match = [&context](const port& our_input, const port& their_input)
         {
             const declaration* our_input_type = nullptr;
             const declaration* their_input_type = nullptr;
@@ -68,10 +68,10 @@ namespace element
             const constraint* their_input_constraint = nullptr;
 
             if (our_input.has_annotation())
-                our_input_type = our_input.resolve_annotation(context).get();
+                our_input_type = our_input.resolve_annotation(context);
 
             if (their_input.has_annotation())
-                their_input_type = their_input.resolve_annotation(context).get();
+                their_input_type = their_input.resolve_annotation(context);
 
             if (our_input_type)
                 our_input_constraint = our_input_type->get_constraint();

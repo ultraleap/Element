@@ -31,16 +31,16 @@ namespace element
     {
     }
 
-    void scope::add_declaration(std::shared_ptr<declaration> declaration)
+    void scope::add_declaration(std::unique_ptr<declaration> declaration)
     {
         declarations.emplace(declaration->name.value, std::move(declaration));
     }
 
-    std::shared_ptr<declaration> scope::find(const identifier& name, const bool recurse = false) const
+    const declaration* scope::find(const identifier& name, const bool recurse = false) const
     {
         const auto name_it = declarations.find(name);
         if (name_it != declarations.end())
-            return name_it->second;
+            return name_it->second.get();
 
         return (recurse && parent_scope) ? parent_scope->find(name, true) : nullptr;
     }

@@ -179,7 +179,7 @@ std::string element::function_declaration::to_code(int depth) const
         return result + name.value + ports + our_scope->to_code(depth);
 
     //expression-bodied
-    return result + name.value + ports + " = " + body->to_code(depth) + ";";
+    return result + name.value + ports + " = "/* + body->to_code(depth) + ";"*/;
 }
 
 std::string element::namespace_declaration::to_code(const int depth) const

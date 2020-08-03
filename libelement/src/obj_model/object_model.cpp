@@ -75,7 +75,7 @@ namespace element
         }
     }
 
-    std::shared_ptr<declaration> build_struct_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
+    std::unique_ptr<declaration> build_struct_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
         const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -102,7 +102,7 @@ namespace element
         return std::move(struct_decl);
     }
 
-    std::shared_ptr<declaration> build_constraint_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
+    std::unique_ptr<declaration> build_constraint_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
         auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
@@ -121,12 +121,12 @@ namespace element
         return std::move(constraint_decl);
     }
 
-    std::shared_ptr<declaration> build_function_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
+    std::unique_ptr<declaration> build_function_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
         auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-        auto function_decl = std::make_shared<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
+        auto function_decl = std::make_unique<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
         assign_source_information(context, function_decl, decl);
 
         build_inputs(context, decl, *function_decl, output_result);
@@ -138,13 +138,16 @@ namespace element
         {
             assert(!intrinsic);
             build_scope(context, body, *function_decl, output_result);
-            function_decl->body = function_decl->our_scope->find(identifier::return_identifier, false);
-            if (!function_decl->body)
+
+            auto return_func = function_decl->our_scope->find(identifier::return_identifier, false);
+            if (!return_func)
             {
                 //todo: check if this is covered during parsing? I think it likely is already
                 output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::parse_function_missing_body, function_decl->name.value);
                 return nullptr;
             }
+
+            function_decl->body = return_func;
         }
         else if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL || body->type == ELEMENT_AST_NODE_LAMBDA)
         {
@@ -179,7 +182,7 @@ namespace element
         return function_decl;
     }
 
-    std::shared_ptr<declaration> build_namespace_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
+    std::unique_ptr<declaration> build_namespace_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
         auto namespace_decl = std::make_unique<namespace_declaration>(identifier(ast->identifier), parent_scope);
         assign_source_information(context, namespace_decl, ast);
@@ -194,9 +197,9 @@ namespace element
         return std::move(namespace_decl);
     }
 
-    std::shared_ptr<declaration> build_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
+    std::unique_ptr<declaration> build_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
-        std::shared_ptr<declaration> result;
+        std::unique_ptr<declaration> result;
         if (ast->type == ELEMENT_AST_NODE_STRUCT)
             result = build_struct_declaration(context, ast, parent_scope, output_result);
 
