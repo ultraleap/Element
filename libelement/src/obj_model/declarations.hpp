@@ -50,7 +50,8 @@ namespace element
 
         [[nodiscard]] virtual bool serializable(const compilation_context& context) const { return false; };
         [[nodiscard]] virtual bool deserializable(const compilation_context& context) const { return false; };
-        [[nodiscard]] virtual std::shared_ptr<object> generate_placeholder(const compilation_context& context, int& placeholder_index) const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<const object> generate_placeholder(
+            const compilation_context& context, int& placeholder_index) const { return nullptr; };
 
         [[nodiscard]] virtual std::string location() const;
 
@@ -87,11 +88,16 @@ namespace element
 
         [[nodiscard]] bool serializable(const compilation_context& context) const { return declarer->serializable(context); }
         [[nodiscard]] bool deserializable(const compilation_context& context) const { return declarer->deserializable(context); }
-        [[nodiscard]] std::shared_ptr<object> generate_placeholder(const compilation_context& context, int& placeholder_index) const { return declarer->generate_placeholder(context, placeholder_index); }
+        [[nodiscard]] std::shared_ptr<const object> generate_placeholder(
+            const compilation_context& context, int& placeholder_index) const { return declarer->generate_placeholder(context, placeholder_index); }
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const { return declarer->index(context, name, source_info); }
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const { return declarer->call(context, std::move(compiled_args), source_info); }
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const { return declarer->compile(context, source_info); }
+        [[nodiscard]] std::shared_ptr<const object> index(const compilation_context& context, const identifier& name,
+                                                          const source_information& source_info) const { return declarer->index(context, name, source_info); }
+        [[nodiscard]] std::shared_ptr<const object> call(const compilation_context& context,
+                                                         std::vector<std::shared_ptr<const object>> compiled_args,
+                                                         const source_information& source_info) const { return declarer->call(context, std::move(compiled_args), source_info); }
+        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+                                                            const source_information& source_info) const { return declarer->compile(context, source_info); }
 
         [[nodiscard]] std::string location() const { return declarer->location(); }
 
@@ -117,13 +123,18 @@ namespace element
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return wrapper; }
+        [[nodiscard]] std::shared_ptr<const object> index(const compilation_context& context, const identifier& name,
+                                                          const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> call(const compilation_context& context,
+                                                         std::vector<std::shared_ptr<const object>> compiled_args,
+                                                         const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+                                                            const source_information& source_info) const override { return wrapper; }
 
         [[nodiscard]] bool serializable(const compilation_context& context) const override;
         [[nodiscard]] bool deserializable(const compilation_context& context) const override;
-        [[nodiscard]] std::shared_ptr<object> generate_placeholder(const compilation_context& context, int& placeholder_index) const override;
+        [[nodiscard]] std::shared_ptr<const object> generate_placeholder(
+            const compilation_context& context, int& placeholder_index) const override;
 
     private:
         std::unique_ptr<user_type> type;
@@ -147,7 +158,8 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return wrapper; }
+        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+                                                            const source_information& source_info) const override { return wrapper; }
 
     private:
         std::unique_ptr<constraint> constraint_;
@@ -171,8 +183,11 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> call(const compilation_context& context,
+                                                         std::vector<std::shared_ptr<const object>> compiled_args,
+                                                         const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+                                                            const source_information& source_info) const override;
 
         [[nodiscard]] bool valid_at_boundary(const compilation_context& context) const;
 
@@ -196,8 +211,10 @@ namespace element
 
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> index(const compilation_context& context, const identifier& name,
+                                                          const source_information& source_info) const override;
         //todo: required because typeof does compilation, might need to change that?
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return wrapper; }
+        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+                                                            const source_information& source_info) const override { return wrapper; }
     };
 }

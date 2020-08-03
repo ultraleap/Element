@@ -18,12 +18,12 @@ DEFINE_TYPE_ID(element_expression_if,              1U << 6);
 //DEFINE_TYPE_ID(element_expression_group,           1U << 7);
 //DEFINE_TYPE_ID(element_expression_unbound_arg,     1U << 8);
 
-std::shared_ptr<element::object> element_expression::compile(const element::compilation_context& context, const element::source_information& source_info) const
+std::shared_ptr<const element::object> element_expression::compile(const element::compilation_context& context, const element::source_information& source_info) const
 {
-    return const_cast<element_expression*>(this)->shared_from_this();
+    return shared_from_this();
 }
 
-std::shared_ptr<element::object> element_expression::index(
+std::shared_ptr<const element::object> element_expression::index(
     const element::compilation_context& context,
     const element::identifier& name,
     const element::source_information& source_info) const
@@ -52,7 +52,7 @@ element_expression_constant::element_expression_constant(element_value val)
 {
 }
 
-element_expression_if::element_expression_if(expression_shared_ptr predicate, expression_shared_ptr if_true, expression_shared_ptr if_false)
+element_expression_if::element_expression_if(expression_const_shared_ptr predicate, expression_const_shared_ptr if_true, expression_const_shared_ptr if_false)
     : element_expression(type_id, nullptr)
 {
     if (if_true->actual_type != if_false->actual_type)

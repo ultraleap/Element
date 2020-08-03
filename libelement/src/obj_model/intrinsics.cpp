@@ -110,7 +110,7 @@ namespace element
         { "Any", [&](const declaration* decl) { return (is_type_of<constraint_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
     };
 
-    std::shared_ptr<element_expression> evaluate(const compilation_context& context, std::shared_ptr<element_expression> expr)
+    std::shared_ptr<const element_expression> evaluate(const compilation_context& context, std::shared_ptr<const element_expression> expr)
     {
         std::vector<element_value> outputs = { 0 };
         const auto result = element_evaluate(*context.interpreter, expr, {}, outputs, {});
@@ -138,7 +138,8 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_nullary::compile(const compilation_context& context, const source_information& source_info) const
+    std::shared_ptr<const object> intrinsic_nullary::compile(const compilation_context& context,
+                                                             const source_information& source_info) const
     {
         return std::make_unique<element_expression_nullary>(
             operation, return_type);
@@ -153,7 +154,8 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_unary::compile(const compilation_context& context, const source_information& source_info) const
+    std::shared_ptr<const object> intrinsic_unary::compile(const compilation_context& context,
+                                                           const source_information& source_info) const
     {
         const auto& frame = context.calls.frames.back();
         const auto& declarer = *frame.function;
@@ -164,7 +166,7 @@ namespace element
         assert(intrinsic);
         assert(intrinsic == this);
 
-        auto expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
+        auto expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[0]);
         assert(expr);
 
         auto new_expr = std::make_unique<element_expression_unary>(
@@ -185,7 +187,8 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_binary::compile(const compilation_context& context, const source_information& source_info) const
+    std::shared_ptr<const object> intrinsic_binary::compile(const compilation_context& context,
+                                                            const source_information& source_info) const
     {
         const auto& frame = context.calls.frames.back();
         const auto& declarer = *frame.function;
@@ -196,8 +199,8 @@ namespace element
         assert(intrinsic);
         assert(intrinsic == this);
         
-        auto expr1 = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
-        auto expr2 = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[1]);
+        auto expr1 = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[0]);
+        auto expr2 = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[1]);
         assert(expr1);
         assert(expr2);
 
@@ -215,7 +218,8 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_if::compile(const compilation_context& context, const source_information& source_info) const
+    std::shared_ptr<const object> intrinsic_if::compile(const compilation_context& context,
+                                                        const source_information& source_info) const
     {
         const auto& frame = context.calls.frames.back();
         const auto& declarer = *frame.function;
@@ -226,7 +230,7 @@ namespace element
         assert(intrinsic);
         assert(intrinsic == this);
 
-        auto pred_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[0]);
+        auto pred_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[0]);
         assert(pred_expr);
 
         //todo: hack. we can only do if-expressions if the predicate is a constant. the difficulty is in the branches returning a non-expression type
@@ -238,8 +242,8 @@ namespace element
         return outputs[0] > 0 ? frame.compiled_arguments[1] : frame.compiled_arguments[2];
 
         //TODO: Remove zombie code
-        auto true_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[1]);
-        auto false_expr = std::dynamic_pointer_cast<element_expression>(frame.compiled_arguments[2]);
+        auto true_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[1]);
+        auto false_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[2]);
         assert(true_expr);
         assert(false_expr);
 
@@ -256,12 +260,12 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_num_constructor::call(
+    std::shared_ptr<const object> intrinsic_num_constructor::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<object>> compiled_args,
+        std::vector<std::shared_ptr<const object>> compiled_args,
         const source_information& source_info) const
     {
-        auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
+        auto expr = std::dynamic_pointer_cast<const element_expression>(compiled_args[0]);
         assert(expr); //todo: I don't think it could be anything but an expression?
         expr->actual_type = type::num.get();
 
@@ -273,9 +277,9 @@ namespace element
     {
     }
 
-    std::shared_ptr<object> intrinsic_bool_constructor::call(
+    std::shared_ptr<const object> intrinsic_bool_constructor::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<object>> compiled_args,
+        std::vector<std::shared_ptr<const object>> compiled_args,
         const source_information& source_info) const
     {
         auto& true_decl = *context.get_global_scope()->find(identifier("True"), false);
@@ -284,16 +288,16 @@ namespace element
         const auto true_expr = get_intrinsic(context.interpreter, true_decl)->compile(context, source_info);
         const auto false_expr = get_intrinsic(context.interpreter, false_decl)->compile(context, source_info);
 
-        auto expr = std::dynamic_pointer_cast<element_expression>(compiled_args[0]);
+        auto expr = std::dynamic_pointer_cast<const element_expression>(compiled_args[0]);
         
         assert(expr); //todo: I think this is accurate
-        assert(std::dynamic_pointer_cast<element_expression>(true_expr));
-        assert(std::dynamic_pointer_cast<element_expression>(false_expr));
+        assert(std::dynamic_pointer_cast<const element_expression>(true_expr));
+        assert(std::dynamic_pointer_cast<const element_expression>(false_expr));
 
         auto new_expr = std::make_unique<element_expression_if>(
             expr,
-            std::dynamic_pointer_cast<element_expression>(true_expr),
-            std::dynamic_pointer_cast<element_expression>(false_expr));
+            std::dynamic_pointer_cast<const element_expression>(true_expr),
+            std::dynamic_pointer_cast<const element_expression>(false_expr));
 
         return evaluate(context, std::move(new_expr));
     }

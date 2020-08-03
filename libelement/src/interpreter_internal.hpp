@@ -38,7 +38,7 @@ struct element_interpreter_ctx
 struct element_compiled_function
 {
     const element_function* function;
-    expression_shared_ptr expression;
+    expression_const_shared_ptr expression;
     constraint_const_shared_ptr constraint; //todo: can we enforce a stricker type (e.g. element_type instead of constraint)
 };
 
@@ -51,7 +51,7 @@ struct element_compilable
 
 struct element_evaluable
 {
-    std::shared_ptr<element::object> evaluable;
+    std::shared_ptr<const element::object> evaluable;
 };
 
 struct element_metainfo

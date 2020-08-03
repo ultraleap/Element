@@ -21,7 +21,7 @@ namespace element
         return declarer->get_scope()->find(annotation->to_string(), true);
     }
 
-    std::shared_ptr<object> port::generate_placeholder(const compilation_context& context, int& placeholder_index) const
+    std::shared_ptr<const object> port::generate_placeholder(const compilation_context& context, int& placeholder_index) const
     {
         const auto type = resolve_annotation(context);
         if (!type)

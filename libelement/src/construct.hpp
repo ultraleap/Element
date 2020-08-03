@@ -56,12 +56,12 @@ struct element_construct : public std::enable_shared_from_this<element_construct
         return nullptr;
     }
 
-    // expression_shared_ptr as_expression() const;
+    // expression_const_shared_ptr as_expression() const;
 
     virtual size_t get_size() const;
-    // bool serialize(std::vector<expression_shared_ptr>& output) const;
-    // construct_shared_ptr deserialize(const std::vector<expression_shared_ptr>& data) const;
-    // construct_shared_ptr deserialize(const std::vector<expression_shared_ptr>& data, size_t& index) const;
+    // bool serialize(std::vector<expression_const_shared_ptr>& output) const;
+    // construct_shared_ptr deserialize(const std::vector<expression_const_shared_ptr>& data) const;
+    // construct_shared_ptr deserialize(const std::vector<expression_const_shared_ptr>& data, size_t& index) const;
     // std::vector<construct_shared_ptr> get_as_array() const;
 
     virtual ~element_construct() = default;
