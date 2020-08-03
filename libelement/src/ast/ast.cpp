@@ -56,7 +56,17 @@ static element_result check_reserved_words(const std::string& text, bool allow_r
 
 //
 // Token helpers
-//
+//#define PEEK_TOKEN(tctx, tindex, tok) \
+//    { \
+//        size_t count = 0; \
+//        ELEMENT_OK_OR_RETURN(element_tokeniser_get_token_count((tctx), &count)); \
+//        if((tindex) < count) { \
+//            ELEMENT_OK_OR_RETURN(element_tokeniser_get_token((tctx), (tindex), &(tok), nullptr)); \
+//        } else { \
+//            return ELEMENT_OK; \
+//        } \
+//    } 
+
 #define GET_TOKEN(tctx, tindex, tok) ELEMENT_OK_OR_RETURN(element_tokeniser_get_token((tctx), (tindex), &(tok), nullptr))
 #define GET_TOKEN_CUSTOM_MSG(tctx, tindex, tok, msg) ELEMENT_OK_OR_RETURN(element_tokeniser_get_token((tctx), (tindex), &(tok), msg))
 #define GET_TOKEN_COUNT(tctx, tcount) ELEMENT_OK_OR_RETURN(element_tokeniser_get_token_count((tctx), &(tcount)))
@@ -489,14 +499,14 @@ element_result element_parser_ctx::parse_lambda(size_t* tindex, element_ast* ast
 
     element_ast* body = ast_new_child(ast);
     body->nearest_token = token;
-    ELEMENT_OK_OR_RETURN(parse_body(tindex, body, false));
+    ELEMENT_OK_OR_RETURN(parse_body(tindex, body));
     return ELEMENT_OK;
 }
 
 element_result element_parser_ctx::parse_expression(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
-    GET_TOKEN(tokeniser, *tindex, token); //TODO: JM - CommentInline-fail.ele
+    GET_TOKEN(tokeniser, *tindex, token);
     ast->nearest_token = token;
 
     if (token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_NUMBER)
@@ -597,7 +607,7 @@ element_result element_parser_ctx::parse_declaration(size_t* tindex, element_ast
         args->flags |= ELEMENT_AST_FLAG_DECL_EMPTY_INPUT;
     }
 
-    auto has_return = tok->type == ELEMENT_TOK_COLON;
+    const auto has_return = tok->type == ELEMENT_TOK_COLON;
     if (has_return) {
         if (find_return_type) {
             // output type
@@ -639,13 +649,13 @@ element_result element_parser_ctx::parse_scope(size_t* tindex, element_ast* ast)
         element_ast* item = ast_new_child(ast);
         item->nearest_token = token;
         ELEMENT_OK_OR_RETURN(parse_item(tindex, item));
-        GET_TOKEN(tokeniser, *tindex, token);
+        //GET_TOKEN(tokeniser, *tindex, token);
     }
     tokenlist_advance(tokeniser, tindex);
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, bool expr_requires_semicolon)
+element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast)
 {
     const element_token* token;
     GET_TOKEN(tokeniser, *tindex, token);
@@ -655,20 +665,6 @@ element_result element_parser_ctx::parse_body(size_t* tindex, element_ast* ast, 
     } else if (token->type == ELEMENT_TOK_EQUALS) {
         tokenlist_advance(tokeniser, tindex);
         ELEMENT_OK_OR_RETURN(parse_expression(tindex, ast));
-        if (expr_requires_semicolon) {
-            GET_TOKEN(tokeniser, *tindex, token);
-            if (token->type == ELEMENT_TOK_SEMICOLON) {
-                tokenlist_advance(tokeniser, tindex);
-            } else {
-                return log_error(
-                    logger.get(),
-                    src_context.get(),
-                    token,
-                    element::log_error_message_code::parse_body_missing_semicolon,
-                    ast->parent->children[ast_idx::function::declaration]->identifier,
-                    tokeniser->text(token));
-            }
-        }
     } else {
         if (ast->parent->type == ELEMENT_AST_NODE_FUNCTION) {
             return log_error(
@@ -707,7 +703,10 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
     const element_token* body;
     GET_TOKEN(tokeniser, *tindex, body);
     body_node->nearest_token = body;
-    if (body->type == ELEMENT_TOK_SEMICOLON) {
+    if (body->type == ELEMENT_TOK_BRACEL || body->type == ELEMENT_TOK_EQUALS) {
+        ELEMENT_OK_OR_RETURN(parse_body(tindex, body_node));
+    }
+    else {
         body_node->type = ELEMENT_AST_NODE_NO_BODY;
         if (declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
             tokenlist_advance(tokeniser, tindex);
@@ -720,9 +719,6 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
                 element::log_error_message_code::parse_function_missing_body,
                 declaration->identifier);
         }
-    } else {
-        // real body of some sort
-        ELEMENT_OK_OR_RETURN(parse_body(tindex, body_node, true));
     }
 
     return ELEMENT_OK;
@@ -769,10 +765,10 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
     GET_TOKEN(tokeniser, *tindex, body);
     body_node->nearest_token = body;
     tokenlist_advance(tokeniser, tindex);
-    if (body->type == ELEMENT_TOK_SEMICOLON) {
-        // constraint
-        body_node->type = ELEMENT_AST_NODE_NO_BODY;
-    } else if (body->type == ELEMENT_TOK_BRACEL) {
+    //constraint
+    body_node->type = ELEMENT_AST_NODE_NO_BODY;
+
+    if (body->type == ELEMENT_TOK_BRACEL) {
         // scope (struct body)
         ELEMENT_OK_OR_RETURN(parse_scope(tindex, body_node));
     } else {
@@ -830,11 +826,9 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
     GET_TOKEN(tokeniser, *tindex, body);
     body_node->nearest_token = body;
     tokenlist_advance(tokeniser, tindex);
+    body_node->type = ELEMENT_AST_NODE_NO_BODY;
 
-    if (body->type == ELEMENT_TOK_SEMICOLON) {
-        body_node->type = ELEMENT_AST_NODE_NO_BODY;
-    }
-    else if (body->type == ELEMENT_TOK_BRACEL) {
+    if (body->type == ELEMENT_TOK_BRACEL || body->type == ELEMENT_TOK_EQUALS) {
         return log_error(
             logger.get(),
             src_context.get(),

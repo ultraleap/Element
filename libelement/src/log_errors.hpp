@@ -30,7 +30,6 @@ namespace element
         parse_declaration_invalid_identifier,
         parse_declaration_missing_portlist_closing_parenthesis,
         parse_declaration_invalid_struct_return_type,
-        parse_body_missing_semicolon,
         parse_body_missing_body_for_function,
         parse_body_missing_body,
         parse_function_missing_body,

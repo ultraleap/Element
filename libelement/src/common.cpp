@@ -27,7 +27,6 @@ std::string tokens_to_string(const element_tokeniser_ctx* context, const element
             PRINTCASE(ELEMENT_TOK_DOT);
             PRINTCASE(ELEMENT_TOK_BRACKETL);
             PRINTCASE(ELEMENT_TOK_BRACKETR);
-            PRINTCASE(ELEMENT_TOK_SEMICOLON);
             PRINTCASE(ELEMENT_TOK_COLON);
             PRINTCASE(ELEMENT_TOK_COMMA);
             PRINTCASE(ELEMENT_TOK_BRACEL);

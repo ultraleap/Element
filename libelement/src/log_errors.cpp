@@ -77,12 +77,6 @@ namespace element::detail
             ELEMENT_STAGE_PARSER);
 
         register_log_error<std::string, std::string>(
-            log_error_message_code::parse_body_missing_semicolon,
-            "expected to find a ';' at the end of the expression for '{}', but found '{}' instead.",
-            ELEMENT_ERROR_MISSING_SEMICOLON,
-            ELEMENT_STAGE_PARSER);
-
-        register_log_error<std::string, std::string>(
             log_error_message_code::parse_body_missing_body_for_function,
             "expected to find a body for the non-intrinsic function '{}' but found '{}' instead.",
             ELEMENT_ERROR_MISSING_FUNCTION_BODY,

@@ -64,6 +64,7 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
     std::string message = msg ? msg : "";
 
     if (index >= state->tokens.size()) {
+
         if (message.empty()) {
             message = fmt::format("tried to access token at index {} but there are only {} tokens.",
                 index, state->tokens.size());
@@ -186,28 +187,30 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
         }
     }
 
-    c = UTF8_PEEK_NEXT(it, end);
-    if (c == 'e' || c == 'E') {
-        auto it_prev_character = it;
-        UTF8_NEXT(it, end);
+    if (it != end) {
         c = UTF8_PEEK_NEXT(it, end);
-
-        if (c == '-' || c == '+') {
-            it_prev_character = it;
+        if (c == 'e' || c == 'E') {
+            auto it_prev_character = it;
             UTF8_NEXT(it, end);
             c = UTF8_PEEK_NEXT(it, end);
-        }
 
-        if (!element_isdigit(c)) {
-            state->log(ELEMENT_ERROR_BAD_NUMBER_EXPONENT,
-                fmt::format("Found {} which was thought to be a number in scientific notation, "
-                    "but encountered invalid character '{}' instead of the exponent number", 
-                    std::string(it_begin, it), std::string(it_prev_character, it)));
-            return ELEMENT_ERROR_BAD_NUMBER_EXPONENT;
-        }
+            if (c == '-' || c == '+') {
+                it_prev_character = it;
+                UTF8_NEXT(it, end);
+                c = UTF8_PEEK_NEXT(it, end);
+            }
 
-        while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
-            c = UTF8_NEXT(it, end);
+            if (!element_isdigit(c)) {
+                state->log(ELEMENT_ERROR_BAD_NUMBER_EXPONENT,
+                    fmt::format("Found {} which was thought to be a number in scientific notation, "
+                        "but encountered invalid character '{}' instead of the exponent number",
+                        std::string(it_begin, it), std::string(it_prev_character, it)));
+                return ELEMENT_ERROR_BAD_NUMBER_EXPONENT;
+            }
+
+            while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
+                c = UTF8_NEXT(it, end);
+        }
     }
 
     // determine length in bytes
@@ -345,7 +348,6 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 case '.': add_token(state, ELEMENT_TOK_DOT, 1); UTF8_NEXT(it, end); break;
                 case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); UTF8_NEXT(it, end); break;
                 case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); UTF8_NEXT(it, end); break;
-                case ';': add_token(state, ELEMENT_TOK_SEMICOLON, 1); UTF8_NEXT(it, end); break;
                 case ',': add_token(state, ELEMENT_TOK_COMMA, 1); UTF8_NEXT(it, end); break;
                 case ':': add_token(state, ELEMENT_TOK_COLON, 1); UTF8_NEXT(it, end); break;
                 case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); UTF8_NEXT(it, end); break;
@@ -448,7 +450,6 @@ void element_tokeniser_print(const element_tokeniser_ctx* state)
             PRINTCASE(ELEMENT_TOK_DOT);
             PRINTCASE(ELEMENT_TOK_BRACKETL);
             PRINTCASE(ELEMENT_TOK_BRACKETR);
-            PRINTCASE(ELEMENT_TOK_SEMICOLON);
             PRINTCASE(ELEMENT_TOK_COLON);
             PRINTCASE(ELEMENT_TOK_COMMA);
             PRINTCASE(ELEMENT_TOK_BRACEL);
