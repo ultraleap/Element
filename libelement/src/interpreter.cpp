@@ -428,14 +428,14 @@ element_result valid_boundary_function(
     return ELEMENT_OK;
 }
 
-std::vector<std::shared_ptr<element::object>> generate_placeholder_inputs(
+std::vector<std::shared_ptr<const element::object>> generate_placeholder_inputs(
     element_interpreter_ctx* context,
     const element::compilation_context& compilation_context,
     const element_compiler_options* options,
     const element_compilable* compilable,
     element_result& out_result)
 {
-    std::vector<std::shared_ptr<element::object>> placeholder_inputs;
+    std::vector<std::shared_ptr<const element::object>> placeholder_inputs;
     int placeholder_index = 0;
 
     for (const auto& input : compilable->decl->get_inputs())
@@ -483,7 +483,7 @@ element_result element_interpreter_compile(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto err = std::dynamic_pointer_cast<element::error>(compiled);
+    const auto err = std::dynamic_pointer_cast<const element::error>(compiled);
     if (err)
     {
         *evaluable = nullptr;
@@ -523,15 +523,15 @@ element_result element_interpreter_evaluate(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto err = std::dynamic_pointer_cast<element::error>(evaluable->evaluable);
+    const auto err = std::dynamic_pointer_cast<const element::error>(evaluable->evaluable);
     if (err)
         return err->log_once(context->logger.get());
 
-    auto expr = std::dynamic_pointer_cast<element_expression>(evaluable->evaluable);
+    auto expr = std::dynamic_pointer_cast<const element_expression>(evaluable->evaluable);
     if (!expr)
     {
         //todo: this is a quick hack just to test basic structs
-        auto struct_instance = std::dynamic_pointer_cast<element::struct_instance>(evaluable->evaluable);
+        auto struct_instance = std::dynamic_pointer_cast<const element::struct_instance>(evaluable->evaluable);
         if (!struct_instance)
         {
             //TODO: Handle as error
@@ -724,7 +724,7 @@ element_result element_interpreter_evaluate_expression(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto err = std::dynamic_pointer_cast<element::error>(evaluable_ptr->evaluable);
+    const auto err = std::dynamic_pointer_cast<const element::error>(evaluable_ptr->evaluable);
     if (err)
     {
         outputs->count = 0;
@@ -771,7 +771,7 @@ element_result element_interpreter_typeof_expression(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto err = std::dynamic_pointer_cast<element::error>(evaluable_ptr->evaluable);
+    const auto err = std::dynamic_pointer_cast<const element::error>(evaluable_ptr->evaluable);
     if (err)
     {
         return err->log_once(context->logger.get());

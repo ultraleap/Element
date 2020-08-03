@@ -25,10 +25,10 @@ namespace element
         struct frame
         {
             const declaration* function;
-            std::vector<std::shared_ptr<object>> compiled_arguments;
+            std::vector<std::shared_ptr<const object>> compiled_arguments;
         };
 
-        frame& push(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments);
+        frame& push(const declaration* function, std::vector<std::shared_ptr<const object>> compiled_arguments);
         void pop();
 
         [[nodiscard]] bool is_recursive(const declaration* declaration) const;
@@ -47,15 +47,17 @@ namespace element
         struct frame
         {
             const declaration* function;
-            std::vector<std::shared_ptr<object>> compiled_arguments;
+            std::vector<std::shared_ptr<const object>> compiled_arguments;
         };
 
         capture_stack() = default;
         capture_stack(const declaration* function, const call_stack& calls);
 
-        void push(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments);
+        void push(const declaration* function, std::vector<std::shared_ptr<const object>> compiled_arguments);
         void pop();
-        [[nodiscard]] std::shared_ptr<object> find(const scope* s, const identifier& name, const compilation_context& context, const source_information& source_info);
+        [[nodiscard]] std::shared_ptr<const object> find(const scope* s, const identifier& name,
+                                                         const compilation_context& context,
+                                                         const source_information& source_info);
 
         //todo: private
         std::vector<frame> frames;
@@ -89,15 +91,20 @@ namespace element
         [[nodiscard]] virtual bool matches_constraint(const compilation_context& context, const constraint* constraint) const;
         [[nodiscard]] virtual const constraint* get_constraint() const { return nullptr; };
 
-        [[nodiscard]] virtual std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const;
-        [[nodiscard]] virtual std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&source_info) const;
-        [[nodiscard]] virtual std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const;
+        [[nodiscard]] virtual std::shared_ptr<const object> index(const compilation_context& context,
+                                                                  const identifier& name,
+                                                                  const source_information& source_info) const;
+        [[nodiscard]] virtual std::shared_ptr<const object> call(const compilation_context& context,
+                                                                 std::vector<std::shared_ptr<const object>> compiled_args,
+                                                                 const source_information& source_info) const;
+        [[nodiscard]] virtual std::shared_ptr<const object> compile(const compilation_context& context,
+                                                                    const source_information& source_info) const;
 
         [[nodiscard]] virtual const std::vector<port>& get_inputs() const { static std::vector<port> empty; return empty; };
         [[nodiscard]] virtual const scope* get_scope() const { return nullptr; };
         [[nodiscard]] virtual const std::optional<port>& get_output() const { static std::optional<port> empty; return empty; };
         
-        [[nodiscard]] virtual std::shared_ptr<element_expression> to_expression() const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<const element_expression> to_expression() const { return nullptr; };
 
         source_information source_info;
 
@@ -118,9 +125,13 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier&, const source_information& source_info) const override { return const_cast<error*>(this)->shared_from_this(); };
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override { return const_cast<error*>(this)->shared_from_this(); };
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override { return const_cast<error*>(this)->shared_from_this(); };
+        [[nodiscard]] std::shared_ptr<const object> index(const compilation_context& context, const identifier&,
+                                                          const source_information& source_info) const override { return shared_from_this(); };
+        [[nodiscard]] std::shared_ptr<const object> call(const compilation_context& context,
+                                                         std::vector<std::shared_ptr<const object>> compiled_args,
+                                                         const source_information& source_info) const override { return shared_from_this(); };
+        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+                                                            const source_information& source_info) const override { return shared_from_this(); };
 
         [[nodiscard]] element_result get_result() const;
         [[nodiscard]] const std::string& get_message() const;
@@ -128,15 +139,19 @@ namespace element
 
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override { return true; };
 
-        element_result log_once(const element_log_ctx* logger);
+        element_result log_once(const element_log_ctx* logger) const;
 
     private:
         std::string message;
         element_result code = ELEMENT_ERROR_UNKNOWN;
-        bool logged = false;
+        mutable bool logged = false;
     };
 
-    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
-    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args);
-    std::shared_ptr<object> index_type(const declaration* type, std::shared_ptr<object> instance, const compilation_context& context, const identifier& name, const source_information& source_info);
+    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<const object>>&
+                    compiled_args);
+    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<const object>>&
+                                                        compiled_args);
+    std::shared_ptr<const object> index_type(const declaration* type, std::shared_ptr<const object> instance,
+                                             const compilation_context& context, const identifier& name,
+                                             const source_information& source_info);
  }

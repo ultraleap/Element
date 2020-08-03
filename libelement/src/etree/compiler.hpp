@@ -9,7 +9,7 @@
 
 struct compilation
 {
-    expression_shared_ptr expression;
+    expression_const_shared_ptr expression;
     constraint_const_shared_ptr constraint;
 
     [[nodiscard]] bool valid() const

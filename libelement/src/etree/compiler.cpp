@@ -62,10 +62,10 @@ static element_result compile_call_function(
 static element_result compile_call_namespace(
     const element_ast* callsite_node,
     const element_scope* parent_scope,
-    const expression_shared_ptr& expr);
+    const expression_const_shared_ptr& expr);
 
 static element_result place_args(
-    expression_shared_ptr& expr,
+    expression_const_shared_ptr& expr,
     const std::vector<compilation>& args);
 
 static element_result compile_custom_function(
@@ -149,7 +149,7 @@ static element_result compile_type_ctor(
     assert(function->inputs().size() >= inputs.size());
 
     // TODO: is flat list here OK?
-    std::vector<std::pair<std::string, expression_shared_ptr>> deps;
+    std::vector<std::pair<std::string, expression_const_shared_ptr>> deps;
     deps.reserve(inputs.size());
 
     for (size_t i = 0; i < inputs.size(); ++i)
@@ -198,7 +198,7 @@ static std::vector<compilation> generate_placeholder_inputs(
 }
 
 //todo: understand what this does and document it
-static element_result place_args(expression_shared_ptr& expr, const std::vector<compilation>& args)
+static element_result place_args(expression_const_shared_ptr& expr, const std::vector<compilation>& args)
 {
     if (const auto ua = expr->as<element_expression_unbound_arg>()) {
         if (ua->index() < args.size()) {
@@ -336,7 +336,7 @@ static element_result compile_custom_function_scope(
 static element_result compile_call_namespace(
     const element_ast* callsite_node,
     const element_scope* parent_scope,
-    const expression_shared_ptr& expr)
+    const expression_const_shared_ptr& expr)
 {
     const bool has_parent = parent_scope;
 

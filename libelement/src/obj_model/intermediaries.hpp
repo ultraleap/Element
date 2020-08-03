@@ -10,7 +10,7 @@ namespace element
     {
     public:
         explicit struct_instance(const struct_declaration* declarer);
-        explicit struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<object>>& expressions);
+        explicit struct_instance(const struct_declaration* declarer, const std::vector<std::shared_ptr<const object>>& expressions);
         virtual ~struct_instance() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
@@ -25,13 +25,15 @@ namespace element
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;
 
-        [[nodiscard]] std::shared_ptr<object> index(const compilation_context& context, const identifier& name, const source_information& source_info) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> index(const compilation_context& context, const identifier& name,
+                                                          const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+                                                            const source_information& source_info) const override;
 
-        [[nodiscard]] std::shared_ptr<element_expression> to_expression() const final;
+        [[nodiscard]] std::shared_ptr<const element_expression> to_expression() const final;
 
         const struct_declaration* const declarer;
-        std::map<std::string, std::shared_ptr<object>> fields;
+        std::map<std::string, std::shared_ptr<const object>> fields;
 
     private:
     };
@@ -40,7 +42,7 @@ namespace element
     {
     public:
         explicit function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info);
-        explicit function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info, std::vector<std::shared_ptr<object>> args);
+        explicit function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info, std::vector<std::shared_ptr<const object>> args);
         virtual ~function_instance() = default;
 
         //todo: default them if we really need them, but it's unlikely given it should be wrapped in a shared_ptr
@@ -55,13 +57,16 @@ namespace element
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;
 
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information& source_info) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> call(const compilation_context& context,
+                                                         std::vector<std::shared_ptr<const object>> compiled_args,
+                                                         const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+                                                            const source_information& source_info) const override;
 
         const function_declaration* const declarer;
 
     private:
         mutable capture_stack captures;
-        std::vector<std::shared_ptr<object>> provided_arguments;
+        std::vector<std::shared_ptr<const object>> provided_arguments;
     };
 }

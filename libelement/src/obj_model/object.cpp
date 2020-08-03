@@ -33,17 +33,20 @@ namespace element
         return false;
     }
 
-    std::shared_ptr<object> object::index(const compilation_context& context, const identifier&, const source_information& source_info) const
+    std::shared_ptr<const object> object::index(const compilation_context& context, const identifier&,
+                                                const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_indexable, typeof_info());
     }
 
-    std::shared_ptr<object> object::call(const compilation_context& context, std::vector<std::shared_ptr<object>>, const source_information& source_info) const
+    std::shared_ptr<const object> object::call(const compilation_context& context, std::vector<std::shared_ptr<const object>>,
+                                               const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_callable, typeof_info());
     }
 
-    std::shared_ptr<object> object::compile(const compilation_context& context, const source_information& source_info) const
+    std::shared_ptr<const object> object::compile(const compilation_context& context,
+                                                  const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_compilable, typeof_info());
     }
@@ -73,7 +76,7 @@ namespace element
         return msg;
     }
 
-    element_result error::log_once(const element_log_ctx* logger)
+    element_result error::log_once(const element_log_ctx* logger) const
     {
         if (!logged)
         {
@@ -84,7 +87,8 @@ namespace element
         return code;
     }
 
-    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
+    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<const object>>&
+                    compiled_args)
     {
         if (compiled_args.size() != declarer->inputs.size())
             return false;
@@ -112,7 +116,8 @@ namespace element
         return true;
     }
 
-    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<object>>& compiled_args)
+    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<const object>>&
+                                                        compiled_args)
     {
         assert(!valid_call(context, declarer, compiled_args));
 
@@ -144,9 +149,9 @@ namespace element
         return std::make_shared<error>("constraint not satisfied", ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
     }
 
-    std::shared_ptr<object> index_type(
+    std::shared_ptr<const object> index_type(
         const declaration* type,
-        std::shared_ptr<object> instance,
+        std::shared_ptr<const object> instance,
         const compilation_context& context,
         const identifier& name,
         const source_information& source_info)
@@ -184,7 +189,7 @@ namespace element
         return nullptr;
     }
 
-    call_stack::frame& call_stack::push(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments)
+    call_stack::frame& call_stack::push(const declaration* function, std::vector<std::shared_ptr<const object>> compiled_arguments)
     {
         return frames.emplace_back(frame{ function, std::move(compiled_arguments) });
     }
@@ -267,7 +272,7 @@ namespace element
         }
     }
 
-    void capture_stack::push(const declaration* function, std::vector<std::shared_ptr<object>> compiled_arguments)
+    void capture_stack::push(const declaration* function, std::vector<std::shared_ptr<const object>> compiled_arguments)
     {
         frames.emplace_back(frame{function, std::move(compiled_arguments)});
     }
@@ -277,7 +282,9 @@ namespace element
         frames.pop_back();
     }
 
-    std::shared_ptr<object> capture_stack::find(const scope* s, const identifier& name, const compilation_context& context, const source_information& source_info)
+    std::shared_ptr<const object> capture_stack::find(const scope* s, const identifier& name,
+                                                      const compilation_context& context,
+                                                      const source_information& source_info)
     {
         while (s)
         {

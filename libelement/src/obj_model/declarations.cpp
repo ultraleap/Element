@@ -49,7 +49,7 @@ namespace element
         _intrinsic = is_intrinsic;
     }
 
-    std::shared_ptr<object> struct_declaration::index(
+    std::shared_ptr<const object> struct_declaration::index(
         const compilation_context& context,
         const identifier& name,
         const source_information& source_info) const
@@ -57,9 +57,9 @@ namespace element
         return our_scope->find(name, false)->compile(context, source_info);
     }
 
-    std::shared_ptr<object> struct_declaration::call(
+    std::shared_ptr<const object> struct_declaration::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<object>> compiled_args,
+        std::vector<std::shared_ptr<const object>> compiled_args,
         const source_information& source_info) const
     {
         //this function handles construction of an intrinsic struct instance (get_intrinsic(...)->call(...)) or a user struct instance (make_shared<struct_instance>(...))
@@ -138,7 +138,8 @@ namespace element
         return true;
     }
 
-    std::shared_ptr<object> struct_declaration::generate_placeholder(const compilation_context& context, int& placeholder_index) const
+    std::shared_ptr<const object> struct_declaration::generate_placeholder(
+        const compilation_context& context, int& placeholder_index) const
     {
         if (inputs.empty())
         {
@@ -149,7 +150,7 @@ namespace element
             return expr;
         }
 
-        std::vector<std::shared_ptr<object>> placeholder_inputs;
+        std::vector<std::shared_ptr<const object>> placeholder_inputs;
         for (const auto& input : get_inputs())
         {
             const auto& type = get_scope()->find(input.get_annotation()->to_string(), true);
@@ -211,9 +212,9 @@ namespace element
         _intrinsic = is_intrinsic;
     }
 
-    std::shared_ptr<object> function_declaration::call(
+    std::shared_ptr<const object> function_declaration::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<object>> compiled_args,
+        std::vector<std::shared_ptr<const object>> compiled_args,
         const source_information& source_info) const
     {
         //todo: check, if there is a first argument, that this is a valid instance function
@@ -222,7 +223,8 @@ namespace element
         return instance->compile(context, source_info);
     }
 
-    std::shared_ptr<object> function_declaration::compile(const compilation_context& context, const source_information& source_info) const
+    std::shared_ptr<const object> function_declaration::compile(const compilation_context& context,
+                                                                const source_information& source_info) const
     {
         const auto instance = std::make_shared<function_instance>(this, context.captures, source_info);
         return instance->compile(context, source_info);
@@ -267,7 +269,7 @@ namespace element
         _intrinsic = false;
     }
 
-    std::shared_ptr<object> namespace_declaration::index(
+    std::shared_ptr<const object> namespace_declaration::index(
         const compilation_context& context,
         const identifier& name,
         const source_information& source_info) const

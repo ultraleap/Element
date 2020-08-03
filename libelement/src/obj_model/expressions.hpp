@@ -27,9 +27,12 @@ namespace element
 
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth = 0) const override;
-        [[nodiscard]] std::shared_ptr<object> call(const compilation_context& context, std::vector<std::shared_ptr<object>> compiled_args, const source_information&
-                                                   source_info) const override;
-        [[nodiscard]] std::shared_ptr<object> compile(const compilation_context& context, const source_information& source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> call(const compilation_context& context,
+                                                         std::vector<std::shared_ptr<const object>> compiled_args,
+                                                         const source_information&
+                                                         source_info) const override;
+        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+                                                            const source_information& source_info) const override;
 
         const declaration* declarer;
         std::vector<std::unique_ptr<expression>> expressions;
@@ -50,7 +53,7 @@ namespace element
         expression& operator=(expression&&) = delete;
 
         [[nodiscard]] virtual std::string to_code(int depth = 0) const = 0;
-        [[nodiscard]] virtual std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) = 0;
+        [[nodiscard]] virtual std::shared_ptr<const object> resolve(const compilation_context& context, const object* obj) = 0;
 
         source_information source_info;
 
@@ -64,7 +67,7 @@ namespace element
         literal_expression(element_value value, const expression_chain* parent);
 
         [[nodiscard]] std::string to_code(int depth = 0) const override { return std::to_string(value); }
-        [[nodiscard]] std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) override;
+        [[nodiscard]] std::shared_ptr<const object> resolve(const compilation_context& context, const object* obj) override;
 
         element_value value;
 
@@ -77,7 +80,7 @@ namespace element
         identifier_expression(identifier name, const expression_chain* parent);
 
         [[nodiscard]] std::string to_code(int depth = 0) const override;
-        [[nodiscard]] std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) override;
+        [[nodiscard]] std::shared_ptr<const object> resolve(const compilation_context& context, const object* obj) override;
 
     private:
         identifier name;
@@ -89,7 +92,7 @@ namespace element
         call_expression(const expression_chain* parent);
 
         [[nodiscard]] std::string to_code(int depth = 0) const override;
-        [[nodiscard]] std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) override;
+        [[nodiscard]] std::shared_ptr<const object> resolve(const compilation_context& context, const object* obj) override;
 
         std::vector<std::unique_ptr<expression_chain>> arguments;
     private:
@@ -101,7 +104,7 @@ namespace element
         indexing_expression(identifier name, const expression_chain* parent);
 
         [[nodiscard]] std::string to_code(int depth = 0) const override;
-        [[nodiscard]] std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) override;
+        [[nodiscard]] std::shared_ptr<const object> resolve(const compilation_context& context, const object* obj) override;
 
     private:
         identifier name;
@@ -114,7 +117,7 @@ namespace element
         lambda_expression(const expression_chain* parent);
 
         [[nodiscard]] std::string to_code(int depth) const override;
-        [[nodiscard]] std::shared_ptr<object> resolve(const compilation_context& context, std::shared_ptr<object>& obj) override;
+        [[nodiscard]] std::shared_ptr<const object> resolve(const compilation_context& context, const object* obj) override;
 
         //need to think about what this requires
         std::vector<port> inputs;
