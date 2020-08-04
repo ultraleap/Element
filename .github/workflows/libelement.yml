@@ -20,7 +20,7 @@ jobs:
           cd Laboratory
           export CC=gcc-9
           export CXX=g++-9
-          dotnet test -v q --test-adapter-path:. --logger:trx -s "libelement_cli_unix_ci_debug.runsettings"
+          dotnet test --test-adapter-path:. --logger:trx -s "libelement_cli_unix_ci_debug.runsettings"
       - name: Uploaded test results on fail
         if: failure()
         uses: actions/upload-artifact@v1.0.0
