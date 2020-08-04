@@ -172,17 +172,18 @@ element_result element_interpreter_ctx::load_files(const std::vector<std::string
 
 element_result element_interpreter_ctx::load_package(const std::string& package)
 {
-    if (!directory_exists(package))
+    auto package_path = "Content\\" + package;
+    if (!directory_exists(package_path))
     {
-        auto abs = std::filesystem::absolute(std::filesystem::path(package)).string();
+        auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
         std::cout << fmt::format("package {} does not exist at path {}\n",
-            package, abs); //todo: proper logging
+            package_path, abs); //todo: proper logging
         return ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
     }
 
     element_result ret = ELEMENT_OK;
 
-    for (const auto& file : std::filesystem::recursive_directory_iterator(package)) {
+    for (const auto& file : std::filesystem::recursive_directory_iterator(package_path)) {
         const auto filename = file.path().string();
         const auto extension = file.path().extension().string();
         if (extension == ".ele")
@@ -194,7 +195,7 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
         else
         {
             std::cout << fmt::format("file {} in package {} has extension {} instead of '.ele'\n", 
-                filename, package, extension); //todo: proper logging
+                filename, package_path, extension); //todo: proper logging
         }
     }
 
@@ -206,7 +207,8 @@ element_result element_interpreter_ctx::load_packages(const std::vector<std::str
     element_result ret = ELEMENT_OK;
 
     for (const auto& package : packages) {
-        if (!directory_exists(package)) {
+        auto package_path = "Content\\" + package;
+        if (!directory_exists(package_path)) {
             auto abs = std::filesystem::absolute(std::filesystem::path(package)).string();
             std::cout << fmt::format("package {} was not found at location {}\n",
                 package, abs); //todo: proper logging
@@ -226,7 +228,7 @@ element_result element_interpreter_ctx::load_prelude()
     if (prelude_loaded)
         return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
 
-    auto result = load_package("Content\\Prelude");
+    auto result = load_package("Prelude");
     if (result == ELEMENT_OK) {
         prelude_loaded = true;
         return result;

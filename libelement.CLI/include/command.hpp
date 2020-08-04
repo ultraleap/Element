@@ -113,7 +113,8 @@ namespace libelement::cli
 
 		[[nodiscard]] static bool directory_exists(const std::string& directory)
 		{
-			return std::filesystem::exists(directory) && std::filesystem::is_directory(directory);
+			//Bad James, bad!
+			return std::filesystem::exists("Content\\" + directory) && std::filesystem::is_directory("Content\\" + directory);
 		}
 
 		template<typename T, typename Predicate> std::vector<T> select(const std::vector<T>& container, Predicate predicate)
