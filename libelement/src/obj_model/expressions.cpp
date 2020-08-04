@@ -4,10 +4,10 @@
 #include <fmt/format.h>
 
 //SELF
-#include "scope.hpp"
+#include "etree/expressions.hpp"
 #include "errors.hpp"
 #include "interpreter_internal.hpp"
-#include "obj_model/intrinsics.hpp"
+#include "intrinsics.hpp"
 
 namespace element
 {
