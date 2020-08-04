@@ -16,7 +16,7 @@ namespace libelement::cli
 		[[nodiscard]] std::string as_string() const
 		{
 			std::stringstream ss;
-			ss << "evaluate --expression " << expression << " ";
+			ss << "evaluate --expression \"" << expression << "\" ";
 			return ss.str();
 		}
 	};

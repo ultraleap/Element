@@ -285,6 +285,9 @@ element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* a
         if (tok->type == ELEMENT_TOK_DOT) {
             TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
         }
+        else if(tok->type == ELEMENT_TOK_IDENTIFIER) {
+            break;
+        }
     }
 
     return result;
@@ -710,7 +713,7 @@ element_result element_parser_ctx::parse_function(size_t* tindex, element_ast* a
     else {
         body_node->type = ELEMENT_AST_NODE_NO_BODY;
         if (declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
-            tokenlist_advance(tokeniser, tindex);
+            //tokenlist_advance(tokeniser, tindex);
         }
         else {
             return log_error(
@@ -765,21 +768,12 @@ element_result element_parser_ctx::parse_struct(size_t* tindex, element_ast* ast
     const element_token* body;
     GET_TOKEN(tokeniser, *tindex, body);
     body_node->nearest_token = body;
-    tokenlist_advance(tokeniser, tindex);
-    //constraint
+    //constraint, we have to assume this with no terminator, the next parsed statement will fail if syntax is incorrect
     body_node->type = ELEMENT_AST_NODE_NO_BODY;
 
     if (body->type == ELEMENT_TOK_BRACEL) {
         // scope (struct body)
         ELEMENT_OK_OR_RETURN(parse_scope(tindex, body_node));
-    } else {
-        return log_error(
-            logger.get(),
-            src_context.get(),
-            body_node,
-            element::log_error_message_code::parse_struct_invalid_body,
-            tokeniser->text(ast->nearest_token),
-            tokeniser->text(body));
     }
 
     return ELEMENT_OK;
@@ -826,7 +820,7 @@ element_result element_parser_ctx::parse_constraint(size_t* tindex, element_ast*
     const element_token* body;
     GET_TOKEN(tokeniser, *tindex, body);
     body_node->nearest_token = body;
-    tokenlist_advance(tokeniser, tindex);
+    //tokenlist_advance(tokeniser, tindex);
 
     if (body->type == ELEMENT_TOK_BRACEL) {
         return log_error(
@@ -897,6 +891,9 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
             tokenlist_advance(tokeniser, tindex);
             ELEMENT_OK_OR_RETURN(parse_constraint(tindex, ast, flags));
         } else {
+            if (tokeniser->text(token) == "function")
+                tokenlist_advance(tokeniser, tindex);
+
             ELEMENT_OK_OR_RETURN(parse_function(tindex, ast, flags));
         }
     }

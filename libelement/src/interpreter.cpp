@@ -226,7 +226,7 @@ element_result element_interpreter_ctx::load_prelude()
     if (prelude_loaded)
         return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
 
-    auto result = load_package("Prelude");
+    auto result = load_package("Content\\Prelude");
     if (result == ELEMENT_OK) {
         prelude_loaded = true;
         return result;
@@ -526,9 +526,9 @@ element_result element_interpreter_compile_expression(
     info.file_name = std::make_unique<std::string>("<REMOVE>");
 
     //hack: forcing terminal on expression
-    std::string hack = std::string(expression_string) + ";";
+    std::string expr = std::string(expression_string);
     //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
-    result = element_tokeniser_run(tokeniser, hack.c_str(), info.file_name->data());
+    result = element_tokeniser_run(tokeniser, expr.c_str(), info.file_name->data());
     if (result != ELEMENT_OK)
         return result;
 

@@ -13,7 +13,7 @@ namespace libelement::cli
 		[[nodiscard]] std::string as_string() const
 		{
 			std::stringstream ss;
-			ss << "typeof --expression " << expression << " ";
+			ss << "typeof --expression \"" << expression << "\" ";
 			return ss.str();
 		}
 	};

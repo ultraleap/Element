@@ -129,7 +129,7 @@ std::string struct_declaration::to_code(const int depth) const
 
     result += is_intrinsic() ? "intrinsic struct " : "struct ";
     result += name.value + ports;
-    result += has_scope() ? our_scope->to_code(depth) : ";";
+    result += has_scope() ? our_scope->to_code(depth) : "";
     return result;
 }
 
@@ -157,7 +157,7 @@ std::string constraint_declaration::to_code(const int depth) const
         ports += output->to_code(depth);
 
     result += is_intrinsic() ? "intrinsic constraint " : "constraint ";
-    result += name.value + ports + ";";
+    result += name.value + ports;
     return result;
 }
 
@@ -187,7 +187,7 @@ std::string function_declaration::to_code(int depth) const
 
     //intrinsic declaration
     if (is_intrinsic())
-        return result + "intrinsic " + name.value + ports + ";";
+        return result + "intrinsic " + name.value + ports;
 
     //scope-bodied
     if (has_scope())
@@ -198,7 +198,7 @@ std::string function_declaration::to_code(int depth) const
     };
 
     //expression-bodied
-    return result + name.value + ports + " = " + std::visit(visitor, body) + ";";
+    return result + name.value + ports + " = " + std::visit(visitor, body);
 }
 
 std::string namespace_declaration::to_code(const int depth) const
