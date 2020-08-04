@@ -524,7 +524,7 @@ element_result element_interpreter_evaluate(
     if (err)
         return err->log_once(context->logger.get());
 
-    auto expr = std::dynamic_pointer_cast<const element_expression>(evaluable->evaluable);
+    auto expr = evaluable->evaluable->to_expression();
     if (!expr)
     {
         //todo: proper logging
