@@ -458,14 +458,16 @@ element_result element_interpreter_compile(
 {
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
-    auto result = valid_boundary_function(context, compilation_context, options, compilable);
+    //todo: compiler option to disable/enable boundary function checking
+    /*auto result = valid_boundary_function(context, compilation_context, options, compilable);
     if (result != ELEMENT_OK)
     {
         assert(!"this is not a valid boundary function");
         *evaluable = nullptr;
         return result;
-    }
+    }*/
 
+    element_result result = ELEMENT_OK;
     auto placeholder_inputs = generate_placeholder_inputs(context, compilation_context, options, compilable, result);
     if (result != ELEMENT_OK)
     {
@@ -474,7 +476,7 @@ element_result element_interpreter_compile(
         return result;
     }
 
-    const auto compiled = compilable->decl->call(compilation_context, std::move(placeholder_inputs), {});
+    auto compiled = compilable->decl->call(compilation_context, std::move(placeholder_inputs), {});
 
     if (!compiled)
     {
@@ -490,17 +492,12 @@ element_result element_interpreter_compile(
         return err->log_once(context->logger.get());
     }
 
+    //todo: compiler option to disable/enable forced expression_tree checking
     auto expression = compiled->to_expression();
     if (!expression)
-    {
-        //the actual type doesn't match the expected one for the boundary function, we should handle this error somewhere else
-        //for now we don't, so leave it
-        assert(!"this type can't be serialised");
-        *evaluable = nullptr;
-        return ELEMENT_ERROR_UNKNOWN;
-    }
-
-    *evaluable = new element_evaluable{ std::move(expression) };
+        *evaluable = new element_evaluable{ std::move(compiled) };
+    else
+        *evaluable = new element_evaluable{ std::move(expression) };
 
     return ELEMENT_OK;
 }
@@ -530,65 +527,9 @@ element_result element_interpreter_evaluate(
     auto expr = std::dynamic_pointer_cast<const element_expression>(evaluable->evaluable);
     if (!expr)
     {
-        //todo: this is a quick hack just to test basic structs
-        auto struct_instance = std::dynamic_pointer_cast<const element::struct_instance>(evaluable->evaluable);
-        if (!struct_instance)
-        {
-            //TODO: Handle as error
-            assert(!"tried to evaluate something but it's not an element_expression or struct instance");
-            return ELEMENT_ERROR_UNKNOWN;
-        }
-
-        //doesn't calc space of fields :b
-        if (static_cast<int>(struct_instance->fields.size()) > outputs->count)
-        {
-            //TODO: Handle as error
-            assert(!"tried to evaluate a struct instance but not enough output space to deserialize it");
-            return ELEMENT_ERROR_UNKNOWN;
-        }
-
-        auto c = 0;
-
-        for (auto& f : struct_instance->fields)
-        {
-            element_inputs sub_inputs{ nullptr, 0 };
-            element_outputs sub_outputs{&outputs->values[c], outputs->count - c};
-            element_evaluable sub_evaluable{ f.second };
-            assert(sub_outputs.count > 0);
-            const auto result = element_interpreter_evaluate(context, options, &sub_evaluable, &sub_inputs, &sub_outputs);
-            if (result != ELEMENT_OK) {
-                //TODO: Handle as error
-                context->log(result, fmt::format("Failed to evaluate {}", f.second->typeof_info()), "<input>");
-                return result;
-            }
-
-            c += sub_outputs.count;
-
-            /*auto field_expr = std::dynamic_pointer_cast<element_expression>(f.second);
-            if (!field_expr)
-            {
-                assert(!"tried to evaluate a struct instance but one of the fields is not an element_expression");
-                return ELEMENT_ERROR_UNKNOWN;
-            }
-
-            std::size_t one = 1;
-            const auto result = element_evaluate(
-                *context,
-                std::move(field_expr),
-                nullptr,
-                0,
-                &outputs->values[c],
-                one,
-                opts);
-            c++;
-
-            if (result != ELEMENT_OK) {
-                context->log(result, fmt::format("Failed to evaluate {}", f.second->to_string()), "<input>");
-            }*/
-        }
-
-        outputs->count = c;
-        return ELEMENT_OK;
+        //todo: proper logging
+        context->logger->log("evaluable is not an expression tree, so it can't be evaluated", ELEMENT_STAGE_EVALUATOR);
+        return ELEMENT_ERROR_UNKNOWN;
     }
 
     std::size_t count = outputs->count;

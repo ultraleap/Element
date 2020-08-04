@@ -21,6 +21,13 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
     } 
 
 	if (const auto* ei = expr->as<element_expression_input>()) {
+        if (context.inputs_count <= ei->index()
+            || outputs_count <= outputs_written)
+        {
+            outputs_written = 0;
+            return ELEMENT_ERROR_UNKNOWN;
+        }
+
         assert(context.inputs_count > ei->index());
         assert(outputs_count > outputs_written);
         outputs[outputs_written++] = context.inputs[ei->index()];
