@@ -8,17 +8,12 @@
 
 namespace element
 {
-    DEFINE_TYPE_ID(type, 1U << 0);
-    DEFINE_TYPE_ID(num_type, 1U << 1);
-    DEFINE_TYPE_ID(boolean_type, 1U << 2);
-
-    DEFINE_TYPE_ID(any_constraint, 1U << 3);
-    DEFINE_TYPE_ID(user_function_constraint, 1U << 4);
-    //DEFINE_TYPE_ID(nullary_constraint, 1U << 5);
-    //DEFINE_TYPE_ID(unary_constraint, 1U << 6);
-    //DEFINE_TYPE_ID(binary_constraint, 1U << 7);
-
-    DEFINE_TYPE_ID(user_type, 1U << 8);
+    DEFINE_TYPE_ID(any_constraint, 1U << 1);
+    DEFINE_TYPE_ID(user_function_constraint, 1U << 2);
+    DEFINE_TYPE_ID(type, 1U << 16);
+    DEFINE_TYPE_ID(num_type, 1U << 17);
+    DEFINE_TYPE_ID(boolean_type, 1U << 18);
+    DEFINE_TYPE_ID(user_type, 1U << 19);
 
     identifier num_type::name{ "Num" };
     identifier boolean_type::name{ "Bool" };

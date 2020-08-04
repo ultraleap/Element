@@ -46,35 +46,6 @@ namespace element
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
     };
 
-    //class nullary_constraint : public constraint
-    //{
-    //public:
-    //    DECLARE_TYPE_ID();
-
-    //    nullary_constraint() : constraint(type_id)
-    //    {
-    //    }
-    //};
-
-    //class unary_constraint : public constraint
-    //{
-    //public:
-    //    DECLARE_TYPE_ID();
-    //
-    //    unary_constraint() : constraint(type_id)
-    //    {
-    //    }
-    //};
-    //
-    //class binary_constraint : public constraint {
-    //public:
-    //    DECLARE_TYPE_ID();
-    //
-    //    binary_constraint() : constraint(type_id)
-    //    {
-    //    }
-    //};
-
     class type : public constraint
     {
     public:
@@ -137,8 +108,6 @@ namespace element
             , declarer(declarer)
             , name(std::move(name))
         {}
-
-        //[[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
 
     private:
         const declaration* declarer;
