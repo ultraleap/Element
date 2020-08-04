@@ -6,11 +6,14 @@
 //SELF
 #include "ast/fwd.hpp"
 #include "fwd.hpp"
+#include "source_information.hpp"
 
 namespace element
 {
-    template <typename T>
-    void assign_source_information(const element_interpreter_ctx* context, T& t, const element_ast* ast)
+    //todo: all of this is templated due to GCC having issues with it, move somewhere else where we can have complete types
+    //I imagine MSVC does its checks when the template is instantiated, where as GCC does it when it's parsed
+    template <typename Context, typename Obj, typename AST>
+    void assign_source_information(const Context* context, Obj& t, const AST* ast)
     {
         const auto& file_info = context->src_context->file_info.at(ast->nearest_token->file_name);
         const std::string* filename = file_info.file_name.get();

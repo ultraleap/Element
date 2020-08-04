@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <type_traits>
 #include <utility>
+#include <functional>
 
 typedef size_t element_type_id;
 
