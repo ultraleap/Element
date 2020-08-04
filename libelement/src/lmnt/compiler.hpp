@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <memory>
 #include <unordered_map>
+#include <cstring>
 
 struct element_lmnt_stack_entry
 {

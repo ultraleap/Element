@@ -18,14 +18,9 @@ namespace element
     identifier num_type::name{ "Num" };
     identifier boolean_type::name{ "Bool" };
 
+    const constraint_const_unique_ptr constraint::any = std::make_unique<any_constraint>();
     const type_const_unique_ptr type::num = std::make_unique<num_type>();
     const type_const_unique_ptr type::boolean = std::make_unique<boolean_type>();
-
-    const constraint_const_unique_ptr constraint::any = std::make_unique<any_constraint>();
-    //const constraint_const_unique_ptr constraint::function = std::make_unique<function_constraint>();
-    //const constraint_const_unique_ptr constraint::nullary = std::make_unique<nullary_constraint>();
-    //const constraint_const_unique_ptr constraint::unary = std::make_unique<unary_constraint>();
-    //const constraint_const_unique_ptr constraint::binary = std::make_unique<binary_constraint>();
 
     std::shared_ptr<const object> num_type::index(const compilation_context& context, const identifier& name,
                                                   const source_information& source_info) const
