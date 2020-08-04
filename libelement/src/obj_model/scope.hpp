@@ -13,14 +13,7 @@ namespace element
     class scope final : public object
     {
     public:
-        explicit scope(const scope* parent_scope, const declaration* declarer);
-        virtual ~scope() = default;
-
-        //todo: default them if we really need them, but it's unlikely given it should be wrapped in a unique_ptr
-        scope(const scope&) = delete;
-        scope(scope&&) = delete;
-        scope& operator = (const scope&) = delete;
-        scope& operator = (scope&&) = delete;
+        scope(const scope* parent_scope, const declaration* declarer);
 
         [[nodiscard]] const declaration* find(const identifier& name, bool recurse) const;
         [[nodiscard]] bool is_root() const { return parent_scope == nullptr; }
@@ -35,6 +28,7 @@ namespace element
         void add_declaration(std::unique_ptr<declaration> declaration);
         element_result merge(std::unique_ptr<scope>&& other);
 
+        //todo: private
         const declaration* const declarer;
 
     private:

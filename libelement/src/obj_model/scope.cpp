@@ -2,6 +2,12 @@
 
 namespace element
 {
+    scope::scope(const scope* parent_scope, const declaration* const declarer)
+        : declarer(declarer)
+        , parent_scope(parent_scope)
+    {
+    }
+
     element_result scope::merge(std::unique_ptr<scope>&& other)
     {
         if (!is_root() || !other->is_root())
@@ -25,12 +31,6 @@ namespace element
         return declarer->location();
     }
 
-    scope::scope(const scope* parent_scope, const declaration* const declarer)
-        : declarer(declarer)
-        , parent_scope(parent_scope)
-    {
-    }
-
     void scope::add_declaration(std::unique_ptr<declaration> declaration)
     {
         declarations.emplace(declaration->name.value, std::move(declaration));
@@ -47,15 +47,10 @@ namespace element
 
     const scope* scope::get_global() const
     {
-        //const static scope* global = nullptr;
-        //if (global)
-        //    return global;
+        const auto* global = this;
+        while (global->parent_scope)
+            global = global->parent_scope;
 
-        const auto* local = this;
-        while (local->parent_scope)
-            local = local->parent_scope;
-
-        //global = local;
-        return local;
+        return global;
     }
 }
