@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Element.AST
 {
@@ -8,6 +9,22 @@ namespace Element.AST
         IReadOnlyList<Declaration> Declarations { get; }
         Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context);
     }
+
+    public class ValueWithLocation
+    {
+        public ValueWithLocation(Identifier[] identifiersInPath, IValue value)
+        {
+            Identifier = identifiersInPath.Last();
+            IdentifiersInPath = identifiersInPath;
+            FullPath = string.Join(".", IdentifiersInPath);
+            Value = value;
+        }
+
+        public Identifier Identifier { get; }
+        public Identifier[] IdentifiersInPath { get; }
+        public string FullPath { get; }
+        public IValue Value { get; }
+    }
     
     public static class DeclarationScopeExtensions
     {
@@ -15,10 +32,11 @@ namespace Element.AST
         /// Enumerates top-level and nested declarations that match the filter, resolving them to IValues.
         /// Will not recurse into function scopes.
         /// </summary>
-        public static Result<List<(Identifier Identifier, IValue Value)>> EnumerateValues(this IDeclarationScope declarationScope, Context context, Predicate<Declaration> declarationFilter = null, Predicate<IValue> resolvedValueFilter = null)
+        public static Result<List<ValueWithLocation>> EnumerateValues(this IDeclarationScope declarationScope, Context context, Predicate<Declaration> declarationFilter = null, Predicate<IValue> resolvedValueFilter = null)
         {
-            var builder = new ResultBuilder<List<(Identifier Identifier, IValue Value)>>(context, new List<(Identifier Identifier, IValue Value)>());
-            
+            var builder = new ResultBuilder<List<ValueWithLocation>>(context, new List<ValueWithLocation>());
+            var idStack = new Stack<Identifier>();
+
             void Recurse(IScope? parentScope, IDeclarationScope declScope)
             {
                 builder.Append(declScope.ResolveBlock(parentScope, context)
@@ -28,21 +46,25 @@ namespace Element.AST
                 {
                     foreach (var decl in declScope.Declarations)
                     {
+                        idStack.Push(decl.Identifier);
                         if (declarationFilter?.Invoke(decl) ?? true)
                         {
                             void AddResolvedValueToResults(IValue v)
                             {
-                                if (resolvedValueFilter?.Invoke(v) ?? true) builder.Result.Add((decl.Identifier, v));
+                                if (resolvedValueFilter?.Invoke(v) ?? true) builder.Result.Add(new ValueWithLocation(idStack.Reverse().ToArray(), v));
                             }
 
                             builder.Append(decl.Resolve(containingScope, context).Then(AddResolvedValueToResults));
                         }
 
-                        if (!(decl.Body is IDeclarationScope childScope)) continue;
-                        
-                        void RecurseIntoChildScope(IScope resolvedBlockScope) => Recurse(resolvedBlockScope, childScope);
-                        
-                        builder.Append(childScope.ResolveBlock(containingScope, context).Then(RecurseIntoChildScope));
+                        if (decl.Body is IDeclarationScope childScope)
+                        {
+                            void RecurseIntoChildScope(IScope resolvedBlockScope) => Recurse(resolvedBlockScope, childScope);
+
+                            builder.Append(childScope.ResolveBlock(containingScope, context).Then(RecurseIntoChildScope));
+                        }
+
+                        idStack.Pop();
                     }
                 }
             }

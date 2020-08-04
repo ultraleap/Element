@@ -1,3 +1,4 @@
+using System;
 using Element.AST;
 
 namespace Element
@@ -9,12 +10,21 @@ namespace Element
             Name = name;
             OriginalText = text;
             PreprocessedText = Parser.Preprocess(text);
+            var splitByNewLine = PreprocessedText.Split(new []{"\r\n", "\n", "\r"}, 3, StringSplitOptions.RemoveEmptyEntries);
+            FirstNonEmptyLine = splitByNewLine.Length switch
+            {
+                0 => string.Empty,
+                1 => splitByNewLine[0],
+                _ => $"{splitByNewLine[0]}..."
+            };
         }
         
         public readonly string Name;
         public readonly string OriginalText;
         public readonly string PreprocessedText;
+        public readonly string FirstNonEmptyLine;
         
+
         public (int Line, int Column, int LineCharacterIndex) CalculateLineAndColumnFromIndex(int index, bool indexInPreprocessedText = true)
         {
             var text = indexInPreprocessedText ? PreprocessedText : OriginalText;

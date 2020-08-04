@@ -55,7 +55,7 @@ namespace Element
         public void Append(IEnumerable<CompilerMessage> messages) => _messages.AddRange(messages);
         public void Append(IReadOnlyCollection<CompilerMessage> messages) => _messages.AddRange(messages);
 
-        public Result<T> ToResult() => Result == null
+        public Result<T> ToResult() => Result == null && !Messages.Any(m => m.MessageLevel >= MessageLevel.Error)
                                            ? new Result<T>(Context.Trace(MessageCode.InvalidCast, "Cannot cast null value to Result type") is {} error
                                                                ? (IReadOnlyCollection<CompilerMessage>)_messages.Append(error).ToArray()
                                                                : _messages)

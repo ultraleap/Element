@@ -14,7 +14,6 @@ namespace Element.NET.Tests
             foreach (var message in messages)
             {
                 TestContext.WriteLine(message.ToString());
-                TestContext.WriteLine(string.Empty);
             }
         }
 

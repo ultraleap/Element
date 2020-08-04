@@ -14,7 +14,8 @@ namespace Element.AST
             new Result<ResolvedBlock>(
                 new ResolvedBlock(Declarations.Select(d => d.Identifier).ToArray(),
                                   Enumerable.Empty<(Identifier Identifier, IValue Value)>(),
-                    (resolvedBlock, identifier, indexingContext) => Lookup(identifier, indexingContext), null));
+                    (resolvedBlock, identifier, indexingContext) => Lookup(identifier, indexingContext), null),
+                context.Trace(MessageLevel.Information, $"Resolved global scope as block <{Declarations.Count} top level declarations>"));
 
         public bool ContainsSource(string sourceName) => _sourceScopes.ContainsKey(sourceName);
         
@@ -23,7 +24,7 @@ namespace Element.AST
                 ? new Result<SourceBlob>(found)
                 : context.Trace(MessageCode.ArgumentNotFound, $"No source named '{sourceName}'");
 
-        public bool RemoveSource(string sourceName)
+        private bool RemoveSource(string sourceName)
         {
             if (!_sourceScopes.Remove(sourceName)) return false;
             // Don't need to validate again, removing source cannot invalidate the global scope
@@ -54,19 +55,22 @@ namespace Element.AST
 
         public Result Validate(Context context)
         {
-            var resultBuilder = new ResultBuilder(context);
+            var builder = new ResultBuilder(context);
+            builder.Append(MessageLevel.Information, "Validating global scope...");
             var idHashSet = new HashSet<Identifier>();
             foreach (var decl in Declarations)
             {
-                decl.Identifier.Validate(resultBuilder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
-                decl.Validate(resultBuilder, context);
+                decl.Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
+                decl.Validate(builder, context);
                 if (!idHashSet.Add(decl.Identifier))
                 {
-                    resultBuilder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{decl.Identifier}' defined in global scope");
+                    builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{decl.Identifier}' defined in global scope");
                 }
             }
+            
+            builder.Append(MessageLevel.Information, "Finished validating global scope");
 
-            return resultBuilder.ToResult();
+            return builder.ToResult();
         }
     }
 }

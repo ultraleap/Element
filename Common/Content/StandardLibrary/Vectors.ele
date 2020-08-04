@@ -163,7 +163,7 @@ struct Vector3(x:Num, y:Num, z:Num)
         return = Vector3(result.x, result.y, result.z)
     }
 
-    transformDirection(a:Vec3, matrix:Matrix4x4):Vector3
+    transformDirection(a:Vector3, matrix:Matrix4x4):Vector3
     {
         result = Vector4.transform(Vector4.direction(a), matrix)
         return = Vector3(result.x, result.y, result.z)

@@ -43,7 +43,9 @@ namespace Element
             return files.Except(alreadyLoadedFiles).Select(LoadElementSourceFile).Fold().Bind(() => new Result<SourceContext>(this, alreadyLoadedMsgs));
         }
 
-        private static readonly LambdaEqualityComparer<FileInfo> _fileComparer = new LambdaEqualityComparer<FileInfo>((a, b) => a.FullName == b.FullName, info => info.GetHashCode());
+        private static readonly LambdaEqualityComparer<FileInfo> _fileComparer =
+            new LambdaEqualityComparer<FileInfo>((a, b) => Path.GetFullPath(a.FullName).Equals(Path.GetFullPath(b.FullName), StringComparison.OrdinalIgnoreCase), info => 1 /* Force comparison */);
+        
         private static readonly object _syncRoot = new object();
 
         private readonly struct PackageManifest
