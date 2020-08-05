@@ -1,4 +1,4 @@
-#include "lmnt/ops_util.h"
+#include "lmnt/ops_bounds.h"
 #include <math.h>
 
 
@@ -14,12 +14,6 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_absv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_o
     ctx->stack[arg3 + 1] = fabsf(ctx->stack[arg1 + 1]);
     ctx->stack[arg3 + 2] = fabsf(ctx->stack[arg1 + 2]);
     ctx->stack[arg3 + 3] = fabsf(ctx->stack[arg1 + 3]);
-    return LMNT_OK;
-}
-
-LMNT_ATTR_FAST lmnt_result lmnt_op_sumv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
-{
-    ctx->stack[arg3] = ctx->stack[arg1 + 0] + ctx->stack[arg1 + 1] + ctx->stack[arg1 + 2] + ctx->stack[arg1 + 3];
     return LMNT_OK;
 }
 

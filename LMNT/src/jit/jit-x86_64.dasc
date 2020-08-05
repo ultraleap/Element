@@ -121,6 +121,85 @@
 ||}
 | .endmacro
 
+
+| .macro maths2, op
+||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
+||if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+    ||if (reg1 != reg3) {
+        | movss xmm(reg3), xmm(reg1)
+    ||}
+||} else {
+    | reads xmm(reg3), in.arg1
+||}
+||if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+    | op xmm(reg3), xmm(reg2)
+||} else {
+    | op xmm(reg3), dword [rStack + in.arg2*4]
+||}
+| writes_or_notify reg3, in.arg3, xmmtmp1
+| .endmacro
+
+| .macro mathv2, op
+||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
+||if (acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+    ||if (reg1 != reg3) {
+        | movaps xmm(reg3), xmm(reg1)
+    ||}
+||} else {
+    | reads xmm(reg3), in.arg1
+||}
+||if (acquireVectorRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+    | op xmm(reg3), xmm(reg2)
+||} else {
+    | readv xmm(xmmtmp2), in.arg2
+    | op xmm(reg3), xmm(xmmtmp2)
+||}
+| writev_or_notify reg3, in.arg3, xmmtmp1
+| .endmacro
+
+
+// TODO: this is slow for vector ops but we should phase it out anyway
+| .macro extern1, fn, offset, outarg, outoffset, outreg
+||if (acquireScalarRegister(state, in.arg1 + offset, &reg1, ACCESSTYPE_READ)) {
+    | movss xmm0, xmm(reg1)
+||} else {
+    | reads xmm0, in.arg1 + offset
+||}
+||platformWriteAndEvictVolatile(state);
+| mov64 rax, (const intptr_t)(&fn)
+| call rax
+||if (acquireScalarRegister(state, outarg + outoffset, &outreg, ACCESSTYPE_WRITE)) {
+    | movss xmm(outreg), xmm0
+    ||notifyRegisterWritten(state, outreg, 1);
+||} else {
+    | writes outarg + outoffset, xmm0
+||}
+| .endmacro
+
+// TODO: this is slow for vector ops but we should phase it out anyway
+| .macro extern2, fn, offset1, offset2, offset3
+||if (acquireScalarRegister(state, in.arg1 + offset1, &reg1, ACCESSTYPE_READ)) {
+    | movss xmm0, xmm(reg1)
+||} else {
+    | reads xmm0, in.arg1 + offset1
+||}
+||if (acquireScalarRegister(state, in.arg2 + offset2, &reg2, ACCESSTYPE_READ)) {
+    | movss xmm1, xmm(reg2)
+||} else {
+    | reads xmm1, in.arg2 + offset2
+||}
+||platformWriteAndEvictVolatile(state);
+| mov64 rax, (const intptr_t)(&fn)
+| call rax
+||if (acquireScalarRegister(state, in.arg3 + offset3, &reg3, ACCESSTYPE_WRITE)) {
+    | movss xmm(reg3), xmm0
+    ||notifyRegisterWritten(state, reg3, 1);
+||} else {
+    | writes in.arg3 + offset3, xmm0
+||}
+| .endmacro
+
+
 #include "dasm_x86.h"
 
 
@@ -203,13 +282,13 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // }
     #endif
 
-    unsigned int npc = 0;
+    unsigned int num_pc_labels = 0;
     // Make PC label space for any branch instructions
     for (size_t i = 0; i < state->in_count; ++i) {
-        npc += LMNT_IS_BRANCH_OP(state->instructions[i].opcode);
+        num_pc_labels += LMNT_IS_BRANCH_OP(state->instructions[i].opcode);
     }
 
-    lmnt_loffset branch_targets[32]; // TODO: dynamically allocate to match npc
+    lmnt_loffset branch_targets[32]; // TODO: dynamically allocate to match num_pc_labels
     unsigned int cur_branch = 0;
     for (size_t i = 0; i < state->in_count; ++i) {
         if (LMNT_IS_BRANCH_OP(state->instructions[i].opcode)) {
@@ -218,13 +297,13 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     }
     cur_branch = 0;
 
-    lmnt_loffset next_target = getNextBranchTarget(branch_targets, npc, UINT32_MAX);
+    lmnt_loffset next_target = getNextBranchTarget(branch_targets, num_pc_labels, UINT32_MAX);
 
     dasm_init(&state->dasm_state, DASM_MAXSECTION);
     void* labels[lbl__MAX];
     dasm_setupglobal(&state->dasm_state, labels, lbl__MAX);
     dasm_setup(&state->dasm_state, lmnt_actions);
-    dasm_growpc(&state->dasm_state, npc);
+    dasm_growpc(&state->dasm_state, num_pc_labels);
 
     dasm_State** Dst = &state->dasm_state;
     | .rodata
@@ -258,12 +337,12 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             // if we may have just jumped here, our cache status is unknown, so nuke everything
             platformWriteAndEvictAll(state);
             // find which label(s) we're meant to be
-            for (size_t t = 0; t < npc; ++t) {
+            for (size_t t = 0; t < num_pc_labels; ++t) {
                 if (state->cur_in == branch_targets[t]) {
                     | =>t:
                 }
             }
-            next_target = getNextBranchTarget(branch_targets, npc, next_target);
+            next_target = getNextBranchTarget(branch_targets, num_pc_labels, next_target);
         }
         // encode instruction
         switch (in.opcode) {
@@ -458,41 +537,6 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
         }
 
-        | .macro maths2, op
-        ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
-        ||if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
-            ||if (reg1 != reg3) {
-                | movss xmm(reg3), xmm(reg1)
-            ||}
-        ||} else {
-            | reads xmm(reg3), in.arg1
-        ||}
-        ||if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
-            | op xmm(reg3), xmm(reg2)
-        ||} else {
-            | op xmm(reg3), dword [rStack + in.arg2*4]
-        ||}
-        | writes_or_notify reg3, in.arg3, xmmtmp1
-        | .endmacro
-
-        | .macro mathv2, op
-        ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
-        ||if (acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
-            ||if (reg1 != reg3) {
-                | movaps xmm(reg3), xmm(reg1)
-            ||}
-        ||} else {
-            | reads xmm(reg3), in.arg1
-        ||}
-        ||if (acquireVectorRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
-            | op xmm(reg3), xmm(reg2)
-        ||} else {
-            | readv xmm(xmmtmp2), in.arg2
-            | op xmm(reg3), xmm(xmmtmp2)
-        ||}
-        | writev_or_notify reg3, in.arg3, xmmtmp1
-        | .endmacro
-
         case LMNT_OP_ADDSS:
             | maths2 addss
             break;
@@ -518,52 +562,8 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | mathv2 divps
             break;
 
-        // TODO: this is slow for vector ops but we should phase it out anyway
-        | .macro extern1, fn, offset, outarg, outoffset, outreg
-        ||if (acquireScalarRegister(state, in.arg1 + offset, &reg1, ACCESSTYPE_READ)) {
-            | movss xmm0, xmm(reg1)
-        ||} else {
-            | reads xmm0, in.arg1 + offset
-        ||}
-        ||platformWriteAndEvictVolatile(state);
-        | mov64 rax, (const intptr_t)(&fn)
-        | call rax
-        ||if (acquireScalarRegister(state, outarg + outoffset, &outreg, ACCESSTYPE_WRITE)) {
-            | movss xmm(outreg), xmm0
-            ||notifyRegisterWritten(state, outreg, 1);
-        ||} else {
-            | writes outarg + outoffset, xmm0
-        ||}
-        | .endmacro
-
-        // TODO: this is slow for vector ops but we should phase it out anyway
-        | .macro extern2, fn, offset1, offset2, offset3
-        ||if (acquireScalarRegister(state, in.arg1 + offset1, &reg1, ACCESSTYPE_READ)) {
-            | movss xmm0, xmm(reg1)
-        ||} else {
-            | reads xmm0, in.arg1 + offset1
-        ||}
-        ||if (acquireScalarRegister(state, in.arg2 + offset2, &reg2, ACCESSTYPE_READ)) {
-            | movss xmm1, xmm(reg2)
-        ||} else {
-            | reads xmm1, in.arg2 + offset2
-        ||}
-        ||platformWriteAndEvictVolatile(state);
-        | mov64 rax, (const intptr_t)(&fn)
-        | call rax
-        ||if (acquireScalarRegister(state, in.arg3 + offset3, &reg3, ACCESSTYPE_WRITE)) {
-            | movss xmm(reg3), xmm0
-            ||notifyRegisterWritten(state, reg3, 1);
-        ||} else {
-            | writes in.arg3 + offset3, xmm0
-        ||}
-        | .endmacro
-
         case LMNT_OP_MODSS:
         {
-            // call to C
-            // | extern2 fmodf,  0,  0,  0
-            // manual SSE2 version
             bool arg1hasreg = acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
             bool arg2hasreg = acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
             if (arg1hasreg) {
@@ -604,12 +604,6 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         }
         case LMNT_OP_MODVV:
         {
-            // call to C
-            // | extern2 fmodf, 0, 0, 0
-            // | extern2 fmodf, 1, 1, 1
-            // | extern2 fmodf, 2, 2, 2
-            // | extern2 fmodf, 3, 3, 3
-            // manual SSE2 version
             bool arg1hasreg = acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
             bool arg2hasreg = acquireVectorRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
             if (arg1hasreg) {
@@ -803,35 +797,30 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         // roundss/roundps instructions are only present in SSE4.1
         // Rounding mode: 0b00 = round, 0b01 = floor, 0b10 = ceil, 0b11 = trunc
         case LMNT_OP_FLOORS:
-            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             if (state->cpuflags & SIMD_X86_SSE41) {
+                ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
                 if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
                     | roundss xmm(reg3), xmm(reg1), 0x01
                 } else {
                     | roundss xmm(reg3), dword [rStack + in.arg1*4], 0x01
                 }
+                | writes_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                // Stick to vector ops as they're faster
-                if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
-                    | cvttps2dq xmm(reg3), xmm(reg1)
-                } else {
-                    | readv xmm(reg3), in.arg1
-                    | cvttps2dq xmm(reg3), xmm(reg3)
-                }
-                | cvtdq2ps xmm(reg3), xmm(reg3)
+                | extern1 floorf, 0, in.arg3, 0, reg3
             }
-            | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         case LMNT_OP_FLOORV:
-            ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
-            ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
             if (state->cpuflags & SIMD_X86_SSE41) {
+                ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
+                ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp2);
                 | roundps xmm(reg3), xmm(reg1), 0x01
+                | writev_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | cvttps2dq xmm(reg3), xmm(reg1)
-                | cvtdq2ps xmm(reg3), xmm(reg3)
+                | extern1 floorf, 0, in.arg3, 0, reg3
+                | extern1 floorf, 1, in.arg3, 1, reg3
+                | extern1 floorf, 2, in.arg3, 2, reg3
+                | extern1 floorf, 3, in.arg3, 3, reg3
             }
-            | writev_or_notify reg3, in.arg3, xmmtmp1
             break;
         case LMNT_OP_ROUNDS:
             if (state->cpuflags & SIMD_X86_SSE41) {
@@ -840,7 +829,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundss xmm(reg3), xmm(reg1), 0x00
                 | writes_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 roundf, 0, in.arg3, 0, reg3
+                | extern1 nearbyintf, 0, in.arg3, 0, reg3
             }
             break;
         case LMNT_OP_ROUNDV:
@@ -850,10 +839,10 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | roundps xmm(reg3), xmm(reg1), 0x00
                 | writev_or_notify reg3, in.arg3, xmmtmp1
             } else {
-                | extern1 roundf, 0, in.arg3, 0, reg3
-                | extern1 roundf, 1, in.arg3, 1, reg3
-                | extern1 roundf, 2, in.arg3, 2, reg3
-                | extern1 roundf, 3, in.arg3, 3, reg3
+                | extern1 nearbyintf, 0, in.arg3, 0, reg3
+                | extern1 nearbyintf, 1, in.arg3, 1, reg3
+                | extern1 nearbyintf, 2, in.arg3, 2, reg3
+                | extern1 nearbyintf, 3, in.arg3, 3, reg3
             }
             break;
         case LMNT_OP_CEILS:
@@ -1120,8 +1109,8 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         if (result == LMNT_OK) {
             fndata->function = (lmnt_jit_fn)labels[lbl_lmnt_main];
         }
-        dasm_free(&state->dasm_state);
     }
+    dasm_free(&state->dasm_state);
 
 #if defined(LMNT_JIT_COLLECT_STATS)
     if (stats)

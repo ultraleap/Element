@@ -115,9 +115,9 @@ lmnt_result lmnt_get_data_section(const lmnt_archive* archive, lmnt_offset index
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_data_block(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_value** block)
+lmnt_result lmnt_get_data_block(const lmnt_archive* archive, const lmnt_data_section* section, const lmnt_value** block)
 {
-    *block = validated_get_data_block(archive, offset);
+    *block = validated_get_data_block(archive, section->offset);
     return LMNT_OK;
 }
 
