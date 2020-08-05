@@ -705,6 +705,19 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             }
             | writev_or_notify reg3, in.arg3, xmmtmp1
             break;
+        case LMNT_OP_LOG:
+            // TODO
+            break;
+        case LMNT_OP_LN:
+            | extern1 logf, 0, in.arg3, 0, reg3
+            break;
+        case LMNT_OP_LOG2:
+            | extern1 log2f, 0, in.arg3, 0, reg3
+            break;
+        case LMNT_OP_LOG10:
+            | extern1 log10f, 0, in.arg3, 0, reg3
+            break;
+
         case LMNT_OP_ABSS:
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {

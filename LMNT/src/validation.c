@@ -206,6 +206,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_DIVSS:
     case LMNT_OP_MODSS:
     case LMNT_OP_POWSS:
+    case LMNT_OP_LOG:
     case LMNT_OP_MINSS:
     case LMNT_OP_MAXSS:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
@@ -239,6 +240,9 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_ACOS:
     case LMNT_OP_ATAN:
     case LMNT_OP_SQRTS:
+    case LMNT_OP_LN:
+    case LMNT_OP_LOG2:
+    case LMNT_OP_LOG10:
     case LMNT_OP_ABSS:
     case LMNT_OP_FLOORS:
     case LMNT_OP_ROUNDS:

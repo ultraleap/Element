@@ -715,6 +715,18 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_ABSV:
             | mathv1serial vabs.f32
             break;
+        case LMNT_OP_LOG:
+            // TODO
+            break;
+        case LMNT_OP_LN:
+            | extern1 logf, 0, in.arg3, reg3
+            break;
+        case LMNT_OP_LOG2:
+            | extern1 log2f, 0, in.arg3, reg3
+            break;
+        case LMNT_OP_LOG10:
+            | extern1 log10f, 0, in.arg3, reg3
+            break;
 
         case LMNT_OP_SUMV:
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
