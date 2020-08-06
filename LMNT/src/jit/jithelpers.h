@@ -50,8 +50,8 @@ typedef enum
 } overlap_type;
 
 typedef unsigned int cpu_flags;
-struct jit_fpreg_data_s;
-typedef struct jit_fpreg_data_s jit_fpreg_data;
+struct jit_fpreg_data;
+typedef struct jit_fpreg_data jit_fpreg_data;
 
 typedef struct
 {
