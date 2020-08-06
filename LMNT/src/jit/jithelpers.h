@@ -71,6 +71,7 @@ typedef struct
 // prototypes for platform-specific functions implemented in dasc
 static void platformWriteAndEvictAll(jit_compile_state* state);
 static void platformWriteAndEvictVolatile(jit_compile_state* state);
+static void platformWriteAndEvictByStack(jit_compile_state* state, lmnt_offset start, lmnt_offset end);
 static void platformReadScalarToRegister(jit_compile_state* state, size_t reg, lmnt_offset stackpos);
 static void platformWriteScalarFromRegister(jit_compile_state* state, lmnt_offset stackpos, size_t reg);
 static void platformReadVectorToRegister(jit_compile_state* state, size_t reg, lmnt_offset stackpos);
