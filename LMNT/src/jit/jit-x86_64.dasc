@@ -40,13 +40,18 @@
 |.endif
 
 | .define rStack, rbx
-| .define CFRAME_SPACE, aword * 6
 | .define xmmtmp1, 1
 | .define xmmtmp2, 0
 
 
 // If we use any of these non-volatile registers within *our* function
 // (NOT anything we call) then we must push/pop them here
+
+// IMPORTANT: if the amount of data pushed/popped is changed here, this
+// will affect the stack alignment of all external calls out to C.
+// On x86_64, at the time of a call, (rsp + 8) must be 16-byte aligned.
+// Change this number (ensuring it remains >= 5) to adjust the alignment.
+| .define CFRAME_SPACE, aword * 6
 
 | .macro prologue, use_nv
 ||#if defined(_WIN32)
@@ -706,7 +711,28 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | writev_or_notify reg3, in.arg3, xmmtmp1
             break;
         case LMNT_OP_LOG:
-            // TODO
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | movss xmm0, xmm(reg1)
+            } else {
+                | reads xmm0, in.arg1
+            }
+            platformWriteAndEvictVolatile(state);
+            | mov64 rax, (const intptr_t)(&logf)
+            | call rax
+            | sub rsp, 16  // remain 16-byte aligned for call to logf
+            | movss dword [rsp], xmm0
+            | reads xmm0, in.arg2
+            | mov64 rax, (const intptr_t)(&logf)
+            | call rax
+            | movss xmm1, dword [rsp]
+            | add rsp, 16
+            | divss xmm1, xmm0
+            if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
+                | movss xmm(reg3), xmm1
+                notifyRegisterWritten(state, reg3, 1);
+            } else {
+                | writes in.arg3, xmm1
+            }
             break;
         case LMNT_OP_LN:
             | extern1 logf, 0, in.arg3, 0, reg3

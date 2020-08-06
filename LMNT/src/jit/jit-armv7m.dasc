@@ -716,7 +716,29 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | mathv1serial vabs.f32
             break;
         case LMNT_OP_LOG:
-            // TODO
+            if (acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, 0)) {
+                | vmov.f32 s0, s(reg1)
+            }
+            platformWriteAndEvictVolatile(state);
+            |.rodata
+            |1:
+            | .long (intptr_t)(&logf)
+            |.code
+            | ldr r1, <1
+            | blx r1
+            | vpush {s0-s0}
+            | reads 0, in.arg2
+            | ldr r1, <1
+            | blx r1
+            | vpop {s1-s1}
+            if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
+                | vdiv.f32 s(reg3), s1, s0
+                notifyRegisterWritten(state, reg3, 1);
+            } else {
+                | vdiv.f32 s1, s1, s0
+                | writes in.arg3, 1
+            }
+            ||rmode = RMODE_UNKNOWN;
             break;
         case LMNT_OP_LN:
             | extern1 logf, 0, in.arg3, reg3
