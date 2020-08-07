@@ -32,7 +32,7 @@ namespace Element.AST
         /// Enumerates top-level and nested declarations that match the filter, resolving them to IValues.
         /// Will not recurse into function scopes.
         /// </summary>
-        public static Result<List<ValueWithLocation>> EnumerateValues(this IDeclarationScope declarationScope, Context context, Predicate<Declaration> declarationFilter = null, Predicate<IValue> resolvedValueFilter = null)
+        public static Result<List<ValueWithLocation>> EnumerateValues(this IDeclarationScope declarationScope, Context context, Predicate<Declaration> declarationFilter = null, Predicate<ValueWithLocation> resolvedValueFilter = null)
         {
             var builder = new ResultBuilder<List<ValueWithLocation>>(context, new List<ValueWithLocation>());
             var idStack = new Stack<Identifier>();
@@ -51,7 +51,8 @@ namespace Element.AST
                         {
                             void AddResolvedValueToResults(IValue v)
                             {
-                                if (resolvedValueFilter?.Invoke(v) ?? true) builder.Result.Add(new ValueWithLocation(idStack.Reverse().ToArray(), v));
+                                var resolvedValue = new ValueWithLocation(idStack.Reverse().ToArray(), v);
+                                if (resolvedValueFilter?.Invoke(resolvedValue) ?? true) builder.Result.Add(resolvedValue);
                             }
 
                             builder.Append(decl.Resolve(containingScope, context).Then(AddResolvedValueToResults));

@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
 
     <PackageId>Element.NET</PackageId>
-    <PackageVersion>1.0.0-alpha.23</PackageVersion>
+    <PackageVersion>1.0.0-alpha.24</PackageVersion>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Authors>Ultraleap</Authors>
     <Company>Ultraleap</Company>
@@ -23,7 +23,7 @@
     <PackageReference Include="Tomlyn" Version="0.1.2" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\Common\**" PackagePath="contentFiles\any\any;content" CopyToOutputDirectory="Always" PackageCopyToOutput="true" />
+    <Content Include="..\ContentFiles\**" PackagePath="contentFiles\any\any;content" CopyToOutputDirectory="Always" PackageCopyToOutput="true" />
   </ItemGroup>
   <ItemGroup>
     <_UnmanagedRegistrationCache Remove="obj\Element.NET.csproj.UnmanagedRegistration.cache" />

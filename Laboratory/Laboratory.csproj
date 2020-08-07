@@ -26,8 +26,6 @@
     <Content Include="Alchemist.runsettings">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Remove="Tests\L0-Parsing\Declarations\Structs\MissingTerminalOrScope-fail.ele" />
-    <None Remove="Tests\L0-Parsing\Declarations\Functions\Declaration\TerminalMissing-fail.ele" />
   </ItemGroup>
   
   <ItemGroup>
