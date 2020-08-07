@@ -17,5 +17,5 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_extcall(lmnt_ictx* ctx, lmnt_offset deflo, lm
 
     lmnt_value* const eargs = &ctx->stack[stack_pos];
     lmnt_value* const ervals = &ctx->stack[stack_pos + extcall->args_count];
-    return extcall->function(ctx, eargs, extcall->args_count, ervals, extcall->rvals_count);
+    return extcall->function(ctx, extcall, eargs, ervals);
 }
