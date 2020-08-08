@@ -112,17 +112,15 @@ static inline lmnt_validation_result validate_operand_immediate(const lmnt_archi
 
 static inline lmnt_validation_result validate_operand_dataload_section(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg1, size_t constants_count, size_t rw_stack_count)
 {
-    lmnt_offset sec_count;
-    lmnt_result sresult = lmnt_get_data_sections_count(archive, &sec_count);
-    return (sresult == LMNT_OK && arg1 < sec_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
+    lmnt_offset sec_count = validated_get_data_sections_count(archive);
+    return (arg1 < sec_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
 static inline lmnt_validation_result validate_operand_dataload_imm(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset size, size_t constants_count, size_t rw_stack_count)
 {
     LMNT_V_OK_OR_RETURN(validate_operand_dataload_section(archive, def, arg1, constants_count, rw_stack_count));
-    const lmnt_data_section* sec;
-    lmnt_result sresult = lmnt_get_data_section(archive, arg1, &sec);
-    return (sresult == LMNT_OK && (lmnt_loffset)arg2 + (lmnt_loffset)size <= sec->count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
+    const lmnt_data_section* sec = validated_get_data_section(archive, arg1);
+    return ((lmnt_loffset)arg2 + (lmnt_loffset)size <= sec->count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
 static inline lmnt_validation_result validate_operand_defptr(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, lmnt_offset stack, size_t constants_count, size_t rw_stack_count, lmnt_offset* defstack, size_t defstack_count)
@@ -335,7 +333,7 @@ static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, l
 }
 
 
-lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, size_t memory_size, size_t* stack_count)
+lmnt_validation_result lmnt_archive_validate(lmnt_archive* archive, size_t memory_size, size_t* stack_count)
 {
     if (archive->size < sizeof(lmnt_archive_header))
         return LMNT_VERROR_HEADER_MAGIC;
@@ -399,5 +397,6 @@ lmnt_validation_result lmnt_archive_validate(const lmnt_archive* archive, size_t
     if (stack_count)
         *stack_count = total_stack_count;
 
+    archive->flags |= LMNT_ARCHIVE_VALIDATED;
     return LMNT_VALIDATION_OK;
 }
