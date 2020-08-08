@@ -1,6 +1,6 @@
 #include "CUnit/CUnitCI.h"
 #include "lmnt/interpreter.h"
-#include "helpers.h"
+#include "testhelpers.h"
 #include <stdio.h>
 #include <stdbool.h>
 
