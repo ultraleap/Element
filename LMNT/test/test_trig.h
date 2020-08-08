@@ -17,7 +17,7 @@ static void test_sin(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_SIN, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -68,7 +68,7 @@ static void test_cos(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_COS, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -119,7 +119,7 @@ static void test_tan(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_TAN, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -170,7 +170,7 @@ static void test_asin(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASIN, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -221,7 +221,7 @@ static void test_acos(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ACOS, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -272,7 +272,7 @@ static void test_atan(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ATAN, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -319,7 +319,7 @@ static void test_atan2(void)
     archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ATAN2, 0x00, 0x01, 0x02)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -378,7 +378,7 @@ static void test_sincos(void)
     archive a = create_archive_array("test", 1, 2, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_SINCOS, 0x00, 0x01, 0x02)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
