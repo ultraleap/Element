@@ -18,8 +18,8 @@ namespace Element.AST
         IReadOnlyList<Identifier> Members { get; }
         Result<bool> MatchesConstraint(IValue value, Context context);
         Result<IValue> DefaultValue(Context context);
-        void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, Context context);
-        Result<IValue> Deserialize(Func<Element.Expression> nextValue, Context context);
+        void Serialize(ResultBuilder<List<Element.Instruction>> resultBuilder, Context context);
+        Result<IValue> Deserialize(Func<Element.Instruction> nextValue, Context context);
     }
 
     public abstract class Value : IValue
@@ -40,8 +40,8 @@ namespace Element.AST
         public virtual Result<bool> MatchesConstraint(IValue value, Context context) => context.Trace(MessageCode.NotConstraint, $"'{this}' cannot be used as a port annotation, it is not a constraint");
         
         public virtual Result<IValue> DefaultValue(Context context) => context.Trace(MessageCode.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
-        public virtual void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, Context context) => resultBuilder.Append(MessageCode.SerializationError, $"'{this}' is not serializable");
-        public virtual Result<IValue> Deserialize(Func<Element.Expression> nextValue, Context context) => context.Trace(MessageCode.SerializationError, $"'{this}' cannot be deserialized");
+        public virtual void Serialize(ResultBuilder<List<Element.Instruction>> resultBuilder, Context context) => resultBuilder.Append(MessageCode.SerializationError, $"'{this}' is not serializable");
+        public virtual Result<IValue> Deserialize(Func<Element.Instruction> nextValue, Context context) => context.Trace(MessageCode.SerializationError, $"'{this}' cannot be deserialized");
     }
 
     public static class ValueExtensions
@@ -65,9 +65,9 @@ namespace Element.AST
                        : context.Trace(MessageCode.ArgumentOutOfRange, $"Cannot access member {index} - '{value}' has {members.Count} members");
         }
 
-        public static Result<List<Element.Expression>> Serialize(this IValue value, Context context)
+        public static Result<List<Element.Instruction>> Serialize(this IValue value, Context context)
         {
-            var result = new ResultBuilder<List<Element.Expression>>(context, new List<Element.Expression>());
+            var result = new ResultBuilder<List<Element.Instruction>>(context, new List<Element.Instruction>());
             value.Serialize(result, context);
             return result.ToResult();
         }
@@ -84,12 +84,12 @@ namespace Element.AST
             }, context).Map(_ => size); // Discard the value and just check the size
         }
 
-        public static Result<IValue> Deserialize(this IValue value, IEnumerable<Element.Expression> expressions, Context context) =>
-            value.Deserialize(new Queue<Element.Expression>(expressions).Dequeue, context);
+        public static Result<IValue> Deserialize(this IValue value, IEnumerable<Element.Instruction> expressions, Context context) =>
+            value.Deserialize(new Queue<Element.Instruction>(expressions).Dequeue, context);
 
-        public static Result<float[]> ToFloatArray(this IEnumerable<Element.Expression> expressions, Context context)
+        public static Result<float[]> ToFloatArray(this IEnumerable<Element.Instruction> expressions, Context context)
         {
-            var exprs = expressions as Element.Expression[] ?? expressions.ToArray();
+            var exprs = expressions as Element.Instruction[] ?? expressions.ToArray();
             var result = new float[exprs.Length];
             for (var i = 0; i < result.Length; i++)
             {

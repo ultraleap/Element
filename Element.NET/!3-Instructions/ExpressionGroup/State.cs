@@ -3,14 +3,14 @@ namespace Element
 	using System;
 	using System.Collections.Generic;
 
-	public class State : Expression
+	public class State : Instruction
 	{
-		public override IEnumerable<Expression> Dependent => new[] {InitialValue};
+		public override IEnumerable<Instruction> Dependent => new[] {InitialValue};
 		public int Id { get; }
 		public int Scope { get; }
-		public Expression InitialValue { get; }
+		public Instruction InitialValue { get; }
 
-		public State(int id, int scope, Expression initialValue)
+		public State(int id, int scope, Instruction initialValue)
 		{
 			Id = id;
 			Scope = scope;
@@ -20,7 +20,7 @@ namespace Element
 		public override string SummaryString => $"$State<{Id}>";
 		public override int GetHashCode() => GetType().GetHashCode() ^ Id.GetHashCode() ^ Scope.GetHashCode();
 
-		public override bool Equals(Expression other)
+		public override bool Equals(Instruction other)
 		{
 			if (this == other) return true;
 			return other is State bOther && bOther.Id == Id && bOther.Scope == Scope;

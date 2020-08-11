@@ -6,9 +6,9 @@ namespace Element
 	using System.Collections.Generic;
 
 	/// <summary>
-	/// 2-arity expression, i.e. f(a, b) = expr
+	/// 2-arity function, i.e. f(a, b) = expr
 	/// </summary>
-	public class Binary : Expression
+	public class Binary : Instruction
 	{
 		public enum Op
 		{
@@ -73,7 +73,7 @@ namespace Element
 				})
 			};
 
-		public static Expression CreateAndOptimize(Op op, Expression opA, Expression opB)
+		public static Instruction CreateAndOptimize(Op op, Instruction opA, Instruction opB)
 		{
             Constant NaN() => _boolOps.Contains(op) ? Constant.BoolNaN : Constant.NaN;
             
@@ -118,7 +118,7 @@ namespace Element
             return new Binary(op, opA, opB);
 		}
 
-		private Binary(Op operation, Expression opA, Expression opB)
+		private Binary(Op operation, Instruction opA, Instruction opB)
 			: base(operation switch
 			{
 				Op.And => BoolStruct.Instance,
@@ -138,15 +138,15 @@ namespace Element
 		}
 
 		public Op Operation { get; }
-		public Expression OpA { get; }
-		public Expression OpB { get; }
+		public Instruction OpA { get; }
+		public Instruction OpB { get; }
 
-		public override IEnumerable<Expression> Dependent => new[] {OpA, OpB};
+		public override IEnumerable<Instruction> Dependent => new[] {OpA, OpB};
 
 		public override string SummaryString => $"{Operation}({OpA}, {OpB})";
 		public override int GetHashCode() => (int)Operation ^ OpA.GetHashCode() ^ OpB.GetHashCode();
 
-		public override bool Equals(Expression other) =>
+		public override bool Equals(Instruction other) =>
 			// ReSharper disable once PossibleUnintendedReferenceComparison
 			this == other || other is Binary bOther
 			&& bOther.Operation == Operation

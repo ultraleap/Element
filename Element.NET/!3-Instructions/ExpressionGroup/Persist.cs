@@ -5,16 +5,16 @@
 	using System.Collections.ObjectModel;
 	using System.Linq;
 
-	public class Persist : ExpressionGroup
+	public class Persist : InstructionGroup
 	{
 		public override int Size => State.Count;
 		public ReadOnlyCollection<State> State { get; }
-		public ReadOnlyCollection<Expression> NewValue { get; }
+		public ReadOnlyCollection<Instruction> NewValue { get; }
 
-		public Persist(IEnumerable<Expression> initialValue, NewValueFunction newValue)
+		public Persist(IEnumerable<Instruction> initialValue, NewValueFunction newValue)
 		{
 			State = initialValue.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
-			NewValue = new ReadOnlyCollection<Expression>(newValue(State).ToArray());
+			NewValue = new ReadOnlyCollection<Instruction>(newValue(State).ToArray());
 			if (NewValue.Any(e => e == null))
 			{
 				throw new ArgumentException("An operand was null");
@@ -30,13 +30,13 @@
 			if (scope != null)
 			{
 				State = initialValue.Select((v, i) => new State(i, scope.Id + 1, v)).ToList().AsReadOnly();
-				NewValue = new ReadOnlyCollection<Expression>(newValue(State).ToArray());
+				NewValue = new ReadOnlyCollection<Instruction>(newValue(State).ToArray());
 			}
 		}
 
-		public override IEnumerable<Expression> Dependent => State.Concat(NewValue);
+		public override IEnumerable<Instruction> Dependent => State.Concat(NewValue);
 
 		protected override string ToStringInternal() => $"Persist({StateListJoin(State)}; {ListJoinToString(NewValue)})";
-		// public override bool Equals(Expression other) => this == other || other is Persist && other.ToString() == ToString();
+		// public override bool Equals(Instruction other) => this == other || other is Persist && other.ToString() == ToString();
 	}
 }*/

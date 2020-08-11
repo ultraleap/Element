@@ -7,44 +7,44 @@ namespace Element
 	using System.Linq;
 
 	/// <summary>
-	/// A looped repeating expression. Each loop iteration is an expression group item.
+	/// A group representing repeated iteration until a condition is not satisfied. Each iteration is a group item.
 	/// </summary>
-	public class Loop : ExpressionGroup
+	public class Loop : InstructionGroup
 	{
 		public override int Size => State.Count;
 		public ReadOnlyCollection<State> State { get; }
-		public Expression Condition { get; }
-		public ReadOnlyCollection<Expression> Body { get; }
+		public Instruction Condition { get; }
+		public ReadOnlyCollection<Instruction> Body { get; }
 
-		private class DummyExpression : Expression
+		private class DummyInstruction : Instruction
 		{
-			public static DummyExpression Instance { get; } = new DummyExpression();
-			public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
+			public static DummyInstruction Instance { get; } = new DummyInstruction();
+			public override IEnumerable<Instruction> Dependent => Array.Empty<Instruction>();
 			public override string SummaryString => "<dummy>";
 		}
 
-		private static ReadOnlyCollection<State> ToState(IEnumerable<Expression> exprs) => exprs.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
+		private static ReadOnlyCollection<State> ToState(IEnumerable<Instruction> exprs) => exprs.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
 
-		public static Result<ExpressionGroup> CreateAndOptimize(IReadOnlyCollection<Expression> initialSerialized, ConditionFunction conditionFunc, IterationFunction bodyFunc, Context context) =>
-			conditionFunc(ToState(Enumerable.Repeat(DummyExpression.Instance, initialSerialized.Count)))
+		public static Result<InstructionGroup> CreateAndOptimize(IReadOnlyCollection<Instruction> initialSerialized, ConditionFunction conditionFunc, IterationFunction bodyFunc, Context context) =>
+			conditionFunc(ToState(Enumerable.Repeat(DummyInstruction.Instance, initialSerialized.Count)))
 				.Bind(dummyConditionResult =>
 				{
-					// Check the condition function with non-constant dummy expressions
+					// Check the condition function with non-constant dummy instructions
 					if (dummyConditionResult is Constant c)
 					{
 						// ReSharper disable once PossibleUnintendedReferenceComparison
 						if (c == Constant.True) return context.Trace(MessageCode.InfiniteLoop, "Loop condition function always returns true");
-						//if (c == Constant.False) return new BasicExpressionGroup(initialSerialized); // TODO: Implement compilation of BasicExpressionGroup and re-enable this, warn that loop is redundant
+						//if (c == Constant.False) return new BasicInstructionGroup(initialSerialized); // TODO: Implement compilation of BasicInstructionGroup and re-enable this, warn that loop is redundant
 					}
 
 					var initialState = ToState(initialSerialized);
 
-					Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> EvaluateIteration(IReadOnlyCollection<Expression> iterationState) =>
-						bodyFunc(iterationState!).Map(bodyExprs => new ReadOnlyCollection<Expression>(bodyExprs.ToArray()))
+					Result<(ReadOnlyCollection<Instruction> Body, Instruction Condition)> EvaluateIteration(IReadOnlyCollection<Instruction> iterationState) =>
+						bodyFunc(iterationState!).Map(bodyExprs => new ReadOnlyCollection<Instruction>(bodyExprs.ToArray()))
 						                        .Accumulate(() => conditionFunc(iterationState!))
 						                        .Assert(e => iterationState!.Count == e.Item1.Count, "Iteration state counts are different");
 
-					Result<(ReadOnlyCollection<Expression> Body, Expression Condition)> IncrementScopeIndexIfAnyNestedLoops((ReadOnlyCollection<Expression> Body, Expression Condition) e)
+					Result<(ReadOnlyCollection<Instruction> Body, Instruction Condition)> IncrementScopeIndexIfAnyNestedLoops((ReadOnlyCollection<Instruction> Body, Instruction Condition) e)
 					{
 						var (body, condition) = e;
 
@@ -63,13 +63,13 @@ namespace Element
 						return e;
 					}
 
-					Result<ExpressionGroup> UnrollCompileTimeConstantLoop((ReadOnlyCollection<Expression> Body, Expression Condition) e)
+					Result<InstructionGroup> UnrollCompileTimeConstantLoop((ReadOnlyCollection<Instruction> Body, Instruction Condition) e)
 					{
 						var (body, condition) = e;
-						// TODO: Implement compilation of BasicExpressionGroup and re-enable this
+						// TODO: Implement compilation of BasicInstructionGroup and re-enable this
 						/*if (initialSerialized.All(e => e is Constant))
 						{
-							var builder = new ResultBuilder<ExpressionGroup>(context, null);
+							var builder = new ResultBuilder<InstructionGroup>(context, null);
 							var iterationCount = 1; // We already did first iteration above
 							while (condition == Constant.True)
 							{
@@ -91,12 +91,12 @@ namespace Element
 								}
 							}
 
-							builder.Result = new BasicExpressionGroup(body);
+							builder.Result = new BasicInstructionGroup(body);
 							return builder.ToResult();
 						}
 
 						NotCompileTimeConstant:*/
-						return new Result<ExpressionGroup>(new Loop(initialState, condition, body));
+						return new Result<InstructionGroup>(new Loop(initialState, condition, body));
 					}
 
 					return EvaluateIteration(initialState)
@@ -104,16 +104,16 @@ namespace Element
 					       .Bind(UnrollCompileTimeConstantLoop);
 				});
 
-		private Loop(ReadOnlyCollection<State> state, Expression condition, ReadOnlyCollection<Expression> body)
+		private Loop(ReadOnlyCollection<State> state, Instruction condition, ReadOnlyCollection<Instruction> body)
 		{
 			State = state;
 			Condition = condition;
 			Body = body;
 		}
 
-		public override IEnumerable<Expression> Dependent => State.Concat(Body).Concat(new[] {Condition});
+		public override IEnumerable<Instruction> Dependent => State.Concat(Body).Concat(new[] {Condition});
 
 		public override string SummaryString => $"Loop({StateListJoin(State)}; {Condition}; {ListJoinToString(Body)})";
-		// public override bool Equals(Expression other) => this == other || other is Loop && other.ToString() == ToString();
+		// public override bool Equals(Instruction other) => this == other || other is Loop && other.ToString() == ToString();
 	}
 }

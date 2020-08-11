@@ -43,7 +43,7 @@ namespace Element.AST
             public override IValue ReturnConstraint { get; }
 
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-	            arguments[0] is Element.Expression index
+	            arguments[0] is Element.Instruction index
 		                               ? new Result<IValue>(ListElement.Create(index,
 		                                                                       _elements,
 		                                                                       _elements[0].IsFunction() ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort},
@@ -53,17 +53,17 @@ namespace Element.AST
 
         private class ListElement : Function
         {
-            public static IValue Create(Element.Expression index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputConstraints, IValue outputConstraint) =>
+            public static IValue Create(Element.Instruction index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputConstraints, IValue outputConstraint) =>
                 index switch
                 {
 	                Constant constantIndex => elements[(int) constantIndex.Value],
-	                {} indexExpr => elements.All(e => e is Element.Expression)
-		                                ? (IValue) Mux.CreateAndOptimize(indexExpr, elements.Cast<Element.Expression>())
+	                {} indexExpr => elements.All(e => e is Element.Instruction)
+		                                ? (IValue) Mux.CreateAndOptimize(indexExpr, elements.Cast<Element.Instruction>())
 		                                : new ListElement(index, elements, inputConstraints, outputConstraint),
 	                _ => throw new ArgumentNullException(nameof(index))
                 };
 
-            private ListElement(Element.Expression index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputPorts, IValue output)
+            private ListElement(Element.Instruction index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputPorts, IValue output)
             {
                 _index = index;
                 _elements = elements;
@@ -71,7 +71,7 @@ namespace Element.AST
                 ReturnConstraint = output;
             }
 
-            private readonly Element.Expression _index;
+            private readonly Element.Instruction _index;
             private readonly IReadOnlyList<IValue> _elements;
             public override string SummaryString => $"List[{_index}]";
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }

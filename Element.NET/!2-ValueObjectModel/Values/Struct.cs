@@ -92,7 +92,7 @@ namespace Element.AST
 
         public override IReadOnlyList<Identifier> Members => _resolvedBlock.Members;
 
-        public override void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, Context context)
+        public override void Serialize(ResultBuilder<List<Element.Instruction>> resultBuilder, Context context)
         {
             if (DeclaringStruct.IsIntrinsic<ListStruct>())
             {
@@ -104,7 +104,7 @@ namespace Element.AST
             _resolvedBlock.Serialize(resultBuilder, context);
         }
 
-        public override Result<IValue> Deserialize(Func<Element.Expression> nextValue, Context context) =>
+        public override Result<IValue> Deserialize(Func<Element.Instruction> nextValue, Context context) =>
             _resolvedBlock.DeserializeMembers(nextValue, context)
                           .Map(deserializedFields => (IValue) new StructInstance(DeclaringStruct, deserializedFields));
     }

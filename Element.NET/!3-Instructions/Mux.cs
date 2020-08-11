@@ -6,13 +6,13 @@ namespace Element
 	using System.Linq;
 
 	/// <summary>
-	/// Multiplexing expression, picks a result from many arguments based on passed in selector function
+	/// Multiplexing instruction, picks a result from many arguments based on passed in selector function
 	/// </summary>
-	public class Mux : Expression
+	public class Mux : Instruction
 	{
-		public static Expression CreateAndOptimize(Expression selector, IEnumerable<Expression> operands)
+		public static Instruction CreateAndOptimize(Instruction selector, IEnumerable<Instruction> operands)
 		{
-			var options = operands as Expression[] ?? operands.ToArray();
+			var options = operands as Instruction[] ?? operands.ToArray();
 			if (options.Length == 1 || options.All(o => o.Equals(options[0]))) return options[0];
 			if (selector is Constant index)
 			{
@@ -26,20 +26,20 @@ namespace Element
 			return new Mux(selector, options);
 		}
 		
-		private Mux(Expression selector, IEnumerable<Expression> operands)
+		private Mux(Instruction selector, IEnumerable<Instruction> operands)
 		{
 			Selector = selector ?? throw new ArgumentNullException(nameof(selector));
-			Operands = new ReadOnlyCollection<Expression>(operands.ToArray());
+			Operands = new ReadOnlyCollection<Instruction>(operands.ToArray());
 			if (Operands.Any(o => o == null))
 			{
 				throw new ArgumentException("An operand was null");
 			}
 		}
 
-		public Expression Selector { get; }
-		public ReadOnlyCollection<Expression> Operands { get; }
+		public Instruction Selector { get; }
+		public ReadOnlyCollection<Instruction> Operands { get; }
 
-		public override IEnumerable<Expression> Dependent => Operands.Concat(new[] {Selector});
+		public override IEnumerable<Instruction> Dependent => Operands.Concat(new[] {Selector});
 		public override string SummaryString => $"[{ListJoinToString(Operands)}]:{Selector}";
 
 		private int? _hashCode;
@@ -60,7 +60,7 @@ namespace Element
 			return _hashCode.Value;
 		}
 
-		public override bool Equals(Expression other)
+		public override bool Equals(Instruction other)
 		{
 			if (this == other) return true;
 			if (!(other is Mux bOther) || bOther.Operands.Count != Operands.Count || !bOther.Selector.Equals(Selector))

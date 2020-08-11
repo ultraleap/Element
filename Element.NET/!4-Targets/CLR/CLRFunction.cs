@@ -4,7 +4,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Element.AST;
-using ElementExpression = Element.Expression;
 using LinqExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
@@ -67,19 +66,19 @@ namespace Element.CLR
 		{
 			public List<LinqExpression> Statements;
 			public List<ParameterExpression> Variables;
-			public Dictionary<CachedExpression, ParameterExpression> Cache;
-			public Dictionary<ExpressionGroup, LinqExpression[]> GroupCache;
+			public Dictionary<CachedInstruction, ParameterExpression> Cache;
+			public Dictionary<InstructionGroup, LinqExpression[]> GroupCache;
 			public Func<State, LinqExpression> ResolveState;
 			//public List<float> StateValues;
 			//public ParameterExpression StateArray;
-			public Dictionary<ElementExpression, CachedExpression> CSECache;
+			public Dictionary<Instruction, CachedInstruction> CSECache;
 			//public Dictionary<ElementExpression, ElementExpression> ConstantCache;
 		}
 
-		private static LinqExpression Compile(ElementExpression value, CompilationData data)
+		private static LinqExpression Compile(Instruction value, CompilationData data)
 		{
-			data.Cache ??= new Dictionary<CachedExpression, ParameterExpression>();
-			data.GroupCache ??= new Dictionary<ExpressionGroup, LinqExpression[]>();
+			data.Cache ??= new Dictionary<CachedInstruction, ParameterExpression>();
+			data.GroupCache ??= new Dictionary<InstructionGroup, LinqExpression[]>();
 			switch (value)
 			{
 				case ICLRExpression s:
@@ -132,7 +131,7 @@ namespace Element.CLR
 					}
 
 					break;
-				case CachedExpression v:
+				case CachedInstruction v:
 					if (!data.Cache.TryGetValue(v, out var varExpr))
 					{
 						var result = Compile(v.Value, data);
@@ -162,11 +161,11 @@ namespace Element.CLR
 				case State s:
 					if (data.ResolveState == null)
 					{
-						throw new Exception("Tried to compile a State expression outside of an ExpressionGroup");
+						throw new Exception("Tried to compile a State expression outside of an InstructionGroup");
 					}
 
 					return data.ResolveState(s);
-				case ExpressionGroupElement groupElement:
+				case InstructionGroupElement groupElement:
 					if (!data.GroupCache.TryGetValue(groupElement.Group, out var groupList))
 					{
 						data.GroupCache.Add(groupElement.Group, groupList = CompileGroup(groupElement.Group, data));
@@ -178,7 +177,7 @@ namespace Element.CLR
 			throw new Exception("Unknown expression " + value);
 		}
 
-		private static LinqExpression[] CompileGroup(ExpressionGroup group, CompilationData data)
+		private static LinqExpression[] CompileGroup(InstructionGroup group, CompilationData data)
 		{
 			switch (group)
 			{
@@ -222,7 +221,7 @@ namespace Element.CLR
 					data.ResolveState = s => stateList[s.Id];
 					var parentStatements = data.Statements;
 					// Make a new cache that copies in the old one, but won't leak State expressions
-					data.Cache = new Dictionary<CachedExpression, ParameterExpression>(data.Cache);
+					data.Cache = new Dictionary<CachedInstruction, ParameterExpression>(data.Cache);
 
 					// Create a new statements list to put in the loop body
 					var s1 = data.Statements = new List<LinqExpression>();
@@ -286,7 +285,7 @@ namespace Element.CLR
 					          var (defaultValues, argSizes) = tuple;
 					          var totalSerializedSize = argSizes.Sum();
 
-					          // Allocate the array and make an expression for it
+					          // Allocate the array and make an instructions for it
 					          var array = new float[totalSerializedSize];
 					          var arrayObjectExpr = LinqExpression.Constant(array);
 
@@ -294,14 +293,14 @@ namespace Element.CLR
 					                           // For each array index, create an ArrayIndex expression
 					                           .Select(i => NumberConverter.Instance
 					                                                       .LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), null!, context)
-					                                                       .Cast<Expression>(context))
+					                                                       .Cast<Instruction>(context))
 					                           // Aggregate enumerable of results into single result
 					                           .ToResultArray()
 					                           .Bind(expressions =>
 					                           {
 						                           // Create a func for accessing the array items
 						                           var flattenedValIdx = 0;
-						                           Expression NextValue() => expressions[flattenedValIdx++];
+						                           Instruction NextValue() => expressions[flattenedValIdx++];
 						                           return defaultValues.Select(v => v.Deserialize(NextValue, context))
 						                                               .BindEnumerable(arguments => function.Call(arguments.ToArray(), context));
 					                           })
@@ -329,7 +328,7 @@ namespace Element.CLR
                 return context.Trace(MessageCode.InvalidBoundaryFunction, $"{delegateType} cannot have out parameters and must have non-void return type");
             }
             
-            // Create parameter expressions
+            // Create parameter expressions for input parameters and the functions return
             var parameterExpressions = delegateParameters.Select(p => LinqExpression.Parameter(p.ParameterType, p.Name)).ToArray();
             var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
@@ -358,8 +357,8 @@ namespace Element.CLR
                 //StateValues = new List<float>(),
                 Statements = new List<LinqExpression>(),
                 Variables = new List<ParameterExpression>(),
-                Cache = new Dictionary<CachedExpression, ParameterExpression>(),
-                CSECache = new Dictionary<ElementExpression, CachedExpression>(),
+                Cache = new Dictionary<CachedInstruction, ParameterExpression>(),
+                CSECache = new Dictionary<Instruction, CachedInstruction>(),
                 //ConstantCache = new Dictionary<ElementExpression, ElementExpression>()
             };
 
@@ -380,12 +379,12 @@ namespace Element.CLR
 					return value.Serialize(context)
 					         .Bind(serialized => serialized.Count switch
 					         {
-						         1 when IsPrimitiveElementType(outputType) => Compile(serialized[0].CacheExpressions(data.CSECache), data),
+						         1 when IsPrimitiveElementType(outputType) => Compile(serialized[0].Cache(data.CSECache), data),
 						         _ => boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context)
 					         });
 				}
 
-				// Else we try to use a boundary converter to convert to serializable expressions
+				// Else we try to use a boundary converter to convert to serializable instructions
 				// TODO: Move circular checks to boundary converters
 				detectCircular.Push(value);
 				var retval = boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context);

@@ -26,8 +26,8 @@ namespace Element
 			{Unary.Op.ASin, "asin"},
 		};
 
-		private static void Compile(Expression expression, StringBuilder output,
-		                            Dictionary<CachedExpression, StringBuilder> cache)
+		private static void Compile(Instruction expression, StringBuilder output,
+		                            Dictionary<CachedInstruction, StringBuilder> cache)
 		{
 			switch (expression)
 			{
@@ -55,7 +55,7 @@ namespace Element
 					Compile(u.Operand, output, cache);
 					output.Append(')');
 					break;
-				case CachedExpression v:
+				case CachedInstruction v:
 					if (!cache.TryGetValue(v, out var _))
 					{
 						var tmp = new StringBuilder();
@@ -84,15 +84,15 @@ namespace Element
 			}
 		}
 
-		private class SingleInput : Expression
+		private class SingleInput : Instruction
 		{
 			public SingleInput(string name, int? index) => Name = name;
 			public int? Index { get; }
 
 			public string Name { get; }
 
-			// public override bool Equals(Expression other) => this == other;
-			public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
+			// public override bool Equals(Instruction other) => this == other;
+			public override IEnumerable<Instruction> Dependent => Array.Empty<Instruction>();
 			protected override string ToStringInternal() => Index.HasValue ? $"{Name}[{Index}]" : Name;
 		}
 
@@ -138,7 +138,7 @@ namespace Element
 			}
 
 			var arguments = argumentsList.ToArray();
-			var outputs = new List<(string, Expression[])>();
+			var outputs = new List<(string, Instruction[])>();
 			foreach (var port in function.Outputs)
 			{
 				if ((argumentsList.Count + outputs.Count) > 0)
@@ -154,8 +154,8 @@ namespace Element
 			sb.Append(")\n{");
 
 			// Function body + compilation
-			var cacheList = new Dictionary<Expression, CachedExpression>();
-			var cacheResult = new Dictionary<CachedExpression, StringBuilder>();
+			var cacheList = new Dictionary<Instruction, CachedInstruction>();
+			var cacheResult = new Dictionary<CachedInstruction, StringBuilder>();
 			var outputStrings = new StringBuilder();
 			foreach (var (name, expressions) in outputs)
 			{

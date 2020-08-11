@@ -25,6 +25,6 @@ namespace Element.AST
         public Element.Unary.Op Operation { get; }
         public override Identifier Identifier { get; }
         public bool IsVariadic => false;
-        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => Element.Unary.CreateAndOptimize(Operation, (Element.Expression) arguments[0]);
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => Element.Unary.CreateAndOptimize(Operation, (Element.Instruction) arguments[0]);
     }
 }

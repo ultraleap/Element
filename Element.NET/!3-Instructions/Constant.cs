@@ -6,7 +6,7 @@ using Lexico;
 
 namespace Element
 {
-    public class Constant : Expression, IExpressionChainStart
+    public class Constant : Instruction, IExpressionChainStart
     {
         // ReSharper disable once UnusedMember.Global - Used by Lexico
         public Constant() {}
@@ -35,11 +35,11 @@ namespace Element
         public static Constant PositiveInfinity { get; } = new Constant(float.PositiveInfinity);
         public static Constant NegativeInfinity { get; } = new Constant(float.NegativeInfinity);
         
-        public override IEnumerable<Expression> Dependent { get; } = Array.Empty<Expression>();
+        public override IEnumerable<Instruction> Dependent { get; } = Array.Empty<Instruction>();
         public override string TypeOf => StructImplementation.Identifier.String;
         public override string SummaryString => NormalizedFormString;
         public override string NormalizedFormString => Value.ToString(CultureInfo.CurrentCulture);
-        public override bool Equals(Expression other) => (other as Constant)?.Value == Value;
+        public override bool Equals(Instruction other) => (other as Constant)?.Value == Value;
         // ReSharper disable once NonReadonlyMemberInGetHashCode
         public override int GetHashCode() => new {Value, Type = StructImplementation}.GetHashCode();
         public string TraceString => NormalizedFormString;

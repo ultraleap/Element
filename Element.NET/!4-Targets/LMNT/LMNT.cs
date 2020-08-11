@@ -21,18 +21,18 @@ namespace Element
 			}
 		}
 
-		private class SingleInput : Expression
+		private class SingleInput : Instruction
 		{
 			public SingleInput(int slot) => Slot = slot;
 			public int Slot { get; }
-			public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
+			public override IEnumerable<Instruction> Dependent => Array.Empty<Instruction>();
 
-			// public override bool Equals(Expression other) => (other as SingleInput)?.Slot == Slot;
+			// public override bool Equals(Instruction other) => (other as SingleInput)?.Slot == Slot;
 
 			protected override string ToStringInternal() => $"Input{Slot}";
 		}
 
-		private static Instruction Compile(Expression expression, int dst, Func<Expression, int> getSrc)
+		private static Instruction Compile(Instruction expression, int dst, Func<Instruction, int> getSrc)
 		{
 			switch (expression)
 			{
@@ -64,7 +64,7 @@ namespace Element
 			var inputSize = 0;
 			var arguments = inputs.Select(i => i.Type.Deserialize(() => new SingleInput(inputSize++), context)).ToArray();
 
-			var cache = new Dictionary<Expression, CachedExpression>();
+			var cache = new Dictionary<Instruction, CachedInstruction>();
 			// Flatten all the outputs into one big array
 			var outputExpressions = outputs.SelectMany(o =>
 			                               {
@@ -78,7 +78,7 @@ namespace Element
 			                               .ToArray();
 			var instructions = cache.Values.OrderBy(c => c.Id).ToList();
 
-			// Now each value in outputExpressions should point directly to a CachedExpression or a ConstantExpression
+			// Now each value in outputExpressions should point directly to a CachedInstruction or a ConstantExpression
 			var constants = outputExpressions.SelectMany(e => e.AllDependent.OfType<Constant>()).Distinct().ToArray();
 			var outputSize = outputExpressions.Length;
 			var stackSize = instructions.Count + inputSize + constants.Length;
@@ -125,13 +125,13 @@ namespace Element
 				bw.Write((ushort)outputSize);
 				bw.Write((byte)0);
 
-				int getStackSlot(Expression e)
+				int getStackSlot(Instruction e)
 				{
 					switch (e)
 					{
 						case SingleInput s: return s.Slot;
 						case Constant c: return Array.IndexOf(constants, c);
-						case CachedExpression a:
+						case CachedInstruction a:
 							var outputIdx = Array.IndexOf(outputExpressions, a);
 							if (outputIdx >= 0) return outputIdx;
 							return instructions.IndexOf(a);

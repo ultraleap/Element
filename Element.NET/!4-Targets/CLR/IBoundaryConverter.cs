@@ -24,8 +24,8 @@ namespace Element.CLR
         public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, IBoundaryConverter root, Context context) =>
             parameter.Type switch
         {
-            {} t when t == typeof(bool) => new NumberExpression(LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)), BoolStruct.Instance),
-            _ => new NumberExpression(LExpression.Convert(parameter, typeof(float)))
+            {} t when t == typeof(bool) => new NumberInstruction(LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)), BoolStruct.Instance),
+            _ => new NumberInstruction(LExpression.Convert(parameter, typeof(float)))
         };
 
         public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, Context context) =>
@@ -39,18 +39,18 @@ namespace Element.CLR
                               _ => throw new InternalCompilerException($"Unhandled {nameof(ElementToLinq)} output type")
                           });
 
-        private class NumberExpression : Expression, ICLRExpression
+        private class NumberInstruction : Instruction, ICLRExpression
         {
-            public NumberExpression(LExpression parameter, IIntrinsicStructImplementation? typeOverride = default)
+            public NumberInstruction(LExpression parameter, IIntrinsicStructImplementation? typeOverride = default)
                 : base(typeOverride) =>
                 Parameter = parameter;
 
             public LExpression Parameter { get; }
-            public override IEnumerable<Expression> Dependent => Array.Empty<Expression>();
-            public LExpression Compile(Func<Expression, LExpression> compileOther) => Parameter;
+            public override IEnumerable<Instruction> Dependent => Array.Empty<Instruction>();
+            public LExpression Compile(Func<Instruction, LExpression> compileOther) => Parameter;
             public override string SummaryString => Parameter.ToString();
             // ReSharper disable once PossibleUnintendedReferenceComparison
-            public override bool Equals(Expression other) => other == this;
+            public override bool Equals(Instruction other) => other == this;
             public override int GetHashCode() => new {Parameter, InstanceTypeOverride = StructImplementation}.GetHashCode();
         }
     }
@@ -86,27 +86,26 @@ namespace Element.CLR
             context.EvaluateExpression(_elementTypeExpression)
                    .Cast<Struct>(context)
                    .Bind(structDeclaration => StructInstance.Create(structDeclaration, _elementToClrFieldMapping
-                                                                                       .Select(pair => new FieldExpression(root, parameter, pair.Value))
+                                                                                       .Select(pair => new FieldInstruction(root, parameter, pair.Value))
                                                                                        .ToArray(), context)
                                                             .Cast<IValue>(context));
 
-        private class FieldExpression : Expression, ICLRExpression
+        private class FieldInstruction : Instruction, ICLRExpression
         {
             private readonly LExpression _parameter;
             //private readonly IBoundaryConverter _root;
             private readonly string _clrField;
 
-            public FieldExpression(IBoundaryConverter root, LExpression parameter, string clrField)
+            public FieldInstruction(IBoundaryConverter root, LExpression parameter, string clrField)
             {
                 //_root = root;
                 _parameter = parameter;
                 _clrField = clrField;
-                Dependent = Array.Empty<Expression>();
+                Dependent = Array.Empty<Instruction>();
             }
 
-            public LExpression Compile(Func<Expression, LExpression> compileOther) =>
-                LExpression.PropertyOrField(_parameter, _clrField);
-            public override IEnumerable<Expression> Dependent { get; }
+            public LExpression Compile(Func<Instruction, LExpression> compileOther) => LExpression.PropertyOrField(_parameter, _clrField);
+            public override IEnumerable<Instruction> Dependent { get; }
             public override string SummaryString => $"{_parameter}.{_clrField}";
             /*public Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
                 _root.LinqToElement(LExpression.PropertyOrField(_parameter, _clrField), _root, context);*/

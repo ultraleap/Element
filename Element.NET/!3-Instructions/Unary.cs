@@ -6,9 +6,9 @@ namespace Element
 	using System.Collections.Generic;
 
 	/// <summary>
-	/// Single arity expression, i.e. f(a) = expr
+	/// Single arity functions, i.e. f(a) = expr
 	/// </summary>
-	public class Unary : Expression
+	public class Unary : Instruction
 	{
 		public enum Op
 		{
@@ -47,11 +47,11 @@ namespace Element
 			})
 		};
 
-		public static Expression CreateAndOptimize(Op op, Expression operand) => operand is Constant c
-			                                                                         ? (Expression) Evaluate(op, c.Value)
+		public static Instruction CreateAndOptimize(Op op, Instruction operand) => operand is Constant c
+			                                                                         ? (Instruction) Evaluate(op, c.Value)
 			                                                                         : new Unary(op, operand);
 		
-		private Unary(Op operation, Expression operand)
+		private Unary(Op operation, Instruction operand)
 			: base(operation switch
 			{
 				Op.Not => BoolStruct.Instance,
@@ -63,12 +63,12 @@ namespace Element
 		}
 
 		public Op Operation { get; }
-		public Expression Operand { get; }
+		public Instruction Operand { get; }
 
-		public override IEnumerable<Expression> Dependent => new[] {Operand};
+		public override IEnumerable<Instruction> Dependent => new[] {Operand};
 		public override string SummaryString => $"{Operation}({Operand})";
 		public override int GetHashCode() => (int)Operation ^ Operand.GetHashCode();
-		public override bool Equals(Expression other) =>
+		public override bool Equals(Instruction other) =>
 			// ReSharper disable once PossibleUnintendedReferenceComparison
 			this == other || other is Unary bOther
 			&& bOther.Operation == Operation

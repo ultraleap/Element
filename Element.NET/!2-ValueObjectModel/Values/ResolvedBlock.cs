@@ -44,7 +44,7 @@ namespace Element.AST
         public override IReadOnlyList<Identifier> Members { get; }
         private IScope? Parent { get; }
 
-        public override void Serialize(ResultBuilder<List<Element.Expression>> resultBuilder, Context context)
+        public override void Serialize(ResultBuilder<List<Element.Instruction>> resultBuilder, Context context)
         {
             foreach (var member in Members)
             {
@@ -53,11 +53,11 @@ namespace Element.AST
             }
         }
 
-        public override Result<IValue> Deserialize(Func<Element.Expression> nextValue, Context context) =>
+        public override Result<IValue> Deserialize(Func<Element.Instruction> nextValue, Context context) =>
             DeserializeMembers(nextValue, context)
                 .Map(memberValues => (IValue)new ResolvedBlock(memberValues.Zip(Members, (value, identifier) => (identifier, value)).ToArray(), null));
 
-        public Result<IEnumerable<IValue>> DeserializeMembers(Func<Element.Expression> nextValue, Context context) =>
+        public Result<IEnumerable<IValue>> DeserializeMembers(Func<Element.Instruction> nextValue, Context context) =>
             Members.Select(m => Index(m, context))
                    .BindEnumerable(resolvedMembers => resolvedMembers.Select(m => m.Deserialize(nextValue, context)).ToResultEnumerable());
     }
