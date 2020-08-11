@@ -8,9 +8,9 @@ namespace Element
         public Result Parse(CompilerInput compilerInput) => (Result)SourceContext.CreateAndLoad(compilerInput);
 
         public Result<float[]> Evaluate(CompilerInput compilerInput, string expression) =>
-            PersistentHost.Create(compilerInput).Bind(host => host.Evaluate(compilerInput, expression));
+            PersistentHost.Create(compilerInput.Options).Evaluate(compilerInput, expression);
 
         public Result<string> Typeof(CompilerInput input, string expression) =>
-            PersistentHost.Create(input).Bind(host => host.Typeof(input, expression));
+            PersistentHost.Create(input.Options).Typeof(input, expression);
     }
 }

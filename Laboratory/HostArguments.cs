@@ -218,9 +218,9 @@ namespace Laboratory
             {
                 var processArgs = new StringBuilder();
                 processArgs.Append($"{command} --logjson");
-                if (input.Source.ExcludePrelude) processArgs.Append(" --no-prelude ");
-                if (input.Source.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Source.Packages);
-                if (input.Source.ExtraSourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.Source.ExtraSourceFiles);
+                if (input.PreludeVersion == null) processArgs.Append(" --no-prelude ");
+                if (input.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Packages);
+                if (input.SourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.SourceFiles);
                 if (!input.Options.ReleaseMode) processArgs.Append(" --debug ");
                 if (input.Options.SkipValidation) processArgs.Append(" --no-validation ");
                 if (input.Options.NoParseTrace) processArgs.Append(" --no-parse-trace ");

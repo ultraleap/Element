@@ -1,10 +1,28 @@
 using System;
+using System.IO;
 using Element.AST;
 
 namespace Element
 {
+    /// <summary>
+    /// A single named element source.
+    /// Could be a source file, a stream of source text or any arbitrary element source code string.
+    /// </summary>
     public class SourceInfo
     {
+        public static SourceInfo FromFilePath(string path)
+        {
+            var file = new FileInfo(path);
+            return FromStream(file.FullName, File.OpenRead(file.FullName));
+        }
+
+        public static SourceInfo FromFile(FileInfo file) => FromStream(file.FullName, File.OpenRead(file.FullName));
+        public static SourceInfo FromStream(string sourceName, Stream stream)
+        {
+            using var reader = new StreamReader(stream);
+            return new SourceInfo(sourceName, reader.ReadToEnd());
+        }
+
         public SourceInfo(string name, string text)
         {
             Name = name;
@@ -23,15 +41,18 @@ namespace Element
         public readonly string OriginalText;
         public readonly string PreprocessedText;
         public readonly string FirstNonEmptyLine;
-        
 
-        public (int Line, int Column, int LineCharacterIndex) CalculateLineAndColumnFromIndex(int index, bool indexInPreprocessedText = true)
+        /// <summary>
+        /// Count line and column numbers for an index in the source text.
+        /// </summary>
+        public (int Line, int Column, int LineCharacterIndex) CalculateLineAndColumnFromIndex(int index, bool indexInPreprocessedText = true, int spacesPerTab = 4)
         {
             var text = indexInPreprocessedText ? PreprocessedText : OriginalText;
             
             var line = 1;
             var column = 1;
             var lineCharacterIndex = 1;
+            
             for (var i = 0; i < index; i++)
             {
                 if (text[i] == '\r')
@@ -52,7 +73,7 @@ namespace Element
                 }
                 else if (text[i] == '\t')
                 {
-                    column += 4;
+                    column += spacesPerTab;
                     lineCharacterIndex++;
                 }
                 else

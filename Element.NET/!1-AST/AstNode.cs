@@ -2,6 +2,9 @@ using Lexico;
 
 namespace Element.AST
 {
+    /// <summary>
+    /// Base class for any Element AST node.
+    /// </summary>
     public abstract class AstNode : ISourceLocation
     {
 #pragma warning disable 8618

@@ -6,7 +6,7 @@ using Lexico;
 namespace Element.AST
 {
     /// <summary>
-    /// Represents a top-level blob of Element source code
+    /// Represents a top-level blob of Element source code.
     /// </summary>
     [WhitespaceSurrounded, MultiLine, TopLevel]
     // ReSharper disable once ClassNeverInstantiated.Global

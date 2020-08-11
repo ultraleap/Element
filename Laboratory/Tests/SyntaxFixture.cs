@@ -40,13 +40,13 @@ namespace Laboratory.Tests
         {
             var (fileInfo, messageCode) = info;
             var expectingError = messageCode.HasValue;
-            
-            var compilationInput = new CompilerInput(new CompilerSource
-            {
-                ExcludePrelude = true,
-                ExtraSourceFiles = new[]{fileInfo}
-            }, new CompilerOptions(default, skipValidation, expectingError, default));
-            
+
+            var compilationInput = new CompilerInput(TestPackageRegistry,
+                                                     null,
+                                                     Array.Empty<PackageSpecifier>(),
+                                                     new[] {fileInfo},
+                                                     new CompilerOptions(default, skipValidation, expectingError, default));
+
             var result = Host.Parse(compilationInput);
             if (expectingError)
                 ExpectingError(result.Messages, result.IsSuccess, messageCode!.Value);

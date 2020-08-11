@@ -4,12 +4,18 @@ using System.Linq;
 
 namespace Element.AST
 {
+    /// <summary>
+    /// A scope of declarations which can be resolved as a block.
+    /// </summary>
     public interface IDeclarationScope
     {
         IReadOnlyList<Declaration> Declarations { get; }
         Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context);
     }
 
+    /// <summary>
+    /// Value retaining it's full path in source and identifiers within, including it's own identifier.
+    /// </summary>
     public class ValueWithLocation
     {
         public ValueWithLocation(Identifier[] identifiersInPath, IValue value)

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using Element;
@@ -10,10 +11,6 @@ namespace Laboratory.Tests.L2.Semantics
 
         private FileInfo[] SourceFiles { get; }
 
-        protected CompilerInput CompilerInput => new CompilerInput(new CompilerSource
-        {
-            ExcludePrelude = true,
-            ExtraSourceFiles = SourceFiles
-        }, default);
+        protected CompilerInput CompilerInput => new CompilerInput(TestPackageRegistry, null,  Array.Empty<PackageSpecifier>(), SourceFiles, default);
     }
 }

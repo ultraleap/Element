@@ -7,7 +7,7 @@ using Lexico;
 namespace Element.AST
 {
     /// <summary>
-    /// Provides methods to convert text into 
+    /// Provides methods to parse source text into AST objects.
     /// </summary>
     public static class Parser
     {

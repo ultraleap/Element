@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace Element.AST
 {
+    /// <summary>
+    /// Composite scope which aggregates many source scopes and represents the root of an element source tree.
+    /// </summary>
     public sealed class GlobalScope : IScope, IDeclarationScope
     {
         private readonly Dictionary<string, SourceBlob> _sourceScopes = new Dictionary<string, SourceBlob>();
@@ -68,7 +71,7 @@ namespace Element.AST
                 }
             }
             
-            builder.Append(MessageLevel.Information, "Finished validating global scope");
+            builder.Append(MessageLevel.Information, "Successfully validated global scope");
 
             return builder.ToResult();
         }

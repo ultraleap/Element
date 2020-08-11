@@ -209,11 +209,14 @@ namespace Element
 
         public TResult Match<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(_value, Messages) : onError(Messages);
         
-        public Result Then(Action<T> action)
+        public Result<T> Then(Action<T> action)
         {
             if (IsSuccess) action(_value);
-            return (Result)this;
+            return this;
         }
+        
+        public Result<T> Then(Func<T, Result> action) => IsSuccess ? new Result<T>(_value, Messages.Combine(action(_value).Messages)) : this;
+        public Result<T> Then(Func<T, Result<T>> action) => IsSuccess ? Merge(action(_value)) : this;
 
         public Result<(T, T1)> Accumulate<T1>(Func<Result<T1>> a)
         {
