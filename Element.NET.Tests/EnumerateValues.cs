@@ -1,5 +1,6 @@
 using System;
 using Element.AST;
+using Element.NET.TestHelpers;
 using NUnit.Framework;
 
 namespace Element.NET.Tests

@@ -3,6 +3,7 @@ using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 using Element;
+using Element.NET.TestHelpers;
 using NUnit.Framework;
 
 namespace Laboratory.Tests

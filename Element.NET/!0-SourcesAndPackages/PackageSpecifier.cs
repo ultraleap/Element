@@ -15,5 +15,7 @@ namespace Element
 
         public string Name { get; }
         public Range VersionRange { get; }
+
+        public override string ToString() => $"{Name}-{VersionRange}";
     }
 }

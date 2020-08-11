@@ -6,16 +6,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Element;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace Laboratory
+namespace Element.NET.TestHelpers
 {
     /// <summary>
     /// Implements hosts types and enumerates hosts for host fixtures
     /// </summary>
-    internal static class HostArguments
+    public static class HostArguments
     {
         public static IHost MakeHost() => _processHostInfo != null
                                             ? (IHost)new ProcessHost(_processHostInfo)
@@ -113,7 +112,7 @@ namespace Laboratory
                 {
                     foreach(var command in _processHostInfo.BuildCommands.Where(s => !string.IsNullOrWhiteSpace(s)))
                     {
-                        var splitCommand = command.Split(' ', 2);
+                        var splitCommand = command.Split(new []{' '}, 2);
                         var process = new Process
                         {
                             StartInfo = new ProcessStartInfo
@@ -219,11 +218,9 @@ namespace Laboratory
                 var processArgs = new StringBuilder();
                 processArgs.Append($"{command} --logjson");
                 if (input.PreludeVersion == null) processArgs.Append(" --no-prelude ");
-                if (input.Packages.Count > 0) processArgs.Append(" --packages ").AppendJoin(' ', input.Packages);
-                if (input.SourceFiles.Count > 0) processArgs.Append(" --source-files ").AppendJoin(' ', input.SourceFiles);
-                if (!input.Options.ReleaseMode) processArgs.Append(" --debug ");
+                if (input.Packages.Count > 0) processArgs.Append(" --packages ").Append(string.Join(" ", input.Packages));
+                if (input.SourceFiles.Count > 0) processArgs.Append(" --source-files ").Append(string.Join(" ", input.SourceFiles));
                 if (input.Options.SkipValidation) processArgs.Append(" --no-validation ");
-                if (input.Options.NoParseTrace) processArgs.Append(" --no-parse-trace ");
                 return processArgs;
             }
 
@@ -235,7 +232,7 @@ namespace Laboratory
                 return RunHostProcess(resultBuilder.Context, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString())
                     .Bind(resultString =>
                     {
-                        resultBuilder.Result = resultString.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                        resultBuilder.Result = resultString.Split(new []{' '}, StringSplitOptions.RemoveEmptyEntries)
                                                            .Select(s =>
                                                            {
                                                                if (!float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))

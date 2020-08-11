@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Element;
+using Element.NET.TestHelpers;
 using Range = SemVer.Range;
 
 namespace Laboratory.Tests.L4.StandardLibrary

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Element.CLR;
+using Element.NET.TestHelpers;
 using NUnit.Framework;
 
 namespace Element.NET.Tests

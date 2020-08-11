@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 
-namespace Element.NET.Tests
+namespace Element.NET.TestHelpers
 {
     [TestFixture, Parallelizable(ParallelScope.All)]
     public abstract class FixtureBase

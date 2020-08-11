@@ -1,5 +1,6 @@
 using System;
 using Element;
+using Element.NET.TestHelpers;
 
 namespace Laboratory.Tests.L3.Prelude
 {

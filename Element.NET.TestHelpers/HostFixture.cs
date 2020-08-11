@@ -1,13 +1,9 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using Element;
-using Element.NET.Tests;
 using NUnit.Framework;
 
-namespace Laboratory
+namespace Element.NET.TestHelpers
 {
-    internal abstract class HostFixture : FixtureBase
+    public abstract class HostFixture : FixtureBase
     {
         protected readonly IHost Host = HostArguments.MakeHost();
         

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Element;
+using Element.NET.TestHelpers;
 
 namespace Laboratory.Tests.L2.Semantics
 {
