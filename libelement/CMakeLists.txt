@@ -158,7 +158,7 @@ target_include_directories(libelement
 target_link_libraries(libelement PRIVATE utf8cpp fmt::fmt-header-only )
 target_link_libraries(libelement PUBLIC coverage_config)
 
-if (LINUX)
+if (UNIX AND NOT APPLE)
     target_link_libraries(libelement PRIVATE "m" "atomic" "pthread" "stdc++fs")
 endif ()
 
@@ -172,7 +172,7 @@ if (BUILD_TESTING)
             "${PROJECT_SOURCE_DIR}/test/*.test.cpp"
             )
 
-    add_executable(libelement_test_app ${TEST_SOURCES})
+    add_executable(libelement_test_app ${TEST_SOURCES} ${libelement_sources})
     target_link_libraries(libelement_test_app PRIVATE Catch2 libelement)
     target_link_libraries(libelement_test_app PUBLIC coverage_config)
 
