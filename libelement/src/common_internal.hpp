@@ -5,6 +5,7 @@
 #include <map>
 #include <functional>
 #include <cassert>
+#include <vector>
 
 //SELF
 #include "element/token.h"

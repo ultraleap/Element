@@ -158,7 +158,7 @@ target_include_directories(libelement
 target_link_libraries(libelement PRIVATE utf8cpp fmt::fmt-header-only )
 target_link_libraries(libelement PUBLIC coverage_config)
 
-if (UNIX)
+if (LINUX)
     target_link_libraries(libelement PRIVATE "m" "atomic" "pthread" "stdc++fs")
 endif ()
 
@@ -172,15 +172,11 @@ if (BUILD_TESTING)
             "${PROJECT_SOURCE_DIR}/test/*.test.cpp"
             )
 
-    #set(TEST_SOURCES
-    #        test/main.test.cpp
-    #       test/eval.test.cpp)
-
     add_executable(libelement_test_app ${TEST_SOURCES})
     target_link_libraries(libelement_test_app PRIVATE Catch2 libelement)
     target_link_libraries(libelement_test_app PUBLIC coverage_config)
 
-    add_test(NAME run_libelement_test_app
+    add_test(NAME libelement_test
             COMMAND libelement_test_app -r junit -o ${CMAKE_BINARY_DIR}/libemelement_test_app_details.xml)
 
     set_target_properties(libelement_test_app PROPERTIES
