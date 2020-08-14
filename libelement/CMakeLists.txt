@@ -172,7 +172,7 @@ if (BUILD_TESTING)
             "${PROJECT_SOURCE_DIR}/test/*.test.cpp"
             )
 
-    add_executable(libelement_test_app ${TEST_SOURCES} ${libelement_sources})
+    add_executable(libelement_test_app ${TEST_SOURCES})
     target_link_libraries(libelement_test_app PRIVATE Catch2 libelement)
     target_link_libraries(libelement_test_app PUBLIC coverage_config)
 
