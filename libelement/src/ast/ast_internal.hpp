@@ -9,7 +9,7 @@
 
 //SELF
 #include "ast_indexes.hpp"
-#include "common_internal.hpp"
+#include "../common_internal.hpp"
 #include "element/ast.h"
 #include "element/token.h"
 #include <cassert>

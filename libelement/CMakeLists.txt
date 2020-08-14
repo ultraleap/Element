@@ -163,10 +163,25 @@ if (UNIX)
 endif ()
 
 if (BUILD_TESTING)
-    add_executable(libelement_test_app
-        "test/main.c")
-    target_link_libraries(libelement_test_app PRIVATE libelement)
+    include(CTest)
+    set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/catch2)
+    add_library(Catch INTERFACE)
+    target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
+
+    file(GLOB_RECURSE TEST_SOURCES
+            "${PROJECT_SOURCE_DIR}/test/*.test.cpp"
+            )
+
+    #set(TEST_SOURCES
+    #        test/main.test.cpp
+    #       test/eval.test.cpp)
+
+    add_executable(libelement_test_app ${TEST_SOURCES})
+    target_link_libraries(libelement_test_app PRIVATE Catch2 libelement)
     target_link_libraries(libelement_test_app PUBLIC coverage_config)
+
+    add_test(NAME run_libelement_test_app
+            COMMAND libelement_test_app -r junit -o ${CMAKE_BINARY_DIR}/libemelement_test_app_details.xml)
 
     set_target_properties(libelement_test_app PROPERTIES
         VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
