@@ -116,6 +116,30 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_sqrtv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
     return LMNT_OK;
 }
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_log(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    ctx->stack[arg3] = logf(ctx->stack[arg1]) / logf(ctx->stack[arg2]);
+    return LMNT_OK;
+}
+
+LMNT_ATTR_FAST lmnt_result lmnt_op_ln(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    ctx->stack[arg3] = logf(ctx->stack[arg1]);
+    return LMNT_OK;
+}
+
+LMNT_ATTR_FAST lmnt_result lmnt_op_log2(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    ctx->stack[arg3] = log2f(ctx->stack[arg1]);
+    return LMNT_OK;
+}
+
+LMNT_ATTR_FAST lmnt_result lmnt_op_log10(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    ctx->stack[arg3] = log10f(ctx->stack[arg1]);
+    return LMNT_OK;
+}
+
 LMNT_ATTR_FAST lmnt_result lmnt_op_sumv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = ctx->stack[arg1 + 0] + ctx->stack[arg1 + 1] + ctx->stack[arg1 + 2] + ctx->stack[arg1 + 3];

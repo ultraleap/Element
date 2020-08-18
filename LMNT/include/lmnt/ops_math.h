@@ -27,6 +27,11 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_powvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
 LMNT_ATTR_FAST lmnt_result lmnt_op_sqrts(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 LMNT_ATTR_FAST lmnt_result lmnt_op_sqrtv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_log(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_ln(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_log2(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_log10(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+
 LMNT_ATTR_FAST lmnt_result lmnt_op_sumv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
 #endif
