@@ -181,6 +181,13 @@ if (BUILD_TESTING)
 
     set_target_properties(libelement_test_app PROPERTIES
         VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
+
+    # Copy prelude alongside built library
+    add_custom_command (
+            TARGET libelement_test_app POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/../Common"
+            "${debug_dir}")
 endif ()
 
 target_compile_definitions(libelement
