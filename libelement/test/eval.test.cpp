@@ -277,15 +277,15 @@ TEST_CASE("Passing Cases - Eval", "[Evaluate]") {
         REQUIRE(result == ELEMENT_OK);
     }
 
-        //element doesn't support partial application of any function, only instance functions (i.e. member functions with implicit "this")
-        /*
-        SECTION("Partial application") {
-            result = eval("add5 = Num.add(5); evaluate = add5(2);");
-            REQUIRE(result == ELEMENT_OK);
-        }
-         */
+    //element doesn't support partial application of any function, only instance functions (i.e. member functions with implicit "this")
+    /*
+    SECTION("Partial application") {
+        result = eval("add5 = Num.add(5); evaluate = add5(2);");
+        REQUIRE(result == ELEMENT_OK);
+    }
+     */
 
-    SECTION("") {
+    SECTION("Functions") {
         result = eval("mul(a) { return(b) = a.mul(b); } evaluate = mul(5)(2);");
         REQUIRE(result == ELEMENT_OK);
     }
@@ -295,7 +295,7 @@ TEST_CASE("Passing Cases - Eval", "[Evaluate]") {
         REQUIRE(result == ELEMENT_OK);
     }
 
-    SECTION("") {
+    SECTION("Struct fields") {
         result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).b;");
         REQUIRE(result == ELEMENT_OK);
     }
