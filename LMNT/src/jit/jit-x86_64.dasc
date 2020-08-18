@@ -74,15 +74,15 @@
     | sub rsp, 160
 ||}
 ||#endif
-| push rbx
-| push r15
+| push rStack
+| push rContext
 | sub rsp, CFRAME_SPACE
 | .endmacro
 
 | .macro epilogue, use_nv
 | add rsp, CFRAME_SPACE
-| pop r15
-| pop rbx
+| pop rContext
+| pop rStack
 ||#if defined(_WIN32)
 ||if (use_nv) {
     | add rsp, 160
