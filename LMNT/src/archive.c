@@ -141,6 +141,7 @@ lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_i
 {
     LMNT_ENSURE_VALIDATED(archive);
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
+    archive->flags &= ~LMNT_ARCHIVE_USES_EXTCALLS; // reset flag before checking below
     size_t defindex = 0;
     while (defindex < hdr->defs_length)
     {
