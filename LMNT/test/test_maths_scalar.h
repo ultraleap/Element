@@ -1,6 +1,6 @@
 #include "CUnit/CUnitCI.h"
 #include "lmnt/interpreter.h"
-#include "helpers.h"
+#include "testhelpers.h"
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -13,7 +13,7 @@ static void test_addss(void)
     archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x00, 0x01, 0x02)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -61,7 +61,7 @@ static void test_subss(void)
     archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_SUBSS, 0x00, 0x01, 0x02)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -109,7 +109,7 @@ static void test_mulss(void)
     archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MULSS, 0x00, 0x01, 0x02)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -161,7 +161,7 @@ static void test_divss(void)
     archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_DIVSS, 0x00, 0x01, 0x02)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -214,7 +214,7 @@ static void test_modss(void)
     archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_MODSS, 0x00, 0x01, 0x02)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -274,7 +274,7 @@ static void test_powss(void)
     archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_POWSS, 0x00, 0x01, 0x02)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -323,7 +323,7 @@ static void test_sqrts(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_SQRTS, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -368,7 +368,7 @@ static void test_log(void)
     archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_LOG, 0x00, 0x01, 0x02)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -441,7 +441,7 @@ static void test_ln(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_LN, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -494,7 +494,7 @@ static void test_log2(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_LOG2, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -551,7 +551,7 @@ static void test_log10(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_LOG10, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 

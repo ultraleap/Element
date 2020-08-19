@@ -26,6 +26,8 @@
 |.if TARGET_WIN
     |.define rArg1, rcx
     |.define rArg2, rdx
+    |.define rArg3, r8
+    |.define rArg4, r9
     |.define rtmp1, r8
     |.define rtmp2, r9
     |.define etmp1, r8d
@@ -33,12 +35,15 @@
 |.else
     |.define rArg1, rdi
     |.define rArg2, rsi
+    |.define rArg3, rdx
+    |.define rArg4, rcx
     |.define rtmp1, rcx
     |.define rtmp2, rdx
     |.define etmp1, ecx
     |.define etmp2, edx
 |.endif
 
+| .define rContext, r15
 | .define rStack, rbx
 | .define xmmtmp1, 1
 | .define xmmtmp2, 0
@@ -51,7 +56,7 @@
 // will affect the stack alignment of all external calls out to C.
 // On x86_64, at the time of a call, (rsp + 8) must be 16-byte aligned.
 // Change this number (ensuring it remains >= 5) to adjust the alignment.
-| .define CFRAME_SPACE, aword * 6
+| .define CFRAME_SPACE, aword * 5
 
 | .macro prologue, use_nv
 ||#if defined(_WIN32)
@@ -69,13 +74,15 @@
     | sub rsp, 160
 ||}
 ||#endif
-| push rbx
+| push rStack
+| push rContext
 | sub rsp, CFRAME_SPACE
 | .endmacro
 
 | .macro epilogue, use_nv
 | add rsp, CFRAME_SPACE
-| pop rbx
+| pop rContext
+| pop rStack
 ||#if defined(_WIN32)
 ||if (use_nv) {
     | add rsp, 160
@@ -340,6 +347,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // store LMNT stack base
     const size_t ctx_stack_offset = offsetof(lmnt_ictx, stack);
     const size_t ctx_stack_count_offset = offsetof(lmnt_ictx, cur_stack_count);
+    | mov rContext, rArg1
     | mov rStack, [rArg1 + ctx_stack_offset]
 
     lmnt_result result = LMNT_OK;
@@ -1132,12 +1140,36 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
 
         case LMNT_OP_EXTCALL:
-            // keep these or not?
+        {
+            lmnt_loffset def_offset = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const lmnt_def* def = validated_get_def(&ctx->archive, def_offset);
+            const lmnt_extcall_info* extcall;
+            result = lmnt_ictx_extcall_get(ctx, def->code, &extcall);
+            if (result != LMNT_OK) break;
+            // Make sure that anything the extcall has access to isn't cached
+            platformWriteAndEvictByStack(state, in.arg3, in.arg3 + extcall->args_count + extcall->rvals_count);
+            // Also evict anything volatile since the function could mess with it
+            platformWriteAndEvictVolatile(state);
+
+            | mov64 rax, (const intptr_t)(extcall->function)
+            | mov rArg1, rContext
+            | mov64 rArg2, (const intptr_t)(extcall)
+            | mov rArg3, rStack
+            | add rArg3, (in.arg3 * sizeof(lmnt_value))
+            | mov rArg4, rArg3
+            | add rArg4, (extcall->args_count * sizeof(lmnt_value))
+            | call rax
+            | cmp rax, LMNT_OK
+            | jne ->return
             break;
+        }
 
         default:
             break;
         }
+
+        if (result != LMNT_OK)
+            break;
 
 #if defined(LMNT_JIT_DEBUG_VALIDATE_REGCACHE)
         result = validateRegCache(state);

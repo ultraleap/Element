@@ -147,7 +147,7 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
 
         lmnt_value* const eargs = &ctx->writable_stack[0];
         lmnt_value* const ervals = &ctx->writable_stack[extcall->args_count];
-        opresult = extcall->function(ctx, eargs, extcall->args_count, ervals, extcall->rvals_count);
+        opresult = extcall->function(ctx, extcall, eargs, ervals);
     }
 
     // If we finished or hit an error, clear the context's current def

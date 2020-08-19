@@ -19,11 +19,14 @@
 | .globals lbl_
 | .actionlist lmnt_actions
 
-|.define rArg1, r0
-|.define rArg2, r1
-|.define rtmp1, r2
-|.define rtmp2, r3 
+| .define rArg1, r0
+| .define rArg2, r1
+| .define rArg3, r2
+| .define rArg4, r3
+| .define rtmp1, r2
+| .define rtmp2, r3
 
+| .define rContext, r10
 | .define rStack, r11
 // TODO: scalar vs vector?
 | .define vtmps1, 4
@@ -42,7 +45,7 @@
 // (NOT anything we call) then we must push/pop them here
 
 | .macro prologue, use_nv
-| push {lr, rStack}
+| push {lr, rContext, rStack}
 ||if (use_nv) {
     | vpush {d8-d15}
 ||}
@@ -52,7 +55,7 @@
 ||if (use_nv) {
     | vpop {d8-d15}
 ||}
-| pop {lr, rStack}
+| pop {lr, rContext, rStack}
 | bx lr
 | .endmacro
 
@@ -1145,12 +1148,41 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
 
         case LMNT_OP_EXTCALL:
-            // keep these or not?
+        {
+            lmnt_loffset def_offset = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
+            const lmnt_def* def = validated_get_def(&ctx->archive, def_offset);
+            const lmnt_extcall_info* extcall;
+            result = lmnt_ictx_extcall_get(ctx, def->code, &extcall);
+            if (result != LMNT_OK) break;
+            // Make sure that anything the extcall has access to isn't cached
+            platformWriteAndEvictByStack(state, in.arg3, in.arg3 + extcall->args_count + extcall->rvals_count);
+            // Also evict anything volatile since the function could mess with it
+            platformWriteAndEvictVolatile(state);
+
+            |.rodata
+            |1:
+            | .long (const intptr_t)(extcall->function)
+            |2:
+            | .long (const intptr_t)(extcall)
+            |.code
+            | ldr r12, <1
+            | mov rArg1, rContext
+            | ldr rArg2, <2
+            | add rArg3, rStack, #(in.arg3 * sizeof(lmnt_value))
+            | add rArg4, rArg3, #(extcall->args_count * sizeof(lmnt_value))
+            | blx r12
+            | cmp r0, #(LMNT_OK)
+            | bne ->return
+            ||rmode = RMODE_UNKNOWN;
             break;
+        }
 
         default:
             break;
         }
+
+        if (result != LMNT_OK)
+            break;
 
 #if defined(LMNT_JIT_DEBUG_VALIDATE_REGCACHE)
         result = validateRegCache(state);
