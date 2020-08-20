@@ -51,41 +51,45 @@ void log_callback(const element_log_message* msg)
 
 element_result eval(const char* evaluate)
 {
-    element_interpreter_ctx* context;
+    element_interpreter_ctx* context= NULL;
+    element_compilable* compilable = NULL;
+    element_evaluable* evaluable = NULL;
+
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback);
     element_interpreter_load_prelude(context);
 
+    float inputs[] = { 1, 2 };
+    float outputs[1];
+
+    element_inputs input;
+    element_outputs output;
+
+    std::array<char, 2048> output_buffer_array{};
+    char* output_buffer = output_buffer_array.data();
+
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
-        return result;
+        goto cleanup;
 
-    element_compilable* compilable;
     result = element_interpreter_find(context, "evaluate", &compilable);
     if (result != ELEMENT_OK)
-        return result;
+        goto cleanup;
 
-    struct element_evaluable* evaluable;
     result = element_interpreter_compile(context, NULL, compilable, &evaluable);
     if (result != ELEMENT_OK)
-        return result;
+        goto cleanup;
 
-    float inputs[] = { 1, 2 };
-    element_inputs input;
     input.values = inputs;
     input.count = 2;
 
-    float outputs[1];
-    element_outputs output;
     output.values = outputs;
     output.count = 1;
 
     result = element_interpreter_evaluate(context, NULL, evaluable, &input, &output);
     if (result != ELEMENT_OK)
-        return result;
+        goto cleanup;
 
-    std::array<char, 2048> output_buffer_array{};
-    char* output_buffer = output_buffer_array.data();
     sprintf(output_buffer + strlen(output_buffer), "%s -> {", evaluate);
     for (int i = 0; i < output.count; ++i)
     {
@@ -100,11 +104,11 @@ element_result eval(const char* evaluate)
     printf("%s", output_buffer);
     UNSCOPED_INFO(output_buffer);
 
-    //todo
+    cleanup:
     element_delete_compilable(context, &compilable);
     element_delete_evaluable(context, &evaluable);
     element_interpreter_delete(context);
-    return ELEMENT_OK;
+    return result;
 }
 
 element_result eval_with_source(const char* source, const char* evaluate)
@@ -119,6 +123,12 @@ element_result eval_with_source(const char* source, const char* evaluate)
 
     float inputs[] = { 1, 2 };
     float outputs[1];
+
+    element_inputs input;
+    element_outputs output;
+
+    std::array<char, 2048> output_buffer_array{};
+    char* output_buffer = output_buffer_array.data();
 
     element_result result = element_interpreter_load_string(context, source, "<source>");
     if (result != ELEMENT_OK)
@@ -136,11 +146,9 @@ element_result eval_with_source(const char* source, const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    element_inputs input;
     input.values = inputs;
     input.count = 2;
 
-    element_outputs output;
     output.values = outputs;
     output.count = 1;
 
@@ -148,8 +156,6 @@ element_result eval_with_source(const char* source, const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    std::array<char, 2048> output_buffer_array{};
-    char* output_buffer = output_buffer_array.data();
     sprintf(output_buffer + strlen(output_buffer), "%s -> {", evaluate);
     for (int i = 0; i < output.count; ++i)
     {
@@ -181,6 +187,9 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     element_interpreter_set_log_callback(context, log_callback);
     element_interpreter_load_prelude(context);
 
+    std::array<char, 2048> output_buffer_array{};
+    char* output_buffer = output_buffer_array.data();
+
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
         goto cleanup;
@@ -197,8 +206,6 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    std::array<char, 2048> output_buffer_array{};
-    char* output_buffer = output_buffer_array.data();
     sprintf(output_buffer + strlen(output_buffer), "%s -> {", evaluate);
     for (int i = 0; i < outputs->count; ++i)
     {
