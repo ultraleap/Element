@@ -54,7 +54,11 @@ namespace element
         const identifier& name,
         const source_information& source_info) const
     {
-        return our_scope->find(name, false)->compile(context, source_info);
+        const auto* found = our_scope->find(name, false);
+        if (!found)
+            return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, typeof_info());
+
+        return found->compile(context, source_info);
     }
 
     std::shared_ptr<const object> struct_declaration::call(

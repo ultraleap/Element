@@ -56,6 +56,8 @@ TEST_CASE("AST", "[AST]") {
         // Literal
         REQUIRE(root->children[0]->children[1]->type == ELEMENT_AST_NODE_LITERAL);
         REQUIRE(root->children[0]->children[1]->literal == 2);
+
+        element_ast_delete(parser.root);
     }
 
     SECTION("Functions: Burger1(a) = 2") {
@@ -94,6 +96,8 @@ TEST_CASE("AST", "[AST]") {
         const auto& body = function->children[1];
         REQUIRE(body->type == ELEMENT_AST_NODE_LITERAL);
         REQUIRE(body->literal == 2);
+
+        element_ast_delete(parser.root);
     }
 
     SECTION("Functions: Burger1(a:Num) = a") {
@@ -134,6 +138,8 @@ TEST_CASE("AST", "[AST]") {
         const auto& body = function->children[1];
         REQUIRE(body->type == ELEMENT_AST_NODE_CALL);
         REQUIRE(body->identifier == "a");
+
+        element_ast_delete(parser.root);
     }
 
     SECTION("Structs: struct MyStruct(a, b)") {
@@ -170,6 +176,8 @@ TEST_CASE("AST", "[AST]") {
 
         // No body
         REQUIRE(root->children[0]->children[1]->type == ELEMENT_AST_NODE_NO_BODY);
+
+        element_ast_delete(parser.root);
     }
 
     SECTION("Functions: a = _(_a) = 5") {
@@ -212,6 +220,8 @@ TEST_CASE("AST", "[AST]") {
         // Literal
         REQUIRE(root->children[0]->children[1]->children[1]->type == ELEMENT_AST_NODE_LITERAL);
         REQUIRE(root->children[0]->children[1]->children[1]->literal == 5);
+
+        element_ast_delete(parser.root);
     }
 
     SECTION("Namespace: namespace Empty {}") {
@@ -235,6 +245,7 @@ TEST_CASE("AST", "[AST]") {
         // Scope
         REQUIRE(root->children[0]->children[0]->type == ELEMENT_AST_NODE_SCOPE);
 
+        element_ast_delete(parser.root);
     }
 
     SECTION("Constraint: intrinsic constraint Any") {
@@ -270,6 +281,7 @@ TEST_CASE("AST", "[AST]") {
         // No body
         REQUIRE(root->children[0]->children[1]->type == ELEMENT_AST_NODE_NO_BODY);
 
+        element_ast_delete(parser.root);
     }
 
     SECTION("Functions: evaluate = Num.add(1, 2)") {
@@ -317,6 +329,9 @@ TEST_CASE("AST", "[AST]") {
         REQUIRE(root->children[0]->children[1]->children[1]->children[0]->literal == 1);
         REQUIRE(root->children[0]->children[1]->children[1]->children[1]->type == ELEMENT_AST_NODE_LITERAL);
         REQUIRE(root->children[0]->children[1]->children[1]->children[1]->literal == 2);
+
+        element_ast_delete(parser.root);
     }
 
+    element_tokeniser_delete(tokeniser);
 }

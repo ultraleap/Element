@@ -106,13 +106,17 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     }
 
     auto object_model = element::build_root_scope(this, parser.root, result);
+    element_ast_delete(parser.root);
+
     if (result != ELEMENT_OK) {
         log(result, fmt::format("building object model failed with element_result {}", result), filename);
+        return result;
     }
 
     result = global_scope->merge(std::move(object_model));
     if (result != ELEMENT_OK) {
         log(result, fmt::format("merging object models failed with element_result {}", result), filename);
+        return result;
     }
 
     return result;
