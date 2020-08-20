@@ -399,7 +399,7 @@ element_result valid_boundary_function(
 
     const bool is_valid = func_decl->valid_at_boundary(compilation_context);
     if (!is_valid)
-        return ELEMENT_ERROR_UNKNOWN;
+        return ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE;
 
     return ELEMENT_OK;
 }
@@ -434,14 +434,20 @@ element_result element_interpreter_compile(
 {
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
-    //todo: compiler option to disable/enable boundary function checking
-    /*auto result = valid_boundary_function(context, compilation_context, options, compilable);
-    if (result != ELEMENT_OK)
+    if (!compilable->decl)
+        return ELEMENT_ERROR_UNKNOWN;
+
+    //todo: compiler option to disable/enable boundary function checking?
+    if (!compilable->decl->get_inputs().empty())
     {
-        assert(!"this is not a valid boundary function");
-        *evaluable = nullptr;
-        return result;
-    }*/
+        auto result = valid_boundary_function(context, compilation_context, options, compilable);
+        if (result != ELEMENT_OK)
+        {
+            context->log(result, "Tried to compile a function that requires inputs, making it a boundary function, but it can't be a boundary function.");
+            *evaluable = nullptr;
+            return result;
+        }
+    }
 
     element_result result = ELEMENT_OK;
     auto placeholder_inputs = generate_placeholder_inputs(context, compilation_context, options, compilable, result);

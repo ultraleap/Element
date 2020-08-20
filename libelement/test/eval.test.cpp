@@ -177,7 +177,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     return result;
 }
 
-element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, element_outputs* outputs)
+element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, element_outputs* outputs, std::string package = "")
 {
     element_interpreter_ctx* context = NULL;
     element_compilable* compilable = NULL;
@@ -186,6 +186,13 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback);
     element_interpreter_load_prelude(context);
+
+    if (!package.empty())
+    {
+        auto result = element_interpreter_load_package(context, package.c_str());
+        if (result != ELEMENT_OK)
+            return result;
+    }
 
     std::array<char, 2048> output_buffer_array{};
     char* output_buffer = output_buffer_array.data();
@@ -346,101 +353,329 @@ TEST_CASE("Evaluate", "[Evaluate]")
     {
         element_result result = ELEMENT_OK;
 
-        SECTION("Double using input")
+        SECTION("Invalid Boundary Function")
         {
-            float inputs[] = { 2 };
-            element_inputs input;
-            input.values = inputs;
-            input.count = 1;
-            element_outputs output;
-            float outputs[] = { 0 };
-            output.values = outputs;
-            output.count = 1;
-            result = eval_with_inputs("evaluate(a:Num) = a.mul(2);", &input, &output);
-            REQUIRE(result == ELEMENT_OK);
-            REQUIRE(output.values[0] == input.values[0] * 2);
+            SECTION("Missing Return Annotation")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("evaluate(a:Num) = a.mul(2);", &input, &output);
+                REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
+            }
+
+            SECTION("Missing Port Annotation")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("evaluate(a):Num = a.mul(2);", &input, &output);
+                REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
+            }
+
+            SECTION("Port Annotation is Any")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("evaluate(a:Any):Num = a.mul(2);", &input, &output);
+                REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
+            }
+
+            SECTION("Return Annotation is Any")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("evaluate(a:Num):Any = a.mul(2);", &input, &output);
+                REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
+            }
+
+            SECTION("Return Annotation is Namespace")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("namespace Namespace{} evaluate(a:Num):Namespace = Namespace;", &input, &output);
+                REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
+            }
+
+            SECTION("Returns HigherOrder Function")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("myMul(a, b) = a.mul(b); evaluate(a:Num, b:Num):myMul = myMul;", &input, &output);
+                REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
+            }
+
+            SECTION("Returns Struct containing HigherOrder Function")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("myMul(a, b) = a.mul(b); struct myStruct(a:myMul) {} evaluate(a:Num, b:Num):myStruct = myStruct(myMul);", &input, &output);
+                REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
+            }
+
+            SECTION("Port is HigherOrder Function")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("myMul(a, b) = a.mul(b); evaluate(a:myMul):Num = a(1, 2);", &input, &output);
+                REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
+            }
+
+            SECTION("Port is Struct containing HigherOrder Function")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("myMul(a, b) = a.mul(b); struct myStruct(a:myMul) {}  evaluate(a:myStruct):Num = a.a(1, 2);", &input, &output);
+                REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
+            }
         }
 
-        SECTION("Multiply using inputs")
+        SECTION("Constraints")
         {
-            float inputs[] = { 20, 20 };
-            element_inputs input;
-            input.values = inputs;
-            input.count = 2;
-            element_outputs output;
-            float outputs[] = { 0 };
-            output.values = outputs;
-            output.count = 1;
-            result = eval_with_inputs("evaluate(a:Num, b:Num) = a.mul(b);", &input, &output);
-            REQUIRE(result == ELEMENT_OK);
-            REQUIRE(output.values[0] == input.values[0] * input.values[1]);
+            SECTION("Unspecified annotations")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("returnIt(a) = a; evaluate(a:Num):Num = returnIt(a);", &input, &output);
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(outputs[0] == inputs[0]);
+            }
         }
 
-        SECTION("Multiple inputs and outputs")
+        SECTION("HigherOrderFunctions")
         {
-            float inputs[] = { 2, 2, 3, 4 };
-            element_inputs input;
-            input.values = inputs;
-            input.count = 4;
-            element_outputs output;
-            float outputs[] = { 0, 0, 0 };
-            output.values = outputs;
-            output.count = 3;
+            SECTION("Num.add")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("doIt(a:Num, b:Binary):Num = b(a, 1); evaluate(a:Num):Num = doIt(a, Num.add);", &input, &output);
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(outputs[0] == inputs[0] + 1.0f);
+            }
+        }
 
-            char source[] =
+        SECTION("Structs")
+        {
+            SECTION("Multiple inputs and outputs")
+            {
+                float inputs[] = { 2, 2, 3, 4 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 4;
+                element_outputs output;
+                float outputs[] = { 0, 0, 0 };
+                output.values = outputs;
+                output.count = 3;
+
+                char source[] =
                     "struct Vector3(x:Num, y:Num, z:Num) {}\n"
                     "struct Quaternion(scalar:Num, vector:Vector3) {}\n"
-                    "evaluate(q:Quaternion)\n"
+                    "evaluate(q:Quaternion):Vector3\n"
                     "{\n"
                     "    scale(vec:Vector3, s:Num) = Vector3(vec.x.mul(s), vec.y.mul(s), vec.z.mul(s));\n"
                     "    return = scale(q.vector, q.scalar);\n"
                     "}\n";
 
-            result = eval_with_inputs(source, &input, &output);
+                result = eval_with_inputs(source, &input, &output);
 
-            REQUIRE(result == ELEMENT_OK);
+                REQUIRE(result == ELEMENT_OK);
 
-            REQUIRE(output.values[0] == input.values[0] * input.values[1]);
-            REQUIRE(output.values[1] == input.values[0] * input.values[2]);
-            REQUIRE(output.values[2] == input.values[0] * input.values[3]);
+                REQUIRE(output.values[0] == input.values[0] * input.values[1]);
+                REQUIRE(output.values[1] == input.values[0] * input.values[2]);
+                REQUIRE(output.values[2] == input.values[0] * input.values[3]);
+            }
         }
 
-        SECTION("if true")
+        SECTION("Prelude")
         {
-            float inputs[] = { 1 };
-            element_inputs input;
-            input.values = inputs;
-            input.count = 1;
-            element_outputs output;
-            float outputs[] = { 0 };
-            output.values = outputs;
-            output.count = 1;
+            SECTION("Number")
+            {
 
-            char source[] = "evaluate(a:Num) = Bool.if(Bool(a), a.mul(2), a);";
+                SECTION("Double using input")
+                {
+                    float inputs[] = { 2 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+                    result = eval_with_inputs("evaluate(a:Num):Num = a.mul(2);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(output.values[0] == input.values[0] * 2);
+                }
 
-            result = eval_with_inputs(source, &input, &output);
+                SECTION("Multiply using inputs")
+                {
+                    float inputs[] = { 20, 20 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 2;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+                    result = eval_with_inputs("evaluate(a:Num, b:Num):Num = a.mul(b);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(output.values[0] == input.values[0] * input.values[1]);
+                }
 
-            REQUIRE(result == ELEMENT_OK);
-            REQUIRE(output.values[0] == input.values[0] * 2);
+            }
+
+            SECTION("Bool")
+            {
+                SECTION("if true")
+                {
+                    float inputs[] = { 1 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a.mul(2), a);";
+
+                    result = eval_with_inputs(source, &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(output.values[0] == input.values[0] * 2);
+                }
+
+                SECTION("if false")
+                {
+                    float inputs[] = { -1 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a, a.mul(2));";
+
+                    result = eval_with_inputs(source, &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(output.values[0] == input.values[0] * 2);
+                }
+            }
+
+            SECTION("List")
+            {
+                element_result result = ELEMENT_OK;
+                SECTION("list(a).at(0)")
+                {
+                    float inputs[] = { -1 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a, a.mul(2));";
+
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(a).at(0);", &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(output.values[0] == input.values[0]);
+                }
+            }
         }
 
-        SECTION("if false")
+        SECTION("StandardLibrary")
         {
-            float inputs[] = { -1 };
-            element_inputs input;
-            input.values = inputs;
-            input.count = 1;
-            element_outputs output;
-            float outputs[] = { 0 };
-            output.values = outputs;
-            output.count = 1;
+            SECTION("Vector2")
+            {
+                SECTION("opposite")
+                {
+                    float inputs[] = { 1, 2 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 2;
+                    element_outputs output;
+                    float outputs[] = { 0, 0 };
+                    output.values = outputs;
+                    output.count = 2;
 
-            char source[] = "evaluate(a:Num) = Bool.if(Bool(a), a, a.mul(2));";
+                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a, a.mul(2));";
 
-            result = eval_with_inputs(source, &input, &output);
+                    result = eval_with_inputs("evaluate(a:Vector2):Vector2 = a.opposite;", &input, &output, "StandardLibrary");
 
-            REQUIRE(result == ELEMENT_OK);
-            REQUIRE(output.values[0] == input.values[0] * 2);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(output.values[0] == -input.values[0]);
+                    REQUIRE(output.values[1] == -input.values[1]);
+                }
+            }
         }
     }
 
@@ -663,16 +898,6 @@ TEST_CASE("Evaluate", "[Evaluate]")
             //todo: we should print that we expect '=' or '{' when defining the function 'evaluate' but found 'MyStruct' instead
             result = eval_with_source(my_vec, "evaluate MyStruct(1, 2, 3).add(MyStruct(4, 5, 6));\n");
             REQUIRE(result == ELEMENT_ERROR_MISSING_FUNCTION_BODY);
-        }
-    }
-
-    SECTION("List")
-    {
-        element_result result = ELEMENT_OK;
-        SECTION("list(1)")
-        {
-            result = eval("evaluate = list(1);");
-            REQUIRE(result == ELEMENT_OK);
         }
     }
 }
