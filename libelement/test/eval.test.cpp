@@ -7,6 +7,7 @@
 
 //STD
 #include <array>
+#include <cstring>
 
 void log_callback(const element_log_message* msg)
 {
@@ -899,5 +900,72 @@ TEST_CASE("Evaluate", "[Evaluate]")
             result = eval_with_source(my_vec, "evaluate MyStruct(1, 2, 3).add(MyStruct(4, 5, 6));\n");
             REQUIRE(result == ELEMENT_ERROR_MISSING_FUNCTION_BODY);
         }
+    }
+
+    SECTION("element_interpreter_evaluate_expression once")
+    {
+        element_interpreter_ctx* context;
+        element_interpreter_create(&context);
+
+        element_outputs output;
+        float outputs_buffer[] = {0};
+        output.values = outputs_buffer;
+        output.count = 1;
+
+        auto result = element_interpreter_evaluate_expression(context, nullptr, "1", &output);
+        REQUIRE(result == ELEMENT_OK);
+        REQUIRE(outputs_buffer[0] == 1);
+    }
+
+    SECTION("element_interpreter_evaluate_expression twice")
+    {
+        element_interpreter_ctx* context;
+        element_interpreter_create(&context);
+
+        element_outputs output;
+        float outputs_buffer[] = { 0 };
+        output.values = outputs_buffer;
+        output.count = 1;
+
+        auto result = element_interpreter_evaluate_expression(context, nullptr, "1", &output);
+        REQUIRE(result == ELEMENT_OK);
+        REQUIRE(outputs_buffer[0] == 1);
+
+        result = element_interpreter_evaluate_expression(context, nullptr, "2", &output);
+        REQUIRE(result == ELEMENT_OK);
+        REQUIRE(outputs_buffer[0] == 2);
+    }
+
+    SECTION("element_interpreter_typeof_expression once")
+    {
+        element_interpreter_ctx* context;
+        element_interpreter_create(&context);
+
+        std::string buffer(256, '\0');
+
+        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), buffer.size());
+        REQUIRE(result == ELEMENT_OK);
+        REQUIRE(strcmp(buffer.data(), "Num") == 0);
+    }
+
+    SECTION("element_interpreter_typeof_expression twice")
+    {
+        element_interpreter_ctx* context;
+        element_interpreter_create(&context);
+
+        std::string buffer(256, '\0');
+
+        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), buffer.size());
+        REQUIRE(result == ELEMENT_OK);
+        REQUIRE(strcmp(buffer.data(), "Num") == 0);
+
+        element_interpreter_load_prelude(context);
+
+        buffer.clear();
+        buffer.resize(256, '\0');
+
+        result = element_interpreter_typeof_expression(context, nullptr, "Bool(1)", buffer.data(), buffer.size());
+        REQUIRE(result == ELEMENT_OK);
+        REQUIRE(strcmp(buffer.data(), "Bool") == 0);
     }
 }
