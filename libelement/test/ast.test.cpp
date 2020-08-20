@@ -7,6 +7,7 @@
 
 //STD
 #include <array>
+#include <cstring>
 
 void print_ast(element_ast* ast, int depth, element_ast* ast_to_mark)
 {
