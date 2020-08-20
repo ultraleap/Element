@@ -5,6 +5,17 @@
 #include "element/token.h"
 #include "../src/ast/ast_internal.hpp"
 
+//STD
+#include <array>
+
+void print_ast(element_ast* ast, int depth, element_ast* ast_to_mark)
+{
+    std::array<char, 2048> output_buffer{};
+    element_ast_to_string(ast, depth, ast_to_mark, output_buffer.data(), output_buffer.size());
+    printf("%s", output_buffer.data());
+    UNSCOPED_INFO(output_buffer.data());
+}
+
 TEST_CASE("Ast Generation", "[AST]") {
 
     element_tokeniser_ctx* tokeniser;
@@ -22,6 +33,7 @@ TEST_CASE("Ast Generation", "[AST]") {
         REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
 
         auto root = parser.root;
+        print_ast(root, 0, nullptr);
 
         // Function
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_FUNCTION);
@@ -53,6 +65,7 @@ TEST_CASE("Ast Generation", "[AST]") {
         REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
 
         auto root = parser.root;
+        print_ast(root, 0, nullptr);
 
         // Struct
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_STRUCT);
@@ -86,6 +99,7 @@ TEST_CASE("Ast Generation", "[AST]") {
         REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
 
         auto root = parser.root;
+        print_ast(root, 0, nullptr);
 
         // Function
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_FUNCTION);
@@ -125,6 +139,7 @@ TEST_CASE("Ast Generation", "[AST]") {
         REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
 
         auto root = parser.root;
+        print_ast(root, 0, nullptr);
 
         // Namespace
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_NAMESPACE);
@@ -145,6 +160,7 @@ TEST_CASE("Ast Generation", "[AST]") {
         REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
 
         auto root = parser.root;
+        print_ast(root, 0, nullptr);
 
         // Constraint
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_CONSTRAINT);
@@ -177,6 +193,7 @@ TEST_CASE("Ast Generation", "[AST]") {
         REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
 
         auto root = parser.root;
+        print_ast(root, 0, nullptr);
 
         // Function
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_FUNCTION);

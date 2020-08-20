@@ -25,6 +25,16 @@
 //static const std::string constraint_qualifier = "constraint";
 //static const std::string return_keyword = "return";
 
+element_result element_ast_to_string(const element_ast* ast, int depth, const element_ast* ast_to_mark, char* output_buffer, int output_buffer_size)
+{
+    auto str = ast_to_string(ast, depth, ast_to_mark);
+    if (str.size() > output_buffer_size)
+        return ELEMENT_ERROR_UNKNOWN;
+
+    sprintf(output_buffer, "%s", str.c_str());
+    return ELEMENT_OK;
+}
+
 static std::unordered_set<std::string> qualifiers {"intrinsic"};
 static std::unordered_set<std::string> constructs{ "struct", "namespace", "constraint"};
 static std::unordered_set<std::string> reserved_args{};
