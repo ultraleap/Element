@@ -135,24 +135,45 @@ namespace element
         build_inputs(context, lambda_inputs, *lambda_function_decl, output_result);
         build_output(context, lambda_output, *lambda_function_decl, output_result);
 
-        deferred_expressions deferred_expressions;
-        auto chain = build_expression_chain(context, lambda_body, lambda_function_decl.get(), deferred_expressions, output_result);
-
-        if (deferred_expressions.empty())
-            lambda_function_decl->body = std::move(chain);
-        else
+        if (lambda_body->type == ELEMENT_AST_NODE_SCOPE)
         {
-            for (auto& [nested_identifier, nested_expression] : deferred_expressions) {
+            build_scope(context, lambda_body, *lambda_function_decl, output_result);
 
-                auto lambda = build_lambda_declaration(context, nested_identifier, nested_expression, parent_scope, output_result);
-                lambda_function_decl->our_scope->add_declaration(std::move(lambda));
+            const auto* return_func = lambda_function_decl->our_scope->find(identifier::return_identifier, false);
+            if (!return_func)
+            {
+                //todo: check if this is covered during parsing? I think it likely is already
+                output_result = log_error(context, context->src_context.get(), expression, log_error_message_code::parse_function_missing_body, lambda_function_decl->name.value);
+                return nullptr;
             }
 
-            auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, parent_scope, false);
-            assign_source_information(context, lambda_return_decl, expression);
-            lambda_return_decl->body = std::move(chain);
+            lambda_function_decl->body = return_func;
+        }
+        else
+        {
+            deferred_expressions deferred_expressions;
+            auto chain = build_expression_chain(context, lambda_body, lambda_function_decl.get(), deferred_expressions, output_result);
 
-            lambda_function_decl->body = std::move(lambda_return_decl);
+            if (deferred_expressions.empty())
+            {
+                assert(!chain->expressions.empty());
+                assert(chain->expressions[0]);
+                lambda_function_decl->body = std::move(chain);
+            }
+            else
+            {
+                for (auto& [nested_identifier, nested_expression] : deferred_expressions) {
+
+                    auto lambda = build_lambda_declaration(context, nested_identifier, nested_expression, parent_scope, output_result);
+                    lambda_function_decl->our_scope->add_declaration(std::move(lambda));
+                }
+
+                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, parent_scope, false);
+                assign_source_information(context, lambda_return_decl, expression);
+                lambda_return_decl->body = std::move(chain);
+
+                lambda_function_decl->body = std::move(lambda_return_decl);
+            }
         }
 
         return std::move(lambda_function_decl);
@@ -353,6 +374,7 @@ namespace element
 
         //start of an expression chain, then build the rest of it
         auto first_expression = build_expression(context, ast, chain.get(), deferred_expressions, output_result);
+        assert(first_expression);
         chain->expressions.push_back(std::move(first_expression));
 
         //every child of the first AST node is part of the chain
@@ -395,6 +417,7 @@ namespace element
             return build_call_expression(context, ast, chain, deferred_expressions, output_result);
 
         //todo: error
+        output_result = ELEMENT_ERROR_UNKNOWN;
         return nullptr;
     }
 
