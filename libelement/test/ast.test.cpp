@@ -16,24 +16,26 @@ void print_ast(element_ast* ast, int depth, element_ast* ast_to_mark)
     UNSCOPED_INFO(output_buffer.data());
 }
 
-TEST_CASE("Ast Generation", "[AST]") {
+TEST_CASE("AST", "[AST]") {
 
     element_tokeniser_ctx* tokeniser;
     element_tokeniser_create(&tokeniser);
 
     element_parser_ctx parser;
 
-    SECTION("Example Code - Simple Variable") {
-        element_tokeniser_run(tokeniser, "Burger1 = 2;", "<input>");
+    SECTION("Functions: Burger1 = 2") {
+        const std::string input = "Burger1 = 2;";
+        UNSCOPED_INFO(input.c_str());
+        element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
         parser.tokeniser = tokeniser;
         parser.ast_build();
 
-        // Root
-        REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
-
-        auto root = parser.root;
+        auto* root = parser.root;
         print_ast(root, 0, nullptr);
+
+        // Root
+        REQUIRE(root->type == ELEMENT_AST_NODE_ROOT);
 
         // Function
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_FUNCTION);
@@ -55,17 +57,97 @@ TEST_CASE("Ast Generation", "[AST]") {
         REQUIRE(root->children[0]->children[1]->literal == 2);
     }
 
-    SECTION("Example Code - Struct") {
-        element_tokeniser_run(tokeniser,"struct MyStruct(a, b);" ,"<input>");
+    SECTION("Functions: Burger1(a) = 2") {
+        const std::string input = "Burger1(a) = 2;";
+        UNSCOPED_INFO(input.c_str());
+        element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
         parser.tokeniser = tokeniser;
         parser.ast_build();
 
-        // Root
-        REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
-
-        auto root = parser.root;
+        auto* root = parser.root;
         print_ast(root, 0, nullptr);
+
+        // Root
+        REQUIRE(root->type == ELEMENT_AST_NODE_ROOT);
+
+        const auto& function = root->children[0];
+        REQUIRE(function->type == ELEMENT_AST_NODE_FUNCTION);
+
+        const auto& declaration = function->children[0];
+        REQUIRE(declaration->type == ELEMENT_AST_NODE_DECLARATION);
+        REQUIRE(declaration->identifier == "Burger1");
+
+        const auto& portlist = declaration->children[0];
+        REQUIRE(portlist->type == ELEMENT_AST_NODE_PORTLIST);
+        REQUIRE(!portlist->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT));
+
+        const auto& port = portlist->children[0];
+        REQUIRE(port->type == ELEMENT_AST_NODE_PORT);
+        REQUIRE(port->children.size() == 0);
+
+        const auto& return_annotation = declaration->children[1];
+        REQUIRE(return_annotation->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
+
+        // Literal
+        const auto& body = function->children[1];
+        REQUIRE(body->type == ELEMENT_AST_NODE_LITERAL);
+        REQUIRE(body->literal == 2);
+    }
+
+    SECTION("Functions: Burger1(a:Num) = a") {
+        const std::string input = "Burger1(a:Num) = a;";
+        UNSCOPED_INFO(input.c_str());
+        element_tokeniser_run(tokeniser, input.c_str(), "<input>");
+
+        parser.tokeniser = tokeniser;
+        parser.ast_build();
+
+        auto* root = parser.root;
+        print_ast(root, 0, nullptr);
+
+        REQUIRE(root->type == ELEMENT_AST_NODE_ROOT);
+
+        const auto& function = root->children[0];
+        REQUIRE(function->type == ELEMENT_AST_NODE_FUNCTION);
+
+        const auto& declaration = function->children[0];
+        REQUIRE(declaration->type == ELEMENT_AST_NODE_DECLARATION);
+        REQUIRE(declaration->identifier == "Burger1");
+
+        const auto& portlist = declaration->children[0];
+        REQUIRE(portlist->type == ELEMENT_AST_NODE_PORTLIST);
+        REQUIRE(!portlist->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT));
+
+        const auto& port = portlist->children[0];
+        REQUIRE(port->type == ELEMENT_AST_NODE_PORT);
+
+        const auto& type_name = port->children[0];
+        REQUIRE(type_name->type == ELEMENT_AST_NODE_TYPENAME);
+        REQUIRE(type_name->children[0]->type == ELEMENT_AST_NODE_IDENTIFIER);
+        REQUIRE(type_name->children[0]->identifier == "Num");
+
+        const auto& return_annotation = declaration->children[1];
+        REQUIRE(return_annotation->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
+
+        const auto& body = function->children[1];
+        REQUIRE(body->type == ELEMENT_AST_NODE_CALL);
+        REQUIRE(body->identifier == "a");
+    }
+
+    SECTION("Structs: struct MyStruct(a, b)") {
+        const std::string input = "struct MyStruct(a, b);";
+        UNSCOPED_INFO(input.c_str());
+        element_tokeniser_run(tokeniser, input.c_str(), "<input>");
+
+        parser.tokeniser = tokeniser;
+        parser.ast_build();
+
+        auto* root = parser.root;
+        print_ast(root, 0, nullptr);
+
+        // Root
+        REQUIRE(root->type == ELEMENT_AST_NODE_ROOT);
 
         // Struct
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_STRUCT);
@@ -89,17 +171,19 @@ TEST_CASE("Ast Generation", "[AST]") {
         REQUIRE(root->children[0]->children[1]->type == ELEMENT_AST_NODE_NO_BODY);
     }
 
-    SECTION("Example Code - Lambda") {
-        element_tokeniser_run(tokeniser, "a = _(_a) = 5;" ,"<input>");
+    SECTION("Functions: a = _(_a) = 5") {
+        const std::string input = "a = _(_a) = 5;";
+        UNSCOPED_INFO(input.c_str());
+        element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
         parser.tokeniser = tokeniser;
         parser.ast_build();
 
-        // Root
-        REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
-
-        auto root = parser.root;
+        auto* root = parser.root;
         print_ast(root, 0, nullptr);
+
+        // Root
+        REQUIRE(root->type == ELEMENT_AST_NODE_ROOT);
 
         // Function
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_FUNCTION);
@@ -129,17 +213,19 @@ TEST_CASE("Ast Generation", "[AST]") {
         REQUIRE(root->children[0]->children[1]->children[1]->literal == 5);
     }
 
-    SECTION("Example Code - Namespace") {
-        element_tokeniser_run(tokeniser, "namespace Empty {}" ,"<input>");
+    SECTION("Namespace: namespace Empty {}") {
+        const std::string input = "namespace Empty {}";
+        UNSCOPED_INFO(input.c_str());
+        element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
         parser.tokeniser = tokeniser;
         parser.ast_build();
 
-        // Root
-        REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
-
-        auto root = parser.root;
+        auto* root = parser.root;
         print_ast(root, 0, nullptr);
+
+        // Root
+        REQUIRE(root->type == ELEMENT_AST_NODE_ROOT);
 
         // Namespace
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_NAMESPACE);
@@ -150,17 +236,19 @@ TEST_CASE("Ast Generation", "[AST]") {
 
     }
 
-    SECTION("Example Code - Intrinsic Constraint") {
-        element_tokeniser_run(tokeniser, "intrinsic constraint Any;" ,"<input>");
+    SECTION("Constraint: intrinsic constraint Any") {
+        const std::string input = "intrinsic constraint Any;";
+        UNSCOPED_INFO(input.c_str());
+        element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
         parser.tokeniser = tokeniser;
         parser.ast_build();
 
-        // Root
-        REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
-
-        auto root = parser.root;
+        auto* root = parser.root;
         print_ast(root, 0, nullptr);
+
+        // Root
+        REQUIRE(root->type == ELEMENT_AST_NODE_ROOT);
 
         // Constraint
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_CONSTRAINT);
@@ -183,17 +271,19 @@ TEST_CASE("Ast Generation", "[AST]") {
 
     }
 
-    SECTION("Example Code - Function Call With Inputs") {
-        element_tokeniser_run(tokeniser, "evaluate = Num.add(1, 2);" ,"<input>");
+    SECTION("Functions: evaluate = Num.add(1, 2)") {
+        const std::string input = "evaluate = Num.add(1, 2);";
+        UNSCOPED_INFO(input.c_str());
+        element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
         parser.tokeniser = tokeniser;
         parser.ast_build();
 
-        // Root
-        REQUIRE(parser.root->type == ELEMENT_AST_NODE_ROOT);
-
-        auto root = parser.root;
+        auto* root = parser.root;
         print_ast(root, 0, nullptr);
+
+        // Root
+        REQUIRE(root->type == ELEMENT_AST_NODE_ROOT);
 
         // Function
         REQUIRE(root->children[0]->type == ELEMENT_AST_NODE_FUNCTION);

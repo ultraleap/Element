@@ -110,8 +110,10 @@ TEST_CASE("Token Generation", "[Tokeniser]") {
         REQUIRE(tokeniser->tokens[11].type == ELEMENT_TOK_SEMICOLON); // ;
     }
 
-    SECTION("Example Code") {
-        element_tokeniser_run(tokeniser, "evaluate = Num.add(1, 2);", "<input>");
+    SECTION("evaluate = Num.add(1, 2);") {
+        const std::string input = "evaluate = Num.add(1, 2);";
+        UNSCOPED_INFO(input.c_str());
+        element_tokeniser_run(tokeniser, input.c_str(), "<input>");
         print_token(tokeniser, nullptr);
         REQUIRE(tokeniser->tokens[0].type == ELEMENT_TOK_IDENTIFIER);
         REQUIRE(tokeniser->tokens[1].type == ELEMENT_TOK_EQUALS);
