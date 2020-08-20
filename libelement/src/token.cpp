@@ -23,6 +23,15 @@
 #define UTF8_ADVANCE(it, n, end) utf8::advance(it, n, end)
 #endif
 
+element_result element_tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token, char* output_buffer, int output_buffer_size)
+{
+    auto str = tokens_to_string(context, nearest_token);
+    if (str.size() > output_buffer_size)
+        return ELEMENT_ERROR_UNKNOWN;
+
+    sprintf(output_buffer, "%s", str.c_str());
+    return ELEMENT_OK;
+}
 
 element_result element_tokeniser_get_filename(const element_tokeniser_ctx* state, const char** filename)
 {

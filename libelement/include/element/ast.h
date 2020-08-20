@@ -54,6 +54,8 @@ element_result element_ast_get_child(const element_ast* ast, const size_t index,
 element_result element_ast_build(element_tokeniser_ctx* tctx, element_ast** ast);
 void element_ast_delete(element_ast* ast);
 
+element_result element_ast_to_string(const element_ast* ast, int depth, const element_ast* ast_to_mark, char* output_buffer, int output_buffer_size);
+
 #if defined(__cplusplus)
 }
 #endif

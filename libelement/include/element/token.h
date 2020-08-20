@@ -59,6 +59,8 @@ void element_tokeniser_print(const element_tokeniser_ctx* state);
 element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* input, const char* filename);
 element_result element_tokeniser_clear(element_tokeniser_ctx* state);
 
+element_result element_tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token, char* output_buffer, int output_buffer_size);
+
 #if defined(__cplusplus)
 }
 #endif

@@ -5,6 +5,9 @@
 #include "element/interpreter.h"
 #include "element/common.h"
 
+//STD
+#include <array>
+
 void log_callback(const element_log_message* msg)
 {
     char buffer[512];
@@ -30,7 +33,10 @@ void log_callback(const element_log_message* msg)
         buffer_str = &buffer[0];
     }
 
-    printf("\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
+    std::array<char, 2048> output_buffer_array{};
+    char* output_buffer = output_buffer_array.data();
+
+    sprintf(output_buffer, "\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
            msg->message_code,
            msg->filename,
            msg->line,
@@ -38,6 +44,9 @@ void log_callback(const element_log_message* msg)
            msg->line,
            buffer_str,
            msg->message);
+
+    printf("%s", output_buffer);
+    UNSCOPED_INFO(output_buffer);
 }
 
 element_result eval(const char* evaluate)
@@ -75,18 +84,21 @@ element_result eval(const char* evaluate)
     if (result != ELEMENT_OK)
         return result;
 
-    /*
-    printf("%s -> {", evaluate);
+    std::array<char, 2048> output_buffer_array{};
+    char* output_buffer = output_buffer_array.data();
+    sprintf(output_buffer + strlen(output_buffer), "%s -> {", evaluate);
     for (int i = 0; i < output.count; ++i)
     {
-        printf("%f", output.values[i]);
+        sprintf(output_buffer + strlen(output_buffer), "%f", output.values[i]);
         if (i != output.count - 1)
         {
-            printf(", ");
+            sprintf(output_buffer + strlen(output_buffer), ", ");
         }
     }
-    printf("}\n");
-     */
+    sprintf(output_buffer + strlen(output_buffer), "}\n");
+
+    printf("%s", output_buffer);
+    UNSCOPED_INFO(output_buffer);
 
     //todo
     element_delete_compilable(context, &compilable);
@@ -136,18 +148,21 @@ element_result eval_with_source(const char* source, const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    /*
-    printf("%s -> {", evaluate);
+    std::array<char, 2048> output_buffer_array{};
+    char* output_buffer = output_buffer_array.data();
+    sprintf(output_buffer + strlen(output_buffer), "%s -> {", evaluate);
     for (int i = 0; i < output.count; ++i)
     {
-        printf("%f", output.values[i]);
+        sprintf(output_buffer + strlen(output_buffer), "%f", output.values[i]);
         if (i != output.count - 1)
         {
-            printf(", ");
+            sprintf(output_buffer + strlen(output_buffer), ", ");
         }
     }
-    printf("}\n");
-    */
+    sprintf(output_buffer + strlen(output_buffer), "}\n");
+
+    printf("%s", output_buffer);
+    UNSCOPED_INFO(output_buffer);
 
     cleanup:
     element_delete_compilable(context, &compilable);
@@ -182,18 +197,21 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    /*
-    printf("%s -> {", evaluate);
+    std::array<char, 2048> output_buffer_array{};
+    char* output_buffer = output_buffer_array.data();
+    sprintf(output_buffer + strlen(output_buffer), "%s -> {", evaluate);
     for (int i = 0; i < outputs->count; ++i)
     {
-        printf("%f", outputs->values[i]);
+        sprintf(output_buffer + strlen(output_buffer), "%f", outputs->values[i]);
         if (i != outputs->count - 1)
         {
-            printf(", ");
+            sprintf(output_buffer + strlen(output_buffer), ", ");
         }
     }
-    printf("}\n");
-    */
+    sprintf(output_buffer + strlen(output_buffer), "}\n");
+
+    printf("%s", output_buffer);
+    UNSCOPED_INFO(output_buffer);
 
     cleanup:
     element_delete_compilable(context, &compilable);
