@@ -112,16 +112,16 @@ namespace element
         return build_error_and_log(context, source_info, error_message_code::invalid_errorless_call, parent->declarer->name.value);
     }
 
-    lambda_expression::lambda_expression(const expression_chain* parent)
-        : expression(parent)
-        , name(unidentifier)
-    {
-        assert(parent);
-    }
+    //lambda_expression::lambda_expression(const expression_chain* parent)
+    //    : expression(parent)
+    //    , name(unidentifier)
+    //{
+    //    assert(parent);
+    //}
 
-    object_const_shared_ptr lambda_expression::resolve(const compilation_context& context, const object* obj)
-    {
-        assert(!"lambdas are not implemented");
-        throw;
-    }
+    //object_const_shared_ptr lambda_expression::resolve(const compilation_context& context, const object* obj)
+    //{
+    //    assert(!"lambdas are not implemented");
+    //    throw;
+    //}
 }

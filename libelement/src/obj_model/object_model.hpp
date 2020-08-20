@@ -27,8 +27,10 @@ namespace element
         );
     }
 
-    std::unique_ptr<expression> build_expression(const element_interpreter_ctx* context, const element_ast* ast, expression_chain* chain, element_result& output_result);
-    std::unique_ptr<expression_chain> build_expression_chain(const element_interpreter_ctx* context, const element_ast* const ast, const declaration* declarer, element_result& output_result);
+    typedef std::vector<std::pair<identifier, const element_ast*>> deferred_expressions;
+
+    std::unique_ptr<expression> build_expression(const element_interpreter_ctx* context, const element_ast* ast, expression_chain* chain, deferred_expressions& deferred_expressions, element_result& output_result);
+    std::unique_ptr<expression_chain> build_expression_chain(const element_interpreter_ctx* context, const element_ast* const ast, const declaration* declarer, deferred_expressions& deferred_expressions, element_result& output_result);
 	std::unique_ptr<scope> build_root_scope(const element_interpreter_ctx* context, const element_ast* ast, element_result& output_result);
 }
 

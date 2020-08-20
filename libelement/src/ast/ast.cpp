@@ -474,13 +474,17 @@ element_result element_parser_ctx::parse_lambda(size_t* tindex, element_ast* ast
     tokenlist_advance(tokeniser, tindex);
 
     GET_TOKEN(tokeniser, *tindex, token);
-    auto has_return = token->type == ELEMENT_TOK_COLON;
+    element_ast* type = ast_new_child(ast);
+    type->nearest_token = token;
+    const auto has_return = token->type == ELEMENT_TOK_COLON;
     if (has_return) 
     {
         tokenlist_advance(tokeniser, tindex);
-        element_ast* type = ast_new_child(ast);
-        type->nearest_token = token;
         ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
+    }
+    else
+    {
+        type->type = ELEMENT_AST_NODE_UNSPECIFIED_TYPE;
     }
 
     element_ast* body = ast_new_child(ast);

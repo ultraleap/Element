@@ -13,7 +13,8 @@ namespace function
 namespace lambda
 {
     constexpr size_t inputs = 0;
-    constexpr size_t body = 1;
+    constexpr size_t output = 1;
+    constexpr size_t body = 2;
 }
 
 namespace declaration

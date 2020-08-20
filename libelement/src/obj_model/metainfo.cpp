@@ -223,10 +223,10 @@ std::string element::indexing_expression::to_code(int depth) const
     return "." + name.value;
 }
 
-std::string element::lambda_expression::to_code(int depth) const
-{
-    return "_() = lambda.todo";
-}
+//std::string element::lambda_expression::to_code(int depth) const
+//{
+//    return "_() = lambda.todo";
+//}
 
 std::string element::port::to_code(int) const
 {
