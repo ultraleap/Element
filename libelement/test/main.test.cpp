@@ -3,6 +3,20 @@
 
 int main(int argc, char* argv[])
 {
+/*#if !defined(NDEBUG) && defined(WIN32)
+    //TODO: JM - TEMPORARY - Remove me later
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+
+    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+    _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+
+    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+    _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
+
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+#endif*/
+
     Catch::Session session; // There must be exactly one instance
 
     // writing to session.configData() here sets defaults

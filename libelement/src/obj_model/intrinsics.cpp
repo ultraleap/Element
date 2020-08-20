@@ -236,7 +236,8 @@ namespace element
 
         std::vector<element_value> outputs = { 0 };
         const auto result = element_evaluate(*context.interpreter, pred_expr, {}, outputs, {});
-        assert(result == ELEMENT_OK);
+        if (result != ELEMENT_OK)
+            return std::make_shared<error>("predicate for Bool.if must be a compile-time constant", ELEMENT_ERROR_UNKNOWN, source_info); //todo
 
         return outputs[0] > 0 ? frame.compiled_arguments[1] : frame.compiled_arguments[2];
 

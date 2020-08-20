@@ -229,7 +229,7 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
 
 TEST_CASE("Evaluate", "[Evaluate]")
 {
-    SECTION("Passing Cases - Eval")
+    SECTION("Compiletime - Pass")
     {
         element_result result = ELEMENT_OK;
 
@@ -342,7 +342,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
         }
     }
 
-    SECTION("Passing Cases - EvalWithInputs")
+    SECTION("Runtime")
     {
         element_result result = ELEMENT_OK;
 
@@ -404,9 +404,47 @@ TEST_CASE("Evaluate", "[Evaluate]")
             REQUIRE(output.values[1] == input.values[0] * input.values[2]);
             REQUIRE(output.values[2] == input.values[0] * input.values[3]);
         }
+
+        SECTION("if true")
+        {
+            float inputs[] = { 1 };
+            element_inputs input;
+            input.values = inputs;
+            input.count = 1;
+            element_outputs output;
+            float outputs[] = { 0 };
+            output.values = outputs;
+            output.count = 1;
+
+            char source[] = "evaluate(a:Num) = Bool.if(Bool(a), a.mul(2), a);";
+
+            result = eval_with_inputs(source, &input, &output);
+
+            REQUIRE(result == ELEMENT_OK);
+            REQUIRE(output.values[0] == input.values[0] * 2);
+        }
+
+        SECTION("if false")
+        {
+            float inputs[] = { -1 };
+            element_inputs input;
+            input.values = inputs;
+            input.count = 1;
+            element_outputs output;
+            float outputs[] = { 0 };
+            output.values = outputs;
+            output.count = 1;
+
+            char source[] = "evaluate(a:Num) = Bool.if(Bool(a), a, a.mul(2));";
+
+            result = eval_with_inputs(source, &input, &output);
+
+            REQUIRE(result == ELEMENT_OK);
+            REQUIRE(output.values[0] == input.values[0] * 2);
+        }
     }
 
-    SECTION("Error Cases - Eval")
+    SECTION("Compiletime - Fail")
     {
         element_result result = ELEMENT_OK;
 
@@ -590,7 +628,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
         }
     }
 
-    SECTION("Error Cases - EvalWithSource")
+    SECTION("Compiletime - Fail")
     {
         element_result result = ELEMENT_OK;
 
