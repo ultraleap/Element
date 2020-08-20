@@ -110,22 +110,22 @@ namespace element
         identifier name;
     };
 
-    //lambdas are basically function declarations and expressions, can we combine/simplify in some way?
-    class lambda_expression final : public expression
-    {
-    public:
-        lambda_expression(const expression_chain* parent);
+    ////lambdas are basically function declarations and expressions, can we combine/simplify in some way?
+    //class lambda_expression final : public expression
+    //{
+    //public:
+    //    lambda_expression(const expression_chain* parent);
 
-        [[nodiscard]] std::string to_code(int depth) const override;
-        [[nodiscard]] object_const_shared_ptr resolve(const compilation_context& context, const object* obj) override;
+    //    [[nodiscard]] std::string to_code(int depth) const override;
+    //    [[nodiscard]] object_const_shared_ptr resolve(const compilation_context& context, const object* obj) override;
 
-        //need to think about what this requires
-        std::vector<port> inputs;
-        std::optional<port> output;
-        std::unique_ptr<scope> our_scope;
-        object_const_shared_ptr body;
+    //    //need to think about what this requires
+    //    std::vector<port> inputs;
+    //    std::optional<port> output;
+    //    std::unique_ptr<scope> our_scope;
+    //    object_const_shared_ptr body;
 
-    private:
-        identifier name;
-    };
+    //private:
+    //    identifier name;
+    //};
 }

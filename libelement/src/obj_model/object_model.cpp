@@ -2,6 +2,7 @@
 
 //STD
 #include <iostream>
+#include <vector>
 
 //SELF
 #include "expressions.hpp"
@@ -39,17 +40,14 @@ namespace element
         return nullptr;
     }
 
-    void build_output(const element_interpreter_ctx* context, element_ast* ast, declaration& declaration, element_result& output_result)
+    void build_output(const element_interpreter_ctx* context, element_ast* output, declaration& declaration, element_result& output_result)
     {
-        auto* const output = ast->children[ast_idx::declaration::outputs].get();
         auto type_annotation = build_type_annotation(context, output, output_result);
         declaration.output.emplace(port{&declaration, identifier::return_identifier, std::move(type_annotation) });
     }
 
-    void build_inputs(const element_interpreter_ctx* context, element_ast* ast, declaration& declaration, element_result& output_result)
+    void build_inputs(const element_interpreter_ctx* context, element_ast* inputs, declaration& declaration, element_result& output_result)
     {
-        auto* const inputs = ast->children[ast_idx::declaration::inputs].get();
-
         for (auto& input : inputs->children)
         {
             if (input->type != ELEMENT_AST_NODE_PORT)
@@ -82,9 +80,10 @@ namespace element
 
         auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, is_intrinsic);
 
-        //fields
-        build_inputs(context, decl, *struct_decl, output_result);
-        build_output(context, decl, *struct_decl, output_result);
+        auto* const inputs = decl->children[ast_idx::declaration::inputs].get();
+        auto* const output = decl->children[ast_idx::declaration::outputs].get();
+        build_inputs(context, inputs, *struct_decl, output_result);
+        build_output(context, output, *struct_decl, output_result);
 
         if (is_intrinsic)
         {
@@ -109,9 +108,10 @@ namespace element
 
         auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
 
-        //ports
-        build_inputs(context, decl, *constraint_decl, output_result);
-        build_output(context, decl, *constraint_decl, output_result);
+        auto* const inputs = decl->children[ast_idx::declaration::inputs].get();
+        auto* const output = decl->children[ast_idx::declaration::outputs].get();
+        build_inputs(context, inputs, *constraint_decl, output_result);
+        build_output(context, output, *constraint_decl, output_result);
 
         if (intrinsic)
         {
@@ -119,6 +119,43 @@ namespace element
         }
 
         return std::move(constraint_decl);
+    }
+
+    std::unique_ptr<declaration> build_lambda_declaration(const element_interpreter_ctx* context, identifier& identifier, const element_ast* const expression, const scope* const parent_scope, element_result& output_result)
+    {
+
+        auto* const lambda_inputs = expression->children[ast_idx::lambda::inputs].get();
+        auto* const lambda_output = expression->children[ast_idx::lambda::output].get();
+        auto* const lambda_body = expression->children[ast_idx::lambda::body].get();
+
+        //TODO: This needs to be a new type e.g. lambda_declaration, at the very least for to_code to function correctly (might require some string magic to resugar/sugarify/???) and be able to distinguish between lambda vs not
+        auto lambda_function_decl = std::make_unique<function_declaration>(identifier, parent_scope, false);
+        assign_source_information(context, lambda_function_decl, expression);
+
+        build_inputs(context, lambda_inputs, *lambda_function_decl, output_result);
+        build_output(context, lambda_output, *lambda_function_decl, output_result);
+
+        deferred_expressions deferred_expressions;
+        auto chain = build_expression_chain(context, lambda_body, lambda_function_decl.get(), deferred_expressions, output_result);
+
+        if (deferred_expressions.empty())
+            lambda_function_decl->body = std::move(chain);
+        else
+        {
+            for (auto& [nested_identifier, nested_expression] : deferred_expressions) {
+
+                auto lambda = build_lambda_declaration(context, nested_identifier, nested_expression, parent_scope, output_result);
+                lambda_function_decl->our_scope->add_declaration(std::move(lambda));
+            }
+
+            auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, parent_scope, false);
+            assign_source_information(context, lambda_return_decl, expression);
+            lambda_return_decl->body = std::move(chain);
+
+            lambda_function_decl->body = std::move(lambda_return_decl);
+        }
+
+        return std::move(lambda_function_decl);
     }
 
     std::unique_ptr<declaration> build_function_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
@@ -129,8 +166,10 @@ namespace element
         auto function_decl = std::make_unique<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
         assign_source_information(context, function_decl, decl);
 
-        build_inputs(context, decl, *function_decl, output_result);
-        build_output(context, decl, *function_decl, output_result);
+        auto* const inputs = decl->children[ast_idx::declaration::inputs].get();
+        auto* const output = decl->children[ast_idx::declaration::outputs].get();
+        build_inputs(context, inputs, *function_decl, output_result);
+        build_output(context, output, *function_decl, output_result);
 
         auto* const body = ast->children[ast_idx::function::body].get();
 
@@ -139,7 +178,7 @@ namespace element
             assert(!intrinsic);
             build_scope(context, body, *function_decl, output_result);
 
-            auto return_func = function_decl->our_scope->find(identifier::return_identifier, false);
+            const auto* return_func = function_decl->our_scope->find(identifier::return_identifier, false);
             if (!return_func)
             {
                 //todo: check if this is covered during parsing? I think it likely is already
@@ -158,14 +197,30 @@ namespace element
                 return nullptr;
             }
 
-            auto chain = build_expression_chain(context, body, function_decl.get(), output_result);
+            deferred_expressions deferred_expressions;
+            auto chain = build_expression_chain(context, body, function_decl.get(), deferred_expressions, output_result);
             if (chain->expressions.empty())
             {
                 output_result = log_error(context, context->src_context.get(), body, log_error_message_code::expression_chain_cannot_be_empty, function_decl->name.value);
                 return nullptr;
             }
 
-            function_decl->body = std::move(chain);
+            if (deferred_expressions.empty())
+                function_decl->body = std::move(chain);
+            else
+            {
+                for (auto& [identifier, expression] : deferred_expressions) {
+
+                    auto lambda = build_lambda_declaration(context, identifier, expression, parent_scope, output_result);
+                    function_decl->our_scope->add_declaration(std::move(lambda));
+                }
+
+                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, parent_scope, intrinsic);
+                assign_source_information(context, lambda_return_decl, decl);
+                lambda_return_decl->body = std::move(chain);
+
+                function_decl->body = std::move(lambda_return_decl);
+            }
         }
         else if (intrinsic && body->type == ELEMENT_AST_NODE_NO_BODY)
         {
@@ -248,7 +303,7 @@ namespace element
         return std::move(expression);
     }
 
-    std::unique_ptr<expression> build_call_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    std::unique_ptr<expression> build_call_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, deferred_expressions& deferred_expressions, element_result& output_result)
     {
         const auto is_empty = chain->expressions.empty();
         if (is_empty)
@@ -269,41 +324,58 @@ namespace element
         //every child of the current AST node (EXPRLIST) is the start of another expression_chain, comma separated
         for (const auto& child : ast->children)
         {
-            auto nested_chain = build_expression_chain(context, child.get(), chain->declarer, output_result);
+            //oof, call expressions... you have to be awkward, don't you?
+            auto nested_chain = build_expression_chain(context, child.get(), chain->declarer, deferred_expressions, output_result);
             call_expr->arguments.push_back(std::move(nested_chain));
         }
 
         return std::move(call_expr);
     }
 
-    std::unique_ptr<expression>  build_lambda_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
-    {
-        auto expression = std::make_unique<lambda_expression>(chain);
-        assign_source_information(context, expression, ast);
-        return std::move(expression);
-    }
-
-
-    std::unique_ptr<expression_chain> build_expression_chain(const element_interpreter_ctx* context, const element_ast* const ast, const declaration* declarer, element_result& output_result)
+    std::unique_ptr<expression_chain> build_expression_chain(const element_interpreter_ctx* context, const element_ast* const ast, const declaration* declarer, deferred_expressions& deferred_expressions, element_result& output_result)
     {
         auto chain = std::make_unique<expression_chain>(declarer);
         assign_source_information(context, chain, ast);
 
+        //clean me up, Scotty!
+
+        //early return if lambda
+        if (ast->type == ELEMENT_AST_NODE_LAMBDA) {
+
+            const auto identifier_string = fmt::format("{}_{}", declarer->name.value, deferred_expressions.size());
+            auto identifier = element::identifier(identifier_string);
+            auto expression = std::make_unique<identifier_expression>(identifier, chain.get());
+            assign_source_information(context, expression, ast);
+            chain->expressions.push_back(std::move(expression));
+            deferred_expressions.push_back({ identifier, ast });
+            return std::move(chain);
+        }
+
         //start of an expression chain, then build the rest of it
-        auto first_expression = build_expression(context, ast, chain.get(), output_result);
+        auto first_expression = build_expression(context, ast, chain.get(), deferred_expressions, output_result);
         chain->expressions.push_back(std::move(first_expression));
 
         //every child of the first AST node is part of the chain
         for (const auto& child : ast->children)
         {
-            auto chained_expression = build_expression(context, child.get(), chain.get(), output_result);
-            chain->expressions.push_back(std::move(chained_expression));
+            if (child->type == ELEMENT_AST_NODE_LAMBDA) {
+                const auto identifier_string = fmt::format("{}_{}", declarer->name.value, deferred_expressions.size());
+                auto identifier = element::identifier(identifier_string);
+                auto expression = std::make_unique<identifier_expression>(identifier, chain.get());
+                assign_source_information(context, expression, ast);
+                chain->expressions.push_back(std::move(expression));
+                deferred_expressions.push_back({ identifier, ast });
+            }
+            else {
+                auto chained_expression = build_expression(context, child.get(), chain.get(), deferred_expressions, output_result);
+                chain->expressions.push_back(std::move(chained_expression));
+            }
         }
 
         return std::move(chain);
     }
 
-    std::unique_ptr<expression> build_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    std::unique_ptr<expression> build_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, deferred_expressions& deferred_expressions, element_result& output_result)
     {
         assert(chain);
         assert(chain->declarer);
@@ -320,10 +392,7 @@ namespace element
             return build_indexing_expression(context, ast, chain, output_result);
 
         if (ast->type == ELEMENT_AST_NODE_EXPRLIST)
-            return build_call_expression(context, ast, chain, output_result);
-
-        if (ast->type == ELEMENT_AST_NODE_LAMBDA)
-            return build_lambda_expression(context, ast, chain, output_result);
+            return build_call_expression(context, ast, chain, deferred_expressions, output_result);
 
         //todo: error
         return nullptr;
