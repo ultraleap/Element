@@ -31,9 +31,10 @@ namespace element
         return declarer->location();
     }
 
-    void scope::add_declaration(std::unique_ptr<declaration> declaration)
+    bool scope::add_declaration(std::unique_ptr<declaration> declaration)
     {
-        declarations.emplace(declaration->name.value, std::move(declaration));
+        const auto& [it, success] = declarations.try_emplace(declaration->name.value, std::move(declaration));
+        return success;
     }
 
     const declaration* scope::find(const identifier& name, const bool recurse = false) const

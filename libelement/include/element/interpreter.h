@@ -50,8 +50,8 @@ void element_interpreter_parse_only_mode(element_interpreter_ctx* context, bool 
 
 element_result element_interpreter_clear(element_interpreter_ctx* context);
 
-typedef struct element_compilable element_compilable;
-typedef struct element_evaluable element_evaluable;
+typedef struct element_declaration element_declaration;
+typedef struct element_object element_object;
 
 typedef struct element_inputs
 {
@@ -67,29 +67,29 @@ typedef struct element_outputs
 
 typedef struct element_metainfo element_metainfo;
 
-element_result element_delete_compilable(
+element_result element_delete_declaration(
     element_interpreter_ctx* context,
-    element_compilable** compilable);
+    element_declaration** declaration);
 
-element_result element_delete_evaluable(
+element_result element_delete_object(
     element_interpreter_ctx* context,
-    element_evaluable** evaluable);
+    element_object** object);
 
 element_result element_interpreter_find(
     element_interpreter_ctx* context,
     const char* path,
-    element_compilable** compilable);
+    element_declaration** declaration);
 
 element_result element_interpreter_compile(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
-    const element_compilable* compilable,
-    element_evaluable** evaluable);
+    const element_declaration* declaration,
+    element_object** object);
 
 element_result element_interpreter_evaluate(
     element_interpreter_ctx* context,
     const element_evaluator_options* options,
-    const element_evaluable* evaluable,
+    const element_object* object,
     const element_inputs* inputs,
     element_outputs* outputs);
 

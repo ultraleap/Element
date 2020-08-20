@@ -11,14 +11,14 @@
 #include "common_internal.hpp"
 #include "obj_model/scope.hpp"
 
-struct element_compilable
+struct element_declaration
 {
     const element::declaration* decl;
 };
 
-struct element_evaluable
+struct element_object
 {
-    std::shared_ptr<const element::object> evaluable;
+    std::shared_ptr<const element::object> obj;
 };
 
 struct element_metainfo

@@ -7,6 +7,9 @@
 namespace element
 {
     class object;
+    //Everything in element is const, so all of our objects should also be const. Be careful using mutable.
+    using object_const_shared_ptr = std::shared_ptr<const object>;
+
     struct identifier;
     class error;
     class compilation_context;

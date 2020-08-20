@@ -25,10 +25,10 @@ namespace element
         struct frame
         {
             const declaration* function;
-            std::vector<std::shared_ptr<const object>> compiled_arguments;
+            std::vector<object_const_shared_ptr> compiled_arguments;
         };
 
-        frame& push(const declaration* function, std::vector<std::shared_ptr<const object>> compiled_arguments);
+        frame& push(const declaration* function, std::vector<object_const_shared_ptr> compiled_arguments);
         void pop();
 
         [[nodiscard]] bool is_recursive(const declaration* declaration) const;
@@ -47,15 +47,15 @@ namespace element
         struct frame
         {
             const declaration* function;
-            std::vector<std::shared_ptr<const object>> compiled_arguments;
+            std::vector<object_const_shared_ptr> compiled_arguments;
         };
 
         capture_stack() = default;
         capture_stack(const declaration* function, const call_stack& calls);
 
-        void push(const declaration* function, std::vector<std::shared_ptr<const object>> compiled_arguments);
+        void push(const declaration* function, std::vector<object_const_shared_ptr> compiled_arguments);
         void pop();
-        [[nodiscard]] std::shared_ptr<const object> find(const scope* s, const identifier& name,
+        [[nodiscard]] object_const_shared_ptr find(const scope* s, const identifier& name,
                                                          const compilation_context& context,
                                                          const source_information& source_info);
 
@@ -91,13 +91,13 @@ namespace element
         [[nodiscard]] virtual bool matches_constraint(const compilation_context& context, const constraint* constraint) const;
         [[nodiscard]] virtual const constraint* get_constraint() const { return nullptr; };
 
-        [[nodiscard]] virtual std::shared_ptr<const object> index(const compilation_context& context,
+        [[nodiscard]] virtual object_const_shared_ptr index(const compilation_context& context,
                                                                   const identifier& name,
                                                                   const source_information& source_info) const;
-        [[nodiscard]] virtual std::shared_ptr<const object> call(const compilation_context& context,
-                                                                 std::vector<std::shared_ptr<const object>> compiled_args,
+        [[nodiscard]] virtual object_const_shared_ptr call(const compilation_context& context,
+                                                                 std::vector<object_const_shared_ptr> compiled_args,
                                                                  const source_information& source_info) const;
-        [[nodiscard]] virtual std::shared_ptr<const object> compile(const compilation_context& context,
+        [[nodiscard]] virtual object_const_shared_ptr compile(const compilation_context& context,
                                                                     const source_information& source_info) const;
 
         [[nodiscard]] virtual const std::vector<port>& get_inputs() const { static std::vector<port> empty; return empty; };
@@ -125,12 +125,12 @@ namespace element
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
 
-        [[nodiscard]] std::shared_ptr<const object> index(const compilation_context& context, const identifier&,
+        [[nodiscard]] object_const_shared_ptr index(const compilation_context& context, const identifier&,
                                                           const source_information& source_info) const override { return shared_from_this(); };
-        [[nodiscard]] std::shared_ptr<const object> call(const compilation_context& context,
-                                                         std::vector<std::shared_ptr<const object>> compiled_args,
+        [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,
+                                                         std::vector<object_const_shared_ptr> compiled_args,
                                                          const source_information& source_info) const override { return shared_from_this(); };
-        [[nodiscard]] std::shared_ptr<const object> compile(const compilation_context& context,
+        [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
                                                             const source_information& source_info) const override { return shared_from_this(); };
 
         [[nodiscard]] element_result get_result() const;
@@ -147,11 +147,11 @@ namespace element
         mutable bool logged = false;
     };
 
-    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<const object>>&
+    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>&
                     compiled_args);
-    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<const object>>&
+    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>&
                                                         compiled_args);
-    std::shared_ptr<const object> index_type(const declaration* type, std::shared_ptr<const object> instance,
+    object_const_shared_ptr index_type(const declaration* type, object_const_shared_ptr instance,
                                              const compilation_context& context, const identifier& name,
                                              const source_information& source_info);
  }

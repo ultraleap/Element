@@ -27,7 +27,7 @@ public:
     [[nodiscard]] std::string typeof_info() const override;
     [[nodiscard]] std::string to_code(int depth = 0) const override;
 
-    [[nodiscard]] std::shared_ptr<const element_expression> to_expression() const final { return const_cast<element_expression*>(this)->shared_from_this(); };
+    [[nodiscard]] std::shared_ptr<const element_expression> to_expression() const final { return shared_from_this(); };
 
     //todo: this is changed by the num constructor, but it should actually copy the expression with the new type
     mutable element::type_const_ptr actual_type;
@@ -43,11 +43,11 @@ protected:
     element_type_id m_type_id = 0;
     int m_size = 0;
 
-    [[nodiscard]] std::shared_ptr<const object> compile(
+    [[nodiscard]] element::object_const_shared_ptr compile(
         const element::compilation_context& context,
         const element::source_information& source_info) const override;
 
-    [[nodiscard]] std::shared_ptr<const object> index(
+    [[nodiscard]] element::object_const_shared_ptr index(
         const element::compilation_context& context,
         const element::identifier& name,
         const element::source_information& source_info) const override;

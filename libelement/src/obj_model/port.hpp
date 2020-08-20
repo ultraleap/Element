@@ -19,7 +19,7 @@ namespace element
         [[nodiscard]] const type_annotation* get_annotation() const { return annotation.get(); };
 
         [[nodiscard]] const declaration* resolve_annotation(const compilation_context& context) const;
-        [[nodiscard]] std::shared_ptr<const object> generate_placeholder(const compilation_context& context, int& placeholder_index) const;
+        [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index) const;
 
     private:
         const declaration* declarer;

@@ -33,19 +33,19 @@ namespace element
         return false;
     }
 
-    std::shared_ptr<const object> object::index(const compilation_context& context, const identifier&,
+    object_const_shared_ptr object::index(const compilation_context& context, const identifier&,
                                                 const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_indexable, typeof_info());
     }
 
-    std::shared_ptr<const object> object::call(const compilation_context& context, std::vector<std::shared_ptr<const object>>,
+    object_const_shared_ptr object::call(const compilation_context& context, std::vector<object_const_shared_ptr>,
                                                const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_callable, typeof_info());
     }
 
-    std::shared_ptr<const object> object::compile(const compilation_context& context,
+    object_const_shared_ptr object::compile(const compilation_context& context,
                                                   const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_compilable, typeof_info());
@@ -87,7 +87,7 @@ namespace element
         return code;
     }
 
-    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<const object>>&
+    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>&
                     compiled_args)
     {
         if (compiled_args.size() != declarer->inputs.size())
@@ -116,7 +116,7 @@ namespace element
         return true;
     }
 
-    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<std::shared_ptr<const object>>&
+    std::shared_ptr<error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>&
                                                         compiled_args)
     {
         assert(!valid_call(context, declarer, compiled_args));
@@ -149,9 +149,9 @@ namespace element
         return std::make_shared<error>("constraint not satisfied", ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
     }
 
-    std::shared_ptr<const object> index_type(
+    object_const_shared_ptr index_type(
         const declaration* type,
-        std::shared_ptr<const object> instance,
+        object_const_shared_ptr instance,
         const compilation_context& context,
         const identifier& name,
         const source_information& source_info)
@@ -189,7 +189,7 @@ namespace element
         return nullptr;
     }
 
-    call_stack::frame& call_stack::push(const declaration* function, std::vector<std::shared_ptr<const object>> compiled_arguments)
+    call_stack::frame& call_stack::push(const declaration* function, std::vector<object_const_shared_ptr> compiled_arguments)
     {
         return frames.emplace_back(frame{ function, std::move(compiled_arguments) });
     }
@@ -272,7 +272,7 @@ namespace element
         }
     }
 
-    void capture_stack::push(const declaration* function, std::vector<std::shared_ptr<const object>> compiled_arguments)
+    void capture_stack::push(const declaration* function, std::vector<object_const_shared_ptr> compiled_arguments)
     {
         frames.emplace_back(frame{function, std::move(compiled_arguments)});
     }
@@ -282,7 +282,7 @@ namespace element
         frames.pop_back();
     }
 
-    std::shared_ptr<const object> capture_stack::find(const scope* s, const identifier& name,
+    object_const_shared_ptr capture_stack::find(const scope* s, const identifier& name,
                                                       const compilation_context& context,
                                                       const source_information& source_info)
     {

@@ -362,32 +362,32 @@ element_result element_interpreter_clear(element_interpreter_ctx* context)
     return context->clear();
 }
 
-element_result element_delete_compilable(element_interpreter_ctx* context, element_compilable** compilable)
+element_result element_delete_declaration(element_interpreter_ctx* context, element_declaration** declaration)
 {
-    delete *compilable;
-    *compilable = nullptr;
+    delete * declaration;
+    *declaration = nullptr;
     return ELEMENT_OK;
 }
 
-element_result element_delete_evaluable(element_interpreter_ctx* context, element_evaluable** evaluable)
+element_result element_delete_object(element_interpreter_ctx* context, element_object** object)
 {
-    delete *evaluable;
-    *evaluable = nullptr;
+    delete * object;
+    *object = nullptr;
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_find(element_interpreter_ctx* context, const char* path, element_compilable** compilable)
+element_result element_interpreter_find(element_interpreter_ctx* context, const char* path, element_declaration** declaration)
 {
-    const auto obj = context->global_scope->find(element::identifier(path), false);
-    if (!obj)
+    const auto* decl = context->global_scope->find(element::identifier(path), false);
+    if (!decl)
     {
-        *compilable = nullptr;
+        *declaration = nullptr;
         context->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("failed to find '{}'.", path));
         return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND;
     }
 
     //todo: don't need to new
-    *compilable = new element_compilable{obj};
+    *declaration = new element_declaration{decl};
     return ELEMENT_OK;
 }
 
@@ -395,9 +395,9 @@ element_result valid_boundary_function(
     element_interpreter_ctx* context,
     const element::compilation_context& compilation_context,
     const element_compiler_options* options,
-    const element_compilable* compilable)
+    const element_declaration* declaration)
 {
-    const auto func_decl = dynamic_cast<const element::function_declaration*>(compilable->decl);
+    const auto func_decl = dynamic_cast<const element::function_declaration*>(declaration->decl);
     if (!func_decl)
         return ELEMENT_ERROR_UNKNOWN;
 
@@ -412,13 +412,13 @@ std::vector<std::shared_ptr<const element::object>> generate_placeholder_inputs(
     element_interpreter_ctx* context,
     const element::compilation_context& compilation_context,
     const element_compiler_options* options,
-    const element_compilable* compilable,
+    const element_declaration* declaration,
     element_result& out_result)
 {
     std::vector<std::shared_ptr<const element::object>> placeholder_inputs;
     int placeholder_index = 0;
 
-    for (const auto& input : compilable->decl->get_inputs())
+    for (const auto& input : declaration->decl->get_inputs())
     {
         auto placeholder = input.generate_placeholder(compilation_context, placeholder_index);
         if (!placeholder)
@@ -433,57 +433,57 @@ std::vector<std::shared_ptr<const element::object>> generate_placeholder_inputs(
 element_result element_interpreter_compile(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
-    const element_compilable* compilable,
-    element_evaluable** evaluable)
+    const element_declaration* declaration,
+    element_object** object)
 {
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
-    if (!compilable->decl)
+    if (!declaration->decl)
         return ELEMENT_ERROR_UNKNOWN;
 
     //todo: compiler option to disable/enable boundary function checking?
-    if (!compilable->decl->get_inputs().empty())
+    if (!declaration->decl->get_inputs().empty())
     {
-        auto result = valid_boundary_function(context, compilation_context, options, compilable);
+        auto result = valid_boundary_function(context, compilation_context, options, declaration);
         if (result != ELEMENT_OK)
         {
             context->log(result, "Tried to compile a function that requires inputs, making it a boundary function, but it can't be a boundary function.");
-            *evaluable = nullptr;
+            *object = nullptr;
             return result;
         }
     }
 
     element_result result = ELEMENT_OK;
-    auto placeholder_inputs = generate_placeholder_inputs(context, compilation_context, options, compilable, result);
+    auto placeholder_inputs = generate_placeholder_inputs(context, compilation_context, options, declaration, result);
     if (result != ELEMENT_OK)
     {
         assert(!"failed to generate placeholder inputs despite being a valid boundary function, bug?");
-        *evaluable = nullptr;
+        *object = nullptr;
         return result;
     }
 
-    auto compiled = compilable->decl->call(compilation_context, std::move(placeholder_inputs), {});
+    auto compiled = declaration->decl->call(compilation_context, std::move(placeholder_inputs), {});
 
     if (!compiled)
     {
-        assert(!"tried to compile something but it resulted in a nullptr");
-        *evaluable = nullptr;
+        assert(!"tried to compile a declaration but it resulted in a nullptr");
+        *object = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
     const auto err = std::dynamic_pointer_cast<const element::error>(compiled);
     if (err)
     {
-        *evaluable = nullptr;
+        *object = nullptr;
         return err->log_once(context->logger.get());
     }
 
     //todo: compiler option to disable/enable forced expression_tree checking
     auto expression = compiled->to_expression();
     if (!expression)
-        *evaluable = new element_evaluable{ std::move(compiled) };
+        *object = new element_object{ std::move(compiled) };
     else
-        *evaluable = new element_evaluable{ std::move(expression) };
+        *object = new element_object{ std::move(expression) };
 
     return ELEMENT_OK;
 }
@@ -491,7 +491,7 @@ element_result element_interpreter_compile(
 element_result element_interpreter_evaluate(
     element_interpreter_ctx* context,
     const element_evaluator_options* options,
-    const element_evaluable* evaluable,
+    const element_object* object,
     const element_inputs* inputs,
     element_outputs* outputs)
 {
@@ -500,17 +500,17 @@ element_result element_interpreter_evaluate(
     if (options)
         opts = *options;
 
-    if (!evaluable->evaluable)
+    if (!object->obj)
     {
         assert(!"tried to evaluate something but it's nullptr");
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto err = std::dynamic_pointer_cast<const element::error>(evaluable->evaluable);
+    const auto err = std::dynamic_pointer_cast<const element::error>(object->obj);
     if (err)
         return err->log_once(context->logger.get());
 
-    auto expr = evaluable->evaluable->to_expression();
+    auto expr = object->obj->to_expression();
     if (!expr)
     {
         //todo: proper logging
@@ -530,7 +530,7 @@ element_result element_interpreter_evaluate(
     outputs->count = static_cast<int>(count);
 
     if (result != ELEMENT_OK) {
-        context->log(result, fmt::format("Failed to evaluate {}", evaluable->evaluable->typeof_info()), "<input>");
+        context->log(result, fmt::format("Failed to evaluate {}", object->obj->typeof_info()), "<input>");
     }
 
     return result;
@@ -540,7 +540,7 @@ element_result element_interpreter_compile_expression(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
     const char* expression_string,
-    element_evaluable** evaluable)
+    element_object** object)
 {
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
@@ -623,13 +623,20 @@ element_result element_interpreter_compile_expression(
         return result;
     }
 
-    context->global_scope->add_declaration(std::move(dummy_declaration));
+    const bool success = context->global_scope->add_declaration(std::move(dummy_declaration));
+    if (!success)
+    {
+        (*object)->obj = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
 
-    auto found_dummy_decl = context->global_scope->find(element::identifier{ "<REMOVE>" }, false);
+    const auto* found_dummy_decl = context->global_scope->find(element::identifier{ "<REMOVE>" }, false);
+    assert(found_dummy_decl);
     auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
 
     //stuff from below
-    (*evaluable)->evaluable = compiled;
+    (*object)->obj = std::move(compiled);
+    return ELEMENT_OK;
 }
 
 element_result element_interpreter_evaluate_expression(
@@ -639,26 +646,26 @@ element_result element_interpreter_evaluate_expression(
     element_outputs* outputs)
 {
     //sure there is a shorthand for this
-    element_evaluable evaluable;
-    auto* evaluable_ptr = &evaluable;
-    element_interpreter_compile_expression(context, nullptr, expression_string, &evaluable_ptr);
+    element_object object;
+    auto* object_ptr = &object;
+    element_interpreter_compile_expression(context, nullptr, expression_string, &object_ptr);
 
-    if (!evaluable_ptr->evaluable)
+    if (!object_ptr->obj)
     {
-        assert(!"tried to evaluate an expression that failed to compile");
-        //todo: log
+        //todo:
+        context->log(ELEMENT_ERROR_UNKNOWN, "tried to evaluate an expression that failed to compile");
         outputs->count = 0;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto err = std::dynamic_pointer_cast<const element::error>(evaluable_ptr->evaluable);
+    const auto err = std::dynamic_pointer_cast<const element::error>(object_ptr->obj);
     if (err)
     {
         outputs->count = 0;
         return err->log_once(context->logger.get());
     }
 
-    const auto compiled = evaluable_ptr->evaluable->to_expression();
+    const auto compiled = object_ptr->obj->to_expression();
     if (!compiled)
     {
         context->log(ELEMENT_ERROR_SERIALISATION, "failed to serialise", "<REMOVE>");
@@ -671,7 +678,7 @@ element_result element_interpreter_evaluate_expression(
     input.values = inputs;
     input.count = 1;
 
-    const auto result = element_interpreter_evaluate(context, options, evaluable_ptr, &input, outputs);
+    const auto result = element_interpreter_evaluate(context, options, object_ptr, &input, outputs);
 
     //todo: remove declaration added to global scope
     //todo: remove file_info added to interpreter source context
@@ -687,31 +694,26 @@ element_result element_interpreter_typeof_expression(
     const int buffer_size)
 {
     //sure there is a shorthand for this
-    element_evaluable evaluable;
-    auto* evaluable_ptr = &evaluable;
-    element_interpreter_compile_expression(context, nullptr, expression_string, &evaluable_ptr);
+    element_object object;
+    auto* object_ptr = &object;
+    element_interpreter_compile_expression(context, nullptr, expression_string, &object_ptr);
 
-    if (!evaluable_ptr->evaluable)
+    if (!object_ptr->obj)
     {
-        assert(!"tried to evaluate an expression that failed to compile");
-        //todo: log
+        //todo:
+        context->log(ELEMENT_ERROR_UNKNOWN, "tried to get typeof an expression that failed to compile");
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto err = std::dynamic_pointer_cast<const element::error>(evaluable_ptr->evaluable);
+    const auto err = std::dynamic_pointer_cast<const element::error>(object_ptr->obj);
     if (err)
-    {
         return err->log_once(context->logger.get());
-    }
 
-    const auto typeof = evaluable.evaluable->typeof_info();
+    const auto typeof = object.obj->typeof_info();
     if (buffer_size < static_cast<int>(typeof.size()))
         return ELEMENT_ERROR_UNKNOWN;
 
-    #define _CRT_SECURE_NO_WARNINGS
     strncpy(buffer, typeof.c_str(), typeof.size());
-    #undef _CRT_SECURE_NO_WARNINGS
-
     return ELEMENT_OK;
 }
 

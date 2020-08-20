@@ -360,7 +360,12 @@ namespace element
             }
 
             assert(decl);
-            our_scope->add_declaration(std::move(decl));
+            const bool success = our_scope->add_declaration(std::move(decl));
+            if (!success)
+            {
+                if (output_result == ELEMENT_OK)
+                    output_result = ELEMENT_ERROR_UNKNOWN;
+            }
         }
     }
 
