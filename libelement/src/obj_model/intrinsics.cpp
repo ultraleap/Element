@@ -137,7 +137,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<const object> intrinsic_nullary::compile(const compilation_context& context,
+    object_const_shared_ptr intrinsic_nullary::compile(const compilation_context& context,
                                                              const source_information& source_info) const
     {
         return std::make_unique<element_expression_nullary>(
@@ -153,7 +153,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<const object> intrinsic_unary::compile(const compilation_context& context,
+    object_const_shared_ptr intrinsic_unary::compile(const compilation_context& context,
                                                            const source_information& source_info) const
     {
         const auto& frame = context.calls.frames.back();
@@ -186,7 +186,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<const object> intrinsic_binary::compile(const compilation_context& context,
+    object_const_shared_ptr intrinsic_binary::compile(const compilation_context& context,
                                                             const source_information& source_info) const
     {
         const auto& frame = context.calls.frames.back();
@@ -217,7 +217,7 @@ namespace element
     {
     }
 
-    std::shared_ptr<const object> intrinsic_if::compile(const compilation_context& context,
+    object_const_shared_ptr intrinsic_if::compile(const compilation_context& context,
                                                         const source_information& source_info) const
     {
         const auto& frame = context.calls.frames.back();
@@ -260,9 +260,9 @@ namespace element
     {
     }
 
-    std::shared_ptr<const object> intrinsic_num_constructor::call(
+    object_const_shared_ptr intrinsic_num_constructor::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<const object>> compiled_args,
+        std::vector<object_const_shared_ptr> compiled_args,
         const source_information& source_info) const
     {
         auto expr = std::dynamic_pointer_cast<const element_expression>(compiled_args[0]);
@@ -277,9 +277,9 @@ namespace element
     {
     }
 
-    std::shared_ptr<const object> intrinsic_bool_constructor::call(
+    object_const_shared_ptr intrinsic_bool_constructor::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<const object>> compiled_args,
+        std::vector<object_const_shared_ptr> compiled_args,
         const source_information& source_info) const
     {
         auto& true_decl = *context.get_global_scope()->find(identifier("True"), false);

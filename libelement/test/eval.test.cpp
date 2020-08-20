@@ -53,8 +53,8 @@ void log_callback(const element_log_message* msg)
 element_result eval(const char* evaluate)
 {
     element_interpreter_ctx* context= NULL;
-    element_compilable* compilable = NULL;
-    element_evaluable* evaluable = NULL;
+    element_declaration* declaration = NULL;
+    element_object* object = NULL;
 
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback);
@@ -73,11 +73,11 @@ element_result eval(const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_find(context, "evaluate", &compilable);
+    result = element_interpreter_find(context, "evaluate", &declaration);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_compile(context, NULL, compilable, &evaluable);
+    result = element_interpreter_compile(context, NULL, declaration, &object);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -87,7 +87,7 @@ element_result eval(const char* evaluate)
     output.values = outputs;
     output.count = 1;
 
-    result = element_interpreter_evaluate(context, NULL, evaluable, &input, &output);
+    result = element_interpreter_evaluate(context, NULL, object, &input, &output);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -106,8 +106,8 @@ element_result eval(const char* evaluate)
     UNSCOPED_INFO(output_buffer);
 
     cleanup:
-    element_delete_compilable(context, &compilable);
-    element_delete_evaluable(context, &evaluable);
+    element_delete_declaration(context, &declaration);
+    element_delete_object(context, &object);
     element_interpreter_delete(context);
     return result;
 }
@@ -115,8 +115,8 @@ element_result eval(const char* evaluate)
 element_result eval_with_source(const char* source, const char* evaluate)
 {
     element_interpreter_ctx* context = NULL;
-    element_compilable* compilable = NULL;
-    element_evaluable* evaluable = NULL;
+    element_declaration* declaration = NULL;
+    element_object* object = NULL;
 
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback);
@@ -139,11 +139,11 @@ element_result eval_with_source(const char* source, const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_find(context, "evaluate", &compilable);
+    result = element_interpreter_find(context, "evaluate", &declaration);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_compile(context, NULL, compilable, &evaluable);
+    result = element_interpreter_compile(context, NULL, declaration, &object);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -153,7 +153,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     output.values = outputs;
     output.count = 1;
 
-    result = element_interpreter_evaluate(context, NULL, evaluable, &input, &output);
+    result = element_interpreter_evaluate(context, NULL, object, &input, &output);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -172,8 +172,8 @@ element_result eval_with_source(const char* source, const char* evaluate)
     UNSCOPED_INFO(output_buffer);
 
     cleanup:
-    element_delete_compilable(context, &compilable);
-    element_delete_evaluable(context, &evaluable);
+    element_delete_declaration(context, &declaration);
+    element_delete_object(context, &object);
     element_interpreter_delete(context);
     return result;
 }
@@ -181,8 +181,8 @@ element_result eval_with_source(const char* source, const char* evaluate)
 element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, element_outputs* outputs, std::string package = "")
 {
     element_interpreter_ctx* context = NULL;
-    element_compilable* compilable = NULL;
-    element_evaluable* evaluable = NULL;
+    element_declaration* declaration = NULL;
+    element_object* object = NULL;
 
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback);
@@ -202,15 +202,15 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_find(context, "evaluate", &compilable);
+    result = element_interpreter_find(context, "evaluate", &declaration);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_compile(context, NULL, compilable, &evaluable);
+    result = element_interpreter_compile(context, NULL, declaration, &object);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_evaluate(context, NULL, evaluable, inputs, outputs);
+    result = element_interpreter_evaluate(context, NULL, object, inputs, outputs);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -229,8 +229,8 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     UNSCOPED_INFO(output_buffer);
 
     cleanup:
-    element_delete_compilable(context, &compilable);
-    element_delete_evaluable(context, &evaluable);
+    element_delete_declaration(context, &declaration);
+    element_delete_object(context, &object);
     element_interpreter_delete(context);
     return result;
 }
@@ -714,7 +714,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
 
         SECTION("Identifier Not Found - Namespace")
         {
-            //todo: namespace is "compilable" because that's how the CLI implements typeof, which throws an assert at evaluation (rightly so, shouldn't be an error, because trying to compile it should fail at that stage)
+            //todo: namespace is "declaration" because that's how the CLI implements typeof, which throws an assert at evaluation (rightly so, shouldn't be an error, because trying to compile it should fail at that stage)
             result = eval("namespace MyNamespace {} evaluate = MyNamespace;");
             REQUIRE(result == ELEMENT_ERROR_IDENTIFIER_NOT_FOUND);
         }

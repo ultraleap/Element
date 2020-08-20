@@ -22,7 +22,7 @@ namespace element
     const type_const_unique_ptr type::num = std::make_unique<num_type>();
     const type_const_unique_ptr type::boolean = std::make_unique<boolean_type>();
 
-    std::shared_ptr<const object> num_type::index(const compilation_context& context, const identifier& name,
+    object_const_shared_ptr num_type::index(const compilation_context& context, const identifier& name,
                                                   const source_information& source_info) const
     {
         //todo: cache, but don't use static
@@ -31,7 +31,7 @@ namespace element
         return declaration->index(context, name, source_info);
     }
 
-    std::shared_ptr<const object> boolean_type::index(const compilation_context& context, const identifier& name,
+    object_const_shared_ptr boolean_type::index(const compilation_context& context, const identifier& name,
                                                       const source_information& source_info) const
     {
         //todo: cache, but don't use static

@@ -6,7 +6,6 @@
 //SELF
 #include "object.hpp"
 #include "scope.hpp"
-#include "expressions.hpp"
 #include "intermediaries.hpp"
 #include "intrinsics.hpp"
 #include "errors.hpp"
@@ -49,7 +48,7 @@ namespace element
         _intrinsic = is_intrinsic;
     }
 
-    std::shared_ptr<const object> struct_declaration::index(
+    object_const_shared_ptr struct_declaration::index(
         const compilation_context& context,
         const identifier& name,
         const source_information& source_info) const
@@ -61,15 +60,15 @@ namespace element
         return found->compile(context, source_info);
     }
 
-    std::shared_ptr<const object> struct_declaration::call(
+    object_const_shared_ptr struct_declaration::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<const object>> compiled_args,
+        std::vector<object_const_shared_ptr> compiled_args,
         const source_information& source_info) const
     {
         //this function handles construction of an intrinsic struct instance (get_intrinsic(...)->call(...)) or a user struct instance (make_shared<struct_instance>(...))
         if (is_intrinsic()) 
         {
-            const auto intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
+            const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
             if (intrinsic) 
                 return intrinsic->call(context, compiled_args, source_info);
 
@@ -122,7 +121,7 @@ namespace element
         if (inputs.empty())
         {
             assert(is_intrinsic());
-            const auto intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
+            const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
             assert(intrinsic);
             //todo: ask intrinsic if it's deserializable
             if (intrinsic->get_type() == type::num.get() || intrinsic->get_type() == type::boolean.get())
@@ -142,19 +141,19 @@ namespace element
         return true;
     }
 
-    std::shared_ptr<const object> struct_declaration::generate_placeholder(
+    object_const_shared_ptr struct_declaration::generate_placeholder(
         const compilation_context& context, int& placeholder_index) const
     {
         if (inputs.empty())
         {
             assert(is_intrinsic());
-            const auto intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
+            const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
             auto expr = std::make_shared<element_expression_input>(placeholder_index);
             expr->actual_type = intrinsic->get_type();
             return expr;
         }
 
-        std::vector<std::shared_ptr<const object>> placeholder_inputs;
+        std::vector<object_const_shared_ptr> placeholder_inputs;
         for (const auto& input : get_inputs())
         {
             const auto& type = get_scope()->find(input.get_annotation()->to_string(), true);
@@ -175,7 +174,7 @@ namespace element
 
     //constraint
     constraint_declaration::constraint_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
-        : declaration(name, parent_scope)
+        : declaration(std::move(name), parent_scope)
         , constraint_(std::make_unique<constraint>(4, this)) //todo: what to use
     {
         qualifier = constraint_qualifier;
@@ -216,9 +215,9 @@ namespace element
         _intrinsic = is_intrinsic;
     }
 
-    std::shared_ptr<const object> function_declaration::call(
+    object_const_shared_ptr function_declaration::call(
         const compilation_context& context,
-        std::vector<std::shared_ptr<const object>> compiled_args,
+        std::vector<object_const_shared_ptr> compiled_args,
         const source_information& source_info) const
     {
         //todo: check, if there is a first argument, that this is a valid instance function
@@ -227,7 +226,7 @@ namespace element
         return instance->compile(context, source_info);
     }
 
-    std::shared_ptr<const object> function_declaration::compile(const compilation_context& context,
+    object_const_shared_ptr function_declaration::compile(const compilation_context& context,
                                                                 const source_information& source_info) const
     {
         const auto instance = std::make_shared<function_instance>(this, context.captures, source_info);
@@ -250,7 +249,7 @@ namespace element
             return false;
 
         //outputs must be serializable
-        const auto return_type = output->resolve_annotation(context);
+        const auto* return_type = output->resolve_annotation(context);
         if (!return_type || !return_type->serializable(context))
             return false;
 
@@ -273,7 +272,7 @@ namespace element
         _intrinsic = false;
     }
 
-    std::shared_ptr<const object> namespace_declaration::index(
+    object_const_shared_ptr namespace_declaration::index(
         const compilation_context& context,
         const identifier& name,
         const source_information& source_info) const

@@ -25,7 +25,7 @@ namespace element
         [[nodiscard]] std::string location() const;
         [[nodiscard]] std::string to_code(int depth = -1) const override;
 
-        void add_declaration(std::unique_ptr<declaration> declaration);
+        [[nodiscard]] bool add_declaration(std::unique_ptr<declaration> declaration);
         element_result merge(std::unique_ptr<scope>&& other);
 
         //todo: private

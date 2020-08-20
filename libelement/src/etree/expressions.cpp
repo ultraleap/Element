@@ -43,7 +43,7 @@ std::shared_ptr<const element::object> element_expression::index(
         return nullptr;
     }
 
-    return index_type(actual_type_decl, const_cast<element_expression*>(this)->shared_from_this(), context, name, source_info);
+    return index_type(actual_type_decl, shared_from_this(), context, name, source_info);
 }
 
 element_expression_constant::element_expression_constant(element_value val)

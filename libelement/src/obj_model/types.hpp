@@ -77,7 +77,7 @@ namespace element
         {
         }
 
-        [[nodiscard]] std::shared_ptr<const object> index(const compilation_context& context, const identifier& name,
+        [[nodiscard]] object_const_shared_ptr index(const compilation_context& context, const identifier& name,
                                                           const source_information& source_info) const override;
 
     private:
@@ -92,7 +92,7 @@ namespace element
         {
         }
 
-        [[nodiscard]] std::shared_ptr<const object> index(const compilation_context& context, const identifier& name,
+        [[nodiscard]] object_const_shared_ptr index(const compilation_context& context, const identifier& name,
                                                           const source_information& source_info) const override;
 
     private:
