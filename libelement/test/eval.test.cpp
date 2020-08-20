@@ -862,6 +862,13 @@ TEST_CASE("Evaluate", "[Evaluate]")
             result = eval("evaluate = 5.add.add(1);");
             REQUIRE(result == ELEMENT_ERROR_UNKNOWN);
         }
+
+        SECTION("Identifier Not Found - Indexing Num")
+        {
+            //todo: better error message
+            result = eval("evaluate = Num.woo;");
+            REQUIRE(result == ELEMENT_ERROR_IDENTIFIER_NOT_FOUND);
+        }
     }
 
     SECTION("Compiletime - Fail")
@@ -915,6 +922,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
         auto result = element_interpreter_evaluate_expression(context, nullptr, "1", &output);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs_buffer[0] == 1);
+        element_interpreter_delete(context);
     }
 
     SECTION("element_interpreter_evaluate_expression twice")
@@ -934,6 +942,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
         result = element_interpreter_evaluate_expression(context, nullptr, "2", &output);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs_buffer[0] == 2);
+        element_interpreter_delete(context);
     }
 
     SECTION("element_interpreter_typeof_expression once")
@@ -946,6 +955,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
         auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), buffer.size());
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Num") == 0);
+        element_interpreter_delete(context);
     }
 
     SECTION("element_interpreter_typeof_expression twice")
@@ -967,5 +977,6 @@ TEST_CASE("Evaluate", "[Evaluate]")
         result = element_interpreter_typeof_expression(context, nullptr, "Bool(1)", buffer.data(), buffer.size());
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Bool") == 0);
+        element_interpreter_delete(context);
     }
 }
