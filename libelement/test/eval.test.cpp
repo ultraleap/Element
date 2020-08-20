@@ -442,13 +442,13 @@ TEST_CASE("Error Cases - Eval", "[Evaluate]") {
         REQUIRE(result == ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL);
     }
 
-    SECTION("Error Unknown") {
+    SECTION("Failed to call namespace") {
         //todo: namespace should have a specific error message for calling a namespace, with a specific error code
         result = eval("namespace MyNamespace {} evaluate = MyNamespace(1);");
         REQUIRE(result == ELEMENT_ERROR_UNKNOWN);
     }
 
-    SECTION("Error Unknown") {
+    SECTION("Failed to index function") {
         //todo: this should return an error for trying to index a function
         result = eval("func(a) = 1; evaluate = func.a;");
         REQUIRE(result == ELEMENT_ERROR_UNKNOWN);
