@@ -17,7 +17,7 @@ void print_ast(element_ast* ast, int depth, element_ast* ast_to_mark)
     UNSCOPED_INFO(output_buffer.data());
 }
 
-TEST_CASE("AST", "[AST]") {
+TEST_CASE("Parser", "[AST]") {
 
     element_tokeniser_ctx* tokeniser;
     element_tokeniser_create(&tokeniser);

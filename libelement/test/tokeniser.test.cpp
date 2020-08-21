@@ -14,7 +14,7 @@ void print_token(const element_tokeniser_ctx* context, const element_token* near
     UNSCOPED_INFO(output_buffer.data());
 }
 
-TEST_CASE("Token Generation", "[Tokeniser]") {
+TEST_CASE("Tokeniser", "[Tokeniser]") {
 
     element_tokeniser_ctx* tokeniser;
     element_tokeniser_create(&tokeniser);
