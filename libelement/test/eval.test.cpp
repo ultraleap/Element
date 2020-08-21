@@ -547,6 +547,21 @@ TEST_CASE("Evaluate", "[Evaluate]")
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[0] * 2.0f);
             }
+
+            SECTION("do(func, func2, param) = func2(func(param)(param)); evaluate(a:Num):Num = do(_(b) {return = _(c) { mul(a, b) = a.mul(b); return = mul(c.mul(b), 2);};}, _(d) = d.mul(2), a);")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("do(func, func2, param) = func2(func(param)(param)); evaluate(a:Num):Num = do(_(b) {return = _(c) { mul(a, b) = a.mul(b); return = mul(c.mul(b), 2);};}, _(d) = d.mul(2), a);", &input, &output);
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(outputs[0] == inputs[0] * inputs[0] * 2.0f * 2.0f);
+            }
         }
 
         SECTION("Structs")
