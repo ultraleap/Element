@@ -164,11 +164,15 @@ namespace element
             {
                 for (auto& [nested_identifier, nested_expression] : deferred_expressions) {
 
-                    auto lambda = build_lambda_declaration(context, nested_identifier, nested_expression, parent_scope, output_result);
-                    lambda_function_decl->our_scope->add_declaration(std::move(lambda));
+                    auto lambda = build_lambda_declaration(context, nested_identifier, nested_expression, lambda_function_decl->our_scope.get(), output_result);
+                    const auto is_added = lambda_function_decl->our_scope->add_declaration(std::move(lambda));
+                    if (!is_added)
+                    {
+                        //todo: error
+                    }
                 }
 
-                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, parent_scope, false);
+                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, lambda_function_decl->our_scope.get(), false);
                 assign_source_information(context, lambda_return_decl, expression);
                 lambda_return_decl->body = std::move(chain);
 
@@ -232,11 +236,15 @@ namespace element
             {
                 for (auto& [identifier, expression] : deferred_expressions) {
 
-                    auto lambda = build_lambda_declaration(context, identifier, expression, parent_scope, output_result);
-                    function_decl->our_scope->add_declaration(std::move(lambda));
+                    auto lambda = build_lambda_declaration(context, identifier, expression, function_decl->our_scope.get(), output_result);
+                    const auto is_added = function_decl->our_scope->add_declaration(std::move(lambda));
+                    if(!is_added)
+                    {
+                        //todo: error
+                    }
                 }
 
-                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, parent_scope, intrinsic);
+                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, function_decl->our_scope.get(), intrinsic);
                 assign_source_information(context, lambda_return_decl, decl);
                 lambda_return_decl->body = std::move(chain);
 
