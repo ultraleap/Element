@@ -150,8 +150,7 @@ namespace element
             const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
             auto expr = std::make_shared<element_expression_input>(placeholder_index);
             expr->actual_type = intrinsic->get_type();
-            //todo: Lists might cause issues here
-            //placeholder_index++;
+            placeholder_index += 1; //todo: fix when we have lists, size() on intrinsic? on type?
             return expr;
         }
 
@@ -168,7 +167,6 @@ namespace element
             }
 
             placeholder_inputs.push_back(std::move(placeholder));
-            placeholder_index++;
         }
 
         return call(context, std::move(placeholder_inputs), {});
