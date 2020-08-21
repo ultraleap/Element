@@ -503,7 +503,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
 
         SECTION("HigherOrderFunctions")
         {
-            SECTION("Num.add")
+            SECTION("Apply Num.add to number")
             {
                 float inputs[] = { 2 };
                 element_inputs input;
@@ -518,7 +518,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
                 REQUIRE(outputs[0] == inputs[0] + 1.0f);
             }
 
-            SECTION("do(func, param) = func(param); evaluate(a:Num):Num = do(_(b) = b), a")
+            SECTION("Apply lambda to number")
              {
                 float inputs[] = { 2 };
                 element_inputs input;
@@ -533,7 +533,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
                 REQUIRE(outputs[0] == inputs[0]);
             }
 
-            SECTION("do(func, param) = func(param); evaluate(a:Num):Num = do(_(b) {return = _(c) { return = c.mul(b);};}, a)")
+            SECTION("Apply nested scoped lambdas to number")
             {
                 float inputs[] = { 2 };
                 element_inputs input;
@@ -543,12 +543,20 @@ TEST_CASE("Evaluate", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("do(func, param) = func(param)(param); evaluate(a:Num):Num = do(_(b) {return = _(c) { mul(a, b) = a.mul(b); return = mul(c.mul(b), 2);};}, a);", &input, &output);
+                result = eval_with_inputs(
+                    "do(func, param) = func(param)(param);"
+                    "evaluate(a:Num):Num = do(_(b) {"
+                    "    return = _(c) {"
+                    "        mul(a, b) = a.mul(b);"
+                    "        return = mul(c.mul(b), 2);"
+                    "    };"
+                    "}, a);",
+                    &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[0] * 2.0f);
             }
 
-            SECTION("do(func, func2, param) = func2(func(param)(param)); evaluate(a:Num):Num = do(_(b) {return = _(c) { mul(a, b) = a.mul(b); return = mul(c.mul(b), 2);};}, _(d) = d.mul(2), a);")
+            SECTION("Apply nested scoped lambdas and expression lambda to number")
             {
                 float inputs[] = { 2 };
                 element_inputs input;
@@ -558,7 +566,15 @@ TEST_CASE("Evaluate", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("do(func, func2, param) = func2(func(param)(param)); evaluate(a:Num):Num = do(_(b) {return = _(c) { mul(a, b) = a.mul(b); return = mul(c.mul(b), 2);};}, _(d) = d.mul(2), a);", &input, &output);
+                result = eval_with_inputs(
+                    "do(func, func2, param) = func2(func(param)(param));"
+                    "evaluate(a:Num):Num = do(_(b) {"
+                    "    return = _(c) {"
+                    "        mul(a, b) = a.mul(b);"
+                    "        return = mul(c.mul(b), 2);"
+                    "    };"
+                    "}, _(d) = d.mul(2), a);",
+                    &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[0] * 2.0f * 2.0f);
             }
