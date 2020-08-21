@@ -363,7 +363,7 @@ namespace element
         //early return if lambda
         if (ast->type == ELEMENT_AST_NODE_LAMBDA) {
 
-            const auto identifier_string = fmt::format("{}_{}", declarer->name.value, deferred_expressions.size());
+            const auto identifier_string = fmt::format("<{}_{}>", declarer->name.value, deferred_expressions.size());
             auto identifier = element::identifier(identifier_string);
             auto expression = std::make_unique<identifier_expression>(identifier, chain.get());
             assign_source_information(context, expression, ast);
@@ -381,7 +381,7 @@ namespace element
         for (const auto& child : ast->children)
         {
             if (child->type == ELEMENT_AST_NODE_LAMBDA) {
-                const auto identifier_string = fmt::format("{}_{}", declarer->name.value, deferred_expressions.size());
+                const auto identifier_string = fmt::format("<{}_{}>", declarer->name.value, deferred_expressions.size());
                 auto identifier = element::identifier(identifier_string);
                 auto expression = std::make_unique<identifier_expression>(identifier, chain.get());
                 assign_source_information(context, expression, ast);
