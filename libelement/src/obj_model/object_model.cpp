@@ -388,18 +388,8 @@ namespace element
         //every child of the first AST node is part of the chain
         for (const auto& child : ast->children)
         {
-            if (child->type == ELEMENT_AST_NODE_LAMBDA) {
-                const auto identifier_string = fmt::format("<{}_{}>", declarer->name.value, deferred_expressions.size());
-                auto identifier = element::identifier(identifier_string);
-                auto expression = std::make_unique<identifier_expression>(identifier, chain.get());
-                assign_source_information(context, expression, ast);
-                chain->expressions.push_back(std::move(expression));
-                deferred_expressions.push_back({ identifier, ast });
-            }
-            else {
-                auto chained_expression = build_expression(context, child.get(), chain.get(), deferred_expressions, output_result);
-                chain->expressions.push_back(std::move(chained_expression));
-            }
+            auto chained_expression = build_expression(context, child.get(), chain.get(), deferred_expressions, output_result);
+            chain->expressions.push_back(std::move(chained_expression));
         }
 
         return std::move(chain);
