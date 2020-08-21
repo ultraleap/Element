@@ -50,8 +50,7 @@ namespace element
 
         [[nodiscard]] virtual bool serializable(const compilation_context& context) const { return false; };
         [[nodiscard]] virtual bool deserializable(const compilation_context& context) const { return false; };
-        [[nodiscard]] virtual object_const_shared_ptr generate_placeholder(
-            const compilation_context& context, int& placeholder_index) const { return nullptr; };
+        [[nodiscard]] virtual object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index) const { return nullptr; };
 
         [[nodiscard]] virtual std::string location() const;
 
@@ -88,8 +87,7 @@ namespace element
 
         [[nodiscard]] bool serializable(const compilation_context& context) const { return declarer->serializable(context); }
         [[nodiscard]] bool deserializable(const compilation_context& context) const { return declarer->deserializable(context); }
-        [[nodiscard]] object_const_shared_ptr generate_placeholder(
-            const compilation_context& context, int& placeholder_index) const { return declarer->generate_placeholder(context, placeholder_index); }
+        [[nodiscard]] object_const_shared_ptr generate_placeholder (const compilation_context& context, int& placeholder_index) const { return declarer->generate_placeholder(context, placeholder_index); }
 
         [[nodiscard]] object_const_shared_ptr index(const compilation_context& context, const identifier& name,
                                                           const source_information& source_info) const { return declarer->index(context, name, source_info); }

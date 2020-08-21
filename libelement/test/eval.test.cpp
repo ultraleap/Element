@@ -562,6 +562,87 @@ TEST_CASE("Evaluate", "[Evaluate]")
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[0] * 2.0f * 2.0f);
             }
+
+
+            SECTION("Nullary function returning lambda")
+            {
+                float inputs[] = { 1 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("nullary = _(a:Num):Num = a.mul(10); evaluate(a:Num):Num = nullary(a);", &input, &output);
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(outputs[0] == inputs[0] * 10.0f);
+            }
+
+
+            SECTION("Nullary function returning struct containing lambda")
+            {
+                float inputs[] = { 1 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("constraint func_constraint(a); struct container(contained:func_constraint); nullary = container(_(a) = a.mul(10)); evaluate(a:Num):Num = nullary.contained(a);", &input, &output);
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(outputs[0] == inputs[0] * 10.0f);
+            }
+
+
+            SECTION("Nullary function returning struct containing nested lambdas")
+            {
+                float inputs[] = { 1, 10 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 2;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("constraint func_constraint(a); struct container(contained:func_constraint); nullary = container(_(a) = _(b) = a.mul(b)); evaluate(a:Num, b:Num):Num = nullary.contained(a)(b);", &input, &output);
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(outputs[0] == inputs[0] * inputs[1]);
+            }
+
+
+            //SECTION("Nullary function returning struct containing set of lambdas")
+            //{
+            //    float inputs[] = { 1, 2 };
+            //    element_inputs input;
+            //    input.values = inputs;
+            //    input.count = 2;
+            //    element_outputs output;
+            //    float outputs[] = { 0, 0 };
+            //    output.values = outputs;
+            //    output.count = 2;
+            //    result = eval_with_inputs("constraint func_constraint(a); struct result(a:Num, b:Num); struct container(contained0:func_constraint, contained1:func_constraint); nullary = container(_(a) = a.mul(10), _(b) = b.mul(5)); evaluate(a:Num, b:Num):Num = result(nullary.contained0(a), nullary.contained1(b));", &input, &output);
+            //    REQUIRE(result == ELEMENT_OK);
+            //    REQUIRE(outputs[0] == inputs[0] * 10.0f);
+            //    REQUIRE(outputs[1] == inputs[1] * 5.0f);
+            //}
+
+
+            //SECTION("Nullary function returning struct containing set of nested lambdas")
+            //{
+            //    float inputs[] = { 1, 10 };
+            //    element_inputs input;
+            //    input.values = inputs;
+            //    input.count = 2;
+            //    element_outputs output;
+            //    float outputs[] = { 0 };
+            //    output.values = outputs;
+            //    output.count = 1;
+            //    result = eval_with_inputs("constraint func_constraint(a); struct container(contained:func_constraint); nullary = container(_(a) = _(b) = a.mul(b)); evaluate(a:Num, b:Num):Num = nullary.contained(a)(b);", &input, &output);
+            //    REQUIRE(result == ELEMENT_OK);
+            //    REQUIRE(outputs[0] == inputs[0] * inputs[1]);
+            //}
         }
 
         SECTION("Structs")
@@ -618,7 +699,7 @@ TEST_CASE("Evaluate", "[Evaluate]")
 
                 SECTION("Multiply using inputs")
                 {
-                    float inputs[] = { 20, 20 };
+                    float inputs[] = { 20, 10 };
                     element_inputs input;
                     input.values = inputs;
                     input.count = 2;
