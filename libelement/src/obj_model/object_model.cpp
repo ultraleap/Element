@@ -73,6 +73,26 @@ namespace element
         }
     }
 
+    void build_inputs_output(const element_interpreter_ctx* context, element_ast* ast, declaration& declaration, element_result& output_result, int type)
+    {
+        element_ast* inputs = nullptr;
+        element_ast* output = nullptr;
+
+        if (type == ELEMENT_AST_NODE_LAMBDA)
+        {
+            inputs = ast->children[ast_idx::lambda::inputs].get();
+            output = ast->children[ast_idx::lambda::output].get();
+        }
+        else
+        {
+            inputs = ast->children[ast_idx::declaration::inputs].get();
+            output = ast->children[ast_idx::declaration::outputs].get();
+        }
+
+        build_inputs(context, inputs, declaration, output_result);
+        build_output(context, output, declaration, output_result);
+    }
+
     std::unique_ptr<declaration> build_struct_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
@@ -80,10 +100,7 @@ namespace element
 
         auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, is_intrinsic);
 
-        auto* const inputs = decl->children[ast_idx::declaration::inputs].get();
-        auto* const output = decl->children[ast_idx::declaration::outputs].get();
-        build_inputs(context, inputs, *struct_decl, output_result);
-        build_output(context, output, *struct_decl, output_result);
+        build_inputs_output(context, decl, *struct_decl, output_result, ELEMENT_AST_NODE_STRUCT);
 
         if (is_intrinsic)
         {
@@ -108,10 +125,7 @@ namespace element
 
         auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
 
-        auto* const inputs = decl->children[ast_idx::declaration::inputs].get();
-        auto* const output = decl->children[ast_idx::declaration::outputs].get();
-        build_inputs(context, inputs, *constraint_decl, output_result);
-        build_output(context, output, *constraint_decl, output_result);
+        build_inputs_output(context, decl, *constraint_decl, output_result, ELEMENT_AST_NODE_CONSTRAINT);
 
         if (intrinsic)
         {
@@ -123,17 +137,13 @@ namespace element
 
     std::unique_ptr<declaration> build_lambda_declaration(const element_interpreter_ctx* context, identifier& identifier, const element_ast* const expression, const scope* const parent_scope, element_result& output_result)
     {
-
-        auto* const lambda_inputs = expression->children[ast_idx::lambda::inputs].get();
-        auto* const lambda_output = expression->children[ast_idx::lambda::output].get();
-        auto* const lambda_body = expression->children[ast_idx::lambda::body].get();
-
         //TODO: This needs to be a new type e.g. lambda_declaration, at the very least for to_code to function correctly (might require some string magic to resugar/sugarify/???) and be able to distinguish between lambda vs not
         auto lambda_function_decl = std::make_unique<function_declaration>(identifier, parent_scope, false);
         assign_source_information(context, lambda_function_decl, expression);
 
-        build_inputs(context, lambda_inputs, *lambda_function_decl, output_result);
-        build_output(context, lambda_output, *lambda_function_decl, output_result);
+        build_inputs_output(context, (element_ast *) expression, *lambda_function_decl, output_result, ELEMENT_AST_NODE_LAMBDA);
+
+        auto* const lambda_body = expression->children[ast_idx::lambda::body].get();
 
         if (lambda_body->type == ELEMENT_AST_NODE_SCOPE)
         {
@@ -191,10 +201,7 @@ namespace element
         auto function_decl = std::make_unique<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
         assign_source_information(context, function_decl, decl);
 
-        auto* const inputs = decl->children[ast_idx::declaration::inputs].get();
-        auto* const output = decl->children[ast_idx::declaration::outputs].get();
-        build_inputs(context, inputs, *function_decl, output_result);
-        build_output(context, output, *function_decl, output_result);
+        build_inputs_output(context, decl, *function_decl, output_result, ELEMENT_AST_NODE_FUNCTION);
 
         auto* const body = ast->children[ast_idx::function::body].get();
 
