@@ -517,6 +517,36 @@ TEST_CASE("Evaluate", "[Evaluate]")
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] + 1.0f);
             }
+
+            SECTION("do(func, param) = func(param); evaluate(a:Num):Num = do(_(b) = b), a")
+             {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("do(func, param) = func(param); evaluate(a:Num):Num = do(_(b) = b, a);", &input, &output);
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(outputs[0] == inputs[0]);
+            }
+
+            SECTION("do(func, param) = func(param); evaluate(a:Num):Num = do(_(b) {return = _(c) { return = c.mul(b);};}, a)")
+            {
+                float inputs[] = { 2 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("do(func, param) = func(param)(param); evaluate(a:Num):Num = do(_(b) {return = _(c) { mul(a, b) = a.mul(b); return = mul(c.mul(b), 2);};}, a);", &input, &output);
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(outputs[0] == inputs[0] * inputs[0] * 2.0f);
+            }
         }
 
         SECTION("Structs")
