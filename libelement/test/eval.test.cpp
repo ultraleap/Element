@@ -546,6 +546,21 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[1]);
             }
+
+            SECTION("Nullary function returning struct containing multiple nested lambdas")
+            {
+                float inputs[] = { 1, 10 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 2;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+                result = eval_with_inputs("constraint func_constraint(a); struct container(one:func_constraint, two:func_constraint); nullary = container(_(a) = _(b) = a.mul(b), _(a) = _(b) = a.mul(b)); evaluate(a:Num, b:Num):Bool = Num.eq(nullary.one(a)(b), nullary.two(a)(b));", &input, &output);
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(outputs[0] >= 0.0f);
+            }
         }
 
         SECTION("Structs")
