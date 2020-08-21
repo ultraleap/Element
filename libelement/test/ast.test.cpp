@@ -217,9 +217,12 @@ TEST_CASE("AST", "[AST]") {
         REQUIRE(root->children[0]->children[1]->children[0]->children[0]->type == ELEMENT_AST_NODE_PORT);
         REQUIRE(root->children[0]->children[1]->children[0]->children[0]->identifier == "_a");
 
+        // Type
+        REQUIRE(root->children[0]->children[1]->children[1]->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
+
         // Literal
-        REQUIRE(root->children[0]->children[1]->children[1]->type == ELEMENT_AST_NODE_LITERAL);
-        REQUIRE(root->children[0]->children[1]->children[1]->literal == 5);
+        REQUIRE(root->children[0]->children[1]->children[2]->type == ELEMENT_AST_NODE_LITERAL);
+        REQUIRE(root->children[0]->children[1]->children[2]->literal == 5);
 
         element_ast_delete(parser.root);
     }
