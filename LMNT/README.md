@@ -23,33 +23,42 @@ These cannot all be achieved in all situations; for parts of the library which c
 lmnt_ictx ctx;
 char mem[8192];
 lmnt_result result;
+
 // initialise interpreter context
 result = lmnt_ictx_init(&ctx, mem, sizeof(mem));
 assert(result == LMNT_OK);
+
 // acquire the archive from the user
 const char* archive = get_archive_from_user();
 size_t archive_size = get_archive_size_from_user();
+
 // load the archive (this can also be loaded in stages)
 result = lmnt_ictx_load_archive(&ctx, archive, archive_size);
 assert(result == LMNT_OK);
+
 // prepare and validate the archive to ensure it's valid
 result = lmnt_ictx_prepare_archive(&ctx, NULL);
 assert(result == LMNT_OK);
+
 // find the function we want to execute
 const lmnt_def* def = NULL;
 result = lmnt_find_def(&ctx.archive, "AddThreeNumbers", &def);
 assert(result == LMNT_OK);
+
 // specify our arguments and provide space for return values
 lmnt_value args[] = {1.0f, 2.0f, 3.0f};
 lmnt_value rvals[1];
 const size_t args_count = sizeof(args) / sizeof(lmnt_value);
 const size_t rvals_count = sizeof(rvals) / sizeof(lmnt_value);
+
 // set our current arguments
 result = lmnt_update_args(&ctx, def, 0, args, args_count);
 assert(result == LMNT_OK);
+
 // execute the function
 result = lmnt_execute(&ctx, def, rvals, rvals_count);
 assert(result >= rvals_count);
+
 // process our results!
 printf("%.1f + %.1f + %.1f = %.1f\n", args[0], args[1], args[2], rvals[0]);
 // 1.0 + 2.0 + 3.0 = 6.0
