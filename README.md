@@ -1,7 +1,7 @@
 # Element
 Element is a minimal functional programming language.
 Element code runs using a host which can interpret or compile it to other formats.
-One of these formats is the bytecode format, [LMNTIL (Element Intermediate Language)](LMNT/Bytecode.md), for use in native and embedded applications.
+One of these formats is the bytecode format, [LMNTIL (Element Intermediate Language)](LMNT), for use in native and embedded applications.
 
 ## Element Language
 This is a brief summary, see the [Element Reference Manual](Language/ElementReferenceManual.md) for full details.
@@ -35,21 +35,21 @@ New features will generally be implemented as part of the standard library rathe
         * Direct evaluation (slow)
         * Compilation to CLR Function using [LINQ Expressions](https://docs.microsoft.com/en-us/dotnet/api/system.linq.expressions.expression) (very fast)
     * AoT compilation targets including:
-        * [LMNTIL](LMNT/Bytecode.md)
+        * [LMNTIL](LMNT)
         * C
 * [libelement](libelement) - C++
     * Element parser
     * Element function evaluation
     * AoT compilation to:
-        * [LMNTIL](LMNT/Bytecode.md) - planned
+        * [LMNTIL](LMNT) - planned
 * [PyElement](PyElement) - Python
     * Element parser using [TatSu](https://github.com/neogeny/TatSu)
     * Element interpreter using Python [eval()](https://docs.python.org/3/library/functions.html)
 * [LMNT](LMNT) - C
-    * [LMNTIL](LMNT/Bytecode.md) interpreter
+    * [LMNTIL](LMNT/doc/Bytecode.md) interpreter
     * JIT compiler using [DynASM](https://luajit.org/dynasm.html)
         * x86_64
-        * ARMv7-M - in progress
+        * ARMv7-M
         * ARMv7-A - planned
 
 ### Command Line Interfaces (CLIs)

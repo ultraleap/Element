@@ -77,3 +77,5 @@ First, the user must call `lmnt_jit_compile` to generate a compiled version of t
 Once this is done, the user can then call `lmnt_jit_execute` passing in the compiled function; this sets up the environment and then calls the compiled function, which executes and returns.
 
 There is currently no way to interrupt execution of the JIT-compiled function since it's just native code executing; there are speculative platform-specific ways of achieving this, and functions in the library to provide the necessary data, but they would require getting your hands _very_ dirty (see: swapping the task's instruction pointer out from under it while it's suspended).
+
+More detailed information about the implementation of the JIT compiler can be found [here](JIT.md).
