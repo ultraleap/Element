@@ -9,7 +9,7 @@ unidentifier    ::= '_'
 expression      ::= ((identifier | literal) (indexExpression | callExpression)*) | lambda | anonymousBlock
 indexExpression ::= '.' identifier
 callExpression  ::= '(' expression (',' expression)* ')'
-lambda          ::= unidentifier portList functionBody
+lambda          ::= unidentifier portList portConstraint? functionBody
 anonymousBlock  ::= '{' (declaration (',' declaration)*)? '}'
 
 /* Ports can have no identifier to be discarded (may require being declared with a constraint to match a function constraints)
