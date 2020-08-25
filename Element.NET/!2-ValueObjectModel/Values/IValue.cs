@@ -84,12 +84,12 @@ namespace Element.AST
             }, context).Map(_ => size); // Discard the value and just check the size
         }
 
-        public static Result<IValue> Deserialize(this IValue value, IEnumerable<Element.Instruction> expressions, Context context) =>
-            value.Deserialize(new Queue<Element.Instruction>(expressions).Dequeue, context);
+        public static Result<IValue> Deserialize(this IValue value, IEnumerable<Instruction> expressions, Context context) =>
+            value.Deserialize(new Queue<Instruction>(expressions).Dequeue, context);
 
-        public static Result<float[]> ToFloatArray(this IEnumerable<Element.Instruction> expressions, Context context)
+        public static Result<float[]> ToFloats(this IEnumerable<Instruction> expressions, Context context)
         {
-            var exprs = expressions as Element.Instruction[] ?? expressions.ToArray();
+            var exprs = expressions as Instruction[] ?? expressions.ToArray();
             var result = new float[exprs.Length];
             for (var i = 0; i < result.Length; i++)
             {
@@ -107,5 +107,9 @@ namespace Element.AST
 
             return result;
         }
+
+        public static Result<float[]> SerializeToFloats(this IValue value, Context context) =>
+            value.Serialize(context)
+                 .Bind(serialized => serialized.ToFloats(context));
     }
 }
