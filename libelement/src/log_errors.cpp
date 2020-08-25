@@ -1,7 +1,5 @@
 #include "log_errors.hpp"
 
-#include "obj_model/errors.hpp"
-
 namespace element::detail
 {
     bool register_log_errors()

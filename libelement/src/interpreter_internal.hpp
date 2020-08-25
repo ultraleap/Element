@@ -9,7 +9,7 @@
 //SELF
 #include "element/interpreter.h"
 #include "common_internal.hpp"
-#include "obj_model/scope.hpp"
+#include "object_model/scope.hpp"
 
 struct element_declaration
 {

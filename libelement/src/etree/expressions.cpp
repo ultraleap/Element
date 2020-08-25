@@ -1,12 +1,7 @@
 #include "expressions.hpp"
 
-//LIBS
-#include <fmt/format.h>
-
 //SELF
-#include "obj_model/errors.hpp"
-#include "obj_model/types.hpp"
-#include "obj_model/intermediaries.hpp"
+#include "object_model/compilation_context.hpp"
 
 DEFINE_TYPE_ID(element_expression_constant,        1U << 0);
 DEFINE_TYPE_ID(element_expression_input,           1U << 1);
