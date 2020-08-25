@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
     // writing to session.configData() here sets defaults
     // this is the preferred way to set them
     session.configData().showSuccessfulTests = true;
-    session.configData().showDurations = Catch::ShowDurations::Always;
-    session.configData().runOrder = Catch::RunTests::InDeclarationOrder;
+    //session.configData().showDurations = Catch::ShowDurations::Always;
+    session.configData().runOrder = Catch::RunTests::InLexicographicalOrder;
     const int returnCode = session.applyCommandLine(argc, argv);
     if (returnCode != 0) // Indicates a command line error
         return returnCode;

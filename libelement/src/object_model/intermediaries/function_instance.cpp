@@ -45,6 +45,8 @@ object_const_shared_ptr function_instance::call(
 {
     compiled_args.insert(std::begin(compiled_args), std::begin(provided_arguments), std::end(provided_arguments));
 
+    const bool is_variadic = declarer->is_variadic();
+
     //element doesn't allow partial application generally
     //todo: more helpful information than the number of arguments expected
     if (compiled_args.size() < declarer->inputs.size())
@@ -52,12 +54,12 @@ object_const_shared_ptr function_instance::call(
             declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
     //todo: more helpful information than the number of arguments expected
-    if (compiled_args.size() > declarer->inputs.size())
+    if (!is_variadic && compiled_args.size() > declarer->inputs.size())
         return build_error_and_log(context, source_info, error_message_code::too_many_arguments,
             declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
     //todo: check this works and is a useful error message (stolen from struct declaration call)
-    if (!valid_call(context, declarer, compiled_args))
+    if (!is_variadic && !valid_call(context, declarer, compiled_args))
         return build_error_for_invalid_call(context, declarer, compiled_args);
 
     if (context.calls.is_recursive(declarer))
@@ -99,9 +101,15 @@ object_const_shared_ptr function_instance::call(
 }
 
 object_const_shared_ptr function_instance::compile(const compilation_context& context,
-                                                            const source_information& source_info) const
+                                                   const source_information& source_info) const
 {
-    if (provided_arguments.size() == declarer->inputs.size())
+    const bool variadic = declarer->is_variadic();
+
+    //variadic intrinsics (e.g. list) need at least one input, they aren't nullary
+    if (variadic && !provided_arguments.empty())
+        return call(context, {}, source_info);
+
+    if (!variadic && provided_arguments.size() == declarer->inputs.size())
         return call(context, {}, source_info);
 
     return shared_from_this();

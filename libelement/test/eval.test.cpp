@@ -687,12 +687,61 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a, a.mul(2));";
-
                     result = eval_with_inputs("evaluate(a:Num):Num = list(a).at(0);", &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(output.values[0] == input.values[0]);
+                }
+
+                SECTION("list(1, 2).at(a)")
+                {
+                    float inputs[] = { 1 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2).at(a);", &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(output.values[0] == input.values[1]);
+                }
+
+                SECTION("list(a, b, c).at(1)")
+                {
+                    float inputs[] = { 10, 20, 30 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 3;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(a, b, c).at(1);", &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(output.values[0] == input.values[1]);
+                }
+
+                SECTION("list(a, b, c).at(d)")
+                {
+                    float inputs[] = { 10, 20, 30, 1 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 4;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num, d:Num):Num = list(a, b, c).at(d);", &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(output.values[0] == input.values[1]);
                 }
             }
         }

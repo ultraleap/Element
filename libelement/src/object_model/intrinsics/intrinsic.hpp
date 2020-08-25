@@ -5,7 +5,8 @@
 #include <log_errors.hpp>
 
 //SELF
-#include "../object.hpp"
+#include "object_model/object.hpp"
+#include "log_errors.hpp"
 #include "typeutil.hpp"
 #include "interpreter_internal.hpp"
 
@@ -56,7 +57,9 @@ namespace element
             return false;
         }
 
-        const auto location = declaration.location();
+        const bool compiler_intrinsic = declaration.name.value[0] == '@';
+
+        const auto location = compiler_intrinsic ? declaration.name.value : declaration.location();
         const auto it = validation_func_map.find(location);
         if (it == validation_func_map.end())
         {

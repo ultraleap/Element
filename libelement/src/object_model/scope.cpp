@@ -31,7 +31,7 @@ element_result scope::merge(std::unique_ptr<scope>&& other)
 
 std::string scope::location() const
 {
-    return declarer->location();
+    return declarer ? declarer->location() : "Not available";
 }
 
 bool scope::add_declaration(std::unique_ptr<declaration> declaration)
