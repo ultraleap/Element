@@ -1,9 +1,10 @@
 #include "function_declaration.hpp"
 
 //SELF
-#include "../constraints/user_function_constraint.hpp"
-#include "../intermediaries/function_instance.hpp"
-#include "../compilation_context.hpp"
+#include "object_model/constraints/user_function_constraint.hpp"
+#include "object_model/intermediaries/function_instance.hpp"
+#include "object_model/intrinsics/intrinsic_function.hpp"
+#include "object_model/compilation_context.hpp"
 
 using namespace element;
 
@@ -13,6 +14,16 @@ function_declaration::function_declaration(identifier name, const scope* parent_
 {
     qualifier = function_qualifier;
     _intrinsic = is_intrinsic;
+}
+
+bool function_declaration::is_variadic() const
+{
+    constexpr auto visitor = [](const auto& body) {
+        const auto* body_intrinsic = dynamic_cast<const intrinsic_function*>(&*body);
+        return body_intrinsic && body_intrinsic->is_variadic();
+    };
+
+    return std::visit(visitor, body);
 }
 
 object_const_shared_ptr function_declaration::call(
@@ -27,7 +38,7 @@ object_const_shared_ptr function_declaration::call(
 }
 
 object_const_shared_ptr function_declaration::compile(const compilation_context& context,
-                                                            const source_information& source_info) const
+                                                      const source_information& source_info) const
 {
     const auto instance = std::make_shared<function_instance>(this, context.captures, source_info);
     return instance->compile(context, source_info);

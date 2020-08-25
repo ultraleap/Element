@@ -10,6 +10,9 @@
 #include "intrinsic_unary.hpp"
 #include "intrinsic_binary.hpp"
 #include "intrinsic_if.hpp"
+#include "intrinsic_list.hpp"
+#include "intrinsic_compiler_list_indexer.hpp"
+#include "intrinsic_constructor_list.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/constraints/type.hpp"
 #include "object_model/declarations/function_declaration.hpp"
@@ -26,6 +29,9 @@ DEFINE_TYPE_ID(element::intrinsic_binary, 1U << 2);
 DEFINE_TYPE_ID(element::intrinsic_if, 1U << 3);
 DEFINE_TYPE_ID(element::intrinsic_constructor_num, 1U << 4);
 DEFINE_TYPE_ID(element::intrinsic_constructor_bool, 1U << 5);
+DEFINE_TYPE_ID(element::intrinsic_constructor_list, 1U << 6);
+DEFINE_TYPE_ID(element::intrinsic_list, 1U << 7);
+DEFINE_TYPE_ID(element::intrinsic_compiler_list_indexer, 1U << 8);
 
 template<typename T>
 static bool is_type_of(const declaration* decl)
@@ -53,7 +59,7 @@ const std::unordered_map<std::string, std::function<std::unique_ptr<const intrin
     //type
     { "Num", [](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_constructor_num>() : nullptr); } },
     { "Bool", [](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_constructor_bool>() : nullptr); } },
-    { "List", [](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
+    { "List", [](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_constructor_list>() : nullptr); } },
     { "Tuple", [](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
 
     //functions
@@ -68,11 +74,9 @@ const std::unordered_map<std::string, std::function<std::unique_ptr<const intrin
     { "Num.min", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::min, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
     { "Num.max", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::max, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
 
-
     { "Num.abs",   [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::abs, type::num.get(), type::num.get()) : nullptr); } },
     { "Num.ceil",  [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::ceil, type::num.get(), type::num.get()) : nullptr); } },
     { "Num.floor", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::floor, type::num.get(), type::num.get()) : nullptr); } },
-
 
     { "Num.sin", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::sin, type::num.get(), type::num.get()) : nullptr); } },
     { "Num.cos", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::cos, type::num.get(), type::num.get()) : nullptr); } },
@@ -106,15 +110,18 @@ const std::unordered_map<std::string, std::function<std::unique_ptr<const intrin
     { "True", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_nullary>(element_nullary_op::true_value, type::boolean.get()) : nullptr); } },
     { "False", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_nullary>(element_nullary_op::false_value, type::boolean.get()) : nullptr); } },
 
-    { "list", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
+    { "list", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_list>() : nullptr); } },
     { "List.fold", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
 
     { "memberwise", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
     { "for", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
     { "persist", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
 
-    ////constraints
+    //constraints
     { "Any", [](const declaration* decl) { return (is_type_of<constraint_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
+
+    //compiler-implemented hidden thingies that aren't intrinsic but kinda are
+    { "@list_indexer", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_compiler_list_indexer>() : nullptr); } },
 };
 
 intrinsic::intrinsic(const element_type_id id)

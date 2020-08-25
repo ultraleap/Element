@@ -19,6 +19,7 @@ namespace element
 
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth) const override;
+        [[nodiscard]] bool is_variadic() const override;
 
         [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,
                                                    std::vector<object_const_shared_ptr> compiled_args,
