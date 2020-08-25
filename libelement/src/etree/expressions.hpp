@@ -10,8 +10,8 @@
 #include "ast/fwd.hpp"
 #include "etree/fwd.hpp"
 #include "typeutil.hpp"
-#include "obj_model/types.hpp"
-#include "obj_model/object.hpp"
+#include "object_model/constraints/type.hpp"
+#include "object_model/object.hpp"
 
 struct element_expression : element::object, rtti_type<element_expression>, std::enable_shared_from_this<element_expression>
 {

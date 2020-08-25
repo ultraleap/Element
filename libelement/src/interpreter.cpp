@@ -18,13 +18,15 @@
 #include "etree/expressions.hpp"
 #include "token_internal.hpp"
 #include "configuration.hpp"
-#include "obj_model/object_model.hpp"
-#include "obj_model/declarations.hpp"
-#include "obj_model/intermediaries.hpp"
-#include "obj_model/errors.hpp"
+#include "object_model/object_model_builder.hpp"
+#include "object_model/declarations/function_declaration.hpp"
+#include "object_model/error.hpp"
+#include "object_model/error_map.hpp"
+#include "object_model/compilation_context.hpp"
+#include "object_model/expressions/expression_chain.hpp"
 #include "log_errors.hpp"
 #include "element/ast.h"
-#include "obj_model/intrinsics.hpp"
+#include "object_model/intrinsics/intrinsic.hpp"
 
 void element_interpreter_ctx::Deleter::operator()(element::intrinsic* i) { delete i; }
 void element_interpreter_ctx::Deleter::operator()(const element::intrinsic* i) { delete i; }
