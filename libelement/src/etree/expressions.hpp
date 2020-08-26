@@ -189,6 +189,21 @@ struct element_expression_if final : public element_expression
     [[nodiscard]] size_t get_size() const override { return 1; }
 };
 
+struct element_expression_select final : public element_expression
+{
+    DECLARE_TYPE_ID();
+
+    explicit element_expression_select(expression_const_shared_ptr selector, std::vector<expression_const_shared_ptr> options);
+
+    [[nodiscard]] size_t get_size() const override
+    {
+        return 1;
+    }
+
+    expression_const_shared_ptr selector;
+    std::vector<expression_const_shared_ptr> options;
+};
+
 ////
 //// Expression groups
 ////
