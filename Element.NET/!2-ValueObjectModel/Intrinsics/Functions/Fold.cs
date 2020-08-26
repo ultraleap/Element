@@ -26,7 +26,7 @@ namespace Element.AST
 
 			static SourceInfo ConditionSourceCode() => new SourceInfo("<compiler generated dynamic fold condition>",
 			                                                         "_(tup):Bool = tup.i.lt(list.count)");
-			static SourceInfo BodySourceCode() => new SourceInfo("<compiler generated dynamic fold body",
+			static SourceInfo BodySourceCode() => new SourceInfo("<compiler generated dynamic fold body>",
 			                                                     "_(tup) = {i = tup.i.add(1), value = aggregator(tup.value, list.at(tup.i)) }");
 			Result<IValue[]> CreateDynamicFoldArguments() =>
 				Parser.Parse<Lambda>(ConditionSourceCode(), context)
