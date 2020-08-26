@@ -1,13 +1,18 @@
 #include <catch2/catch.hpp>
 
+//STD
+#include <array>
+#include <cstring>
+
+//SELF
 #include "element/token.h"
 #include "element/ast.h"
 #include "element/interpreter.h"
 #include "element/common.h"
 
-//STD
-#include <array>
-#include <cstring>
+#include "etree/fwd.hpp"
+#include "etree/expressions.hpp"
+#include "etree/evaluator.hpp"
 
 void log_callback(const element_log_message* msg)
 {
@@ -1183,5 +1188,30 @@ TEST_CASE("Interpreter", "[Evaluate]")
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Bool") == 0);
         element_interpreter_delete(context);
+    }
+
+    SECTION("Compile Time Mux")
+    {
+        element_interpreter_ctx* context;
+        element_interpreter_create(&context);
+
+        std::vector<element_value> outputs = { 0 };
+        expression_const_shared_ptr expr;
+        const auto result = element_evaluate(*context, expr, {}, outputs, {});
+        REQUIRE(result == ELEMENT_OK);
+        REQUIRE(outputs[0] == 1.0f);
+    }
+
+    SECTION("Runtime Mux")
+    {
+        element_interpreter_ctx* context;
+        element_interpreter_create(&context);
+
+        std::vector<element_value> inputs = { 1 };
+        std::vector<element_value> outputs = { 0 };
+        expression_const_shared_ptr expr;
+        const auto result = element_evaluate(*context, expr, {}, outputs, {});
+        REQUIRE(result == ELEMENT_OK);
+        REQUIRE(outputs[0] == 1.0f);
     }
 }
