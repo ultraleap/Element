@@ -90,6 +90,17 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
+    if (const auto* sel = expr->as<element_expression_select>()) {
+        assert(outputs_count > outputs_written);
+        size_t intermediate_written = 0;
+        element_value selector;
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->selector, &selector, 1, intermediate_written));
+        intermediate_written = 0;
+        const auto selected_option = element_evaluate_select(selector, sel->options);
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, selected_option, outputs, outputs_count, outputs_written));
+        return ELEMENT_OK;
+    }
+
 	return ELEMENT_ERROR_NO_IMPL;
 }
 
@@ -190,4 +201,10 @@ element_value element_evaluate_if(element_value predicate, element_value if_true
 {
     //Element treats negative numbers and 0 as false
     return predicate > 0 ? if_true : if_false;
+}
+
+expression_const_shared_ptr element_evaluate_select(element_value selector, std::vector<expression_const_shared_ptr> options)
+{
+    //todo: how do we round a float to an index? just truncating for now
+    return options[static_cast<int>(selector)];
 }

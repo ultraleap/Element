@@ -1190,28 +1190,47 @@ TEST_CASE("Interpreter", "[Evaluate]")
         element_interpreter_delete(context);
     }
 
-    SECTION("Compile Time Mux")
+    SECTION("Compile Time Select")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
 
         std::vector<element_value> outputs = { 0 };
-        expression_const_shared_ptr expr;
+
+        auto selector = std::make_shared<element_expression_constant>(1);
+        std::vector<expression_const_shared_ptr> options{
+            std::make_shared<const element_expression_constant>(0),
+            std::make_shared<const element_expression_constant>(1)
+        };
+
+        auto expr = std::make_shared<element_expression_select>(std::move(selector), std::move(options));
         const auto result = element_evaluate(*context, expr, {}, outputs, {});
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);
     }
 
-    SECTION("Runtime Mux")
+    SECTION("Runtime Select")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
 
         std::vector<element_value> inputs = { 1 };
-        std::vector<element_value> outputs = { 0 };
-        expression_const_shared_ptr expr;
-        const auto result = element_evaluate(*context, expr, {}, outputs, {});
+        std::vector<element_value> outputs = { 0, 0 };
+
+        auto selector = std::make_shared<element_expression_input>(0);
+        std::vector<expression_const_shared_ptr> options{
+            std::make_shared<const element_expression_constant>(0),
+            std::make_shared<const element_expression_constant>(1)
+        };
+
+        auto expr = std::make_shared<element_expression_select>(std::move(selector), std::move(options));
+        std::vector<std::pair<std::string, expression_const_shared_ptr>> deps;
+        deps.push_back(std::make_pair<std::string, expression_const_shared_ptr>("1", expr));
+        deps.push_back(std::make_pair<std::string, expression_const_shared_ptr>("2", expr));
+        auto new_expr = std::make_shared<element_expression_structure>(std::move(deps));
+        const auto result = element_evaluate(*context, new_expr, inputs, outputs, {});
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);
+        REQUIRE(outputs[1] == 1.0f);
     }
 }
