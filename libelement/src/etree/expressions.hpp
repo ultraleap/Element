@@ -21,7 +21,17 @@ public:
 
     [[nodiscard]] virtual size_t get_size() const { return m_size; }
 
-    [[nodiscard]] bool matches_constraint(const element::compilation_context& context, const element::constraint* constraint) const final { return actual_type ? actual_type->matches_constraint(context, constraint) : false; };
+    [[nodiscard]] bool matches_constraint(const element::compilation_context& context, const element::constraint* constraint) const final
+    {
+        if (actual_type)
+            return actual_type->matches_constraint(context, constraint);
+
+        if (!constraint || constraint == element::constraint::any.get())
+            return true;
+
+        return false;
+    };
+
     [[nodiscard]] const element::constraint* get_constraint() const final { return actual_type; };
 
     [[nodiscard]] std::string typeof_info() const override;

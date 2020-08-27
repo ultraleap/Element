@@ -90,7 +90,7 @@ std::string error::typeof_info() const
 
 std::string element_expression::typeof_info() const
 {
-    return actual_type->get_identifier().value;
+    return actual_type ? actual_type->get_identifier().value : "UnknownType:Expression";
 }
 
 std::string port::typeof_info() const

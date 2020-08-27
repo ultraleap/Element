@@ -712,7 +712,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2).at(a);", &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
-                    REQUIRE(output.values[0] == input.values[1]);
+                    REQUIRE(output.values[0] == 2.0f);
                 }
 
                 SECTION("list(a, b, c).at(1)")
