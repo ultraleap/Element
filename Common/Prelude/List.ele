@@ -21,21 +21,80 @@ intrinsic struct List(at:Indexer, count:Num)
 
     concatenate(a:List, b:List):List
     {
-        indexer(idx:Num) = if(idx.lt(a.count), a.at(idx), b.at(idx.sub(a.count)));
+        indexer(idx:Num) = Bool.if(idx.lt(a.count), a.at(idx), b.at(idx.sub(a.count)));
         count = a.count.add(b.count);
         return = List(indexer, count);
     }
 
-    take(a:List, amount:Num):List = List(a.at, amount);
+    take(a:List, amount:Num):List
+    {
+        indexer(idx:Num) = Bool.if(idx.gt(amount), amount, idx);
+        return = List(indexer, amount);
+    }
 
     skip(a:List, amount:Num):List
     {
         count = a.count.sub(amount);
-        indexer(idx:Num) = a.at(idx.add(amount));
+        
+        indexer(idx:Num)
+        {
+            clamped_idx = idx.clamp(0, count);
+            return = a.at(clamped_idx.add(amount));
+        }
         return = List(indexer, count);
     }
 
-    slice(a:List, start:Num, count:Num):List = List(_(idx) = a.at(idx.add(start)), count);
+    slice(a:List, start:Num, count:Num):List
+    {
+        #list is 3, start 1, count 1
+        #clamped_start = 1
+        #clamped_count = 3 - 1 = 2
+        #actual_clamped_count = 1
+
+        #list is 3, start -1, count 1
+        #clamped_start = 0
+        #clamped_count = 3
+        #actual_clamped_count = 1
+
+        #list is 3, start -1, count -1
+        #clamped_start = 0
+        #clamped_count = 1
+        #actual_clamped_count = 1
+
+        #list is 3, start 2, count 1
+        #clamped_start = 2
+        #clamped_count = 1
+        #actual_clamped_count = 1
+
+        #list is 3, start 3, count 3
+        #clamped_start = 2
+        #clamped_count = 1
+        #actual_clamped_count = 1
+
+        #list is 3, start 4, count -1
+        #clamped_start = 3-1 = 2
+        #clamped_count = 3-2 = 1
+        #actual_clamped_count = 1
+
+        #list is 3, start 1, count 1
+        #clamped_start = 1
+        #clamped_count = 1
+        #actual_clamped_count = 1
+
+        clamped_start = start.clamp(0, a.count.sub(1));
+        clamped_count = count.clamp(1, a.count.sub(clamped_start));
+        actual_clamped_count = clamped_count.max(count);
+
+        indexer(idx:Num)
+        {
+            clamped_idx = idx.clamp(0, actual_clamped_count.sub(1));
+            new_idx = clamped_idx.add(clamped_start);
+            new_clamped_idx = new_idx.max(actual_clamped_count.sub(1).add(clamped_start));
+            return = a.at(new_clamped_idx);
+        }
+
+        return = List(indexer, actual_clamped_count);
+    }
 
     filter(a:List, predicate:Predicate):List
     {
