@@ -1297,7 +1297,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("list(1, 2, 3).cycle.at(a)")
                 {
-                    float inputs[] = { 4 };
+                    float inputs[] = { 3 };
                     element_inputs input;
                     input.values = inputs;
                     input.count = 1;
@@ -1310,12 +1310,12 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 1);
 
-                    inputs[0] = 5;
+                    inputs[0] = 4;
                     result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a);", &input, &output);
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 2);
 
-                    inputs[0] = 6;
+                    inputs[0] = 5;
                     result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a);", &input, &output);
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 3);
