@@ -1227,6 +1227,102 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("take")
                 {
+                    SECTION("list(1, 2, 3).take(1).at(1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(1).at(1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 1);
+                    }
+
+                    SECTION("list(1, 2, 3).take(1).at(-1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(1).at(-1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 1);
+                    }
+
+                    SECTION("list(1, 2, 3).take(1).at(4)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(1).at(4);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 1);
+                    }
+
+                    SECTION("list(1, 2, 3).take(4).at(1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(4).at(1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
+                    }
+
+                    SECTION("list(1, 2, 3).take(1).at(-1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(4).at(-1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
+                    }
+
+                    SECTION("list(1, 2, 3).take(1).at(4)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(4).at(4);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
+                    }
+
                     SECTION("list(1, 2, 3).take(2).at(2)")
                     {
                         float inputs[] = { 0, 0, 0 };
@@ -1246,7 +1342,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("skip")
                 {
-                    SECTION("list(1, 2, 3).skip(1).at(0)")
+                    SECTION("list(1, 2, 3).skip(-4).at(1)")
                     {
                         float inputs[] = { 0, 0, 0 };
                         element_inputs input;
@@ -1257,9 +1353,105 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(0);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-4).at(1);", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 2);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(-4).at(-1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-4).at(-1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 1);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(-4).at(4)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-4).at(4);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(-1).at(1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-1).at(1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 2);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(-1).at(-1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-1).at(-1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 1);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(-1).at(4)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-1).at(4);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(1).at(1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
                     }
 
                     SECTION("list(1, 2, 3).skip(1).at(-1)")
@@ -1276,6 +1468,70 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(-1);", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 2);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(1).at(4)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(4);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(4).at(1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(4).at(1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(4).at(-1)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(4).at(-1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
+                    }
+
+                    SECTION("list(1, 2, 3).skip(4).at(4)")
+                    {
+                        float inputs[] = { 0, 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 3;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(4).at(4);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
                     }
                 }
 

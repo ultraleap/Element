@@ -34,13 +34,15 @@ intrinsic struct List(at:Indexer, count:Num)
 
     skip(a:List, amount:Num):List
     {
-        count = a.count.sub(amount);
+        skip = Bool.if(amount.lt(0), 0, a.count.sub(1).min(amount));
+        count = a.count.sub(skip);
         
         indexer(idx:Num)
         {
             clamped_idx = idx.clamp(0, count);
-            return = a.at(clamped_idx.add(amount));
+            return = a.at(clamped_idx.add(skip));
         }
+
         return = List(indexer, count);
     }
 
