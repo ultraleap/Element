@@ -28,8 +28,15 @@ intrinsic struct List(at:Indexer, count:Num)
 
     take(a:List, amount:Num):List
     {
-        indexer(idx:Num) = Bool.if(idx.gt(amount), amount, idx);
-        return = List(indexer, amount);
+        take = Bool.if(amount.lt(1), 1, a.count.min(amount));
+
+        indexer(idx:Num)   
+        {
+            clamped_idx = Bool.if(idx.lt(0), 0, idx.clamp(0, amount.min(take.sub(1))));
+            return = a.at(clamped_idx);
+        }
+
+        return = List(indexer, take);
     }
 
     skip(a:List, amount:Num):List
