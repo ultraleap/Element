@@ -1,4 +1,4 @@
-#include "list_element_wrapper.hpp"
+#include "list_wrapper.hpp"
 
 //STD
 #include <cassert>
@@ -11,7 +11,7 @@
 
 using namespace element;
 
-object_const_shared_ptr list_element_wrapper::create_or_optimise(const object_const_shared_ptr& selector_object, const std::vector<object_const_shared_ptr>& option_objects, const source_information& source_info)
+object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shared_ptr& selector_object, const std::vector<object_const_shared_ptr>& option_objects, const source_information& source_info)
 {
     auto index_error = std::dynamic_pointer_cast<const error>(selector_object);
     if (index_error)
@@ -34,6 +34,7 @@ object_const_shared_ptr list_element_wrapper::create_or_optimise(const object_co
     }
 
     //the selector is not constant, so all types must be homogenous
+    //I'm not sure why this restriction exists in element
     const auto* actual_type = option_objects[0]->get_constraint();
     for (const auto& obj : option_objects)
     {
@@ -67,10 +68,10 @@ object_const_shared_ptr list_element_wrapper::create_or_optimise(const object_co
         return select;
     }
 
-    return std::make_shared<const list_element_wrapper>(std::move(selector), option_objects);
+    return std::make_shared<const list_wrapper>(std::move(selector), option_objects);
 }
 
-list_element_wrapper::list_element_wrapper(std::shared_ptr<const element_expression> selector, std::vector<object_const_shared_ptr> options)
+list_wrapper::list_wrapper(std::shared_ptr<const element_expression> selector, std::vector<object_const_shared_ptr> options)
     : selector(std::move(selector))
     , options(std::move(options))
 {
@@ -83,27 +84,27 @@ list_element_wrapper::list_element_wrapper(std::shared_ptr<const element_express
     }
 }
 
-std::string list_element_wrapper::typeof_info() const
+std::string list_wrapper::typeof_info() const
 {
     return "?";
 }
 
-std::string list_element_wrapper::to_code(int depth) const
+std::string list_wrapper::to_code(int depth) const
 {
     return "?";
 }
 
-bool list_element_wrapper::matches_constraint(const compilation_context& context, const constraint* constraint) const
+bool list_wrapper::matches_constraint(const compilation_context& context, const constraint* constraint) const
 {
     return options[0]->matches_constraint(context, constraint);
 }
 
-const constraint* list_element_wrapper::get_constraint() const
+const constraint* list_wrapper::get_constraint() const
 {
     return options[0]->get_constraint();
 }
 
-object_const_shared_ptr list_element_wrapper::call(const compilation_context& context,
+object_const_shared_ptr list_wrapper::call(const compilation_context& context,
                                                    std::vector<object_const_shared_ptr> compiled_args,
                                                    const source_information& source_info) const
 {
@@ -115,7 +116,7 @@ object_const_shared_ptr list_element_wrapper::call(const compilation_context& co
     return create_or_optimise(selector, new_options, source_info);
 }
 
-object_const_shared_ptr list_element_wrapper::index(const compilation_context& context,
+object_const_shared_ptr list_wrapper::index(const compilation_context& context,
                                                     const identifier& name,
                                                     const source_information& source_info) const
 {
@@ -127,7 +128,7 @@ object_const_shared_ptr list_element_wrapper::index(const compilation_context& c
     return create_or_optimise(selector, new_options, source_info);
 }
 
-object_const_shared_ptr list_element_wrapper::compile(const compilation_context& context,
+object_const_shared_ptr list_wrapper::compile(const compilation_context& context,
                                                       const source_information& source_info) const
 {
     std::vector<object_const_shared_ptr> new_options;
@@ -138,7 +139,7 @@ object_const_shared_ptr list_element_wrapper::compile(const compilation_context&
     return create_or_optimise(selector, new_options, source_info);
 }
 
-std::shared_ptr<const element_expression> list_element_wrapper::to_expression() const
+std::shared_ptr<const element_expression> list_wrapper::to_expression() const
 {
     std::vector<object_const_shared_ptr> new_options;
     new_options.reserve(options.size());
