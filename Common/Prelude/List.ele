@@ -51,7 +51,8 @@ intrinsic struct List(at:Indexer, count:Num)
 
         indexer(idx:Num)
         {
-            clamped_idx = Bool.if(idx.lt(0), clamped_start, idx.clamp(clamped_start, clamped_count));
+            #clamped_start = 1, clamped_count = 1, idx = 0
+            clamped_idx = Bool.if(idx.lt(0), clamped_start, clamped_start.add(idx.min(clamped_count.sub(1))));
             return = a.at(clamped_idx);
         }
 
