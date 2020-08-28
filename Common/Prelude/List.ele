@@ -17,7 +17,16 @@ intrinsic struct List(at:Indexer, count:Num)
 
     repeat(value, count:Num):List = List(_(_:Num) = value, count);
 
-    range(start:Num, count:Num):List = List(_(idx:Num) = idx.add(start), count);
+    range(start:Num, count:Num):List 
+    {
+        indexer(idx:Num)   
+        {
+            clamped_idx = Bool.if(idx.lt(0), 0, idx.clamp(0, count.sub(1)));
+            return = clamped_idx.add(start);
+        }
+
+        return = List(indexer, count);
+    }
 
     concatenate(a:List, b:List):List
     {

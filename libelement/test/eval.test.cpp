@@ -1190,6 +1190,22 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("range")
                 {
+                    SECTION("List.range(4, 6).at(1)")
+                    {
+                        float inputs[] = { 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 1;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 5);
+                    }
+
                     SECTION("List.range(4, 6).at(idx)")
                     {
                         float inputs[] = { 6 };
@@ -1203,7 +1219,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                         result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(idx);", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 10);
+                        REQUIRE(outputs[0] == 9);
                     }
                 }
 
