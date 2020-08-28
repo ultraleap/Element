@@ -642,7 +642,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
             SECTION("Bool")
             {
-                SECTION("if true")
+                SECTION("if true, return expression")
                 {
                     float inputs[] = { 1 };
                     element_inputs input;
@@ -661,23 +661,24 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     REQUIRE(output.values[0] == input.values[0] * 2);
                 }
 
-                SECTION("if false")
+                SECTION("if true, return intermediary")
                 {
-                    float inputs[] = { -1 };
+                    float inputs[] = { 1 };
                     element_inputs input;
                     input.values = inputs;
                     input.count = 1;
                     element_outputs output;
-                    float outputs[] = { 0 };
+                    float outputs[] = { 0, 0 };
                     output.values = outputs;
-                    output.count = 1;
+                    output.count = 2;
 
-                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a, a.mul(2));";
+                    char source[] = "evaluate(a:Num):Vector2 = Bool.if(Bool(a), Vector2(a.mul(2), a.mul(2)), Vector2(a.mul(4), a.mul(4)));";
 
-                    result = eval_with_inputs(source, &input, &output);
+                    result = eval_with_inputs(source, &input, &output, "StandardLibrary");
 
                     REQUIRE(result == ELEMENT_OK);
-                    REQUIRE(output.values[0] == input.values[0] * 2);
+                    REQUIRE(output.values[0] == 2);
+                    REQUIRE(output.values[1] == 2);
                 }
             }
 

@@ -6,13 +6,13 @@
 
 namespace element
 {
-    //note: a list_element_wrapper means a runtime index, so all types are homogenous
-    class list_element_wrapper final : public object, public std::enable_shared_from_this<list_element_wrapper>
+    //note: a list_wrapper means a runtime index, so all types are homogenous
+    class list_wrapper final : public object, public std::enable_shared_from_this<list_wrapper>
     {
     public:
         static object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& selector_object, const std::vector<object_const_shared_ptr>& option_objects, const source_information& source_info);
 
-        explicit list_element_wrapper(std::shared_ptr<const element_expression> selector, std::vector<object_const_shared_ptr> options);
+        explicit list_wrapper(std::shared_ptr<const element_expression> selector, std::vector<object_const_shared_ptr> options);
 
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(int depth = 0) const override;
