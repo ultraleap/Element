@@ -1,7 +1,9 @@
 #include "namespace_declaration.hpp"
 
 //SELF
-#include "../scope.hpp"
+#include "object_model/scope.hpp"
+#include "object_model/error.hpp"
+#include "object_model/error_map.hpp"
 
 using namespace element;
 
@@ -17,5 +19,14 @@ object_const_shared_ptr namespace_declaration::index(
     const identifier& name,
     const source_information& source_info) const
 {
-    return our_scope->find(name, false)->compile(context, source_info);
+    if (our_scope)
+    {
+        const auto* found = our_scope->find(name, false);
+        if (found)
+            return found->compile(context, source_info);
+
+        return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, typeof_info());
+    }
+
+    throw;
 }
