@@ -2202,8 +2202,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         SECTION("Error - Identifier Not Found - Indexing Namespace")
         {
-            //todo: namespace is "declaration" because that's how the CLI implements typeof, which throws an assert at evaluation (rightly so, shouldn't be an error, because trying to compile it should fail at that stage)
-            result = eval("namespace MyNamespace {} evaluate = MyNamespace;");
+            result = eval("namespace MyNamespace {} evaluate = MyNamespace.a;");
             REQUIRE(result == ELEMENT_ERROR_IDENTIFIER_NOT_FOUND);
         }
 
