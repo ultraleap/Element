@@ -4,6 +4,9 @@
 #include <array>
 #include <cstring>
 
+//LIBS
+#include <fmt/format.h>
+
 //SELF
 #include "element/token.h"
 #include "element/ast.h"
@@ -682,8 +685,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
             {
                 SECTION("at")
                 {
-                    element_result result = ELEMENT_OK;
-                    SECTION("list(a).at(0)")
+                    SECTION("Error - Nullary list, Constant Index")
                     {
                         float inputs[] = { -1 };
                         element_inputs input;
@@ -694,15 +696,15 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(a).at(0);", &input, &output);
+                        char source[] = "evaluate(a:Num):Num = list.at(0);";
+                        result = eval_with_inputs(source, &input, &output);
 
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == input.values[0]);
+                        REQUIRE(result != ELEMENT_OK);
                     }
 
-                    SECTION("list(1, 2).at(a)")
+                    SECTION("Error - Nullary list, Runtime Index")
                     {
-                        float inputs[] = { 1 };
+                        float inputs[] = { -1 };
                         element_inputs input;
                         input.values = inputs;
                         input.count = 1;
@@ -711,44 +713,340 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2).at(a);", &input, &output);
+                        char source[] = "evaluate(a:Num):Num = list.at(a);";
+                        result = eval_with_inputs(source, &input, &output);
 
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == 2.0f);
+                        REQUIRE(result != ELEMENT_OK);
                     }
 
-                    SECTION("list(a, b, c).at(1)")
+                    SECTION("list(1, 2, 3).at(<-1...3>)")
                     {
-                        float inputs[] = { 10, 20, 30 };
+                        std::array<element_value, 10> inputs{ 1, 2, 3 };
                         element_inputs input;
-                        input.values = inputs;
-                        input.count = 3;
+                        input.values = inputs.data();
+                        input.count = inputs.size();
+
                         element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                        std::array<element_value, 2> outputs{ 0, 0 };
+                        output.values = outputs.data();
+                        output.count = outputs.size();
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(a, b, c).at(1);", &input, &output);
+                        std::string src = "evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).at({});";
 
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == input.values[1]);
+                        SECTION("Negative Constant Index")
+                        {
+                            auto new_src = fmt::format(src, -1);
+                            result = eval_with_inputs(new_src.c_str(), &input, &output);
+
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == input.values[0]);
+                        }
+
+                        SECTION("Valid Constant Index")
+                        {
+                            for (int i = 0; i < 3; ++i)
+                            {
+                                auto new_src = fmt::format(src, i);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(output.values[0] == input.values[i]);
+                            }
+                        }
+
+                        SECTION("Beyond Length Constant Index")
+                        {
+                            auto new_src = fmt::format(src, 3);
+                            result = eval_with_inputs(new_src.c_str(), &input, &output);
+
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == input.values[2]);
+                        }
                     }
 
-                    SECTION("list(a, b, c).at(d)")
+                    SECTION("list(a, b, c).at(idx)")
                     {
-                        float inputs[] = { 10, 20, 30, 1 };
+                        std::array<element_value, 10> inputs{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
                         element_inputs input;
-                        input.values = inputs;
-                        input.count = 4;
+                        input.values = inputs.data();
+                        input.count = inputs.size();
+
                         element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                        std::array<element_value, 2> outputs{ 0, 0 };
+                        output.values = outputs.data();
+                        output.count = outputs.size();
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num, d:Num):Num = list(a, b, c).at(d);", &input, &output);
+                        SECTION("Error - Mixed Element Types, Runtime Index")
+                        {
+                            inputs[6] = -1;
+                            result = eval_with_inputs("evaluate(a:Num, b:Bool, c:Num, idx:Num):Num = list(a, b, c).at(idx);", &input, &output, "StandardLibrary");
+                            REQUIRE(result != ELEMENT_OK);
 
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == input.values[1]);
+                            inputs[6] = 0;
+                            result = eval_with_inputs("evaluate(a:Bool, b:Num, c:Bool, idx:Num):Bool = list(a, b, c).at(idx);", &input, &output, "StandardLibrary");
+                            REQUIRE(result != ELEMENT_OK);
+
+                            inputs[6] = 3;
+                            result = eval_with_inputs("evaluate(a:Num, b:Num, c:Bool, idx:Num):Num = Num(list(a, b, c).at(idx));", &input, &output, "StandardLibrary");
+                            REQUIRE(result != ELEMENT_OK);
+                        }
+
+                        SECTION(" Mixed Element Types, Constant Index")
+                        {
+                            result = eval_with_inputs("evaluate(a:Num, b:Bool, c:Num, idx:Num):Num = list(a, b, c).at(-1);", &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(outputs[0] == inputs[0]);
+
+                            result = eval_with_inputs("evaluate(a:Bool, b:Num, c:Bool, idx:Num):Bool = list(a, b, c).at(0);", &input, &output, "StandardLibrary");
+                            REQUIRE(outputs[0] == inputs[0]);
+
+                            result = eval_with_inputs("evaluate(a:Num, b:Num, c:Bool, idx:Num):Num = Num(list(a, b, c).at(3));", &input, &output, "StandardLibrary");
+                            REQUIRE(outputs[0] == inputs[2]);
+                        }
+
+                        SECTION("Runtime Intermediary Elements, Runtime Index")
+                        {
+                            SECTION("Homogenous Structs")
+                            {
+                                inputs[0] = 1;
+                                inputs[1] = 1;
+                                inputs[2] = 2;
+                                inputs[3] = 2;
+                                inputs[4] = 3;
+                                inputs[5] = 3;
+
+                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, idx:Num):Vector2 = list(a, b, c).at(idx);";
+
+                                SECTION("Negative Index")
+                                {
+                                    inputs[6] = -1;
+                                    result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[0]);
+                                    REQUIRE(outputs[1] == inputs[1]);
+                                }
+
+                                SECTION("Valid Index")
+                                {
+                                    for (int i = 0; i < 3; ++i)
+                                    {
+                                        inputs[6] = i;
+                                        result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                                        REQUIRE(result == ELEMENT_OK);
+                                        REQUIRE(outputs[0] == inputs[i*2]);
+                                        REQUIRE(outputs[1] == inputs[i*2+1]);
+                                    }
+                                }
+
+                                SECTION("Beyond Length Index")
+                                {
+                                    inputs[6] = 3;
+                                    result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[4]);
+                                    REQUIRE(outputs[1] == inputs[5]);
+                                }
+                            }
+
+                            SECTION("Non-Homogenous Structs")
+                            {
+                                inputs[0] = 1;
+                                inputs[1] = 1;
+                                inputs[2] = 2;
+                                inputs[3] = 2;
+                                inputs[4] = 3;
+                                inputs[5] = 3;
+                                inputs[6] = 3;
+
+                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector3, idx:Num):Num = list(a, b, c).at(idx).x;";
+
+                                SECTION("Negative Index")
+                                {
+                                    inputs[7] = -1;
+                                    result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                                    REQUIRE(result != ELEMENT_OK);
+                                }
+
+                                SECTION("Valid Index")
+                                {
+                                    for (int i = 0; i < 3; ++i)
+                                    {
+                                        inputs[7] = i;
+                                        result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                                        REQUIRE(result != ELEMENT_OK);
+                                    }
+                                }
+
+                                SECTION("Beyond Length Index")
+                                {
+                                    inputs[7] = 3;
+                                    result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                                    REQUIRE(result != ELEMENT_OK);
+                                }
+                            }
+                        }
+
+                        SECTION("Runtime Intermediary Elements, Constant Index")
+                        {
+                            SECTION("Homogenous Structs")
+                            {
+                                inputs[0] = 1;
+                                inputs[1] = 1;
+                                inputs[2] = 2;
+                                inputs[3] = 2;
+                                inputs[4] = 3;
+                                inputs[5] = 3;
+
+                                inputs[6] = -1;
+
+                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, idx:Num):Vector2 = list(a, b, c).at({});";
+
+                                SECTION("Negative Index")
+                                {
+                                    std::string new_src = fmt::format(src, -1);
+                                    result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[0]);
+                                    REQUIRE(outputs[1] == inputs[1]);
+                                }
+
+                                SECTION("Valid Index")
+                                {
+                                    for (int i = 0; i < 3; ++i)
+                                    {
+                                        std::string new_src = fmt::format(src, i);
+                                        result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
+                                        REQUIRE(result == ELEMENT_OK);
+                                        REQUIRE(outputs[0] == inputs[i * 2]);
+                                        REQUIRE(outputs[1] == inputs[i * 2 + 1]);
+                                    }
+                                }
+
+                                SECTION("Beyond Length Index")
+                                {
+                                    std::string new_src = fmt::format(src, 3);
+                                    result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[4]);
+                                    REQUIRE(outputs[1] == inputs[5]);
+                                }
+                            }
+
+                            SECTION("Non-Homogenous Structs")
+                            {
+                                inputs[0] = 1;
+                                inputs[1] = 1;
+                                inputs[2] = 2;
+                                inputs[3] = 2;
+                                inputs[4] = 3;
+                                inputs[5] = 3;
+                                inputs[6] = 3;
+
+                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector3, idx:Num):Num = list(a, b, c).at({}).x;";
+
+                                SECTION("Negative Index")
+                                {
+                                    std::string new_src = fmt::format(src, -1);
+                                    result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[0]);
+                                }
+
+                                SECTION("Valid Index")
+                                {
+                                    for (int i = 0; i < 3; ++i)
+                                    {
+                                        std::string new_src = fmt::format(src, i);
+                                        result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
+                                        REQUIRE(result == ELEMENT_OK);
+                                        REQUIRE(outputs[0] == inputs[i * 2]);
+                                    }
+                                }
+
+                                SECTION("Beyond Length Index")
+                                {
+                                    std::string new_src = fmt::format(src, 3);
+                                    result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[4]);
+                                }
+                            }
+                        }
+                       
+                        SECTION("Runtime Expression Elements, Runtime Index")
+                        {
+                            inputs[0] = 1;
+                            inputs[1] = 2;
+                            inputs[2] = 3;
+
+                            const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, Num.add(0, b), a.mul(c)).at(idx);";
+
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+
+                                result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[0]);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                for (int i = 0; i < 3; ++i)
+                                {
+                                    inputs[3] = i;
+
+                                    result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[i]);
+                                }
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 3;
+
+                                result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+                        }
+
+                        SECTION("Runtime Expression Elements, Constant Index")
+                        {
+                            inputs[0] = 1;
+                            inputs[1] = 2;
+                            inputs[2] = 3;
+
+                            const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, Num.add(0, b), a.mul(c)).at({});";
+
+                            SECTION("Negative Index")
+                            {
+                                std::string new_src = fmt::format(src, -1);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[0]);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                for (int i = 0; i < 3; ++i)
+                                {
+                                    std::string new_src = fmt::format(src, i);
+                                    result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[i]);
+                                }
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                std::string new_src = fmt::format(src, 3);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+                        }
                     }
                 }
 
