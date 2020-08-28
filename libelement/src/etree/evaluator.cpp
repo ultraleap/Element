@@ -205,6 +205,7 @@ element_value element_evaluate_if(element_value predicate, element_value if_true
 
 expression_const_shared_ptr element_evaluate_select(element_value selector, std::vector<expression_const_shared_ptr> options)
 {
-    //todo: how do we round a float to an index? just truncating for now
-    return options[static_cast<int>(selector)];
+    assert(!options.empty());
+    const auto clamped_index = std::clamp(static_cast<int>(selector), 0, static_cast<int>(options.size() - 1));
+    return options[clamped_index];
 }

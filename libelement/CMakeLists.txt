@@ -231,9 +231,9 @@ if (BUILD_TESTING)
             )
 
     add_executable(libelement_test_app ${TEST_SOURCES})
-    target_link_libraries(libelement_test_app PRIVATE Catch2 libelement)
+    target_link_libraries(libelement_test_app PRIVATE Catch2 libelement fmt::fmt-header-only )
     target_link_libraries(libelement_test_app PUBLIC coverage_config)
-    target_include_directories(libelement_test_app PRIVATE "${libelement_SOURCE_DIR}/src")
+    target_include_directories(libelement_test_app PRIVATE "${libelement_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}/_deps/fmt-src/include")
     add_test(NAME libelement_test
             COMMAND libelement_test_app -r junit -o ${CMAKE_BINARY_DIR}/libemelement_test_app_details.xml)
 
