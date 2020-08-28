@@ -106,6 +106,8 @@ set(libelement_sources
     "src/object_model/intermediaries/function_instance.hpp"
     "src/object_model/intermediaries/struct_instance.cpp"
     "src/object_model/intermediaries/struct_instance.hpp"
+    "src/object_model/intermediaries/list_element_wrapper.cpp"
+    "src/object_model/intermediaries/list_element_wrapper.hpp"
 
     "src/object_model/intrinsics/intrinsic.cpp"
     "src/object_model/intrinsics/intrinsic.hpp"
