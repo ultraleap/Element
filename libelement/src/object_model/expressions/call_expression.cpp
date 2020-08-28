@@ -26,6 +26,13 @@ call_expression::call_expression(const expression_chain* parent)
     for (const auto& arg : arguments)
         compiled_arguments.push_back(arg->compile(context, source_info));
 
+    for (const auto& arg : compiled_arguments)
+    {
+        const auto* err = dynamic_cast<const error*>(arg.get());
+        if (err)
+            return arg;
+    }
+
     auto element = obj->call(context, std::move(compiled_arguments), source_info);
     if (element) return element;
 
