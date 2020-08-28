@@ -3,6 +3,7 @@
 //SELF
 #include "object_model/constraints/type.hpp"
 #include "object_model/declarations/declaration.hpp"
+#include "object_model/error.hpp"
 
 using namespace element;
 
@@ -27,7 +28,15 @@ object_const_shared_ptr intrinsic_binary::compile(const compilation_context& con
     const auto intrinsic = get_intrinsic(context.interpreter, declarer);
     assert(intrinsic);
     assert(intrinsic == this);
-    
+
+    auto expr1_err = std::dynamic_pointer_cast<const error>(frame.compiled_arguments[0]);
+    if (expr1_err)
+        return expr1_err;
+
+    auto expr2_err = std::dynamic_pointer_cast<const error>(frame.compiled_arguments[1]);
+    if (expr2_err)
+        return expr2_err;
+
     auto expr1 = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[0]);
     auto expr2 = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[1]);
     assert(expr1);

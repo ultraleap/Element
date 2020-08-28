@@ -1101,27 +1101,156 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     REQUIRE(outputs[0] == 3);
                 }
 
-                /*
-
-                slice(a:List, start:Num, count:Num):List = List(_(idx) = a.at(idx.add(start)), count);
-
-                filter(a:List, predicate:Predicate):List
+                SECTION("list(1, 2, 3).slice(2, 4).at(0)")
                 {
-                    count = countWhere(a, predicate);
-                    index(idx:Num) = idx.add(a.slice(0, idx).countWhere(_(item) = predicate(item).negate));
-                    return = List(index, count);
+                    float inputs[] = { 0, 0, 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 3;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(2, 4).at(0);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
                 }
 
-                cycle(a:List):Stream = Stream(_(idx:Num) = a.at(idx.mod(count)));
+                SECTION("list(1, 2, 3).slice(4, 2).at(0)")
+                {
+                    float inputs[] = { 0, 0, 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 3;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
 
-                countWhere(a:List, predicate:Predicate):Num = a.fold(0, _(current, next) = if(predicate(next), add(current, 1), current));
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, 2).at(0);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
+                }
+                SECTION("list(1, 2, 3).slice(2, -4).at(0)")
+                {
+                    float inputs[] = { 0, 0, 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 3;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
 
-                reverse(a:List):List = List(_(idx:Num) = a.at(count.sub(idx).sub(1)), a.count);
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(2, 4).at(0);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
+                }
 
-                findLast(a:List, predicate:Predicate, default) = a.fold(default, _(current, next) = predicate(next).if(next, current));
+                SECTION("list(1, 2, 3).slice(-4, 2).at(0)")
+                {
+                    float inputs[] = { 0, 0, 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 3;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
 
-                findFirst(a:List, predicate:Predicate, default) = a.reverse.findLast(predicate, default);
-                */
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, 2).at(0);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 1);
+                }
+
+                SECTION("list(1, 2, 3).cycle.at(a)")
+                {
+                    float inputs[] = { 4 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 1);
+
+                    inputs[0] = 5;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 2);
+
+                    inputs[0] = 6;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
+                }
+
+                SECTION("list(1, 2, 3).reverse.at(a)")
+                {
+                    float inputs[] = { 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
+
+                    inputs[0] = 1;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 2);
+
+                    inputs[0] = 2;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 1);
+                }
+
+                SECTION("list(1, 2, 3).filter")
+                {
+                    //todo: requires countWhere, which requires fold
+                    /*
+                    filter(a:List, predicate:Predicate):List
+                    {
+                        count = countWhere(a, predicate);
+                        index(idx:Num) = idx.add(a.slice(0, idx).countWhere(_(item) = predicate(item).negate));
+                        return = List(index, count);
+                    }
+                    */
+                    REQUIRE(1 == 0);
+                }
+
+                SECTION("list(1, 2, 3).countWhere")
+                {
+
+                    //todo: requires fold
+                    //countWhere(a:List, predicate : Predicate) :Num = a.fold(0, _(current, next) = if (predicate(next), add(current, 1), current));
+                    REQUIRE(1 == 0);
+                }
+
+                SECTION("list(1, 2, 3).findLast")
+                {
+                    //todo: requires fold
+                    //findLast(a:List, predicate:Predicate, default) = a.fold(default, _(current, next) = predicate(next).if(next, current));
+                    REQUIRE(1 == 0);
+                }
+
+                SECTION("list(1, 2, 3).findFirst")
+                {
+                    //todo: requires fold
+                    //findFirst(a:List, predicate:Predicate, default) = a.reverse.findLast(predicate, default);
+                    REQUIRE(1 == 0);
+                }
             }
         }
 

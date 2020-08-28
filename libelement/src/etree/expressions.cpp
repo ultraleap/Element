@@ -68,5 +68,9 @@ element_expression_select::element_expression_select(expression_const_shared_ptr
     , selector(std::move(selector))
     , options(std::move(options))
 {
-    
+    assert(this->selector);
+    for (auto& option : this->options)
+    {
+        assert(option);
+    }
 }

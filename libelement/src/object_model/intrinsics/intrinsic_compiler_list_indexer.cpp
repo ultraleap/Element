@@ -18,6 +18,10 @@ object_const_shared_ptr intrinsic_compiler_list_indexer::compile(const compilati
                                                                  const source_information& source_info) const
 {
     const auto& our_arguments = context.calls.frames.back().compiled_arguments;
+    auto index_error = std::dynamic_pointer_cast<const error>(our_arguments[0]);
+    if (index_error)
+        return index_error;
+
     const auto& list_arguments = context.captures.frames[context.captures.frames.size() - 2].compiled_arguments;
 
     const auto* constant_expression = dynamic_cast<const element_expression_constant*>(our_arguments[0].get());
@@ -43,8 +47,17 @@ object_const_shared_ptr intrinsic_compiler_list_indexer::compile(const compilati
         for (const auto& element : list_arguments)
             options.push_back(std::dynamic_pointer_cast<const element_expression>(element));
 
-        auto select = std::make_shared<const element_expression_select>(std::dynamic_pointer_cast<const element_expression>(our_arguments[0]), options);
-        select->actual_type = options[0]->actual_type;
+        auto actual_type = options[0]->actual_type;
+
+        auto selector = std::dynamic_pointer_cast<const element_expression>(our_arguments[0]);
+        if (!selector) {
+            return std::make_shared<const error>(
+                "tried to create a select expression (list index using at?) with something that isn't an expression (e.g. a function or struct).\nnote: typeof selector is \"" + our_arguments[0]->typeof_info() + "\"",
+                ELEMENT_ERROR_UNKNOWN, source_info);
+        }
+
+        auto select = std::make_shared<const element_expression_select>(std::move(selector), std::move(options));
+        select->actual_type = actual_type;
         return select;
     }
 
