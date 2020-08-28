@@ -1096,7 +1096,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(-1, 4).at(200);", &input, &output);
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, -1).at(200);", &input, &output);
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 3);
                 }
@@ -1144,7 +1144,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, 2).at(0);", &input, &output);
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, 2).at(1);", &input, &output);
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 3);
                 }
@@ -1186,7 +1186,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, 2).at(0);", &input, &output);
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(-4, 2).at(0);", &input, &output);
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 1);
                 }
@@ -1202,9 +1202,97 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, 2).at(0);", &input, &output);
+                    result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(-4, 2).at(1);", &input, &output);
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 2);
+                }
+
+                SECTION("list(1, 2, 3).slice(2, 2).at(a)")
+                {
+                    float inputs[] = { 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 2).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
+
+                    inputs[0] = 1;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 2).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
+
+                    inputs[0] = -1;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 2).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
+                }
+
+                SECTION("list(1, 2, 3, 4).slice(2, 3).at(a)")
+                {
+                    float inputs[] = { 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
+
+                    inputs[0] = 1;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
+
+                    inputs[0] = 2;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
+
+                    inputs[0] = -1;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 3);
+                }
+
+                SECTION("list(1, 2, 3, 4).slice(3, 2).at(a)")
+                {
+                    float inputs[] = { 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
+
+                    inputs[0] = 1;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
+
+                    inputs[0] = 2;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
+
+                    inputs[0] = -1;
+                    result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a);", &input, &output);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
                 }
 
                 SECTION("list(1, 2, 3).cycle.at(a)")
