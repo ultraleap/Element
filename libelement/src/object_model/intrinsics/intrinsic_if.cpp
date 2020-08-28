@@ -23,28 +23,24 @@ object_const_shared_ptr intrinsic_if::compile(const compilation_context& context
     assert(intrinsic);
     assert(intrinsic == this);
 
+    //if the predicate is a constant then just return the correct branch
+    const auto* predicate_as_constant = dynamic_cast<const element_expression_constant*>(frame.compiled_arguments[0].get());
+    if (predicate_as_constant)
+        return predicate_as_constant->value() > 0 ? frame.compiled_arguments[1] : frame.compiled_arguments[2];
+
+    //the predicate is dynamic, and the branches are expressions (constant or dynamic), so create a tree to evaluate the correct branch later when we can determine the predicate from user input
     auto pred_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[0]);
-    assert(pred_expr);
-
-    //todo: hack. we can only do if-expressions if the predicate is a constant. the difficulty is in the branches returning a non-expression type
-
-    std::vector<element_value> outputs = { 0 };
-    const auto result = element_evaluate(*context.interpreter, pred_expr, {}, outputs, {});
-    if (result != ELEMENT_OK)
-        return std::make_shared<error>("predicate for Bool.if must be a compile-time constant", ELEMENT_ERROR_UNKNOWN, source_info); //todo
-
-    return outputs[0] > 0 ? frame.compiled_arguments[1] : frame.compiled_arguments[2];
-
-    //TODO: Remove zombie code
     auto true_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[1]);
     auto false_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[2]);
-    assert(true_expr);
-    assert(false_expr);
+    const bool all_expressions = pred_expr && true_expr && false_expr;
+    if (all_expressions)
+    {
+        return std::make_unique<element_expression_if>(
+            pred_expr,
+            true_expr,
+            false_expr);
+    }
 
-    auto ret = std::make_unique<element_expression_if>(
-        pred_expr,
-        true_expr,
-        false_expr);
-
-    return ret;
+    //the predicate is dynamic and the branches aren't expressions. this is where we need a wrapper like ListElement to delay which branch we pick until we know more, since we can't have intermediaries in our expression tree
+    return std::make_shared<error>("predicate for Bool.if must be a compile-time constant as the branches are not expressions", ELEMENT_ERROR_UNKNOWN, source_info);
 }
