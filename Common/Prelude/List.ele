@@ -46,54 +46,16 @@ intrinsic struct List(at:Indexer, count:Num)
 
     slice(a:List, start:Num, count:Num):List
     {
-        #list is 3, start 1, count 1
-        #clamped_start = 1
-        #clamped_count = 3 - 1 = 2
-        #actual_clamped_count = 1
-
-        #list is 3, start -1, count 1
-        #clamped_start = 0
-        #clamped_count = 3
-        #actual_clamped_count = 1
-
-        #list is 3, start -1, count -1
-        #clamped_start = 0
-        #clamped_count = 1
-        #actual_clamped_count = 1
-
-        #list is 3, start 2, count 1
-        #clamped_start = 2
-        #clamped_count = 1
-        #actual_clamped_count = 1
-
-        #list is 3, start 3, count 3
-        #clamped_start = 2
-        #clamped_count = 1
-        #actual_clamped_count = 1
-
-        #list is 3, start 4, count -1
-        #clamped_start = 3-1 = 2
-        #clamped_count = 3-2 = 1
-        #actual_clamped_count = 1
-
-        #list is 3, start 1, count 1
-        #clamped_start = 1
-        #clamped_count = 1
-        #actual_clamped_count = 1
-
-        clamped_start = start.clamp(0, a.count.sub(1));
-        clamped_count = count.clamp(1, a.count.sub(clamped_start));
-        actual_clamped_count = clamped_count.max(count);
+        clamped_start = Bool.if(start.lt(0), 0, start.clamp(0, a.count.sub(1).min(start)));
+        clamped_count = Bool.if(count.lt(1), 1, count.clamp(0, a.count.sub(clamped_start).min(count)));
 
         indexer(idx:Num)
         {
-            clamped_idx = idx.clamp(0, actual_clamped_count.sub(1));
-            new_idx = clamped_idx.add(clamped_start);
-            new_clamped_idx = new_idx.max(actual_clamped_count.sub(1).add(clamped_start));
-            return = a.at(new_clamped_idx);
+            clamped_idx = Bool.if(idx.lt(0), clamped_start, idx.clamp(clamped_start, clamped_count));
+            return = a.at(clamped_idx);
         }
 
-        return = List(indexer, actual_clamped_count);
+        return = List(indexer, clamped_count);
     }
 
     filter(a:List, predicate:Predicate):List
