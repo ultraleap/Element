@@ -1116,7 +1116,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         float inputs[] = { 0, 3 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 1;
+                        input.count = 2;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
@@ -1146,7 +1146,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         float inputs[] = { 0, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 1;
+                        input.count = 2;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
@@ -1200,7 +1200,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         float inputs[] = { 3, 2 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 1;
+                        input.count = 2;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
@@ -1252,7 +1252,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         float inputs[] = { 0, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 1;
+                        input.count = 2;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
@@ -1293,7 +1293,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         float inputs[] = { 0, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 1;
+                        input.count = 2;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
@@ -1335,7 +1335,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         float inputs[] = { -10, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 1;
+                        input.count = 2;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
