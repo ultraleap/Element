@@ -10,9 +10,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(LOG_VERBOSITY "log_flags::none" CACHE STRING "logging flags")
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 # Code Coverage Configuration
 add_library(coverage_config INTERFACE)
 option(CODE_COVERAGE "Enable coverage reporting" OFF)
+option(GEN_HTML "Enable code coverage html output" OFF)
+
 if (CODE_COVERAGE)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "CODE_COVERAGE ON")
@@ -236,6 +240,34 @@ if (BUILD_TESTING)
             COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_CURRENT_SOURCE_DIR}/../Common"
             "${debug_dir}")
+
+    if(CODE_COVERAGE)
+        # Add an OR exit 0 in case tests fail but still want coverage of tests ran
+        add_custom_target(libelement_test_coverage
+                COMMAND ./libelement_test_app || (exit 0)
+                DEPENDS libelement_test_app)
+
+        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+
+        # Ensure that lcov has been installed
+        find_package(Lcov)
+
+        if(Lcov_FOUND)
+            add_custom_command(
+                    TARGET libelement_test_coverage POST_BUILD
+                    COMMAND ${LCOV_BIN} --capture --directory . --output-file coverage.info
+                    COMMAND ${LCOV_BIN} --remove coverage.info '/Library/*' '${CMAKE_BINARY_DIR}/*' '${CMAKE_SOURCE_DIR}/dependencies/*' '${CMAKE_SOURCE_DIR}/test/*' --output-file coverage.info
+                    COMMAND ${LCOV_BIN} --list coverage.info)
+
+            if(GEN_HTML)
+                add_custom_command(TARGET libelement_test_coverage POST_BUILD
+                        COMMAND mkdir -p coverage-html
+                        COMMAND ${GENHTML_BIN} -o coverage-html coverage.info)
+            endif()
+        else()
+            message(WARNING "Lcov not found, coverage report not generated for libelement test app.")
+        endif()
+    endif()
 endif ()
 
 target_compile_definitions(libelement
