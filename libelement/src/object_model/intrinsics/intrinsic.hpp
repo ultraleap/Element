@@ -2,6 +2,7 @@
 
 //STD
 #include <unordered_map>
+#include <log_errors.hpp>
 
 //SELF
 #include "../object.hpp"
