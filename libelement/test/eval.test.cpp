@@ -1817,254 +1817,530 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("slice")
                 {
-                    SECTION("list(1, 2, 3).slice(1, 1).at(0)")
+                    SECTION("list(1, 2, 3).slice(1, 1).at(idx)")
                     {
-                        float inputs[] = { 0, 0, 0 };
+                        float inputs[] = { 1, 2, 3, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 3;
+                        input.count = 4;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(1, 1).at(0);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 2);
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(1, 1).at(idx);";
+
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 2);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                inputs[3] = 0;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 2);
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 2);
+                            }
+
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 2);
+                            }
+
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 2);
+                            }
+
+                            SECTION("NaN Index")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 2);
+                            }
+                        }
                     }
 
-                    SECTION("list(1, 2, 3).slice(1, 1).at(1)")
+                    SECTION("list(1, 2, 3).slice(-1, -1).at(idx)")
                     {
-                        float inputs[] = { 0, 0, 0 };
+                        float inputs[] = { 1, 2, 3, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 3;
+                        input.count = 4;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(1, 1).at(1);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 2);
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(-1, -1).at(idx);";
+
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                inputs[3] = 0;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("NaN Index")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+                        }
                     }
 
-                    SECTION("list(1, 2, 3).slice(1, 1).at(-1)")
+                    SECTION("list(1, 2, 3).slice(4, -1).at(idx)")
                     {
-                        float inputs[] = { 0, 0, 0 };
+                        float inputs[] = { 1, 2, 3, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 3;
+                        input.count = 4;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(1, 1).at(-1);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 2);
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(4, -1).at(idx);";
+
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                inputs[3] = 0;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("NaN Index")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+                        }
                     }
 
-                    SECTION("list(1, 2, 3).slice(1, 1).at(2)")
+                    SECTION("list(1, 2, 3).slice(-1, 4).at(idx)")
                     {
-                        float inputs[] = { 0, 0, 0 };
+                        float inputs[] = { 1, 2, 3, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 3;
+                        input.count = 4;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(1, 1).at(2);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 2);
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(-1, 4).at(idx);";
+
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[0]);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                for (int i = 0; i < 3; ++i)
+                                {
+                                    inputs[3] = i;
+                                    result = eval_with_inputs(src, &input, &output);
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[i]);
+                                }
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 3;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[0]);
+                            }
+
+                            SECTION("NaN Index")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[0]);
+                            }
+                        }
                     }
 
-                    SECTION("list(1, 2, 3).slice(-1, -1).at(-1)")
+                    SECTION("list(1, 2, 3).slice(2, 4).at(idx)")
                     {
-                        float inputs[] = { 0, 0, 0 };
+                        float inputs[] = { 1, 2, 3, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 3;
+                        input.count = 4;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(-1, -1).at(-1);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 1);
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(2, 4).at(idx);";
+
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                inputs[3] = 0;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("NaN Index")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+                        }
                     }
 
-                    SECTION("list(1, 2, 3).slice(4, -1).at(-1)")
+                    SECTION("list(1, 2, 3).slice(4, 2).at(idx)")
                     {
-                        float inputs[] = { 0, 0, 0 };
+                        float inputs[] = { 1, 2, 3, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 3;
+                        input.count = 4;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, -1).at(-1);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(4, 2).at(idx);";
+
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                inputs[3] = 0;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("NaN Index")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+                        }
                     }
 
-                    SECTION("list(1, 2, 3).slice(-1, 4).at(-1)")
+                    SECTION("list(1, 2, 3).slice(2, -4).at(idx)")
                     {
-                        float inputs[] = { 0, 0, 0 };
+                        float inputs[] = { 1, 2, 3, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 3;
+                        input.count = 4;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(-1, 4).at(-1);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 1);
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(2, -4).at(idx);";
+
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                inputs[3] = 0;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+
+                            SECTION("NaN Index")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[2]);
+                            }
+                        }
                     }
 
-                    SECTION("list(1, 2, 3).slice(-1, 4).at(200)")
+                    SECTION("list(1, 2, 3).slice(-4, 2).at(idx)")
                     {
-                        float inputs[] = { 0, 0, 0 };
+                        float inputs[] = { 1, 2, 3, 0 };
                         element_inputs input;
                         input.values = inputs;
-                        input.count = 3;
+                        input.count = 4;
                         element_outputs output;
                         float outputs[] = { 0 };
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(-1, 4).at(200);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
-                    }
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(-4, 2).at(idx);";
 
-                    SECTION("list(1, 2, 3).slice(4, -1).at(200)")
-                    {
-                        float inputs[] = { 0, 0, 0 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 3;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[0]);
+                            }
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, -1).at(200);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
-                    }
+                            SECTION("Valid Index")
+                            {
+                                for (int i = 0; i < 2; ++i)
+                                {
+                                    inputs[3] = i;
+                                    result = eval_with_inputs(src, &input, &output);
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == inputs[i]);
+                                }
+                            }
 
-                    SECTION("list(1, 2, 3).slice(2, 4).at(0)")
-                    {
-                        float inputs[] = { 0, 0, 0 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 3;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 2;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[1]);
+                            }
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(2, 4).at(0);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
-                    }
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[1]);
+                            }
 
-                    SECTION("list(1, 2, 3).slice(4, 2).at(0)")
-                    {
-                        float inputs[] = { 0, 0, 0 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 3;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[0]);
+                            }
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, 2).at(0);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
-                    }
-
-                    SECTION("list(1, 2, 3).slice(4, 2).at(1)")
-                    {
-                        float inputs[] = { 0, 0, 0 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 3;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
-
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(4, 2).at(1);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
-                    }
-
-                    SECTION("list(1, 2, 3).slice(2, -4).at(a)")
-                    {
-                        float inputs[] = { 0 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 1;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
-
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 4).at(a);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
-
-                        inputs[0] = 1;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 4).at(a);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
-
-                        inputs[0] = -1;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 4).at(a);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
-                    }
-
-                    SECTION("list(1, 2, 3).slice(-4, 2).at(0)")
-                    {
-                        float inputs[] = { 0, 0, 0 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 3;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
-
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(-4, 2).at(0);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 1);
-                    }
-
-                    SECTION("list(1, 2, 3).slice(-4, 2).at(1)")
-                    {
-                        float inputs[] = { 0, 0, 0 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 3;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
-
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).slice(-4, 2).at(1);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 2);
+                            SECTION("NaN Index")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[0]);
+                            }
+                        }
                     }
 
                     SECTION("list(1, 2, 3).slice(2, 2).at(a)")
