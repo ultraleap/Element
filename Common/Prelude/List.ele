@@ -87,7 +87,16 @@ intrinsic struct List(at:Indexer, count:Num)
 
     countWhere(a:List, predicate:Predicate):Num = a.fold(0, _(current, next) = if(predicate(next), add(current, 1), current));
 
-    reverse(a:List):List = List(_(idx:Num) = a.at(a.count.sub(idx).sub(1)), a.count);
+    reverse(a:List):List 
+    {
+        index(idx:Num) 
+        {
+            clamped_idx = Num.clamp(a.count.sub(idx).sub(1), 0, a.count);
+            return = a.at(clamped_idx);
+        }
+        
+        return = List(index, a.count);
+    }
 
     findLast(a:List, predicate:Predicate, default) = a.fold(default, _(current, next) = predicate(next).if(next, current));
 

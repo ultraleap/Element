@@ -1997,6 +1997,38 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
+
+                    SECTION("list(1, 2, 3).reverse.at(-1)")
+                    {
+                        float inputs[] = { 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 1;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(-1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 3);
+                    }
+
+                    SECTION("list(1, 2, 3).reverse.at(4)")
+                    {
+                        float inputs[] = { 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 1;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(4);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 1);
+                    }
                 }
 
                 SECTION("filter")
