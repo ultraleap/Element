@@ -1141,6 +1141,60 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("repeat")
                 {
+                    SECTION("Count")
+                    {
+                        float inputs[] = { 0, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 1;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        const char* src = "evaluate(count:Num):Num = List.repeat(1, count).count;";
+                        SECTION("Count clamps to 1 if less than 1")
+                        {
+                            inputs[0] = -100;
+                            result = eval_with_inputs(src, &input, &output);
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(outputs[0] == 1);
+                        }
+
+                        SECTION("Count can be the max of a float")
+                        {
+#undef max //windows please
+                            inputs[0] = std::numeric_limits<float>::max();
+                            result = eval_with_inputs(src, &input, &output);
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(outputs[0] == std::numeric_limits<float>::max());
+                        }
+
+                        SECTION("Count is NaN, set to 1")
+                        {
+                            inputs[0] = std::nanf("");
+                            result = eval_with_inputs(src, &input, &output);
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(outputs[0] == 1);
+                        }
+
+                        SECTION("Count is PositiveInfinity, set to 1")
+                        {
+                            inputs[0] = std::numeric_limits<float>::infinity();
+                            result = eval_with_inputs(src, &input, &output);
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(outputs[0] == 1);
+                        }
+
+                        SECTION("Count is NegativeInfinity, set to 1")
+                        {
+                            inputs[0] = std::numeric_limits<float>::infinity() * -1.0f;
+                            result = eval_with_inputs(src, &input, &output);
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(outputs[0] == 1);
+                        }
+                    }
+
                     SECTION("List.repeat(3, count).at(idx)")
                     {
                         float inputs[] = { 3, 2 };
@@ -1152,14 +1206,50 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(count:Num, idx:Num):Num = List.repeat(3, count).at(idx);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == 3);
+                        const char* src = "evaluate(count:Num, idx:Num):Num = List.repeat(3, count).at(idx);";
+
+                        SECTION("Valid Count, Non-Integer")
+                        {
+                            inputs[0] = 100.5f;
+                            SECTION("Count truncates to integer")
+                            {
+                                result = eval_with_inputs("evaluate(count:Num):Num = List.repeat(3, count).count;", &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 100.0f);
+                            }
+
+                            SECTION("Negative Index")
+                            {
+                                inputs[1] = -200;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                for (int i = 0; i < static_cast<int>(inputs[0]); ++i)
+                                {
+                                    inputs[1] = static_cast<float>(i);
+                                    result = eval_with_inputs(src, &input, &output);
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == 3);
+                                }
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[1] = inputs[0] + 2.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
+                        }
                     }
 
                     SECTION("List.repeat(1, 0).at(idx)")
                     {
-                        float inputs[] = { 0, 2 };
+                        float inputs[] = { 0, 0 };
                         element_inputs input;
                         input.values = inputs;
                         input.count = 1;
@@ -1168,13 +1258,39 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(count:Num, idx:Num):Num = List.repeat(1, count).at(idx);", &input, &output);
-                        REQUIRE(result != ELEMENT_OK);
+                        const char* src = "evaluate(count:Num, idx:Num):Num = List.repeat(1, count).at(idx);";
+
+                        SECTION("Zero Count")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[1] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                inputs[1] = 0;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[1] = 1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+                        }
                     }
 
-                    SECTION("List.repeat(1, -100).at(-200)")
+                    SECTION("List.repeat(1, -100).at(idx)")
                     {
-                        float inputs[] = { -100, -200 };
+                        float inputs[] = { 0, 0 };
                         element_inputs input;
                         input.values = inputs;
                         input.count = 1;
@@ -1183,8 +1299,75 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(count:Num, idx:Num):Num = List.repeat(1, count).at(idx);", &input, &output);
-                        REQUIRE(result != ELEMENT_OK);
+                        const char* src = "evaluate(count:Num, idx:Num):Num = List.repeat(1, count).at(idx);";
+
+                        SECTION("Negative Count")
+                        {
+                            inputs[0] = -100.0f;
+                            SECTION("Negative Index")
+                            {
+                                inputs[1] = -200;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                inputs[1] = 0;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[1] = 1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+                        }
+                    }
+
+                    SECTION("List.repeat(10, -10).concatenate(List.repeat(20, -10))")
+                    {
+                        float inputs[] = { -10, 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 1;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        std::string src = "evaluate(count:Num, idx:Num):Num = List.repeat(10, count).concatenate(List.repeat(20, count))";
+
+                        SECTION("Resulting list has a count of 2")
+                        {
+                            auto new_src = fmt::format("{}.count;", src);
+                            result = eval_with_inputs(new_src.c_str(), &input, &output);
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(outputs[0] == 2);
+                        }
+
+                        SECTION("Resulting list indexed at 0 is 10")
+                        {
+                            inputs[1] = 0;
+                            auto new_src = fmt::format("{}.at(idx);", src);
+                            result = eval_with_inputs(new_src.c_str(), &input, &output);
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(outputs[0] == 10);
+                        }
+
+                        SECTION("Resulting list indexed at 1 is 20")
+                        {
+                            inputs[1] = 1;
+                            auto new_src = fmt::format("{}.at(idx);", src);
+                            result = eval_with_inputs(new_src.c_str(), &input, &output);
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(outputs[0] == 20);
+                        }
                     }
                 }
 
