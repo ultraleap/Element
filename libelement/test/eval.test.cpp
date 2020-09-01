@@ -2198,51 +2198,116 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(a);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
+                        const char* src = "evaluate(a:Num):Num = list(1, 2, 3).reverse.at({});";
 
-                        inputs[0] = 1;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(a);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 2);
+                        SECTION("Constant List, Dynamic Index")
+                        {
+                            auto new_src = fmt::format(src, "a");
+                            SECTION("Negative Index")
+                            {
+                                inputs[0] = -1;
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
 
-                        inputs[0] = 2;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(a);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 1);
-                    }
+                            SECTION("Valid Index")
+                            {
+                                for (int i = 0; i < 3; ++i)
+                                {
+                                    inputs[0] = i;
+                                    result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == 3 - i);
+                                }
+                            }
 
-                    SECTION("list(1, 2, 3).reverse.at(-1)")
-                    {
-                        float inputs[] = { 0 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 1;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[0] = 3;
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
 
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(-1);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 3);
-                    }
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[0] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
 
-                    SECTION("list(1, 2, 3).reverse.at(4)")
-                    {
-                        float inputs[] = { 0 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 1;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[0] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
 
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).reverse.at(4);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(outputs[0] == 1);
+                            SECTION("NaN Index")
+                            {
+                                inputs[0] = std::nanf("");
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
+                        }
+
+                        SECTION("Constant List, Constant Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                auto new_src = fmt::format(src, -1);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                for (int i = 0; i < 3; ++i)
+                                {
+                                    auto new_src = fmt::format(src, i);
+                                    result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                    REQUIRE(result == ELEMENT_OK);
+                                    REQUIRE(outputs[0] == 3 - i);
+                                }
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                auto new_src = fmt::format(src, 3);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("NegativeInfinity Index")
+                            {
+                                auto new_src = fmt::format(src, "Num.NegativeInfinity");
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
+
+                            SECTION("PositiveInfinity Index")
+                            {
+                                auto new_src = fmt::format(src, "Num.PositiveInfinity");
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 1);
+                            }
+
+                            SECTION("NaN Index")
+                            {
+                                auto new_src = fmt::format(src, "Num.NaN");
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
+                        }
                     }
                 }
 
