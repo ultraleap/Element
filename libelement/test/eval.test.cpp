@@ -1221,6 +1221,38 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 9);
                     }
+
+                    SECTION("List.range(4, 6).at(-1)")
+                    {
+                        float inputs[] = { 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 1;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(-1);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 4);
+                    }
+
+                    SECTION("List.range(4, 6).at(100)")
+                    {
+                        float inputs[] = { 0 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 1;
+                        element_outputs output;
+                        float outputs[] = { 0 };
+                        output.values = outputs;
+                        output.count = 1;
+
+                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(100);", &input, &output);
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 9);
+                    }
                 }
 
                 SECTION("concatenate")
