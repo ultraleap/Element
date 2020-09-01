@@ -123,6 +123,8 @@ set(libelement_sources
     "src/object_model/intrinsics/intrinsic_function.hpp"
     "src/object_model/intrinsics/intrinsic_if.cpp"
     "src/object_model/intrinsics/intrinsic_if.hpp"
+    "src/object_model/intrinsics/intrinsic_for.cpp"
+    "src/object_model/intrinsics/intrinsic_for.hpp"
     "src/object_model/intrinsics/intrinsic_nullary.cpp"
     "src/object_model/intrinsics/intrinsic_nullary.hpp"
     "src/object_model/intrinsics/intrinsic_unary.cpp"
