@@ -1053,40 +1053,153 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("map")
                 {
-                    SECTION("list(1, 2, a).map(_(n:Num) = n.mul(b)).at(c)")
+                    SECTION("list(1, 2, a).map(_(n:Num) = n.mul(b)).at(idx)")
                     {
-                        float inputs[] = { 4, 2, 2 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 3;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                        std::array<float, 3> inputs = { 4, 2, 0 };
+                        std::array<float, 1> outputs = { 0 };
+                        element_inputs input{ inputs.data(), inputs.size() };
+                        element_outputs output{ outputs.data(), outputs.size() };
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, a).map(_(n:Num) = n.mul(b)).at(c);", &input, &output);
+                        const char* src = "evaluate(a:Num, b:Num, idx:Num):Num = list(1, 2, a).map(_(n:Num) = n.mul(b)).at(idx);";
+                        
+                        SECTION("Negative Index")
+                        {
+                            inputs[2] = -1;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == 1 * inputs[1]);
+                        }
 
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == input.values[0] * input.values[1]);
+                        SECTION("Valid Index")
+                        {
+                            inputs[2] = 0;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == 1 * inputs[1]);
+
+                            inputs[2] = 1;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == 2 * inputs[1]);
+
+                            inputs[2] = 2;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[1]);
+                        }
+
+                        SECTION("Beyond Length Index")
+                        {
+                            inputs[2] = 3;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[1]);
+                        }
+
+                        SECTION("NaN Index")
+                        {
+                            inputs[2] = std::nanf("");
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == 1 * inputs[1]);
+                        }
+
+                        SECTION("Max Value Index")
+                        {
+#undef max
+                            inputs[2] = std::numeric_limits<float>::max();
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[1]);
+                        }
+
+                        SECTION("PositiveInfinity Index")
+                        {
+                            inputs[2] = std::numeric_limits<float>::infinity();
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[1]);
+                        }
+
+                        SECTION("NegativeInfinity Index")
+                        {
+                            inputs[2] = std::numeric_limits<float>::infinity() * -1.0f;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == 1 * inputs[1]);
+                        }
                     }
 
-                    SECTION("list(vec2, vec3).map(_(n) = n.magnitude).at(0)")
+                    SECTION("list(vec2, vec3).map(_(n) = n.magnitude).at(idx)")
                     {
-                        float inputs[] = { 4, 2, 1 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 3;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                        std::array<float, 4> inputs = { 4, 2, 1, 0 };
+                        std::array<float, 1> outputs = { 0 };
+                        element_inputs input{ inputs.data(), inputs.size() };
+                        element_outputs output{ outputs.data(), outputs.size() };
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(0);", &input, &output, "StandardLibrary");
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1]);
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(1);", &input, &output, "StandardLibrary");
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1] + inputs[2] * inputs[2]);
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(idx);";
+
+                        SECTION("Negative Index")
+                        {
+                            inputs[3] = -1;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1]);
+                        }
+
+                        SECTION("Valid Index")
+                        {
+                            inputs[3] = 0;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1]);
+
+                            inputs[3] = 1;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1] + inputs[2] * inputs[2]);
+                        }
+
+                        SECTION("Beyond Length Index")
+                        {
+                            inputs[3] = 2;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1] + inputs[2] * inputs[2]);
+                        }
+
+                        SECTION("NaN Index")
+                        {
+                            inputs[3] = std::nanf("");
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1]);
+                        }
+
+                        SECTION("Max Value Index")
+                        {
+                            #undef max
+                            inputs[3] = std::numeric_limits<float>::max();
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1] + inputs[2] * inputs[2]);
+                        }
+
+                        SECTION("PositiveInfinity Index")
+                        {
+                            inputs[3] = std::numeric_limits<float>::infinity();
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1] + inputs[2] * inputs[2]);
+                        }
+
+                        SECTION("NegativeInfinity Index")
+                        {
+                            inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
+                            REQUIRE(result == ELEMENT_OK);
+                            REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1]);
+                        }
                     }
 
                     SECTION("list(vec2, vec3).map(_(n) = n.magnitude).at(0)")
