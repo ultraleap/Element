@@ -2949,6 +2949,28 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     }
                 }
             }
+
+            SECTION("for")
+            {
+                SECTION("For test")
+                {
+                    float inputs[] = { -1 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(a):Bool = a.value.lt(4), _(a) = test(a.value.add(1))).value;";
+                    result = eval_with_inputs(source, &input, &output);
+
+
+                    REQUIRE(result != ELEMENT_OK);
+                }
+
+            }
         }
 
         SECTION("StandardLibrary")
