@@ -1224,31 +1224,131 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("zip")
                 {
-                    SECTION("List.zip(list(1, 2, a), list(a, 2, 1), Num.add).at(idx)")
+                    SECTION("List.zip(list(a, b, c), list(3, 2, 1, 0), Num.add).at(idx)")
                     {
-                        float inputs[] = { 0, 3 };
-                        element_inputs input;
-                        input.values = inputs;
-                        input.count = 2;
-                        element_outputs output;
-                        float outputs[] = { 0 };
-                        output.values = outputs;
-                        output.count = 1;
+                        std::array<float, 4> inputs = { 1, 2, 3, 0 };
+                        std::array<float, 1> outputs = { 0 };
+                        element_inputs input{ inputs.data(), inputs.size() };
+                        element_outputs output{ outputs.data(), outputs.size() };
 
-                        inputs[0] = 0;
-                        result = eval_with_inputs("evaluate(idx:Num, a:Num):Num = List.zip(list(1, 2, 3), list(3, 2, 1), Num.add).at(idx);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == 4);
+                        const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c), list(3, 2, 1, 0), Num.add)";
 
-                        inputs[0] = 1;
-                        result = eval_with_inputs("evaluate(idx:Num, a:Num):Num = List.zip(list(1, 2, 3), list(3, 2, 1), Num.add).at(idx);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == 4);
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Length Equals Smallest List")
+                            {
+                                auto new_src = fmt::format("{}.count;", src);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
+                        }
+                    }
 
-                        inputs[0] = 2;
-                        result = eval_with_inputs("evaluate(idx:Num, a:Num):Num = List.zip(list(1, 2, 3), list(3, 2, 1), Num.add).at(idx);", &input, &output);
-                        REQUIRE(result == ELEMENT_OK);
-                        REQUIRE(output.values[0] == 4);
+                    SECTION("List.zip(list(a, b, c, 0), list(3, 2, 1), Num.add).at(idx)")
+                    {
+                        std::array<float, 4> inputs = { 1, 2, 3, 0 };
+                        std::array<float, 1> outputs = { 0 };
+                        element_inputs input{ inputs.data(), inputs.size() };
+                        element_outputs output{ outputs.data(), outputs.size() };
+
+                        const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c, 0), list(3, 2, 1), Num.add)";
+
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Length Equals Smallest List")
+                            {
+                                auto new_src = fmt::format("{}.count;", src);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 3);
+                            }
+                        }
+                    }
+
+                    SECTION("List.zip(list(a, b, c), list(3, 2, 1), Num.add).at(idx)")
+                    {
+                        std::array<float, 4> inputs = { 1, 2, 3, 0 };
+                        std::array<float, 1> outputs = { 0 };
+                        element_inputs input{ inputs.data(), inputs.size() };
+                        element_outputs output{ outputs.data(), outputs.size() };
+
+                        const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c), list(3, 2, 1), Num.add).at(idx);";
+
+                        SECTION("Runtime Expression List, Runtime Index")
+                        {
+                            SECTION("Negative Index")
+                            {
+                                inputs[3] = -1;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 4);
+                            }
+
+                            SECTION("Valid Index")
+                            {
+                                inputs[3] = 0;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 4);
+                            }
+
+                            SECTION("Beyond Length Index")
+                            {
+                                inputs[3] = 100;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 4);
+                            }
+
+                            SECTION("PositiveInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 4);
+                            }
+
+                            SECTION("NegativeInfinity Index")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == 4);
+                            }
+
+                            SECTION("NaN Index")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == std::nanf(""));
+                            }
+                        
+                            SECTION("PositiveInfinity List Item")
+                            {
+                                inputs[0] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == std::numeric_limits<float>::infinity());
+                            }
+
+                            SECTION("NegativeInfinity List Item")
+                            {
+                                inputs[0] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == std::numeric_limits<float>::infinity() * -1.0f);
+                            }
+
+                            SECTION("NaN List Item")
+                            {
+                                inputs[0] = std::nanf("");
+                                result = eval_with_inputs(src, &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == std::nanf(""));
+                            }
+                        }
                     }
                 }
 
@@ -2966,10 +3066,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(a):Bool = a.value.lt(4), _(a) = test(a.value.add(1))).value;";
                     result = eval_with_inputs(source, &input, &output);
 
-
                     REQUIRE(result != ELEMENT_OK);
                 }
-
             }
         }
 

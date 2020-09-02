@@ -13,7 +13,7 @@ intrinsic struct List(at:Indexer, count:Num)
 
     map(a:List, mapper:Unary):List = List(_(idx:Num) = mapper(a.at(idx)), a.count);
 
-    zip(a:List, b:List, zipper:Binary):List = List(_(idx:Num) = zipper(a.at(idx), b.at(idx)), a.count);
+    zip(a:List, b:List, zipper:Binary):List = List(_(idx:Num) = zipper(a.at(idx), b.at(idx)), Num.min(a.count, b.count));
 
     repeat(value, count:Num):List = List(_(_:Num) = value, count);
 
