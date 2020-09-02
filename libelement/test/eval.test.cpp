@@ -2781,7 +2781,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("Negative Start")
                         {
                             inputs[6] = -100;
-                            result = eval_with_inputs(src, &input, &output, "StandardLibrart");
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
                         }
@@ -2789,7 +2789,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("Zero Start")
                         {
                             inputs[6] = 0;
-                            result = eval_with_inputs(src, &input, &output, "StandardLibrart");
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
                         }
@@ -2797,7 +2797,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("Positive Start")
                         {
                             inputs[6] = 100;
-                            result = eval_with_inputs(src, &input, &output, "StandardLibrart");
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
                         }
@@ -2805,7 +2805,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("Max Value Start")
                         {
                             inputs[6] = std::numeric_limits<float>::max();
-                            result = eval_with_inputs(src, &input, &output, "StandardLibrart");
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
                         }
@@ -2813,7 +2813,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("NaN Start")
                         {
                             inputs[6] = std::nanf("");
-                            result = eval_with_inputs(src, &input, &output, "StandardLibrart");
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
                         }
@@ -2821,7 +2821,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("PositiveInfinity Start")
                         {
                             inputs[6] = std::numeric_limits<float>::infinity();
-                            result = eval_with_inputs(src, &input, &output, "StandardLibrart");
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
                         }
@@ -2829,7 +2829,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("NegativeInfinity Start")
                         {
                             inputs[6] = std::numeric_limits<float>::infinity() * -1.0f;
-                            result = eval_with_inputs(src, &input, &output, "StandardLibrart");
+                            result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
                         }
