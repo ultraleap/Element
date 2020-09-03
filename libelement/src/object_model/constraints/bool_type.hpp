@@ -15,7 +15,7 @@ namespace element
                                                     const identifier& name,
                                                     const source_information& source_info) const override;
 
-        [[nodiscard]] bool is_constant() const override { return true; }
+        [[nodiscard]] bool is_constant() const override;
 
     private:
         static identifier name;

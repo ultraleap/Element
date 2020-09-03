@@ -114,3 +114,13 @@ object_const_shared_ptr function_instance::compile(const compilation_context& co
 
     return shared_from_this();
 }
+
+bool function_instance::is_constant() const
+{
+    return true;
+}
+
+bool function_instance::valid_at_boundary(const compilation_context& context) const
+{
+    return declarer->valid_at_boundary(context);
+}

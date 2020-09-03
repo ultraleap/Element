@@ -12,6 +12,11 @@
 
 namespace element
 {
+    bool object::is_constant() const
+    {
+        return false;
+    }
+
     bool object::matches_constraint(const compilation_context& context, const constraint* constraint) const
     {
         if (!constraint || constraint == constraint::any.get())
