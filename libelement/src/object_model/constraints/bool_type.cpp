@@ -14,3 +14,8 @@ object_const_shared_ptr bool_type::index(const compilation_context& context, con
     assert(declaration);
     return declaration->index(context, name, source_info);
 }
+
+bool bool_type::is_constant() const
+{
+    return true;
+}

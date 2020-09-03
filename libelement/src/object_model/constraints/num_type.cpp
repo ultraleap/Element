@@ -15,3 +15,8 @@ object_const_shared_ptr num_type::index(const compilation_context& context,
     assert(declaration);
     return declaration->index(context, name, source_info);
 }
+
+bool num_type::is_constant() const
+{
+    return true;
+}
