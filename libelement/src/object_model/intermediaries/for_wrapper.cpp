@@ -78,7 +78,7 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
             if (!ret_as_constant)
                 return false;
 
-            return ret_as_constant->value() >= 0;
+            return ret_as_constant->value() > 0;
         };
 
         const auto next_successor = [&initial_object, &body_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> object_const_shared_ptr
