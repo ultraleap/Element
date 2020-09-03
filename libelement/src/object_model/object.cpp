@@ -53,7 +53,7 @@ namespace element
             if (!input.has_annotation())
                 return true;
 
-            const auto type = input.resolve_annotation(context);
+            const auto* const type = input.resolve_annotation(context);
             if (!type)
             {
                 assert(!"failed to resolve annotation, couldn't be found");

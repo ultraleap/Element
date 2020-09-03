@@ -1,5 +1,7 @@
 #include "expressions.hpp"
 
+#include <utility>
+
 //SELF
 #include "object_model/compilation_context.hpp"
 
@@ -11,8 +13,7 @@ DEFINE_TYPE_ID(element_expression_unary,           1U << 4);
 DEFINE_TYPE_ID(element_expression_binary,          1U << 5);
 DEFINE_TYPE_ID(element_expression_if,              1U << 6);
 DEFINE_TYPE_ID(element_expression_select,          1U << 7);
-//DEFINE_TYPE_ID(element_expression_group,           1U << 7);
-//DEFINE_TYPE_ID(element_expression_unbound_arg,     1U << 8);
+DEFINE_TYPE_ID(element_expression_indexer,         1U << 8);
 
 std::shared_ptr<const element::object> element_expression::compile(const element::compilation_context& context, const element::source_information& source_info) const
 {
@@ -31,7 +32,7 @@ std::shared_ptr<const element::object> element_expression::index(
     }
 
     //find the declaration of the type that we are
-    const auto actual_type_decl = context.get_global_scope()->find(actual_type->get_identifier(), false);
+    const auto* const actual_type_decl = context.get_global_scope()->find(actual_type->get_identifier(), false);
     if (!actual_type_decl)
     {
         //TODO: Handle as error
@@ -62,6 +63,34 @@ element_expression_if::element_expression_if(expression_const_shared_ptr predica
     m_dependents.emplace_back(std::move(if_true));
     m_dependents.emplace_back(std::move(if_false));
 }
+
+element_expression_for::element_expression_for(expression_const_shared_ptr initial, expression_const_shared_ptr condition, expression_const_shared_ptr body)
+    : element_expression(type_id, nullptr)
+{
+    actual_type = initial->actual_type;
+
+    m_dependents.emplace_back(std::move(initial));
+    m_dependents.emplace_back(std::move(condition));
+    m_dependents.emplace_back(std::move(body));
+}
+
+element_expression_indexer::element_expression_indexer(expression_const_shared_ptr expression, int index)
+    : element_expression(type_id, nullptr) 
+    , expression{std::move(expression)}, index{index}
+{
+}
+
+//[[nodiscard]] element::object_const_shared_ptr element_expression_for::index(const element::compilation_context& context, const element::identifier& name,
+//                                                                    const element::source_information& source_info) const
+//{
+//    auto thing = initial()->actual_type;
+//    //initial to offset
+//    auto indexer = std::make_unique<element_expression_indexer>(shared_from_this(), 0);
+//
+//
+//    return nullptr;
+//}
+
 
 element_expression_select::element_expression_select(expression_const_shared_ptr selector, std::vector<expression_const_shared_ptr> options)
     : element_expression(type_id, nullptr)

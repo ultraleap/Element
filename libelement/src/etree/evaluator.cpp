@@ -90,6 +90,19 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
+    if (const auto* eb = expr->as<element_expression_for>()) {
+        assert(outputs_count > outputs_written);
+        assert(eb->initial()->get_size() == 1);
+        assert(eb->condition()->get_size() == 1);
+        assert(eb->body()->get_size() == 1);
+        size_t intermediate_written = 0;
+        element_value initial;
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->initial(), &initial, 1, intermediate_written));
+        intermediate_written = 0;
+        outputs[outputs_written++] = element_evaluate_for(context, eb->initial(), eb->condition(), eb->body());
+        return ELEMENT_OK;
+    }
+
     if (const auto* sel = expr->as<element_expression_select>()) {
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
@@ -201,6 +214,27 @@ element_value element_evaluate_if(element_value predicate, element_value if_true
 {
     //Element treats negative numbers and 0 as false
     return predicate > 0 ? if_true : if_false;
+}
+
+element_value element_evaluate_for(evaluator_ctx& context, const expression_const_shared_ptr& initial, const expression_const_shared_ptr& condition, const expression_const_shared_ptr& body)
+{
+    size_t intermediate_written = 0;
+
+    const auto value_size = initial->get_size();
+    std::vector<float> current_value;
+    current_value.reserve(value_size);
+
+    //evaluator_ctx ectx = { current_value.data(), value_size, {} };
+
+    auto result = do_evaluate(context, initial, current_value.data(), value_size, intermediate_written);
+
+    element_value predicate_value;
+    result = do_evaluate(context, condition, &predicate_value, 1, intermediate_written);
+    while(predicate_value > 0)
+    {
+        result = do_evaluate(context, body, current_value.data(), value_size, intermediate_written);
+        result = do_evaluate(context, condition, &predicate_value, 1, intermediate_written);
+    }
 }
 
 expression_const_shared_ptr element_evaluate_select(element_value selector, std::vector<expression_const_shared_ptr> options)

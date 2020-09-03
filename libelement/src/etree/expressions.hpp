@@ -20,6 +20,14 @@ public:
     std::vector<expression_const_shared_ptr>& dependents() { return m_dependents; }
 
     [[nodiscard]] virtual size_t get_size() const { return m_size; }
+    [[nodiscard]] bool is_constant() const override
+    {
+        auto is_constant = true;
+        for (const auto& item : m_dependents)
+            is_constant &= item->is_constant();
+
+        return is_constant;
+    }
 
     [[nodiscard]] bool matches_constraint(const element::compilation_context& context, const element::constraint* constraint) const final
     {
@@ -57,6 +65,7 @@ protected:
         const element::compilation_context& context,
         const element::source_information& source_info) const override;
 
+public:
     [[nodiscard]] element::object_const_shared_ptr index(
         const element::compilation_context& context,
         const element::identifier& name,
@@ -199,16 +208,38 @@ struct element_expression_if final : public element_expression
     [[nodiscard]] size_t get_size() const override { return 1; }
 };
 
+struct element_expression_for final : public element_expression {
+    DECLARE_TYPE_ID();
+
+    explicit element_expression_for(expression_const_shared_ptr initial, expression_const_shared_ptr condition,  expression_const_shared_ptr body);
+    [[nodiscard]] const expression_const_shared_ptr& initial() const { return m_dependents[0]; }
+    [[nodiscard]] const expression_const_shared_ptr& condition() const { return m_dependents[1]; }
+    [[nodiscard]] const expression_const_shared_ptr& body() const { return m_dependents[2]; }
+
+    [[nodiscard]] size_t get_size() const override { return 1; }
+
+    [[nodiscard]] element::object_const_shared_ptr index(const element::compilation_context& context, const element::identifier& name,
+                                                         const element::source_information& source_info) const override;
+};
+
+struct element_expression_indexer final : public element_expression {
+    DECLARE_TYPE_ID();
+
+    explicit element_expression_indexer(expression_const_shared_ptr expression, int index);
+
+    [[nodiscard]] size_t get_size() const override { return 1; }
+
+    expression_const_shared_ptr expression;
+    int index;
+};
+
 struct element_expression_select final : public element_expression
 {
     DECLARE_TYPE_ID();
 
     explicit element_expression_select(expression_const_shared_ptr selector, std::vector<expression_const_shared_ptr> options);
 
-    [[nodiscard]] size_t get_size() const override
-    {
-        return 1;
-    }
+    [[nodiscard]] size_t get_size() const override { return 1; }
 
     expression_const_shared_ptr selector;
     std::vector<expression_const_shared_ptr> options;

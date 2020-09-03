@@ -26,6 +26,15 @@ namespace element
 
         [[nodiscard]] std::shared_ptr<const element_expression> to_expression() const final;
 
+        [[nodiscard]] bool is_constant() const override
+        {
+            auto is_constant = true;
+            for (const auto& [name, item] : fields)
+                is_constant &= item->is_constant();
+
+            return is_constant;
+        }
+
         const struct_declaration* const declarer;
         std::map<std::string, object_const_shared_ptr> fields;
 

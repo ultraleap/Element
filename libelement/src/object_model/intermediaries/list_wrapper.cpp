@@ -11,7 +11,9 @@
 
 using namespace element;
 
-object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shared_ptr& selector_object, const std::vector<object_const_shared_ptr>& option_objects, const source_information& source_info)
+object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shared_ptr& selector_object,
+                                                         const std::vector<object_const_shared_ptr>& option_objects,
+                                                         const source_information& source_info)
 {
     auto index_error = std::dynamic_pointer_cast<const error>(selector_object);
     if (index_error)
@@ -105,8 +107,8 @@ const constraint* list_wrapper::get_constraint() const
 }
 
 object_const_shared_ptr list_wrapper::call(const compilation_context& context,
-                                                   std::vector<object_const_shared_ptr> compiled_args,
-                                                   const source_information& source_info) const
+                                           std::vector<object_const_shared_ptr> compiled_args,
+                                           const source_information& source_info) const
 {
     std::vector<object_const_shared_ptr> new_options;
     new_options.reserve(options.size());
@@ -117,8 +119,8 @@ object_const_shared_ptr list_wrapper::call(const compilation_context& context,
 }
 
 object_const_shared_ptr list_wrapper::index(const compilation_context& context,
-                                                    const identifier& name,
-                                                    const source_information& source_info) const
+                                            const identifier& name,
+                                            const source_information& source_info) const
 {
     std::vector<object_const_shared_ptr> new_options;
     new_options.reserve(options.size());
@@ -129,7 +131,7 @@ object_const_shared_ptr list_wrapper::index(const compilation_context& context,
 }
 
 object_const_shared_ptr list_wrapper::compile(const compilation_context& context,
-                                                      const source_information& source_info) const
+                                              const source_information& source_info) const
 {
     std::vector<object_const_shared_ptr> new_options;
     new_options.reserve(options.size());

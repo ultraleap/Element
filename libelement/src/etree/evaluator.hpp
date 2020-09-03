@@ -6,6 +6,7 @@
 #include "element/interpreter.h"
 #include "etree/expressions.hpp"
 
+struct evaluator_ctx;
 element_result element_evaluate(
     element_interpreter_ctx& context,
     expression_const_shared_ptr fn,
@@ -24,4 +25,5 @@ element_value element_evaluate_nullary(element_expression_nullary::op op);
 element_value element_evaluate_unary(element_expression_unary::op op, element_value a);
 element_value element_evaluate_binary(element_expression_binary::op op, element_value a, element_value b);
 element_value element_evaluate_if(element_value predicate, element_value if_true, element_value if_false);
+element_value element_evaluate_for(evaluator_ctx& context, const expression_const_shared_ptr& initial, const expression_const_shared_ptr& condition, const expression_const_shared_ptr&);
 expression_const_shared_ptr element_evaluate_select(element_value selector, std::vector<expression_const_shared_ptr> options);

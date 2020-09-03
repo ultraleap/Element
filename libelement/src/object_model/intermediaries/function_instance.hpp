@@ -25,6 +25,8 @@ namespace element
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
                                                       const source_information& source_info) const override;
 
+        [[nodiscard]] bool is_constant() const override { return true; }
+
         const function_declaration* const declarer;
 
     private:
