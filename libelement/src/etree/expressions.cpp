@@ -14,6 +14,7 @@ DEFINE_TYPE_ID(element_expression_binary,          1U << 5);
 DEFINE_TYPE_ID(element_expression_if,              1U << 6);
 DEFINE_TYPE_ID(element_expression_select,          1U << 7);
 DEFINE_TYPE_ID(element_expression_indexer,         1U << 8);
+DEFINE_TYPE_ID(element_expression_for,             1U << 9);
 
 std::shared_ptr<const element::object> element_expression::compile(const element::compilation_context& context, const element::source_information& source_info) const
 {
@@ -79,18 +80,6 @@ element_expression_indexer::element_expression_indexer(expression_const_shared_p
     , expression{std::move(expression)}, index{index}
 {
 }
-
-//[[nodiscard]] element::object_const_shared_ptr element_expression_for::index(const element::compilation_context& context, const element::identifier& name,
-//                                                                    const element::source_information& source_info) const
-//{
-//    auto thing = initial()->actual_type;
-//    //initial to offset
-//    auto indexer = std::make_unique<element_expression_indexer>(shared_from_this(), 0);
-//
-//
-//    return nullptr;
-//}
-
 
 element_expression_select::element_expression_select(expression_const_shared_ptr selector, std::vector<expression_const_shared_ptr> options)
     : element_expression(type_id, nullptr)

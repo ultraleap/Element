@@ -235,6 +235,8 @@ element_value element_evaluate_for(evaluator_ctx& context, const expression_cons
         result = do_evaluate(context, body, current_value.data(), value_size, intermediate_written);
         result = do_evaluate(context, condition, &predicate_value, 1, intermediate_written);
     }
+
+    return result;
 }
 
 expression_const_shared_ptr element_evaluate_select(element_value selector, std::vector<expression_const_shared_ptr> options)
