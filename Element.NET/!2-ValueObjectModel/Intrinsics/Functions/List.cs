@@ -57,8 +57,8 @@ namespace Element.AST
                 index switch
                 {
 	                Constant constantIndex => elements[(int) constantIndex.Value],
-	                {} indexExpr => elements.All(e => e is Element.Instruction)
-		                                ? (IValue) Mux.CreateAndOptimize(indexExpr, elements.Cast<Element.Instruction>())
+	                {} indexExpr => elements.All(e => e is Instruction)
+		                                ? (IValue) Switch.CreateAndOptimize(indexExpr, elements.Cast<Instruction>())
 		                                : new ListElement(index, elements, inputConstraints, outputConstraint),
 	                _ => throw new ArgumentNullException(nameof(index))
                 };

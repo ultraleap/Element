@@ -141,7 +141,7 @@ namespace Element.CLR
 					}
 
 					return varExpr;
-				case Mux m:
+				case Switch m:
 					if (m.Operands.Count == 2)
 					{
 						return LinqExpression.Condition(

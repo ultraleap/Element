@@ -37,8 +37,8 @@ namespace Element
 					case Binary b:
 						newValue = Binary.CreateAndOptimize(b.Operation, Cache(b.OpA, cache), Cache(b.OpB, cache));
 						break;
-					case Mux m:
-						newValue = Mux.CreateAndOptimize(Cache(m.Selector, cache), m.Operands.Select(o => Cache(o, cache)));
+					case Switch m:
+						newValue = Switch.CreateAndOptimize(Cache(m.Selector, cache), m.Operands.Select(o => Cache(o, cache)));
 						break;
 					case InstructionGroupElement ge:
 						return new InstructionGroupElement(OptimizeGroup(cache, ge.Group), ge.Index);

@@ -248,6 +248,16 @@ namespace Element.NET.TestHelpers
 
             Result<string> IHost.Typeof(CompilerInput input, string expression) =>
                 RunHostProcess(new Context(null, input.Options), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
+
+            public Result<string> Summary(CompilerInput input, string expression)
+            {
+                throw new NotImplementedException();
+            }
+
+            public Result<string> NormalForm(CompilerInput input, string expression)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

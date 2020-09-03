@@ -65,7 +65,7 @@ namespace Element
 
 					output.Append("local_").Append(v.Id);
 					break;
-				case Mux m:
+				case Switch m:
 					output.Append("((float[").Append(m.Operands.Count).Append("]){");
 					for (int i = 0; i < m.Operands.Count; i++)
 					{

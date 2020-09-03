@@ -42,7 +42,6 @@ namespace Alchemist
 			Log(args);
 
 			var options = new CompilerOptions(!Debug, _skipValidation, _noParseTrace, Verbosity);
-			var builder = new ResultBuilder(new Context(null, options));
 
 			var currentDirectory = new DirectoryInfo(Directory.GetCurrentDirectory());
 			var packageRegistry = new DirectoryPackageRegistry(currentDirectory);
@@ -58,7 +57,7 @@ namespace Alchemist
 				}
 				catch (Exception e)
 				{
-					builder.Append(MessageLevel.Error, e.ToString());
+					Log(e.ToString(), MessageLevel.Error);
 				}
 			}
 
@@ -72,7 +71,7 @@ namespace Alchemist
 				}
 				catch (Exception e)
 				{
-					builder.Append(MessageLevel.Error, e.ToString());
+					Log(e.ToString(), MessageLevel.Error);
 				}
 			}
 

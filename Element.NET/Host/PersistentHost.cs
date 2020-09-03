@@ -1,3 +1,5 @@
+using System;
+
 namespace Element
 {
     using AST;
@@ -20,9 +22,13 @@ namespace Element
                     .Bind(_ => new Context(_srcContext).EvaluateExpression(expression))
                     .Bind(value => value.SerializeToFloats(new Context(_srcContext)));
 
-        public Result<string> Typeof(CompilerInput input, string expression) =>
+        public Result<string> Typeof(CompilerInput input, string expression) => Stringify(input, expression, value => value.TypeOf);
+        public Result<string> Summary(CompilerInput input, string expression) => Stringify(input, expression, value => value.SummaryString);
+        public Result<string> NormalForm(CompilerInput input, string expression) => Stringify(input, expression, value => value.NormalizedFormString);
+
+        private Result<string> Stringify(CompilerInput input, string expression, Func<IValue, string> stringify) =>
             _srcContext.LoadCompilerInput(input)
-                    .Bind(_ => new Context(_srcContext).EvaluateExpression(expression))
-                    .Map(value => value.TypeOf);
+                       .Bind(_ => new Context(_srcContext).EvaluateExpression(expression))
+                       .Map(stringify);
     }
 }

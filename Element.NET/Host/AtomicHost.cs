@@ -12,5 +12,11 @@ namespace Element
 
         public Result<string> Typeof(CompilerInput input, string expression) =>
             PersistentHost.Create(input.Options).Typeof(input, expression);
+
+        public Result<string> Summary(CompilerInput input, string expression) =>
+            PersistentHost.Create(input.Options).Summary(input, expression);
+
+        public Result<string> NormalForm(CompilerInput input, string expression) =>
+        PersistentHost.Create(input.Options).NormalForm(input, expression);
     }
 }

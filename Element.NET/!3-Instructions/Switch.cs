@@ -6,9 +6,9 @@ namespace Element
 	using System.Linq;
 
 	/// <summary>
-	/// Multiplexing instruction, picks a result from many arguments based on passed in selector function
+	/// Switch instruction, picks a result from many arguments based on passed in selector function
 	/// </summary>
-	public class Mux : Instruction
+	public class Switch : Instruction
 	{
 		public static Instruction CreateAndOptimize(Instruction selector, IEnumerable<Instruction> operands)
 		{
@@ -23,10 +23,10 @@ namespace Element
 						          : index.Value;
 				return options[(int)idx];
 			}
-			return new Mux(selector, options);
+			return new Switch(selector, options);
 		}
 		
-		private Mux(Instruction selector, IEnumerable<Instruction> operands)
+		private Switch(Instruction selector, IEnumerable<Instruction> operands)
 		{
 			Selector = selector ?? throw new ArgumentNullException(nameof(selector));
 			Operands = new ReadOnlyCollection<Instruction>(operands.ToArray());
@@ -63,7 +63,7 @@ namespace Element
 		public override bool Equals(Instruction other)
 		{
 			if (this == other) return true;
-			if (!(other is Mux bOther) || bOther.Operands.Count != Operands.Count || !bOther.Selector.Equals(Selector))
+			if (!(other is Switch bOther) || bOther.Operands.Count != Operands.Count || !bOther.Selector.Equals(Selector))
 				return false;
 			for (var i = 0; i < Operands.Count; i++)
 			{
