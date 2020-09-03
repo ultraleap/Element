@@ -180,7 +180,6 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
     return std::make_shared<const for_wrapper>(initial_object, std::move(predicate_compiled), std::move(body_compiled));
 }
 
-
 for_wrapper::for_wrapper(const object_const_shared_ptr& initial,
                          std::shared_ptr<const element_expression>&& predicate,
                          std::shared_ptr<const element_expression>&& body)

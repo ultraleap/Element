@@ -217,9 +217,6 @@ struct element_expression_for final : public element_expression {
     [[nodiscard]] const expression_const_shared_ptr& body() const { return m_dependents[2]; }
 
     [[nodiscard]] size_t get_size() const override { return 1; }
-
-    [[nodiscard]] element::object_const_shared_ptr index(const element::compilation_context& context, const element::identifier& name,
-                                                         const element::source_information& source_info) const override;
 };
 
 struct element_expression_indexer final : public element_expression {
