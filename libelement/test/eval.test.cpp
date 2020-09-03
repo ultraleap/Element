@@ -3052,7 +3052,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
             SECTION("for")
             {
-                SECTION("For test")
+                SECTION("Compile-time for")
                 {
                     float inputs[] = { -1 };
                     element_inputs input;
@@ -3066,7 +3066,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(a):Bool = a.value.lt(4), _(a) = test(a.value.add(1))).value;";
                     result = eval_with_inputs(source, &input, &output);
 
-                    REQUIRE(result != ELEMENT_OK);
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
                 }
             }
         }

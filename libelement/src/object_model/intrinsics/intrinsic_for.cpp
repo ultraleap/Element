@@ -2,6 +2,8 @@
 
 //SELF
 #include "object_model/error.hpp"
+#include "object_model/intermediaries/for_wrapper.hpp"
+#include "object_model/intermediaries/function_instance.hpp"
 
 using namespace element;
 
@@ -25,12 +27,15 @@ object_const_shared_ptr intrinsic_for::compile(const compilation_context& contex
     assert(declarer.inputs.size() == 3);
     assert(frame.compiled_arguments.size() == 3);
 
-    auto initial_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[0]);
-    auto pred_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[1]);
-    auto body_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[2]);
+    auto initial_expr = frame.compiled_arguments[0];
+    auto pred_expr = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[1]);
+    auto body_expr = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[2]);
 
-    return std::make_unique<element_expression_for>(
-        initial_expr,
-        pred_expr,
-        body_expr);
+    return for_wrapper::create_or_optimise(initial_expr, pred_expr, body_expr, source_info, context);
+
+
+    //return std::make_unique<element_expression_for>(
+    //    initial_expr,
+    //    pred_expr,
+    //    body_expr);
 }
