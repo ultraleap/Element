@@ -12,13 +12,6 @@ intrinsic_for::intrinsic_for()
 {
 }
 
-//Calls body repeatedly until condition is not met
-//WARNING: Usage of this function breaks halting guarantees
-//Body is a Unary function supplied with the output from the previous body starting with initial
-//Thus the types of initialand both the parameterand return of Unary must have compatible interfaces
-//List.fold is recommended as a constant - time alternative when iteration count is known
-//intrinsic function for (initial, condition : Predicate, body : Unary)
-
 object_const_shared_ptr intrinsic_for::compile(const compilation_context& context,
                                               const source_information& source_info) const
 {
@@ -27,15 +20,9 @@ object_const_shared_ptr intrinsic_for::compile(const compilation_context& contex
     assert(declarer.inputs.size() == 3);
     assert(frame.compiled_arguments.size() == 3);
 
-    auto initial_expr = frame.compiled_arguments[0];
-    auto pred_expr = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[1]);
-    auto body_expr = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[2]);
+    const auto initial = frame.compiled_arguments[0];
+    const auto pred = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[1]);
+    const auto body = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[2]);
 
-    return for_wrapper::create_or_optimise(initial_expr, pred_expr, body_expr, source_info, context);
-
-
-    //return std::make_unique<element_expression_for>(
-    //    initial_expr,
-    //    pred_expr,
-    //    body_expr);
+    return for_wrapper::create_or_optimise(initial, pred, body, source_info, context);
 }

@@ -3063,7 +3063,61 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(a):Bool = a.value.lt(4), _(a) = test(a.value.add(1))).value;";
+                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(b):Bool = b.value.lt(4), _(c) = test(c.value.add(1))).value;";
+                    result = eval_with_inputs(source, &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
+                }
+
+                SECTION("Dynamic-time for, initial")
+                {
+                    float inputs[] = { 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(a), _(b:test):Bool = b.value.lt(4), _(c:test):test = test(c.value.add(1))).value;";
+                    result = eval_with_inputs(source, &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
+                }
+
+                SECTION("Dynamic-time for, predicate")
+                {
+                    float inputs[] = { 4 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(b:test):Bool = b.value.lt(a), _(c:test):test = test(c.value.add(1))).value;";
+                    result = eval_with_inputs(source, &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 4);
+                }
+
+                SECTION("Dynamic-time for, body")
+                {
+                    float inputs[] = { 1 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(b:test):Bool = b.value.lt(4), _(c:test):test = test(c.value.add(a))).value;";
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
