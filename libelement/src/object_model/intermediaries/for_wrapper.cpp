@@ -6,9 +6,12 @@
 
 //SELF
 #include "object_model/error.hpp"
+#include "object_model/intrinsics/intrinsic.hpp"
 #include "object_model/constraints/constraint.hpp"
 #include "object_model/intermediaries/function_instance.hpp"
+#include "object_model/intermediaries/struct_instance.hpp"
 #include "object_model/declarations/function_declaration.hpp"
+#include "object_model/declarations/struct_declaration.hpp"
 #include "object_model/compilation_context.hpp"
 #include "source_information.hpp"
 #include "etree/expressions.hpp"
@@ -32,11 +35,50 @@ else initial is an object, e.g. struct instance
     indexing expression with the for loop as a child, or we need to make another for
     wrapper if the indexed thing is not a number (e.g. another struct instance)
  */
+
+auto clone_instance_and_fill_with_indexing_expression(const compilation_context& context,
+    const std::shared_ptr<const element_expression_for>& for_expression,
+    const std::shared_ptr<const struct_instance>& instance,
+    int& index) -> std::shared_ptr<struct_instance>
+{
+    auto clone = std::make_shared<struct_instance>(instance->declarer);
+
+    for (const auto& [name, field] : instance->fields)
+    {
+        const auto* field_type = field->get_constraint();
+        const auto* field_type_declarer = field_type->declarer;
+
+        //if there's no declarer then we're probably dealing with a Num or Bool (IIRC)
+
+        const auto field_is_expression = std::dynamic_pointer_cast<const element_expression>(field);
+
+        if (!field_type_declarer || field_is_expression)
+        {
+            auto thing = std::make_shared<element_expression_indexer>(for_expression, index);
+            clone->fields.try_emplace(name, thing);
+            index += 1;
+            continue;
+        }
+
+        const auto field_as_instance = std::dynamic_pointer_cast<const struct_instance>(field);
+        if (field_as_instance)
+        {
+            auto sub_clone = clone_instance_and_fill_with_indexing_expression(context, for_expression, field_as_instance, index);
+            clone->fields.try_emplace(name, std::move(sub_clone));
+            continue;
+        }
+
+        clone->fields.try_emplace(name, std::make_shared<const error>("???????????????????????????", ELEMENT_ERROR_UNKNOWN, source_information{}));
+    }
+
+    return clone;
+};
+
 object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_shared_ptr& initial_object,
-                                                        const std::shared_ptr<const function_instance>& predicate_function,
-                                                        const std::shared_ptr<const function_instance>& body_function,
-                                                        const source_information& source_info,
-                                                        const compilation_context& context)
+    const std::shared_ptr<const function_instance>& predicate_function,
+    const std::shared_ptr<const function_instance>& body_function,
+    const source_information& source_info,
+    const compilation_context& context)
 {
     //todo: delete?
     /*auto initial_error = std::dynamic_pointer_cast<const error>(initial_object);
@@ -50,7 +92,7 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
     auto body_error = std::dynamic_pointer_cast<const error>(body_object);
     if (body_error)
         return body_error;
-        
+
     const auto initial_expression = std::dynamic_pointer_cast<const element_expression>(initial_object);
     if (!initial_expression)
     {
@@ -62,21 +104,29 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
 
     //try to run the loop at compile time, if the initial is constant
     const auto is_constant = initial_object->is_constant();
-    
+
     //note: the predicate and the body could still return something which is not constant, so we need to check each time and try a runtime loop if so
     if (is_constant)
     {
-        const auto continue_loop = [&predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool
+        bool predicate_returned_nonconstant = false;
+
+        const auto continue_loop = [&predicate_returned_nonconstant , &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool
         {
             const auto ret = predicate_function->call(context, input, source_info);
             if (!ret->is_constant())
+            {
+                predicate_returned_nonconstant = true;
                 return false;
+            }
 
             //todo: one day we'll use the fast RTTI instead of the language one
             const auto ret_as_constant = std::dynamic_pointer_cast<const element_expression_constant>(ret);
             assert(ret_as_constant);
             if (!ret_as_constant)
+            {
+                predicate_returned_nonconstant = true;
                 return false;
+            }
 
             return ret_as_constant->value() > 0;
         };
@@ -94,7 +144,7 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
             return ret;
         };
 
-        std::vector<object_const_shared_ptr> arguments {initial_object};
+        std::vector<object_const_shared_ptr> arguments{ initial_object };
         auto& current_object = arguments[0];
 
         while (continue_loop(arguments))
@@ -104,7 +154,7 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
                 break;
         }
 
-        if (current_object)
+        if (!predicate_returned_nonconstant || current_object)
             return current_object;
     }
 
@@ -160,24 +210,35 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
 
     auto predicate_compiled = compile_function_instance(context, *predicate_function, source_info);
     auto body_compiled = compile_function_instance(context, *body_function, source_info);
-    
+
     if (!predicate_compiled)
         return std::make_shared<const error>("predicate failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, source_info);
 
     if (!body_compiled)
         return std::make_shared<const error>("body failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, source_info);
 
-    auto initial_expression =std::dynamic_pointer_cast<const element_expression>(initial_object);
+    auto initial_expression = std::dynamic_pointer_cast<const element_expression>(initial_object);
     //everything can be represented as an instruction, so make a for instruction
     if (initial_expression)
         return std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_compiled), std::move(body_compiled));
 
-    if (!initial_object->to_expression())
+    initial_expression = initial_object->to_expression();
+    if (!initial_expression)
         return std::make_shared<const error>("tried to create a runtime for but a non-serializable initial value was given", ELEMENT_ERROR_UNKNOWN, source_info);
 
     //  initial is an object, e.g. struct instance
     //    create for wrapper, so that when we later index it, e.g. Vector2(0, 0).x, we create an indexing expression with the for loop as a child
-    return std::make_shared<const for_wrapper>(initial_object, std::move(predicate_compiled), std::move(body_compiled));
+
+    /*
+     * instead of a for wrapper we can create a struct instance where its fields are either indexing expressions with the for loop + index as a child, or another struct instance that is the same
+     * i.e. from_expressions
+     */
+
+    const auto for_expression = std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_compiled), std::move(body_compiled));
+    const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
+
+    int index = 0;
+    return clone_instance_and_fill_with_indexing_expression(context, for_expression, initial_struct, index);
 }
 
 for_wrapper::for_wrapper(const object_const_shared_ptr& initial,
@@ -228,7 +289,8 @@ object_const_shared_ptr for_wrapper::index(const compilation_context& context,
                 if we found something, just return it. e.g. Vector2(0, 0).magnitude will create the correct object that contains the for expression in its resulting expression tree somewhere
                 if we didn't find something, then we need to check if it's a field
                     if it is a field and it's a value like Num or Bool (expressions, e.g. Vector2(0, 0).x), then we create an indexing expression, with the for loop as the 1st child and the index 0 as the second child
-                    if it is a field and it's a non-value like a finger struct within a hand struct, then
+                    if it is a field and it's a non-value like a finger struct within a hand struct, then we can't create an indexing expression that results in an element_struct expression, because that has no type information
+                        since we need to preserve type information, we need to create another wrapper which allows a user to index an indexing expression, so we need an indexing expression wrapper
 
 struct Finger(x, y, z) {}
 struct Hand(thumb) {}
