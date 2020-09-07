@@ -115,6 +115,8 @@ struct element_log_message {
     element_stage stage;
     // description of the error
     const char* message;
+    // error message length
+    int message_length;
     // filename
     const char* filename;
     // line of code in the source

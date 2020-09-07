@@ -55,6 +55,7 @@ namespace element
             , msg(std::move(msg))
         {
             this->log_msg.message = this->msg.c_str();
+            this->log_msg.message_length = this->msg.length();
         }
 
         [[nodiscard]] const element_log_message& get_log_message() const

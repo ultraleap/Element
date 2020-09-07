@@ -129,6 +129,7 @@ namespace element
             msg.related_log_message = nullptr; //todo: delete?
             msg.length = source_info.character_end - source_info.character_start; //todo: UTF8 concerns?
             msg.message = nullptr;
+            msg.message_length = 0;
 
             auto our_string = fmt::format(f, args...);
             return log_message(std::move(msg), std::move(our_string));

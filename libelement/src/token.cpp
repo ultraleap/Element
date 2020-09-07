@@ -89,6 +89,7 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
             const std::string line_in_source = state->text_on_line(last_token.line);
             log_msg.line_in_source = line_in_source.c_str();
             log_msg.message = message.c_str();
+            log_msg.message_length = message.length();
             log_msg.filename = last_token.file_name;
             log_msg.length = last_token.tok_len;
             log_msg.line = last_token.line;

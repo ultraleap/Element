@@ -19,7 +19,9 @@
 
 void log_callback(const element_log_message* msg)
 {
-    char buffer[8 * 1024];
+    //TODO: This is a bit of a hack for now... Setting a constant length instead and using for both buffers
+    const int space = 512;
+    char buffer[space];
     buffer[0] = '^';
     buffer[1] = '\0';
     const char* buffer_str = NULL;
@@ -42,7 +44,8 @@ void log_callback(const element_log_message* msg)
         buffer_str = &buffer[0];
     }
 
-    std::array<char, 8 * 1024> output_buffer_array{};
+    std::vector<char> output_buffer_array;
+    output_buffer_array.resize(msg->message_length + 4 * space);
     char* output_buffer = output_buffer_array.data();
 
     sprintf(output_buffer, "\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
