@@ -172,10 +172,10 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
 
     const auto compile_function_instance = [](const compilation_context& context, const function_instance& function, const source_information& source_info) -> std::shared_ptr<const element_expression>
     {
-        const auto generate_placeholder_inputs = [](const compilation_context& context, const function_declaration& declaration) -> std::optional<std::vector<object_const_shared_ptr>>
+        const auto generate_placeholder_inputs = [](const compilation_context& context, const function_declaration& declaration) -> std::optional<std::pair<std::vector<object_const_shared_ptr>, size_t>>
         {
-            std::vector<object_const_shared_ptr> placeholder_inputs;
-            int placeholder_index = 0; //todo: figure out starting offset
+            std::pair<std::vector<object_const_shared_ptr>, size_t> placeholder_inputs;
+            int placeholder_index = context.total_boundary_size_at_index(context.boundaries.size() - 1);
 
             for (const auto& input : declaration.get_inputs())
             {
@@ -183,9 +183,10 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
                 if (!placeholder)
                     return {};
 
-                placeholder_inputs.push_back(std::move(placeholder));
+                placeholder_inputs.first.push_back(std::move(placeholder));
             }
 
+            placeholder_inputs.second = placeholder_index;
             return placeholder_inputs;
         };
 
@@ -194,7 +195,9 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
         if (!placeholder_inputs)
             return nullptr;
 
-        const auto compiled = function.call(context, std::move(placeholder_inputs.value()), source_info);
+        context.boundaries.push_back({placeholder_inputs.value().second});
+        const auto compiled = function.call(context, std::move(placeholder_inputs.value().first), source_info);
+        context.boundaries.pop_back();
         assert(compiled);
 
         if (!compiled)
@@ -238,7 +241,6 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
     const auto for_expression = std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_compiled), std::move(body_compiled));
     const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
 
-    /* todo: index should not be 0, it needs to be offset by the total inputs to placeholders so far (top-level functions, nested for loops, etc) keep track in context*/
     int index = 0;
     return clone_instance_and_fill_with_indexing_expression(context, for_expression, initial_struct, index);
 }

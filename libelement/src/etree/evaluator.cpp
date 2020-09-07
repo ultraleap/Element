@@ -245,7 +245,7 @@ std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const ex
 
     std::copy(context.inputs, context.inputs + context.inputs_count, inputs.data());
 
-    evaluator_ctx ectx = { inputs.data(), value_size, {} };
+    evaluator_ctx ectx = { inputs.data(), inputs.size(), {} };
 
     auto result = do_evaluate(context, initial, inputs.data() + current_value_offset, value_size, intermediate_written);
     if (result != ELEMENT_OK)
