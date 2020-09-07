@@ -92,12 +92,14 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
 
     if (const auto* eb = expr->as<element_expression_for>()) {
         assert(outputs_count > outputs_written);
-        assert(eb->initial()->get_size() == 1);
         assert(eb->condition()->get_size() == 1);
-        assert(eb->body()->get_size() == 1);
+        assert(eb->initial()->get_size() >= 1);
+        assert(eb->body()->get_size() >= 1);
+        assert(eb->body()->get_size() == eb->initial()->get_size());
         size_t intermediate_written = 0;
-        element_value initial;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->initial(), &initial, 1, intermediate_written));
+        std::vector<element_value> initial;
+        initial.resize(eb->initial()->get_size());
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->initial(), initial.data(), eb->initial()->get_size(), intermediate_written));
         intermediate_written = 0;
         auto for_result = element_evaluate_for(context, eb->initial(), eb->condition(), eb->body());
         assert(outputs_count >= outputs_written + for_result.size());

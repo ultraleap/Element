@@ -3177,6 +3177,31 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 25);
                 }
+
+                SECTION("Dynamic-time for, Vector2")
+                {
+                    float inputs[] = { 2, 2, 4, 4};
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 4;
+                    element_outputs output;
+                    float outputs[] = { 0, 0 };
+                    output.values = outputs;
+                    output.count = 2;
+
+                    char source[] = ""
+                        "evaluate(a:Vector2, b:Vector2):Vector2\n"
+                        "{\n"
+                        "   body(input:Vector2):Vector2 = Vector2(input.x.add(a.x), input.y.add(a.y));\n"
+                        "   predicate(input:Vector2):Bool = input.magnitudeSquared.lt(a.x.add(a.y).add(b.x).sub(a.y));\n"
+                        "   return = for(a, predicate, body).add(for(b, predicate, body)).add(Vector2(1, 1));\n"
+                        "}\n";
+                    result = eval_with_inputs(source, &input, &output, "StandardLibrary");
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 7);
+                    REQUIRE(outputs[1] == 7);
+                }
             }
         }
 
