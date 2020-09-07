@@ -3153,10 +3153,10 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("Dynamic-time for, nested predicate")
                 {
-                    float inputs[] = { 0 };
+                    float inputs[] = { 0, 5 };
                     element_inputs input;
                     input.values = inputs;
-                    input.count = 1;
+                    input.count = 2;
                     element_outputs output;
                     float outputs[] = { 0 };
                     output.values = outputs;
@@ -3164,12 +3164,12 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                     char source[] = ""
                         "struct test(value:Num);\n"
-                        "evaluate(a:Num):Num\n"
+                        "evaluate(a:Num, b:Num):Num\n"
                         "{\n"
                         "   nested_predicate(input:Num):Bool = input.lt(5);\n"
                         "   nested_body(input:Num):Num = input.add(1);\n"
                         "   body(input:test):test = test(input.value.add(1));\n"
-                        "   predicate(input:test):Bool = input.value.lt(5.mul(for(a, nested_predicate, nested_body)));\n"
+                        "   predicate(input:test):Bool = input.value.lt(b.mul(for(a, nested_predicate, nested_body)));\n"
                         "   return = for(test(a), predicate, body).value;\n"
                         "}\n";
                     result = eval_with_inputs(source, &input, &output);
