@@ -487,9 +487,19 @@ element_result element_interpreter_compile(
     //todo: compiler option to disable/enable forced expression_tree checking
     auto expression = compiled->to_expression();
     if (!expression)
+    {
         *object = new element_object{ std::move(compiled) };
+    }
     else
+    {
+        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree);
+
+        if (log_expression_tree) {
+            context->log("\n------\nEXPRESSION\n------\n" + expression_to_string(*expression));
+        }
+
         *object = new element_object{ std::move(expression) };
+    }
 
     return ELEMENT_OK;
 }
