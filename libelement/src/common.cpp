@@ -139,10 +139,7 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
 
 std::string expression_to_string(const element_expression& expression, int depth)
 {
-    std::string string;
-	
-    for (auto i = 0; i < depth; ++i)
-        string += "  ";
+    std::string string(depth, ' ');
 
     if (expression.is<element_expression_constant>())
     {
@@ -245,9 +242,9 @@ std::string expression_to_string(const element_expression& expression, int depth
     {
         const auto& if_instruction = expression.as<element_expression_if>();
         string += "IF:\n";
-        string += "  PREDICATE:\n" + expression_to_string(*if_instruction->predicate().get(), depth + 2);
-        string += "  IF_TRUE:\n" + expression_to_string(*if_instruction->if_true().get(), depth + 2);
-        string += "  IF_FALSE:\n" + expression_to_string(*if_instruction->if_false().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "PREDICATE:\n" + expression_to_string(*if_instruction->predicate().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "IF_TRUE:\n" + expression_to_string(*if_instruction->if_true().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "IF_FALSE:\n" + expression_to_string(*if_instruction->if_false().get(), depth + 2);
         return string;
     }
 
@@ -255,9 +252,9 @@ std::string expression_to_string(const element_expression& expression, int depth
     {
         const auto& for_instruction = expression.as<element_expression_for>();
         string += "FOR:\n";
-        string += "  INITIAL:\n" + expression_to_string(*for_instruction->initial().get(), depth + 2);
-        string += "  CONDITION:\n" + expression_to_string(*for_instruction->condition().get(), depth + 2);
-        string += "  BODY:\n" + expression_to_string(*for_instruction->body().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "INITIAL:\n" + expression_to_string(*for_instruction->initial().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "CONDITION:\n" + expression_to_string(*for_instruction->condition().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "BODY:\n" + expression_to_string(*for_instruction->body().get(), depth + 2);
         return string;
     }
 
@@ -265,9 +262,9 @@ std::string expression_to_string(const element_expression& expression, int depth
     {
         const auto& select_instruction = expression.as<element_expression_select>();
         string += "SELECT:\n";
-        string += "  SELECTOR:\n" + expression_to_string(*select_instruction->selector.get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "SELECTOR:\n" + expression_to_string(*select_instruction->selector.get(), depth + 2);
 
-        string += "  OPTIONS:\n";
+        string += std::string(depth + 1, ' ') + "OPTIONS:\n";
         for (const auto& dependent : select_instruction->options)
             string += expression_to_string(*dependent, depth + 2);
 
@@ -278,8 +275,8 @@ std::string expression_to_string(const element_expression& expression, int depth
     {
         const auto& indexer_instruction = expression.as<element_expression_indexer>();
         string += "INDEXER\n";
-        string += expression_to_string(*indexer_instruction->for_expression, depth + 1);
-        string += "INDEX: " + std::to_string(indexer_instruction->index);
+        string += expression_to_string(indexer_instruction->for_expression), depth + 1);
+        string += std::string(depth + 1, ' ') + "INDEX: " + std::to_string(indexer_instruction->index);
 
         return string;
     }
