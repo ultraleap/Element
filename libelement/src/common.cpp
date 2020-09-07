@@ -8,6 +8,7 @@
 #include "ast/ast_internal.hpp"
 #include "configuration.hpp"
 #include "etree/expressions.hpp"
+#include "lmnt/compiler.hpp"
 
 #define PRINTCASE(a) case a: c = #a; break;
 std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token)
@@ -136,14 +137,11 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     return string;
 }
 
-//todo: reenable at some point
-#if 0
-
 std::string expression_to_string(const element_expression& expression, int depth)
 {
     std::string string;
 	
-    for (int i = 0; i < depth; ++i)
+    for (auto i = 0; i < depth; ++i)
         string += "  ";
 
     if (expression.is<element_expression_constant>())
@@ -172,9 +170,9 @@ std::string expression_to_string(const element_expression& expression, int depth
         switch (nullary->operation())
         {
             //num
+            PRINTCASE(element_nullary_op::nan);
             PRINTCASE(element_nullary_op::positive_infinity);
             PRINTCASE(element_nullary_op::negative_infinity);
-            PRINTCASE(element_nullary_op::nan);
 
         	//boolean
             PRINTCASE(element_nullary_op::true_value);
@@ -203,7 +201,7 @@ std::string expression_to_string(const element_expression& expression, int depth
             PRINTCASE(element_unary_op::floor);
 
             //boolean
-            PRINTCASE(element_unary_op::not);
+            PRINTCASE(element_unary_op::not_);
     	}
         string += c;
     }
@@ -227,9 +225,10 @@ std::string expression_to_string(const element_expression& expression, int depth
             PRINTCASE(element_binary_op::log);
             PRINTCASE(element_binary_op::atan2);
 
+
             //boolean
-            PRINTCASE(element_binary_op::and);
-            PRINTCASE(element_binary_op::or);
+            PRINTCASE(element_binary_op::and_);
+            PRINTCASE(element_binary_op::or_);
 
             //comparison
             PRINTCASE(element_binary_op::eq);
@@ -241,15 +240,52 @@ std::string expression_to_string(const element_expression& expression, int depth
         }
         string += c;
     }
-	
+
+    if (expression.is<element_expression_if>())
+    {
+        const auto& if_instruction = expression.as<element_expression_if>();
+        string += "IF:\n";
+        string += "  PREDICATE:" + expression_to_string(*if_instruction->predicate().get(), depth + 2);
+        string += "  IF_TRUE:" + expression_to_string(*if_instruction->if_true().get(), depth + 2);
+        string += "  IF_FALSE:" + expression_to_string(*if_instruction->if_false().get(), depth + 2);
+        return string;
+    }
+
+    if (expression.is<element_expression_for>())
+    {
+        const auto& for_instruction = expression.as<element_expression_for>();
+        string += "FOR:\n";
+        string += "  INITIAL:" + expression_to_string(*for_instruction->initial().get(), depth + 2);
+        string += "  CONDITION:" + expression_to_string(*for_instruction->condition().get(), depth + 2);
+        string += "  BODY:" + expression_to_string(*for_instruction->body().get(), depth + 2);
+        return string;
+    }
+
+    if (expression.is<element_expression_select>())
+    {
+        const auto& select_instruction = expression.as<element_expression_select>();
+        string += "SELECT:\n";
+        string += "  SELECTOR:" + expression_to_string(*select_instruction->selector.get(), depth + 2);
+
+        string += "  OPTIONS:\n";
+        for (const auto& dependent : select_instruction->options)
+            string += expression_to_string(*dependent, depth + 2);
+
+        return string;
+    }
+
+    if (expression.is<element_expression_indexer>())
+    {
+        const auto& indexer_instruction = expression.as<element_expression_indexer>();
+        string += "INDEXER: " + std::to_string(indexer_instruction->index);
+    }
+
     string += "\n";
 	
     for (const auto& dependent : expression.dependents())
         string += expression_to_string(*dependent, depth + 1);
     return string;
 }
-
-#endif
 
 void element_log_ctx::log(const element_tokeniser_ctx& context, element_result code, const std::string& message, int length, element_log_message* related_message) const
 {
