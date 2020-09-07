@@ -19,7 +19,7 @@
 
 void log_callback(const element_log_message* msg)
 {
-    char buffer[512];
+    char buffer[8 * 1024];
     buffer[0] = '^';
     buffer[1] = '\0';
     const char* buffer_str = NULL;
@@ -42,7 +42,7 @@ void log_callback(const element_log_message* msg)
         buffer_str = &buffer[0];
     }
 
-    std::array<char, 2048> output_buffer_array{};
+    std::array<char, 8 * 1024> output_buffer_array{};
     char* output_buffer = output_buffer_array.data();
 
     sprintf(output_buffer, "\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
