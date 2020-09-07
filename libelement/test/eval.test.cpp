@@ -3150,6 +3150,33 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 200);
                 }
+
+                SECTION("Dynamic-time for, nested predicate")
+                {
+                    float inputs[] = { 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] = ""
+                        "struct test(value:Num);\n"
+                        "evaluate(a:Num):Num\n"
+                        "{\n"
+                        "   nested_predicate(input:Num):Bool = input.lt(5);\n"
+                        "   nested_body(input:Num):Num = input.add(1);\n"
+                        "   body(input:test):test = test(input.value.add(1));\n"
+                        "   predicate(input:test):Bool = input.value.lt(5.mul(for(a, nested_predicate, nested_body)));\n"
+                        "   return = for(test(a), predicate, body).value;\n"
+                        "}\n";
+                    result = eval_with_inputs(source, &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 25);
+                }
             }
         }
 
