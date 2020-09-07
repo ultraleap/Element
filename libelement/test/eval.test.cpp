@@ -3141,11 +3141,10 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         "{\n"
                         "   nested_predicate(input:Num):Bool = input.lt(20);\n"
                         "   nested_body(input:Num):Num = input.add(1);\n"
-                        "   body(input:test):test = test(for(a, nested_predicate, nested_body));\n"
+                        "   body(input:test):test = test(input.value.add(for(a, nested_predicate, nested_body)));\n"
                         "   predicate(input:test):Bool = input.value.lt(200);\n"
                         "   return = for(test(a), predicate, body).value;\n"
                         "}\n";
-
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
