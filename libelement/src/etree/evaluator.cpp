@@ -99,7 +99,24 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         element_value initial;
         ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->initial(), &initial, 1, intermediate_written));
         intermediate_written = 0;
-        outputs[outputs_written++] = element_evaluate_for(context, eb->initial(), eb->condition(), eb->body());
+        auto for_result = element_evaluate_for(context, eb->initial(), eb->condition(), eb->body());
+        assert(outputs_count >= outputs_written + for_result.size());
+        assert(for_result.size() == eb->initial()->get_size());
+        std::copy(for_result.begin(), for_result.begin() + for_result.size(), &outputs[outputs_written]);
+        //std::memcpy(outputs + outputs_written, for_result.data(), for_result.size() * );
+        outputs_written += for_result.size();
+        return ELEMENT_OK;
+    }
+
+    if (const auto* eb = expr->as<element_expression_indexer>()) {
+        assert(outputs_count > outputs_written);
+        size_t intermediate_written = 0;
+        size_t size = eb->for_expression->get_size();
+        assert(eb->index < size);
+        std::vector<element_value> for_result(size);
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->for_expression, for_result.data(), size, intermediate_written));
+        intermediate_written = 0;
+        outputs[outputs_written++] = for_result[eb->index];
         return ELEMENT_OK;
     }
 
@@ -216,27 +233,54 @@ element_value element_evaluate_if(element_value predicate, element_value if_true
     return predicate > 0 ? if_true : if_false;
 }
 
-element_value element_evaluate_for(evaluator_ctx& context, const expression_const_shared_ptr& initial, const expression_const_shared_ptr& condition, const expression_const_shared_ptr& body)
+std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const expression_const_shared_ptr& initial, const expression_const_shared_ptr& condition, const expression_const_shared_ptr& body)
 {
     size_t intermediate_written = 0;
 
+    const auto current_value_offset = context.inputs_count;
+
     const auto value_size = initial->get_size();
-    std::vector<float> current_value;
-    current_value.reserve(value_size);
+    std::vector<element_value> inputs;
+    inputs.resize(context.inputs_count + value_size);
 
-    //evaluator_ctx ectx = { current_value.data(), value_size, {} };
+    std::copy(context.inputs, context.inputs + context.inputs_count, inputs.data());
 
-    auto result = do_evaluate(context, initial, current_value.data(), value_size, intermediate_written);
+    evaluator_ctx ectx = { inputs.data(), value_size, {} };
+
+    auto result = do_evaluate(context, initial, inputs.data() + current_value_offset, value_size, intermediate_written);
+    if (result != ELEMENT_OK)
+        throw;
+
+    intermediate_written = 0;
 
     element_value predicate_value;
-    result = do_evaluate(context, condition, &predicate_value, 1, intermediate_written);
-    while(predicate_value > 0)
+    result = do_evaluate(ectx, condition, &predicate_value, 1, intermediate_written);
+    intermediate_written = 0;
+
+    while (predicate_value > 0) //predicate returned true
     {
-        result = do_evaluate(context, body, current_value.data(), value_size, intermediate_written);
-        result = do_evaluate(context, condition, &predicate_value, 1, intermediate_written);
+        result = do_evaluate(ectx, body, inputs.data() + current_value_offset, value_size, intermediate_written);
+        if (result != ELEMENT_OK)
+            throw;
+
+        if (intermediate_written != value_size)
+            throw;
+
+        intermediate_written = 0;
+        result = do_evaluate(ectx, condition, &predicate_value, 1, intermediate_written);
+        if (result != ELEMENT_OK)
+            throw;
+
+        if (intermediate_written != 1)
+            throw;
+
+        intermediate_written = 0;
     }
 
-    return result;
+    if (result != ELEMENT_OK)
+        throw;
+
+    return std::vector<element_value>(inputs.begin() + current_value_offset, inputs.end());
 }
 
 expression_const_shared_ptr element_evaluate_select(element_value selector, std::vector<expression_const_shared_ptr> options)

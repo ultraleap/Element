@@ -50,11 +50,12 @@ auto clone_instance_and_fill_with_indexing_expression(const compilation_context&
 
         //if there's no declarer then we're probably dealing with a Num or Bool (IIRC)
 
-        const auto field_is_expression = std::dynamic_pointer_cast<const element_expression>(field);
+        const auto field_as_expression = std::dynamic_pointer_cast<const element_expression>(field);
 
-        if (!field_type_declarer || field_is_expression)
+        if (field_as_expression)
         {
-            auto thing = std::make_shared<element_expression_indexer>(for_expression, index);
+            assert(!field_type_declarer);
+            auto thing = std::make_shared<element_expression_indexer>(for_expression, index, field_as_expression->actual_type);
             clone->fields.try_emplace(name, thing);
             index += 1;
             continue;
@@ -108,14 +109,14 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
     //note: the predicate and the body could still return something which is not constant, so we need to check each time and try a runtime loop if so
     if (is_constant)
     {
-        bool predicate_returned_nonconstant = false;
+        bool predicate_is_constant = true;
 
-        const auto continue_loop = [&predicate_returned_nonconstant , &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool
+        const auto continue_loop = [&predicate_is_constant, &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool
         {
             const auto ret = predicate_function->call(context, input, source_info);
             if (!ret->is_constant())
             {
-                predicate_returned_nonconstant = true;
+                predicate_is_constant = false;
                 return false;
             }
 
@@ -124,7 +125,7 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
             assert(ret_as_constant);
             if (!ret_as_constant)
             {
-                predicate_returned_nonconstant = true;
+                predicate_is_constant = false;
                 return false;
             }
 
@@ -154,7 +155,7 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
                 break;
         }
 
-        if (!predicate_returned_nonconstant || current_object)
+        if (predicate_is_constant && current_object)
             return current_object;
     }
 
@@ -237,6 +238,7 @@ object_const_shared_ptr for_wrapper::create_or_optimise(const object_const_share
     const auto for_expression = std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_compiled), std::move(body_compiled));
     const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
 
+    /* todo: index should not be 0, it needs to be offset by the total inputs to placeholders so far (top-level functions, nested for loops, etc) keep track in context*/
     int index = 0;
     return clone_instance_and_fill_with_indexing_expression(context, for_expression, initial_struct, index);
 }

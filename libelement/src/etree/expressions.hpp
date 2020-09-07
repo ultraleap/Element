@@ -38,7 +38,7 @@ public:
             return true;
 
         return false;
-    };
+    }
 
     [[nodiscard]] const element::constraint* get_constraint() const final { return actual_type; };
 
@@ -217,17 +217,17 @@ struct element_expression_for final : public element_expression {
     [[nodiscard]] const expression_const_shared_ptr& condition() const { return m_dependents[1]; }
     [[nodiscard]] const expression_const_shared_ptr& body() const { return m_dependents[2]; }
 
-    [[nodiscard]] size_t get_size() const override { return 1; }
+    [[nodiscard]] size_t get_size() const override { return m_dependents[0]->get_size(); }
 };
 
 struct element_expression_indexer final : public element_expression {
     DECLARE_TYPE_ID();
 
-    explicit element_expression_indexer(expression_const_shared_ptr expression, int index);
+    explicit element_expression_indexer(std::shared_ptr<const element_expression_for> for_expression, int index, element::type_const_ptr type);
 
     [[nodiscard]] size_t get_size() const override { return 1; }
 
-    expression_const_shared_ptr expression;
+    std::shared_ptr<const element_expression_for> for_expression;
     int index;
 };
 

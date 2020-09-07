@@ -75,9 +75,9 @@ element_expression_for::element_expression_for(expression_const_shared_ptr initi
     m_dependents.emplace_back(std::move(body));
 }
 
-element_expression_indexer::element_expression_indexer(expression_const_shared_ptr expression, int index)
-    : element_expression(type_id, nullptr) 
-    , expression{std::move(expression)}, index{index}
+element_expression_indexer::element_expression_indexer(std::shared_ptr<const element_expression_for> for_expression, int index, element::type_const_ptr type)
+    : element_expression(type_id, type) 
+    , for_expression{std::move(for_expression)}, index{index}
 {
 }
 
