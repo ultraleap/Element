@@ -245,9 +245,9 @@ std::string expression_to_string(const element_expression& expression, int depth
     {
         const auto& if_instruction = expression.as<element_expression_if>();
         string += "IF:\n";
-        string += "  PREDICATE:" + expression_to_string(*if_instruction->predicate().get(), depth + 2);
-        string += "  IF_TRUE:" + expression_to_string(*if_instruction->if_true().get(), depth + 2);
-        string += "  IF_FALSE:" + expression_to_string(*if_instruction->if_false().get(), depth + 2);
+        string += "  PREDICATE:\n" + expression_to_string(*if_instruction->predicate().get(), depth + 2);
+        string += "  IF_TRUE:\n" + expression_to_string(*if_instruction->if_true().get(), depth + 2);
+        string += "  IF_FALSE:\n" + expression_to_string(*if_instruction->if_false().get(), depth + 2);
         return string;
     }
 
@@ -255,9 +255,9 @@ std::string expression_to_string(const element_expression& expression, int depth
     {
         const auto& for_instruction = expression.as<element_expression_for>();
         string += "FOR:\n";
-        string += "  INITIAL:" + expression_to_string(*for_instruction->initial().get(), depth + 2);
-        string += "  CONDITION:" + expression_to_string(*for_instruction->condition().get(), depth + 2);
-        string += "  BODY:" + expression_to_string(*for_instruction->body().get(), depth + 2);
+        string += "  INITIAL:\n" + expression_to_string(*for_instruction->initial().get(), depth + 2);
+        string += "  CONDITION:\n" + expression_to_string(*for_instruction->condition().get(), depth + 2);
+        string += "  BODY:\n" + expression_to_string(*for_instruction->body().get(), depth + 2);
         return string;
     }
 
@@ -265,7 +265,7 @@ std::string expression_to_string(const element_expression& expression, int depth
     {
         const auto& select_instruction = expression.as<element_expression_select>();
         string += "SELECT:\n";
-        string += "  SELECTOR:" + expression_to_string(*select_instruction->selector.get(), depth + 2);
+        string += "  SELECTOR:\n" + expression_to_string(*select_instruction->selector.get(), depth + 2);
 
         string += "  OPTIONS:\n";
         for (const auto& dependent : select_instruction->options)
