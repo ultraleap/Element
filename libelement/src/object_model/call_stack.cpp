@@ -25,7 +25,7 @@ bool call_stack::is_recursive(const declaration* declaration) const
     for (auto it = frames.rbegin(); it != frames.rend(); ++it)
     {
         if (it->function == declaration)
-            return true;
+            return it->function->recursive_handler(*this, declaration, it);
     }
 
     return false;

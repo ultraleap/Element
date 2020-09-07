@@ -46,13 +46,13 @@ void log_callback(const element_log_message* msg)
     char* output_buffer = output_buffer_array.data();
 
     sprintf(output_buffer, "\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
-           msg->message_code,
-           msg->filename,
-           msg->line,
-           msg->line_in_source ? msg->line_in_source : "",
-           msg->line,
-           buffer_str,
-           msg->message);
+        msg->message_code,
+        msg->filename,
+        msg->line,
+        msg->line_in_source ? msg->line_in_source : "",
+        msg->line,
+        buffer_str,
+        msg->message);
 
     printf("%s", output_buffer);
     UNSCOPED_INFO(output_buffer);
@@ -60,7 +60,7 @@ void log_callback(const element_log_message* msg)
 
 element_result eval(const char* evaluate)
 {
-    element_interpreter_ctx* context= NULL;
+    element_interpreter_ctx* context = NULL;
     element_declaration* declaration = NULL;
     element_object* object = NULL;
 
@@ -113,7 +113,7 @@ element_result eval(const char* evaluate)
     printf("%s", output_buffer);
     UNSCOPED_INFO(output_buffer);
 
-    cleanup:
+cleanup:
     element_delete_declaration(context, &declaration);
     element_delete_object(context, &object);
     element_interpreter_delete(context);
@@ -179,7 +179,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     printf("%s", output_buffer);
     UNSCOPED_INFO(output_buffer);
 
-    cleanup:
+cleanup:
     element_delete_declaration(context, &declaration);
     element_delete_object(context, &object);
     element_interpreter_delete(context);
@@ -236,7 +236,7 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     printf("%s", output_buffer);
     UNSCOPED_INFO(output_buffer);
 
-    cleanup:
+cleanup:
     element_delete_declaration(context, &declaration);
     element_delete_object(context, &object);
     element_interpreter_delete(context);
@@ -414,7 +414,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
             }
 
             SECTION("Apply lambda to number")
-             {
+            {
                 float inputs[] = { 2 };
                 element_inputs input;
                 input.values = inputs;
@@ -834,8 +834,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                         inputs[6] = i;
                                         result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                                         REQUIRE(result == ELEMENT_OK);
-                                        REQUIRE(outputs[0] == inputs[i*2]);
-                                        REQUIRE(outputs[1] == inputs[i*2+1]);
+                                        REQUIRE(outputs[0] == inputs[i * 2]);
+                                        REQUIRE(outputs[1] == inputs[i * 2 + 1]);
                                     }
                                 }
 
@@ -973,7 +973,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 }
                             }
                         }
-                       
+
                         SECTION("Runtime Expression Elements, Runtime Index")
                         {
                             inputs[0] = 1;
@@ -1061,7 +1061,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         element_outputs output{ outputs.data(), outputs.size() };
 
                         const char* src = "evaluate(a:Num, b:Num, idx:Num):Num = list(1, 2, a).map(_(n:Num) = n.mul(b)).at(idx);";
-                        
+
                         SECTION("Negative Index")
                         {
                             inputs[2] = -1;
@@ -1178,7 +1178,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                         SECTION("Max Value Index")
                         {
-                            #undef max
+#undef max
                             inputs[3] = std::numeric_limits<float>::max();
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
@@ -1324,7 +1324,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 REQUIRE(result == ELEMENT_OK);
                                 REQUIRE(outputs[0] == std::nanf(""));
                             }
-                        
+
                             SECTION("PositiveInfinity List Item")
                             {
                                 inputs[0] = std::numeric_limits<float>::infinity();
@@ -2854,7 +2854,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{inputs.data(), inputs.size() };
+                        element_inputs input{ inputs.data(), inputs.size() };
                         element_outputs output{ outputs.data(), outputs.size() };
 
                         const char* src = "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list(a, b, c).fold(start, Num.add);";
@@ -3123,6 +3123,34 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 4);
                 }
+
+                SECTION("Dynamic-time for, nested")
+                {
+                    float inputs[] = { 0 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 1;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] = ""
+                        "struct test(value:Num);\n"
+                        "evaluate(a:Num):Num\n"
+                        "{\n"
+                        "   nested_predicate(input:Num):Bool = input.lt(20);\n"
+                        "   nested_body(input:Num):Num = input.add(1);\n"
+                        "   body(input:test):test = test(for(a, nested_predicate, nested_body));\n"
+                        "   predicate(input:test):Bool = input.value.lt(200);\n"
+                        "   return = for(test(a), predicate, body).value;\n"
+                        "}\n";
+
+                    result = eval_with_inputs(source, &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 200);
+                }
             }
         }
 
@@ -3268,9 +3296,9 @@ TEST_CASE("Interpreter", "[Evaluate]")
         SECTION("Error - Circular Compilation")
         {
             result = eval(
-                    "c(d) = a(d);\n"
-                    "a(b:Num) = c(b.mul(b));\n"
-                    "evaluate = a(5);\n");
+                "c(d) = a(d);\n"
+                "a(b:Num) = c(b.mul(b));\n"
+                "evaluate = a(5);\n");
             REQUIRE(result == ELEMENT_ERROR_CIRCULAR_COMPILATION);
         }
 
@@ -3499,7 +3527,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
         element_interpreter_create(&context);
 
         element_outputs output;
-        float outputs_buffer[] = {0};
+        float outputs_buffer[] = { 0 };
         output.values = outputs_buffer;
         output.count = 1;
 
