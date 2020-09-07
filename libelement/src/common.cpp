@@ -308,6 +308,7 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
         new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(&context, nullptr);
 
     msg.message = new_log_message.c_str();
+    msg.message_length = new_log_message.length();
 
     log(msg);
 }
@@ -316,6 +317,7 @@ void element_log_ctx::log(const element_interpreter_ctx& context, element_result
 {
     auto msg = element_log_message();
     msg.message = message.c_str();
+    msg.message_length = message.length();
     msg.message_code = code;
     msg.line = -1;
     msg.character = -1;
@@ -332,6 +334,7 @@ void element_log_ctx::log(const std::string& message, const element_stage stage)
 {
     auto msg = element_log_message();
     msg.message = message.c_str();
+    msg.message_length = message.length();
     msg.message_code = ELEMENT_OK;
     msg.line = -1;
     msg.character = -1;
@@ -383,6 +386,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     }
 	
     msg.message = new_log_message.c_str();
+    msg.message_length = new_log_message.length();
     msg.line_in_source = source_line.empty() ? nullptr : source_line.c_str();
     log(msg);
 }
@@ -392,6 +396,7 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
 {
     auto msg = element_log_message();
     msg.message = message.c_str();
+    msg.message_length = message.length();
     msg.message_code = code;
     msg.line = -1;
     msg.character = -1;

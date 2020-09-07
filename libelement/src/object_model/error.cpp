@@ -19,6 +19,7 @@ element_log_message error::get_log_message() const
     msg.line = source_info.line;
     msg.character = source_info.character_start;
     msg.message = message.c_str();
+    msg.message_length = message.length();
     msg.length = source_info.character_end - source_info.character_start;
     msg.message_code = code;
     msg.related_log_message = nullptr;
