@@ -278,7 +278,7 @@ std::string expression_to_string(const element_expression& expression, int depth
     {
         const auto& indexer_instruction = expression.as<element_expression_indexer>();
         string += "INDEXER\n";
-        string += expression_to_string(*indexer_instruction->for_expression.get(), depth + 1);
+        string += expression_to_string(*indexer_instruction->for_expression, depth + 1);
         string += "INDEX: " + std::to_string(indexer_instruction->index);
 
         return string;
