@@ -487,19 +487,9 @@ element_result element_interpreter_compile(
     //todo: compiler option to disable/enable forced expression_tree checking
     auto expression = compiled->to_expression();
     if (!expression)
-    {
         *object = new element_object{ std::move(compiled) };
-    }
     else
-    {
-        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree);
-
-        if (log_expression_tree) {
-            context->log("\n------\nEXPRESSION\n------\n" + expression_to_string(*expression));
-        }
-
         *object = new element_object{ std::move(expression) };
-    }
 
     return ELEMENT_OK;
 }
@@ -532,6 +522,14 @@ element_result element_interpreter_evaluate(
         //todo: proper logging
         context->logger->log("evaluable is not an expression tree, so it can't be evaluated", ELEMENT_STAGE_EVALUATOR);
         return ELEMENT_ERROR_UNKNOWN;
+    }
+    else
+    {
+        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree);
+
+        if (log_expression_tree) {
+            context->log("\n------\nEXPRESSION\n------\n" + expression_to_string(*expr));
+        }
     }
 
     std::size_t count = outputs->count;
@@ -689,6 +687,14 @@ element_result element_interpreter_evaluate_expression(
         context->log(ELEMENT_ERROR_SERIALISATION, "failed to serialise", "<REMOVE>");
         outputs->count = 0;
         return ELEMENT_ERROR_SERIALISATION;
+    }
+    else
+    {
+        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree);
+
+        if (log_expression_tree) {
+            context->log("\n------\nEXPRESSION\n------\n" + expression_to_string(*compiled));
+        }
     }
 
     float inputs[] = { 0 };
