@@ -297,7 +297,6 @@ namespace Laboratory.Tests.L3.Prelude
 			TestCase("Num.pow(5, 0)", "1"),
 			TestCase("Num.pow(5, -0)", "1"),
 			TestCase("Num.pow(-5, 0)", "1"),
-			TestCase("Num.pow(-5, -0)", "1"),
 		]
 		public void Power(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilerInput, expected, expression);
