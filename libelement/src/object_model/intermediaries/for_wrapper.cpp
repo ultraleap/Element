@@ -272,7 +272,7 @@ bool for_wrapper::matches_constraint(const compilation_context& context, const c
 
 const constraint* for_wrapper::get_constraint() const
 {
-    return false;
+    return nullptr;
 }
 
 object_const_shared_ptr for_wrapper::call(const compilation_context& context,
