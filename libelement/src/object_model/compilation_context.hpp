@@ -5,6 +5,9 @@
 #include "capture_stack.hpp"
 #include "interpreter_internal.hpp"
 
+//todo: move to cpp
+#include "declarations/function_declaration.hpp"
+
 namespace element
 {
     class compilation_context
@@ -19,6 +22,21 @@ namespace element
         mutable call_stack calls;
         mutable capture_stack captures;
         mutable source_information source_info;
+
+        struct boundary_info
+        {
+            size_t size = 0;
+        };
+
+        mutable std::vector<boundary_info> boundaries;
+
+        size_t total_boundary_size_at_index(size_t index) const
+        {
+            size_t total_size = 0;
+            for (size_t i = 0; i < index + 1; ++i)
+                total_size = boundaries[i].size;
+            return total_size;
+        }
 
         element_interpreter_ctx* interpreter;
 

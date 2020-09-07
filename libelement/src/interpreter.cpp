@@ -410,14 +410,14 @@ element_result valid_boundary_function(
     return ELEMENT_OK;
 }
 
-std::vector<std::shared_ptr<const element::object>> generate_placeholder_inputs(
+std::pair<std::vector<std::shared_ptr<const element::object>>, size_t> generate_placeholder_inputs(
     element_interpreter_ctx* context,
     const element::compilation_context& compilation_context,
     const element_compiler_options* options,
     const element_declaration* declaration,
     element_result& out_result)
 {
-    std::vector<std::shared_ptr<const element::object>> placeholder_inputs;
+    std::pair<std::vector<std::shared_ptr<const element::object>>, size_t> placeholder_inputs;
     int placeholder_index = 0;
 
     for (const auto& input : declaration->decl->get_inputs())
@@ -426,9 +426,10 @@ std::vector<std::shared_ptr<const element::object>> generate_placeholder_inputs(
         if (!placeholder)
             out_result = ELEMENT_ERROR_UNKNOWN;
 
-        placeholder_inputs.push_back(std::move(placeholder));
+        placeholder_inputs.first.push_back(std::move(placeholder));
     }
 
+    placeholder_inputs.second = placeholder_index;
     return placeholder_inputs;
 }
 
@@ -464,7 +465,10 @@ element_result element_interpreter_compile(
         return result;
     }
 
-    auto compiled = declaration->decl->call(compilation_context, std::move(placeholder_inputs), {});
+    element::compilation_context::boundary_info boundary{ placeholder_inputs.second };
+    compilation_context.boundaries.push_back(std::move(boundary));
+
+    auto compiled = declaration->decl->call(compilation_context, std::move(placeholder_inputs.first), {});
 
     if (!compiled)
     {
