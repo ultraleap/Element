@@ -130,3 +130,43 @@ intrinsic::intrinsic(const element_type_id id)
     : rtti_type(id)
 {
 }
+
+std::pair<std::vector<object_const_shared_ptr>, size_t> element::generate_placeholder_inputs(
+    const compilation_context& compilation_context,
+    const std::vector<port>& inputs,
+    element_result& out_result,
+    const int index_offset)
+{
+    std::pair<std::vector<object_const_shared_ptr>, size_t> placeholder_inputs;
+    auto placeholder_index = index_offset;
+
+    for (const auto& input : inputs)
+    {
+        auto placeholder = input.generate_placeholder(compilation_context, placeholder_index);
+        if (!placeholder)
+            out_result = ELEMENT_ERROR_UNKNOWN;
+
+        placeholder_inputs.first.push_back(std::move(placeholder));
+    }
+
+    placeholder_inputs.second = placeholder_index;
+    return placeholder_inputs;
+}
+
+//const auto generate_placeholder_inputs = [](const compilation_context& context, const function_declaration& declaration) -> std::optional<std::pair<std::vector<object_const_shared_ptr>, size_t>>
+//{
+//    std::pair<std::vector<object_const_shared_ptr>, size_t> placeholder_inputs;
+//    int placeholder_index = context.total_boundary_size_at_index(context.boundaries.size() - 1);
+
+//    for (const auto& input : declaration.get_inputs())
+//    {
+//        auto placeholder = input.generate_placeholder(context, placeholder_index);
+//        if (!placeholder)
+//            return {};
+
+//        placeholder_inputs.first.push_back(std::move(placeholder));
+//    }
+
+//    placeholder_inputs.second = placeholder_index;
+//    return placeholder_inputs;
+//};

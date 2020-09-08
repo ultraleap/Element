@@ -85,4 +85,10 @@ namespace element
         context->intrinsic_map.insert(value_type{ &declaration, std::move(intrinsic) });
         return true;
     }
+
+    std::pair<std::vector<object_const_shared_ptr>, size_t> generate_placeholder_inputs(
+        const compilation_context& compilation_context,
+        const std::vector<port>& inputs,
+        element_result& out_result,
+        const int index_offset = 0);
 }
