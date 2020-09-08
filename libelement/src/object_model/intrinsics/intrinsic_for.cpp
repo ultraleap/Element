@@ -32,6 +32,71 @@ else initial is an object, e.g. struct instance
     indexing expression with the for loop as a child and an index of 0 (in to the flat vector2)
  */
 
+object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_object,
+                                         const std::shared_ptr<const function_instance>& predicate_function,
+                                         const std::shared_ptr<const function_instance>& body_function,
+                                         const source_information& source_info,
+                                         const compilation_context& context)
+{
+    //try to run the loop at compile time, if the initial is constant
+    const auto is_constant = initial_object->is_constant();
+
+    if (!is_constant)
+        return nullptr;
+
+    //note: the predicate and the body could still return something which is not constant, so we need to check each time and try a runtime loop if so
+    bool predicate_evaluated_to_constant = true;
+
+    const auto continue_loop = [&predicate_evaluated_to_constant, &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool
+    {
+        const auto ret = predicate_function->call(context, input, source_info);
+        if (!ret->is_constant())
+        {
+            predicate_evaluated_to_constant = false;
+            return false;
+        }
+
+        //todo: one day we'll use the fast RTTI instead of the language one
+        const auto ret_as_constant = std::dynamic_pointer_cast<const element_expression_constant>(ret);
+        assert(ret_as_constant);
+        if (!ret_as_constant)
+        {
+            predicate_evaluated_to_constant = false;
+            return false;
+        }
+
+        return ret_as_constant->value() > 0;
+    };
+
+    const auto next_successor = [&initial_object, &body_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> object_const_shared_ptr
+    {
+        auto ret = body_function->call(context, input, source_info);
+        if (!ret->is_constant())
+            return nullptr;
+
+        //todo: we could allow for a compile-time for loop to return a different type than it started with, but for now let's check
+        if (!ret->matches_constraint(context, initial_object->get_constraint()))
+            return nullptr;
+
+        return ret;
+    };
+
+    std::vector<object_const_shared_ptr> arguments{ initial_object };
+    auto& current_object = arguments[0];
+
+    while (continue_loop(arguments))
+    {
+        current_object = next_successor(arguments);
+        if (!current_object)
+            return current_object;
+    }
+
+    if (!predicate_evaluated_to_constant)
+        return nullptr;
+
+    return current_object;
+}
+
 object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initial_object,
     const std::shared_ptr<const function_instance>& predicate_function,
     const std::shared_ptr<const function_instance>& body_function,
@@ -46,61 +111,9 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
     if (initial_error)
         return initial_error;
 
-    //try to run the loop at compile time, if the initial is constant
-    const auto is_constant = initial_object->is_constant();
-
-    //note: the predicate and the body could still return something which is not constant, so we need to check each time and try a runtime loop if so
-    if (is_constant)
-    {
-        bool predicate_is_constant = true;
-
-        const auto continue_loop = [&predicate_is_constant, &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool
-        {
-            const auto ret = predicate_function->call(context, input, source_info);
-            if (!ret->is_constant())
-            {
-                predicate_is_constant = false;
-                return false;
-            }
-
-            //todo: one day we'll use the fast RTTI instead of the language one
-            const auto ret_as_constant = std::dynamic_pointer_cast<const element_expression_constant>(ret);
-            assert(ret_as_constant);
-            if (!ret_as_constant)
-            {
-                predicate_is_constant = false;
-                return false;
-            }
-
-            return ret_as_constant->value() > 0;
-        };
-
-        const auto next_successor = [&initial_object, &body_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> object_const_shared_ptr
-        {
-            auto ret = body_function->call(context, input, source_info);
-            if (!ret->is_constant())
-                return nullptr;
-
-            //todo: we could allow for a compile-time for loop to return a different type than it started with, but for now let's check
-            if (!ret->matches_constraint(context, initial_object->get_constraint()))
-                return nullptr;
-
-            return ret;
-        };
-
-        std::vector<object_const_shared_ptr> arguments{ initial_object };
-        auto& current_object = arguments[0];
-
-        while (continue_loop(arguments))
-        {
-            current_object = next_successor(arguments);
-            if (!current_object)
-                break;
-        }
-
-        if (predicate_is_constant && current_object)
-            return current_object;
-    }
+    auto compile_time_result = compile_time_for(initial_object, predicate_function, body_function, source_info, context);
+    if (compile_time_result)
+        return compile_time_result;
 
     //if you got this far, then something in the constant for loop case
     //was found to be non-constant which means we have a dynamic for loop
