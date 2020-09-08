@@ -15,6 +15,7 @@ DEFINE_TYPE_ID(element_expression_if,              1U << 6);
 DEFINE_TYPE_ID(element_expression_select,          1U << 7);
 DEFINE_TYPE_ID(element_expression_indexer,         1U << 8);
 DEFINE_TYPE_ID(element_expression_for,             1U << 9);
+DEFINE_TYPE_ID(element_expression_fold,            1U << 10);
 
 std::shared_ptr<const element::object> element_expression::compile(const element::compilation_context& context, const element::source_information& source_info) const
 {
@@ -73,6 +74,16 @@ element_expression_for::element_expression_for(expression_const_shared_ptr initi
     m_dependents.emplace_back(std::move(initial));
     m_dependents.emplace_back(std::move(condition));
     m_dependents.emplace_back(std::move(body));
+}
+
+element_expression_fold::element_expression_fold(expression_const_shared_ptr list, expression_const_shared_ptr initial, expression_const_shared_ptr accumulator)
+    : element_expression(type_id, nullptr)
+{
+    actual_type = initial->actual_type;
+
+    m_dependents.emplace_back(std::move(list));
+    m_dependents.emplace_back(std::move(initial));
+    m_dependents.emplace_back(std::move(accumulator));
 }
 
 element_expression_indexer::element_expression_indexer(std::shared_ptr<const element_expression_for> for_expression, int index, element::type_const_ptr type)

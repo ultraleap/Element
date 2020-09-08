@@ -223,6 +223,17 @@ struct element_expression_for final : public element_expression {
     [[nodiscard]] size_t get_size() const override { return m_dependents[0]->get_size(); }
 };
 
+struct element_expression_fold final : public element_expression {
+    DECLARE_TYPE_ID();
+
+    explicit element_expression_for(expression_const_shared_ptr list, expression_const_shared_ptr initial,  expression_const_shared_ptr accumulator);
+    [[nodiscard]] const expression_const_shared_ptr& list() const { return m_dependents[0]; }
+    [[nodiscard]] const expression_const_shared_ptr& initial() const { return m_dependents[1]; }
+    [[nodiscard]] const expression_const_shared_ptr& accumulator() const { return m_dependents[2]; }
+
+    [[nodiscard]] size_t get_size() const override { return m_dependents[1]->get_size(); }
+};
+
 struct element_expression_indexer final : public element_expression {
     DECLARE_TYPE_ID();
 

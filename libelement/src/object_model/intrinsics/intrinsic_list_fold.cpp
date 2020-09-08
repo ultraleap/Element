@@ -18,7 +18,7 @@ intrinsic_list_fold::intrinsic_list_fold()
 object_const_shared_ptr compile_time_fold(const compilation_context& context, 
     const std::shared_ptr<const struct_instance>& list,
     const object_const_shared_ptr& initial,
-    const std::shared_ptr<const function_instance>& accumulator,
+    const std::shared_ptr<const function_instance>& accumulator_function,
     const source_information& source_info)
 {
     const auto is_constant = list->is_constant();
@@ -43,7 +43,7 @@ object_const_shared_ptr compile_time_fold(const compilation_context& context,
             return nullptr;
 
         //note: the order must be maintained across compilers to ensure the same results for non-commutative operations
-        aggregate = accumulator->call(context, {std::move(aggregate), std::move(at_index)}, source_info);
+        aggregate = accumulator_function->call(context, {std::move(aggregate), std::move(at_index)}, source_info);
     }
 
     return aggregate;
@@ -52,9 +52,24 @@ object_const_shared_ptr compile_time_fold(const compilation_context& context,
 object_const_shared_ptr runtime_fold(const compilation_context& context, 
     const std::shared_ptr<const struct_instance>& list,
     const object_const_shared_ptr& initial,
-    const object_const_shared_ptr& accumulator,
+    const std::shared_ptr<const function_instance>& accumulator_function,
     const source_information& source_info)
 {
+    const auto accumulator_is_boundary = accumulator_function->valid_at_boundary(context);
+    if (!accumulator_is_boundary)
+        return std::make_shared<const error>("accumulator is not a boundary function", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
+
+    const auto placeholder_offset = 0;
+    const auto accumulator_compiled = compile_placeholder_expression(context, *accumulator_function, accumulator_function->declarer->get_inputs(), result, source_info, placeholder_offset);
+    if(!accumulator_compiled)
+        return std::make_shared<const error>("accumulator failed to compile", result, source_info);
+
+    auto accumulator_expression = accumulator_compiled->to_expression();
+    if (!accumulator_expression)
+        return std::make_shared<const error>("accumulator failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
+
+    //make it work
+
     return nullptr;
 }
 
