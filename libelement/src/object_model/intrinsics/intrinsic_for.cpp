@@ -73,26 +73,13 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     return current_object;
 }
 
-object_const_shared_ptr for_loop(const object_const_shared_ptr& initial_object,
+object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_object,
     const std::shared_ptr<const function_instance>& predicate_function,
     const std::shared_ptr<const function_instance>& body_function,
     const source_information& source_info,
     const compilation_context& context)
 {
-    assert(initial_object);
-    assert(predicate_function);
-    assert(body_function);
     element_result result = ELEMENT_OK;
-
-    auto initial_error = std::dynamic_pointer_cast<const error>(initial_object);
-    if (initial_error)
-        return initial_error;
-
-    auto compile_time_result = compile_time_for(initial_object, predicate_function, body_function, source_info, context);
-    if (compile_time_result)
-        return compile_time_result;
-
-    //runtime for todo: split out
 
     //ensure that these are boundary functions as we'll need to compile them like any other boundary function
     const auto predicate_is_boundary = predicate_function->valid_at_boundary(context);
@@ -163,5 +150,17 @@ object_const_shared_ptr intrinsic_for::compile(const compilation_context& contex
     const auto pred = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[1]);
     const auto body = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[2]);
 
-    return for_loop(initial, pred, body, source_info, context);
+    assert(initial);
+    assert(pred);
+    assert(body);
+
+    auto initial_error = std::dynamic_pointer_cast<const error>(initial);
+    if (initial_error)
+        return initial_error;
+
+    auto compile_time_result = compile_time_for(initial, pred, body, source_info, context);
+    if (compile_time_result)
+        return compile_time_result;
+
+    return runtime_for(initial, pred, body, source_info, context);
 }
