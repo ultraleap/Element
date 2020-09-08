@@ -17,6 +17,8 @@ namespace element
         }
 
         static identifier return_identifier;
+        static identifier list_count_identifier;
+        static identifier list_at_identifier;
 
         std::string value;
 

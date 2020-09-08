@@ -2860,62 +2860,132 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         element_inputs input{ inputs.data(), inputs.size() };
                         element_outputs output{ outputs.data(), outputs.size() };
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list(a, b, c).fold(start, Num.add);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list({}, {}, {}).fold({}, Num.add);";
 
-                        SECTION("Negative Start")
+                        SECTION("Runtime")
                         {
-                            inputs[3] = -100;
-                            result = eval_with_inputs(src, &input, &output);
-                            REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            auto new_src = fmt::format(src, "a", "b", "c", "start");
+                            SECTION("Negative Start")
+                            {
+                                inputs[3] = -100;
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
+
+                            SECTION("Zero Start")
+                            {
+                                inputs[3] = 0;
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
+
+                            SECTION("Positive Start")
+                            {
+                                inputs[3] = 100;
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
+
+                            SECTION("Max Value Start")
+                            {
+                                inputs[3] = std::numeric_limits<float>::max();
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
+
+                            SECTION("NaN Start")
+                            {
+                                inputs[3] = std::nanf("");
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
+
+                            SECTION("PositiveInfinity Start")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
+
+                            SECTION("NegativeInfinity Start")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
                         }
 
-                        SECTION("Zero Start")
+                        SECTION("Compile-time")
                         {
-                            inputs[3] = 0;
-                            result = eval_with_inputs(src, &input, &output);
-                            REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
-                        }
+                            SECTION("Negative Start")
+                            {
+                                inputs[3] = -100;
+                                auto new_src = fmt::format(src, inputs[0], inputs[1], inputs[2], inputs[3]);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
 
-                        SECTION("Positive Start")
-                        {
-                            inputs[3] = 100;
-                            result = eval_with_inputs(src, &input, &output);
-                            REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
-                        }
+                            SECTION("Zero Start")
+                            {
+                                inputs[3] = 0;
+                                auto new_src = fmt::format(src, inputs[0], inputs[1], inputs[2], inputs[3]);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
 
-                        SECTION("Max Value Start")
-                        {
-                            inputs[3] = std::numeric_limits<float>::max();
-                            result = eval_with_inputs(src, &input, &output);
-                            REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
-                        }
+                            SECTION("Positive Start")
+                            {
+                                inputs[3] = 100;
+                                auto new_src = fmt::format(src, inputs[0], inputs[1], inputs[2], inputs[3]);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
 
-                        SECTION("NaN Start")
-                        {
-                            inputs[3] = std::nanf("");
-                            result = eval_with_inputs(src, &input, &output);
-                            REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
-                        }
+                            SECTION("Max Value Start")
+                            {
+                                inputs[3] = std::numeric_limits<float>::max();
+                                auto new_src = fmt::format(src, inputs[0], inputs[1], inputs[2], inputs[3]);
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
 
-                        SECTION("PositiveInfinity Start")
-                        {
-                            inputs[3] = std::numeric_limits<float>::infinity();
-                            result = eval_with_inputs(src, &input, &output);
-                            REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
-                        }
+                            SECTION("NaN Start")
+                            {
+                                inputs[3] = std::nanf("");
+                                auto new_src = fmt::format(src, inputs[0], inputs[1], inputs[2], "Num.NaN");
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(std::isnan(outputs[0]) == std::isnan(inputs[3] + inputs[0] + inputs[1] + inputs[2]));
+                            }
 
-                        SECTION("NegativeInfinity Start")
-                        {
-                            inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
-                            result = eval_with_inputs(src, &input, &output);
-                            REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            SECTION("PositiveInfinity Start")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity();
+                                auto new_src = fmt::format(src, inputs[0], inputs[1], inputs[2], "Num.PositiveInfinity");
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
+
+                            SECTION("NegativeInfinity Start")
+                            {
+                                inputs[3] = std::numeric_limits<float>::infinity() * -1.0f;
+                                auto new_src = fmt::format(src, inputs[0], inputs[1], inputs[2], "Num.NegativeInfinity");
+                                result = eval_with_inputs(new_src.c_str(), &input, &output);
+                                REQUIRE(result == ELEMENT_OK);
+                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                            }
                         }
                     }
 
