@@ -12,6 +12,7 @@ expression_chain::expression_chain(const declaration* declarer)
     : declarer{declarer}
 {
     assert(declarer);
+    expressions.reserve(20);
 }
 
 object_const_shared_ptr expression_chain::call(const compilation_context& context,

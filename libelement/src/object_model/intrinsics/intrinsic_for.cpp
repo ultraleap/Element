@@ -38,27 +38,13 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
     const source_information& source_info,
     const compilation_context& context)
 {
-    //todo: delete?
-    /*auto initial_error = std::dynamic_pointer_cast<const error>(initial_object);
+    assert(initial_object);
+    assert(predicate_function);
+    assert(body_function);
+
+    auto initial_error = std::dynamic_pointer_cast<const error>(initial_object);
     if (initial_error)
         return initial_error;
-
-    auto predicate_error = std::dynamic_pointer_cast<const error>(predicate_object);
-    if (predicate_error)
-        return predicate_error;
-
-    auto body_error = std::dynamic_pointer_cast<const error>(body_object);
-    if (body_error)
-        return body_error;
-
-    const auto initial_expression = std::dynamic_pointer_cast<const element_expression>(initial_object);
-    if (!initial_expression)
-    {
-        return std::make_shared<const error>(
-            "Initial element must be a value type, functions are not valid as the initial parameter",
-            ELEMENT_ERROR_UNKNOWN, source_info);
-    }
-    */
 
     //try to run the loop at compile time, if the initial is constant
     const auto is_constant = initial_object->is_constant();
