@@ -10,41 +10,17 @@
 
 using namespace element;
 
-intrinsic_for::intrinsic_for()
-    : intrinsic_function(type_id, nullptr)
-{
-}
-
-
-/*
-constant for loop if all of the objects (initial, predicate, body) are constant
-
-else it's a dynamic for loop
-
-if to_expression fails on initial, error message, since it needs to be serializable
-if predicate or body take inputs that are not serializable, error message, since they're almost
-the same as a boundary function (except the return, we know it's the same type as initial)
-
-if initial is an expression, create for instruction
-
-else initial is an object, e.g. struct instance
-    create for wrapper, so that when we index it, e.g. Vector2(0, 0).x, we create an
-    indexing expression with the for loop as a child and an index of 0 (in to the flat vector2)
- */
-
 object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_object,
                                          const std::shared_ptr<const function_instance>& predicate_function,
                                          const std::shared_ptr<const function_instance>& body_function,
                                          const source_information& source_info,
                                          const compilation_context& context)
 {
-    //try to run the loop at compile time, if the initial is constant
     const auto is_constant = initial_object->is_constant();
-
     if (!is_constant)
         return nullptr;
 
-    //note: the predicate and the body could still return something which is not constant, so we need to check each time and try a runtime loop if so
+    //note: the predicate and the body could still return something which is not constant, so we need to check constantly
     bool predicate_evaluated_to_constant = true;
 
     const auto continue_loop = [&predicate_evaluated_to_constant, &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool
@@ -97,7 +73,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     return current_object;
 }
 
-object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initial_object,
+object_const_shared_ptr for_loop(const object_const_shared_ptr& initial_object,
     const std::shared_ptr<const function_instance>& predicate_function,
     const std::shared_ptr<const function_instance>& body_function,
     const source_information& source_info,
@@ -115,6 +91,9 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
     if (compile_time_result)
         return compile_time_result;
 
+    //runtime for todo: split out
+
+    //ensure that these are boundary functions as we'll need to compile them like any other boundary function
     const auto predicate_is_boundary = predicate_function->valid_at_boundary(context);
     const auto body_is_boundary = body_function->valid_at_boundary(context);
     if (!predicate_is_boundary)
@@ -123,6 +102,7 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
     if (!body_is_boundary)
         return std::make_shared<const error>("body is not a boundary function", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
 
+    //compile our functions to instruction trees, with their own placeholder input instructions
     const auto compile_function_instance = [](const compilation_context& context, const function_instance& function, const source_information& source_info) -> std::shared_ptr<const element_expression>
     {
         element_result result = ELEMENT_OK;
@@ -157,23 +137,18 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
     if (!body_compiled)
         return std::make_shared<const error>("body failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
 
+    //everything is an instruction, so make a for instruction. note: initial_object is either Num or Bool.
     auto initial_expression = std::dynamic_pointer_cast<const element_expression>(initial_object);
-    //everything can be represented as an instruction, so make a for instruction
     if (initial_expression)
         return std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_compiled), std::move(body_compiled));
 
+    //if it wasn't an instruction, let's convert it in to one.
+    //if we can't then this for-loop can't be done at runtime, since it can't be represented in the instruction tree
     initial_expression = initial_object->to_expression();
     if (!initial_expression)
         return std::make_shared<const error>("tried to create a runtime for but a non-serializable initial value was given", ELEMENT_ERROR_UNKNOWN, source_info);
 
-    //  initial is an object, e.g. struct instance
-    //    create for wrapper, so that when we later index it, e.g. Vector2(0, 0).x, we create an indexing expression with the for loop as a child
-
-    /*
-     * instead of a for wrapper we can create a struct instance where its fields are either indexing expressions with the for loop + index as a child, or another struct instance that is the same
-     * i.e. from_expressions
-     */
-
+    //initial_object should be a struct, so the output of the for loop is going to be the same type of struct, except all the fields (flattened struct) are instructions referring to the for loop
     const auto for_expression = std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_compiled), std::move(body_compiled));
     const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
 
@@ -187,8 +162,13 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
     return initial_struct->clone_and_fill_with_expressions(context, std::move(indexing_expression_filler));
 }
 
+intrinsic_for::intrinsic_for()
+    : intrinsic_function(type_id, nullptr)
+{
+}
+
 object_const_shared_ptr intrinsic_for::compile(const compilation_context& context,
-                                              const source_information& source_info) const
+                                               const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
     const auto& declarer = *frame.function;
@@ -199,5 +179,5 @@ object_const_shared_ptr intrinsic_for::compile(const compilation_context& contex
     const auto pred = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[1]);
     const auto body = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[2]);
 
-    return create_or_optimise(initial, pred, body, source_info, context);
+    return for_loop(initial, pred, body, source_info, context);
 }
