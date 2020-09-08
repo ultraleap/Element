@@ -150,7 +150,7 @@ std::string expression_to_string(const element_expression& expression, int depth
     if (expression.is<element_expression_input>())
     {
         const auto& input = expression.as<element_expression_input>();
-        string += "INPUT: " + std::to_string(input->index());
+        string += "INPUT: scope = " + std::to_string(input->scope()) + "; index = " + std::to_string(input->index());
     }
 
     if (expression.is<element_expression_structure>())
@@ -251,7 +251,7 @@ std::string expression_to_string(const element_expression& expression, int depth
     if (expression.is<element_expression_for>())
     {
         const auto& for_instruction = expression.as<element_expression_for>();
-        string += "FOR:\n";
+        string += "FOR:" + fmt::format(" [{}]", fmt::ptr(&expression)) + "\n";
         string += std::string(depth + 1, ' ') + "INITIAL:\n" + expression_to_string(*for_instruction->initial().get(), depth + 2);
         string += std::string(depth + 1, ' ') + "CONDITION:\n" + expression_to_string(*for_instruction->condition().get(), depth + 2);
         string += std::string(depth + 1, ' ') + "BODY:\n" + expression_to_string(*for_instruction->body().get(), depth + 2);
