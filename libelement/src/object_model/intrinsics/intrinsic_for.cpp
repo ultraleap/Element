@@ -115,16 +115,13 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
     if (compile_time_result)
         return compile_time_result;
 
-    //if you got this far, then something in the constant for loop case
-    //was found to be non-constant which means we have a dynamic for loop
-
     const auto predicate_is_boundary = predicate_function->valid_at_boundary(context);
     const auto body_is_boundary = body_function->valid_at_boundary(context);
     if (!predicate_is_boundary)
-        return std::make_shared<const error>("predicate is not a boundary function", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>("predicate is not a boundary function", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info);
 
     if (!body_is_boundary)
-        return std::make_shared<const error>("body is not a boundary function", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>("body is not a boundary function", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
 
     const auto compile_function_instance = [](const compilation_context& context, const function_instance& function, const source_information& source_info) -> std::shared_ptr<const element_expression>
     {
@@ -155,10 +152,10 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
     auto body_compiled = compile_function_instance(context, *body_function, source_info);
 
     if (!predicate_compiled)
-        return std::make_shared<const error>("predicate failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>("predicate failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info);
 
     if (!body_compiled)
-        return std::make_shared<const error>("body failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>("body failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
 
     auto initial_expression = std::dynamic_pointer_cast<const element_expression>(initial_object);
     //everything can be represented as an instruction, so make a for instruction
@@ -187,7 +184,7 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
         return std::make_shared<element_expression_indexer>(for_expression, index, field->actual_type);
     };
 
-    return initial_struct->clone_and_fill_with_expressions(context, indexing_expression_filler);
+    return initial_struct->clone_and_fill_with_expressions(context, std::move(indexing_expression_filler));
 }
 
 object_const_shared_ptr intrinsic_for::compile(const compilation_context& context,
