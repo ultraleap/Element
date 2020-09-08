@@ -89,17 +89,20 @@ struct element_expression_input final : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    explicit element_expression_input(size_t input_index)
+    explicit element_expression_input(size_t scope, size_t input_index)
         : element_expression(type_id, nullptr)
+        , m_scope(scope)
         , m_index(input_index)
     {
     }
 
+    [[nodiscard]] size_t scope() const { return m_scope; }
     [[nodiscard]] size_t index() const { return m_index; }
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool is_constant() const override { return false; }
 
 private:
+    size_t m_scope;
     size_t m_index;
 };
 

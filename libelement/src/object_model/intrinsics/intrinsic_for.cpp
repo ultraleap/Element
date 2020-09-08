@@ -106,7 +106,7 @@ object_const_shared_ptr for_loop(const object_const_shared_ptr& initial_object,
     const auto compile_function_instance = [](const compilation_context& context, const function_instance& function, const source_information& source_info) -> std::shared_ptr<const element_expression>
     {
         element_result result = ELEMENT_OK;
-        const int placeholder_offset = context.total_boundary_size_at_index(context.boundaries.size() - 1);
+        const int placeholder_offset = 0;
         auto [placeholder, size] = generate_placeholder_inputs(context, function.declarer->get_inputs(), result, placeholder_offset);
         if (result != ELEMENT_OK)
             return nullptr;

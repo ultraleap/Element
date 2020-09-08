@@ -7,8 +7,12 @@
 
 struct evaluator_ctx
 {
-    const element_value* inputs;
-    const size_t inputs_count;
+    struct boundary
+    {
+        const element_value* inputs;
+        const size_t inputs_count;
+    };
+    std::vector<boundary> boundaries;
     element_evaluator_options options;
 };
 
@@ -21,16 +25,17 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
     } 
 
 	if (const auto* ei = expr->as<element_expression_input>()) {
-        if (context.inputs_count <= ei->index()
+        if (context.boundaries.size() <= ei->scope()
+            || context.boundaries[ei->scope()].inputs_count <= ei->index()
             || outputs_count <= outputs_written)
         {
+            //occurs during constant folding to check if it can be evaluated
             outputs_written = 0;
             return ELEMENT_ERROR_UNKNOWN;
         }
 
-        assert(context.inputs_count > ei->index());
         assert(outputs_count > outputs_written);
-        outputs[outputs_written++] = context.inputs[ei->index()];
+        outputs[outputs_written++] = context.boundaries[ei->scope()].inputs[ei->index()];
         return ELEMENT_OK;
     } 
 
@@ -155,7 +160,9 @@ element_result element_evaluate(
     element_value* outputs, size_t& outputs_count,
     element_evaluator_options opts)
 {
-    evaluator_ctx ectx = { inputs, inputs_count, std::move(opts) };
+    evaluator_ctx ectx = { {}, std::move(opts) };
+    ectx.boundaries.push_back({ inputs, inputs_count });
+
     size_t outputs_written = 0;
     const auto result = do_evaluate(ectx, fn, outputs, outputs_count, outputs_written);
     outputs_count = outputs_written;
@@ -239,29 +246,27 @@ std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const ex
 {
     size_t intermediate_written = 0;
 
-    const auto current_value_offset = context.inputs_count;
-
     const auto value_size = initial->get_size();
     std::vector<element_value> inputs;
-    inputs.resize(context.inputs_count + value_size);
+    inputs.resize(value_size);
+    context.boundaries.push_back({ inputs.data(), value_size });
 
-    std::copy(context.inputs, context.inputs + context.inputs_count, inputs.data());
-
-    evaluator_ctx ectx = { inputs.data(), inputs.size(), {} };
-
-    auto result = do_evaluate(context, initial, inputs.data() + current_value_offset, value_size, intermediate_written);
+    auto result = do_evaluate(context, initial, inputs.data(), value_size, intermediate_written);
     if (result != ELEMENT_OK)
         throw;
 
     intermediate_written = 0;
 
     element_value predicate_value;
-    result = do_evaluate(ectx, condition, &predicate_value, 1, intermediate_written);
+    result = do_evaluate(context, condition, &predicate_value, 1, intermediate_written);
     intermediate_written = 0;
+
+    if (result != ELEMENT_OK)
+        throw;
 
     while (predicate_value > 0) //predicate returned true
     {
-        result = do_evaluate(ectx, body, inputs.data() + current_value_offset, value_size, intermediate_written);
+        result = do_evaluate(context, body, inputs.data(), value_size, intermediate_written);
         if (result != ELEMENT_OK)
             throw;
 
@@ -269,7 +274,7 @@ std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const ex
             throw;
 
         intermediate_written = 0;
-        result = do_evaluate(ectx, condition, &predicate_value, 1, intermediate_written);
+        result = do_evaluate(context, condition, &predicate_value, 1, intermediate_written);
         if (result != ELEMENT_OK)
             throw;
 
@@ -282,7 +287,8 @@ std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const ex
     if (result != ELEMENT_OK)
         throw;
 
-    return std::vector<element_value>(inputs.begin() + current_value_offset, inputs.end());
+    context.boundaries.pop_back();
+    return inputs;
 }
 
 expression_const_shared_ptr element_evaluate_select(element_value selector, std::vector<expression_const_shared_ptr> options)
