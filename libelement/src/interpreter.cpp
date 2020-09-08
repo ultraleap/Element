@@ -434,34 +434,10 @@ element_result element_interpreter_compile(
     }
 
     element_result result = ELEMENT_OK;
-    auto placeholder_inputs = generate_placeholder_inputs(compilation_context, declaration->decl->get_inputs(), result);
-    if (result != ELEMENT_OK)
-    {
-        assert(!"failed to generate placeholder inputs despite being a valid boundary function, bug?");
-        *object = nullptr;
-        return result;
-    }
-
-    element::compilation_context::boundary_info boundary{ placeholder_inputs.second };
-    compilation_context.boundaries.push_back(std::move(boundary));
-
-    auto compiled = declaration->decl->call(compilation_context, std::move(placeholder_inputs.first), {});
-
-    if (!compiled)
-    {
-        assert(!"tried to compile a declaration but it resulted in a nullptr");
-        *object = nullptr;
+    auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), result, {});
+    if(!compiled)
         return ELEMENT_ERROR_UNKNOWN;
-    }
 
-    const auto err = std::dynamic_pointer_cast<const element::error>(compiled);
-    if (err)
-    {
-        *object = nullptr;
-        return err->log_once(context->logger.get());
-    }
-
-    //todo: compiler option to disable/enable forced expression_tree checking
     auto expression = compiled->to_expression();
     if (!expression)
         *object = new element_object{ std::move(compiled) };
