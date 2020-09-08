@@ -23,7 +23,9 @@ struct element_ast
     element_ast(element_ast* ast_parent)
         : parent(ast_parent)
         , type(ELEMENT_AST_NODE_NONE)
-    { }
+    {
+        children.reserve(20);
+    }
 
     union
     {
