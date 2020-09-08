@@ -9,6 +9,7 @@
 #include "error.hpp"
 #include "error_map.hpp"
 #include "compilation_context.hpp"
+#include "intrinsics/intrinsic.hpp"
 
 namespace element
 {
@@ -142,4 +143,40 @@ namespace element
         assert(false);
         return nullptr;
     }
+
+
+    object_const_shared_ptr compile_placeholder_expression(const compilation_context& context,
+        const object& object,
+        const std::vector<port>& inputs,
+        element_result& result,
+        const source_information& source_info,
+        const int placeholder_offset)
+    {
+        auto [placeholder, size] = generate_placeholder_inputs(context, inputs, result, placeholder_offset);
+        if (result != ELEMENT_OK)
+        {
+            result = ELEMENT_ERROR_UNKNOWN;
+            return nullptr;
+        }
+
+        context.boundaries.push_back({ size });
+        auto compiled = object.call(context, std::move(placeholder), source_info);
+        context.boundaries.pop_back();
+
+        if (!compiled)
+        {
+            result = ELEMENT_ERROR_UNKNOWN;
+            return nullptr;
+        }
+
+        const auto err = std::dynamic_pointer_cast<const element::error>(compiled);
+        if (err)
+        {
+            result = err->log_once(context.interpreter->logger.get());
+            return nullptr;
+        }
+
+        return compiled;
+    }
+
 }

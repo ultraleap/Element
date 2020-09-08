@@ -82,6 +82,7 @@ object_const_shared_ptr for_loop(const object_const_shared_ptr& initial_object,
     assert(initial_object);
     assert(predicate_function);
     assert(body_function);
+    element_result result = ELEMENT_OK;
 
     auto initial_error = std::dynamic_pointer_cast<const error>(initial_object);
     if (initial_error)
@@ -95,52 +96,35 @@ object_const_shared_ptr for_loop(const object_const_shared_ptr& initial_object,
 
     //ensure that these are boundary functions as we'll need to compile them like any other boundary function
     const auto predicate_is_boundary = predicate_function->valid_at_boundary(context);
-    const auto body_is_boundary = body_function->valid_at_boundary(context);
     if (!predicate_is_boundary)
         return std::make_shared<const error>("predicate is not a boundary function", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info);
 
+    const auto body_is_boundary = body_function->valid_at_boundary(context);
     if (!body_is_boundary)
         return std::make_shared<const error>("body is not a boundary function", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
 
     //compile our functions to instruction trees, with their own placeholder input instructions
-    const auto compile_function_instance = [](const compilation_context& context, const function_instance& function, const source_information& source_info) -> std::shared_ptr<const element_expression>
-    {
-        element_result result = ELEMENT_OK;
-        const int placeholder_offset = 0;
-        auto [placeholder, size] = generate_placeholder_inputs(context, function.declarer->get_inputs(), result, placeholder_offset);
-        if (result != ELEMENT_OK)
-            return nullptr;
+    const int placeholder_offset = 0;
+    const auto predicate_compiled = compile_placeholder_expression(context, *predicate_function, predicate_function->declarer->get_inputs(), result, source_info, placeholder_offset);
+    if(!predicate_compiled)
+        return std::make_shared<const error>("predicate failed to compile", result, source_info);
 
-        context.boundaries.push_back({ size });
-        const auto compiled = function.call(context, std::move(placeholder), source_info);
-        context.boundaries.pop_back();
-        assert(compiled);
+    const auto body_compiled = compile_placeholder_expression(context, *body_function, body_function->declarer->get_inputs(), result, source_info, placeholder_offset);
+    if (!body_compiled)
+        return std::make_shared<const error>("body failed to compile", result, source_info);
 
-        if (!compiled)
-            return nullptr;
-
-        const auto err = std::dynamic_pointer_cast<const element::error>(compiled);
-        if (err) {
-            result = err->log_once(context.get_logger());
-            return nullptr;
-        }
-
-        return compiled->to_expression();
-    };
-
-    auto predicate_compiled = compile_function_instance(context, *predicate_function, source_info);
-    auto body_compiled = compile_function_instance(context, *body_function, source_info);
-
-    if (!predicate_compiled)
+    auto predicate_expression = predicate_compiled->to_expression();
+    if (!predicate_expression)
         return std::make_shared<const error>("predicate failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info);
 
-    if (!body_compiled)
+    auto body_expression = body_compiled->to_expression();
+    if (!body_expression)
         return std::make_shared<const error>("body failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
 
     //everything is an instruction, so make a for instruction. note: initial_object is either Num or Bool.
     auto initial_expression = std::dynamic_pointer_cast<const element_expression>(initial_object);
     if (initial_expression)
-        return std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_compiled), std::move(body_compiled));
+        return std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression));
 
     //if it wasn't an instruction, let's convert it in to one.
     //if we can't then this for-loop can't be done at runtime, since it can't be represented in the instruction tree
@@ -149,7 +133,7 @@ object_const_shared_ptr for_loop(const object_const_shared_ptr& initial_object,
         return std::make_shared<const error>("tried to create a runtime for but a non-serializable initial value was given", ELEMENT_ERROR_UNKNOWN, source_info);
 
     //initial_object should be a struct, so the output of the for loop is going to be the same type of struct, except all the fields (flattened struct) are instructions referring to the for loop
-    const auto for_expression = std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_compiled), std::move(body_compiled));
+    const auto for_expression = std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression));
     const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
 
     auto indexing_expression_filler = [&for_expression](const std::string&,

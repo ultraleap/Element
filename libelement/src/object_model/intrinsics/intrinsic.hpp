@@ -90,5 +90,5 @@ namespace element
         const compilation_context& compilation_context,
         const std::vector<port>& inputs,
         element_result& out_result,
-        const int index_offset = 0);
+        const int index_offset);
 }
