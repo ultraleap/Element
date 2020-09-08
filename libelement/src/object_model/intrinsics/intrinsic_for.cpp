@@ -17,7 +17,6 @@ intrinsic_for::intrinsic_for()
 
 /*
 constant for loop if all of the objects (initial, predicate, body) are constant
-    reimplement the for loop in evaluator
 
 else it's a dynamic for loop
 
@@ -29,48 +28,8 @@ if initial is an expression, create for instruction
 
 else initial is an object, e.g. struct instance
     create for wrapper, so that when we index it, e.g. Vector2(0, 0).x, we create an
-    indexing expression with the for loop as a child, or we need to make another for
-    wrapper if the indexed thing is not a number (e.g. another struct instance)
+    indexing expression with the for loop as a child and an index of 0 (in to the flat vector2)
  */
-
-auto clone_instance_and_fill_with_indexing_expression(const compilation_context& context,
-    const std::shared_ptr<const element_expression_for>& for_expression,
-    const std::shared_ptr<const struct_instance>& instance,
-    int& index) -> std::shared_ptr<struct_instance>
-{
-    auto clone = std::make_shared<struct_instance>(instance->declarer);
-
-    for (const auto& [name, field] : instance->fields)
-    {
-        const auto* field_type = field->get_constraint();
-        const auto* field_type_declarer = field_type->declarer;
-
-        //if there's no declarer then we're probably dealing with a Num or Bool (IIRC)
-
-        const auto field_as_expression = std::dynamic_pointer_cast<const element_expression>(field);
-
-        if (field_as_expression)
-        {
-            assert(!field_type_declarer);
-            auto thing = std::make_shared<element_expression_indexer>(for_expression, index, field_as_expression->actual_type);
-            clone->fields.try_emplace(name, thing);
-            index += 1;
-            continue;
-        }
-
-        const auto field_as_instance = std::dynamic_pointer_cast<const struct_instance>(field);
-        if (field_as_instance)
-        {
-            auto sub_clone = clone_instance_and_fill_with_indexing_expression(context, for_expression, field_as_instance, index);
-            clone->fields.try_emplace(name, std::move(sub_clone));
-            continue;
-        }
-
-        clone->fields.try_emplace(name, std::make_shared<const error>("???????????????????????????", ELEMENT_ERROR_UNKNOWN, source_information{}));
-    }
-
-    return clone;
-};
 
 object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initial_object,
     const std::shared_ptr<const function_instance>& predicate_function,
@@ -238,8 +197,14 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
     const auto for_expression = std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_compiled), std::move(body_compiled));
     const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
 
-    int index = 0;
-    return clone_instance_and_fill_with_indexing_expression(context, for_expression, initial_struct, index);
+    auto indexing_expression_filler = [&for_expression](const std::string&,
+                                                        const std::shared_ptr<const element_expression>& field,
+                                                        int index) -> std::shared_ptr<const element_expression>
+    {
+        return std::make_shared<element_expression_indexer>(for_expression, index, field->actual_type);
+    };
+
+    return initial_struct->clone_and_fill_with_expressions(context, indexing_expression_filler);
 }
 
 object_const_shared_ptr intrinsic_for::compile(const compilation_context& context,
