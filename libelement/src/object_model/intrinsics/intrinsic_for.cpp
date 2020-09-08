@@ -1,3 +1,4 @@
+#include "intrinsic.hpp"
 #include "intrinsic_for.hpp"
 
 //SELF
@@ -128,31 +129,14 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
 
     const auto compile_function_instance = [](const compilation_context& context, const function_instance& function, const source_information& source_info) -> std::shared_ptr<const element_expression>
     {
-        const auto generate_placeholder_inputs = [](const compilation_context& context, const function_declaration& declaration) -> std::optional<std::pair<std::vector<object_const_shared_ptr>, size_t>>
-        {
-            std::pair<std::vector<object_const_shared_ptr>, size_t> placeholder_inputs;
-            int placeholder_index = context.total_boundary_size_at_index(context.boundaries.size() - 1);
-
-            for (const auto& input : declaration.get_inputs())
-            {
-                auto placeholder = input.generate_placeholder(context, placeholder_index);
-                if (!placeholder)
-                    return {};
-
-                placeholder_inputs.first.push_back(std::move(placeholder));
-            }
-
-            placeholder_inputs.second = placeholder_index;
-            return placeholder_inputs;
-        };
-
-        auto placeholder_inputs = generate_placeholder_inputs(context, *function.declarer);
-        assert(placeholder_inputs);
-        if (!placeholder_inputs)
+        element_result result = ELEMENT_OK;
+        const int placeholder_offset = context.total_boundary_size_at_index(context.boundaries.size() - 1);
+        auto [placeholder, size] = generate_placeholder_inputs(context, function.declarer->get_inputs(), result, placeholder_offset);
+        if (result != ELEMENT_OK)
             return nullptr;
 
-        context.boundaries.push_back({ placeholder_inputs.value().second });
-        const auto compiled = function.call(context, std::move(placeholder_inputs.value().first), source_info);
+        context.boundaries.push_back({ size });
+        const auto compiled = function.call(context, std::move(placeholder), source_info);
         context.boundaries.pop_back();
         assert(compiled);
 
@@ -161,7 +145,7 @@ object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& initia
 
         const auto err = std::dynamic_pointer_cast<const element::error>(compiled);
         if (err) {
-            auto result = err->log_once(context.get_logger());
+            result = err->log_once(context.get_logger());
             return nullptr;
         }
 

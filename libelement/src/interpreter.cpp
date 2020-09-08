@@ -410,29 +410,6 @@ element_result valid_boundary_function(
     return ELEMENT_OK;
 }
 
-std::pair<std::vector<std::shared_ptr<const element::object>>, size_t> generate_placeholder_inputs(
-    element_interpreter_ctx* context,
-    const element::compilation_context& compilation_context,
-    const element_compiler_options* options,
-    const element_declaration* declaration,
-    element_result& out_result)
-{
-    std::pair<std::vector<std::shared_ptr<const element::object>>, size_t> placeholder_inputs;
-    int placeholder_index = 0;
-
-    for (const auto& input : declaration->decl->get_inputs())
-    {
-        auto placeholder = input.generate_placeholder(compilation_context, placeholder_index);
-        if (!placeholder)
-            out_result = ELEMENT_ERROR_UNKNOWN;
-
-        placeholder_inputs.first.push_back(std::move(placeholder));
-    }
-
-    placeholder_inputs.second = placeholder_index;
-    return placeholder_inputs;
-}
-
 element_result element_interpreter_compile(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
@@ -457,7 +434,7 @@ element_result element_interpreter_compile(
     }
 
     element_result result = ELEMENT_OK;
-    auto placeholder_inputs = generate_placeholder_inputs(context, compilation_context, options, declaration, result);
+    auto placeholder_inputs = generate_placeholder_inputs(compilation_context, declaration->decl->get_inputs(), result);
     if (result != ELEMENT_OK)
     {
         assert(!"failed to generate placeholder inputs despite being a valid boundary function, bug?");
