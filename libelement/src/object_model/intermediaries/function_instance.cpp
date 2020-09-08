@@ -80,6 +80,9 @@ object_const_shared_ptr function_instance::call(
     captures.pop();
     context.calls.pop();
 
+    if (!element)
+        return std::make_shared<const error>(fmt::format("call to {} caused an internal error", declarer->name.value), ELEMENT_ERROR_UNKNOWN, source_info);
+
     //type check return
     //todo: nicer?
     const constraint* constraint = nullptr;

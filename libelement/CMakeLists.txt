@@ -131,6 +131,8 @@ set(libelement_sources
     "src/object_model/intrinsics/intrinsic_unary.hpp"
     "src/object_model/intrinsics/intrinsic_list.cpp"
     "src/object_model/intrinsics/intrinsic_list.hpp"
+    "src/object_model/intrinsics/intrinsic_list_fold.cpp"
+    "src/object_model/intrinsics/intrinsic_list_fold.hpp"
     "src/object_model/intrinsics/intrinsic_compiler_list_indexer.cpp"
     "src/object_model/intrinsics/intrinsic_compiler_list_indexer.hpp"
 

@@ -11,6 +11,7 @@
 #include "intrinsic_binary.hpp"
 #include "intrinsic_if.hpp"
 #include "intrinsic_list.hpp"
+#include "intrinsic_list_fold.hpp"
 #include "intrinsic_for.hpp"
 #include "intrinsic_compiler_list_indexer.hpp"
 #include "intrinsic_constructor_list.hpp"
@@ -34,6 +35,7 @@ DEFINE_TYPE_ID(element::intrinsic_constructor_list, 1U << 6);
 DEFINE_TYPE_ID(element::intrinsic_list, 1U << 7);
 DEFINE_TYPE_ID(element::intrinsic_compiler_list_indexer, 1U << 8);
 DEFINE_TYPE_ID(element::intrinsic_for, 1U << 9);
+DEFINE_TYPE_ID(element::intrinsic_list_fold, 1U << 10);
 
 template<typename T>
 static bool is_type_of(const declaration* decl)
@@ -113,7 +115,7 @@ const std::unordered_map<std::string, std::function<std::unique_ptr<const intrin
     { "False", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_nullary>(element_nullary_op::false_value, type::boolean.get()) : nullptr); } },
 
     { "list", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_list>() : nullptr); } },
-    { "List.fold", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
+    { "List.fold", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_list_fold> () : nullptr); } },
 
     { "memberwise", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
     { "for", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_for>() : nullptr); } },
