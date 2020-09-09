@@ -59,12 +59,13 @@ object_const_shared_ptr runtime_fold(const compilation_context& context,
     if (!accumulator_is_boundary)
         return std::make_shared<const error>("accumulator is not a boundary function", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
 
+    element_result result;
     const auto placeholder_offset = 0;
     const auto accumulator_compiled = compile_placeholder_expression(context, *accumulator_function, accumulator_function->declarer->get_inputs(), result, source_info, placeholder_offset);
     if(!accumulator_compiled)
         return std::make_shared<const error>("accumulator failed to compile", result, source_info);
 
-    auto accumulator_expression = accumulator_compiled->to_expression();
+    const auto accumulator_expression = accumulator_compiled->to_expression();
     if (!accumulator_expression)
         return std::make_shared<const error>("accumulator failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
 
@@ -98,7 +99,7 @@ object_const_shared_ptr intrinsic_list_fold::compile(const compilation_context& 
     if (compile_time_result)
         return compile_time_result;
 
-    return runtime_fold(context, list_struct, initial, accumulator, source_info);
+    return runtime_fold(context, list_struct, initial, accumulator_instance, source_info);
 }
 
 
