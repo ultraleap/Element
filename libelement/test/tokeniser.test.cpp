@@ -57,12 +57,6 @@ TEST_CASE("Tokeniser", "[Tokeniser]") {
         REQUIRE(tokeniser->tokens[0].type == ELEMENT_TOK_BRACKETR);
     }
 
-    SECTION("Semicolon") {
-        element_tokeniser_run(tokeniser, ";", "<input>");
-        print_token(tokeniser, nullptr);
-        REQUIRE(tokeniser->tokens[0].type == ELEMENT_TOK_SEMICOLON);
-    }
-
     SECTION("Colon") {
         element_tokeniser_run(tokeniser, ":", "<input>");
         print_token(tokeniser, nullptr);
@@ -94,7 +88,7 @@ TEST_CASE("Tokeniser", "[Tokeniser]") {
     }
 
     SECTION("Everything") {
-        element_tokeniser_run(tokeniser, "v.():,{}=9_;", "<input>");
+        element_tokeniser_run(tokeniser, "v.():,{}=9_", "<input>");
         print_token(tokeniser, nullptr);
         REQUIRE(tokeniser->tokens[0].type == ELEMENT_TOK_IDENTIFIER); // v
         REQUIRE(tokeniser->tokens[1].type == ELEMENT_TOK_DOT); // .
@@ -107,11 +101,10 @@ TEST_CASE("Tokeniser", "[Tokeniser]") {
         REQUIRE(tokeniser->tokens[8].type == ELEMENT_TOK_EQUALS); // =
         REQUIRE(tokeniser->tokens[9].type == ELEMENT_TOK_NUMBER); // 9
         REQUIRE(tokeniser->tokens[10].type == ELEMENT_TOK_UNDERSCORE); // _
-        REQUIRE(tokeniser->tokens[11].type == ELEMENT_TOK_SEMICOLON); // ;
     }
 
-    SECTION("evaluate = Num.add(1, 2);") {
-        const std::string input = "evaluate = Num.add(1, 2);";
+    SECTION("evaluate = Num.add(1, 2)") {
+        const std::string input = "evaluate = Num.add(1, 2)";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
         print_token(tokeniser, nullptr);
@@ -125,6 +118,5 @@ TEST_CASE("Tokeniser", "[Tokeniser]") {
         REQUIRE(tokeniser->tokens[7].type == ELEMENT_TOK_COMMA);
         REQUIRE(tokeniser->tokens[8].type == ELEMENT_TOK_NUMBER);
         REQUIRE(tokeniser->tokens[9].type == ELEMENT_TOK_BRACKETR);
-        REQUIRE(tokeniser->tokens[10].type == ELEMENT_TOK_SEMICOLON);
     }
 }
