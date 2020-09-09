@@ -172,7 +172,12 @@ element_result element_interpreter_ctx::load_files(const std::vector<std::string
 
 element_result element_interpreter_ctx::load_package(const std::string& package)
 {
-    auto package_path = "ElementPackages\\" + package;
+    const auto last_dash = package.find_last_of('-');
+    auto actual_package_name = package;
+    if (last_dash != std::string::npos)
+        actual_package_name = package.substr(0, last_dash);
+
+    auto package_path = "ElementPackages\\" + actual_package_name;
     if (!directory_exists(package_path))
     {
         auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
@@ -208,13 +213,6 @@ element_result element_interpreter_ctx::load_packages(const std::vector<std::str
 
     for (const auto& package : packages) {
         auto package_path = "ElementPackages\\" + package;
-        if (!directory_exists(package_path)) {
-            auto abs = std::filesystem::absolute(std::filesystem::path(package)).string();
-            std::cout << fmt::format("package {} was not found at location {}\n",
-                package, abs); //todo: proper logging
-            continue; //todo: error handling
-        }
-
         const auto result = load_package(package);
         if (result != ELEMENT_OK && ret != ELEMENT_OK) //todo: only returns first error
             ret = result;

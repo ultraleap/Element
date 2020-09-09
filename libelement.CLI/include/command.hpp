@@ -114,7 +114,13 @@ namespace libelement::cli
 		[[nodiscard]] static bool directory_exists(const std::string& directory)
 		{
 			//Bad James, bad!
-			return std::filesystem::exists("Content\\" + directory) && std::filesystem::is_directory("Content\\" + directory);
+            const auto last_dash = directory.find_last_of('-');
+            auto actual_package_name = directory;
+			if (last_dash != std::string::npos)
+				actual_package_name = directory.substr(0, last_dash);
+
+			const auto package_path = "ElementPackages\\" + actual_package_name;
+			return std::filesystem::exists(package_path) && std::filesystem::is_directory(package_path);
 		}
 
 		template<typename T, typename Predicate> std::vector<T> select(const std::vector<T>& container, Predicate predicate)
