@@ -173,7 +173,7 @@ namespace element
         if (err)
         {
             result = err->log_once(context.interpreter->logger.get());
-            return nullptr;
+            return err;
         }
 
         return compiled;

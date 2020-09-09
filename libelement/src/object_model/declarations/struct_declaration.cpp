@@ -106,6 +106,7 @@ bool struct_declaration::deserializable(const compilation_context& context) cons
     {
         //todo: we can cache all of the resolving annotation things everywhere
         const auto& type = get_scope()->find(input.get_annotation()->to_string(), true);
+        assert(type);
         if (!type->deserializable(context))
             return false;
     }

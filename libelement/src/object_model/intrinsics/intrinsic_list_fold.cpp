@@ -101,32 +101,3 @@ object_const_shared_ptr intrinsic_list_fold::compile(const compilation_context& 
 
     return runtime_fold(context, list_struct, initial, accumulator_instance, source_info);
 }
-
-
-
-
-
-/*
-//const char* src = "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list(a, b, c).fold(start, Num.add);";
-
-* accumulator = Num.add;
-* magic_struct(index:Num, aggregate:Num){}
-* mylist = list(a, b, c);
-* predicate(magic:magic_struct):Bool = magic.index.lt(mylist.count);
-* body(magic:magic_struct) = magic_struct(magic_struct.index.add(1), accumulator(mylist.at(magic.index), magic.aggreggate);
-* evaluate(a:Num, b:Num, c:Num, start:Num):Num = for(magic_struct(0, 0), predicate, body);
-*/
-
-/*
-intrinsic fold(list:List, initial, accumulator:Binary);
-intrinsic for(initial, condition:Predicate, body:Unary);
-*/
-
-//auto aggregate = initial;
-//   int i = 0;
-//   while(i < list.count)
-//   {
-//       cur_element = list.at(i);
-//       aggregate = accumulator.call(aggregate, cur_element);
-//       ++i; 
-//   }

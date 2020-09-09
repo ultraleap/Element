@@ -21,7 +21,7 @@ TEST_CASE("Tokeniser", "[Tokeniser]") {
 
     SECTION("Number") {
         // A number has to be 'closed' with semicolon to be tokenised as a number
-        element_tokeniser_run(tokeniser, "9;", "<input>");
+        element_tokeniser_run(tokeniser, "9", "<input>");
         print_token(tokeniser, nullptr);
         REQUIRE(tokeniser->tokens[0].type == ELEMENT_TOK_NUMBER);
     }
@@ -34,7 +34,7 @@ TEST_CASE("Tokeniser", "[Tokeniser]") {
 
     SECTION("Underscore") {
         // A underscore has to be 'closed' with a semicolon to be tokenised as an underscore
-        element_tokeniser_run(tokeniser, "_;", "<input>");
+        element_tokeniser_run(tokeniser, "_", "<input>");
         print_token(tokeniser, nullptr);
         REQUIRE(tokeniser->tokens[0].type == ELEMENT_TOK_UNDERSCORE);
     }

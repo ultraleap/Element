@@ -172,7 +172,7 @@ element_result element_interpreter_ctx::load_files(const std::vector<std::string
 
 element_result element_interpreter_ctx::load_package(const std::string& package)
 {
-    auto package_path = "Content\\" + package;
+    auto package_path = "ElementPackages\\" + package;
     if (!directory_exists(package_path))
     {
         auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
@@ -192,9 +192,9 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
             if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
                 ret = result;
         }
-        else
+        else if (extension != ".bond")
         {
-            std::cout << fmt::format("file {} in package {} has extension {} instead of '.ele'\n", 
+            std::cout << fmt::format("file {} in package {} has extension {} instead of '.ele' or '.bond'\n", 
                 filename, package_path, extension); //todo: proper logging
         }
     }
@@ -207,7 +207,7 @@ element_result element_interpreter_ctx::load_packages(const std::vector<std::str
     element_result ret = ELEMENT_OK;
 
     for (const auto& package : packages) {
-        auto package_path = "Content\\" + package;
+        auto package_path = "ElementPackages\\" + package;
         if (!directory_exists(package_path)) {
             auto abs = std::filesystem::absolute(std::filesystem::path(package)).string();
             std::cout << fmt::format("package {} was not found at location {}\n",

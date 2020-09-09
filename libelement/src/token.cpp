@@ -361,8 +361,16 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                 case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); UTF8_NEXT(it, end); break;
                 case '#': tokenise_comment(it, end, state); break;
                 case '_': {
-                    auto next = UTF8_PEEK_NEXT(it + 1, end);
+                    //in case there is nothing after this, add the token first first, and remove later if it's an identifier
+                    add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
+
+                    const auto next = UTF8_PEEK_NEXT(it + 1, end);
                     if (isid_alpha(next)) {
+                        //remove token
+                        state->tokens.pop_back();
+                        state->pos -= 1;
+                        state->character -= 1;
+
                         const auto begin_it = it;
                         auto result = tokenise_identifier(it, end, state);
                         if (result != ELEMENT_OK) {
@@ -372,8 +380,8 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                             return result;
                         }
                     }
-                    else {
-                        add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
+                    else
+                    {
                         UTF8_NEXT(it, end);
                     }
                     break;
@@ -417,9 +425,12 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     else {
                         const auto begin_it = it;
                         UTF8_NEXT(it, end);
+                        std::string source_line;
+                        source_line.resize(1024);
+                        memcpy(source_line.data(), cinput + state->line_start_position, state->pos - state->line_start_position);
                         state->log(ELEMENT_ERROR_PARSE,
-                            fmt::format("Reached unexpected state when encountering character '{}'",
-                                std::string(begin_it, it)));
+                            fmt::format("Encountered invalid character '{}' in file {} on line {} character {}\n{}",
+                                std::string(begin_it, it), cfilename, state->line, state->character, source_line));
                         return ELEMENT_ERROR_PARSE;
                     }
                 }
