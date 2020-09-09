@@ -226,7 +226,7 @@ struct element_expression_for final : public element_expression {
 struct element_expression_fold final : public element_expression {
     DECLARE_TYPE_ID();
 
-    explicit element_expression_for(expression_const_shared_ptr list, expression_const_shared_ptr initial,  expression_const_shared_ptr accumulator);
+    explicit element_expression_fold(expression_const_shared_ptr list, expression_const_shared_ptr initial, expression_const_shared_ptr accumulator);
     [[nodiscard]] const expression_const_shared_ptr& list() const { return m_dependents[0]; }
     [[nodiscard]] const expression_const_shared_ptr& initial() const { return m_dependents[1]; }
     [[nodiscard]] const expression_const_shared_ptr& accumulator() const { return m_dependents[2]; }
