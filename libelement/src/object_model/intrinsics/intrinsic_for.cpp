@@ -91,7 +91,7 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
         return std::make_shared<const error>("body is not a boundary function", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
 
     //compile our functions to instruction trees, with their own placeholder input instructions
-    const int placeholder_offset = 0;
+    const auto placeholder_offset = 0;
     const auto predicate_compiled = compile_placeholder_expression(context, *predicate_function, predicate_function->declarer->get_inputs(), result, source_info, placeholder_offset);
     if(!predicate_compiled)
         return std::make_shared<const error>("predicate failed to compile", result, source_info);
@@ -147,20 +147,20 @@ object_const_shared_ptr intrinsic_for::compile(const compilation_context& contex
     assert(frame.compiled_arguments.size() == 3);
 
     const auto initial = frame.compiled_arguments[0];
-    const auto pred = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[1]);
+    const auto predicate = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[1]);
     const auto body = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[2]);
 
     assert(initial);
-    assert(pred);
+    assert(predicate);
     assert(body);
 
     auto initial_error = std::dynamic_pointer_cast<const error>(initial);
     if (initial_error)
         return initial_error;
 
-    auto compile_time_result = compile_time_for(initial, pred, body, source_info, context);
+    auto compile_time_result = compile_time_for(initial, predicate, body, source_info, context);
     if (compile_time_result)
         return compile_time_result;
 
-    return runtime_for(initial, pred, body, source_info, context);
+    return runtime_for(initial, predicate, body, source_info, context);
 }
