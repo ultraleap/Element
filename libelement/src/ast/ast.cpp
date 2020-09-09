@@ -891,7 +891,8 @@ element_result element_parser_ctx::parse_item(size_t* tindex, element_ast* ast)
             tokenlist_advance(tokeniser, tindex);
             ELEMENT_OK_OR_RETURN(parse_constraint(tindex, ast, flags));
         } else {
-            if (tokeniser->text(token) == "function")
+            //consume "function" token ONLY if "intrinsic" qualifier precedes it
+            if (tokeniser->text(token) == "function" && (flags & ELEMENT_AST_FLAG_DECL_INTRINSIC) == ELEMENT_AST_FLAG_DECL_INTRINSIC)
                 tokenlist_advance(tokeniser, tindex);
 
             ELEMENT_OK_OR_RETURN(parse_function(tindex, ast, flags));
