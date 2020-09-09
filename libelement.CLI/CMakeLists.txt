@@ -44,7 +44,7 @@ set_target_properties(libelement_cli PROPERTIES
 add_custom_command (
 	TARGET libelement_cli POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	"${CMAKE_SOURCE_DIR}/../Common"
+	"${CMAKE_SOURCE_DIR}/../ContentFiles"
 	"${debug_dir}")
 
 target_include_directories(${CMAKE_PROJECT_NAME}

@@ -18,7 +18,7 @@ namespace Laboratory.Tests.L3.Prelude
 			TestCase("Num(0.1)", "0.1"),
 			TestCase("Num(-0.1)", "-0.1")
 		]
-		public void Construct(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+		public void Construct(string expression, string expected) => AssertApproxEqual(ValidatedCompilerInput, expected, expression);
 
 		
 		#region Random
@@ -41,14 +41,14 @@ namespace Laboratory.Tests.L3.Prelude
 		// 	AssertApproxEqual(ValidatedCompilationInput,
 		// 		string.Format(functionPair.ElementFunction, arg0),
 		// 		new[]{functionPair.CLRFunction(arg0)});
-
-		[Test, Pairwise]
-		public void UnaryMathOpRandom([ValueSource(nameof(_unaryOpTestValues))]
-		                              (string ElementFunction, Func<float, float> CLRFunction) functionPair,
-		                              [Random(-1.0e6f, 1.0e6f, 5)] float arg0) =>
-			AssertApproxEqual(ValidatedCompilerInput,
-				string.Format(functionPair.ElementFunction, arg0),
-				new[]{functionPair.CLRFunction(arg0)});
+		//
+		// [Test, Pairwise]
+		// public void UnaryMathOpRandom([ValueSource(nameof(_unaryOpTestValues))]
+		//                               (string ElementFunction, Func<float, float> CLRFunction) functionPair,
+		//                               [Random(-1.0e6f, 1.0e6f, 5)] float arg0) =>
+		// 	AssertApproxEqual(ValidatedCompilerInput,
+		// 		string.Format(functionPair.ElementFunction, arg0),
+		// 		new[]{functionPair.CLRFunction(arg0)});
 
 		private static (string ElementFunction, Func<float, float, float> CLRFunction)[] _binaryOpMap =
 		{

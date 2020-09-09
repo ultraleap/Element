@@ -205,7 +205,7 @@ ENDIF()
 add_custom_command (
 	TARGET libelement POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	"${CMAKE_CURRENT_SOURCE_DIR}/../Common"
+	"${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
 	"${debug_dir}")
 
 target_include_directories(libelement
@@ -250,7 +250,7 @@ if (BUILD_TESTING)
     add_custom_command (
             TARGET libelement_test_app POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/../Common"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
             "${debug_dir}")
 
     if(CODE_COVERAGE)
