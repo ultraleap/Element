@@ -108,11 +108,14 @@ namespace Element
         public string? Context { get; }
         public IReadOnlyCollection<TraceSite>? TraceStack { get; }
 
-        public override string ToString()
+        public override string ToString() => ToString(true);
+        
+        public string ToString(bool stackTrace)
         {
             if (_message == null)
             {
-                if (MessageCode.HasValue || TraceStack?.Count > 0)
+                var includingStackTrace = stackTrace && TraceStack?.Count > 0;
+                if (MessageCode.HasValue || includingStackTrace)
                 {
                     var builder = new StringBuilder();
                     if (MessageCode.HasValue)
@@ -124,7 +127,7 @@ namespace Element
                     }
 
                     builder.Append(Context);
-                    if (TraceStack?.Count > 0)
+                    if (includingStackTrace)
                     {
                         builder.AppendLine();
                         builder.AppendLine("Element source trace:");

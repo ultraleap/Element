@@ -20,3 +20,8 @@ factorialExpressionBodied(a:Num):Num = for({i = a, v = 1},
                                      _(tup):Bool = tup.i.gt(0),
                                      _(tup) = {i = tup.i.sub(1), v = tup.v.mul(tup.i)})
                                  .v
+
+struct MyStruct(vector:Vector3)
+makeMyStruct(a:Num) = MyStruct(Vector3(a, a, a))
+predicate(a:MyStruct):Bool = false
+iterateWithMyStruct(a:Num) = for(makeMyStruct(a), predicate, _(a) = a).vector.add(Vector3(5, 5, 5)).x
