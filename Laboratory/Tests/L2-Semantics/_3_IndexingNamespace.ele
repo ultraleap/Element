@@ -44,3 +44,5 @@ namespace X
         c = Z.x
     }
 }
+
+generate_anonymous_block(a, b) = { c = a, d = b } 

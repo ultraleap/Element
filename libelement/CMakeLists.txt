@@ -99,6 +99,8 @@ set(libelement_sources
     "src/object_model/expressions/indexing_expression.hpp"
     "src/object_model/expressions/literal_expression.cpp"
     "src/object_model/expressions/literal_expression.hpp"
+    "src/object_model/expressions/anonymous_block_expression.cpp"
+    "src/object_model/expressions/anonymous_block_expression.hpp"
 
     "src/object_model/intermediaries/declaration_wrapper.cpp"
     "src/object_model/intermediaries/declaration_wrapper.hpp"

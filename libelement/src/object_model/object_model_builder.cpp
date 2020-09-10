@@ -19,6 +19,7 @@
 #include "intrinsics/intrinsic.hpp"
 #include "log_errors.hpp"
 #include "ast/ast_internal.hpp"
+#include "expressions/anonymous_block_expression.hpp"
 
 namespace element
 {
@@ -95,7 +96,7 @@ namespace element
         }
     }
 
-    void build_inputs_output(const element_interpreter_ctx* context, element_ast* ast, declaration& declaration, element_result& output_result, int type)
+    void build_inputs_output(const element_interpreter_ctx* context, const element_ast* const ast, declaration& declaration, element_result& output_result, int type)
     {
         element_ast* inputs = nullptr;
         element_ast* output = nullptr;
@@ -173,7 +174,7 @@ namespace element
         auto lambda_function_decl = std::make_unique<function_declaration>(identifier, parent_scope, get_function_kind(lambda_body, false));
         assign_source_information(context, lambda_function_decl, expression);
 
-        build_inputs_output(context, (element_ast *) expression, *lambda_function_decl, output_result, ELEMENT_AST_NODE_LAMBDA);
+        build_inputs_output(context, expression, *lambda_function_decl, output_result, ELEMENT_AST_NODE_LAMBDA);
 
         if (lambda_body->type == ELEMENT_AST_NODE_SCOPE)
         {
@@ -236,7 +237,13 @@ namespace element
         build_inputs_output(context, decl, *function_decl, output_result, ELEMENT_AST_NODE_FUNCTION);
 
         
-        if (body->type == ELEMENT_AST_NODE_SCOPE)
+        const auto scope_bodied = body->type == ELEMENT_AST_NODE_SCOPE;
+        const auto expression_bodied= body->type == ELEMENT_AST_NODE_CALL
+            || body->type == ELEMENT_AST_NODE_LITERAL
+            || body->type == ELEMENT_AST_NODE_LAMBDA
+            || body->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK;
+
+        if (scope_bodied)
         {
             assert(!intrinsic);
             build_scope(context, body, *function_decl, output_result);
@@ -251,7 +258,7 @@ namespace element
 
             function_decl->body = return_func;
         }
-        else if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL || body->type == ELEMENT_AST_NODE_LAMBDA)
+        else if (expression_bodied)
         {
             assert(!intrinsic);
             if (!function_decl->our_scope)
@@ -398,6 +405,31 @@ namespace element
         return std::move(call_expr);
     }
 
+    std::unique_ptr<expression> build_anonymous_block_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    {
+        assert(chain);
+        assert(chain->declarer);
+
+        if (ast->type != ELEMENT_AST_NODE_ANONYMOUS_BLOCK)
+        {
+            output_result = ELEMENT_ERROR_UNKNOWN;
+            return nullptr;
+        }
+
+        auto anonymous_block_expr = std::make_unique<anonymous_block_expression>(chain);
+        for (const auto& child : ast->children)
+        {
+            auto declaration = build_declaration(context, child.get(), anonymous_block_expr->our_scope.get(), output_result);
+            const auto is_added = anonymous_block_expr->our_scope->add_declaration(std::move(declaration));
+            if(!is_added)
+            {
+                //todo: error
+            }
+        }
+
+        return std::move(anonymous_block_expr);
+    }
+
     std::unique_ptr<expression_chain> build_expression_chain(const element_interpreter_ctx* context, const element_ast* const ast, const declaration* declarer, deferred_expressions& deferred_expressions, element_result& output_result)
     {
         auto chain = std::make_unique<expression_chain>(declarer);
@@ -414,6 +446,13 @@ namespace element
             assign_source_information(context, expression, ast);
             chain->expressions.push_back(std::move(expression));
             deferred_expressions.push_back({ identifier, ast });
+            return std::move(chain);
+        }
+
+        if (ast->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK) {
+
+            auto anonymous_block = build_anonymous_block_expression(context, ast, chain.get(), output_result);
+            chain->expressions.push_back(std::move(anonymous_block));
             return std::move(chain);
         }
 

@@ -22,8 +22,8 @@ namespace element
                                                             const source_information& source_info) const override;
 
         const declaration* declarer;
-        std::vector<std::unique_ptr<expression>> expressions;
         mutable capture_stack captures;
+        std::vector<std::unique_ptr<expression>> expressions;
     private:
     };
 }

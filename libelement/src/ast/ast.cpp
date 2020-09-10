@@ -518,6 +518,9 @@ element_result element_parser_ctx::parse_expression(size_t* tindex, element_ast*
     if (token->type == ELEMENT_TOK_UNDERSCORE)
         return parse_lambda(tindex, ast);
 
+    if (token->type == ELEMENT_TOK_BRACEL)
+        return parse_anonymous_block(tindex, ast);
+
     return log_error(
         logger.get(),
         src_context.get(),
@@ -648,12 +651,41 @@ element_result element_parser_ctx::parse_scope(size_t* tindex, element_ast* ast)
         TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, token);
 
     ast->nearest_token = token;
-    ast->type = ELEMENT_AST_NODE_SCOPE;
+    ast->type =ELEMENT_AST_NODE_SCOPE;
     while (token->type != ELEMENT_TOK_BRACER) {
         element_ast* item = ast_new_child(ast);
         item->nearest_token = token;
         ELEMENT_OK_OR_RETURN(parse_item(tindex, item));
         GET_TOKEN(tokeniser, *tindex, token);
+    }
+    tokenlist_advance(tokeniser, tindex);
+    return ELEMENT_OK;
+}
+
+element_result element_parser_ctx::parse_anonymous_block(size_t* tindex, element_ast* ast)
+{
+    const element_token* token;
+    GET_TOKEN(tokeniser, *tindex, token);
+    if (token->type == ELEMENT_TOK_BRACEL)
+        TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, token);
+
+    ast->nearest_token = token;
+    ast->type = ELEMENT_AST_NODE_ANONYMOUS_BLOCK;
+
+    while (token->type != ELEMENT_TOK_BRACER) {
+        element_ast* item = ast_new_child(ast);
+        item->nearest_token = token;
+        ELEMENT_OK_OR_RETURN(parse_item(tindex, item));
+
+        GET_TOKEN(tokeniser, *tindex, token);
+        if (token->type != ELEMENT_TOK_BRACER && token->type != ELEMENT_TOK_COMMA)
+            return ELEMENT_ERROR_MISSING_COMMA_IN_ANONYMOUS_BLOCK;
+
+        if(token->type == ELEMENT_TOK_COMMA)
+        {
+            tokenlist_advance(tokeniser, tindex);
+            GET_TOKEN(tokeniser, *tindex, token);
+        }
     }
     tokenlist_advance(tokeniser, tindex);
     return ELEMENT_OK;
