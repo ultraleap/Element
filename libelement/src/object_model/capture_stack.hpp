@@ -13,19 +13,20 @@ namespace element
     public:
         struct frame
         {
-            const declaration* function;
+            const scope* current_scope;
+            const std::vector<port>* parameters;
             std::vector<object_const_shared_ptr> compiled_arguments;
         };
 
         capture_stack() = default;
-        capture_stack(const declaration* function, const call_stack& calls);
 
-        void push(const declaration* function, std::vector<object_const_shared_ptr> compiled_arguments);
+        void push(const scope* local_scope, const std::vector<port>* parameters, std::vector<object_const_shared_ptr> compiled_arguments);
+        void push(const declaration& declaration, std::vector<object_const_shared_ptr> compiled_arguments);
         void pop();
-        [[nodiscard]] object_const_shared_ptr find(const scope* s,
+        [[nodiscard]] object_const_shared_ptr find(const scope* local_scope,
                                                    const identifier& name,
                                                    const compilation_context& context,
-                                                   const source_information& source_info);
+                                                   const source_information& source_info) const;
 
         //todo: private
         std::vector<frame> frames;

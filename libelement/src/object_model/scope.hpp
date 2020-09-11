@@ -13,7 +13,7 @@ namespace element
     class scope final : public object
     {
     public:
-        scope(const scope* parent_scope, const declaration* declarer);
+        scope(const scope* parent_scope, const object* declaration_or_expression);
 
         [[nodiscard]] const declaration* find(const identifier& name, bool recurse) const;
         [[nodiscard]] bool is_root() const { return parent_scope == nullptr; }
@@ -29,7 +29,8 @@ namespace element
         element_result merge(std::unique_ptr<scope>&& other);
 
         //todo: private
-        const declaration* const declarer;
+        //const declaration* const declarer;
+        const object* declaration_or_expression;
 
     private:
         const scope* parent_scope = nullptr;

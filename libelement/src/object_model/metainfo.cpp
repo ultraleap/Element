@@ -29,7 +29,7 @@ std::string constraint::typeof_info() const
 
 std::string scope::typeof_info() const
 {
-    return declarer->typeof_info();
+    return "";
 }
 
 std::string struct_declaration::typeof_info() const

@@ -43,7 +43,7 @@ namespace element
         std::string qualifier;
         const identifier name;
         std::vector<port> inputs;
-        std::unique_ptr<scope> our_scope; //needed to merge object model
+        std::unique_ptr<scope> our_scope;
         std::optional<port> output;
 
     protected:
