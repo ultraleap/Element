@@ -27,29 +27,33 @@ std::string constraint::typeof_info() const
     return declarer->location() + ":Constraint";
 }
 
-std::string scope::typeof_info() const
-{
-    return "";
-}
-
 std::string struct_declaration::typeof_info() const
 {
-    return location() + ":Struct";
+    return is_intrinsic() ? "IntrinsicStruct" : "CustomStruct";
 }
 
 std::string constraint_declaration::typeof_info() const
 {
-    return location() + ":Constraint";
+    return is_intrinsic() ? "IntrinsicConstraint" : "FunctionConstraint"; //Might have more constraints later... derived types could handle this function return value instead
 }
 
 std::string function_declaration::typeof_info() const
 {
-    return location() + ":Function";
+    switch(function_kind)
+    {
+    case kind::intrinsic:
+        return "IntrinsicFunction";
+    case kind::scope_bodied:
+        return "ScopeBodiedFunction";
+    case kind::expression_bodied:
+        return "ExpressionBodiedFunction";
+    }
+    return {};
 }
 
 std::string namespace_declaration::typeof_info() const
 {
-    return location() + ":Namespace";
+    return "Namespace";
 }
 
 std::string expression_chain::typeof_info() const
@@ -60,14 +64,12 @@ std::string expression_chain::typeof_info() const
 
 std::string struct_instance::typeof_info() const
 {
-    return "Instance:" + declarer->typeof_info();
+    return declarer->name.value;
 }
 
 std::string function_instance::typeof_info() const
 {
-    //todo: element test expects Function, not FunctionInstance
-    //return declarer->location() + ":FunctionInstance";
-    return declarer->location() + ":Function";
+    return provided_arguments.empty() ? declarer->typeof_info() : "AppliedFunction";
 }
 
 std::string intrinsic::typeof_info() const
@@ -76,17 +78,17 @@ std::string intrinsic::typeof_info() const
     return "";
 }
 
-std::string type::typeof_info() const
-{
-    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
-    return declarer->location() + ":Type";
-}
-
-std::string error::typeof_info() const
-{
-    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
-    return "Error: " + message;
-}
+//std::string type::typeof_info() const
+//{
+//    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+//    return declarer->location() + ":Type";
+//}
+//
+//std::string error::typeof_info() const
+//{
+//    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+//    return "Error: " + message;
+//}
 
 std::string element_expression::typeof_info() const
 {
@@ -265,43 +267,7 @@ std::string scope::to_code(int depth) const
     return "\n" + scope_offset + "{\n" + code + "\n" + scope_offset + "}";
 }
 
-std::string struct_instance::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
-std::string function_instance::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
 std::string type_annotation::to_code() const
 {
     return ":" + name.value;
-}
-
-std::string intrinsic::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
-std::string type::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
-std::string error::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
-std::string element_expression::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
 }

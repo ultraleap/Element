@@ -13,7 +13,6 @@ namespace element
         explicit struct_instance(const struct_declaration* declarer, const std::vector<object_const_shared_ptr>& expressions);
 
         [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth = 0) const override;
 
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;
@@ -93,7 +92,7 @@ namespace element
             }
 
             assert(!"wasn't a num, bool, or stuct, so probably a HOF. not serialisable, caller should check");
-            clone->fields.try_emplace(name, std::make_shared<const error>("wasn't a num, bool, or stuct, so probably a HOF. not serialisable, caller should check", ELEMENT_ERROR_UNKNOWN, source_information{}));
+            clone->fields.try_emplace(name, std::make_shared<const error>("wasn't a num, bool, or struct, so probably a HOF. not serialisable, caller should check", ELEMENT_ERROR_UNKNOWN, source_information{}));
         }
 
         return clone;

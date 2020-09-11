@@ -15,9 +15,6 @@ namespace element
             source_info = std::move(src_info);
         }
 
-        [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth) const override;
-
         [[nodiscard]] object_const_shared_ptr index(const compilation_context& context,
                                                     const identifier& name,
                                                     const source_information& source_info) const override { return shared_from_this(); };

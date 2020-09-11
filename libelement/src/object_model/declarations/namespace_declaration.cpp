@@ -11,7 +11,6 @@ namespace_declaration::namespace_declaration(identifier name, const scope* paren
     : declaration(std::move(name), parent_scope)
 {
     qualifier = namespace_qualifier;
-    _intrinsic = false;
 }
 
 object_const_shared_ptr namespace_declaration::index(
@@ -29,4 +28,9 @@ object_const_shared_ptr namespace_declaration::index(
     }
 
     throw;
+}
+
+bool namespace_declaration::is_intrinsic() const
+{
+    return false;
 }

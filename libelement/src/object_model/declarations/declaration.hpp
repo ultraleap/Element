@@ -24,7 +24,7 @@ namespace element
         [[nodiscard]] bool has_output() const { return output.has_value(); };
         [[nodiscard]] bool has_constraint() const { return false; }; //TODO: JM - nonsense, this needs to be a constraint::something OR constraint::any
         [[nodiscard]] bool has_scope() const;
-        [[nodiscard]] bool is_intrinsic() const { return _intrinsic; }
+        [[nodiscard]] bool virtual is_intrinsic() const = 0;
         [[nodiscard]] virtual bool is_variadic() const { return false; };
         [[nodiscard]] const std::vector<port>& get_inputs() const override { return inputs; }
         [[nodiscard]] const scope* get_scope() const override { return our_scope.get(); };
@@ -47,7 +47,6 @@ namespace element
         std::optional<port> output;
 
     protected:
-        bool _intrinsic = false; //todo: we need to decide on coding standards, if our types are lowercase like our variables and functions, we need some way to differentiate them
         //the wrapper is used to return declarations within the object model
         std::shared_ptr<const declaration_wrapper> wrapper;
     };

@@ -13,7 +13,7 @@ compilation_context::compilation_context(const scope* const scope, element_inter
     , global_scope{ scope }
     , compiler_scope(std::make_unique<element::scope>(global_scope, nullptr))
 {
-    auto list_indexer = std::make_unique<function_declaration>(identifier{ "@list_indexer" }, compiler_scope.get(), true);
+    auto list_indexer = std::make_unique<function_declaration>(identifier{ "@list_indexer" }, compiler_scope.get(), function_declaration::kind::intrinsic);
     auto input_port = port(list_indexer.get(), identifier{ "i" }, std::make_unique<type_annotation>(identifier{ "Num" }));
     list_indexer->inputs.push_back(std::move(input_port));
     bool success = intrinsic::register_intrinsic<function_declaration>(interpreter, nullptr, *list_indexer);

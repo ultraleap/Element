@@ -19,5 +19,7 @@ namespace element
         //todo: required because typeof does compilation, might need to change that?
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
                                                       const source_information& source_info) const override { return wrapper; }
+
+        [[nodiscard]] bool is_intrinsic() const override;
     };
 }

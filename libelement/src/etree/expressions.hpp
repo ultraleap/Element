@@ -43,7 +43,6 @@ public:
     [[nodiscard]] const element::constraint* get_constraint() const final { return actual_type; };
 
     [[nodiscard]] std::string typeof_info() const override;
-    [[nodiscard]] std::string to_code(int depth = 0) const override;
 
     [[nodiscard]] std::shared_ptr<const element_expression> to_expression() const final { return shared_from_this(); };
 

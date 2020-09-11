@@ -25,7 +25,7 @@ namespace element
         [[nodiscard]] bool serializable(const compilation_context& context) const { return declarer->serializable(context); }
         [[nodiscard]] bool deserializable(const compilation_context& context) const { return declarer->deserializable(context); }
         [[nodiscard]] object_const_shared_ptr generate_placeholder (const compilation_context& context, int& placeholder_index) const { return declarer->generate_placeholder(context, placeholder_index); }
-        [[nodiscard]] std::string location() const { return declarer->location(); }
+        //[[nodiscard]] std::string location() const { return declarer->location(); }
         
         [[nodiscard]] object_const_shared_ptr index(const compilation_context& context,
                                                     const identifier& name,

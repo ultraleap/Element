@@ -12,12 +12,12 @@
 
 using namespace element;
 
-struct_declaration::struct_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
+struct_declaration::struct_declaration(identifier name, const scope* parent_scope, const kind struct_kind)
     : declaration(name, parent_scope)
     , type(std::make_unique<user_type>(std::move(name), this))
+    , struct_kind(struct_kind)
 {
     qualifier = struct_qualifier;
-    _intrinsic = is_intrinsic;
 }
 
 object_const_shared_ptr struct_declaration::index(
@@ -144,4 +144,9 @@ object_const_shared_ptr struct_declaration::generate_placeholder(const compilati
     }
 
     return call(context, std::move(placeholder_inputs), {});
+}
+
+bool struct_declaration::is_intrinsic() const
+{
+    return struct_kind == kind::intrinsic;
 }

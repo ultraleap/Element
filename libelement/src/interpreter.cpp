@@ -579,7 +579,7 @@ element_result element_interpreter_compile_expression(
 
     //todo: urgh, this is horrible now...
     element::deferred_expressions deferred_expressions;
-    auto dummy_declaration = std::make_unique<element::function_declaration>(element::identifier{ "<REMOVE>" }, context->global_scope.get(), false);
+    auto dummy_declaration = std::make_unique<element::function_declaration>(element::identifier{ "<REMOVE>" }, context->global_scope.get(), element::function_declaration::kind::expression_bodied);
     parser.root->nearest_token = &tokeniser->tokens[0];
     element::assign_source_information(context, dummy_declaration, parser.root);
     auto expression_chain = element::build_expression_chain(context, ast, dummy_declaration.get(), deferred_expressions, result);
