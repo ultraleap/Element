@@ -33,5 +33,9 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("Any.a")]
         [TestCase("add.b")]
         public void IndexingNonIndexable(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.NotIndexable, expression);
+        
+        [TestCase("makeAnonymousBlock(5, 10).a",  "5")]
+        [TestCase("makeAnonymousBlock(5, 10).b",  "10")]
+        public void IndexAnonymousBlock(string expression, string expected) => AssertApproxEqual(CompilerInput, expression, expected);
     }
 }

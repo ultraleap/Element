@@ -15,3 +15,15 @@ recurse(a) = recurse(a)
 
 recurseIndirect(a) = recurseIndirectOther(a)
 recurseIndirectOther(a) = recurseIndirect(a)
+
+selfReferencingLocalWithOuter
+{
+    pi = pi # Skips direct recursion and refers to pi in the outer scope
+    return = pi
+}
+
+selfReferencingLocal
+{
+    loc = loc
+    return = loc
+}

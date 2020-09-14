@@ -51,3 +51,13 @@ usePartiallyAppliedFunctionMultipleTimes
     twenty = add5(15)
     return = Num.add(fifteen, twenty)
 }
+
+cyclicLocalFunction
+{
+    a = cyclicLocalFunction
+    return = a
+}
+
+# In a slightly more readable form this is: a(b = _(b = a) = b) = b
+# The function takes in 1 argument which has a default value referring to the declaration making it a cyclic reference
+cyclicDefault(input = _(cyclicDefault = cyclicDefault) = cyclicDefault) = input

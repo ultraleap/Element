@@ -31,6 +31,10 @@ namespace Laboratory.Tests.L2.Semantics
         public void RecursionDirectDisallowed() => EvaluateExpectingErrorCode(CompilerInput, MessageCode.RecursionNotAllowed, "recurse(5)");
         [Test]
         public void RecursionIndirectDisallowed() => EvaluateExpectingErrorCode(CompilerInput, MessageCode.RecursionNotAllowed, "recurseIndirect(5)");
+        [Test]
+        public void SelfReferencingLocalWithOuter() => AssertApproxEqual(CompilerInput, "selfReferencingLocalWithOuter", "3.14");
+        [Test]
+        public void SelfReferencingLocal() => EvaluateExpectingErrorCode(CompilerInput, MessageCode.RecursionNotAllowed, "selfReferencingLocal");
         
         [TestCase("add", "IntrinsicFunction")]
         [TestCase("addThree", "ExpressionBodiedFunction")]

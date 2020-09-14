@@ -13,12 +13,14 @@ namespace Element.AST
         
         protected IReadOnlyList<(Identifier Identifier, IValue Value)> MakeNamedArgumentList(IReadOnlyList<IValue> arguments)
         {
+            if (arguments.Count < 1) return Array.Empty<(Identifier Identifier, IValue Value)>();
+            
             var namedArguments = new List<(Identifier Identifier, IValue Value)>(InputPorts.Count);
 
             for (var i = 0; i < arguments.Count; i++)
             {
                 var arg = arguments[i];
-                var port = InputPorts[i]; 
+                var port = InputPorts[i];
                 
                 if (port?.Identifier.HasValue ?? false) // Ignore adding ports without identifier - they are discards
                 {

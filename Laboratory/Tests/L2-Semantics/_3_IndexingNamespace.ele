@@ -44,3 +44,5 @@ namespace X
         c = Z.x
     }
 }
+
+makeAnonymousBlock(a, b) = { a = a, b = b }

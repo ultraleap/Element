@@ -25,6 +25,11 @@ namespace Element.AST
 
         public Result<IValue> Resolve(IScope scope, Context context)
         {
+            if (context.DeclarationStack.Contains(this))
+            {
+                return context.Trace(MessageCode.RecursionNotAllowed, $"{this} has self-referencing implementation");
+            }
+            
             context.DeclarationStack.Push(this);
             context.TraceStack.Push(this.MakeTraceSite(ToString()));
             var result = Validate(context).Bind(() => ResolveImpl(scope, context));
