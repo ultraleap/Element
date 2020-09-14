@@ -21,7 +21,7 @@ namespace element
         [[nodiscard]] const scope* get_global() const;
         [[nodiscard]] const scope* get_parent_scope() const { return parent_scope; }
 
-        [[nodiscard]] std::string location() const;
+        //[[nodiscard]] std::string location() const;
         [[nodiscard]] std::string to_code(int depth = -1) const override;
 
         [[nodiscard]] bool add_declaration(std::unique_ptr<declaration> declaration);
@@ -29,7 +29,7 @@ namespace element
 
         //todo: private
         //const declaration* const declarer;
-        const object* declaration_or_expression;
+        //const object* declaration_or_expression;
 
     private:
         const scope* parent_scope = nullptr;

@@ -7,8 +7,8 @@
 using namespace element;
 
 scope::scope(const scope* parent_scope, const object* const declaration_or_expression)
-    : declaration_or_expression(declaration_or_expression)
-    , parent_scope(parent_scope)
+    : /*declaration_or_expression(declaration_or_expression)
+    ,*/ parent_scope(parent_scope)
 {
 }
 
@@ -30,31 +30,31 @@ element_result scope::merge(std::unique_ptr<scope>&& other)
     return ELEMENT_OK;
 }
 
-std::string scope::location() const
-{
-    if (!declaration_or_expression)
-        return "Not available";
-
-    if (const auto* decl = dynamic_cast<const declaration*>(declaration_or_expression))
-    {
-        return decl->location();
-    }
-
-    //todo: location
-    if (const auto* expr = dynamic_cast<const expression*>(declaration_or_expression))
-    {
-        return *expr->source_info.line_in_source;
-    }
-
-    if (const auto* expr_chain = dynamic_cast<const expression_chain*>(declaration_or_expression))
-    {
-        return *expr_chain->source_info.line_in_source;
-    }
-
-    assert(false);
-    throw;
-    //return declaration_or_expression ? declaration_or_expression->location() : "Not available";
-}
+//std::string scope::location() const
+//{
+//    if (!declaration_or_expression)
+//        return "Not available";
+//
+//    if (const auto* decl = dynamic_cast<const declaration*>(declaration_or_expression))
+//    {
+//        return decl->location();
+//    }
+//
+//    //todo: location
+//    if (const auto* expr = dynamic_cast<const expression*>(declaration_or_expression))
+//    {
+//        return *expr->source_info.line_in_source;
+//    }
+//
+//    if (const auto* expr_chain = dynamic_cast<const expression_chain*>(declaration_or_expression))
+//    {
+//        return *expr_chain->source_info.line_in_source;
+//    }
+//
+//    assert(false);
+//    throw;
+//    //return declaration_or_expression ? declaration_or_expression->location() : "Not available";
+//}
 
 bool scope::add_declaration(std::unique_ptr<declaration> declaration)
 {
