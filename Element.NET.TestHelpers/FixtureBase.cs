@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace Element.NET.TestHelpers
 {
-    [TestFixture, Parallelizable(ParallelScope.All)]
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public abstract class FixtureBase
     {
         public const float FloatEpsilon = 1.19209e-5f;

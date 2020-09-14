@@ -4,7 +4,7 @@ using Element.AST;
 namespace Element
 {
     /// <summary>
-    /// Contains contextual information about the state of compilation.
+    /// Contains contextual information about the state of compilation including compiler options and current trace stack, call stack etc.
     /// </summary>
     public class Context
     {
@@ -34,7 +34,6 @@ namespace Element
         public Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
         public Stack<IValue> CallStack { get; } = new Stack<IValue>();
         public Stack<Declaration> DeclarationStack { get; } = new Stack<Declaration>();
-        public Stack<CompilerMessage> LookupErrorStack { get; } = new Stack<CompilerMessage>();
         
         public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
             Parser.Parse<TopLevelExpression>(new SourceInfo("<input expression>", expression), this, CompilerOptions.NoParseTrace)
