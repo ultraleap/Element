@@ -15,7 +15,7 @@ bool element::detail::register_errors()
     element::register_error<std::string>(
         error_message_code::not_callable,
         "failed to call '{}', it is not callable.",
-        ELEMENT_ERROR_UNKNOWN);
+        ELEMENT_ERROR_INVALID_CALL_NONFUNCTION);
 
     element::register_error<std::string>(
         error_message_code::not_compilable,

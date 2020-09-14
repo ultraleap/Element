@@ -48,11 +48,8 @@ namespace element
         if (ast->type == ELEMENT_AST_NODE_TYPENAME)
         {
             auto* const ident = ast->children[ast_idx::port::type].get();
-            if (ident->type != ELEMENT_AST_NODE_IDENTIFIER)
-            {
-                output_result = log_error(context, context->src_context.get(), ident, log_error_message_code::invalid_type_annotation, ast->parent->parent->identifier);
-                return nullptr;
-            }
+
+            //todo: make expression chain, it's not an identifier
 
             auto element = std::make_unique<type_annotation>(identifier(ident->identifier));
             assign_source_information(context, element, ast);

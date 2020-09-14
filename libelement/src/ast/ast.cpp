@@ -258,36 +258,17 @@ element_result element_parser_ctx::parse_typename(size_t* tindex, element_ast* a
     ast->nearest_token = tok;
     ast->type = ELEMENT_AST_NODE_TYPENAME;
 
-    if (tok->type != ELEMENT_TOK_IDENTIFIER) {
+    auto* expr = ast_new_child(ast);
+    element_result result = parse_expression(tindex, expr);
+    if (result != ELEMENT_OK)
+    {
+        //todo: change error from identifier to invalid expression
         return log_error(
             logger.get(),
             src_context.get(),
             ast,
             element::log_error_message_code::parse_typename_not_identifier,
             tokeniser->text(tok));
-    }
-
-    element_result result = ELEMENT_OK;
-
-    while (tok->type == ELEMENT_TOK_IDENTIFIER) {
-        element_ast* child = ast_new_child(ast);
-        child->type = ELEMENT_AST_NODE_IDENTIFIER;
-
-        const auto identifier_result = parse_identifier(tindex, child);
-        if (identifier_result != ELEMENT_OK)
-        {
-            if (result == ELEMENT_OK)
-                result = identifier_result;
-        }
-
-        GET_TOKEN(tokeniser, *tindex, tok);
-        child->nearest_token = tok;
-        if (tok->type == ELEMENT_TOK_DOT) {
-            TOKENLIST_ADVANCE_AND_UPDATE(tokeniser, tindex, tok);
-        }
-        else if(tok->type == ELEMENT_TOK_IDENTIFIER) {
-            break;
-        }
     }
 
     return result;
