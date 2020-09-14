@@ -18,6 +18,7 @@
 #include "scope.hpp"
 #include "error.hpp"
 #include "etree/expressions.hpp"
+#include "expressions/anonymous_block_expression.hpp"
 
 using namespace element;
 
@@ -237,6 +238,11 @@ std::string call_expression::to_code(int depth) const
 std::string indexing_expression::to_code(int depth) const
 {
     return "." + name.value;
+}
+
+std::string anonymous_block_expression::to_code(int depth) const
+{
+    return "todo";
 }
 
 std::string port::to_code(int) const
