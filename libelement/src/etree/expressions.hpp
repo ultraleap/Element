@@ -77,6 +77,9 @@ struct element_expression_constant final : public element_expression
 
     explicit element_expression_constant(element_value val);
 
+    [[nodiscard]] virtual element::object_const_shared_ptr call(const element::compilation_context& context,
+                                                                std::vector<element::object_const_shared_ptr> compiled_args,
+                                                                const element::source_information& source_info) const;
     [[nodiscard]] element_value value() const { return m_value; }
     [[nodiscard]] size_t get_size() const override { return 1; }
 private:
