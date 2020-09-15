@@ -10,7 +10,7 @@ bool element::detail::register_errors()
     element::register_error<std::string>(
         error_message_code::not_indexable,
         "failed to index '{}', it is not indexable.",
-        ELEMENT_ERROR_UNKNOWN);
+        ELEMENT_ERROR_NOT_INDEXABLE);
 
     element::register_error<std::string>(
         error_message_code::not_callable,
