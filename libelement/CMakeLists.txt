@@ -286,6 +286,18 @@ if (BUILD_TESTING)
     endif()
 endif ()
 
+find_program(CLANG_FORMAT clang-format)
+if(CLANG_FORMAT)
+    find_package(Python)
+    add_custom_target(clang-check
+            COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/run-clang-format.py -r ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/test
+            COMMENT "Checking src & test folder against clang format styling.")
+
+    add_custom_target(clang-format
+            COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/run-clang-format.py -i -r ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/test
+            COMMENT "Formatting src & test folder to match clang format styling.")
+endif()
+
 target_compile_definitions(libelement
     PRIVATE
         ${LEGACY_COMPILER}
