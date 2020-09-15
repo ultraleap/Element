@@ -25,7 +25,8 @@ namespace element
 {
     //declarations
     void build_scope(const element_interpreter_ctx* context, const element_ast* ast, const declaration& declaration, element_result& output_result);
-    
+    void build_scope(const element_interpreter_ctx* context, const element_ast* ast, scope* our_scope, element_result& output_result);
+
     //definitions
     function_declaration::kind get_function_kind(const element_ast* const body, const bool intrinsic)
     {
@@ -414,15 +415,8 @@ namespace element
         }
 
         auto anonymous_block_expr = std::make_unique<anonymous_block_expression>(chain);
-        for (const auto& child : ast->children)
-        {
-            auto declaration = build_declaration(context, child.get(), anonymous_block_expr->our_scope.get(), output_result);
-            const auto is_added = anonymous_block_expr->our_scope->add_declaration(std::move(declaration));
-            if(!is_added)
-            {
-                //todo: error
-            }
-        }
+        anonymous_block_expr->our_scope = std::make_unique<scope>(chain->get_scope(), chain);
+        build_scope(context, ast, anonymous_block_expr->our_scope.get(), output_result);
 
         return std::move(anonymous_block_expr);
     }
