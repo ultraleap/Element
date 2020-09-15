@@ -384,7 +384,7 @@ element_result element_interpreter_find(element_interpreter_ctx* context, const 
     if (!decl)
     {
         *declaration = nullptr;
-        context->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("failed to find '{}'.", path));
+        context->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("API - failed to find '{}'.", path));
         return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND;
     }
 

@@ -110,6 +110,8 @@ set(libelement_sources
     "src/object_model/intermediaries/struct_instance.hpp"
     "src/object_model/intermediaries/list_wrapper.cpp"
     "src/object_model/intermediaries/list_wrapper.hpp"
+    "src/object_model/intermediaries/anonymous_block_instance.cpp"
+    "src/object_model/intermediaries/anonymous_block_instance.hpp"
 
     "src/object_model/intrinsics/intrinsic.cpp"
     "src/object_model/intrinsics/intrinsic.hpp"

@@ -3,6 +3,7 @@
 //SELF
 #include "object_model/declarations/declaration.hpp"
 #include "object_model/expressions/expression_chain.hpp"
+#include "object_model/error.hpp"
 
 using namespace element;
 

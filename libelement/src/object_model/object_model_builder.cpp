@@ -407,6 +407,7 @@ namespace element
     {
         assert(chain);
         assert(chain->declarer);
+        assert(chain->get_scope());
 
         if (ast->type != ELEMENT_AST_NODE_ANONYMOUS_BLOCK)
         {

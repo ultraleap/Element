@@ -10,7 +10,7 @@
 
 namespace element
 {
-    class scope final : public object
+    class scope final : public object, public std::enable_shared_from_this<scope>
     {
     public:
         scope(const scope* parent_scope, const object* declaration_or_expression);

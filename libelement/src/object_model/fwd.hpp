@@ -22,9 +22,12 @@ namespace element
     class identifier_expression;
     class indexing_expression;
     class call_expression;
+    class anonymous_block_expression;
 
     class struct_instance;
     class function_instance;
+    class anonymous_block_instance;
+    class declaration_wrapper;
 
     class declaration;
     class struct_declaration;
@@ -53,5 +56,4 @@ namespace element
     class source_information;
     class call_stack;
     class capture_stack;
-    class declaration_wrapper;
 }
