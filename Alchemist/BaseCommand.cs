@@ -57,7 +57,7 @@ namespace Alchemist
 				}
 				catch (Exception e)
 				{
-					Log(e.ToString(), MessageLevel.Error);
+					Log(e.ToString(), level: MessageLevel.Error);
 				}
 			}
 
@@ -71,7 +71,7 @@ namespace Alchemist
 				}
 				catch (Exception e)
 				{
-					Log(e.ToString(), MessageLevel.Error);
+					Log(e.ToString(), level: MessageLevel.Error);
 				}
 			}
 
@@ -92,7 +92,7 @@ namespace Alchemist
 			return result.IsSuccess ? 0 : 1;
 		}
 
-		private void Log(string message, MessageLevel? level = default) => Log(new CompilerMessage(message, level));
+		private void Log(string message, string messageType = "", MessageLevel? level = default) => Log(new CompilerMessage(message, messageType, level));
 
 		private void Log(CompilerMessage message)
 		{
