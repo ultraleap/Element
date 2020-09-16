@@ -303,6 +303,97 @@ std::string expression_to_string(const element_expression& expression, std::size
     return string;
 }
 
+std::string ast_to_code(const element_ast* node, const element_ast* parent)
+{
+    std::string string;
+
+    if (node->type == ELEMENT_AST_NODE_LITERAL) {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION || parent->type == ELEMENT_AST_NODE_LAMBDA) {
+            string += " = ";
+        }
+        string += fmt::format("{}", node->literal);
+    }
+    else if (node->type == ELEMENT_AST_NODE_IDENTIFIER) {
+        string += node->identifier;
+    }
+    else if (node->type == ELEMENT_AST_NODE_TYPENAME) {
+        string += ":";
+    }
+    else if (node->type == ELEMENT_AST_NODE_DECLARATION) {
+        if (node->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
+            string += "intrinsic ";
+        }
+        if (parent->type == ELEMENT_AST_NODE_CONSTRAINT) {
+            string += "constraint ";
+        }
+        string += node->identifier;
+    }
+    else if (node->type == ELEMENT_AST_NODE_PORTLIST || node->type == ELEMENT_AST_NODE_EXPRLIST) {
+        // Create string for port list
+        std::string port_string = "(";
+
+        for (int i = 0; i <= node->children.size()-1; i++)
+        {
+            port_string += ast_to_code(node->children[i].get(), node);
+            if (i != node->children.size()-1) {
+                port_string += ", ";
+            }
+        }
+
+        // Add closing brace
+        port_string += ")";
+        string += port_string;
+    }
+    else if (node->type == ELEMENT_AST_NODE_PORT) {
+        string += node->identifier;
+    }
+    else if (node->type == ELEMENT_AST_NODE_STRUCT) {
+        string += "struct ";
+    }
+    else if (node->type == ELEMENT_AST_NODE_CALL){
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION) {
+            string += " = ";
+        }
+        else if (parent->type == ELEMENT_AST_NODE_CALL) {
+            string += ".";
+        }
+        string += node->identifier;
+    }
+    else if (node->type == ELEMENT_AST_NODE_LAMBDA) {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION) {
+            string += " = ";
+        }
+        string += "_";
+    }
+    else if (node->type == ELEMENT_AST_NODE_NAMESPACE) {
+        string += fmt::format("namespace {} ", node->identifier);
+    }
+    else if (node->type == ELEMENT_AST_NODE_SCOPE) {
+        // Create string for scope
+        std::string scope_string = "{ ";
+
+        if (!node->children.empty()) {
+            for (int i = 0; i <= node->children.size()-1; i++)
+            {
+                scope_string += ast_to_code(node->children[i].get(), node);
+                // TODO: Remove hacky semicolon adding
+                scope_string += "; ";
+            }
+        }
+
+        // Add closing brace
+        scope_string += "}";
+        string += scope_string;
+    }
+
+    for (const auto& child: node->children)
+        if (child.get()->type != ELEMENT_AST_NODE_PORT && node->type != ELEMENT_AST_NODE_EXPRLIST && node->type != ELEMENT_AST_NODE_SCOPE) {
+            string += ast_to_code(child.get(), node);
+        }
+
+    return string;
+}
+
 void element_log_ctx::log(const element_tokeniser_ctx& context, element_result code, const std::string& message, int length, element_log_message* related_message) const
 {
     element_log_message msg;
