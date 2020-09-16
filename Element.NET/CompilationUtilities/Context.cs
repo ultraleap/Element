@@ -41,14 +41,14 @@ namespace Element
                   .Check(expressionObject => expressionObject.Validate(this))
                   .Bind(expressionObject => expressionObject.ResolveExpression(scopeToEvaluateIn ?? RootScope, this));
 
-        public CompilerMessage? Trace(MessageCode messageCode, string? contextString) =>
-            (CompilerMessage.TryGetMessageLevel(messageCode, out var level), level >= CompilerOptions.Verbosity) switch
+        public CompilerMessage? Trace(string messageType, int messageCode, string? contextString) =>
+            (CompilerMessage.TryGetMessageLevel(messageType, messageCode, out var level), level >= CompilerOptions.Verbosity) switch
             {
-                (true, true) => new CompilerMessage(messageCode, contextString, TraceStack),
+                (true, true) => new CompilerMessage(messageType, messageCode, contextString, TraceStack),
                 (true, false) => null, // No message should be produced 
-                (false, _) => new CompilerMessage(null, MessageLevel.Error, $"Couldn't get {nameof(MessageLevel)} for {messageCode}", null),
+                (false, _) => new CompilerMessage(messageType, null, MessageLevel.Error, $"Couldn't get {nameof(MessageLevel)} for {messageCode}", null),
             };
 
-        public CompilerMessage Trace(MessageLevel messageLevel, string message) => new CompilerMessage(null, messageLevel, message, TraceStack);
+        public CompilerMessage Trace(MessageLevel messageLevel, string message, string messageType = "") => new CompilerMessage(messageType, null, messageLevel, message, TraceStack);
     }
 }

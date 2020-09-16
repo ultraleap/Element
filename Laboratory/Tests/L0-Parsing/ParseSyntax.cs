@@ -53,7 +53,7 @@ namespace Laboratory.Tests.L0.Parsing
         }
 
         [TestCaseSource(nameof(GenerateParseTestData))]
-        public void Parse((FileInfo fileInfo, MessageCode? messageCode) info) => SyntaxTest(info, true);
+        public void Parse((FileInfo fileInfo, EleMessageCode? messageCode) info) => SyntaxTest(info, true);
         
         // TODO: Force consuming the whole text in all of these parsers
         // TODO: Make this test use an IHost so that it can test process hosts!

@@ -27,7 +27,7 @@ namespace Element.AST
         {
             if (context.DeclarationStack.Contains(this))
             {
-                return context.Trace(MessageCode.RecursionNotAllowed, $"{this} has self-referencing implementation");
+                return context.Trace(EleMessageCode.RecursionNotAllowed, $"{this} has self-referencing implementation");
             }
             
             context.DeclarationStack.Push(this);

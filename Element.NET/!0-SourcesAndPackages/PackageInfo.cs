@@ -27,7 +27,7 @@ namespace Element
 
         public static Result<PackageInfo> FromManifestFile(FileInfo manifestFile, Context context) =>
             !manifestFile.Extension.Equals(PackageManifest.FileExtension, StringComparison.OrdinalIgnoreCase)
-                ? context.Trace(MessageCode.FileAccessError, $"{manifestFile.Name} is not a valid package manifest, file extension should be {PackageManifest.FileExtension}")
+                ? context.Trace(EleMessageCode.FileAccessError, $"{manifestFile.Name} is not a valid package manifest, file extension should be {PackageManifest.FileExtension}")
                 : FromDirectory(manifestFile.Directory, context);
 
         public static Result<PackageInfo> FromDirectory(DirectoryInfo directoryInfo, Context context)
@@ -35,7 +35,7 @@ namespace Element
             var manifestFiles = directoryInfo.GetFiles($"*{PackageManifest.FileExtension}", SearchOption.TopDirectoryOnly);
             if (manifestFiles.Length != 1)
             {
-                return context.Trace(MessageCode.FileAccessError, "Package directory must have exactly 1 .bond file at root");
+                return context.Trace(EleMessageCode.FileAccessError, "Package directory must have exactly 1 .bond file at root");
             }
 
             return FromStrings(Path.GetFileNameWithoutExtension(manifestFiles[0].FullName), File.ReadAllText(manifestFiles[0].FullName),

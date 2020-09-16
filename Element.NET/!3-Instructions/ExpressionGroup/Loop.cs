@@ -33,7 +33,7 @@ namespace Element
 					if (dummyConditionResult is Constant c)
 					{
 						// ReSharper disable once PossibleUnintendedReferenceComparison
-						if (c == Constant.True) return context.Trace(MessageCode.InfiniteLoop, "Loop condition function always returns true");
+						if (c == Constant.True) return context.Trace(EleMessageCode.InfiniteLoop, "Loop condition function always returns true");
 						//if (c == Constant.False) return new BasicInstructionGroup(initialSerialized); // TODO: Implement compilation of BasicInstructionGroup and re-enable this, warn that loop is redundant
 					}
 
@@ -87,7 +87,7 @@ namespace Element
 								iterationCount++;
 								if (iterationCount > 100000)
 								{
-									return context.Trace(MessageCode.InfiniteLoop, "Iteration count exceeded 100000, likely to be an infinite loop");
+									return context.Trace(EleMessageCode.InfiniteLoop, "Iteration count exceeded 100000, likely to be an infinite loop");
 								}
 							}
 

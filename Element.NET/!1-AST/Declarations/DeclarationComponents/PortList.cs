@@ -23,12 +23,12 @@ namespace Element.AST
             foreach (var port in Ports.List)
             {
                 if (port.DefaultArgument != null) anyDefaultArgumentsSoFar = true;
-                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) builder.Append(MessageCode.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{context.DeclarationStack.Peek()}' is unreachable");
+                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) builder.Append(EleMessageCode.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{context.DeclarationStack.Peek()}' is unreachable");
                 port.Validate(builder, context);
                 if (!(port.Identifier is { } id)) continue;
                 if (!distinctPortIdentifiers.Add(id.String))
                 {
-                    builder.Append(MessageCode.MultipleDefinitions, $"'{context.DeclarationStack.Peek()}' has duplicate input ports named '{id}'");
+                    builder.Append(EleMessageCode.MultipleDefinitions, $"'{context.DeclarationStack.Peek()}' has duplicate input ports named '{id}'");
                 }
             }
         }
@@ -44,7 +44,7 @@ namespace Element.AST
             {
                 (true, false) => Array.Empty<ResolvedPort>(),
                 (_, true) => new Result<IReadOnlyList<ResolvedPort>>(new[] {ResolvedPort.VariadicPort}),
-                _ => context.Trace(MessageCode.MissingPorts, $"'{context.DeclarationStack.Peek()}' must have a port list")
+                _ => context.Trace(EleMessageCode.MissingPorts, $"'{context.DeclarationStack.Peek()}' must have a port list")
             };
     }
 }

@@ -71,10 +71,10 @@ namespace Element.NET.TestHelpers
                     Assert.That(result, Is.EqualTo(typeStr));
                 }, messages => ExpectingSuccess(messages, false));
         
-        protected void EvaluateExpectingErrorCode(CompilerInput compilerInput, MessageCode messageCode, string expression)
+        protected void EvaluateExpectingElementError(CompilerInput compilerInput, EleMessageCode eleMessageCode, string expression)
         {
             var result = Host.Evaluate(compilerInput, expression);
-            ExpectingError(result.Messages, result.IsSuccess, messageCode);
+            ExpectingError(result.Messages, result.IsSuccess, MessageExtensions.TypeString, (int)eleMessageCode);
         }
     }
 }

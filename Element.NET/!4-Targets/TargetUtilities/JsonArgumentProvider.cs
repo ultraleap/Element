@@ -29,7 +29,7 @@ namespace Element.JsonArgument
 					}
 					else
 					{
-						builder.Append(MessageCode.InvalidBoundaryFunction, "Port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
+						builder.Append(EleMessageCode.InvalidBoundaryFunction, "Port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
 					}
 				}
 			}
@@ -47,7 +47,7 @@ namespace Element.JsonArgument
 							arguments[idx++] = (int) value!;
 							break;
 						default:
-							builder.Append(MessageCode.InvalidBoundaryData, $"Expected float or integer token for element Num parameter '{fieldIdentifier}'");
+							builder.Append(EleMessageCode.InvalidBoundaryData, $"Expected float or integer token for element Num parameter '{fieldIdentifier}'");
 							break;
 					}
 				}
@@ -59,7 +59,7 @@ namespace Element.JsonArgument
 							arguments[idx++] = (bool) value! ? 1f : 0f;
 							break;
 						default:
-							builder.Append(MessageCode.InvalidBoundaryData, $"Expected boolean token for element Bool parameter '{fieldIdentifier}'");
+							builder.Append(EleMessageCode.InvalidBoundaryData, $"Expected boolean token for element Bool parameter '{fieldIdentifier}'");
 							break;
 					}
 				}
@@ -71,13 +71,13 @@ namespace Element.JsonArgument
 							ProvisionObject(declaredStruct.Fields, (JObject)value!);
 							break;
 						default:
-							builder.Append(MessageCode.InvalidBoundaryData, $"Expected object token for element Struct parameter '{fieldIdentifier}'");
+							builder.Append(EleMessageCode.InvalidBoundaryData, $"Expected object token for element Struct parameter '{fieldIdentifier}'");
 							break;
 					}
 				}
 				else
 				{
-					builder.Append(MessageCode.InvalidBoundaryFunction, $"Element constraint '{type}' is not supported for JSON argument provisioning");
+					builder.Append(EleMessageCode.InvalidBoundaryFunction, $"Element constraint '{type}' is not supported for JSON argument provisioning");
 				}
 			}
 
@@ -87,7 +87,7 @@ namespace Element.JsonArgument
 
 		public static Result<JObject> ParseFromJsonFile(this string filePath, Context context)
 		{
-			if (!File.Exists(filePath)) return context.Trace(MessageCode.FileAccessError, $"\"{filePath}\" JSON file not found.");
+			if (!File.Exists(filePath)) return context.Trace(EleMessageCode.FileAccessError, $"\"{filePath}\" JSON file not found.");
 			string fileText;
 			try
 			{
@@ -95,7 +95,7 @@ namespace Element.JsonArgument
 			}
 			catch (Exception e)
 			{
-				return context.Trace(MessageCode.FileAccessError, e.ToString());
+				return context.Trace(EleMessageCode.FileAccessError, e.ToString());
 			}
 			return ParseFromJsonString(fileText, context);
 		}
@@ -108,7 +108,7 @@ namespace Element.JsonArgument
 			}
 			catch (Exception e)
 			{
-				return context.Trace(MessageCode.ParseError, e.ToString());
+				return context.Trace(EleMessageCode.ParseError, e.ToString());
 			}
 		}
 	}

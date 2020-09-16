@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Element.AST;
 
 namespace Element
 {
@@ -17,12 +18,13 @@ namespace Element
         public Context Context { get; }
         public IReadOnlyList<CompilerMessage> Messages => _messages;
         
-        public void Append(CompilerMessage message) => _messages.Add(message);
-        public void Append(MessageCode messageCode, string? context)
+        public void Append(CompilerMessage? message)
         {
-            if (Context.Trace(messageCode, context) is {} msg) _messages.Add(msg);
+            if (message != null) _messages.Add(message);
         }
-        public void Append(MessageLevel messageLevel, string message) => _messages.Add(Context.Trace(messageLevel, message));
+
+        public void AppendVerbose(string message) => Append(Context.Trace(MessageLevel.Verbose, message));
+        public void AppendInfo(string message) => Append(Context.Trace(MessageLevel.Information, message));
         public void Append(Result result) => _messages.AddRange(result.Messages);
         public void Append<T>(in Result<T> result) => _messages.AddRange(result.Messages);
 
@@ -44,19 +46,20 @@ namespace Element
         public T Result { get; set; }
         public IReadOnlyList<CompilerMessage> Messages => _messages;
         
-        public void Append(CompilerMessage message) => _messages.Add(message);
-        public void Append(MessageCode messageCode, string? context)
+        public void Append(CompilerMessage? message)
         {
-            if (Context.Trace(messageCode, context) is {} msg) _messages.Add(msg);
+            if (message != null) _messages.Add(message);
         }
-        public void Append(MessageLevel messageLevel, string message) => _messages.Add(Context.Trace(messageLevel, message));
+
+        public void AppendVerbose(string message) => Append(Context.Trace(MessageLevel.Verbose, message));
+        public void AppendInfo(string message) => Append(Context.Trace(MessageLevel.Information, message));
         public void Append(Result result) => _messages.AddRange(result.Messages);
         public void Append<TResult>(in Result<TResult> result) => _messages.AddRange(result.Messages);
         public void Append(IEnumerable<CompilerMessage> messages) => _messages.AddRange(messages);
         public void Append(IReadOnlyCollection<CompilerMessage> messages) => _messages.AddRange(messages);
 
         public Result<T> ToResult() => Result == null && !Messages.Any(m => m.MessageLevel >= MessageLevel.Error)
-                                           ? new Result<T>(Context.Trace(MessageCode.InvalidCast, "Cannot cast null value to Result type") is {} error
+                                           ? new Result<T>(Context.Trace(EleMessageCode.InvalidCast, "Cannot cast null value to Result type") is {} error
                                                                ? (IReadOnlyCollection<CompilerMessage>)_messages.Append(error).ToArray()
                                                                : _messages)
                                            : new Result<T>(Result, _messages);
@@ -84,6 +87,12 @@ namespace Element
             else onError(Messages);
         }
         public TResult Match<TResult>(Func<IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(Messages) : onError(Messages);
+        public Result Then(Action action)
+        {
+            if (IsSuccess) action();
+            return this;
+        }
+
         public Result And(Func<Result> action) => IsSuccess ? new Result(Messages.Combine(action().Messages)) : this;
         public Result<TResult> Map<TResult>(Func<TResult> mapFunc) => IsSuccess ? Merge(new Result<TResult>(mapFunc())) : new Result<TResult>(Messages);
         public Result<TResult> Bind<TResult>(Func<Result<TResult>> bindFunc) => IsSuccess ? Merge(bindFunc()) : new Result<TResult>(Messages);
@@ -264,7 +273,7 @@ namespace Element
         {
             if (!IsSuccess) return new Result<TResult>(Messages);
             if (_value is TResult casted) return new Result<TResult>(casted, Messages);
-            var msg = context.Trace(MessageCode.InvalidCast, contextString ?? $"'{_value}' failed to cast to '{typeof(TResult)}'");
+            var msg = context.Trace(EleMessageCode.InvalidCast, contextString ?? $"'{_value}' failed to cast to '{typeof(TResult)}'");
             return msg != null ? new Result<TResult>(Messages.Append(msg).ToArray()) : new Result<TResult>(Messages);
         }
 

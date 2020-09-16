@@ -25,16 +25,16 @@ namespace Laboratory.Tests.L2.Semantics
 
         [TestCase("add(1)")]
         [TestCase("add(1, 3, 5)")]
-        public void CallWithIncorrectArgCountFails(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.ArgumentCountMismatch, expression);
+        public void CallWithIncorrectArgCountFails(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.ArgumentCountMismatch, expression);
 
         [Test]
-        public void RecursionDirectDisallowed() => EvaluateExpectingErrorCode(CompilerInput, MessageCode.RecursionNotAllowed, "recurse(5)");
+        public void RecursionDirectDisallowed() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "recurse(5)");
         [Test]
-        public void RecursionIndirectDisallowed() => EvaluateExpectingErrorCode(CompilerInput, MessageCode.RecursionNotAllowed, "recurseIndirect(5)");
+        public void RecursionIndirectDisallowed() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "recurseIndirect(5)");
         [Test]
         public void SelfReferencingLocalWithOuter() => AssertApproxEqual(CompilerInput, "selfReferencingLocalWithOuter", "3.14");
         [Test]
-        public void SelfReferencingLocal() => EvaluateExpectingErrorCode(CompilerInput, MessageCode.RecursionNotAllowed, "selfReferencingLocal");
+        public void SelfReferencingLocal() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "selfReferencingLocal");
         
         [TestCase("add", "IntrinsicFunction")]
         [TestCase("addThree", "ExpressionBodiedFunction")]
@@ -44,10 +44,10 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("add")]
         [TestCase("addThree")]
         [TestCase("addFive")]
-        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.SerializationError, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.SerializationError, expression);
 
         [TestCase("5(10)")]
         [TestCase("pi(2)")]
-        public void CallNonFunction(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.NotFunction, expression);
+        public void CallNonFunction(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.NotFunction, expression);
     }
 }

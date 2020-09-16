@@ -46,11 +46,11 @@ namespace Element
                 var context = new Context(this);
                 if (_loadedPackages.TryGetValue(packageInfo.Name, out var loaded))
                 {
-                    return context.Trace(MessageCode.DuplicateSourceFile, $"Tried to load package {loaded} when {loaded} is already loaded");
+                    return context.Trace(EleMessageCode.DuplicateSourceFile, $"Tried to load package {loaded} when {loaded} is already loaded");
                 }
                 
                 var builder = new ResultBuilder<SourceContext>(context, this);
-                builder.Append(MessageLevel.Information, $"Started loading sources in package {packageInfo}");
+                builder.AppendInfo($"Started loading sources in package {packageInfo}");
                 foreach (var src in packageInfo.PackageSources)
                 {
                     builder.Append(GlobalScope.AddSource(src, context));
@@ -59,11 +59,11 @@ namespace Element
                 var anyErrors = builder.Messages.Any(msg => msg.MessageLevel >= MessageLevel.Error);
                 if (anyErrors)
                 {
-                    builder.Append(MessageLevel.Error, $"Failed to load package {packageInfo}");
+                    builder.AppendInfo($"Failed to load package {packageInfo}");
                 }
                 else
                 {
-                    builder.Append(MessageLevel.Information, $"Successfully loaded package {packageInfo}");
+                    builder.AppendInfo($"Successfully loaded package {packageInfo}");
                     _loadedPackages[packageInfo.Name] = packageInfo;
                 }
 

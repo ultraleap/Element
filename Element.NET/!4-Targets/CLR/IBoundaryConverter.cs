@@ -120,7 +120,7 @@ namespace Element.CLR
                 assigns.Add(LExpression.Assign(obj, LExpression.New(outputType)));
             }
             
-            if (!(value is StructInstance structInstance)) return context.Trace(MessageCode.InvalidBoundaryData, $"'{value}' is not a struct instance - expected struct instance when converting a struct");
+            if (!(value is StructInstance structInstance)) return context.Trace(EleMessageCode.InvalidBoundaryData, $"'{value}' is not a struct instance - expected struct instance when converting a struct");
             var builder = new ResultBuilder<LExpression>(context, default!);
             
             foreach (var pair in _elementToClrFieldMapping)
@@ -187,7 +187,7 @@ namespace Element.CLR
         private Result<IBoundaryConverter> TryAddStructConverter(Type clrStructType, Context context)
         {
             if (!(clrStructType.GetCustomAttribute<ElementStructTemplateAttribute>() is {} attr))
-                return context.Trace(MessageCode.MissingBoundaryConverter, $"Could not find or create {nameof(IBoundaryConverter)} for CLR type '{clrStructType}'");
+                return context.Trace(EleMessageCode.MissingBoundaryConverter, $"Could not find or create {nameof(IBoundaryConverter)} for CLR type '{clrStructType}'");
             var boundaryConverter = new StructConverter(attr.ElementTypeExpression, clrStructType);
             Add(clrStructType, boundaryConverter);
             return boundaryConverter;

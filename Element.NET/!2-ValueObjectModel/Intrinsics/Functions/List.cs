@@ -48,7 +48,7 @@ namespace Element.AST
 		                                                                       _elements,
 		                                                                       _elements[0].IsFunction() ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort},
 		                                                                       _elements[0].IsFunction() ? _elements[0].ReturnConstraint : AnyConstraint.Instance))
-		                               : context.Trace(MessageCode.ConstraintNotSatisfied, "List Index must be a Num");
+		                               : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
         }
 
         private class ListElement : Function

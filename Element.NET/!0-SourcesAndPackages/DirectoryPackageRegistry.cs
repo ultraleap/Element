@@ -24,7 +24,7 @@ namespace Element
         {
             if (!_packagesByName.TryGetValue(specifier.Name, out var versions))
             {
-                return context.Trace(MessageLevel.Error, $"No package '{specifier.Name}' found in registry");
+                return context.Trace(EleMessageCode.PackageNotFound, $"No package '{specifier.Name}' found in registry");
             }
 
             try
@@ -50,7 +50,7 @@ namespace Element
 
                                    return matchingVersionsOrdered.Length switch
                                    {
-                                       0 => context.Trace(MessageLevel.Error, $"No version of package '{specifier.Name}' matches specified range '{specifier.VersionRange}'"),
+                                       0 => context.Trace(EleMessageCode.PackageNotFound, $"No version of package '{specifier.Name}' matches specified range '{specifier.VersionRange}'"),
                                        _ => new Result<FileInfo>(matchingVersionsOrdered.Last().fileInfo)
                                    };
                                }).Bind(manifest => PackageInfo.FromManifestFile(manifest, context));

@@ -27,7 +27,7 @@ namespace Element.AST
             builder.Append(IntrinsicImplementationCache.Get<IIntrinsicStructImplementation>(Identifier, builder.Context));
             if (ReturnConstraint != null)
             {
-                builder.Append(MessageCode.StructCannotHaveReturnType, $"Struct '{context.DeclarationStack.Peek()}' cannot have declared return type");
+                builder.Append(EleMessageCode.StructCannotHaveReturnType, $"Struct '{context.DeclarationStack.Peek()}' cannot have declared return type");
             }
             
             PortList?.Validate(builder, context);
@@ -39,7 +39,7 @@ namespace Element.AST
 
             if (PortList?.Ports.List.Any(port => !port.Identifier.HasValue) ?? false)
             {
-                builder.Append(MessageCode.PortListCannotContainDiscards, $"Struct '{context.DeclarationStack.Peek()}' contains discards");
+                builder.Append(EleMessageCode.PortListCannotContainDiscards, $"Struct '{context.DeclarationStack.Peek()}' contains discards");
             }
         }
     }
@@ -64,12 +64,12 @@ namespace Element.AST
         {
             if (!(PortList?.Ports.List.Count > 0))
             {
-                builder.Append(MessageCode.MissingPorts, $"Non intrinsic '{context.DeclarationStack.Peek()}' must have ports");
+                builder.Append(EleMessageCode.MissingPorts, $"Non intrinsic '{context.DeclarationStack.Peek()}' must have ports");
             }
             
             if (ReturnConstraint != null)
             {
-                builder.Append(MessageCode.StructCannotHaveReturnType, $"Struct '{context.DeclarationStack.Peek()}' cannot have declared return type");
+                builder.Append(EleMessageCode.StructCannotHaveReturnType, $"Struct '{context.DeclarationStack.Peek()}' cannot have declared return type");
             }
             
             PortList?.Validate(builder, context);
@@ -81,7 +81,7 @@ namespace Element.AST
 
             if (PortList?.Ports.List.Any(port => !port.Identifier.HasValue) ?? false)
             {
-                builder.Append(MessageCode.PortListCannotContainDiscards, $"Struct '{context.DeclarationStack.Peek()}' contains discards");
+                builder.Append(EleMessageCode.PortListCannotContainDiscards, $"Struct '{context.DeclarationStack.Peek()}' contains discards");
             }
         }
     }

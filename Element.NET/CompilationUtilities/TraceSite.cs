@@ -1,7 +1,7 @@
 namespace Element
 {
     /// <summary>
-    /// Represents an instance of function usage.
+    /// A trace at a location in source.
     /// </summary>
     public readonly struct TraceSite
     {

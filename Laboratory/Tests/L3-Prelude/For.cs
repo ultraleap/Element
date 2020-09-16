@@ -7,7 +7,7 @@ namespace Laboratory.Tests.L3.Prelude
     {
         [Test]
         public void GuaranteedInfiniteLoop() =>
-            EvaluateExpectingErrorCode(ValidatedCompilerInput, MessageCode.InfiniteLoop, "for(5, _(n):Bool = True, _(n) = n)");
+            EvaluateExpectingElementError(ValidatedCompilerInput, EleMessageCode.InfiniteLoop, "for(5, _(n):Bool = True, _(n) = n)");
 
         [TestCase("5")]
         [TestCase("Vector2(10, 20)")]

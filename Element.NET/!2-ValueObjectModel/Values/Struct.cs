@@ -25,7 +25,7 @@ namespace Element.AST
         public abstract override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context);
         public abstract override Result<bool> MatchesConstraint(IValue value, Context context);
         public override Result<IValue> Index(Identifier id, Context context) => _associatedBlock?.Index(id, context)
-                                                                                 ?? (Result<IValue>)context.Trace(MessageCode.InvalidExpression, $"'{this}' has no associated scope - it cannot be indexed");
+                                                                                 ?? (Result<IValue>)context.Trace(EleMessageCode.InvalidExpression, $"'{this}' has no associated scope - it cannot be indexed");
         public Result<IValue> Lookup(Identifier id, Context context) => (_associatedBlock ?? _parent).Lookup(id, context);
         public override IReadOnlyList<Identifier> Members => _associatedBlock?.Members ?? Array.Empty<Identifier>();
         public abstract override Result<IValue> DefaultValue(Context context);
@@ -34,10 +34,10 @@ namespace Element.AST
             Index(id, context)
                 .Bind(v => v switch
                 {
-                    {} when !v.IsFunction() => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"'{v}' found by indexing '{instance}' is not a function"),
+                    {} when !v.IsFunction() => context.Trace(EleMessageCode.CannotBeUsedAsInstanceFunction, $"'{v}' found by indexing '{instance}' is not a function"),
                     // ReSharper disable once PossibleUnintendedReferenceComparison
                     {} when v.InputPorts[0].ResolvedConstraint == this => v.PartiallyApply(new[] {instance}, context),
-                    {} => context.Trace(MessageCode.CannotBeUsedAsInstanceFunction, $"Found function '{v}' <{v.InputPorts[0]}> must be of type <{Identifier}> to be used as an instance function"),
+                    {} => context.Trace(EleMessageCode.CannotBeUsedAsInstanceFunction, $"Found function '{v}' <{v.InputPorts[0]}> must be of type <{Identifier}> to be used as an instance function"),
                     null => throw new InternalCompilerException($"Indexing '{instance}' with '{id}' returned null IValue - this should not occur from user input")
                 });
     }
@@ -97,7 +97,7 @@ namespace Element.AST
             if (DeclaringStruct.IsIntrinsic<ListStruct>())
             {
                 // TODO: List serialization
-                resultBuilder.Append(MessageCode.SerializationError, "List serialization not supported yet");
+                resultBuilder.Append(EleMessageCode.SerializationError, "List serialization not supported yet");
                 return;
             }
             

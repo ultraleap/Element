@@ -45,7 +45,7 @@ namespace Element
 			var result = nextValue();
 			return result.StructImplementation == StructImplementation
 				       ? new Result<IValue>(result)
-				       : context.Trace(MessageCode.SerializationError, $"'{result}' deserialized to incorrect type: is '{result.StructImplementation}' - expected '{StructImplementation}'");
+				       : context.Trace(EleMessageCode.SerializationError, $"'{result}' deserialized to incorrect type: is '{result.StructImplementation}' - expected '{StructImplementation}'");
 		}
 	}
 }

@@ -160,6 +160,10 @@ level = "Error"
 name = "NotConstraint"
 level = "Error"
 
+[ELE39]
+name = "PackageNotFound"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

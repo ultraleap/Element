@@ -306,7 +306,7 @@ namespace Element.CLR
 					                           })
 					                           .Map(result => (result, array));
 				          })
-				: context.Trace(MessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
+				: context.Trace(EleMessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
 
 		public static Result<TDelegate> Compile<TDelegate>(this IValue value, Context context, IBoundaryConverter? boundaryConverter = default)
 			where TDelegate : Delegate =>
@@ -319,13 +319,13 @@ namespace Element.CLR
 
             // Check return type/single out parameter of delegate
             var method = delegateType.GetMethod(nameof(Action.Invoke));
-            if (method == null) return context.Trace(MessageCode.InvalidBoundaryFunction, $"{delegateType} did not have invoke method");
+            if (method == null) return context.Trace(EleMessageCode.InvalidBoundaryFunction, $"{delegateType} did not have invoke method");
 
             var delegateParameters = method.GetParameters();
             var delegateReturn = method.ReturnParameter;
             if (delegateParameters.Any(p => p.IsOut) || method.ReturnType == typeof(void))
             {
-                return context.Trace(MessageCode.InvalidBoundaryFunction, $"{delegateType} cannot have out parameters and must have non-void return type");
+                return context.Trace(EleMessageCode.InvalidBoundaryFunction, $"{delegateType} cannot have out parameters and must have non-void return type");
             }
             
             // Create parameter expressions for input parameters and the functions return
@@ -335,7 +335,7 @@ namespace Element.CLR
             
             if (value.IsFunction() && value.InputPorts.Count != delegateParameters.Length)
             {
-	            return context.Trace(MessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
+	            return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
             }
 
             var resultBuilder = new ResultBuilder<Delegate>(context, default!);
@@ -370,7 +370,7 @@ namespace Element.CLR
 			{
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == value)
 				{
-					return context.Trace(MessageCode.RecursionNotAllowed, $"Circular dependency when compiling '{value}'");
+					return context.Trace(EleMessageCode.RecursionNotAllowed, $"Circular dependency when compiling '{value}'");
 				}
 
 				// If this value is serializable then serialize and use it

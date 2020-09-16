@@ -91,14 +91,14 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         public void CompileBinaryAsUnaryFails()
         {
             var fn = CompileDelegate<UnaryOp>(MakeSourceContext(), "Num.add");
-            ExpectingError(fn.Messages, fn.IsSuccess, MessageCode.InvalidBoundaryFunction);
+            ExpectingElementError(fn.Messages, fn.IsSuccess, EleMessageCode.InvalidBoundaryFunction);
         }
         
         [Test]
         public void CompileUnaryAsBinaryFails()
         {
             var fn = CompileDelegate<BinaryOp>(MakeSourceContext(), "Num.sqr");
-            ExpectingError(fn.Messages, fn.IsSuccess, MessageCode.InvalidBoundaryFunction);
+            ExpectingElementError(fn.Messages, fn.IsSuccess, EleMessageCode.InvalidBoundaryFunction);
         }
 
         [Test]
@@ -113,7 +113,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         public void NoObjectBoundaryConverter()
         {
             var fn = CompileDelegate<InvalidDelegate>(MakeSourceContext(), "Num.sqr");
-            ExpectingError(fn.Messages, fn.IsSuccess, MessageCode.MissingBoundaryConverter);
+            ExpectingElementError(fn.Messages, fn.IsSuccess, EleMessageCode.MissingBoundaryConverter);
         }
 
         [Test]

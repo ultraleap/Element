@@ -23,7 +23,7 @@ namespace Element
             }
             catch (Exception e)
             {
-                return context.Trace(MessageCode.ParseError, e.ToString());
+                return context.Trace(EleMessageCode.ParseError, e.ToString());
             }
         }
 

@@ -27,10 +27,10 @@ namespace Element.AST
                               .Bind(countValue => countValue switch
                               {
                                   Constant c => new Result<int>((int) c),
-                                  Element.Instruction e => context.Trace(MessageCode.NotCompileConstant, $"List count '{e}' is not a compile-time constant expression"),
+                                  Element.Instruction e => context.Trace(EleMessageCode.NotCompileConstant, $"List count '{e}' is not a compile-time constant expression"),
                                   _ => throw new InternalCompilerException($"Couldn't get List.'{CountId}' from '{listInstance}'. Count must be an expression.")
                               })
-                : context.Trace(MessageCode.TypeError, "Struct instance is not a list");
+                : context.Trace(EleMessageCode.TypeError, "Struct instance is not a list");
 
         public static Result<IValue[]> EvaluateElements(StructInstance listInstance, Context context) =>
             ConstantCount(listInstance, context)

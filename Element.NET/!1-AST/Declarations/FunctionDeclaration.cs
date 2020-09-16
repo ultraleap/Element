@@ -29,7 +29,7 @@ namespace Element.AST
             PortList?.Validate(builder, context);
             if (PortList != null && PortList.Ports.List.Any(port => !port.Identifier.HasValue))
             {
-                builder.Append(MessageCode.PortListCannotContainDiscards, $"Intrinsic '{context.DeclarationStack.Peek()}' port list contains discards");
+                builder.Append(EleMessageCode.PortListCannotContainDiscards, $"Intrinsic '{context.DeclarationStack.Peek()}' port list contains discards");
             }
             ReturnConstraint?.Validate(builder, context);
         }
@@ -79,7 +79,7 @@ namespace Element.AST
                 {
                     if (!distinctLocalIdentifiers.Add(id))
                     {
-                        builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{id}' defined in function '{context.DeclarationStack.Peek()}' local scope or arguments");
+                        builder.Append(EleMessageCode.MultipleDefinitions, $"Multiple definitions for '{id}' defined in function '{context.DeclarationStack.Peek()}' local scope or arguments");
                     }
                 }
             }

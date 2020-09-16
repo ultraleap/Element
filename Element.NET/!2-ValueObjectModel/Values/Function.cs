@@ -100,7 +100,7 @@ namespace Element.AST
                                                                      Func<Result<IValue>> resolveFunc,
                                                                      Context context)
         {
-            if (context.CallStack.Contains(function)) return context.Trace(MessageCode.RecursionNotAllowed, $"Multiple references to {function} in same call stack - recursion is not allowed");
+            if (context.CallStack.Contains(function)) return context.Trace(EleMessageCode.RecursionNotAllowed, $"Multiple references to {function} in same call stack - recursion is not allowed");
             context.CallStack.Push(function);
 
             try
@@ -109,7 +109,7 @@ namespace Element.AST
                     function.ReturnConstraint.MatchesConstraint(result, context)
                             .Bind(matches => matches
                                                  ? Result.Success
-                                                 : context.Trace(MessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
+                                                 : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
 
 
                 return CheckInputConstraints(function.InputPorts, arguments as IValue[] ?? arguments.ToArray(), context)
@@ -130,7 +130,7 @@ namespace Element.AST
             var isVariadic = ports.Any(p => p == ResolvedPort.VariadicPort);
             if (!isVariadic && arguments.Count != ports.Count)
             {
-                resultBuilder.Append(MessageCode.ArgumentCountMismatch, $"Expected '{ports.Count}' arguments but got '{arguments.Count}'");
+                resultBuilder.Append(EleMessageCode.ArgumentCountMismatch, $"Expected '{ports.Count}' arguments but got '{arguments.Count}'");
             }
 
             for (var i = 0; i < Math.Min(ports.Count, arguments.Count); i++)
@@ -143,7 +143,7 @@ namespace Element.AST
                                          .MatchesConstraint(arg, context)
                                          .Bind(matches => matches
                                                             ? Result.Success
-                                                            : context.Trace(MessageCode.ConstraintNotSatisfied, $"Value '{arg}' for port '{port}' does not match '{port.ResolvedConstraint}' constraint")));
+                                                            : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Value '{arg}' for port '{port}' does not match '{port.ResolvedConstraint}' constraint")));
             }
 
             return resultBuilder.ToResult();

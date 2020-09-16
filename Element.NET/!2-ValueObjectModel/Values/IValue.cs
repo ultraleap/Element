@@ -29,19 +29,19 @@ namespace Element.AST
         public virtual string SummaryString => TypeOf;
         public virtual string TypeOf => GetType().Name;
         public virtual string NormalizedFormString => SummaryString;
-        public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => context.Trace(MessageCode.NotFunction, $"'{this}' cannot be called, it is not a function");
+        public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => context.Trace(EleMessageCode.NotFunction, $"'{this}' cannot be called, it is not a function");
         
         public virtual IReadOnlyList<ResolvedPort> InputPorts => Array.Empty<ResolvedPort>();
         public virtual IValue ReturnConstraint => NothingConstraint.Instance;
         
-        public virtual Result<IValue> Index(Identifier id, Context context) => context.Trace(MessageCode.NotIndexable, $"'{this}' is not indexable");
+        public virtual Result<IValue> Index(Identifier id, Context context) => context.Trace(EleMessageCode.NotIndexable, $"'{this}' is not indexable");
         public virtual IReadOnlyList<Identifier> Members => Array.Empty<Identifier>();
         
-        public virtual Result<bool> MatchesConstraint(IValue value, Context context) => context.Trace(MessageCode.NotConstraint, $"'{this}' cannot be used as a port annotation, it is not a constraint");
+        public virtual Result<bool> MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.NotConstraint, $"'{this}' cannot be used as a port annotation, it is not a constraint");
         
-        public virtual Result<IValue> DefaultValue(Context context) => context.Trace(MessageCode.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
-        public virtual void Serialize(ResultBuilder<List<Element.Instruction>> resultBuilder, Context context) => resultBuilder.Append(MessageCode.SerializationError, $"'{this}' is not serializable");
-        public virtual Result<IValue> Deserialize(Func<Element.Instruction> nextValue, Context context) => context.Trace(MessageCode.SerializationError, $"'{this}' cannot be deserialized");
+        public virtual Result<IValue> DefaultValue(Context context) => context.Trace(EleMessageCode.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
+        public virtual void Serialize(ResultBuilder<List<Element.Instruction>> resultBuilder, Context context) => resultBuilder.Append(EleMessageCode.SerializationError, $"'{this}' is not serializable");
+        public virtual Result<IValue> Deserialize(Func<Element.Instruction> nextValue, Context context) => context.Trace(EleMessageCode.SerializationError, $"'{this}' cannot be deserialized");
     }
 
     public static class ValueExtensions
@@ -62,7 +62,7 @@ namespace Element.AST
             var members = value.Members;
             return index < members.Count
                        ? value.Index(members[index], context)
-                       : context.Trace(MessageCode.ArgumentOutOfRange, $"Cannot access member {index} - '{value}' has {members.Count} members");
+                       : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Cannot access member {index} - '{value}' has {members.Count} members");
         }
 
         public static Result<List<Element.Instruction>> Serialize(this IValue value, Context context)
@@ -101,7 +101,7 @@ namespace Element.AST
                 }
                 else
                 {
-                    return context.Trace(MessageCode.SerializationError, $"Non-constant expression '{expr}' cannot be evaluated to a float");
+                    return context.Trace(EleMessageCode.SerializationError, $"Non-constant expression '{expr}' cannot be evaluated to a float");
                 }
             }
 

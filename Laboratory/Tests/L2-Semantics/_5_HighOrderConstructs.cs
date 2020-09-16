@@ -76,7 +76,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void ConstraintChecking(string expression, bool succeeds, string type = default)
         {
             if (succeeds) AssertTypeof(CompilerInput, expression, type);
-            else EvaluateExpectingErrorCode(CompilerInput, MessageCode.ConstraintNotSatisfied, expression);
+            else EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, expression);
         }
 
         [Test]
@@ -94,10 +94,10 @@ namespace Laboratory.Tests.L2.Semantics
         
         [TestCase("Indexer")]
         [TestCase("Binary")]
-        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.SerializationError, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.SerializationError, expression);
         
         [TestCase("cyclicLocalFunction")]
         [TestCase("cyclicDefault")]
-        public void RecursionDisallowed(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.RecursionNotAllowed, expression);
+        public void RecursionDisallowed(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, expression);
     }
 }
