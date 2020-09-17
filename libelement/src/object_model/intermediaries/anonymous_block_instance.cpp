@@ -20,6 +20,11 @@ anonymous_block_instance::anonymous_block_instance(const anonymous_block_express
     this->source_info = std::move(source_info);
 }
 
+bool element::anonymous_block_instance::is_constant() const
+{
+    return true;
+}
+
 bool anonymous_block_instance::matches_constraint(const compilation_context& context, const constraint* constraint) const
 {
     //todo: might need to do more, see below, but for now it can be treated as any

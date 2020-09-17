@@ -32,6 +32,12 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
             return false;
         }
 
+        if (const auto* err = dynamic_cast<const error*>(ret.get()))
+        {
+            err->log_once(context.interpreter->logger.get());
+            return false;
+        }
+
         //todo: one day we'll use the fast RTTI instead of the language one
         const auto ret_as_constant = std::dynamic_pointer_cast<const element_expression_constant>(ret);
         assert(ret_as_constant);
@@ -49,6 +55,12 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
         auto ret = body_function->call(context, input, source_info);
         if (!ret->is_constant())
             return nullptr;
+
+        if (auto err = std::dynamic_pointer_cast<const error>(ret))
+        {
+            err->log_once(context.interpreter->logger.get());
+            return err;
+        }
 
         //todo: we could allow for a compile-time for loop to return a different type than it started with, but for now let's check
         if (!ret->matches_constraint(context, initial_object->get_constraint()))

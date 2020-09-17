@@ -16,11 +16,10 @@ factorial(a:Num):Num
     body(v) = Vector2(v.x.add(1), v.y.mul(v.x))
 }
 
-#fix this when anonymous scopes are working
-#factorialExpressionBodied(a:Num):Num = for({i = a, v = 1},
-#                                     _(tup):Bool = tup.i.gt(0),
-#                                     _(tup) = {i = tup.i.sub(1), v = tup.v.mul(tup.i)})
-#                                 .v
+factorialExpressionBodied(a:Num):Num = for({i = a, v = 1},
+                                     _(tup):Bool = tup.i.gt(0),
+                                     _(tup) = {i = tup.i.sub(1), v = tup.v.mul(tup.i)})
+                                 .v
 
 struct MyStruct(vector:Vector3)
 makeMyStruct(a:Num) = MyStruct(Vector3(a, a, a))
