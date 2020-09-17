@@ -17,7 +17,7 @@
 #include "etree/expressions.hpp"
 #include "etree/evaluator.hpp"
 
-void log_callback(const element_log_message* msg)
+void log_callback(const element_log_message* msg, void* user_data)
 {
     //TODO: This is a bit of a hack for now... Setting a constant length instead and using for both buffers
     const int space = 512;
@@ -68,7 +68,7 @@ element_result eval(const char* evaluate)
     element_object* object = NULL;
 
     element_interpreter_create(&context);
-    element_interpreter_set_log_callback(context, log_callback);
+    element_interpreter_set_log_callback(context, log_callback, nullptr);
     element_interpreter_load_prelude(context);
 
     float inputs[] = { 1, 2 };
@@ -130,7 +130,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     element_object* object = NULL;
 
     element_interpreter_create(&context);
-    element_interpreter_set_log_callback(context, log_callback);
+    element_interpreter_set_log_callback(context, log_callback, nullptr);
     element_interpreter_load_prelude(context);
 
     float inputs[] = { 1, 2 };
@@ -196,7 +196,7 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     element_object* object = NULL;
 
     element_interpreter_create(&context);
-    element_interpreter_set_log_callback(context, log_callback);
+    element_interpreter_set_log_callback(context, log_callback, nullptr);
     element_interpreter_load_prelude(context);
 
     if (!package.empty())
