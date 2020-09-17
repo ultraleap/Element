@@ -35,7 +35,7 @@ namespace libelement::cli
 		{
 			auto result = setup(compilation_input);
 			if (result != ELEMENT_OK)
-				return compiler_message(error_conversion(result), "Failed to setup context"); //todo
+				return compiler_message(error_conversion(result), "Failed to setup context", compilation_input.get_log_json()); //todo
 
 			const auto expression = custom_arguments.expression;
 			constexpr auto max_output_size = 512;
@@ -46,10 +46,10 @@ namespace libelement::cli
 
 			result = element_interpreter_evaluate_expression(context, nullptr, expression.c_str(), &output);
 			if (result != ELEMENT_OK) {
-				return compiler_message(error_conversion(result), "Failed to evaluate: " + expression + " with element_result " + std::to_string(result));
+				return compiler_message(error_conversion(result), "Failed to evaluate: " + expression + " with element_result " + std::to_string(result), compilation_input.get_log_json());
 			}
 
-			return generate_response(result, output);
+			return generate_response(result, output, compilation_input.get_log_json());
 		}
 
 		[[nodiscard]] std::string as_string() const override

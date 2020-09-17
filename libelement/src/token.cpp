@@ -108,11 +108,11 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
     return ELEMENT_OK;
 }
 
-void element_tokeniser_set_log_callback(element_tokeniser_ctx* state, void (*log_callback)(const element_log_message*))
+void element_tokeniser_set_log_callback(element_tokeniser_ctx* state, void (*log_callback)(const element_log_message*, void*), void* user_data)
 {
     assert(state);
     assert(log_callback);
-    state->set_log_callback(log_callback);
+    state->set_log_callback(log_callback, user_data);
 }
 
 static void reset_token(element_tokeniser_ctx* state)

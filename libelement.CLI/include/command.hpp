@@ -163,11 +163,11 @@ namespace libelement::cli
 		[[nodiscard]] virtual compiler_message execute(const compilation_input& input) const = 0;
 		[[nodiscard]] virtual std::string as_string() const = 0;
 
-		using callback = std::function<void(const command&)>;
-		using log_callback = void (*)(const element_log_message* const);
+		using callback = std::function<void(command&)>;
+		using log_callback = void (*)(const element_log_message*, void* user_data);
 		static void configure(CLI::App& app, command::callback callback);
 
-		static compiler_message generate_response(const element_result result, element_outputs output, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+		static compiler_message generate_response(const element_result result, element_outputs output, bool log_json, std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 		{
 			std::string data;
 			for (auto i = 0; i < output.count; i++) 
@@ -185,23 +185,23 @@ namespace libelement::cli
 					data += " ";
 			}
 			
-			return generate_response(result, data, std::move(trace_stack));
+			return generate_response(result, data, log_json, std::move(trace_stack));
 		}
 
-		static compiler_message generate_response(const element_result result, const std::string& value, const std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+		static compiler_message generate_response(const element_result result, const std::string& value, bool log_json, const std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
 		{
 			switch (result)
 			{
 			case ELEMENT_OK:
-				return compiler_message(value, trace_stack);
+				return compiler_message(value, log_json, trace_stack);
 			default:
-				return compiler_message(error_conversion(result), value, trace_stack);
+				return compiler_message(error_conversion(result), value, log_json, trace_stack);
 			}
 		}
 
-		void set_log_callback(const command::log_callback log_callback) const {
+		void set_log_callback(const command::log_callback log_callback, void* user_data) const {
 
-			element_interpreter_set_log_callback(context, log_callback);
+			element_interpreter_set_log_callback(context, log_callback, user_data);
 		}
 
 	protected:
@@ -213,7 +213,7 @@ namespace libelement::cli
 				if (result != ELEMENT_OK) 
 				{
 				    //TODO: Better solution for this? Forces a parse error on any file load error
-					auto parse_error = compiler_message(error_conversion(result), "failed when loading prelude");
+					auto parse_error = compiler_message(error_conversion(result), "failed when loading prelude", common_arguments.log_json);
 					std::cout << parse_error.serialize() << std::endl;
 					
 					return result;
@@ -226,7 +226,7 @@ namespace libelement::cli
 				result = element_interpreter_load_packages(context, &packages[0], packages_count);
 				if (result != ELEMENT_OK)
 				{
-					auto parse_error = compiler_message(error_conversion(result), "failed when loading packages");
+					auto parse_error = compiler_message(error_conversion(result), "failed when loading packages", common_arguments.log_json);
 					std::cout << parse_error.serialize() << std::endl;
 
 					return result;
@@ -240,7 +240,7 @@ namespace libelement::cli
 				result = element_interpreter_load_files(context, &source_files[0], source_file_count);
 				if (result != ELEMENT_OK) 
 				{
-					auto parse_error = compiler_message(error_conversion(result), "failed when loading files");
+					auto parse_error = compiler_message(error_conversion(result), "failed when loading files", common_arguments.log_json);
 					std::cout << parse_error.serialize() << std::endl;
 					
 					return result;

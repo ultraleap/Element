@@ -38,13 +38,13 @@ namespace libelement::cli
 			if (result != ELEMENT_OK)
 			{
 				//todo: the test runner expects at least one PARSE_ERROR
-                const auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "failed when parsing");
+                const auto parse_error = compiler_message(ELEMENT_ERROR_PARSE, "failed when parsing", compilation_input.get_log_json());
 				std::cout << parse_error.serialize() << std::endl;
 				//expects the last thing to be True/False (not json)
-				return compiler_message("False");
+				return compiler_message("False", compilation_input.get_log_json());
 			}
 
-			return compiler_message("True");
+			return compiler_message("True", compilation_input.get_log_json());
 		}
 
         [[nodiscard]] std::string as_string() const override

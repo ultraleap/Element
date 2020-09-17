@@ -54,10 +54,11 @@ struct element_tokeniser_ctx
         logger->log(message, message_stage::ELEMENT_STAGE_MISC);
     }
 
-    void set_log_callback(LogCallback callback)
+    void set_log_callback(LogCallback callback, void* user_data)
     {
         logger = std::make_shared<element_log_ctx>();
         logger->callback = callback;
+        logger->user_data = user_data;
     }
 
     element_tokeniser_ctx()

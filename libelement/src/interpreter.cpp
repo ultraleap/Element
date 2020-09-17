@@ -126,8 +126,9 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 
 element_result element_interpreter_ctx::load_file(const std::string& file)
 {
-    if (!file_exists(file)) {
-        const auto abs = std::filesystem::absolute(std::filesystem::path(file)).string();
+    const auto abs = std::filesystem::absolute(std::filesystem::path(file)).string();
+
+    if (!file_exists(abs)) {
         std::cout << fmt::format("file {} was not found at path {}\n",
             file, abs.c_str()); //todo: proper logging
         return ELEMENT_ERROR_FILE_NOT_FOUND;
@@ -135,13 +136,13 @@ element_result element_interpreter_ctx::load_file(const std::string& file)
 
     std::string buffer;
 
-    std::ifstream f(file);
+    std::ifstream f(abs);
     f.seekg(0, std::ios::end);
     buffer.resize(f.tellg());
     f.seekg(0);
     f.read(buffer.data(), buffer.size());
 
-    const auto result = load(buffer.c_str(), file.c_str());
+    const auto result = load(buffer.c_str(), abs.c_str());
     if (result != ELEMENT_OK) {
         //std::cout << fmt::format("interpreter failed to parse file {}. element_result = {}\n", 
         //    file, result); //todo: proper logging
@@ -240,10 +241,11 @@ element_result element_interpreter_ctx::load_prelude()
     return result;
 }
 
-void element_interpreter_ctx::set_log_callback(LogCallback callback)
+void element_interpreter_ctx::set_log_callback(LogCallback callback, void* user_data)
 {
     logger = std::make_shared<element_log_ctx>();
     logger->callback = callback;
+    logger->user_data = user_data;
 }
 
 void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename) const
@@ -352,10 +354,10 @@ void element_interpreter_parse_only_mode(element_interpreter_ctx* context, bool 
     context->parse_only = parse_only;
 }
 
-void element_interpreter_set_log_callback(element_interpreter_ctx* context, void (*log_callback)(const element_log_message* const))
+void element_interpreter_set_log_callback(element_interpreter_ctx* context, void (*log_callback)(const element_log_message*, void*), void* user_data)
 {
     assert(context);
-    context->set_log_callback(log_callback);
+    context->set_log_callback(log_callback, user_data);
 }
 
 element_result element_interpreter_clear(element_interpreter_ctx* context)
