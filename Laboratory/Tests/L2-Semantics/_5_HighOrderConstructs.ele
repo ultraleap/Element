@@ -61,3 +61,60 @@ cyclicLocalFunction
 # In a slightly more readable form this is: a(b = _(b = a) = b) = b
 # The function takes in 1 argument which has a default value referring to the declaration making it a cyclic reference
 cyclicDefault(input = _(cyclicDefault = cyclicDefault) = cyclicDefault) = input
+
+
+
+
+
+
+
+
+
+
+
+
+
+createTupleFromTuple(tup) = { i = tup.i.add(1), v = tup.v.add(1) }
+getTuple = createTupleFromTuple(createTupleFromTuple({i = 0, v = 1}))
+
+
+struct Vector2(i, v) {}
+createVecFromVec(vec:Vector2):Vector2 = Vector2(vec.i.add(1), vec.v.add(1))
+getVec = createVecFromVec(createVecFromVec(Vector2(0, 1)))
+
+struct structContainer(who_cares) { i = 0 v = 1 }
+createStructFromStruct(prev) {
+    struct return (who_cares) { i = prev.i.add(1) v = prev.v.add(1) }
+}
+
+getStruct = createStructFromStruct(createStructFromStruct(structContainer))
+
+
+namespace namespaceContainer { i = 0 v = 1 }
+createNamespaceFromNamespace(prev) {
+    namespace return { i = prev.i.add(1) v = prev.v.add(1) }
+}
+
+getNamespace = createNamespaceFromNamespace(createNamespaceFromNamespace(namespaceContainer))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
