@@ -312,6 +312,34 @@ namespace Element.CLR
 			where TDelegate : Delegate =>
 			Compile(value, context, typeof(TDelegate), boundaryConverter).Map(result => (TDelegate)result);
 
+		public static Result<Delegate> CompileDynamic(this IValue value, Context context, IBoundaryConverter? boundaryConverter = default)
+		{
+			// TODO: Move this to BoundaryConverter? Need to support more than just Num arguments!
+			static Type ToClrType(Struct elementType) => elementType.IsIntrinsic<NumStruct>() ? typeof(float) : throw new NotImplementedException("Only Num is currently supported as input parameter for compiling delegate dynamically");
+			
+			Result<Struct> ConstraintToStruct(IValue constraint) => constraint is Struct s
+				                                                        ? new Result<Struct>(s)
+				                                                        : new Result<Struct>(context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{constraint}' is not a struct - all top-level function ports must be serializable struct types"));
+
+			var inputStructs = value.IsFunction()
+				                   ? value.InputPorts.Select(p => ConstraintToStruct(p.ResolvedConstraint)).ToResultArray()
+				                   : Array.Empty<Struct>();
+			
+			return inputStructs
+			       .Accumulate(() => value.IsFunction() switch
+			       {
+				       true => ConstraintToStruct(value.ReturnConstraint),
+				       false when value is StructInstance s => ConstraintToStruct(s.DeclaringStruct),
+				       false => context.RootScope.Lookup(NumStruct.Instance.Identifier, context).Cast<Struct>(context)
+			       })
+			       .Bind(types =>
+			       {
+				       var (inputTypes, returnType) = types;
+				       var delegateType = LinqExpression.GetFuncType(inputTypes.Append(returnType).Select(ToClrType).ToArray());
+				       return Compile(value, context, delegateType, boundaryConverter);
+			       });
+		}
+
 		private static Result<Delegate> Compile(IValue value, Context context, 
 		                                 Type delegateType, IBoundaryConverter? boundaryConverter = default)
         {

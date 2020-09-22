@@ -20,9 +20,11 @@ namespace Laboratory.Tests.L3.Prelude
         [TestCase("iterateWithMyStruct(5)", "5")]
         public void LoopReturningFor(string expr, string result) => AssertApproxEqual(ValidatedCompilerInput, expr, result);
 
-        // TODO: Nested loop test
-        //public void NestedLoop(string expr, string result) => AssertApproxEqual(ValidatedCompilerInput, expr, result);
+        [TestCase("NestedForLoop(0)", "200")]
+        public void NestedLoop(string expr, string result) => AssertApproxEqual(ValidatedCompilerInput, expr, result);
         
-        // TODO: Somehow test non-constant loops, how can we define a non-constant loop as an expression here? 
+        [TestCase("factorial", "(5)", "120")]
+        public void NonConstantLoop(string expr, string callExpr, string expectedResult) =>
+            AssertApproxEqual(ValidatedCompilerInput, new FunctionEvaluation(expr, callExpr, false), expectedResult);
     }
 }

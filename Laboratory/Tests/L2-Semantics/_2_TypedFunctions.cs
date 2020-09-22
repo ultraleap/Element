@@ -7,6 +7,18 @@ namespace Laboratory.Tests.L2.Semantics
     {
         public _2_TypedFunctions() : base("_2_TypedFunctions") { }
 
+        private static readonly (string FunctionExpr, string CallExpr, string ExpectedExpr)[] TopLevelCalls =
+        {
+            ("add", "(3, 8)", "11"),
+            ("add", "(-3, 8)", "5"),
+            ("addFive", "(-3)", "2"),
+            ("addFive", "(3)", "8"),
+        };
+
+        [Test]
+        public void CallToplevelFunction([ValueSource(nameof(TopLevelCalls))] (string FunctionExpr, string CallExpr, string ExpectedExpr) e, [ValueSource(nameof(Interpreted))] bool interpreted)
+            => AssertApproxEqual(CompilerInput, new FunctionEvaluation(e.FunctionExpr, e.CallExpr, interpreted), e.ExpectedExpr);
+
         [TestCase("explicitAny(5)", true)]
         [TestCase("explicitAny(NotNum(5))", true)]
         [TestCase("explicitAny(a)", true)]

@@ -13,5 +13,8 @@ returnsNotNum(a):NotNum
     return = a
 }
 
+intrinsic function add(a:Num, b:Num):Num
+addFive(a:Num):Num = add(a, 5)
+
 literalNumNotAConstraint(a:5):10 = a
 literalFunctionNotAConstraint(a:onlyNum):returnsNum = a

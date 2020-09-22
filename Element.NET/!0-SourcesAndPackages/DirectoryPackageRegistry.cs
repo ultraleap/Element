@@ -12,7 +12,7 @@ namespace Element
     {
         public DirectoryPackageRegistry(DirectoryInfo registryRootDirectory)
         {
-            // TODO: Packages within other package directories are an error
+            // TODO: Nested package directories are an error
             _packagesByName = registryRootDirectory.GetFiles($"*{PackageManifest.FileExtension}", SearchOption.AllDirectories)
                                                    .GroupBy(fi => Path.GetFileNameWithoutExtension(fi.Name))
                                                    .ToDictionary(infos => infos.Key, infos => infos.ToArray());

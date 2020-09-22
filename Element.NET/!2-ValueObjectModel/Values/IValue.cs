@@ -46,7 +46,7 @@ namespace Element.AST
 
     public static class ValueExtensions
     {
-        public static bool IsFunction(this IValue value) => value.InputPorts.Count > 0;
+        public static bool IsFunction(this IValue value) => value.InputPorts.Count > 0; // This works for variadic intrinsics too as variadicness is signified with a single variadic port marker
         
         public static bool IsIntrinsic<TIntrinsicImplementation>(this IValue value)
             where TIntrinsicImplementation : IIntrinsicImplementation =>

@@ -36,11 +36,16 @@ namespace Element
         public Stack<Declaration> DeclarationStack { get; } = new Stack<Declaration>();
         
         public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
-            Parser.Parse<TopLevelExpression>(new SourceInfo("<input expression>", expression), this, CompilerOptions.NoParseTrace)
-                  .Map(tle => tle.Expression)
-                  .Check(expressionObject => expressionObject.Validate(this))
-                  .Bind(expressionObject => expressionObject.ResolveExpression(scopeToEvaluateIn ?? RootScope, this));
+            Parse<TopLevelExpression>(expression)
+                .Bind(tle => EvaluateExpression(tle.Expression, scopeToEvaluateIn));
 
+        public Result<T> Parse<T>(string source, string sourceName = "<input source>") where T : notnull =>
+            Parser.Parse<T>(new SourceInfo(sourceName, source), this, CompilerOptions.NoParseTrace);
+
+        public Result<IValue> EvaluateExpression(Expression expression, IScope? scopeToEvaluateIn = null) =>
+            expression.Validate(this)
+                      .Bind(() => expression.ResolveExpression(scopeToEvaluateIn ?? RootScope, this));
+        
         public CompilerMessage? Trace(string messageType, int messageCode, string? contextString) =>
             (CompilerMessage.TryGetMessageLevel(messageType, messageCode, out var level), level >= CompilerOptions.Verbosity) switch
             {

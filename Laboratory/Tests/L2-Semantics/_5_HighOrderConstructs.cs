@@ -79,6 +79,10 @@ namespace Laboratory.Tests.L2.Semantics
             else EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, expression);
         }
 
+        [TestCase("lambdaChainConstant(0)(0)", "10")]
+        [TestCase("lambdaChainConstantManyTimes(0)(0)(0)(0)(0)(0)(0)(0)(0)(0)(0)(0)", "10")]
+        public void LambdaChain(string expression, string expected) => AssertApproxEqual(CompilerInput, expression, expected);
+
         [Test]
         public void CaptureLifetimeExtendsForReturnedFunction() => AssertApproxEqual(CompilerInput, "addAndGetSub(5, 10)(20)", "-5");
 

@@ -25,3 +25,13 @@ struct MyStruct(vector:Vector3)
 makeMyStruct(a:Num) = MyStruct(Vector3(a, a, a))
 predicate(a:MyStruct):Bool = false
 iterateWithMyStruct(a:Num) = for(makeMyStruct(a), predicate, _(a) = a).vector.add(Vector3(5, 5, 5)).x
+
+struct LoopState(value:Num)
+NestedForLoop(a:Num):Num
+{
+   nested_predicate(input:Num):Bool = input.lt(20)
+   nested_body(input:Num):Num = input.add(1)
+   body(input:LoopState):LoopState = LoopState(input.value.add(for(a, nested_predicate, nested_body)))
+   predicate(input:LoopState):Bool = input.value.lt(200)
+   return = for(LoopState(a), predicate, body).value
+}
