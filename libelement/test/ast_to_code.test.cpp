@@ -83,4 +83,23 @@ TEST_CASE("AST to Source Code" "[AST_CODE]") {
     SECTION("function(a, b) { struct MyStruct(a, b); return = MyStruct(a, b); }") {
         check_ast_to_code("function(a, b) { struct MyStruct(a, b); return = MyStruct(a, b); }");
     }
+
+    SECTION("c = -10.86;") {
+        check_ast_to_code("c = -10.86;");
+    }
+
+    SECTION("invalidReturn(a:Num, b:Num):Num { c = Num.add(a.x, b.x); }") {
+        check_ast_to_code("invalidReturn(a:Num, b:Num):Num { c = Num.add(a.x, b.x); }");
+    }
+
+    SECTION("scope_bodied { return = 5.0; }") {
+        check_ast_to_code("scopeBodied { return = 5.0; }");
+    }
+
+    SECTION("Preserve Whitespace") {
+        check_ast_to_code("struct myStruct(a:Num)\n"
+                          "{\n"
+                          "    a(b:Num) = b; \n"
+                          "}");
+    }
 }

@@ -345,7 +345,11 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent)
         string += port_string;
     }
     else if (node->type == ELEMENT_AST_NODE_PORT) {
-        string += node->identifier;
+        if (!node->identifier.empty()) {
+            string += node->identifier;
+        } else if (node->nearest_token->type == ELEMENT_TOK_UNDERSCORE) {
+            string += "_";
+        }
     }
     else if (node->type == ELEMENT_AST_NODE_STRUCT) {
         string += "struct ";
@@ -369,8 +373,13 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent)
         string += fmt::format("namespace {} ", node->identifier);
     }
     else if (node->type == ELEMENT_AST_NODE_SCOPE) {
-        // Create string for scope
-        std::string scope_string = "{ ";
+        std::string scope_string;
+
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION) {
+            scope_string = " { ";
+        } else {
+            scope_string = "{ ";
+        }
 
         if (!node->children.empty()) {
             for (int i = 0; i <= node->children.size()-1; i++)
@@ -490,7 +499,10 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
             new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
 
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
-            new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast ? nearest_ast : nullptr);
+			new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast ? nearest_ast : nullptr);
+
+        if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast_to_code))
+            new_log_message += "\n\nAST-TO-CODE\n---------\n" + ast_to_code(context.root, nullptr);
     }
 
     msg.message = new_log_message.c_str();

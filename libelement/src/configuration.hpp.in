@@ -13,6 +13,7 @@ enum class log_flags : int {
 	output_prelude              = 1 << 5,
 	output_typeof_information   = 1 << 6,
 	output_compilation_steps    = 1 << 7,
+	output_ast_to_code          = 1 << 8,
 };
 
 constexpr log_flags operator|(log_flags lhs, log_flags rhs) 
