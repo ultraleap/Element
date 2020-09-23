@@ -103,5 +103,19 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("cyclicLocalFunction")]
         [TestCase("cyclicDefault")]
         public void RecursionDisallowed(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, expression);
+        
+
+        [Test]
+        public void AnonymousBlockShouldBeFullyResolvedBeforeSuccessiveCall() => AssertApproxEqual(CompilerInput, "getTuple.i", "2");
+
+        [Test]
+        public void VectorsShouldBeFullyResolvedBeforeSuccessiveCall() => AssertApproxEqual(CompilerInput, "getVec.i", "2");
+        
+        [Test]
+        public void StructsShouldBeFullyResolvedBeforeSuccessiveCall() => AssertApproxEqual(CompilerInput, "getStruct.i", "2");
+        
+        [Test]
+        public void NamespacesShouldBeFullyResolvedBeforeSuccessiveCall() => AssertApproxEqual(CompilerInput, "getNamespace.i", "2");
+
     }
 }
