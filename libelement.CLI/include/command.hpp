@@ -179,7 +179,14 @@ namespace libelement::cli
 				else if (output.values[i] == -std::numeric_limits<float>::infinity())
 					data += "-Infinity";
 				else
-					data += std::to_string(output.values[i]);
+				{
+					std::stringstream ss;
+					ss << std::setprecision(10) << output.values[i];
+					data += ss.str(); 
+				}
+				//else
+				//	data += std::to_string(output.values[i]);
+
 
 				if (output.count > 1 && i < output.count)
 					data += " ";
