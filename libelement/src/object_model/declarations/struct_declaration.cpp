@@ -58,7 +58,7 @@ bool struct_declaration::matches_constraint(const compilation_context& context, 
 {
     if (is_intrinsic())
     {
-        const auto intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
+        const auto* const intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
         if (!intrinsic)
             return type->matches_constraint(context, constraint);
 

@@ -13,11 +13,16 @@
 
 using namespace element;
 
-anonymous_block_instance::anonymous_block_instance(const anonymous_block_expression* declarer, capture_stack captures, source_information source_info)
+anonymous_block_instance::anonymous_block_instance(const anonymous_block_expression* declarer, const std::map<identifier, object_const_shared_ptr>& named_expressions, source_information source_info)
     : declarer(declarer)
-    , captures(std::move(captures))
 {
-    this->source_info = std::move(source_info);
+    assert(declarer->our_scope.get());
+
+    auto* our_scope = declarer->our_scope.get();
+    for(const auto& [identifier, expression] : named_expressions)
+    {
+        fields.emplace(identifier.value, expression);
+    }
 }
 
 bool element::anonymous_block_instance::is_constant() const
@@ -41,13 +46,14 @@ object_const_shared_ptr anonymous_block_instance::index(const compilation_contex
                                                         const identifier& name,
                                                         const source_information& source_info) const
 {
-    std::swap(captures, context.captures);
-    auto found = context.captures.find(declarer->our_scope.get(), name, context, declarer->source_info);
-    std::swap(captures, context.captures);
-    if (found)
-        return found;
+    const auto found_field = fields.find(name.value);
 
-    return build_error_and_log(context, source_info, error_message_code::failed_to_find, name.value);
+    //found it as a field
+    if (found_field != fields.end())
+        return found_field->second;
+
+    //todo: well, this is probably a problem
+    return nullptr;
 }
 
 object_const_shared_ptr anonymous_block_instance::compile(const compilation_context& context,

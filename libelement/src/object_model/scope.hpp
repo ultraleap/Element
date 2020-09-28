@@ -34,6 +34,8 @@ namespace element
 
     private:
         const scope* parent_scope = nullptr;
+
+    public:
         std::map<identifier, std::unique_ptr<declaration>> declarations;
     };
 }

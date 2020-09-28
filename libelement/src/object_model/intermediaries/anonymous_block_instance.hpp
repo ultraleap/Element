@@ -9,7 +9,7 @@ namespace element
     class anonymous_block_instance final : public object, public std::enable_shared_from_this<anonymous_block_instance>
     {
     public:
-        explicit anonymous_block_instance(const anonymous_block_expression* declarer, capture_stack captures, source_information source_info);
+        explicit anonymous_block_instance(const anonymous_block_expression* declarer, const std::map<identifier, object_const_shared_ptr>& named_expressions, source_information source_info);
 
         //[[nodiscard]] std::string typeof_info() const override;
 
@@ -25,8 +25,9 @@ namespace element
                                                       const source_information& source_info) const override;
 
         const anonymous_block_expression* const declarer;
+        std::map<std::string, object_const_shared_ptr> fields;
 
     private:
-        mutable capture_stack captures;
+        //mutable capture_stack captures;
     };
 }
