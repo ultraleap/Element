@@ -22,8 +22,6 @@ void call_stack::pop()
 
 bool call_stack::is_recursive(const declaration* declaration) const
 {
-    return false;
-
     for (auto it = frames.rbegin(); it != frames.rend(); ++it)
     {
         if (it->function == declaration)
