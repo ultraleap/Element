@@ -27,25 +27,27 @@ namespace element
     }
 
     object_const_shared_ptr object::index(const compilation_context& context, const identifier&,
-                                                const source_information& source_info) const
+                                          const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_indexable, typeof_info());
     }
 
     object_const_shared_ptr object::call(const compilation_context& context, std::vector<object_const_shared_ptr>,
-                                               const source_information& source_info) const
+                                         const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_callable, typeof_info());
     }
 
     object_const_shared_ptr object::compile(const compilation_context& context,
-                                                  const source_information& source_info) const
+                                            const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_compilable, typeof_info());
     }
 
-    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>&
-                    compiled_args)
+    bool valid_call(
+        const compilation_context& context,
+        const declaration* declarer,
+        const std::vector<object_const_shared_ptr>& compiled_args)
     {
         if (compiled_args.size() != declarer->inputs.size())
             return false;
@@ -62,7 +64,9 @@ namespace element
             const auto* const type = input.resolve_annotation(context);
             if (!type)
             {
-                assert(!"failed to resolve annotation, couldn't be found");
+                error(fmt::format("typename '{}' for port {}({}) of {} could not be found",
+                    input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
+                    ELEMENT_ERROR_NOT_A_CONSTRAINT, declarer->source_info).log_once(context.get_logger());
                 return false;
             }
 
@@ -73,7 +77,10 @@ namespace element
         return true;
     }
 
-    std::shared_ptr<const error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>& compiled_args)
+    std::shared_ptr<const error> build_error_for_invalid_call(
+        const compilation_context& context,
+        const declaration* declarer,
+        const std::vector<object_const_shared_ptr>& compiled_args)
     {
         assert(!valid_call(context, declarer, compiled_args));
 

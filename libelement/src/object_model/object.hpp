@@ -53,7 +53,7 @@ namespace element
         object() = default;
     };
 
-    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>&compiled_args);
+    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>& compiled_args);
     std::shared_ptr<const error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>&compiled_args);
     object_const_shared_ptr index_type(const declaration* type,
                                        object_const_shared_ptr instance,
