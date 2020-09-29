@@ -10,6 +10,7 @@ namespace Element.AST
     {
 #pragma warning disable 649, 169
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        // ReSharper disable once UnusedMember.Global
         public abstract List<Declaration>? Items { get; protected set; }
 #pragma warning restore 649, 169
         

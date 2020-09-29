@@ -67,7 +67,9 @@ intrinsic struct Num
     mod(a:Num, b:Num):Num
     {
         c = a.rem(b)
-        return = c.mul(b).lt(0).if(add(c, b), c)
+        return = c.mul(b).lt(0)
+                         .if(add(c, b),
+                             c)
     }
 
     negate(a:Num):Num                   = 0.sub(a)

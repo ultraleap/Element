@@ -16,6 +16,8 @@ namespace Element.AST
         public override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public override IValue ReturnConstraint { get; }
 
+        public override string SummaryString => $"({InputPortsJoined}):{ReturnConstraint.SummaryString}";
+
         public FunctionConstraint(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint)
         {
             InputPorts = inputPorts;
@@ -29,23 +31,31 @@ namespace Element.AST
 
             var resultBuilder = new ResultBuilder<bool>(context, true);
 
-            void CompareConstraints(IValue argConstraint, IValue declConstraint)
+            void CompareConstraintPair(IValue argConstraint, IValue expectedConstraint, bool portIsInput)
             {
-                // This port pair passes if the declarations port is Any (all constraints are narrower than Any)
+                var succeedingSoFar = resultBuilder.Result;
+                // This port pair passes if the expected port is Any (all constraints are narrower than Any)
                 // otherwise it must be exactly the same constraint since there is no type/constraint hierarchy
-                // ReSharper disable once PossibleUnintendedReferenceComparison
                 // TODO: Does Nothing need to be handled specially here?
-                resultBuilder.Result &=
-                    declConstraint.IsIntrinsic<AnyConstraint>()
-                    || argConstraint == declConstraint;
+                var portMatches = resultBuilder.Result &=
+                                      expectedConstraint.IsIntrinsic<AnyConstraint>()
+                                      // ReSharper disable once PossibleUnintendedReferenceComparison
+                                      || argConstraint == expectedConstraint;
+                
+                if (!portMatches)
+                {
+                    // On first port error, add extra message about the function constraint not matching
+                    if (succeedingSoFar) resultBuilder.Append(EleMessageCode.ConstraintNotSatisfied, $"Expected function signature to match '{this}' but was '{fn}'");
+                    resultBuilder.Append(EleMessageCode.ConstraintNotSatisfied, $"Expected {(portIsInput ? "input" : "return")} port '{expectedConstraint}' but was '{argConstraint}'");
+                }
             }
 
             foreach (var (argumentPort, matchingPort) in fn.InputPorts.Zip(InputPorts, (argumentPort, matchingPort) => (argumentPort, matchingPort)))
             {
-                CompareConstraints(argumentPort.ResolvedConstraint, matchingPort.ResolvedConstraint);
+                CompareConstraintPair(argumentPort.ResolvedConstraint, matchingPort.ResolvedConstraint, true);
             }
 
-            CompareConstraints(fn.ReturnConstraint, ReturnConstraint);
+            CompareConstraintPair(fn.ReturnConstraint, ReturnConstraint, false);
 
             return resultBuilder.ToResult();
         }

@@ -25,6 +25,9 @@ namespace Element.AST
     public abstract class Value : IValue
     {
         private string? _cachedString;
+
+        protected string InputPortsJoined => string.Join(", ", InputPorts);
+        
         public sealed override string ToString() => _cachedString ??= SummaryString;
         public virtual string SummaryString => TypeOf;
         public virtual string TypeOf => GetType().Name;
@@ -64,6 +67,8 @@ namespace Element.AST
                        ? value.Index(members[index], context)
                        : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Cannot access member {index} - '{value}' has {members.Count} members");
         }
+
+        public static Result<IReadOnlyList<IValue>> MemberValues(this IValue value, Context context) => value.Members.Select(m => value.Index(m, context)).ToResultReadOnlyList();
 
         public static Result<List<Element.Instruction>> Serialize(this IValue value, Context context)
         {

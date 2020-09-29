@@ -22,6 +22,8 @@ namespace Element.AST
         public override IValue ReturnConstraint => this;
         public IReadOnlyList<ResolvedPort> Fields { get; }
 
+        public override string SummaryString => Identifier.String;
+
         public abstract override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context);
         public abstract override Result<bool> MatchesConstraint(IValue value, Context context);
         public override Result<IValue> Index(Identifier id, Context context) => _associatedBlock?.Index(id, context)

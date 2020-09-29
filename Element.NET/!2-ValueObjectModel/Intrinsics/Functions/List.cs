@@ -73,7 +73,7 @@ namespace Element.AST
 
             private readonly Instruction _index;
             private readonly IReadOnlyList<IValue> _elements;
-            public override string SummaryString => $"List[{_index}]";
+            public override string SummaryString => $"ListElement({_index})[{string.Join(", ", _elements)}]";
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
 

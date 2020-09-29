@@ -64,5 +64,6 @@ namespace Element
         NotFunction = 36,
         NotIndexable = 37,
         NotConstraint = 38,
+        CallStackLimitReached = 40,
     }
 }

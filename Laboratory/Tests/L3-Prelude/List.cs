@@ -1,4 +1,5 @@
 using System.Globalization;
+using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L3.Prelude
@@ -24,6 +25,10 @@ namespace Laboratory.Tests.L3.Prelude
 		public void SerializeListElement() =>
 			AssertApproxEqual(ValidatedCompilerInput, "Vector3(5, 5, 5)", "List.repeat(Vector3(5, 5, 5), 3).at(2)");
 
+		[Test]
+		public void CallWithListElementOfNonHomogenousList() =>
+			EvaluateExpectingElementError(ValidatedCompilerInput, EleMessageCode.ConstraintNotSatisfied, new FunctionEvaluation("_(i:Num):Num = returnVec2(list(Vector2(5, 10), Vector3(5, 10, 15)).at(i))", "(1)", false));
+		
 		private static readonly (float, float)[] _factorialArguments =
 		{
 			(0f, 1f),

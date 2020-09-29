@@ -71,6 +71,8 @@ namespace Element.AST
         public IValue ResolvedConstraint { get; }
         public IValue? ResolvedDefaultArgument { get; }
         public Result<IValue> DefaultValue(Context context) => ResolvedDefaultArgument != null ? new Result<IValue>(ResolvedDefaultArgument) : ResolvedConstraint.DefaultValue(context);
+
+        public override string ToString() => $"{Identifier.GetValueOrDefault(new Identifier("_")).String}:{ResolvedConstraint.SummaryString}{(ResolvedDefaultArgument is {} v ? $" = {v.SummaryString}" : string.Empty)}";
     }
 
     public class VariadicPortMarker : Value

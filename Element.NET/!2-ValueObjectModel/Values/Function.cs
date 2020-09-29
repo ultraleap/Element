@@ -10,18 +10,18 @@ namespace Element.AST
             this.VerifyArgumentsAndApplyFunction(arguments, () => ResolveCall(arguments, context), context);
 
         protected abstract Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context);
-        
+
         protected IReadOnlyList<(Identifier Identifier, IValue Value)> MakeNamedArgumentList(IReadOnlyList<IValue> arguments)
         {
             if (arguments.Count < 1) return Array.Empty<(Identifier Identifier, IValue Value)>();
-            
+
             var namedArguments = new List<(Identifier Identifier, IValue Value)>(InputPorts.Count);
 
             for (var i = 0; i < arguments.Count; i++)
             {
                 var arg = arguments[i];
                 var port = InputPorts[i];
-                
+
                 if (port?.Identifier.HasValue ?? false) // Ignore adding ports without identifier - they are discards
                 {
                     namedArguments.Add((port!.Identifier!.Value, arg));
@@ -33,6 +33,8 @@ namespace Element.AST
 
         public abstract override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public abstract override IValue ReturnConstraint { get; }
+
+        public override string SummaryString => $"({InputPortsJoined}):{ReturnConstraint.SummaryString}";
     }
     
     public class IntrinsicFunction : Function, IIntrinsicValue
@@ -94,13 +96,13 @@ namespace Element.AST
 
     public static class FunctionExtensions
     {
-        
         public static Result<IValue> VerifyArgumentsAndApplyFunction(this IValue function,
                                                                      IEnumerable<IValue> arguments,
                                                                      Func<Result<IValue>> resolveFunc,
                                                                      Context context)
         {
             if (context.CallStack.Contains(function)) return context.Trace(EleMessageCode.RecursionNotAllowed, $"Multiple references to {function} in same call stack - recursion is not allowed");
+            if (context.CallStack.Count > context.CompilerOptions.CallStackLimit) return context.Trace(EleMessageCode.CallStackLimitReached, $"Call stack has exceeded limit of {context.CompilerOptions.CallStackLimit} - this can modified as a compiler option");
             context.CallStack.Push(function);
 
             try

@@ -23,7 +23,7 @@ namespace Element
         public Context(IScope? rootScope, CompilerOptions? compilerOptions)
         {
             RootScope = rootScope ?? new NoScope(this);
-            CompilerOptions = compilerOptions.GetValueOrDefault();
+            CompilerOptions = compilerOptions ?? new CompilerOptions(MessageLevel.Information);
         }
         public Context(SourceContext sourceContext) : this(sourceContext.GlobalScope, sourceContext.CompilerOptions) { }
         

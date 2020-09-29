@@ -18,6 +18,6 @@ namespace Laboratory.Tests.L4.StandardLibrary
             TestPackageRegistry,
             new[] {new PackageSpecifier("StandardLibrary", new Range("*"))},
             Array.Empty<FileInfo>(),
-            new CompilerOptions(default, true, default, default));
+            new CompilerOptions(default, default, true));
     }
 }

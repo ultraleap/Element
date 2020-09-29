@@ -46,7 +46,7 @@ namespace Laboratory.Tests
                                                      null,
                                                      Array.Empty<PackageSpecifier>(),
                                                      new[] {fileInfo},
-                                                     new CompilerOptions(default, skipValidation, expectingError, default));
+                                                     new CompilerOptions(default, default, skipValidation, expectingError));
 
             var result = Host.Parse(compilationInput);
             if (expectingError)

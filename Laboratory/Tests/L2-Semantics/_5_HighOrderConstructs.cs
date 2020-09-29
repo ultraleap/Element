@@ -90,7 +90,10 @@ namespace Laboratory.Tests.L2.Semantics
         public void HighOrderFunctionSum() => AssertApproxEqual(CompilerInput, "sum(list(3, -5, 8, 20))", "26");
         
         [Test]
-        public void ApplyHighOrderFunctionMultipleTimes() => AssertApproxEqual(CompilerInput, "usePartiallyAppliedFunctionMultipleTimes", "35"); 
+        public void ApplyHighOrderFunctionMultipleTimes() => AssertApproxEqual(CompilerInput, "usePartiallyAppliedFunctionMultipleTimes", "35");
+
+        [Test]
+        public void NestedFunctionReturnWithIncorrectSignatureReturnsError() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, "innerFuncSignatureIncorrect(10)");
         
         [TestCase("Indexer", "FunctionConstraint")]
         [TestCase("Binary", "FunctionConstraint")]

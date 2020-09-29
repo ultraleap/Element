@@ -164,6 +164,10 @@ level = "Error"
 name = "PackageNotFound"
 level = "Error"
 
+[ELE40]
+name = "CallStackLimitReached"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

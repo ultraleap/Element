@@ -18,9 +18,10 @@ namespace Element.AST
                                         .Bind(t =>
                                         {
                                             var (functionImpl, inputPorts, returnConstraint) = t;
+                                            var intrinsicFunction = new Result<IValue>(new IntrinsicFunction(functionImpl, inputPorts, returnConstraint));
                                             return PortList == null && !functionImpl.IsVariadic
-                                                       ? functionImpl.Call(Array.Empty<IValue>(), context)
-                                                       : new Result<IValue>(new IntrinsicFunction(functionImpl, inputPorts, returnConstraint));
+                                                       ? intrinsicFunction.Bind(fn => fn.Call(Array.Empty<IValue>(), context))
+                                                       : intrinsicFunction;
                                         });
 
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)
@@ -47,9 +48,11 @@ namespace Element.AST
                     .Bind(t =>
                     {
                         var (inputPort, returnConstraint) = t;
+                        var expressionBodiedFunction = new Result<IValue>(new ExpressionBodiedFunction(inputPort, returnConstraint, (ExpressionBody)Body, scope));
+                        // Call functions with no args immediately
                         return PortList == null
-                                   ? ((ExpressionBody) Body).Expression.ResolveExpression(scope, context)
-                                   : new Result<IValue>(new ExpressionBodiedFunction(inputPort, returnConstraint, (ExpressionBody)Body, scope));
+                                   ? expressionBodiedFunction.Bind(nullary => nullary.Call(Array.Empty<IValue>(), context))
+                                   : expressionBodiedFunction;
                     });
 
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)
@@ -98,10 +101,11 @@ namespace Element.AST
                     .Bind(t =>
                     {
                         var (inputPort, returnConstraint) = t;
+                        var scopeBodiedFunction = new Result<IValue>(new ScopeBodiedFunction(inputPort, returnConstraint, (FunctionBlock) Body, scope));
+                        // Call functions with no args immediately
                         return PortList == null
-                                   ? ((FunctionBlock) Body).ResolveBlock(scope, context)
-                                                           .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context))
-                                   : new Result<IValue>(new ScopeBodiedFunction(inputPort, returnConstraint, (FunctionBlock) Body, scope));
+                                   ? scopeBodiedFunction.Bind(nullary => nullary.Call(Array.Empty<IValue>(), context))
+                                   : scopeBodiedFunction;
                     });
     }
     

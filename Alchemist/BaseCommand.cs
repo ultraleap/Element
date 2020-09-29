@@ -41,7 +41,7 @@ namespace Alchemist
 		{
 			Log(args);
 
-			var options = new CompilerOptions(!Debug, _skipValidation, _noParseTrace, Verbosity);
+			var options = new CompilerOptions(Verbosity, !Debug, _skipValidation, _noParseTrace);
 
 			var currentDirectory = new DirectoryInfo(Directory.GetCurrentDirectory());
 			var packageRegistry = new DirectoryPackageRegistry(currentDirectory);

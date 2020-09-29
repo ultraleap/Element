@@ -92,5 +92,11 @@ namespace Element.NET.TestHelpers
             var result = Host.EvaluateExpression(compilerInput, expression);
             ExpectingError(result.Messages, result.IsSuccess, MessageExtensions.TypeString, (int)eleMessageCode);
         }
+        
+        protected void EvaluateExpectingElementError(CompilerInput compilerInput, EleMessageCode eleMessageCode, FunctionEvaluation fn)
+        {
+            var result = Host.EvaluateFunction(compilerInput, fn.FunctionExpression, fn.CallExpression, fn.Interpreted);
+            ExpectingError(result.Messages, result.IsSuccess, MessageExtensions.TypeString, (int)eleMessageCode);
+        }
     }
 }
