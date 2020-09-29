@@ -41,16 +41,16 @@ bool directory_exists(const std::string& directory)
     return std::filesystem::exists(directory) && std::filesystem::is_directory(directory);
 }
 
-element_result element_interpreter_ctx::load(const char* str, const char* filename)
+element_result element_interpreter_ctx::load_into_scope(const char* str, const char* filename, element::scope* src_scope)
 {
-	//HACK: JM - Not a fan of this...
+    //HACK: JM - Not a fan of this...
     const std::string file = filename;
     const auto starts_with_prelude = file.rfind("Prelude\\", 0) == 0;
-	
+
     element_tokeniser_ctx* tokeniser;
     ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
 
-    tokeniser->logger = logger;
+        tokeniser->logger = logger;
 
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
     auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(tokeniser, element_tokeniser_delete);
@@ -60,8 +60,8 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     info.file_name = std::make_unique<std::string>(filename);
     //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
     ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()))
-    if (tokeniser->tokens.empty())
-        return ELEMENT_OK;
+        if (tokeniser->tokens.empty())
+            return ELEMENT_OK;
 
     const auto total_lines_parsed = tokeniser->line;
 
@@ -75,29 +75,28 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
     src_context->file_info[data] = std::move(info);
 
     const auto log_tokens = starts_with_prelude
-                                ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
-                                : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
-	
+        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
+        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+
     if (log_tokens) {
-			log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+        log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
     }
 
     element_parser_ctx parser;
     parser.tokeniser = tokeniser;
     parser.logger = logger;
     parser.src_context = src_context;
-     
+
     auto result = parser.ast_build();
     ELEMENT_OK_OR_RETURN(result)
 
-    const auto log_ast = starts_with_prelude
+        const auto log_ast = starts_with_prelude
         ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
         : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
-	
+
     if (log_ast) {
         log("\n---\nAST\n---\n" + ast_to_string(parser.root));
     }
-
 
     //parse only enabled, skip object model generation to avoid error codes with positive values
     //i.e. errors returned other than ELEMENT_ERROR_PARSE
@@ -115,13 +114,18 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
         return result;
     }
 
-    result = global_scope->merge(std::move(object_model));
+    result = src_scope->merge(std::move(object_model));
     if (result != ELEMENT_OK) {
         log(result, fmt::format("merging object models failed with element_result {}", result), filename);
         return result;
     }
 
     return result;
+}
+
+element_result element_interpreter_ctx::load(const char* str, const char* filename)
+{
+    return load_into_scope(str, filename, global_scope.get());
 }
 
 element_result element_interpreter_ctx::load_file(const std::string& file)

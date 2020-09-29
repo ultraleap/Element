@@ -77,32 +77,34 @@ namespace element
     {
         assert(!valid_call(context, declarer, compiled_args));
 
+        std::string input_params;
+        for (unsigned i = 0; i < declarer->inputs.size(); ++i)
+        {
+            const auto& input = declarer->inputs[i];
+            input_params += fmt::format("({}) {}{}", i, input.get_name(), input.has_annotation() ? ":" + input.get_annotation()->to_string() : "");
+            if (i != declarer->inputs.size() - 1)
+                input_params += ", ";
+        }
+
+        std::string given_params;
+        for (unsigned i = 0; i < compiled_args.size(); ++i)
+        {
+            const auto& input = compiled_args[i];
+            given_params += fmt::format("({}) _:{}", i, input->typeof_info());
+            if (i != compiled_args.size() - 1)
+                given_params += ", ";
+        }
+
         if (compiled_args.size() != declarer->inputs.size())
         {
-            std::string input_params;
-            for (unsigned i = 0; i < declarer->inputs.size(); ++i)
-            {
-                const auto& input = declarer->inputs[i];
-                input_params += fmt::format("({}) {}{}", i, input.get_name(), input.has_annotation() ? ":" + input.get_annotation()->to_string() : "");
-                if (i != declarer->inputs.size() - 1)
-                    input_params += ", ";
-            }
-
-            std::string given_params;
-            for (unsigned i = 0; i < compiled_args.size(); ++i)
-            {
-                const auto& input = compiled_args[i];
-                given_params += fmt::format("({}) _:{}", i, input->typeof_info());
-                if (i != compiled_args.size() - 1)
-                    given_params += ", ";
-            }
-
             return build_error(declarer->source_info, error_message_code::argument_count_mismatch,
                 declarer->location(), input_params, given_params);
         }
 
-        //todo: proper logging
-        return std::make_shared<error>("constraint not satisfied", ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
+        auto error_string = fmt::format("constraint not satisfied for function {}\nfunction has {} inputs\nfunction parameters = {}\narguments passed = {}",
+            declarer->name.value, declarer->inputs.size(), input_params, given_params);
+        
+        return std::make_shared<error>(std::move(error_string), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
     }
 
     object_const_shared_ptr index_type(const declaration* type,

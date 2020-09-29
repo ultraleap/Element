@@ -15,7 +15,7 @@ scope::scope(const scope* parent_scope, const object* const declaration_or_expre
 
 element_result scope::merge(std::unique_ptr<scope>&& other)
 {
-    if (!is_root() || !other->is_root())
+    if (!other->is_root())
         return ELEMENT_ERROR_UNKNOWN;
 
     for (auto& [identifier, declaration] : other->declarations)
@@ -29,6 +29,19 @@ element_result scope::merge(std::unique_ptr<scope>&& other)
     }
 
     return ELEMENT_OK;
+}
+
+bool scope::mark_declaration_compiler_generated(const identifier& name)
+{
+    const auto found_it = declarations.find(name);
+    if (found_it == declarations.end())
+        return false;
+
+    auto decl = std::move(found_it->second);
+    decl->name.value = "@" + name.value;
+    declarations.erase(found_it);
+    auto [it, success] = declarations.try_emplace(decl->name, std::move(decl));
+    return success;
 }
 
 //std::string scope::location() const

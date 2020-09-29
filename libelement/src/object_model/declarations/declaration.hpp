@@ -41,7 +41,7 @@ namespace element
         }
 
         std::string qualifier;
-        const identifier name;
+        identifier name;
         std::vector<port> inputs;
         std::unique_ptr<scope> our_scope;
         std::optional<port> output;

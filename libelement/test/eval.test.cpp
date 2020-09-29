@@ -2902,7 +2902,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 inputs[3] = std::nanf("");
                                 result = eval_with_inputs(new_src.c_str(), &input, &output);
                                 REQUIRE(result == ELEMENT_OK);
-                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                                REQUIRE(std::isnan(outputs[0]) == std::isnan(inputs[3] + inputs[0] + inputs[1] + inputs[2]));
                             }
 
                             SECTION("PositiveInfinity Start")
@@ -3055,21 +3055,21 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         }
                     }
 
-                    SECTION("list(Vector2, Vector2, Vector2).fold(Vector2(start, start), Vector2.mul).x")
+                    SECTION("list(Vector2, Vector2, Vector2).fold(Vector2(start, start), Vector2.add).x")
                     {
                         std::array<float, 7> inputs = { 2, 2, 2, 2, 2, 2, 0 };
                         std::array<float, 2> outputs = { 0 };
                         element_inputs input{ inputs.data(), inputs.size() };
                         element_outputs output{ outputs.data(), outputs.size() };
 
-                        const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, start:Num):Num = list(a, b, c).fold(Vector2(start, start), Vector2.mul).x";
+                        const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, start:Num):Num = list(a, b, c).fold(Vector2(start, start), Vector2.add).x";
 
                         SECTION("Negative Start")
                         {
                             inputs[6] = -100;
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("Zero Start")
@@ -3077,7 +3077,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = 0;
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("Positive Start")
@@ -3085,7 +3085,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = 100;
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("Max Value Start")
@@ -3093,7 +3093,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = std::numeric_limits<float>::max();
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("NaN Start")
@@ -3101,7 +3101,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = std::nanf("");
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(std::isnan(outputs[0]) == std::isnan(inputs[6] + inputs[0] + inputs[2] + inputs[4]));
                         }
 
                         SECTION("PositiveInfinity Start")
@@ -3109,7 +3109,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = std::numeric_limits<float>::infinity();
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("NegativeInfinity Start")
@@ -3117,8 +3117,30 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = std::numeric_limits<float>::infinity() * -1.0f;
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
+                    }
+
+                    SECTION("Dynamic-time list fold")
+                    {
+                        /*
+                         *
+                         * note: anonymous block recursion bug breaks this test, but with recursion detection disabled it works
+                         *
+                         */
+                        float inputs[] = { 1, 2, 3, 100 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 4;
+                        element_outputs output;
+                        float outputs[] = { 0, 0 };
+                        output.values = outputs;
+                        output.count = 2;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num, start:Num):Num = list(a, b, c).fold(start, Num.add)\n", &input, &output, "StandardLibrary");
+
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 106);
                     }
                 }
             }
@@ -3275,6 +3297,37 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     REQUIRE(outputs[0] == 7);
                     REQUIRE(outputs[1] == 7);
                 }
+
+                SECTION("Dynamic-time for, manual list_fold")
+                {
+                    /*
+                     *
+                     * note: anonymous block recursion bug breaks this test, but with recursion detection disabled it works
+                     *
+                     */
+                    float inputs[] = { 1, 2, 3, 100 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 4;
+                    element_outputs output;
+                    float outputs[] = { 0, 0 };
+                    output.values = outputs;
+                    output.count = 2;
+
+                    char source[] = ""
+                        "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"
+                        "{\n"
+                        "   end_of_list(tuple:Any):Bool = tuple.idx.lt(myList.count)\n"
+                        "   accumulate(tuple:Any):Any = {idx = tuple.idx.add(1), accumulated_value = someFunc(tuple.accumulated_value, myList.at(tuple.idx))}\n"
+                        "   return:Any = for({idx = 0, accumulated_value = initial_value}, end_of_list, accumulate).accumulated_value\n"
+                        "}\n"
+                        "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list_fold(list(a, b, c), start, Num.add)\n";
+
+                    result = eval_with_inputs(source, &input, &output, "StandardLibrary");
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 106);
+                }
             }
         }
 
@@ -3419,6 +3472,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         SECTION("Error - Circular Compilation")
         {
+            //recursion is disabled to test list.fold at runtime due to bug with anonymous blocks - this test infinite loops and stops other tests as a result
+            REQUIRE(true == false);
             result = eval(
                 "c(d) = a(d)\n"
                 "a(b:Num) = c(b.mul(b))\n"
@@ -3461,14 +3516,14 @@ TEST_CASE("Interpreter", "[Evaluate]")
         {
             //todo: namespace should have a specific error message for calling a namespace, with a specific error code
             result = eval("namespace MyNamespace {} evaluate = MyNamespace(1)");
-            REQUIRE(result == ELEMENT_ERROR_UNKNOWN);
+            REQUIRE(result == ELEMENT_ERROR_INVALID_CALL_NONFUNCTION);
         }
 
         SECTION("Error - Indexing Function")
         {
             //todo: this should return an error for trying to index a function
             result = eval("func(a) = 1 evaluate = func.a");
-            REQUIRE(result == ELEMENT_ERROR_UNKNOWN);
+            REQUIRE(result == ELEMENT_ERROR_NOT_INDEXABLE);
         }
 
         SECTION("Error - Missing Function Body")
@@ -3580,7 +3635,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
         {
             //todo: better error message
             result = eval("evaluate = 5.add.add(1)");
-            REQUIRE(result == ELEMENT_ERROR_UNKNOWN);
+            REQUIRE(result == ELEMENT_ERROR_NOT_INDEXABLE);
         }
 
         SECTION("Error - Identifier Not Found - Indexing Num")

@@ -27,6 +27,7 @@ namespace element
         [[nodiscard]] bool add_declaration(std::unique_ptr<declaration> declaration);
         element_result merge(std::unique_ptr<scope>&& other);
 
+        bool mark_declaration_compiler_generated(const identifier&);
         //todo: private
         //const declaration* const declarer;
         //const object* declaration_or_expression;
