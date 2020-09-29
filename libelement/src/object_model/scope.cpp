@@ -76,6 +76,17 @@ bool scope::add_declaration(std::unique_ptr<declaration> declaration)
     return success;
 }
 
+
+bool scope::remove_declaration(const identifier& name)
+{
+    return declarations.erase(name.value) != 0;
+}
+
+const std::map<identifier, std::unique_ptr<declaration>>& scope::get_declarations() const
+{
+    return declarations;
+}
+
 const declaration* scope::find(const identifier& name, const bool recurse = false) const
 {
     const auto name_it = declarations.find(name);

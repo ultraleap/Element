@@ -26,7 +26,7 @@ object_const_shared_ptr anonymous_block_expression::resolve(const compilation_co
         return std::make_shared<const error>("anonymous block isn't the first thing in the chain", ELEMENT_ERROR_UNKNOWN, source_info);
 
     std::map<identifier, object_const_shared_ptr> compiled_declarations;
-    for (const auto& [identifier, declaration] : our_scope->declarations)
+    for (const auto& [identifier, declaration] : our_scope->get_declarations())
         compiled_declarations.emplace(identifier, declaration->compile(context, source_info));
 
     for (const auto& [identifier, obj] : compiled_declarations)

@@ -585,7 +585,8 @@ element_result element_interpreter_compile_expression(
 
     //todo: urgh, this is horrible now...
     element::deferred_expressions deferred_expressions;
-    auto dummy_declaration = std::make_unique<element::function_declaration>(element::identifier{ "<REMOVE>" }, context->global_scope.get(), element::function_declaration::kind::expression_bodied);
+    auto dummy_identifier = element::identifier{ "<REMOVE>" };
+    auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, context->global_scope.get(), element::function_declaration::kind::expression_bodied);
     parser.root->nearest_token = &tokeniser->tokens[0];
     element::assign_source_information(context, dummy_declaration, parser.root);
     auto expression_chain = element::build_expression_chain(context, ast, dummy_declaration.get(), deferred_expressions, result);
@@ -598,16 +599,23 @@ element_result element_interpreter_compile_expression(
         return result;
     }
 
-    const bool success = context->global_scope->add_declaration(std::move(dummy_declaration));
+    bool success = context->global_scope->add_declaration(std::move(dummy_declaration));
     if (!success)
     {
         (*object)->obj = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto* found_dummy_decl = context->global_scope->find(element::identifier{ "<REMOVE>" }, false);
+    const auto* found_dummy_decl = context->global_scope->find(dummy_identifier, false);
     assert(found_dummy_decl);
     auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
+
+    success = context->global_scope->remove_declaration(dummy_identifier);
+    if (!success)
+    {
+        (*object)->obj = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
 
     //stuff from below
     (*object)->obj = std::move(compiled);
