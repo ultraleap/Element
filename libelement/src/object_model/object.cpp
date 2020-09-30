@@ -120,7 +120,7 @@ namespace element
                                        const identifier& name,
                                        const source_information& source_info)
     {
-        if (type->our_scope->declarations.empty())
+        if (type->our_scope->is_empty())
             return std::make_shared<const error>("Structs with empty scopes cannot be indexed", ELEMENT_ERROR_NOT_INDEXABLE, source_info);
 
         const auto* func = dynamic_cast<const function_declaration*>(type->our_scope->find(name, false));
