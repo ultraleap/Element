@@ -45,7 +45,7 @@ element_result element_interpreter_load_files(element_interpreter_ctx* context, 
 element_result element_interpreter_load_package(element_interpreter_ctx* context, const char* package);
 element_result element_interpreter_load_packages(element_interpreter_ctx* context, const char** packages, int packages_count);
 element_result element_interpreter_load_prelude(element_interpreter_ctx* context);
-void element_interpreter_set_log_callback (element_interpreter_ctx* context, void (*log_callback)(const element_log_message*));
+void element_interpreter_set_log_callback (element_interpreter_ctx* context, void (*log_callback)(const element_log_message*, void*), void* user_data);
 void element_interpreter_parse_only_mode(element_interpreter_ctx* context, bool parse_only);
 
 element_result element_interpreter_clear(element_interpreter_ctx* context);

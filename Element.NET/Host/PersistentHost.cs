@@ -1,44 +1,34 @@
 using System;
-using Element.AST;
 
 namespace Element
 {
+    using AST;
+    
     /// <summary>
     /// Host where the compilation context is persisted between commands.
     /// </summary>
     public class PersistentHost : IHost
     {
-        public static bool TryCreate(CompilationInput input, out PersistentHost? host)
-        {
-            host = null;
-            if (!SourceContext.TryCreate(input, out var context)) return false;
-            host = new PersistentHost(context);
-            return true;
-        }
-        
-        private PersistentHost(SourceContext context) => _context = context;
+        public static PersistentHost Create(CompilerOptions options) => new PersistentHost(new SourceContext(options));
 
-        private readonly SourceContext _context;
+        private PersistentHost(SourceContext context) => _srcContext = context;
 
-        public bool Parse(CompilationInput input) => _context.ApplyExtraInput(input);
+        private readonly SourceContext _srcContext;
 
-        public (bool Success, float[] Result) Evaluate(CompilationInput input, string expression) =>
-            _context.ApplyExtraInput(input)
-                ? _context.EvaluateExpressionAs<ISerializableValue>(expression, out var compilationContext)
-                          ?.Serialize(compilationContext)
-                          .ToFloatArray(compilationContext) is {} result
-                      ? (true, result)
-                      : (_context.LogError(1, "Result not serializable") == CompilationError.Instance, Array.Empty<float>())
-                : (false, Array.Empty<float>());
+        public Result Parse(CompilerInput input) => (Result)_srcContext.LoadCompilerInput(input);
 
-        public (bool Success, string Result) Typeof(CompilationInput input, string expression) =>
-            _context.ApplyExtraInput(input)
-                ? _context.EvaluateExpression(expression, out _) switch
-                {
-                    CompilationError err => (false, err.ToString()),
-                    { } result => (true, result.ToString()),
-                    null => (false, "<null>")
-                }
-                : (false, "<compilation input error>");
+        public Result<float[]> Evaluate(CompilerInput input, string expression) =>
+            _srcContext.LoadCompilerInput(input)
+                    .Bind(_ => new Context(_srcContext).EvaluateExpression(expression))
+                    .Bind(value => value.SerializeToFloats(new Context(_srcContext)));
+
+        public Result<string> Typeof(CompilerInput input, string expression) => Stringify(input, expression, value => value.TypeOf);
+        public Result<string> Summary(CompilerInput input, string expression) => Stringify(input, expression, value => value.SummaryString);
+        public Result<string> NormalForm(CompilerInput input, string expression) => Stringify(input, expression, value => value.NormalizedFormString);
+
+        private Result<string> Stringify(CompilerInput input, string expression, Func<IValue, string> stringify) =>
+            _srcContext.LoadCompilerInput(input)
+                       .Bind(_ => new Context(_srcContext).EvaluateExpression(expression))
+                       .Map(stringify);
     }
 }

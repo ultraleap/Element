@@ -17,7 +17,7 @@
 #include "etree/expressions.hpp"
 #include "etree/evaluator.hpp"
 
-void log_callback(const element_log_message* msg)
+void log_callback(const element_log_message* msg, void* user_data)
 {
     //TODO: This is a bit of a hack for now... Setting a constant length instead and using for both buffers
     const int space = 512;
@@ -68,7 +68,7 @@ element_result eval(const char* evaluate)
     element_object* object = NULL;
 
     element_interpreter_create(&context);
-    element_interpreter_set_log_callback(context, log_callback);
+    element_interpreter_set_log_callback(context, log_callback, nullptr);
     element_interpreter_load_prelude(context);
 
     float inputs[] = { 1, 2 };
@@ -130,7 +130,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     element_object* object = NULL;
 
     element_interpreter_create(&context);
-    element_interpreter_set_log_callback(context, log_callback);
+    element_interpreter_set_log_callback(context, log_callback, nullptr);
     element_interpreter_load_prelude(context);
 
     float inputs[] = { 1, 2 };
@@ -196,7 +196,7 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     element_object* object = NULL;
 
     element_interpreter_create(&context);
-    element_interpreter_set_log_callback(context, log_callback);
+    element_interpreter_set_log_callback(context, log_callback, nullptr);
     element_interpreter_load_prelude(context);
 
     if (!package.empty())
@@ -264,7 +264,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("evaluate(a:Num) = a.mul(2);", &input, &output);
+                result = eval_with_inputs("evaluate(a:Num) = a.mul(2)", &input, &output);
                 REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
             }
 
@@ -278,7 +278,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("evaluate(a):Num = a.mul(2);", &input, &output);
+                result = eval_with_inputs("evaluate(a):Num = a.mul(2)", &input, &output);
                 REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
             }
 
@@ -292,7 +292,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("evaluate(a:Any):Num = a.mul(2);", &input, &output);
+                result = eval_with_inputs("evaluate(a:Any):Num = a.mul(2)", &input, &output);
                 REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
             }
 
@@ -306,7 +306,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("evaluate(a:Num):Any = a.mul(2);", &input, &output);
+                result = eval_with_inputs("evaluate(a:Num):Any = a.mul(2)", &input, &output);
                 REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
             }
 
@@ -320,7 +320,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("namespace Namespace{} evaluate(a:Num):Namespace = Namespace;", &input, &output);
+                result = eval_with_inputs("namespace Namespace{} evaluate(a:Num):Namespace = Namespace", &input, &output);
                 REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
             }
 
@@ -334,7 +334,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("myMul(a, b) = a.mul(b); evaluate(a:Num, b:Num):myMul = myMul;", &input, &output);
+                result = eval_with_inputs("myMul(a, b) = a.mul(b) evaluate(a:Num, b:Num):myMul = myMul", &input, &output);
                 REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
             }
 
@@ -348,7 +348,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("myMul(a, b) = a.mul(b); struct myStruct(a:myMul) {} evaluate(a:Num, b:Num):myStruct = myStruct(myMul);", &input, &output);
+                result = eval_with_inputs("myMul(a, b) = a.mul(b) struct myStruct(a:myMul) {} evaluate(a:Num, b:Num):myStruct = myStruct(myMul)", &input, &output);
                 REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
             }
 
@@ -362,7 +362,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("myMul(a, b) = a.mul(b); evaluate(a:myMul):Num = a(1, 2);", &input, &output);
+                result = eval_with_inputs("myMul(a, b) = a.mul(b) evaluate(a:myMul):Num = a(1, 2)", &input, &output);
                 REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
             }
 
@@ -376,7 +376,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("myMul(a, b) = a.mul(b); struct myStruct(a:myMul) {}  evaluate(a:myStruct):Num = a.a(1, 2);", &input, &output);
+                result = eval_with_inputs("myMul(a, b) = a.mul(b) struct myStruct(a:myMul) {} evaluate(a:myStruct):Num = a.a(1, 2)", &input, &output);
                 REQUIRE(result == ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE);
             }
         }
@@ -393,7 +393,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("returnIt(a) = a; evaluate(a:Num):Num = returnIt(a);", &input, &output);
+                result = eval_with_inputs("returnIt(a) = a evaluate(a:Num):Num = returnIt(a)", &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0]);
             }
@@ -411,7 +411,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("doIt(a:Num, b:Binary):Num = b(a, 1); evaluate(a:Num):Num = doIt(a, Num.add);", &input, &output);
+                result = eval_with_inputs("doIt(a:Num, b:Binary):Num = b(a, 1) evaluate(a:Num):Num = doIt(a, Num.add)", &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] + 1.0f);
             }
@@ -426,7 +426,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("do(func, param) = func(param); evaluate(a:Num):Num = do(_(b) = b, a);", &input, &output);
+                result = eval_with_inputs("do(func, param) = func(param) evaluate(a:Num):Num = do(_(b) = b, a)", &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0]);
             }
@@ -442,13 +442,13 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 output.values = outputs;
                 output.count = 1;
                 result = eval_with_inputs(
-                    "do(func, param) = func(param)(param);"
+                    "do(func, param) = func(param)(param)"
                     "evaluate(a:Num):Num = do(_(b) {"
                     "    return = _(c) {"
-                    "        mul(a, b) = a.mul(b);"
-                    "        return = mul(c.mul(b), 2);"
-                    "    };"
-                    "}, a);",
+                    "        mul(a, b) = a.mul(b)"
+                    "        return = mul(c.mul(b), 2)"
+                    "    }"
+                    "}, a)",
                     &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[0] * 2.0f);
@@ -465,13 +465,13 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 output.values = outputs;
                 output.count = 1;
                 result = eval_with_inputs(
-                    "do(func, func2, param) = func2(func(param)(param));"
+                    "do(func, func2, param) = func2(func(param)(param))"
                     "evaluate(a:Num):Num = do(_(b) {"
                     "    return = _(c) {"
-                    "        mul(a, b) = a.mul(b);"
-                    "        return = mul(c.mul(b), 2);"
-                    "    };"
-                    "}, _(d) = d.mul(2), a);",
+                    "        mul(a, b) = a.mul(b)"
+                    "        return = mul(c.mul(b), 2)"
+                    "    }"
+                    "}, _(d) = d.mul(2), a)",
                     &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[0] * 2.0f * 2.0f);
@@ -488,7 +488,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("nullary = _(a:Num):Num = a.mul(10); evaluate(a:Num):Num = nullary(a);", &input, &output);
+                result = eval_with_inputs("nullary = _(a:Num):Num = a.mul(10) evaluate(a:Num):Num = nullary(a)", &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * 10.0f);
             }
@@ -504,7 +504,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("constraint func_constraint(a); struct container(contained:func_constraint); nullary = container(_(a) = a.mul(10)); evaluate(a:Num):Num = nullary.contained(a);", &input, &output);
+                result = eval_with_inputs("constraint func_constraint(a) struct container(contained:func_constraint) nullary = container(_(a) = a.mul(10)) evaluate(a:Num):Num = nullary.contained(a)", &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * 10.0f);
             }
@@ -520,7 +520,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("constraint func_constraint(a); struct container(contained:func_constraint); nullary = container(_(a) = _(b) = a.mul(b)); evaluate(a:Num, b:Num):Num = nullary.contained(a)(b);", &input, &output);
+                result = eval_with_inputs("constraint func_constraint(a) struct container(contained:func_constraint) nullary = container(_(a) = _(b) = a.mul(b)) evaluate(a:Num, b:Num):Num = nullary.contained(a)(b)", &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[1]);
             }
@@ -536,7 +536,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0, 0 };
                 output.values = outputs;
                 output.count = 2;
-                result = eval_with_inputs("constraint func_constraint(a); struct result(a:Num, b:Num); struct container(contained0:func_constraint, contained1:func_constraint); nullary = container(_(a) = a.mul(10), _(b) = b.mul(5)); evaluate(a:Num, b:Num):result = result(nullary.contained0(a), nullary.contained1(b));", &input, &output);
+                result = eval_with_inputs("constraint func_constraint(a) struct result(a:Num, b:Num) struct container(contained0:func_constraint, contained1:func_constraint) nullary = container(_(a) = a.mul(10), _(b) = b.mul(5)) evaluate(a:Num, b:Num):result = result(nullary.contained0(a), nullary.contained1(b))", &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * 10.0f);
                 REQUIRE(outputs[1] == inputs[1] * 5.0f);
@@ -553,7 +553,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("constraint func_constraint(a); struct container(contained:func_constraint); nullary = container(_(a) = _(b) = a.mul(b)); evaluate(a:Num, b:Num):Num = nullary.contained(a)(b);", &input, &output);
+                result = eval_with_inputs("constraint func_constraint(a) struct container(contained:func_constraint) nullary = container(_(a) = _(b) = a.mul(b)) evaluate(a:Num, b:Num):Num = nullary.contained(a)(b)", &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[1]);
             }
@@ -568,7 +568,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 float outputs[] = { 0 };
                 output.values = outputs;
                 output.count = 1;
-                result = eval_with_inputs("constraint func_constraint(a); struct container(one:func_constraint, two:func_constraint); nullary = container(_(a) = _(b) = a.mul(b), _(a) = _(b) = a.mul(b)); evaluate(a:Num, b:Num):Bool = Num.eq(nullary.one(a)(b), nullary.two(a)(b));", &input, &output);
+                result = eval_with_inputs("constraint func_constraint(a) struct container(one:func_constraint, two:func_constraint) nullary = container(_(a) = _(b) = a.mul(b), _(a) = _(b) = a.mul(b)) evaluate(a:Num, b:Num):Bool = Num.eq(nullary.one(a)(b), nullary.two(a)(b))", &input, &output);
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] >= 0.0f);
             }
@@ -592,8 +592,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     "struct Quaternion(scalar:Num, vector:Vector3) {}\n"
                     "evaluate(q:Quaternion):Vector3\n"
                     "{\n"
-                    "    scale(vec:Vector3, s:Num) = Vector3(vec.x.mul(s), vec.y.mul(s), vec.z.mul(s));\n"
-                    "    return = scale(q.vector, q.scalar);\n"
+                    "    scale(vec:Vector3, s:Num) = Vector3(vec.x.mul(s), vec.y.mul(s), vec.z.mul(s))\n"
+                    "    return = scale(q.vector, q.scalar)\n"
                     "}\n";
 
                 result = eval_with_inputs(source, &input, &output);
@@ -621,7 +621,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     float outputs[] = { 0 };
                     output.values = outputs;
                     output.count = 1;
-                    result = eval_with_inputs("evaluate(a:Num):Num = a.mul(2);", &input, &output);
+                    result = eval_with_inputs("evaluate(a:Num):Num = a.mul(2)", &input, &output);
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(output.values[0] == input.values[0] * 2);
                 }
@@ -636,7 +636,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     float outputs[] = { 0 };
                     output.values = outputs;
                     output.count = 1;
-                    result = eval_with_inputs("evaluate(a:Num, b:Num):Num = a.mul(b);", &input, &output);
+                    result = eval_with_inputs("evaluate(a:Num, b:Num):Num = a.mul(b)", &input, &output);
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(output.values[0] == input.values[0] * input.values[1]);
                 }
@@ -656,7 +656,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a.mul(2), a);";
+                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a.mul(2), a)";
 
                     result = eval_with_inputs(source, &input, &output);
 
@@ -675,7 +675,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 2;
 
-                    char source[] = "evaluate(a:Num):Vector2 = Bool.if(Bool(a), Vector2(a.mul(2), a.mul(2)), Vector2(a.mul(4), a.mul(4)));";
+                    char source[] = "evaluate(a:Num):Vector2 = Bool.if(Bool(a), Vector2(a.mul(2), a.mul(2)), Vector2(a.mul(4), a.mul(4)))";
 
                     result = eval_with_inputs(source, &input, &output, "StandardLibrary");
 
@@ -700,7 +700,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        char source[] = "evaluate(a:Num):Num = list.at(0);";
+                        char source[] = "evaluate(a:Num):Num = list.at(0)";
                         result = eval_with_inputs(source, &input, &output);
 
                         REQUIRE(result != ELEMENT_OK);
@@ -717,7 +717,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        char source[] = "evaluate(a:Num):Num = list.at(a);";
+                        char source[] = "evaluate(a:Num):Num = list.at(a)";
                         result = eval_with_inputs(source, &input, &output);
 
                         REQUIRE(result != ELEMENT_OK);
@@ -735,7 +735,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs.data();
                         output.count = outputs.size();
 
-                        std::string src = "evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).at({});";
+                        std::string src = "evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).at({})";
 
                         SECTION("Negative Constant Index")
                         {
@@ -783,28 +783,28 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("Error - Mixed Element Types, Runtime Index")
                         {
                             inputs[6] = -1;
-                            result = eval_with_inputs("evaluate(a:Num, b:Bool, c:Num, idx:Num):Num = list(a, b, c).at(idx);", &input, &output, "StandardLibrary");
+                            result = eval_with_inputs("evaluate(a:Num, b:Bool, c:Num, idx:Num):Num = list(a, b, c).at(idx)", &input, &output, "StandardLibrary");
                             REQUIRE(result != ELEMENT_OK);
 
                             inputs[6] = 0;
-                            result = eval_with_inputs("evaluate(a:Bool, b:Num, c:Bool, idx:Num):Bool = list(a, b, c).at(idx);", &input, &output, "StandardLibrary");
+                            result = eval_with_inputs("evaluate(a:Bool, b:Num, c:Bool, idx:Num):Bool = list(a, b, c).at(idx)", &input, &output, "StandardLibrary");
                             REQUIRE(result != ELEMENT_OK);
 
                             inputs[6] = 3;
-                            result = eval_with_inputs("evaluate(a:Num, b:Num, c:Bool, idx:Num):Num = Num(list(a, b, c).at(idx));", &input, &output, "StandardLibrary");
+                            result = eval_with_inputs("evaluate(a:Num, b:Num, c:Bool, idx:Num):Num = Num(list(a, b, c).at(idx))", &input, &output, "StandardLibrary");
                             REQUIRE(result != ELEMENT_OK);
                         }
 
                         SECTION(" Mixed Element Types, Constant Index")
                         {
-                            result = eval_with_inputs("evaluate(a:Num, b:Bool, c:Num, idx:Num):Num = list(a, b, c).at(-1);", &input, &output, "StandardLibrary");
+                            result = eval_with_inputs("evaluate(a:Num, b:Bool, c:Num, idx:Num):Num = list(a, b, c).at(-1)", &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == inputs[0]);
 
-                            result = eval_with_inputs("evaluate(a:Bool, b:Num, c:Bool, idx:Num):Bool = list(a, b, c).at(0);", &input, &output, "StandardLibrary");
+                            result = eval_with_inputs("evaluate(a:Bool, b:Num, c:Bool, idx:Num):Bool = list(a, b, c).at(0)", &input, &output, "StandardLibrary");
                             REQUIRE(outputs[0] == inputs[0]);
 
-                            result = eval_with_inputs("evaluate(a:Num, b:Num, c:Bool, idx:Num):Num = Num(list(a, b, c).at(3));", &input, &output, "StandardLibrary");
+                            result = eval_with_inputs("evaluate(a:Num, b:Num, c:Bool, idx:Num):Num = Num(list(a, b, c).at(3))", &input, &output, "StandardLibrary");
                             REQUIRE(outputs[0] == inputs[2]);
                         }
 
@@ -819,7 +819,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 inputs[4] = 3;
                                 inputs[5] = 3;
 
-                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, idx:Num):Vector2 = list(a, b, c).at(idx);";
+                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, idx:Num):Vector2 = list(a, b, c).at(idx)";
 
                                 SECTION("Negative Index")
                                 {
@@ -862,7 +862,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 inputs[5] = 3;
                                 inputs[6] = 3;
 
-                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector3, idx:Num):Num = list(a, b, c).at(idx).x;";
+                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector3, idx:Num):Num = list(a, b, c).at(idx).x";
 
                                 SECTION("Negative Index")
                                 {
@@ -903,7 +903,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                                 inputs[6] = -1;
 
-                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, idx:Num):Vector2 = list(a, b, c).at({});";
+                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, idx:Num):Vector2 = list(a, b, c).at({})";
 
                                 SECTION("Negative Index")
                                 {
@@ -946,7 +946,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 inputs[5] = 3;
                                 inputs[6] = 3;
 
-                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector3, idx:Num):Num = list(a, b, c).at({}).x;";
+                                const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector3, idx:Num):Num = list(a, b, c).at({}).x";
 
                                 SECTION("Negative Index")
                                 {
@@ -983,7 +983,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[1] = 2;
                             inputs[2] = 3;
 
-                            const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, Num.add(0, b), a.mul(c)).at(idx);";
+                            const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, Num.add(0, b), a.mul(c)).at(idx)";
 
                             SECTION("Negative Index")
                             {
@@ -1022,7 +1022,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[1] = 2;
                             inputs[2] = 3;
 
-                            const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, Num.add(0, b), a.mul(c)).at({});";
+                            const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, Num.add(0, b), a.mul(c)).at({})";
 
                             SECTION("Negative Index")
                             {
@@ -1063,7 +1063,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         element_inputs input{ inputs.data(), inputs.size() };
                         element_outputs output{ outputs.data(), outputs.size() };
 
-                        const char* src = "evaluate(a:Num, b:Num, idx:Num):Num = list(1, 2, a).map(_(n:Num) = n.mul(b)).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, idx:Num):Num = list(1, 2, a).map(_(n:Num) = n.mul(b)).at(idx)";
 
                         SECTION("Negative Index")
                         {
@@ -1140,7 +1140,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         element_inputs input{ inputs.data(), inputs.size() };
                         element_outputs output{ outputs.data(), outputs.size() };
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(idx)";
 
                         SECTION("Negative Index")
                         {
@@ -1216,10 +1216,10 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(0);", &input, &output, "StandardLibrary");
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(0)", &input, &output, "StandardLibrary");
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1]);
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(1);", &input, &output, "StandardLibrary");
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(1)", &input, &output, "StandardLibrary");
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(output.values[0] == inputs[0] * inputs[0] + inputs[1] + inputs[1] + inputs[2] * inputs[2]);
                     }
@@ -1240,7 +1240,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         {
                             SECTION("Length Equals Smallest List")
                             {
-                                auto new_src = fmt::format("{}.count;", src);
+                                auto new_src = fmt::format("{}.count", src);
                                 result = eval_with_inputs(new_src.c_str(), &input, &output);
                                 REQUIRE(result == ELEMENT_OK);
                                 REQUIRE(outputs[0] == 3);
@@ -1261,7 +1261,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         {
                             SECTION("Length Equals Smallest List")
                             {
-                                auto new_src = fmt::format("{}.count;", src);
+                                auto new_src = fmt::format("{}.count", src);
                                 result = eval_with_inputs(new_src.c_str(), &input, &output);
                                 REQUIRE(result == ELEMENT_OK);
                                 REQUIRE(outputs[0] == 3);
@@ -1276,7 +1276,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         element_inputs input{ inputs.data(), inputs.size() };
                         element_outputs output{ outputs.data(), outputs.size() };
 
-                        const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c), list(3, 2, 1), Num.add).at(idx);";
+                        const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c), list(3, 2, 1), Num.add).at(idx)";
 
                         SECTION("Runtime Expression List, Runtime Index")
                         {
@@ -1368,7 +1368,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(count:Num):Num = List.repeat(1, count).count;";
+                        const char* src = "evaluate(count:Num):Num = List.repeat(1, count).count";
                         SECTION("Count clamps to 1 if less than 1")
                         {
                             inputs[0] = -100;
@@ -1422,14 +1422,14 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(count:Num, idx:Num):Num = List.repeat(3, count).at(idx);";
+                        const char* src = "evaluate(count:Num, idx:Num):Num = List.repeat(3, count).at(idx)";
 
                         SECTION("Valid Count, Non-Integer")
                         {
                             inputs[0] = 100.5f;
                             SECTION("Count truncates to integer")
                             {
-                                result = eval_with_inputs("evaluate(count:Num):Num = List.repeat(3, count).count;", &input, &output);
+                                result = eval_with_inputs("evaluate(count:Num):Num = List.repeat(3, count).count", &input, &output);
                                 REQUIRE(result == ELEMENT_OK);
                                 REQUIRE(outputs[0] == 100.0f);
                             }
@@ -1474,7 +1474,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(count:Num, idx:Num):Num = List.repeat(1, count).at(idx);";
+                        const char* src = "evaluate(count:Num, idx:Num):Num = List.repeat(1, count).at(idx)";
 
                         SECTION("Zero Count")
                         {
@@ -1515,7 +1515,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(count:Num, idx:Num):Num = List.repeat(1, count).at(idx);";
+                        const char* src = "evaluate(count:Num, idx:Num):Num = List.repeat(1, count).at(idx)";
 
                         SECTION("Negative Count")
                         {
@@ -1561,7 +1561,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                         SECTION("Resulting list has a count of 2")
                         {
-                            auto new_src = fmt::format("{}.count;", src);
+                            auto new_src = fmt::format("{}.count", src);
                             result = eval_with_inputs(new_src.c_str(), &input, &output);
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == 2);
@@ -1570,7 +1570,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("Resulting list indexed at 0 is 10")
                         {
                             inputs[1] = 0;
-                            auto new_src = fmt::format("{}.at(idx);", src);
+                            auto new_src = fmt::format("{}.at(idx)", src);
                             result = eval_with_inputs(new_src.c_str(), &input, &output);
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == 10);
@@ -1579,7 +1579,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         SECTION("Resulting list indexed at 1 is 20")
                         {
                             inputs[1] = 1;
-                            auto new_src = fmt::format("{}.at(idx);", src);
+                            auto new_src = fmt::format("{}.at(idx)", src);
                             result = eval_with_inputs(new_src.c_str(), &input, &output);
                             REQUIRE(result == ELEMENT_OK);
                             REQUIRE(outputs[0] == 20);
@@ -1600,7 +1600,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(1);", &input, &output);
+                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 5);
                     }
@@ -1616,7 +1616,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(idx);", &input, &output);
+                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(idx)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 9);
                     }
@@ -1632,7 +1632,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(-1);", &input, &output);
+                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(-1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 4);
                     }
@@ -1648,7 +1648,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(100);", &input, &output);
+                        result = eval_with_inputs("evaluate(idx:Num):Num = List.range(4, 6).at(100)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 9);
                     }
@@ -1667,7 +1667,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(a, b, c).concatenate(list(4, 5, 6)).at(5);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(a, b, c).concatenate(list(4, 5, 6)).at(5)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 6);
                     }
@@ -1686,7 +1686,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(-1).at(1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(-1).at(1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
@@ -1702,7 +1702,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(-1).at(-1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(-1).at(-1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
@@ -1718,7 +1718,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(-1).at(4);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(-1).at(4)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
@@ -1734,7 +1734,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(1).at(1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(1).at(1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
@@ -1750,7 +1750,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(1).at(-1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(1).at(-1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
@@ -1766,7 +1766,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(1).at(4);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(1).at(4)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
@@ -1782,7 +1782,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(4).at(1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(4).at(1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 2);
                     }
@@ -1798,7 +1798,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(4).at(-1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(4).at(-1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
@@ -1814,7 +1814,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(4).at(4);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(4).at(4)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -1830,7 +1830,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(2).at(2);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).take(2).at(2)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 2);
                     }
@@ -1849,7 +1849,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-4).at(1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-4).at(1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 2);
                     }
@@ -1865,7 +1865,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-4).at(-1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-4).at(-1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
@@ -1881,7 +1881,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-4).at(4);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-4).at(4)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -1897,7 +1897,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-1).at(1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-1).at(1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 2);
                     }
@@ -1913,7 +1913,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-1).at(-1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-1).at(-1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
                     }
@@ -1929,7 +1929,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-1).at(4);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(-1).at(4)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -1945,7 +1945,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -1961,7 +1961,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(-1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(-1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 2);
                     }
@@ -1977,7 +1977,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(4);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(1).at(4)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -1993,7 +1993,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(4).at(1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(4).at(1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -2009,7 +2009,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(4).at(-1);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(4).at(-1)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -2025,7 +2025,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(4).at(4);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).skip(4).at(4)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -2044,7 +2044,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(1, 1).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(1, 1).at(idx)";
 
                         SECTION("Runtime Expression List, Runtime Index")
                         {
@@ -2109,7 +2109,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(-1, -1).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(-1, -1).at(idx)";
 
                         SECTION("Runtime Expression List, Runtime Index")
                         {
@@ -2174,7 +2174,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(4, -1).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(4, -1).at(idx)";
 
                         SECTION("Runtime Expression List, Runtime Index")
                         {
@@ -2239,7 +2239,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(-1, 4).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(-1, 4).at(idx)";
 
                         SECTION("Runtime Expression List, Runtime Index")
                         {
@@ -2307,7 +2307,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(2, 4).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(2, 4).at(idx)";
 
                         SECTION("Runtime Expression List, Runtime Index")
                         {
@@ -2372,7 +2372,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(4, 2).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(4, 2).at(idx)";
 
                         SECTION("Runtime Expression List, Runtime Index")
                         {
@@ -2437,7 +2437,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(2, -4).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(2, -4).at(idx)";
 
                         SECTION("Runtime Expression List, Runtime Index")
                         {
@@ -2502,7 +2502,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(-4, 2).at(idx);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(a, b, c).slice(-4, 2).at(idx)";
 
                         SECTION("Runtime Expression List, Runtime Index")
                         {
@@ -2570,17 +2570,17 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 2).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 2).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
 
                         inputs[0] = 1;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 2).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 2).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
 
                         inputs[0] = -1;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 2).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).slice(2, 2).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -2596,22 +2596,22 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
 
                         inputs[0] = 1;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 4);
 
                         inputs[0] = 2;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 4);
 
                         inputs[0] = -1;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(2, 3).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -2627,22 +2627,22 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 4);
 
                         inputs[0] = 1;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 4);
 
                         inputs[0] = 2;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 4);
 
                         inputs[0] = -1;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3, 4).slice(3, 2).at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 4);
                     }
@@ -2661,17 +2661,17 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 1);
 
                         inputs[0] = 4;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 2);
 
                         inputs[0] = 5;
-                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a);", &input, &output);
+                        result = eval_with_inputs("evaluate(a:Num):Num = list(1, 2, 3).cycle.at(a)", &input, &output);
                         REQUIRE(result == ELEMENT_OK);
                         REQUIRE(outputs[0] == 3);
                     }
@@ -2690,7 +2690,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         output.values = outputs;
                         output.count = 1;
 
-                        const char* src = "evaluate(a:Num):Num = list(1, 2, 3).reverse.at({});";
+                        const char* src = "evaluate(a:Num):Num = list(1, 2, 3).reverse.at({})";
 
                         SECTION("Constant List, Dynamic Index")
                         {
@@ -2860,7 +2860,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         element_inputs input{ inputs.data(), inputs.size() };
                         element_outputs output{ outputs.data(), outputs.size() };
 
-                        const char* src = "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list({}, {}, {}).fold({}, Num.add);";
+                        const char* src = "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list({}, {}, {}).fold({}, Num.add)";
 
                         SECTION("Runtime")
                         {
@@ -2902,7 +2902,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 inputs[3] = std::nanf("");
                                 result = eval_with_inputs(new_src.c_str(), &input, &output);
                                 REQUIRE(result == ELEMENT_OK);
-                                REQUIRE(outputs[0] == inputs[3] + inputs[0] + inputs[1] + inputs[2]);
+                                REQUIRE(std::isnan(outputs[0]) == std::isnan(inputs[3] + inputs[0] + inputs[1] + inputs[2]));
                             }
 
                             SECTION("PositiveInfinity Start")
@@ -2996,7 +2996,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         element_inputs input{ inputs.data(), inputs.size() };
                         element_outputs output{ outputs.data(), outputs.size() };
 
-                        const char* src = "evaluate(a:Bool, b:Bool, c:Bool, start:Bool):Bool = list(a, b, c).fold(start, Bool.or);";
+                        const char* src = "evaluate(a:Bool, b:Bool, c:Bool, start:Bool):Bool = list(a, b, c).fold(start, Bool.or)";
 
                         SECTION("Negative Start")
                         {
@@ -3055,21 +3055,21 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         }
                     }
 
-                    SECTION("list(Vector2, Vector2, Vector2).fold(Vector2(start, start), Vector2.mul).x")
+                    SECTION("list(Vector2, Vector2, Vector2).fold(Vector2(start, start), Vector2.add).x")
                     {
                         std::array<float, 7> inputs = { 2, 2, 2, 2, 2, 2, 0 };
                         std::array<float, 2> outputs = { 0 };
                         element_inputs input{ inputs.data(), inputs.size() };
                         element_outputs output{ outputs.data(), outputs.size() };
 
-                        const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, start:Num):Num = list(a, b, c).fold(Vector2(start, start), Vector2.mul).x;";
+                        const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, start:Num):Num = list(a, b, c).fold(Vector2(start, start), Vector2.add).x";
 
                         SECTION("Negative Start")
                         {
                             inputs[6] = -100;
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("Zero Start")
@@ -3077,7 +3077,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = 0;
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("Positive Start")
@@ -3085,7 +3085,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = 100;
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("Max Value Start")
@@ -3093,7 +3093,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = std::numeric_limits<float>::max();
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("NaN Start")
@@ -3101,7 +3101,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = std::nanf("");
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(std::isnan(outputs[0]) == std::isnan(inputs[6] + inputs[0] + inputs[2] + inputs[4]));
                         }
 
                         SECTION("PositiveInfinity Start")
@@ -3109,7 +3109,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = std::numeric_limits<float>::infinity();
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
 
                         SECTION("NegativeInfinity Start")
@@ -3117,8 +3117,30 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             inputs[6] = std::numeric_limits<float>::infinity() * -1.0f;
                             result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                             REQUIRE(result == ELEMENT_OK);
-                            REQUIRE(outputs[0] == inputs[6] * inputs[0] * inputs[2] * inputs[4]);
+                            REQUIRE(outputs[0] == inputs[6] + inputs[0] + inputs[2] + inputs[4]);
                         }
+                    }
+
+                    SECTION("Dynamic-time list fold")
+                    {
+                        /*
+                         *
+                         * note: anonymous block recursion bug breaks this test, but with recursion detection disabled it works
+                         *
+                         */
+                        float inputs[] = { 1, 2, 3, 100 };
+                        element_inputs input;
+                        input.values = inputs;
+                        input.count = 4;
+                        element_outputs output;
+                        float outputs[] = { 0, 0 };
+                        output.values = outputs;
+                        output.count = 2;
+
+                        result = eval_with_inputs("evaluate(a:Num, b:Num, c:Num, start:Num):Num = list(a, b, c).fold(start, Num.add)\n", &input, &output, "StandardLibrary");
+
+                        REQUIRE(result == ELEMENT_OK);
+                        REQUIRE(outputs[0] == 106);
                     }
                 }
             }
@@ -3136,7 +3158,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(b):Bool = b.value.lt(4), _(c) = test(c.value.add(1))).value;";
+                    char source[] = "struct test(value:Num) evaluate(a:Num):Num = for(test(0), _(b):Bool = b.value.lt(4), _(c) = test(c.value.add(1))).value";
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3154,7 +3176,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(a), _(b:test):Bool = b.value.lt(4), _(c:test):test = test(c.value.add(1))).value;";
+                    char source[] = "struct test(value:Num) evaluate(a:Num):Num = for(test(a), _(b:test):Bool = b.value.lt(4), _(c:test):test = test(c.value.add(1))).value";
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3172,7 +3194,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(b:test):Bool = b.value.lt(a), _(c:test):test = test(c.value.add(1))).value;";
+                    char source[] = "struct test(value:Num) evaluate(a:Num):Num = for(test(0), _(b:test):Bool = b.value.lt(a), _(c:test):test = test(c.value.add(1))).value";
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3190,7 +3212,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = "struct test(value:Num); evaluate(a:Num):Num = for(test(0), _(b:test):Bool = b.value.lt(4), _(c:test):test = test(c.value.add(a))).value;";
+                    char source[] = "struct test(value:Num) evaluate(a:Num):Num = for(test(0), _(b:test):Bool = b.value.lt(4), _(c:test):test = test(c.value.add(a))).value";
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3209,14 +3231,14 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.count = 1;
 
                     char source[] = ""
-                        "struct test(value:Num);\n"
+                        "struct test(value:Num)\n"
                         "evaluate(a:Num):Num\n"
                         "{\n"
-                        "   nested_predicate(input:Num):Bool = input.lt(20);\n"
-                        "   nested_body(input:Num):Num = input.add(1);\n"
-                        "   body(input:test):test = test(input.value.add(for(a, nested_predicate, nested_body)));\n"
-                        "   predicate(input:test):Bool = input.value.lt(200);\n"
-                        "   return = for(test(a), predicate, body).value;\n"
+                        "   nested_predicate(input:Num):Bool = input.lt(20)\n"
+                        "   nested_body(input:Num):Num = input.add(1)\n"
+                        "   body(input:test):test = test(input.value.add(for(a, nested_predicate, nested_body)))\n"
+                        "   predicate(input:test):Bool = input.value.lt(200)\n"
+                        "   return = for(test(a), predicate, body).value\n"
                         "}\n";
                     result = eval_with_inputs(source, &input, &output);
 
@@ -3236,14 +3258,14 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.count = 1;
 
                     char source[] = ""
-                        "struct test(value:Num);\n"
+                        "struct test(value:Num)\n"
                         "evaluate(a:Num, b:Num):Num\n"
                         "{\n"
-                        "   nested_predicate(input:Num):Bool = input.lt(5);\n"
-                        "   nested_body(input:Num):Num = input.add(1);\n"
-                        "   body(input:test):test = test(input.value.add(1));\n"
-                        "   predicate(input:test):Bool = input.value.lt(b.mul(for(a, nested_predicate, nested_body)));\n"
-                        "   return = for(test(a), predicate, body).value;\n"
+                        "   nested_predicate(input:Num):Bool = input.lt(5)\n"
+                        "   nested_body(input:Num):Num = input.add(1)\n"
+                        "   body(input:test):test = test(input.value.add(1))\n"
+                        "   predicate(input:test):Bool = input.value.lt(b.mul(for(a, nested_predicate, nested_body)))\n"
+                        "   return = for(test(a), predicate, body).value\n"
                         "}\n";
                     result = eval_with_inputs(source, &input, &output);
 
@@ -3265,15 +3287,46 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     char source[] = ""
                         "evaluate(a:Vector2, b:Vector2):Vector2\n"
                         "{\n"
-                        "   body(input:Vector2):Vector2 = Vector2(input.x.add(a.x), input.y.add(a.y));\n"
-                        "   predicate(input:Vector2):Bool = input.magnitudeSquared.lt(a.x.add(a.y).add(b.x).sub(a.y));\n"
-                        "   return = for(a, predicate, body).add(for(b, predicate, body)).add(Vector2(1, 1));\n"
+                        "   body(input:Vector2):Vector2 = Vector2(input.x.add(a.x), input.y.add(a.y))\n"
+                        "   predicate(input:Vector2):Bool = input.magnitudeSquared.lt(a.x.add(a.y).add(b.x).sub(a.y))\n"
+                        "   return = for(a, predicate, body).add(for(b, predicate, body)).add(Vector2(1, 1))\n"
                         "}\n";
                     result = eval_with_inputs(source, &input, &output, "StandardLibrary");
 
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 7);
                     REQUIRE(outputs[1] == 7);
+                }
+
+                SECTION("Dynamic-time for, manual list_fold")
+                {
+                    /*
+                     *
+                     * note: anonymous block recursion bug breaks this test, but with recursion detection disabled it works
+                     *
+                     */
+                    float inputs[] = { 1, 2, 3, 100 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 4;
+                    element_outputs output;
+                    float outputs[] = { 0, 0 };
+                    output.values = outputs;
+                    output.count = 2;
+
+                    char source[] = ""
+                        "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"
+                        "{\n"
+                        "   end_of_list(tuple:Any):Bool = tuple.idx.lt(myList.count)\n"
+                        "   accumulate(tuple:Any):Any = {idx = tuple.idx.add(1), accumulated_value = someFunc(tuple.accumulated_value, myList.at(tuple.idx))}\n"
+                        "   return:Any = for({idx = 0, accumulated_value = initial_value}, end_of_list, accumulate).accumulated_value\n"
+                        "}\n"
+                        "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list_fold(list(a, b, c), start, Num.add)\n";
+
+                    result = eval_with_inputs(source, &input, &output, "StandardLibrary");
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 106);
                 }
             }
         }
@@ -3293,9 +3346,9 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 2;
 
-                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a, a.mul(2));";
+                    char source[] = "evaluate(a:Num):Num = Bool.if(Bool(a), a, a.mul(2))";
 
-                    result = eval_with_inputs("evaluate(a:Vector2):Vector2 = a.opposite;", &input, &output, "StandardLibrary");
+                    result = eval_with_inputs("evaluate(a:Vector2):Vector2 = a.opposite", &input, &output, "StandardLibrary");
 
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(output.values[0] == -input.values[0]);
@@ -3310,267 +3363,257 @@ TEST_CASE("Interpreter", "[Evaluate]")
         element_result result = ELEMENT_OK;
 
         SECTION("Expression bodied function. Literal.") {
-            result = eval("evaluate = -3;");
+            result = eval("evaluate = -3");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Intrinsic struct. intrinsic function. calling with arguments") {
-            result = eval("evaluate = Num.add(1, 2);");
+            result = eval("evaluate = Num.add(1, 2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Instance function") {
-            result = eval("evaluate = 1.add(2);");
+            result = eval("evaluate = 1.add(2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Intrinsic nullary") {
-            result = eval("evaluate = Num.NaN;");
+            result = eval("evaluate = Num.NaN");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Nullary") {
-            result = eval("evaluate = Num.pi;");
+            result = eval("evaluate = Num.pi");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Nullary which looks up another nullary locally") {
-            result = eval("evaluate = Num.tau;");
+            result = eval("evaluate = Num.tau");
             REQUIRE(result == ELEMENT_OK);
         }
 
         //element doesn't support partial application of any function, only instance functions (i.e. member functions with implicit "this")
         /*
         SECTION("Partial application") {
-            result = eval("add5 = Num.add(5); evaluate = add5(2);");
+            result = eval("add5 = Num.add(5); evaluate = add5(2)");
             REQUIRE(result == ELEMENT_OK);
         }
          */
 
         SECTION("Indexing intrinsic function") {
-            result = eval("evaluate = Num.acos(0).degrees;");
+            result = eval("evaluate = Num.acos(0).degrees");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Indexing nested instance function") {
-            result = eval("evaluate = Num.cos(Num.pi.div(4));");
+            result = eval("evaluate = Num.cos(Num.pi.div(4))");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Chaining Functions") {
             //ndexing degrees on result of asin. instance function degrees that is now nullary.
-            result = eval("evaluate = Num.asin(-1).degrees;");
+            result = eval("evaluate = Num.asin(-1).degrees");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("If Expression") {
-            result = eval("evaluate = Bool.if(False, 1, 0);");
+            result = eval("evaluate = Bool.if(False, 1, 0)");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Mod") {
-            result = eval("evaluate = Num.mod(5, 2);");
+            result = eval("evaluate = Num.mod(5, 2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Bool constructor") {
-            result = eval("evaluate = Bool(2);");
+            result = eval("evaluate = Bool(2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Num constructor converts back to num") {
-            result = eval("evaluate = Num(Bool(Num(2))).mul(1);");
+            result = eval("evaluate = Num(Bool(Num(2))).mul(1)");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Pass higher order function") {
-            result = eval("double(a:Num) = a.mul(2); applyFive(a) = a(5); evaluate = applyFive(double);");
+            result = eval("double(a:Num) = a.mul(2) applyFive(a) = a(5) evaluate = applyFive(double)");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Functions") {
-            result = eval("mul(a) { return(b) = a.mul(b); } evaluate = mul(5)(2);");
+            result = eval("mul(a) { return(b) = a.mul(b) } evaluate = mul(5)(2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Struct fields") {
-            result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).a;");
+            result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).a");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Struct fields") {
-            result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).b;");
+            result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).b");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Struct instance function") {
-            result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct) = s.a.add(s.b);} evaluate = MyStruct(1, 2).add;");
+            result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct) = s.a.add(s.b)} evaluate = MyStruct(1, 2).add");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Struct instance function called with more parameters") {
-            result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct, s2:MyStruct) = MyStruct(s.a.add(s2.a), s.b.add(s2.b));} evaluate = MyStruct(1, 2).add(MyStruct(1, 2)).b;");
+            result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct, s2:MyStruct) = MyStruct(s.a.add(s2.a), s.b.add(s2.b))} evaluate = MyStruct(1, 2).add(MyStruct(1, 2)).b");
             REQUIRE(result == ELEMENT_OK);
         }
 
         SECTION("Typename can refer to things inside scopes") {
-            result = eval("namespace Space { struct Thing(a){}} func(a:Space.Thing) = a.a; evaluate = func(Space.Thing(1));");
+            result = eval("namespace Space { struct Thing(a){}} func(a:Space.Thing) = a.a evaluate = func(Space.Thing(1))");
         }
 
         SECTION("Error - Circular Compilation")
         {
+            //recursion is disabled to test list.fold at runtime due to bug with anonymous blocks - this test infinite loops and stops other tests as a result
+            REQUIRE(true == false);
             result = eval(
-                "c(d) = a(d);\n"
-                "a(b:Num) = c(b.mul(b));\n"
-                "evaluate = a(5);\n");
+                "c(d) = a(d)\n"
+                "a(b:Num) = c(b.mul(b))\n"
+                "evaluate = a(5)\n");
             REQUIRE(result == ELEMENT_ERROR_CIRCULAR_COMPILATION);
         }
 
         SECTION("Error - Identifier Not Found")
         {
-            result = eval("evaluate = one;");
+            result = eval("evaluate = one");
             REQUIRE(result == ELEMENT_ERROR_IDENTIFIER_NOT_FOUND);
         }
 
         SECTION("Error - Cannot Be Used As Instance Function")
         {
             //todo: missing a semi colon is an unfriendly error
-            result = eval("struct MyStruct(crap) { f(a:Num) = a; } evaluate = MyStruct(1).f;");
+            result = eval("struct MyStruct(crap) { f(a:Num) = a } evaluate = MyStruct(1).f");
             REQUIRE(result == ELEMENT_ERROR_CANNOT_BE_USED_AS_INSTANCE_FUNCTION);
         }
 
         SECTION("Error - Identifier Not Found - Indexing Struct")
         {
-            result = eval("struct MyStruct(crap) { f(a:Num) = a; } evaluate = MyStruct(1).a;");
+            result = eval("struct MyStruct(crap) { f(a:Num) = a } evaluate = MyStruct(1).a");
             REQUIRE(result == ELEMENT_ERROR_IDENTIFIER_NOT_FOUND);
         }
 
         SECTION("Error - Identifier Not Found - Indexing Namespace")
         {
-            result = eval("namespace MyNamespace {} evaluate = MyNamespace.a;");
+            result = eval("namespace MyNamespace {} evaluate = MyNamespace.a");
             REQUIRE(result == ELEMENT_ERROR_IDENTIFIER_NOT_FOUND);
         }
 
         SECTION("Error - Missing Contents For Call")
         {
-            result = eval("namespace MyNamespace {} evaluate = MyNamespace();");
+            result = eval("namespace MyNamespace {} evaluate = MyNamespace()");
             REQUIRE(result == ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL);
         }
 
         SECTION("Error - Calling Namespace")
         {
             //todo: namespace should have a specific error message for calling a namespace, with a specific error code
-            result = eval("namespace MyNamespace {} evaluate = MyNamespace(1);");
-            REQUIRE(result == ELEMENT_ERROR_UNKNOWN);
+            result = eval("namespace MyNamespace {} evaluate = MyNamespace(1)");
+            REQUIRE(result == ELEMENT_ERROR_INVALID_CALL_NONFUNCTION);
         }
 
         SECTION("Error - Indexing Function")
         {
             //todo: this should return an error for trying to index a function
-            result = eval("func(a) = 1; evaluate = func.a;");
-            REQUIRE(result == ELEMENT_ERROR_UNKNOWN);
-        }
-
-        SECTION("Error - Partial Grammar")
-        {
-            result = eval("evaluate\n");
-            REQUIRE(result == ELEMENT_ERROR_PARTIAL_GRAMMAR);
+            result = eval("func(a) = 1 evaluate = func.a");
+            REQUIRE(result == ELEMENT_ERROR_NOT_INDEXABLE);
         }
 
         SECTION("Error - Missing Function Body")
         {
-            result = eval("evaluate;\n");
+            result = eval("evaluate\n");
             REQUIRE(result == ELEMENT_ERROR_MISSING_FUNCTION_BODY);
         }
 
-        SECTION("Error - Invalid Identifier - Semicolon")
+        SECTION("Error - Invalid Character In Call - Semicolon")
         {
-            result = eval(";");
-            REQUIRE(result == ELEMENT_ERROR_INVALID_IDENTIFIER);
+            result = eval("func = 1 evaluate = func(;)");
+            REQUIRE(result == ELEMENT_ERROR_PARSE);
         }
 
-        SECTION("Error - Invalid Expression In Call - Semicolon")
+        SECTION("Error - Invalid Character When Indexing - Semicolon")
         {
-            result = eval("func = 1; evaluate = func(;);");
-            REQUIRE(result == ELEMENT_ERROR_INVALID_EXPRESSION);
+            result = eval("func = 1 evaluate = func(a.;)");
+            REQUIRE(result == ELEMENT_ERROR_PARSE);
         }
 
-        SECTION("Error - Invalid Identifier When Indexing - Semicolon")
+        SECTION("Error - Invalid Character In Call - (a;)")
         {
-            result = eval("func = 1; evaluate = func(a.;);");
-            REQUIRE(result == ELEMENT_ERROR_INVALID_IDENTIFIER);
-        }
-
-        SECTION("Error - Missing Parenthesis For Call")
-        {
-            result = eval("func = 1; evaluate = func(a;);");
-            REQUIRE(result == ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL);
+            result = eval("func = 1 evaluate = func(a;)");
+            REQUIRE(result == ELEMENT_ERROR_PARSE);
         }
 
         SECTION("Error - Invalid Expression In Call - (a,,)")
         {
-            result = eval("func = 1; evaluate = func(a,,);");
+            result = eval("func = 1 evaluate = func(a,,)");
             REQUIRE(result == ELEMENT_ERROR_INVALID_EXPRESSION);
         }
 
         SECTION("Error - Invalid Expression In Call - (a,)")
         {
-            result = eval("func = 1; evaluate = func(a,);");
+            result = eval("func = 1 evaluate = func(a,)");
             REQUIRE(result == ELEMENT_ERROR_INVALID_EXPRESSION);
         }
 
         SECTION("Error - Invalid Expression In Call - (,)")
         {
-            result = eval("func = 1; evaluate = func(,);");
+            result = eval("func = 1 evaluate = func(,)");
             REQUIRE(result == ELEMENT_ERROR_INVALID_EXPRESSION);
         }
 
         SECTION("Error - Invalid Port")
         {
-            result = eval("func(,) = 1; evaluate = func;");
+            result = eval("func(,) = 1 evaluate = func");
             REQUIRE(result == ELEMENT_ERROR_INVALID_PORT);
         }
 
         SECTION("Error - Invalid Typename")
         {
-            result = eval("func(a:,) = 1; evaluate = func;");
+            result = eval("func(a:,) = 1 evaluate = func");
             REQUIRE(result == ELEMENT_ERROR_INVALID_TYPENAME);
         }
 
         SECTION("Error - Invalid Typename")
         {
-            result = eval("func(a::) = 1; evaluate = func;");
+            result = eval("func(a::) = 1 evaluate = func");
             REQUIRE(result == ELEMENT_ERROR_INVALID_TYPENAME);
         }
 
         SECTION("Error - Invalid Typename")
         {
-            result = eval("func(a:) = 1; evaluate = func;");
+            result = eval("func(a:) = 1 evaluate = func");
             REQUIRE(result == ELEMENT_ERROR_INVALID_TYPENAME);
         }
 
         SECTION("Error - Invalid Typename")
         {
-            result = eval("func(a: = 1; evaluate = func;");
+            result = eval("func(a: = 1 evaluate = func");
             REQUIRE(result == ELEMENT_ERROR_INVALID_TYPENAME);
         }
 
         SECTION("Error - Missing Closing Parenthesis For Portlist")
         {
             //note: expressions aren't valid in a typename, might change?
-            result = eval("func(a:func(a)) = 1; evaluate = func;");
+            result = eval("func(a:func(a)) = 1 evaluate = func");
             REQUIRE(result == ELEMENT_ERROR_MISSING_CLOSING_PARENTHESIS_FOR_PORTLIST);
         }
 
         SECTION("Error - Invalid Typename - 123")
         {
-            result = eval("func(a:123) = 1; evaluate = func;");
+            result = eval("func(a:123) = 1 evaluate = func");
             REQUIRE(result == ELEMENT_ERROR_INVALID_TYPENAME);
         }
 
         SECTION("Error - Invalid Identifier - 123")
         {
-            result = eval("123 = 1;");
+            result = eval("123 = 1");
             REQUIRE(result == ELEMENT_ERROR_INVALID_IDENTIFIER);
         }
 
@@ -3584,28 +3627,28 @@ TEST_CASE("Interpreter", "[Evaluate]")
         SECTION("Error - Argument Count Mismatch")
         {
             //should log two errors, though we'll only be told the error code for one of them in our API
-            result = eval("evaluate = Num.add(1).add(Num.add(1, 2, 3));");
+            result = eval("evaluate = Num.add(1).add(Num.add(1, 2, 3))");
             REQUIRE(result == ELEMENT_ERROR_ARGUMENT_COUNT_MISMATCH);
         }
 
         SECTION("Error - Indexing Arity Function")
         {
             //todo: better error message
-            result = eval("evaluate = 5.add.add(1);");
-            REQUIRE(result == ELEMENT_ERROR_UNKNOWN);
+            result = eval("evaluate = 5.add.add(1)");
+            REQUIRE(result == ELEMENT_ERROR_NOT_INDEXABLE);
         }
 
         SECTION("Error - Identifier Not Found - Indexing Num")
         {
             //todo: better error message
-            result = eval("evaluate = Num.woo;");
+            result = eval("evaluate = Num.woo");
             REQUIRE(result == ELEMENT_ERROR_IDENTIFIER_NOT_FOUND);
         }
 
         SECTION("Error - Identifier Not Found - Indexing 5")
         {
             //todo: better error message
-            result = eval("evaluate = 5.woo;");
+            result = eval("evaluate = 5.woo");
             REQUIRE(result == ELEMENT_ERROR_IDENTIFIER_NOT_FOUND);
         }
 
@@ -3613,33 +3656,33 @@ TEST_CASE("Interpreter", "[Evaluate]")
             char my_vec[] =
                 "struct MyVec(x:Num, y:Num)\n"
                 "{\n"
-                "    add(a:MyVec, b:MyVec) = MyVec(a.x.add(b.x), a.y.add(b.y));\n"
-                "    transform_components(a:MyVec, func) = MyVec(func(a.x), func(a.y), func(a.z));\n"
+                "    add(a:MyVec, b:MyVec) = MyVec(a.x.add(b.x), a.y.add(b.y))\n"
+                "    transform_components(a:MyVec, func) = MyVec(func(a.x), func(a.y), func(a.z))\n"
                 "}\n";
 
             SECTION("Error - Missing Closing Parenthesis For Call")
             {
-                result = eval_with_source(my_vec, "evaluate = MyStruct(1, 2, 3).add(MyStruct(4, 5, 6);\n");
+                result = eval_with_source(my_vec, "evaluate = MyStruct(1, 2, 3).add(MyStruct(4, 5, 6)\n");
                 REQUIRE(result == ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL);
-            }
-
-            SECTION("Error - Missing Semicolon")
-            {
-                result = eval_with_source(my_vec, "evaluate = MyStruct(1, 2, 3).add(MyStruct4, 5, 6));\n");
-                REQUIRE(result == ELEMENT_ERROR_MISSING_SEMICOLON);
             }
 
             SECTION("Error - Missing Closing Parenthesis For Call #2")
             {
+                result = eval_with_source(my_vec, "evaluate = MyStruct(1, 2, 3.add(MyStruct(4, 5, 6))\n");
+                REQUIRE(result == ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL);
+            }
+
+            SECTION("Error - Missing Opening Parenthesis For Call")
+            {
                 //todo: we should say what the opening bracket was/specifically which "MyStruct" it is referring to
-                result = eval_with_source(my_vec, "evaluate = MyStruct(1, 2, 3.add(MyStruct(4, 5, 6));\n");
+                result = eval_with_source(my_vec, "evaluate = MyStruct(1, 2, 3).add(MyStruct4, 5, 6))\n");
                 REQUIRE(result == ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL);
             }
 
             SECTION("Error - Missing Function Body")
             {
                 //todo: we should print that we expect '=' or '{' when defining the function 'evaluate' but found 'MyStruct' instead
-                result = eval_with_source(my_vec, "evaluate MyStruct(1, 2, 3).add(MyStruct(4, 5, 6));\n");
+                result = eval_with_source(my_vec, "evaluate MyStruct(1, 2, 3).add(MyStruct(4, 5, 6))\n");
                 REQUIRE(result == ELEMENT_ERROR_MISSING_FUNCTION_BODY);
             }
         }

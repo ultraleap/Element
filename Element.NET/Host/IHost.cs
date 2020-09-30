@@ -2,10 +2,10 @@ namespace Element
 {
     public interface IHost
     {
-        bool Parse(CompilationInput input);
-        (bool Success, float[] Result) Evaluate(CompilationInput input, string expression);
-        (bool Success, string Result) Typeof(CompilationInput input, string expression);
-        // Normalized Form
-        // Serialized Size
+        Result Parse(CompilerInput input);
+        Result<float[]> Evaluate(CompilerInput input, string expression);
+        Result<string> Typeof(CompilerInput input, string expression);
+        Result<string> Summary(CompilerInput input, string expression);
+        Result<string> NormalForm(CompilerInput input, string expression);
     }
 }

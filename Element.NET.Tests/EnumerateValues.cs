@@ -1,5 +1,6 @@
 using System;
 using Element.AST;
+using Element.NET.TestHelpers;
 using NUnit.Framework;
 
 namespace Element.NET.Tests
@@ -10,8 +11,9 @@ namespace Element.NET.Tests
         public void EnumerateAll()
         {
             var sourceContext = MakeSourceContext();
-            var results = sourceContext.GlobalScope.EnumerateValues<IValue>(_ => true);
-            CollectionAssert.IsNotEmpty(results);
+            var results = sourceContext.GlobalScope.EnumerateValues(new Context(sourceContext));
+            Assert.That(results.IsSuccess);
+            CollectionAssert.IsNotEmpty(results.ResultOr(default));
         }
 
         [
@@ -21,30 +23,30 @@ namespace Element.NET.Tests
         public void EnumerateByName(string nameContains)
         {
             var sourceContext = MakeSourceContext();
-            var results = sourceContext.GlobalScope.EnumerateValues<Declaration>(v => v.Location.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
-            CollectionAssert.IsNotEmpty(results);
+            var results = sourceContext.GlobalScope.EnumerateValues(new Context(sourceContext), d => d.Identifier.String.Contains(nameContains, StringComparison.OrdinalIgnoreCase));
+            Assert.That(results.IsSuccess);
+            CollectionAssert.IsNotEmpty(results.ResultOr(default));
             // TODO: Actually check collection contents are correct
         }
 
-        private static readonly IIntrinsic[] _types =
+        private static readonly IIntrinsicImplementation[] _intrinsics =
         {
-            NumType.Instance,
-            BoolType.Instance,
-            ListType.Instance,
-            TupleType.Instance,
+            NumStruct.Instance,
+            BoolStruct.Instance,
+            ListStruct.Instance,
         };
         
-        [TestCaseSource(nameof(_types))]
-        public void EnumerateByReturnType(IIntrinsic type)
+        [TestCaseSource(nameof(_intrinsics))]
+        public void EnumerateByReturnType(IIntrinsicImplementation intrinsic)
         {
             var sourceContext = MakeSourceContext();
-            sourceContext.MakeCompilationContext(out var compilationContext);
-            bool Filter(IValue v) => v is IFunctionSignature fn && fn.Output.ResolveConstraint(compilationContext) == compilationContext.GetIntrinsicsDeclaration<StructDeclaration>(type);
-            var results = sourceContext.GlobalScope.EnumerateValues<Declaration>(Filter);
-            CollectionAssert.IsNotEmpty(results);
+            bool Filter(ValueWithLocation v) => v.Value.ReturnConstraint.IsIntrinsic(intrinsic);
+            var results = sourceContext.GlobalScope.EnumerateValues(new Context(sourceContext), resolvedValueFilter: Filter);
+            Assert.That(results.IsSuccess);
+            CollectionAssert.IsNotEmpty(results.ResultOr(default));
             // TODO: Actually check collection contents are correct
         }
         
-        // Test case: don't recurse into function scopes! Returning intermediates would be dumb!
+        // Test case: don't recurse into function scopes! Returning intermediates would be bad!
     }
 }

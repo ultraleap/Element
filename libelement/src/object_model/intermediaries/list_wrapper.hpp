@@ -15,7 +15,7 @@ namespace element
         explicit list_wrapper(std::shared_ptr<const element_expression> selector, std::vector<object_const_shared_ptr> options);
 
         [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth = 0) const override;
+        [[nodiscard]] std::string to_code(const int depth = 0) const override;
 
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;

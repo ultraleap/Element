@@ -7,31 +7,14 @@
 
 using namespace element;
 
-capture_stack::capture_stack(
-    const declaration* function,
-    const call_stack& calls)
+void capture_stack::push(const scope* local_scope, const std::vector<port>* parameters, std::vector<object_const_shared_ptr> compiled_arguments)
 {
-    //build up a list of declarations with their captures, using each parent scope of the passed in declaration
-    const scope* s = function->our_scope.get();
-    while (s)
-    {
-        const declaration* decl = s->declarer;
-
-        auto found_it = std::find_if(std::rbegin(calls.frames), std::rend(calls.frames),
-            [decl](const auto& frame) {
-                return frame.function == decl;
-        });
-
-        if (found_it != std::rend(calls.frames))
-            frames.emplace_back(frame{ found_it->function, found_it->compiled_arguments });
-        
-        s = s->get_parent_scope();
-    }
+    frames.emplace_back(frame{local_scope, parameters, std::move(compiled_arguments)});
 }
 
-void capture_stack::push(const declaration* function, std::vector<object_const_shared_ptr> compiled_arguments)
+void capture_stack::push(const declaration& declaration, std::vector<object_const_shared_ptr> compiled_arguments)
 {
-    frames.emplace_back(frame{function, std::move(compiled_arguments)});
+    push(declaration.our_scope.get(), &declaration.get_inputs(), std::move(compiled_arguments));
 }
 
 void capture_stack::pop()
@@ -39,33 +22,39 @@ void capture_stack::pop()
     frames.pop_back();
 }
 
-object_const_shared_ptr capture_stack::find(const scope* s, const identifier& name,
-                                                    const compilation_context& context,
-                                                    const source_information& source_info)
+object_const_shared_ptr capture_stack::find(const scope* local_scope,
+                                            const identifier& name,
+                                            const compilation_context& context,
+                                            const source_information& source_info) const
 {
-    while (s)
+    const scope* current_scope = local_scope;
+
+    while (current_scope)
     {
-        const auto found = s->find(name, false);
+        //check the scope and see if it's in there
+        const auto* found = current_scope->find(name, false);
         if (found)
             return found->compile(context, source_info);
 
-        auto found_it = std::find_if(std::begin(frames), std::end(frames), 
-            [function = s->declarer](const auto& frame) {
-                return function == frame.function;
+        //if it's not, then find the scope in our stack
+        auto found_it = std::find_if(std::rbegin(frames), std::rend(frames),
+            [current_scope](const auto& frame) {
+            return current_scope == frame.current_scope;
         });
 
-        if (found_it != frames.end())
+        //if the scope is in our stack, check the parameters if there are any
+        if (found_it != frames.rend() && found_it->parameters)
         {
-            const auto* func = found_it->function;
-            for (unsigned i = 0; i < func->inputs.size(); ++i)
+            const auto& parameters = *found_it->parameters;
+            for (unsigned i = 0; i < parameters.size(); ++i)
             {
-                const auto& input = func->inputs[i];
-                if (input.get_name() == name.value)
+                const auto& param = parameters[i];
+                if (param.get_name() == name.value)
                     return found_it->compiled_arguments[i];
             }
         }
 
-        s = s->get_parent_scope();
+        current_scope = current_scope->get_parent_scope();
     }
 
     return nullptr;

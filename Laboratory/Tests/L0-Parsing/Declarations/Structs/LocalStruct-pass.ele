@@ -1,0 +1,5 @@
+function(a, b)
+{
+    struct MyStruct(a, b)
+    return = MyStruct(a, b)
+}

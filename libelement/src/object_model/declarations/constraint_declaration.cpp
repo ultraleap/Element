@@ -5,12 +5,12 @@
 
 using namespace element;
 
-constraint_declaration::constraint_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
+constraint_declaration::constraint_declaration(identifier name, const scope* parent_scope, const kind constraint_kind)
     : declaration(std::move(name), parent_scope)
     , constraint_(std::make_unique<constraint>(4, this)) //todo: what to use
+    , constraint_kind(constraint_kind)
 {
     qualifier = constraint_qualifier;
-    _intrinsic = is_intrinsic;
 }
 
 bool constraint_declaration::matches_constraint(const compilation_context& context, const constraint* constraint) const
@@ -24,4 +24,9 @@ const constraint* constraint_declaration::get_constraint() const
         return constraint::any.get();
 
     return constraint_.get();
+}
+
+bool constraint_declaration::is_intrinsic() const
+{
+    return constraint_kind == kind::intrinsic;
 }

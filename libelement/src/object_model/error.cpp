@@ -2,6 +2,11 @@
 
 using namespace element;
 
+bool error::is_constant() const
+{
+    return true;
+}
+
 element_result error::get_result() const
 {
     return code;

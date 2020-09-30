@@ -91,7 +91,7 @@ std::string list_wrapper::typeof_info() const
     return "?";
 }
 
-std::string list_wrapper::to_code(int depth) const
+std::string list_wrapper::to_code(const int depth) const
 {
     return "?";
 }

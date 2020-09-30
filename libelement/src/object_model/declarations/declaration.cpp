@@ -24,11 +24,12 @@ bool declaration::has_scope() const
 
 std::string declaration::location() const
 {
-    assert(our_scope && our_scope->get_parent_scope());
+    return name.value;
+    //assert(our_scope && our_scope->get_parent_scope());
 
-    if (our_scope->get_parent_scope()->is_root())
-        return name.value;
+    //if (our_scope->get_parent_scope()->is_root())
+    //    return name.value;
 
-    //recursive construction
-    return fmt::format("{}.{}", our_scope->get_parent_scope()->location(), name.value);
+    ////recursive construction
+    //return fmt::format("{}.{}", our_scope->get_parent_scope()->location(), name.value);
 }

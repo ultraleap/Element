@@ -13,4 +13,8 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_asin(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_o
 LMNT_ATTR_FAST lmnt_result lmnt_op_acos(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 LMNT_ATTR_FAST lmnt_result lmnt_op_atan(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_atan2(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+
+LMNT_ATTR_FAST lmnt_result lmnt_op_sincos(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+
 #endif

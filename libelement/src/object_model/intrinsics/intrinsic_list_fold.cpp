@@ -15,7 +15,8 @@ intrinsic_list_fold::intrinsic_list_fold()
 {
 }
 
-object_const_shared_ptr compile_time_fold(const compilation_context& context, 
+object_const_shared_ptr compile_time_fold(
+    const compilation_context& context, 
     const std::shared_ptr<const struct_instance>& list,
     const object_const_shared_ptr& initial,
     const std::shared_ptr<const function_instance>& accumulator_function,
@@ -25,7 +26,7 @@ object_const_shared_ptr compile_time_fold(const compilation_context& context,
     if (!is_constant)
         return nullptr;
 
-    const auto list_count = list->index(context, identifier::list_count_identifier, source_info);
+    const auto list_count = list->index(context, identifier::list_count_identifier, source_info)->compile(context, source_info);
     if (!list_count->is_constant())
         return nullptr;
 
@@ -49,7 +50,8 @@ object_const_shared_ptr compile_time_fold(const compilation_context& context,
     return aggregate;
 }
 
-object_const_shared_ptr runtime_fold(const compilation_context& context, 
+object_const_shared_ptr runtime_fold(
+    const compilation_context& context, 
     const std::shared_ptr<const struct_instance>& list,
     const object_const_shared_ptr& initial,
     const std::shared_ptr<const function_instance>& accumulator_function,
@@ -59,7 +61,7 @@ object_const_shared_ptr runtime_fold(const compilation_context& context,
     if (!accumulator_is_boundary)
         return std::make_shared<const error>("accumulator is not a boundary function", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
 
-    element_result result;
+    element_result result = ELEMENT_OK;
     const auto placeholder_offset = 0;
     const auto accumulator_compiled = compile_placeholder_expression(context, *accumulator_function, accumulator_function->declarer->get_inputs(), result, source_info, placeholder_offset);
     if(!accumulator_compiled)
@@ -69,31 +71,34 @@ object_const_shared_ptr runtime_fold(const compilation_context& context,
     if (!accumulator_expression)
         return std::make_shared<const error>("accumulator failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
 
-    //make it work
+    const auto* listfold = context.get_compiler_scope()->find(identifier{ "@list_fold" }, false);
+    if (!listfold)
+        return std::make_shared<const error>("failed to find @list_fold", ELEMENT_ERROR_UNKNOWN, source_info);
 
-    return nullptr;
+    std::vector<object_const_shared_ptr> list_fold_args {list, initial, accumulator_function};
+    return listfold->call(context, std::move(list_fold_args), source_info);
 }
 
-object_const_shared_ptr intrinsic_list_fold::compile(const compilation_context& context,
+object_const_shared_ptr intrinsic_list_fold::compile(
+    const compilation_context& context,
     const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
     const auto& declarer = *frame.function;
     assert(declarer.inputs.size() == 3);
-
     assert(frame.compiled_arguments.size() == 3);
 
     const auto& list = frame.compiled_arguments[0];
     const auto& initial = frame.compiled_arguments[1];
     const auto& accumulator = frame.compiled_arguments[2];
 
-    auto list_struct = std::dynamic_pointer_cast<const struct_instance>(list);
+    const auto list_struct = std::dynamic_pointer_cast<const struct_instance>(list);
     if (!list_struct)
-        return nullptr;
+        return std::make_shared<const error>("first argument must be a list struct instance", ELEMENT_ERROR_UNKNOWN, source_info);
 
-    auto accumulator_instance = std::dynamic_pointer_cast<const function_instance>(accumulator);
+    const auto accumulator_instance = std::dynamic_pointer_cast<const function_instance>(accumulator);
     if (!accumulator_instance)
-        return nullptr;
+        return std::make_shared<const error>("first argument must be a binary function instance", ELEMENT_ERROR_UNKNOWN, source_info);
 
     auto compile_time_result = compile_time_fold(context, list_struct, initial, accumulator_instance, source_info);
     if (compile_time_result)
@@ -101,32 +106,3 @@ object_const_shared_ptr intrinsic_list_fold::compile(const compilation_context& 
 
     return runtime_fold(context, list_struct, initial, accumulator_instance, source_info);
 }
-
-
-
-
-
-/*
-//const char* src = "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list(a, b, c).fold(start, Num.add);";
-
-* accumulator = Num.add;
-* magic_struct(index:Num, aggregate:Num){}
-* mylist = list(a, b, c);
-* predicate(magic:magic_struct):Bool = magic.index.lt(mylist.count);
-* body(magic:magic_struct) = magic_struct(magic_struct.index.add(1), accumulator(mylist.at(magic.index), magic.aggreggate);
-* evaluate(a:Num, b:Num, c:Num, start:Num):Num = for(magic_struct(0, 0), predicate, body);
-*/
-
-/*
-intrinsic fold(list:List, initial, accumulator:Binary);
-intrinsic for(initial, condition:Predicate, body:Unary);
-*/
-
-//auto aggregate = initial;
-//   int i = 0;
-//   while(i < list.count)
-//   {
-//       cur_element = list.at(i);
-//       aggregate = accumulator.call(aggregate, cur_element);
-//       ++i; 
-//   }

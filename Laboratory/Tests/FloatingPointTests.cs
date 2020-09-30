@@ -1,16 +1,15 @@
-using Laboratory;
 using NUnit.Framework;
+using Element.NET.TestHelpers;
 
 namespace Laboratory.FloatingPoint.Tests
 {
-    [TestFixture, Parallelizable(ParallelScope.All)]
-    internal class FloatingPointTests
+    internal class FloatingPointTests : FixtureBase
     {
-        public void NearlyEqual(float a, float b, bool expected) =>
-            Assert.That(HostFixture.ApproximatelyEqualEpsilon(a, b, HostFixture.FloatEpsilon), Is.EqualTo(expected));
+        public static void NearlyEqual(float a, float b, bool expected) =>
+            Assert.That(ApproximatelyEqualEpsilon(a, b, FloatEpsilon), Is.EqualTo(expected));
 
-        public void NearlyEqual(float a, float b, float epsilon, bool expected) =>
-            Assert.That(HostFixture.ApproximatelyEqualEpsilon(a, b, epsilon), Is.EqualTo(expected));
+        public static void NearlyEqual(float a, float b, float epsilon, bool expected) =>
+            Assert.That(ApproximatelyEqualEpsilon(a, b, epsilon), Is.EqualTo(expected));
 
         //Test cases taken from https://floating-point-gui.de/errors/NearlyEqualsTest.java (https://floating-point-gui.de/errors/comparison/)
         [

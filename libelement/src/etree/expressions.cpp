@@ -4,6 +4,7 @@
 
 //SELF
 #include "object_model/compilation_context.hpp"
+#include "object_model/error.hpp"
 
 DEFINE_TYPE_ID(element_expression_constant,        1U << 0);
 DEFINE_TYPE_ID(element_expression_input,           1U << 1);
@@ -49,6 +50,11 @@ element_expression_constant::element_expression_constant(element_value val)
     : element_expression(type_id, element::type::num.get())
     , m_value(val)
 {
+}
+
+element::object_const_shared_ptr element_expression_constant::call(const element::compilation_context& context, std::vector<element::object_const_shared_ptr> compiled_args, const element::source_information& source_info) const
+{
+    return std::make_shared<element::error>("Tried to call something that isn't a function", ELEMENT_ERROR_INVALID_CALL_NONFUNCTION, source_info);
 }
 
 element_expression_if::element_expression_if(expression_const_shared_ptr predicate, expression_const_shared_ptr if_true, expression_const_shared_ptr if_false)

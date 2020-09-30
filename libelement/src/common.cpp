@@ -27,7 +27,6 @@ std::string tokens_to_string(const element_tokeniser_ctx* context, const element
             PRINTCASE(ELEMENT_TOK_DOT);
             PRINTCASE(ELEMENT_TOK_BRACKETL);
             PRINTCASE(ELEMENT_TOK_BRACKETR);
-            PRINTCASE(ELEMENT_TOK_SEMICOLON);
             PRINTCASE(ELEMENT_TOK_COLON);
             PRINTCASE(ELEMENT_TOK_COMMA);
             PRINTCASE(ELEMENT_TOK_BRACEL);
@@ -434,7 +433,7 @@ void element_log_ctx::log(const element_log_message& log) const
     if (callback == nullptr)
         return;
 
-    callback(&log);
+    callback(&log, user_data);
 }
 
 void element_log_ctx::log(const element::log_message& log) const
@@ -442,5 +441,5 @@ void element_log_ctx::log(const element::log_message& log) const
     if (callback == nullptr)
         return;
 
-    callback(&log.get_log_message());
+    callback(&log.get_log_message(), user_data);
 }

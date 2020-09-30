@@ -10,10 +10,16 @@ namespace element
     class struct_declaration final : public declaration
     {
     public:
-        struct_declaration(identifier name, const scope* parent_scope, bool is_intrinsic);
+        enum class kind {
+            custom,
+            intrinsic
+        };
+
+    public:
+        struct_declaration(identifier name, const scope* parent_scope, kind struct_kind);
         
         [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth) const override;
+        [[nodiscard]] std::string to_code(const int depth) const override;
 
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;
@@ -32,7 +38,10 @@ namespace element
         [[nodiscard]] bool deserializable(const compilation_context& context) const override;
         [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index) const override;
 
+        [[nodiscard]] bool is_intrinsic() const override;
+
     private:
         std::unique_ptr<user_type> type;
+        kind struct_kind;
     };
 }

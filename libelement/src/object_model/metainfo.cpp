@@ -18,6 +18,7 @@
 #include "scope.hpp"
 #include "error.hpp"
 #include "etree/expressions.hpp"
+#include "expressions/anonymous_block_expression.hpp"
 
 using namespace element;
 
@@ -27,29 +28,33 @@ std::string constraint::typeof_info() const
     return declarer->location() + ":Constraint";
 }
 
-std::string scope::typeof_info() const
-{
-    return declarer->typeof_info();
-}
-
 std::string struct_declaration::typeof_info() const
 {
-    return location() + ":Struct";
+    return is_intrinsic() ? "IntrinsicStruct" : "CustomStruct";
 }
 
 std::string constraint_declaration::typeof_info() const
 {
-    return location() + ":Constraint";
+    return is_intrinsic() ? "IntrinsicConstraint" : "FunctionConstraint"; //Might have more constraints later... derived types could handle this function return value instead
 }
 
 std::string function_declaration::typeof_info() const
 {
-    return location() + ":Function";
+    switch(function_kind)
+    {
+    case kind::intrinsic:
+        return "IntrinsicFunction";
+    case kind::scope_bodied:
+        return "ScopeBodiedFunction";
+    case kind::expression_bodied:
+        return "ExpressionBodiedFunction";
+    }
+    return {};
 }
 
 std::string namespace_declaration::typeof_info() const
 {
-    return location() + ":Namespace";
+    return "Namespace";
 }
 
 std::string expression_chain::typeof_info() const
@@ -60,14 +65,12 @@ std::string expression_chain::typeof_info() const
 
 std::string struct_instance::typeof_info() const
 {
-    return "Instance:" + declarer->typeof_info();
+    return declarer->name.value;
 }
 
 std::string function_instance::typeof_info() const
 {
-    //todo: element test expects Function, not FunctionInstance
-    //return declarer->location() + ":FunctionInstance";
-    return declarer->location() + ":Function";
+    return provided_arguments.empty() ? declarer->typeof_info() : "AppliedFunction";
 }
 
 std::string intrinsic::typeof_info() const
@@ -76,17 +79,17 @@ std::string intrinsic::typeof_info() const
     return "";
 }
 
-std::string type::typeof_info() const
-{
-    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
-    return declarer->location() + ":Type";
-}
-
-std::string error::typeof_info() const
-{
-    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
-    return "Error: " + message;
-}
+//std::string type::typeof_info() const
+//{
+//    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+//    return declarer->location() + ":Type";
+//}
+//
+//std::string error::typeof_info() const
+//{
+//    //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
+//    return "Error: " + message;
+//}
 
 std::string element_expression::typeof_info() const
 {
@@ -102,7 +105,7 @@ std::string port::typeof_info() const
 }
 
 //to_code
-std::string constraint::to_code(int depth) const
+std::string constraint::to_code(const int depth) const
 {
     return "?";
 }
@@ -129,7 +132,7 @@ std::string struct_declaration::to_code(const int depth) const
 
     result += is_intrinsic() ? "intrinsic struct " : "struct ";
     result += name.value + ports;
-    result += has_scope() ? our_scope->to_code(depth) : ";";
+    result += has_scope() ? our_scope->to_code(depth) : "";
     return result;
 }
 
@@ -157,11 +160,11 @@ std::string constraint_declaration::to_code(const int depth) const
         ports += output->to_code(depth);
 
     result += is_intrinsic() ? "intrinsic constraint " : "constraint ";
-    result += name.value + ports + ";";
+    result += name.value + ports;
     return result;
 }
 
-std::string function_declaration::to_code(int depth) const
+std::string function_declaration::to_code(const int depth) const
 {
     auto declaration = name.value;
     std::string ports;
@@ -187,7 +190,7 @@ std::string function_declaration::to_code(int depth) const
 
     //intrinsic declaration
     if (is_intrinsic())
-        return result + "intrinsic " + name.value + ports + ";";
+        return result + "intrinsic " + name.value + ports;
 
     //scope-bodied
     if (has_scope())
@@ -198,7 +201,7 @@ std::string function_declaration::to_code(int depth) const
     };
 
     //expression-bodied
-    return result + name.value + ports + " = " + std::visit(visitor, body) + ";";
+    return result + name.value + ports + " = " + std::visit(visitor, body);
 }
 
 std::string namespace_declaration::to_code(const int depth) const
@@ -206,7 +209,7 @@ std::string namespace_declaration::to_code(const int depth) const
     return "namespace " + name.value + our_scope->to_code(depth);
 }
 
-std::string expression_chain::to_code(int depth) const
+std::string expression_chain::to_code(const int depth) const
 {
     static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression>& expression)
     {
@@ -216,12 +219,12 @@ std::string expression_chain::to_code(int depth) const
     return std::accumulate(std::next(std::begin(expressions)), std::end(expressions), expressions[0]->to_code(), accumulate);
 }
 
-std::string identifier_expression::to_code(int depth) const
+std::string identifier_expression::to_code(const int depth) const
 {
     return name.value;
 }
 
-std::string call_expression::to_code(int depth) const
+std::string call_expression::to_code(const int depth) const
 {
     static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression_chain>& chain)
     {
@@ -232,20 +235,25 @@ std::string call_expression::to_code(int depth) const
     return "(" + expressions + ")";
 }
 
-std::string indexing_expression::to_code(int depth) const
+std::string indexing_expression::to_code(const int depth) const
 {
     return "." + name.value;
 }
 
-std::string port::to_code(int) const
+std::string anonymous_block_expression::to_code(const int depth) const
+{
+    return "todo";
+}
+
+std::string port::to_code(const int depth) const
 {
     if (has_annotation())
-        return annotation->to_code();
+        return annotation->to_code(depth);
 
     return "";
 }
 
-std::string scope::to_code(int depth) const
+std::string scope::to_code(const int depth) const
 {
     std::string code;
 
@@ -265,43 +273,7 @@ std::string scope::to_code(int depth) const
     return "\n" + scope_offset + "{\n" + code + "\n" + scope_offset + "}";
 }
 
-std::string struct_instance::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
-std::string function_instance::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
-std::string type_annotation::to_code() const
+std::string type_annotation::to_code(const int depth) const
 {
     return ":" + name.value;
-}
-
-std::string intrinsic::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
-std::string type::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
-std::string error::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
-}
-
-std::string element_expression::to_code(const int depth) const
-{
-    //We need an override here since object::to_code is pure virtual, but this object has no associated code
-    return "?";
 }

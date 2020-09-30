@@ -27,7 +27,7 @@ namespace element
         expression& operator=(const expression&) = delete;
         expression& operator=(expression&&) = delete;
 
-        [[nodiscard]] virtual std::string to_code(int depth = 0) const = 0;
+        [[nodiscard]] virtual std::string to_code(const int depth = 0) const = 0;
         [[nodiscard]] virtual object_const_shared_ptr resolve(const compilation_context& context, const object* obj) = 0;
 
         source_information source_info;

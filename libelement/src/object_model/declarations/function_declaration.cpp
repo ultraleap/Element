@@ -8,12 +8,12 @@
 
 using namespace element;
 
-function_declaration::function_declaration(identifier name, const scope* parent_scope, const bool is_intrinsic)
+function_declaration::function_declaration(identifier name, const scope* parent_scope, const kind function_kind)
     : declaration(std::move(name), parent_scope)
     , constraint_ (std::make_unique<user_function_constraint>(this)) //todo: what to use
+    , function_kind(function_kind)
 {
     qualifier = function_qualifier;
-    _intrinsic = is_intrinsic;
 }
 
 bool function_declaration::is_variadic() const
@@ -73,4 +73,9 @@ bool function_declaration::valid_at_boundary(const compilation_context& context)
     }
 
     return true;
+}
+
+bool function_declaration::is_intrinsic() const
+{
+    return function_kind == kind::intrinsic;
 }

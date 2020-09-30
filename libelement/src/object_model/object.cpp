@@ -27,25 +27,27 @@ namespace element
     }
 
     object_const_shared_ptr object::index(const compilation_context& context, const identifier&,
-                                                const source_information& source_info) const
+                                          const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_indexable, typeof_info());
     }
 
     object_const_shared_ptr object::call(const compilation_context& context, std::vector<object_const_shared_ptr>,
-                                               const source_information& source_info) const
+                                         const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_callable, typeof_info());
     }
 
     object_const_shared_ptr object::compile(const compilation_context& context,
-                                                  const source_information& source_info) const
+                                            const source_information& source_info) const
     {
         return build_error_and_log(context, source_info, error_message_code::not_compilable, typeof_info());
     }
 
-    bool valid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>&
-                    compiled_args)
+    bool valid_call(
+        const compilation_context& context,
+        const declaration* declarer,
+        const std::vector<object_const_shared_ptr>& compiled_args)
     {
         if (compiled_args.size() != declarer->inputs.size())
             return false;
@@ -62,7 +64,9 @@ namespace element
             const auto* const type = input.resolve_annotation(context);
             if (!type)
             {
-                assert(!"failed to resolve annotation, couldn't be found");
+                error(fmt::format("typename '{}' for port {}({}) of {} could not be found",
+                    input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
+                    ELEMENT_ERROR_NOT_A_CONSTRAINT, declarer->source_info).log_once(context.get_logger());
                 return false;
             }
 
@@ -73,36 +77,41 @@ namespace element
         return true;
     }
 
-    std::shared_ptr<const error> build_error_for_invalid_call(const compilation_context& context, const declaration* declarer, const std::vector<object_const_shared_ptr>& compiled_args)
+    std::shared_ptr<const error> build_error_for_invalid_call(
+        const compilation_context& context,
+        const declaration* declarer,
+        const std::vector<object_const_shared_ptr>& compiled_args)
     {
         assert(!valid_call(context, declarer, compiled_args));
 
+        std::string input_params;
+        for (unsigned i = 0; i < declarer->inputs.size(); ++i)
+        {
+            const auto& input = declarer->inputs[i];
+            input_params += fmt::format("({}) {}{}", i, input.get_name(), input.has_annotation() ? ":" + input.get_annotation()->to_string() : "");
+            if (i != declarer->inputs.size() - 1)
+                input_params += ", ";
+        }
+
+        std::string given_params;
+        for (unsigned i = 0; i < compiled_args.size(); ++i)
+        {
+            const auto& input = compiled_args[i];
+            given_params += fmt::format("({}) _:{}", i, input->typeof_info());
+            if (i != compiled_args.size() - 1)
+                given_params += ", ";
+        }
+
         if (compiled_args.size() != declarer->inputs.size())
         {
-            std::string input_params;
-            for (unsigned i = 0; i < declarer->inputs.size(); ++i)
-            {
-                const auto& input = declarer->inputs[i];
-                input_params += fmt::format("({}) {}{}", i, input.get_name(), input.has_annotation() ? ":" + input.get_annotation()->to_string() : "");
-                if (i != declarer->inputs.size() - 1)
-                    input_params += ", ";
-            }
-
-            std::string given_params;
-            for (unsigned i = 0; i < compiled_args.size(); ++i)
-            {
-                const auto& input = compiled_args[i];
-                given_params += fmt::format("({}) _:{}", i, input->typeof_info());
-                if (i != compiled_args.size() - 1)
-                    given_params += ", ";
-            }
-
             return build_error(declarer->source_info, error_message_code::argument_count_mismatch,
                 declarer->location(), input_params, given_params);
         }
 
-        //todo: proper logging
-        return std::make_shared<error>("constraint not satisfied", ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
+        auto error_string = fmt::format("constraint not satisfied for function {}\nfunction has {} inputs\nfunction parameters = {}\narguments passed = {}",
+            declarer->name.value, declarer->inputs.size(), input_params, given_params);
+        
+        return std::make_shared<error>(std::move(error_string), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
     }
 
     object_const_shared_ptr index_type(const declaration* type,
@@ -173,7 +182,7 @@ namespace element
         if (err)
         {
             result = err->log_once(context.interpreter->logger.get());
-            return nullptr;
+            return err;
         }
 
         return compiled;

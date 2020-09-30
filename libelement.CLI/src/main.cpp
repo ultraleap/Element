@@ -10,7 +10,7 @@
 
 using namespace libelement::cli;
 
-void log_callback(const element_log_message* const message)
+void log_callback(const element_log_message* const message, void* user_data)
 {
 	auto message_code = message->message_code;
 
@@ -43,15 +43,15 @@ void log_callback(const element_log_message* const message)
 	std::string message_with_info = msg_info + message->message;
 
 	//todo: hack to force parse errors
-	auto log = compiler_message(static_cast<message_type>(message_code), message_with_info);
+	auto log = compiler_message(static_cast<message_type>(message_code), message_with_info, static_cast<command*>(user_data)->get_common_arguments().log_json);
 	std::cout << log.serialize() << std::endl;
 
 	//todo: might want to do this differently in the future
 	if (message->related_log_message)
-	    log_callback(message->related_log_message);
+	    log_callback(message->related_log_message, user_data);
 }
 
-void command_callback(const command& command) 
+void command_callback(command& command) 
 {
 #if !defined(NDEBUG) && defined(WIN32)
 	//TODO: JM - TEMPORARY - Remove me later
@@ -68,17 +68,18 @@ void command_callback(const command& command)
 #endif
 	
 	//set a log callback, so that when we get errors, messages are logged
-	command.set_log_callback(log_callback);
+	command.set_log_callback(log_callback, static_cast<void*>(&command));
 
 	//feedback request
-	const auto request = compiler_message(command.as_string());
+	const auto request = compiler_message(command.as_string(), command.get_common_arguments().log_json);
 	std::cout << request.serialize() << std::endl;
 
 	//callback in case we need access to the command for some compiler_message generation shenanigans
 	const auto input = compilation_input(command.get_common_arguments());
 	const auto response = command.execute(input);
 	std::cout << response.serialize() << std::endl;
-} 
+	command.set_log_callback(nullptr, nullptr);
+}
 
 int main(const int argc, char** argv)
 {

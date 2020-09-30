@@ -18,6 +18,6 @@ namespace Element
         public readonly int Line;
         public readonly int Column;
 
-        public override string ToString() => $"{What} in {Source}:{Line},{Column}";
+        public override string ToString() => $"{What} at {Source}:{Line},{Column}";
     }
 }

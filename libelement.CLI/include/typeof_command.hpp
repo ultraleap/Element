@@ -13,7 +13,7 @@ namespace libelement::cli
 		[[nodiscard]] std::string as_string() const
 		{
 			std::stringstream ss;
-			ss << "typeof --expression " << expression << " ";
+			ss << "typeof --expression \"" << expression << "\" ";
 			return ss.str();
 		}
 	};
@@ -33,7 +33,7 @@ namespace libelement::cli
 			element_result result = ELEMENT_OK;
 			result = setup(compilation_input);
 			if (result != ELEMENT_OK)
-				return compiler_message(ELEMENT_ERROR_PARSE,"Failed to setup context");
+				return compiler_message(ELEMENT_ERROR_PARSE,"Failed to setup context", compilation_input.get_log_json());
 
 			const auto expression = custom_arguments.expression;
 			std::string typeof(256, '\0');
@@ -43,10 +43,10 @@ namespace libelement::cli
 				auto type = ELEMENT_ERROR_UNKNOWN;
 				if (result > 0)
 					type = static_cast<message_type>(result);
-				return compiler_message(type, "Failed to compile: " + expression + " with element_result " + std::to_string(result));
+				return compiler_message(type, "Failed to compile: " + expression + " with element_result " + std::to_string(result), compilation_input.get_log_json());
 			}
 
-			return generate_response(result, typeof);
+			return generate_response(result, typeof, compilation_input.get_log_json());
 		}
 
 		[[nodiscard]] std::string as_string() const override

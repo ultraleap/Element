@@ -18,7 +18,6 @@ namespace element
         intrinsic(element_type_id id);
 
         [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth = 0) const override;
 
         template <typename T>
         static bool register_intrinsic(const element_interpreter_ctx* context, const element_ast* ast, const declaration& declaration);

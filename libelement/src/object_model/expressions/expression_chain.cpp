@@ -41,3 +41,8 @@ object_const_shared_ptr expression_chain::compile(const compilation_context& con
 
     return current;
 }
+
+const scope* expression_chain::get_scope() const
+{
+    return declarer->our_scope.get();
+}

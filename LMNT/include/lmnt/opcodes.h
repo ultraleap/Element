@@ -9,6 +9,7 @@ enum
 {
     // no-op: null, null, null
     LMNT_OP_NOOP = 0,
+    LMNT_OP_RETURN,
     // assign variants: stack, null, stack
     LMNT_OP_ASSIGNSS,
     LMNT_OP_ASSIGNVV,
@@ -18,6 +19,14 @@ enum
     LMNT_OP_ASSIGNIBS,
     LMNT_OP_ASSIGNIIV,
     LMNT_OP_ASSIGNIBV,
+    // data load: immediate, immediate, stack
+    LMNT_OP_DLOADIIS,
+    LMNT_OP_DLOADIIV,
+    // data load: immediate, data ref, stack
+    LMNT_OP_DLOADIRS,
+    LMNT_OP_DLOADIRV,
+    // data section get count: immediate, null, stack
+    LMNT_OP_DSECLEN,
     // add: stack, stack, stack
     LMNT_OP_ADDSS,
     LMNT_OP_ADDVV,
@@ -40,6 +49,9 @@ enum
     LMNT_OP_ASIN,
     LMNT_OP_ACOS,
     LMNT_OP_ATAN,
+    // trig: stack, stack, stack
+    LMNT_OP_ATAN2,
+    LMNT_OP_SINCOS,
     // pow: stack, stack, stack
     LMNT_OP_POWSS,
     LMNT_OP_POWVV,
@@ -67,29 +79,48 @@ enum
     LMNT_OP_ROUNDV,
     LMNT_OP_CEILS,
     LMNT_OP_CEILV,
+    LMNT_OP_TRUNCS,
+    LMNT_OP_TRUNCV,
     // indexing: stackref, immediate, stack
-    LMNT_OP_INDEXDIS,
-    // indexing: stack, stack, stack
-    LMNT_OP_INDEXSSS,
-    // indexing: stackref, stack, stack
-    LMNT_OP_INDEXDSS,
-    // indexing: stackref, stack, stackref
-    LMNT_OP_INDEXDSD,
-    // extern call: deflo, defhi, imm
+    LMNT_OP_INDEXRIS,
+    // indexing: stackref, immediate, stackref
+    LMNT_OP_INDEXRIR,
+    // compare: stack, stack, null
+    LMNT_OP_CMP,
+    // branch: null, codelo, codehi
+    LMNT_OP_BRANCH,
+    LMNT_OP_BRANCHCEQ,
+    LMNT_OP_BRANCHCNE,
+    LMNT_OP_BRANCHCLT,
+    LMNT_OP_BRANCHCLE,
+    LMNT_OP_BRANCHCGT,
+    LMNT_OP_BRANCHCGE,
+    LMNT_OP_BRANCHCUN,
+    // branch: stack, codelo, codehi
+    LMNT_OP_BRANCHZ,
+    LMNT_OP_BRANCHNZ,
+    LMNT_OP_BRANCHPOS,
+    LMNT_OP_BRANCHNEG,
+    LMNT_OP_BRANCHUN,
+    // extern call: deflo, defhi, stack
     LMNT_OP_EXTCALL,
     // placeholder end operation
     LMNT_OP_END,
 };
 
+#define LMNT_IS_BRANCH_OP(opcode) ((opcode) >= LMNT_OP_BRANCH && (opcode) <= LMNT_OP_BRANCHUN)
+
+
 typedef enum
 {
     LMNT_OPERAND_UNUSED,
-    LMNT_OPERAND_STACK1,  // S
-    LMNT_OPERAND_STACK4,  // V
+    LMNT_OPERAND_STACK1,   // S
+    LMNT_OPERAND_STACK4,   // V
     LMNT_OPERAND_STACKN,
-    LMNT_OPERAND_IMM,     // I
-    LMNT_OPERAND_DYNAMIC, // D
+    LMNT_OPERAND_IMM,      // I
+    LMNT_OPERAND_STACKREF, // R
     LMNT_OPERAND_DEFPTR,
+    LMNT_OPERAND_CODEPTR,
 } lmnt_operand_type;
 
 typedef struct
@@ -102,7 +133,7 @@ typedef struct
 
 extern const lmnt_op_info lmnt_opcode_info[LMNT_OP_END];
 
-#define LMNT_OP16(a) (a & 0xFF), ((a >> 8) & 0xFF)
-#define LMNT_OP(op, arg1, arg2, arg3) LMNT_OP16(op), LMNT_OP16(arg1), LMNT_OP16(arg2), LMNT_OP16(arg3)
+#define LMNT_OP16(a) (char)(a & 0xFF), (char)((a >> 8) & 0xFF)
+#define LMNT_OP_BYTES(op, arg1, arg2, arg3) LMNT_OP16(op), LMNT_OP16(arg1), LMNT_OP16(arg2), LMNT_OP16(arg3)
 
 #endif

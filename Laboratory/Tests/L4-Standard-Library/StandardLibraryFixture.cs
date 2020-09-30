@@ -1,19 +1,23 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Element;
+using Element.NET.TestHelpers;
+using Range = SemVer.Range;
 
 namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal abstract class StandardLibraryFixture : HostFixture
     {
-        protected CompilationInput ValidatedCompilationInput { get; } = new CompilationInput(LogMessage)
-        {
-            Packages = new[] { new DirectoryInfo("StandardLibrary") },
-        };
-        
-        protected CompilationInput NonValidatedCompilationInput { get; } = new CompilationInput(LogMessage)
-        {
-            Packages = new[] { new DirectoryInfo("StandardLibrary") },
-            SkipValidation = true
-        };
+        protected CompilerInput ValidatedCompilerInput { get; } = new CompilerInput(
+            TestPackageRegistry,
+            new[] {new PackageSpecifier("StandardLibrary", new Range("*"))},
+            Array.Empty<FileInfo>(),
+            default);
+
+        protected CompilerInput NonValidatedCompilerInput { get; } = new CompilerInput(
+            TestPackageRegistry,
+            new[] {new PackageSpecifier("StandardLibrary", new Range("*"))},
+            Array.Empty<FileInfo>(),
+            new CompilerOptions(default, true, default, default));
     }
 }

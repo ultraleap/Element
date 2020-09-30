@@ -1,3 +1,0 @@
-struct MyStruct(a, b);
-
-do(a:MyStruct) = add(a, a);

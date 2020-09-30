@@ -19,13 +19,26 @@
 #include "intrinsics/intrinsic.hpp"
 #include "log_errors.hpp"
 #include "ast/ast_internal.hpp"
+#include "expressions/anonymous_block_expression.hpp"
 
 namespace element
 {
     //declarations
     void build_scope(const element_interpreter_ctx* context, const element_ast* ast, const declaration& declaration, element_result& output_result);
-    
+    void build_scope(const element_interpreter_ctx* context, const element_ast* ast, scope* our_scope, element_result& output_result);
+
     //definitions
+    function_declaration::kind get_function_kind(const element_ast* const body, const bool intrinsic)
+    {
+        //wrapped in a lambda only to indicate that this initialisation behaviour
+        //is grouped and dependent on the items that precede it
+        if (intrinsic)
+            return function_declaration::kind::intrinsic;
+
+        return body->type == ELEMENT_AST_NODE_SCOPE
+            ? function_declaration::kind::scope_bodied
+            : function_declaration::kind::expression_bodied;
+    };
 
     std::unique_ptr<type_annotation> build_type_annotation(const element_interpreter_ctx* context, const element_ast* ast, element_result& output_result)
     {
@@ -36,11 +49,8 @@ namespace element
         if (ast->type == ELEMENT_AST_NODE_TYPENAME)
         {
             auto* const ident = ast->children[ast_idx::port::type].get();
-            if (ident->type != ELEMENT_AST_NODE_IDENTIFIER)
-            {
-                output_result = log_error(context, context->src_context.get(), ident, log_error_message_code::invalid_type_annotation, ast->parent->parent->identifier);
-                return nullptr;
-            }
+
+            //todo: make expression chain, it's not an identifier
 
             auto element = std::make_unique<type_annotation>(identifier(ident->identifier));
             assign_source_information(context, element, ast);
@@ -84,7 +94,7 @@ namespace element
         }
     }
 
-    void build_inputs_output(const element_interpreter_ctx* context, element_ast* ast, declaration& declaration, element_result& output_result, int type)
+    void build_inputs_output(const element_interpreter_ctx* context, const element_ast* const ast, declaration& declaration, element_result& output_result, int type)
     {
         element_ast* inputs = nullptr;
         element_ast* output = nullptr;
@@ -107,13 +117,17 @@ namespace element
     std::unique_ptr<declaration> build_struct_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
-        const auto is_intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+        const auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-        auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, is_intrinsic);
+        auto struct_kind = intrinsic
+            ? struct_declaration::kind::intrinsic
+            : struct_declaration::kind::custom;
+
+        auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, struct_kind);
 
         build_inputs_output(context, decl, *struct_decl, output_result, ELEMENT_AST_NODE_STRUCT);
 
-        if (is_intrinsic)
+        if (intrinsic)
         {
             //todo: handle the intrinsic not existing once we have them all (don't break using the prelude for everything else)
             intrinsic::register_intrinsic<struct_declaration>(context, ast, *struct_decl);
@@ -132,9 +146,13 @@ namespace element
     std::unique_ptr<declaration> build_constraint_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
-        auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+        const auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-        auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
+        auto constraint_kind = intrinsic
+            ? constraint_declaration::kind::intrinsic
+            : constraint_declaration::kind::custom;
+
+        auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), parent_scope, constraint_kind);
 
         build_inputs_output(context, decl, *constraint_decl, output_result, ELEMENT_AST_NODE_CONSTRAINT);
 
@@ -148,13 +166,13 @@ namespace element
 
     std::unique_ptr<declaration> build_lambda_declaration(const element_interpreter_ctx* context, identifier& identifier, const element_ast* const expression, const scope* const parent_scope, element_result& output_result)
     {
+        auto* const lambda_body = expression->children[ast_idx::lambda::body].get();
+
         //TODO: This needs to be a new type e.g. lambda_declaration, at the very least for to_code to function correctly (might require some string magic to resugar/sugarify/???) and be able to distinguish between lambda vs not
-        auto lambda_function_decl = std::make_unique<function_declaration>(identifier, parent_scope, false);
+        auto lambda_function_decl = std::make_unique<function_declaration>(identifier, parent_scope, get_function_kind(lambda_body, false));
         assign_source_information(context, lambda_function_decl, expression);
 
-        build_inputs_output(context, (element_ast *) expression, *lambda_function_decl, output_result, ELEMENT_AST_NODE_LAMBDA);
-
-        auto* const lambda_body = expression->children[ast_idx::lambda::body].get();
+        build_inputs_output(context, expression, *lambda_function_decl, output_result, ELEMENT_AST_NODE_LAMBDA);
 
         if (lambda_body->type == ELEMENT_AST_NODE_SCOPE)
         {
@@ -193,7 +211,7 @@ namespace element
                     }
                 }
 
-                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, lambda_function_decl->our_scope.get(), false);
+                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, lambda_function_decl->our_scope.get(), function_declaration::kind::expression_bodied);
                 assign_source_information(context, lambda_return_decl, expression);
                 lambda_return_decl->body = std::move(chain);
 
@@ -207,16 +225,23 @@ namespace element
     std::unique_ptr<declaration> build_function_declaration(const element_interpreter_ctx* context, const element_ast* const ast, const scope* const parent_scope, element_result& output_result)
     {
         auto* const decl = ast->children[ast_idx::function::declaration].get();
+        auto* const body = ast->children[ast_idx::function::body].get();
+
         auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-        auto function_decl = std::make_unique<function_declaration>(identifier(decl->identifier), parent_scope, intrinsic);
+        auto function_decl = std::make_unique<function_declaration>(identifier(decl->identifier), parent_scope, get_function_kind(body, intrinsic));
         assign_source_information(context, function_decl, decl);
 
         build_inputs_output(context, decl, *function_decl, output_result, ELEMENT_AST_NODE_FUNCTION);
 
-        auto* const body = ast->children[ast_idx::function::body].get();
+        
+        const auto scope_bodied = body->type == ELEMENT_AST_NODE_SCOPE;
+        const auto expression_bodied= body->type == ELEMENT_AST_NODE_CALL
+            || body->type == ELEMENT_AST_NODE_LITERAL
+            || body->type == ELEMENT_AST_NODE_LAMBDA
+            || body->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK;
 
-        if (body->type == ELEMENT_AST_NODE_SCOPE)
+        if (scope_bodied)
         {
             assert(!intrinsic);
             build_scope(context, body, *function_decl, output_result);
@@ -231,7 +256,7 @@ namespace element
 
             function_decl->body = return_func;
         }
-        else if (body->type == ELEMENT_AST_NODE_CALL || body->type == ELEMENT_AST_NODE_LITERAL || body->type == ELEMENT_AST_NODE_LAMBDA)
+        else if (expression_bodied)
         {
             assert(!intrinsic);
             if (!function_decl->our_scope)
@@ -262,7 +287,7 @@ namespace element
                     }
                 }
 
-                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, function_decl->our_scope.get(), intrinsic);
+                auto lambda_return_decl = std::make_unique<function_declaration>(identifier::return_identifier, function_decl->our_scope.get(), function_declaration::kind::expression_bodied);
                 assign_source_information(context, lambda_return_decl, decl);
                 lambda_return_decl->body = std::move(chain);
 
@@ -271,7 +296,6 @@ namespace element
         }
         else if (intrinsic && body->type == ELEMENT_AST_NODE_NO_BODY)
         {
-            assert(intrinsic);
             if (intrinsic::register_intrinsic<function_declaration>(context, ast, *function_decl))
                 function_decl->body = intrinsic::get_intrinsic(context, *function_decl);
         }
@@ -379,6 +403,25 @@ namespace element
         return std::move(call_expr);
     }
 
+    std::unique_ptr<expression> build_anonymous_block_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, element_result& output_result)
+    {
+        assert(chain);
+        assert(chain->declarer);
+        assert(chain->get_scope());
+
+        if (ast->type != ELEMENT_AST_NODE_ANONYMOUS_BLOCK)
+        {
+            output_result = ELEMENT_ERROR_UNKNOWN;
+            return nullptr;
+        }
+
+        auto anonymous_block_expr = std::make_unique<anonymous_block_expression>(chain);
+        anonymous_block_expr->our_scope = std::make_unique<scope>(chain->get_scope(), chain);
+        build_scope(context, ast, anonymous_block_expr->our_scope.get(), output_result);
+
+        return std::move(anonymous_block_expr);
+    }
+
     std::unique_ptr<expression_chain> build_expression_chain(const element_interpreter_ctx* context, const element_ast* const ast, const declaration* declarer, deferred_expressions& deferred_expressions, element_result& output_result)
     {
         auto chain = std::make_unique<expression_chain>(declarer);
@@ -395,6 +438,13 @@ namespace element
             assign_source_information(context, expression, ast);
             chain->expressions.push_back(std::move(expression));
             deferred_expressions.push_back({ identifier, ast });
+            return std::move(chain);
+        }
+
+        if (ast->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK) {
+
+            auto anonymous_block = build_anonymous_block_expression(context, ast, chain.get(), output_result);
+            chain->expressions.push_back(std::move(anonymous_block));
             return std::move(chain);
         }
 

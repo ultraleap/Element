@@ -8,31 +8,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
-    <PackageReference Include="NUnit.Console" Version="3.10.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1">
+    <PackageReference Include="NUnit.Console" Version="3.11.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NunitXml.TestLogger" Version="2.1.41" />
+    <PackageReference Include="NunitXml.TestLogger" Version="2.1.62" />
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="..\Common\**" Link="%(RecursiveDir)%(Filename)%(Extension)">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="Tests\**\*.ele" Link="%(RecursiveDir)%(Filename)%(Extension)">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tests\**\*.toml" Link="%(RecursiveDir)%(Filename)%(Extension)">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Remove="Alchemist.runsettings" />
     <Content Include="Alchemist.runsettings">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Remove="Tests\L3-Prelude\For.ele" />
   </ItemGroup>
   
   <ItemGroup>
@@ -64,13 +57,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Element.NET.TestHelpers\Element.NET.TestHelpers.csproj" />
     <ProjectReference Include="..\Element.NET\Element.NET.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Tests\L3-Prelude">
-      <Link>L3-Prelude</Link>
-    </Folder>
   </ItemGroup>
 
 </Project>

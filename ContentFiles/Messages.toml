@@ -1,0 +1,165 @@
+# Message Levels in order of importance:
+    # Verbose - frequent information that can significantly slow performance when on
+    # Information - infrequent information generally useful to the user which doesn't impact performance
+    # Warning - any issues found that aren't significant enough to be considered an error
+    # Error - errors that don't prevent compilation
+
+[ELE0]
+name = "Success"
+level = "Verbose"
+
+[ELE1]
+name = "SerializationError"
+level = "Error"
+
+[ELE2]
+name = "MultipleDefinitions"
+level = "Error"
+
+[ELE3]
+name = "InvalidCompileTarget"
+level = "Error"
+
+[ELE4]
+name = "IntrinsicNotFound"
+level = "Error"
+
+[ELE5]
+name = "LocalShadowing"
+level = "Warning"
+
+[ELE6]
+name = "ArgumentCountMismatch"
+level = "Error"
+
+[ELE7]
+name = "IdentifierNotFound"
+level = "Error"
+
+[ELE8]
+name = "ConstraintNotSatisfied"
+level = "Error"
+
+[ELE9]
+name = "ParseError"
+level = "Error"
+
+[ELE10]
+name = "InvalidBoundaryFunction"
+level = "Error"
+
+[ELE11]
+name = "RecursionNotAllowed"
+level = "Error"
+
+[ELE12]
+name = "MissingBoundaryConverter"
+level = "Error"
+
+[ELE13]
+name = "MissingPorts"
+level = "Error"
+
+[ELE14]
+name = "TypeError"
+level = "Error"
+
+[ELE15]
+name = "InvalidIdentifier"
+level = "Error"
+
+[ELE16]
+name = "InvalidExpression"
+level = "Error"
+
+[ELE17]
+name = "InvalidReturnType"
+level = "Error"
+
+[ELE18]
+name = "InvalidBoundaryData"
+level = "Error"
+
+[ELE19]
+name = "StructCannotHaveReturnType"
+level = "Error"
+
+[ELE20]
+name = "IntrinsicCannotHaveBody"
+level = "Error"
+
+[ELE21]
+name = "MissingFunctionBody"
+level = "Error"
+
+[ELE22]
+name = "CannotBeUsedAsInstanceFunction"
+level = "Error"
+
+[ELE23]
+name = "FunctionCannotBeUncurried"
+level = "Error"
+
+[ELE24]
+name = "NotCompileConstant"
+level = "Error"
+
+[ELE25]
+name = "FileAccessError"
+level = "Error"
+
+[ELE26]
+name = "ArgumentNotFound"
+level = "Error"
+
+[ELE27]
+name = "DuplicateSourceFile"
+level = "Error"
+
+[ELE28]
+name = "ArgumentOutOfRange"
+level = "Error"
+
+[ELE29]
+name = "MultipleIntrinsicLocations"
+level = "Warning"
+
+[ELE30]
+name = "InvalidCast"
+level = "Error"
+
+[ELE31]
+name = "FunctionMissingReturn"
+level = "Error"
+
+[ELE32]
+name = "PortListCannotContainDiscards"
+level = "Error"
+
+[ELE33]
+name = "PortListDeclaresDefaultArgumentBeforeNonDefault"
+level = "Error"
+
+[ELE34]
+name = "IntrinsicConstraintCannotSpecifyFunctionSignature"
+level = "Error"
+
+[ELE35]
+name = "InfiniteLoop"
+level = "Error"
+
+[ELE36]
+name = "NotFunction"
+level = "Error"
+
+[ELE37]
+name = "NotIndexable"
+level = "Error"
+
+[ELE38]
+name = "NotConstraint"
+level = "Error"
+
+[ELE9999]
+name = "UnknownError"
+level = "Error"

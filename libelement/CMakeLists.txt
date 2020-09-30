@@ -99,6 +99,8 @@ set(libelement_sources
     "src/object_model/expressions/indexing_expression.hpp"
     "src/object_model/expressions/literal_expression.cpp"
     "src/object_model/expressions/literal_expression.hpp"
+    "src/object_model/expressions/anonymous_block_expression.cpp"
+    "src/object_model/expressions/anonymous_block_expression.hpp"
 
     "src/object_model/intermediaries/declaration_wrapper.cpp"
     "src/object_model/intermediaries/declaration_wrapper.hpp"
@@ -108,6 +110,8 @@ set(libelement_sources
     "src/object_model/intermediaries/struct_instance.hpp"
     "src/object_model/intermediaries/list_wrapper.cpp"
     "src/object_model/intermediaries/list_wrapper.hpp"
+    "src/object_model/intermediaries/anonymous_block_instance.cpp"
+    "src/object_model/intermediaries/anonymous_block_instance.hpp"
 
     "src/object_model/intrinsics/intrinsic.cpp"
     "src/object_model/intrinsics/intrinsic.hpp"
@@ -205,7 +209,7 @@ ENDIF()
 add_custom_command (
 	TARGET libelement POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	"${CMAKE_CURRENT_SOURCE_DIR}/../Common"
+	"${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
 	"${debug_dir}")
 
 target_include_directories(libelement
@@ -250,7 +254,7 @@ if (BUILD_TESTING)
     add_custom_command (
             TARGET libelement_test_app POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/../Common"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
             "${debug_dir}")
 
     if(CODE_COVERAGE)

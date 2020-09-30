@@ -51,23 +51,25 @@ The name of a validation test is the relative path from the root Validation dire
 ### L2 - Semantics
 Semantic tests are responsible for ensuring the behaviour of language features.
 Semantic tests are written as C# test cases with an accompanying Element file.
-The Prelude is not included in semantic tests so that language features are isolated and testable incrementally.
+The Prelude is not included in semantic tests - language features are organized into groups so that functionality can be tested incrementally.
 The base class `SemanticsFixture` is used to to capture this convention.
 
 ### L3 - Prelude
-Prelude tests ensure Prelude intrinsics and functionality is correct and are written as C# test cases.
+Prelude tests ensure Prelude intrinsics and functionality is correct and are written as C# test cases with an accompanying element source file used by some tests.
 
 ### L4 - Standard Library
 Standard Library tests ensure standard library functionality is correct and are written as C# test cases.
 
 ## Command Line Interface (CLI) Convention
+Here we describe commands an Element CLI must implement to be fully comaptible with the Laboratory test suite.
+
 All commands are a verb followed by some options with arguments.
 Commands have a base set of options. These are:
 * `-no-prelude` if specified, the Prelude is not automatically included.
-* `-packages <packages>...` includes one or more packages.
+* `-packages <packages>...` includes one or more packages. Package are specified in the form `Name-VersionRange`. See [here](https://github.com/adamreeve/semver.net) for spec of VersionRange. 
 * `-source-files <paths>...` includes one or more individual source files.
 * `-verbosity` sets the compiler log verbosity. Defaults to "Information".
-* `-logjson` log messages as serialized json. Used by the test suite.
+* `-logjson` log messages as serialized json.
 
 ### JSON Message Format
 A compliant CLI must lost messages in the correct format for the test suite to run as expected.
@@ -87,7 +89,7 @@ The JSON message format is as follows:
     ]
 }
 ```
-MessageCode, MessageLevel and Context may all be null while TraceStack may be empty.
+MessageCode, MessageLevel and Context may all be null while TraceStack may be empty or null.
 Bare messages may be passed by only setting Context.
 
 ### Commands
@@ -99,10 +101,10 @@ Parse packages and files provided by base options, returning whether or not pars
 `parse [-no-validation] [<base options>]`
 * `-no-validation` if specified, skips validating parsed files. Errors such as duplicate/invalid identifiers will not be discovered/logged.
 
-##### Example
-* `parse` should parse only the Prelude
-* `parse -no-prelude -source-files "MySource.ele"` should parse only "MySource.ele"
-* `parse -packages "StandardLibrary"` should parse the Prelude and Standard Library
+##### Examples
+* `parse` should parse and validate only the Prelude
+* `parse -no-prelude -source-files "MySource.ele"` should parse and validate only "MySource.ele"
+* `parse -packages "StandardLibrary-~0"` should parse and validate the latest versions of Prelude and Standard Library
 
 #### Evaluate
 Compile and evaluate an expression, returning the result. The result must be a serializable value.
@@ -110,7 +112,7 @@ Compile and evaluate an expression, returning the result. The result must be a s
 `evaluate -e <expression> [<base options>]`
 * `-e <expression>` where expression is a string. Conceptually equivalent to `return = <expression>` written in source.
 
-##### Example
+##### Examples
 * `evaluate -e "Num.add(4, 2)"` prints `6`
 * `evaluate -e "list(4, 5, 6).fold(0, Num.add)"` prints `15`
 
@@ -123,6 +125,6 @@ Compile and evaluate an expression, returning the type of the result. Can resolv
 * `-e <expression>` where expression is a string. Conceptually equivalent to `return = <expression>` written in source.
 
 ##### Example
-* `typeof -e "5"` prints "Num"
-* `typeof -e "Num.add"` prints "Function"
-* `typeof -e "Num"` prints "Type"
+* `typeof -e "5"` prints `Num`
+* `typeof -e "Num.add"` prints `IntrinsicFunction`
+* `typeof -e "Num"` prints `IntrinsicStruct`

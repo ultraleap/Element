@@ -49,6 +49,7 @@ struct element_interpreter_ctx
     element_interpreter_ctx();
     ~element_interpreter_ctx() = default;
 
+    element_result load_into_scope(const char* str, const char* filename, element::scope*);
     element_result load(const char* str, const char* filename = "<input>");
     element_result load_file(const std::string& file);
     element_result load_files(const std::vector<std::string>& files);
@@ -56,7 +57,7 @@ struct element_interpreter_ctx
     element_result load_packages(const std::vector<std::string>& packages);
     element_result load_prelude();
     element_result clear();
-    void set_log_callback(LogCallback callback);
+    void set_log_callback(LogCallback callback, void* user_data);
     void log(int message_code, const std::string& message, const std::string& filename = std::string()) const;
     void log(const std::string& message) const;
 };

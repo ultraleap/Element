@@ -11,6 +11,6 @@ namespace Laboratory.Tests.L4.StandardLibrary
             TestCase("Line3(Vector3(1, -1, 0), Vector3(5, 5, 0)).distanceFromPoint(Vector3(-5, 5, 0))", "10.div(2.sqrt)"),
         ]
         public void Operations(string expression, string expected) =>
-            AssertApproxEqual(ValidatedCompilationInput, expected, expression);
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
     }
 }

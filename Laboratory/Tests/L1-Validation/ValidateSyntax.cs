@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.IO;
+using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L1.Validation
@@ -9,6 +10,6 @@ namespace Laboratory.Tests.L1.Validation
         private static IEnumerable GenerateValidationTestData() => GenerateTestData("Validation", "L1-Validation", null);
 
         [TestCaseSource(nameof(GenerateValidationTestData))]
-        public void Validation((FileInfo fileInfo, int? messageCode) info) => SyntaxTest(info, false);
+        public void Validation((FileInfo fileInfo, MessageCode? messageCode) info) => SyntaxTest(info, false);
     }
 }

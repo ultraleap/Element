@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Globalization;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L3.Prelude
@@ -10,19 +10,19 @@ namespace Laboratory.Tests.L3.Prelude
 	{
 		[Test]
 		public void IndexListWithStructuredElements() =>
-			AssertApproxEqual(ValidatedCompilationInput, "5", "List.repeat(Vector3(5, 5, 5), 3).at(2).z");
+			AssertApproxEqual(ValidatedCompilerInput, "5", "List.repeat(Vector3(5, 5, 5), 3).at(2).z");
 		
 		[Test]
 		public void IndexLiteralList() =>
-			AssertApproxEqual(ValidatedCompilationInput, "Vector3(5, 5, 5)", "list(Vector3(5, 5, 5)).at(0)");
+			AssertApproxEqual(ValidatedCompilerInput, "Vector3(5, 5, 5)", "list(Vector3(5, 5, 5)).at(0)");
 		
 		[Test]
 		public void IndexLiteralListWithStructuredElements() =>
-			AssertApproxEqual(ValidatedCompilationInput, "5", "list(Vector3(5, 5, 5)).at(0).z");
+			AssertApproxEqual(ValidatedCompilerInput, "5", "list(Vector3(5, 5, 5)).at(0).z");
 		
 		[Test]
 		public void SerializeListElement() =>
-			AssertApproxEqual(ValidatedCompilationInput, "Vector3(5, 5, 5)", "List.repeat(Vector3(5, 5, 5), 3).at(2)");
+			AssertApproxEqual(ValidatedCompilerInput, "Vector3(5, 5, 5)", "List.repeat(Vector3(5, 5, 5), 3).at(2)");
 
 		private static readonly (float, float)[] _factorialArguments =
 		{
@@ -42,10 +42,10 @@ namespace Laboratory.Tests.L3.Prelude
 		
 		[TestCaseSource(nameof(_factorialArguments))]
 		public void FactorialUsingForWithVector2((float factorial, float expectedResult) f) =>
-			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(), $"factorial({f.factorial.ToString()})");
+			AssertApproxEqual(ValidatedCompilerInput, f.expectedResult.ToString(CultureInfo.InvariantCulture), $"factorial({f.factorial.ToString(CultureInfo.InvariantCulture)})");
 		
 		[TestCaseSource(nameof(_factorialArguments))]
 		public void FactorialUsingForWithTupleAndLambdas((float factorial, float expectedResult) f) =>
-			AssertApproxEqual(ValidatedCompilationInput, f.expectedResult.ToString(), $"factorialUsingTuple({f.factorial.ToString()})");
+			AssertApproxEqual(ValidatedCompilerInput, f.expectedResult.ToString(CultureInfo.InvariantCulture), $"factorialExpressionBodied({f.factorial.ToString(CultureInfo.InvariantCulture)})");
 	}
 }

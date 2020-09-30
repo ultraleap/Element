@@ -25,7 +25,7 @@ TEST_CASE("Parser", "[AST]") {
     element_parser_ctx parser;
 
     SECTION("Functions: Burger1 = 2") {
-        const std::string input = "Burger1 = 2;";
+        const std::string input = "Burger1 = 2";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
@@ -61,7 +61,7 @@ TEST_CASE("Parser", "[AST]") {
     }
 
     SECTION("Functions: Burger1(a) = 2") {
-        const std::string input = "Burger1(a) = 2;";
+        const std::string input = "Burger1(a) = 2";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
@@ -101,7 +101,7 @@ TEST_CASE("Parser", "[AST]") {
     }
 
     SECTION("Functions: Burger1(a:Num) = a") {
-        const std::string input = "Burger1(a:Num) = a;";
+        const std::string input = "Burger1(a:Num) = a";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
@@ -143,7 +143,7 @@ TEST_CASE("Parser", "[AST]") {
     }
 
     SECTION("Structs: struct MyStruct(a, b)") {
-        const std::string input = "struct MyStruct(a, b);";
+        const std::string input = "struct MyStruct(a, b)";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
@@ -181,7 +181,7 @@ TEST_CASE("Parser", "[AST]") {
     }
 
     SECTION("Functions: a = _(_a) = 5") {
-        const std::string input = "a = _(_a) = 5;";
+        const std::string input = "a = _(_a) = 5";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
@@ -252,7 +252,7 @@ TEST_CASE("Parser", "[AST]") {
     }
 
     SECTION("Constraint: intrinsic constraint Any") {
-        const std::string input = "intrinsic constraint Any;";
+        const std::string input = "intrinsic constraint Any";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 
@@ -288,7 +288,7 @@ TEST_CASE("Parser", "[AST]") {
     }
 
     SECTION("Functions: evaluate = Num.add(1, 2)") {
-        const std::string input = "evaluate = Num.add(1, 2);";
+        const std::string input = "evaluate = Num.add(1, 2)";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
 

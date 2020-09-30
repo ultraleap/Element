@@ -15,9 +15,6 @@ namespace element
 
         [[nodiscard]] identifier get_identifier() const { return name; }
 
-        [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth = 0) const override;
-
     protected:
         type(element_type_id id, identifier name, const declaration* declarer)
             : constraint(type_id, declarer)

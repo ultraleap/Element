@@ -19,7 +19,7 @@ namespace element
         {
         }
 
-        [[nodiscard]] std::string to_code() const;
+        [[nodiscard]] std::string to_code(const int depth) const;
         [[nodiscard]] const std::string& to_string() const { return name.value; };
 
         source_information source_info;

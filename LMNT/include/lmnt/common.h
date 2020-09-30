@@ -25,7 +25,11 @@ enum
     LMNT_ERROR_ACCESS_VIOLATION = -13,
     LMNT_ERROR_MEMORY_SIZE      = -14,
     LMNT_ERROR_MISSING_EXTCALL  = -15,
-    LMNT_ERROR_INTERNAL         = -16,
+    LMNT_ERROR_FEATURE_DISABLED = -16,
+    LMNT_ERROR_INTERNAL         = -1024,
+    // These error codes are only used internally
+    LMNT_BRANCHING              = -65536,
+    LMNT_RETURNING              = -65537,
 };
 
 // Possible enum values for lmnt_validation_result
@@ -74,8 +78,8 @@ typedef LMNT_VALUE_TYPE lmnt_value;
 //
 
 // Forward declare lmnt_ictx so it can be used in definitions
-struct lmnt_ictx_s;
-typedef struct lmnt_ictx_s lmnt_ictx;
+struct lmnt_ictx;
+typedef struct lmnt_ictx lmnt_ictx;
 
 #define LMNT_OK_OR_RETURN(t) \
 { \
@@ -91,7 +95,7 @@ typedef struct lmnt_ictx_s lmnt_ictx;
         return ok_or_return_result; \
 }
 
-#define LMNT_COMBINE_OFFSET(lo, hi) (lo | (hi << sizeof(lmnt_offset) * CHAR_BIT))
+#define LMNT_COMBINE_OFFSET(lo, hi) (lo | (hi << (sizeof(lmnt_offset) * CHAR_BIT)))
 
 // MSVC does not currently include the C11-standard _Static_assert, only the C++-style variant
 #if defined(_MSC_VER)

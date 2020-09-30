@@ -22,7 +22,7 @@ namespace element
         [[nodiscard]] const constraint* get_constraint() const override { return this; }
 
         [[nodiscard]] std::string typeof_info() const override;
-        [[nodiscard]] std::string to_code(int depth) const override;
+        [[nodiscard]] std::string to_code(const int depth) const override;
 
         const declaration* declarer;
     };

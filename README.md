@@ -4,7 +4,6 @@ Element code runs using a host which can interpret or compile it to other format
 One of these formats is the bytecode format, [LMNTIL (Element Intermediate Language)](LMNT/Bytecode.md), for use in native and embedded applications.
 
 ## Element Language
-This is a brief summary, see the [Element Reference Manual](Language/ElementReferenceManual.md) for full details.
 * Single number data type `Num`
 * Structured types using `struct`
 * First class functions and local functions
@@ -17,11 +16,12 @@ sum(list) = list.fold(0, Num.add);
 factorial(n) = List.range(0, n).fold(1, Num.mul);
 ```
 
+For full details see the [Element Reference Manual](Language/ElementReferenceManual.md).
+
 ### Element Libraries
-Element includes a library of core functionality called [Prelude](Common/Prelude).
+Element includes a core set of functionality in the base library [Prelude](Common/Prelude).
 
 Element also comes with a [Standard Library](Common/StandardLibrary).
-New features will generally be implemented as part of the standard library rather than as language features.
 
 ## Repository Layout
 * [Laboratory - The Element Host Test Suite](Laboratory) - .NET Core 2.1 CLI
@@ -30,7 +30,7 @@ New features will generally be implemented as part of the standard library rathe
 
 ### Host Libraries
 * [Element.NET](Element.NET) - .NET Standard 2.0 ![](https://github.com/ultraleap/Element/workflows/Element.NET.yml/badge.svg)
-    * Element parser using [Eto.Parse](https://github.com/picoe/Eto.Parse)
+    * Element parser using [Lexico](https://github.com/hamish-milne/Lexico)
     * Element function evaluation via:
         * Direct evaluation (slow)
         * Compilation to CLR Function using [LINQ Expressions](https://docs.microsoft.com/en-us/dotnet/api/system.linq.expressions.expression) (very fast)
@@ -55,6 +55,8 @@ New features will generally be implemented as part of the standard library rathe
 ### Command Line Interfaces (CLIs)
 * [Alchemist](Alchemist) - .NET Core 2.1 using [Element.NET](Element.NET) ![](https://github.com/ultraleap/Element/workflows/Alchemist.yml/badge.svg)
     * CLI for executing Element via a REPL or compiling to other targets
+* [libelement.CLI](libelement.CLI) - C++ using [libelement](libelement)
+    * CLI for executing Element via a REPL or compiling to other targets
 
 ### Integrations/Tooling
 * [Element.Unity](Element.Unity) - Unity using [Element.NET](Element.NET)
@@ -65,5 +67,5 @@ New features will generally be implemented as part of the standard library rathe
     * Syntax highlighting for .ele files
     * Installation guide:
         * Download or clone this repo
-        * Extract `element-vscode` to `%UserProfile/.vscode/extensions`
+        * Extract `element-vscode` to `%UserProfile%/.vscode/extensions`
         * Restart VS Code and enjoy!
