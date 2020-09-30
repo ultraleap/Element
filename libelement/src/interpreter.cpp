@@ -586,7 +586,33 @@ element_result element_interpreter_compile_expression(
     parser.root->nearest_token = &tokeniser->tokens[0];
     element::assign_source_information(context, dummy_declaration, parser.root);
     auto expression_chain = element::build_expression_chain(context, ast, dummy_declaration.get(), deferred_expressions, result);
-    dummy_declaration->body = std::move(expression_chain);
+
+    if (deferred_expressions.empty())
+    {
+        dummy_declaration->body = std::move(expression_chain);
+    }
+    else
+    {
+        for (auto& [identifier, expression] : deferred_expressions) {
+            element_result output_result = ELEMENT_OK;
+            auto lambda = element::build_lambda_declaration(context, identifier, expression, dummy_declaration->our_scope.get(), output_result);
+            if (output_result != ELEMENT_OK)
+                throw;
+
+            const auto is_added = dummy_declaration->our_scope->add_declaration(std::move(lambda));
+            if (!is_added)
+            {
+                //todo: error
+            }
+        }
+
+        auto lambda_return_decl = std::make_unique<element::function_declaration>(element::identifier::return_identifier, dummy_declaration->our_scope.get(), element::function_declaration::kind::expression_bodied);
+        element::assign_source_information(context, lambda_return_decl, parser.root);
+        lambda_return_decl->body = std::move(expression_chain);
+
+        dummy_declaration->body = std::move(lambda_return_decl);
+    }
+
     root.children.clear();
 
     if (result != ELEMENT_OK)

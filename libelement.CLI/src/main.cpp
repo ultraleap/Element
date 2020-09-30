@@ -53,7 +53,7 @@ void log_callback(const element_log_message* const message, void* user_data)
 
 void command_callback(command& command) 
 {
-#if !defined(NDEBUG) && defined(WIN32)
+/*#if !defined(NDEBUG) && defined(WIN32)
 	//TODO: JM - TEMPORARY - Remove me later
 	SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
 
@@ -65,7 +65,7 @@ void command_callback(command& command)
 
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
 	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
-#endif
+#endif*/
 	
 	//set a log callback, so that when we get errors, messages are logged
 	command.set_log_callback(log_callback, static_cast<void*>(&command));

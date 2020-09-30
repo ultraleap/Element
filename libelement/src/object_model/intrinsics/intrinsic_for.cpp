@@ -39,7 +39,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
         }
 
         //todo: one day we'll use the fast RTTI instead of the language one
-        const auto ret_as_constant = std::dynamic_pointer_cast<const element_expression_constant>(ret);
+        auto ret_as_constant = std::dynamic_pointer_cast<const element_expression_constant>(ret);
         assert(ret_as_constant);
         if (!ret_as_constant)
         {
