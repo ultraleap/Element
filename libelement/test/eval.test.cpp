@@ -3328,6 +3328,31 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(outputs[0] == 106);
                 }
+
+                SECTION("Function composition over anonymous blocks should not trigger recursion")
+                {
+                    float inputs[] = { 10, 5 };
+                    element_inputs input;
+                    input.values = inputs;
+                    input.count = 2;
+                    element_outputs output;
+                    float outputs[] = { 0 };
+                    output.values = outputs;
+                    output.count = 1;
+
+                    char source[] =
+                        "scoped_function\n"
+                        "{\n"
+                        "anonymous_higher_order(tuple:Any):Any = { somefunc(inner_param:Num) = tuple.somefunc(inner_param).sub(1) }\n"
+                        "return = anonymous_higher_order(anonymous_higher_order({somefunc(_) = 3}))\n"
+                        "}\n"
+                        "evaluate(in0:Num, in1:Num):Num = scoped_function.somefunc(5)";
+
+                    result = eval_with_inputs(source, &input, &output);
+
+                    REQUIRE(result == ELEMENT_OK);
+                    REQUIRE(outputs[0] == 1);
+                }
             }
         }
 
