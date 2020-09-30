@@ -7,6 +7,7 @@
 #include "object_model/intermediaries/struct_instance.hpp"
 #include "object_model/declarations/function_declaration.hpp"
 #include "object_model/declarations/struct_declaration.hpp"
+#include "object_model/intrinsics/intrinsic_function.hpp"
 
 using namespace element;
 
@@ -26,11 +27,6 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     const auto continue_loop = [&predicate_evaluated_to_constant, &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool
     {
         const auto ret = predicate_function->call(context, input, source_info);
-        if (!ret->is_constant())
-        {
-            predicate_evaluated_to_constant = false;
-            return false;
-        }
 
         if (const auto* err = dynamic_cast<const error*>(ret.get()))
         {
@@ -39,8 +35,17 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
         }
 
         //todo: one day we'll use the fast RTTI instead of the language one
-        auto ret_as_constant = std::dynamic_pointer_cast<const element_expression_constant>(ret);
-        assert(ret_as_constant);
+        //the return value is going to be a bool (of some kind), and bools are expressions
+        const auto ret_as_expression = std::dynamic_pointer_cast<const element_expression>(ret);
+        if (!ret_as_expression || !ret_as_expression->is_constant())
+        {
+            predicate_evaluated_to_constant = false;
+            return false;
+        }
+
+        const auto ret_evaluated = evaluate(context, ret_as_expression);
+        assert(ret_evaluated);
+        const auto ret_as_constant = std::dynamic_pointer_cast<const element_expression_constant>(ret_evaluated);
         if (!ret_as_constant)
         {
             predicate_evaluated_to_constant = false;
@@ -72,11 +77,21 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     std::vector<object_const_shared_ptr> arguments{ initial_object };
     auto& current_object = arguments[0];
 
+    //todo: in order to detect an infinite loop we need to know if the predicates result is dependant on its input, i.e. it is actually using it to alter the calculation in a meaningful way
+    //  not sure how to do it, but the loop iteration limit will catch the infinite loop situation anyway
+    
+    //todo: make this user configurable
+    constexpr auto max_loop_iterations = 10'000;
+    auto current_loop_iteration = 0;
     while (continue_loop(arguments))
     {
+        if (current_loop_iteration > max_loop_iterations)
+            return std::make_shared<const error>(fmt::format("Compile time loop didn't finish after max iteration count of {}", max_loop_iterations), ELEMENT_ERROR_COMPILETIME_LOOP_TOO_MANY_ITERATIONS, source_info);
+
         current_object = next_successor(arguments);
         if (!current_object)
             return current_object;
+        ++current_loop_iteration;
     }
 
     if (!predicate_evaluated_to_constant)

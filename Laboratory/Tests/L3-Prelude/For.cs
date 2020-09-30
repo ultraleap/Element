@@ -17,7 +17,7 @@ namespace Laboratory.Tests.L3.Prelude
         [TestCase("Loop.count(10, 2, _(s:Loop.IterationState) = s.state.add(5))", "20")]
         public void CompileTimeConstantLoop(string expr, string result) => AssertApproxEqual(ValidatedCompilerInput, expr, result);
         
-        [TestCase("iterateWithMyStruct(5)", "5")]
+        [TestCase("iterateWithMyStruct(5)", "10")]
         public void LoopReturningFor(string expr, string result) => AssertApproxEqual(ValidatedCompilerInput, expr, result);
 
         // TODO: Nested loop test
