@@ -23,18 +23,18 @@ AlwaysBreakTemplateDeclarations: true
 BinPackArguments: true
 BinPackParameters: true
 BraceWrapping:
-  #  AfterCaseLabel:  false
+  AfterCaseLabel:  true
   AfterClass:      true
-  AfterControlStatement: false
-  AfterEnum:       false
+  AfterControlStatement: true
+  AfterEnum:       true
   AfterFunction:   true
-  AfterNamespace:  false
-  AfterObjCDeclaration: false
+  AfterNamespace:  true
+  AfterObjCDeclaration: true
   AfterStruct:     true
-  AfterUnion:      false
-  AfterExternBlock: false
-  BeforeCatch:     false
-  BeforeElse:      false
+  AfterUnion:      true
+  AfterExternBlock: true
+  BeforeCatch:     true
+  BeforeElse:      true
   IndentBraces:    false
   SplitEmptyFunction: false
   SplitEmptyRecord: false
@@ -54,7 +54,7 @@ CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: false
 #DeriveLineEnding: true
 DerivePointerAlignment: false
 DisableFormat:   false
@@ -78,6 +78,7 @@ IncludeCategories:
     Priority:        1
 IncludeIsMainRegex: '(\.test)?$'
 IndentCaseLabels: false
+IndentExternBlock: NoIndent
 IndentPPDirectives: None
 IndentWidth:     4
 IndentWrappedFunctionNames: false
