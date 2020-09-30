@@ -32,7 +32,7 @@ BraceWrapping:
   AfterObjCDeclaration: true
   AfterStruct:     true
   AfterUnion:      true
-  AfterExternBlock: true
+  AfterExternBlock: false
   BeforeCatch:     true
   BeforeElse:      true
   IndentBraces:    false
@@ -78,7 +78,7 @@ IncludeCategories:
     Priority:        1
 IncludeIsMainRegex: '(\.test)?$'
 IndentCaseLabels: false
-IndentExternBlock: NoIndent
+#IndentExternBlock: NoIndent
 IndentPPDirectives: None
 IndentWidth:     4
 IndentWrappedFunctionNames: false
