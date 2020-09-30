@@ -384,9 +384,7 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent)
         if (!node->children.empty()) {
             for (int i = 0; i <= node->children.size()-1; i++)
             {
-                scope_string += ast_to_code(node->children[i].get(), node);
-                // TODO: Remove hacky semicolon adding
-                scope_string += "; ";
+                scope_string += ast_to_code(node->children[i].get(), node) + " ";
             }
         }
 
