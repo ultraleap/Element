@@ -41,4 +41,4 @@ namespace element
     private:
         std::string text;
     };
-}
+} // namespace element

@@ -49,12 +49,11 @@ namespace element
     template <typename Callable>
     [[nodiscard]] std::shared_ptr<struct_instance> struct_instance::clone_and_fill_with_expressions(const compilation_context& context, Callable&& callable) const
     {
-        static_assert(std::is_invocable_v<Callable, const std::string&, const std::shared_ptr<const element_expression>&, int>
-            , "Invalid parameters");
+        static_assert(std::is_invocable_v<Callable, const std::string&, const std::shared_ptr<const element_expression>&, int>, "Invalid parameters");
         static_assert(std::is_same_v<
-                std::invoke_result_t<Callable, const std::string&, const std::shared_ptr<const element_expression>&, int>,
-                std::shared_ptr<const element_expression>>
-            , "Invalid return");
+                          std::invoke_result_t<Callable, const std::string&, const std::shared_ptr<const element_expression>&, int>,
+                          std::shared_ptr<const element_expression>>,
+                      "Invalid return");
 
         int index = 0;
         return clone_and_fill_with_expressions_internal(context, std::forward<Callable&&>(callable), index);
@@ -97,4 +96,4 @@ namespace element
 
         return clone;
     }
-}
+} // namespace element

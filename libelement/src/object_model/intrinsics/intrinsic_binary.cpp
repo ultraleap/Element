@@ -8,12 +8,12 @@
 using namespace element;
 
 intrinsic_binary::intrinsic_binary(const element_binary_op operation, type_const_ptr return_type = type::num.get(),
-                                    type_const_ptr first_argument_type = type::num.get(),
-                                    type_const_ptr second_argument_type = type::num.get()):
-    intrinsic_function(type_id, return_type)
+                                   type_const_ptr first_argument_type = type::num.get(),
+                                   type_const_ptr second_argument_type = type::num.get())
+    : intrinsic_function(type_id, return_type)
     , operation(operation)
-    , first_argument_type{first_argument_type}
-    , second_argument_type{second_argument_type}
+    , first_argument_type{ first_argument_type }
+    , second_argument_type{ second_argument_type }
 {
 }
 

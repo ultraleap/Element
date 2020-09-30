@@ -23,5 +23,5 @@ object_const_shared_ptr intrinsic_if::compile(const compilation_context& context
     //todo: this flips the true/false branch so as not to modify the predicate, and we're not using the if expression, we probably want a different solution for niceties but this will work for now
     auto pred_expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[0]);
     pred_expr->actual_type = type::num.get();
-    return list_wrapper::create_or_optimise(std::move(pred_expr), {frame.compiled_arguments[2], frame.compiled_arguments[1]}, source_info);
+    return list_wrapper::create_or_optimise(std::move(pred_expr), { frame.compiled_arguments[2], frame.compiled_arguments[1] }, source_info);
 }

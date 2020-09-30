@@ -107,7 +107,8 @@ typedef int32_t element_stage;
 
 typedef struct element_log_message element_log_message;
 
-struct element_log_message {
+struct element_log_message
+{
     // determines which values in this struct will be relevant
     element_result message_code;
     // the first character of the source file which the message is relevant, or -1
@@ -130,12 +131,12 @@ struct element_log_message {
     element_log_message* related_log_message;
 };
 
-#define ELEMENT_OK_OR_RETURN(t) \
-{ \
-    const element_result ok_or_return_result = (t); \
-    if (ok_or_return_result != ELEMENT_OK) \
-        return ok_or_return_result; \
-}
+#define ELEMENT_OK_OR_RETURN(t)                         \
+    {                                                   \
+        const element_result ok_or_return_result = (t); \
+        if (ok_or_return_result != ELEMENT_OK)          \
+            return ok_or_return_result;                 \
+    }
 
 #if defined(__cplusplus)
 }

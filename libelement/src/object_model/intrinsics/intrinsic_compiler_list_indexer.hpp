@@ -16,4 +16,4 @@ namespace element
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
                                                       const source_information& source_info) const override;
     };
-}
+} // namespace element

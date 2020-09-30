@@ -10,13 +10,16 @@
 #include "etree/expressions.hpp"
 #include "lmnt/compiler.hpp"
 
-#define PRINTCASE(a) case a: c = #a; break;
+#define PRINTCASE(a) \
+    case a:          \
+        c = #a;      \
+        break;
 std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token)
 {
     std::string string;
 
-	for(const auto& token : context->tokens)
-	{
+    for (const auto& token : context->tokens)
+    {
         std::string c;
         switch (token.type)
         {
@@ -32,16 +35,17 @@ std::string tokens_to_string(const element_tokeniser_ctx* context, const element
             PRINTCASE(ELEMENT_TOK_BRACEL);
             PRINTCASE(ELEMENT_TOK_BRACER);
             PRINTCASE(ELEMENT_TOK_EQUALS);
-			default: c = "";
+        default:
+            c = "";
         }
-		
+
         string += c;
 
-		if(token.tok_pos >= 0 && token.tok_len >= 0)
-		{
+        if (token.tok_pos >= 0 && token.tok_len >= 0)
+        {
             //Align the token text using tabs (with tabs = 4 spaces), so that they start at character 24 (4*6)
             auto chunks = c.length() / 4;
-            for(auto i = chunks; chunks < 6; chunks++)
+            for (auto i = chunks; chunks < 6; chunks++)
                 string += "\t";
 
             auto text = context->text(&token);
@@ -51,12 +55,11 @@ std::string tokens_to_string(const element_tokeniser_ctx* context, const element
             {
                 string += " <--- HERE";
             }
-		}
-		
-        string += "\n";
-	}
+        }
 
-	
+        string += "\n";
+    }
+
     return string;
 }
 
@@ -67,37 +70,47 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     for (int i = 0; i < depth; ++i)
         string += "  ";
 
-    if (ast->type == ELEMENT_AST_NODE_LITERAL) {
+    if (ast->type == ELEMENT_AST_NODE_LITERAL)
+    {
         string += fmt::format("LITERAL: {}", ast->literal);
     }
-    else if (ast->type == ELEMENT_AST_NODE_IDENTIFIER) {
+    else if (ast->type == ELEMENT_AST_NODE_IDENTIFIER)
+    {
         string += fmt::format("IDENTIFIER: {}", ast->identifier);
     }
-    else if (ast->type == ELEMENT_AST_NODE_DECLARATION) {
+    else if (ast->type == ELEMENT_AST_NODE_DECLARATION)
+    {
         const auto intrinsic = ast->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
         intrinsic
             ? string += fmt::format("INTRINSIC DECLARATION: {}", ast->identifier)
             : string += fmt::format("DECLARATION: {}", ast->identifier);
     }
-    else if (ast->type == ELEMENT_AST_NODE_NAMESPACE) {
+    else if (ast->type == ELEMENT_AST_NODE_NAMESPACE)
+    {
         string += fmt::format("NAMESPACE: {}", ast->identifier);
     }
-    else if (ast->type == ELEMENT_AST_NODE_CALL) {
+    else if (ast->type == ELEMENT_AST_NODE_CALL)
+    {
         string += fmt::format("CALL: {}", ast->identifier);
     }
-    else if (ast->type == ELEMENT_AST_NODE_PORT) {
+    else if (ast->type == ELEMENT_AST_NODE_PORT)
+    {
         string += fmt::format("PORT: {}", ast->identifier);
     }
-    else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_PORT) {
-		string += "IMPLICIT TYPE";
+    else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_PORT)
+    {
+        string += "IMPLICIT TYPE";
     }
-    else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_DECLARATION) {
+    else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_DECLARATION)
+    {
         string += "IMPLICIT RETURN";
     }
-    else if (ast->type == ELEMENT_AST_NODE_NO_BODY) {
+    else if (ast->type == ELEMENT_AST_NODE_NO_BODY)
+    {
         string += "NO BODY";
     }
-    else if (ast->type == ELEMENT_AST_NODE_NONE) {
+    else if (ast->type == ELEMENT_AST_NODE_NONE)
+    {
         if (ast->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT))
             string += "EMPTY INPUT";
         else if (ast->flags == 0)
@@ -105,9 +118,11 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
         else
             string += "UNKNOWN FLAGS";
     }
-    else {
+    else
+    {
         char* c;
-        switch (ast->type) {
+        switch (ast->type)
+        {
             PRINTCASE(ELEMENT_AST_NODE_ROOT);
             PRINTCASE(ELEMENT_AST_NODE_SCOPE);
             PRINTCASE(ELEMENT_AST_NODE_CONSTRAINT);
@@ -118,7 +133,9 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
             PRINTCASE(ELEMENT_AST_NODE_PORTLIST);
             PRINTCASE(ELEMENT_AST_NODE_TYPENAME);
             PRINTCASE(ELEMENT_AST_NODE_LAMBDA);
-        default: c = "ELEMENT_AST_NODE_<UNKNOWN>"; break;
+        default:
+            c = "ELEMENT_AST_NODE_<UNKNOWN>";
+            break;
         }
 
         //Offset pointer by length of prefix to cutoff prefix
@@ -170,20 +187,20 @@ std::string expression_to_string(const element_expression& expression, int depth
             PRINTCASE(element_nullary_op::positive_infinity);
             PRINTCASE(element_nullary_op::negative_infinity);
 
-        	//boolean
+            //boolean
             PRINTCASE(element_nullary_op::true_value);
             PRINTCASE(element_nullary_op::false_value);
         }
         string += c;
     }
-	
-    if(expression.is<element_expression_unary>())
+
+    if (expression.is<element_expression_unary>())
     {
         const auto& unary = expression.as<element_expression_unary>();
         string += "UNARY: ";
         char* c = nullptr;
-    	switch(unary->operation())
-    	{
+        switch (unary->operation())
+        {
             //num
             PRINTCASE(element_unary_op::sin);
             PRINTCASE(element_unary_op::cos);
@@ -198,7 +215,7 @@ std::string expression_to_string(const element_expression& expression, int depth
 
             //boolean
             PRINTCASE(element_unary_op::not_);
-    	}
+        }
         string += c;
     }
 
@@ -209,7 +226,7 @@ std::string expression_to_string(const element_expression& expression, int depth
         char* c = nullptr;
         switch (binary->operation())
         {
-        	//num
+            //num
             PRINTCASE(element_binary_op::add);
             PRINTCASE(element_binary_op::sub);
             PRINTCASE(element_binary_op::mul);
@@ -220,7 +237,6 @@ std::string expression_to_string(const element_expression& expression, int depth
             PRINTCASE(element_binary_op::max);
             PRINTCASE(element_binary_op::log);
             PRINTCASE(element_binary_op::atan2);
-
 
             //boolean
             PRINTCASE(element_binary_op::and_);
@@ -281,7 +297,7 @@ std::string expression_to_string(const element_expression& expression, int depth
     }
 
     string += "\n";
-	
+
     for (const auto& dependent : expression.dependents())
         string += expression_to_string(*dependent, depth + 1);
     return string;
@@ -302,7 +318,7 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
     msg.related_log_message = related_message;
 
     std::string new_log_message = message;
-	
+
     if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens))
         new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(&context, nullptr);
 
@@ -325,7 +341,7 @@ void element_log_ctx::log(const element_interpreter_ctx& context, element_result
     msg.filename = filename.c_str();
     msg.related_log_message = nullptr;
     msg.line_in_source = nullptr;
-	
+
     log(msg);
 }
 
@@ -341,7 +357,7 @@ void element_log_ctx::log(const std::string& message, const element_stage stage)
     msg.stage = stage;
     msg.related_log_message = nullptr;
     msg.line_in_source = nullptr;
-	
+
     log(msg);
 }
 
@@ -350,7 +366,8 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     assert(context.tokeniser);
 
     const bool starts_with_prelude = context.tokeniser->filename.rfind("Prelude\\", 0) == 0;
-    if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude)) {
+    if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude))
+    {
         return; //early out if prelude logging disabled
     }
 
@@ -365,7 +382,8 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
 
     std::string new_log_message = message;
     std::string source_line;
-    if (nearest_ast && nearest_ast->nearest_token) {
+    if (nearest_ast && nearest_ast->nearest_token)
+    {
         msg.line = nearest_ast->nearest_token->line;
         msg.character = nearest_ast->nearest_token->character;
         msg.length = nearest_ast->nearest_token->tok_len;
@@ -379,11 +397,11 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     {
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens))
             new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
-    	
+
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
-			new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast ? nearest_ast : nullptr);
+            new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast ? nearest_ast : nullptr);
     }
-	
+
     msg.message = new_log_message.c_str();
     msg.message_length = new_log_message.length();
     msg.line_in_source = source_line.empty() ? nullptr : source_line.c_str();
@@ -391,7 +409,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
 }
 
 void element_log_ctx::log(const element_compiler_ctx& context, element_result code, const std::string& message,
-    const element_ast* nearest_ast) const
+                          const element_ast* nearest_ast) const
 {
     auto msg = element_log_message();
     msg.message = message.c_str();
@@ -406,7 +424,8 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
     msg.line_in_source = nullptr;
 
     std::string new_log_message;
-    if (nearest_ast && nearest_ast->nearest_token) {
+    if (nearest_ast && nearest_ast->nearest_token)
+    {
         msg.line = nearest_ast->nearest_token->line;
         msg.character = nearest_ast->nearest_token->character;
         msg.length = nearest_ast->nearest_token->tok_len;
@@ -414,13 +433,15 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
         //todo: print source code/use james debug recreation
         new_log_message = message;
     }
-    else {
+    else
+    {
         new_log_message = message;
     }
 
-    if (code != ELEMENT_OK) {
+    if (code != ELEMENT_OK)
+    {
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
-			new_log_message += "\n\nAST\n---\n" + ast_to_string(get_root_from_ast(nearest_ast), 0, nearest_ast);
+            new_log_message += "\n\nAST\n---\n" + ast_to_string(get_root_from_ast(nearest_ast), 0, nearest_ast);
     }
 
     msg.message = new_log_message.c_str();

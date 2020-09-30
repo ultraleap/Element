@@ -82,6 +82,7 @@ struct element_expression_constant final : public element_expression
                                                                 const element::source_information& source_info) const;
     [[nodiscard]] element_value value() const { return m_value; }
     [[nodiscard]] size_t get_size() const override { return 1; }
+
 private:
     element_value m_value;
 };
@@ -116,7 +117,8 @@ struct element_expression_structure final : public element_expression
         : element_expression(type_id, nullptr)
     {
         m_dependents.reserve(deps.size());
-        for (const auto& [name, expression] : deps) {
+        for (const auto& [name, expression] : deps)
+        {
             m_dependents.emplace_back(expression);
             m_dependents_map[name] = expression;
         }
@@ -131,7 +133,7 @@ struct element_expression_structure final : public element_expression
     [[nodiscard]] size_t get_size() const override
     {
         return std::accumulate(m_dependents.begin(), m_dependents.end(), size_t(0),
-            [](size_t c, const auto& d) { return c + d->get_size(); });
+                               [](size_t c, const auto& d) { return c + d->get_size(); });
     }
 
 private:
@@ -152,6 +154,7 @@ struct element_expression_nullary final : public element_expression
 
     [[nodiscard]] op operation() const { return m_op; }
     [[nodiscard]] size_t get_size() const override { return 1; }
+
 private:
     op m_op;
 };
@@ -174,6 +177,7 @@ struct element_expression_unary final : public element_expression
     [[nodiscard]] const expression_const_shared_ptr& input() const { return m_dependents[0]; }
 
     [[nodiscard]] size_t get_size() const override { return 1; }
+
 private:
     op m_op;
 };
@@ -198,6 +202,7 @@ struct element_expression_binary final : public element_expression
     [[nodiscard]] const expression_const_shared_ptr& input2() const { return m_dependents[1]; }
 
     [[nodiscard]] size_t get_size() const override { return 1; }
+
 private:
     op m_op;
 };
@@ -214,10 +219,11 @@ struct element_expression_if final : public element_expression
     [[nodiscard]] size_t get_size() const override { return 1; }
 };
 
-struct element_expression_for final : public element_expression {
+struct element_expression_for final : public element_expression
+{
     DECLARE_TYPE_ID();
 
-    explicit element_expression_for(expression_const_shared_ptr initial, expression_const_shared_ptr condition,  expression_const_shared_ptr body);
+    explicit element_expression_for(expression_const_shared_ptr initial, expression_const_shared_ptr condition, expression_const_shared_ptr body);
     [[nodiscard]] const expression_const_shared_ptr& initial() const { return m_dependents[0]; }
     [[nodiscard]] const expression_const_shared_ptr& condition() const { return m_dependents[1]; }
     [[nodiscard]] const expression_const_shared_ptr& body() const { return m_dependents[2]; }
@@ -225,7 +231,8 @@ struct element_expression_for final : public element_expression {
     [[nodiscard]] size_t get_size() const override { return m_dependents[0]->get_size(); }
 };
 
-struct element_expression_fold final : public element_expression {
+struct element_expression_fold final : public element_expression
+{
     DECLARE_TYPE_ID();
 
     explicit element_expression_fold(expression_const_shared_ptr list, expression_const_shared_ptr initial, expression_const_shared_ptr accumulator);
@@ -236,7 +243,8 @@ struct element_expression_fold final : public element_expression {
     [[nodiscard]] size_t get_size() const override { return m_dependents[1]->get_size(); }
 };
 
-struct element_expression_indexer final : public element_expression {
+struct element_expression_indexer final : public element_expression
+{
     DECLARE_TYPE_ID();
 
     explicit element_expression_indexer(std::shared_ptr<const element_expression_for> for_expression, int index, element::type_const_ptr type);
@@ -279,7 +287,7 @@ struct element_expression_select final : public element_expression
 //struct element_expression_unbound_arg : public element_expression
 //{
 //    DECLARE_TYPE_ID();
-//    
+//
 //    element_expression_unbound_arg(size_t idx)
 //        : element_expression(type_id)
 //        , m_index(idx)

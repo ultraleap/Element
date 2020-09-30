@@ -51,12 +51,12 @@ object_const_shared_ptr function_instance::call(
     //todo: more helpful information than the number of arguments expected
     if (compiled_args.size() < declarer->inputs.size())
         return build_error_and_log(context, source_info, error_message_code::not_enough_arguments,
-            declarer->name.value, compiled_args.size(), declarer->inputs.size());
+                                   declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
     //todo: more helpful information than the number of arguments expected
     if (!is_variadic && compiled_args.size() > declarer->inputs.size())
         return build_error_and_log(context, source_info, error_message_code::too_many_arguments,
-            declarer->name.value, compiled_args.size(), declarer->inputs.size());
+                                   declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
     //todo: check this works and is a useful error message (stolen from struct declaration call)
     if (!is_variadic && !valid_call(context, declarer, compiled_args))
@@ -97,7 +97,7 @@ object_const_shared_ptr function_instance::call(
     if (!element->matches_constraint(context, constraint))
         return std::make_shared<error>(
             fmt::format("the return of '{}' was '{}' which doesn't match the constraint '{}'",
-            declarer->name.value, element->typeof_info(), constraint ? type->name.value : "Any"),
+                        declarer->name.value, element->typeof_info(), constraint ? type->name.value : "Any"),
             ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
 
     return element;

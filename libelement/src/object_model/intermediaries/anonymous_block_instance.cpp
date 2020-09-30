@@ -19,7 +19,7 @@ anonymous_block_instance::anonymous_block_instance(const anonymous_block_express
     assert(declarer->our_scope.get());
 
     auto* our_scope = declarer->our_scope.get();
-    for(const auto& [identifier, expression] : named_expressions)
+    for (const auto& [identifier, expression] : named_expressions)
     {
         fields.emplace(identifier.value, expression);
     }

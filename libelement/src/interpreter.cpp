@@ -73,7 +73,8 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
                                 ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
                                 : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
 
-    if (log_tokens) {
+    if (log_tokens)
+    {
         log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
     }
 
@@ -86,13 +87,13 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     ELEMENT_OK_OR_RETURN(result)
 
     const auto log_ast = starts_with_prelude
-        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
-        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+                             ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
+                             : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
 
-    if (log_ast) {
+    if (log_ast)
+    {
         log("\n---\nAST\n---\n" + ast_to_string(parser.root));
     }
-
 
     //parse only enabled, skip object model generation to avoid error codes with positive values
     //i.e. errors returned other than ELEMENT_ERROR_PARSE
@@ -105,13 +106,15 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     auto object_model = element::build_root_scope(this, parser.root, result);
     element_ast_delete(parser.root);
 
-    if (result != ELEMENT_OK) {
+    if (result != ELEMENT_OK)
+    {
         log(result, fmt::format("building object model failed with element_result {}", result), filename);
         return result;
     }
 
     result = src_scope->merge(std::move(object_model));
-    if (result != ELEMENT_OK) {
+    if (result != ELEMENT_OK)
+    {
         log(result, fmt::format("merging object models failed with element_result {}", result), filename);
         return result;
     }
@@ -128,9 +131,10 @@ element_result element_interpreter_ctx::load_file(const std::string& file)
 {
     const auto abs = std::filesystem::absolute(std::filesystem::path(file)).string();
 
-    if (!file_exists(abs)) {
+    if (!file_exists(abs))
+    {
         std::cout << fmt::format("file {} was not found at path {}\n",
-            file, abs.c_str()); //todo: proper logging
+                                 file, abs.c_str()); //todo: proper logging
         return ELEMENT_ERROR_FILE_NOT_FOUND;
     }
 
@@ -143,8 +147,9 @@ element_result element_interpreter_ctx::load_file(const std::string& file)
     f.read(buffer.data(), buffer.size());
 
     const auto result = load(buffer.c_str(), abs.c_str());
-    if (result != ELEMENT_OK) {
-        //std::cout << fmt::format("interpreter failed to parse file {}. element_result = {}\n", 
+    if (result != ELEMENT_OK)
+    {
+        //std::cout << fmt::format("interpreter failed to parse file {}. element_result = {}\n",
         //    file, result); //todo: proper logging
     }
 
@@ -155,12 +160,14 @@ element_result element_interpreter_ctx::load_files(const std::vector<std::string
 {
     element_result ret = ELEMENT_OK;
 
-    for (const auto& filename : files) {
-        if (!file_exists(filename)) {
+    for (const auto& filename : files)
+    {
+        if (!file_exists(filename))
+        {
             auto abs = std::filesystem::absolute(std::filesystem::path(filename)).string();
             std::cout << fmt::format("file {} was not found at path {}\n",
-                filename, abs); //todo: proper logging
-            continue; //todo: error handling
+                                     filename, abs); //todo: proper logging
+            continue;                                //todo: error handling
         }
 
         const element_result result = load_file(filename);
@@ -183,13 +190,14 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
     {
         auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
         std::cout << fmt::format("package {} does not exist at path {}\n",
-            package_path, abs); //todo: proper logging
+                                 package_path, abs); //todo: proper logging
         return ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
     }
 
     element_result ret = ELEMENT_OK;
 
-    for (const auto& file : std::filesystem::recursive_directory_iterator(package_path)) {
+    for (const auto& file : std::filesystem::recursive_directory_iterator(package_path))
+    {
         const auto filename = file.path().string();
         const auto extension = file.path().extension().string();
         if (extension == ".ele")
@@ -200,8 +208,8 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
         }
         else if (extension != ".bond")
         {
-            std::cout << fmt::format("file {} in package {} has extension {} instead of '.ele' or '.bond'\n", 
-                filename, package_path, extension); //todo: proper logging
+            std::cout << fmt::format("file {} in package {} has extension {} instead of '.ele' or '.bond'\n",
+                                     filename, package_path, extension); //todo: proper logging
         }
     }
 
@@ -212,7 +220,8 @@ element_result element_interpreter_ctx::load_packages(const std::vector<std::str
 {
     element_result ret = ELEMENT_OK;
 
-    for (const auto& package : packages) {
+    for (const auto& package : packages)
+    {
         auto package_path = "ElementPackages\\" + package;
         const auto result = load_package(package);
         if (result != ELEMENT_OK && ret != ELEMENT_OK) //todo: only returns first error
@@ -228,12 +237,14 @@ element_result element_interpreter_ctx::load_prelude()
         return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
 
     auto result = load_package("Prelude");
-    if (result == ELEMENT_OK) {
+    if (result == ELEMENT_OK)
+    {
         prelude_loaded = true;
         return result;
     }
 
-    if (result == ELEMENT_ERROR_DIRECTORY_NOT_FOUND) {
+    if (result == ELEMENT_ERROR_DIRECTORY_NOT_FOUND)
+    {
         auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
         std::cout << fmt::format("could not find prelude at {}\n", abs); //todo: proper logging
     }
@@ -253,7 +264,7 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
     if (logger == nullptr)
         return;
 
-	logger->log(*this, code, message, filename);
+    logger->log(*this, code, message, filename);
 }
 
 void element_interpreter_ctx::log(const std::string& message) const
@@ -313,7 +324,8 @@ element_result element_interpreter_load_files(element_interpreter_ctx* context, 
 
     std::vector<std::string> actual_files;
     actual_files.resize(files_count);
-    for (auto i = 0; i < files_count; ++i) {
+    for (auto i = 0; i < files_count; ++i)
+    {
         //std::cout << fmt::format("load_file {}\n", files[i]); //todo: proper logging
         actual_files[i] = files[i];
     }
@@ -334,7 +346,8 @@ element_result element_interpreter_load_packages(element_interpreter_ctx* contex
 
     std::vector<std::string> actual_packages;
     actual_packages.resize(packages_count);
-    for (auto i = 0; i < packages_count; ++i) {
+    for (auto i = 0; i < packages_count; ++i)
+    {
         //std::cout << fmt::format("load_packages {}\n", packages[i]); //todo: proper logging
         actual_packages[i] = packages[i];
     }
@@ -368,14 +381,14 @@ element_result element_interpreter_clear(element_interpreter_ctx* context)
 
 element_result element_delete_declaration(element_interpreter_ctx* context, element_declaration** declaration)
 {
-    delete * declaration;
+    delete *declaration;
     *declaration = nullptr;
     return ELEMENT_OK;
 }
 
 element_result element_delete_object(element_interpreter_ctx* context, element_object** object)
 {
-    delete * object;
+    delete *object;
     *object = nullptr;
     return ELEMENT_OK;
 }
@@ -391,7 +404,7 @@ element_result element_interpreter_find(element_interpreter_ctx* context, const 
     }
 
     //todo: don't need to new
-    *declaration = new element_declaration{decl};
+    *declaration = new element_declaration{ decl };
     return ELEMENT_OK;
 }
 
@@ -437,7 +450,7 @@ element_result element_interpreter_compile(
 
     element_result result = ELEMENT_OK;
     auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), result, {});
-    if(!compiled)
+    if (!compiled)
         return ELEMENT_ERROR_UNKNOWN;
 
     auto expression = compiled->to_expression();
@@ -482,7 +495,8 @@ element_result element_interpreter_evaluate(
     {
         const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree);
 
-        if (log_expression_tree) {
+        if (log_expression_tree)
+        {
             context->log("\n------\nEXPRESSION\n------\n" + expression_to_string(*expr));
         }
     }
@@ -498,7 +512,8 @@ element_result element_interpreter_evaluate(
         opts);
     outputs->count = static_cast<int>(count);
 
-    if (result != ELEMENT_OK) {
+    if (result != ELEMENT_OK)
+    {
         context->log(result, fmt::format("Failed to evaluate {}", object->obj->typeof_info()), "<input>");
     }
 
@@ -593,7 +608,8 @@ element_result element_interpreter_compile_expression(
     }
     else
     {
-        for (auto& [identifier, expression] : deferred_expressions) {
+        for (auto& [identifier, expression] : deferred_expressions)
+        {
             element_result output_result = ELEMENT_OK;
             auto lambda = element::build_lambda_declaration(context, identifier, expression, dummy_declaration->our_scope.get(), output_result);
             if (output_result != ELEMENT_OK)
@@ -681,7 +697,8 @@ element_result element_interpreter_evaluate_expression(
     {
         const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree);
 
-        if (log_expression_tree) {
+        if (log_expression_tree)
+        {
             context->log("\n------\nEXPRESSION\n------\n" + expression_to_string(*compiled));
         }
     }

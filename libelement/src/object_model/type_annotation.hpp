@@ -15,7 +15,7 @@ namespace element
     public:
         //TODO: This should be an expression, not an identifier
         explicit type_annotation(identifier name)
-            : name{std::move(name)}
+            : name{ std::move(name) }
         {
         }
 
@@ -27,4 +27,4 @@ namespace element
     private:
         identifier name;
     };
-}
+} // namespace element

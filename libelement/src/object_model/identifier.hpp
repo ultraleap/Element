@@ -22,9 +22,9 @@ namespace element
 
         std::string value;
 
-        bool operator <(const identifier& rhs) const
+        bool operator<(const identifier& rhs) const
         {
             return value < rhs.value;
         }
     };
-}
+} // namespace element

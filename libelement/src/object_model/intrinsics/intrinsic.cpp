@@ -37,7 +37,7 @@ DEFINE_TYPE_ID(element::intrinsic_compiler_list_indexer, 1U << 8);
 DEFINE_TYPE_ID(element::intrinsic_for, 1U << 9);
 DEFINE_TYPE_ID(element::intrinsic_list_fold, 1U << 10);
 
-template<typename T>
+template <typename T>
 static bool is_type_of(const declaration* decl)
 {
     return dynamic_cast<const T*>(decl) ? true : false;
@@ -58,8 +58,7 @@ std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter> make_unique()
 }
 
 //TODO: This is a horrible, temporary hack. Remove and replace once we start dealing with constraints
-const std::unordered_map<std::string, std::function<std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter>(const declaration*)>> intrinsic::validation_func_map
-{
+const std::unordered_map<std::string, std::function<std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter>(const declaration*)>> intrinsic::validation_func_map{
     //type
     { "Num", [](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_constructor_num>() : nullptr); } },
     { "Bool", [](const declaration* decl) { return (is_type_of<struct_declaration>(decl) ? make_unique<intrinsic_constructor_bool>() : nullptr); } },
@@ -78,8 +77,8 @@ const std::unordered_map<std::string, std::function<std::unique_ptr<const intrin
     { "min", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::min, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
     { "max", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::max, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
 
-    { "abs",   [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::abs, type::num.get(), type::num.get()) : nullptr); } },
-    { "ceil",  [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::ceil, type::num.get(), type::num.get()) : nullptr); } },
+    { "abs", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::abs, type::num.get(), type::num.get()) : nullptr); } },
+    { "ceil", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::ceil, type::num.get(), type::num.get()) : nullptr); } },
     { "floor", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::floor, type::num.get(), type::num.get()) : nullptr); } },
 
     { "sin", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::sin, type::num.get(), type::num.get()) : nullptr); } },
@@ -105,7 +104,7 @@ const std::unordered_map<std::string, std::function<std::unique_ptr<const intrin
     { "leq", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::leq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
     { "gt", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::gt, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
     { "geq", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::geq, type::boolean.get(), type::num.get(), type::num.get()) : nullptr); } },
-    
+
     { "if", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_if>() : nullptr); } },
     { "not", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_unary>(element_unary_op::not_, type::boolean.get(), type::boolean.get()) : nullptr); } },
     { "and", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_binary>(element_binary_op::and_, type::boolean.get(), type::boolean.get(), type::boolean.get()) : nullptr); } },
@@ -115,7 +114,7 @@ const std::unordered_map<std::string, std::function<std::unique_ptr<const intrin
     { "False", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_nullary>(element_nullary_op::false_value, type::boolean.get()) : nullptr); } },
 
     { "list", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_list>() : nullptr); } },
-    { "fold", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_list_fold> () : nullptr); } },
+    { "fold", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_list_fold>() : nullptr); } },
 
     { "memberwise", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_not_implemented>() : nullptr); } },
     { "for", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? make_unique<intrinsic_for>() : nullptr); } },

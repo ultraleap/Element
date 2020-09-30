@@ -19,12 +19,13 @@ namespace element
                                                    const source_information& source_info) const override;
 
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
-                                                            const source_information& source_info) const override;
+                                                      const source_information& source_info) const override;
         [[nodiscard]] const scope* get_scope() const override;
 
         const declaration* declarer;
         mutable capture_stack captures;
         std::vector<std::unique_ptr<expression>> expressions;
+
     private:
     };
-}
+} // namespace element

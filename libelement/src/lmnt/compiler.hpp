@@ -14,7 +14,13 @@
 
 struct element_lmnt_stack_entry
 {
-    enum class entry_type { constant, input, output, local };
+    enum class entry_type
+    {
+        constant,
+        input,
+        output,
+        local
+    };
     entry_type type;
     size_t index;
     size_t size;

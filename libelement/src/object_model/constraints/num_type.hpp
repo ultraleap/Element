@@ -9,7 +9,9 @@ namespace element
     {
     public:
         DECLARE_TYPE_ID();
-        num_type() : type(type_id, name, nullptr) {}
+        num_type()
+            : type(type_id, name, nullptr)
+        {}
 
         [[nodiscard]] object_const_shared_ptr index(const compilation_context& context,
                                                     const identifier& name,
@@ -20,4 +22,4 @@ namespace element
     private:
         static identifier name;
     };
-}
+} // namespace element

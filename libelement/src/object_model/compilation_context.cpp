@@ -26,13 +26,13 @@ compilation_context::compilation_context(const scope* const scope, element_inter
         throw;
 
     const char* list_fold_src = ""
-        "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"
-        "{\n"
-        "   end_of_list(tuple:Any):Bool = tuple.idx.lt(myList.count)\n"
-        "   accumulate(tuple:Any):Any = {idx = tuple.idx.add(1), accumulated_value = someFunc(tuple.accumulated_value, myList.at(tuple.idx))}\n"
-        "   return:Any = for({idx = 0, accumulated_value = initial_value}, end_of_list, accumulate).accumulated_value\n"
-        "}\n"
-        "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list_fold(list(a, b, c), start, Num.add)\n";
+                                "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"
+                                "{\n"
+                                "   end_of_list(tuple:Any):Bool = tuple.idx.lt(myList.count)\n"
+                                "   accumulate(tuple:Any):Any = {idx = tuple.idx.add(1), accumulated_value = someFunc(tuple.accumulated_value, myList.at(tuple.idx))}\n"
+                                "   return:Any = for({idx = 0, accumulated_value = initial_value}, end_of_list, accumulate).accumulated_value\n"
+                                "}\n"
+                                "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list_fold(list(a, b, c), start, Num.add)\n";
 
     interpreter->load_into_scope(list_fold_src, "compiler_generated_list_fold", compiler_scope.get());
     compiler_scope->mark_declaration_compiler_generated(identifier{ "list_fold" });

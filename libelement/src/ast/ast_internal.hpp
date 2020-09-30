@@ -14,7 +14,7 @@
 #include "element/token.h"
 #include <cassert>
 
-using ast_unique_ptr = std::unique_ptr<element_ast, void(*)(element_ast*)>;
+using ast_unique_ptr = std::unique_ptr<element_ast, void (*)(element_ast*)>;
 
 element_ast* ast_new_child(element_ast* parent, element_ast_node_type type);
 
@@ -29,8 +29,8 @@ struct element_ast
 
     union
     {
-        element_value literal = 0;   // active for AST_NODE_LITERAL
-        element_ast_flags flags; // active for all other node types
+        element_value literal = 0; // active for AST_NODE_LITERAL
+        element_ast_flags flags;   // active for all other node types
     };
 
     element_ast_node_type type;
@@ -39,7 +39,7 @@ struct element_ast
     std::vector<ast_unique_ptr> children;
     const element_token* nearest_token = nullptr;
 
-    [[nodiscard]] bool has_flag(element_ast_flags flag) const 
+    [[nodiscard]] bool has_flag(element_ast_flags flag) const
     {
         return (flags & flag) == flag;
     }
@@ -48,9 +48,9 @@ struct element_ast
 inline bool ast_node_has_identifier(const element_ast* n)
 {
     return n->type == ELEMENT_AST_NODE_DECLARATION
-        || n->type == ELEMENT_AST_NODE_IDENTIFIER
-        || n->type == ELEMENT_AST_NODE_CALL
-        || n->type == ELEMENT_AST_NODE_PORT;
+           || n->type == ELEMENT_AST_NODE_IDENTIFIER
+           || n->type == ELEMENT_AST_NODE_CALL
+           || n->type == ELEMENT_AST_NODE_PORT;
 }
 
 inline bool ast_node_has_literal(const element_ast* n)
@@ -61,14 +61,12 @@ inline bool ast_node_has_literal(const element_ast* n)
 //SCOPE
 inline bool ast_node_in_function_scope(const element_ast* n)
 {
-    return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE &&
-        n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_FUNCTION);
+    return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE && n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_FUNCTION);
 }
 
 inline bool ast_node_in_lambda_scope(const element_ast* n)
 {
-    return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE &&
-    n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_LAMBDA);
+    return (n->parent && n->parent->type == ELEMENT_AST_NODE_SCOPE && n->parent->parent && n->parent->parent->type == ELEMENT_AST_NODE_LAMBDA);
 }
 
 //STRUCT
@@ -100,8 +98,7 @@ inline bool ast_node_in_lambda_scope(const element_ast* n)
 //FUNCTION
 [[nodiscard]] inline bool ast_node_function_is_valid(const element_ast* n)
 {
-    return n && n->type == ELEMENT_AST_NODE_FUNCTION &&
-        n->children.size() > ast_idx::function::declaration && n->children[ast_idx::function::declaration]->type == ELEMENT_AST_NODE_DECLARATION;
+    return n && n->type == ELEMENT_AST_NODE_FUNCTION && n->children.size() > ast_idx::function::declaration && n->children[ast_idx::function::declaration]->type == ELEMENT_AST_NODE_DECLARATION;
 }
 
 [[nodiscard]] inline bool ast_node_function_has_body(const element_ast* n)
@@ -222,7 +219,7 @@ struct element_parser_ctx
     element_result parse(size_t* tindex, element_ast* ast);
     element_result ast_build();
 
-	//TODO: Move to object model as this one is already disgustingly large
+    //TODO: Move to object model as this one is already disgustingly large
     element_result validate(element_ast* ast);
 
 private:

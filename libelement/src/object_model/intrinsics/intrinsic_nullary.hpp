@@ -19,4 +19,4 @@ namespace element
     private:
         element_nullary_op operation;
     };
-}
+} // namespace element

@@ -14,12 +14,12 @@
 
 // #define UTF8_UNCHECKED
 #if defined(UTF8_UNCHECKED)
-#define UTF8_PEEK_NEXT(it, end)  utf8::unchecked::peek_next(it)
-#define UTF8_NEXT(it, end)       utf8::unchecked::next(it)
+#define UTF8_PEEK_NEXT(it, end) utf8::unchecked::peek_next(it)
+#define UTF8_NEXT(it, end) utf8::unchecked::next(it)
 #define UTF8_ADVANCE(it, n, end) utf8::unchecked::advance(it, n)
 #else
-#define UTF8_PEEK_NEXT(it, end)  utf8::peek_next(it, end)
-#define UTF8_NEXT(it, end)       utf8::next(it, end)
+#define UTF8_PEEK_NEXT(it, end) utf8::peek_next(it, end)
+#define UTF8_NEXT(it, end) utf8::next(it, end)
 #define UTF8_ADVANCE(it, n, end) utf8::advance(it, n, end)
 #endif
 
@@ -63,16 +63,21 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
     assert(token);
     std::string message = msg ? msg : "";
 
-    if (index >= state->tokens.size()) {
+    if (index >= state->tokens.size())
+    {
 
-        if (message.empty()) {
+        if (message.empty())
+        {
             message = fmt::format("tried to access token at index {} but there are only {} tokens.",
-                index, state->tokens.size());
+                                  index, state->tokens.size());
 
             //if the token requested is only one after the end
-            if (!state->tokens.empty() && index == state->tokens.size()) {
+            if (!state->tokens.empty() && index == state->tokens.size())
+            {
                 message += "\nnote: perhaps your source code is incomplete.";
-            } else {
+            }
+            else
+            {
                 message += "\nnote: perhaps an internal compiler error.";
             }
         }
@@ -117,7 +122,8 @@ void element_tokeniser_set_log_callback(element_tokeniser_ctx* state, void (*log
 
 static void reset_token(element_tokeniser_ctx* state)
 {
-    if (state->cur_token.type != ELEMENT_TOK_NONE) {
+    if (state->cur_token.type != ELEMENT_TOK_NONE)
+    {
         // save current token
         state->tokens.push_back(state->cur_token);
         state->cur_token.pre_pos = -1;
@@ -149,7 +155,8 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
 
     const auto it_begin = it;
     uint32_t c = UTF8_PEEK_NEXT(it, end);
-    if (c == '-' || c == '+') {
+    if (c == '-' || c == '+')
+    {
         UTF8_NEXT(it, end);
         c = UTF8_PEEK_NEXT(it, end);
     }
@@ -158,7 +165,8 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
         c = UTF8_NEXT(it, end);
 
-    if (it == end) {
+    if (it == end)
+    {
         const size_t len = std::distance(it_begin, it);
         state->pos += (int)len;
         state->character += (int)len;
@@ -168,49 +176,58 @@ static element_result tokenise_number(std::string::iterator& it, const std::stri
     }
 
     c = UTF8_PEEK_NEXT(it, end);
-    if (c == '.') {
+    if (c == '.')
+    {
         auto it_next = it;
         UTF8_NEXT(it_next, end);
 
         auto c_next = UTF8_PEEK_NEXT(it_next, end);
-        if (element_isdigit(c_next)) {
+        if (element_isdigit(c_next))
+        {
             // number
             UTF8_NEXT(it, end);
             while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
                 c = UTF8_NEXT(it, end);
-        } 
-        else if (element_isalpha(c_next)) {
+        }
+        else if (element_isalpha(c_next))
+        {
             // indexing into a literal, do nothing and let the cleanup back out
-        } else {
+        }
+        else
+        {
             const auto it_rhs_start = it_next;
             UTF8_NEXT(it_next, end);
             state->log(ELEMENT_ERROR_BAD_INDEX_INTO_NUMBER,
-                fmt::format("Found {} which was thought to be a number being indexed, "
-                    "but encountered invalid character '{}' on the right hand side of '.'",
-                    std::string(it_begin, it), std::string(it_rhs_start, it_next)));
+                       fmt::format("Found {} which was thought to be a number being indexed, "
+                                   "but encountered invalid character '{}' on the right hand side of '.'",
+                                   std::string(it_begin, it), std::string(it_rhs_start, it_next)));
 
             return ELEMENT_ERROR_BAD_INDEX_INTO_NUMBER;
         }
     }
 
-    if (it != end) {
+    if (it != end)
+    {
         c = UTF8_PEEK_NEXT(it, end);
-        if (c == 'e' || c == 'E') {
+        if (c == 'e' || c == 'E')
+        {
             auto it_prev_character = it;
             UTF8_NEXT(it, end);
             c = UTF8_PEEK_NEXT(it, end);
 
-            if (c == '-' || c == '+') {
+            if (c == '-' || c == '+')
+            {
                 it_prev_character = it;
                 UTF8_NEXT(it, end);
                 c = UTF8_PEEK_NEXT(it, end);
             }
 
-            if (!element_isdigit(c)) {
+            if (!element_isdigit(c))
+            {
                 state->log(ELEMENT_ERROR_BAD_NUMBER_EXPONENT,
-                    fmt::format("Found {} which was thought to be a number in scientific notation, "
-                        "but encountered invalid character '{}' instead of the exponent number",
-                        std::string(it_begin, it), std::string(it_prev_character, it)));
+                           fmt::format("Found {} which was thought to be a number in scientific notation, "
+                                       "but encountered invalid character '{}' instead of the exponent number",
+                                       std::string(it_begin, it), std::string(it_prev_character, it)));
                 return ELEMENT_ERROR_BAD_NUMBER_EXPONENT;
             }
 
@@ -238,7 +255,8 @@ static element_result tokenise_comment(std::string::iterator& it, const std::str
     const auto it_before = it;
     try
     {
-        while (it != end && !element_iseol(UTF8_PEEK_NEXT(it, end))) { //will throw at EOF
+        while (it != end && !element_iseol(UTF8_PEEK_NEXT(it, end)))
+        { //will throw at EOF
             UTF8_NEXT(it, end);
         }
     }
@@ -271,14 +289,16 @@ static element_result tokenise_identifier(std::string::iterator& it, const std::
     state->cur_token.character = state->character;
     const auto it_begin = it;
     uint32_t c = UTF8_PEEK_NEXT(it, end);
-    if (c == '_') {
+    if (c == '_')
+    {
         c = UTF8_NEXT(it, end);
     }
 
     assert(isid_alpha(c));
 
     while (it != end
-        && (isid_alnum(UTF8_PEEK_NEXT(it, end)) || UTF8_PEEK_NEXT(it, end) == '_')) {
+           && (isid_alnum(UTF8_PEEK_NEXT(it, end)) || UTF8_PEEK_NEXT(it, end) == '_'))
+    {
         c = UTF8_NEXT(it, end);
     }
 
@@ -346,94 +366,131 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
         auto it = state->input.begin();
         auto end = state->input.end();
         uint32_t c;
-        while (it != end) 
+        while (it != end)
         {
             c = UTF8_PEEK_NEXT(it, end);
-            switch (c) 
+            switch (c)
             {
-                case '.': add_token(state, ELEMENT_TOK_DOT, 1); UTF8_NEXT(it, end); break;
-                case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); UTF8_NEXT(it, end); break;
-                case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); UTF8_NEXT(it, end); break;
-                case ',': add_token(state, ELEMENT_TOK_COMMA, 1); UTF8_NEXT(it, end); break;
-                case ':': add_token(state, ELEMENT_TOK_COLON, 1); UTF8_NEXT(it, end); break;
-                case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); UTF8_NEXT(it, end); break;
-                case '}': add_token(state, ELEMENT_TOK_BRACER, 1); UTF8_NEXT(it, end); break;
-                case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); UTF8_NEXT(it, end); break;
-                case '#': tokenise_comment(it, end, state); break;
-                case '_': {
-                    //in case there is nothing after this, add the token first first, and remove later if it's an identifier
-                    add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
+            case '.':
+                add_token(state, ELEMENT_TOK_DOT, 1);
+                UTF8_NEXT(it, end);
+                break;
+            case '(':
+                add_token(state, ELEMENT_TOK_BRACKETL, 1);
+                UTF8_NEXT(it, end);
+                break;
+            case ')':
+                add_token(state, ELEMENT_TOK_BRACKETR, 1);
+                UTF8_NEXT(it, end);
+                break;
+            case ',':
+                add_token(state, ELEMENT_TOK_COMMA, 1);
+                UTF8_NEXT(it, end);
+                break;
+            case ':':
+                add_token(state, ELEMENT_TOK_COLON, 1);
+                UTF8_NEXT(it, end);
+                break;
+            case '{':
+                add_token(state, ELEMENT_TOK_BRACEL, 1);
+                UTF8_NEXT(it, end);
+                break;
+            case '}':
+                add_token(state, ELEMENT_TOK_BRACER, 1);
+                UTF8_NEXT(it, end);
+                break;
+            case '=':
+                add_token(state, ELEMENT_TOK_EQUALS, 1);
+                UTF8_NEXT(it, end);
+                break;
+            case '#':
+                tokenise_comment(it, end, state);
+                break;
+            case '_':
+            {
+                //in case there is nothing after this, add the token first first, and remove later if it's an identifier
+                add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
 
-                    const auto next = UTF8_PEEK_NEXT(it + 1, end);
-                    if (isid_alpha(next)) {
-                        //remove token
-                        state->tokens.pop_back();
-                        state->pos -= 1;
-                        state->character -= 1;
+                const auto next = UTF8_PEEK_NEXT(it + 1, end);
+                if (isid_alpha(next))
+                {
+                    //remove token
+                    state->tokens.pop_back();
+                    state->pos -= 1;
+                    state->character -= 1;
 
-                        const auto begin_it = it;
-                        auto result = tokenise_identifier(it, end, state);
-                        if (result != ELEMENT_OK) {
-                            state->log(result,
-                                fmt::format("Failed to parse identifier '{}'",
-                                    std::string(begin_it, it)));
-                            return result;
-                        }
-                    }
-                    else
+                    const auto begin_it = it;
+                    auto result = tokenise_identifier(it, end, state);
+                    if (result != ELEMENT_OK)
                     {
-                        UTF8_NEXT(it, end);
-                    }
-                    break;
-                }
-                default: {
-                    if (isid_alpha(c)) {
-                        const auto begin_it = it;
-                        auto result = tokenise_identifier(it, end, state);
-                        if (result != ELEMENT_OK) {
-                            state->log(result,
-                                fmt::format("Failed to parse identifier '{}'",
-                                    std::string(begin_it, it)));
-                            return result;
-                        }
-                    }
-                    else if (element_isdigit(c) || c == '-' || c == '+') {
-                        const auto begin_it = it;
-                        auto result = tokenise_number(it, end, state);
-                        if (result != ELEMENT_OK) {
-                            state->log(result,
-                                fmt::format("Failed to parse number '{}'",
-                                    std::string(begin_it, it)));
-                            return result;
-                        }
-                    }
-                    else if (element_iseol(c)) {
-                        ++state->line;
-                        state->character = 1;
-                        state->pos += 1;
-                        state->line_start_position = state->pos;
-                        state->line_number_to_line_pos.push_back(state->line_start_position);
-                        reset_token(state);
-                        UTF8_NEXT(it, end);
-                    }
-                    else if (element_isspace(c)) {
-                        //just eat it!
-                        state->pos += 1;
-                        state->character += 1;
-                        UTF8_NEXT(it, end);
-                    }
-                    else {
-                        const auto begin_it = it;
-                        UTF8_NEXT(it, end);
-                        std::string source_line;
-                        source_line.resize(1024);
-                        memcpy(source_line.data(), cinput + state->line_start_position, state->pos - state->line_start_position);
-                        state->log(ELEMENT_ERROR_PARSE,
-                            fmt::format("Encountered invalid character '{}' in file {} on line {} character {}\n{}",
-                                std::string(begin_it, it), cfilename, state->line, state->character, source_line));
-                        return ELEMENT_ERROR_PARSE;
+                        state->log(result,
+                                   fmt::format("Failed to parse identifier '{}'",
+                                               std::string(begin_it, it)));
+                        return result;
                     }
                 }
+                else
+                {
+                    UTF8_NEXT(it, end);
+                }
+                break;
+            }
+            default:
+            {
+                if (isid_alpha(c))
+                {
+                    const auto begin_it = it;
+                    auto result = tokenise_identifier(it, end, state);
+                    if (result != ELEMENT_OK)
+                    {
+                        state->log(result,
+                                   fmt::format("Failed to parse identifier '{}'",
+                                               std::string(begin_it, it)));
+                        return result;
+                    }
+                }
+                else if (element_isdigit(c) || c == '-' || c == '+')
+                {
+                    const auto begin_it = it;
+                    auto result = tokenise_number(it, end, state);
+                    if (result != ELEMENT_OK)
+                    {
+                        state->log(result,
+                                   fmt::format("Failed to parse number '{}'",
+                                               std::string(begin_it, it)));
+                        return result;
+                    }
+                }
+                else if (element_iseol(c))
+                {
+                    ++state->line;
+                    state->character = 1;
+                    state->pos += 1;
+                    state->line_start_position = state->pos;
+                    state->line_number_to_line_pos.push_back(state->line_start_position);
+                    reset_token(state);
+                    UTF8_NEXT(it, end);
+                }
+                else if (element_isspace(c))
+                {
+                    //just eat it!
+                    state->pos += 1;
+                    state->character += 1;
+                    UTF8_NEXT(it, end);
+                }
+                else
+                {
+                    const auto begin_it = it;
+                    UTF8_NEXT(it, end);
+                    std::string source_line;
+                    source_line.resize(1024);
+                    memcpy(source_line.data(), cinput + state->line_start_position, state->pos - state->line_start_position);
+                    state->log(ELEMENT_ERROR_PARSE,
+                               fmt::format("Encountered invalid character '{}' in file {} on line {} character {}\n{}",
+                                           std::string(begin_it, it), cfilename, state->line, state->character, source_line));
+                    return ELEMENT_ERROR_PARSE;
+                }
+            }
             }
         }
         add_token(state, ELEMENT_TOK_EOF, 0);
@@ -442,25 +499,30 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
     catch (const std::exception& e)
     {
         state->log(ELEMENT_ERROR_EXCEPTION,
-            fmt::format("Exception occured: {}", e.what()));
+                   fmt::format("Exception occured: {}", e.what()));
 
         return ELEMENT_ERROR_EXCEPTION;
     }
     catch (...) //potentially EOF when last source character is UTF?
     {
         state->log(ELEMENT_ERROR_EXCEPTION,
-            fmt::format("Exception occured"));
+                   fmt::format("Exception occured"));
 
         return ELEMENT_ERROR_EXCEPTION;
     }
 }
 
-#define PRINTCASE(a) case a: c = #a; break;
+#define PRINTCASE(a) \
+    case a:          \
+        c = #a;      \
+        break;
 void element_tokeniser_print(const element_tokeniser_ctx* state)
 {
-    for (const auto& t : state->tokens) {
+    for (const auto& t : state->tokens)
+    {
         const char* c;
-        switch (t.type) {
+        switch (t.type)
+        {
             PRINTCASE(ELEMENT_TOK_NONE);
             PRINTCASE(ELEMENT_TOK_NUMBER);
             PRINTCASE(ELEMENT_TOK_IDENTIFIER);
@@ -473,7 +535,9 @@ void element_tokeniser_print(const element_tokeniser_ctx* state)
             PRINTCASE(ELEMENT_TOK_BRACEL);
             PRINTCASE(ELEMENT_TOK_BRACER);
             PRINTCASE(ELEMENT_TOK_EQUALS);
-            default: "ELEMENT_TOK_<UNKNOWN>"; break;
+        default:
+            "ELEMENT_TOK_<UNKNOWN>";
+            break;
         }
         std::string buf;
         if (t.tok_len > 0)

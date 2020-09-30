@@ -10,7 +10,7 @@ using namespace element;
 
 function_declaration::function_declaration(identifier name, const scope* parent_scope, const kind function_kind)
     : declaration(std::move(name), parent_scope)
-    , constraint_ (std::make_unique<user_function_constraint>(this)) //todo: what to use
+    , constraint_(std::make_unique<user_function_constraint>(this)) //todo: what to use
     , function_kind(function_kind)
 {
     qualifier = function_qualifier;

@@ -16,7 +16,7 @@ intrinsic_list_fold::intrinsic_list_fold()
 }
 
 object_const_shared_ptr compile_time_fold(
-    const compilation_context& context, 
+    const compilation_context& context,
     const std::shared_ptr<const struct_instance>& list,
     const object_const_shared_ptr& initial,
     const std::shared_ptr<const function_instance>& accumulator_function,
@@ -44,14 +44,14 @@ object_const_shared_ptr compile_time_fold(
             return nullptr;
 
         //note: the order must be maintained across compilers to ensure the same results for non-commutative operations
-        aggregate = accumulator_function->call(context, {std::move(aggregate), std::move(at_index)}, source_info);
+        aggregate = accumulator_function->call(context, { std::move(aggregate), std::move(at_index) }, source_info);
     }
 
     return aggregate;
 }
 
 object_const_shared_ptr runtime_fold(
-    const compilation_context& context, 
+    const compilation_context& context,
     const std::shared_ptr<const struct_instance>& list,
     const object_const_shared_ptr& initial,
     const std::shared_ptr<const function_instance>& accumulator_function,
@@ -64,7 +64,7 @@ object_const_shared_ptr runtime_fold(
     element_result result = ELEMENT_OK;
     const auto placeholder_offset = 0;
     const auto accumulator_compiled = compile_placeholder_expression(context, *accumulator_function, accumulator_function->declarer->get_inputs(), result, source_info, placeholder_offset);
-    if(!accumulator_compiled)
+    if (!accumulator_compiled)
         return std::make_shared<const error>("accumulator failed to compile", result, source_info);
 
     const auto accumulator_expression = accumulator_compiled->to_expression();
@@ -75,7 +75,7 @@ object_const_shared_ptr runtime_fold(
     if (!listfold)
         return std::make_shared<const error>("failed to find @list_fold", ELEMENT_ERROR_UNKNOWN, source_info);
 
-    std::vector<object_const_shared_ptr> list_fold_args {list, initial, accumulator_function};
+    std::vector<object_const_shared_ptr> list_fold_args{ list, initial, accumulator_function };
     return listfold->call(context, std::move(list_fold_args), source_info);
 }
 

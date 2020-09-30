@@ -37,7 +37,7 @@ struct_instance::struct_instance(const struct_declaration* declarer, const std::
 }
 
 object_const_shared_ptr struct_instance::index(const compilation_context& context, const identifier& name,
-                                                        const source_information& source_info) const
+                                               const source_information& source_info) const
 {
     const auto found_field = fields.find(name.value);
 
@@ -49,7 +49,7 @@ object_const_shared_ptr struct_instance::index(const compilation_context& contex
 }
 
 object_const_shared_ptr struct_instance::compile(const compilation_context& context,
-                                                        const source_information& source_info) const
+                                                 const source_information& source_info) const
 {
     return shared_from_this();
 }
@@ -68,7 +68,7 @@ std::shared_ptr<const element_expression> struct_instance::to_expression() const
         if (!expr)
             return nullptr;
 
-        dependents.push_back({ input.get_name(), std::move(expr)});
+        dependents.push_back({ input.get_name(), std::move(expr) });
     }
 
     return std::make_shared<element_expression_structure>(std::move(dependents));

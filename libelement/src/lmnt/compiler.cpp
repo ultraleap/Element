@@ -6,49 +6,49 @@
 #include <unordered_map>
 
 static std::unordered_map<element_unary_op, lmnt_opcode> unary_scalar_ops = {
-    {element_unary_op::abs, LMNT_OP_ABSS},
-    {element_unary_op::acos, LMNT_OP_ACOS},
-    {element_unary_op::asin, LMNT_OP_ASIN},
-    {element_unary_op::atan, LMNT_OP_ATAN},
-    {element_unary_op::ceil, LMNT_OP_CEILS},
-    {element_unary_op::cos, LMNT_OP_COS},
-    {element_unary_op::floor, LMNT_OP_FLOORS},
+    { element_unary_op::abs, LMNT_OP_ABSS },
+    { element_unary_op::acos, LMNT_OP_ACOS },
+    { element_unary_op::asin, LMNT_OP_ASIN },
+    { element_unary_op::atan, LMNT_OP_ATAN },
+    { element_unary_op::ceil, LMNT_OP_CEILS },
+    { element_unary_op::cos, LMNT_OP_COS },
+    { element_unary_op::floor, LMNT_OP_FLOORS },
     // {element_unary_op::ln, LMNT_OP_LN},
     // {element_unary_op::round, LMNT_OP_ROUNDS},
-    {element_unary_op::sin, LMNT_OP_SIN},
-    {element_unary_op::tan, LMNT_OP_TAN},
+    { element_unary_op::sin, LMNT_OP_SIN },
+    { element_unary_op::tan, LMNT_OP_TAN },
 };
 
 static std::unordered_map<element_unary_op, lmnt_opcode> unary_vector_ops = {
-    {element_unary_op::abs, LMNT_OP_ABSV},
-    {element_unary_op::ceil, LMNT_OP_CEILV},
-    {element_unary_op::floor, LMNT_OP_FLOORV},
+    { element_unary_op::abs, LMNT_OP_ABSV },
+    { element_unary_op::ceil, LMNT_OP_CEILV },
+    { element_unary_op::floor, LMNT_OP_FLOORV },
     // {element_unary_op::round, LMNT_OP_ROUNDV},
 };
 
 static std::unordered_map<element_binary_op, lmnt_opcode> binary_scalar_ops = {
-    {element_binary_op::add, LMNT_OP_ADDSS},
+    { element_binary_op::add, LMNT_OP_ADDSS },
     // {element_binary_op::atan2, LMNT_OP_ATAN2},
-    {element_binary_op::div, LMNT_OP_DIVSS},
+    { element_binary_op::div, LMNT_OP_DIVSS },
     // {element_binary_op::log, LMNT_OP_LOG},
-    {element_binary_op::max, LMNT_OP_MAXSS},
-    {element_binary_op::min, LMNT_OP_MINSS},
-    {element_binary_op::mul, LMNT_OP_MULSS},
-    {element_binary_op::pow, LMNT_OP_POWSS},
-    {element_binary_op::rem, LMNT_OP_MODSS}, // TODO
-    {element_binary_op::sub, LMNT_OP_SUBSS},
+    { element_binary_op::max, LMNT_OP_MAXSS },
+    { element_binary_op::min, LMNT_OP_MINSS },
+    { element_binary_op::mul, LMNT_OP_MULSS },
+    { element_binary_op::pow, LMNT_OP_POWSS },
+    { element_binary_op::rem, LMNT_OP_MODSS }, // TODO
+    { element_binary_op::sub, LMNT_OP_SUBSS },
 };
 
 // TODO: VS variants...
 static std::unordered_map<element_binary_op, lmnt_opcode> binary_vector_ops = {
-    {element_binary_op::add, LMNT_OP_ADDVV},
-    {element_binary_op::div, LMNT_OP_DIVVV},
-    {element_binary_op::max, LMNT_OP_MAXVV},
-    {element_binary_op::min, LMNT_OP_MINVV},
-    {element_binary_op::mul, LMNT_OP_MULVV},
-    {element_binary_op::pow, LMNT_OP_POWVV}, // TODO: special-case sqrt
-    {element_binary_op::rem, LMNT_OP_MODVV}, // TODO
-    {element_binary_op::sub, LMNT_OP_SUBVV},
+    { element_binary_op::add, LMNT_OP_ADDVV },
+    { element_binary_op::div, LMNT_OP_DIVVV },
+    { element_binary_op::max, LMNT_OP_MAXVV },
+    { element_binary_op::min, LMNT_OP_MINVV },
+    { element_binary_op::mul, LMNT_OP_MULVV },
+    { element_binary_op::pow, LMNT_OP_POWVV }, // TODO: special-case sqrt
+    { element_binary_op::rem, LMNT_OP_MODVV }, // TODO
+    { element_binary_op::sub, LMNT_OP_SUBVV },
 };
 
 struct compiler_ctx
@@ -64,7 +64,7 @@ struct compiler_ctx
 
 element_result buf_raw_write_and_update(char* b, size_t bsize, size_t& i, const void* d, size_t dsize)
 {
-    if (i + dsize > bsize) 
+    if (i + dsize > bsize)
         return ELEMENT_ERROR_INVALID_OPERATION;
     std::memcpy(b + i, d, dsize);
     i += dsize;
@@ -81,11 +81,15 @@ static element_result generate_lmnt_constants(
     compiler_ctx& context,
     const expression_const_shared_ptr& expr)
 {
-    if (auto ce = expr->as<element_expression_constant>()) {
+    if (auto ce = expr->as<element_expression_constant>())
+    {
         size_t cidx = context.archive.get_constant(ce->value());
         context.entries()[expr.get()] = { element_lmnt_stack_entry::entry_type::constant, cidx, 1 };
-    } else {
-        for (const auto& t : expr->dependents()) {
+    }
+    else
+    {
+        for (const auto& t : expr->dependents())
+        {
             ELEMENT_OK_OR_RETURN(generate_lmnt_constants(context, t));
         }
     }
@@ -98,23 +102,31 @@ static element_result generate_lmnt_ops(
     size_t depth = 0)
 {
     // TODO: smarts of any sort - especially vectorisation
-    if (auto ce = expr->as<element_expression_constant>()) {
+    if (auto ce = expr->as<element_expression_constant>())
+    {
         // already computed by previous pass
         // TODO: if constant -> output, do a COPY
         return ELEMENT_OK;
-    } else if (auto ie = expr->as<element_expression_input>()) {
+    }
+    else if (auto ie = expr->as<element_expression_input>())
+    {
         assert(ie->index() + ie->get_size() <= context.function->inputs_size);
-        context.entries()[expr.get()] = {element_lmnt_stack_entry::entry_type::input, ie->index(), ie->get_size()};
+        context.entries()[expr.get()] = { element_lmnt_stack_entry::entry_type::input, ie->index(), ie->get_size() };
         // TODO: if input -> output, do a COPY
         return ELEMENT_OK;
-    } else if (auto se = expr->as<element_expression_structure>()) {
+    }
+    else if (auto se = expr->as<element_expression_structure>())
+    {
         assert(depth == 0);
-        for (const auto& d : se->dependents()) {
+        for (const auto& d : se->dependents())
+        {
             // do *not* increment depth here: let the dependents write to the outputs as needed
             ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, d, depth));
         }
         return ELEMENT_OK;
-    } else if (auto ue = expr->as<element_expression_unary>()) {
+    }
+    else if (auto ue = expr->as<element_expression_unary>())
+    {
         ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, ue->input(), depth + 1));
         element_lmnt_instruction op;
         // find our opcode
@@ -136,7 +148,9 @@ static element_result generate_lmnt_ops(
         context.function->ops.push_back(op);
         context.entries()[expr.get()] = op.arg3;
         return ELEMENT_OK;
-    } else if (auto be = expr->as<element_expression_binary>()) {
+    }
+    else if (auto be = expr->as<element_expression_binary>())
+    {
         ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, be->input1(), depth + 1));
         ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, be->input2(), depth + 1));
         element_lmnt_instruction op;
@@ -164,24 +178,27 @@ static element_result generate_lmnt_ops(
         context.function->ops.push_back(op);
         context.entries()[expr.get()] = op.arg3;
         return ELEMENT_OK;
-    } else {
+    }
+    else
+    {
         assert(false);
         return ELEMENT_ERROR_NO_IMPL;
     }
 }
 
-
 static size_t get_input_size(const expression_const_shared_ptr& expr)
 {
     auto ie = expr->as<element_expression_input>();
-    if (ie) {
+    if (ie)
+    {
         return ie->get_size();
-    } else {
+    }
+    else
+    {
         return std::accumulate(expr->dependents().begin(), expr->dependents().end(), size_t(0),
-            [](size_t a, const auto& b) { return a + get_input_size(b); });
+                               [](size_t a, const auto& b) { return a + get_input_size(b); });
     }
 }
-
 
 static element_result lmnt_compile(
     element_interpreter_ctx& context,
@@ -209,12 +226,11 @@ static element_result lmnt_compile(
     return ELEMENT_OK;
 }
 
-
 static element_result build_archive(
     const element_lmnt_archive_ctx& archive,
     char* buffer, size_t& size)
 {
-    const size_t defs_size = sizeof(lmnt_def) * archive.functions.size();  // assumes no bases, which is a feature we probably want to kill anyway
+    const size_t defs_size = sizeof(lmnt_def) * archive.functions.size(); // assumes no bases, which is a feature we probably want to kill anyway
     const size_t constants_size = sizeof(lmnt_value) * archive.constants.size();
 
     size_t idx = 0;
@@ -226,7 +242,8 @@ static element_result build_archive(
     string_indexes.reserve(archive.functions.size());
     std::vector<lmnt_loffset> code_indexes;
     code_indexes.reserve(archive.functions.size());
-    for (const auto& fn : archive.functions) {
+    for (const auto& fn : archive.functions)
+    {
         string_indexes.push_back(strings_size);
         //todo: fix
         throw;
@@ -244,12 +261,14 @@ static element_result build_archive(
     const size_t archive_size = sizeof(lmnt_archive_header) + strings_size + defs_size + code_size + rounding + constants_size;
 
     // if we're just being asked for the size, leave now
-    if (!buffer) {
+    if (!buffer)
+    {
         size = archive_size;
         return ELEMENT_OK;
     }
 
-    if (archive_size > size) return ELEMENT_ERROR_INVALID_SIZE;
+    if (archive_size > size)
+        return ELEMENT_ERROR_INVALID_SIZE;
     size = archive_size;
 
     // write header
@@ -268,7 +287,8 @@ static element_result build_archive(
     ELEMENT_OK_OR_RETURN(buf_write_and_update(buffer, size, idx, hdr));
 
     // write strings
-    for (const auto& fn : archive.functions) {
+    for (const auto& fn : archive.functions)
+    {
         throw;
 #if 0
         std::string name = fn.function->name();
@@ -278,12 +298,13 @@ static element_result build_archive(
     }
 
     // write defs
-    for (size_t i = 0; i < archive.functions.size(); ++i) {
+    for (size_t i = 0; i < archive.functions.size(); ++i)
+    {
         const element_lmnt_compiled_function& fn = archive.functions[i];
         lmnt_def def;
         def.length = sizeof(lmnt_def);
         def.name = string_indexes[i];
-        def.flags = 0;  // TODO: single-constant optimisation
+        def.flags = 0;              // TODO: single-constant optimisation
         def.code = code_indexes[i]; // TODO: single-constant optimisation
         def.stack_count_unaligned = lmnt_offset(fn.locals_size + fn.inputs_size + fn.outputs_size);
         def.stack_count_aligned = lmnt_offset(fn.locals_size + fn.inputs_size + fn.outputs_size);
@@ -294,22 +315,29 @@ static element_result build_archive(
         ELEMENT_OK_OR_RETURN(buf_write_and_update(buffer, size, idx, def));
     }
 
-    auto get_arg_index = [&archive](const element_lmnt_compiled_function& fn, const element_lmnt_stack_entry& arg)
-    {
+    auto get_arg_index = [&archive](const element_lmnt_compiled_function& fn, const element_lmnt_stack_entry& arg) {
         lmnt_offset argi = lmnt_offset(arg.index);
-        switch (arg.type) {
-        case element_lmnt_stack_entry::entry_type::local:  argi += lmnt_offset(fn.outputs_size); // fallthrough
-        case element_lmnt_stack_entry::entry_type::output: argi += lmnt_offset(fn.inputs_size);  // fallthrough
-        case element_lmnt_stack_entry::entry_type::input:  argi += lmnt_offset(archive.constants.size()); // fallthrough
-        case element_lmnt_stack_entry::entry_type::constant: default: break;
+        switch (arg.type)
+        {
+        case element_lmnt_stack_entry::entry_type::local:
+            argi += lmnt_offset(fn.outputs_size); // fallthrough
+        case element_lmnt_stack_entry::entry_type::output:
+            argi += lmnt_offset(fn.inputs_size); // fallthrough
+        case element_lmnt_stack_entry::entry_type::input:
+            argi += lmnt_offset(archive.constants.size()); // fallthrough
+        case element_lmnt_stack_entry::entry_type::constant:
+        default:
+            break;
         }
         return argi;
     };
 
     // write code
-    for (const auto& fn : archive.functions) {
+    for (const auto& fn : archive.functions)
+    {
         ELEMENT_OK_OR_RETURN(buf_write_and_update(buffer, size, idx, lmnt_loffset(fn.ops.size())));
-        for (const auto& op : fn.ops) {
+        for (const auto& op : fn.ops)
+        {
             lmnt_instruction iop;
             iop.opcode = op.opcode;
             iop.arg1 = get_arg_index(fn, op.arg1);
@@ -320,7 +348,7 @@ static element_result build_archive(
     }
 
     // write padding
-    char padding[PAD_TO] = {0};
+    char padding[PAD_TO] = { 0 };
     if (rounding)
         ELEMENT_OK_OR_RETURN(buf_raw_write_and_update(buffer, size, idx, padding, rounding));
 
@@ -329,7 +357,6 @@ static element_result build_archive(
 
     return ELEMENT_OK;
 }
-
 
 element_result element_lmnt_archive_init(element_lmnt_archive_ctx** context)
 {

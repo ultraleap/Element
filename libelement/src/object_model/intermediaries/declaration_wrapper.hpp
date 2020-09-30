@@ -24,24 +24,30 @@ namespace element
         [[nodiscard]] const std::optional<port>& get_output() const override { return declarer->get_output(); }
         [[nodiscard]] bool serializable(const compilation_context& context) const { return declarer->serializable(context); }
         [[nodiscard]] bool deserializable(const compilation_context& context) const { return declarer->deserializable(context); }
-        [[nodiscard]] object_const_shared_ptr generate_placeholder (const compilation_context& context, int& placeholder_index) const { return declarer->generate_placeholder(context, placeholder_index); }
+        [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index) const { return declarer->generate_placeholder(context, placeholder_index); }
         //[[nodiscard]] std::string location() const { return declarer->location(); }
-        
+
         [[nodiscard]] object_const_shared_ptr index(const compilation_context& context,
                                                     const identifier& name,
                                                     const source_information& source_info) const
-        { return declarer->index(context, name, source_info); }
+        {
+            return declarer->index(context, name, source_info);
+        }
 
         [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,
                                                    std::vector<object_const_shared_ptr> compiled_args,
                                                    const source_information& source_info) const
-        { return declarer->call(context, std::move(compiled_args), source_info); }
+        {
+            return declarer->call(context, std::move(compiled_args), source_info);
+        }
 
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
                                                       const source_information& source_info) const
-        { return declarer->compile(context, source_info); }
+        {
+            return declarer->compile(context, source_info);
+        }
 
     private:
         const declaration* declarer = nullptr;
     };
-}
+} // namespace element

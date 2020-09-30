@@ -38,10 +38,9 @@ typedef struct
 
     int line;
     int line_start_position; //the position at which the line starts in the input string
-    int character; //the position in the line where the token starts (starting from 1, not 0)
+    int character;           //the position in the line where the token starts (starting from 1, not 0)
     const char* file_name;
 } element_token;
-
 
 typedef struct element_tokeniser_ctx element_tokeniser_ctx;
 

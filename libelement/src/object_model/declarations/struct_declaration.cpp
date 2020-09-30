@@ -41,10 +41,10 @@ object_const_shared_ptr struct_declaration::call(
     const source_information& source_info) const
 {
     //this function handles construction of an intrinsic struct instance (get_intrinsic(...)->call(...)) or a user struct instance (make_shared<struct_instance>(...))
-    if (is_intrinsic()) 
+    if (is_intrinsic())
     {
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
-        if (intrinsic) 
+        if (intrinsic)
             return intrinsic->call(context, compiled_args, source_info);
 
         //todo: could we validate this when creating the object model? then there's less to check during compilation

@@ -29,4 +29,4 @@ namespace element
         //todo: private
         std::vector<frame> frames;
     };
-}
+} // namespace element

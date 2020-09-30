@@ -21,4 +21,4 @@ namespace element
         //TODO: this might need to be a constraint_const_shared_ptr
         type_const_ptr argument_type;
     };
-}
+} // namespace element

@@ -9,7 +9,8 @@ using namespace element;
 
 scope::scope(const scope* parent_scope, const object* const declaration_or_expression)
     : /*declaration_or_expression(declaration_or_expression)
-    ,*/ parent_scope(parent_scope)
+    ,*/
+    parent_scope(parent_scope)
 {
 }
 
@@ -75,7 +76,6 @@ bool scope::add_declaration(std::unique_ptr<declaration> declaration)
     const auto& [it, success] = declarations.try_emplace(declaration->name.value, std::move(declaration));
     return success;
 }
-
 
 bool scope::remove_declaration(const identifier& name)
 {

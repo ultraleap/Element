@@ -41,4 +41,4 @@ namespace element
         element_result code = ELEMENT_ERROR_UNKNOWN;
         mutable bool logged = false;
     };
-}
+} // namespace element

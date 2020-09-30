@@ -22,4 +22,4 @@ namespace element
 
         [[nodiscard]] bool is_intrinsic() const override;
     };
-}
+} // namespace element

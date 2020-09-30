@@ -17,7 +17,8 @@ indexing_expression::indexing_expression(identifier name, const expression_chain
 [[nodiscard]] object_const_shared_ptr indexing_expression::resolve(const compilation_context& context, const object* obj)
 {
     auto element = obj->index(context, name, source_info);
-    if (element) return element;
+    if (element)
+        return element;
 
     return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, obj->typeof_info());
 }

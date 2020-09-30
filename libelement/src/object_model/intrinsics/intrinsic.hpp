@@ -36,21 +36,23 @@ namespace element
     private:
         const static std::unordered_map<std::string, std::function<std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter>(const declaration*)>> validation_func_map;
     };
-    
+
     class intrinsic_not_implemented final : public intrinsic
     {
     public:
         DECLARE_TYPE_ID();
-        intrinsic_not_implemented() : intrinsic(0) {}
+        intrinsic_not_implemented()
+            : intrinsic(0)
+        {}
     };
 
     template <typename T>
     bool intrinsic::register_intrinsic(const element_interpreter_ctx* context, const element_ast* ast, const declaration& declaration)
     {
-        if (!declaration.is_intrinsic()) 
+        if (!declaration.is_intrinsic())
         {
             const auto error = element::build_log_error(context->src_context.get(),
-                ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
+                                                        ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
             context->logger->log(error);
 
             return false;
@@ -63,7 +65,7 @@ namespace element
         if (it == validation_func_map.end())
         {
             const auto error = element::build_log_error(context->src_context.get(),
-                ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
+                                                        ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
             context->logger->log(error);
 
             return false;
@@ -74,7 +76,7 @@ namespace element
         if (!intrinsic)
         {
             const auto error = element::build_log_error(context->src_context.get(),
-                ast, log_error_message_code::intrinsic_type_mismatch, declaration.name.value);
+                                                        ast, log_error_message_code::intrinsic_type_mismatch, declaration.name.value);
             context->logger->log(error);
 
             return false;
@@ -90,4 +92,4 @@ namespace element
         const std::vector<port>& inputs,
         element_result& out_result,
         const int index_offset);
-}
+} // namespace element

@@ -6,13 +6,14 @@
 //SELF
 #include "common_internal.hpp"
 
-enum class element_nullary_op {
-	//num
-	nan,
-	positive_infinity,
-	negative_infinity,
+enum class element_nullary_op
+{
+    //num
+    nan,
+    positive_infinity,
+    negative_infinity,
 
-	//boolean
+    //boolean
     true_value,
     false_value,
 };
@@ -37,7 +38,7 @@ enum class element_unary_op
 
 enum class element_binary_op
 {
-	//num
+    //num
     add,
     sub,
     mul,
@@ -49,15 +50,15 @@ enum class element_binary_op
     log,
     atan2,
 
-	//boolean
+    //boolean
     and_, //reserved keyword
-    or_, //reserved keyword
+    or_,  //reserved keyword
 
-	//comparison
-	eq,
-	neq,
-	lt,
-	leq,
-	gt,
-	geq
+    //comparison
+    eq,
+    neq,
+    lt,
+    leq,
+    gt,
+    geq
 };

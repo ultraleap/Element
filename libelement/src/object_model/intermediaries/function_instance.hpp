@@ -20,7 +20,7 @@ namespace element
         [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,
                                                    std::vector<object_const_shared_ptr> compiled_args,
                                                    const source_information& source_info) const override;
-                                                   
+
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
                                                       const source_information& source_info) const override;
 
@@ -33,4 +33,4 @@ namespace element
         mutable capture_stack captures;
         std::vector<object_const_shared_ptr> provided_arguments;
     };
-}
+} // namespace element

@@ -10,14 +10,15 @@ namespace element
     class struct_declaration final : public declaration
     {
     public:
-        enum class kind {
+        enum class kind
+        {
             custom,
             intrinsic
         };
 
     public:
         struct_declaration(identifier name, const scope* parent_scope, kind struct_kind);
-        
+
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(const int depth) const override;
 
@@ -44,4 +45,4 @@ namespace element
         std::unique_ptr<user_type> type;
         kind struct_kind;
     };
-}
+} // namespace element

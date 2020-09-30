@@ -22,7 +22,11 @@ namespace element
     class log_message;
 }
 
-#define ENSURE_NOT_NULL(t) if (t == nullptr) { return ELEMENT_ERROR_INVALID_PTR; }
+#define ENSURE_NOT_NULL(t)                \
+    if (t == nullptr)                     \
+    {                                     \
+        return ELEMENT_ERROR_INVALID_PTR; \
+    }
 
 using LogCallback = void (*)(const element_log_message*, void*);
 
@@ -30,7 +34,7 @@ struct element_log_ctx
 {
     LogCallback callback;
     void* user_data = nullptr;
-	
+
     void log(const std::string& message, const element_stage stage) const;
     void log(const element_tokeniser_ctx& context, element_result code, const std::string& message, int length = 0, element_log_message* related_message = nullptr) const;
     void log(const element_interpreter_ctx& context, element_result code, const std::string& message, const std::string& filename) const;
@@ -83,4 +87,4 @@ namespace element
     {
         std::map<const char*, file_information> file_info;
     };
-}
+} // namespace element

@@ -40,7 +40,7 @@ std::string constraint_declaration::typeof_info() const
 
 std::string function_declaration::typeof_info() const
 {
-    switch(function_kind)
+    switch (function_kind)
     {
     case kind::intrinsic:
         return "IntrinsicFunction";
@@ -120,9 +120,9 @@ std::string struct_declaration::to_code(const int depth) const
     for (auto i = 0; i < depth; ++i)
         result += offset;
 
-    if (has_inputs()) {
-        static auto accumulate = [depth](std::string accumulator, const port& port)
-        {
+    if (has_inputs())
+    {
+        static auto accumulate = [depth](std::string accumulator, const port& port) {
             return std::move(accumulator) + ", " + port.typeof_info() + port.to_code(depth);
         };
 
@@ -146,9 +146,9 @@ std::string constraint_declaration::to_code(const int depth) const
     for (auto i = 0; i < depth; ++i)
         result += offset;
 
-    if (has_inputs()) {
-        static auto accumulate = [depth](std::string accumulator, const port& port)
-        {
+    if (has_inputs())
+    {
+        static auto accumulate = [depth](std::string accumulator, const port& port) {
             return std::move(accumulator) + ", " + port.typeof_info() + port.to_code(depth);
         };
 
@@ -175,9 +175,9 @@ std::string function_declaration::to_code(const int depth) const
     for (auto i = 0; i < depth; ++i)
         result += offset;
 
-    if (has_inputs()) {
-        static auto accumulate = [depth](std::string accumulator, const port& port)
-        {
+    if (has_inputs())
+    {
+        static auto accumulate = [depth](std::string accumulator, const port& port) {
             return std::move(accumulator) + ", " + port.typeof_info() + port.to_code(depth);
         };
 
@@ -211,8 +211,7 @@ std::string namespace_declaration::to_code(const int depth) const
 
 std::string expression_chain::to_code(const int depth) const
 {
-    static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression>& expression)
-    {
+    static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression>& expression) {
         return std::move(accumulator) + expression->to_code();
     };
 
@@ -226,8 +225,7 @@ std::string identifier_expression::to_code(const int depth) const
 
 std::string call_expression::to_code(const int depth) const
 {
-    static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression_chain>& chain)
-    {
+    static auto accumulate = [](std::string accumulator, const std::unique_ptr<expression_chain>& chain) {
         return std::move(accumulator) + ", " + chain->to_code();
     };
 

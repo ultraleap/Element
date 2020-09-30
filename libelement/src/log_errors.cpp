@@ -10,7 +10,7 @@ namespace element::detail
         registered_errors = true;
 
         register_log_error<std::string>(
-            log_error_message_code::parse_identifier_failed, 
+            log_error_message_code::parse_identifier_failed,
             "invalid identifier '{}'",
             ELEMENT_ERROR_INVALID_IDENTIFIER,
             ELEMENT_STAGE_PARSER);
@@ -226,4 +226,4 @@ namespace element::detail
 
         return true;
     }
-}
+} // namespace element::detail

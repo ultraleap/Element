@@ -18,6 +18,7 @@ namespace element
         [[nodiscard]] object_const_shared_ptr resolve(const compilation_context& context, const object* obj) override;
 
         std::unique_ptr<scope> our_scope;
+
     private:
     };
-}
+} // namespace element

@@ -6,17 +6,17 @@
 #include "object_model/compilation_context.hpp"
 #include "object_model/error.hpp"
 
-DEFINE_TYPE_ID(element_expression_constant,        1U << 0);
-DEFINE_TYPE_ID(element_expression_input,           1U << 1);
-DEFINE_TYPE_ID(element_expression_structure,       1U << 2);
-DEFINE_TYPE_ID(element_expression_nullary,         1U << 3);
-DEFINE_TYPE_ID(element_expression_unary,           1U << 4);
-DEFINE_TYPE_ID(element_expression_binary,          1U << 5);
-DEFINE_TYPE_ID(element_expression_if,              1U << 6);
-DEFINE_TYPE_ID(element_expression_select,          1U << 7);
-DEFINE_TYPE_ID(element_expression_indexer,         1U << 8);
-DEFINE_TYPE_ID(element_expression_for,             1U << 9);
-DEFINE_TYPE_ID(element_expression_fold,            1U << 10);
+DEFINE_TYPE_ID(element_expression_constant, 1U << 0);
+DEFINE_TYPE_ID(element_expression_input, 1U << 1);
+DEFINE_TYPE_ID(element_expression_structure, 1U << 2);
+DEFINE_TYPE_ID(element_expression_nullary, 1U << 3);
+DEFINE_TYPE_ID(element_expression_unary, 1U << 4);
+DEFINE_TYPE_ID(element_expression_binary, 1U << 5);
+DEFINE_TYPE_ID(element_expression_if, 1U << 6);
+DEFINE_TYPE_ID(element_expression_select, 1U << 7);
+DEFINE_TYPE_ID(element_expression_indexer, 1U << 8);
+DEFINE_TYPE_ID(element_expression_for, 1U << 9);
+DEFINE_TYPE_ID(element_expression_fold, 1U << 10);
 
 std::shared_ptr<const element::object> element_expression::compile(const element::compilation_context& context, const element::source_information& source_info) const
 {
@@ -93,8 +93,9 @@ element_expression_fold::element_expression_fold(expression_const_shared_ptr lis
 }
 
 element_expression_indexer::element_expression_indexer(std::shared_ptr<const element_expression_for> for_expression, int index, element::type_const_ptr type)
-    : element_expression(type_id, type) 
-    , for_expression{std::move(for_expression)}, index{index}
+    : element_expression(type_id, type)
+    , for_expression{ std::move(for_expression) }
+    , index{ index }
 {
 }
 

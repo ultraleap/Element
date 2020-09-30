@@ -45,4 +45,4 @@ namespace element
         std::unique_ptr<constraint> constraint_;
         kind function_kind;
     };
-}
+} // namespace element

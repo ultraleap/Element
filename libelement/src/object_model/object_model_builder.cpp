@@ -36,8 +36,8 @@ namespace element
             return function_declaration::kind::intrinsic;
 
         return body->type == ELEMENT_AST_NODE_SCOPE
-            ? function_declaration::kind::scope_bodied
-            : function_declaration::kind::expression_bodied;
+                   ? function_declaration::kind::scope_bodied
+                   : function_declaration::kind::expression_bodied;
     };
 
     std::unique_ptr<type_annotation> build_type_annotation(const element_interpreter_ctx* context, const element_ast* ast, element_result& output_result)
@@ -64,7 +64,7 @@ namespace element
     void build_output(const element_interpreter_ctx* context, element_ast* output, declaration& declaration, element_result& output_result)
     {
         auto type_annotation = build_type_annotation(context, output, output_result);
-        declaration.output.emplace(port{&declaration, identifier::return_identifier, std::move(type_annotation) });
+        declaration.output.emplace(port{ &declaration, identifier::return_identifier, std::move(type_annotation) });
     }
 
     void build_inputs(const element_interpreter_ctx* context, element_ast* inputs, declaration& declaration, element_result& output_result)
@@ -120,8 +120,8 @@ namespace element
         const auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
         auto struct_kind = intrinsic
-            ? struct_declaration::kind::intrinsic
-            : struct_declaration::kind::custom;
+                               ? struct_declaration::kind::intrinsic
+                               : struct_declaration::kind::custom;
 
         auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, struct_kind);
 
@@ -149,8 +149,8 @@ namespace element
         const auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
         auto constraint_kind = intrinsic
-            ? constraint_declaration::kind::intrinsic
-            : constraint_declaration::kind::custom;
+                                   ? constraint_declaration::kind::intrinsic
+                                   : constraint_declaration::kind::custom;
 
         auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), parent_scope, constraint_kind);
 
@@ -201,7 +201,8 @@ namespace element
             }
             else
             {
-                for (auto& [nested_identifier, nested_expression] : deferred_expressions) {
+                for (auto& [nested_identifier, nested_expression] : deferred_expressions)
+                {
 
                     auto lambda = build_lambda_declaration(context, nested_identifier, nested_expression, lambda_function_decl->our_scope.get(), output_result);
                     const auto is_added = lambda_function_decl->our_scope->add_declaration(std::move(lambda));
@@ -234,12 +235,11 @@ namespace element
 
         build_inputs_output(context, decl, *function_decl, output_result, ELEMENT_AST_NODE_FUNCTION);
 
-        
         const auto scope_bodied = body->type == ELEMENT_AST_NODE_SCOPE;
-        const auto expression_bodied= body->type == ELEMENT_AST_NODE_CALL
-            || body->type == ELEMENT_AST_NODE_LITERAL
-            || body->type == ELEMENT_AST_NODE_LAMBDA
-            || body->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK;
+        const auto expression_bodied = body->type == ELEMENT_AST_NODE_CALL
+                                       || body->type == ELEMENT_AST_NODE_LITERAL
+                                       || body->type == ELEMENT_AST_NODE_LAMBDA
+                                       || body->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK;
 
         if (scope_bodied)
         {
@@ -277,11 +277,12 @@ namespace element
                 function_decl->body = std::move(chain);
             else
             {
-                for (auto& [identifier, expression] : deferred_expressions) {
+                for (auto& [identifier, expression] : deferred_expressions)
+                {
 
                     auto lambda = build_lambda_declaration(context, identifier, expression, function_decl->our_scope.get(), output_result);
                     const auto is_added = function_decl->our_scope->add_declaration(std::move(lambda));
-                    if(!is_added)
+                    if (!is_added)
                     {
                         //todo: error
                     }
@@ -430,7 +431,8 @@ namespace element
         //clean me up, Scotty!
 
         //early return if lambda
-        if (ast->type == ELEMENT_AST_NODE_LAMBDA) {
+        if (ast->type == ELEMENT_AST_NODE_LAMBDA)
+        {
 
             const auto identifier_string = fmt::format("<{}_{}>", declarer->name.value, deferred_expressions.size());
             auto identifier = element::identifier(identifier_string);
@@ -441,7 +443,8 @@ namespace element
             return std::move(chain);
         }
 
-        if (ast->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK) {
+        if (ast->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK)
+        {
 
             auto anonymous_block = build_anonymous_block_expression(context, ast, chain.get(), output_result);
             chain->expressions.push_back(std::move(anonymous_block));
@@ -545,7 +548,8 @@ namespace element
 
         build_scope(context, ast, root.get(), output_result);
 
-        if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_object_model_as_code)) {
+        if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_object_model_as_code))
+        {
             std::cout << "\n<CODE>\n";
             std::cout << root->to_code();
             std::cout << "\n</CODE>\n\n";
@@ -553,4 +557,4 @@ namespace element
 
         return root;
     }
-}
+} // namespace element

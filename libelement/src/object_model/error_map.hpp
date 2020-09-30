@@ -45,7 +45,7 @@ namespace element
         static void register_func(error_message_code code, func&& b)
         {
             auto [it, success] = func_map.insert({ code, std::move(b) });
-            if(!success)
+            if (!success)
                 throw;
         }
 
@@ -64,7 +64,8 @@ namespace element
 
     //specialisation for zero parameters
     template <>
-    struct error_map<> {
+    struct error_map<>
+    {
         using func = std::function<std::shared_ptr<error>(const source_information&)>;
         using map = std::map<error_message_code, func>;
 
@@ -94,8 +95,7 @@ namespace element
     template <typename... Args>
     void register_error(error_message_code code, std::string format, element_result error_result)
     {
-        auto builder = [f = std::move(format), error_result](const source_information& source_info, Args... args)
-        {
+        auto builder = [f = std::move(format), error_result](const source_information& source_info, Args... args) {
             //std::cout << fmt::format(format, args...);
             return std::make_shared<error>(fmt::format(f, args...), error_result, source_info);
         };
@@ -106,7 +106,7 @@ namespace element
     //build_error is intended to fall back on template argument deduction to avoid the need for silly template parameters everywhere
 
     template <typename... Args>
-        std::shared_ptr<error> build_error(const source_information& source_info, error_message_code code, Args... args)
+    std::shared_ptr<error> build_error(const source_information& source_info, error_message_code code, Args... args)
     {
         return error_map<Args...>::build_error(code, source_info, args...);
     }
@@ -123,5 +123,5 @@ namespace element
     {
         //used for initializing the errors in maps statically
         bool register_errors();
-    }
-}
+    } // namespace detail
+} // namespace element

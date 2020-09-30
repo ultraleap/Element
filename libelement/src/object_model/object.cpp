@@ -65,8 +65,9 @@ namespace element
             if (!type)
             {
                 error(fmt::format("typename '{}' for port {}({}) of {} could not be found",
-                    input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
-                    ELEMENT_ERROR_NOT_A_CONSTRAINT, declarer->source_info).log_once(context.get_logger());
+                                  input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
+                      ELEMENT_ERROR_NOT_A_CONSTRAINT, declarer->source_info)
+                    .log_once(context.get_logger());
                 return false;
             }
 
@@ -105,12 +106,12 @@ namespace element
         if (compiled_args.size() != declarer->inputs.size())
         {
             return build_error(declarer->source_info, error_message_code::argument_count_mismatch,
-                declarer->location(), input_params, given_params);
+                               declarer->location(), input_params, given_params);
         }
 
         auto error_string = fmt::format("constraint not satisfied for function {}\nfunction has {} inputs\nfunction parameters = {}\narguments passed = {}",
-            declarer->name.value, declarer->inputs.size(), input_params, given_params);
-        
+                                        declarer->name.value, declarer->inputs.size(), input_params, given_params);
+
         return std::make_shared<error>(std::move(error_string), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
     }
 
@@ -140,29 +141,28 @@ namespace element
 
         if (!has_inputs)
             return build_error_and_log(context, source_info, error_message_code::instance_function_cannot_be_nullary,
-                func->typeof_info(), instance->typeof_info());
+                                       func->typeof_info(), instance->typeof_info());
 
         if (!has_type)
             return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
-                func->typeof_info(), instance->typeof_info(), func->inputs[0].get_name());
+                                       func->typeof_info(), instance->typeof_info(), func->inputs[0].get_name());
 
         if (!types_match)
             return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
-                func->typeof_info(), instance->typeof_info(),
-                func->inputs[0].get_name(), func->inputs[0].get_annotation()->to_string(), type->name.value);
+                                       func->typeof_info(), instance->typeof_info(),
+                                       func->inputs[0].get_name(), func->inputs[0].get_annotation()->to_string(), type->name.value);
 
         //did we miss an error that we need to handle?
         assert(false);
         return nullptr;
     }
 
-
     object_const_shared_ptr compile_placeholder_expression(const compilation_context& context,
-        const object& object,
-        const std::vector<port>& inputs,
-        element_result& result,
-        const source_information& source_info,
-        const int placeholder_offset)
+                                                           const object& object,
+                                                           const std::vector<port>& inputs,
+                                                           element_result& result,
+                                                           const source_information& source_info,
+                                                           const int placeholder_offset)
     {
         auto [placeholder, size] = generate_placeholder_inputs(context, inputs, result, placeholder_offset);
         if (result != ELEMENT_OK)
@@ -191,4 +191,4 @@ namespace element
         return compiled;
     }
 
-}
+} // namespace element

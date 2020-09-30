@@ -18,13 +18,15 @@ struct evaluator_ctx
 
 static element_result do_evaluate(evaluator_ctx& context, const expression_const_shared_ptr& expr, element_value* outputs, size_t outputs_count, size_t& outputs_written)
 {
-    if (const auto* ec = expr->as<element_expression_constant>()) {
+    if (const auto* ec = expr->as<element_expression_constant>())
+    {
         assert(outputs_count > outputs_written);
         outputs[outputs_written++] = ec->value();
         return ELEMENT_OK;
-    } 
+    }
 
-	if (const auto* ei = expr->as<element_expression_input>()) {
+    if (const auto* ei = expr->as<element_expression_input>())
+    {
         if (context.boundaries.size() <= ei->scope()
             || context.boundaries[ei->scope()].inputs_count <= ei->index()
             || outputs_count <= outputs_written)
@@ -37,9 +39,10 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         assert(outputs_count > outputs_written);
         outputs[outputs_written++] = context.boundaries[ei->scope()].inputs[ei->index()];
         return ELEMENT_OK;
-    } 
+    }
 
-	if (const auto* es = expr->as<element_expression_structure>()) {
+    if (const auto* es = expr->as<element_expression_structure>())
+    {
         auto deps = es->dependents();
         for (auto& dep : deps)
         {
@@ -47,15 +50,17 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         }
         return ELEMENT_OK;
     }
-	
-    if (const auto* eu = expr->as<element_expression_nullary>()) {
+
+    if (const auto* eu = expr->as<element_expression_nullary>())
+    {
         assert(outputs_count > outputs_written);
         assert(eu->get_size() == 1);
         outputs[outputs_written++] = element_evaluate_nullary(eu->operation());
         return ELEMENT_OK;
     }
 
-	if (const auto* eu = expr->as<element_expression_unary>()) {
+    if (const auto* eu = expr->as<element_expression_unary>())
+    {
         assert(outputs_count > outputs_written);
         assert(eu->input()->get_size() == 1);
         size_t intermediate_written = 0;
@@ -63,9 +68,10 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         ELEMENT_OK_OR_RETURN(do_evaluate(context, eu->input(), &a, 1, intermediate_written));
         outputs[outputs_written++] = element_evaluate_unary(eu->operation(), a);
         return ELEMENT_OK;
-    } 
+    }
 
-	if (const auto* eb = expr->as<element_expression_binary>()) {
+    if (const auto* eb = expr->as<element_expression_binary>())
+    {
         assert(outputs_count > outputs_written);
         assert(eb->input1()->get_size() == 1);
         assert(eb->input2()->get_size() == 1);
@@ -79,7 +85,8 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
     }
 
     //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
-    if (const auto* eb = expr->as<element_expression_if>()) {
+    if (const auto* eb = expr->as<element_expression_if>())
+    {
         assert(outputs_count > outputs_written);
         assert(eb->predicate()->get_size() == 1);
         assert(eb->if_true()->get_size() == 1);
@@ -95,7 +102,8 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* eb = expr->as<element_expression_for>()) {
+    if (const auto* eb = expr->as<element_expression_for>())
+    {
         assert(outputs_count > outputs_written);
         assert(eb->condition()->get_size() == 1);
         assert(eb->initial()->get_size() >= 1);
@@ -115,7 +123,8 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* eb = expr->as<element_expression_indexer>()) {
+    if (const auto* eb = expr->as<element_expression_indexer>())
+    {
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
         size_t size = eb->for_expression->get_size();
@@ -127,7 +136,8 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* sel = expr->as<element_expression_select>()) {
+    if (const auto* sel = expr->as<element_expression_select>())
+    {
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
         element_value selector;
@@ -138,9 +148,8 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-	return ELEMENT_ERROR_NO_IMPL;
+    return ELEMENT_ERROR_NO_IMPL;
 }
-
 
 element_result element_evaluate(
     element_interpreter_ctx& context,
@@ -171,67 +180,110 @@ element_result element_evaluate(
 
 element_value element_evaluate_nullary(element_expression_nullary::op op)
 {
-    switch (op) {
+    switch (op)
+    {
     //num
-    case element_expression_nullary::op::positive_infinity: return std::numeric_limits<float>::infinity();
-    case element_expression_nullary::op::negative_infinity: return -std::numeric_limits<float>::infinity();
-    case element_expression_nullary::op::nan:               return std::numeric_limits<float>::quiet_NaN();
+    case element_expression_nullary::op::positive_infinity:
+        return std::numeric_limits<float>::infinity();
+    case element_expression_nullary::op::negative_infinity:
+        return -std::numeric_limits<float>::infinity();
+    case element_expression_nullary::op::nan:
+        return std::numeric_limits<float>::quiet_NaN();
 
     //boolean
-    case element_expression_nullary::op::true_value:        return 1;
-    case element_expression_nullary::op::false_value:       return 0;
-    default: assert(false);                                 return static_cast<element_value>(std::nan(""));
+    case element_expression_nullary::op::true_value:
+        return 1;
+    case element_expression_nullary::op::false_value:
+        return 0;
+    default:
+        assert(false);
+        return static_cast<element_value>(std::nan(""));
     }
 }
 
 element_value element_evaluate_unary(element_expression_unary::op op, element_value a)
 {
-    switch (op) {
+    switch (op)
+    {
     //num
-    case element_expression_unary::op::abs:   return std::fabs(a);
-    case element_expression_unary::op::acos:  return std::acos(a);
-    case element_expression_unary::op::asin:  return std::asin(a);
-    case element_expression_unary::op::atan:  return std::atan(a);
-    case element_expression_unary::op::ceil:  return std::ceil(a);
-    case element_expression_unary::op::cos:   return std::cos(a);
-    case element_expression_unary::op::floor: return std::floor(a);
-    case element_expression_unary::op::ln:    return std::log(a);
-    case element_expression_unary::op::sin:   return std::sin(a);
-    case element_expression_unary::op::tan:   return std::tan(a);
+    case element_expression_unary::op::abs:
+        return std::fabs(a);
+    case element_expression_unary::op::acos:
+        return std::acos(a);
+    case element_expression_unary::op::asin:
+        return std::asin(a);
+    case element_expression_unary::op::atan:
+        return std::atan(a);
+    case element_expression_unary::op::ceil:
+        return std::ceil(a);
+    case element_expression_unary::op::cos:
+        return std::cos(a);
+    case element_expression_unary::op::floor:
+        return std::floor(a);
+    case element_expression_unary::op::ln:
+        return std::log(a);
+    case element_expression_unary::op::sin:
+        return std::sin(a);
+    case element_expression_unary::op::tan:
+        return std::tan(a);
 
     //boolean
-    case element_expression_unary::op::not_ :  return !a;
-    default: assert(false);                   return static_cast<element_value>(std::nan(""));
+    case element_expression_unary::op::not_:
+        return !a;
+    default:
+        assert(false);
+        return static_cast<element_value>(std::nan(""));
     }
 }
 
 element_value element_evaluate_binary(element_expression_binary::op op, element_value a, element_value b)
 {
-    switch (op) {
+    switch (op)
+    {
         //num
-    case element_expression_binary::op::add:   return a + b;
-    case element_expression_binary::op::atan2: return std::atan2(a, b);
-    case element_expression_binary::op::div:   return a / b;
-    case element_expression_binary::op::log:   return b ? std::log10(a) / std::log10(b) : std::nanf(""); // TODO: optimised pseudo-ops for log10 et al?
-    case element_expression_binary::op::max:   return (std::max)(a, b);
-    case element_expression_binary::op::min:   return (std::min)(a, b);
-    case element_expression_binary::op::mul:   return a * b;
-    case element_expression_binary::op::pow:   return std::pow(a, b);
-    case element_expression_binary::op::rem:   return std::fmod(a, b);
-    case element_expression_binary::op::sub:   return a - b;
+    case element_expression_binary::op::add:
+        return a + b;
+    case element_expression_binary::op::atan2:
+        return std::atan2(a, b);
+    case element_expression_binary::op::div:
+        return a / b;
+    case element_expression_binary::op::log:
+        return b ? std::log10(a) / std::log10(b) : std::nanf(""); // TODO: optimised pseudo-ops for log10 et al?
+    case element_expression_binary::op::max:
+        return (std::max)(a, b);
+    case element_expression_binary::op::min:
+        return (std::min)(a, b);
+    case element_expression_binary::op::mul:
+        return a * b;
+    case element_expression_binary::op::pow:
+        return std::pow(a, b);
+    case element_expression_binary::op::rem:
+        return std::fmod(a, b);
+    case element_expression_binary::op::sub:
+        return a - b;
 
     //boolean
-    case element_expression_binary::op::and_ :  return a && b;
-    case element_expression_binary::op:: or_ :  return a || b;
+    case element_expression_binary::op::and_:
+        return a && b;
+    case element_expression_binary::op::or_:
+        return a || b;
 
     //comparison
-    case element_expression_binary::op::eq :   return a == b;
-    case element_expression_binary::op::neq:   return a != b;
-    case element_expression_binary::op::lt:    return a < b;
-    case element_expression_binary::op::leq:   return a <= b;
-    case element_expression_binary::op::gt:    return a > b;
-    case element_expression_binary::op::geq:   return a >= b;
-    default: assert(false);                    return static_cast<element_value>(std::nan(""));
+    case element_expression_binary::op::eq:
+        return a == b;
+    case element_expression_binary::op::neq:
+        return a != b;
+    case element_expression_binary::op::lt:
+        return a < b;
+    case element_expression_binary::op::leq:
+        return a <= b;
+    case element_expression_binary::op::gt:
+        return a > b;
+    case element_expression_binary::op::geq:
+        return a >= b;
+    default:
+        assert(false);
+        return static_cast<element_value>(std::nan(""));
     }
 }
 

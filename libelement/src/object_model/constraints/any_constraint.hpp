@@ -10,6 +10,8 @@ namespace element
     {
     public:
         DECLARE_TYPE_ID();
-        any_constraint() : constraint(type_id, nullptr) {}
+        any_constraint()
+            : constraint(type_id, nullptr)
+        {}
     };
-}
+} // namespace element

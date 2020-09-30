@@ -19,4 +19,4 @@ namespace element
         const declaration* declarer;
         identifier name;
     };
-}
+} // namespace element

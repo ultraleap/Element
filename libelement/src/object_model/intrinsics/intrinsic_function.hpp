@@ -31,4 +31,4 @@ namespace element
         new_expr->actual_type = expr->actual_type;
         return new_expr;
     }
-}
+} // namespace element

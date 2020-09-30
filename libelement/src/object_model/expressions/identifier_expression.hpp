@@ -17,4 +17,4 @@ namespace element
     private:
         identifier name;
     };
-}
+} // namespace element

@@ -38,4 +38,4 @@ namespace element
         const scope* parent_scope = nullptr;
         std::map<identifier, std::unique_ptr<declaration>> declarations;
     };
-}
+} // namespace element

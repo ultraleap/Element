@@ -50,4 +50,4 @@ namespace element
         //the wrapper is used to return declarations within the object model
         std::shared_ptr<const declaration_wrapper> wrapper;
     };
-}
+} // namespace element

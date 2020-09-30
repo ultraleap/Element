@@ -25,8 +25,8 @@ struct element_metainfo
 {
     //todo: decide what kinda stuff to associate here, just need typeof for now
 
-    std::string code; //the code associated with this thing
-    std::string typeof; //internal type representation
+    std::string code;        //the code associated with this thing
+    std::string typeof;      //internal type representation
     std::string source_type; //the type as it is in source, i.e. something the user could use in an element source file
 };
 
@@ -38,7 +38,8 @@ struct element_interpreter_ctx
     std::shared_ptr<element::source_context> src_context;
     std::unique_ptr<element::scope> global_scope;
 
-    struct Deleter {
+    struct Deleter
+    {
         void operator()(element::intrinsic* i);
         void operator()(const element::intrinsic* i);
     };

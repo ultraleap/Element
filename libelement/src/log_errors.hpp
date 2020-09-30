@@ -87,7 +87,8 @@ namespace element
 
     //specialisation for zero parameters
     template <>
-    struct log_error_map<> {
+    struct log_error_map<>
+    {
         using func = std::function<log_message(const source_information&)>;
         using map = std::map<log_error_message_code, func>;
 
@@ -117,8 +118,7 @@ namespace element
     template <typename... Args>
     void register_log_error(log_error_message_code code, std::string format, element_result error_result, element_stage stage)
     {
-        auto builder = [f = std::move(format), error_result, stage](const source_information& source_info, Args... args)
-        {
+        auto builder = [f = std::move(format), error_result, stage](const source_information& source_info, Args... args) {
             element_log_message msg;
             msg.line_in_source = source_info.line_in_source ? source_info.line_in_source->c_str() : nullptr;
             msg.character = source_info.character_start;
@@ -126,7 +126,7 @@ namespace element
             msg.message_code = error_result;
             msg.line = source_info.line;
             msg.stage = stage;
-            msg.related_log_message = nullptr; //todo: delete?
+            msg.related_log_message = nullptr;                                    //todo: delete?
             msg.length = source_info.character_end - source_info.character_start; //todo: UTF8 concerns?
             msg.message = nullptr;
             msg.message_length = 0;
@@ -207,5 +207,5 @@ namespace element
     {
         //used for initializing the errors in maps statically
         bool register_log_errors();
-    }
-}
+    } // namespace detail
+} // namespace element

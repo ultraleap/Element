@@ -35,4 +35,4 @@ namespace element
     protected:
         const expression_chain* parent;
     };
-}
+} // namespace element

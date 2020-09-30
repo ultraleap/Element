@@ -35,6 +35,7 @@ namespace element
 
         const std::shared_ptr<const element_expression> selector;
         const std::vector<object_const_shared_ptr> options;
+
     private:
     };
-}
+} // namespace element

@@ -56,4 +56,4 @@ namespace element
     class source_information;
     class call_stack;
     class capture_stack;
-}
+} // namespace element

@@ -15,7 +15,7 @@ namespace element
         [[nodiscard]] std::string typeof_info() const;
         [[nodiscard]] std::string to_code(const int depth) const;
 
-        [[nodiscard]] const std::string& get_name() const { return name.value;  };
+        [[nodiscard]] const std::string& get_name() const { return name.value; };
         [[nodiscard]] const type_annotation* get_annotation() const { return annotation.get(); };
 
         [[nodiscard]] const declaration* resolve_annotation(const compilation_context& context) const;
@@ -26,4 +26,4 @@ namespace element
         identifier name;
         std::unique_ptr<type_annotation> annotation;
     };
-}
+} // namespace element

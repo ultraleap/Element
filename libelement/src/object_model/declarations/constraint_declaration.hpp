@@ -9,7 +9,8 @@ namespace element
     class constraint_declaration final : public declaration
     {
     public:
-        enum class kind {
+        enum class kind
+        {
             custom,
             intrinsic
         };
@@ -32,4 +33,4 @@ namespace element
         std::unique_ptr<constraint> constraint_;
         kind constraint_kind;
     };
-}
+} // namespace element

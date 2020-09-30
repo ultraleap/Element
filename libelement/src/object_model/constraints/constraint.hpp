@@ -26,4 +26,4 @@ namespace element
 
         const declaration* declarer;
     };
-}
+} // namespace element

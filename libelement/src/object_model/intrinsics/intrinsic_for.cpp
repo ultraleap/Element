@@ -24,8 +24,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     //note: the predicate and the body could still return something which is not constant, so we need to check constantly
     bool predicate_evaluated_to_constant = true;
 
-    const auto continue_loop = [&predicate_evaluated_to_constant, &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool
-    {
+    const auto continue_loop = [&predicate_evaluated_to_constant, &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool {
         const auto ret = predicate_function->call(context, input, source_info);
 
         if (const auto* err = dynamic_cast<const error*>(ret.get()))
@@ -55,8 +54,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
         return ret_as_constant->value() > 0;
     };
 
-    const auto next_successor = [&initial_object, &body_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> object_const_shared_ptr
-    {
+    const auto next_successor = [&initial_object, &body_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> object_const_shared_ptr {
         auto ret = body_function->call(context, input, source_info);
         if (!ret->is_constant())
             return nullptr;
@@ -79,7 +77,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
 
     //todo: in order to detect an infinite loop we need to know if the predicates result is dependant on its input, i.e. it is actually using it to alter the calculation in a meaningful way
     //  not sure how to do it, but the loop iteration limit will catch the infinite loop situation anyway
-    
+
     //todo: make this user configurable
     constexpr auto max_loop_iterations = 10'000;
     auto current_loop_iteration = 0;
@@ -101,10 +99,10 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
 }
 
 object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_object,
-    const std::shared_ptr<const function_instance>& predicate_function,
-    const std::shared_ptr<const function_instance>& body_function,
-    const source_information& source_info,
-    const compilation_context& context)
+                                    const std::shared_ptr<const function_instance>& predicate_function,
+                                    const std::shared_ptr<const function_instance>& body_function,
+                                    const source_information& source_info,
+                                    const compilation_context& context)
 {
     element_result result = ELEMENT_OK;
 
@@ -120,7 +118,7 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
     //compile our functions to instruction trees, with their own placeholder input instructions
     const auto placeholder_offset = 0;
     const auto predicate_compiled = compile_placeholder_expression(context, *predicate_function, predicate_function->declarer->get_inputs(), result, source_info, placeholder_offset);
-    if(!predicate_compiled)
+    if (!predicate_compiled)
         return std::make_shared<const error>("predicate failed to compile", result, source_info);
 
     const auto body_compiled = compile_placeholder_expression(context, *body_function, body_function->declarer->get_inputs(), result, source_info, placeholder_offset);
@@ -152,8 +150,7 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
 
     auto indexing_expression_filler = [&for_expression](const std::string&,
                                                         const std::shared_ptr<const element_expression>& field,
-                                                        int index) -> std::shared_ptr<const element_expression>
-    {
+                                                        int index) -> std::shared_ptr<const element_expression> {
         return std::make_shared<element_expression_indexer>(for_expression, index, field->actual_type);
     };
 

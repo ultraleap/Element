@@ -6,7 +6,7 @@
 #include <sstream>
 #include <vector>
 
-template<char delimiter>
+template <char delimiter>
 class WordDelimitedBy : public std::string
 {};
 
@@ -17,10 +17,10 @@ std::istream& operator>>(std::istream& is, WordDelimitedBy<c>& output)
     return is;
 }
 
-template<char delimiter>
+template <char delimiter>
 std::vector<std::string> split(std::string input_str)
 {
     std::istringstream iss(input_str);
     return { std::istream_iterator<WordDelimitedBy<delimiter>>(iss),
-            std::istream_iterator<WordDelimitedBy<delimiter>>() };
+             std::istream_iterator<WordDelimitedBy<delimiter>>() };
 }

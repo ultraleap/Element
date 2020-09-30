@@ -47,4 +47,4 @@ namespace element
         //e.g. a declaration for the compiler-provided list indexer when a user creates a List using the intrinsic function list
         std::unique_ptr<scope> compiler_scope;
     };
-}
+} // namespace element

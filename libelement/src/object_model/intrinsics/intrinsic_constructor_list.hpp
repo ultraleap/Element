@@ -17,4 +17,4 @@ namespace element
             std::vector<object_const_shared_ptr> compiled_args,
             const source_information& source_info) const override;
     };
-}
+} // namespace element

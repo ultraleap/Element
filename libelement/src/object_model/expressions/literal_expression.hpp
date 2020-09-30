@@ -18,4 +18,4 @@ namespace element
 
     private:
     };
-}
+} // namespace element

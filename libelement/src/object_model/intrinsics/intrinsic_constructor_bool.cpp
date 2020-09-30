@@ -22,7 +22,7 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
     const auto false_expr = get_intrinsic(context.interpreter, false_decl)->compile(context, source_info);
 
     auto expr = std::dynamic_pointer_cast<const element_expression>(compiled_args[0]);
-    
+
     assert(expr); //todo: I think this is accurate
     assert(std::dynamic_pointer_cast<const element_expression>(true_expr));
     assert(std::dynamic_pointer_cast<const element_expression>(false_expr));

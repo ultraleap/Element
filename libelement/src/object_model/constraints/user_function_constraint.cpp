@@ -7,8 +7,7 @@ using namespace element;
 
 bool user_function_constraint::matches_constraint(const compilation_context& context, const constraint* constraint_) const
 {
-    const auto check_match = [&context](const port& our_input, const port& their_input)
-    {
+    const auto check_match = [&context](const port& our_input, const port& their_input) {
         const declaration* our_input_type = nullptr;
         const declaration* their_input_type = nullptr;
         const constraint* our_input_constraint = nullptr;

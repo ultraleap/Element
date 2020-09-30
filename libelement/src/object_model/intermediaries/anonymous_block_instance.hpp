@@ -30,4 +30,4 @@ namespace element
     private:
         //mutable capture_stack captures;
     };
-}
+} // namespace element

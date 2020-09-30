@@ -21,13 +21,11 @@ element_result element_lmnt_compile(
     element_interpreter_ctx* context,
     const element_compiled_function* compiled_function,
     const element_lmnt_compile_options* opts,
-    element_lmnt_archive_ctx* archive
-);
+    element_lmnt_archive_ctx* archive);
 
 element_result element_lmnt_archive_build(
     const element_lmnt_archive_ctx* archive,
-    char* buffer, size_t* size
-);
+    char* buffer, size_t* size);
 
 #if defined(__cplusplus)
 }
