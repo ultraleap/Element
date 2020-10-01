@@ -11,19 +11,19 @@ namespace element
     public:
         explicit port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation, std::unique_ptr<expression_chain> expression_chain);
 
-        [[nodiscard]] bool has_annotation() const { return annotation != nullptr; };
+        [[nodiscard]] bool has_annotation() const { return annotation != nullptr; }
 
         [[nodiscard]] std::string typeof_info() const;
         [[nodiscard]] std::string to_code(const int depth) const;
 
-        [[nodiscard]] const std::string& get_name() const { return name.value; };
-        [[nodiscard]] const type_annotation* get_annotation() const { return annotation.get(); };
+        [[nodiscard]] const std::string& get_name() const { return name.value; }
+        [[nodiscard]] const type_annotation* get_annotation() const { return annotation.get(); }
 
         [[nodiscard]] const declaration* resolve_annotation(const compilation_context& context) const;
         [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index) const;
 
-        [[nodiscard]] bool has_default() const { return expression_chain.get(); }
-
+        [[nodiscard]] bool has_default() const { return get_default(); }
+        [[nodiscard]] expression_chain* get_default() const { return expression_chain.get(); }
     private:
         const declaration* declarer;
         identifier name;

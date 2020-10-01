@@ -6,6 +6,7 @@
 //SELF
 #include "etree/expressions.hpp"
 #include "object_model/declarations/function_declaration.hpp"
+#include "object_model/expressions/expression_chain.hpp"
 #include "object_model/constraints/constraint.hpp"
 #include "object_model/error.hpp"
 #include "object_model/error_map.hpp"
@@ -59,6 +60,18 @@ const constraint* function_instance::get_constraint() const
     return declarer->get_constraint();
 }
 
+bool has_defaults(const function_instance* instance)
+{
+    for (const auto& input : instance->declarer->inputs)
+    {
+        if (input.has_default())
+            return true;
+    }
+
+    return false;
+}
+
+
 object_const_shared_ptr function_instance::call(
     const compilation_context& context,
     std::vector<object_const_shared_ptr> compiled_args,
@@ -69,6 +82,21 @@ object_const_shared_ptr function_instance::call(
                                        declarer->name.value, declarer->is_variadic() ? "variadic " : "", compiled_args.size(), provided_arguments.size());
 
     compiled_args.insert(std::begin(compiled_args), std::begin(provided_arguments), std::end(provided_arguments));
+
+    //todo: error checks
+    
+    const auto check_defaults = has_defaults(this) && !declarer->is_variadic();
+    if (check_defaults)
+    {
+        const auto unfilled_args = declarer->inputs.size() - compiled_args.size() > 0;
+        if (unfilled_args)
+        {
+            for (auto i = compiled_args.size(); i < declarer->inputs.size(); i++)
+            {
+                compiled_args.push_back(declarer->inputs[i].get_default()->compile(context, source_info));
+            }
+        }
+    }
 
     if constexpr (should_log_compilation_step())
     {

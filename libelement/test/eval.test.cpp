@@ -606,6 +606,26 @@ TEST_CASE("Interpreter", "[Evaluate]")
             }
         }
 
+        SECTION("Default Arguments")
+        {
+            SECTION("Fill missing arguments")
+            {
+                float inputs[] = { 5 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+
+                result = eval_with_inputs("func(a, b:Num = 5) = a.add(b) evaluate(a:Num, b:Num):Num = func(a)", &input, &output);
+
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(output.values[0] == 10);
+            }
+        }
+
         SECTION("Prelude")
         {
             SECTION("Number")
