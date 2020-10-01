@@ -5,16 +5,18 @@
 
 //SELF
 #include "declarations/declaration.hpp"
+#include "expressions/expression_chain.hpp"
 #include "scope.hpp"
 #include "error.hpp"
 #include "compilation_context.hpp"
 
 using namespace element;
 
-port::port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation)
+port::port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation, std::unique_ptr<element::expression_chain> expression_chain)
     : declarer(declarer)
     , name{ std::move(name) }
     , annotation{ std::move(annotation) }
+    , expression_chain{ std::move(expression_chain) }
 {
 }
 

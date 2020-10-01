@@ -64,7 +64,7 @@ namespace element
     void build_output(const element_interpreter_ctx* context, element_ast* output, declaration& declaration, element_result& output_result)
     {
         auto type_annotation = build_type_annotation(context, output, output_result);
-        declaration.output.emplace(port{ &declaration, identifier::return_identifier, std::move(type_annotation) });
+        declaration.output.emplace(port{ &declaration, identifier::return_identifier, std::move(type_annotation), nullptr });
     }
 
     void build_inputs(const element_interpreter_ctx* context, element_ast* inputs, declaration& declaration, element_result& output_result)
@@ -79,18 +79,18 @@ namespace element
 
             auto ident = identifier(input->identifier);
 
-            //todo: is either not there, or is UNSPECIFIED_TYPE, need to clean up AST to only do one or the other. seems like inputs are always missing the child, outputs have unspecified type
-            const auto has_type_annotation = input->children.size() > ast_idx::port::type;
-            if (!has_type_annotation)
+            auto* const type = input->children[ast_idx::port::type].get();
+            auto* const default_value = input->children[ast_idx::port::default_value].get();
+   
+            std::unique_ptr<expression_chain> chain = nullptr;
+            if (default_value->type != ELEMENT_AST_NODE_UNSPECIFIED_DEFAULT)
             {
-                //todo: instead of nullptr, use an object to represent nothing? can't use Any, as user might not have it in source
-                declaration.inputs.emplace_back(&declaration, ident, nullptr);
-                continue;
+                deferred_expressions deferred_expressions;
+                chain = build_expression_chain(context, default_value, &declaration, deferred_expressions, output_result);
             }
 
-            auto* const output = input->children[ast_idx::port::type].get();
-            auto type_annotation = build_type_annotation(context, output, output_result);
-            declaration.inputs.emplace_back(&declaration, ident, std::move(type_annotation));
+            auto type_annotation = build_type_annotation(context, type, output_result);
+            declaration.inputs.emplace_back(&declaration, ident, std::move(type_annotation), std::move(chain));
         }
     }
 

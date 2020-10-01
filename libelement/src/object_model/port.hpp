@@ -2,13 +2,14 @@
 
 //SELF
 #include "type_annotation.hpp"
+#include "fwd.hpp"
 
 namespace element
 {
     class port final
     {
     public:
-        explicit port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation);
+        explicit port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation, std::unique_ptr<expression_chain> expression_chain);
 
         [[nodiscard]] bool has_annotation() const { return annotation != nullptr; };
 
@@ -25,5 +26,7 @@ namespace element
         const declaration* declarer;
         identifier name;
         std::unique_ptr<type_annotation> annotation;
+        //todo: consider unique_ptr and custom deleter, shared_ptr for now so that it can be forward declared as including expression_chain causes circular inclusion
+        std::shared_ptr<expression_chain> expression_chain; 
     };
 } // namespace element

@@ -30,6 +30,7 @@ namespace ast_idx
     namespace port
     {
         constexpr size_t type = 0;
+        constexpr size_t default_value = 1;
     }
 
 } // namespace ast_idx

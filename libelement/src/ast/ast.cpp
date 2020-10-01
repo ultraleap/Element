@@ -286,7 +286,7 @@ element_result element_parser_ctx::parse_port(size_t* tindex, element_ast* ast)
     ast->type = ELEMENT_AST_NODE_PORT;
     if (tok->type == ELEMENT_TOK_IDENTIFIER)
     {
-        ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, true));
+        ELEMENT_OK_OR_RETURN(parse_identifier(tindex, ast, true))
     }
     else if (tok->type == ELEMENT_TOK_UNDERSCORE)
     {
@@ -303,14 +303,24 @@ element_result element_parser_ctx::parse_port(size_t* tindex, element_ast* ast)
             tokeniser->text(tok));
     }
 
-    GET_TOKEN(tokeniser, *tindex, tok);
+    auto* const type = ast_new_child(ast, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
+    GET_TOKEN(tokeniser, *tindex, tok)
+    type->nearest_token = tok;
     if (tok->type == ELEMENT_TOK_COLON)
     {
         tokenlist_advance(tokeniser, tindex);
-        element_ast* type = ast_new_child(ast, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
-        type->nearest_token = tok;
-        ELEMENT_OK_OR_RETURN(parse_typename(tindex, type));
+        ELEMENT_OK_OR_RETURN(parse_typename(tindex, type))
     }
+
+    auto* const default_value = ast_new_child(ast, ELEMENT_AST_NODE_UNSPECIFIED_DEFAULT);
+    GET_TOKEN(tokeniser, *tindex, tok)
+    default_value->nearest_token = tok;
+    if (tok->type == ELEMENT_TOK_EQUALS)
+    {
+        tokenlist_advance(tokeniser, tindex);
+        ELEMENT_OK_OR_RETURN(parse_expression(tindex, default_value))
+    }
+
 
     return ELEMENT_OK;
 }
