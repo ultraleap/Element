@@ -619,10 +619,10 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 output.values = outputs;
                 output.count = 1;
 
-                result = eval_with_inputs("func(a, b:Num = 5) = a.add(b) evaluate(a:Num, b:Num):Num = func(a)", &input, &output);
+                result = eval_with_inputs("func(a, b:Num = 3) = a.sub(b) evaluate(a:Num, b:Num):Num = func(a)", &input, &output);
 
                 REQUIRE(result == ELEMENT_OK);
-                REQUIRE(output.values[0] == 10);
+                REQUIRE(output.values[0] == 2);
             }
         }
 
