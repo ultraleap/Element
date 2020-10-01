@@ -321,7 +321,6 @@ element_result element_parser_ctx::parse_port(size_t* tindex, element_ast* ast)
         ELEMENT_OK_OR_RETURN(parse_expression(tindex, default_value))
     }
 
-
     return ELEMENT_OK;
 }
 

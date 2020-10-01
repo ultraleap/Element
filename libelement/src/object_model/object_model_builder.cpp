@@ -81,7 +81,7 @@ namespace element
 
             auto* const type = input->children[ast_idx::port::type].get();
             auto* const default_value = input->children[ast_idx::port::default_value].get();
-   
+
             std::unique_ptr<expression_chain> chain = nullptr;
             if (default_value->type != ELEMENT_AST_NODE_UNSPECIFIED_DEFAULT)
             {
