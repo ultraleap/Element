@@ -4,6 +4,7 @@
 #include "call_stack.hpp"
 #include "capture_stack.hpp"
 #include "interpreter_internal.hpp"
+#include "configuration.hpp"
 
 //todo: move to cpp
 #include "declarations/function_declaration.hpp"

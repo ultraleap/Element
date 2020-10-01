@@ -13,6 +13,7 @@ namespace element
         explicit function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info, std::vector<object_const_shared_ptr> args);
 
         [[nodiscard]] std::string typeof_info() const override;
+        [[nodiscard]] std::string to_string() const override;
 
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;

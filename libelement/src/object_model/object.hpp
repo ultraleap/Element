@@ -25,8 +25,9 @@ namespace element
         object& operator=(object&& scope) = delete;
 
         [[nodiscard]] virtual bool is_constant() const;
-        [[nodiscard]] virtual std::string typeof_info() const { return "Unknown"; }
-        [[nodiscard]] virtual std::string to_code(const int depth) const { return "Unknown"; }
+        [[nodiscard]] virtual std::string typeof_info() const { return "<Unknown>"; }
+        [[nodiscard]] virtual std::string to_code(const int depth) const { return "<Unknown>"; }
+        [[nodiscard]] virtual std::string to_string() const {return fmt::format("{}:{}", to_code(0), typeof_info()); }
         [[nodiscard]] virtual bool matches_constraint(const compilation_context& context, const constraint* constraint) const;
         [[nodiscard]] virtual const constraint* get_constraint() const { return nullptr; };
 

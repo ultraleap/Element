@@ -12,6 +12,7 @@ enum class log_flags : int {
 	output_expression_tree      = 1 << 4,
 	output_prelude              = 1 << 5,
 	output_typeof_information   = 1 << 6,
+	output_compilation_steps    = 1 << 7,
 };
 
 constexpr log_flags operator|(log_flags lhs, log_flags rhs) 
@@ -36,3 +37,8 @@ constexpr bool flag_set(const log_flags input_flags, const log_flags flags)
 }
 
 constexpr log_flags logging_bitmask = @LOG_VERBOSITY@;
+
+constexpr bool should_log_compilation_step()
+{
+    return logging_bitmask == log_flags::none || (static_cast<int>(logging_bitmask) & static_cast<int>(log_flags::output_compilation_steps)) != 0;
+}

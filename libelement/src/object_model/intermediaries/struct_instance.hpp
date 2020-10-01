@@ -13,6 +13,7 @@ namespace element
         explicit struct_instance(const struct_declaration* declarer, const std::vector<object_const_shared_ptr>& expressions);
 
         [[nodiscard]] std::string typeof_info() const override;
+        [[nodiscard]] std::string to_string() const override;
 
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;

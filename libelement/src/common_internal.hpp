@@ -6,6 +6,10 @@
 #include <functional>
 #include <cassert>
 #include <vector>
+#include <iostream>
+
+//LIBS
+#include <fmt/format.h>
 
 //SELF
 #include "element/token.h"
@@ -42,6 +46,36 @@ struct element_log_ctx
     void log(const element_compiler_ctx& context, element_result code, const std::string& message, const element_ast* nearest_ast = nullptr) const;
     void log(const element_log_message& log) const;
     void log(const element::log_message& log) const;
+
+    template <typename String, typename... Args>
+    void log_step(String&& str, Args&&... args) const
+    {
+        try
+        {
+            fmt::print(std::string(compilation_step_indent_level, '\t') + std::forward<String>(str), std::forward<Args>(args)...);
+        }
+        catch(std::exception& e)
+        {
+            fmt::print(std::string("Failed to log_step - ") + e.what());
+        }
+        catch(...)
+        {
+            std::cout << "Failed to log_step\n";
+        }
+    }
+
+    void log_step_indent() const
+    {
+        compilation_step_indent_level += 1;
+    }
+
+    void log_step_unindent() const
+    {
+        if (compilation_step_indent_level > 0)
+            compilation_step_indent_level -= 1;
+    }
+
+    mutable int compilation_step_indent_level = 0;
 };
 
 std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token = nullptr);

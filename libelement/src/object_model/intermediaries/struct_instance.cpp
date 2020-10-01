@@ -15,6 +15,23 @@ struct_instance::struct_instance(const struct_declaration* declarer)
 {
 }
 
+std::string struct_instance::to_string() const
+{
+    std::string input_string;
+    for (std::size_t i = 0; i < declarer->inputs.size(); ++i)
+    {
+        input_string += fmt::format("{}{} = {}",
+                                    declarer->inputs[i].get_name(),
+                                    declarer->inputs[i].has_annotation() ? ":" + declarer->inputs[i].get_annotation()->to_string() : "",
+                                    fields.at(declarer->inputs[i].get_name())->to_string());
+
+        if (i < static_cast<int>(declarer->inputs.size()) - 1)
+            input_string += ", ";
+    }
+
+    return fmt::format("{}({})", declarer->name.value, std::move(input_string));
+}
+
 bool struct_instance::matches_constraint(const compilation_context& context, const constraint* constraint) const
 {
     return declarer->get_constraint()->matches_constraint(context, constraint);

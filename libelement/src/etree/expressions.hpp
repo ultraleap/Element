@@ -82,6 +82,13 @@ struct element_expression_constant final : public element_expression
                                                                 const element::source_information& source_info) const;
     [[nodiscard]] element_value value() const { return m_value; }
     [[nodiscard]] size_t get_size() const override { return 1; }
+    [[nodiscard]] std::string to_string() const override
+    {
+        if (actual_type == element::type::boolean.get())
+            return m_value > 0 ? "true" : "false";
+
+        return fmt::format("{:g}", m_value);
+    }
 
 private:
     element_value m_value;
@@ -103,6 +110,7 @@ struct element_expression_input final : public element_expression
     [[nodiscard]] size_t index() const { return m_index; }
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool is_constant() const override { return false; }
+    [[nodiscard]] std::string to_string() const override { return fmt::format("<scope {}, index {}>", m_scope, m_index); }
 
 private:
     size_t m_scope;
