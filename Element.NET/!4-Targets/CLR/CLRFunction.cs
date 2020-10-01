@@ -27,7 +27,7 @@ namespace Element.CLR
 		    {Unary.Op.ATan, ((Func<double, double>)Math.Atan).Method},
 	    };
 	    
-	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryArithmeticOps =
+	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryArithmeticOpsFloat =
 			new Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>>
 			{
 				{Binary.Op.Add, LinqExpression.Add},
@@ -35,6 +35,11 @@ namespace Element.CLR
 				{Binary.Op.Mul, LinqExpression.Multiply},
 				{Binary.Op.Div, LinqExpression.Divide},
 				{Binary.Op.Rem, LinqExpression.Modulo},
+			};
+
+	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryArithmeticOpsDouble =
+			new Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>>
+			{
 				{Binary.Op.Pow, LinqExpression.Power},
 			};
 	    
@@ -112,9 +117,15 @@ namespace Element.CLR
 						return LinqExpression.Convert(methodExpr, typeof(float));
 					}
 
-					if (_linqBinaryArithmeticOps.TryGetValue(b.Operation, out var linqBinaryOp))
+					if (_linqBinaryArithmeticOpsFloat.TryGetValue(b.Operation, out var linqBinaryOp))
 					{
 						return linqBinaryOp(ba, bb);
+					}
+
+					if (_linqBinaryArithmeticOpsDouble.TryGetValue(b.Operation, out linqBinaryOp))
+					{
+						return LinqExpression.Convert(linqBinaryOp(LinqExpression.Convert(ba, typeof(double)), LinqExpression.Convert(bb, typeof(double))),
+							typeof(float));
 					}
 					
 					if (_linqBinaryComparisonOps.TryGetValue(b.Operation, out linqBinaryOp))

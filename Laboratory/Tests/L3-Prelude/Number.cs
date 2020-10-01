@@ -67,18 +67,34 @@ namespace Laboratory.Tests.L3.Prelude
 				new[]{functionPair.CLRFunction(arg0, arg1)});
 		
 		#endregion
-		
-		[
-			TestCase("Num.NaN", "Num.NaN"),
-			TestCase("Num.PositiveInfinity", "Num.PositiveInfinity"),
-			TestCase("Num.NegativeInfinity", "Num.NegativeInfinity"),
-			TestCase("Num.pi", "3.14159265359"),
-			TestCase("Num.tau", "6.28318530718"),
-			TestCase("Num.e", "2.718281828459045"),
-		]
-		public void Constants(string expression, string expected) =>
-			AssertApproxEqual(ValidatedCompilerInput, expected, expression);
-		
+
+		[Theory]
+		public void Intrinsics((string functionExpression, string callExpression, string expectedExpression) args, bool interpreted) =>
+			AssertApproxEqual(ValidatedCompilerInput, new FunctionEvaluation(args.functionExpression, args.callExpression, interpreted), args.expectedExpression);
+
+		[DatapointSource]
+		public (string functionExpression, string callExpression, string expectedExpression)[] ConstantIntrinsics =
+			{
+				("Num.NaN", "", "Num.NaN"),
+				("Num.PositiveInfinity", "", "Num.PositiveInfinity"),
+				("Num.NegativeInfinity", "", "Num.NegativeInfinity"),
+				("Num.pi", "", "3.14159265359"),
+				("Num.tau", "", "6.28318530718"),
+				("Num.e", "", "2.718281828459045"),
+			};
+
+		[DatapointSource]
+		public (string functionExpression, string callExpression, string expectedExpression)[] UnaryIntrinsics =
+		{
+
+		};
+
+		[DatapointSource]
+		public (string functionExpression, string callExpression, string expectedExpression)[] BinaryIntrinsics =
+		{
+
+		};
+
 		[
 			TestCase("Num.ln(0)", "Num.NegativeInfinity"),
 			TestCase("Num.ln(1)", "0"),
@@ -86,7 +102,7 @@ namespace Laboratory.Tests.L3.Prelude
 		]	
 		public void NaturalLog(string expression, string expected) =>
 			AssertApproxEqual(ValidatedCompilerInput, expected, expression);
-		
+
 		[
 			TestCase("Num.sin(0)", "0"),
 			TestCase("Num.sin(-180.radians)", "0"),
