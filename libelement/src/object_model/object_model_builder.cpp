@@ -124,7 +124,6 @@ namespace element
                                : struct_declaration::kind::custom;
 
         auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, struct_kind);
-
         build_inputs_output(context, decl, *struct_decl, output_result, ELEMENT_AST_NODE_STRUCT);
 
         if (intrinsic)
@@ -139,6 +138,15 @@ namespace element
             if (body->type == ELEMENT_AST_NODE_SCOPE)
                 build_scope(context, body, *struct_decl, output_result);
         }
+
+        for (const auto& input : struct_decl->inputs)
+        {
+            if (input.get_name().empty())
+                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::struct_portlist_cannot_contain_discards, struct_decl->name.value);
+        }
+
+        if (output_result != ELEMENT_OK)
+            return nullptr;
 
         return std::move(struct_decl);
     }
@@ -181,8 +189,7 @@ namespace element
             const auto* return_func = lambda_function_decl->our_scope->find(identifier::return_identifier, false);
             if (!return_func)
             {
-                //todo: check if this is covered during parsing? I think it likely is already
-                output_result = log_error(context, context->src_context.get(), expression, log_error_message_code::parse_function_missing_body, lambda_function_decl->name.value);
+                output_result = log_error(context, context->src_context.get(), expression, log_error_message_code::function_missing_return, lambda_function_decl->name.value);
                 return nullptr;
             }
 
@@ -249,8 +256,7 @@ namespace element
             const auto* return_func = function_decl->our_scope->find(identifier::return_identifier, false);
             if (!return_func)
             {
-                //todo: check if this is covered during parsing? I think it likely is already
-                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::parse_function_missing_body, function_decl->name.value);
+                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::function_missing_return, function_decl->name.value);
                 return nullptr;
             }
 
@@ -305,6 +311,26 @@ namespace element
             output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::invalid_function_declaration, function_decl->name.value);
             return nullptr;
         }
+
+        bool had_default = false;
+        for (const auto& input : function_decl->inputs)
+        {
+            if (function_decl->our_scope->find(identifier{ input.get_name() }, false))
+                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::multiple_definition_with_parameter, input.get_name() , function_decl->name.value);
+
+            if (input.has_default())
+            {
+                had_default = true;
+            }
+            else if (!input.has_default())
+            {
+                if (had_default)
+                    output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::default_argument_not_at_end, input.get_name(), function_decl->name.value);
+            }
+        }
+
+        if (output_result != ELEMENT_OK)
+            return nullptr;
 
         return function_decl;
     }

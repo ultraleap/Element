@@ -53,8 +53,11 @@ namespace element
         invalid_function_declaration,
         invalid_call_expression_placement,
         invalid_literal_expression_placement,
-        empty_expression
-
+        empty_expression,
+        function_missing_return,
+        multiple_definition_with_parameter,
+        default_argument_not_at_end,
+        struct_portlist_cannot_contain_discards
     };
 
     template <typename... Args>

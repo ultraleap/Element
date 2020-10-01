@@ -224,6 +224,30 @@ namespace element::detail
             ELEMENT_ERROR_UNKNOWN,
             ELEMENT_STAGE_PARSER);
 
+        register_log_error<std::string>(
+            log_error_message_code::function_missing_return,
+            "non-intrinsic scope-bodied function '{}' is missing a return declaration.",
+            ELEMENT_ERROR_MISSING_FUNCTION_RETURN,
+            ELEMENT_STAGE_PARSER);
+
+        register_log_error<std::string, std::string>(
+            log_error_message_code::multiple_definition_with_parameter,
+            "declaration '{}' within function '{}' has the same name as a parameter.",
+            ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
+            ELEMENT_STAGE_PARSER);
+
+        register_log_error<std::string, std::string>(
+            log_error_message_code::default_argument_not_at_end,
+            "argument '{}' for function '{}' has a default, but parameters with defaults must be defined at the end of the portlist.",
+            ELEMENT_ERROR_DEFAULT_ARGUMENT_NOT_AT_END,
+            ELEMENT_STAGE_PARSER);
+
+        register_log_error<std::string>(
+            log_error_message_code::struct_portlist_cannot_contain_discards,
+            "the port for the struct declaration '{}' contains a discarded('_') parameter, which isn't allowed here",
+            ELEMENT_ERROR_STRUCT_PORTLIST_CONTAINS_DISCARDS,
+            ELEMENT_STAGE_PARSER);
+
         return true;
     }
 } // namespace element::detail

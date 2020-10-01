@@ -22,6 +22,8 @@ namespace element
         [[nodiscard]] const declaration* resolve_annotation(const compilation_context& context) const;
         [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index) const;
 
+        [[nodiscard]] bool has_default() const { return expression_chain.get(); }
+
     private:
         const declaration* declarer;
         identifier name;
