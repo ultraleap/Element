@@ -73,8 +73,9 @@ object_const_shared_ptr struct_instance::compile(const compilation_context& cont
 
 std::shared_ptr<const element_expression> struct_instance::to_expression() const
 {
-    //todo: I don't think the expression needs names for the dependents, it's just index based
-    std::vector<std::pair<std::string, expression_const_shared_ptr>> dependents;
+    std::vector<expression_const_shared_ptr> dependents;
+    std::vector<std::string> dependents_names;
+
     for (const auto& input : declarer->inputs)
     {
         assert(fields.count(input.get_name()));
@@ -85,8 +86,9 @@ std::shared_ptr<const element_expression> struct_instance::to_expression() const
         if (!expr)
             return nullptr;
 
-        dependents.push_back({ input.get_name(), std::move(expr) });
+        dependents.push_back(std::move(expr));
+        dependents_names.push_back(input.get_name());
     }
 
-    return std::make_shared<element_expression_structure>(std::move(dependents));
+    return std::make_shared<element_expression_structure>(std::move(dependents), std::move(dependents_names), declarer->get_name());
 }

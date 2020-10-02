@@ -15,6 +15,8 @@ namespace element
             , name(std::move(name))
         {}
 
+        [[nodiscard]] std::string get_name() const { return name.value; }
+
     private:
         const declaration* declarer;
         identifier name;

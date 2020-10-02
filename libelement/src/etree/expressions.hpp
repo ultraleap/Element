@@ -121,21 +121,17 @@ struct element_expression_structure final : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    explicit element_expression_structure(const std::vector<std::pair<std::string, expression_const_shared_ptr>>& deps)
+    explicit element_expression_structure(std::vector<expression_const_shared_ptr>&& deps, std::vector<std::string>&& deps_names, std::string&& type_name)
         : element_expression(type_id, nullptr)
+        , m_debug_dependents_names(std::move(deps_names))
+        , m_debug_type_name(std::move(type_name))
     {
-        m_dependents.reserve(deps.size());
-        for (const auto& [name, expression] : deps)
-        {
-            m_dependents.emplace_back(expression);
-            m_dependents_map[name] = expression;
-        }
+        m_dependents = std::move(deps);
     }
 
-    [[nodiscard]] expression_const_shared_ptr output(const std::string& name) const
+    [[nodiscard]] expression_const_shared_ptr output(size_t index) const
     {
-        const auto it = m_dependents_map.find(name);
-        return (it != m_dependents_map.end()) ? it->second : nullptr;
+        return m_dependents[index];
     }
 
     [[nodiscard]] size_t get_size() const override
@@ -145,7 +141,8 @@ struct element_expression_structure final : public element_expression
     }
 
 private:
-    std::unordered_map<std::string, expression_const_shared_ptr> m_dependents_map;
+    std::vector<std::string> m_debug_dependents_names;
+    std::string m_debug_type_name;
 };
 
 struct element_expression_nullary final : public element_expression

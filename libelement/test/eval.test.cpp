@@ -3838,10 +3838,10 @@ TEST_CASE("Interpreter", "[Evaluate]")
         };
 
         auto expr = std::make_shared<element_expression_select>(std::move(selector), std::move(options));
-        std::vector<std::pair<std::string, expression_const_shared_ptr>> deps;
-        deps.push_back(std::make_pair<std::string, expression_const_shared_ptr>("1", expr));
-        deps.push_back(std::make_pair<std::string, expression_const_shared_ptr>("2", expr));
-        auto new_expr = std::make_shared<element_expression_structure>(std::move(deps));
+        std::vector<expression_const_shared_ptr> deps;
+        deps.push_back(expr);
+        deps.push_back(expr);
+        auto new_expr = std::make_shared<element_expression_structure>(std::move(deps), std::vector<std::string>{}, "");
         const auto result = element_evaluate(*context, new_expr, inputs, outputs, {});
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);
