@@ -164,7 +164,8 @@ jobs:
           git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
       - name: Install dependencies
         run: |
-          sudo apt-get install clang-format-10.0
+          sudo apt update
+          sudo apt install clang-format-9
       - name: Run analysis
         run: |
           export CC=gcc-9
