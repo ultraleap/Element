@@ -54,11 +54,11 @@ struct element_log_ctx
         {
             fmt::print(std::string(compilation_step_indent_level, '\t') + std::forward<String>(str), std::forward<Args>(args)...);
         }
-        catch(std::exception& e)
+        catch (std::exception& e)
         {
             fmt::print(std::string("Failed to log_step - ") + e.what());
         }
-        catch(...)
+        catch (...)
         {
             std::cout << "Failed to log_step\n";
         }

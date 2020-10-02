@@ -49,13 +49,13 @@ void log_callback(const element_log_message* msg, void* user_data)
     char* output_buffer = output_buffer_array.data();
 
     sprintf(output_buffer, "\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
-        msg->message_code,
-        msg->filename,
-        msg->line,
-        msg->line_in_source ? msg->line_in_source : "",
-        msg->line,
-        buffer_str,
-        msg->message);
+            msg->message_code,
+            msg->filename,
+            msg->line,
+            msg->line_in_source ? msg->line_in_source : "",
+            msg->line,
+            buffer_str,
+            msg->message);
 
     printf("%s", output_buffer);
     UNSCOPED_INFO(output_buffer);
@@ -477,7 +477,6 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 REQUIRE(outputs[0] == inputs[0] * inputs[0] * 2.0f * 2.0f);
             }
 
-
             SECTION("Nullary function returning lambda")
             {
                 float inputs[] = { 1 };
@@ -492,7 +491,6 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * 10.0f);
             }
-
 
             SECTION("Nullary function returning struct containing lambda")
             {
@@ -509,7 +507,6 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 REQUIRE(outputs[0] == inputs[0] * 10.0f);
             }
 
-
             SECTION("Nullary function returning struct containing nested lambdas")
             {
                 float inputs[] = { 1, 10 };
@@ -524,7 +521,6 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(outputs[0] == inputs[0] * inputs[1]);
             }
-
 
             SECTION("Nullary function returning struct containing set of lambdas")
             {
@@ -541,7 +537,6 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 REQUIRE(outputs[0] == inputs[0] * 10.0f);
                 REQUIRE(outputs[1] == inputs[1] * 5.0f);
             }
-
 
             SECTION("Nullary function returning struct containing set of nested lambdas")
             {
@@ -587,14 +582,13 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 output.values = outputs;
                 output.count = 3;
 
-                char source[] =
-                    "struct Vector3(x:Num, y:Num, z:Num) {}\n"
-                    "struct Quaternion(scalar:Num, vector:Vector3) {}\n"
-                    "evaluate(q:Quaternion):Vector3\n"
-                    "{\n"
-                    "    scale(vec:Vector3, s:Num) = Vector3(vec.x.mul(s), vec.y.mul(s), vec.z.mul(s))\n"
-                    "    return = scale(q.vector, q.scalar)\n"
-                    "}\n";
+                char source[] = "struct Vector3(x:Num, y:Num, z:Num) {}\n"
+                                "struct Quaternion(scalar:Num, vector:Vector3) {}\n"
+                                "evaluate(q:Quaternion):Vector3\n"
+                                "{\n"
+                                "    scale(vec:Vector3, s:Num) = Vector3(vec.x.mul(s), vec.y.mul(s), vec.z.mul(s))\n"
+                                "    return = scale(q.vector, q.scalar)\n"
+                                "}\n";
 
                 result = eval_with_inputs(source, &input, &output);
 
@@ -660,7 +654,6 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     REQUIRE(result == ELEMENT_OK);
                     REQUIRE(output.values[0] == input.values[0] * input.values[1]);
                 }
-
             }
 
             SECTION("Bool")
@@ -3251,15 +3244,15 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.count = 1;
 
                     char source[] = ""
-                        "struct test(value:Num)\n"
-                        "evaluate(a:Num):Num\n"
-                        "{\n"
-                        "   nested_predicate(input:Num):Bool = input.lt(20)\n"
-                        "   nested_body(input:Num):Num = input.add(1)\n"
-                        "   body(input:test):test = test(input.value.add(for(a, nested_predicate, nested_body)))\n"
-                        "   predicate(input:test):Bool = input.value.lt(200)\n"
-                        "   return = for(test(a), predicate, body).value\n"
-                        "}\n";
+                                    "struct test(value:Num)\n"
+                                    "evaluate(a:Num):Num\n"
+                                    "{\n"
+                                    "   nested_predicate(input:Num):Bool = input.lt(20)\n"
+                                    "   nested_body(input:Num):Num = input.add(1)\n"
+                                    "   body(input:test):test = test(input.value.add(for(a, nested_predicate, nested_body)))\n"
+                                    "   predicate(input:test):Bool = input.value.lt(200)\n"
+                                    "   return = for(test(a), predicate, body).value\n"
+                                    "}\n";
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3278,15 +3271,15 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.count = 1;
 
                     char source[] = ""
-                        "struct test(value:Num)\n"
-                        "evaluate(a:Num, b:Num):Num\n"
-                        "{\n"
-                        "   nested_predicate(input:Num):Bool = input.lt(5)\n"
-                        "   nested_body(input:Num):Num = input.add(1)\n"
-                        "   body(input:test):test = test(input.value.add(1))\n"
-                        "   predicate(input:test):Bool = input.value.lt(b.mul(for(a, nested_predicate, nested_body)))\n"
-                        "   return = for(test(a), predicate, body).value\n"
-                        "}\n";
+                                    "struct test(value:Num)\n"
+                                    "evaluate(a:Num, b:Num):Num\n"
+                                    "{\n"
+                                    "   nested_predicate(input:Num):Bool = input.lt(5)\n"
+                                    "   nested_body(input:Num):Num = input.add(1)\n"
+                                    "   body(input:test):test = test(input.value.add(1))\n"
+                                    "   predicate(input:test):Bool = input.value.lt(b.mul(for(a, nested_predicate, nested_body)))\n"
+                                    "   return = for(test(a), predicate, body).value\n"
+                                    "}\n";
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3295,7 +3288,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                 SECTION("Dynamic-time for, Vector2")
                 {
-                    float inputs[] = { 2, 2, 4, 4};
+                    float inputs[] = { 2, 2, 4, 4 };
                     element_inputs input;
                     input.values = inputs;
                     input.count = 4;
@@ -3305,12 +3298,12 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.count = 2;
 
                     char source[] = ""
-                        "evaluate(a:Vector2, b:Vector2):Vector2\n"
-                        "{\n"
-                        "   body(input:Vector2):Vector2 = Vector2(input.x.add(a.x), input.y.add(a.y))\n"
-                        "   predicate(input:Vector2):Bool = input.magnitudeSquared.lt(a.x.add(a.y).add(b.x).sub(a.y))\n"
-                        "   return = for(a, predicate, body).add(for(b, predicate, body)).add(Vector2(1, 1))\n"
-                        "}\n";
+                                    "evaluate(a:Vector2, b:Vector2):Vector2\n"
+                                    "{\n"
+                                    "   body(input:Vector2):Vector2 = Vector2(input.x.add(a.x), input.y.add(a.y))\n"
+                                    "   predicate(input:Vector2):Bool = input.magnitudeSquared.lt(a.x.add(a.y).add(b.x).sub(a.y))\n"
+                                    "   return = for(a, predicate, body).add(for(b, predicate, body)).add(Vector2(1, 1))\n"
+                                    "}\n";
                     result = eval_with_inputs(source, &input, &output, "StandardLibrary");
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3335,13 +3328,13 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.count = 2;
 
                     char source[] = ""
-                        "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"
-                        "{\n"
-                        "   end_of_list(tuple:Any):Bool = tuple.idx.lt(myList.count)\n"
-                        "   accumulate(tuple:Any):Any = {idx = tuple.idx.add(1), accumulated_value = someFunc(tuple.accumulated_value, myList.at(tuple.idx))}\n"
-                        "   return:Any = for({idx = 0, accumulated_value = initial_value}, end_of_list, accumulate).accumulated_value\n"
-                        "}\n"
-                        "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list_fold(list(a, b, c), start, Num.add)\n";
+                                    "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"
+                                    "{\n"
+                                    "   end_of_list(tuple:Any):Bool = tuple.idx.lt(myList.count)\n"
+                                    "   accumulate(tuple:Any):Any = {idx = tuple.idx.add(1), accumulated_value = someFunc(tuple.accumulated_value, myList.at(tuple.idx))}\n"
+                                    "   return:Any = for({idx = 0, accumulated_value = initial_value}, end_of_list, accumulate).accumulated_value\n"
+                                    "}\n"
+                                    "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list_fold(list(a, b, c), start, Num.add)\n";
 
                     result = eval_with_inputs(source, &input, &output, "StandardLibrary");
 
@@ -3360,13 +3353,12 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] =
-                        "scoped_function\n"
-                        "{\n"
-                        "anonymous_higher_order(tuple:Any):Any = { somefunc(inner_param:Num) = tuple.somefunc(inner_param).sub(1) }\n"
-                        "return = anonymous_higher_order(anonymous_higher_order({somefunc(_) = 3}))\n"
-                        "}\n"
-                        "evaluate(in0:Num, in1:Num):Num = scoped_function.somefunc(5)";
+                    char source[] = "scoped_function\n"
+                                    "{\n"
+                                    "anonymous_higher_order(tuple:Any):Any = { somefunc(inner_param:Num) = tuple.somefunc(inner_param).sub(1) }\n"
+                                    "return = anonymous_higher_order(anonymous_higher_order({somefunc(_) = 3}))\n"
+                                    "}\n"
+                                    "evaluate(in0:Num, in1:Num):Num = scoped_function.somefunc(5)";
 
                     result = eval_with_inputs(source, &input, &output);
 
@@ -3407,32 +3399,38 @@ TEST_CASE("Interpreter", "[Evaluate]")
     {
         element_result result = ELEMENT_OK;
 
-        SECTION("Expression bodied function. Literal.") {
+        SECTION("Expression bodied function. Literal.")
+        {
             result = eval("evaluate = -3");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Intrinsic struct. intrinsic function. calling with arguments") {
+        SECTION("Intrinsic struct. intrinsic function. calling with arguments")
+        {
             result = eval("evaluate = Num.add(1, 2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Instance function") {
+        SECTION("Instance function")
+        {
             result = eval("evaluate = 1.add(2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Intrinsic nullary") {
+        SECTION("Intrinsic nullary")
+        {
             result = eval("evaluate = Num.NaN");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Nullary") {
+        SECTION("Nullary")
+        {
             result = eval("evaluate = Num.pi");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Nullary which looks up another nullary locally") {
+        SECTION("Nullary which looks up another nullary locally")
+        {
             result = eval("evaluate = Num.tau");
             REQUIRE(result == ELEMENT_OK);
         }
@@ -3445,73 +3443,87 @@ TEST_CASE("Interpreter", "[Evaluate]")
         }
          */
 
-        SECTION("Indexing intrinsic function") {
+        SECTION("Indexing intrinsic function")
+        {
             result = eval("evaluate = Num.acos(0).degrees");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Indexing nested instance function") {
+        SECTION("Indexing nested instance function")
+        {
             result = eval("evaluate = Num.cos(Num.pi.div(4))");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Chaining Functions") {
+        SECTION("Chaining Functions")
+        {
             //ndexing degrees on result of asin. instance function degrees that is now nullary.
             result = eval("evaluate = Num.asin(-1).degrees");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("If Expression") {
+        SECTION("If Expression")
+        {
             result = eval("evaluate = Bool.if(False, 1, 0)");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Mod") {
+        SECTION("Mod")
+        {
             result = eval("evaluate = Num.mod(5, 2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Bool constructor") {
+        SECTION("Bool constructor")
+        {
             result = eval("evaluate = Bool(2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Num constructor converts back to num") {
+        SECTION("Num constructor converts back to num")
+        {
             result = eval("evaluate = Num(Bool(Num(2))).mul(1)");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Pass higher order function") {
+        SECTION("Pass higher order function")
+        {
             result = eval("double(a:Num) = a.mul(2) applyFive(a) = a(5) evaluate = applyFive(double)");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Functions") {
+        SECTION("Functions")
+        {
             result = eval("mul(a) { return(b) = a.mul(b) } evaluate = mul(5)(2)");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Struct fields") {
+        SECTION("Struct fields")
+        {
             result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).a");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Struct fields") {
+        SECTION("Struct fields")
+        {
             result = eval("struct MyStruct(a:Num, b:Num) {} evaluate = MyStruct(1, 2).b");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Struct instance function") {
+        SECTION("Struct instance function")
+        {
             result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct) = s.a.add(s.b)} evaluate = MyStruct(1, 2).add");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Struct instance function called with more parameters") {
+        SECTION("Struct instance function called with more parameters")
+        {
             result = eval("struct MyStruct(a:Num, b:Num) {add(s:MyStruct, s2:MyStruct) = MyStruct(s.a.add(s2.a), s.b.add(s2.b))} evaluate = MyStruct(1, 2).add(MyStruct(1, 2)).b");
             REQUIRE(result == ELEMENT_OK);
         }
 
-        SECTION("Typename can refer to things inside scopes") {
+        SECTION("Typename can refer to things inside scopes")
+        {
             result = eval("namespace Space { struct Thing(a){}} func(a:Space.Thing) = a.a evaluate = func(Space.Thing(1))");
         }
 
@@ -3698,12 +3710,11 @@ TEST_CASE("Interpreter", "[Evaluate]")
         }
 
         {
-            char my_vec[] =
-                "struct MyVec(x:Num, y:Num)\n"
-                "{\n"
-                "    add(a:MyVec, b:MyVec) = MyVec(a.x.add(b.x), a.y.add(b.y))\n"
-                "    transform_components(a:MyVec, func) = MyVec(func(a.x), func(a.y), func(a.z))\n"
-                "}\n";
+            char my_vec[] = "struct MyVec(x:Num, y:Num)\n"
+                            "{\n"
+                            "    add(a:MyVec, b:MyVec) = MyVec(a.x.add(b.x), a.y.add(b.y))\n"
+                            "    transform_components(a:MyVec, func) = MyVec(func(a.x), func(a.y), func(a.z))\n"
+                            "}\n";
 
             SECTION("Error - Missing Closing Parenthesis For Call")
             {

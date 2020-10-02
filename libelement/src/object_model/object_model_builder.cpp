@@ -316,7 +316,7 @@ namespace element
         for (const auto& input : function_decl->inputs)
         {
             if (function_decl->our_scope->find(identifier{ input.get_name() }, false))
-                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::multiple_definition_with_parameter, input.get_name() , function_decl->name.value);
+                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::multiple_definition_with_parameter, input.get_name(), function_decl->name.value);
 
             if (input.has_default())
             {

@@ -17,14 +17,16 @@ void print_ast(element_ast* ast, int depth, element_ast* ast_to_mark)
     UNSCOPED_INFO(output_buffer.data());
 }
 
-TEST_CASE("Parser", "[AST]") {
+TEST_CASE("Parser", "[AST]")
+{
 
     element_tokeniser_ctx* tokeniser;
     element_tokeniser_create(&tokeniser);
 
     element_parser_ctx parser;
 
-    SECTION("Functions: Burger1 = 2") {
+    SECTION("Functions: Burger1 = 2")
+    {
         const std::string input = "Burger1 = 2";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
@@ -60,7 +62,8 @@ TEST_CASE("Parser", "[AST]") {
         element_ast_delete(parser.root);
     }
 
-    SECTION("Functions: Burger1(a) = 2") {
+    SECTION("Functions: Burger1(a) = 2")
+    {
         const std::string input = "Burger1(a) = 2";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
@@ -100,7 +103,8 @@ TEST_CASE("Parser", "[AST]") {
         element_ast_delete(parser.root);
     }
 
-    SECTION("Functions: Burger1(a:Num) = a") {
+    SECTION("Functions: Burger1(a:Num) = a")
+    {
         const std::string input = "Burger1(a:Num) = a";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
@@ -142,7 +146,8 @@ TEST_CASE("Parser", "[AST]") {
         element_ast_delete(parser.root);
     }
 
-    SECTION("Structs: struct MyStruct(a, b)") {
+    SECTION("Structs: struct MyStruct(a, b)")
+    {
         const std::string input = "struct MyStruct(a, b)";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
@@ -180,7 +185,8 @@ TEST_CASE("Parser", "[AST]") {
         element_ast_delete(parser.root);
     }
 
-    SECTION("Functions: a = _(_a) = 5") {
+    SECTION("Functions: a = _(_a) = 5")
+    {
         const std::string input = "a = _(_a) = 5";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
@@ -227,7 +233,8 @@ TEST_CASE("Parser", "[AST]") {
         element_ast_delete(parser.root);
     }
 
-    SECTION("Namespace: namespace Empty {}") {
+    SECTION("Namespace: namespace Empty {}")
+    {
         const std::string input = "namespace Empty {}";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
@@ -251,7 +258,8 @@ TEST_CASE("Parser", "[AST]") {
         element_ast_delete(parser.root);
     }
 
-    SECTION("Constraint: intrinsic constraint Any") {
+    SECTION("Constraint: intrinsic constraint Any")
+    {
         const std::string input = "intrinsic constraint Any";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");
@@ -287,7 +295,8 @@ TEST_CASE("Parser", "[AST]") {
         element_ast_delete(parser.root);
     }
 
-    SECTION("Functions: evaluate = Num.add(1, 2)") {
+    SECTION("Functions: evaluate = Num.add(1, 2)")
+    {
         const std::string input = "evaluate = Num.add(1, 2)";
         UNSCOPED_INFO(input.c_str());
         element_tokeniser_run(tokeniser, input.c_str(), "<input>");

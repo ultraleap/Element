@@ -6,7 +6,8 @@
 #include "element/token.h"
 #include "../src/ast/ast_internal.hpp"
 
-void check_ast_to_code(std::string input) {
+void check_ast_to_code(std::string input)
+{
     element_tokeniser_ctx* tokeniser;
     element_tokeniser_create(&tokeniser);
 
@@ -30,73 +31,92 @@ void check_ast_to_code(std::string input) {
     REQUIRE(code == input);
 }
 
-TEST_CASE("AST to Source Code" "[AST_CODE]") {
+TEST_CASE("AST to Source Code"
+          "[AST_CODE]")
+{
 
-    SECTION("Burger1 = 2.0") {
+    SECTION("Burger1 = 2.0")
+    {
         check_ast_to_code("Burger1 = 2.0");
     }
 
-    SECTION("Burger1(a) = 2.0") {
+    SECTION("Burger1(a) = 2.0")
+    {
         check_ast_to_code("Burger1(a) = 2.0");
     }
 
-    SECTION("Burger1(a:Num) = a") {
+    SECTION("Burger1(a:Num) = a")
+    {
         check_ast_to_code("Burger1(a:Num) = a");
     }
 
-    SECTION("struct MyStruct(a, b)") {
+    SECTION("struct MyStruct(a, b)")
+    {
         check_ast_to_code("struct MyStruct(a, b)");
     }
 
-    SECTION("a = _(_a) = 5.0") {
+    SECTION("a = _(_a) = 5.0")
+    {
         check_ast_to_code("a = _(_a) = 5.0");
     }
 
-    SECTION("namespace Empty { }") {
+    SECTION("namespace Empty { }")
+    {
         check_ast_to_code("namespace Empty { }");
     }
 
-    SECTION("intrinsic constraint Any") {
+    SECTION("intrinsic constraint Any")
+    {
         check_ast_to_code("intrinsic constraint Any");
     }
 
-    SECTION("evaluate = Num.add(1.0, 2.0)") {
+    SECTION("evaluate = Num.add(1.0, 2.0)")
+    {
         check_ast_to_code("evaluate = Num.add(1.0, 2.0)");
     }
 
-    SECTION("discardedArg(_) = pi") {
+    SECTION("discardedArg(_) = pi")
+    {
         check_ast_to_code("discardedArg(_) = pi");
     }
 
-    SECTION("e = bar(a)(b)(c)(foo)") {
+    SECTION("e = bar(a)(b)(c)(foo)")
+    {
         check_ast_to_code("e = bar(a)(b)(c)(foo)");
     }
 
-    SECTION("constraint Predicate(a:Num):Bool") {
+    SECTION("constraint Predicate(a:Num):Bool")
+    {
         check_ast_to_code("constraint Predicate(a:Num):Bool");
     }
 
-    SECTION("namespace Blah { a = 5.0 b = 10.0 }") {
+    SECTION("namespace Blah { a = 5.0 b = 10.0 }")
+    {
         check_ast_to_code("namespace Blah { a = 5.0 b = 10.0 }");
     }
 
-    SECTION("function(a, b) { struct MyStruct(a, b) return = MyStruct(a, b) }") {
+    SECTION("function(a, b) { struct MyStruct(a, b) return = MyStruct(a, b) }")
+    {
         check_ast_to_code("function(a, b) { struct MyStruct(a, b) return = MyStruct(a, b) }");
     }
 
-    SECTION("c = -10.86") {
+    SECTION("c = -10.86")
+    {
         check_ast_to_code("c = -10.86");
     }
 
-    SECTION("invalidReturn(a:Num, b:Num):Num { c = Num.add(a.x, b.x) }") {
+    SECTION("invalidReturn(a:Num, b:Num):Num { c = Num.add(a.x, b.x) }")
+    {
         check_ast_to_code("invalidReturn(a:Num, b:Num):Num { c = Num.add(a.x, b.x) }");
     }
 
-    SECTION("scope_bodied { return = 5.0 }") {
+    SECTION("scope_bodied { return = 5.0 }")
+    {
         check_ast_to_code("scopeBodied { return = 5.0 }");
     }
 
-    SECTION("Preserve Whitespace") {
+    SECTION("Preserve Whitespace")
+    {
         check_ast_to_code("struct myStruct(a:Num)\n"
                           "{\n"
                           "    a(b:Num) = b \n"

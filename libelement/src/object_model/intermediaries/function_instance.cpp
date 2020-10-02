@@ -29,7 +29,6 @@ function_instance::function_instance(const function_declaration* declarer, captu
     this->source_info = std::move(source_info);
 }
 
-
 std::string function_instance::to_string() const
 {
     if (provided_arguments.empty())
@@ -71,7 +70,6 @@ bool has_defaults(const function_instance* instance)
     return false;
 }
 
-
 object_const_shared_ptr function_instance::call(
     const compilation_context& context,
     std::vector<object_const_shared_ptr> compiled_args,
@@ -84,7 +82,7 @@ object_const_shared_ptr function_instance::call(
     compiled_args.insert(std::begin(compiled_args), std::begin(provided_arguments), std::end(provided_arguments));
 
     //todo: error checks
-    
+
     const auto check_defaults = has_defaults(this) && !declarer->is_variadic();
     if (check_defaults)
     {
@@ -104,9 +102,9 @@ object_const_shared_ptr function_instance::call(
         for (std::size_t i = 0; i < declarer->inputs.size(); ++i)
         {
             input_string += fmt::format("{}{}{}",
-                declarer->inputs[i].get_name(),
-                declarer->inputs[i].has_annotation() ? ":" + declarer->inputs[i].get_annotation()->to_string() : "",
-                i < compiled_args.size()  ? " = " + compiled_args[i]->to_string() : ""); 
+                                        declarer->inputs[i].get_name(),
+                                        declarer->inputs[i].has_annotation() ? ":" + declarer->inputs[i].get_annotation()->to_string() : "",
+                                        i < compiled_args.size() ? " = " + compiled_args[i]->to_string() : "");
 
             if (i < static_cast<int>(declarer->inputs.size()) - 1)
                 input_string += ", ";
@@ -200,7 +198,7 @@ object_const_shared_ptr function_instance::compile(const compilation_context& co
     {
         if constexpr (should_log_compilation_step())
             context.get_logger()->log_step("{} - compiling variadic function with {} arguments\n",
-                       declarer->name.value, provided_arguments.size());
+                                           declarer->name.value, provided_arguments.size());
 
         return call(context, {}, source_info);
     }
@@ -209,7 +207,7 @@ object_const_shared_ptr function_instance::compile(const compilation_context& co
     {
         if constexpr (should_log_compilation_step())
             context.get_logger()->log_step("{} - compiling function with {} arguments\n",
-                declarer->name.value, provided_arguments.size());
+                                           declarer->name.value, provided_arguments.size());
 
         return call(context, {}, source_info);
     }

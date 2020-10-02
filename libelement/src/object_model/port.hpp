@@ -24,6 +24,7 @@ namespace element
 
         [[nodiscard]] bool has_default() const { return get_default(); }
         [[nodiscard]] expression_chain* get_default() const { return expression_chain.get(); }
+
     private:
         const declaration* declarer;
         identifier name;

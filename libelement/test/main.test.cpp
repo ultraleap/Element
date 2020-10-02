@@ -3,7 +3,7 @@
 
 int main(int argc, char* argv[])
 {
-/*#if !defined(NDEBUG) && defined(WIN32)
+    /*#if !defined(NDEBUG) && defined(WIN32)
     //TODO: JM - TEMPORARY - Remove me later
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
 
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     if (returnCode != 0) // Indicates a command line error
         return returnCode;
 
-    // writing to session.configData() or session.Config() here 
+    // writing to session.configData() or session.Config() here
     // overrides command line args
     // only do this if you know you need to
 

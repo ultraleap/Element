@@ -307,35 +307,44 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent)
 {
     std::string string;
 
-    if (node->type == ELEMENT_AST_NODE_LITERAL) {
-        if (parent->type == ELEMENT_AST_NODE_FUNCTION || parent->type == ELEMENT_AST_NODE_LAMBDA) {
+    if (node->type == ELEMENT_AST_NODE_LITERAL)
+    {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION || parent->type == ELEMENT_AST_NODE_LAMBDA)
+        {
             string += " = ";
         }
         string += fmt::format("{}", node->literal);
     }
-    else if (node->type == ELEMENT_AST_NODE_IDENTIFIER) {
+    else if (node->type == ELEMENT_AST_NODE_IDENTIFIER)
+    {
         string += node->identifier;
     }
-    else if (node->type == ELEMENT_AST_NODE_TYPENAME) {
+    else if (node->type == ELEMENT_AST_NODE_TYPENAME)
+    {
         string += ":";
     }
-    else if (node->type == ELEMENT_AST_NODE_DECLARATION) {
-        if (node->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
+    else if (node->type == ELEMENT_AST_NODE_DECLARATION)
+    {
+        if (node->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC))
+        {
             string += "intrinsic ";
         }
-        if (parent->type == ELEMENT_AST_NODE_CONSTRAINT) {
+        if (parent->type == ELEMENT_AST_NODE_CONSTRAINT)
+        {
             string += "constraint ";
         }
         string += node->identifier;
     }
-    else if (node->type == ELEMENT_AST_NODE_PORTLIST || node->type == ELEMENT_AST_NODE_EXPRLIST) {
+    else if (node->type == ELEMENT_AST_NODE_PORTLIST || node->type == ELEMENT_AST_NODE_EXPRLIST)
+    {
         // Create string for port list
         std::string port_string = "(";
 
-        for (int i = 0; i <= node->children.size()-1; i++)
+        for (int i = 0; i <= node->children.size() - 1; i++)
         {
             port_string += ast_to_code(node->children[i].get(), node);
-            if (i != node->children.size()-1) {
+            if (i != node->children.size() - 1)
+            {
                 port_string += ", ";
             }
         }
@@ -344,45 +353,61 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent)
         port_string += ")";
         string += port_string;
     }
-    else if (node->type == ELEMENT_AST_NODE_PORT) {
-        if (!node->identifier.empty()) {
+    else if (node->type == ELEMENT_AST_NODE_PORT)
+    {
+        if (!node->identifier.empty())
+        {
             string += node->identifier;
-        } else if (node->nearest_token->type == ELEMENT_TOK_UNDERSCORE) {
+        }
+        else if (node->nearest_token->type == ELEMENT_TOK_UNDERSCORE)
+        {
             string += "_";
         }
     }
-    else if (node->type == ELEMENT_AST_NODE_STRUCT) {
+    else if (node->type == ELEMENT_AST_NODE_STRUCT)
+    {
         string += "struct ";
     }
-    else if (node->type == ELEMENT_AST_NODE_CALL){
-        if (parent->type == ELEMENT_AST_NODE_FUNCTION) {
+    else if (node->type == ELEMENT_AST_NODE_CALL)
+    {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION)
+        {
             string += " = ";
         }
-        else if (parent->type == ELEMENT_AST_NODE_CALL) {
+        else if (parent->type == ELEMENT_AST_NODE_CALL)
+        {
             string += ".";
         }
         string += node->identifier;
     }
-    else if (node->type == ELEMENT_AST_NODE_LAMBDA) {
-        if (parent->type == ELEMENT_AST_NODE_FUNCTION) {
+    else if (node->type == ELEMENT_AST_NODE_LAMBDA)
+    {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION)
+        {
             string += " = ";
         }
         string += "_";
     }
-    else if (node->type == ELEMENT_AST_NODE_NAMESPACE) {
+    else if (node->type == ELEMENT_AST_NODE_NAMESPACE)
+    {
         string += fmt::format("namespace {} ", node->identifier);
     }
-    else if (node->type == ELEMENT_AST_NODE_SCOPE) {
+    else if (node->type == ELEMENT_AST_NODE_SCOPE)
+    {
         std::string scope_string;
 
-        if (parent->type == ELEMENT_AST_NODE_FUNCTION) {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION)
+        {
             scope_string = " { ";
-        } else {
+        }
+        else
+        {
             scope_string = "{ ";
         }
 
-        if (!node->children.empty()) {
-            for (int i = 0; i <= node->children.size()-1; i++)
+        if (!node->children.empty())
+        {
+            for (int i = 0; i <= node->children.size() - 1; i++)
             {
                 scope_string += ast_to_code(node->children[i].get(), node) + " ";
             }
@@ -393,8 +418,9 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent)
         string += scope_string;
     }
 
-    for (const auto& child: node->children)
-        if (child.get()->type != ELEMENT_AST_NODE_PORT && node->type != ELEMENT_AST_NODE_EXPRLIST && node->type != ELEMENT_AST_NODE_SCOPE) {
+    for (const auto& child : node->children)
+        if (child.get()->type != ELEMENT_AST_NODE_PORT && node->type != ELEMENT_AST_NODE_EXPRLIST && node->type != ELEMENT_AST_NODE_SCOPE)
+        {
             string += ast_to_code(child.get(), node);
         }
 
@@ -497,7 +523,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
             new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
 
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
-			new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast ? nearest_ast : nullptr);
+            new_log_message += "\n\nAST\n---\n" + ast_to_string(context.root, 0, nearest_ast ? nearest_ast : nullptr);
 
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast_to_code))
             new_log_message += "\n\nAST-TO-CODE\n---------\n" + ast_to_code(context.root, nullptr);
