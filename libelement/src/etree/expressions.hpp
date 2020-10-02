@@ -117,11 +117,11 @@ private:
     size_t m_index;
 };
 
-struct element_expression_structure final : public element_expression
+struct element_expression_serialised_structure final : public element_expression
 {
     DECLARE_TYPE_ID();
 
-    explicit element_expression_structure(std::vector<expression_const_shared_ptr>&& deps, std::vector<std::string>&& deps_names, std::string&& type_name)
+    explicit element_expression_serialised_structure(std::vector<expression_const_shared_ptr>&& deps, std::vector<std::string>&& deps_names, std::string&& type_name)
         : element_expression(type_id, nullptr)
         , m_debug_dependents_names(std::move(deps_names))
         , m_debug_type_name(std::move(type_name))

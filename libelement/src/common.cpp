@@ -169,9 +169,9 @@ std::string expression_to_string(const element_expression& expression, int depth
         string += "INPUT: scope = " + std::to_string(input->scope()) + "; index = " + std::to_string(input->index());
     }
 
-    if (expression.is<element_expression_structure>())
+    if (expression.is<element_expression_serialised_structure>())
     {
-        const auto& structure = expression.as<element_expression_structure>();
+        const auto& structure = expression.as<element_expression_serialised_structure>();
         string += "STRUCTURE: ";
     }
 

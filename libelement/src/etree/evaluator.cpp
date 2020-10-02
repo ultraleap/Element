@@ -41,7 +41,7 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* es = expr->as<element_expression_structure>())
+    if (const auto* es = expr->as<element_expression_serialised_structure>())
     {
         auto deps = es->dependents();
         for (auto& dep : deps)

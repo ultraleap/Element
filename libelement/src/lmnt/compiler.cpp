@@ -115,7 +115,7 @@ static element_result generate_lmnt_ops(
         // TODO: if input -> output, do a COPY
         return ELEMENT_OK;
     }
-    else if (auto se = expr->as<element_expression_structure>())
+    else if (auto se = expr->as<element_expression_serialised_structure>())
     {
         assert(depth == 0);
         for (const auto& d : se->dependents())

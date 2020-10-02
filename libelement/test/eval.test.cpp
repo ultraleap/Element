@@ -3841,7 +3841,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
         std::vector<expression_const_shared_ptr> deps;
         deps.push_back(expr);
         deps.push_back(expr);
-        auto new_expr = std::make_shared<element_expression_structure>(std::move(deps), std::vector<std::string>{}, "");
+        auto new_expr = std::make_shared<element_expression_serialised_structure>(std::move(deps), std::vector<std::string>{}, "");
         const auto result = element_evaluate(*context, new_expr, inputs, outputs, {});
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);

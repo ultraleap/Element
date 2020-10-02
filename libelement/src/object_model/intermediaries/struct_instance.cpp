@@ -90,5 +90,5 @@ std::shared_ptr<const element_expression> struct_instance::to_expression() const
         dependents_names.push_back(input.get_name());
     }
 
-    return std::make_shared<element_expression_structure>(std::move(dependents), std::move(dependents_names), declarer->get_name());
+    return std::make_shared<element_expression_serialised_structure>(std::move(dependents), std::move(dependents_names), declarer->get_name());
 }
