@@ -25,7 +25,8 @@ namespace element
             {
                 //todo: UTF8 concerns?
                 assert(character_end - character_start >= 0);
-                text = line_in_source->substr(character_start - 1, character_end - character_start);
+                assert(character_start > 0);
+                text = line_in_source->substr(static_cast<std::size_t>(character_start) - 1, static_cast<std::size_t>(character_end) - character_start);
             }
 
             return text;

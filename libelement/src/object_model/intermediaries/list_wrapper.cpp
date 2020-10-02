@@ -23,7 +23,7 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
     if (selector_constant)
     {
         assert(!option_objects.empty());
-        int index = selector_constant->value();
+        int index = static_cast<int>(selector_constant->value());
         index = std::clamp(index, 0, static_cast<int>(option_objects.size()) - 1);
         return option_objects[index];
     }

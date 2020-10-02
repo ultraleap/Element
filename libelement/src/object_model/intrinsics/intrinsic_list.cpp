@@ -17,7 +17,7 @@ object_const_shared_ptr intrinsic_list::compile(const compilation_context& conte
                                                 const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
-    const int count = frame.compiled_arguments.size();
+    const int count = static_cast<int>(frame.compiled_arguments.size());
 
     assert(count != 0); //todo
 

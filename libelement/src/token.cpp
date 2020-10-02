@@ -85,17 +85,17 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, c
         *token = nullptr;
         if (state->tokens.empty())
         {
-            state->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg);
+            state->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg ? msg : "");
             return ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
         }
         else
         {
-            auto& last_token = state->tokens[state->tokens.size() - 1];
+            const auto& last_token = state->tokens[state->tokens.size() - 1];
             element_log_message log_msg;
             const std::string line_in_source = state->text_on_line(last_token.line);
             log_msg.line_in_source = line_in_source.c_str();
             log_msg.message = message.c_str();
-            log_msg.message_length = message.length();
+            log_msg.message_length = static_cast<int>(message.length());
             log_msg.filename = last_token.file_name;
             log_msg.length = last_token.tok_len;
             log_msg.line = last_token.line;
@@ -484,7 +484,9 @@ element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* c
                     UTF8_NEXT(it, end);
                     std::string source_line;
                     source_line.resize(1024);
-                    memcpy(source_line.data(), cinput + state->line_start_position, state->pos - state->line_start_position);
+                    assert(state->pos - state->line_start_position >= 0);
+                    assert(state->pos >= 0);
+                    memcpy(source_line.data(), cinput + state->line_start_position, static_cast<std::size_t>(state->pos) - state->line_start_position);
                     state->log(ELEMENT_ERROR_PARSE,
                                fmt::format("Encountered invalid character '{}' in file {} on line {} character {}\n{}",
                                            std::string(begin_it, it), cfilename, state->line, state->character, source_line));
@@ -520,28 +522,30 @@ void element_tokeniser_print(const element_tokeniser_ctx* state)
 {
     for (const auto& t : state->tokens)
     {
-        const char* c;
+        const char* c = "ELEMENT_TOK_<UNKNOWN>";
         switch (t.type)
         {
-            PRINTCASE(ELEMENT_TOK_NONE);
-            PRINTCASE(ELEMENT_TOK_NUMBER);
-            PRINTCASE(ELEMENT_TOK_IDENTIFIER);
-            PRINTCASE(ELEMENT_TOK_UNDERSCORE);
-            PRINTCASE(ELEMENT_TOK_DOT);
-            PRINTCASE(ELEMENT_TOK_BRACKETL);
-            PRINTCASE(ELEMENT_TOK_BRACKETR);
-            PRINTCASE(ELEMENT_TOK_COLON);
-            PRINTCASE(ELEMENT_TOK_COMMA);
-            PRINTCASE(ELEMENT_TOK_BRACEL);
-            PRINTCASE(ELEMENT_TOK_BRACER);
-            PRINTCASE(ELEMENT_TOK_EQUALS);
+            PRINTCASE(ELEMENT_TOK_NONE)
+            PRINTCASE(ELEMENT_TOK_NUMBER)
+            PRINTCASE(ELEMENT_TOK_IDENTIFIER)
+            PRINTCASE(ELEMENT_TOK_UNDERSCORE)
+            PRINTCASE(ELEMENT_TOK_DOT)
+            PRINTCASE(ELEMENT_TOK_BRACKETL)
+            PRINTCASE(ELEMENT_TOK_BRACKETR)
+            PRINTCASE(ELEMENT_TOK_COLON)
+            PRINTCASE(ELEMENT_TOK_COMMA)
+            PRINTCASE(ELEMENT_TOK_BRACEL)
+            PRINTCASE(ELEMENT_TOK_BRACER)
+            PRINTCASE(ELEMENT_TOK_EQUALS)
+            PRINTCASE(ELEMENT_TOK_EOF)
         default:
-            "ELEMENT_TOK_<UNKNOWN>";
+            c = "ELEMENT_TOK_<UNKNOWN>";
             break;
         }
         std::string buf;
         if (t.tok_len > 0)
             buf = state->input.substr(t.tok_pos, t.tok_len);
+        //Skip past the identical prefix for all cases by adding strlen
         printf("%-10s  %s\n", c + strlen("ELEMENT_TOK_"), buf.c_str());
     }
 }

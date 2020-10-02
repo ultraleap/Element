@@ -23,18 +23,18 @@ std::string tokens_to_string(const element_tokeniser_ctx* context, const element
         std::string c;
         switch (token.type)
         {
-            PRINTCASE(ELEMENT_TOK_NONE);
-            PRINTCASE(ELEMENT_TOK_NUMBER);
-            PRINTCASE(ELEMENT_TOK_IDENTIFIER);
-            PRINTCASE(ELEMENT_TOK_UNDERSCORE);
-            PRINTCASE(ELEMENT_TOK_DOT);
-            PRINTCASE(ELEMENT_TOK_BRACKETL);
-            PRINTCASE(ELEMENT_TOK_BRACKETR);
-            PRINTCASE(ELEMENT_TOK_COLON);
-            PRINTCASE(ELEMENT_TOK_COMMA);
-            PRINTCASE(ELEMENT_TOK_BRACEL);
-            PRINTCASE(ELEMENT_TOK_BRACER);
-            PRINTCASE(ELEMENT_TOK_EQUALS);
+            PRINTCASE(ELEMENT_TOK_NONE)
+            PRINTCASE(ELEMENT_TOK_NUMBER)
+            PRINTCASE(ELEMENT_TOK_IDENTIFIER)
+            PRINTCASE(ELEMENT_TOK_UNDERSCORE)
+            PRINTCASE(ELEMENT_TOK_DOT)
+            PRINTCASE(ELEMENT_TOK_BRACKETL)
+            PRINTCASE(ELEMENT_TOK_BRACKETR)
+            PRINTCASE(ELEMENT_TOK_COLON)
+            PRINTCASE(ELEMENT_TOK_COMMA)
+            PRINTCASE(ELEMENT_TOK_BRACEL)
+            PRINTCASE(ELEMENT_TOK_BRACER)
+            PRINTCASE(ELEMENT_TOK_EQUALS)
         default:
             c = "";
         }
@@ -123,16 +123,16 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
         char* c;
         switch (ast->type)
         {
-            PRINTCASE(ELEMENT_AST_NODE_ROOT);
-            PRINTCASE(ELEMENT_AST_NODE_SCOPE);
-            PRINTCASE(ELEMENT_AST_NODE_CONSTRAINT);
-            PRINTCASE(ELEMENT_AST_NODE_FUNCTION);
-            PRINTCASE(ELEMENT_AST_NODE_STRUCT);
-            PRINTCASE(ELEMENT_AST_NODE_EXPRESSION);
-            PRINTCASE(ELEMENT_AST_NODE_EXPRLIST);
-            PRINTCASE(ELEMENT_AST_NODE_PORTLIST);
-            PRINTCASE(ELEMENT_AST_NODE_TYPENAME);
-            PRINTCASE(ELEMENT_AST_NODE_LAMBDA);
+            PRINTCASE(ELEMENT_AST_NODE_ROOT)
+            PRINTCASE(ELEMENT_AST_NODE_SCOPE)
+            PRINTCASE(ELEMENT_AST_NODE_CONSTRAINT)
+            PRINTCASE(ELEMENT_AST_NODE_FUNCTION)
+            PRINTCASE(ELEMENT_AST_NODE_STRUCT)
+            PRINTCASE(ELEMENT_AST_NODE_EXPRESSION)
+            PRINTCASE(ELEMENT_AST_NODE_EXPRLIST)
+            PRINTCASE(ELEMENT_AST_NODE_PORTLIST)
+            PRINTCASE(ELEMENT_AST_NODE_TYPENAME)
+            PRINTCASE(ELEMENT_AST_NODE_LAMBDA)
         default:
             c = "ELEMENT_AST_NODE_<UNKNOWN>";
             break;
@@ -153,7 +153,7 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     return string;
 }
 
-std::string expression_to_string(const element_expression& expression, int depth)
+std::string expression_to_string(const element_expression& expression, std::size_t depth)
 {
     std::string string(depth, ' ');
 
@@ -183,13 +183,13 @@ std::string expression_to_string(const element_expression& expression, int depth
         switch (nullary->operation())
         {
             //num
-            PRINTCASE(element_nullary_op::nan);
-            PRINTCASE(element_nullary_op::positive_infinity);
-            PRINTCASE(element_nullary_op::negative_infinity);
+            PRINTCASE(element_nullary_op::nan)
+            PRINTCASE(element_nullary_op::positive_infinity)
+            PRINTCASE(element_nullary_op::negative_infinity)
 
             //boolean
-            PRINTCASE(element_nullary_op::true_value);
-            PRINTCASE(element_nullary_op::false_value);
+            PRINTCASE(element_nullary_op::true_value)
+            PRINTCASE(element_nullary_op::false_value)
         }
         string += c;
     }
@@ -202,19 +202,19 @@ std::string expression_to_string(const element_expression& expression, int depth
         switch (unary->operation())
         {
             //num
-            PRINTCASE(element_unary_op::sin);
-            PRINTCASE(element_unary_op::cos);
-            PRINTCASE(element_unary_op::tan);
-            PRINTCASE(element_unary_op::asin);
-            PRINTCASE(element_unary_op::acos);
-            PRINTCASE(element_unary_op::atan);
-            PRINTCASE(element_unary_op::ln);
-            PRINTCASE(element_unary_op::abs);
-            PRINTCASE(element_unary_op::ceil);
-            PRINTCASE(element_unary_op::floor);
+            PRINTCASE(element_unary_op::sin)
+            PRINTCASE(element_unary_op::cos)
+            PRINTCASE(element_unary_op::tan)
+            PRINTCASE(element_unary_op::asin)
+            PRINTCASE(element_unary_op::acos)
+            PRINTCASE(element_unary_op::atan)
+            PRINTCASE(element_unary_op::ln)
+            PRINTCASE(element_unary_op::abs)
+            PRINTCASE(element_unary_op::ceil)
+            PRINTCASE(element_unary_op::floor)
 
             //boolean
-            PRINTCASE(element_unary_op::not_);
+            PRINTCASE(element_unary_op::not_)
         }
         string += c;
     }
@@ -227,28 +227,28 @@ std::string expression_to_string(const element_expression& expression, int depth
         switch (binary->operation())
         {
             //num
-            PRINTCASE(element_binary_op::add);
-            PRINTCASE(element_binary_op::sub);
-            PRINTCASE(element_binary_op::mul);
-            PRINTCASE(element_binary_op::div);
-            PRINTCASE(element_binary_op::rem);
-            PRINTCASE(element_binary_op::pow);
-            PRINTCASE(element_binary_op::min);
-            PRINTCASE(element_binary_op::max);
-            PRINTCASE(element_binary_op::log);
-            PRINTCASE(element_binary_op::atan2);
+            PRINTCASE(element_binary_op::add)
+            PRINTCASE(element_binary_op::sub)
+            PRINTCASE(element_binary_op::mul)
+            PRINTCASE(element_binary_op::div)
+            PRINTCASE(element_binary_op::rem)
+            PRINTCASE(element_binary_op::pow)
+            PRINTCASE(element_binary_op::min)
+            PRINTCASE(element_binary_op::max)
+            PRINTCASE(element_binary_op::log)
+            PRINTCASE(element_binary_op::atan2)
 
             //boolean
-            PRINTCASE(element_binary_op::and_);
-            PRINTCASE(element_binary_op::or_);
+            PRINTCASE(element_binary_op::and_)
+            PRINTCASE(element_binary_op::or_)
 
             //comparison
-            PRINTCASE(element_binary_op::eq);
-            PRINTCASE(element_binary_op::neq);
-            PRINTCASE(element_binary_op::lt);
-            PRINTCASE(element_binary_op::leq);
-            PRINTCASE(element_binary_op::gt);
-            PRINTCASE(element_binary_op::geq);
+            PRINTCASE(element_binary_op::eq)
+            PRINTCASE(element_binary_op::neq)
+            PRINTCASE(element_binary_op::lt)
+            PRINTCASE(element_binary_op::leq)
+            PRINTCASE(element_binary_op::gt)
+            PRINTCASE(element_binary_op::geq)
         }
         string += c;
     }
@@ -323,7 +323,7 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
         new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(&context, nullptr);
 
     msg.message = new_log_message.c_str();
-    msg.message_length = new_log_message.length();
+    msg.message_length = static_cast<int>(new_log_message.length());
 
     log(msg);
 }
@@ -332,7 +332,7 @@ void element_log_ctx::log(const element_interpreter_ctx& context, element_result
 {
     auto msg = element_log_message();
     msg.message = message.c_str();
-    msg.message_length = message.length();
+    msg.message_length = static_cast<int>(message.length());
     msg.message_code = code;
     msg.line = -1;
     msg.character = -1;
@@ -349,7 +349,7 @@ void element_log_ctx::log(const std::string& message, const element_stage stage)
 {
     auto msg = element_log_message();
     msg.message = message.c_str();
-    msg.message_length = message.length();
+    msg.message_length = static_cast<int>(message.length());
     msg.message_code = ELEMENT_OK;
     msg.line = -1;
     msg.character = -1;
@@ -403,7 +403,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     }
 
     msg.message = new_log_message.c_str();
-    msg.message_length = new_log_message.length();
+    msg.message_length = static_cast<int>(new_log_message.length());
     msg.line_in_source = source_line.empty() ? nullptr : source_line.c_str();
     log(msg);
 }
@@ -413,7 +413,7 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
 {
     auto msg = element_log_message();
     msg.message = message.c_str();
-    msg.message_length = message.length();
+    msg.message_length = static_cast<int>(message.length());
     msg.message_code = code;
     msg.line = -1;
     msg.character = -1;

@@ -36,7 +36,7 @@ using LogCallback = void (*)(const element_log_message*, void*);
 
 struct element_log_ctx
 {
-    LogCallback callback;
+    LogCallback callback = nullptr;
     void* user_data = nullptr;
 
     void log(const std::string& message, const element_stage stage) const;
@@ -80,7 +80,7 @@ struct element_log_ctx
 
 std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token = nullptr);
 std::string ast_to_string(const element_ast* ast, int depth = 0, const element_ast* ast_to_mark = nullptr);
-std::string expression_to_string(const element_expression& expression, int depth = 0);
+std::string expression_to_string(const element_expression& expression, std::size_t depth = 0);
 std::string ast_to_code(const element_ast* node, const element_ast* parent = nullptr, bool skip = false);
 
 namespace element
@@ -94,7 +94,7 @@ namespace element
             , msg(std::move(msg))
         {
             this->log_msg.message = this->msg.c_str();
-            this->log_msg.message_length = this->msg.length();
+            this->log_msg.message_length = static_cast<int>(this->msg.length());
         }
 
         [[nodiscard]] const element_log_message& get_log_message() const
