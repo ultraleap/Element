@@ -10,7 +10,7 @@
 #include "object_model/error.hpp"
 #include "object_model/error_map.hpp"
 #include "object_model/declarations/declaration.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 
 using namespace element;
 

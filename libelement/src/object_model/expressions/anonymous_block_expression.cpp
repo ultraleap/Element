@@ -10,7 +10,7 @@
 #include "object_model/error.hpp"
 #include "object_model/error_map.hpp"
 #include "object_model/intermediaries/anonymous_block_instance.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 
 using namespace element;
 

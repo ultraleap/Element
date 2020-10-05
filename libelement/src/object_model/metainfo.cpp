@@ -17,7 +17,7 @@
 #include "port.hpp"
 #include "scope.hpp"
 #include "error.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 #include "expressions/anonymous_block_expression.hpp"
 
 using namespace element;
@@ -91,7 +91,7 @@ std::string intrinsic::typeof_info() const
 //    return "Error: " + message;
 //}
 
-std::string element_expression::typeof_info() const
+std::string element_instruction::typeof_info() const
 {
     return actual_type ? actual_type->get_identifier().value : "UnknownType:Expression";
 }

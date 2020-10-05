@@ -30,7 +30,7 @@ object_const_shared_ptr compile_time_fold(
     if (!list_count->is_constant())
         return nullptr;
 
-    const auto list_count_constant = std::dynamic_pointer_cast<const element_expression_constant>(list_count);
+    const auto list_count_constant = std::dynamic_pointer_cast<const element_instruction_constant>(list_count);
 
     std::vector<object_const_shared_ptr> indexer_arguments;
     indexer_arguments.resize(1);
@@ -38,7 +38,7 @@ object_const_shared_ptr compile_time_fold(
     auto aggregate = initial;
     for (int i = 0; i < list_count_constant->value(); ++i)
     {
-        indexer_arguments[0] = std::make_shared<const element_expression_constant>(i);
+        indexer_arguments[0] = std::make_shared<const element_instruction_constant>(i);
         auto at_index = list->index(context, identifier::list_at_identifier, source_info)->call(context, indexer_arguments, source_info);
         if (!at_index->is_constant())
             return nullptr;
@@ -67,9 +67,9 @@ object_const_shared_ptr runtime_fold(
     if (!accumulator_compiled)
         return std::make_shared<const error>("accumulator failed to compile", result, source_info);
 
-    const auto accumulator_expression = accumulator_compiled->to_expression();
+    const auto accumulator_expression = accumulator_compiled->to_instruction();
     if (!accumulator_expression)
-        return std::make_shared<const error>("accumulator failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
+        return std::make_shared<const error>("accumulator failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
 
     const auto* listfold = context.get_compiler_scope()->find(identifier{ "@list_fold" }, false);
     if (!listfold)

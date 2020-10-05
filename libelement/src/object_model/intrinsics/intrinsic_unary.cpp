@@ -4,7 +4,7 @@
 #include "object_model/constraints/type.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/declarations/declaration.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 
 using namespace element;
 
@@ -29,10 +29,10 @@ object_const_shared_ptr intrinsic_unary::compile(const compilation_context& cont
     assert(intrinsic);
     assert(intrinsic == this);
 
-    auto expr = std::dynamic_pointer_cast<const element_expression>(frame.compiled_arguments[0]);
+    auto expr = std::dynamic_pointer_cast<const element_instruction>(frame.compiled_arguments[0]);
     assert(expr);
 
-    auto new_expr = std::make_unique<element_expression_unary>(
+    auto new_expr = std::make_unique<element_instruction_unary>(
         operation,
         std::move(expr),
         return_type);

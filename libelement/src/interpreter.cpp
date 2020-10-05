@@ -15,7 +15,7 @@
 //SELF
 #include "common_internal.hpp"
 #include "etree/evaluator.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 #include "token_internal.hpp"
 #include "configuration.hpp"
 #include "object_model/object_model_builder.hpp"
@@ -464,18 +464,18 @@ element_result element_interpreter_compile(
 
     if (options->desired_result == element_compiler_options::compiled_result_kind::AUTOMATIC)
     {
-        auto expression = compiled->to_expression();
-        if (!expression)
+        auto instruction = compiled->to_instruction();
+        if (!instruction)
             *object = new element_object{ std::move(compiled) };
         else
-            *object = new element_object{ std::move(expression) };
+            *object = new element_object{ std::move(instruction) };
     }
-    else if (options->desired_result == element_compiler_options::compiled_result_kind::EXPRESSION_TREE_ONLY)
+    else if (options->desired_result == element_compiler_options::compiled_result_kind::INSTRUCTION_TREE_ONLY)
     {
-        *object = new element_object { compiled->to_expression() };
+        *object = new element_object { compiled->to_instruction() };
         if (!*object)
         {
-            context->log(result, "Failed to compile declaration to an expression tree.");
+            context->log(result, "Failed to compile declaration to an instruction tree.");
             return ELEMENT_ERROR_UNKNOWN;
         }
     }
@@ -509,20 +509,20 @@ element_result element_interpreter_evaluate(
     if (err)
         return err->log_once(context->logger.get());
 
-    auto expr = object->obj->to_expression();
+    auto expr = object->obj->to_instruction();
     if (!expr)
     {
         //todo: proper logging
-        context->logger->log("element_object is not an expression tree, so it can't be evaluated", ELEMENT_STAGE_EVALUATOR);
+        context->logger->log("element_object is not an instruction tree, so it can't be evaluated", ELEMENT_STAGE_EVALUATOR);
         return ELEMENT_ERROR_UNKNOWN;
     }
     else
     {
-        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree);
+        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
 
         if (log_expression_tree)
         {
-            context->log("\n------\nEXPRESSION\n------\n" + expression_to_string(*expr));
+            context->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*expr));
         }
     }
 
@@ -711,7 +711,7 @@ element_result element_interpreter_evaluate_expression(
         return err->log_once(context->logger.get());
     }
 
-    const auto compiled = object_ptr->obj->to_expression();
+    const auto compiled = object_ptr->obj->to_instruction();
     if (!compiled)
     {
         context->log(ELEMENT_ERROR_SERIALISATION, "failed to serialise", "<REMOVE>");
@@ -720,11 +720,11 @@ element_result element_interpreter_evaluate_expression(
     }
     else
     {
-        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree);
+        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
 
         if (log_expression_tree)
         {
-            context->log("\n------\nEXPRESSION\n------\n" + expression_to_string(*compiled));
+            context->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*compiled));
         }
     }
 

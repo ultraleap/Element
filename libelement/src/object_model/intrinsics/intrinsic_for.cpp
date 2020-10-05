@@ -35,7 +35,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
 
         //todo: one day we'll use the fast RTTI instead of the language one
         //the return value is going to be a bool (of some kind), and bools are expressions
-        const auto ret_as_expression = std::dynamic_pointer_cast<const element_expression>(ret);
+        const auto ret_as_expression = std::dynamic_pointer_cast<const element_instruction>(ret);
         if (!ret_as_expression || !ret_as_expression->is_constant())
         {
             predicate_evaluated_to_constant = false;
@@ -44,7 +44,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
 
         const auto ret_evaluated = evaluate(context, ret_as_expression);
         assert(ret_evaluated);
-        const auto ret_as_constant = std::dynamic_pointer_cast<const element_expression_constant>(ret_evaluated);
+        const auto ret_as_constant = std::dynamic_pointer_cast<const element_instruction_constant>(ret_evaluated);
         if (!ret_as_constant)
         {
             predicate_evaluated_to_constant = false;
@@ -125,33 +125,33 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
     if (!body_compiled)
         return std::make_shared<const error>("body failed to compile", result, source_info);
 
-    auto predicate_expression = predicate_compiled->to_expression();
+    auto predicate_expression = predicate_compiled->to_instruction();
     if (!predicate_expression)
-        return std::make_shared<const error>("predicate failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info);
+        return std::make_shared<const error>("predicate failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info);
 
-    auto body_expression = body_compiled->to_expression();
+    auto body_expression = body_compiled->to_instruction();
     if (!body_expression)
-        return std::make_shared<const error>("body failed to compile to an expression tree", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
+        return std::make_shared<const error>("body failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
 
     //everything is an instruction, so make a for instruction. note: initial_object is either Num or Bool.
-    auto initial_expression = std::dynamic_pointer_cast<const element_expression>(initial_object);
+    auto initial_expression = std::dynamic_pointer_cast<const element_instruction>(initial_object);
     if (initial_expression)
-        return std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression));
+        return std::make_shared<element_instruction_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression));
 
     //if it wasn't an instruction, let's convert it in to one.
     //if we can't then this for-loop can't be done at runtime, since it can't be represented in the instruction tree
-    initial_expression = initial_object->to_expression();
+    initial_expression = initial_object->to_instruction();
     if (!initial_expression)
         return std::make_shared<const error>("tried to create a runtime for but a non-serializable initial value was given", ELEMENT_ERROR_UNKNOWN, source_info);
 
     //initial_object should be a struct, so the output of the for loop is going to be the same type of struct, except all the fields (flattened struct) are instructions referring to the for loop
-    const auto for_expression = std::make_shared<element_expression_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression));
+    const auto for_expression = std::make_shared<element_instruction_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression));
     const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
 
     auto indexing_expression_filler = [&for_expression](const std::string&,
-                                                        const std::shared_ptr<const element_expression>& field,
-                                                        int index) -> std::shared_ptr<const element_expression> {
-        return std::make_shared<element_expression_indexer>(for_expression, index, field->actual_type);
+                                                        const std::shared_ptr<const element_instruction>& field,
+                                                        int index) -> std::shared_ptr<const element_instruction> {
+        return std::make_shared<element_instruction_indexer>(for_expression, index, field->actual_type);
     };
 
     return initial_struct->clone_and_fill_with_expressions(context, std::move(indexing_expression_filler));

@@ -7,7 +7,7 @@
 #include "token_internal.hpp"
 #include "ast/ast_internal.hpp"
 #include "configuration.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 #include "lmnt/compiler.hpp"
 
 #define PRINTCASE(a) \
@@ -153,31 +153,31 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     return string;
 }
 
-std::string expression_to_string(const element_expression& expression, std::size_t depth)
+std::string instruction_to_string(const element_instruction& expression, std::size_t depth)
 {
     std::string string(depth, ' ');
 
-    if (expression.is<element_expression_constant>())
+    if (expression.is<element_instruction_constant>())
     {
-        const auto& constant = expression.as<element_expression_constant>();
+        const auto& constant = expression.as<element_instruction_constant>();
         string += "CONSTANT: " + std::to_string(constant->value());
     }
 
-    if (expression.is<element_expression_input>())
+    if (expression.is<element_instruction_input>())
     {
-        const auto& input = expression.as<element_expression_input>();
+        const auto& input = expression.as<element_instruction_input>();
         string += "INPUT: scope = " + std::to_string(input->scope()) + "; index = " + std::to_string(input->index());
     }
 
-    if (expression.is<element_expression_serialised_structure>())
+    if (expression.is<element_instruction_serialised_structure>())
     {
-        const auto& structure = expression.as<element_expression_serialised_structure>();
+        const auto& structure = expression.as<element_instruction_serialised_structure>();
         string += "STRUCTURE: ";
     }
 
-    if (expression.is<element_expression_nullary>())
+    if (expression.is<element_instruction_nullary>())
     {
-        const auto& nullary = expression.as<element_expression_nullary>();
+        const auto& nullary = expression.as<element_instruction_nullary>();
         string += "NULLARY: ";
         char* c = nullptr;
         switch (nullary->operation())
@@ -194,9 +194,9 @@ std::string expression_to_string(const element_expression& expression, std::size
         string += c;
     }
 
-    if (expression.is<element_expression_unary>())
+    if (expression.is<element_instruction_unary>())
     {
-        const auto& unary = expression.as<element_expression_unary>();
+        const auto& unary = expression.as<element_instruction_unary>();
         string += "UNARY: ";
         char* c = nullptr;
         switch (unary->operation())
@@ -219,9 +219,9 @@ std::string expression_to_string(const element_expression& expression, std::size
         string += c;
     }
 
-    if (expression.is<element_expression_binary>())
+    if (expression.is<element_instruction_binary>())
     {
-        const auto& binary = expression.as<element_expression_binary>();
+        const auto& binary = expression.as<element_instruction_binary>();
         string += "BINARY: ";
         char* c = nullptr;
         switch (binary->operation())
@@ -253,44 +253,44 @@ std::string expression_to_string(const element_expression& expression, std::size
         string += c;
     }
 
-    if (expression.is<element_expression_if>())
+    if (expression.is<element_instruction_if>())
     {
-        const auto& if_instruction = expression.as<element_expression_if>();
+        const auto& if_instruction = expression.as<element_instruction_if>();
         string += "IF:\n";
-        string += std::string(depth + 1, ' ') + "PREDICATE:\n" + expression_to_string(*if_instruction->predicate().get(), depth + 2);
-        string += std::string(depth + 1, ' ') + "IF_TRUE:\n" + expression_to_string(*if_instruction->if_true().get(), depth + 2);
-        string += std::string(depth + 1, ' ') + "IF_FALSE:\n" + expression_to_string(*if_instruction->if_false().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "PREDICATE:\n" + instruction_to_string(*if_instruction->predicate().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "IF_TRUE:\n" + instruction_to_string(*if_instruction->if_true().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "IF_FALSE:\n" + instruction_to_string(*if_instruction->if_false().get(), depth + 2);
         return string;
     }
 
-    if (expression.is<element_expression_for>())
+    if (expression.is<element_instruction_for>())
     {
-        const auto& for_instruction = expression.as<element_expression_for>();
+        const auto& for_instruction = expression.as<element_instruction_for>();
         string += "FOR:" + fmt::format(" [{}]", fmt::ptr(&expression)) + "\n";
-        string += std::string(depth + 1, ' ') + "INITIAL:\n" + expression_to_string(*for_instruction->initial().get(), depth + 2);
-        string += std::string(depth + 1, ' ') + "CONDITION:\n" + expression_to_string(*for_instruction->condition().get(), depth + 2);
-        string += std::string(depth + 1, ' ') + "BODY:\n" + expression_to_string(*for_instruction->body().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "INITIAL:\n" + instruction_to_string(*for_instruction->initial().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "CONDITION:\n" + instruction_to_string(*for_instruction->condition().get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "BODY:\n" + instruction_to_string(*for_instruction->body().get(), depth + 2);
         return string;
     }
 
-    if (expression.is<element_expression_select>())
+    if (expression.is<element_instruction_select>())
     {
-        const auto& select_instruction = expression.as<element_expression_select>();
+        const auto& select_instruction = expression.as<element_instruction_select>();
         string += "SELECT:\n";
-        string += std::string(depth + 1, ' ') + "SELECTOR:\n" + expression_to_string(*select_instruction->selector.get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "SELECTOR:\n" + instruction_to_string(*select_instruction->selector.get(), depth + 2);
 
         string += std::string(depth + 1, ' ') + "OPTIONS:\n";
         for (const auto& dependent : select_instruction->options)
-            string += expression_to_string(*dependent, depth + 2);
+            string += instruction_to_string(*dependent, depth + 2);
 
         return string;
     }
 
-    if (expression.is<element_expression_indexer>())
+    if (expression.is<element_instruction_indexer>())
     {
-        const auto& indexer_instruction = expression.as<element_expression_indexer>();
+        const auto& indexer_instruction = expression.as<element_instruction_indexer>();
         string += "INDEXER\n";
-        string += expression_to_string(*indexer_instruction->for_expression, depth + 1);
+        string += instruction_to_string(*indexer_instruction->for_instruction, depth + 1);
         string += std::string(depth + 1, ' ') + "INDEX: " + std::to_string(indexer_instruction->index) + "\n";
 
         return string;
@@ -299,7 +299,7 @@ std::string expression_to_string(const element_expression& expression, std::size
     string += "\n";
 
     for (const auto& dependent : expression.dependents())
-        string += expression_to_string(*dependent, depth + 1);
+        string += instruction_to_string(*dependent, depth + 1);
     return string;
 }
 

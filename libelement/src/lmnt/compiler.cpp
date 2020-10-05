@@ -59,7 +59,7 @@ struct compiler_ctx
     element_lmnt_compiled_function* function;
     std::shared_ptr<std::vector<element_value>> constants;
 
-    std::unordered_map<const element_expression*, element_lmnt_stack_entry>& entries() { return archive.entries[function]; }
+    std::unordered_map<const element_instruction*, element_lmnt_stack_entry>& entries() { return archive.entries[function]; }
 };
 
 element_result buf_raw_write_and_update(char* b, size_t bsize, size_t& i, const void* d, size_t dsize)
@@ -79,9 +79,9 @@ element_result buf_write_and_update(char* b, size_t bsize, size_t& i, const T& t
 
 static element_result generate_lmnt_constants(
     compiler_ctx& context,
-    const expression_const_shared_ptr& expr)
+    const instruction_const_shared_ptr& expr)
 {
-    if (auto ce = expr->as<element_expression_constant>())
+    if (auto ce = expr->as<element_instruction_constant>())
     {
         size_t cidx = context.archive.get_constant(ce->value());
         context.entries()[expr.get()] = { element_lmnt_stack_entry::entry_type::constant, cidx, 1 };
@@ -98,24 +98,24 @@ static element_result generate_lmnt_constants(
 
 static element_result generate_lmnt_ops(
     compiler_ctx& context,
-    const expression_const_shared_ptr& expr,
+    const instruction_const_shared_ptr& expr,
     size_t depth = 0)
 {
     // TODO: smarts of any sort - especially vectorisation
-    if (auto ce = expr->as<element_expression_constant>())
+    if (auto ce = expr->as<element_instruction_constant>())
     {
         // already computed by previous pass
         // TODO: if constant -> output, do a COPY
         return ELEMENT_OK;
     }
-    else if (auto ie = expr->as<element_expression_input>())
+    else if (auto ie = expr->as<element_instruction_input>())
     {
         assert(ie->index() + ie->get_size() <= context.function->inputs_size);
         context.entries()[expr.get()] = { element_lmnt_stack_entry::entry_type::input, ie->index(), ie->get_size() };
         // TODO: if input -> output, do a COPY
         return ELEMENT_OK;
     }
-    else if (auto se = expr->as<element_expression_serialised_structure>())
+    else if (auto se = expr->as<element_instruction_serialised_structure>())
     {
         assert(depth == 0);
         for (const auto& d : se->dependents())
@@ -125,7 +125,7 @@ static element_result generate_lmnt_ops(
         }
         return ELEMENT_OK;
     }
-    else if (auto ue = expr->as<element_expression_unary>())
+    else if (auto ue = expr->as<element_instruction_unary>())
     {
         ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, ue->input(), depth + 1));
         element_lmnt_instruction op;
@@ -149,7 +149,7 @@ static element_result generate_lmnt_ops(
         context.entries()[expr.get()] = op.arg3;
         return ELEMENT_OK;
     }
-    else if (auto be = expr->as<element_expression_binary>())
+    else if (auto be = expr->as<element_instruction_binary>())
     {
         ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, be->input1(), depth + 1));
         ELEMENT_OK_OR_RETURN(generate_lmnt_ops(context, be->input2(), depth + 1));
@@ -186,9 +186,9 @@ static element_result generate_lmnt_ops(
     }
 }
 
-static size_t get_input_size(const expression_const_shared_ptr& expr)
+static size_t get_input_size(const instruction_const_shared_ptr& expr)
 {
-    auto ie = expr->as<element_expression_input>();
+    auto ie = expr->as<element_instruction_input>();
     if (ie)
     {
         return ie->get_size();

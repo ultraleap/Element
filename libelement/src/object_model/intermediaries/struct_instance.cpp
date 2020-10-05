@@ -6,7 +6,7 @@
 //SELF
 #include "object_model/declarations/struct_declaration.hpp"
 #include "object_model/constraints/constraint.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 
 using namespace element;
 
@@ -71,9 +71,9 @@ object_const_shared_ptr struct_instance::compile(const compilation_context& cont
     return shared_from_this();
 }
 
-std::shared_ptr<const element_expression> struct_instance::to_expression() const
+std::shared_ptr<const element_instruction> struct_instance::to_instruction() const
 {
-    std::vector<expression_const_shared_ptr> dependents;
+    std::vector<instruction_const_shared_ptr> dependents;
     std::vector<std::string> dependents_names;
 
     for (const auto& input : declarer->inputs)
@@ -82,7 +82,7 @@ std::shared_ptr<const element_expression> struct_instance::to_expression() const
         const auto field = fields.at(input.get_name());
         assert(field);
 
-        auto expr = field->to_expression();
+        auto expr = field->to_instruction();
         if (!expr)
             return nullptr;
 
@@ -90,5 +90,5 @@ std::shared_ptr<const element_expression> struct_instance::to_expression() const
         dependents_names.push_back(input.get_name());
     }
 
-    return std::make_shared<element_expression_serialised_structure>(std::move(dependents), std::move(dependents_names), declarer->get_name());
+    return std::make_shared<element_instruction_serialised_structure>(std::move(dependents), std::move(dependents_names), declarer->get_name());
 }

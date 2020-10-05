@@ -1,7 +1,7 @@
 #include "literal_expression.hpp"
 
 //SELF
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 #include "interpreter_internal.hpp"
 
 using namespace element;
@@ -15,5 +15,5 @@ literal_expression::literal_expression(element_value value, const expression_cha
 
 [[nodiscard]] object_const_shared_ptr literal_expression::resolve(const compilation_context& context, const object* obj)
 {
-    return std::make_shared<element_expression_constant>(value);
+    return std::make_shared<element_instruction_constant>(value);
 }

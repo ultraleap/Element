@@ -8,7 +8,7 @@
 #include "object_model/compilation_context.hpp"
 #include "object_model/intermediaries/struct_instance.hpp"
 #include "object_model/constraints/user_type.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 
 using namespace element;
 
@@ -85,7 +85,7 @@ const constraint* struct_declaration::get_constraint() const
 
 bool struct_declaration::serializable(const compilation_context& context) const
 {
-    //if it's a type (struct) and it can be deserialized (can be represented as a flat array of floats via placeholder expressions), then it can also be serialized (converted to an expression tree)
+    //if it's a type (struct) and it can be deserialized (can be represented as a flat array of floats via placeholder instructions), then it can also be serialized (converted to an instruction tree)
     return deserializable(context);
 }
 
@@ -125,7 +125,7 @@ object_const_shared_ptr struct_declaration::generate_placeholder(const compilati
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
         //note: generate_placeholder is called before context.boundaries has the new boundary pushed back, so we use the current size as the future index, when usually it would be size - 1
         //todo: ideally we would modify it so that we already have the boundary at this point
-        auto expr = std::make_shared<element_expression_input>(context.boundaries.size(), placeholder_index);
+        auto expr = std::make_shared<element_instruction_input>(context.boundaries.size(), placeholder_index);
         expr->actual_type = intrinsic->get_type();
         placeholder_index += 1; //todo: fix when we have lists, size() on intrinsic? on type?
         return expr;

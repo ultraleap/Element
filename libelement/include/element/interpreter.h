@@ -33,12 +33,12 @@ typedef struct element_compiler_options
 
     enum compiled_result_kind
     {
-        //It will compile to an expression tree if possible, otherwise it will fall back to the object model
+        //It will compile to an instruction tree if possible, otherwise it will fall back to the object model
         AUTOMATIC,
-        //It will compile to an expression tree, or error
-        EXPRESSION_TREE_ONLY,
+        //It will compile to an instruction tree, or error
+        INSTRUCTION_TREE_ONLY,
         //It will compile to something in the object model.
-        //note: this could still be an expression tree (e.g. when using some intrinsics), but there's no guarantee (e.g. structs and functions will never be expression trees)
+        //note: this could still be an instruction tree (e.g. when using some intrinsics), but there's no guarantee (e.g. structs and functions will never be instruction trees)
         OBJECT_MODEL_ONLY,
     };
 

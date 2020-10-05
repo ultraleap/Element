@@ -14,7 +14,7 @@
 #include "element/common.h"
 
 #include "etree/fwd.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 #include "etree/evaluator.hpp"
 
 void log_callback(const element_log_message* msg, void* user_data)
@@ -3956,13 +3956,13 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         std::vector<element_value> outputs = { 0 };
 
-        auto selector = std::make_shared<element_expression_constant>(1);
-        std::vector<expression_const_shared_ptr> options{
-            std::make_shared<const element_expression_constant>(0),
-            std::make_shared<const element_expression_constant>(1)
+        auto selector = std::make_shared<element_instruction_constant>(1);
+        std::vector<instruction_const_shared_ptr> options{
+            std::make_shared<const element_instruction_constant>(0),
+            std::make_shared<const element_instruction_constant>(1)
         };
 
-        auto expr = std::make_shared<element_expression_select>(std::move(selector), std::move(options));
+        auto expr = std::make_shared<element_instruction_select>(std::move(selector), std::move(options));
         const auto result = element_evaluate(*context, expr, {}, outputs, {});
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);
@@ -3976,17 +3976,17 @@ TEST_CASE("Interpreter", "[Evaluate]")
         std::vector<element_value> inputs = { 1 };
         std::vector<element_value> outputs = { 0, 0 };
 
-        auto selector = std::make_shared<element_expression_input>(0, 0);
-        std::vector<expression_const_shared_ptr> options{
-            std::make_shared<const element_expression_constant>(0),
-            std::make_shared<const element_expression_constant>(1)
+        auto selector = std::make_shared<element_instruction_input>(0, 0);
+        std::vector<instruction_const_shared_ptr> options{
+            std::make_shared<const element_instruction_constant>(0),
+            std::make_shared<const element_instruction_constant>(1)
         };
 
-        auto expr = std::make_shared<element_expression_select>(std::move(selector), std::move(options));
-        std::vector<expression_const_shared_ptr> deps;
+        auto expr = std::make_shared<element_instruction_select>(std::move(selector), std::move(options));
+        std::vector<instruction_const_shared_ptr> deps;
         deps.push_back(expr);
         deps.push_back(expr);
-        auto new_expr = std::make_shared<element_expression_serialised_structure>(std::move(deps), std::vector<std::string>{}, "");
+        auto new_expr = std::make_shared<element_instruction_serialised_structure>(std::move(deps), std::vector<std::string>{}, "");
         const auto result = element_evaluate(*context, new_expr, inputs, outputs, {});
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);

@@ -20,7 +20,7 @@
 #include "object_model/declarations/function_declaration.hpp"
 #include "object_model/declarations/constraint_declaration.hpp"
 #include "object_model/declarations/struct_declaration.hpp"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 #include "etree/evaluator.hpp"
 
 using namespace element;

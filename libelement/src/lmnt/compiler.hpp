@@ -3,7 +3,7 @@
 #include "element/common.h"
 #include "element/interpreter.h"
 #include "element/lmnt.h"
-#include "etree/expressions.hpp"
+#include "etree/instructions.hpp"
 
 #pragma warning(push)
 #pragma warning(disable : 26819)
@@ -53,7 +53,7 @@ struct element_lmnt_archive_ctx
 {
     std::vector<element_lmnt_compiled_function> functions;
     std::vector<lmnt_value> constants;
-    std::unordered_map<const element_lmnt_compiled_function*, std::unordered_map<const element_expression*, element_lmnt_stack_entry>> entries;
+    std::unordered_map<const element_lmnt_compiled_function*, std::unordered_map<const element_instruction*, element_lmnt_stack_entry>> entries;
 
     size_t get_constant(lmnt_value v)
     {

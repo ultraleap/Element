@@ -16,16 +16,16 @@ struct evaluator_ctx
     element_evaluator_options options;
 };
 
-static element_result do_evaluate(evaluator_ctx& context, const expression_const_shared_ptr& expr, element_value* outputs, size_t outputs_count, size_t& outputs_written)
+static element_result do_evaluate(evaluator_ctx& context, const instruction_const_shared_ptr& expr, element_value* outputs, size_t outputs_count, size_t& outputs_written)
 {
-    if (const auto* ec = expr->as<element_expression_constant>())
+    if (const auto* ec = expr->as<element_instruction_constant>())
     {
         assert(outputs_count > outputs_written);
         outputs[outputs_written++] = ec->value();
         return ELEMENT_OK;
     }
 
-    if (const auto* ei = expr->as<element_expression_input>())
+    if (const auto* ei = expr->as<element_instruction_input>())
     {
         if (context.boundaries.size() <= ei->scope()
             || context.boundaries[ei->scope()].inputs_count <= ei->index()
@@ -41,7 +41,7 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* es = expr->as<element_expression_serialised_structure>())
+    if (const auto* es = expr->as<element_instruction_serialised_structure>())
     {
         auto deps = es->dependents();
         for (auto& dep : deps)
@@ -51,7 +51,7 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* eu = expr->as<element_expression_nullary>())
+    if (const auto* eu = expr->as<element_instruction_nullary>())
     {
         assert(outputs_count > outputs_written);
         assert(eu->get_size() == 1);
@@ -59,7 +59,7 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* eu = expr->as<element_expression_unary>())
+    if (const auto* eu = expr->as<element_instruction_unary>())
     {
         assert(outputs_count > outputs_written);
         assert(eu->input()->get_size() == 1);
@@ -70,7 +70,7 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* eb = expr->as<element_expression_binary>())
+    if (const auto* eb = expr->as<element_instruction_binary>())
     {
         assert(outputs_count > outputs_written);
         assert(eb->input1()->get_size() == 1);
@@ -85,7 +85,7 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
     }
 
     //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
-    if (const auto* eb = expr->as<element_expression_if>())
+    if (const auto* eb = expr->as<element_instruction_if>())
     {
         assert(outputs_count > outputs_written);
         assert(eb->predicate()->get_size() == 1);
@@ -102,7 +102,7 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* eb = expr->as<element_expression_for>())
+    if (const auto* eb = expr->as<element_instruction_for>())
     {
         assert(outputs_count > outputs_written);
         assert(eb->condition()->get_size() == 1);
@@ -123,20 +123,20 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
         return ELEMENT_OK;
     }
 
-    if (const auto* eb = expr->as<element_expression_indexer>())
+    if (const auto* eb = expr->as<element_instruction_indexer>())
     {
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
-        size_t size = eb->for_expression->get_size();
+        size_t size = eb->for_instruction->get_size();
         assert(eb->index < size);
         std::vector<element_value> for_result(size);
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->for_expression, for_result.data(), size, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->for_instruction, for_result.data(), size, intermediate_written));
         intermediate_written = 0;
         outputs[outputs_written++] = for_result[eb->index];
         return ELEMENT_OK;
     }
 
-    if (const auto* sel = expr->as<element_expression_select>())
+    if (const auto* sel = expr->as<element_instruction_select>())
     {
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
@@ -153,7 +153,7 @@ static element_result do_evaluate(evaluator_ctx& context, const expression_const
 
 element_result element_evaluate(
     element_interpreter_ctx& context,
-    expression_const_shared_ptr fn,
+    instruction_const_shared_ptr fn,
     const std::vector<element_value>& inputs,
     std::vector<element_value>& outputs,
     const element_evaluator_options opts)
@@ -164,7 +164,7 @@ element_result element_evaluate(
 
 element_result element_evaluate(
     element_interpreter_ctx& context,
-    expression_const_shared_ptr fn,
+    instruction_const_shared_ptr fn,
     const element_value* inputs, size_t inputs_count,
     element_value* outputs, size_t& outputs_count,
     element_evaluator_options opts)
@@ -178,22 +178,22 @@ element_result element_evaluate(
     return result;
 }
 
-element_value element_evaluate_nullary(element_expression_nullary::op op)
+element_value element_evaluate_nullary(element_instruction_nullary::op op)
 {
     switch (op)
     {
     //num
-    case element_expression_nullary::op::positive_infinity:
+    case element_instruction_nullary::op::positive_infinity:
         return std::numeric_limits<float>::infinity();
-    case element_expression_nullary::op::negative_infinity:
+    case element_instruction_nullary::op::negative_infinity:
         return -std::numeric_limits<float>::infinity();
-    case element_expression_nullary::op::nan:
+    case element_instruction_nullary::op::nan:
         return std::numeric_limits<float>::quiet_NaN();
 
     //boolean
-    case element_expression_nullary::op::true_value:
+    case element_instruction_nullary::op::true_value:
         return 1;
-    case element_expression_nullary::op::false_value:
+    case element_instruction_nullary::op::false_value:
         return 0;
     default:
         assert(false);
@@ -201,34 +201,34 @@ element_value element_evaluate_nullary(element_expression_nullary::op op)
     }
 }
 
-element_value element_evaluate_unary(element_expression_unary::op op, element_value a)
+element_value element_evaluate_unary(element_instruction_unary::op op, element_value a)
 {
     switch (op)
     {
     //num
-    case element_expression_unary::op::abs:
+    case element_instruction_unary::op::abs:
         return std::fabs(a);
-    case element_expression_unary::op::acos:
+    case element_instruction_unary::op::acos:
         return std::acos(a);
-    case element_expression_unary::op::asin:
+    case element_instruction_unary::op::asin:
         return std::asin(a);
-    case element_expression_unary::op::atan:
+    case element_instruction_unary::op::atan:
         return std::atan(a);
-    case element_expression_unary::op::ceil:
+    case element_instruction_unary::op::ceil:
         return std::ceil(a);
-    case element_expression_unary::op::cos:
+    case element_instruction_unary::op::cos:
         return std::cos(a);
-    case element_expression_unary::op::floor:
+    case element_instruction_unary::op::floor:
         return std::floor(a);
-    case element_expression_unary::op::ln:
+    case element_instruction_unary::op::ln:
         return std::log(a);
-    case element_expression_unary::op::sin:
+    case element_instruction_unary::op::sin:
         return std::sin(a);
-    case element_expression_unary::op::tan:
+    case element_instruction_unary::op::tan:
         return std::tan(a);
 
     //boolean
-    case element_expression_unary::op::not_:
+    case element_instruction_unary::op::not_:
         return !a;
     default:
         assert(false);
@@ -236,50 +236,50 @@ element_value element_evaluate_unary(element_expression_unary::op op, element_va
     }
 }
 
-element_value element_evaluate_binary(element_expression_binary::op op, element_value a, element_value b)
+element_value element_evaluate_binary(element_instruction_binary::op op, element_value a, element_value b)
 {
     switch (op)
     {
         //num
-    case element_expression_binary::op::add:
+    case element_instruction_binary::op::add:
         return a + b;
-    case element_expression_binary::op::atan2:
+    case element_instruction_binary::op::atan2:
         return std::atan2(a, b);
-    case element_expression_binary::op::div:
+    case element_instruction_binary::op::div:
         return a / b;
-    case element_expression_binary::op::log:
+    case element_instruction_binary::op::log:
         return b ? std::log10(a) / std::log10(b) : std::nanf(""); // TODO: optimised pseudo-ops for log10 et al?
-    case element_expression_binary::op::max:
+    case element_instruction_binary::op::max:
         return (std::max)(a, b);
-    case element_expression_binary::op::min:
+    case element_instruction_binary::op::min:
         return (std::min)(a, b);
-    case element_expression_binary::op::mul:
+    case element_instruction_binary::op::mul:
         return a * b;
-    case element_expression_binary::op::pow:
+    case element_instruction_binary::op::pow:
         return std::pow(a, b);
-    case element_expression_binary::op::rem:
+    case element_instruction_binary::op::rem:
         return std::fmod(a, b);
-    case element_expression_binary::op::sub:
+    case element_instruction_binary::op::sub:
         return a - b;
 
     //boolean
-    case element_expression_binary::op::and_:
+    case element_instruction_binary::op::and_:
         return a && b;
-    case element_expression_binary::op::or_:
+    case element_instruction_binary::op::or_:
         return a || b;
 
     //comparison
-    case element_expression_binary::op::eq:
+    case element_instruction_binary::op::eq:
         return a == b;
-    case element_expression_binary::op::neq:
+    case element_instruction_binary::op::neq:
         return a != b;
-    case element_expression_binary::op::lt:
+    case element_instruction_binary::op::lt:
         return a < b;
-    case element_expression_binary::op::leq:
+    case element_instruction_binary::op::leq:
         return a <= b;
-    case element_expression_binary::op::gt:
+    case element_instruction_binary::op::gt:
         return a > b;
-    case element_expression_binary::op::geq:
+    case element_instruction_binary::op::geq:
         return a >= b;
     default:
         assert(false);
@@ -294,7 +294,7 @@ element_value element_evaluate_if(element_value predicate, element_value if_true
     return predicate > 0 ? if_true : if_false;
 }
 
-std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const expression_const_shared_ptr& initial, const expression_const_shared_ptr& condition, const expression_const_shared_ptr& body)
+std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const instruction_const_shared_ptr& initial, const instruction_const_shared_ptr& condition, const instruction_const_shared_ptr& body)
 {
     size_t intermediate_written = 0;
 
@@ -343,7 +343,7 @@ std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const ex
     return inputs;
 }
 
-expression_const_shared_ptr element_evaluate_select(element_value selector, std::vector<expression_const_shared_ptr> options)
+instruction_const_shared_ptr element_evaluate_select(element_value selector, std::vector<instruction_const_shared_ptr> options)
 {
     assert(!options.empty());
     const auto clamped_index = std::clamp(static_cast<int>(selector), 0, static_cast<int>(options.size() - 1));
