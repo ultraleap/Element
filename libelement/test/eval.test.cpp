@@ -13,9 +13,9 @@
 #include "element/interpreter.h"
 #include "element/common.h"
 
-#include "etree/fwd.hpp"
-#include "etree/instructions.hpp"
-#include "etree/evaluator.hpp"
+#include "instruction_tree/fwd.hpp"
+#include "instruction_tree/instructions.hpp"
+#include "instruction_tree/evaluator.hpp"
 
 void log_callback(const element_log_message* msg, void* user_data)
 {

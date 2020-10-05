@@ -14,7 +14,7 @@
 //SELF
 #include "element/token.h"
 #include "element/common.h"
-#include "etree/fwd.hpp"
+#include "instruction_tree/fwd.hpp"
 
 struct element_instruction;
 struct element_tokeniser_ctx;

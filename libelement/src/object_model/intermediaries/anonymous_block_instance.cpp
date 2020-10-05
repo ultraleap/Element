@@ -4,7 +4,7 @@
 #include <fmt/format.h>
 
 //SELF
-#include "etree/instructions.hpp"
+#include "instruction_tree/instructions.hpp"
 #include "object_model/expressions/anonymous_block_expression.hpp"
 #include "object_model/constraints/constraint.hpp"
 #include "object_model/error.hpp"

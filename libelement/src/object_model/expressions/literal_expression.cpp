@@ -1,7 +1,7 @@
 #include "literal_expression.hpp"
 
 //SELF
-#include "etree/instructions.hpp"
+#include "instruction_tree/instructions.hpp"
 #include "interpreter_internal.hpp"
 
 using namespace element;

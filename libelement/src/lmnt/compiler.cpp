@@ -206,7 +206,7 @@ static element_result lmnt_compile(
     const element_lmnt_compile_options& opts,
     element_lmnt_archive_ctx& archive)
 {
-    // generate LMNT function from etree
+    // generate LMNT function from instruction_tree
     //todo: fix
     throw;
 #if 0

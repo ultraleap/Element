@@ -14,8 +14,8 @@
 
 //SELF
 #include "common_internal.hpp"
-#include "etree/evaluator.hpp"
-#include "etree/instructions.hpp"
+#include "instruction_tree/evaluator.hpp"
+#include "instruction_tree/instructions.hpp"
 #include "token_internal.hpp"
 #include "configuration.hpp"
 #include "object_model/object_model_builder.hpp"

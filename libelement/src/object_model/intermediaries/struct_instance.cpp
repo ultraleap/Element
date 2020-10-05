@@ -6,7 +6,7 @@
 //SELF
 #include "object_model/declarations/struct_declaration.hpp"
 #include "object_model/constraints/constraint.hpp"
-#include "etree/instructions.hpp"
+#include "instruction_tree/instructions.hpp"
 
 using namespace element;
 

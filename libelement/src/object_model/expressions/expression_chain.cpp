@@ -4,7 +4,7 @@
 #include "expression.hpp"
 #include "object_model/error.hpp"
 #include "object_model/compilation_context.hpp"
-#include "etree/instructions.hpp"
+#include "instruction_tree/instructions.hpp"
 
 using namespace element;
 

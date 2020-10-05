@@ -167,11 +167,11 @@ set(libelement_sources
     "src/object_model/type_annotation.hpp"
 
     #Instruction tree
-    "src/etree/evaluator.cpp"
-    "src/etree/evaluator.hpp"
-    "src/etree/instructions.cpp"
-    "src/etree/instructions.hpp"
-    "src/etree/fwd.hpp"
+    "src/instruction_tree/evaluator.cpp"
+    "src/instruction_tree/evaluator.hpp"
+    "src/instruction_tree/instructions.cpp"
+    "src/instruction_tree/instructions.hpp"
+    "src/instruction_tree/fwd.hpp"
 
     "src/lmnt/compiler.cpp"
     "src/lmnt/compiler.hpp"

@@ -4,7 +4,7 @@
 #include "object_model/constraints/type.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/declarations/declaration.hpp"
-#include "etree/instructions.hpp"
+#include "instruction_tree/instructions.hpp"
 
 using namespace element;
 

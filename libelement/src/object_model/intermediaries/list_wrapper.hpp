@@ -2,7 +2,7 @@
 
 //SELF
 #include "object_model/object.hpp"
-#include "etree/fwd.hpp"
+#include "instruction_tree/fwd.hpp"
 
 namespace element
 {

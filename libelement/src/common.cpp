@@ -7,7 +7,7 @@
 #include "token_internal.hpp"
 #include "ast/ast_internal.hpp"
 #include "configuration.hpp"
-#include "etree/instructions.hpp"
+#include "instruction_tree/instructions.hpp"
 #include "lmnt/compiler.hpp"
 
 #define PRINTCASE(a) \

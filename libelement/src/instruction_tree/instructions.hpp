@@ -8,7 +8,7 @@
 
 #include "../ast/ast_internal.hpp"
 #include "../ast/fwd.hpp"
-#include "etree/fwd.hpp"
+#include "instruction_tree/fwd.hpp"
 #include "typeutil.hpp"
 #include "object_model/constraints/type.hpp"
 #include "object_model/object.hpp"

@@ -3,7 +3,7 @@
 #include "element/common.h"
 #include "element/interpreter.h"
 #include "element/lmnt.h"
-#include "etree/instructions.hpp"
+#include "instruction_tree/instructions.hpp"
 
 #pragma warning(push)
 #pragma warning(disable : 26819)

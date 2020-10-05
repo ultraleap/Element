@@ -8,7 +8,7 @@
 #include "object_model/compilation_context.hpp"
 #include "object_model/intermediaries/struct_instance.hpp"
 #include "object_model/constraints/user_type.hpp"
-#include "etree/instructions.hpp"
+#include "instruction_tree/instructions.hpp"
 
 using namespace element;
 

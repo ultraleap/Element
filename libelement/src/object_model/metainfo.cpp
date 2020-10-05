@@ -17,7 +17,7 @@
 #include "port.hpp"
 #include "scope.hpp"
 #include "error.hpp"
-#include "etree/instructions.hpp"
+#include "instruction_tree/instructions.hpp"
 #include "expressions/anonymous_block_expression.hpp"
 
 using namespace element;
