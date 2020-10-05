@@ -431,18 +431,23 @@ element_result element_interpreter_compile(
     const element_declaration* declaration,
     element_object** object)
 {
+    if (!options)
+        options = &element_compiler_options_default;
+
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
     if (!declaration->decl)
         return ELEMENT_ERROR_UNKNOWN;
 
     //todo: compiler option to disable/enable boundary function checking?
-    if (!declaration->decl->get_inputs().empty())
+    const bool declaration_is_nullary = declaration->decl->get_inputs().empty();
+    const bool check_boundary = declaration_is_nullary ? options->check_valid_boundary_function_when_nullary : options->check_valid_boundary_function;
+    if (check_boundary)
     {
-        auto result = valid_boundary_function(context, compilation_context, options, declaration);
+        const auto result = valid_boundary_function(context, compilation_context, options, declaration);
         if (result != ELEMENT_OK)
         {
-            context->log(result, "Tried to compile a function that requires inputs, making it a boundary function, but it can't be a boundary function.");
+            context->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
             *object = nullptr;
             return result;
         }
@@ -450,14 +455,34 @@ element_result element_interpreter_compile(
 
     element_result result = ELEMENT_OK;
     auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), result, {});
-    if (!compiled)
-        return ELEMENT_ERROR_UNKNOWN;
+    if (!compiled || result != ELEMENT_OK)
+    {
+        context->log(result, "Tried to compile placeholders but it failed.");
+        *object = nullptr;
+        return result;
+    }
 
-    auto expression = compiled->to_expression();
-    if (!expression)
+    if (options->desired_result == element_compiler_options::compiled_result_kind::AUTOMATIC)
+    {
+        auto expression = compiled->to_expression();
+        if (!expression)
+            *object = new element_object{ std::move(compiled) };
+        else
+            *object = new element_object{ std::move(expression) };
+    }
+    else if (options->desired_result == element_compiler_options::compiled_result_kind::EXPRESSION_TREE_ONLY)
+    {
+        *object = new element_object { compiled->to_expression() };
+        if (!*object)
+        {
+            context->log(result, "Failed to compile declaration to an expression tree.");
+            return ELEMENT_ERROR_UNKNOWN;
+        }
+    }
+    else if (options->desired_result == element_compiler_options::compiled_result_kind::OBJECT_MODEL_ONLY)
+    {
         *object = new element_object{ std::move(compiled) };
-    else
-        *object = new element_object{ std::move(expression) };
+    }
 
     return ELEMENT_OK;
 }
@@ -488,7 +513,7 @@ element_result element_interpreter_evaluate(
     if (!expr)
     {
         //todo: proper logging
-        context->logger->log("evaluable is not an expression tree, so it can't be evaluated", ELEMENT_STAGE_EVALUATOR);
+        context->logger->log("element_object is not an expression tree, so it can't be evaluated", ELEMENT_STAGE_EVALUATOR);
         return ELEMENT_ERROR_UNKNOWN;
     }
     else

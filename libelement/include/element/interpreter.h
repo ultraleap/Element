@@ -22,9 +22,37 @@ typedef enum
 
 typedef struct element_compiler_options
 {
-    //C requires that a struct or union have at least one member
-    bool dummy;
+    /* When set to true, functions being compiled must be a valid boundary function
+     * 1. Type annotations for all inputs are provided, and those types are serialisable
+     * 2. Type annotations for the output is provided, and that type is serialisable
+     */
+    bool check_valid_boundary_function;
+
+    //overrides check_valid_boundary_function for nullary functions (no inputs)
+    bool check_valid_boundary_function_when_nullary;
+
+    enum compiled_result_kind
+    {
+        //It will compile to an expression tree if possible, otherwise it will fall back to the object model
+        AUTOMATIC,
+        //It will compile to an expression tree, or error
+        EXPRESSION_TREE_ONLY,
+        //It will compile to something in the object model.
+        //note: this could still be an expression tree (e.g. when using some intrinsics), but there's no guarantee (e.g. structs and functions will never be expression trees)
+        OBJECT_MODEL_ONLY,
+    };
+
+    compiled_result_kind desired_result;
 } element_compiler_options;
+
+//passing nullptr where a element_compiler_options struct is expected will use these values
+//todo: do we want to expose this global in the header? doesn't matter if it's modified since it's inline, but as long users can just pass nullptr... don't think we need it
+//  just need to make sure we document the defaults and that the documentation doesn't get out of sync
+inline element_compiler_options element_compiler_options_default = {
+    true,
+    false, //todo: this should not exist/be true, but our tests rely on this behaviour right now
+    element_compiler_options ::compiled_result_kind::AUTOMATIC
+};
 
 typedef struct element_evaluator_options
 {
@@ -65,8 +93,6 @@ typedef struct element_outputs
     int count;
 } element_outputs;
 
-typedef struct element_metainfo element_metainfo;
-
 element_result element_delete_declaration(
     element_interpreter_ctx* context,
     element_declaration** declaration);
@@ -75,11 +101,13 @@ element_result element_delete_object(
     element_interpreter_ctx* context,
     element_object** object);
 
+//call element_delete_declaration when you're done with declaration
 element_result element_interpreter_find(
     element_interpreter_ctx* context,
     const char* path,
     element_declaration** declaration);
 
+//call element_delete_object when you're done with object
 element_result element_interpreter_compile(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
@@ -106,10 +134,12 @@ element_result element_interpreter_typeof_expression(
     char* buffer,
     int buffer_size);
 
+//typedef struct element_metainfo element_metainfo;
+
 //element_result element_metainfo_for_evaluable(
 //    const element_evaluable* evaluable,
 //    element_metainfo** metainfo);
-//
+
 //element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size);
 
 #if defined(__cplusplus)
