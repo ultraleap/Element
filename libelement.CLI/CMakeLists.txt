@@ -58,7 +58,7 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libelement CLI11::CLI11 fmt::fmt-header-only)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libelement CLI11::CLI11 fmt)
 
 if (UNIX AND NOT APPLE)
     target_link_libraries(libelement_cli PRIVATE "m" "atomic" "pthread" "stdc++fs")
