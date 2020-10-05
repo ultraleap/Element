@@ -602,7 +602,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         SECTION("Default Arguments")
         {
-            SECTION("Fill missing arguments")
+            SECTION("Fill single missing argument for function with partial defaults")
             {
                 float inputs[] = { 5 };
                 element_inputs input;
@@ -613,10 +613,144 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 output.values = outputs;
                 output.count = 1;
 
-                result = eval_with_inputs("func(a, b:Num = 3) = a.sub(b) evaluate(a:Num, b:Num):Num = func(a)", &input, &output);
+                result = eval_with_inputs("apply_single_default(a, b:Num = 3) = a.sub(b) evaluate(a:Num):Num = apply_single_default(a)", &input, &output);
 
                 REQUIRE(result == ELEMENT_OK);
                 REQUIRE(output.values[0] == 2);
+            }
+
+            SECTION("Fill multiple missing arguments for function with partial defaults")
+            {
+                float inputs[] = { 5 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+
+                result = eval_with_inputs("apply_multiple_defaults(a, b:Num = 3, c:Num = 4) = a.sub(b).add(c) evaluate(a:Num):Num = apply_multiple_defaults(a)", &input, &output);
+
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(output.values[0] == 6);
+            }
+
+            SECTION("Fill multiple missing arguments for function with all defaults")
+            {
+                float inputs[] = { 5 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+
+                result = eval_with_inputs("apply_multiple_defaults(a:Num = 6, b:Num = 3, c:Num = 4) = a.sub(b).add(c) evaluate(a:Num):Num = apply_multiple_defaults(a)", &input, &output);
+
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(output.values[0] == 6);
+            }
+
+            SECTION("Error - Fill all missing arguments")
+            {
+                float inputs[] = { 5 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+
+                result = eval_with_inputs("apply_all_defaults(a:Num = 2, b:Num = 3, c:Num = 4) = a.sub(b).add(c) evaluate(a:Num):Num = apply_all_defaults", &input, &output);
+
+                //error as this returns a function_instance as there is no way to know to apply all defaults as function is never called
+                REQUIRE(result == ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED);
+            }
+
+            SECTION("Error - Pass function as higher order instead of applying defaults when ambiguity exists")
+            {
+                float inputs[] = { 5 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+
+                //error as function_instance returned from higher order needs to be called, instead of just being returned as the result
+                result = eval_with_inputs("sub_values(a:Num = 2, b:Num = 3):Num = a.sub(b) higher_order(func) = func evaluate:Num = higher_order(sub_values)", &input, &output);
+
+                REQUIRE(result == ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED);
+            }
+
+            SECTION("Return higher order function and apply arguments explicitly")
+            {
+                float inputs[] = { 5 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+
+                result = eval_with_inputs("sub_values(a:Num = 2, b:Num = 3):Num = a.sub(b) higher_order(func) = func evaluate:Num = higher_order(sub_values)(3, 2)", &input, &output);
+
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(output.values[0] == 1);
+            }
+
+            SECTION("Error - Defaults cannot be fully applied to instance function called as nullary")
+            {
+                float inputs[] = { 5 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+
+                result = eval_with_inputs("struct container(ignore:Num) { instance_func_with_defaults(thing:container, a:Num = 6, b:Num = 3) = a.sub(b) } evaluate:Num = container(3).instance_func_with_defaults", &input, &output);
+
+                REQUIRE(result == ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED);
+            }
+
+            SECTION("Error - Default cannot be applied to instance function")
+            {
+                float inputs[] = { 5 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+
+                result = eval_with_inputs("struct container(ignore:Num) { instance_func_with_defaults(thing:container = container(2), a:Num = 6, b:Num = 3) = a.sub(b) } evaluate:Num = container(3).instance_func_with_defaults", &input, &output);
+
+                REQUIRE(result == ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED);
+            }
+
+            SECTION("Partially applied defaults on instance function")
+            {
+                float inputs[] = { 5 };
+                element_inputs input;
+                input.values = inputs;
+                input.count = 1;
+                element_outputs output;
+                float outputs[] = { 0 };
+                output.values = outputs;
+                output.count = 1;
+
+                result = eval_with_inputs("struct container(ignore:Num) { instance_func_with_defaults(thing:container = container(2), a:Num = 6, b:Num = 3) = a.sub(b) } evaluate:Num = container(3).instance_func_with_defaults(4)", &input, &output);
+
+                REQUIRE(result == ELEMENT_OK);
+                REQUIRE(output.values[0] == 1);
             }
         }
 

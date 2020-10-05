@@ -75,7 +75,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     std::vector<object_const_shared_ptr> arguments{ initial_object };
     auto& current_object = arguments[0];
 
-    //todo: in order to detect an infinite loop we need to know if the predicates result is dependant on its input, i.e. it is actually using it to alter the calculation in a meaningful way
+    //todo: in order to detect an infinite loop we need to know if the predicates result is dependent on its input, i.e. it is actually using it to alter the calculation in a meaningful way
     //  not sure how to do it, but the loop iteration limit will catch the infinite loop situation anyway
 
     //todo: make this user configurable
