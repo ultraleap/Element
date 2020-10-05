@@ -4,8 +4,13 @@
 #include "element/interpreter.h"
 #include "element/lmnt.h"
 #include "etree/expressions.hpp"
+
+#pragma warning(push)
+#pragma warning(disable : 26819)
 #include "lmnt/opcodes.h"
 #include "lmnt/archive.h"
+#pragma warning(pop)
+
 #include <vector>
 #include <cstdlib>
 #include <memory>
