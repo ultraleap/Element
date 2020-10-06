@@ -12,11 +12,13 @@ namespace Element
 	public abstract class Instruction : Value, IEquatable<Instruction>
 	{
 		protected Instruction(IIntrinsicStructImplementation? instanceStructImplementationOverride = default) => StructImplementation = instanceStructImplementationOverride ?? NumStruct.Instance;
-		
+
 		/// <summary>
 		/// The primitive type of this value
 		/// </summary>
 		public readonly IIntrinsicStructImplementation StructImplementation;
+
+		public Result<Struct> LookupIntrinsicStruct(Context context) => context.RootScope.Lookup(StructImplementation.Identifier, context).Cast<Struct>(context);
 
 		public abstract IEnumerable<Instruction> Dependent { get; }
 
@@ -36,7 +38,7 @@ namespace Element
 
 		// TODO: This allows indexing constants from an instruction, see note about wrapper class above to fix
 		public override Result<IValue> Index(Identifier id, Context context) =>
-			context.RootScope.Lookup(StructImplementation.Identifier, context).Cast<Struct>(context).Bind(v => v.ResolveInstanceFunction(this, id, context));
+			LookupIntrinsicStruct(context).Bind(v => v.ResolveInstanceFunction(this, id, context));
 
 		public override void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => resultBuilder.Result.Add(this);
 

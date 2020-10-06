@@ -7,8 +7,8 @@ namespace Element
     {
         public Result Parse(CompilerInput compilerInput) => (Result)SourceContext.CreateAndLoad(compilerInput);
 
-        public Result<float[]> EvaluateExpression(CompilerInput input, string expression) =>
-            PersistentHost.Create(input.Options).EvaluateExpression(input, expression);
+        public Result<float[]> EvaluateExpression(CompilerInput input, string expression, bool interpreted) =>
+            PersistentHost.Create(input.Options).EvaluateExpression(input, expression, interpreted);
 
         public Result<float[]> EvaluateFunction(CompilerInput input, string functionExpression, string argumentsAsCallExpression, bool interpreted) =>
             PersistentHost.Create(input.Options).EvaluateFunction(input, functionExpression, argumentsAsCallExpression, interpreted);

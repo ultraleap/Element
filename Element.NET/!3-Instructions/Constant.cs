@@ -11,7 +11,7 @@ namespace Element
         // ReSharper disable once UnusedMember.Global - Used by Lexico
         public Constant() {}
         public Constant(float value) => Value = value;
-        private Constant(float value, IIntrinsicStructImplementation structImplementationOverride) : base(structImplementationOverride) => Value = value;
+        public Constant(float value, IIntrinsicStructImplementation structImplementationOverride) : base(structImplementationOverride) => Value = value;
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         [Term] public float Value { get; private set; }
@@ -34,7 +34,7 @@ namespace Element
         public static Constant NaN { get; } = new Constant(float.NaN);
         public static Constant PositiveInfinity { get; } = new Constant(float.PositiveInfinity);
         public static Constant NegativeInfinity { get; } = new Constant(float.NegativeInfinity);
-        
+
         public override IEnumerable<Instruction> Dependent { get; } = Array.Empty<Instruction>();
         public override string TypeOf => StructImplementation.Identifier.String;
         public override string SummaryString => NormalizedFormString;
@@ -43,5 +43,20 @@ namespace Element
         // ReSharper disable once NonReadonlyMemberInGetHashCode
         public override int GetHashCode() => new {Value, Type = StructImplementation}.GetHashCode();
         public string TraceString => NormalizedFormString;
+    }
+
+    public class Cast : Instruction
+    {
+        public static Instruction Create(Instruction instruction, IIntrinsicStructImplementation targetType) => instruction switch
+        {
+            Constant c => new Constant(c.Value, targetType),
+            _ => new Cast(instruction, targetType)
+        };
+        
+        public Instruction Instruction { get; }
+        private Cast(Instruction instruction, IIntrinsicStructImplementation targetType) : base(targetType) => Instruction = instruction;
+
+        public override IEnumerable<Instruction> Dependent => new[] {Instruction};
+        public override string SummaryString => $"{StructImplementation}({Instruction})";
     }
 }

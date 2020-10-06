@@ -30,6 +30,14 @@ namespace Element.AST
             }
         }
 
+        public static Result<IValue> ResolveExpressionChain(IValue start, IEnumerable<SubExpression> subExpressions, IScope parentScope, Context context)
+        {
+            Result<IValue> ResolveSubExpression(Result<IValue> previousResult, SubExpression subExpr) =>
+                previousResult.Bind(previous => subExpr.ResolveSubExpression(previous, parentScope, context));
+            
+            return subExpressions.Aggregate(new Result<IValue>(start), ResolveSubExpression);
+        }
+
         protected override Result<IValue> ExpressionImpl(IScope parentScope, Context context) =>
             (LitOrId switch
                 {
@@ -38,15 +46,9 @@ namespace Element.AST
                     Constant constant => constant,
                     _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
                 })
-            .Bind(previous =>
-            {
-                var previousAsResult = new Result<IValue>(previous);
-                // Evaluate all expressions for this chain if there are any
-                return Expressions?.Aggregate(previousAsResult, ResolveSubExpression) ?? previousAsResult; // If there's no subexpressions just return what we found
-
-                Result<IValue> ResolveSubExpression(Result<IValue> previousResult, SubExpression subExpr) =>
-                    previousResult.Bind(previousResult => subExpr.ResolveSubExpression(previousResult, parentScope, context));
-            });
+            .Bind(start => Expressions != null // Return the starting value if there's no subexpressions
+                               ? ResolveExpressionChain(start, Expressions, parentScope, context)
+                               : new Result<IValue>(start));
 
         public abstract class SubExpression : AstNode
         {

@@ -226,10 +226,12 @@ namespace Element.NET.TestHelpers
 
             Result IHost.Parse(CompilerInput input) => (Result)RunHostProcess(new Context(null, input.Options), BeginCommand(input, "parse").ToString());
 
-            Result<float[]> IHost.EvaluateExpression(CompilerInput input, string expression)
+            Result<float[]> IHost.EvaluateExpression(CompilerInput input, string expression, bool interpreted)
             {
                 var resultBuilder = new ResultBuilder<float[]>(new Context(null, input.Options), Array.Empty<float>());
-                return RunHostProcess(resultBuilder.Context, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString())
+                var commandBuilder = BeginCommand(input, "evaluate").Append($" -e \"{expression}\"");
+                if (interpreted) commandBuilder.Append(" --interpreted ");
+                return RunHostProcess(resultBuilder.Context, commandBuilder.ToString())
                     .Bind(command => ParseEvaluateResult(command, resultBuilder));
             }
 
@@ -238,7 +240,7 @@ namespace Element.NET.TestHelpers
                 var resultBuilder = new ResultBuilder<float[]>(new Context(null, input.Options), Array.Empty<float>());
                 var commandBuilder = BeginCommand(input, "evaluate").Append($" -e \"{functionExpression}\"");
                 if (!string.IsNullOrEmpty(argumentsAsCallExpression)) commandBuilder.Append($" -a \"{argumentsAsCallExpression}\"");
-                if (interpreted) commandBuilder.Append(" --interpretArgs ");
+                if (interpreted) commandBuilder.Append(" --interpreted ");
                 return RunHostProcess(resultBuilder.Context, commandBuilder.ToString())
                     .Bind(command => ParseEvaluateResult(command, resultBuilder));
             }

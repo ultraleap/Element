@@ -16,8 +16,8 @@ namespace Laboratory.Tests.L2.Semantics
         };
 
         [Test]
-        public void CallToplevelFunction([ValueSource(nameof(TopLevelCalls))] (string FunctionExpr, string CallExpr, string ExpectedExpr) e, [ValueSource(nameof(Interpreted))] bool interpreted)
-            => AssertApproxEqual(CompilerInput, new FunctionEvaluation(e.FunctionExpr, e.CallExpr, interpreted), e.ExpectedExpr);
+        public void CallToplevelFunction([ValueSource(nameof(TopLevelCalls))] (string FunctionExpr, string CallExpr, string ExpectedExpr) e, [Values] bool interpreted)
+            => AssertApproxEqual(CompilerInput, new FunctionEvaluation(e.FunctionExpr, e.CallExpr, interpreted), new ExpressionEvaluation(e.ExpectedExpr, true));
 
         [TestCase("explicitAny(5)", true)]
         [TestCase("explicitAny(NotNum(5))", true)]

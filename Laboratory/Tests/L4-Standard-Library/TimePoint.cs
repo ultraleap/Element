@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using NUnit.Framework;
 
 namespace Laboratory.Tests.L4.StandardLibrary
 {

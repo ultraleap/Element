@@ -5,7 +5,7 @@ using CommandLine.Text;
 
 namespace Alchemist
 {
-	[Verb("evaluate", HelpText = "Compile and evaluate an expression.")]
+	[Verb("evaluate", HelpText = "Evaluate an Element expression.")]
 	internal class EvaluateCommand : BaseCommand
 	{
 		[Option('e', "expression", Required = true, HelpText = "Expression to evaluate.")]
@@ -14,8 +14,8 @@ namespace Alchemist
 		[Option('a', "arguments", Required = false, HelpText = "Arguments for when expression resolves to a function, in the format of an element call expression.")]
 		public string Arguments { get; set; }
 		
-		[Option("interpretArgs", Required = false, HelpText = "When evaluating a function and arguments are passed, call the function with arguments immediately instead of compiling the function first.")]
-		public bool InterpretArguments { get; set; }
+		[Option("interpreted", Required = false, HelpText = "Interpret the expression/function (with arguments), returning the result serialized. Default behaviour will compile the expression dynamically - if arguments are supplied they are compiled separately and expression called dynamically.")]
+		public bool Interpreted { get; set; }
 
 		protected override bool _skipValidation => false; // Skipping validation during evaluate may cause indirect compiler errors
 		protected override bool _noParseTrace => false;
@@ -26,13 +26,13 @@ namespace Alchemist
 			{
 				new Example("Evaluate adding expression inline", new EvaluateCommand {Expression = "5.add(10)"}),
 				new Example("Compiled add and call with arguments", new EvaluateCommand {Expression = "Num.add", Arguments = "(5, 10)"}),
-				new Example("Evaluate add as an interpreted call", new EvaluateCommand {Expression = "Num.add", Arguments = "(5, 10)", InterpretArguments = true}),
+				new Example("Evaluate add as an interpreted call", new EvaluateCommand {Expression = "Num.add", Arguments = "(5, 10)", Interpreted = true}),
 			};
 
 		protected override Result<string> CommandImplementation(CompilerInput input) =>
 			(string.IsNullOrEmpty(Arguments)
-				 ? new AtomicHost().EvaluateExpression(input, Expression)
-				 : new AtomicHost().EvaluateFunction(input, Expression, Arguments, InterpretArguments))
+				 ? new AtomicHost().EvaluateExpression(input, Expression, Interpreted)
+				 : new AtomicHost().EvaluateFunction(input, Expression, Arguments, Interpreted))
 			.Map(result => string.Join(" ", result)
 			                     .Replace("∞", "Infinity"));
 

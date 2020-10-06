@@ -51,4 +51,14 @@ namespace Element.AST
             }
         }
     }
+    
+    [TopLevel]
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class TopLevel<T>
+    {
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+#pragma warning disable 8618
+        [Term] public T Object { get; private set; }
+#pragma warning restore 8618
+    }
 }

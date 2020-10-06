@@ -168,6 +168,10 @@ level = "Error"
 name = "CallStackLimitReached"
 level = "Error"
 
+[ELE41]
+name = "NotImplemented"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

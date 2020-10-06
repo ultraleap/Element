@@ -8,15 +8,9 @@ using LinqExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
 {
-    public static class CLRFunction
-    {
-	    private static readonly Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>> _linqUnaryOps =
-		    new Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>>
-		    {
-			    {Unary.Op.Not, LinqExpression.Not}
-		    };
-	    
-	    private static readonly Dictionary<Unary.Op, MethodInfo> _unaryMethodOps = new Dictionary<Unary.Op, MethodInfo>
+	public static class CLRFunction
+	{
+		private static readonly Dictionary<Unary.Op, MethodInfo> _unaryMethodOps = new Dictionary<Unary.Op, MethodInfo>
 	    {
 		    {Unary.Op.Ln, ((Func<double, double>)Math.Log).Method},
 		    {Unary.Op.Sin, ((Func<double, double>)Math.Sin).Method},
@@ -25,127 +19,174 @@ namespace Element.CLR
 		    {Unary.Op.ACos, ((Func<double, double>)Math.Acos).Method},
 		    {Unary.Op.Tan, ((Func<double, double>)Math.Tan).Method},
 		    {Unary.Op.ATan, ((Func<double, double>)Math.Atan).Method},
+		    {Unary.Op.Abs, ((Func<float, float>)Math.Abs).Method},
 	    };
 	    
-	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryArithmeticOpsFloat =
+	    private static readonly Dictionary<Binary.Op, MethodInfo> _binaryMethodOps = new Dictionary<Binary.Op, MethodInfo>
+	    {
+		    {Binary.Op.Log, ((Func<double, double, double>)Math.Log).Method},
+		    {Binary.Op.Atan2, ((Func<double, double, double>)Math.Atan2).Method},
+		    {Binary.Op.Max, ((Func<float, float, float>)Math.Max).Method},
+		    {Binary.Op.Min, ((Func<float, float, float>)Math.Min).Method},
+	    };
+	    
+	    private static readonly Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>> _unaryLinqOps =
+		    new Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>>
+		    {
+			    {Unary.Op.Not, LinqExpression.Not}
+		    };
+
+	    private static readonly Dictionary<Unary.Op, (Type In, Type Out)> _unaryLinqSignatures =
+		    new Dictionary<Unary.Op, (Type In, Type Out)>
+		    {
+			    {Unary.Op.Not, (typeof(bool), typeof(bool))}
+		    };
+
+	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _binaryLinqOps =
 			new Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>>
 			{
+				// Float ops
 				{Binary.Op.Add, LinqExpression.Add},
 				{Binary.Op.Sub, LinqExpression.Subtract},
 				{Binary.Op.Mul, LinqExpression.Multiply},
 				{Binary.Op.Div, LinqExpression.Divide},
 				{Binary.Op.Rem, LinqExpression.Modulo},
-			};
-
-	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryArithmeticOpsDouble =
-			new Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>>
-			{
+				
+				// Double ops
 				{Binary.Op.Pow, LinqExpression.Power},
-			};
-	    
-	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryComparisonOps =
-			new Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>>
-			{
+				
+				// Float comparison ops
 				{Binary.Op.Eq, LinqExpression.Equal},
 				{Binary.Op.NEq, LinqExpression.NotEqual},
 				{Binary.Op.Lt, LinqExpression.LessThan},
 				{Binary.Op.LEq, LinqExpression.LessThanOrEqual},
 				{Binary.Op.Gt, LinqExpression.GreaterThan},
-				{Binary.Op.GEq, LinqExpression.GreaterThanOrEqual}
-			};
-	    
-	    private static readonly Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>> _linqBinaryLogicalOps =
-			new Dictionary<Binary.Op, Func<LinqExpression, LinqExpression, BinaryExpression>>
-			{
+				{Binary.Op.GEq, LinqExpression.GreaterThanOrEqual},
+				
+				// Logical ops
 				{Binary.Op.And, LinqExpression.AndAlso},
 				{Binary.Op.Or, LinqExpression.OrElse},
 			};
 	    
-	    private static readonly Dictionary<Binary.Op, MethodInfo> _binaryMethodOps = new Dictionary<Binary.Op, MethodInfo>
-		{
-			{Binary.Op.Log, ((Func<double, double, double>)Math.Log).Method},
-			{Binary.Op.Atan2, ((Func<double, double, double>)Math.Atan2).Method}
-		};
+	    private static readonly Dictionary<Binary.Op, (Type InA, Type InB, Type Out)> _binaryLinqSignatures =
+		    new Dictionary<Binary.Op, (Type InA, Type InB, Type Out)>
+		    {
+			    // Float ops
+			    {Binary.Op.Add, (typeof(float), typeof(float), typeof(float))},
+			    {Binary.Op.Sub, (typeof(float), typeof(float), typeof(float))},
+			    {Binary.Op.Mul, (typeof(float), typeof(float), typeof(float))},
+			    {Binary.Op.Div, (typeof(float), typeof(float), typeof(float))},
+			    {Binary.Op.Rem, (typeof(float), typeof(float), typeof(float))},
+			    
+			    // Double ops
+			    {Binary.Op.Pow, (typeof(double), typeof(double), typeof(double))},
+			    
+			    // Float comparison ops
+			    {Binary.Op.Eq, (typeof(float), typeof(float), typeof(bool))},
+			    {Binary.Op.NEq, (typeof(float), typeof(float), typeof(bool))},
+			    {Binary.Op.Lt, (typeof(float), typeof(float), typeof(bool))},
+			    {Binary.Op.LEq, (typeof(float), typeof(float), typeof(bool))},
+			    {Binary.Op.Gt, (typeof(float), typeof(float), typeof(bool))},
+			    {Binary.Op.GEq, (typeof(float), typeof(float), typeof(bool))},
+			    
+			    // Logical ops
+			    {Binary.Op.And, (typeof(bool), typeof(bool), typeof(bool))},
+			    {Binary.Op.Or, (typeof(bool), typeof(bool), typeof(bool))},
+		    };
 
-		private struct CompilationData
+	    private static readonly Dictionary<(Type From, Type To), Func<LinqExpression, LinqExpression>> _conversionFunctions =
+		    new Dictionary<(Type From, Type To), Func<LinqExpression, LinqExpression>>
+		    {
+			    {(typeof(float), typeof(bool)), num => LinqExpression.Condition(LinqExpression.GreaterThan(num, LinqExpression.Constant(0f)), LinqExpression.Constant(true), LinqExpression.Constant(false))},
+			    {(typeof(bool), typeof(float)), boolean => LinqExpression.Condition(boolean, LinqExpression.Constant(1f), LinqExpression.Constant(0f))},
+			    {(typeof(float), typeof(double)), expression => LinqExpression.Convert(expression, typeof(double))},
+			    {(typeof(double), typeof(float)), expression => LinqExpression.Convert(expression, typeof(float))}
+		    };
+	    
+	    // TODO: Move this to BoundaryConverter? Should support more than just Num/Bool structs
+	    private static Type? ToClrType(Struct elementType) => elementType.IsIntrinsic<NumStruct>()
+		                                                          ? typeof(float)
+		                                                          : elementType.IsIntrinsic<BoolStruct>()
+			                                                          ? typeof(bool)
+			                                                          : null;
+
+	    // TODO: Move this to BoundaryConverter?
+	    private static Type? ToClrType(IIntrinsicStructImplementation structImplementation) => structImplementation == NumStruct.Instance ? typeof(float) : structImplementation == BoolStruct.Instance ? typeof(bool) : null;
+
+
+	    private struct CompilationData
 		{
 			public List<LinqExpression> Statements;
 			public List<ParameterExpression> Variables;
 			public Dictionary<CachedInstruction, ParameterExpression> Cache;
 			public Dictionary<InstructionGroup, LinqExpression[]> GroupCache;
-			public Func<State, LinqExpression> ResolveState;
+			public Func<State, LinqExpression>? ResolveState;
 			//public List<float> StateValues;
 			//public ParameterExpression StateArray;
 			public Dictionary<Instruction, CachedInstruction> CSECache;
 			//public Dictionary<ElementExpression, ElementExpression> ConstantCache;
 		}
 
-		private static LinqExpression Compile(Instruction value, CompilationData data)
+		private static LinqExpression CompileInstruction(Instruction value, CompilationData data)
 		{
+			static LinqExpression ConvertExpressionType(LinqExpression expr, Type targetType) =>
+				expr.Type == targetType
+					? expr
+					: _conversionFunctions.TryGetValue((expr.Type, targetType), out var convert)
+						? convert(expr)
+						: throw new NotSupportedException($"Conversion not defined from '{expr}' to '{targetType}'");
+			
 			data.Cache ??= new Dictionary<CachedInstruction, ParameterExpression>();
 			data.GroupCache ??= new Dictionary<InstructionGroup, LinqExpression[]>();
 			switch (value)
 			{
 				case ICLRExpression s:
-					return s.Compile(e => Compile(e, data));
+					return s.Compile(e => CompileInstruction(e, data));
 				case Constant c:
 					return LinqExpression.Constant(c.Value);
+				case Cast c:
+					return ConvertExpressionType(CompileInstruction(c.Instruction, data), ToClrType(c.StructImplementation));
 				case Unary u:
-					var ua = Compile(u.Operand, data);
+					var ua = CompileInstruction(u.Operand, data);
+					
+					if (_unaryLinqOps.TryGetValue(u.Operation, out var linqUnaryOp))
+					{
+						return _unaryLinqSignatures.TryGetValue(u.Operation, out var unaryLinqOpSignature)
+							       ? ConvertExpressionType(linqUnaryOp(ConvertExpressionType(ua, unaryLinqOpSignature.In)), unaryLinqOpSignature.Out)
+							       : throw new NotImplementedException($"'{u.Operation}' is implemented as a linq expression but signature is not known");
+					}
+					
 					if (_unaryMethodOps.TryGetValue(u.Operation, out var unaryMethod))
 					{
-						var methodExpr = LinqExpression.Call(unaryMethod, LinqExpression.Convert(ua, typeof(double)));
-						return LinqExpression.Convert(methodExpr, typeof(float));
-					}
-
-
-					if (_linqUnaryOps.TryGetValue(u.Operation, out var linqUnaryOp))
-					{
-						return linqUnaryOp(ua);
+						return ConvertExpressionType(LinqExpression.Call(unaryMethod, ConvertExpressionType(ua, unaryMethod.GetParameters()[0].ParameterType)),
+						                             unaryMethod.ReturnParameter!.ParameterType);
 					}
 
 					break;
 				case Binary b:
-					var ba = Compile(b.OpA, data);
-					var bb = Compile(b.OpB, data);
+					var ba = CompileInstruction(b.OpA, data);
+					var bb = CompileInstruction(b.OpB, data);
+					
+					if (_binaryLinqOps.TryGetValue(b.Operation, out var linqBinaryOp))
+					{
+						return _binaryLinqSignatures.TryGetValue(b.Operation, out var binaryLinqOpSignature)
+							       ? ConvertExpressionType(linqBinaryOp(ConvertExpressionType(ba, binaryLinqOpSignature.InA), ConvertExpressionType(bb, binaryLinqOpSignature.InB)), binaryLinqOpSignature.Out)
+							       : throw new NotImplementedException($"'{b.Operation}' is implemented as a linq expression but signature is not known");
+					}
 
 					if (_binaryMethodOps.TryGetValue(b.Operation, out var binaryMethod))
 					{
-						var methodExpr = LinqExpression.Call(binaryMethod,
-						                                     LinqExpression.Convert(ba, typeof(double)),
-						                                     LinqExpression.Convert(bb, typeof(double)));
-						return LinqExpression.Convert(methodExpr, typeof(float));
-					}
-
-					if (_linqBinaryArithmeticOpsFloat.TryGetValue(b.Operation, out var linqBinaryOp))
-					{
-						return linqBinaryOp(ba, bb);
-					}
-
-					if (_linqBinaryArithmeticOpsDouble.TryGetValue(b.Operation, out linqBinaryOp))
-					{
-						return LinqExpression.Convert(linqBinaryOp(LinqExpression.Convert(ba, typeof(double)), LinqExpression.Convert(bb, typeof(double))),
-							typeof(float));
+						return ConvertExpressionType(LinqExpression.Call(binaryMethod,
+						                                                 ConvertExpressionType(ba, binaryMethod.GetParameters()[0].ParameterType),
+						                                                 ConvertExpressionType(bb, binaryMethod.GetParameters()[1].ParameterType)),
+						                             binaryMethod.ReturnParameter!.ParameterType);
 					}
 					
-					if (_linqBinaryComparisonOps.TryGetValue(b.Operation, out linqBinaryOp))
-					{
-						return LinqExpression.Condition(linqBinaryOp(ba, bb), LinqExpression.Constant(1f), LinqExpression.Constant(0f));
-					}
-					
-					if (_linqBinaryLogicalOps.TryGetValue(b.Operation, out linqBinaryOp))
-					{
-						static LinqExpression ToBool(LinqExpression numExpr) => LinqExpression.Condition(LinqExpression.LessThan(numExpr, LinqExpression.Constant(1f)),
-						                                                                                 LinqExpression.Constant(false),
-						                                                                                 LinqExpression.Constant(true));
-						return LinqExpression.Condition(linqBinaryOp(ToBool(ba), ToBool(bb)), LinqExpression.Constant(1f), LinqExpression.Constant(0f));
-					}
-
 					break;
 				case CachedInstruction v:
 					if (!data.Cache.TryGetValue(v, out var varExpr))
 					{
-						var result = Compile(v.Value, data);
+						var result = CompileInstruction(v.Value, data);
 						data.Cache.Add(v, varExpr = LinqExpression.Parameter(result.Type));
 						data.Statements.Add(LinqExpression.Assign(varExpr, result));
 						data.Variables.Add(varExpr);
@@ -153,20 +194,23 @@ namespace Element.CLR
 
 					return varExpr;
 				case Switch m:
+					
+					// TODO: Don't clamp access to operands, use runtime error (nothing type? NaN?) instead!
+
 					if (m.Operands.Count == 2)
 					{
-						return LinqExpression.Condition(
-							LinqExpression.LessThan(Compile(m.Selector, data), LinqExpression.Constant(1f)),
-							Compile(m.Operands[0], data), Compile(m.Operands[1], data));
+						return LinqExpression.Condition(ConvertExpressionType(CompileInstruction(m.Selector, data), typeof(bool)),
+						                                CompileInstruction(m.Operands[1], data),
+						                                CompileInstruction(m.Operands[0], data));
 					}
 
-					var sel = LinqExpression.Convert(Compile(m.Selector, data), typeof(int));
+					var sel = LinqExpression.Convert(CompileInstruction(m.Selector, data), typeof(int));
 					var clampedSel =
 						LinqExpression.Condition(
 							LinqExpression.GreaterThanOrEqual(sel, LinqExpression.Constant(m.Operands.Count)),
 							LinqExpression.Constant(m.Operands.Count - 1), sel);
 					var cases = m.Operands.Select(
-						             (c, i) => LinqExpression.SwitchCase(Compile(c, data), LinqExpression.Constant(i)))
+						             (c, i) => LinqExpression.SwitchCase(CompileInstruction(c, data), LinqExpression.Constant(i)))
 					             .ToArray();
 					return LinqExpression.Switch(clampedSel, cases[0].Body, cases);
 				case State s:
@@ -221,7 +265,7 @@ namespace Element.CLR
 					var stateList = new List<ParameterExpression>();
 					foreach (var s in l.State)
 					{
-						var initial = Compile(s.InitialValue, data);
+						var initial = CompileInstruction(s.InitialValue, data);
 						var variable = LinqExpression.Variable(initial.Type);
 						data.Statements.Add(LinqExpression.Assign(variable, initial));
 						data.Variables.Add(variable);
@@ -236,9 +280,9 @@ namespace Element.CLR
 
 					// Create a new statements list to put in the loop body
 					var s1 = data.Statements = new List<LinqExpression>();
-					var condition = Compile(l.Condition, data);
+					var condition = CompileInstruction(l.Condition, data);
 					var s2 = data.Statements = new List<LinqExpression>();
-					var newState = l.Body.Select(e => Compile(e, data)).ToArray();
+					var newState = l.Body.Select(e => CompileInstruction(e, data)).ToArray();
 
 					// Ensure that the entire state is only set at the end of the loop
 					for (var i = 0; i < newState.Length; i++)
@@ -325,9 +369,6 @@ namespace Element.CLR
 
 		public static Result<Delegate> CompileDynamic(this IValue value, Context context, IBoundaryConverter? boundaryConverter = default)
 		{
-			// TODO: Move this to BoundaryConverter? Need to support more than just Num arguments!
-			static Type ToClrType(Struct elementType) => elementType.IsIntrinsic<NumStruct>() ? typeof(float) : throw new NotImplementedException("Only Num is currently supported as input parameter for compiling delegate dynamically");
-			
 			Result<Struct> ConstraintToStruct(IValue constraint) => constraint is Struct s
 				                                                        ? new Result<Struct>(s)
 				                                                        : new Result<Struct>(context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{constraint}' is not a struct - all top-level function ports must be serializable struct types"));
@@ -340,15 +381,16 @@ namespace Element.CLR
 			       .Accumulate(() => value.IsFunction() switch
 			       {
 				       true => ConstraintToStruct(value.ReturnConstraint),
+				       false when value is Struct s => s,
 				       false when value is StructInstance s => ConstraintToStruct(s.DeclaringStruct),
-				       false => context.RootScope.Lookup(NumStruct.Instance.Identifier, context).Cast<Struct>(context)
+				       false when value is Instruction i => i.LookupIntrinsicStruct(context),
+				       false => context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{value}' is not recognized as a function, struct, struct instance or primitive value, cannot deduce the return type for compiling a delegate")
 			       })
-			       .Bind(types =>
-			       {
-				       var (inputTypes, returnType) = types;
-				       var delegateType = LinqExpression.GetFuncType(inputTypes.Append(returnType).Select(ToClrType).ToArray());
-				       return Compile(value, context, delegateType, boundaryConverter);
-			       });
+			       .Bind(types => types.Item1.Append(types.Item2)
+			                           .Select(elementStruct => ToClrType(elementStruct) is {} type
+				                                                    ? new Result<Type>(type)
+				                                                    : context.Trace(EleMessageCode.InvalidBoundaryFunction,"Only Num/Bool are currently implemented for input/return parameter when compiling dynamically"))
+			                           .BindEnumerable(clrPortTypes => Compile(value, context, LinqExpression.GetFuncType(clrPortTypes.ToArray()), boundaryConverter)));
 		}
 
 		private static Result<Delegate> Compile(IValue value, Context context, 
@@ -418,7 +460,7 @@ namespace Element.CLR
 					return value.Serialize(context)
 					         .Bind(serialized => serialized.Count switch
 					         {
-						         1 when IsPrimitiveElementType(outputType) => Compile(serialized[0].Cache(data.CSECache), data),
+						         1 when IsPrimitiveElementType(outputType) => CompileInstruction(serialized[0].Cache(data.CSECache, context), data),
 						         _ => boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context)
 					         });
 				}

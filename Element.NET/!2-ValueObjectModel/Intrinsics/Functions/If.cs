@@ -16,12 +16,20 @@ namespace Element.AST
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
             // Make a list out of the true and false options
-            List.Instance.Call(arguments.Skip(1).ToArray(), context)
+            // 
+            List.Instance.Call(arguments.Skip(1).Reverse().ToArray(), context)
                 .Cast<StructInstance>(context)
                 // Get the option lists indexer (field 0)
                 .Bind(optionListInstance => optionListInstance.Index(ListStruct.IndexerId, context))
-                // Call the list indexer to get option 0 if true or option 1 if false.
+                .Accumulate(() => context.RootScope.Lookup(NumStruct.Instance.Identifier, context))
                 // ReSharper disable once PossibleUnintendedReferenceComparison
-                .Bind(optionListIndexer => optionListIndexer.Call(new IValue[] {arguments[0] == Constant.True ? Constant.Zero : Constant.One}, context));
+                .Bind(t =>
+                {
+                    var (optionListIndexer, numStruct) = t;
+                    // Change condition to a numerical index for the list
+                    return numStruct.Call(new[] {arguments[0]}, context)
+                                    .Cast<Instruction>(context)
+                                    .Bind(index => optionListIndexer.Call(new [] {index}, context));
+                });
     }
 }

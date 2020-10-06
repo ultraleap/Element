@@ -25,84 +25,88 @@ namespace Element
 
 		private static ReadOnlyCollection<State> ToState(IEnumerable<Instruction> exprs) => exprs.Select((v, i) => new State(i, 0, v)).ToList().AsReadOnly();
 
-		public static Result<InstructionGroup> CreateAndOptimize(IReadOnlyCollection<Instruction> initialSerialized, ConditionFunction conditionFunc, IterationFunction bodyFunc, Context context) =>
-			conditionFunc(ToState(Enumerable.Repeat(DummyInstruction.Instance, initialSerialized.Count)))
-				.Bind(dummyConditionResult =>
+		public static Result<InstructionGroup> CreateAndOptimize(IReadOnlyCollection<Instruction> initialSerialized, ConditionFunction conditionFunc, IterationFunction bodyFunc, Context context)
+		{
+			Result<InstructionGroup> EvaluateLoop()
+			{
+				var initialState = ToState(initialSerialized);
+
+				Result<(ReadOnlyCollection<Instruction> Body, Instruction Condition)> EvaluateIteration(IReadOnlyCollection<Instruction> iterationState) =>
+					bodyFunc(iterationState!).Map(bodyExprs => new ReadOnlyCollection<Instruction>(bodyExprs.ToArray()))
+					                         .Accumulate(() => conditionFunc(iterationState!))
+					                         .Assert(e => iterationState!.Count == e.Item1.Count, "Iteration state counts are different");
+
+				Result<(ReadOnlyCollection<Instruction> Body, Instruction Condition)> IncrementScopeIndexIfAnyNestedLoops((ReadOnlyCollection<Instruction> Body, Instruction Condition) e)
 				{
-					// Check the condition function with non-constant dummy instructions
-					if (dummyConditionResult is Constant c)
+					var (body, condition) = e;
+
+					// Increment the scope number if there's nested loops
+					var scope = body.SelectMany(n => n.AllDependent)
+					                .Concat(condition.AllDependent)
+					                .OfType<State>()
+					                .OrderBy(s => s.Scope)
+					                .FirstOrDefault();
+					if (scope != null)
 					{
-						// ReSharper disable once PossibleUnintendedReferenceComparison
-						if (c == Constant.True) return context.Trace(EleMessageCode.InfiniteLoop, "Loop condition function always returns true");
-						//if (c == Constant.False) return new BasicInstructionGroup(initialSerialized); // TODO: Implement compilation of BasicInstructionGroup and re-enable this, warn that loop is redundant
+						initialState = initialSerialized.Select((v, i) => new State(i, scope.Scope + 1, v)).ToList().AsReadOnly();
+						return EvaluateIteration(initialState);
 					}
 
-					var initialState = ToState(initialSerialized);
+					return e;
+				}
 
-					Result<(ReadOnlyCollection<Instruction> Body, Instruction Condition)> EvaluateIteration(IReadOnlyCollection<Instruction> iterationState) =>
-						bodyFunc(iterationState!).Map(bodyExprs => new ReadOnlyCollection<Instruction>(bodyExprs.ToArray()))
-						                        .Accumulate(() => conditionFunc(iterationState!))
-						                        .Assert(e => iterationState!.Count == e.Item1.Count, "Iteration state counts are different");
-
-					Result<(ReadOnlyCollection<Instruction> Body, Instruction Condition)> IncrementScopeIndexIfAnyNestedLoops((ReadOnlyCollection<Instruction> Body, Instruction Condition) e)
+				Result<InstructionGroup> UnrollCompileTimeConstantLoop((ReadOnlyCollection<Instruction> Body, Instruction Condition) e)
+				{
+					var (body, condition) = e;
+					// TODO: Implement compilation of BasicInstructionGroup and re-enable this
+					/*if (initialSerialized.All(e => e is Constant))
 					{
-						var (body, condition) = e;
-
-						// Increment the scope number if there's nested loops
-						var scope = body.SelectMany(n => n.AllDependent)
-						                .Concat(condition.AllDependent)
-						                .OfType<State>()
-						                .OrderBy(s => s.Scope)
-						                .FirstOrDefault();
-						if (scope != null)
+						var builder = new ResultBuilder<InstructionGroup>(context, null);
+						var iterationCount = 1; // We already did first iteration above
+						while (condition == Constant.True)
 						{
-							initialState = initialSerialized.Select((v, i) => new State(i, scope.Scope + 1, v)).ToList().AsReadOnly();
-							return EvaluateIteration(initialState);
-						}
-
-						return e;
-					}
-
-					Result<InstructionGroup> UnrollCompileTimeConstantLoop((ReadOnlyCollection<Instruction> Body, Instruction Condition) e)
-					{
-						var (body, condition) = e;
-						// TODO: Implement compilation of BasicInstructionGroup and re-enable this
-						/*if (initialSerialized.All(e => e is Constant))
-						{
-							var builder = new ResultBuilder<InstructionGroup>(context, null);
-							var iterationCount = 1; // We already did first iteration above
-							while (condition == Constant.True)
+							if (body.Append(condition)
+							        .Any(e => !(e is Constant)))
 							{
-								if (body.Append(condition)
-								        .Any(e => !(e is Constant)))
-								{
-									goto NotCompileTimeConstant;
-								}
-
-								var iterationResult = EvaluateIteration(body);
-								builder.Append(in iterationResult);
-								if (!iterationResult.IsSuccess) return builder.ToResult();
-								(body, condition) = iterationResult.ResultOr(default); // Will never pick default alternative
-								
-								iterationCount++;
-								if (iterationCount > 100000)
-								{
-									return context.Trace(EleMessageCode.InfiniteLoop, "Iteration count exceeded 100000, likely to be an infinite loop");
-								}
+								goto NotCompileTimeConstant;
 							}
 
-							builder.Result = new BasicInstructionGroup(body);
-							return builder.ToResult();
+							var iterationResult = EvaluateIteration(body);
+							builder.Append(in iterationResult);
+							if (!iterationResult.IsSuccess) return builder.ToResult();
+							(body, condition) = iterationResult.ResultOr(default); // Will never pick default alternative
+							
+							iterationCount++;
+							if (iterationCount > 100000)
+							{
+								return context.Trace(EleMessageCode.InfiniteLoop, "Iteration count exceeded 100000, likely to be an infinite loop");
+							}
 						}
 
-						NotCompileTimeConstant:*/
-						return new Result<InstructionGroup>(new Loop(initialState, condition, body));
+						builder.Result = new BasicInstructionGroup(body);
+						return builder.ToResult();
 					}
 
-					return EvaluateIteration(initialState)
-					       .Bind(IncrementScopeIndexIfAnyNestedLoops)
-					       .Bind(UnrollCompileTimeConstantLoop);
-				});
+					NotCompileTimeConstant:*/
+					return new Result<InstructionGroup>(new Loop(initialState, condition, body));
+				}
+
+				return EvaluateIteration(initialState)
+				       .Bind(IncrementScopeIndexIfAnyNestedLoops)
+				       .Bind(UnrollCompileTimeConstantLoop);
+			}
+			
+			return conditionFunc(ToState(Enumerable.Repeat(DummyInstruction.Instance, initialSerialized.Count)))
+			       .Match((dummyConditionResult, messages) => dummyConditionResult switch
+			       {
+				       // Check the condition function with non-constant dummy instructions
+				       // ReSharper disable once PossibleUnintendedReferenceComparison
+				       Constant c when c == Constant.True => context.Trace(EleMessageCode.InfiniteLoop, "Loop condition function always returns true"),
+				       // ReSharper disable once PossibleUnintendedReferenceComparison
+				       //Constant c when c == Constant.False => new BasicInstructionGroup(initialSerialized), // TODO: Implement compilation of BasicInstructionGroup and re-enable this, warn that loop is redundant
+				       _ => EvaluateLoop()
+			       }, messages => EvaluateLoop()); // Discard error messages deliberately, we don't care if the dummy check failed
+		}
 
 		private Loop(ReadOnlyCollection<State> state, Instruction condition, ReadOnlyCollection<Instruction> body)
 		{

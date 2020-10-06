@@ -30,7 +30,7 @@ namespace Element
 
 		public static Constant Evaluate(Op op, float a) => op switch
 		{
-			Op.Not => float.IsNaN(a) ? Constant.BoolNaN : (a + 1f) % 2f > 0f ? Constant.True : Constant.False,
+			Op.Not => float.IsNaN(a) ? Constant.BoolNaN : a > 0f ? Constant.False : Constant.True,
 			_ => new Constant(op switch
 			{
 				Op.Sin => (float) Math.Sin(a),

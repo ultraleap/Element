@@ -36,11 +36,12 @@ namespace Element
         public Stack<Declaration> DeclarationStack { get; } = new Stack<Declaration>();
         
         public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
-            Parse<TopLevelExpression>(expression)
-                .Bind(tle => EvaluateExpression(tle.Expression, scopeToEvaluateIn));
+            Parse<Expression>(expression)
+                .Bind(tle => EvaluateExpression(tle, scopeToEvaluateIn));
 
-        public Result<T> Parse<T>(string source, string sourceName = "<input source>") where T : notnull =>
-            Parser.Parse<T>(new SourceInfo(sourceName, source), this, CompilerOptions.NoParseTrace);
+        public Result<T> Parse<T>(string source, string sourceName = "<input source>") =>
+            Parser.Parse<TopLevel<T>>(new SourceInfo(sourceName, source), this, CompilerOptions.NoParseTrace)
+                  .Map(parsed => parsed.Object);
 
         public Result<IValue> EvaluateExpression(Expression expression, IScope? scopeToEvaluateIn = null) =>
             expression.Validate(this)

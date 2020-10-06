@@ -34,7 +34,7 @@ namespace Element.CLR
                           (outputType, convertedValue) switch
                           {
                               (_, {} result) when result.Type == outputType => result, // Correct type from convert, return directly
-                              ({} t, {} result) when t == typeof(bool) => LExpression.LessThanOrEqual(result, LExpression.Constant(0f)),
+                              ({} t, {} result) when t == typeof(bool) => LExpression.GreaterThan(result, LExpression.Constant(0f)),
                               (_, {} result) => LExpression.Convert(result, outputType),
                               _ => throw new InternalCompilerException($"Unhandled {nameof(ElementToLinq)} output type")
                           });

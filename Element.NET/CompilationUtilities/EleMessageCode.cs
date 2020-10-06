@@ -22,6 +22,7 @@ namespace Element
         ArgumentNotFound = 26,
         ArgumentOutOfRange = 28,
         InvalidCast = 30,
+        NotImplemented = 41,
         UnknownError = 9999,
         
         // LOADING SOURCE/PACKAGES/PARSING

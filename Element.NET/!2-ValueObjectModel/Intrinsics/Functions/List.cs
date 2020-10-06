@@ -44,24 +44,20 @@ namespace Element.AST
 
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
 	            arguments[0] is Instruction index
-		                               ? new Result<IValue>(ListElement.Create(index,
-		                                                                       _elements,
-		                                                                       _elements[0].IsFunction() ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort},
-		                                                                       _elements[0].IsFunction() ? _elements[0].ReturnConstraint : AnyConstraint.Instance))
-		                               : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
+		            ? ListElement.Create(index,
+		                                 _elements,
+		                                 _elements[0].IsFunction() ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort},
+		                                 _elements[0].IsFunction() ? _elements[0].ReturnConstraint : AnyConstraint.Instance,
+		                                 context)
+		            : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
         }
 
         private class ListElement : Function
         {
-            public static IValue Create(Instruction index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputConstraints, IValue outputConstraint) =>
-                index switch
-                {
-	                Constant constantIndex => elements[(int) constantIndex.Value],
-	                {} indexExpr => elements.All(e => e is Instruction)
-		                                ? (IValue) Switch.CreateAndOptimize(indexExpr, elements.Cast<Instruction>())
-		                                : new ListElement(index, elements, inputConstraints, outputConstraint),
-	                _ => throw new ArgumentNullException(nameof(index))
-                };
+	        public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputConstraints, IValue outputConstraint, Context context) =>
+		        elements.All(e => e is Instruction)
+			        ? Switch.CreateAndOptimize(index, elements.Cast<Instruction>(), context).Cast<IValue>(context)
+			        : new Result<IValue>(new ListElement(index, elements, inputConstraints, outputConstraint));
 
             private ListElement(Instruction index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputPorts, IValue output)
             {
@@ -79,11 +75,11 @@ namespace Element.AST
 
             public override Result<IValue> Index(Identifier id, Context context) =>
 	            _elements.Select(e => e.Index(id, context))
-	                     .MapEnumerable(elements => Create(_index, elements.ToList(), InputPorts, ReturnConstraint));
+	                     .BindEnumerable(elements => Create(_index, elements.ToList(), InputPorts, ReturnConstraint, context));
             
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
 	            _elements.Select(e => e.Call(arguments.ToArray(), context))
-	                     .MapEnumerable(v => Create(_index, v.ToList(), InputPorts, ReturnConstraint));
+	                     .BindEnumerable(v => Create(_index, v.ToList(), InputPorts, ReturnConstraint, context));
         }
 	}
 }
