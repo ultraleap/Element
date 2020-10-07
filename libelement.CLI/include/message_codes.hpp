@@ -23,11 +23,11 @@ namespace libelement::cli
         typedef const std::map<std::string, message_level>::const_iterator
             message_level_const_iterator;
 
-        message_type type;
+        element_result type;
         std::string name;
         message_level level;
 
-        message_code(message_type type, std::string name, const std::string& level)
+        message_code(element_result type, std::string name, const std::string& level)
             : type{ type }
             , name{ std::move(name) }
             , level{ get_message_level(level) }
@@ -54,7 +54,7 @@ namespace libelement::cli
 
     class message_codes
     {
-        typedef const std::map<message_type, message_code>::const_iterator
+        typedef const std::map<element_result, message_code>::const_iterator
             message_code_const_iterator;
 
     public:
@@ -68,13 +68,13 @@ namespace libelement::cli
             {
                 auto name = toml::find<std::string>(item.second, "name");
                 auto level = toml::find<std::string>(item.second, "level");
-                auto index = static_cast<message_type>(std::stoi(item.first.substr(3)));
-                code_map.insert(it, std::pair<message_type, message_code>(
+                auto index = static_cast<element_result>(std::stoi(item.first.substr(3)));
+                code_map.insert(it, std::pair<element_result, message_code>(
                                         index, message_code(index, name, level)));
             }
         }
 
-        const message_code* get_code(message_type type) const
+        const message_code* get_code(element_result type) const
         {
             message_code_const_iterator it = code_map.find(type);
             if (it != code_map.end())
@@ -83,7 +83,7 @@ namespace libelement::cli
             return nullptr;
         }
 
-        message_level get_level(message_type type) const
+        message_level get_level(element_result type) const
         {
             const message_code* message_code = get_code(type);
             if (message_code == nullptr)
@@ -93,17 +93,17 @@ namespace libelement::cli
         }
 
     private:
-        std::map<message_type, message_code> code_map;
+        std::map<element_result, message_code> code_map;
     };
 
-    inline message_type error_conversion(element_result result)
+    inline element_result error_conversion(element_result result)
     {
         if (result > 0)
-            return static_cast<message_type>(result);
+            return result;
 
         if (result == ELEMENT_ERROR_RESERVED_IDENTIFIER)
-            return static_cast<message_type>(ELEMENT_ERROR_INVALID_IDENTIFIER);
+            return ELEMENT_ERROR_INVALID_IDENTIFIER;
 
-        return static_cast<message_type>(ELEMENT_ERROR_UNKNOWN);
+        return ELEMENT_ERROR_UNKNOWN;
     };
 } // namespace libelement::cli

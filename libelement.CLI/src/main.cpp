@@ -62,7 +62,7 @@ void log_callback(const element_log_message* const message, void* user_data)
 
     // todo: hack to force parse errors
     auto log = compiler_message(
-        static_cast<message_type>(message_code), message_with_info,
+        message_code, message_with_info,
         static_cast<command*>(user_data)->get_common_arguments().log_json);
     std::cout << log.serialize() << std::endl;
 

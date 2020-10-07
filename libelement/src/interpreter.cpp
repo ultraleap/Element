@@ -1,326 +1,56 @@
-#include "interpreter_internal.hpp"
+#include "element/interpreter.h"
 
 //STD
 #include <algorithm>
 #include <functional>
 #include <cassert>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <memory>
 
 //LIBS
 #include <fmt/format.h>
 
 //SELF
-#include "common_internal.hpp"
+#include "element/ast.h"
 #include "instruction_tree/evaluator.hpp"
-#include "instruction_tree/instructions.hpp"
+#include "ast/parser_internal.hpp"
+#include "common_internal.hpp"
 #include "token_internal.hpp"
 #include "configuration.hpp"
+#include "log_errors.hpp"
 #include "object_model/object_model_builder.hpp"
 #include "object_model/declarations/function_declaration.hpp"
 #include "object_model/error.hpp"
-#include "object_model/error_map.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/expressions/expression_chain.hpp"
-#include "log_errors.hpp"
-#include "element/ast.h"
-#include "object_model/intrinsics/intrinsic.hpp"
 
-void element_interpreter_ctx::Deleter::operator()(element::intrinsic* i) { delete i; }
-void element_interpreter_ctx::Deleter::operator()(const element::intrinsic* i) { delete i; }
-
-bool file_exists(const std::string& file)
+element_result element_interpreter_create(element_interpreter_ctx** interpreter)
 {
-    return std::filesystem::exists(file) && std::filesystem::is_regular_file(file);
-}
-
-bool directory_exists(const std::string& directory)
-{
-    return std::filesystem::exists(directory) && std::filesystem::is_directory(directory);
-}
-
-element_result element_interpreter_ctx::load_into_scope(const char* str, const char* filename, element::scope* src_scope)
-{
-    //HACK: JM - Not a fan of this...
-    const std::string file = filename;
-    const auto starts_with_prelude = file.rfind("Prelude\\", 0) == 0;
-    element_tokeniser_ctx* tokeniser;
-    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
-
-    tokeniser->logger = logger;
-    // Make a smart pointer out of the tokeniser so it's deleted on an early return
-    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(tokeniser, element_tokeniser_delete);
-
-    //create the file info struct to be used by the object model later
-    element::file_information info;
-    info.file_name = std::make_unique<std::string>(filename);
-    //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
-    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()))
-    const auto total_lines_parsed = tokeniser->line;
-
-    for (auto i = 0; i < total_lines_parsed; ++i)
-    {
-        //lines start at 1
-        info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
-    }
-
-    auto* const data = info.file_name->data();
-    src_context->file_info[data] = std::move(info);
-
-    const auto log_tokens = starts_with_prelude
-                                ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
-                                : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
-
-    if (log_tokens)
-    {
-        log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
-    }
-
-    element_parser_ctx parser;
-    parser.tokeniser = tokeniser;
-    parser.logger = logger;
-    parser.src_context = src_context;
-
-    auto result = parser.ast_build();
-    ELEMENT_OK_OR_RETURN(result)
-
-    const auto log_ast = starts_with_prelude
-                             ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
-                             : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
-
-    if (log_ast)
-    {
-        log("\n---\nAST\n---\n" + ast_to_string(parser.root));
-    }
-
-    //parse only enabled, skip object model generation to avoid error codes with positive values
-    //i.e. errors returned other than ELEMENT_ERROR_PARSE
-    if (parse_only)
-    {
-        element_ast_delete(parser.root);
-        return ELEMENT_OK;
-    }
-
-    auto object_model = element::build_root_scope(this, parser.root, result);
-    element_ast_delete(parser.root);
-
-    if (result != ELEMENT_OK)
-    {
-        log(result, fmt::format("building object model failed with element_result {}", result), filename);
-        return result;
-    }
-
-    result = src_scope->merge(std::move(object_model));
-    if (result != ELEMENT_OK)
-    {
-        log(result, fmt::format("merging object models failed with element_result {}", result), filename);
-        return result;
-    }
-
-    return result;
-}
-
-element_result element_interpreter_ctx::load(const char* str, const char* filename)
-{
-    return load_into_scope(str, filename, global_scope.get());
-}
-
-element_result element_interpreter_ctx::load_file(const std::string& file)
-{
-    const auto abs = std::filesystem::absolute(std::filesystem::path(file)).string();
-
-    if (!file_exists(abs))
-    {
-        std::cout << fmt::format("file {} was not found at path {}\n",
-                                 file, abs.c_str()); //todo: proper logging
-        return ELEMENT_ERROR_FILE_NOT_FOUND;
-    }
-
-    std::string buffer;
-
-    std::ifstream f(abs);
-    f.seekg(0, std::ios::end);
-    buffer.resize(f.tellg());
-    f.seekg(0);
-    f.read(buffer.data(), buffer.size());
-
-    const auto result = load(buffer.c_str(), abs.c_str());
-    if (result != ELEMENT_OK)
-    {
-        //std::cout << fmt::format("interpreter failed to parse file {}. element_result = {}\n",
-        //    file, result); //todo: proper logging
-    }
-
-    return result;
-}
-
-element_result element_interpreter_ctx::load_files(const std::vector<std::string>& files)
-{
-    element_result ret = ELEMENT_OK;
-
-    for (const auto& filename : files)
-    {
-        if (!file_exists(filename))
-        {
-            auto abs = std::filesystem::absolute(std::filesystem::path(filename)).string();
-            std::cout << fmt::format("file {} was not found at path {}\n",
-                                     filename, abs); //todo: proper logging
-            continue;                                //todo: error handling
-        }
-
-        const element_result result = load_file(filename);
-        if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
-            ret = result;
-    }
-
-    return ret;
-}
-
-element_result element_interpreter_ctx::load_package(const std::string& package)
-{
-    const auto last_dash = package.find_last_of('-');
-    auto actual_package_name = package;
-    if (last_dash != std::string::npos)
-        actual_package_name = package.substr(0, last_dash);
-
-    auto package_path = "ElementPackages\\" + actual_package_name;
-    if (!directory_exists(package_path))
-    {
-        auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
-        std::cout << fmt::format("package {} does not exist at path {}\n",
-                                 package_path, abs); //todo: proper logging
-        return ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
-    }
-
-    element_result ret = ELEMENT_OK;
-
-    for (const auto& file : std::filesystem::recursive_directory_iterator(package_path))
-    {
-        const auto filename = file.path().string();
-        const auto extension = file.path().extension().string();
-        if (extension == ".ele")
-        {
-            const element_result result = load_file(file.path().string());
-            if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
-                ret = result;
-        }
-        else if (extension != ".bond")
-        {
-            std::cout << fmt::format("file {} in package {} has extension {} instead of '.ele' or '.bond'\n",
-                                     filename, package_path, extension); //todo: proper logging
-        }
-    }
-
-    return ret;
-}
-
-element_result element_interpreter_ctx::load_packages(const std::vector<std::string>& packages)
-{
-    element_result ret = ELEMENT_OK;
-
-    for (const auto& package : packages)
-    {
-        auto package_path = "ElementPackages\\" + package;
-        const auto result = load_package(package);
-        if (result != ELEMENT_OK && ret != ELEMENT_OK) //todo: only returns first error
-            ret = result;
-    }
-
-    return ret;
-}
-
-element_result element_interpreter_ctx::load_prelude()
-{
-    if (prelude_loaded)
-        return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
-
-    auto result = load_package("Prelude");
-    if (result == ELEMENT_OK)
-    {
-        prelude_loaded = true;
-        return result;
-    }
-
-    if (result == ELEMENT_ERROR_DIRECTORY_NOT_FOUND)
-    {
-        auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
-        std::cout << fmt::format("could not find prelude at {}\n", abs); //todo: proper logging
-    }
-
-    return result;
-}
-
-void element_interpreter_ctx::set_log_callback(LogCallback callback, void* user_data)
-{
-    logger = std::make_shared<element_log_ctx>();
-    logger->callback = callback;
-    logger->user_data = user_data;
-}
-
-void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename) const
-{
-    if (logger == nullptr)
-        return;
-
-    logger->log(*this, code, message, filename);
-}
-
-void element_interpreter_ctx::log(const std::string& message) const
-{
-    if (logger == nullptr)
-        return;
-
-    logger->log(message, message_stage::ELEMENT_STAGE_MISC);
-}
-
-element_interpreter_ctx::element_interpreter_ctx()
-{
-    element::detail::register_errors();
-    element::detail::register_log_errors();
-
-    // TODO: hack, remove
-    global_scope = std::make_unique<element::scope>(nullptr, nullptr);
-    clear();
-    src_context = std::make_shared<element::source_context>();
-}
-
-element_result element_interpreter_ctx::clear()
-{
-    //trees.clear();
-    //names.reset();
-    //ast_names.clear();
-
+    *interpreter = new element_interpreter_ctx();
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_create(element_interpreter_ctx** context)
+void element_interpreter_delete(element_interpreter_ctx** interpreter)
 {
-    *context = new element_interpreter_ctx();
-    return ELEMENT_OK;
+    delete *interpreter;
+    *interpreter = nullptr;
 }
 
-void element_interpreter_delete(element_interpreter_ctx* context)
+element_result element_interpreter_load_string(element_interpreter_ctx* interpreter, const char* string, const char* filename)
 {
-    delete context;
+    assert(interpreter);
+    return interpreter->load(string, filename);
 }
 
-element_result element_interpreter_load_string(element_interpreter_ctx* context, const char* string, const char* filename)
+element_result element_interpreter_load_file(element_interpreter_ctx* interpreter, const char* file)
 {
-    assert(context);
-    return context->load(string, filename);
+    assert(interpreter);
+    return interpreter->load_file(file);
 }
 
-element_result element_interpreter_load_file(element_interpreter_ctx* context, const char* file)
+element_result element_interpreter_load_files(element_interpreter_ctx* interpreter, const char** files, const int files_count)
 {
-    assert(context);
-    return context->load_file(file);
-}
-
-element_result element_interpreter_load_files(element_interpreter_ctx* context, const char** files, const int files_count)
-{
-    assert(context);
+    assert(interpreter);
 
     std::vector<std::string> actual_files;
     actual_files.resize(files_count);
@@ -330,19 +60,19 @@ element_result element_interpreter_load_files(element_interpreter_ctx* context, 
         actual_files[i] = files[i];
     }
 
-    return context->load_files(actual_files);
+    return interpreter->load_files(actual_files);
 }
 
-element_result element_interpreter_load_package(element_interpreter_ctx* context, const char* package)
+element_result element_interpreter_load_package(element_interpreter_ctx* interpreter, const char* package)
 {
-    assert(context);
+    assert(interpreter);
     //std::cout << fmt::format("load_package {}\n", package); //todo: proper logging
-    return context->load_package(package);
+    return interpreter->load_package(package);
 }
 
-element_result element_interpreter_load_packages(element_interpreter_ctx* context, const char** packages, const int packages_count)
+element_result element_interpreter_load_packages(element_interpreter_ctx* interpreter, const char** packages, const int packages_count)
 {
-    assert(context);
+    assert(interpreter);
 
     std::vector<std::string> actual_packages;
     actual_packages.resize(packages_count);
@@ -352,54 +82,53 @@ element_result element_interpreter_load_packages(element_interpreter_ctx* contex
         actual_packages[i] = packages[i];
     }
 
-    return context->load_packages(actual_packages);
+    return interpreter->load_packages(actual_packages);
 }
 
-element_result element_interpreter_load_prelude(element_interpreter_ctx* context)
+element_result element_interpreter_load_prelude(element_interpreter_ctx* interpreter)
 {
-    assert(context);
-    return context->load_prelude();
+    assert(interpreter);
+    return interpreter->load_prelude();
 }
 
-void element_interpreter_parse_only_mode(element_interpreter_ctx* context, bool parse_only)
+void element_interpreter_set_log_callback(element_interpreter_ctx* interpreter, void (*log_callback)(const element_log_message*, void*), void* user_data)
 {
-    assert(context);
-    context->parse_only = parse_only;
+    assert(interpreter);
+    interpreter->set_log_callback(log_callback, user_data);
 }
 
-void element_interpreter_set_log_callback(element_interpreter_ctx* context, void (*log_callback)(const element_log_message*, void*), void* user_data)
+void element_interpreter_set_parse_only(element_interpreter_ctx* interpreter, bool parse_only)
 {
-    assert(context);
-    context->set_log_callback(log_callback, user_data);
+    interpreter->parse_only = parse_only;
 }
 
-element_result element_interpreter_clear(element_interpreter_ctx* context)
+element_result element_interpreter_clear(element_interpreter_ctx* interpreter)
 {
-    assert(context);
-    return context->clear();
+    assert(interpreter);
+    return interpreter->clear();
 }
 
-element_result element_delete_declaration(element_interpreter_ctx* context, element_declaration** declaration)
+element_result element_delete_declaration(element_declaration** declaration)
 {
     delete *declaration;
     *declaration = nullptr;
     return ELEMENT_OK;
 }
 
-element_result element_delete_object(element_interpreter_ctx* context, element_object** object)
+element_result element_delete_object(element_object** object)
 {
     delete *object;
     *object = nullptr;
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_find(element_interpreter_ctx* context, const char* path, element_declaration** declaration)
+element_result element_interpreter_find(element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
 {
-    const auto* decl = context->global_scope->find(element::identifier(path), false);
+    const auto* decl = interpreter->global_scope->find(element::identifier(path), false);
     if (!decl)
     {
         *declaration = nullptr;
-        context->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("API - failed to find '{}'.", path));
+        interpreter->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("API - failed to find '{}'.", path));
         return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND;
     }
 
@@ -409,7 +138,7 @@ element_result element_interpreter_find(element_interpreter_ctx* context, const 
 }
 
 element_result valid_boundary_function(
-    element_interpreter_ctx* context,
+    element_interpreter_ctx* interpreter,
     const element::compilation_context& compilation_context,
     const element_compiler_options* options,
     const element_declaration* declaration)
@@ -426,7 +155,7 @@ element_result valid_boundary_function(
 }
 
 element_result element_interpreter_compile(
-    element_interpreter_ctx* context,
+    element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
     const element_declaration* declaration,
     element_object** object)
@@ -434,7 +163,7 @@ element_result element_interpreter_compile(
     if (!options)
         options = &element_compiler_options_default;
 
-    const element::compilation_context compilation_context(context->global_scope.get(), context);
+    const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
 
     if (!declaration->decl)
         return ELEMENT_ERROR_UNKNOWN;
@@ -444,10 +173,10 @@ element_result element_interpreter_compile(
     const bool check_boundary = declaration_is_nullary ? options->check_valid_boundary_function_when_nullary : options->check_valid_boundary_function;
     if (check_boundary)
     {
-        const auto result = valid_boundary_function(context, compilation_context, options, declaration);
+        const auto result = valid_boundary_function(interpreter, compilation_context, options, declaration);
         if (result != ELEMENT_OK)
         {
-            context->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
+            interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
             *object = nullptr;
             return result;
         }
@@ -457,7 +186,7 @@ element_result element_interpreter_compile(
     auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), result, {});
     if (!compiled || result != ELEMENT_OK)
     {
-        context->log(result, "Tried to compile placeholders but it failed.");
+        interpreter->log(result, "Tried to compile placeholders but it failed.");
         *object = nullptr;
         return result;
     }
@@ -475,7 +204,7 @@ element_result element_interpreter_compile(
         *object = new element_object { compiled->to_instruction() };
         if (!*object)
         {
-            context->log(result, "Failed to compile declaration to an instruction tree.");
+            interpreter->log(result, "Failed to compile declaration to an instruction tree.");
             return ELEMENT_ERROR_UNKNOWN;
         }
     }
@@ -488,7 +217,7 @@ element_result element_interpreter_compile(
 }
 
 element_result element_interpreter_evaluate(
-    element_interpreter_ctx* context,
+    element_interpreter_ctx* interpreter,
     const element_evaluator_options* options,
     const element_object* object,
     const element_inputs* inputs,
@@ -507,13 +236,13 @@ element_result element_interpreter_evaluate(
 
     const auto err = std::dynamic_pointer_cast<const element::error>(object->obj);
     if (err)
-        return err->log_once(context->logger.get());
+        return err->log_once(interpreter->logger.get());
 
     auto expr = object->obj->to_instruction();
     if (!expr)
     {
         //todo: proper logging
-        context->logger->log("element_object is not an instruction tree, so it can't be evaluated", ELEMENT_STAGE_EVALUATOR);
+        interpreter->logger->log("element_object is not an instruction tree, so it can't be evaluated", ELEMENT_STAGE_EVALUATOR);
         return ELEMENT_ERROR_UNKNOWN;
     }
     else
@@ -522,13 +251,13 @@ element_result element_interpreter_evaluate(
 
         if (log_expression_tree)
         {
-            context->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*expr));
+            interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*expr));
         }
     }
 
     std::size_t count = outputs->count;
     const auto result = element_evaluate(
-        *context,
+        *interpreter,
         std::move(expr),
         inputs->values,
         inputs->count,
@@ -539,29 +268,33 @@ element_result element_interpreter_evaluate(
 
     if (result != ELEMENT_OK)
     {
-        context->log(result, fmt::format("Failed to evaluate {}", object->obj->typeof_info()), "<input>");
+        interpreter->log(result, fmt::format("Failed to evaluate {}", object->obj->typeof_info()), "<input>");
     }
 
     return result;
 }
 
 element_result element_interpreter_compile_expression(
-    element_interpreter_ctx* context,
+    element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
     const char* expression_string,
     element_object** object)
 {
-    const element::compilation_context compilation_context(context->global_scope.get(), context);
+    const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
 
     element_tokeniser_ctx* tokeniser;
     auto result = element_tokeniser_create(&tokeniser);
     if (result != ELEMENT_OK)
         return result;
 
-    tokeniser->logger = context->logger;
+    tokeniser->logger = interpreter->logger;
 
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
-    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(tokeniser, element_tokeniser_delete);
+    auto element_tokeniser_delete_ptr = [](element_tokeniser_ctx* tokeniser) {
+        element_tokeniser_delete(&tokeniser);
+    };
+
+    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(element_tokeniser_delete_ptr)>(tokeniser, element_tokeniser_delete_ptr);
 
     //create the file info struct to be used by the object model later
     element::file_information info;
@@ -584,24 +317,24 @@ element_result element_interpreter_compile_expression(
         info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
 
     auto* const data = info.file_name->data();
-    context->src_context->file_info[data] = std::move(info);
+    interpreter->src_context->file_info[data] = std::move(info);
 
     const auto log_tokens = flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
 
     if (log_tokens)
-        context->log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+        interpreter->log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
 
     element_parser_ctx parser;
     parser.tokeniser = tokeniser;
-    parser.logger = context->logger;
-    parser.src_context = context->src_context;
+    parser.logger = interpreter->logger;
+    parser.src_context = interpreter->src_context;
 
     element_ast root(nullptr);
     //root.nearest_token = &tokeniser->cur_token;
     parser.root = &root;
 
     size_t first_token = 0;
-    auto* ast = ast_new_child(&root, ELEMENT_AST_NODE_EXPRESSION);
+    auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRESSION);
     result = parser.parse_expression(&first_token, ast);
     if (result != ELEMENT_OK)
         return result;
@@ -609,11 +342,11 @@ element_result element_interpreter_compile_expression(
     const auto log_ast = flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
 
     if (log_ast)
-        context->log("\n---\nAST\n---\n" + ast_to_string(parser.root));
+        interpreter->log("\n---\nAST\n---\n" + ast_to_string(parser.root));
 
     //parse only enabled, skip object model generation to avoid error codes with positive values
     //i.e. errors returned other than ELEMENT_ERROR_PARSE
-    if (context->parse_only)
+    if (interpreter->parse_only)
     {
         root.children.clear();
         return ELEMENT_OK;
@@ -622,10 +355,10 @@ element_result element_interpreter_compile_expression(
     //todo: urgh, this is horrible now...
     element::deferred_expressions deferred_expressions;
     auto dummy_identifier = element::identifier{ "<REMOVE>" };
-    auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, context->global_scope.get(), element::function_declaration::kind::expression_bodied);
+    auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, interpreter->global_scope.get(), element::function_declaration::kind::expression_bodied);
     parser.root->nearest_token = &tokeniser->tokens[0];
-    element::assign_source_information(context, dummy_declaration, parser.root);
-    auto expression_chain = element::build_expression_chain(context, ast, dummy_declaration.get(), deferred_expressions, result);
+    element::assign_source_information(interpreter, dummy_declaration, parser.root);
+    auto expression_chain = element::build_expression_chain(interpreter, ast, dummy_declaration.get(), deferred_expressions, result);
 
     if (deferred_expressions.empty())
     {
@@ -636,7 +369,7 @@ element_result element_interpreter_compile_expression(
         for (auto& [identifier, expression] : deferred_expressions)
         {
             element_result output_result = ELEMENT_OK;
-            auto lambda = element::build_lambda_declaration(context, identifier, expression, dummy_declaration->our_scope.get(), output_result);
+            auto lambda = element::build_lambda_declaration(interpreter, identifier, expression, dummy_declaration->our_scope.get(), output_result);
             if (output_result != ELEMENT_OK)
                 throw;
 
@@ -648,7 +381,7 @@ element_result element_interpreter_compile_expression(
         }
 
         auto lambda_return_decl = std::make_unique<element::function_declaration>(element::identifier::return_identifier, dummy_declaration->our_scope.get(), element::function_declaration::kind::expression_bodied);
-        element::assign_source_information(context, lambda_return_decl, parser.root);
+        element::assign_source_information(interpreter, lambda_return_decl, parser.root);
         lambda_return_decl->body = std::move(expression_chain);
 
         dummy_declaration->body = std::move(lambda_return_decl);
@@ -658,22 +391,22 @@ element_result element_interpreter_compile_expression(
 
     if (result != ELEMENT_OK)
     {
-        context->log(result, fmt::format("building object model failed with element_result {}", result), info.file_name->data());
+        interpreter->log(result, fmt::format("building object model failed with element_result {}", result), info.file_name->data());
         return result;
     }
 
-    bool success = context->global_scope->add_declaration(std::move(dummy_declaration));
+    bool success = interpreter->global_scope->add_declaration(std::move(dummy_declaration));
     if (!success)
     {
         (*object)->obj = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto* found_dummy_decl = context->global_scope->find(dummy_identifier, false);
+    const auto* found_dummy_decl = interpreter->global_scope->find(dummy_identifier, false);
     assert(found_dummy_decl);
     auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
 
-    success = context->global_scope->remove_declaration(dummy_identifier);
+    success = interpreter->global_scope->remove_declaration(dummy_identifier);
     if (!success)
     {
         (*object)->obj = nullptr;
@@ -686,7 +419,7 @@ element_result element_interpreter_compile_expression(
 }
 
 element_result element_interpreter_evaluate_expression(
-    element_interpreter_ctx* context,
+    element_interpreter_ctx* interpreter,
     const element_evaluator_options* options,
     const char* expression_string,
     element_outputs* outputs)
@@ -694,12 +427,12 @@ element_result element_interpreter_evaluate_expression(
     //sure there is a shorthand for this
     element_object object;
     auto* object_ptr = &object;
-    element_interpreter_compile_expression(context, nullptr, expression_string, &object_ptr);
+    element_interpreter_compile_expression(interpreter, nullptr, expression_string, &object_ptr);
 
     if (!object_ptr->obj)
     {
         //todo:
-        context->log(ELEMENT_ERROR_UNKNOWN, "tried to evaluate an expression that failed to compile");
+        interpreter->log(ELEMENT_ERROR_UNKNOWN, "tried to evaluate an expression that failed to compile");
         outputs->count = 0;
         return ELEMENT_ERROR_UNKNOWN;
     }
@@ -708,13 +441,13 @@ element_result element_interpreter_evaluate_expression(
     if (err)
     {
         outputs->count = 0;
-        return err->log_once(context->logger.get());
+        return err->log_once(interpreter->logger.get());
     }
 
     const auto compiled = object_ptr->obj->to_instruction();
     if (!compiled)
     {
-        context->log(ELEMENT_ERROR_SERIALISATION, "failed to serialise", "<REMOVE>");
+        interpreter->log(ELEMENT_ERROR_SERIALISATION, "failed to serialise", "<REMOVE>");
         outputs->count = 0;
         return ELEMENT_ERROR_SERIALISATION;
     }
@@ -724,7 +457,7 @@ element_result element_interpreter_evaluate_expression(
 
         if (log_expression_tree)
         {
-            context->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*compiled));
+            interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*compiled));
         }
     }
 
@@ -733,16 +466,16 @@ element_result element_interpreter_evaluate_expression(
     input.values = inputs;
     input.count = 1;
 
-    const auto result = element_interpreter_evaluate(context, options, object_ptr, &input, outputs);
+    const auto result = element_interpreter_evaluate(interpreter, options, object_ptr, &input, outputs);
 
     //todo: remove declaration added to global scope
-    //todo: remove file_info added to interpreter source context
+    //todo: remove file_info added to interpreter source interpreter
 
     return result;
 }
 
 element_result element_interpreter_typeof_expression(
-    element_interpreter_ctx* context,
+    element_interpreter_ctx* interpreter,
     const element_evaluator_options* options,
     const char* expression_string,
     char* buffer,
@@ -751,18 +484,18 @@ element_result element_interpreter_typeof_expression(
     //sure there is a shorthand for this
     element_object object;
     auto* object_ptr = &object;
-    element_interpreter_compile_expression(context, nullptr, expression_string, &object_ptr);
+    element_interpreter_compile_expression(interpreter, nullptr, expression_string, &object_ptr);
 
     if (!object_ptr->obj)
     {
         //todo:
-        context->log(ELEMENT_ERROR_UNKNOWN, "tried to get typeof an expression that failed to compile");
+        interpreter->log(ELEMENT_ERROR_UNKNOWN, "tried to get typeof an expression that failed to compile");
         return ELEMENT_ERROR_UNKNOWN;
     }
 
     const auto err = std::dynamic_pointer_cast<const element::error>(object_ptr->obj);
     if (err)
-        return err->log_once(context->logger.get());
+        return err->log_once(interpreter->logger.get());
 
     const auto typeof = object.obj->typeof_info();
     if (buffer_size < static_cast<int>(typeof.size()))

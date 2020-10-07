@@ -6,6 +6,7 @@
 //SELF
 #include "token_internal.hpp"
 #include "ast/ast_internal.hpp"
+#include "ast/parser_internal.hpp"
 #include "configuration.hpp"
 #include "instruction_tree/instructions.hpp"
 #include "lmnt/compiler.hpp"
@@ -14,7 +15,7 @@
     case a:          \
         c = #a;      \
         break;
-std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token)
+std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* token_to_mark)
 {
     std::string string;
 
@@ -51,7 +52,7 @@ std::string tokens_to_string(const element_tokeniser_ctx* context, const element
             auto text = context->text(&token);
             string += text;
 
-            if (nearest_token == &token)
+            if (token_to_mark == &token)
             {
                 string += " <--- HERE";
             }
@@ -568,7 +569,7 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
     if (code != ELEMENT_OK)
     {
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
-            new_log_message += "\n\nAST\n---\n" + ast_to_string(get_root_from_ast(nearest_ast), 0, nearest_ast);
+            new_log_message += "\n\nAST\n---\n" + ast_to_string(nearest_ast ? nearest_ast->get_root() : nullptr, 0, nearest_ast);
     }
 
     msg.message = new_log_message.c_str();

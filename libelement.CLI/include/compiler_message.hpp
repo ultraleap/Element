@@ -46,7 +46,7 @@ namespace libelement::cli
         static constexpr const char* const key_context{ "Context" };
         static constexpr const char* const key_trace_stack{ "TraceStack" };
 
-        std::optional<message_type> type;
+        std::optional<element_result> type;
         std::optional<message_level> level;
         std::string context;
         std::vector<trace_site> trace_stack;
@@ -66,7 +66,7 @@ namespace libelement::cli
             , serialize_to_json(log_json)
         {}
 
-        compiler_message(message_type type, std::string message, bool log_json,
+        compiler_message(element_result type, std::string message, bool log_json,
                          std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
             : type{ type }
             , level{ codes.get_level(type) }
@@ -75,7 +75,7 @@ namespace libelement::cli
             , serialize_to_json(log_json)
         {}
 
-        compiler_message(message_type type, const element_log_message* const error,
+        compiler_message(element_result type, const element_log_message* const error,
                          bool log_json)
             : type{ type }
             , level{ codes.get_level(type) }

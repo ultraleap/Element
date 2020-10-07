@@ -6,18 +6,11 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <stddef.h>
+#include <stdbool.h>
 
 typedef float element_value;
 
-typedef struct element_ast_ctx element_ast_ctx;
-
-typedef struct
-{
-    element_ast_ctx* ast;
-} element_ctx;
-
-typedef enum message_type
+typedef enum element_result
 {
     //ELEMENT
     ELEMENT_OK = 0,
@@ -92,11 +85,9 @@ typedef enum message_type
     ELEMENT_ERROR_CONSTRAINT_INVALID_BODY = -215,
     ELEMENT_ERROR_MISSING_COMMA_IN_ANONYMOUS_BLOCK = -216,
     ELEMENT_ERROR_COMPILETIME_LOOP_TOO_MANY_ITERATIONS = -217,
-} message_type;
+} element_result;
 
-typedef int32_t element_result;
-
-typedef enum message_stage
+typedef enum element_stage
 {
     ELEMENT_STAGE_INVALID = -1,
     ELEMENT_STAGE_MISC,
@@ -104,9 +95,7 @@ typedef enum message_stage
     ELEMENT_STAGE_PARSER,
     ELEMENT_STAGE_COMPILER,
     ELEMENT_STAGE_EVALUATOR
-} message_stage;
-
-typedef int32_t element_stage;
+} element_stage;
 
 typedef struct element_log_message element_log_message;
 

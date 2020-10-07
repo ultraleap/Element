@@ -27,15 +27,14 @@ typedef enum
 typedef struct
 {
     element_token_type type;
-    int pre_pos; //unsure
+    int pre_pos; //todo: unsure
     int pre_len;
     int tok_pos; //the position in the input string where the token starts
     int tok_len;
-    int post_pos; //unsure
+    int post_pos; //todo: unsure
     int post_len;
 
     //for debug/logging
-
     int line;
     int line_start_position; //the position at which the line starts in the input string
     int character;           //the position in the line where the token starts (starting from 1, not 0)
@@ -44,21 +43,19 @@ typedef struct
 
 typedef struct element_tokeniser_ctx element_tokeniser_ctx;
 
-element_result element_tokeniser_create(element_tokeniser_ctx** state);
-element_result element_tokeniser_delete(element_tokeniser_ctx* state);
+element_result element_tokeniser_create(element_tokeniser_ctx** tokeniser);
+void element_tokeniser_delete(element_tokeniser_ctx** tokeniser);
 
-element_result element_tokeniser_get_filename(const element_tokeniser_ctx* state, const char** filename);
-element_result element_tokeniser_get_input(const element_tokeniser_ctx* state, const char** input);
-element_result element_tokeniser_get_token_count(const element_tokeniser_ctx* state, size_t* count);
-element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, size_t index, const element_token** token, const char* msg);
+element_result element_tokeniser_run(element_tokeniser_ctx* tokeniser, const char* input, const char* filename);
+element_result element_tokeniser_clear(element_tokeniser_ctx* tokeniser);
+element_result element_tokeniser_set_log_callback(element_tokeniser_ctx* tokeniser, void (*log_callback)(const element_log_message*, void*), void* user_data);
 
-void element_tokeniser_set_log_callback(element_tokeniser_ctx* state, void (*log_callback)(const element_log_message*, void*), void* user_data);
-
-void element_tokeniser_print(const element_tokeniser_ctx* state);
-element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* input, const char* filename);
-element_result element_tokeniser_clear(element_tokeniser_ctx* state);
-
-element_result element_tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token, char* output_buffer, int output_buffer_size);
+element_result element_tokeniser_get_filename(const element_tokeniser_ctx* tokeniser, const char** filename);
+element_result element_tokeniser_get_input(const element_tokeniser_ctx* tokeniser, const char** input);
+element_result element_tokeniser_get_token_count(const element_tokeniser_ctx* tokeniser, size_t* count);
+element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokeniser, size_t index, const element_token** token, const char* msg);
+//token_to_mark will output "HERE" beside it, pass null if unwanted
+element_result element_tokeniser_to_string(const element_tokeniser_ctx* tokeniser, const element_token* token_to_mark, char* output_buffer, int output_buffer_size);
 
 #if defined(__cplusplus)
 }

@@ -1,10 +1,15 @@
-#include <catch2/catch.hpp>
+//STD
 #include <iostream>
 #include <array>
 
+//LIBS
+#include <catch2/catch.hpp>
+
+//SELF
 #include "element/ast.h"
 #include "element/token.h"
-#include "../src/ast/ast_internal.hpp"
+#include "ast/ast_internal.hpp"
+#include "ast/parser_internal.hpp"
 
 void check_ast_to_code(std::string input)
 {
@@ -21,7 +26,7 @@ void check_ast_to_code(std::string input)
     auto* root = parser.root;
 
     std::array<char, 2048> output_buffer{};
-    element_ast_to_string(root, 0, nullptr, output_buffer.data(), output_buffer.size());
+    element_ast_to_string(root, nullptr, output_buffer.data(), output_buffer.size());
     printf("%s", output_buffer.data());
     UNSCOPED_INFO(output_buffer.data());
 

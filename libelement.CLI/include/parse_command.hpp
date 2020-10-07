@@ -33,8 +33,7 @@ namespace libelement::cli
                 std::move(custom_arguments)
             }
         {
-            element_interpreter_parse_only_mode(context,
-                                                custom_arguments.no_validation);
+            element_interpreter_set_parse_only(context, custom_arguments.no_validation);
         }
 
         [[nodiscard]] compiler_message

@@ -1,15 +1,12 @@
-#include <catch2/catch.hpp>
-
 //STD
 #include <array>
 #include <cstring>
 
 //LIBS
 #include <fmt/format.h>
+#include <catch2/catch.hpp>
 
 //SELF
-#include "element/token.h"
-#include "element/ast.h"
 #include "element/interpreter.h"
 #include "element/common.h"
 
@@ -117,9 +114,9 @@ element_result eval(const char* evaluate)
     UNSCOPED_INFO(output_buffer);
 
 cleanup:
-    element_delete_declaration(context, &declaration);
-    element_delete_object(context, &object);
-    element_interpreter_delete(context);
+    element_delete_declaration(&declaration);
+    element_delete_object(&object);
+    element_interpreter_delete(&context);
     return result;
 }
 
@@ -183,9 +180,9 @@ element_result eval_with_source(const char* source, const char* evaluate)
     UNSCOPED_INFO(output_buffer);
 
 cleanup:
-    element_delete_declaration(context, &declaration);
-    element_delete_object(context, &object);
-    element_interpreter_delete(context);
+    element_delete_declaration(&declaration);
+    element_delete_object(&object);
+    element_interpreter_delete(&context);
     return result;
 }
 
@@ -240,9 +237,9 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     UNSCOPED_INFO(output_buffer);
 
 cleanup:
-    element_delete_declaration(context, &declaration);
-    element_delete_object(context, &object);
-    element_interpreter_delete(context);
+    element_delete_declaration(&declaration);
+    element_delete_object(&object);
+    element_interpreter_delete(&context);
     return result;
 }
 
@@ -3882,6 +3879,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         element_outputs output;
         float outputs_buffer[] = { 0 };
@@ -3891,13 +3889,14 @@ TEST_CASE("Interpreter", "[Evaluate]")
         auto result = element_interpreter_evaluate_expression(context, nullptr, "1", &output);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs_buffer[0] == 1);
-        element_interpreter_delete(context);
+        element_interpreter_delete(&context);
     }
 
     SECTION("element_interpreter_evaluate_expression twice")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         element_outputs output;
         float outputs_buffer[] = { 0 };
@@ -3911,26 +3910,28 @@ TEST_CASE("Interpreter", "[Evaluate]")
         result = element_interpreter_evaluate_expression(context, nullptr, "2", &output);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs_buffer[0] == 2);
-        element_interpreter_delete(context);
+        element_interpreter_delete(&context);
     }
 
     SECTION("element_interpreter_typeof_expression once")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         std::string buffer(256, '\0');
 
         auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), buffer.size());
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Num") == 0);
-        element_interpreter_delete(context);
+        element_interpreter_delete(&context);
     }
 
     SECTION("element_interpreter_typeof_expression twice")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         std::string buffer(256, '\0');
 
@@ -3946,7 +3947,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
         result = element_interpreter_typeof_expression(context, nullptr, "Bool(1)", buffer.data(), buffer.size());
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Bool") == 0);
-        element_interpreter_delete(context);
+        element_interpreter_delete(&context);
     }
 
     SECTION("Compile Time Select")

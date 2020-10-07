@@ -1,20 +1,22 @@
-#include <catch2/catch.hpp>
-#include <iostream>
-
-#include "element/ast.h"
-#include "element/token.h"
-#include "../src/ast/ast_internal.hpp"
-
 //STD
 #include <array>
-#include <cstring>
+#include <iostream>
+
+//LIBS
+#include <catch2/catch.hpp>
+
+//SELF
+#include "element/ast.h"
+#include "element/parser.h"
+#include "element/token.h"
+#include "ast/ast_internal.hpp"
+#include "ast/parser_internal.hpp"
 
 void print_ast(element_ast* ast, int depth, element_ast* ast_to_mark)
 {
-    std::array<char, 2048> output_buffer{};
-    element_ast_to_string(ast, depth, ast_to_mark, output_buffer.data(), output_buffer.size());
-    printf("%s", output_buffer.data());
-    UNSCOPED_INFO(output_buffer.data());
+    const auto str = ast_to_string(ast, depth, ast_to_mark);
+    printf("%s", str.data());
+    UNSCOPED_INFO(str.data());
 }
 
 TEST_CASE("Parser", "[AST]")
@@ -59,7 +61,7 @@ TEST_CASE("Parser", "[AST]")
         REQUIRE(root->children[0]->children[1]->type == ELEMENT_AST_NODE_LITERAL);
         REQUIRE(root->children[0]->children[1]->literal == 2);
 
-        element_ast_delete(parser.root);
+        element_ast_delete(&parser.root);
     }
 
     SECTION("Functions: Burger1(a) = 2")
@@ -100,7 +102,7 @@ TEST_CASE("Parser", "[AST]")
         REQUIRE(body->type == ELEMENT_AST_NODE_LITERAL);
         REQUIRE(body->literal == 2);
 
-        element_ast_delete(parser.root);
+        element_ast_delete(&parser.root);
     }
 
     SECTION("Functions: Burger1(a:Num) = a")
@@ -143,7 +145,7 @@ TEST_CASE("Parser", "[AST]")
         REQUIRE(body->type == ELEMENT_AST_NODE_CALL);
         REQUIRE(body->identifier == "a");
 
-        element_ast_delete(parser.root);
+        element_ast_delete(&parser.root);
     }
 
     SECTION("Structs: struct MyStruct(a, b)")
@@ -182,7 +184,7 @@ TEST_CASE("Parser", "[AST]")
         // No body
         REQUIRE(root->children[0]->children[1]->type == ELEMENT_AST_NODE_NO_BODY);
 
-        element_ast_delete(parser.root);
+        element_ast_delete(&parser.root);
     }
 
     SECTION("Functions: a = _(_a) = 5")
@@ -230,7 +232,7 @@ TEST_CASE("Parser", "[AST]")
         REQUIRE(root->children[0]->children[1]->children[2]->type == ELEMENT_AST_NODE_LITERAL);
         REQUIRE(root->children[0]->children[1]->children[2]->literal == 5);
 
-        element_ast_delete(parser.root);
+        element_ast_delete(&parser.root);
     }
 
     SECTION("Namespace: namespace Empty {}")
@@ -255,7 +257,7 @@ TEST_CASE("Parser", "[AST]")
         // Scope
         REQUIRE(root->children[0]->children[0]->type == ELEMENT_AST_NODE_SCOPE);
 
-        element_ast_delete(parser.root);
+        element_ast_delete(&parser.root);
     }
 
     SECTION("Constraint: intrinsic constraint Any")
@@ -292,7 +294,7 @@ TEST_CASE("Parser", "[AST]")
         // No body
         REQUIRE(root->children[0]->children[1]->type == ELEMENT_AST_NODE_NO_BODY);
 
-        element_ast_delete(parser.root);
+        element_ast_delete(&parser.root);
     }
 
     SECTION("Functions: evaluate = Num.add(1, 2)")
@@ -342,8 +344,8 @@ TEST_CASE("Parser", "[AST]")
         REQUIRE(root->children[0]->children[1]->children[1]->children[1]->type == ELEMENT_AST_NODE_LITERAL);
         REQUIRE(root->children[0]->children[1]->children[1]->children[1]->literal == 2);
 
-        element_ast_delete(parser.root);
+        element_ast_delete(&parser.root);
     }
 
-    element_tokeniser_delete(tokeniser);
+    element_tokeniser_delete(&tokeniser);
 }

@@ -43,16 +43,16 @@ configure_file (
 )
 
 set(libelement_sources
-    "notes.txt"
-
     "src/source_information.hpp"
 
     "src/log_errors.hpp"
     "src/log_errors.cpp"
 
     "src/token.cpp"
+    "src/token_internal.cpp"
     "src/interpreter.cpp"
-    "src/common.cpp"
+    "src/interpreter_internal.cpp"
+    "src/common_internal.cpp"
 
     "src/common_internal.hpp"
     "src/interpreter_internal.hpp"
@@ -61,6 +61,9 @@ set(libelement_sources
     #AST
     "src/ast/ast.cpp"
     "src/ast/ast_internal.hpp"
+    "src/ast/ast_internal.cpp"
+    "src/ast/parser.cpp"
+    "src/ast/parser_internal.cpp"
     "src/ast/ast_indexes.hpp"
     "src/ast/fwd.hpp"
     
@@ -173,18 +176,24 @@ set(libelement_sources
     "src/instruction_tree/instructions.hpp"
     "src/instruction_tree/fwd.hpp"
 
+    #LMNT target
     "src/lmnt/compiler.cpp"
     "src/lmnt/compiler.hpp"
 
+    #Util
     "src/stringutil.hpp"
     "src/typeutil.hpp"
     
+    #C API
+    "include/element/element.h"
     "include/element/common.h"
     "include/element/ast.h"
+    "include/element/parser.h"
     "include/element/token.h"
     "include/element/interpreter.h"
     "include/element/lmnt.h"
     
+    #MISC
     "src/configuration.hpp.in"
     "${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp"
 )
