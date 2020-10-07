@@ -128,7 +128,32 @@ element_result element_delete_object(element_object** object)
 
 element_result element_interpreter_find(element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
 {
-    const auto* decl = interpreter->global_scope->find(element::identifier(path), false);
+    const auto* scope = interpreter->global_scope.get();
+
+    const std::string delimiter = ".";
+    const std::string full_path = path;
+    const element::declaration* decl = nullptr;
+
+    auto start = 0;
+    auto end = full_path.find(delimiter);
+    if (end != std::string::npos)
+    {
+        //find all but last string
+        while (end != std::string::npos)
+        {
+            const auto identifier = full_path.substr(start, end - start);
+
+            start = end + delimiter.length();
+            end = full_path.find(delimiter, start);
+
+            decl = scope->find(element::identifier(identifier), false);
+            scope = decl->get_scope();
+        }
+    }
+
+    //find last string
+    const auto identifier = full_path.substr(start, full_path.length() - start);
+    decl = scope->find(element::identifier(identifier), false);
     if (!decl)
     {
         *declaration = nullptr;

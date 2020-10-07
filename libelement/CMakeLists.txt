@@ -53,6 +53,7 @@ set(libelement_sources
     "src/interpreter.cpp"
     "src/interpreter_internal.cpp"
     "src/common_internal.cpp"
+    "src/interpreter_object_model.cpp"
 
     "src/common_internal.hpp"
     "src/interpreter_internal.hpp"
@@ -191,6 +192,7 @@ set(libelement_sources
     "include/element/parser.h"
     "include/element/token.h"
     "include/element/interpreter.h"
+    "include/element/interpreter_object_model.h"
     "include/element/lmnt.h"
     
     #MISC
@@ -248,6 +250,7 @@ if (BUILD_TESTING)
 
     file(GLOB_RECURSE TEST_SOURCES
             "${PROJECT_SOURCE_DIR}/test/*.test.cpp"
+            "${PROJECT_SOURCE_DIR}/test/*.test.hpp"
             )
 
     add_executable(libelement_test_app ${TEST_SOURCES})
