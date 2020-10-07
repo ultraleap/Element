@@ -23,6 +23,10 @@
 #include "object_model/error.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/expressions/expression_chain.hpp"
+#include "log_errors.hpp"
+#include "element/ast.h"
+#include "ast/parser_internal.hpp"
+#include "object_model/intrinsics/intrinsic.hpp"
 
 element_result element_interpreter_create(element_interpreter_ctx** interpreter)
 {
