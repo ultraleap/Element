@@ -8,13 +8,15 @@
 
 //SELF
 #include "element/interpreter_object_model.h"
+#include "interpreter_internal.hpp"
 
 #include "util.test.hpp"
+#include "object_model/intermediaries/function_instance.hpp"
 
-element_result compile_test(
-    const char* input, 
-    const char* to_compile, 
-    const std::function<element_result(const element_object*)>& func,
+element_result find_declaration(
+    const char* input,
+    const char* identifier,
+    const std::function<element_result(element_interpreter_ctx* , const element_declaration*, element_object**)>& func,
     const std::string& package = "")
 {
     element_interpreter_ctx* context = nullptr;
@@ -39,16 +41,12 @@ element_result compile_test(
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_find(context, to_compile, &declaration);
-    if (result != ELEMENT_OK)
-        goto cleanup;
-
-    result = element_object_model_compile(context, nullptr, declaration, &object);
+    result = element_interpreter_find(context, identifier, &declaration);
     if (result != ELEMENT_OK)
         goto cleanup;
 
     if (func)
-        result = func(object);
+        result = func(context, declaration, &object);
 
 cleanup:
     element_delete_declaration(&declaration);
@@ -57,28 +55,52 @@ cleanup:
     return result;
 }
 
-
 // Include specific tests for object model generation here
 TEST_CASE("ObjectModel", "[API]")
 {
     SECTION("Compile")
     {
-        auto check = [](const element_object* obj) -> element_result
+        auto compile = [](element_interpreter_ctx* context, const element_declaration* declaration, element_object** obj) -> element_result
         {
+            const auto result = element_object_model_compile(context, nullptr, declaration, obj);
+            if (result != ELEMENT_OK)
+                return result;
 
-            return ELEMENT_OK;
+            const auto function_instance = std::dynamic_pointer_cast<const element::function_instance>((*obj)->obj);
+            if (function_instance)
+                return ELEMENT_OK;
+
+            return ELEMENT_ERROR_UNKNOWN;
         };
 
-        element_result result = ELEMENT_OK;
-        result = compile_test("struct my_struct(a:Num) { func(thing:my_struct) = thing.a.mul(2) }", "my_struct.func", check);
+        auto result = ELEMENT_OK;
+        result = find_declaration("struct my_struct(a:Num) { func(thing:my_struct) = thing.a.mul(2) }", "my_struct.func", compile);
         REQUIRE(result == ELEMENT_OK);
     }
 
     SECTION("Call")
     {
+
+
     }
 
     SECTION("Index")
     {
+        auto index = [](element_interpreter_ctx* context, const element_declaration* declaration, element_object** obj) -> element_result {
+
+            const auto result = element_object_model_index(context, nullptr, declaration, "func", obj);
+            if (result != ELEMENT_OK)
+                return result;
+
+            const auto function_instance = std::dynamic_pointer_cast<const element::function_instance>((*obj)->obj);
+            if (function_instance)
+                return ELEMENT_OK;
+
+            return ELEMENT_ERROR_UNKNOWN;
+        };
+
+        element_result result = ELEMENT_OK;
+        result = find_declaration("struct my_struct(a:Num) { func(thing:my_struct) = thing.a.mul(2) }", "my_struct", index);
+        REQUIRE(result == ELEMENT_OK);
     }
 }

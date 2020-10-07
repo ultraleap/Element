@@ -23,15 +23,15 @@ element_result element_object_model_compile(
 element_result element_object_model_call(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
-    const element_object* callable,
-    const element_object** object);
+    const element_declaration* callable,
+    element_object** object);
 
 element_result element_object_model_index(
     element_interpreter_ctx* context,
     const element_compiler_options* options,
-    const char* name,
-    const element_object* indexable,
-    const element_object** object);
+    const element_declaration* indexable,
+    const char* index,
+    element_object** object);
 
     #if defined(__cplusplus)
 }

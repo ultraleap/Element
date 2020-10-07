@@ -46,8 +46,8 @@ element_result element_object_model_compile(
 element_result element_object_model_call(
     element_interpreter_ctx* context,
     const element_compiler_options* options, 
-    const element_object* callable,
-    const element_object** object)
+    const element_declaration* callable,
+    element_object** object)
 {
     if (!options)
         options = &element_compiler_options_default;
@@ -56,7 +56,7 @@ element_result element_object_model_call(
 
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
-    auto compiled = callable->obj->call(compilation_context, {}, callable->obj->source_info);
+    auto compiled = callable->decl->call(compilation_context, {}, callable->decl->source_info);
     if (options->desired_result == element_compiler_options::compiled_result_kind::AUTOMATIC)
     {
         auto instruction = compiled->to_instruction();
@@ -84,10 +84,10 @@ element_result element_object_model_call(
 
 element_result element_object_model_index(
     element_interpreter_ctx* context,
-    const element_compiler_options* options, 
-    const char* name,
-    const element_object* indexable,
-    const element_object** object)
+    const element_compiler_options* options,
+    const element_declaration* indexable,
+    const char* index,
+    element_object** object)
 {
     if (!options)
         options = &element_compiler_options_default;
@@ -95,7 +95,7 @@ element_result element_object_model_index(
     const element_result result = ELEMENT_OK;
     const element::compilation_context compilation_context(context->global_scope.get(), context);
 
-    auto compiled = indexable->obj->index(compilation_context, element::identifier{name}, indexable->obj->source_info);
+    auto compiled = indexable->decl->index(compilation_context, element::identifier{ index }, indexable->decl->source_info);
     if (options->desired_result == element_compiler_options::compiled_result_kind::AUTOMATIC)
     {
         auto instruction = compiled->to_instruction();
