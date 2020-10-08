@@ -31,6 +31,6 @@ jobs:
           python scripts/zip-docs.py Element_Documentation
       - name: Upload Docs
         uses: actions/upload-artifact@1.0.0
-          with:
-            name: Element Documentation
-            path: Documentation/Element_Documentation.zip
+        with:
+          name: Element Documentation
+          path: Documentation/Element_Documentation.zip
