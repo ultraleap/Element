@@ -37,10 +37,9 @@ namespace Element.AST
                 // This port pair passes if the expected port is Any (all constraints are narrower than Any)
                 // otherwise it must be exactly the same constraint since there is no type/constraint hierarchy
                 // TODO: Does Nothing need to be handled specially here?
-                var portMatches = resultBuilder.Result &=
-                                      expectedConstraint.IsIntrinsic<AnyConstraint>()
-                                      // ReSharper disable once PossibleUnintendedReferenceComparison
-                                      || argConstraint == expectedConstraint;
+                var portMatches = expectedConstraint.IsIntrinsic<AnyConstraint>()
+                                  || argConstraint == expectedConstraint;
+                resultBuilder.Result &= portMatches;
                 
                 if (!portMatches)
                 {

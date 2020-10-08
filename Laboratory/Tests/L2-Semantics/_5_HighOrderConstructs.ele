@@ -2,8 +2,8 @@ intrinsic struct Num
 {
 	intrinsic function add(a:Num, b:Num)
 	intrinsic function sub(a:Num, b:Num)
+	intrinsic function mul(a:Num, b:Num)
 }
-struct Foo(a)
 
 constraint Indexer(i:Num)
 constraint Binary(a, b)
@@ -14,8 +14,12 @@ intrinsic struct List(at:Indexer, count:Num)
 	intrinsic function fold(list:List, initial, accumulator:Binary)
 }
 
+struct Vector3(x:Num, y:Num, z:Num)
+
+
 lambdaChainConstant = _(_) = _(_) = 10
 lambdaChainConstantManyTimes = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = 10
+
 
 add = Num.add
 addFromInstanceFunction = 5.add
@@ -27,6 +31,18 @@ addAndGetSub(a:Num, b:Num)
 }
 sum(numbers:List) = numbers.fold(0, _(accum, element) = accum.add(element))
 
+scopeBodiedLocal(a:Num)
+{
+    local(b:Num)
+    {
+        return = a.add(b)
+    }
+    return = local
+}
+
+
+
+struct Foo(a)
 constraint NumFunction(a):Num
 constraint FooFunction(a):Foo
 constraint StrictNumFunction(a:Num):Num
@@ -102,3 +118,28 @@ createNamespaceFromNamespace(prev) {
     namespace return { i = prev.i.add(1) v = prev.v.add(1) }
 }
 getNamespace = createNamespaceFromNamespace(createNamespaceFromNamespace(namespaceContainer))
+
+
+
+constraint EvaluateSingle(t:Num)
+struct Evaluator(at:EvaluateSingle)
+
+constraint Renderer(evaluator:Evaluator):EvaluateList
+constraint EvaluateList(t:Num):List
+
+addFiveEvaluator = Evaluator(_(_:Num) = 5)
+
+numRenderer(a:Num):Renderer
+{
+    return(evaluator:Evaluator):EvaluateList
+    {
+        return(t:Num):List
+        {
+            index(idx:Num)
+            {
+                return = evaluator.at(t).add(a)
+            }
+            return = List(index, 1)
+        }
+    }
+}
