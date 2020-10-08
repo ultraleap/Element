@@ -4,36 +4,58 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
-#include <stdint.h>
-#include <stdbool.h>
     
 #include "element/interpreter.h"
 
-typedef struct element_interpreter_ctx element_interpreter_ctx;
-typedef struct element_declaration element_declaration;
-typedef struct element_object element_object;
-
 element_result element_object_model_compile(
     element_interpreter_ctx* context,
-    const element_compiler_options* options,
+    const element_object* compilable,
+    element_object** output);
+
+element_result element_declaration_to_object_model_declaration(
     const element_declaration* declaration,
-    element_object** object);
+    element_object** output);
 
 element_result element_object_model_call(
     element_interpreter_ctx* context,
-    const element_compiler_options* options,
-    const element_declaration* callable,
-    element_object** object);
+    const element_object* callable,
+    const element_object arguments[],
+    unsigned int arguments_count,
+    element_object** output);
 
 element_result element_object_model_index(
     element_interpreter_ctx* context,
-    const element_compiler_options* options,
-    const element_declaration* indexable,
+    const element_object* indexable,
     const char* index,
-    element_object** object);
+    element_object** output);
 
-    #if defined(__cplusplus)
+
+/*
+ * if we have typeof be an enum, then we don't need is_xyz functions for each type of thing in the object model
+ * element_typeof_to_string
+ * element_object_get_typeof
+ * element_object_get_name
+ * element_object_get_source_info
+ * element_source_info
+ * {
+ *    char* filename
+ *    char* line
+ *    int column_start
+ *    int length
+ * }
+ * element_object_is_error
+ * element_object_get_error_info
+ * element_error_info
+ * {
+ *      element_result result;
+        char* message; //owning or not?
+        source_info
+ * }
+ *
+ */
+
+
+#if defined(__cplusplus)
 }
 #endif
 #endif
