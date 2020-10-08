@@ -1,0 +1,36 @@
+name: Documentation
+
+on: [push]
+
+jobs:
+  generate-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install doxygen
+      - name: Generate Docs
+        run: |
+          cd Documentation
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --target Documentation
+      - name: Zip Docs
+        run: |
+          cd Documentation
+          python scripts/zip-docs.py Element_Documentation
+      - name: Upload Docs
+        uses: actions/upload-artifact@1.0.0
+          with:
+            name: Element Documentation
+            path: Documentation/Element_Documentation.zip
