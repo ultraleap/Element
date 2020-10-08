@@ -14,8 +14,7 @@ set(SPHINX_RST
         "UserGuide.rst"
         "element_dotnet/index.rst"
         "libelement/index.rst"
-        "pyelement/index.rst"
-        "ElementReferenceManual.rst")
+        "PyElement/index.rst")
 
 file(GLOB_RECURSE ELEMENT_DOTNET_SOURCES
         ${CMAKE_SOURCE_DIR}/../Element.NET/*.cs)
