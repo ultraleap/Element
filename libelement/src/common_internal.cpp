@@ -9,7 +9,6 @@
 #include "ast/parser_internal.hpp"
 #include "configuration.hpp"
 #include "instruction_tree/instructions.hpp"
-#include "lmnt/compiler.hpp"
 
 #define PRINTCASE(a) \
     case a:          \

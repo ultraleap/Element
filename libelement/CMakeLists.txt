@@ -177,10 +177,6 @@ set(libelement_sources
     "src/instruction_tree/instructions.hpp"
     "src/instruction_tree/fwd.hpp"
 
-    #LMNT target
-    "src/lmnt/compiler.cpp"
-    "src/lmnt/compiler.hpp"
-
     #Util
     "src/stringutil.hpp"
     "src/typeutil.hpp"
@@ -193,8 +189,7 @@ set(libelement_sources
     "include/element/token.h"
     "include/element/interpreter.h"
     "include/element/interpreter_object_model.h"
-    "include/element/lmnt.h"
-    
+
     #MISC
     "src/configuration.hpp.in"
     "${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp"
