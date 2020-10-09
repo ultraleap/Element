@@ -4,7 +4,6 @@ struct Segment(a:Vector3, b:Vector3)
 
 struct Path(at:PathFunc, length:Num)
 {	
-	#Paths
     Circle(position:Vector3, radius:Num):Path
     {
         at(u:Num):Vector3
@@ -18,15 +17,9 @@ struct Path(at:PathFunc, length:Num)
         return = Path(at, length)
     }    
 
-	RepeatingLine(endpointA:Vector3, endpointB:Vector3):Path
-	{
-		return = BoundedPath.Repeat(BoundedPath.Line(endpointA, endpointB))
-	}
+	RepeatingLine(endpointA:Vector3, endpointB:Vector3):Path = BoundedPath.Repeat(BoundedPath.Line(endpointA, endpointB))
 
-	PingPongLine(endpointA:Vector3, endpointB:Vector3):Path
-	{
-		return = BoundedPath.PingPong(BoundedPath.Line(endpointA, endpointB))
-	}
+	PingPongLine(endpointA:Vector3, endpointB:Vector3):Path = BoundedPath.PingPong(BoundedPath.Line(endpointA, endpointB))
 
 	Rectangle(width:Num, height:Num):Path
 	{
@@ -129,12 +122,13 @@ struct Path(at:PathFunc, length:Num)
 #   } 
 }
 
+
 struct BoundedPath(atBounded:PathFunc, length:Num)
 {
     #Paths
 	Line(endpointA:Vector3, endpointB:Vector3):BoundedPath
 	{
-		at(u:Num):Vector3 = Vector3.lerp(u.clamp(0,1), endpointA, endpointB)
+		at(u:Num):Vector3 = Vector3.lerp(u, endpointA, endpointB)
 		length = Vector3.distance(endpointA, endpointB)
 		return = BoundedPath(at, length)
 	}

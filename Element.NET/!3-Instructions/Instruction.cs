@@ -19,6 +19,7 @@ namespace Element
 		public readonly IIntrinsicStructImplementation StructImplementation;
 
 		public Result<Struct> LookupIntrinsicStruct(Context context) => context.RootScope.Lookup(StructImplementation.Identifier, context).Cast<Struct>(context);
+		public virtual Result<Constant> CompileTimeConstant(Context context) => context.Trace(EleMessageCode.NotCompileConstant, $"'{this}' is not a constant");
 
 		public abstract IEnumerable<Instruction> Dependent { get; }
 
@@ -49,5 +50,27 @@ namespace Element
 				       ? new Result<IValue>(result)
 				       : context.Trace(EleMessageCode.SerializationError, $"'{result}' deserialized to incorrect type: is '{result.StructImplementation}' - expected '{StructImplementation}'");
 		}
+	}
+
+	public static class InstructionExtensions
+	{
+		public static Result<int> ConstantToIndex(this Constant constant, int min, int max, Context context)
+		{
+			if (float.IsNaN(constant.Value))
+			{
+				// TODO: Return error type, not an error message
+				return context.Trace(EleMessageCode.ArgumentOutOfRange, "Constant was NaN - cannot convert to an index");
+			}
+
+			var asInt = (int) constant.Value;
+			var inRange = asInt >= min && asInt <= max;
+			return inRange
+				       ? new Result<int>(asInt)
+				       // TODO: Return error type, not an error message
+				       : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index '{asInt}' not in range of [{min}, {max}]");
+		}
+
+		public static Result<int> CompileTimeIndex(this Instruction instruction, int min, int max, Context context) =>
+			instruction.CompileTimeConstant(context).Bind(constant => constant.ConstantToIndex(min, max, context));
 	}
 }

@@ -35,6 +35,7 @@ namespace Element
         public static Constant PositiveInfinity { get; } = new Constant(float.PositiveInfinity);
         public static Constant NegativeInfinity { get; } = new Constant(float.NegativeInfinity);
 
+        public override Result<Constant> CompileTimeConstant(Context context) => this;
         public override IEnumerable<Instruction> Dependent { get; } = Array.Empty<Instruction>();
         public override string TypeOf => StructImplementation.Identifier.String;
         public override string SummaryString => NormalizedFormString;
@@ -52,7 +53,9 @@ namespace Element
             Constant c => new Constant(c.Value, targetType),
             _ => new Cast(instruction, targetType)
         };
-        
+
+        public override Result<Constant> CompileTimeConstant(Context context) => Instruction.CompileTimeConstant(context);
+
         public Instruction Instruction { get; }
         private Cast(Instruction instruction, IIntrinsicStructImplementation targetType) : base(targetType) => Instruction = instruction;
 

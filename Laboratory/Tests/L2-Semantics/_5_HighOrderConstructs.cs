@@ -125,5 +125,7 @@ namespace Laboratory.Tests.L2.Semantics
 
         [Theory]
         public void TripleNestedHighOrderFunction(EvaluationMode mode) => AssertApproxEqual(CompilerInput, ("numRenderer(5)(addFiveEvaluator)(0).at(0)", "10"), mode);
+        
+        
     }
 }
