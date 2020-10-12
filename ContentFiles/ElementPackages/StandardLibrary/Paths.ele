@@ -191,8 +191,9 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 	
 	#Modifiers
 	PingPong(path:BoundedPath):Path
-	{
-		at(u:Num):Vector3 = path.atBounded(u.abs.add(1).rem(2).sub(1).abs)
+	{       
+		#ping-pong cycles every increment of 1, range is scaled such that min->max->min occurs every 0->1 step
+        at(u:Num):Vector3 = path.atBounded(u.mul(2).abs.add(1).rem(2).sub(1).abs)
 		length = path.length.mul(2)
 		return = Path(at, length)
 	}
