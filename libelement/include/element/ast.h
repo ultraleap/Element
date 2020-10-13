@@ -8,6 +8,9 @@ extern "C" {
 #include "element/common.h"
 #include "element/token.h"
 
+/// <summary>
+///
+/// </summary>
 typedef enum
 {
     ELEMENT_AST_NODE_NONE = 0,
@@ -33,30 +36,152 @@ typedef enum
     ELEMENT_AST_NODE_ANONYMOUS_BLOCK,
 } element_ast_node_type;
 
+/// <summary>
+///
+/// </summary>
 typedef uint32_t element_ast_flags;
-// declaration flags
+
+/// <summary>
+///
+/// </summary>
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_INTRINSIC = (1U << 1);
+
+/// <summary>
+///
+/// </summary>
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_EMPTY_INPUT = (1U << 2);
 
+/// <summary>
+///
+/// </summary>
 typedef struct element_ast_node element_ast_node;
+
+/// <summary>
+///
+/// </summary>
 typedef struct element_ast element_ast;
 
-void element_ast_delete(element_ast** ast);
+/// <summary>
+///
+/// </summary>
+/// <param name="ast"></param>
+void element_ast_delete(
+    element_ast** ast);
 
-element_result element_ast_get_flags(const element_ast* ast, element_ast_flags* flags);
-element_result element_ast_get_nearest_token(const element_ast* ast, const element_token** token);
-element_result element_ast_get_type(const element_ast* ast, element_ast_node_type* type);
-element_result element_ast_get_value_as_identifier(const element_ast* ast, const char** value);
-element_result element_ast_get_value_as_literal(const element_ast* ast, element_value* value);
-element_result element_ast_get_parent(const element_ast* ast, element_ast** parent);
-element_result element_ast_get_child_count(const element_ast* ast, size_t* count);
-element_result element_ast_get_child(const element_ast* ast, size_t index, element_ast** child);
-//may return ast if it is the root
-element_result element_ast_get_root(element_ast* ast, element_ast** root);
-//may return ast if it is the root
-element_result element_ast_get_root_const(const element_ast* ast, const element_ast** root);
-//ast_to_mark will output "HERE" beside it, pass null if unwanted
-element_result element_ast_to_string(const element_ast* ast, const element_ast* ast_to_mark, char* output_buffer, int output_buffer_size);
+/// <summary>
+///
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="flags"></param>
+/// <returns></returns>
+element_result element_ast_get_flags(
+    const element_ast* ast,
+    element_ast_flags* flags);
+
+/// <summary>
+///
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="token"></param>
+/// <returns></returns>
+element_result element_ast_get_nearest_token(
+    const element_ast* ast, 
+    const element_token** token);
+
+/// <summary>
+///
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="type"></param>
+/// <returns></returns>
+element_result element_ast_get_type(
+    const element_ast* ast, 
+    element_ast_node_type* type);
+
+/// <summary>
+///
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="value"></param>
+/// <returns></returns>
+element_result element_ast_get_value_as_identifier(
+    const element_ast* ast, 
+    const char** value);
+
+/// <summary>
+///
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="value"></param>
+/// <returns></returns>
+element_result element_ast_get_value_as_literal(
+    const element_ast* ast, 
+    element_value* value);
+
+/// <summary>
+///
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="parent"></param>
+/// <returns></returns>
+element_result element_ast_get_parent(
+    const element_ast* ast, 
+    element_ast** parent);
+
+/// <summary>
+///
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="count"></param>
+/// <returns></returns>
+element_result element_ast_get_child_count(
+    const element_ast* ast, 
+    size_t* count);
+
+/// <summary>
+///
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="index"></param>
+/// <param name="child"></param>
+/// <returns></returns>
+element_result element_ast_get_child(
+    const element_ast* ast, size_t index, 
+    element_ast** child);
+
+/// <summary>
+/// may return ast if it is the root
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="root"></param>
+/// <returns></returns>
+element_result element_ast_get_root(
+    element_ast* ast, 
+    element_ast** root);
+
+/// <summary>
+/// may return ast if it is the root
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="root"></param>
+/// <returns></returns>
+element_result element_ast_get_root_const(
+    const element_ast* ast, 
+    const element_ast** root);
+
+/// <summary>
+/// ast_to_mark will output "HERE" beside it, pass null if unwanted
+/// </summary>
+/// <param name="ast"></param>
+/// <param name="ast_to_mark"></param>
+/// <param name="output_buffer"></param>
+/// <param name="output_buffer_size"></param>
+/// <returns></returns>
+element_result element_ast_to_string(
+    const element_ast* ast, 
+    const element_ast* ast_to_mark, 
+    char* output_buffer, 
+    int output_buffer_size);
 
 #if defined(__cplusplus)
 }

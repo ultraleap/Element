@@ -10,6 +10,9 @@ extern "C" {
 
 typedef float element_value;
 
+/// <summary>
+///
+/// </summary>
 typedef enum element_result
 {
     //ELEMENT
@@ -88,6 +91,9 @@ typedef enum element_result
     ELEMENT_ERROR_API_INSTRUCTION_IS_NULL = -10000,
 } element_result;
 
+/// <summary>
+///
+/// </summary>
 typedef enum element_stage
 {
     ELEMENT_STAGE_INVALID = -1,
@@ -98,8 +104,14 @@ typedef enum element_stage
     ELEMENT_STAGE_EVALUATOR
 } element_stage;
 
+/// <summary>
+///
+/// </summary>
 typedef struct element_log_message element_log_message;
 
+/// <summary>
+///
+/// </summary>
 struct element_log_message
 {
     // determines which values in this struct will be relevant
