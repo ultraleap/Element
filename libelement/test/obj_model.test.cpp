@@ -46,14 +46,19 @@ TEST_CASE("ObjectModel", "[API]")
                             "func(thing:my_struct, val:Num) = thing.a.mul(val)\n"
                             "}\n";
 
-        auto result = element_interpreter_load_string(context, input_element, "<input>");
-
         constexpr auto args_count = 1;
         element_object* args[args_count];
         element_object* const_int = nullptr;
         element_object* my_struct_instance = nullptr;
         element_object* my_struct_instance_a = nullptr;
         std::shared_ptr<const element::instruction_constant> constant;
+
+        auto result = element_interpreter_load_string(context, input_element, "<input>");
+        if (result != ELEMENT_OK)
+        {
+            printf("Output buffer too small");
+            goto cleanup;
+        }
 
         if (result != ELEMENT_OK)
             goto cleanup;
@@ -94,6 +99,7 @@ TEST_CASE("ObjectModel", "[API]")
         result = element_interpreter_evaluate(context, nullptr, instruction, &input, &output);
         CHECK(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 5);
+
     cleanup:
         element_delete_object(&my_struct_instance_a);
         element_delete_object(&my_struct_instance);

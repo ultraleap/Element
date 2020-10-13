@@ -37,7 +37,10 @@ element_result eval(const char* evaluate)
 
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
+    {
+        printf("Output buffer too small");
         goto cleanup;
+    }
 
     result = element_interpreter_find(context, "evaluate", &declaration);
     if (result != ELEMENT_OK)
@@ -99,7 +102,10 @@ element_result eval_with_source(const char* source, const char* evaluate)
 
     element_result result = element_interpreter_load_string(context, source, "<source>");
     if (result != ELEMENT_OK)
+    {
+        printf("Output buffer too small");
         goto cleanup;
+    }
 
     result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
@@ -166,7 +172,10 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
 
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
+    {
+        printf("Output buffer too small");
         goto cleanup;
+    }
 
     result = element_interpreter_find(context, "evaluate", &declaration);
     if (result != ELEMENT_OK)
