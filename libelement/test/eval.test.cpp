@@ -20,7 +20,7 @@ element_result eval(const char* evaluate)
 {
     element_interpreter_ctx* context = NULL;
     element_declaration* declaration = NULL;
-    element_object* object = NULL;
+    element_instruction* instruction = NULL;
 
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback, nullptr);
@@ -43,7 +43,7 @@ element_result eval(const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_compile(context, NULL, declaration, &object);
+    result = element_interpreter_compile(context, NULL, declaration, &instruction);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -53,7 +53,7 @@ element_result eval(const char* evaluate)
     output.values = outputs;
     output.count = 1;
 
-    result = element_interpreter_evaluate(context, NULL, object, &input, &output);
+    result = element_interpreter_evaluate(context, NULL, instruction, &input, &output);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -73,7 +73,7 @@ element_result eval(const char* evaluate)
 
 cleanup:
     element_delete_declaration(&declaration);
-    element_delete_object(&object);
+    element_delete_instruction(&instruction);
     element_interpreter_delete(&context);
     return result;
 }
@@ -82,7 +82,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
 {
     element_interpreter_ctx* context = NULL;
     element_declaration* declaration = NULL;
-    element_object* object = NULL;
+    element_instruction* instruction = NULL;
 
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback, nullptr);
@@ -109,7 +109,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_compile(context, NULL, declaration, &object);
+    result = element_interpreter_compile(context, NULL, declaration, &instruction);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -119,7 +119,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     output.values = outputs;
     output.count = 1;
 
-    result = element_interpreter_evaluate(context, NULL, object, &input, &output);
+    result = element_interpreter_evaluate(context, NULL, instruction, &input, &output);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -139,7 +139,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
 
 cleanup:
     element_delete_declaration(&declaration);
-    element_delete_object(&object);
+    element_delete_instruction(&instruction);
     element_interpreter_delete(&context);
     return result;
 }
@@ -148,7 +148,7 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
 {
     element_interpreter_ctx* context = NULL;
     element_declaration* declaration = NULL;
-    element_object* object = NULL;
+    element_instruction* instruction = NULL;
 
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback, nullptr);
@@ -172,11 +172,11 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_compile(context, NULL, declaration, &object);
+    result = element_interpreter_compile(context, NULL, declaration, &instruction);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_evaluate(context, NULL, object, inputs, outputs);
+    result = element_interpreter_evaluate(context, NULL, instruction, inputs, outputs);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -196,7 +196,7 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
 
 cleanup:
     element_delete_declaration(&declaration);
-    element_delete_object(&object);
+    element_delete_instruction(&instruction);
     element_interpreter_delete(&context);
     return result;
 }

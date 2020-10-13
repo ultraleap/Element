@@ -21,6 +21,11 @@ struct element_object
     std::shared_ptr<const element::object> obj;
 };
 
+struct element_instruction
+{
+    std::shared_ptr<const element::instruction> instruction;
+};
+
 struct element_metainfo
 {
     //todo: decide what kinda stuff to associate here, just need typeof for now

@@ -88,7 +88,11 @@ TEST_CASE("ObjectModel", "[API]")
         float outputs[] = { 0 };
         output.values = outputs;
         output.count = 1;
-        element_interpreter_evaluate(context, nullptr, my_struct_instance_a, &input, &output);
+        element_instruction* instruction;
+        result = element_object_to_instruction(my_struct_instance_a, &instruction);
+        CHECK(result == ELEMENT_OK);
+        result = element_interpreter_evaluate(context, nullptr, instruction, &input, &output);
+        CHECK(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 5);
     cleanup:
         element_delete_object(&my_struct_instance_a);

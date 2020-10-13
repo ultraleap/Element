@@ -65,3 +65,24 @@ element_result element_object_index(
 
     return result;
 }
+
+element_result element_object_to_instruction(const element_object* object, element_instruction** output)
+{
+    if (!object)
+    {
+        (*output)->instruction = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    auto instr = object->obj->to_instruction();
+
+    if (!instr)
+    {
+        (*output)->instruction = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    (*output)->instruction = std::move(instr);
+
+    return ELEMENT_OK;
+}

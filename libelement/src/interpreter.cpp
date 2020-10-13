@@ -126,6 +126,13 @@ element_result element_delete_object(element_object** object)
     return ELEMENT_OK;
 }
 
+element_result element_delete_instruction(element_instruction** instruction)
+{
+    delete *instruction;
+    *instruction = nullptr;
+    return ELEMENT_OK;
+}
+
 element_result element_interpreter_find(element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
 {
     const auto* scope = interpreter->global_scope.get();
@@ -187,7 +194,7 @@ element_result element_interpreter_compile(
     element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
     const element_declaration* declaration,
-    element_object** object)
+    element_instruction** instruction)
 {
     if (!options)
         options = &element_compiler_options_default;
@@ -197,7 +204,6 @@ element_result element_interpreter_compile(
     if (!declaration->decl)
         return ELEMENT_ERROR_UNKNOWN;
 
-    //todo: compiler option to disable/enable boundary function checking?
     const bool declaration_is_nullary = declaration->decl->get_inputs().empty();
     const bool check_boundary = declaration_is_nullary ? options->check_valid_boundary_function_when_nullary : options->check_valid_boundary_function;
     if (check_boundary)
@@ -206,49 +212,36 @@ element_result element_interpreter_compile(
         if (result != ELEMENT_OK)
         {
             interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
-            *object = nullptr;
+            *instruction = nullptr;
             return result;
         }
     }
 
     element_result result = ELEMENT_OK;
-    auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), result, {});
+    const auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), result, {});
     if (!compiled || result != ELEMENT_OK)
     {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
-        *object = nullptr;
+        *instruction = nullptr;
         return result;
     }
 
-    if (options->desired_result == element_compiler_options::compiled_result_kind::AUTOMATIC)
+    auto instr = compiled->to_instruction();
+    if (!instr)
     {
-        auto instruction = compiled->to_instruction();
-        if (!instruction)
-            *object = new element_object{ std::move(compiled) };
-        else
-            *object = new element_object{ std::move(instruction) };
-    }
-    else if (options->desired_result == element_compiler_options::compiled_result_kind::INSTRUCTION_TREE_ONLY)
-    {
-        *object = new element_object { compiled->to_instruction() };
-        if (!*object)
-        {
-            interpreter->log(result, "Failed to compile declaration to an instruction tree.");
-            return ELEMENT_ERROR_UNKNOWN;
-        }
-    }
-    else if (options->desired_result == element_compiler_options::compiled_result_kind::OBJECT_MODEL_ONLY)
-    {
-        *object = new element_object{ std::move(compiled) };
+        interpreter->log(result, "Failed to compile declaration to an instruction tree.");
+        *instruction = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
     }
 
+    *instruction = new element_instruction{ std::move(instr) };
     return ELEMENT_OK;
 }
 
 element_result element_interpreter_evaluate(
     element_interpreter_ctx* interpreter,
     const element_evaluator_options* options,
-    const element_object* object,
+    const element_instruction* instruction,
     const element_inputs* inputs,
     element_outputs* outputs)
 {
@@ -257,37 +250,22 @@ element_result element_interpreter_evaluate(
     if (options)
         opts = *options;
 
-    if (!object->obj)
-    {
-        assert(!"tried to evaluate something but it's nullptr");
-        return ELEMENT_ERROR_UNKNOWN;
-    }
+    if (!instruction || !instruction->instruction)
+        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
 
-    const auto err = std::dynamic_pointer_cast<const element::error>(object->obj);
+    const auto err = std::dynamic_pointer_cast<const element::error>(instruction->instruction);
     if (err)
         return err->log_once(interpreter->logger.get());
 
-    auto expr = object->obj->to_instruction();
-    if (!expr)
-    {
-        //todo: proper logging
-        interpreter->logger->log("element_object is not an instruction tree, so it can't be evaluated", ELEMENT_STAGE_EVALUATOR);
-        return ELEMENT_ERROR_UNKNOWN;
-    }
-    else
-    {
-        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
+    const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
 
-        if (log_expression_tree)
-        {
-            interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*expr));
-        }
-    }
+    if constexpr (log_expression_tree)
+        interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*instruction->instruction));
 
     std::size_t count = outputs->count;
     const auto result = element_evaluate(
         *interpreter,
-        std::move(expr),
+        instruction->instruction,
         inputs->values,
         inputs->count,
         outputs->values,
@@ -296,14 +274,12 @@ element_result element_interpreter_evaluate(
     outputs->count = static_cast<int>(count);
 
     if (result != ELEMENT_OK)
-    {
-        interpreter->log(result, fmt::format("Failed to evaluate {}", object->obj->typeof_info()), "<input>");
-    }
+        interpreter->log(result, fmt::format("Failed to evaluate {}", instruction->instruction->typeof_info()), "<input>");
 
     return result;
 }
 
-element_result element_interpreter_compile_expression(
+element_result expression_to_object(
     element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
     const char* expression_string,
@@ -346,6 +322,7 @@ element_result element_interpreter_compile_expression(
         info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
 
     auto* const data = info.file_name->data();
+    //todo: remove file_info added to interpreter source interpreter
     interpreter->src_context->file_info[data] = std::move(info);
 
     const auto log_tokens = flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
@@ -435,15 +412,46 @@ element_result element_interpreter_compile_expression(
     assert(found_dummy_decl);
     auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
 
-    success = interpreter->global_scope->remove_declaration(dummy_identifier);
-    if (!success)
+    if (!compiled)
     {
         (*object)->obj = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    //stuff from below
     (*object)->obj = std::move(compiled);
+
+    const auto* err = dynamic_cast<const element::error*>((*object)->obj.get());
+    if (err)
+        return err->log_once(interpreter->logger.get());
+
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_compile_expression(
+    element_interpreter_ctx* interpreter,
+    const element_compiler_options* options,
+    const char* expression_string,
+    element_instruction** instruction)
+{
+    element_object object;
+    auto* object_ptr = &object;
+    const auto result = expression_to_object(interpreter, options, expression_string, &object_ptr);
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+
+    if (result != ELEMENT_OK)
+    {
+        (*instruction)->instruction = nullptr;
+        return result;
+    }
+
+    auto instr = object.obj->to_instruction();
+    if (!instr)
+    {
+        (*instruction)->instruction = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    (*instruction)->instruction = std::move(instr);
     return ELEMENT_OK;
 }
 
@@ -453,52 +461,25 @@ element_result element_interpreter_evaluate_expression(
     const char* expression_string,
     element_outputs* outputs)
 {
-    //sure there is a shorthand for this
-    element_object object;
-    auto* object_ptr = &object;
-    element_interpreter_compile_expression(interpreter, nullptr, expression_string, &object_ptr);
-
-    if (!object_ptr->obj)
-    {
-        //todo:
-        interpreter->log(ELEMENT_ERROR_UNKNOWN, "tried to evaluate an expression that failed to compile");
-        outputs->count = 0;
-        return ELEMENT_ERROR_UNKNOWN;
-    }
-
-    const auto err = std::dynamic_pointer_cast<const element::error>(object_ptr->obj);
-    if (err)
+    element_instruction instruction;
+    auto* instruction_ptr = &instruction;
+    auto result = element_interpreter_compile_expression(interpreter, nullptr, expression_string, &instruction_ptr);
+    if (result != ELEMENT_OK)
     {
         outputs->count = 0;
-        return err->log_once(interpreter->logger.get());
+        return result;
     }
 
-    const auto compiled = object_ptr->obj->to_instruction();
-    if (!compiled)
-    {
-        interpreter->log(ELEMENT_ERROR_SERIALISATION, "failed to serialise", "<REMOVE>");
-        outputs->count = 0;
-        return ELEMENT_ERROR_SERIALISATION;
-    }
-    else
-    {
-        const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
-
-        if (log_expression_tree)
-        {
-            interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*compiled));
-        }
-    }
+    constexpr auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
+    if constexpr (log_expression_tree)
+        interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*instruction.instruction));
 
     float inputs[] = { 0 };
     element_inputs input;
     input.values = inputs;
     input.count = 1;
 
-    const auto result = element_interpreter_evaluate(interpreter, options, object_ptr, &input, outputs);
-
-    //todo: remove declaration added to global scope
-    //todo: remove file_info added to interpreter source interpreter
+    result = element_interpreter_evaluate(interpreter, options, instruction_ptr, &input, outputs);
 
     return result;
 }
@@ -513,46 +494,24 @@ element_result element_interpreter_typeof_expression(
     //sure there is a shorthand for this
     element_object object;
     auto* object_ptr = &object;
-    element_interpreter_compile_expression(interpreter, nullptr, expression_string, &object_ptr);
+    const auto result = expression_to_object(interpreter, nullptr, expression_string, &object_ptr);
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
 
-    if (!object_ptr->obj)
+    if (result != ELEMENT_OK)
     {
         //todo:
         interpreter->log(ELEMENT_ERROR_UNKNOWN, "tried to get typeof an expression that failed to compile");
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto err = std::dynamic_pointer_cast<const element::error>(object_ptr->obj);
-    if (err)
-        return err->log_once(interpreter->logger.get());
-
     const auto typeof = object.obj->typeof_info();
     if (buffer_size < static_cast<int>(typeof.size()))
+    {
+        //todo:
+        interpreter->log(ELEMENT_ERROR_UNKNOWN, fmt::format("buffer size of {} isn't sufficient for string of {} characters", buffer_size, typeof.size()));
         return ELEMENT_ERROR_UNKNOWN;
+    }
 
     strncpy(buffer, typeof.c_str(), typeof.size());
     return ELEMENT_OK;
 }
-
-//element_result element_metainfo_for_evaluable(const element_evaluable* evaluable, element_metainfo** metainfo)
-//{
-//    //todo: error checking and stuff
-//
-//    *metainfo = new element_metainfo();
-//    (*metainfo)->typeof = evaluable->evaluable->typeof_info();
-//    (*metainfo)->code = evaluable->evaluable->to_code(0);
-//
-//    return ELEMENT_OK;
-//}
-//
-//element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, const int buffer_size)
-//{
-//    if (buffer_size < static_cast<int>(metainfo->typeof.size()))
-//        return ELEMENT_ERROR_UNKNOWN;
-//
-//    #define _CRT_SECURE_NO_WARNINGS
-//    strncpy(buffer, metainfo->typeof.c_str(), metainfo->typeof.size());
-//    #undef _CRT_SECURE_NO_WARNINGS
-//
-//    return ELEMENT_OK;
-//}

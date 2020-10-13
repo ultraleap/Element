@@ -29,6 +29,10 @@ element_result element_object_index(
     const char* index,
     element_object** output);
 
+element_result element_object_to_instruction(
+    const element_object* object,
+    element_instruction** output);
+
 /*
  * if we have typeof be an enum, then we don't need is_xyz functions for each type of thing in the object model
  * element_typeof_to_string

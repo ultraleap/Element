@@ -16,19 +16,6 @@ typedef struct element_compiler_options
 
     //overrides check_valid_boundary_function for nullary functions (no inputs)
     bool check_valid_boundary_function_when_nullary;
-
-    enum compiled_result_kind
-    {
-        //It will compile to an instruction tree if possible, otherwise it will fall back to the object model
-        AUTOMATIC,
-        //It will compile to an instruction tree if possible, or error
-        INSTRUCTION_TREE_ONLY,
-        //It will compile to something in the object model
-        //note: instruction trees are part of the object model
-        OBJECT_MODEL_ONLY,
-    };
-
-    compiled_result_kind desired_result;
 } element_compiler_options;
 
 //passing nullptr where a element_compiler_options struct is expected will use these values
@@ -37,7 +24,6 @@ typedef struct element_compiler_options
 inline element_compiler_options element_compiler_options_default = {
     true,
     false, //todo: this should not exist/be true, but our tests rely on this behaviour right now
-    element_compiler_options::compiled_result_kind::AUTOMATIC
 };
 
 typedef struct element_evaluator_options
@@ -63,6 +49,7 @@ void element_interpreter_set_parse_only(element_interpreter_ctx* interpreter, bo
 
 typedef struct element_declaration element_declaration;
 typedef struct element_object element_object;
+typedef struct element_instruction element_instruction;
 
 typedef struct element_inputs
 {
@@ -78,6 +65,7 @@ typedef struct element_outputs
 
 element_result element_delete_declaration(element_declaration** declaration);
 element_result element_delete_object(element_object** object);
+element_result element_delete_instruction(element_instruction** instruction);
 
 //call element_delete_declaration when you're done with declaration
 element_result element_interpreter_find(
@@ -85,19 +73,25 @@ element_result element_interpreter_find(
     const char* path,
     element_declaration** declaration);
 
-//call element_delete_object when you're done with object
+//call element_delete_instruction when you're done with the instruction tree
 element_result element_interpreter_compile(
     element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
     const element_declaration* declaration,
-    element_object** object);
+    element_instruction** instruction);
 
 element_result element_interpreter_evaluate(
     element_interpreter_ctx* interpreter,
     const element_evaluator_options* options,
-    const element_object* object,
+    const element_instruction* instruction,
     const element_inputs* inputs,
     element_outputs* outputs);
+
+element_result element_interpreter_compile_expression(
+    element_interpreter_ctx* interpreter,
+    const element_compiler_options* options,
+    const char* expression_string,
+    element_instruction** instruction);
 
 element_result element_interpreter_evaluate_expression(
     element_interpreter_ctx* interpreter,
@@ -111,14 +105,6 @@ element_result element_interpreter_typeof_expression(
     const char* expression_string,
     char* buffer,
     int buffer_size);
-
-//typedef struct element_metainfo element_metainfo;
-
-//element_result element_metainfo_for_evaluable(
-//    const element_evaluable* evaluable,
-//    element_metainfo** metainfo);
-
-//element_result element_metainfo_get_typeof(const element_metainfo* metainfo, char* buffer, int buffer_size);
 
 #if defined(__cplusplus)
 }
