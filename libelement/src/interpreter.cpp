@@ -363,8 +363,8 @@ element_result expression_to_object(
     auto dummy_identifier = element::identifier{ "<REMOVE>" };
     auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, interpreter->global_scope.get(), element::function_declaration::kind::expression_bodied);
     parser.root->nearest_token = &tokeniser->tokens[0];
-    element::assign_source_information(interpreter, dummy_declaration, parser.root);
-    auto expression_chain = element::build_expression_chain(interpreter, ast, dummy_declaration.get(), deferred_expressions, result);
+    assign_source_information(interpreter, dummy_declaration, parser.root);
+    auto expression_chain = build_expression_chain(interpreter, ast, dummy_declaration.get(), deferred_expressions, result);
 
     if (deferred_expressions.empty())
     {
@@ -375,7 +375,7 @@ element_result expression_to_object(
         for (auto& [identifier, expression] : deferred_expressions)
         {
             element_result output_result = ELEMENT_OK;
-            auto lambda = element::build_lambda_declaration(interpreter, identifier, expression, dummy_declaration->our_scope.get(), output_result);
+            auto lambda = build_lambda_declaration(interpreter, identifier, expression, dummy_declaration->our_scope.get(), output_result);
             if (output_result != ELEMENT_OK)
                 throw;
 
@@ -387,7 +387,7 @@ element_result expression_to_object(
         }
 
         auto lambda_return_decl = std::make_unique<element::function_declaration>(element::identifier::return_identifier, dummy_declaration->our_scope.get(), element::function_declaration::kind::expression_bodied);
-        element::assign_source_information(interpreter, lambda_return_decl, parser.root);
+        assign_source_information(interpreter, lambda_return_decl, parser.root);
         lambda_return_decl->body = std::move(expression_chain);
 
         dummy_declaration->body = std::move(lambda_return_decl);

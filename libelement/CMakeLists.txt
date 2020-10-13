@@ -196,6 +196,9 @@ set(libelement_sources
 )
 
 add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
+if(MSVC)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
 
 add_library(element STATIC ${libelement_sources})
 

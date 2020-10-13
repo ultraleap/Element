@@ -25,7 +25,7 @@ element_result element_ast_to_string(const element_ast* ast, const element_ast* 
 {
     const auto str = ast_to_string(ast, 0, ast_to_mark);
     if (str.size() > output_buffer_size)
-        return ELEMENT_ERROR_UNKNOWN;
+        return ELEMENT_ERROR_INVALID_SIZE;
 
     sprintf(output_buffer, "%s", str.c_str());
     return ELEMENT_OK;

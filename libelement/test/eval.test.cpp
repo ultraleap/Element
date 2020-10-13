@@ -830,12 +830,12 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         std::array<element_value, 10> inputs{ 1, 2, 3 };
                         element_inputs input;
                         input.values = inputs.data();
-                        input.count = inputs.size();
+                        input.count = static_cast<int>(inputs.size());
 
                         element_outputs output;
                         std::array<element_value, 2> outputs{ 0, 0 };
                         output.values = outputs.data();
-                        output.count = outputs.size();
+                        output.count = static_cast<int>(outputs.size());
 
                         std::string src = "evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).at({})";
 
@@ -875,12 +875,12 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         std::array<element_value, 10> inputs{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
                         element_inputs input;
                         input.values = inputs.data();
-                        input.count = inputs.size();
+                        input.count = static_cast<int>(inputs.size());
 
                         element_outputs output;
                         std::array<element_value, 2> outputs{ 0, 0 };
                         output.values = outputs.data();
-                        output.count = outputs.size();
+                        output.count = static_cast<int>(outputs.size());
 
                         SECTION("Error - Mixed Element Types, Runtime Index")
                         {
@@ -936,7 +936,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 {
                                     for (int i = 0; i < 3; ++i)
                                     {
-                                        inputs[6] = i;
+                                        inputs[6] = static_cast<float>(i);
                                         result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                                         REQUIRE(result == ELEMENT_OK);
                                         REQUIRE(outputs[0] == inputs[i * 2]);
@@ -977,7 +977,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 {
                                     for (int i = 0; i < 3; ++i)
                                     {
-                                        inputs[7] = i;
+                                        inputs[7] = static_cast<float>(i);
                                         result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                                         REQUIRE(result != ELEMENT_OK);
                                     }
@@ -1100,7 +1100,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             {
                                 for (int i = 0; i < 3; ++i)
                                 {
-                                    inputs[3] = i;
+                                    inputs[3] = static_cast<float>(i);
 
                                     result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                                     REQUIRE(result == ELEMENT_OK);
@@ -1162,8 +1162,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 3> inputs = { 4, 2, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size())};
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size())};
 
                         const char* src = "evaluate(a:Num, b:Num, idx:Num):Num = list(1, 2, a).map(_(n:Num) = n.mul(b)).at(idx)";
 
@@ -1239,8 +1239,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 4, 2, 1, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(idx)";
 
@@ -1333,8 +1333,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c), list(3, 2, 1, 0), Num.add)";
 
@@ -1354,8 +1354,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c, 0), list(3, 2, 1), Num.add)";
 
@@ -1375,8 +1375,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size())};
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size())};
 
                         const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c), list(3, 2, 1), Num.add).at(idx)";
 
@@ -2357,7 +2357,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             {
                                 for (int i = 0; i < 3; ++i)
                                 {
-                                    inputs[3] = i;
+                                    inputs[3] = static_cast<float>(i);
                                     result = eval_with_inputs(src, &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
                                     REQUIRE(outputs[0] == inputs[i]);
@@ -2620,7 +2620,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             {
                                 for (int i = 0; i < 2; ++i)
                                 {
-                                    inputs[3] = i;
+                                    inputs[3] = static_cast<float>(i);
                                     result = eval_with_inputs(src, &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
                                     REQUIRE(outputs[0] == inputs[i]);
@@ -2809,7 +2809,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             {
                                 for (int i = 0; i < 3; ++i)
                                 {
-                                    inputs[0] = i;
+                                    inputs[0] = static_cast<float>(i);
                                     result = eval_with_inputs(new_src.c_str(), &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
                                     REQUIRE(outputs[0] == 3 - i);
@@ -2959,8 +2959,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const char* src = "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list({}, {}, {}).fold({}, Num.add)";
 
@@ -3095,8 +3095,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 0, 0, 0, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size())};
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size())};
 
                         const char* src = "evaluate(a:Bool, b:Bool, c:Bool, start:Bool):Bool = list(a, b, c).fold(start, Bool.or)";
 
@@ -3161,8 +3161,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 7> inputs = { 2, 2, 2, 2, 2, 2, 0 };
                         std::array<float, 2> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, start:Num):Num = list(a, b, c).fold(Vector2(start, start), Vector2.add).x";
 
@@ -3879,7 +3879,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         std::string buffer(256, '\0');
 
-        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), buffer.size());
+        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), static_cast<int>(buffer.size()));
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Num") == 0);
         element_interpreter_delete(&context);
@@ -3893,7 +3893,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         std::string buffer(256, '\0');
 
-        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), buffer.size());
+        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), static_cast<int>(buffer.size()));
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Num") == 0);
 
@@ -3902,7 +3902,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
         buffer.clear();
         buffer.resize(256, '\0');
 
-        result = element_interpreter_typeof_expression(context, nullptr, "Bool(1)", buffer.data(), buffer.size());
+        result = element_interpreter_typeof_expression(context, nullptr, "Bool(1)", buffer.data(), static_cast<int>(buffer.size()));
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Bool") == 0);
         element_interpreter_delete(&context);
@@ -3916,10 +3916,10 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         std::vector<element_value> outputs = { 0 };
 
-        auto selector = std::make_shared<element::instruction_constant>(1);
+        auto selector = std::make_shared<element::instruction_constant>(1.0f);
         std::vector<element::instruction_const_shared_ptr> options{
-            std::make_shared<const element::instruction_constant>(0),
-            std::make_shared<const element::instruction_constant>(1)
+            std::make_shared<const element::instruction_constant>(0.0f),
+            std::make_shared<const element::instruction_constant>(1.0f)
         };
 
         auto expr = std::make_shared<element::instruction_select>(std::move(selector), std::move(options));
@@ -3939,8 +3939,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         auto selector = std::make_shared<element::instruction_input>(0, 0);
         std::vector<element::instruction_const_shared_ptr> options{
-            std::make_shared<const element::instruction_constant>(0),
-            std::make_shared<const element::instruction_constant>(1)
+            std::make_shared<const element::instruction_constant>(0.0f),
+            std::make_shared<const element::instruction_constant>(1.0f)
         };
 
         auto expr = std::make_shared<element::instruction_select>(std::move(selector), std::move(options));

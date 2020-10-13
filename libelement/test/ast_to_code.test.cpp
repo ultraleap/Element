@@ -26,7 +26,12 @@ void check_ast_to_code(std::string input)
     auto* root = parser.root;
 
     std::array<char, 2048> output_buffer{};
-    element_ast_to_string(root, nullptr, output_buffer.data(), output_buffer.size());
+    if (element_ast_to_string(root, nullptr, output_buffer.data(), output_buffer.size() == ELEMENT_ERROR_INVALID_SIZE))
+    {
+        printf("Output buffer too small");
+        return;
+    }
+
     printf("%s", output_buffer.data());
     UNSCOPED_INFO(output_buffer.data());
 

@@ -11,7 +11,7 @@
 void print_token(const element_tokeniser_ctx* context, const element_token* nearest_token)
 {
     std::array<char, 2048> output_buffer{};
-    element_tokeniser_to_string(context, nearest_token, output_buffer.data(), output_buffer.size());
+    element_tokeniser_to_string(context, nearest_token, output_buffer.data(), static_cast<int>(output_buffer.size()));
     printf("%s", output_buffer.data());
     UNSCOPED_INFO(output_buffer.data());
 }
