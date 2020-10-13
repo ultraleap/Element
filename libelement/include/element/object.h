@@ -1,11 +1,28 @@
-#if !defined(ELEMENT_INTERPRETER_OBJECT_MODEL_H)
-#define ELEMENT_INTERPRETER_OBJECT_MODEL_H
+#if !defined(ELEMENT_INTERPRETER_OBJECT_H)
+#define ELEMENT_INTERPRETER_OBJECT_H
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
 #include "element/interpreter.h"
+
+/// <summary>
+///
+/// </summary>
+typedef struct element_object element_object;
+
+/// <summary>
+///
+/// </summary>
+/// <param name="object"></param>
+/// <returns></returns>
+element_result element_delete_object(
+    element_object** object);
+
+typedef struct element_object_ctx element_object_ctx;
+element_result element_create_object_ctx(element_interpreter_ctx* interpreter, element_object_ctx** output);
+element_result element_delete_object_ctx(element_object_ctx** context);
 
 /// <summary>
 ///
@@ -18,43 +35,43 @@ element_result element_declaration_to_object(
     element_object** output);
 
 /// <summary>
-///
+/// if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
 /// </summary>
 /// <param name="context"></param>
-/// <param name="compilable"></param>
+/// <param name="object"></param>
 /// <param name="output"></param>
 /// <returns></returns>
 element_result element_object_compile(
-    element_interpreter_ctx* context,
-    const element_object* compilable,
+    element_object_ctx* context,
+    const element_object* object,
     element_object** output);
 
 /// <summary>
-///
+/// if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
 /// </summary>
 /// <param name="context"></param>
-/// <param name="callable"></param>
+/// <param name="object"></param>
 /// <param name="arguments"></param>
 /// <param name="arguments_count"></param>
 /// <param name="output"></param>
 /// <returns></returns>
 element_result element_object_call(
-    element_interpreter_ctx* context,
+    element_object_ctx* context,
     const element_object* object,
     const element_object* arguments,
     unsigned int arguments_count,
     element_object** output);
 
 /// <summary>
-///
+/// if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
 /// </summary>
 /// <param name="context"></param>
-/// <param name="indexable"></param>
+/// <param name="object"></param>
 /// <param name="index"></param>
 /// <param name="output"></param>
 /// <returns></returns>
 element_result element_object_index(
-    element_interpreter_ctx* context,
+    element_object_ctx* context,
     const element_object* object,
     const char* index,
     element_object** output);
@@ -80,7 +97,7 @@ element_result element_object_to_log_message(
     const element_object* object,
     element_log_message* output);
 
-typedef struct
+typedef struct element_source_information
 {
     int line = 0;
     int character_start = 0;

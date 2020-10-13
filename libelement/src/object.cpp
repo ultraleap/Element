@@ -8,9 +8,42 @@
 #include "element/common.h"
 #include "interpreter_internal.hpp"
 #include "instruction_tree/evaluator.hpp"
+#include "object_model/object_internal.hpp"
 #include "object_model/error.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/intermediaries/declaration_wrapper.hpp"
+
+element_result element_delete_object(element_object** object)
+{
+    delete *object;
+    *object = nullptr;
+    return ELEMENT_OK;
+}
+
+element_result element_create_object_ctx(element_interpreter_ctx* interpreter, element_object_ctx** output)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_IS_NULL;
+
+    if (!output)
+        return ELEMENT_ERROR_API_UNKNOWN;
+
+    *output = new element_object_ctx;
+    (*output)->ctx = std::make_unique<element::compilation_context>(interpreter->global_scope.get(), interpreter);
+
+    return ELEMENT_OK;
+}
+
+element_result element_delete_object_ctx(element_object_ctx** context)
+{
+    if (!context)
+        return ELEMENT_OK;
+
+    delete *context;
+    (*context) = nullptr;
+
+    return ELEMENT_OK;
+}
 
 element_result element_declaration_to_object(
     const element_declaration* declaration,
@@ -22,29 +55,47 @@ element_result element_declaration_to_object(
 }
 
 element_result element_object_compile(
-    element_interpreter_ctx* context, 
-    const element_object* compilable,
+    element_object_ctx* context,
+    const element_object* object,
     element_object** output)
 {
-    const element_result result = ELEMENT_OK;
+    if (!context || !context->ctx)
+        return ELEMENT_ERROR_API_OBJECT_CTX_IS_NULL;
 
-    const element::compilation_context compilation_context(context->global_scope.get(), context);
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
 
-    auto compiled = compilable->obj->compile(compilation_context, compilable->obj->source_info);
+    if (!output)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    auto compiled = object->obj->compile(*context->ctx, object->obj->source_info);
     *output = new element_object{ std::move(compiled) };
 
-    return result;
+    const auto* err = dynamic_cast<const element::error*>((*output)->obj.get());
+    if (err)
+        return err->log_once(context->ctx->get_logger());
+
+    return ELEMENT_OK;
 }
 
 element_result element_object_call(
-    element_interpreter_ctx* context,
+    element_object_ctx* context,
     const element_object* object,
     const element_object* arguments,
     unsigned int arguments_count,
     element_object** output)
 {
-    const auto result = ELEMENT_OK;
-    const element::compilation_context compilation_context(context->global_scope.get(), context);
+    if (!context || !context->ctx)
+        return ELEMENT_ERROR_API_OBJECT_CTX_IS_NULL;
+
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+
+    if (!output)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    if (!arguments && arguments_count > 0)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
 
     std::vector<element::object_const_shared_ptr> args;
     args.reserve(arguments_count);
@@ -52,45 +103,62 @@ element_result element_object_call(
     for (auto i = 0U; i < arguments_count; ++i)
         args.push_back(arguments[i].obj);
 
-    auto compiled = object->obj->call(compilation_context, args, object->obj->source_info);
+    auto compiled = object->obj->call(*context->ctx, std::move(args), object->obj->source_info);
     *output = new element_object{ std::move(compiled) };
 
-    return result;
+    const auto* err = dynamic_cast<const element::error*>((*output)->obj.get());
+    if (err)
+        return err->log_once(context->ctx->get_logger());
+
+    return ELEMENT_OK;
 }
 
 element_result element_object_index(
-    element_interpreter_ctx* context,
+    element_object_ctx* context,
     const element_object* object,
     const char* index,
     element_object** output)
 {
-    const element_result result = ELEMENT_OK;
-    const element::compilation_context compilation_context(context->global_scope.get(), context);
+    if (!context || !context->ctx)
+        return ELEMENT_ERROR_API_OBJECT_CTX_IS_NULL;
 
-    auto compiled = object->obj->index(compilation_context, element::identifier{ index }, object->obj->source_info);
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+
+    if (!output)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    if (!index)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    auto compiled = object->obj->index(*context->ctx, element::identifier{ index }, object->obj->source_info);
     *output = new element_object{ std::move(compiled) };
 
-    return result;
+    const auto* err = dynamic_cast<const element::error*>((*output)->obj.get());
+    if (err)
+        return err->log_once(context->ctx->get_logger());
+
+    return ELEMENT_OK;
 }
 
 element_result element_object_to_instruction(const element_object* object, element_instruction** output)
 {
-    if (!object)
-    {
-        (*output)->instruction = nullptr;
-        return ELEMENT_ERROR_UNKNOWN;
-    }
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
 
+    if (!output)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *output = new element_instruction;
     auto instr = object->obj->to_instruction();
 
     if (!instr)
     {
         (*output)->instruction = nullptr;
-        return ELEMENT_ERROR_UNKNOWN;
+        return ELEMENT_ERROR_SERIALISATION;
     }
 
     (*output)->instruction = std::move(instr);
-
     return ELEMENT_OK;
 }
 
@@ -114,6 +182,9 @@ element_result element_object_get_source_information(const element_object* objec
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
 
+    if (!output)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     element_source_information src_info;
     const auto& obj_src_info = object->obj->source_info;
     src_info.character_start = obj_src_info.character_start;
@@ -134,6 +205,9 @@ element_result element_object_get_typeof(const element_object* object, char* buf
 
     if (buffer_size < static_cast<int>(object->obj->typeof_info().size()))
         return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+
+    if (!buffer)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
     strcpy(buffer, object->obj->typeof_info().c_str());
 

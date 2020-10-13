@@ -23,17 +23,18 @@ TEST_CASE("ObjectModel", "[API]")
         element_declaration* my_struct_declaration = nullptr;
         element_object* const_int_obj = nullptr;
         element_object* my_struct_obj = nullptr;
-        element_interpreter_ctx* context = nullptr;
+        element_interpreter_ctx* interpreter = nullptr;
+        element_object_ctx* obj_ctx = nullptr;
 
         const std::string package = "";
 
-        element_interpreter_create(&context);
-        element_interpreter_set_log_callback(context, log_callback, nullptr);
-        element_interpreter_load_prelude(context);
+        element_interpreter_create(&interpreter);
+        element_interpreter_set_log_callback(interpreter, log_callback, nullptr);
+        element_interpreter_load_prelude(interpreter);
 
         if (!package.empty())
         {
-            const auto result = element_interpreter_load_package(context, package.c_str());
+            const auto result = element_interpreter_load_package(interpreter, package.c_str());
             REQUIRE(result == ELEMENT_OK);
         }
 
@@ -53,7 +54,7 @@ TEST_CASE("ObjectModel", "[API]")
         element_object* my_struct_instance_a = nullptr;
         std::shared_ptr<const element::instruction_constant> constant;
 
-        auto result = element_interpreter_load_string(context, input_element, "<input>");
+        auto result = element_interpreter_load_string(interpreter, input_element, "<input>");
         if (result != ELEMENT_OK)
         {
             printf("Output buffer too small");
@@ -63,16 +64,20 @@ TEST_CASE("ObjectModel", "[API]")
         if (result != ELEMENT_OK)
             goto cleanup;
 
-        result = element_interpreter_find(context, "const_int", &const_int_declaration);
+        result = element_interpreter_find(interpreter, "const_int", &const_int_declaration);
         if (result != ELEMENT_OK)
             goto cleanup;
 
-        element_declaration_to_object(const_int_declaration, &const_int_obj);
-
-        result = element_object_compile(context, const_int_obj, &const_int);
+        result = element_declaration_to_object(const_int_declaration, &const_int_obj);
         CHECK(result == ELEMENT_OK);
 
-        result = element_interpreter_find(context, "my_struct", &my_struct_declaration);
+        result = element_create_object_ctx(interpreter, &obj_ctx);
+        CHECK(result == ELEMENT_OK);
+
+        result = element_object_compile(obj_ctx, const_int_obj, &const_int);
+        CHECK(result == ELEMENT_OK);
+
+        result = element_interpreter_find(interpreter, "my_struct", &my_struct_declaration);
         if (result != ELEMENT_OK)
             goto cleanup;
 
@@ -80,10 +85,10 @@ TEST_CASE("ObjectModel", "[API]")
 
         args[0] = const_int;
 
-        result = element_object_call(context, my_struct_obj, *args, args_count, &my_struct_instance);
+        result = element_object_call(obj_ctx, my_struct_obj, *args, args_count, &my_struct_instance);
         CHECK(result == ELEMENT_OK);
 
-        result = element_object_index(context, my_struct_instance, "a", &my_struct_instance_a);
+        result = element_object_index(obj_ctx, my_struct_instance, "a", &my_struct_instance_a);
         CHECK(result == ELEMENT_OK);
 
         element_inputs input;
@@ -96,7 +101,7 @@ TEST_CASE("ObjectModel", "[API]")
         element_instruction* instruction;
         result = element_object_to_instruction(my_struct_instance_a, &instruction);
         CHECK(result == ELEMENT_OK);
-        result = element_interpreter_evaluate(context, nullptr, instruction, &input, &output);
+        result = element_interpreter_evaluate(interpreter, nullptr, instruction, &input, &output);
         CHECK(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 5);
 
@@ -106,8 +111,9 @@ TEST_CASE("ObjectModel", "[API]")
         element_delete_object(&my_struct_obj);
         element_delete_object(&const_int_obj);
         element_delete_object(&const_int);
+        element_delete_object_ctx(&obj_ctx);
         element_delete_declaration(&my_struct_declaration);
         element_delete_declaration(&const_int_declaration);
-        element_interpreter_delete(&context);
+        element_interpreter_delete(&interpreter);
     }
 }

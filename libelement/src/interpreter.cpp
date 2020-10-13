@@ -119,13 +119,6 @@ element_result element_delete_declaration(element_declaration** declaration)
     return ELEMENT_OK;
 }
 
-element_result element_delete_object(element_object** object)
-{
-    delete *object;
-    *object = nullptr;
-    return ELEMENT_OK;
-}
-
 element_result element_delete_instruction(element_instruction** instruction)
 {
     delete *instruction;

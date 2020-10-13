@@ -26,12 +26,9 @@ struct element_instruction
     std::shared_ptr<const element::instruction> instruction;
 };
 
-struct element_metainfo
+struct element_object_ctx
 {
-    //todo: decide what kinda stuff to associate here, just need typeof for now
-    std::string code;        //the code associated with this thing
-    std::string typeof;      //internal type representation
-    std::string source_type; //the type as it is in source, i.e. something the user could use in an element source file
+    std::unique_ptr<element::compilation_context> ctx;
 };
 
 struct element_interpreter_ctx

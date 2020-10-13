@@ -151,21 +151,6 @@ void element_interpreter_set_parse_only(
 /// <summary>
 ///
 /// </summary>
-typedef struct element_declaration element_declaration;
-
-/// <summary>
-///
-/// </summary>
-typedef struct element_object element_object;
-
-/// <summary>
-///
-/// </summary>
-typedef struct element_instruction element_instruction;
-
-/// <summary>
-///
-/// </summary>
 typedef struct element_inputs
 {
     element_value* values;
@@ -184,18 +169,20 @@ typedef struct element_outputs
 /// <summary>
 ///
 /// </summary>
-/// <param name="declaration"></param>
-/// <returns></returns>
-element_result element_delete_declaration(
-    element_declaration** declaration);
+typedef struct element_declaration element_declaration;
 
 /// <summary>
 ///
 /// </summary>
-/// <param name="object"></param>
+typedef struct element_instruction element_instruction;
+
+/// <summary>
+///
+/// </summary>
+/// <param name="declaration"></param>
 /// <returns></returns>
-element_result element_delete_object(
-    element_object** object);
+element_result element_delete_declaration(
+    element_declaration** declaration);
 
 /// <summary>
 ///
