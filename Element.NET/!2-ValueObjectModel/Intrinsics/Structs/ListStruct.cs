@@ -22,7 +22,7 @@ namespace Element.AST
         public Result<IValue> DefaultValue(Context context) => List.Instance.Call(Array.Empty<IValue>(), context);
 
         public static Result<int> ConstantCount(StructInstance listInstance, Context context) =>
-            listInstance.DeclaringStruct.IsIntrinsic<ListStruct>()
+            listInstance.DeclaringStruct.IsIntrinsicOfType<ListStruct>()
                 ? listInstance.Index(CountId, context)
                               .Bind(countValue => countValue switch
                               {

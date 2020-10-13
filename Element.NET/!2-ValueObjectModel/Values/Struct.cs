@@ -21,6 +21,7 @@ namespace Element.AST
         public override IReadOnlyList<ResolvedPort> InputPorts => Fields;
         public override IValue ReturnConstraint => this;
         public IReadOnlyList<ResolvedPort> Fields { get; }
+        public override bool IsFunction => true;
 
         public override string SummaryString => Identifier.String;
 
@@ -36,7 +37,7 @@ namespace Element.AST
             Index(id, context)
                 .Bind(v => v switch
                 {
-                    {} when !v.IsFunction() => context.Trace(EleMessageCode.CannotBeUsedAsInstanceFunction, $"'{v}' found by indexing '{instance}' is not a function"),
+                    {} when !v.IsFunction => context.Trace(EleMessageCode.CannotBeUsedAsInstanceFunction, $"'{v}' found by indexing '{instance}' is not a function"),
                     // ReSharper disable once PossibleUnintendedReferenceComparison
                     {} when v.InputPorts[0].ResolvedConstraint == this => v.PartiallyApply(new[] {instance}, context),
                     {} => context.Trace(EleMessageCode.CannotBeUsedAsInstanceFunction, $"Found function '{v}' <{v.InputPorts[0]}> must be of type <{Identifier}> to be used as an instance function"),
@@ -48,6 +49,8 @@ namespace Element.AST
     {
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicStructImplementation _implementation;
+        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation.GetType() == typeof(TIntrinsicImplementation);
+        public override bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _implementation == intrinsic;
 
         public IntrinsicStruct(IIntrinsicStructImplementation implementation, IReadOnlyList<ResolvedPort> fields, ResolvedBlock? associatedBlock, IScope parent)
             : base(implementation.Identifier, fields, associatedBlock, parent) =>
@@ -96,7 +99,7 @@ namespace Element.AST
 
         public override void Serialize(ResultBuilder<List<Element.Instruction>> resultBuilder, Context context)
         {
-            if (DeclaringStruct.IsIntrinsic<ListStruct>())
+            if (DeclaringStruct.IsIntrinsicOfType<ListStruct>())
             {
                 // TODO: List serialization
                 resultBuilder.Append(EleMessageCode.SerializationError, "List serialization not supported yet");

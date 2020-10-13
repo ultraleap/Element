@@ -31,6 +31,8 @@ namespace Element.AST
             return namedArguments;
         }
 
+        public override bool IsFunction => true;
+
         public abstract override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public abstract override IValue ReturnConstraint { get; }
 
@@ -41,6 +43,8 @@ namespace Element.AST
     {
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicFunctionImplementation _implementation;
+        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation.GetType() == typeof(TIntrinsicImplementation);
+        public override bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _implementation == intrinsic;
 
         public IntrinsicFunction(IIntrinsicFunctionImplementation implementation, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint)
         {

@@ -104,9 +104,9 @@ namespace Element.CLR
 		    };
 	    
 	    // TODO: Move this to BoundaryConverter? Should support more than just Num/Bool structs
-	    private static Type? ToClrType(Struct elementType) => elementType.IsIntrinsic<NumStruct>()
+	    private static Type? ToClrType(Struct elementType) => elementType.IsIntrinsicOfType<NumStruct>()
 		                                                          ? typeof(float)
-		                                                          : elementType.IsIntrinsic<BoolStruct>()
+		                                                          : elementType.IsIntrinsicOfType<BoolStruct>()
 			                                                          ? typeof(bool)
 			                                                          : null;
 
@@ -327,7 +327,7 @@ namespace Element.CLR
 		/// The function inputs are mapped directly to the arrays contents.
 		/// </returns>
 		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, Context context) =>
-			function.IsFunction()
+			function.IsFunction
 				? function.InputPorts.Select(c => c.DefaultValue(context))
 				          .BindEnumerable(defaultValues =>
 				          {
@@ -373,12 +373,12 @@ namespace Element.CLR
 				                                                        ? new Result<Struct>(s)
 				                                                        : new Result<Struct>(context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{constraint}' is not a struct - all top-level function ports must be serializable struct types"));
 
-			var inputStructs = value.IsFunction()
+			var inputStructs = value.IsFunction
 				                   ? value.InputPorts.Select(p => ConstraintToStruct(p.ResolvedConstraint)).ToResultArray()
 				                   : Array.Empty<Struct>();
 			
 			return inputStructs
-			       .Accumulate(() => value.IsFunction() switch
+			       .Accumulate(() => value.IsFunction switch
 			       {
 				       true => ConstraintToStruct(value.ReturnConstraint),
 				       false when value is Struct s => s,
@@ -414,7 +414,7 @@ namespace Element.CLR
             var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
             
-            if (value.IsFunction() && value.InputPorts.Count != delegateParameters.Length)
+            if (value.IsFunction && value.InputPorts.Count != delegateParameters.Length)
             {
 	            return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
             }
@@ -422,7 +422,7 @@ namespace Element.CLR
             var resultBuilder = new ResultBuilder<Delegate>(context, default!);
             IValue outputExpression = value;
             // If input value is not a function we just try to use it directly
-            if (value.IsFunction())
+            if (value.IsFunction)
             {
 	            var outputExpr = value.InputPorts
 	                                  .Select((f, idx) => boundaryConverter.LinqToElement(parameterExpressions[idx], boundaryConverter, context))

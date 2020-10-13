@@ -40,7 +40,7 @@ namespace Element.NET.Tests
         public void EnumerateByReturnType(IIntrinsicImplementation intrinsic)
         {
             var sourceContext = MakeSourceContext();
-            bool Filter(ValueWithLocation v) => v.Value.ReturnConstraint.IsIntrinsic(intrinsic);
+            bool Filter(ValueWithLocation v) => v.Value.ReturnConstraint.IsSpecificIntrinsic(intrinsic);
             var results = sourceContext.GlobalScope.EnumerateValues(new Context(sourceContext), resolvedValueFilter: Filter);
             Assert.That(results.IsSuccess);
             CollectionAssert.IsNotEmpty(results.ResultOr(default));

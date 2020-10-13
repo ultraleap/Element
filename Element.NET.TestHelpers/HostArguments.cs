@@ -269,11 +269,6 @@ namespace Element.NET.TestHelpers
             {
                 throw new NotImplementedException();
             }
-
-            public Result<string> NormalForm(CompilerInput input, string expression)
-            {
-                throw new NotImplementedException();
-            }
         }
     }
 }

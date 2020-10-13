@@ -46,8 +46,8 @@ namespace Element.AST
 	            arguments[0] is Instruction index
 		            ? ListElement.Create(index,
 		                                 _elements,
-		                                 _elements[0].IsFunction() ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort},
-		                                 _elements[0].IsFunction() ? _elements[0].ReturnConstraint : AnyConstraint.Instance,
+		                                 _elements[0].IsFunction ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort},
+		                                 _elements[0].IsFunction ? _elements[0].ReturnConstraint : AnyConstraint.Instance,
 		                                 context)
 		            : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
         }

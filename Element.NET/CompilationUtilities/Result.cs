@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Element.AST;
 
 namespace Element
 {
@@ -87,7 +86,7 @@ namespace Element
             else onError(Messages);
         }
         public TResult Match<TResult>(Func<IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(Messages) : onError(Messages);
-        public Result Then(Action action)
+        public Result Do(Action action)
         {
             if (IsSuccess) action();
             return this;
@@ -96,6 +95,7 @@ namespace Element
         public Result And(Func<Result> action) => IsSuccess ? new Result(Messages.Combine(action().Messages)) : this;
         public Result<TResult> Map<TResult>(Func<TResult> mapFunc) => IsSuccess ? Merge(new Result<TResult>(mapFunc())) : new Result<TResult>(Messages);
         public Result<TResult> Bind<TResult>(Func<Result<TResult>> bindFunc) => IsSuccess ? Merge(bindFunc()) : new Result<TResult>(Messages);
+        public Result Merge(in Result newResult) => new Result(Messages.Combine(newResult.Messages));
         public Result<TResult> Merge<TResult>(in Result<TResult> newResult) => new Result<TResult>(newResult, Messages.Combine(newResult.Messages));
     }
 
@@ -217,8 +217,10 @@ namespace Element
         }
 
         public TResult Match<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(_value, Messages) : onError(Messages);
+
+        public Result<TResult> Branch<TResult>(Func<T, Result<TResult>> success, Func<TResult> error) => IsSuccess ? Merge(success(_value)) : error();
         
-        public Result<T> Then(Action<T> action)
+        public Result<T> Do(Action<T> action)
         {
             if (IsSuccess) action(_value);
             return this;

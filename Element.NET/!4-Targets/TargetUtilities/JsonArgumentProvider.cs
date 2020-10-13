@@ -36,7 +36,7 @@ namespace Element.JsonArgument
 			
 			void ProvisionSingleField(Identifier fieldIdentifier, IValue type, JToken value)
 			{
-				if (type.IsIntrinsic<NumStruct>())
+				if (type.IsIntrinsicOfType<NumStruct>())
 				{
 					switch (value?.Type ?? JTokenType.None)
 					{
@@ -51,7 +51,7 @@ namespace Element.JsonArgument
 							break;
 					}
 				}
-				else if (type.IsIntrinsic<BoolStruct>())
+				else if (type.IsIntrinsicOfType<BoolStruct>())
 				{
 					switch (value?.Type ?? JTokenType.None)
 					{

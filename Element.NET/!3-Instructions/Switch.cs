@@ -1,5 +1,3 @@
-using Element.AST;
-
 namespace Element
 {
 	using System;
@@ -18,8 +16,8 @@ namespace Element
 			if (options.Length == 1 || options.All(o => o.Equals(options[0]))) return options[0];
 
 			return selector.CompileTimeIndex(0, options.Length, context)
-			               .Bind(index => new Result<Instruction>(options[index]))
-			               .Else(() => new Switch(selector, options));
+			               .Branch(idx => new Result<Instruction>(options[idx]),
+			                       () => new Switch(selector, options));
 		}
 		
 		private Switch(Instruction selector, IEnumerable<Instruction> operands)

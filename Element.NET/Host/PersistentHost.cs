@@ -56,7 +56,6 @@ namespace Element
 
         public Result<string> Typeof(CompilerInput input, string expression) => Stringify(input, expression, value => value.TypeOf);
         public Result<string> Summary(CompilerInput input, string expression) => Stringify(input, expression, value => value.SummaryString);
-        public Result<string> NormalForm(CompilerInput input, string expression) => Stringify(input, expression, value => value.NormalizedFormString);
 
         private Result<string> Stringify(CompilerInput input, string expression, Func<IValue, string> stringify) =>
             _srcContext.LoadCompilerInput(input)
