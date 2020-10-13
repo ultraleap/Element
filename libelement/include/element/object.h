@@ -40,8 +40,8 @@ element_result element_object_compile(
 /// <returns></returns>
 element_result element_object_call(
     element_interpreter_ctx* context,
-    const element_object* callable,
-    const element_object arguments[],
+    const element_object* object,
+    const element_object* arguments,
     unsigned int arguments_count,
     element_object** output);
 
@@ -55,7 +55,7 @@ element_result element_object_call(
 /// <returns></returns>
 element_result element_object_index(
     element_interpreter_ctx* context,
-    const element_object* indexable,
+    const element_object* object,
     const char* index,
     element_object** output);
 
@@ -69,29 +69,36 @@ element_result element_object_to_instruction(
     const element_object* object,
     element_instruction** output);
 
-/*
- * if we have typeof be an enum, then we don't need is_xyz functions for each type of thing in the object model
- * element_typeof_to_string
- * element_object_get_typeof
- * element_object_get_name
- * element_object_get_source_info
- * element_source_info
- * {
- *    char* filename
- *    char* line
- *    int column_start
- *    int length
- * }
- * element_object_is_error
- * element_object_get_error_info
- * element_error_info
- * {
- *      element_result result;
-        char* message; //owning or not?
-        source_info
- * }
- *
- */
+struct element_error
+{
+    element_result message_code;
+    char* message;
+};
+
+//object must be an error, and it must be kept alive while using the log message
+element_result element_object_to_log_message(
+    const element_object* object,
+    element_log_message* output);
+
+typedef struct
+{
+    int line = 0;
+    int character_start = 0;
+    int character_end = 0;
+
+    char* filename = NULL; //must be deleted by user
+    char* line_in_source = NULL; //must be deleted by user
+    char* text = NULL; //must be deleted by user
+} element_source_information;
+
+element_result element_object_get_source_information(
+    const element_object* object,
+    element_source_information* output);
+
+element_result element_object_get_typeof(
+    const element_object* object,
+    char* buffer,
+    int buffer_size);
 
 #if defined(__cplusplus)
 }

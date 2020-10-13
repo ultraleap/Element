@@ -19,7 +19,7 @@ namespace element
             , filename(filename)
         {}
 
-        const std::string& get_text()
+        const std::string& get_text() const
         {
             if (text.empty())
             {
@@ -40,6 +40,6 @@ namespace element
         const char* filename = nullptr;
 
     private:
-        std::string text;
+        mutable std::string text;
     };
 } // namespace element

@@ -21,16 +21,10 @@ typedef struct element_compiler_options
     bool check_valid_boundary_function_when_nullary;
 } element_compiler_options;
 
-/// <summary>
-///
-/// </summary>
-inline element_compiler_options element_compiler_options_default = 
-{
-    /// passing nullptr where a element_compiler_options struct is expected will use these values
-    /// todo: do we want to expose this global in the header? doesn't matter if it's modified since it's inline, but as long users can just pass nullptr... don't think we need it
-    /// just need to make sure we document the defaults and that the documentation doesn't get out of sync
+//passing nullptr where a element_compiler_options struct is expected will use these values
+inline const element_compiler_options element_compiler_options_default = {
     true,
-    false, //todo: this should not exist/be true, but our tests rely on this behaviour right now
+    true
 };
 
 /// <summary>
