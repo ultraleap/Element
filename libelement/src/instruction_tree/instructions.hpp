@@ -11,7 +11,7 @@
 #include "instruction_tree/fwd.hpp"
 #include "typeutil.hpp"
 #include "object_model/constraints/type.hpp"
-#include "object_model/object.hpp"
+#include "object_model/object_internal.hpp"
 
 namespace element
 {

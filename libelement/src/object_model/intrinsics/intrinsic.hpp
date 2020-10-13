@@ -5,7 +5,7 @@
 #include <log_errors.hpp>
 
 //SELF
-#include "object_model/object.hpp"
+#include "object_model/object_internal.hpp"
 #include "log_errors.hpp"
 #include "typeutil.hpp"
 #include "interpreter_internal.hpp"

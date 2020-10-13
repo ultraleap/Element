@@ -1,7 +1,7 @@
 #pragma once
 
 //SELF
-#include "object_model/object.hpp"
+#include "object_model/object_internal.hpp"
 #include "instruction_tree/fwd.hpp"
 
 namespace element

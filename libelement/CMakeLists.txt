@@ -53,7 +53,7 @@ set(libelement_sources
     "src/interpreter.cpp"
     "src/interpreter_internal.cpp"
     "src/common_internal.cpp"
-    "src/interpreter_object_model.cpp"
+    "src/object.cpp"
 
     "src/common_internal.hpp"
     "src/interpreter_internal.hpp"
@@ -159,8 +159,8 @@ set(libelement_sources
     "src/object_model/identifier.hpp"
     "src/object_model/metainfo.cpp"
     "src/object_model/metainfo.hpp"
-    "src/object_model/object.cpp"
-    "src/object_model/object.hpp"
+    "src/object_model/object_internal.cpp"
+    "src/object_model/object_internal.hpp"
     "src/object_model/object_model_builder.cpp"
     "src/object_model/object_model_builder.hpp"
     "src/object_model/port.cpp"
@@ -188,7 +188,7 @@ set(libelement_sources
     "include/element/parser.h"
     "include/element/token.h"
     "include/element/interpreter.h"
-    "include/element/interpreter_object_model.h"
+    "include/element/object.h"
 
     #MISC
     "src/configuration.hpp.in"

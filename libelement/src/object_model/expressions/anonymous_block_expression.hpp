@@ -5,7 +5,7 @@
 
 //SELF
 #include "expression.hpp"
-#include "object_model/object.hpp"
+#include "object_model/object_internal.hpp"
 
 namespace element
 {

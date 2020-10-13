@@ -7,7 +7,7 @@
 #include <fmt/format.h>
 
 //SELF
-#include "element/interpreter_object_model.h"
+#include "element/object.h"
 #include "interpreter_internal.hpp"
 
 #include "util.test.hpp"
@@ -62,23 +62,23 @@ TEST_CASE("ObjectModel", "[API]")
         if (result != ELEMENT_OK)
             goto cleanup;
 
-        element_declaration_to_object_model_declaration(const_int_declaration, &const_int_obj);
+        element_declaration_to_object(const_int_declaration, &const_int_obj);
 
-        result = element_object_model_compile(context, const_int_obj, &const_int);
+        result = element_object_compile(context, const_int_obj, &const_int);
         CHECK(result == ELEMENT_OK);
 
         result = element_interpreter_find(context, "my_struct", &my_struct_declaration);
         if (result != ELEMENT_OK)
             goto cleanup;
 
-        element_declaration_to_object_model_declaration(my_struct_declaration, &my_struct_obj);
+        element_declaration_to_object(my_struct_declaration, &my_struct_obj);
 
         args[0] = const_int;
 
-        result = element_object_model_call(context, my_struct_obj, *args, args_count, &my_struct_instance);
+        result = element_object_call(context, my_struct_obj, *args, args_count, &my_struct_instance);
         CHECK(result == ELEMENT_OK);
 
-        result = element_object_model_index(context, my_struct_instance, "a", &my_struct_instance_a);
+        result = element_object_index(context, my_struct_instance, "a", &my_struct_instance_a);
         CHECK(result == ELEMENT_OK);
 
         element_inputs input;

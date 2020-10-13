@@ -7,28 +7,27 @@ extern "C" {
     
 #include "element/interpreter.h"
 
-element_result element_object_model_compile(
+element_result element_declaration_to_object(
+    const element_declaration* declaration,
+    element_object** output);
+
+element_result element_object_compile(
     element_interpreter_ctx* context,
     const element_object* compilable,
     element_object** output);
 
-element_result element_declaration_to_object_model_declaration(
-    const element_declaration* declaration,
-    element_object** output);
-
-element_result element_object_model_call(
+element_result element_object_call(
     element_interpreter_ctx* context,
     const element_object* callable,
     const element_object arguments[],
     unsigned int arguments_count,
     element_object** output);
 
-element_result element_object_model_index(
+element_result element_object_index(
     element_interpreter_ctx* context,
     const element_object* indexable,
     const char* index,
     element_object** output);
-
 
 /*
  * if we have typeof be an enum, then we don't need is_xyz functions for each type of thing in the object model

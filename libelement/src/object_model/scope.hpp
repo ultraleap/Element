@@ -5,7 +5,7 @@
 #include <memory>
 
 //SELF
-#include "object.hpp"
+#include "object_internal.hpp"
 #include "declarations/declaration.hpp"
 
 namespace element

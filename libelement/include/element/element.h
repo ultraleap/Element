@@ -8,7 +8,7 @@ extern "C" {
 #include "ast.h"
 #include "common.h"
 #include "interpreter.h"
-#include "lmnt.h"
+#include "object.h"
 #include "parser.h"
 #include "token.h"
 

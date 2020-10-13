@@ -1,7 +1,7 @@
 #pragma once
 
 //SELF
-#include "object_model/object.hpp"
+#include "object_model/object_internal.hpp"
 #include "object_model/scope.hpp"
 #include "object_model/call_stack.hpp"
 

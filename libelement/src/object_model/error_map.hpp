@@ -10,7 +10,7 @@
 #include <fmt/format.h>
 
 //SELF
-#include "object.hpp"
+#include "object_internal.hpp"
 #include "error.hpp"
 #include "compilation_context.hpp"
 
