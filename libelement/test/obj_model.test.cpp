@@ -53,7 +53,7 @@ TEST_CASE("ObjectModel", "[API]")
         element_object* const_int = nullptr;
         element_object* my_struct_instance = nullptr;
         element_object* my_struct_instance_a = nullptr;
-        std::shared_ptr<const element_instruction_constant> constant;
+        std::shared_ptr<const element::instruction_constant> constant;
 
         if (result != ELEMENT_OK)
             goto cleanup;

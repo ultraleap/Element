@@ -25,7 +25,7 @@ namespace element
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
                                                       const source_information& source_info) const override;
 
-        [[nodiscard]] std::shared_ptr<const element_instruction> to_instruction() const final;
+        [[nodiscard]] std::shared_ptr<const instruction> to_instruction() const final;
 
         [[nodiscard]] bool is_constant() const override
         {
@@ -50,10 +50,10 @@ namespace element
     template <typename Callable>
     [[nodiscard]] std::shared_ptr<struct_instance> struct_instance::clone_and_fill_with_expressions(const compilation_context& context, Callable&& callable) const
     {
-        static_assert(std::is_invocable_v<Callable, const std::string&, const std::shared_ptr<const element_instruction>&, int>, "Invalid parameters");
+        static_assert(std::is_invocable_v<Callable, const std::string&, const std::shared_ptr<const instruction>&, int>, "Invalid parameters");
         static_assert(std::is_same_v<
-                          std::invoke_result_t<Callable, const std::string&, const std::shared_ptr<const element_instruction>&, int>,
-                          std::shared_ptr<const element_instruction>>,
+                          std::invoke_result_t<Callable, const std::string&, const std::shared_ptr<const instruction>&, int>,
+                          std::shared_ptr<const instruction>>,
                       "Invalid return");
 
         int index = 0;
@@ -70,7 +70,7 @@ namespace element
             const auto* field_type = field->get_constraint();
             const auto* field_type_declarer = field_type->declarer;
 
-            const auto field_as_expression = std::dynamic_pointer_cast<const element_instruction>(field);
+            const auto field_as_expression = std::dynamic_pointer_cast<const instruction>(field);
 
             if (field_as_expression)
             {

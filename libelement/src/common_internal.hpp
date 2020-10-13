@@ -16,13 +16,14 @@
 #include "element/common.h"
 #include "instruction_tree/fwd.hpp"
 
-struct element_instruction;
 struct element_tokeniser_ctx;
 struct element_interpreter_ctx;
 struct element_parser_ctx;
 struct element_ast;
+
 namespace element
 {
+    struct instruction;
     class log_message;
 }
 
@@ -80,7 +81,7 @@ struct element_log_ctx
 
 std::string tokens_to_string(const element_tokeniser_ctx* context, const element_token* nearest_token = nullptr);
 std::string ast_to_string(const element_ast* ast, int depth = 0, const element_ast* ast_to_mark = nullptr);
-std::string instruction_to_string(const element_instruction& expression, std::size_t depth = 0);
+std::string instruction_to_string(const element::instruction& expression, std::size_t depth = 0);
 std::string ast_to_code(const element_ast* node, const element_ast* parent = nullptr);
 
 namespace element

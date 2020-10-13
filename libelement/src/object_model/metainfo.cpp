@@ -91,7 +91,7 @@ std::string intrinsic::typeof_info() const
 //    return "Error: " + message;
 //}
 
-std::string element_instruction::typeof_info() const
+std::string instruction::typeof_info() const
 {
     return actual_type ? actual_type->get_identifier().value : "UnknownType:Expression";
 }

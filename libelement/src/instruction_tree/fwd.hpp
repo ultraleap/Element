@@ -2,7 +2,12 @@
 
 #include <memory>
 
-struct element_instruction;
+//TODO: unused, probably delete?
 struct element_compiler_ctx;
 
-using instruction_const_shared_ptr = std::shared_ptr<const element_instruction>;
+namespace element
+{
+    struct instruction;
+
+    using instruction_const_shared_ptr = std::shared_ptr<const instruction>;
+} // namespace element

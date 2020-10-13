@@ -29,10 +29,10 @@ object_const_shared_ptr intrinsic_unary::compile(const compilation_context& cont
     assert(intrinsic);
     assert(intrinsic == this);
 
-    auto expr = std::dynamic_pointer_cast<const element_instruction>(frame.compiled_arguments[0]);
+    auto expr = std::dynamic_pointer_cast<const instruction>(frame.compiled_arguments[0]);
     assert(expr);
 
-    auto new_expr = std::make_unique<element_instruction_unary>(
+    auto new_expr = std::make_unique<element::instruction_unary>(
         operation,
         std::move(expr),
         return_type);

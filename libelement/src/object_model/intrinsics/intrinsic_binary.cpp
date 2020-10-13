@@ -37,12 +37,12 @@ object_const_shared_ptr intrinsic_binary::compile(const compilation_context& con
     if (expr2_err)
         return expr2_err;
 
-    auto expr1 = std::dynamic_pointer_cast<const element_instruction>(frame.compiled_arguments[0]);
-    auto expr2 = std::dynamic_pointer_cast<const element_instruction>(frame.compiled_arguments[1]);
+    auto expr1 = std::dynamic_pointer_cast<const instruction>(frame.compiled_arguments[0]);
+    auto expr2 = std::dynamic_pointer_cast<const instruction>(frame.compiled_arguments[1]);
     assert(expr1);
     assert(expr2);
 
-    auto new_expr = std::make_unique<element_instruction_binary>(
+    auto new_expr = std::make_unique<element::instruction_binary>(
         operation,
         expr1,
         expr2,

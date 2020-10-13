@@ -21,16 +21,16 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
     const auto true_expr = get_intrinsic(context.interpreter, true_decl)->compile(context, source_info);
     const auto false_expr = get_intrinsic(context.interpreter, false_decl)->compile(context, source_info);
 
-    auto expr = std::dynamic_pointer_cast<const element_instruction>(compiled_args[0]);
+    auto expr = std::dynamic_pointer_cast<const instruction>(compiled_args[0]);
 
     assert(expr); //todo: I think this is accurate
-    assert(std::dynamic_pointer_cast<const element_instruction>(true_expr));
-    assert(std::dynamic_pointer_cast<const element_instruction>(false_expr));
+    assert(std::dynamic_pointer_cast<const instruction>(true_expr));
+    assert(std::dynamic_pointer_cast<const instruction>(false_expr));
 
-    auto new_expr = std::make_unique<element_instruction_if>(
+    auto new_expr = std::make_unique<element::instruction_if>(
         expr,
-        std::dynamic_pointer_cast<const element_instruction>(true_expr),
-        std::dynamic_pointer_cast<const element_instruction>(false_expr));
+        std::dynamic_pointer_cast<const instruction>(true_expr),
+        std::dynamic_pointer_cast<const instruction>(false_expr));
 
     return evaluate(context, std::move(new_expr));
 }
