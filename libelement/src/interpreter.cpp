@@ -134,7 +134,7 @@ element_result element_interpreter_find(element_interpreter_ctx* interpreter, co
     const std::string full_path = path;
     const element::declaration* decl = nullptr;
 
-    auto start = 0;
+    size_t start = 0;
     auto end = full_path.find(delimiter);
     if (end != std::string::npos)
     {

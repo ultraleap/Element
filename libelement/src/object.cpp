@@ -42,7 +42,7 @@ element_result element_object_call(
     std::vector<element::object_const_shared_ptr> args;
     args.reserve(arguments_count);
 
-    for (auto i = 0; i < arguments_count; ++i)
+    for (auto i = 0U; i < arguments_count; ++i)
         args.push_back(arguments[i].obj);
 
     auto compiled = callable->obj->call(compilation_context, args, callable->obj->source_info);
