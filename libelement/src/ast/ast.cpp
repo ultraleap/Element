@@ -158,6 +158,11 @@ element_result element_ast_get_child(const element_ast* ast, const size_t index,
 
 element_result element_ast_get_root(element_ast* ast, element_ast** root)
 {
+    assert(ast);
+    assert(root);
+    if (!ast)
+        return ELEMENT_ERROR_API_AST_IS_NULL;
+
     if (!root)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
