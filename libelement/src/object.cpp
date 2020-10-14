@@ -26,7 +26,7 @@ element_result element_delete_object(element_object** object)
 element_result element_create_compilation_ctx(element_interpreter_ctx* interpreter, element_compilation_ctx** output)
 {
     if (!interpreter)
-        return ELEMENT_ERROR_API_INTERPRETER_IS_NULL;
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
 
     if (!output)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;

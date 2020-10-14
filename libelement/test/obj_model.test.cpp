@@ -24,7 +24,7 @@ TEST_CASE("ObjectModel", "[API]")
         element_object* const_int_obj = nullptr;
         element_object* my_struct_obj = nullptr;
         element_interpreter_ctx* interpreter = nullptr;
-        element_compilation_ctx* obj_ctx = nullptr;
+        element_compilation_ctx* compilation_ctx = nullptr;
 
         const std::string package = "";
 
@@ -71,10 +71,10 @@ TEST_CASE("ObjectModel", "[API]")
         result = element_declaration_to_object(const_int_declaration, &const_int_obj);
         CHECK(result == ELEMENT_OK);
 
-        result = element_create_object_ctx(interpreter, &obj_ctx);
+        result = element_create_compilation_ctx(interpreter, &compilation_ctx);
         CHECK(result == ELEMENT_OK);
 
-        result = element_object_compile(obj_ctx, const_int_obj, &const_int);
+        result = element_object_compile(const_int_obj, compilation_ctx, &const_int);
         CHECK(result == ELEMENT_OK);
 
         result = element_interpreter_find(interpreter, "my_struct", &my_struct_declaration);
@@ -85,10 +85,10 @@ TEST_CASE("ObjectModel", "[API]")
 
         args[0] = const_int;
 
-        result = element_object_call(obj_ctx, my_struct_obj, *args, args_count, &my_struct_instance);
+        result = element_object_call(my_struct_obj, compilation_ctx, *args, args_count, &my_struct_instance);
         CHECK(result == ELEMENT_OK);
 
-        result = element_object_index(obj_ctx, my_struct_instance, "a", &my_struct_instance_a);
+        result = element_object_index(my_struct_instance, compilation_ctx, "a", &my_struct_instance_a);
         CHECK(result == ELEMENT_OK);
 
         element_inputs input;
@@ -111,7 +111,7 @@ TEST_CASE("ObjectModel", "[API]")
         element_delete_object(&my_struct_obj);
         element_delete_object(&const_int_obj);
         element_delete_object(&const_int);
-        element_delete_object_ctx(&obj_ctx);
+        element_delete_compilation_ctx(&compilation_ctx);
         element_delete_declaration(&my_struct_declaration);
         element_delete_declaration(&const_int_declaration);
         element_interpreter_delete(&interpreter);
