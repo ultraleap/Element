@@ -17,11 +17,3 @@ Contents
     PyElement/Overview
 
 See whole :ref:`genindex`
-
-Features
-========
-
-- Cool language that does things with numbers
-- Functional
-- Other features!
-- Yay

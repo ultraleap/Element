@@ -21,15 +21,9 @@ def create_zip_file(input_path, filename):
 
 def main(zip_name="Element_Documentation"):
     proj_dir = os.getcwd()
-    doc_path = os.path.join(proj_dir, "build/doc")
+    doc_path = os.path.join(proj_dir, "build/doc/html")
 
     if os.path.exists(doc_path):
-        # Name of the redirect html to be moved
-        redirect_html = "Documentation.html"
-
-        # Move it into the build/doc folder so users have easy input html
-        copy_file("scripts/" + redirect_html, doc_path + "/" + redirect_html)
-
         # Create the zip file for element documentation and put in the project directory
         create_zip_file(doc_path, zip_name)
     else:
