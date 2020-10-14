@@ -15,26 +15,29 @@
 
 element_result element_delete_object(element_object** object)
 {
+    if (!object)
+        return ELEMENT_OK;
+
     delete *object;
     *object = nullptr;
     return ELEMENT_OK;
 }
 
-element_result element_create_object_ctx(element_interpreter_ctx* interpreter, element_object_ctx** output)
+element_result element_create_compilation_ctx(element_interpreter_ctx* interpreter, element_compilation_ctx** output)
 {
     if (!interpreter)
         return ELEMENT_ERROR_API_INTERPRETER_IS_NULL;
 
     if (!output)
-        return ELEMENT_ERROR_API_UNKNOWN;
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    *output = new element_object_ctx;
+    *output = new element_compilation_ctx;
     (*output)->ctx = std::make_unique<element::compilation_context>(interpreter->global_scope.get(), interpreter);
 
     return ELEMENT_OK;
 }
 
-element_result element_delete_object_ctx(element_object_ctx** context)
+element_result element_delete_compilation_ctx(element_compilation_ctx** context)
 {
     if (!context)
         return ELEMENT_OK;
@@ -49,18 +52,24 @@ element_result element_declaration_to_object(
     const element_declaration* declaration,
     element_object** output)
 {
+    if (!declaration || !declaration->decl)
+        return ELEMENT_ERROR_API_DECLARATION_IS_NULL;
+
+    if (!output)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     auto wrapped_declaration = std::make_shared<const element::declaration_wrapper>(declaration->decl);
     *output = new element_object{ std::move(wrapped_declaration) };
     return ELEMENT_OK;
 }
 
 element_result element_object_compile(
-    element_object_ctx* context,
     const element_object* object,
+    element_compilation_ctx* context,
     element_object** output)
 {
     if (!context || !context->ctx)
-        return ELEMENT_ERROR_API_OBJECT_CTX_IS_NULL;
+        return ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL;
 
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
@@ -79,14 +88,14 @@ element_result element_object_compile(
 }
 
 element_result element_object_call(
-    element_object_ctx* context,
     const element_object* object,
+    element_compilation_ctx* context,
     const element_object* arguments,
     unsigned int arguments_count,
     element_object** output)
 {
     if (!context || !context->ctx)
-        return ELEMENT_ERROR_API_OBJECT_CTX_IS_NULL;
+        return ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL;
 
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
@@ -114,13 +123,13 @@ element_result element_object_call(
 }
 
 element_result element_object_index(
-    element_object_ctx* context,
     const element_object* object,
+    element_compilation_ctx* context,
     const char* index,
     element_object** output)
 {
     if (!context || !context->ctx)
-        return ELEMENT_ERROR_API_OBJECT_CTX_IS_NULL;
+        return ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL;
 
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
@@ -166,6 +175,9 @@ element_result element_object_to_log_message(const element_object* object, eleme
 {
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+
+    if (!output)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
     const auto* err = dynamic_cast<const element::error*>(object->obj.get());
     if (err)

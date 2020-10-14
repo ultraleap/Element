@@ -24,7 +24,7 @@ TEST_CASE("ObjectModel", "[API]")
         element_object* const_int_obj = nullptr;
         element_object* my_struct_obj = nullptr;
         element_interpreter_ctx* interpreter = nullptr;
-        element_object_ctx* obj_ctx = nullptr;
+        element_compilation_ctx* obj_ctx = nullptr;
 
         const std::string package = "";
 

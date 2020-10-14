@@ -20,9 +20,9 @@ typedef struct element_object element_object;
 element_result element_delete_object(
     element_object** object);
 
-typedef struct element_object_ctx element_object_ctx;
-element_result element_create_object_ctx(element_interpreter_ctx* interpreter, element_object_ctx** output);
-element_result element_delete_object_ctx(element_object_ctx** context);
+typedef struct element_compilation_ctx element_compilation_ctx;
+element_result element_create_compilation_ctx(element_interpreter_ctx* interpreter, element_compilation_ctx** output);
+element_result element_delete_compilation_ctx(element_compilation_ctx** context);
 
 /// <summary>
 ///
@@ -37,27 +37,27 @@ element_result element_declaration_to_object(
 /// <summary>
 /// if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
 /// </summary>
-/// <param name="context"></param>
 /// <param name="object"></param>
+/// <param name="context"></param>
 /// <param name="output"></param>
 /// <returns></returns>
 element_result element_object_compile(
-    element_object_ctx* context,
     const element_object* object,
+    element_compilation_ctx* context,
     element_object** output);
 
 /// <summary>
 /// if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
 /// </summary>
-/// <param name="context"></param>
 /// <param name="object"></param>
+/// <param name="context"></param>
 /// <param name="arguments"></param>
 /// <param name="arguments_count"></param>
 /// <param name="output"></param>
 /// <returns></returns>
 element_result element_object_call(
-    element_object_ctx* context,
     const element_object* object,
+    element_compilation_ctx* context,
     const element_object* arguments,
     unsigned int arguments_count,
     element_object** output);
@@ -65,14 +65,14 @@ element_result element_object_call(
 /// <summary>
 /// if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
 /// </summary>
-/// <param name="context"></param>
 /// <param name="object"></param>
+/// <param name="context"></param>
 /// <param name="index"></param>
 /// <param name="output"></param>
 /// <returns></returns>
 element_result element_object_index(
-    element_object_ctx* context,
     const element_object* object,
+    element_compilation_ctx* context,
     const char* index,
     element_object** output);
 
