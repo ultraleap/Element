@@ -127,8 +127,9 @@ element_result element_ast_get_value_as_literal(
 /*******************************************************************************
  * obtains the parent of an ast node
  * @param[in] ast ast node to check
- * @param[out] value parent ast node of the ast node
- * @retval ELEMENT_ERROR_INVALID_OPERATION ast node is null or has no parent
+ * @param[out] parent parent ast node of the ast node
+ * @retval ELEMENT_ERROR_API_AST_IS_NULL ast node is null
+ * @retval ELEMENT_ERROR_API_OUTPUT_IS_NULL ast node has no parent
  * @retval ELEMENT_OK success
  ******************************************************************************/
 element_result element_ast_get_parent(
