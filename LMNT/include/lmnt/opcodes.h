@@ -59,12 +59,6 @@ enum
     // sqrt: stack, null, stack
     LMNT_OP_SQRTS,
     LMNT_OP_SQRTV,
-    // log: stack, stack, stack
-    LMNT_OP_LOG,
-    // logn: stack, null, stack
-    LMNT_OP_LN,
-    LMNT_OP_LOG2,
-    LMNT_OP_LOG10,
     // abs: stack, null, stack
     LMNT_OP_ABSS,
     LMNT_OP_ABSV,

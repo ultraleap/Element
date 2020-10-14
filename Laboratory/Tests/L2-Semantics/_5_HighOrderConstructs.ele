@@ -1,0 +1,104 @@
+intrinsic struct Num
+{
+	intrinsic function add(a:Num, b:Num)
+	intrinsic function sub(a:Num, b:Num)
+}
+struct Foo(a)
+
+constraint Indexer(i:Num)
+constraint Binary(a, b)
+
+intrinsic function list
+intrinsic struct List(at:Indexer, count:Num)
+{
+	intrinsic function fold(list:List, initial, accumulator:Binary)
+}
+
+lambdaChainConstant = _(_) = _(_) = 10
+lambdaChainConstantManyTimes = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = _(_) = 10
+
+add = Num.add
+addFromInstanceFunction = 5.add
+getAdd(a:Num) = a.add
+addAndGetSub(a:Num, b:Num)
+{
+	sum = a.add(b)
+	return(a:Num) = sum.sub(a)
+}
+sum(numbers:List) = numbers.fold(0, _(accum, element) = accum.add(element))
+
+constraint NumFunction(a):Num
+constraint FooFunction(a):Foo
+constraint StrictNumFunction(a:Num):Num
+constraint StrictFooFunction(a:Foo):Foo
+
+numFunctionInstance(a):Num = a
+notNumFunctionInstance(a):Foo = a
+strictNumFunctionInstance(a:Num):Num = a
+strictFooFunctionInstance(a:Foo):Foo = a
+
+returnsNumFunction(fn:NumFunction) = fn
+returnsFooFunction(fn:FooFunction) = fn
+returnsStrictNumFunction(fn:StrictNumFunction) = fn
+returnsStrictFooFunction(fn:StrictFooFunction) = fn
+
+applyNumFunction(fn:NumFunction, a) = fn(a)
+applyFooFunction(fn:FooFunction, a) = fn(a)
+applyStrictNumFunction(fn:StrictNumFunction, a) = fn(a)
+applyStrictFooFunction(fn:StrictFooFunction, a) = fn(a)
+
+usePartiallyAppliedFunctionMultipleTimes
+{
+    add5 = 5.add
+    fifteen = add5(10)
+    twenty = add5(15)
+    return = Num.add(fifteen, twenty)
+}
+
+cyclicLocalFunction
+{
+    a = cyclicLocalFunction
+    return = a
+}
+
+# In a slightly more readable form this is: a(b = _(b = a) = b) = b
+# The function takes in 1 argument which has a default value referring to the declaration making it a cyclic reference
+cyclicDefault(input = _(cyclicDefault = cyclicDefault) = cyclicDefault) = input
+
+constraint OuterFunc(capture:Num):InnerFunc
+constraint InnerFunc(input:Num):Num
+
+innerFuncSignatureIncorrect(a:Num):OuterFunc
+{
+    return (capture:Num):InnerFunc
+    {
+        return (input:Foo):Num
+                    # ^ incorrect return type
+        {
+            return = a.add(capture.add(input))
+        }
+    }
+}
+
+
+createTupleFromTuple(tup) = { i = tup.i.add(1), v = tup.v.add(1) }
+getTuple = createTupleFromTuple(createTupleFromTuple({i = 0, v = 1}))
+
+
+struct Vector2(i, v) {}
+createVecFromVec(vec:Vector2):Vector2 = Vector2(vec.i.add(1), vec.v.add(1))
+getVec = createVecFromVec(createVecFromVec(Vector2(0, 1)))
+
+
+struct structContainer(who_cares) { i = 0 v = 1 }
+createStructFromStruct(prev) {
+    struct return(who_cares) { i = prev.i.add(1) v = prev.v.add(1) }
+}
+getStruct = createStructFromStruct(createStructFromStruct(structContainer))
+
+
+namespace namespaceContainer { i = 0 v = 1 }
+createNamespaceFromNamespace(prev) {
+    namespace return { i = prev.i.add(1) v = prev.v.add(1) }
+}
+getNamespace = createNamespaceFromNamespace(createNamespaceFromNamespace(namespaceContainer))

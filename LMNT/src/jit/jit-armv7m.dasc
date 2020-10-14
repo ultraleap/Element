@@ -19,14 +19,11 @@
 | .globals lbl_
 | .actionlist lmnt_actions
 
-| .define rArg1, r0
-| .define rArg2, r1
-| .define rArg3, r2
-| .define rArg4, r3
-| .define rtmp1, r2
-| .define rtmp2, r3
+|.define rArg1, r0
+|.define rArg2, r1
+|.define rtmp1, r2
+|.define rtmp2, r3 
 
-| .define rContext, r10
 | .define rStack, r11
 // TODO: scalar vs vector?
 | .define vtmps1, 4
@@ -45,7 +42,7 @@
 // (NOT anything we call) then we must push/pop them here
 
 | .macro prologue, use_nv
-| push {lr, rContext, rStack}
+| push {lr, rStack}
 ||if (use_nv) {
     | vpush {d8-d15}
 ||}
@@ -55,7 +52,7 @@
 ||if (use_nv) {
     | vpop {d8-d15}
 ||}
-| pop {lr, rContext, rStack}
+| pop {lr, rStack}
 | bx lr
 | .endmacro
 
@@ -129,148 +126,6 @@
 |.endmacro
 
 
-| .macro maths1, op
-||// We don't care if both reg1 and reg3 are vtmps1, it's a temp register anyway
-||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
-||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
-| op s(reg3), s(reg1)
-| writes_or_notify reg3, in.arg3, vtmps1
-| .endmacro
-
-| .macro mathv1simd, op
-||// We don't care if both reg1 and reg3 are vtmpv1, it's a temp register anyway
-||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
-||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv1);
-| op s(reg3), s(reg1)
-| writev_or_notify reg3, in.arg3, vtmpv1
-| .endmacro
-
-| .macro mathv1serial, op
-||// We don't care if both reg1 and reg3 are vtmpv1, it's a temp register anyway
-||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
-||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv1);
-| op s(reg3+0), s(reg1+0)
-| op s(reg3+1), s(reg1+1)
-| op s(reg3+2), s(reg1+2)
-| op s(reg3+3), s(reg1+3)
-| writev_or_notify reg3, in.arg3, vtmpv1
-| .endmacro
-
-| .macro maths2, op
-||// We don't care if both reg1 and reg3 are vtmps1, it's a temp register anyway
-||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
-||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
-||acquireScalarRegisterOrLoad(state, in.arg2, &reg2, ACCESSTYPE_READ, vtmps2);
-| op s(reg3), s(reg1), s(reg2)
-| writes_or_notify reg3, in.arg3, vtmps1
-| .endmacro
-
-| .macro mathv2simd, op
-||// We don't care if both reg1 and reg3 are vtmpv1, it's a temp register anyway
-||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
-||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv1);
-||acquireVectorRegisterOrLoad(state, in.arg2, &reg2, ACCESSTYPE_READ, vtmpv2);
-| op s(reg3), s(reg1), s(reg2)
-| writev_or_notify reg3, in.arg3, vtmpv1
-| .endmacro
-
-| .macro mathv2serial, op
-||// We don't care if both reg1 and reg3 are vtmpv1, it's a temp register anyway
-||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
-||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv1);
-||acquireVectorRegisterOrLoad(state, in.arg2, &reg2, ACCESSTYPE_READ, vtmpv2);
-| op s(reg3+0), s(reg1+0), s(reg2+0)
-| op s(reg3+1), s(reg1+1), s(reg2+1)
-| op s(reg3+2), s(reg1+2), s(reg2+2)
-| op s(reg3+3), s(reg1+3), s(reg2+3)
-| writev_or_notify reg3, in.arg3, vtmpv1
-| .endmacro
-
-
-| .macro round_with_nan_check, dst, src, jmp_if_bad
-| vcvtr.s32.f32 s(dst), s(src)
-|| // NaN check
-| vmrs r1
-| and r2, r1, #0x0F
-| cmp r2, #0
-| beq >1
-| bic r1, r1, #0x0F
-| vmsr r1
-| vmov.f32 s(dst), s(src)  // propagate NaN
-| b jmp_if_bad
-|1:
-| vcvt.f32.s32  s(dst), s(dst)
-| .endmacro
-
-| .macro rounds1, mode
-||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
-||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps2);
-| ensurermode mode, rtmp1
-| round_with_nan_check reg3, reg1, >2
-|2:
-| writes_or_notify reg3, in.arg3, vtmps1
-| .endmacro
-
-| .macro roundv1, mode
-||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
-||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv2);
-| ensurermode mode, rtmp1
-| round_with_nan_check reg3 + 0, reg1 + 0, >2
-|2:
-| round_with_nan_check reg3 + 1, reg1 + 1, >2
-|2:
-| round_with_nan_check reg3 + 2, reg1 + 2, >2
-|2:
-| round_with_nan_check reg3 + 3, reg1 + 3, >2
-|2:
-| writev_or_notify reg3, in.arg3, vtmpv1
-| .endmacro
-
-
-| .macro extern1, fn, offset, outarg, outreg
-||if (acquireScalarRegisterOrLoad(state, in.arg1 + offset, &reg1, ACCESSTYPE_READ, 0)) {
-    | vmov.f32 s0, s(reg1)
-||}
-||platformWriteAndEvictVolatile(state);
-|.rodata
-|1:
-| .long (intptr_t)(&fn)
-|.code
-| ldr r1, <1
-| blx r1
-||if (acquireScalarRegister(state, outarg + offset, &outreg, ACCESSTYPE_WRITE)) {
-    | vmov.f32 s(outreg), s0
-    ||notifyRegisterWritten(state, outreg, 1);
-||} else {
-    | writes outarg, 0
-||}
-||rmode = RMODE_UNKNOWN;
-| .endmacro
-
-| .macro extern2, fn, offset1, offset2, offset3
-||if (acquireScalarRegisterOrLoad(state, in.arg1 + offset1, &reg1, ACCESSTYPE_READ, 0)) {
-    | vmov.f32 s0, s(reg1)
-||}
-||if (acquireScalarRegisterOrLoad(state, in.arg2 + offset2, &reg2, ACCESSTYPE_READ, 1)) {
-    | vmov.f32 s1, s(reg2)
-||}
-||platformWriteAndEvictVolatile(state);
-|.rodata
-|1:
-| .long (intptr_t)(&fn)
-|.code
-| ldr r1, <1
-| blx r1
-||if (acquireScalarRegister(state, in.arg3 + offset3, &reg3, ACCESSTYPE_WRITE)) {
-    | vmov.f32 s(reg3), s0
-    ||notifyRegisterWritten(state, reg3, 1);
-||} else {
-    | writes in.arg3, 0
-||}
-||rmode = RMODE_UNKNOWN;
-| .endmacro
-
-
 #include "dasm_armv7m.h"
 
 
@@ -308,18 +163,6 @@ static void platformWriteAndEvictVolatile(jit_compile_state* state)
 {
     for (size_t i = LMNT_FPREG_V_START; i < LMNT_FPREG_V_END; ++i)
         writeAndEvictRegister(state, i);
-}
-
-static void platformWriteAndEvictByStack(jit_compile_state* state, lmnt_offset start, lmnt_offset end)
-{
-    const reg_status* s = state->fpreg->s;
-    for (size_t i = state->fpreg->start; i < state->fpreg->end; ++i)
-    {
-        // if the first stackpos in this register is before the end of the requested block...
-        // and the end of this register's last stack element is after the start of the block...
-        if (s[i].stackpos < end && s[i].stackpos + s[i].count > start)
-            writeAndEvictRegister(state, i);
-    }
 }
 
 
@@ -364,13 +207,13 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // }
     #endif
 
-    unsigned int num_pc_labels = 0;
+    unsigned int npc = 0;
     // Make PC label space for any branch instructions
     for (size_t i = 0; i < state->in_count; ++i) {
-        num_pc_labels += LMNT_IS_BRANCH_OP(state->instructions[i].opcode);
+        npc += LMNT_IS_BRANCH_OP(state->instructions[i].opcode);
     }
 
-    lmnt_loffset branch_targets[32]; // TODO: dynamically allocate to match num_pc_labels
+    lmnt_loffset branch_targets[32]; // TODO: dynamically allocate to match npc
     unsigned int cur_branch = 0;
     for (size_t i = 0; i < state->in_count; ++i) {
         if (LMNT_IS_BRANCH_OP(state->instructions[i].opcode)) {
@@ -379,13 +222,13 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     }
     cur_branch = 0;
 
-    lmnt_loffset next_target = getNextBranchTarget(branch_targets, num_pc_labels, UINT32_MAX);
+    lmnt_loffset next_target = getNextBranchTarget(branch_targets, npc, UINT32_MAX);
 
     dasm_init(&state->dasm_state, DASM_MAXSECTION);
     void* labels[lbl__MAX];
     dasm_setupglobal(&state->dasm_state, labels, lbl__MAX);
     dasm_setup(&state->dasm_state, lmnt_actions);
-    dasm_growpc(&state->dasm_state, num_pc_labels);
+    dasm_growpc(&state->dasm_state, npc);
 
     dasm_State** Dst = &state->dasm_state;
     | .rodata
@@ -424,12 +267,12 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             // if we may have just jumped here, our cache status is unknown, so nuke everything
             platformWriteAndEvictAll(state);
             // find which label(s) we're meant to be
-            for (size_t t = 0; t < num_pc_labels; ++t) {
+            for (size_t t = 0; t < npc; ++t) {
                 if (state->cur_in == branch_targets[t]) {
                     | =>t:
                 }
             }
-            next_target = getNextBranchTarget(branch_targets, num_pc_labels, next_target);
+            next_target = getNextBranchTarget(branch_targets, npc, next_target);
         }
         // encode instruction
         switch (in.opcode) {
@@ -638,6 +481,64 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
         }
 
+        | .macro maths1, op
+        ||// We don't care if both reg1 and reg3 are vtmps1, it's a temp register anyway
+        ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
+        ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
+        | op s(reg3), s(reg1)
+        | writes_or_notify reg3, in.arg3, vtmps1
+        | .endmacro
+
+        | .macro mathv1simd, op
+        ||// We don't care if both reg1 and reg3 are vtmpv1, it's a temp register anyway
+        ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
+        ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv1);
+        | op s(reg3), s(reg1)
+        | writev_or_notify reg3, in.arg3, vtmpv1
+        | .endmacro
+
+        | .macro mathv1serial, op
+        ||// We don't care if both reg1 and reg3 are vtmpv1, it's a temp register anyway
+        ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
+        ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv1);
+        | op s(reg3+0), s(reg1+0)
+        | op s(reg3+1), s(reg1+1)
+        | op s(reg3+2), s(reg1+2)
+        | op s(reg3+3), s(reg1+3)
+        | writev_or_notify reg3, in.arg3, vtmpv1
+        | .endmacro
+
+        | .macro maths2, op
+        ||// We don't care if both reg1 and reg3 are vtmps1, it's a temp register anyway
+        ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
+        ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
+        ||acquireScalarRegisterOrLoad(state, in.arg2, &reg2, ACCESSTYPE_READ, vtmps2);
+        | op s(reg3), s(reg1), s(reg2)
+        | writes_or_notify reg3, in.arg3, vtmps1
+        | .endmacro
+
+        | .macro mathv2simd, op
+        ||// We don't care if both reg1 and reg3 are vtmpv1, it's a temp register anyway
+        ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
+        ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv1);
+        ||acquireVectorRegisterOrLoad(state, in.arg2, &reg2, ACCESSTYPE_READ, vtmpv2);
+        | op s(reg3), s(reg1), s(reg2)
+        | writev_or_notify reg3, in.arg3, vtmpv1
+        | .endmacro
+
+        | .macro mathv2serial, op
+        ||// We don't care if both reg1 and reg3 are vtmpv1, it's a temp register anyway
+        ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
+        ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv1);
+        ||acquireVectorRegisterOrLoad(state, in.arg2, &reg2, ACCESSTYPE_READ, vtmpv2);
+        | op s(reg3+0), s(reg1+0), s(reg2+0)
+        | op s(reg3+1), s(reg1+1), s(reg2+1)
+        | op s(reg3+2), s(reg1+2), s(reg2+2)
+        | op s(reg3+3), s(reg1+3), s(reg2+3)
+        | writev_or_notify reg3, in.arg3, vtmpv1
+        | .endmacro
+
+
         case LMNT_OP_ADDSS:
             | maths2 vadd.f32
             break;
@@ -662,6 +563,49 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_DIVVV:
             | mathv2serial vdiv.f32
             break;
+
+        | .macro extern1, fn, offset, outarg, outreg
+        ||if (acquireScalarRegisterOrLoad(state, in.arg1 + offset, &reg1, ACCESSTYPE_READ, 0)) {
+            | vmov.f32 s0, s(reg1)
+        ||}
+        ||platformWriteAndEvictVolatile(state);
+        |.rodata
+        |1:
+        | .long (intptr_t)(&fn)
+        |.code
+        | ldr r1, <1
+        | blx r1
+        ||if (acquireScalarRegister(state, outarg + offset, &outreg, ACCESSTYPE_WRITE)) {
+            | vmov.f32 s(outreg), s0
+            ||notifyRegisterWritten(state, outreg, 1);
+        ||} else {
+            | writes outarg, 0
+        ||}
+        ||rmode = RMODE_UNKNOWN;
+        | .endmacro
+
+        | .macro extern2, fn, offset1, offset2, offset3
+        ||if (acquireScalarRegisterOrLoad(state, in.arg1 + offset1, &reg1, ACCESSTYPE_READ, 0)) {
+            | vmov.f32 s0, s(reg1)
+        ||}
+        ||if (acquireScalarRegisterOrLoad(state, in.arg2 + offset2, &reg2, ACCESSTYPE_READ, 1)) {
+            | vmov.f32 s1, s(reg2)
+        ||}
+        ||platformWriteAndEvictVolatile(state);
+        |.rodata
+        |1:
+        | .long (intptr_t)(&fn)
+        |.code
+        | ldr r1, <1
+        | blx r1
+        ||if (acquireScalarRegister(state, in.arg3 + offset3, &reg3, ACCESSTYPE_WRITE)) {
+            | vmov.f32 s(reg3), s0
+            ||notifyRegisterWritten(state, reg3, 1);
+        ||} else {
+            | writes in.arg3, 0
+        ||}
+        ||rmode = RMODE_UNKNOWN;
+        | .endmacro
 
         case LMNT_OP_MODSS:
             // call to C
@@ -703,6 +647,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | extern1 cosf, 0, in.arg3, reg3
             break;
 
+
         case LMNT_OP_POWSS:
             | extern2 powf, 0, 0, 0
             break;
@@ -730,40 +675,6 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_ABSV:
             | mathv1serial vabs.f32
             break;
-        case LMNT_OP_LOG:
-            if (acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, 0)) {
-                | vmov.f32 s0, s(reg1)
-            }
-            platformWriteAndEvictVolatile(state);
-            |.rodata
-            |1:
-            | .long (intptr_t)(&logf)
-            |.code
-            | ldr r1, <1
-            | blx r1
-            | vpush {s0-s0}
-            | reads 0, in.arg2
-            | ldr r1, <1
-            | blx r1
-            | vpop {s1-s1}
-            if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
-                | vdiv.f32 s(reg3), s1, s0
-                notifyRegisterWritten(state, reg3, 1);
-            } else {
-                | vdiv.f32 s1, s1, s0
-                | writes in.arg3, 1
-            }
-            ||rmode = RMODE_UNKNOWN;
-            break;
-        case LMNT_OP_LN:
-            | extern1 logf, 0, in.arg3, reg3
-            break;
-        case LMNT_OP_LOG2:
-            | extern1 log2f, 0, in.arg3, reg3
-            break;
-        case LMNT_OP_LOG10:
-            | extern1 log10f, 0, in.arg3, reg3
-            break;
 
         case LMNT_OP_SUMV:
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
@@ -774,6 +685,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | vadd.f32 s(reg3), s(reg3), s(reg1 + 3)
             | writes_or_notify reg3, in.arg3, vtmps1
             break;
+
 
         case LMNT_OP_MINSS:
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
@@ -929,6 +841,45 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             |4:
             | writev_or_notify reg3, in.arg3, vtmpv1
             break;
+
+        |.macro round_with_nan_check, dst, src, jmp_if_bad
+        | vcvtr.s32.f32 s(dst), s(src)
+        || // NaN check
+        | vmrs r1
+        | and r2, r1, #0x0F
+        | cmp r2, #0
+        | beq >1
+        | bic r1, r1, #0x0F
+        | vmsr r1
+        | vmov.f32 s(dst), s(src)  // propagate NaN
+        | b jmp_if_bad
+        |1:
+        | vcvt.f32.s32  s(dst), s(dst)
+        |.endmacro
+
+        |.macro rounds1, mode
+        ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
+        ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps2);
+        | ensurermode mode, rtmp1
+        | round_with_nan_check reg3, reg1, >2
+        |2:
+        | writes_or_notify reg3, in.arg3, vtmps1
+        |.endmacro
+    
+        |.macro roundv1, mode
+        ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
+        ||acquireVectorRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmpv2);
+        | ensurermode mode, rtmp1
+        | round_with_nan_check reg3 + 0, reg1 + 0, >2
+        |2:
+        | round_with_nan_check reg3 + 1, reg1 + 1, >2
+        |2:
+        | round_with_nan_check reg3 + 2, reg1 + 2, >2
+        |2:
+        | round_with_nan_check reg3 + 3, reg1 + 3, >2
+        |2:
+        | writev_or_notify reg3, in.arg3, vtmpv1
+        |.endmacro
 
         case LMNT_OP_FLOORS:
             | rounds1 RMODE_NEGINF
@@ -1148,41 +1099,12 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
 
         case LMNT_OP_EXTCALL:
-        {
-            lmnt_loffset def_offset = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
-            const lmnt_def* def = validated_get_def(&ctx->archive, def_offset);
-            const lmnt_extcall_info* extcall;
-            result = lmnt_ictx_extcall_get(ctx, def->code, &extcall);
-            if (result != LMNT_OK) break;
-            // Make sure that anything the extcall has access to isn't cached
-            platformWriteAndEvictByStack(state, in.arg3, in.arg3 + extcall->args_count + extcall->rvals_count);
-            // Also evict anything volatile since the function could mess with it
-            platformWriteAndEvictVolatile(state);
-
-            |.rodata
-            |1:
-            | .long (const intptr_t)(extcall->function)
-            |2:
-            | .long (const intptr_t)(extcall)
-            |.code
-            | ldr r12, <1
-            | mov rArg1, rContext
-            | ldr rArg2, <2
-            | add rArg3, rStack, #(in.arg3 * sizeof(lmnt_value))
-            | add rArg4, rArg3, #(extcall->args_count * sizeof(lmnt_value))
-            | blx r12
-            | cmp r0, #(LMNT_OK)
-            | bne ->return
-            ||rmode = RMODE_UNKNOWN;
+            // keep these or not?
             break;
-        }
 
         default:
             break;
         }
-
-        if (result != LMNT_OK)
-            break;
 
 #if defined(LMNT_JIT_DEBUG_VALIDATE_REGCACHE)
         result = validateRegCache(state);
@@ -1192,11 +1114,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     }
 
     | ->ok_return:
-    // Ensure our return values or any updated constants are flushed to stack
-    const lmnt_offset constants_count = validated_get_constants_count(&ctx->archive);
-    const lmnt_offset rvals_start = constants_count + def->args_count;
-    platformWriteAndEvictByStack(state, 0, constants_count);
-    platformWriteAndEvictByStack(state, rvals_start, rvals_start + def->rvals_count);
+    platformWriteAndEvictAll(state);
     | mov r0, #LMNT_OK
     | ->return:
     | epilogue, use_nv
@@ -1211,8 +1129,8 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             // + 1 to indicate the function is THUMB not ARM
             fndata->function = (lmnt_jit_fn)((intptr_t)labels[lbl_lmnt_main] + 1);
         }
+        dasm_free(&state->dasm_state);
     }
-    dasm_free(&state->dasm_state);
 
 #if defined(LMNT_JIT_COLLECT_STATS)
     if (stats)

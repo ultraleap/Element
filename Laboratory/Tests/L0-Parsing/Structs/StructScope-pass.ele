@@ -1,6 +1,0 @@
-struct MyStruct(a, b)
-{
-    a = 15;
-    b = 10;
-    c(a) = add(a, 5);
-}

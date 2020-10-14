@@ -1,0 +1,4 @@
+struct TimePoint(whole:Num, fractional:Num)
+{
+    value(this:TimePoint, period:Num) = this.whole.rem(period).add(this.fractional).rem(period)
+}

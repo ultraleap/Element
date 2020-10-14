@@ -6,19 +6,10 @@
 #include "lmnt/opcodes.h"
 #include "lmnt/extcalls.h"
 
-typedef uint32_t lmnt_archive_flags;
-enum
-{
-    LMNT_ARCHIVE_NONE          = (0U << 0),
-    LMNT_ARCHIVE_VALIDATED     = (1U << 0),
-    LMNT_ARCHIVE_USES_EXTCALLS = (1U << 1),
-};
-
 typedef struct lmnt_archive
 {
     const char* data;
     size_t size;
-    lmnt_archive_flags flags;
 } lmnt_archive;
 
 #pragma pack(push, 1)
@@ -36,20 +27,20 @@ typedef struct lmnt_archive_header
     uint32_t constants_length;
 } lmnt_archive_header;
 
-typedef uint16_t lmnt_def_flags;
+typedef uint16_t lmnt_defflags;
 enum
 {
-    LMNT_DEFFLAG_NONE      = (0U << 0),
-    LMNT_DEFFLAG_INTERFACE = (1U << 0),
-    LMNT_DEFFLAG_EXTERN    = (1U << 1),
-    LMNT_DEFFLAG_LAMBDA    = (1U << 2),
+    LMNT_DEFFLAG_NONE      = 0x00,
+    LMNT_DEFFLAG_INTERFACE = 0x01,
+    LMNT_DEFFLAG_EXTERN    = 0x02,
+    LMNT_DEFFLAG_LAMBDA    = 0x04,
 };
 
 typedef struct lmnt_def
 {
     uint16_t length;
     lmnt_offset name; // string
-    lmnt_def_flags flags;
+    lmnt_defflags flags;
     lmnt_loffset code; // code
     uint16_t stack_count_unaligned;
     uint16_t stack_count_aligned;
@@ -103,7 +94,7 @@ lmnt_result lmnt_get_code_instructions(const lmnt_archive* archive, lmnt_loffset
 
 lmnt_result lmnt_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count);
 lmnt_result lmnt_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section);
-lmnt_result lmnt_get_data_block(const lmnt_archive* archive, const lmnt_data_section* section, const lmnt_value** block);
+lmnt_result lmnt_get_data_block(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_value** block);
 
 lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count);
 

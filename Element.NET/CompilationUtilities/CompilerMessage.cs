@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using Tomlyn;
@@ -8,60 +9,108 @@ using Tomlyn.Model;
 
 namespace Element
 {
-    public readonly struct CompilerMessage
+    public class CompilerMessage
     {
-        private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
+        private static readonly Dictionary<string, TomlTable> _messageToml = new Dictionary<string, TomlTable>();
 
-        private static TomlTable GetMessageToml(int messageCode) =>
-            _messageToml[$"ELE{messageCode}"] is TomlTable messageTable
-                ? messageTable
-                : throw new InternalCompilerException($"ELE{messageCode} could not be found");
-
-        public static string GetMessageName(int messageCode) => (string) GetMessageToml(messageCode)["name"];
-
-        public static MessageLevel GetMessageLevel(int messageCode) =>
-            Enum.TryParse((string) GetMessageToml(messageCode)["level"], out MessageLevel level)
-                ? level
-                : throw new InternalCompilerException($"\"{level}\" is not a valid message level");
-
-        public CompilerMessage(string message, MessageLevel? messageLevel = null) : this(null, messageLevel, message, null){}
-
-        [JsonConstructor]
-        public CompilerMessage(int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? traceStack)
+        private static bool TryGetMessageToml(string messageType, int messageCode, out TomlTable? message)
         {
-            MessageCode = messageCode;
-            MessageLevel = messageCode.HasValue ? GetMessageLevel(messageCode.Value) : messageLevel;
-            Context = context;
-            TraceStack = traceStack ?? Array.Empty<TraceSite>();
-
-            var builder = new StringBuilder();
-            if (messageCode.HasValue)
+            if (string.IsNullOrEmpty(messageType))
             {
-                builder.Append("ELE").Append(MessageCode).Append(": ").Append(MessageLevel).Append(" - ").AppendLine(GetMessageName(messageCode.Value));
+                message = null;
+                return false;
             }
-
-            builder.Append(Context);
-            if (TraceStack.Count > 0)
+            if (!_messageToml.TryGetValue(messageType, out var tomlFile))
             {
-                builder.AppendLine();
-                builder.AppendLine("Element source trace:");
-                foreach (var site in TraceStack)
+                lock (_messageToml)
                 {
-                    builder.Append("    ").AppendLine(site.ToString());
+                    _messageToml[messageType] = tomlFile = Toml.Parse(File.ReadAllText($"Messages-{messageType}.toml")).ToModel();
                 }
-
-                builder.AppendLine();
             }
-
-            _message = builder.ToString();
+            message = tomlFile.TryGetToml($"{messageType}{messageCode}", out var obj) && obj is TomlTable table ? table : null;
+            return message != null;
         }
-        private readonly string _message;
+        
+        public static bool TryGetMessageName(string messageType, int messageCode, out string? name)
+        {
+            name = TryGetMessageToml(messageType, messageCode, out var table) ? (string) table!["name"] : null;
+            return name != null;
+        }
 
+        public static bool TryGetMessageLevel(string messageType, int messageCode, out MessageLevel level)
+        {
+            if (Enum.TryParse(TryGetMessageToml(messageType, messageCode, out var table) ? (string) table!["level"] : string.Empty, out level)) return true;
+            level = Element.MessageLevel.Error;
+            return false;
+        }
+        
+        public CompilerMessage(string message, string messageType = "", MessageLevel? messageLevel = null) : this(messageType, null, messageLevel, message, null) {}
+        public CompilerMessage(string messageType, int messageCode, string? context, IReadOnlyCollection<TraceSite>? traceStack = null) : this(messageType, messageCode, null, context, traceStack) {}
+        
+        [JsonConstructor]
+        public CompilerMessage(string messageType, int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? traceStack)
+        {
+            MessageType = messageType;
+            MessageCode = messageCode;
+            MessageLevel = (messageCode.HasValue, TryGetMessageLevel(messageType, messageCode.GetValueOrDefault(0), out var level)) switch
+            {
+                (true, true) => level,
+                (true, false) => null,
+                (false, _) => messageLevel
+            };
+            Context = context;
+            TraceStack = traceStack?.ToArray() // Force a copy
+                         ?? Array.Empty<TraceSite>();
+            _message = null;
+        }
+        private string? _message;
+
+        public string MessageType { get; }
         public int? MessageCode { get; }
         public MessageLevel? MessageLevel { get; }
         public string? Context { get; }
-        public IReadOnlyCollection<TraceSite> TraceStack { get; }
+        public IReadOnlyCollection<TraceSite>? TraceStack { get; }
 
-        public override string ToString() => _message;
+        public override string ToString() => ToString(true);
+        
+        public string ToString(bool stackTrace)
+        {
+            if (_message == null)
+            {
+                var includingStackTrace = stackTrace && TraceStack?.Count > 0;
+                if (MessageCode.HasValue || includingStackTrace)
+                {
+                    var builder = new StringBuilder();
+                    if (MessageCode.HasValue)
+                    {
+                        builder.Append(MessageType).Append(MessageCode).Append(": ").Append(MessageLevel).Append(" - ")
+                               .AppendLine(TryGetMessageName(MessageType, MessageCode.Value, out var message)
+                                               ? message
+                                               : "Unknown");
+                    }
+
+                    builder.Append(Context);
+                    if (includingStackTrace)
+                    {
+                        builder.AppendLine();
+                        builder.AppendLine("Element source trace:");
+                        foreach (var site in TraceStack)
+                        {
+                            builder.Append("    ").AppendLine(site.ToString());
+                        }
+
+                        builder.AppendLine();
+                    }
+
+                    _message = builder.ToString();
+                }
+                else
+                {
+                    _message = Context ?? string.Empty;
+                }
+            }
+
+            return _message;
+        }
     }
 }

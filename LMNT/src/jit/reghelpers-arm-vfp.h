@@ -48,7 +48,7 @@ typedef struct
     size_t end;
 } fpreg_set;
 
-struct jit_fpreg_data
+struct jit_fpreg_data_s
 {
     size_t start;
     size_t end;

@@ -1,0 +1,70 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - feature/documentation
+
+jobs:
+  generate-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: docs
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Merge branch
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "Github Action"
+          git fetch
+          git merge origin/${GITHUB_REF#refs/heads/} -m "[Auto] Merging ${GITHUB_REF#refs/heads/} onto docs." --allow-unrelated-histories -s ours
+          git checkout --detach origin/${GITHUB_REF#refs/heads/}
+          git reset --soft docs
+          git checkout docs
+          git commit --amend -C HEAD
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install doxygen
+          sudo apt-get install python3-venv
+      - name: Generate Docs
+        run: |
+          cd Documentation
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --target Documentation
+      - name: Move Docs
+        run: |
+          cd Documentation
+          python scripts/move-docs.py
+      - name: Commit Docs
+        run: |
+          git_hash=$(git rev-parse --short "$GITHUB_SHA")
+          git_branch=${GITHUB_REF#refs/heads/}
+          git config --local user.email "actions@github.com"
+          git config --local user.name "Github Action"
+          git add docs/\*
+          git commit -m "[Auto] Documentation generation from commit: $git_hash on $git_branch" -a
+          git status
+      - name: Push Docs
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: docs
+      - name: Zip Docs
+        run: |
+          cd Documentation
+          python scripts/zip-docs.py Element_Documentation
+      - name: Upload Docs
+        uses: actions/upload-artifact@1.0.0
+        with:
+          name: Element Documentation
+          path: Documentation/Element_Documentation.zip

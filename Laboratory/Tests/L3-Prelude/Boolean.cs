@@ -1,76 +1,81 @@
-using Element;
 using NUnit.Framework;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.L3.Prelude
 {
 	internal class Boolean : PreludeFixture
 	{
-		[
-			TestCase("Bool(0)", "false"),
-			TestCase("Bool(1)", "true"),
-			TestCase("Bool(1.2)", "true"),
-			TestCase("Bool(9999)", "true"),
-			TestCase("Bool(0.1)", "true"),
-			TestCase("Bool(-0.1)", "false")
-		]
-		[
-			TestCase("Bool.not(true)", "false"),
-			TestCase("Bool.not(false)", "true"),
-		]
-		[
-			TestCase("false.and(false)", "false"),
-			TestCase("false.and(true)", "false"),
-			TestCase("true.and(false)", "false"),
-			TestCase("true.and(true)", "true")
-		]
-		[
-			TestCase("false.or(false)", "false"),
-			TestCase("false.or(true)", "true"),
-			TestCase("true.or(false)", "true"),
-			TestCase("true.or(true)", "true")
-		]
-		[
-			TestCase("false.xor(false)", "false"),
-			TestCase("false.xor(true)", "true"),
-			TestCase("true.xor(false)", "true"),
-			TestCase("true.xor(true)", "false")
-		]
-		[
-			TestCase("0.lt(0)", "false"),
-			TestCase("0.2.lt(0)", "false"),
-			TestCase("-0.2.lt(0)", "true"),
-			TestCase("1.lt(2)", "true")
-		]
-		[
-			TestCase("0.gt(0)", "false"),
-			TestCase("0.2.gt(0)", "true"),
-			TestCase("-0.2.gt(0)", "false"),
-			TestCase("2.gt(1)", "true")
-		]
-		[
-			TestCase("0.leq(0)", "true"),
-			TestCase("0.2.leq(0)", "false"),
-			TestCase("-0.2.leq(0)", "true"),
-			TestCase("1.leq(2)", "true")
-		]
-		[
-			TestCase("0.geq(0)", "true"),
-			TestCase("0.2.geq(0)", "true"),
-			TestCase("-0.2.geq(0)", "false"),
-			TestCase("2.geq(1)", "true")
-		]
-		[
-			TestCase("0.eq(0)", "true"),
-			TestCase("1.eq(0)", "false"),
-			TestCase("0.1.eq(0)", "false"),
-			TestCase("999.999.eq(999.999)", "true")
-		]
-		[
-			TestCase("0.neq(0)", "false"),
-			TestCase("1.neq(0)", "true"),
-			TestCase("0.1.neq(0)", "true"),
-			TestCase("999.999.neq(999.999)", "false")
-		]
-		public void Operations(string expression, string expected) => AssertApproxEqual(ValidatedCompilationInput, expression, expected);
+		/*[Theory]
+		public void Constants((string ConstantExpression,string ExpectedExpression) args, EvaluationMode evaluationMode) =>
+			AssertApproxEqual(ValidatedCompilerInput, args, evaluationMode);
+
+		[DatapointSource] public (string ConstantExpression, string ExpectedExpression)[] ConstantExpressionData =
+		{
+
+		};*/
+		
+		[Theory]
+		public void FunctionCalls((string FunctionExpression, string CallExpression, string ExpectedExpression) args, EvaluationMode evaluationMode) =>
+			AssertApproxEqual(ValidatedCompilerInput, args, evaluationMode);
+
+		[DatapointSource] public (string FunctionExpression, string CallExpression, string ExpectedExpression)[] FunctionCallData =
+		{
+			("Bool" ,"(0)", "False"),
+			("Bool" ,"(1)", "True"),
+			("Bool" ,"(1.2)", "True"),
+			("Bool" ,"(9999)", "True"),
+			("Bool" ,"(0.1)", "True"),
+			("Bool" ,"(-0.1)", "False"),
+			
+			("Bool.not" ,"(True)", "False"),
+			("Bool.not" ,"(False)", "True"),
+			
+			("False.and" ,"(False)", "False"),
+			("False.and" ,"(True)", "False"),
+			("True.and" ,"(False)", "False"),
+			("True.and" ,"(True)", "True"),
+			
+			("False.or" ,"(False)", "False"),
+			("False.or" ,"(True)", "True"),
+			("True.or" ,"(False)", "True"),
+			("True.or" ,"(True)", "True"),
+			
+			("False.xor" ,"(False)", "False"),
+			("False.xor" ,"(True)", "True"),
+			("True.xor" ,"(False)", "True"),
+			("True.xor" ,"(True)", "False"),
+			
+			("0.lt" ,"(0)", "False"),
+			("0.2.lt" ,"(0)", "False"),
+			("-0.2.lt" ,"(0)", "True"),
+			("1.lt" ,"(2)", "True"),
+			
+			("0.gt" ,"(0)", "False"),
+			("0.2.gt" ,"(0)", "True"),
+			("-0.2.gt" ,"(0)", "False"),
+			("2.gt" ,"(1)", "True"),
+			
+			("0.leq" ,"(0)", "True"),
+			("0.2.leq" ,"(0)", "False"),
+			("-0.2.leq" ,"(0)", "True"),
+			("1.leq" ,"(2)", "True"),
+			
+			("0.geq" ,"(0)", "True"),
+			("0.2.geq" ,"(0)", "True"),
+			("-0.2.geq" ,"(0)", "False"),
+			("2.geq" ,"(1)", "True"),
+			
+			("0.eq" ,"(0)", "True"),
+			("1.eq" ,"(0)", "False"),
+			("0.1.eq" ,"(0)", "False"),
+			("999.999.eq" ,"(999.999)", "True"),
+			
+			("0.neq" ,"(0)", "False"),
+			("1.neq" ,"(0)", "True"),
+			("0.1.neq" ,"(0)", "True"),
+			("999.999.neq" ,"(999.999)", "False"),
+			
+			("_(cond:Bool, a:Num, b:Num):Num = Bool.if(cond, a, b)" ,"(True, 1, 0)", "1"),
+			("_(cond:Bool, a:Num, b:Num):Num = Bool.if(cond, a, b)" ,"(False, 1, 0)", "0"),
+		};
 	}
 }

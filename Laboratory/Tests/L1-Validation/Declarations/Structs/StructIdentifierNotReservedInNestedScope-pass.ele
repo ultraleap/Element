@@ -1,0 +1,7 @@
+struct MyStruct(a:Num)
+{
+	namespace Nested
+	{
+		MyStruct = 20
+	}
+}

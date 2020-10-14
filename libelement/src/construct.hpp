@@ -20,7 +20,12 @@ using construct_vector = std::vector<construct_shared_ptr>;
 struct port_info
 {
     std::string name;
-    type_constraint_const_shared_ptr type;
+    constraint_const_shared_ptr type;
+
+    bool operator==(const port_info& other) const
+    {
+        return name == other.name && type == other.type;
+    }
 };
 
 
@@ -32,6 +37,22 @@ struct element_construct : public std::enable_shared_from_this<element_construct
     const std::vector<port_info>& inputs() const;
     const std::vector<port_info>& outputs() const;
     inline bool is_leaf() const { return m_inputs.empty() && m_outputs.empty(); }
+
+    const port_info* input(std::string name) const
+    {
+        for (const auto& p : inputs()) {
+            if (p.name == name) return &p;
+        }
+        return nullptr;
+    }
+
+    const port_info* output(std::string name) const
+    {
+        for (const auto& p : outputs()) {
+            if (p.name == name) return &p;
+        }
+        return nullptr;
+    }
 
     // expression_shared_ptr as_expression() const;
 
@@ -45,8 +66,8 @@ struct element_construct : public std::enable_shared_from_this<element_construct
 protected:
     element_construct() = default;
 
-    std::vector<port_info> generate_portlist(const element_scope* scope, element_ast* portlist) const;
-    type_const_shared_ptr find_typename(const element_scope* scope, element_ast* type) const;
+    std::vector<port_info> generate_portlist(const element_scope* scope, const element_ast* portlist) const;
+    type_const_shared_ptr find_typename(const element_scope* scope, const element_ast* type) const;
 
     virtual void generate_ports_cache() const { }
     mutable bool m_ports_cached = false;

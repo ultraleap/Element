@@ -1,40 +1,60 @@
+using System.Collections.Generic;
 using Element.AST;
 
 namespace Element
 {
-    public abstract class Context
+    /// <summary>
+    /// Contains contextual information about the state of compilation including compiler options and current trace stack, call stack etc.
+    /// </summary>
+    public class Context
     {
-        protected Context(GlobalScope globalScope, CompilationInput compilationInput)
+        private class NoScope : IScope
         {
-            GlobalScope = globalScope;
-            CompilationInput = compilationInput;
-        }
+            private readonly Context _scopelessContext;
 
-        public GlobalScope GlobalScope { get; }
-        protected CompilationInput CompilationInput { get; }
-        public MessageLevel Verbosity => CompilationInput.Verbosity;
-        public bool Debug => CompilationInput.Debug;
-        public bool SkipValidation => CompilationInput.SkipValidation;
-
-        public CompilationErr LogError(int? messageCode, string context = default)
-        {
-            var msg = MakeMessage(messageCode, context);
-            if (!msg.MessageLevel.HasValue || CompilationInput.Verbosity >= msg.MessageLevel.Value)
+            public NoScope(Context scopelessContext)
             {
-                CompilationInput.LogCallback?.Invoke(msg);
+                _scopelessContext = scopelessContext;
             }
-
-            return CompilationErr.Instance;
+            public Result<IValue> Lookup(Identifier id, Context context) =>
+                throw new InternalCompilerException($"Context '{_scopelessContext}' has no root scope, performing lookup is not possible");
         }
-
-        public void Log(string message)
+        
+        public Context(IScope? rootScope, CompilerOptions? compilerOptions)
         {
-            var msg = MakeMessage(null, message);
-            if (!msg.MessageLevel.HasValue || CompilationInput.Verbosity >= msg.MessageLevel.Value)
-            {
-                CompilationInput.LogCallback?.Invoke(msg);
-            }
+            RootScope = rootScope ?? new NoScope(this);
+            CompilerOptions = compilerOptions ?? new CompilerOptions(MessageLevel.Information);
         }
-        protected abstract CompilerMessage MakeMessage(int? messageCode, string context = default);
+        public Context(SourceContext sourceContext) : this(sourceContext.GlobalScope, sourceContext.CompilerOptions) { }
+        
+        public static Context None { get; } = new Context(null, null);
+
+        public IScope RootScope { get; }
+        public CompilerOptions CompilerOptions { get; }
+        public Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
+        public Stack<IValue> CallStack { get; } = new Stack<IValue>();
+        public Stack<Declaration> DeclarationStack { get; } = new Stack<Declaration>();
+        
+        public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
+            Parse<Expression>(expression)
+                .Bind(tle => EvaluateExpression(tle, scopeToEvaluateIn));
+
+        public Result<T> Parse<T>(string source, string sourceName = "<input source>") =>
+            Parser.Parse<TopLevel<T>>(new SourceInfo(sourceName, source), this, CompilerOptions.NoParseTrace)
+                  .Map(parsed => parsed.Object);
+
+        public Result<IValue> EvaluateExpression(Expression expression, IScope? scopeToEvaluateIn = null) =>
+            expression.Validate(this)
+                      .Bind(() => expression.ResolveExpression(scopeToEvaluateIn ?? RootScope, this));
+        
+        public CompilerMessage? Trace(string messageType, int messageCode, string? contextString) =>
+            (CompilerMessage.TryGetMessageLevel(messageType, messageCode, out var level), level >= CompilerOptions.Verbosity) switch
+            {
+                (true, true) => new CompilerMessage(messageType, messageCode, contextString, TraceStack),
+                (true, false) => null, // No message should be produced 
+                (false, _) => new CompilerMessage(messageType, null, MessageLevel.Error, $"Couldn't get {nameof(MessageLevel)} for {messageCode}", null),
+            };
+
+        public CompilerMessage Trace(MessageLevel messageLevel, string message, string messageType = "") => new CompilerMessage(messageType, null, messageLevel, message, TraceStack);
     }
 }

@@ -1,10 +1,9 @@
 include(FetchContent)
 
 FetchContent_Declare(cunit
-    GIT_REPOSITORY https://gitlab.com/cunity/cunit.git
+    GIT_REPOSITORY https://gitlab.com/cunity/cunit
     GIT_TAG        eccf9ef56f5d8d895ccd4129b80c92f448a6023f
-#   GIT_SHALLOW    true
-)
+    GIT_SHALLOW    true)
 FetchContent_GetProperties(cunit)
 if (NOT cunit_POPULATED)
     FetchContent_Populate(cunit)

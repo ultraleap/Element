@@ -64,7 +64,8 @@ struct compiler_ctx
 
 element_result buf_raw_write_and_update(char* b, size_t bsize, size_t& i, const void* d, size_t dsize)
 {
-    if (i + dsize > bsize) return ELEMENT_ERROR_INVALID_OPERATION;
+    if (i + dsize > bsize) 
+        return ELEMENT_ERROR_INVALID_OPERATION;
     std::memcpy(b + i, d, dsize);
     i += dsize;
     return ELEMENT_OK;
@@ -80,7 +81,7 @@ static element_result generate_lmnt_constants(
     compiler_ctx& ctx,
     const expression_const_shared_ptr& expr)
 {
-    if (auto ce = expr->as<element_constant>()) {
+    if (auto ce = expr->as<element_expression_constant>()) {
         size_t cidx = ctx.archive.get_constant(ce->value());
         ctx.entries()[expr.get()] = { element_lmnt_stack_entry::entry_type::constant, cidx, 1 };
     } else {
@@ -97,23 +98,23 @@ static element_result generate_lmnt_ops(
     size_t depth = 0)
 {
     // TODO: smarts of any sort - especially vectorisation
-    if (auto ce = expr->as<element_constant>()) {
+    if (auto ce = expr->as<element_expression_constant>()) {
         // already computed by previous pass
         // TODO: if constant -> output, do a COPY
         return ELEMENT_OK;
-    } else if (auto ie = expr->as<element_input>()) {
+    } else if (auto ie = expr->as<element_expression_input>()) {
         assert(ie->index() + ie->get_size() <= ctx.fn->inputs_size);
         ctx.entries()[expr.get()] = {element_lmnt_stack_entry::entry_type::input, ie->index(), ie->get_size()};
         // TODO: if input -> output, do a COPY
         return ELEMENT_OK;
-    } else if (auto se = expr->as<element_structure>()) {
+    } else if (auto se = expr->as<element_expression_structure>()) {
         assert(depth == 0);
         for (const auto& d : se->dependents()) {
             // do *not* increment depth here: let the dependents write to the outputs as needed
             ELEMENT_OK_OR_RETURN(generate_lmnt_ops(ctx, d, depth));
         }
         return ELEMENT_OK;
-    } else if (auto ue = expr->as<element_unary>()) {
+    } else if (auto ue = expr->as<element_expression_unary>()) {
         ELEMENT_OK_OR_RETURN(generate_lmnt_ops(ctx, ue->input(), depth + 1));
         element_lmnt_instruction op;
         // find our opcode
@@ -135,7 +136,7 @@ static element_result generate_lmnt_ops(
         ctx.fn->ops.push_back(op);
         ctx.entries()[expr.get()] = op.arg3;
         return ELEMENT_OK;
-    } else if (auto be = expr->as<element_binary>()) {
+    } else if (auto be = expr->as<element_expression_binary>()) {
         ELEMENT_OK_OR_RETURN(generate_lmnt_ops(ctx, be->input1(), depth + 1));
         ELEMENT_OK_OR_RETURN(generate_lmnt_ops(ctx, be->input2(), depth + 1));
         element_lmnt_instruction op;
@@ -172,7 +173,7 @@ static element_result generate_lmnt_ops(
 
 static size_t get_input_size(const expression_const_shared_ptr& expr)
 {
-    auto ie = expr->as<element_input>();
+    auto ie = expr->as<element_expression_input>();
     if (ie) {
         return ie->get_size();
     } else {

@@ -11,12 +11,12 @@ target_sources(lmnt PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/extcalls.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/interpreter.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/opcodes.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/ops_bounds.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/ops_branch.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/ops_fncall.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/ops_math.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/ops_misc.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/ops_trig.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/lmnt/ops_util.h"
 )
 
 if (LMNT_TARGET_ARCH STREQUAL "x86_64")

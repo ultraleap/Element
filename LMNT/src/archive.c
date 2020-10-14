@@ -7,7 +7,6 @@
 #include <limits.h>
 
 #include "lmnt/extcalls.h"
-#include "lmnt/validation.h"
 #include "helpers.h"
 
 
@@ -22,34 +21,29 @@ lmnt_result lmnt_archive_init(lmnt_archive* archive, const char* data, size_t si
 
     archive->data = data;
     archive->size = size;
-    archive->flags = LMNT_ARCHIVE_NONE;
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_constant(const lmnt_archive* archive, uint32_t offset, lmnt_value* value)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     *value = validated_get_constant(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_constants(const lmnt_archive* archive, uint32_t offset, const lmnt_value** value)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     *value = validated_get_constants(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_constants_count(const lmnt_archive* archive, lmnt_offset* value)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     *value = validated_get_constants_count(archive);
     return LMNT_OK;
 }
 
 int32_t lmnt_get_string(const lmnt_archive* archive, uint32_t offset, const char** ptr)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     const uint16_t size = *(uint16_t*)(get_strings_segment(archive) + offset);
     if (ptr)
         *ptr = get_strings_segment(archive) + offset + sizeof(uint16_t);
@@ -58,21 +52,18 @@ int32_t lmnt_get_string(const lmnt_archive* archive, uint32_t offset, const char
 
 lmnt_result lmnt_get_def(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_def** def)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     *def = validated_get_def(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_loffset** bases)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     *bases = validated_get_def_bases(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code, const lmnt_instruction** instrs)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     const char* const base = get_defs_segment(archive) + offset;
     const lmnt_def* hdr = (const lmnt_def*)base;
     *code = validated_get_code(archive, hdr->code);
@@ -82,7 +73,6 @@ lmnt_result lmnt_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, 
 
 lmnt_result lmnt_find_def(const lmnt_archive* archive, const char* name, const lmnt_def** def)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     const char* pos = get_defs_segment(archive);
     const char* end = get_code_segment(archive);
     while (pos < end)
@@ -103,45 +93,38 @@ lmnt_result lmnt_find_def(const lmnt_archive* archive, const char* name, const l
 
 lmnt_result lmnt_get_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     *code = validated_get_code(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_code_instructions(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_instruction** instrs)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     *instrs = validated_get_code_instructions(archive, offset);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     *count = validated_get_data_sections_count(archive);
     return LMNT_OK;
 }
 
 lmnt_result lmnt_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     *section = validated_get_data_section(archive, index);
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_data_block(const lmnt_archive* archive, const lmnt_data_section* section, const lmnt_value** block)
+lmnt_result lmnt_get_data_block(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_value** block)
 {
-    LMNT_ENSURE_VALIDATED(archive);
-    *block = validated_get_data_block(archive, section->offset);
+    *block = validated_get_data_block(archive, offset);
     return LMNT_OK;
 }
 
 
 lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
-    archive->flags &= ~LMNT_ARCHIVE_USES_EXTCALLS; // reset flag before checking below
     size_t defindex = 0;
     while (defindex < hdr->defs_length)
     {
@@ -149,12 +132,12 @@ lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_i
         // If this def is an extern with a function body...
         if ((def->flags & LMNT_DEFFLAG_EXTERN) && !(def->flags & LMNT_DEFFLAG_INTERFACE))
         {
-            const char* name = validated_get_string(archive, def->name);
+            const char* name = NULL;
+            lmnt_result sresult = lmnt_get_string(archive, def->name, &name);
+            if (sresult < 0) return sresult;
             size_t index;
             LMNT_OK_OR_RETURN(lmnt_extcall_find_index(table, table_count, name, def->args_count, def->rvals_count, &index));
             def->code = (lmnt_loffset)index;
-            // Mark archive as using extcalls
-            archive->flags |= LMNT_ARCHIVE_USES_EXTCALLS;
         }
         defindex += def->length;
     }
@@ -164,7 +147,6 @@ lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_i
 
 lmnt_result lmnt_archive_print(const lmnt_archive* archive)
 {
-    LMNT_ENSURE_VALIDATED(archive);
     // Header
     lmnt_loffset offset = 0;
     const lmnt_archive_header* hdr = (lmnt_archive_header*)(archive->data);

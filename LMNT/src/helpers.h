@@ -60,11 +60,6 @@ static inline size_t value_to_size_t(lmnt_value v)
 
 
 
-static inline const char* validated_get_string(const lmnt_archive* archive, uint32_t offset)
-{
-    return (const char*)(get_strings_segment(archive) + offset + sizeof(uint16_t));
-}
-
 static inline lmnt_value validated_get_constant(const lmnt_archive* archive, uint32_t offset)
 {
     return *(lmnt_value*)(get_constants_segment(archive) + offset);

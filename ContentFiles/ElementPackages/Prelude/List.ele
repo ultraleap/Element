@@ -1,0 +1,56 @@
+# list(...):List
+# Creates a literal List from the parameters
+# Elements must be homogeneous
+intrinsic function list:List
+
+# Represents a finite set of elements
+intrinsic struct List(at:Indexer, count:Num)
+{
+    # fold summarizes a list
+    # Invokes accumulator(total, element) with each element of the list, starting with initial as the total and returning a new total each iteration.
+    # For example, fold(array(1, 2, 3), 0, add) evaluates to 0.add(1).add(2).add(3).
+    intrinsic function fold(list:List, initial, accumulator:Binary)
+
+    map(a:List, mapper:Unary):List = List(_(idx:Num) = mapper(a.at(idx)), a.count)
+
+    zip(a:List, b:List, zipper:Binary):List = List(_(idx:Num) = zipper(a.at(idx), b.at(idx)), a.count)
+
+    repeat(value, count:Num):List = List(_(_:Num) = value, count)
+
+    range(start:Num, count:Num):List = List(_(idx:Num) = idx.add(start), count)
+
+    concatenate(a:List, b:List):List
+    {
+        indexer(idx:Num) = if(idx.lt(a.count), a.at(idx), b.at(idx.sub(a.count)))
+        count = a.count.add(b.count)
+        return = List(indexer, count)
+    }
+
+    take(a:List, amount:Num):List = List(a.at, amount)
+
+    skip(a:List, amount:Num):List
+    {
+        count = a.count.sub(amount)
+        indexer(idx:Num) = a.at(idx.add(amount))
+        return = List(indexer, count)
+    }
+
+    slice(a:List, start:Num, count:Num):List = List(_(idx) = a.at(idx.add(start)), count)
+
+    filter(a:List, predicate:Predicate):List
+    {
+        count = countWhere(a, predicate)
+        index(idx:Num) = idx.add(a.slice(0, idx).countWhere(_(item) = predicate(item).negate))
+        return = List(index, count)
+    }
+
+    cycle(a:List):Stream = Stream(_(idx:Num) = a.at(idx.mod(count)))
+
+    countWhere(a:List, predicate:Predicate):Num = a.fold(0, _(current, next) = if(predicate(next), add(current, 1), current))
+
+    reverse(a:List):List = List(_(idx:Num) = a.at(count.sub(idx).sub(1)), a.count)
+
+    findLast(a:List, predicate:Predicate, default) = a.fold(default, _(current, next) = predicate(next).if(next, current))
+
+    findFirst(a:List, predicate:Predicate, default) = a.reverse.findLast(predicate, default)
+}

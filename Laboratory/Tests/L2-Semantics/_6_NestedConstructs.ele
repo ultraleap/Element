@@ -1,0 +1,106 @@
+intrinsic struct Num
+{
+	intrinsic function add(a:Num, b:Num):Num
+}
+
+addUsingLocal(a:Num, b:Num)
+{
+	localAdd(c:Num, d:Num) = c.add(d)
+	return = localAdd(a, b)
+}
+
+addUsingLocalCapture(a:Num, b:Num)
+{
+	localAdd(in:Num) = a.add(in)
+	return = localAdd(b)
+}
+
+addUsingLocalCaptureAsFirstClassFunction(a:Num, b:Num)
+{
+	localAdd(in:Num) = a.add(in)
+	adder = localAdd
+	return = adder(b)
+}
+
+addBTwice(a:Num, b:Num)
+{
+	localAdd(in:Num) = a.add(in)
+	return = localAdd(localAdd(b))
+}
+
+returnLocalStructInstance(a:Num)
+{
+	struct Vector2(x:Num, y:Num)
+	{
+		add(a:Vector2, b:Num) = Vector2(a.x.add(b), a.y.add(b))
+	}
+	return = Vector2(a, a)
+}
+
+addUsingLocalWithShadowing(a:Num, b:Num)
+{
+	localAdd(a, b)
+	{
+		return = a.add(b)
+	}
+	return = localAdd(a, b)
+}
+
+addUsingLambda = _(a:Num, b:Num) = a.add(b)
+
+addUsingLambdaWithScopeBody = _(a:Num, b:Num){ return = a.add(b) }
+
+addUsingLambdaWithCapture(a:Num, b:Num)
+{
+    adder = _(a) = a.add(b)
+    return = adder(a)
+}
+
+deepNestedLambdaWithCapture(a:Num, b:Num, c:Num)
+{
+    addBC
+    {
+        return = _(n)
+        {
+            addBC = _(m) = m.add(n).add(c)
+            return = addBC(b)
+        }
+    }
+    
+    return = addBC(a)
+}
+
+addUsingDeepNestedCapture(a:Num, b:Num)
+{
+    addB
+    {
+        return
+        {
+            return =  a.add(b)
+        }
+    }
+    
+    return = addB
+}
+
+addUsingDeepNestedCaptureWithLambda(a:Num, b:Num)
+{
+    addB
+    {
+        return
+        {
+            adder = _(n) = n.add(b)
+            return = adder
+        }
+    }
+    
+    return = addB(a)
+}
+
+struct rootStruct(a:Num) 
+{
+    namespace nestedNamespace
+    {
+        a = 5
+    }
+}

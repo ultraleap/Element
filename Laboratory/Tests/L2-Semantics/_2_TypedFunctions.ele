@@ -1,0 +1,20 @@
+intrinsic constraint Any
+intrinsic struct Num
+struct NotNum(a)
+a = 5
+b = NotNum(a)
+
+explicitAny(a:Any) = a
+onlyNum(a:Num) = a
+
+returnsNum(a):Num = a
+returnsNotNum(a):NotNum
+{
+    return = a
+}
+
+intrinsic function add(a:Num, b:Num):Num
+addFive(a:Num):Num = add(a, 5)
+
+literalNumNotAConstraint(a:5):10 = a
+literalFunctionNotAConstraint(a:onlyNum):returnsNum = a

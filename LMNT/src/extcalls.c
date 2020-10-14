@@ -13,7 +13,6 @@ lmnt_result lmnt_ictx_extcalls_set(lmnt_ictx* ctx, const lmnt_extcall_info* tabl
 {
     ctx->extcalls = table;
     ctx->extcalls_count = table_count;
-    ctx->archive.flags &= ~LMNT_ARCHIVE_VALIDATED;
     return LMNT_OK;
 }
 
