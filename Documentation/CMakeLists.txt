@@ -99,8 +99,8 @@ add_custom_command(
 
 add_custom_target(Doxygen_Generation
         DEPENDS "${ELEMENT_DOTNET_OUTPUT_DIR}/doc.stamp"
-                "${LIBELEMENT_OUTPUT_DIR}/doc.stamp"
-                "${PYELEMENT_OUTPUT_DIR}/doc.stamp")
+        "${LIBELEMENT_OUTPUT_DIR}/doc.stamp"
+        "${PYELEMENT_OUTPUT_DIR}/doc.stamp")
 
 
 ## --------------------- Sphinx Installation ---------------------
@@ -146,3 +146,8 @@ add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
         COMMENT "Generating documentation with Sphinx")
 
 add_custom_target(Documentation DEPENDS ${SPHINX_INDEX_FILE})
+
+add_custom_command(
+        TARGET Documentation POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E touch "${SPHINX_BUILD}/.nojekyll"
+)
