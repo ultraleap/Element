@@ -134,7 +134,7 @@ element_result element_interpreter_clear(
 /// <param name="interpreter"></param>
 /// <param name="log_callback"></param>
 /// <param name="user_data"></param>
-void element_interpreter_set_log_callback(
+element_result element_interpreter_set_log_callback(
     element_interpreter_ctx* interpreter,
     void (*log_callback)(const element_log_message*, void*),
     void* user_data);
@@ -144,7 +144,7 @@ void element_interpreter_set_log_callback(
 /// </summary>
 /// <param name="interpreter"></param>
 /// <param name="parse_only"></param>
-void element_interpreter_set_parse_only(
+element_result element_interpreter_set_parse_only(
     element_interpreter_ctx* interpreter, 
     bool parse_only);
 
@@ -181,7 +181,7 @@ typedef struct element_instruction element_instruction;
 /// </summary>
 /// <param name="declaration"></param>
 /// <returns></returns>
-element_result element_delete_declaration(
+void element_delete_declaration(
     element_declaration** declaration);
 
 /// <summary>
@@ -189,7 +189,7 @@ element_result element_delete_declaration(
 /// </summary>
 /// <param name="instruction"></param>
 /// <returns></returns>
-element_result element_delete_instruction(
+void element_delete_instruction(
     element_instruction** instruction);
 
 /// <summary>

@@ -30,12 +30,18 @@
 
 element_result element_interpreter_create(element_interpreter_ctx** interpreter)
 {
+    if (!interpreter)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     *interpreter = new element_interpreter_ctx();
     return ELEMENT_OK;
 }
 
 void element_interpreter_delete(element_interpreter_ctx** interpreter)
 {
+    if (!interpreter)
+        return;
+
     delete *interpreter;
     *interpreter = nullptr;
 }
@@ -43,18 +49,38 @@ void element_interpreter_delete(element_interpreter_ctx** interpreter)
 element_result element_interpreter_load_string(element_interpreter_ctx* interpreter, const char* string, const char* filename)
 {
     assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!string || !filename)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
     return interpreter->load(string, filename);
 }
 
 element_result element_interpreter_load_file(element_interpreter_ctx* interpreter, const char* file)
 {
     assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!file)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
     return interpreter->load_file(file);
 }
 
 element_result element_interpreter_load_files(element_interpreter_ctx* interpreter, const char** files, const int files_count)
 {
     assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!files)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
 
     std::vector<std::string> actual_files;
     actual_files.resize(files_count);
@@ -70,6 +96,13 @@ element_result element_interpreter_load_files(element_interpreter_ctx* interpret
 element_result element_interpreter_load_package(element_interpreter_ctx* interpreter, const char* package)
 {
     assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!package)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
     //std::cout << fmt::format("load_package {}\n", package); //todo: proper logging
     return interpreter->load_package(package);
 }
@@ -77,6 +110,12 @@ element_result element_interpreter_load_package(element_interpreter_ctx* interpr
 element_result element_interpreter_load_packages(element_interpreter_ctx* interpreter, const char** packages, const int packages_count)
 {
     assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!packages)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
 
     std::vector<std::string> actual_packages;
     actual_packages.resize(packages_count);
@@ -92,42 +131,72 @@ element_result element_interpreter_load_packages(element_interpreter_ctx* interp
 element_result element_interpreter_load_prelude(element_interpreter_ctx* interpreter)
 {
     assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
     return interpreter->load_prelude();
 }
 
-void element_interpreter_set_log_callback(element_interpreter_ctx* interpreter, void (*log_callback)(const element_log_message*, void*), void* user_data)
+element_result element_interpreter_set_log_callback(element_interpreter_ctx* interpreter, void (*log_callback)(const element_log_message*, void*), void* user_data)
 {
     assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
     interpreter->set_log_callback(log_callback, user_data);
+    return ELEMENT_OK;
 }
 
-void element_interpreter_set_parse_only(element_interpreter_ctx* interpreter, bool parse_only)
+element_result element_interpreter_set_parse_only(element_interpreter_ctx* interpreter, bool parse_only)
 {
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
     interpreter->parse_only = parse_only;
+    return ELEMENT_OK;
 }
 
 element_result element_interpreter_clear(element_interpreter_ctx* interpreter)
 {
     assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
     return interpreter->clear();
 }
 
-element_result element_delete_declaration(element_declaration** declaration)
+void element_delete_declaration(element_declaration** declaration)
 {
+    if (!declaration)
+        return;
+
     delete *declaration;
     *declaration = nullptr;
-    return ELEMENT_OK;
 }
 
-element_result element_delete_instruction(element_instruction** instruction)
+void element_delete_instruction(element_instruction** instruction)
 {
+    if (!instruction)
+        return;
+
     delete *instruction;
     *instruction = nullptr;
-    return ELEMENT_OK;
 }
 
 element_result element_interpreter_find(element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
 {
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!path)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!declaration)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     const auto* scope = interpreter->global_scope.get();
 
     const std::string delimiter = ".";
@@ -189,13 +258,19 @@ element_result element_interpreter_compile(
     const element_declaration* declaration,
     element_instruction** instruction)
 {
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!declaration || !declaration->decl)
+        return ELEMENT_ERROR_API_DECLARATION_IS_NULL;
+
+    if (!instruction)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     if (!options)
         options = &element_compiler_options_default;
 
     const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
-
-    if (!declaration->decl)
-        return ELEMENT_ERROR_UNKNOWN;
 
     const bool declaration_is_nullary = declaration->decl->get_inputs().empty();
     const bool check_boundary = declaration_is_nullary ? options->check_valid_boundary_function_when_nullary : options->check_valid_boundary_function;
@@ -238,13 +313,19 @@ element_result element_interpreter_evaluate(
     const element_inputs* inputs,
     element_outputs* outputs)
 {
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!instruction || !instruction->instruction)
+        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
+
+    if (!inputs || !outputs)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
     element_evaluator_options opts{};
 
     if (options)
         opts = *options;
-
-    if (!instruction || !instruction->instruction)
-        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
 
     const auto err = std::dynamic_pointer_cast<const element::error>(instruction->instruction);
     if (err)
@@ -278,6 +359,15 @@ element_result expression_to_object(
     const char* expression_string,
     element_object** object)
 {
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!object)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
 
     element_tokeniser_ctx* tokeniser;
@@ -426,6 +516,15 @@ element_result element_interpreter_compile_expression(
     const char* expression_string,
     element_instruction** instruction)
 {
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!instruction)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     element_object object;
     auto* object_ptr = &object;
     const auto result = expression_to_object(interpreter, options, expression_string, &object_ptr);
@@ -454,6 +553,15 @@ element_result element_interpreter_evaluate_expression(
     const char* expression_string,
     element_outputs* outputs)
 {
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!outputs)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
     element_instruction instruction;
     auto* instruction_ptr = &instruction;
     auto result = element_interpreter_compile_expression(interpreter, nullptr, expression_string, &instruction_ptr);
@@ -484,6 +592,15 @@ element_result element_interpreter_typeof_expression(
     char* buffer,
     const int buffer_size)
 {
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!buffer)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     //sure there is a shorthand for this
     element_object object;
     auto* object_ptr = &object;
@@ -493,16 +610,16 @@ element_result element_interpreter_typeof_expression(
     if (result != ELEMENT_OK)
     {
         //todo:
-        interpreter->log(ELEMENT_ERROR_UNKNOWN, "tried to get typeof an expression that failed to compile");
-        return ELEMENT_ERROR_UNKNOWN;
+        interpreter->log(result, "tried to get typeof an expression that failed to compile");
+        return result;
     }
 
     const auto typeof = object.obj->typeof_info();
     if (buffer_size < static_cast<int>(typeof.size()))
     {
         //todo:
-        interpreter->log(ELEMENT_ERROR_UNKNOWN, fmt::format("buffer size of {} isn't sufficient for string of {} characters", buffer_size, typeof.size()));
-        return ELEMENT_ERROR_UNKNOWN;
+        interpreter->log(ELEMENT_ERROR_API_INSUFFICIENT_BUFFER, fmt::format("buffer size of {} isn't sufficient for string of {} characters", buffer_size, typeof.size()));
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
     }
 
     strncpy(buffer, typeof.c_str(), typeof.size());

@@ -12,9 +12,15 @@
 
 element_result element_tokeniser_to_string(const element_tokeniser_ctx* tokeniser, const element_token* token_to_mark, char* output_buffer, int output_buffer_size)
 {
-    auto str = tokens_to_string(tokeniser, token_to_mark);
-    if (str.size() > output_buffer_size)
-        return ELEMENT_ERROR_UNKNOWN;
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!output_buffer)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const auto str = tokens_to_string(tokeniser, token_to_mark);
+    if (static_cast<int>(str.size()) > output_buffer_size)
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
 
     sprintf(output_buffer, "%s", str.c_str());
     return ELEMENT_OK;
@@ -24,6 +30,13 @@ element_result element_tokeniser_get_filename(const element_tokeniser_ctx* token
 {
     assert(tokeniser);
     assert(filename);
+
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!filename)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     *filename = tokeniser->filename.c_str();
     return ELEMENT_OK;
 }
@@ -32,6 +45,13 @@ element_result element_tokeniser_get_input(const element_tokeniser_ctx* tokenise
 {
     assert(tokeniser);
     assert(input);
+
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!input)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     *input = tokeniser->input.c_str();
     return ELEMENT_OK;
 }
@@ -40,6 +60,13 @@ element_result element_tokeniser_get_token_count(const element_tokeniser_ctx* to
 {
     assert(tokeniser);
     assert(count);
+
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!count)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     *count = tokeniser->tokens.size();
     return ELEMENT_OK;
 }
@@ -48,6 +75,13 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
 {
     assert(tokeniser);
     assert(token);
+
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!token)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     std::string message = msg ? msg : "";
 
     if (index >= tokeniser->tokens.size())
@@ -104,12 +138,21 @@ element_result element_tokeniser_set_log_callback(element_tokeniser_ctx* tokenis
 {
     assert(tokeniser);
     assert(log_callback);
+
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    //todo: if log callback is null, use a default? or support no callback?
+
     tokeniser->set_log_callback(log_callback, user_data);
     return ELEMENT_OK;
 }
 
 element_result element_tokeniser_create(element_tokeniser_ctx** tokeniser)
 {
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
     *tokeniser = new element_tokeniser_ctx();
     (*tokeniser)->reset_token();
     return ELEMENT_OK;
@@ -117,6 +160,9 @@ element_result element_tokeniser_create(element_tokeniser_ctx** tokeniser)
 
 void element_tokeniser_delete(element_tokeniser_ctx** tokeniser)
 {
+    if (!tokeniser)
+        return;
+
     delete *tokeniser;
     *tokeniser = nullptr;
 }
@@ -124,17 +170,19 @@ void element_tokeniser_delete(element_tokeniser_ctx** tokeniser)
 element_result element_tokeniser_clear(element_tokeniser_ctx* tokeniser)
 {
     if (!tokeniser)
-        return ELEMENT_ERROR_UNKNOWN;
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
 
     tokeniser->clear();
-
     return ELEMENT_OK;
 }
 
 element_result element_tokeniser_run(element_tokeniser_ctx* tokeniser, const char* cinput, const char* cfilename)
 {
     if (!tokeniser)
-        return ELEMENT_ERROR_UNKNOWN;
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!cinput || !cfilename)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
 
     return tokeniser->run(cinput, cfilename);
 }
