@@ -9,7 +9,7 @@ extern "C" {
 #include "element/token.h"
 
 /// <summary>
-///
+/// ast node type
 /// </summary>
 typedef enum
 {
@@ -37,22 +37,22 @@ typedef enum
 } element_ast_node_type;
 
 /// <summary>
-///
+/// flags to represent additional qualifiers not encoded into the ast node type directly
 /// </summary>
 typedef uint32_t element_ast_flags;
 
 /// <summary>
-///
+/// flag to identify a node as having an intrinsic qualifier
 /// </summary>
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_INTRINSIC = (1U << 1);
 
 /// <summary>
-///
+/// flag to identify a node as having no input arguments
 /// </summary>
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_EMPTY_INPUT = (1U << 2);
 
 /// <summary>
-///
+/// 
 /// </summary>
 typedef struct element_ast_node element_ast_node;
 
@@ -62,68 +62,77 @@ typedef struct element_ast_node element_ast_node;
 typedef struct element_ast element_ast;
 
 /// <summary>
-///
+/// deletes an ast node and all children
 /// </summary>
-/// <param name="ast"></param>
+/// <param name="ast">input/output: ast node to be deleted, assigns nullptr on deletion</param>
 void element_ast_delete(
     element_ast** ast);
 
 /// <summary>
-///
+/// obtains any flags set on an ast node
 /// </summary>
-/// <param name="ast"></param>
-/// <param name="flags"></param>
-/// <returns></returns>
+/// <param name="ast">input: ast node to check</param>
+/// <param name="flags">output: flags set on node</param>
+/// <returns>ELEMENT_OK</returns>
 element_result element_ast_get_flags(
     const element_ast* ast,
     element_ast_flags* flags);
 
 /// <summary>
-///
+/// obtains the nearest token from an ast node
 /// </summary>
-/// <param name="ast"></param>
-/// <param name="token"></param>
-/// <returns></returns>
+/// <param name="ast">input: ast node to check</param>
+/// <param name="token">output: nearest token to ast node</param>
+/// <returns>ELEMENT_OK</returns>
 element_result element_ast_get_nearest_token(
     const element_ast* ast, 
     const element_token** token);
 
 /// <summary>
-///
+/// obtains the ast node type of an ast node
 /// </summary>
-/// <param name="ast"></param>
-/// <param name="type"></param>
-/// <returns></returns>
+/// <param name="ast">input: ast node to check</param>
+/// <param name="type">output: ast node type of the ast node</param>
+/// <returns>ELEMENT_OK</returns>
 element_result element_ast_get_type(
     const element_ast* ast, 
     element_ast_node_type* type);
 
 /// <summary>
-///
+/// obtains the identifier of an ast node
 /// </summary>
-/// <param name="ast"></param>
-/// <param name="value"></param>
-/// <returns></returns>
+/// <param name="ast">input: ast node to check</param>
+/// <param name="value">output: identifier name of the ast node</param>
+/// <returns>
+/// failure: ELEMENT_ERROR_INVALID_OPERATION if ast node is null or has no identifier
+/// success: ELEMENT_OK
+/// </returns>
 element_result element_ast_get_value_as_identifier(
     const element_ast* ast, 
     const char** value);
 
 /// <summary>
-///
+/// obtains the literal value of an ast node
 /// </summary>
-/// <param name="ast"></param>
-/// <param name="value"></param>
-/// <returns></returns>
+/// <param name="ast">input: ast node to check</param>
+/// <param name="value">output: identifier name of the ast node</param>
+/// <returns>
+/// failure: ELEMENT_ERROR_INVALID_OPERATION if ast node is null or has no literal value
+/// success: ELEMENT_OK
+/// </returns>
 element_result element_ast_get_value_as_literal(
     const element_ast* ast, 
     element_value* value);
 
 /// <summary>
-///
+/// obtains the parent of an ast node
 /// </summary>
-/// <param name="ast"></param>
-/// <param name="parent"></param>
-/// <returns></returns>
+/// <param name="ast">input: ast node to check</param>
+/// <param name="value">output: parent ast node of the ast node</param>
+/// <returns>
+/// failure: ELEMENT_ERROR_INVALID_OPERATION if ast node is null or has no parent
+/// success: ELEMENT_OK
+/// </returns>
 element_result element_ast_get_parent(
     const element_ast* ast, 
     element_ast** parent);
