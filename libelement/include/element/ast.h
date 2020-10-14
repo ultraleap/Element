@@ -107,7 +107,7 @@ element_result element_ast_get_type(
  * @param[in] ast               ast node to check
  * @param[out] value            identifier name of the ast node
  
- * @return ELEMENT_OK success
+ * @return ELEMENT_OK obtained the identifier successfully
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL value is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT value is not an identifier
@@ -122,7 +122,7 @@ element_result element_ast_get_value_as_identifier(
  * @param[in] ast               ast node to check
  * @param[out] value            literal value of the ast node
  
- * @return ELEMENT_OK success
+ * @return ELEMENT_OK obtained the literal value successfully
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL value is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT value is not a literal
@@ -137,7 +137,7 @@ element_result element_ast_get_value_as_literal(
  * @param[in] ast               ast node to check
  * @param[out] parent           parent ast node of the ast node
  
- * @return ELEMENT_OK success
+ * @return ELEMENT_OK obtained the parent node successfully
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL ast node has no parent
  */
@@ -151,7 +151,7 @@ element_result element_ast_get_parent(
  * @param[in] ast               ast node to check
  * @param[out] count            child count
  
- * @return ELEMENT_OK success
+ * @return ELEMENT_OK obtained the child count successfully
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL count is null
  */
@@ -166,7 +166,7 @@ element_result element_ast_get_child_count(
  * @param[in] index             index of the child node to retrieve
  * @param[out] child            child ast node
  
- * @return ELEMENT_OK success
+ * @return ELEMENT_OK obtained the immediate child ast node successfully
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL child is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT index exceeds child count
@@ -182,7 +182,7 @@ element_result element_ast_get_child(
  * @param[in] ast               ast node to check
  * @param[out] root             root node of the ast tree
  
- * @return ELEMENT_OK success
+ * @return ELEMENT_OK root node retrieved successfully
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node is null
  */
@@ -196,7 +196,7 @@ element_result element_ast_get_root(
  * @param[in] ast               ast node to check
  * @param[out] root             root node of the ast tree
  
- * @return ELEMENT_OK success
+ * @return ELEMENT_OK root node retrieved successfully
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node is null
  */
@@ -204,26 +204,15 @@ element_result element_ast_get_root_const(
     const element_ast* ast, 
     const element_ast** root);
 
-/// <summary>
-/// ast_to_mark will output "HERE" beside it, pass null if unwanted
-/// </summary>
-/// <param name="ast"></param>
-/// <param name="ast_to_mark"></param>
-/// <param name="output_buffer"></param>
-/// <param name="output_buffer_size"></param>
-/// <returns></returns>
-///
-
-
 /**
- * @brief obtains the root node of the tree from a given node
+ * @brief converts an ast node to string form
  
  * @param[in] ast                   ast node to convert to string
  * @param[in] ast_to_mark           ast node to use as an indicator to highlight text, can be nullptr
  * @param[out] output_buffer        output data buffer
  * @param[in] output_buffer_size    size of the output buffer
  
- * @return ELEMENT_OK success
+ * @return ELEMENT_OK ast node converted to string successfully
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT output_buffer is null
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER result size exceeds output_buffer_size

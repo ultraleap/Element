@@ -36,7 +36,7 @@ element_result element_parser_get_ast(element_parser_ctx* parser, element_ast** 
     if (!parser)
         return ELEMENT_ERROR_API_PARSER_CTX_IS_NULL;
 
-    if (!parser)
+    if (!ast)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
     *ast = parser->root;
