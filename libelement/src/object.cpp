@@ -13,14 +13,14 @@
 #include "object_model/compilation_context.hpp"
 #include "object_model/intermediaries/declaration_wrapper.hpp"
 
-element_result element_delete_object(element_object** object)
+void element_delete_object(element_object** object)
 {
     if (!object)
-        return ELEMENT_OK;
+        return;
 
     delete *object;
     *object = nullptr;
-    return ELEMENT_OK;
+    return;
 }
 
 element_result element_create_compilation_ctx(element_interpreter_ctx* interpreter, element_compilation_ctx** output)
