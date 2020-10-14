@@ -124,15 +124,13 @@ element_result element_ast_get_value_as_literal(
     const element_ast* ast, 
     element_value* value);
 
-/// <summary>
-/// obtains the parent of an ast node
-/// </summary>
-/// <param name="ast">input: ast node to check</param>
-/// <param name="value">output: parent ast node of the ast node</param>
-/// <returns>
-/// failure: ELEMENT_ERROR_INVALID_OPERATION if ast node is null or has no parent
-/// success: ELEMENT_OK
-/// </returns>
+/*******************************************************************************
+ * obtains the parent of an ast node
+ * @param[in] ast ast node to check
+ * @param[out] value parent ast node of the ast node
+ * @retval ELEMENT_ERROR_INVALID_OPERATION ast node is null or has no parent
+ * @retval ELEMENT_OK success
+ ******************************************************************************/
 element_result element_ast_get_parent(
     const element_ast* ast, 
     element_ast** parent);
