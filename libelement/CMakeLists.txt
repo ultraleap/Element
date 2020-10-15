@@ -240,6 +240,18 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(element PRIVATE "m" "atomic" "pthread" "stdc++fs")
 endif ()
 
+## A C project to ensure our C API is correct
+add_executable(libelement_c_app "${CMAKE_CURRENT_SOURCE_DIR}/test/main.c")
+target_link_libraries(libelement_c_app PRIVATE element)
+target_include_directories(libelement_c_app PRIVATE "${libelement_SOURCE_DIR}/include")
+set_target_properties(libelement_c_app PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
+add_custom_command (
+        TARGET libelement_c_app POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
+        "${debug_dir}")
+
 if (BUILD_TESTING)
     include(CTest)
     set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/catch2)

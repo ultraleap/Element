@@ -19,7 +19,7 @@ typedef struct element_compiler_options
 } element_compiler_options;
 
 //passing nullptr where a element_compiler_options struct is expected will use these values
-inline const element_compiler_options element_compiler_options_default = {
+const element_compiler_options element_compiler_options_default = {
     true,
     true
 };

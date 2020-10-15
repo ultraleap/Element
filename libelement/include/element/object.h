@@ -55,13 +55,13 @@ element_result element_object_to_log_message(
 
 typedef struct element_source_information
 {
-    int line = 0;
-    int character_start = 0;
-    int character_end = 0;
+    int line;
+    int character_start;
+    int character_end;
 
-    char* filename = NULL; //must be deleted by user
-    char* line_in_source = NULL; //must be deleted by user
-    char* text = NULL; //must be deleted by user
+    char* filename; //must be deleted by user
+    char* line_in_source; //must be deleted by user
+    char* text; //must be deleted by user
 } element_source_information;
 
 element_result element_object_get_source_information(
