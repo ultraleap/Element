@@ -82,7 +82,7 @@ namespace Element.AST
             _expressionBody = expressionBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent), context);
+            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent, () => this), context);
     }
     
     public class ScopeBodiedFunction : CustomFunction
@@ -94,7 +94,7 @@ namespace Element.AST
             _scopeBody = scopeBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context)
+            _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context, () => this)
                       .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context));
     }
 

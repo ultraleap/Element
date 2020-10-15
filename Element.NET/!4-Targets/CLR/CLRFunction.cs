@@ -143,7 +143,7 @@ namespace Element.CLR
 				case ICLRExpression s:
 					return s.Compile(e => CompileInstruction(e, data));
 				case Constant c:
-					return LinqExpression.Constant(c.Value);
+					return ConvertExpressionType(LinqExpression.Constant(c.Value), ToClrType(c.StructImplementation));
 				case Cast c:
 					return ConvertExpressionType(CompileInstruction(c.Instruction, data), ToClrType(c.StructImplementation));
 				case Unary u:
@@ -298,16 +298,13 @@ namespace Element.CLR
 					}
 
 					var breakLabel = LinqExpression.Label();
-					var body = LinqExpression.Block(s1
-					                             .Concat(new[]
-					                             {
-						                             LinqExpression.IfThen(
-							                             LinqExpression.LessThan(condition, LinqExpression.Constant(1f)),
-							                             LinqExpression.Break(breakLabel))
-					                             })
-					                             .Concat(s2)
-					                             .Concat(newState.Select((e, i) =>
-						                             LinqExpression.Assign(stateList[i], e))));
+					var body = LinqExpression.Block(s1.Concat(new[]
+					                                  {
+						                                  LinqExpression.IfThen(LinqExpression.IsFalse(condition),
+						                                                        LinqExpression.Break(breakLabel))
+					                                  })
+					                                  .Concat(s2)
+					                                  .Concat(newState.Select((e, i) => LinqExpression.Assign(stateList[i], e))));
 					parentStatements.Add(LinqExpression.Loop(body, breakLabel));
 					return stateList.ToArray();
 				default:

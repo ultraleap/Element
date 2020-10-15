@@ -32,12 +32,13 @@ namespace Element.AST
             }
         }
 
-        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context) =>
-            ResolveBlockWithCaptures(parentScope, Array.Empty<(Identifier Identifier, IValue Value)>(), context);
+        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context, Func<IValue?>? valueProducedFrom = null) =>
+            ResolveBlockWithCaptures(parentScope, Array.Empty<(Identifier Identifier, IValue Value)>(), context, valueProducedFrom);
 
         public Result<ResolvedBlock> ResolveBlockWithCaptures(IScope? parentScope,
                                                               IReadOnlyList<(Identifier Identifier, IValue Value)> capturedValues,
-                                                              Context context) =>
+                                                              Context context,
+                                                              Func<IValue?>? valueProducedFrom = null) =>
             Validate(context)
                 .Map(() =>
                 {
@@ -48,7 +49,8 @@ namespace Element.AST
                     return new ResolvedBlock(Items?.Select(d => d.Identifier).ToArray() ?? Array.Empty<Identifier>(),
                                      capturedValues,
                                      IndexFunc,
-                                     parentScope);
+                                     parentScope,
+                                     valueProducedFrom);
                 });
     }
 

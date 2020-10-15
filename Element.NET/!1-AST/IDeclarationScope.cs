@@ -10,7 +10,7 @@ namespace Element.AST
     public interface IDeclarationScope
     {
         IReadOnlyList<Declaration> Declarations { get; }
-        Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context);
+        Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context, Func<IValue>? valueProducedFrom = null);
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ namespace Element.AST
         /// Enumerates top-level and nested declarations that match the filter, resolving them to IValues.
         /// Will not recurse into function scopes.
         /// </summary>
-        public static Result<List<ValueWithLocation>> EnumerateValues(this IDeclarationScope declarationScope, Context context, Predicate<Declaration> declarationFilter = null, Predicate<ValueWithLocation> resolvedValueFilter = null)
+        public static Result<List<ValueWithLocation>> EnumerateValues(this IDeclarationScope declarationScope, Context context, Predicate<Declaration>? declarationFilter = null, Predicate<ValueWithLocation>? resolvedValueFilter = null)
         {
             var builder = new ResultBuilder<List<ValueWithLocation>>(context, new List<ValueWithLocation>());
             var idStack = new Stack<Identifier>();

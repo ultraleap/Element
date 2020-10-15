@@ -13,7 +13,7 @@ namespace Element.AST
         private IReadOnlyList<Declaration>? _cachedList;
         private readonly Dictionary<Identifier, Result<IValue>> _resolvedValueCache = new Dictionary<Identifier, Result<IValue>>();
         public IReadOnlyList<Declaration> Declarations => _cachedList ??= _sourceScopes.Values.SelectMany(blob => blob).ToList();
-        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context) =>
+        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context, Func<IValue?>? producingValue = null) =>
             new Result<ResolvedBlock>(
                 new ResolvedBlock(Declarations.Select(d => d.Identifier).ToArray(),
                                   Enumerable.Empty<(Identifier Identifier, IValue Value)>(),

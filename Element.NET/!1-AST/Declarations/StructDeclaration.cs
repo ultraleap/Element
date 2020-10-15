@@ -14,11 +14,12 @@ namespace Element.AST
                           .Bind(t =>
                           {
                               var (structImpl, inputPorts) = t;
+                              IntrinsicStruct? result = null;
                               
-                              Result<IValue> ToIntrinsicStructResult(ResolvedBlock? associatedBlock) => new Result<IValue>(new IntrinsicStruct(structImpl, inputPorts, associatedBlock, scope));
+                              Result<IValue> ToIntrinsicStructResult(ResolvedBlock? associatedBlock) => new Result<IValue>(result = new IntrinsicStruct(structImpl, inputPorts, associatedBlock, scope));
                               
                               return Body is StructBlock b
-                                         ? b.ResolveBlock(scope, context).Bind(ToIntrinsicStructResult)
+                                         ? b.ResolveBlock(scope, context, () => result).Bind(ToIntrinsicStructResult)
                                          : ToIntrinsicStructResult(null);
                           });
         
@@ -53,10 +54,11 @@ namespace Element.AST
             PortList.ResolveInputConstraints(scope, context, false, false)
                     .Bind(inputPorts =>
                     {
-                        Result<IValue> ToCustomStruct(ResolvedBlock? associatedBlock) => new Result<IValue>(new CustomStruct(Identifier, inputPorts, associatedBlock, scope));
+                        CustomStruct? customStruct = null;
+                        Result<IValue> ToCustomStruct(ResolvedBlock? associatedBlock) => new Result<IValue>(customStruct = new CustomStruct(Identifier, inputPorts, associatedBlock, scope));
                               
                         return Body is StructBlock b
-                                   ? b.ResolveBlock(scope, context).Bind(ToCustomStruct)
+                                   ? b.ResolveBlock(scope, context, () => customStruct).Bind(ToCustomStruct)
                                    : ToCustomStruct(null);
                     });
         

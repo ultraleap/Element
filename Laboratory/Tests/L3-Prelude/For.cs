@@ -43,7 +43,7 @@ namespace Laboratory.Tests.L3.Prelude
         {
             ("factorial", "(5)", "120"),
             ("NestedForLoop", "(0)", "200"),
-            ("iterateWithMyStruct", "(5)", "5"),
+            ("iterateWithMyStruct", "(5)", "7"),
         };
     }
 }

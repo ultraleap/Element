@@ -107,6 +107,11 @@ namespace Laboratory.Tests.L3.Prelude
 		[DatapointSource]
 		public (string FunctionExpression, string CallExpression, string ExpectedExpression)[] FunctionCallData =
 		{
+			("Num", "(0)", "0"),
+			("Num", "(Num.NegativeInfinity)", "Num.NegativeInfinity"),
+			("Num", "(False)", "0"),
+			("Num", "(True)", "1"),
+
 			("Num.ln", "(0)", "Num.NegativeInfinity"),
 			("Num.ln", "(1)", "0"),
 			("Num.ln", "(Num.e)", "1"),
@@ -306,6 +311,8 @@ namespace Laboratory.Tests.L3.Prelude
 		[DatapointSource]
 		public (string FunctionExpression, string CallExpression, EleMessageCode ExpectedError)[] FunctionCallErrorCases =
 		{
+			("Num", "(Bool)", EleMessageCode.ConstraintNotSatisfied),
+			("Num", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
 			("Num.mod", "(0, 0)", EleMessageCode.ArgumentOutOfRange),
 			("Num.mod", "(2, 0)", EleMessageCode.ArgumentOutOfRange),
 		};

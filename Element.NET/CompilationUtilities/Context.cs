@@ -12,30 +12,30 @@ namespace Element
         Result<IValue> Expression(Expression expression, IScope scope, IValue value, Context context);
     }
 
-    public abstract class DebugValue : IValue
+    public abstract class WrapperValue : IValue
     {
-        public override string ToString() => ResolvedValue.ToString();
-        public IValue ResolvedValue { get; }
-        protected DebugValue(IValue value) => ResolvedValue = value;
-        public string TypeOf => ResolvedValue.TypeOf;
-        public string SummaryString => ResolvedValue.SummaryString;
-        public Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => ResolvedValue.Call(arguments, context);
-        public IReadOnlyList<ResolvedPort> InputPorts => ResolvedValue.InputPorts;
-        public IValue ReturnConstraint => ResolvedValue.ReturnConstraint;
-        public Result<IValue> Index(Identifier id, Context context) => ResolvedValue.Index(id, context);
-        public IReadOnlyList<Identifier> Members => ResolvedValue.Members;
-        public Result<bool> MatchesConstraint(IValue value, Context context) => ResolvedValue.MatchesConstraint(value, context);
-        public Result<IValue> DefaultValue(Context context) => ResolvedValue.DefaultValue(context);
-        public void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => ResolvedValue.Serialize(resultBuilder, context);
-        public Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => ResolvedValue.Deserialize(nextValue, context);
-        public bool IsFunction => ResolvedValue.IsFunction;
-        public bool IsIntrinsic => ResolvedValue.IsIntrinsic;
-        public bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => ResolvedValue.IsIntrinsicOfType<TIntrinsicImplementation>();
-        public bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => ResolvedValue.IsSpecificIntrinsic(intrinsic);
-        public IValue Inner => ResolvedValue.Inner;
+        public override string ToString() => WrappedValue.ToString();
+        public IValue WrappedValue { get; }
+        protected WrapperValue(IValue result) => WrappedValue = result;
+        public virtual string TypeOf => WrappedValue.TypeOf;
+        public virtual string SummaryString => WrappedValue.SummaryString;
+        public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => WrappedValue.Call(arguments, context);
+        public virtual IReadOnlyList<ResolvedPort> InputPorts => WrappedValue.InputPorts;
+        public virtual IValue ReturnConstraint => WrappedValue.ReturnConstraint;
+        public virtual Result<IValue> Index(Identifier id, Context context) => WrappedValue.Index(id, context);
+        public virtual IReadOnlyList<Identifier> Members => WrappedValue.Members;
+        public virtual Result<bool> MatchesConstraint(IValue value, Context context) => WrappedValue.MatchesConstraint(value, context);
+        public virtual Result<IValue> DefaultValue(Context context) => WrappedValue.DefaultValue(context);
+        public virtual void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => WrappedValue.Serialize(resultBuilder, context);
+        public virtual Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => WrappedValue.Deserialize(nextValue, context);
+        public virtual bool IsFunction => WrappedValue.IsFunction;
+        public virtual bool IsIntrinsic => WrappedValue.IsIntrinsic;
+        public virtual bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => WrappedValue.IsIntrinsicOfType<TIntrinsicImplementation>();
+        public virtual bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => WrappedValue.IsSpecificIntrinsic(intrinsic);
+        public IValue Inner => WrappedValue.Inner;
     }
 
-    public class DebugCall : DebugValue
+    public class DebugCall : WrapperValue
     {
         public IValue Function { get; }
         public IReadOnlyList<IValue> Arguments { get; }
@@ -47,7 +47,7 @@ namespace Element
         }
     }
 
-    public class DebugIndex : DebugValue
+    public class DebugIndex : WrapperValue
     {
         public IValue ValueBeingIndexed { get; }
         public Identifier Identifier { get; }
@@ -59,24 +59,24 @@ namespace Element
         }
     }
 
-    public class DebugDeclaration : DebugValue
+    public class DebugDeclaration : WrapperValue
     {
         public Declaration Declaration { get; }
         public IScope DeclaringScope { get; }
 
-        public DebugDeclaration(Declaration declaration, IScope declaringScope, IValue value) : base(value)
+        public DebugDeclaration(Declaration declaration, IScope declaringScope, IValue result) : base(result)
         {
             Declaration = declaration;
             DeclaringScope = declaringScope;
         }
     }
 
-    public class DebugExpression : DebugValue
+    public class DebugExpression : WrapperValue
     {
         public Expression Expression { get; }
         public IScope ScopeResolvedIn { get; }
 
-        public DebugExpression(Expression expression, IScope scopeResolvedIn, IValue value) : base(value)
+        public DebugExpression(Expression expression, IScope scopeResolvedIn, IValue result) : base(result)
         {
             Expression = expression;
             ScopeResolvedIn = scopeResolvedIn;
@@ -147,7 +147,7 @@ namespace Element
             (CompilerMessage.TryGetMessageLevel(messageType, messageCode, out var level), level >= CompilerOptions.Verbosity) switch
             {
                 (true, true) => new CompilerMessage(messageType, messageCode, contextString, TraceStack),
-                (true, false) => null, // No message should be produced 
+                (true, false) => null, // No message should be produced
                 (false, _) => new CompilerMessage(messageType, null, MessageLevel.Error, $"Couldn't get {nameof(MessageLevel)} for {messageCode}", null),
             };
 
