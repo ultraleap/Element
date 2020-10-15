@@ -42,7 +42,7 @@ configure_file (
     "${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp"
 )
 
-set(libelement_sources
+set(element_sources
     "src/source_information.hpp"
 
     "src/log_errors.hpp"
@@ -200,10 +200,10 @@ if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-add_library(element STATIC ${libelement_sources})
+add_library(element STATIC ${element_sources})
 
 # For VS
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${libelement_sources})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${element_sources})
 
 # Don't rely on compiler extensions
 set_property(TARGET element PROPERTY CMAKE_CXX_EXTENSIONS OFF)
@@ -243,7 +243,7 @@ endif ()
 ## A C project to ensure our C API is correct
 add_executable(libelement_c_app "${CMAKE_CURRENT_SOURCE_DIR}/test/main.c")
 target_link_libraries(libelement_c_app PRIVATE element)
-target_include_directories(libelement_c_app PRIVATE "${libelement_SOURCE_DIR}/include")
+target_include_directories(libelement_c_app PRIVATE "${element_SOURCE_DIR}/include")
 set_target_properties(libelement_c_app PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
 add_custom_command (
@@ -266,7 +266,7 @@ if (BUILD_TESTING)
     add_executable(libelement_test_app ${TEST_SOURCES})
     target_link_libraries(libelement_test_app PRIVATE Catch2 element fmt::fmt )
     target_link_libraries(libelement_test_app PUBLIC coverage_config)
-    target_include_directories(libelement_test_app PRIVATE "${libelement_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}/_deps/fmt-src/include")
+    target_include_directories(libelement_test_app PRIVATE "${element_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}/_deps/fmt-src/include")
     add_test(NAME libelement_test
             COMMAND libelement_test_app -r junit -o ${CMAKE_BINARY_DIR}/libemelement_test_app_details.xml)
 
