@@ -1,17 +1,18 @@
-#random(seed:Num):Num
-#{
-#    A=53;
-#    B=104717;
-#    C=267017;
-#    D=305021;
-#    E=1299827;
-#    na = Num.add(Num.sub(seed.rem(E), seed.rem(1)), A);
-#    t1 = Num.mul(na.pow(3), B);
-#    t2 = Num.mul(na.pow(2), C);
-#    t3 = na.mul(D);
-#    t4 = t1.add(t2).add(t3);
-#    return = div(rem(t4, E), E);
-#}
+random(seed:Num):Num
+{
+    A = 53
+    B = 104717
+    C = 267017
+    D = 305021
+    E = 1299827
+    na = seed.rem(E).sub(seed.rem(1)).add(A)
+    t1 = na.pow(3).mul(B)
+    t2 = na.pow(2).mul(C)
+    t3 = na.mul(D)
+    t4 = t1.add(t2).add(t3)
+    return = t4.rem(E).div(E)
+}
+
 #
 #ellipse(a:Num, b:Num):Num
 #{
