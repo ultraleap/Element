@@ -174,26 +174,18 @@ namespace Element
     
     public readonly struct Result<T> : IEquatable<Result<T>>
     {
-        public Result(T value)
-        {
-            IsSuccess = true;
-            _value = value;
-            Messages = Array.Empty<CompilerMessage>();
-        }
-        
         public Result(T value, IReadOnlyCollection<CompilerMessage> messages)
         {
-            IsSuccess = !messages.Any(m => m.MessageLevel >= MessageLevel.Error);
+            IsSuccess = value != null && !messages.Any(m => m.MessageLevel >= MessageLevel.Error);
             _value = value;
             Messages = messages;
         }
-
+        
+        public Result(T value) : this(value, Array.Empty<CompilerMessage>()) { }
         public Result(T value, CompilerMessage? message) :this(value, message == null ? Array.Empty<CompilerMessage>() : new []{message}) {}
         public Result(Result<T> value, CompilerMessage? message) :this(value._value, message == null ? value.Messages : value.Messages.Append(message).ToArray()) { }
         public Result(Result<T> value, IReadOnlyCollection<CompilerMessage> messages) :this(value._value, messages) { }
-
         public Result(CompilerMessage? message) : this(message == null ? Array.Empty<CompilerMessage>() : new []{message}) { }
-
         public Result(IReadOnlyCollection<CompilerMessage> messages)
         {
             IsSuccess = false; // No value was passed, a result with no messages is an error whether there are any error messages or not
