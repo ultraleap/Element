@@ -1,4 +1,4 @@
-using System;
+/*using System;
 
 namespace Element
 {
@@ -63,7 +63,7 @@ namespace Element
 				                                 _ => new Result<IEnumerable<Instruction>>(l.Body.Select(n => Cache(n, cache))),
 				                                 )
 				              .Match((expression, messages) => (Loop)expression, // TODO: Do something with any potential warnings
-				                     messages => throw new InternalCompilerException("Subexpression extraction should not cause errors")),*/
+				                     messages => throw new InternalCompilerException("Subexpression extraction should not cause errors")),#1#
 				_ => group
 			};
 
@@ -76,4 +76,4 @@ namespace Element
 				_ => value
 			};
 	}
-}
+}*/

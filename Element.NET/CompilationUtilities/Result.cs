@@ -270,13 +270,12 @@ namespace Element
             if (IsSuccess && !assertPredicate(_value)) throw new InternalCompilerException(exceptionErrorMessageIfFalse);
             return this;
         }
-        
-        public Result<TResult> Cast<TResult>(Context context, string? contextString = null)
+
+        public Result<TResult> Cast<TResult>()
         {
             if (!IsSuccess) return new Result<TResult>(Messages);
             if (_value is TResult casted) return new Result<TResult>(casted, Messages);
-            var msg = context.Trace(EleMessageCode.InvalidCast, contextString ?? $"'{_value}' failed to cast to '{typeof(TResult)}'");
-            return msg != null ? new Result<TResult>(Messages.Append(msg).ToArray()) : new Result<TResult>(Messages);
+            throw new InvalidCastException($"'{_value}' failed to cast to '{typeof(TResult)}'");
         }
 
         public Result<T> Else(Func<Result<T>> elseFunc)

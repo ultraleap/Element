@@ -40,7 +40,7 @@ namespace Element.AST
                 // otherwise it must be exactly the same constraint since there is no type/constraint hierarchy
                 // TODO: Does Nothing need to be handled specially here?
                 var portMatches = expectedConstraint.IsIntrinsicOfType<AnyConstraint>()
-                                  || argConstraint == expectedConstraint;
+                                  || argConstraint.IsInstance(expectedConstraint);
                 resultBuilder.Result &= portMatches;
                 
                 if (!portMatches)

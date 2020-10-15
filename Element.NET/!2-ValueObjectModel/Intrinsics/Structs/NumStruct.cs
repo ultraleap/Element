@@ -15,7 +15,7 @@ namespace Element.AST
             {} num => new Result<IValue>(num)
         };
         public Result<IValue> DefaultValue(Context _) => Constant.Zero;
-        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => value is Instruction expr && expr.StructImplementation == Instance;
+        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => value.IsType<Instruction>(out var instruction) && instruction.StructImplementation == Instance;
         public Identifier Identifier { get; } = new Identifier("Num");
     }
 }

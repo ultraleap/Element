@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Element.AST;
 
 namespace Element
@@ -16,23 +14,25 @@ namespace Element
 
     public abstract class DebugValue : IValue
     {
-        private readonly IValue _value;
-        protected DebugValue(IValue value) => _value = value;
-        public string TypeOf => _value.TypeOf;
-        public string SummaryString => _value.SummaryString;
-        public Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => _value.Call(arguments, context);
-        public IReadOnlyList<ResolvedPort> InputPorts => _value.InputPorts;
-        public IValue ReturnConstraint => _value.ReturnConstraint;
-        public Result<IValue> Index(Identifier id, Context context) => _value.Index(id, context);
-        public IReadOnlyList<Identifier> Members => _value.Members;
-        public Result<bool> MatchesConstraint(IValue value, Context context) => _value.MatchesConstraint(value, context);
-        public Result<IValue> DefaultValue(Context context) => _value.DefaultValue(context);
-        public void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => _value.Serialize(resultBuilder, context);
-        public Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => _value.Deserialize(nextValue, context);
-        public bool IsFunction => _value.IsFunction;
-        public bool IsIntrinsic => _value.IsIntrinsic;
-        public bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => _value.IsIntrinsicOfType<TIntrinsicImplementation>();
-        public bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _value.IsSpecificIntrinsic(intrinsic);
+        public override string ToString() => ResolvedValue.ToString();
+        public IValue ResolvedValue { get; }
+        protected DebugValue(IValue value) => ResolvedValue = value;
+        public string TypeOf => ResolvedValue.TypeOf;
+        public string SummaryString => ResolvedValue.SummaryString;
+        public Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => ResolvedValue.Call(arguments, context);
+        public IReadOnlyList<ResolvedPort> InputPorts => ResolvedValue.InputPorts;
+        public IValue ReturnConstraint => ResolvedValue.ReturnConstraint;
+        public Result<IValue> Index(Identifier id, Context context) => ResolvedValue.Index(id, context);
+        public IReadOnlyList<Identifier> Members => ResolvedValue.Members;
+        public Result<bool> MatchesConstraint(IValue value, Context context) => ResolvedValue.MatchesConstraint(value, context);
+        public Result<IValue> DefaultValue(Context context) => ResolvedValue.DefaultValue(context);
+        public void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => ResolvedValue.Serialize(resultBuilder, context);
+        public Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => ResolvedValue.Deserialize(nextValue, context);
+        public bool IsFunction => ResolvedValue.IsFunction;
+        public bool IsIntrinsic => ResolvedValue.IsIntrinsic;
+        public bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => ResolvedValue.IsIntrinsicOfType<TIntrinsicImplementation>();
+        public bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => ResolvedValue.IsSpecificIntrinsic(intrinsic);
+        public IValue Inner => ResolvedValue.Inner;
     }
 
     public class DebugCall : DebugValue

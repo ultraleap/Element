@@ -19,7 +19,11 @@ namespace Element
 		public readonly IIntrinsicStructImplementation StructImplementation;
 
 		private Result<Struct>? _intrinsicStruct;
-		public Result<Struct> LookupIntrinsicStruct(Context context) => _intrinsicStruct ??= context.RootScope.Lookup(StructImplementation.Identifier, context).Cast<Struct>(context);
+		public Result<Struct> LookupIntrinsicStruct(Context context) => _intrinsicStruct ??= context.RootScope
+		                                                                                            .Lookup(StructImplementation.Identifier, context)
+		                                                                                            .Bind(result => result.IsType<Struct>(out var @struct)
+			                                                                                                            ? new Result<Struct>(@struct)
+			                                                                                                            : context.Trace(EleMessageCode.IntrinsicNotFound, $"'{result}' is not intrinsic struct declaration for {StructImplementation.Identifier}"));
 		public virtual Result<Constant> CompileTimeConstant(Context context) => context.Trace(EleMessageCode.NotCompileConstant, $"'{this}' is not a constant");
 
 		public abstract IEnumerable<Instruction> Dependent { get; }

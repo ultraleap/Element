@@ -111,11 +111,13 @@ namespace Element.AST
 
             try
             {
-                Result ResultMatchesReturnConstraint(IValue result) =>
-                    function.ReturnConstraint.MatchesConstraint(result, context)
-                            .Bind(matches => matches
-                                                 ? Result.Success
-                                                 : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
+                Result ResultMatchesReturnConstraint(IValue result)
+                {
+                    return function.ReturnConstraint.MatchesConstraint(result, context)
+                                   .Bind(matches => matches
+                                                        ? Result.Success
+                                                        : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
+                }
 
 
                 return CheckInputConstraints(function.InputPorts, arguments as IValue[] ?? arguments.ToArray(), context)

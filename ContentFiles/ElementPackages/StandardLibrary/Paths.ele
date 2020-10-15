@@ -1,44 +1,32 @@
 constraint PathFunc(u:Num):Vector3
+constraint EvaluatePath(time:TimePoint):List
+constraint PathRenderer(path:Path):EvaluatePath
 
 struct Segment(a:Vector3, b:Vector3)
 
 struct Path(at:PathFunc, length:Num)
 {
-    constraint EvaluatePath(time:TimePoint):List
-    constraint RenderPath(path:Path):EvaluatePath
-
-    # Path renderers turn a path into a 
-    struct Renderer(render:RenderPath)
-    {
-        
-    }
-    
     # Renderers
-    makeVelocityRenderer(velocity:Num):PathRenderer
+    renderWithVelocity(velocity:Num):PathRenderer
         = _(path:Path):EvaluatePath
-        {
-            period = path.length.div(velocity)
-            
-            return (time:TimePoint):List
+            = _(time:TimePoint):List
             {
+                period = path.length.div(velocity)
                 index(idx:Num) = path.at(time.value(period).mul(velocity.div(path.length)))
                 return = List(index, 1)
             }
-        }
         
-    makeFrequencyRenderer(frequency:Num):PathRenderer
-        {
-            period = 1.div(frequency)
-            
-            return(path:Path):EvaluatePath
+    renderWithFrequency(frequency:Num):PathRenderer
+        = _(path:Path):EvaluatePath
+            = _(time:TimePoint):List
             {
-                return(time:TimePoint):List
-                {
-                    index(idx:Num) = path.at(time.value(period).mul(frequency))
-                    return = List(index, 1)
-                }
+                period = 1.div(frequency)
+                index(idx:Num) = path.at(time.value(period).mul(frequency))
+                return = List(index, 1)
             }
-        }
+            
+    withVelocity(this:Path, velocity:Num):EvaluatePath = renderWithVelocity(velocity)(this)
+    withFrequency(this:Path, frequency:Num):EvaluatePath = renderWithFrequency(frequency)(this)
 
     Circle(position:Vector3, radius:Num):Path
     {

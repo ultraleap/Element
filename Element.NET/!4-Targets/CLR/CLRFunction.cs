@@ -348,7 +348,7 @@ namespace Element.CLR
 					                           // For each array index, create an ArrayIndex expression
 					                           .Select(i => NumberConverter.Instance
 					                                                       .LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), null!, context)
-					                                                       .Cast<Instruction>(context))
+					                                                       .Cast<Instruction>())
 					                           // Aggregate enumerable of results into single result
 					                           .ToResultArray()
 					                           .Bind(expressions =>
@@ -369,7 +369,7 @@ namespace Element.CLR
 
 		public static Result<Delegate> CompileDynamic(this IValue value, Context context, IBoundaryConverter? boundaryConverter = default)
 		{
-			Result<Struct> ConstraintToStruct(IValue constraint) => constraint is Struct s
+			Result<Struct> ConstraintToStruct(IValue constraint) => constraint.IsType<Struct>(out var s)
 				                                                        ? new Result<Struct>(s)
 				                                                        : new Result<Struct>(context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{constraint}' is not a struct - all top-level function ports must be serializable struct types"));
 
@@ -381,13 +381,13 @@ namespace Element.CLR
 			       .Accumulate(() => value.IsFunction switch
 			       {
 				       true => ConstraintToStruct(value.ReturnConstraint),
-				       false when value is Struct s => s,
-				       false when value is StructInstance s => ConstraintToStruct(s.DeclaringStruct),
-				       false when value is Instruction i => i.LookupIntrinsicStruct(context),
+				       false when value.IsType<Struct>(out var s) => s,
+				       false when value.IsType<StructInstance>(out var s) => ConstraintToStruct(s.DeclaringStruct),
+				       false when value.IsType<Instruction>(out var i) => i.LookupIntrinsicStruct(context),
 				       false => context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{value}' is not recognized as a function, struct, struct instance or primitive value, cannot deduce the return type for compiling a delegate")
 			       })
 			       .Bind(types => types.Item1.Append(types.Item2)
-			                           .Select(elementStruct => ToClrType(elementStruct) is {} type
+			                           .Select(elementStruct => ToClrType(elementStruct) is {} type // check for non-null type
 				                                                    ? new Result<Type>(type)
 				                                                    : context.Trace(EleMessageCode.InvalidBoundaryFunction,"Only Num/Bool are currently implemented for input/return parameter when compiling dynamically"))
 			                           .BindEnumerable(clrPortTypes => Compile(value, context, LinqExpression.GetFuncType(clrPortTypes.ToArray()), boundaryConverter)));
@@ -460,7 +460,7 @@ namespace Element.CLR
 					return value.Serialize(context)
 					         .Bind(serialized => serialized.Count switch
 					         {
-						         1 when IsPrimitiveElementType(outputType) => CompileInstruction(serialized[0].Cache(data.CSECache, context), data),
+						         1 when IsPrimitiveElementType(outputType) => CompileInstruction(serialized[0]/*.Cache(data.CSECache, context)*/, data),
 						         _ => boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context)
 					         });
 				}

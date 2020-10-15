@@ -7,15 +7,21 @@ namespace Element.AST
     public class ResolvedBlock : Value, IScope
     {
         private readonly Func<IScope, Identifier, Context, Result<IValue>> _indexFunc;
+        private readonly IValue? _owningValue;
         private readonly Dictionary<Identifier, Result<IValue>> _resultCache;
-      
+
+        public override string SummaryString => _owningValue?.SummaryString ?? base.SummaryString;
+        public override string TypeOf => _owningValue?.TypeOf ?? base.TypeOf;
+
         public ResolvedBlock(IReadOnlyList<Identifier> allMembers,
                              IEnumerable<(Identifier Identifier, IValue Value)> resolvedValues,
                              Func<IScope, Identifier, Context, Result<IValue>> indexFunc,
-                             IScope? parent)
+                             IScope? parent,
+                             IValue? owningValue = null)
         {
             Members = allMembers;
             _indexFunc = indexFunc;
+            _owningValue = owningValue;
             Parent = parent;
             _resultCache = resolvedValues.ToDictionary(t => t.Identifier, t => new Result<IValue>(t.Value));
         }
@@ -27,7 +33,7 @@ namespace Element.AST
                   {
                       var (foundId, value) = resolvedValues.FirstOrDefault(m => m.Identifier.Equals(id));
                       return !foundId.Equals(default)
-                                 ? new Result<IValue>(value)
+                                 ? new Result<IValue>(value)//
                                  : context.Trace(EleMessageCode.IdentifierNotFound, $"'{id}' not found when indexing {resolvedBlock}");
                   }, parent)
         { }

@@ -24,6 +24,12 @@ namespace Element.AST
         bool IsIntrinsic { get; }
         bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation;
         bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic);
+
+        /// <summary>
+        /// Get the inner value being wrapped.
+        /// If a value is not being wrapped it will return itself.
+        /// </summary>
+        IValue Inner { get; }
     }
 
     public abstract class Value : IValue
@@ -52,6 +58,7 @@ namespace Element.AST
         public bool IsIntrinsic => IsIntrinsicOfType<IIntrinsicImplementation>();
         public virtual bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => false;
         public virtual bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => false;
+        public IValue Inner => this;
     }
 
     public static class ValueExtensions
@@ -112,5 +119,31 @@ namespace Element.AST
         public static Result<float[]> SerializeToFloats(this IValue value, Context context) =>
             value.Serialize(context)
                  .Bind(serialized => serialized.ToFloats(context));
+        
+        public static bool IsType<T>(this IValue value, out T result) where T : IValue
+        {
+            if (value.Inner is T t)
+            {
+                result = t;
+                return true;
+            }
+            result = default;
+            return false;
+        }
+
+        public static bool IsInstance(this IValue value, IValue other) => ReferenceEquals(value.Inner, other.Inner);
+        
+        public static Result<TValueOut> CastInner<TValueIn, TValueOut>(in this Result<TValueIn> input)
+            where TValueIn : IValue
+            where TValueOut : IValue
+            => input.Bind(value => value.IsType<TValueOut>(out var output)
+                                       ? new Result<TValueOut>(output)
+                                       : throw new InvalidCastException($"'{value}' cannot be casted to {typeof(TValueOut).Name}"));
+        
+        public static Result<TValueOut> CastInner<TValueOut>(in this Result<IValue> input)
+            where TValueOut : IValue
+            => input.Bind(value => value.IsType<TValueOut>(out var output)
+                                       ? new Result<TValueOut>(output)
+                                       : throw new InvalidCastException($"'{value}' cannot be casted to {typeof(TValueOut).Name}"));
     }
 }

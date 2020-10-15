@@ -72,7 +72,7 @@ namespace Element.AST
             }
             
             builder.AppendInfo("Successfully validated global scope");
-
+ 
             return builder.ToResult();
         }
     }

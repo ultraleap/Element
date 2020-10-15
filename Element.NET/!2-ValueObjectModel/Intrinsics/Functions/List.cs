@@ -57,7 +57,7 @@ namespace Element.AST
 	        public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputConstraints, IValue outputConstraint, Context context) =>
 		        index.CompileTimeIndex(0, elements.Count, context).Bind(index => new Result<IValue>(elements[index]))
 		             .Else(() => elements.All(e => e is Instruction)
-			                         ? Switch.CreateAndOptimize(index, elements.Cast<Instruction>(), context).Cast<IValue>(context)
+			                         ? Switch.CreateAndOptimize(index, elements.Cast<Instruction>(), context).Cast<IValue>()
 			                         : new Result<IValue>(new ListElement(index, elements, inputConstraints, outputConstraint)));
 
             private ListElement(Instruction index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputPorts, IValue output)

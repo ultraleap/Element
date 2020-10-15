@@ -84,11 +84,11 @@ namespace Element.CLR
 
         public Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, Context context) =>
             context.EvaluateExpression(_elementTypeExpression)
-                   .Cast<Struct>(context)
+                   .CastInner<Struct>()
                    .Bind(structDeclaration => StructInstance.Create(structDeclaration, _elementToClrFieldMapping
                                                                                        .Select(pair => new FieldInstruction(root, parameter, pair.Value))
                                                                                        .ToArray(), context)
-                                                            .Cast<IValue>(context));
+                                                            .Cast<IValue>());
 
         private class FieldInstruction : Instruction, ICLRExpression
         {
@@ -120,7 +120,7 @@ namespace Element.CLR
                 assigns.Add(LExpression.Assign(obj, LExpression.New(outputType)));
             }
             
-            if (!(value is StructInstance structInstance)) return context.Trace(EleMessageCode.InvalidBoundaryData, $"'{value}' is not a struct instance - expected struct instance when converting a struct");
+            if (!value.IsType(out StructInstance structInstance)) return context.Trace(EleMessageCode.InvalidBoundaryData, $"'{value}' is not a struct instance - expected struct instance when converting a struct");
             var builder = new ResultBuilder<LExpression>(context, default!);
             
             foreach (var pair in _elementToClrFieldMapping)
