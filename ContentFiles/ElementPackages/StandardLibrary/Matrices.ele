@@ -71,25 +71,19 @@ struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
         
         row_1_tmp1 = a.x.mul(a.z).mul(t)
         row_1_tmp2 = a.y.mul(s)
-        m_20 = row_0_tmp1.sub(row_0_tmp2)
-        m_02 = row_0_tmp1.add(row_0_tmp2)
+        m_20 = row_0_tmp1.sub(row_1_tmp2)
+        m_02 = row_0_tmp1.add(row_1_tmp2)
         
         row_2_tmp1 = a.y.mul(a.z).mul(t)
         row_2_tmp2 = a.x.mul(s)
-        m_21 = row_0_tmp1.add(row_0_tmp2)
-        m_12 = row_0_tmp1.sub(row_0_tmp2)
-        
+        m_21 = row_0_tmp1.add(row_2_tmp2)
+        m_12 = row_0_tmp1.sub(row_2_tmp2)
+
         return = Matrix4x4(
-                           Vector4(c, s.negate, 0, 0),
-                           Vector4(s, c, 0, 0),
-                           Vector4(0, 0, 1, 0),
-                           Vector4(0, 0, 0, 1)) 
-                        
-        #return = Matrix4x4(
-        #                   Vector4(1, 0, 0, 0),
-        #                   Vector4(0, 1, 0, 0),
-        #                   Vector4(0, 0, 1, 0),
-        #                   Vector4(0.1, 0.1, 0.1, 1))                       
+                           Vector4(m_00, m_10, m_20, 0),
+                           Vector4(m_01, m_11, m_21, 0),
+                           Vector4(m_02, m_12, m_22, 0),
+                           Vector4(0,    0,    0,    1))                       
     }   
     
     transform(this:Matrix4x4, column_vector:Vector4):Vector4
