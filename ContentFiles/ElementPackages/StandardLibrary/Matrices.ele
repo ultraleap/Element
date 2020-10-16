@@ -1,4 +1,4 @@
-#a 3x3 coordinate matrix for representing linear transformations - INCOMPLETE
+#column-major 3x3 coordinate matrix for representing linear transformations - INCOMPLETE
 struct Matrix3x3(x:Vector3, y:Vector3, z:Vector3)
 {
     x_row(a:Matrix3x3) = Vector3(a.x.x, a.y.x, a.z.x)
@@ -19,10 +19,10 @@ struct Matrix3x3(x:Vector3, y:Vector3, z:Vector3)
 
 
 
-#a 4x4 homogeneous coordinate matrix for representing affine transformations
+#column-major 4x4 homogeneous coordinate matrix for representing affine transformations
 struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
 {        
-     Identity = 
+     identity = 
          Matrix4x4(
             Vector4(1, 0, 0, 0),
             Vector4(0, 1, 0, 0),
@@ -51,7 +51,7 @@ struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
             Vector4(1, 0, 0, 0),
             Vector4(0, 1, 0, 0),
             Vector4(0, 0, 1, 0),
-            Vector4(translation))
+            Vector4(translation.x, translation.y, translation.z, 1))
             
     rotation(axis:Vector3, angle:Num):Matrix4x4 
     { 
@@ -78,30 +78,49 @@ struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
         row_2_tmp2 = a.x.mul(s)
         m_21 = row_0_tmp1.add(row_0_tmp2)
         m_12 = row_0_tmp1.sub(row_0_tmp2)
-    
+        
         return = Matrix4x4(
-                           Vector4(m_00, m_10, m_20, 0),
-                           Vector4(m_01, m_11, m_21, 0),
-                           Vector4(m_02, m_12, m_22, 0),
-                           Vector4(0, 0, 0, 1))
-    }      
+                           Vector4(c, s.negate, 0, 0),
+                           Vector4(s, c, 0, 0),
+                           Vector4(0, 0, 1, 0),
+                           Vector4(0, 0, 0, 1)) 
+                        
+        #return = Matrix4x4(
+        #                   Vector4(1, 0, 0, 0),
+        #                   Vector4(0, 1, 0, 0),
+        #                   Vector4(0, 0, 1, 0),
+        #                   Vector4(0.1, 0.1, 0.1, 1))                       
+    }   
+    
+    transform(this:Matrix4x4, column_vector:Vector4):Vector4
+    {
+        multiply(matrix_row_vector:Vector4):Num = matrix_row_vector.dot(column_vector)
+        x = multiply(this.x_row)
+        y = multiply(this.y_row)
+        z = multiply(this.z_row)
+        w = multiply(this.w_row)
+        return = Vector4(x, y, z, w)
+        
+        #TODO: memberwise this later
+        #return = memberwise(multiply, Matrix4x4.transpose(matrix))
+    }   
     
     multiply(a:Matrix4x4, b:Matrix4x4):Matrix4x4
     {
-        x_component = Vector4(a.x_row.mul(b.x), a.x_row.mul(b.y), a.x_row.mul(b.z), a.x_row.mul(b.w))
-        y_component = Vector4(a.y_row.mul(b.x), a.y_row.mul(b.y), a.y_row.mul(b.z), a.y_row.mul(b.w))
-        z_component = Vector4(a.z_row.mul(b.x), a.z_row.mul(b.y), a.z_row.mul(b.z), a.z_row.mul(b.w))
-        w_component = Vector4(a.w_row.mul(b.x), a.w_row.mul(b.y), a.w_row.mul(b.z), a.w_row.mul(b.w))
+        x_component = Vector4(a.x_row.dot(b.x), a.y_row.dot(b.x), a.z_row.dot(b.x), a.w_row.dot(b.w))
+        y_component = Vector4(a.x_row.dot(b.y), a.y_row.dot(b.y), a.z_row.dot(b.y), a.w_row.dot(b.w))
+        z_component = Vector4(a.x_row.dot(b.z), a.y_row.dot(b.z), a.z_row.dot(b.z), a.w_row.dot(b.w))
+        w_component = Vector4(a.x_row.dot(b.w), a.y_row.dot(b.w), a.z_row.dot(b.w), a.w_row.dot(b.w))
     
         return = Matrix4x4(x_component, y_component, z_component, w_component)
     }
     
     multiply_scalar(a:Matrix4x4, b:Num):Matrix4x4
     {
-        x_component = Vector4(a.x.mul(b))
-        y_component = Vector4(a.y.mul(b))
-        z_component = Vector4(a.z.mul(b))
-        w_component = Vector4(a.w.mul(b))
+        x_component = a.x.mul(b)
+        y_component = a.y.mul(b)
+        z_component = a.z.mul(b)
+        w_component = a.w.mul(b)
     
         return = Matrix4x4(x_component, y_component, z_component, w_component)
     }

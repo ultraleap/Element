@@ -119,12 +119,19 @@ struct Path(at:PathFunc, length:Num)
 #       return = BoundedPath(at, mul(path.length, segment))
 #   }
   
-#   LineBetween(a:Path, aPeriod:Num, b:Path, bPeriod:Num, time:Num):Path
-#   {
-#       pointA = a.at(rem(div(time, aPeriod), 1))
-#       pointB = b.at(rem(div(time, bPeriod), 1))
-#       return = BoundedPath.Easing(Path.Line(pointA, pointB))
-#   }
+    LineBetween(a:Path, aPeriod:Num, b:Path, bPeriod:Num):Path
+    {
+        pointA = a.at(time.div(aPeriod).rem(1))
+        pointB = b.at(time.div(bPeriod),rem(1))
+        return = Path.Easing(BoundedPath.Line(pointA, pointB))
+    }
+    
+    Easing(a:Path):Path
+    {
+        smoothstep(t:Num) = 3.mul(t.mul(t)).sub(2.mul(t.mul(t).mul(t)))
+        at(u:Num):Vector3 = a.at(smoothstep(u))
+        return = Path(at, a.length)
+    }  
    
 #   Concatenate(a:Path, b:Path):Path
 #   {
@@ -152,17 +159,18 @@ struct Path(at:PathFunc, length:Num)
 #       return = Path(at, path.length)
 #   }
 
-   Translate(path:Path, position:Vector3):Path
-   {
-       at(u:Num):Vector3 = Vector3.add(position, path.at(u))
-       return = Path(at, path.length)
-   }
-
-#   Transform(path:Path, matrix:Matrix4x4):Path
+#   #compose matrices instead, as this just feels weird
+#   Translate(path:Path, position:Vector3):Path
 #   {
-#      at(u:Num):Vector3 = Vector3.TransformPosition(path.at(u), matrix)
+#       at(u:Num):Vector3 = Vector3.add(position, path.at(u))
 #       return = Path(at, path.length)
-#   } 
+#   }
+
+    Transform(path:Path, matrix:Matrix4x4):Path
+    {
+        at(u:Num):Vector3 = path.at(u).transformPosition(matrix)
+        return = Path(at, path.length)
+    } 
 }
 
 
@@ -258,15 +266,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
         segment = end.sub(start)
         at(u:Num):Vector3 = path.at(u.add(start).mul(segment))
         return = BoundedPath(at, path.length.mul(segment))
-    }
-   
-    #UNTESTED
-    LineBetween(a:Path, aPeriod:Num, b:Path, bPeriod:Num, time:Num):Path
-    {
-        pointA = a.at(time.div(aPeriod).rem(1))
-        pointB = b.at(time.div(bPeriod),rem(1))
-        return = Path.Easing(BoundedPath.Line(pointA, pointB))
-    }
+    }    
        
 #    #UNTESTED
 #	Join(pathArray:PathArray) : BoundedPath
