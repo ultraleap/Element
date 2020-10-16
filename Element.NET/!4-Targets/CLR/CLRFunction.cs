@@ -19,6 +19,8 @@ namespace Element.CLR
 		    {Unary.Op.ACos, ((Func<double, double>)Math.Acos).Method},
 		    {Unary.Op.Tan, ((Func<double, double>)Math.Tan).Method},
 		    {Unary.Op.ATan, ((Func<double, double>)Math.Atan).Method},
+		    {Unary.Op.Floor, ((Func<double, double>)Math.Floor).Method},
+		    {Unary.Op.Ceil, ((Func<double, double>)Math.Ceiling).Method},
 		    {Unary.Op.Abs, ((Func<float, float>)Math.Abs).Method},
 	    };
 	    
@@ -33,7 +35,7 @@ namespace Element.CLR
 	    private static readonly Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>> _unaryLinqOps =
 		    new Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>>
 		    {
-			    {Unary.Op.Not, LinqExpression.Not}
+			    {Unary.Op.Not, LinqExpression.Not},
 		    };
 
 	    private static readonly Dictionary<Unary.Op, (Type In, Type Out)> _unaryLinqSignatures =

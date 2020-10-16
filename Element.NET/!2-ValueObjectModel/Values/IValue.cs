@@ -58,7 +58,7 @@ namespace Element.AST
         public bool IsIntrinsic => IsIntrinsicOfType<IIntrinsicImplementation>();
         public virtual bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => false;
         public virtual bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => false;
-        public IValue Inner => this;
+        public virtual IValue Inner => this;
     }
 
     public static class ValueExtensions

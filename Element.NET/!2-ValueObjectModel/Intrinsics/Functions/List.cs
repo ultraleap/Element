@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -81,6 +80,7 @@ namespace Element.AST
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
             public override bool IsFunction => _elements[0].IsFunction;
+            public override IValue Inner => _elements[0].Inner;
 
             public override Result<IValue> Index(Identifier id, Context context) =>
 	            _elements.Select(e => e.Index(id, context))

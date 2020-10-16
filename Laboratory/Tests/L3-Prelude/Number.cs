@@ -22,6 +22,9 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.asin", "({0})", MathF.Asin),
 			("Num.acos", "({0})", MathF.Acos),
 			("Num.atan", "({0})", MathF.Atan),
+			("Num.floor", "({0})", MathF.Floor),
+			("Num.ceil", "({0})", MathF.Ceiling),
+			("Num.abs", "({0})", MathF.Abs),
 		};
 
 		[Test, Pairwise]
@@ -42,6 +45,7 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.min", "({0}, {1})", MathF.Min),
 			("Num.max", "({0}, {1})", MathF.Max),
 			("Num.atan2", "({0}, {1})", MathF.Atan2),
+			("Num.log", "({0}, {1})", MathF.Log),
 		};
 		
 		[Test, Pairwise]
@@ -246,6 +250,7 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.max", "(5, -2)", "5"),
 			("Num.max", "(-4, 25)", "25"),
 			("Num.max", "(25, 150)", "150"),
+			("Num.max", "(-140, -2)", "-2"),
 			("Num.max", "(-140, -2)", "-2"),
 			
 			("Num.log", "(0, 0)", "Num.NaN"),
