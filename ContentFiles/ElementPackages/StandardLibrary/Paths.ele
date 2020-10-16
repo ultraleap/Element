@@ -25,8 +25,17 @@ struct Path(at:PathFunc, length:Num)
                 return = List(index, 1)
             }
             
-    withVelocity(this:Path, velocity:Num):EvaluatePath = renderWithVelocity(velocity)(this)
+    renderWithPeriod(period:Num):PathRenderer
+        = _(path:Path):EvaluatePath
+            = _(time:TimePoint):List
+            {
+                index(idx:Num) = path.at(time.value(period).div(period))
+                return = List(index, 1)
+            }
+            
+    withVelocity(this:Path, velocity:Num):EvaluatePath = renderWithVelocity(velocity)(this)    
     withFrequency(this:Path, frequency:Num):EvaluatePath = renderWithFrequency(frequency)(this)
+    withPeriod(this:Path, period:Num):EvaluatePath = renderWithPeriod(period)(this)
 
     Circle(position:Vector3, radius:Num):Path
     {
