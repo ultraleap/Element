@@ -67,10 +67,10 @@ void element_ast_delete(
 
 /**
  * @brief  obtains any flags set on an ast node
-
+ *
  * @param[in] ast               ast node to check
  * @param[out] flags            flags set on node
- 
+ *
  * @return ELEMENT_OK success
  */
 element_result element_ast_get_flags(
@@ -79,10 +79,10 @@ element_result element_ast_get_flags(
 
 /**
  * @brief obtains the nearest token from an ast node
-
+ *
  * @param[in] ast               ast node to check
  * @param[out] token            nearest token to ast node
- 
+ *
  * @return ELEMENT_OK success
  */
 element_result element_ast_get_nearest_token(
@@ -91,10 +91,10 @@ element_result element_ast_get_nearest_token(
 
 /**
  * @brief obtains the ast node type of an ast node
-
+ *
  * @param[in] ast               ast node to check
  * @param[out] type             ast node type of the ast node
- 
+ *
  * @return ELEMENT_OK success
  */
 element_result element_ast_get_type(
@@ -103,10 +103,10 @@ element_result element_ast_get_type(
 
 /**
  * @brief obtains the identifier of an ast node
-
+ *
  * @param[in] ast               ast node to check
  * @param[out] value            identifier name of the ast node
- 
+ *
  * @return ELEMENT_OK obtained the identifier successfully
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL value is null
@@ -118,13 +118,13 @@ element_result element_ast_get_value_as_identifier(
 
 /**
  * @brief obtains the literal value of an ast node
-
+ *
  * @param[in] ast               ast node to check
  * @param[out] value            literal value of the ast node
- 
+ *
  * @return ELEMENT_OK obtained the literal value successfully
- * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL value is null
+ * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL value pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT value is not a literal
  */
 element_result element_ast_get_value_as_literal(
@@ -133,12 +133,12 @@ element_result element_ast_get_value_as_literal(
 
 /**
  * @brief obtains the parent of an ast node
-
+ *
  * @param[in] ast               ast node to check
  * @param[out] parent           parent ast node of the ast node
- 
+ *
  * @return ELEMENT_OK obtained the parent node successfully
- * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
+ * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL ast node has no parent
  */
 element_result element_ast_get_parent(
@@ -147,13 +147,13 @@ element_result element_ast_get_parent(
 
 /**
  * @brief counts the number of immediate children of an ast node
-
+ *
  * @param[in] ast               ast node to check
  * @param[out] count            child count
- 
+ *
  * @return ELEMENT_OK obtained the child count successfully
- * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL count is null
+ * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL count pointer is null
  */
 element_result element_ast_get_child_count(
     const element_ast* ast, 
@@ -161,14 +161,14 @@ element_result element_ast_get_child_count(
 
 /**
  * @brief obtains an immediate child of an ast node
- 
+ *
  * @param[in] ast               ast node to check
  * @param[in] index             index of the child node to retrieve
  * @param[out] child            child ast node
- 
+ *
  * @return ELEMENT_OK obtained the immediate child ast node successfully
- * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL child is null
+ * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL child pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT index exceeds child count
  */
 element_result element_ast_get_child(
@@ -178,13 +178,13 @@ element_result element_ast_get_child(
 
 /**
  * @brief obtains the root node of the tree from a given node
- 
+ *
  * @param[in] ast               ast node to check
  * @param[out] root             root node of the ast tree
- 
+ *
  * @return ELEMENT_OK root node retrieved successfully
- * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node is null
+ * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node pointer is null
  */
 element_result element_ast_get_root(
     element_ast* ast, 
@@ -192,13 +192,13 @@ element_result element_ast_get_root(
 
 /**
  * @brief obtains the root node of the tree from a given node
- 
+ *
  * @param[in] ast               ast node to check
  * @param[out] root             root node of the ast tree
- 
+ *
  * @return ELEMENT_OK root node retrieved successfully
- * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node is null
+ * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node pointer is null
  */
 element_result element_ast_get_root_const(
     const element_ast* ast, 
@@ -206,15 +206,15 @@ element_result element_ast_get_root_const(
 
 /**
  * @brief converts an ast node to string form
- 
+ *
  * @param[in] ast                   ast node to convert to string
  * @param[in] ast_to_mark           ast node to use as an indicator to highlight text, can be nullptr
  * @param[out] output_buffer        output data buffer
  * @param[in] output_buffer_size    size of the output buffer
- 
+ *
  * @return ELEMENT_OK ast node converted to string successfully
- * @return ELEMENT_ERROR_API_AST_IS_NULL ast node is null
- * @return ELEMENT_ERROR_API_INVALID_INPUT output_buffer is null
+ * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
+ * @return ELEMENT_ERROR_API_INVALID_INPUT output_buffer pointer is null
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER result size exceeds output_buffer_size
  */
 element_result element_ast_to_string(

@@ -8,8 +8,14 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+/**
+ * @brief value type
+ */
 typedef float element_value;
 
+/**
+ * @brief result type
+ */
 typedef enum element_result
 {
     //ELEMENT
@@ -102,6 +108,9 @@ typedef enum element_result
     ELEMENT_ERROR_API_UNKNOWN = -20000,
 } element_result;
 
+/**
+ * @brief compilation stage
+ */
 typedef enum element_stage
 {
     ELEMENT_STAGE_INVALID = -1,
@@ -112,8 +121,14 @@ typedef enum element_stage
     ELEMENT_STAGE_EVALUATOR
 } element_stage;
 
+/**
+ * @brief log message
+ */
 typedef struct element_log_message element_log_message;
 
+/**
+ * @brief log message definition
+ */
 struct element_log_message
 {
     // determines which values in this struct will be relevant
