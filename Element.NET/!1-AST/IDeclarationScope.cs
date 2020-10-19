@@ -16,20 +16,18 @@ namespace Element.AST
     /// <summary>
     /// Value retaining it's full path in source and identifiers within, including it's own identifier.
     /// </summary>
-    public class ValueWithLocation
+    public class ValueWithLocation : WrapperValue
     {
-        public ValueWithLocation(Identifier[] identifiersInPath, IValue value)
+        public ValueWithLocation(Identifier[] identifiersInPath, IValue value) : base(value)
         {
             Identifier = identifiersInPath.Last();
             IdentifiersInPath = identifiersInPath;
             FullPath = string.Join(".", IdentifiersInPath);
-            Value = value;
         }
 
         public Identifier Identifier { get; }
         public Identifier[] IdentifiersInPath { get; }
         public string FullPath { get; }
-        public IValue Value { get; }
     }
     
     public static class DeclarationScopeExtensions

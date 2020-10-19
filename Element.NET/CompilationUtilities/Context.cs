@@ -6,10 +6,19 @@ namespace Element
 {
     public interface ICompilationAspect
     {
+        Result BeforeIndex(IValue valueBeingIndexed, Identifier identifier, Context context);
         Result<IValue> Index(IValue valueBeingIndexed, Identifier identifier, IValue result, Context context);
+        
+        Result BeforeCall(IValue function, IReadOnlyList<IValue> arguments, Context context);
         Result<IValue> Call(IValue function, IReadOnlyList<IValue> arguments, IValue result, Context context);
-        Result<IValue> Declaration(Declaration declaration, IScope scope, IValue value, Context context);
-        Result<IValue> Expression(Expression expression, IScope scope, IValue value, Context context);
+        
+        Result BeforeDeclaration(Declaration declaration, IScope scope, Context context);
+        Result<IValue> Declaration(Declaration declaration, IScope scope, IValue result, Context context);
+        
+        Result BeforeExpression(Expression expression, IScope scope, Context context);
+        Result<IValue> Expression(Expression expression, IScope scope, IValue result, Context context);
+        
+        
     }
 
     public abstract class WrapperValue : IValue
@@ -86,11 +95,15 @@ namespace Element
     public class DebugAspect : ICompilationAspect
     {
         //private static string GetDeclarationLocation(Context context) => context.DeclarationStack.Reverse().Aggregate(new StringBuilder(), (builder, decl) => builder.Append($".{decl.Identifier}")).ToString();
-        
+
+        public Result BeforeIndex(IValue valueBeingIndexed, Identifier identifier, Context context) => Result.Success;
         public Result<IValue> Index(IValue valueBeingIndexed, Identifier identifier, IValue result, Context context) => new DebugIndex(valueBeingIndexed, identifier, result);
+        public Result BeforeCall(IValue function, IReadOnlyList<IValue> arguments, Context context) => Result.Success;
         public Result<IValue> Call(IValue function, IReadOnlyList<IValue> arguments, IValue result, Context context) => new DebugCall(function, arguments, result);
-        public Result<IValue> Declaration(Declaration declaration, IScope scope, IValue value, Context context) => new DebugDeclaration(declaration, scope, value);
-        public Result<IValue> Expression(Expression expression, IScope scope, IValue value, Context context) => new DebugExpression(expression, scope, value);
+        public Result BeforeDeclaration(Declaration declaration, IScope scope, Context context) => Result.Success;
+        public Result<IValue> Declaration(Declaration declaration, IScope scope, IValue result, Context context) => new DebugDeclaration(declaration, scope, result);
+        public Result BeforeExpression(Expression expression, IScope scope, Context context) => Result.Success;
+        public Result<IValue> Expression(Expression expression, IScope scope, IValue result, Context context) => new DebugExpression(expression, scope, result);
     }
     
     /// <summary>
@@ -98,6 +111,9 @@ namespace Element
     /// </summary>
     public class Context
     {
+        public static Context CreateFromSourceContext(SourceContext sourceContext, ICompilationAspect? aspect = null) => new Context(sourceContext, aspect);
+        public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions, ICompilationAspect? aspect = null) => new Context(rootScope, compilerOptions, aspect);
+
         private class NoScope : IScope
         {
             private readonly Context _scopelessContext;
@@ -109,20 +125,21 @@ namespace Element
             public Result<IValue> Lookup(Identifier id, Context context) =>
                 throw new InternalCompilerException($"Context '{_scopelessContext}' has no root scope, performing lookup is not possible");
         }
-        
-        public Context(IScope? rootScope, CompilerOptions? compilerOptions, ICompilationAspect? aspect = null)
+
+        private Context(IScope? rootScope, CompilerOptions? compilerOptions, ICompilationAspect? aspect = null)
         {
-            Aspect = aspect;
             RootScope = rootScope ?? new NoScope(this);
             CompilerOptions = compilerOptions ?? new CompilerOptions(MessageLevel.Information);
-            if (Aspect == null && !CompilerOptions.ReleaseMode)
+            Aspect = aspect;
+            /*if (!CompilerOptions.ReleaseMode)
             {
-                Aspect = new DebugAspect();
-            }
+                Aspect = new Aspect();
+            }*/
         }
-        public Context(SourceContext sourceContext) : this(sourceContext.GlobalScope, sourceContext.CompilerOptions, sourceContext.Aspect) { }
         
-        public static Context None { get; } = new Context(null, null);
+        private Context(SourceContext sourceContext, ICompilationAspect? aspect = null) : this(sourceContext.GlobalScope, sourceContext.CompilerOptions, aspect) { }
+        
+        public static Context None { get; } = CreateManually(null, null);
 
         public IScope RootScope { get; }
         public CompilerOptions CompilerOptions { get; }

@@ -85,6 +85,7 @@ namespace Element.AST
                 Expressions.List
                            .Select(argExpr => argExpr.ResolveExpression(scope, context))
                            .ToResultReadOnlyList()
+                           .Then(args => context.Aspect?.BeforeCall(previous, args, context) ?? Result.Success)
                            .Bind(args =>
                            {
                                var callResult = previous.Call(args.ToArray(), context);
@@ -105,8 +106,9 @@ namespace Element.AST
             public override string ToString() => $".{Identifier}";
             protected override void ValidateImpl(ResultBuilder builder, Context context) => Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
             protected override Result<IValue> SubExpressionImpl(IValue previous, IScope _, Context context) =>
-                previous.Index(Identifier, context)
-                        .Bind(indexResult => context.Aspect?.Index(previous, Identifier, indexResult, context) ?? new Result<IValue>(indexResult));
+                (context.Aspect?.BeforeIndex(previous, Identifier, context) ?? Result.Success)
+                .Bind(() => previous.Index(Identifier, context))
+                .Bind(indexResult => context.Aspect?.Index(previous, Identifier, indexResult, context) ?? new Result<IValue>(indexResult));
         }
     }
 }
