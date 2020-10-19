@@ -248,6 +248,7 @@ void element_delete_instruction(
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
  * @return ELEMENT_ERROR_API_STRING_IS_NULL declaration name is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL result object pointer is null
+ * @return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND path was invalid as nothing was found
  */
 element_result element_interpreter_find(
     element_interpreter_ctx* interpreter,
@@ -285,7 +286,8 @@ element_result element_interpreter_compile(
  * @return ELEMENT_OK evaluated instruction tree successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
  * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL instruction pointer is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL inputs or outputs pointer is null
+ * @return ELEMENT_ERROR_API_INVALID_INPUT inputs pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL outputs pointer is null
  */
 element_result element_interpreter_evaluate(
     element_interpreter_ctx* interpreter,
@@ -304,8 +306,8 @@ element_result element_interpreter_evaluate(
  *
  * @return ELEMENT_OK compiled an expression to an instruction tree successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
- * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL instruction pointer is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL inputs or outputs pointer is null
+ * @return ELEMENT_ERROR_API_STRING_IS_NULL expression_string is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL instruction is null
  */
 element_result element_interpreter_compile_expression(
     element_interpreter_ctx* interpreter,
@@ -324,7 +326,7 @@ element_result element_interpreter_compile_expression(
  * @return ELEMENT_OK evaluated an expression successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
  * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL instruction pointer is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL inputs or outputs pointer is null
+ * @return ELEMENT_ERROR_API_INVALID_INPUT outputs pointer is null
  */
 element_result element_interpreter_evaluate_expression(
     element_interpreter_ctx* interpreter,
@@ -344,7 +346,8 @@ element_result element_interpreter_evaluate_expression(
  * @return ELEMENT_OK retrieved typeof information successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
  * @return ELEMENT_ERROR_API_STRING_IS_NULL expression string pointer is null
- * @return ELEMENT_ERROR_API_STRING_IS_NULL buffer pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL buffer pointer is null
+ * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER buffer size is too small
  */
 element_result element_interpreter_typeof_expression(
     element_interpreter_ctx* interpreter,

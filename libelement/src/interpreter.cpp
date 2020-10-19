@@ -319,8 +319,11 @@ element_result element_interpreter_evaluate(
     if (!instruction || !instruction->instruction)
         return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
 
-    if (!inputs || !outputs)
+    if (!inputs)
         return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    if (!outputs)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
     element_evaluator_options opts{};
 
