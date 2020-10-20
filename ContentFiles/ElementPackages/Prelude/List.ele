@@ -53,4 +53,7 @@ intrinsic struct List(at:Indexer, count:Num)
     findLast(a:List, predicate:Predicate, default) = a.fold(default, _(current, next) = predicate(next).if(next, current))
 
     findFirst(a:List, predicate:Predicate, default) = a.reverse.findLast(predicate, default)
+
+    first(a:List) = a.at(0)
+    last(a:List) = a.at(a.count.sub(1))
 }
