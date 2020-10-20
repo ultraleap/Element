@@ -12,8 +12,8 @@
 
 struct Vector2(x:Num, y:Num)
 {   
-     Zero = Vector2(0, 0)
-     One = Vector2(1, 1)
+     zero = Vector2(0, 0)
+     one = Vector2(1, 1)
      
 #    Right = Vector2(1, 0)
 #    Left = Vector2(-1, 0)
@@ -79,15 +79,15 @@ struct Vector2(x:Num, y:Num)
 
 struct Vector3(x:Num, y:Num, z:Num)
 {
-    Zero = Vector3(0, 0, 0)
-    One = Vector3(1, 1, 1)
+    zero = Vector3(0, 0, 0)
+    one = Vector3(1, 1, 1)
     
-    Right = Vector3(1, 0, 0)
-    Left = Vector3(-1, 0, 0)
-    Forward = Vector3(0, 1, 0)
-    Back = Vector3(0, -1, 0)
-    Up = Vector3(0, 0, 1)
-    Down = Vector3(0, 0, -1)
+    right = Vector3(1, 0, 0)
+    left = Vector3(-1, 0, 0)
+    forward = Vector3(0, 1, 0)
+    back = Vector3(0, -1, 0)
+    up = Vector3(0, 0, 1)
+    down = Vector3(0, 0, -1)
 
     #vector properties
     magnitudeSquared(v:Vector3):Num = v.dot(v)
@@ -172,8 +172,8 @@ struct Vector3(x:Num, y:Num, z:Num)
 
 struct Vector4(x:Num, y:Num, z:Num, w:Num)
 {
-    Zero = Vector4(0, 0, 0, 0)
-    One = Vector4(1, 1, 1, 1)
+    zero = Vector4(0, 0, 0, 0)
+    one = Vector4(1, 1, 1, 1)
     
     #vector properties
     magnitudeSquared(v:Vector4):Num = v.dot(v)

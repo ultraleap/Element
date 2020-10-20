@@ -5,7 +5,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
     internal class Matrix : StandardLibraryFixture
     {
         [
-            TestCase("Matrix4x4.Identity", 
+            TestCase("Matrix4x4.identity", 
                 "Matrix4x4(" +
                 "Vector4(1, 0, 0, 0), " +
                 "Vector4(0, 1, 0, 0), " +

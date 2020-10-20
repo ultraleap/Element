@@ -37,7 +37,7 @@ struct Path(at:PathFunc, length:Num)
     withFrequency(this:Path, frequency:Num):EvaluatePath = renderWithFrequency(frequency)(this)
     withPeriod(this:Path, period:Num):EvaluatePath = renderWithPeriod(period)(this)
 
-    Circle(position:Vector3, radius:Num):Path
+    circle(position:Vector3, radius:Num):Path
     {
         at(u:Num):Vector3
         {
@@ -50,11 +50,11 @@ struct Path(at:PathFunc, length:Num)
         return = Path(at, length)
     }
 
-	RepeatingLine(endpointA:Vector3, endpointB:Vector3):Path = BoundedPath.Repeat(BoundedPath.Line(endpointA, endpointB))
+	repeatingLine(endpointA:Vector3, endpointB:Vector3):Path = BoundedPath.repeat(BoundedPath.line(endpointA, endpointB))
 
-	PingPongLine(endpointA:Vector3, endpointB:Vector3):Path = BoundedPath.PingPong(BoundedPath.Line(endpointA, endpointB))
+	pingPongLine(endpointA:Vector3, endpointB:Vector3):Path = BoundedPath.pingPong(BoundedPath.line(endpointA, endpointB))
 
-	Rectangle(width:Num, height:Num):Path
+	rectangle(width:Num, height:Num):Path
 	{
 		at(u:Num):Vector3
 		{
@@ -75,7 +75,7 @@ struct Path(at:PathFunc, length:Num)
 		return = Path.Translate(Path(at, width.add(height).mul(2)), Vector3(width.div(-2), height.div(-2), 0))
 	}
 
- 	Lissajous(position: Vector3, size:Vector2, frequency:Vector2):Path
+    lissajous(position: Vector3, size:Vector2, frequency:Vector2):Path
  	{
  		at(progress:Num):Vector3
  		{
@@ -98,7 +98,7 @@ struct Path(at:PathFunc, length:Num)
  		return = Path(at, 1)
  	}
 
-#	Rose(diameter:Num, n:Num, d:Num, frequency:Num):Path
+#	rose(diameter:Num, n:Num, d:Num, frequency:Num):Path
 #	{
 #		k = Num.div(n, d)
 #		at(u:Num):Vector3
@@ -110,63 +110,63 @@ struct Path(at:PathFunc, length:Num)
 #		}
 #		return = Path(at, Num.mul(Num.mul(diameter, 4), ellipse(k, 1)))
 #	}   
-	
+#	
 #   #Modifiers
-#   WithBounds(path:Path, start:Num, end:Num):BoundedPath
+#   withBounds(path:Path, start:Num, end:Num):BoundedPath
 #   {
 #       segment = sub(end, start)
 #       at(u:Num):Vector3 = path.at(Num.mul(Num.add(u, start), segment))
 #       return = BoundedPath(at, mul(path.length, segment))
 #   }
   
-    LineBetween(a:Path, aPeriod:Num, b:Path, bPeriod:Num):Path
+    lineBetween(a:Path, aPeriod:Num, b:Path, bPeriod:Num):Path
     {
         pointA = a.at(time.div(aPeriod).rem(1))
         pointB = b.at(time.div(bPeriod),rem(1))
-        return = Path.Easing(BoundedPath.Line(pointA, pointB))
+        return = Path.Easing(BoundedPath.line(pointA, pointB))
     }
     
-    Easing(a:Path):Path
+    easing(a:Path):Path
     {
         smoothstep(t:Num) = 3.mul(t.mul(t)).sub(2.mul(t.mul(t).mul(t)))
         at(u:Num):Vector3 = a.at(smoothstep(u))
         return = Path(at, a.length)
     }  
    
-#   Concatenate(a:Path, b:Path):Path
+#   concatenate(a:Path, b:Path):Path
 #   {
 #       at(u:Num):Vector3 = Bool.if(Num.lt(u, 0.5), a.at(Num.mul(u, 2)), b.at(Num.mul(u, 2)))
 #       length = Num.add(a.length, b.length)
 #       return = Path(at, length)
 #   }
-
-#   Animate(path:Path, trajectory:Path, duration:Num, time:Num):Path
+#
+#   animate(path:Path, trajectory:Path, duration:Num, time:Num):Path
 #   {
 #       offset = trajectory.at(Num.div(time, duration))
 #       at(u:Num):Vector3 = Vector3.add(path.at(u), offset)
 #       return = Path(at, path.length)
 #   }
-
-#   Offset(path:Path, amount:Num):Path
+#
+#   offset(path:Path, amount:Num):Path
 #   {
 #       at(u:Num):Vector3 = path.at(Num.rem(Num.add(u, amount), 1))
 #       return = Path(at, path.length)
 #   }
-
-#   Reverse(path:Path):Path
+#
+#   reverse(path:Path):Path
 #   {
 #       at(u:Num):Vector3 = path.at(Num.sub(1, u))
 #       return = Path(at, path.length)
 #   }
-
+#
 #   #compose matrices instead, as this just feels weird
-#   Translate(path:Path, position:Vector3):Path
+#   translate(path:Path, position:Vector3):Path
 #   {
 #       at(u:Num):Vector3 = Vector3.add(position, path.at(u))
 #       return = Path(at, path.length)
 #   }
 
-    Transform(path:Path, matrix:Matrix4x4):Path
+    transform(path:Path, matrix:Matrix4x4):Path
     {
         at(u:Num):Vector3 = path.at(u).transformPosition(matrix)
         return = Path(at, path.length)
@@ -177,7 +177,7 @@ struct Path(at:PathFunc, length:Num)
 struct BoundedPath(atBounded:PathFunc, length:Num)
 {
     #Paths
-	Line(endpointA:Vector3, endpointB:Vector3):BoundedPath
+	line(endpointA:Vector3, endpointB:Vector3):BoundedPath
 	{
 		at(u:Num):Vector3 = Vector3.lerp(u, endpointA, endpointB)
 		length = Vector3.distance(endpointA, endpointB)
@@ -185,7 +185,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 	}
 
 #   #UNTESTED
-#	PolyLineSimple(points:Vec3Array) : BoundedPath
+#	polyLineSimple(points:Vec3Array) : BoundedPath
 #	{
 #		segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)))
 #		segments = TArray(sub(points.count, 1), segment)
@@ -193,7 +193,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 #	}
 #
 #   #UNTESTED
-#	PolySegmentSimple(segments:SegmentArray) : BoundedPath
+#	polySegmentSimple(segments:SegmentArray) : BoundedPath
 #	{
 #		segmentLength(s:Segment) = V3.Distance(s.a, s.b)
 #		totalLength = aggregate(add, Array.Select(segments, segmentLength), 0)
@@ -208,7 +208,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 #	}
 #
 #   #UNTESTED
-#	PolyLine(points:Vec3Array) : BoundedPath
+#	polyLine(points:Vec3Array) : BoundedPath
 #	{
 #		segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)))
 #		segments = TArray(sub(points.count, 1), segment)
@@ -216,7 +216,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 #	}
 #
 #   #UNTESTED
-#	PolySegment(segments:SegmentArray) : BoundedPath
+#	polySegment(segments:SegmentArray) : BoundedPath
 #	{
 #		segmentLength(s:Segment) = V3.Distance(s.a, s.b)
 #		totalLength = aggregate(add, Array.Select(segments, segmentLength), 0)
@@ -241,7 +241,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 #	}
 	
 	#Modifiers
-	PingPong(path:BoundedPath):Path
+	pingPong(path:BoundedPath):Path
 	{       
 		#ping-pong cycles every increment of 1, range is scaled such that min->max->min occurs every 0->1 step
         at(u:Num):Vector3 = path.atBounded(u.mul(2).abs.add(1).rem(2).sub(1).abs)
@@ -249,7 +249,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 		return = Path(at, length)
 	}
 
-	Repeat(path:BoundedPath):Path
+	repeat(path:BoundedPath):Path
 	{
 		at(u:Num):Vector3
 		{
@@ -260,16 +260,16 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 		return = Path(at, path.length)
 	}
 	
-    #UNTESTED
-    WithBounds(path:Path, start:Num, end:Num):BoundedPath
-    {
-        segment = end.sub(start)
-        at(u:Num):Vector3 = path.at(u.add(start).mul(segment))
-        return = BoundedPath(at, path.length.mul(segment))
-    }    
-       
+#   #UNTESTED
+#   withBounds(path:Path, start:Num, end:Num):BoundedPath
+#   {
+#       segment = end.sub(start)
+#       at(u:Num):Vector3 = path.at(u.add(start).mul(segment))
+#       return = BoundedPath(at, path.length.mul(segment))
+#   }    
+#      
 #    #UNTESTED
-#	Join(pathArray:PathArray) : BoundedPath
+#	join(pathArray:PathArray) : BoundedPath
 #	{
 #		pathLength(p:BoundedPath) = p.length
 #		length = aggregate(add, Array.Select(pathArray, pathLength), 0)
@@ -284,7 +284,7 @@ struct BoundedPath(atBounded:PathFunc, length:Num)
 #	}
 #
 #    #UNTESTED
-#	PathSegment(path:BoundedPath, start:Num, end:Num):BoundedPath
+#	pathSegment(path:BoundedPath, start:Num, end:Num):BoundedPath
 #	{
 #		segment = Num.sub(end, start)
 #		at(u:Num):Vector3 = path.atBounded(Num.mul(Num.add(u, start), segment))

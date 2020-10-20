@@ -1,28 +1,28 @@
 struct Plane(normal:Vector3, distance:Num)
 {
     #UNTESTED
-    FromVertices(a:Vector3, b:Vector3, c:Vector3):Plane
-    {
-        ba = b.sub(a)
-        ca = c.sub(a)
-
-        n = ba.cross(ca)
-        normal = n.normalize
-        d = normal.dot(a).negate
-
-        return = Plane(normal, d)
-    }
+    #fromVertices(a:Vector3, b:Vector3, c:Vector3):Plane
+    #{
+    #    ba = b.sub(a)
+    #    ca = c.sub(a)
+    #
+    #    n = ba.cross(ca)
+    #    normal = n.normalize
+    #    d = normal.dot(a).negate
+    #
+    #    return = Plane(normal, d)
+    #}
+    #
+    ##UNTESTED
+    #signedDistanceFromPoint(plane:Plane, point:Vector3):Num
+    #{
+    #    closestPointOnPlane = plane.normal.mul(plane.distance)
+    #    projectedPoint = point.sub(closestPointOnPlane)
+    #    return = projectedPoint.dot(planeNormal)
+    #}
 
     #UNTESTED
-    SignedDistanceFromPoint(plane:Plane, point:Vector3):Num
-    {
-        closestPointOnPlane = plane.normal.mul(plane.distance)
-        projectedPoint = point.sub(closestPointOnPlane)
-        return = projectedPoint.dot(planeNormal)
-    }
-
-    #UNTESTED
-    Intersection(a:Plane, b:Plane):Line3
+    intersection(a:Plane, b:Plane):Line3
     {
         direction = a.normal.Cross(b.normal)
 
