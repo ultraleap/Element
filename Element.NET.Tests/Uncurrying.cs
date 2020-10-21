@@ -10,10 +10,10 @@ namespace Element.NET.Tests
         private delegate float AddSqr(float a, float b);
 
         [Test]
-        public void UncurryAddMul()
+        public void UncurryAddSqr()
         {
             var srcContext = MakeSourceContext();
-            var context = new Context(srcContext);
+            var context = Context.CreateFromSourceContext(srcContext);
             context.EvaluateExpression("Num.add")
                    .Accumulate(() => context.EvaluateExpression("Num.sqr"))
                    .Bind(tuple =>

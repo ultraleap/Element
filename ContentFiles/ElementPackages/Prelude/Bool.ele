@@ -12,6 +12,7 @@ intrinsic struct Bool
     xnor(a:Bool, b:Bool):Bool   = a.and(b).or(not(b).and(not(a)))
 }
 
+if = Bool.if
 intrinsic function True
 true = True
 intrinsic function False

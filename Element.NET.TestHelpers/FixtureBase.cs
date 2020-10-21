@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace Element.NET.TestHelpers
 {
-    [TestFixture, Parallelizable(ParallelScope.All)]
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public abstract class FixtureBase
     {
         public const float FloatEpsilon = 1.19209e-5f;
@@ -50,30 +50,32 @@ namespace Element.NET.TestHelpers
             }
         }
 
-        private static string NameOrUnknown(int? messageCode) => NameOrUnknown(messageCode.HasValue ? (MessageCode?)messageCode.Value : null);
-        private static string NameOrUnknown(MessageCode? messageCode) => messageCode.HasValue
-                                                                             ? CompilerMessage.TryGetMessageName(messageCode.Value, out var name) ? name! : "?"
-                                                                             : "CustomError";
+        private static string NameOrUnknown(string messageType, int? messageCode) => messageCode.HasValue
+                                                                                        ? CompilerMessage.TryGetMessageName(messageType, messageCode.Value, out var name) ? name! : "?"
+                                                                                        : "CustomError";
+
+        protected static void ExpectingElementError(IReadOnlyCollection<CompilerMessage> messages, bool success, EleMessageCode eleMessageCode) =>
+            ExpectingError(messages, success, MessageExtensions.TypeString, (int) eleMessageCode);
         
-        protected static void ExpectingError(IReadOnlyCollection<CompilerMessage> messages, bool success, MessageCode messageCode)
+        protected static void ExpectingError(IReadOnlyCollection<CompilerMessage> messages, bool success, string messageType, int messageCode)
         {
-            var errors = messages.Where(s => s.MessageLevel >= MessageLevel.Error && s.MessageCode.HasValue).ToArray();
+            var errors = messages.Where(s => s.MessageLevel >= MessageLevel.Error).ToArray();
             var hasErrors = errors.Any();
             LogMessages(messages);
             
-            if (messages.Any(s => s.MessageCode == (int)messageCode)) 
-                Assert.Pass($"Received expected message code {messageCode}");
+            if (messages.Any(s => s.MessageCode == messageCode)) 
+                Assert.Pass("Received expected error {0}{1} '{2}'\n", messageType, messageCode, NameOrUnknown(messageType, messageCode));
             
-            if (success) 
-                Assert.Fail("Expected error ELE{0} '{1}' but succeeded",
-                    (int)messageCode, NameOrUnknown(messageCode));
+            if (success)
+                Assert.Fail("Expected error {0}{1} '{2}' but succeeded\n",
+                            messageType, messageCode, NameOrUnknown(messageType, messageCode));
 
-            if (hasErrors) 
-                Assert.Fail("Expected error ELE{0} '{1}' but got following errors instead: {2}",
-                    (int)messageCode, NameOrUnknown(messageCode),
-                    string.Join(", ", errors.Select(err => NameOrUnknown(err.MessageCode))));
+            if (hasErrors)
+                Assert.Fail("Expected error {0}{1} '{2}' but got following errors instead: {3}\n",
+                            messageType, messageCode, NameOrUnknown(messageType, messageCode),
+                            string.Join(", ", errors.Select(err => NameOrUnknown(err.MessageType, err.MessageCode))));
             
-            Assert.Fail("Expected message code {0} '{1}', but success was false and no errors were received", (int)messageCode, NameOrUnknown(messageCode));
+            Assert.Fail("Expected {0}{1} '{2}', but success was false and no errors were received\n", messageType, messageCode, NameOrUnknown(messageType, messageCode));
         }
         
         protected static void ExpectingSuccess(IReadOnlyCollection<CompilerMessage> messages, bool success)
@@ -83,13 +85,13 @@ namespace Element.NET.TestHelpers
             LogMessages(messages);
             
             if (hasErrors) 
-                Assert.Fail("Expected success and got following error(s): {0}", 
-                    string.Join(",", errors.Select(err => NameOrUnknown(err.MessageCode))));
+                Assert.Fail("Expected success and got following error(s): {0}\n", 
+                    string.Join(",", errors.Select(err => NameOrUnknown(err.MessageType, err.MessageCode))));
             
             if(success)
-                Assert.Pass("Received success");
+                Assert.Pass("Received success\n");
             else
-                Assert.Fail("Received failure");
+                Assert.Fail("Received failure\n");
         }
         
         protected static DirectoryInfo TestDirectory { get; } = new DirectoryInfo(Directory.GetCurrentDirectory());

@@ -1,3 +1,5 @@
+/*using System;
+
 namespace Element
 {
 	using System.Linq;
@@ -11,11 +13,11 @@ namespace Element
 			OnlyMultipleUses
 		}
 
-		public static void Cache(this Instruction[] inputs, Mode mode, Dictionary<Instruction, CachedInstruction> cache)
+		public static void Cache(this Instruction[] inputs, Mode mode, Dictionary<Instruction, CachedInstruction> cache, Context context)
 		{
 			for (var i = 0; i < inputs.Length; i++)
 			{
-				inputs[i] = Cache(inputs[i], cache);
+				inputs[i] = Cache(inputs[i], cache, context);
 			}
 			if (mode == Mode.OnlyMultipleUses)
 			{
@@ -23,8 +25,9 @@ namespace Element
 			}
 		}
 
-		public static Instruction Cache(this Instruction value, Dictionary<Instruction, CachedInstruction> cache)
+		public static Instruction Cache(this Instruction value, Dictionary<Instruction, CachedInstruction> cache, Context context)
 		{
+			// TODO: Move CSE to instruction factory functions
 			if (value is Constant || value is CachedInstruction || value is State) { return value; }
 			if (!cache.TryGetValue(value, out var found))
 			{
@@ -32,13 +35,15 @@ namespace Element
 				switch (value)
 				{
 					case Unary u:
-						newValue = Unary.CreateAndOptimize(u.Operation, Cache(u.Operand, cache));
+						newValue = Unary.CreateAndOptimize(u.Operation, Cache(u.Operand, cache, context));
 						break;
 					case Binary b:
-						newValue = Binary.CreateAndOptimize(b.Operation, Cache(b.OpA, cache), Cache(b.OpB, cache));
+						newValue = Binary.CreateAndOptimize(b.Operation, Cache(b.OpA, cache, context), Cache(b.OpB, cache, context));
 						break;
 					case Switch m:
-						newValue = Switch.CreateAndOptimize(Cache(m.Selector, cache), m.Operands.Select(o => Cache(o, cache)));
+						newValue = Switch.CreateAndOptimize(Cache(m.Selector, cache, context), m.Operands.Select(o => Cache(o, cache, context)), context)
+						                 .Match((instruction, messages) => instruction, // TODO: pass messages from here along
+						                        messages => throw new NotImplementedException("Error handling during CSE not implemented yet"));
 						break;
 					case InstructionGroupElement ge:
 						return new InstructionGroupElement(OptimizeGroup(cache, ge.Group), ge.Index);
@@ -58,7 +63,7 @@ namespace Element
 				                                 _ => new Result<IEnumerable<Instruction>>(l.Body.Select(n => Cache(n, cache))),
 				                                 )
 				              .Match((expression, messages) => (Loop)expression, // TODO: Do something with any potential warnings
-				                     messages => throw new InternalCompilerException("Subexpression extraction should not cause errors")),*/
+				                     messages => throw new InternalCompilerException("Subexpression extraction should not cause errors")),#1#
 				_ => group
 			};
 
@@ -71,4 +76,4 @@ namespace Element
 				_ => value
 			};
 	}
-}
+}*/

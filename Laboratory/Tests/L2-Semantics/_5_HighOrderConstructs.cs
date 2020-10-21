@@ -16,6 +16,9 @@ namespace Laboratory.Tests.L2.Semantics
         [Test]
         public void CallFunctionWithFunctionResult() => AssertTypeof(CompilerInput, "getAdd(0)", "AppliedFunction");
 
+        [Theory]
+        public void ReturnScopeBodiedLocal(EvaluationMode mode) => AssertTypeof(CompilerInput, new ExpressionEvaluation("scopeBodiedLocal(5)", mode), "ScopeBodiedFunction");
+
         [
             TestCase("returnsNumFunction(numFunctionInstance)", true, "ExpressionBodiedFunction"),
             TestCase("returnsNumFunction(notNumFunctionInstance)", false),
@@ -76,8 +79,12 @@ namespace Laboratory.Tests.L2.Semantics
         public void ConstraintChecking(string expression, bool succeeds, string type = default)
         {
             if (succeeds) AssertTypeof(CompilerInput, expression, type);
-            else EvaluateExpectingErrorCode(CompilerInput, MessageCode.ConstraintNotSatisfied, expression);
+            else EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, expression);
         }
+
+        [TestCase("lambdaChainConstant(0)(0)", "10")]
+        [TestCase("lambdaChainConstantManyTimes(0)(0)(0)(0)(0)(0)(0)(0)(0)(0)(0)(0)", "10")]
+        public void LambdaChain(string expression, string expected) => AssertApproxEqual(CompilerInput, expression, expected);
 
         [Test]
         public void CaptureLifetimeExtendsForReturnedFunction() => AssertApproxEqual(CompilerInput, "addAndGetSub(5, 10)(20)", "-5");
@@ -86,7 +93,10 @@ namespace Laboratory.Tests.L2.Semantics
         public void HighOrderFunctionSum() => AssertApproxEqual(CompilerInput, "sum(list(3, -5, 8, 20))", "26");
         
         [Test]
-        public void ApplyHighOrderFunctionMultipleTimes() => AssertApproxEqual(CompilerInput, "usePartiallyAppliedFunctionMultipleTimes", "35"); 
+        public void ApplyHighOrderFunctionMultipleTimes() => AssertApproxEqual(CompilerInput, "usePartiallyAppliedFunctionMultipleTimes", "35");
+
+        [Test]
+        public void NestedFunctionReturnWithIncorrectSignatureReturnsError() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, "innerFuncSignatureIncorrect(10)");
         
         [TestCase("Indexer", "FunctionConstraint")]
         [TestCase("Binary", "FunctionConstraint")]
@@ -94,6 +104,28 @@ namespace Laboratory.Tests.L2.Semantics
         
         [TestCase("Indexer")]
         [TestCase("Binary")]
-        public void NotDeserializable(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.SerializationError, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.SerializationError, expression);
+        
+        [TestCase("cyclicLocalFunction")]
+        [TestCase("cyclicDefault")]
+        public void RecursionDisallowed(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, expression);
+        
+
+        [Test]
+        public void AnonymousBlockShouldBeFullyResolvedBeforeSuccessiveCall() => AssertApproxEqual(CompilerInput, "getTuple.i", "2");
+
+        [Test]
+        public void VectorsShouldBeFullyResolvedBeforeSuccessiveCall() => AssertApproxEqual(CompilerInput, "getVec.i", "2");
+        
+        [Test]
+        public void StructsShouldBeFullyResolvedBeforeSuccessiveCall() => AssertApproxEqual(CompilerInput, "getStruct.i", "2");
+        
+        [Test]
+        public void NamespacesShouldBeFullyResolvedBeforeSuccessiveCall() => AssertApproxEqual(CompilerInput, "getNamespace.i", "2");
+
+        [Theory]
+        public void TripleNestedHighOrderFunction(EvaluationMode mode) => AssertApproxEqual(CompilerInput, ("numRenderer(5)(addFiveEvaluator)(0).at(0)", "10"), mode);
+        
+        
     }
 }

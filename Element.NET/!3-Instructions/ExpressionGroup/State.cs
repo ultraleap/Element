@@ -10,14 +10,14 @@ namespace Element
 		public int Scope { get; }
 		public Instruction InitialValue { get; }
 
-		public State(int id, int scope, Instruction initialValue)
+		public State(int id, int scope, Instruction initialValue) :base(initialValue.StructImplementation)
 		{
 			Id = id;
 			Scope = scope;
 			InitialValue = initialValue ?? throw new ArgumentNullException(nameof(initialValue));
 		}
 
-		public override string SummaryString => $"$State<{Id}>";
+		public override string SummaryString => $"$State<{Id}:{InitialValue.SummaryString}>";
 		public override int GetHashCode() => GetType().GetHashCode() ^ Id.GetHashCode() ^ Scope.GetHashCode();
 
 		public override bool Equals(Instruction other)

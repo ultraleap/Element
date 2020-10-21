@@ -29,26 +29,36 @@ namespace Element.AST
             if (Lexico.Lexico.TryParse(source.PreprocessedText, out T output, userObject: source))
                 return new Result<T>(output, context.Trace(MessageLevel.Information, 
                                                            $"Parsed '{source.Name}' \"{source.FirstNonEmptyLine}\" - successfully"));
-            if (noParseTrace) return context.Trace(MessageCode.ParseError, $"Parsing failed within source '{source.Name}' - enable parse trace and run again for details.");
+            if (noParseTrace) return context.Trace(EleMessageCode.ParseError, $"Parsing failed within source '{source.Name}' - enable parse trace and run again for details.");
             
             // Using StringBuilder as there's potentially a lot of trace lines
             var sb = new StringBuilder();
             Lexico.Lexico.TryParse<T>(source.PreprocessedText, out _, new DelegateTextTrace(msg => { if (!string.IsNullOrEmpty(msg)) sb.AppendLine(msg); }), source);
-            return context.Trace(MessageCode.ParseError, $"Parsing failed within '{source.Name}' - see parse trace below for details.\n{sb}");
+            return context.Trace(EleMessageCode.ParseError, $"Parsing failed within '{source.Name}' - see parse trace below for details.\n{sb}");
         }
 
         public static void Validate(this Identifier identifier, ResultBuilder builder, Identifier[] blacklist, Identifier[] whitelist)
         {
             if (string.IsNullOrEmpty(identifier.String))
             {
-                builder.Append(MessageCode.InvalidIdentifier, "Null or empty identifier is invalid");
+                builder.Append(EleMessageCode.InvalidIdentifier, "Null or empty identifier is invalid");
             }
 
             bool Predicate(Identifier reserved) => string.Equals(identifier.String, reserved.String, StringComparison.OrdinalIgnoreCase);
             if (GloballyReservedIdentifiers.Except(whitelist).Any(Predicate) || blacklist.Any(Predicate))
             {
-                builder.Append(MessageCode.InvalidIdentifier, $"'{identifier}' is a reserved identifier");
+                builder.Append(EleMessageCode.InvalidIdentifier, $"'{identifier}' is a reserved identifier");
             }
         }
+    }
+    
+    [TopLevel]
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class TopLevel<T>
+    {
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+#pragma warning disable 8618
+        [Term] public T Object { get; private set; }
+#pragma warning restore 8618
     }
 }

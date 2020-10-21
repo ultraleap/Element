@@ -1,6 +1,6 @@
 # Element Reference Manual
 Element is a minimal embeddable programming language designed as a data format for writing algorithms.
-It is (sometimes purely) functional and statically type checked.
+Element code is purely functional and statically type checked.
 
 Its primary goals are:
 * **Portability**. Designed to be parsed, compiled and executed by many different hosting environments.
@@ -15,10 +15,9 @@ Its primary goals are:
     * **Halting**. (Except when using `for` with non-constant exit condition)
         * Element is guaranteed to execute in a predictable time and take a fixed amount of resources.
         * `for` introduces dynamic loops and hence the halting problem.
-    * **Pure**. (Except when using `persist`)
+    * **Pure Functions**.
         * Element is stateless and causes no side effects.
         The result is referential transparency: the same inputs will always provide the same outputs.
-        * `persist` introduces persistent state between function executions and hence the same inputs could produce different output.
 
 As an embeddable language, Element code requires a hosting environment to do anything useful with.
 The job of a host is to provide capabilities for parsing, analysing and subsequently compiling or evaluating Element functions.
@@ -29,7 +28,6 @@ Name | Language | Evaluation | Compilation
 ---|---|---|---
 Element.NET | C# | [LINQ.Expressions](https://docs.microsoft.com/en-us/dotnet/api/system.linq.expressions.expression) | Bytecode, C
 libelement | C++ | Supported | -
-PyElement | Python | [eval()](https://docs.python.org/3/library/functions.html#eval) | -
 
 
 
@@ -60,11 +58,11 @@ Nested scopes in structs do not have this restriction and will shadow the constr
 struct MyStruct
 {
     # Invalid, MyStruct is reserved
-    MyStruct = 5;
+    MyStruct = 5
     namespace MySpace
     {
         # Valid but not recommended as this will shadow the MyStruct constructor
-        MyStruct = 10;
+        MyStruct = 10
     }
 }
 ```
@@ -94,13 +92,13 @@ Name|Indexable|Callable|Constraint|Serializable|Example|Note
 ---|---|---|---|---|---|---
 `Num`|Yes|-|Yes|Yes|`3.14159`|Number literals behave the same as `struct` instances and can be indexed to access `Num` instance functions
 `Any`|-|-|Yes|-|-|Any is purely a Constraint and cannot have instances
-Function constraint|-|-|Yes|-|`constraint Predicate(a):Bool;`|^
-`struct` declaration|Yes|Yes|Yes|-|`struct Vector3(x:Num, y:Num, z:Num);`|Calling a struct creates an instance
-`struct` instance|Yes|-|-|Maybe|`a = Vector3(3, 6, 9);`|Can Index fields and instance functions, Serializable when all fields are, additionally List instances are Serializable when the Indexer only accesses Serializable elements
+Function constraint|-|-|Yes|-|`constraint Predicate(a):Bool`|^
+`struct` declaration|Yes|Yes|Yes|-|`struct Vector3(x:Num, y:Num, z:Num)`|Calling a struct creates an instance
+`struct` instance|Yes|-|-|Maybe|`a = Vector3(3, 6, 9)`|Can Index fields and instance functions, Serializable when all fields are, additionally List instances are Serializable when the Indexer only accesses Serializable elements
 `namespace`|Yes|-|-|-|`namespace MySpace { ... }`|-
-Constant function|-|-|-|Maybe|`tau = pi.mul(2);`|A function with no inputs and its result are equivalent - Serializability depends on the return value
-Parameterized function|-|Yes|-|-|`sqr(a:Num):Num = a.mul(a);`|-
-Lambda function|-|Yes|-|-|`_(_):List = 5;`|-
+Constant function|-|-|-|Maybe|`tau = pi.mul(2)`|A function with no inputs and its result are equivalent - Serializability depends on the return value
+Parameterized function|-|Yes|-|-|`sqr(a:Num):Num = a.mul(a)`|-
+Lambda function|-|Yes|-|-|`_(_):List = 5`|-
 
 ### Expressions
 Expressions are used build behaviour in Element.
@@ -131,13 +129,13 @@ Binding is the process of assigning a value to an identifier using `=` to reuse 
 Identifiers are shorthand for their bound expression and are substituted for the expression during compilation (formally called beta reduction).
 ```
 # binds x to a literal value of 5
-x = 5;
+x = 5
 
 # binds y to the add function call's return value
-y = x.add(1);
+y = x.add(1)
 
 # binds z to an expression list involving nested expressions which converts radians to degrees
-z = radians.mul(180.div(Num.pi));
+z = radians.mul(180.div(Num.pi))
 ```
 
 Note that binding an expression does not directly cause a compiler to generate instructions for storing its value.
@@ -159,15 +157,15 @@ integer notation:     0        5        -10        +15
 rational notation:    0.0      5.2      -10.86     +3.14159
 e notation:           1e0      3E-5     -8e7       +2.998E8
 
-a = 1e5;
-b = a.add(+10.3).mul(-5);
+a = 1e5
+b = a.add(+10.3).mul(-5)
 ```
 Many intrinsic functions are constrained to operate on numbers:
 ```
-add(a:Num, b:Num):Num; # Performs addition
-sub(a:Num, b:Num):Num; # Performs subtraction
-div(a:Num, b:Num):Num; # Performs division
-mul(a:Num, b:Num):Num; # Performs multiplication
+add(a:Num, b:Num):Num # Performs addition
+sub(a:Num, b:Num):Num # Performs subtraction
+div(a:Num, b:Num):Num # Performs division
+mul(a:Num, b:Num):Num # Performs multiplication
 ```
 
 ## Namespaces
@@ -175,11 +173,11 @@ A namespace is a value containing other values which can be accessed via Indexin
 ```
 namespace Foo
 {
-    x = 10;
+    x = 10
 }
 
 # Indexes into Foo to retrieve x, resolving to 10
-a = Foo.x;
+a = Foo.x
 ```
 
 ## Identifier Resolution & Indexing
@@ -202,29 +200,29 @@ Note that this is distinct from many other languages which have scoped identifie
 In Element, `Foo.Bar` resolves `Foo` using identifier resolution and `.Bar` by Indexing the value identified by `Foo`.
 If `Foo` fails to identify a value, the expression is invalid.
 ```
-x = 5;
+x = 5
 namespace Foo
 {
-    y = 10;
+    y = 10
     namespace Bar
     {
-        x = 15;
+        x = 15
     }
 
     # Does not identify a local x within Foo, recurses to global scope and finds x, resolving to 5
-    a = x;
+    a = x
     
     # Immediately identifies the Bar defined in Foo, indexing x within it, resolving to 15
-    b = Bar.x;
+    b = Bar.x
 
     # Error, indentifies local Bar but indexing a nested y within fails
-    c = Bar.y;
+    c = Bar.y
 
     # Identifies y locally, resolving to 10
-    d = y;
+    d = y
 
     # No local Foo, recurses to the global scope and identifies Foo, indexing it to find y, resolving to 10
-    e = Foo.y;
+    e = Foo.y
 }
 ```
 
@@ -234,26 +232,26 @@ If `x` is defined as `5`, it cannot be rebound to `6` within the same scope.
 A consequence of this is that the order expressions are defined doesn't matter.
 SSA does not disallow shadowing, the same identifier may be defined in different scopes.
 ```
-x = 5;
+x = 5
 namespace Outer
 {
     # Refers to the global x since x is not defined in Outer
-    y = x.add(5);
+    y = x.add(5)
     namespace Inner
     {
         # Refers to global x and Outer.y
         # Shadows z defined in Outer, references to z in this scope or nested scopes will use this z
-        z = x.add(y);
+        z = x.add(y)
     }
 
     # Valid as global x and Outer.x are unique
-    x = 5;
+    x = 5
 
     # This is invalid, y is already defined in Outer
-    y = 10;
+    y = 10
 
     # Valid as Outer.z and Outer.Inner.z are unique
-    z = x.add(y);
+    z = x.add(y)
 }
 ```
 Since all bindings are immutable we deliberately avoid using the term `variable` to describe them.
@@ -264,11 +262,11 @@ Expressions must be acyclic, cyclic expressions (directly or indirectly caused) 
 For explicit looping, the `for` intrinsic is available.
 ```
 # Directly cyclic expression - a depends on itself, causing an infinite cycle
-a = a.add(1);
+a = a.add(1)
 
 # Indirectly cyclic expressions - b and c depend on each other, causing an infinite cycle
-b = c.add(1);
-c = b.add(1);
+b = c.add(1)
+c = b.add(1)
 ```
 
 ## Functions
@@ -279,16 +277,16 @@ A function's interface includes a parameter list and a return type.
 The function body defines one or many expressions which relate the parameters to the return value.
 ```
 # degrees is a function that coverts radians to degrees
-degrees(radians) = radians.mul(180.div(Num.pi));
+degrees(radians) = radians.mul(180.div(Num.pi))
 
 # lerp is a function that performs linear interpolation, returning t amount along a to b
-lerp(t, a, b) = a.add(t.mul(b.sub(a)));
+lerp(t, a, b) = a.add(t.mul(b.sub(a)))
 ```
 
 Calling functions binds the resulting value, these locations are known as call sites.
 ```
 # binds deg to pi radians, resulting in 180
-deg = degrees(Num.pi);
+deg = degrees(Num.pi)
 ```
 
 Functions can define a scope to declare intermediate expressions for calculating the result.
@@ -299,8 +297,8 @@ mod(a, b)
 {
     # c is referenced multiple times in the return expression
     # thus it is helpful to define it once instead of repeating
-    c = a.rem(b);
-    return = c.mul(b).lt(0).if(add(c, b), c);
+    c = a.rem(b)
+    return = c.mul(b).lt(0).if(add(c, b), c)
 }
 ```
 
@@ -308,37 +306,37 @@ Function scopes cannot be Indexed externally, their values are hidden as impleme
 The only way to return a value from a function is via its result.
 ```
 # Error, mod is a function which can only be called or referenced in an expression
-a = mod.c;
+a = mod.c
 
 # Error, calling mod results in a number which does not contain value c when indexed
-b = 5.mod(4).c;
+b = 5.mod(4).c
 ```
 
 As with other identifiers, function identifiers must be unique, function overloading is disallowed.
 ```
 # Valid, foo is bound and identifies a function with 2 parameters
-foo(a, b) = ...;
+foo(a, b) = ...
 
 # Error, foo is already a bound identifier in this scope
-foo(a, b, c) = ...;
+foo(a, b, c) = ...
 ```
 
 ### High Order Functions
 Functions are first-class values and can be passed into and returned from other functions like any other value.
 ```
 # Calls the input function twice on the input value
-applyTwice(function, value) = function(function(value));
+applyTwice(function, value) = function(function(value))
 
 # Returns a function defined locally within another function
 makeAdder(amountToAdd)
 {
-    return(a, amountToAdd) = a.add(amountToAdd);
+    return(a, amountToAdd) = a.add(amountToAdd)
 }
 
 # Partial application - binds halfAlong to 0.5 way between min and max
-halfAlong(min, max) = lerp(0.5, min, max);
+halfAlong(min, max) = lerp(0.5, min, max)
 # resolves a to 15
-a = halfAlong(10, 20);
+a = halfAlong(10, 20)
 ```
 
 ### Recursion
@@ -348,8 +346,8 @@ Iteration is available as an alternative via the `for` intrinsic.
 ```
 factorial(a)
 {
-    body(t) = Tuple(t.item1.add(1), v.item2.mul(v.item1));
-    return = for(Tuple(1, 1), _(t) = leq(t.item1, a), body).item2;
+    body(t) = Tuple(t.item1.add(1), v.item2.mul(v.item1))
+    return = for(Tuple(1, 1), _(t) = leq(t.item1, a), body).item2
 }
 ```
 
@@ -359,11 +357,11 @@ A function scope can contain any other values, e.g. other functions.
 scaleAndSumNumbers(a, b, c, scale)
 {
     # doScale is defined only within scaleAndSumNumbers
-    doScale(number) = number.mul(scale);
-    sa = doScale(a);
-    sb = doScale(b);
-    sc = doScale(c);
-    return = sa.add(sb.add(sc));
+    doScale(number) = number.mul(scale)
+    sa = doScale(a)
+    sb = doScale(b)
+    sc = doScale(c)
+    return = sa.add(sb.add(sc))
 }
 ```
 
@@ -371,15 +369,15 @@ When defining a nested value within a function, the nested value may depend on v
 When these nested values directly or indirectly depend on input of the outer function then they are "captured" when the nested value is passed around or returned.
 ```
 # value is captured by the Indexer in the returned List
-repeat(value, count) = List(_(_) = value, count);
+repeat(value, count) = List(_(_) = value, count)
 
 # the return type of myFunction is "struct Voldemort"
 # but this type is inaccessible from outside of myFunction
 # Voldemort's struct declaration is captured by type instance
 myFunction(a, b)
 {
-    struct Voldemort(u, v);
-    return = Voldemort(a, b);
+    struct Voldemort(u, v)
+    return = Voldemort(a, b)
 }
 ```
 
@@ -391,11 +389,11 @@ Lambdas (anonymous/unidentified functions) - relevant when defining single-use f
 ```
 # binds an unidentified function to the last argument of fold
 # sum is all array elements added together
-sum = array(1, 2, 3).fold(0, _(accum, element) = accum.add(element));
+sum = array(1, 2, 3).fold(0, _(accum, element) = accum.add(element))
 
 # binds the lambda as the return value of the function
 # equivalent to the makeAdder function in the High Order Functions example above
-makeAdder(amountToAdd) = _(a) = a.add(amountToAdd);
+makeAdder(amountToAdd) = _(a) = a.add(amountToAdd)
 ```
 Unused arguments - relevant when a function's interface demands arguments that are unused in the body
 ```
@@ -403,8 +401,8 @@ repeat(value, count)
 {
     # For any index it returns the same value.
     # _ is used to intentionally ignore the index parameter
-    index(_) = value;
-    return = List(index, count);
+    index(_) = value
+    return = List(index, count)
 }
 ```
 
@@ -416,7 +414,7 @@ Types are declared using `:` after a parameter's identifier or, for return types
 Type annotations are optional - when no type is given, `Any` is implied.
 ```
 # to calls the given Unary function to turn a Num into any other type
-to(a:Num, constructor:Unary) = constructor(a);
+to(a:Num, constructor:Unary) = constructor(a)
 ```
 
 ### Higher Order Types
@@ -425,11 +423,11 @@ This would allow parameterized types - the implications of which have not been f
 ```
 List(t)
 {
-    tIndexer(idx:Num):t;
-    struct return(at:tIndexer, count:Num);
+    tIndexer(idx:Num):t
+    struct return(at:tIndexer, count:Num)
 }
 
-sum(a:List(Num)) = a.fold(0, (accum, element) = accum.add(element));
+sum(a:List(Num)) = a.fold(0, (accum, element) = accum.add(element))
 ```
 A [proposal](../Language/Proposals/TypeFunctions.md) exists for allowing this behaviour.
 
@@ -440,9 +438,9 @@ Constraints are used as type annotations for Callable values and other Constrain
 ### Concreteness
 Constraints can be concrete or non-concrete (polymorphic).
 
-A concrete constraint is one which matches only one type of value, e.g. `Num` or `struct Vector3(x:Num, y:Num, z:Num);`.
+A concrete constraint is one which matches only one type of value, e.g. `Num` or `struct Vector3(x:Num, y:Num, z:Num)`.
 
-Non-concrete constraints are polymorphic - they allow more generalized expressions where many types of values are interchangeable, e.g. `Any` or `Predicate(a):Bool;`
+Non-concrete constraints are polymorphic - they allow more generalized expressions where many types of values are interchangeable, e.g. `Any` or `Predicate(a):Bool`
 
 ### Any
 The `Any` constraint allows any value to be dealt with and can be thought of as the absence of a constraint.
@@ -452,28 +450,28 @@ Since this constraint is guaranteed to pass, it is possible to write generic cod
 # call sites of even must pass a value which can Index an instance function rem(a, b:Num)
 # which in turn must return a value which can Index an instance function eq(a, b:Num):Bool
 # in order to pass type checking
-even(a):Bool = a.rem(2).eq(0);
+even(a):Bool = a.rem(2).eq(0)
 
 # Changing a to type Num requires that a be of exactly type Num
 # This is more explicit but less flexible as there could be other types which can satisfy type checking of the generic version
-even(a:Num):Bool = a.rem(2).eq(0);
+even(a:Num):Bool = a.rem(2).eq(0)
 ```
 
 ### Function Constraint (a.k.a. Function Type or Function Interface)
 Function constraints allow constraining the type of a expression to a function with specific parameters and return.
 ```
 # Predicate is a function type taking a parameter of any type and returning a bool
-Predicate(a):Bool;
+Predicate(a):Bool
 
 # Any checks if any list elements pass the given predicate
 any(list:List, pred:Predicate):Bool
-    = list.fold(Bool.false, _(accum, element) = accum.or(pred(element))); 
+    = list.fold(Bool.false, _(accum, element) = accum.or(pred(element)))
 
 # The interface of even matches Predicate
-even(a:Num):Bool = a.rem(2).eq(0);
+even(a:Num):Bool = a.rem(2).eq(0)
 
 # Thus we can call any, passing the function even as an instance of Predicate
-anyEven = any(array(1, 3, 5), even);
+anyEven = any(array(1, 3, 5), even)
 # anyEven evaluates to Bool.false since none of the array elements are even
 ```
 
@@ -484,7 +482,7 @@ Structures involve 2 distinct kinds of values, `struct` declarations and instanc
 ### Structure Declarations
 Structures are defined using the `struct` qualifier followed by a parameter list defining the fields that a `struct` instance must have.  
 ```
-struct Complex(real:Num, imaginary:Num);
+struct Complex(real:Num, imaginary:Num)
 ```
 A fields is simply a value in a structures group.
 `real` and `imaginary` are the fields for a `Complex` instance.
@@ -497,7 +495,7 @@ A fields is simply a value in a structures group.
 Constructors are automatically implemented by the compiler.
 ```
 # Creates a Complex instance with real number 5 and imaginary number 10
-myComplex = Complex(5, 10);
+myComplex = Complex(5, 10)
 ```
 
 Note that the `struct` declaration's identifier is reserved within the structures scope (but not nested ones).
@@ -506,25 +504,25 @@ struct Complex(real:Num, imaginary:Num)
 {
     # adds two complex numbers together, resulting in another complex
     # the implementation must use the Complex constructor to create the result
-    add(a:Complex, b:Complex):Complex = Complex(a.real.add(b.real), a.imaginary.add(b.imaginary));
+    add(a:Complex, b:Complex):Complex = Complex(a.real.add(b.real), a.imaginary.add(b.imaginary))
     
     # invalid, Complex is reserved within the struct scope
-    Complex = 5;
+    Complex = 5
     
     namespace Foo
     {
         # valid but strongly discouraged as this will shadow the outer struct
         # compilers will issue a warning when this shadowing occurs
-        Complex = 5;
+        Complex = 5
     }
 }
 
 # Usage example, a and b are struct instances
-a = Complex(5, 5);
-b = Complex(8, 8);
+a = Complex(5, 5)
+b = Complex(8, 8)
 
 # Add can be called via indexing Complex
-c = Complex.add(a, b);
+c = Complex.add(a, b)
 ```
 
 ### Structure Instances
@@ -543,7 +541,7 @@ Instance functions are functions defined within a `struct` declaration's scope w
 # continuing from the example above...
 # add can be called as an instance function since it's first parameter is type Complex
 # d is an equivalent expression to c above
-d = a.add(b);
+d = a.add(b)
 ```
 
 Instance function calls can be chained allowing natural expressions which read left to right.
@@ -552,7 +550,7 @@ Instance function calls can be chained allowing natural expressions which read l
 # List.range is prefix called (it is a generator and can't be infix called)
 # and then transformed by infix calling filter
 # even is a predicate returning 1 or 0 if a number is even or not
-numbers = List.range(n, m)).filter(_(i) = even(i).and(i.rem(5).eq(0)));
+numbers = List.range(n, m)).filter(_(i) = even(i).and(i.rem(5).eq(0)))
 ```
 
 ## Intrinsics

@@ -15,7 +15,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void Num(string expression, string expectedExpression) => AssertApproxEqual(CompilerInput, expression, expectedExpression);
 
         [Test]
-        public void IdentifierNotFound() => EvaluateExpectingErrorCode(CompilerInput, MessageCode.IdentifierNotFound, "z");
+        public void IdentifierNotFound() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "z");
         
         [TestCase("5", "Num")]
         [TestCase("a", "Num")]

@@ -12,20 +12,26 @@ namespace Element
 	public abstract class Instruction : Value, IEquatable<Instruction>
 	{
 		protected Instruction(IIntrinsicStructImplementation? instanceStructImplementationOverride = default) => StructImplementation = instanceStructImplementationOverride ?? NumStruct.Instance;
-		
+
 		/// <summary>
 		/// The primitive type of this value
 		/// </summary>
 		public readonly IIntrinsicStructImplementation StructImplementation;
 
+		private Result<Struct>? _intrinsicStruct;
+		public Result<Struct> LookupIntrinsicStruct(Context context) => _intrinsicStruct ??= context.RootScope
+		                                                                                            .Lookup(StructImplementation.Identifier, context)
+		                                                                                            .Bind(result => result.IsType<Struct>(out var @struct)
+			                                                                                                            ? new Result<Struct>(@struct)
+			                                                                                                            : context.Trace(EleMessageCode.IntrinsicNotFound, $"'{result}' is not intrinsic struct declaration for {StructImplementation.Identifier}"));
+		public virtual Result<Constant> CompileTimeConstant(Context context) => context.Trace(EleMessageCode.NotCompileConstant, $"'{this}' is not a constant");
+
 		public abstract IEnumerable<Instruction> Dependent { get; }
 
 		protected static string ListJoinToString(IEnumerable<Instruction> list) => string.Join(", ", list.Select(e => e.ToString()));
-		protected static string ListJoinNormalizedForm(IEnumerable<Instruction> list) => string.Join(", ", list.Select(e => e.NormalizedFormString));
 		
 		public abstract override string SummaryString { get; }
 		public override string TypeOf => StructImplementation.Identifier.String;
-		public override string NormalizedFormString => ListJoinNormalizedForm(Dependent);
 
 		public override bool Equals(object obj) => obj is Instruction instruction && Equals(instruction);
 		public virtual bool Equals(Instruction other) => other?.ToString() == ToString();
@@ -36,7 +42,7 @@ namespace Element
 
 		// TODO: This allows indexing constants from an instruction, see note about wrapper class above to fix
 		public override Result<IValue> Index(Identifier id, Context context) =>
-			context.RootScope.Lookup(StructImplementation.Identifier, context).Cast<Struct>(context).Bind(v => v.ResolveInstanceFunction(this, id, context));
+			LookupIntrinsicStruct(context).Bind(v => v.ResolveInstanceFunction(this, id, context));
 
 		public override void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => resultBuilder.Result.Add(this);
 
@@ -45,7 +51,29 @@ namespace Element
 			var result = nextValue();
 			return result.StructImplementation == StructImplementation
 				       ? new Result<IValue>(result)
-				       : context.Trace(MessageCode.SerializationError, $"'{result}' deserialized to incorrect type: is '{result.StructImplementation}' - expected '{StructImplementation}'");
+				       : context.Trace(EleMessageCode.SerializationError, $"'{result}' deserialized to incorrect type: is '{result.StructImplementation}' - expected '{StructImplementation}'");
 		}
+	}
+
+	public static class InstructionExtensions
+	{
+		public static Result<int> ConstantToIndex(this Constant constant, int min, int max, Context context)
+		{
+			if (float.IsNaN(constant.Value))
+			{
+				// TODO: Return error type, not an error message
+				return context.Trace(EleMessageCode.ArgumentOutOfRange, "Constant was NaN - cannot convert to an index");
+			}
+
+			var asInt = (int) constant.Value;
+			var inRange = asInt >= min && asInt <= max;
+			return inRange
+				       ? new Result<int>(asInt)
+				       // TODO: Return error type, not an error message
+				       : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index '{asInt}' not in range of [{min}, {max}]");
+		}
+
+		public static Result<int> CompileTimeIndex(this Instruction instruction, int min, int max, Context context) =>
+			instruction.CompileTimeConstant(context).Bind(constant => constant.ConstantToIndex(min, max, context));
 	}
 }

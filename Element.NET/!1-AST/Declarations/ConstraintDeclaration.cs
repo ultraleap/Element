@@ -14,8 +14,8 @@ namespace Element.AST
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {
             builder.Append(IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, builder.Context));
-            if (PortList != null) builder.Append(MessageCode.IntrinsicConstraintCannotSpecifyFunctionSignature, "Intrinsic constraint cannot specify ports");
-            if (ReturnConstraint != null) builder.Append(MessageCode.IntrinsicConstraintCannotSpecifyFunctionSignature, "Intrinsic constraint cannot specify a return constraint");
+            if (PortList != null) builder.Append(EleMessageCode.IntrinsicConstraintCannotSpecifyFunctionSignature, "Intrinsic constraint cannot specify ports");
+            if (ReturnConstraint != null) builder.Append(EleMessageCode.IntrinsicConstraintCannotSpecifyFunctionSignature, "Intrinsic constraint cannot specify a return constraint");
         }
     }
     
@@ -38,7 +38,7 @@ namespace Element.AST
         {
             if (PortList == null || PortList.Ports.List.Count == 0)
             {
-                builder.Append(MessageCode.MissingPorts, $"Non-intrinsic constraint '{this}' must have a port list");
+                builder.Append(EleMessageCode.MissingPorts, $"Non-intrinsic constraint '{this}' must have a port list");
             }
             PortList?.Validate(builder, context);
             ReturnConstraint?.Validate(builder, context);

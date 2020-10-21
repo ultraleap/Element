@@ -207,7 +207,7 @@ namespace Element.NET.TestHelpers
 
                 if (process.ExitCode != 0 && !resultBuilder.Messages.Any(m => m.MessageLevel.HasValue && m.MessageLevel.Value >= MessageLevel.Error))
                 {
-                    resultBuilder.Append(MessageCode.UnknownError, $"{_info.Name} process quit with exit code '{process.ExitCode}'.");
+                    resultBuilder.Append(EleMessageCode.UnknownError, $"{_info.Name} process quit with exit code '{process.ExitCode}'.");
                 }
 
                 process.Close();
@@ -227,37 +227,48 @@ namespace Element.NET.TestHelpers
                 return processArgs;
             }
 
-            Result IHost.Parse(CompilerInput input) => (Result)RunHostProcess(new Context(null, input.Options), BeginCommand(input, "parse").ToString());
+            Result IHost.Parse(CompilerInput input) => (Result)RunHostProcess(Context.CreateManually(null, input.Options), BeginCommand(input, "parse").ToString());
 
-            Result<float[]> IHost.Evaluate(CompilerInput input, string expression)
+            Result<float[]> IHost.EvaluateExpression(CompilerInput input, string expression, bool interpreted)
             {
-                var resultBuilder = new ResultBuilder<float[]>(new Context(null, input.Options), Array.Empty<float>());
-                return RunHostProcess(resultBuilder.Context, BeginCommand(input, "evaluate").Append($" -e \"{expression}\"").ToString())
-                    .Bind(resultString =>
-                    {
-                        resultBuilder.Result = resultString.Split(new []{' '}, StringSplitOptions.RemoveEmptyEntries)
-                                                           .Select(s =>
-                                                           {
-                                                               if (!float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
-                                                               {
-                                                                   resultBuilder.Append(MessageCode.ParseError, $"Could not parse result string '{s}' as a float");
-                                                               }
-                                                               return value;
-                                                           })
-                                                           .ToArray();
-                        return resultBuilder.ToResult();
-                    });
+                var resultBuilder = new ResultBuilder<float[]>(Context.CreateManually(null, input.Options), Array.Empty<float>());
+                var commandBuilder = BeginCommand(input, "evaluate").Append($" -e \"{expression}\"");
+                if (interpreted) commandBuilder.Append(" --interpreted ");
+                return RunHostProcess(resultBuilder.Context, commandBuilder.ToString())
+                    .Bind(command => ParseEvaluateResult(command, resultBuilder));
             }
+
+            public Result<float[]> EvaluateFunction(CompilerInput input, string functionExpression, string argumentsAsCallExpression, bool interpreted)
+            {
+                var resultBuilder = new ResultBuilder<float[]>(Context.CreateManually(null, input.Options), Array.Empty<float>());
+                var commandBuilder = BeginCommand(input, "evaluate").Append($" -e \"{functionExpression}\"");
+                if (!string.IsNullOrEmpty(argumentsAsCallExpression)) commandBuilder.Append($" -a \"{argumentsAsCallExpression}\"");
+                if (interpreted) commandBuilder.Append(" --interpreted ");
+                return RunHostProcess(resultBuilder.Context, commandBuilder.ToString())
+                    .Bind(command => ParseEvaluateResult(command, resultBuilder));
+            }
+            
+            private static Result<float[]> ParseEvaluateResult(string resultString, ResultBuilder<float[]> resultBuilder)
+            {
+                resultBuilder.Result = resultString.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries)
+                                                   .Select(s =>
+                                                   {
+                                                       if (!float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+                                                       {
+                                                           resultBuilder.Append(EleMessageCode.ParseError, $"Could not parse result string '{s}' as a float");
+                                                       }
+
+                                                       return value;
+                                                   })
+                                                   .ToArray();
+                return resultBuilder.ToResult();
+            }
+
 
             Result<string> IHost.Typeof(CompilerInput input, string expression) =>
-                RunHostProcess(new Context(null, input.Options), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
+                RunHostProcess(Context.CreateManually(null, input.Options), BeginCommand(input, "typeof").Append($" -e \"{expression}\"").ToString());
 
             public Result<string> Summary(CompilerInput input, string expression)
-            {
-                throw new NotImplementedException();
-            }
-
-            public Result<string> NormalForm(CompilerInput input, string expression)
             {
                 throw new NotImplementedException();
             }

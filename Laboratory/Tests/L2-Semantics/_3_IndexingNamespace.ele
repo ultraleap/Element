@@ -45,4 +45,4 @@ namespace X
     }
 }
 
-generate_anonymous_block(a, b) = { c = a, d = b } 
+makeAnonymousBlock(a, b) = { a = a, b = b }

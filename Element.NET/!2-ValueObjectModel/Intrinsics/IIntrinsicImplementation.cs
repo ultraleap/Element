@@ -7,6 +7,7 @@ namespace Element.AST
         public IIntrinsicImplementation Implementation => this;
         public abstract Identifier Identifier { get; }
         Identifier IIntrinsicImplementation.Identifier => Identifier;
+        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => GetType() == typeof(TIntrinsicImplementation);
     }
     
     public interface IIntrinsicValue

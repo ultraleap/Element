@@ -41,8 +41,8 @@ intrinsic struct Num
     # 2 argument arctangent function where a and b specify a cartesian coordinate
     intrinsic function atan2(y:Num, x:Num):Num
 
-    degrees(theta:Num):Num = theta.mul(180.div(pi))
-    radians(theta:Num):Num = theta.mul(pi.div(180))
+    degrees(radians:Num):Num = radians.mul(180.div(pi))
+    radians(degrees:Num):Num = degrees.mul(pi.div(180))
 
 
     # Logarithmic functions
@@ -67,12 +67,14 @@ intrinsic struct Num
     mod(a:Num, b:Num):Num
     {
         c = a.rem(b)
-        return = c.mul(b).lt(0).if(add(c, b), c)
+        return = c.mul(b).lt(0)
+                         .if(add(c, b),
+                             c)
     }
 
     negate(a:Num):Num                   = 0.sub(a)
     roundToZero(a:Num):Num              = a.sub(a.rem(1))
-    sign(n:Num):Num                     = n.leq(0).if(n.eq(0).if(0, -1), 1)
+    sign(n:Num):Num                     = n.gt(0).if(1, n.eq(0).if(0, -1))
     dist(a:Num, b:Num):Num              = a.sub(b).abs
     lerp(t:Num, a:Num, b:Num):Num       = a.add(t.mul(b.sub(a))) #t.lt(0).if(a, t.gt(1).if(b, a.add(t.mul(b.sub(a)))))
     clamp(a:Num, min:Num, max:Num):Num  = a.max(min).min(max)

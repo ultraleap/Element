@@ -9,88 +9,50 @@ using Tomlyn.Model;
 
 namespace Element
 {
-    public enum MessageCode
-    {
-        // GENERAL PURPOSE
-        Success = 0,
-        FileAccessError = 25,
-        ArgumentNotFound = 26,
-        ArgumentOutOfRange = 28,
-        InvalidCast = 30,
-        UnknownError = 9999,
-        
-        // PARSE
-        ParseError= 9,
-        DuplicateSourceFile = 27,
-        
-        // VALIDATION
-        MultipleDefinitions = 2,
-        IntrinsicNotFound = 4,
-        MissingPorts = 13,
-        InvalidIdentifier = 15,
-        StructCannotHaveReturnType = 19,
-        IntrinsicCannotHaveBody = 20,
-        MissingFunctionBody = 21,
-        MultipleIntrinsicLocations = 29,
-        FunctionMissingReturn = 31,
-        PortListCannotContainDiscards = 32,
-        PortListDeclaresDefaultArgumentBeforeNonDefault = 33,
-        IntrinsicConstraintCannotSpecifyFunctionSignature = 34,
-        
-        // COMPILATION
-        SerializationError = 1,
-        InvalidCompileTarget = 3,
-        LocalShadowing = 5,
-        ArgumentCountMismatch = 6,
-        IdentifierNotFound = 7,
-        ConstraintNotSatisfied = 8,
-        InvalidBoundaryFunction = 10,
-        RecursionNotAllowed = 11,
-        MissingBoundaryConverter = 12,
-        TypeError = 14,
-        InvalidExpression = 16,
-        InvalidReturnType = 17,
-        InvalidBoundaryData = 18,
-        CannotBeUsedAsInstanceFunction = 22,
-        FunctionCannotBeUncurried = 23,
-        NotCompileConstant = 24,
-        InfiniteLoop = 35,
-        NotFunction = 36,
-        NotIndexable = 37,
-        NotConstraint = 38,
-    }
-    
     public class CompilerMessage
     {
-        private static readonly TomlTable _messageToml = Toml.Parse(File.ReadAllText("Messages.toml")).ToModel();
+        private static readonly Dictionary<string, TomlTable> _messageToml = new Dictionary<string, TomlTable>();
 
-        private static bool TryGetMessageToml(MessageCode messageCode, out TomlTable? message)
+        private static bool TryGetMessageToml(string messageType, int messageCode, out TomlTable? message)
         {
-            message = _messageToml.TryGetToml($"ELE{(int)messageCode}", out var obj) && obj is TomlTable table ? table : null;
+            if (string.IsNullOrEmpty(messageType))
+            {
+                message = null;
+                return false;
+            }
+            if (!_messageToml.TryGetValue(messageType, out var tomlFile))
+            {
+                lock (_messageToml)
+                {
+                    _messageToml[messageType] = tomlFile = Toml.Parse(File.ReadAllText($"Messages-{messageType}.toml")).ToModel();
+                }
+            }
+            message = tomlFile.TryGetToml($"{messageType}{messageCode}", out var obj) && obj is TomlTable table ? table : null;
             return message != null;
         }
         
-        public static bool TryGetMessageName(MessageCode messageCode, out string? name)
+        public static bool TryGetMessageName(string messageType, int messageCode, out string? name)
         {
-            name = TryGetMessageToml(messageCode, out var table) ? (string) table!["name"] : null;
+            name = TryGetMessageToml(messageType, messageCode, out var table) ? (string) table!["name"] : null;
             return name != null;
         }
 
-        public static bool TryGetMessageLevel(MessageCode messageCode, out MessageLevel level)
+        public static bool TryGetMessageLevel(string messageType, int messageCode, out MessageLevel level)
         {
-            if (Enum.TryParse(TryGetMessageToml(messageCode, out var table) ? (string) table!["level"] : string.Empty, out level)) return true;
+            if (Enum.TryParse(TryGetMessageToml(messageType, messageCode, out var table) ? (string) table!["level"] : string.Empty, out level)) return true;
             level = Element.MessageLevel.Error;
             return false;
         }
-
-        public CompilerMessage(string message, MessageLevel? messageLevel = null) : this(null, messageLevel, message, null) {}
-        public CompilerMessage(MessageCode messageCode, string? context, IReadOnlyCollection<TraceSite>? traceStack = null) : this((int)messageCode, null, context, traceStack) {}
+        
+        public CompilerMessage(string message, string messageType = "", MessageLevel? messageLevel = null) : this(messageType, null, messageLevel, message, null) {}
+        public CompilerMessage(string messageType, int messageCode, string? context, IReadOnlyCollection<TraceSite>? traceStack = null) : this(messageType, messageCode, null, context, traceStack) {}
         
         [JsonConstructor]
-        public CompilerMessage(int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? traceStack)
+        public CompilerMessage(string messageType, int? messageCode, MessageLevel? messageLevel, string? context, IReadOnlyCollection<TraceSite>? traceStack)
         {
+            MessageType = messageType;
             MessageCode = messageCode;
-            MessageLevel = (messageCode.HasValue, TryGetMessageLevel((MessageCode)messageCode.GetValueOrDefault(0), out var level)) switch
+            MessageLevel = (messageCode.HasValue, TryGetMessageLevel(messageType, messageCode.GetValueOrDefault(0), out var level)) switch
             {
                 (true, true) => level,
                 (true, false) => null,
@@ -103,6 +65,7 @@ namespace Element
         }
         private string? _message;
 
+        public string MessageType { get; }
         public int? MessageCode { get; }
         public MessageLevel? MessageLevel { get; }
         public string? Context { get; }
@@ -120,8 +83,8 @@ namespace Element
                     var builder = new StringBuilder();
                     if (MessageCode.HasValue)
                     {
-                        builder.Append("ELE").Append(MessageCode).Append(": ").Append(MessageLevel).Append(" - ")
-                               .AppendLine(TryGetMessageName((MessageCode)MessageCode.Value, out var message)
+                        builder.Append(MessageType).Append(MessageCode).Append(": ").Append(MessageLevel).Append(" - ")
+                               .AppendLine(TryGetMessageName(MessageType, MessageCode.Value, out var message)
                                                ? message
                                                : "Unknown");
                     }

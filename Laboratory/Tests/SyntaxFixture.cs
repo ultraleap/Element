@@ -10,9 +10,9 @@ namespace Laboratory.Tests
 {
     internal abstract class SyntaxFixture : HostFixture
     {
-        protected static readonly MessageCode DefaultFailingParseTestCode = MessageCode.ParseError;
+        protected static readonly EleMessageCode DefaultFailingParseTestCode = EleMessageCode.ParseError;
         
-        protected static IEnumerable GenerateTestData(string testKind, string directory, MessageCode? defaultExpectedErrorCode)
+        protected static IEnumerable GenerateTestData(string testKind, string directory, EleMessageCode? defaultExpectedErrorCode)
         {
             var files = new DirectoryInfo(directory).GetFiles("*.ele", SearchOption.AllDirectories);
             foreach (var file in files)
@@ -27,9 +27,9 @@ namespace Laboratory.Tests
                 };
 
                 var expectedMessageCode = expectedResult
-                    ? (MessageCode?) null
+                    ? (EleMessageCode?) null
                     : int.TryParse(match.Groups["value"].Value, out var code)
-                        ? (MessageCode)code
+                        ? (EleMessageCode)code
                         : defaultExpectedErrorCode
                           ?? throw new ArgumentNullException(nameof(defaultExpectedErrorCode), $"Error code must be specified explicitly for {testKind} tests");
   
@@ -37,7 +37,7 @@ namespace Laboratory.Tests
             }
         }
         
-        public void SyntaxTest((FileInfo ParseTestFile, MessageCode? ExpectedMessageCode) info, bool skipValidation)
+        public void SyntaxTest((FileInfo ParseTestFile, EleMessageCode? ExpectedMessageCode) info, bool skipValidation)
         {
             var (fileInfo, messageCode) = info;
             var expectingError = messageCode.HasValue;
@@ -46,11 +46,11 @@ namespace Laboratory.Tests
                                                      null,
                                                      Array.Empty<PackageSpecifier>(),
                                                      new[] {fileInfo},
-                                                     new CompilerOptions(default, skipValidation, expectingError, default));
+                                                     new CompilerOptions(default, default, skipValidation, expectingError));
 
             var result = Host.Parse(compilationInput);
             if (expectingError)
-                ExpectingError(result.Messages, result.IsSuccess, messageCode!.Value);
+                ExpectingError(result.Messages, result.IsSuccess, MessageExtensions.TypeString, (int)messageCode!.Value);
             else
                 ExpectingSuccess(result.Messages, result.IsSuccess);
         }

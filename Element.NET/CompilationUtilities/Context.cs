@@ -1,13 +1,119 @@
+using System;
 using System.Collections.Generic;
 using Element.AST;
 
 namespace Element
 {
+    public interface ICompilationAspect
+    {
+        Result BeforeIndex(IValue valueBeingIndexed, Identifier identifier, Context context);
+        Result<IValue> Index(IValue valueBeingIndexed, Identifier identifier, IValue result, Context context);
+        
+        Result BeforeCall(IValue function, IReadOnlyList<IValue> arguments, Context context);
+        Result<IValue> Call(IValue function, IReadOnlyList<IValue> arguments, IValue result, Context context);
+        
+        Result BeforeDeclaration(Declaration declaration, IScope scope, Context context);
+        Result<IValue> Declaration(Declaration declaration, IScope scope, IValue result, Context context);
+        
+        Result BeforeExpression(Expression expression, IScope scope, Context context);
+        Result<IValue> Expression(Expression expression, IScope scope, IValue result, Context context);
+        
+        
+    }
+
+    public abstract class WrapperValue : IValue
+    {
+        public override string ToString() => WrappedValue.ToString();
+        public IValue WrappedValue { get; }
+        protected WrapperValue(IValue result) => WrappedValue = result;
+        public virtual string TypeOf => WrappedValue.TypeOf;
+        public virtual string SummaryString => WrappedValue.SummaryString;
+        public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => WrappedValue.Call(arguments, context);
+        public virtual IReadOnlyList<ResolvedPort> InputPorts => WrappedValue.InputPorts;
+        public virtual IValue ReturnConstraint => WrappedValue.ReturnConstraint;
+        public virtual Result<IValue> Index(Identifier id, Context context) => WrappedValue.Index(id, context);
+        public virtual IReadOnlyList<Identifier> Members => WrappedValue.Members;
+        public virtual Result<bool> MatchesConstraint(IValue value, Context context) => WrappedValue.MatchesConstraint(value, context);
+        public virtual Result<IValue> DefaultValue(Context context) => WrappedValue.DefaultValue(context);
+        public virtual void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => WrappedValue.Serialize(resultBuilder, context);
+        public virtual Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => WrappedValue.Deserialize(nextValue, context);
+        public virtual bool IsFunction => WrappedValue.IsFunction;
+        public virtual bool IsIntrinsic => WrappedValue.IsIntrinsic;
+        public virtual bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => WrappedValue.IsIntrinsicOfType<TIntrinsicImplementation>();
+        public virtual bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => WrappedValue.IsSpecificIntrinsic(intrinsic);
+        public IValue Inner => WrappedValue.Inner;
+    }
+
+    public class DebugCall : WrapperValue
+    {
+        public IValue Function { get; }
+        public IReadOnlyList<IValue> Arguments { get; }
+
+        public DebugCall(IValue function, IReadOnlyList<IValue> arguments, IValue result) : base(result)
+        {
+            Function = function;
+            Arguments = arguments;
+        }
+    }
+
+    public class DebugIndex : WrapperValue
+    {
+        public IValue ValueBeingIndexed { get; }
+        public Identifier Identifier { get; }
+
+        public DebugIndex(IValue valueBeingIndexed, Identifier identifier, IValue result) : base(result)
+        {
+            ValueBeingIndexed = valueBeingIndexed;
+            Identifier = identifier;
+        }
+    }
+
+    public class DebugDeclaration : WrapperValue
+    {
+        public Declaration Declaration { get; }
+        public IScope DeclaringScope { get; }
+
+        public DebugDeclaration(Declaration declaration, IScope declaringScope, IValue result) : base(result)
+        {
+            Declaration = declaration;
+            DeclaringScope = declaringScope;
+        }
+    }
+
+    public class DebugExpression : WrapperValue
+    {
+        public Expression Expression { get; }
+        public IScope ScopeResolvedIn { get; }
+
+        public DebugExpression(Expression expression, IScope scopeResolvedIn, IValue result) : base(result)
+        {
+            Expression = expression;
+            ScopeResolvedIn = scopeResolvedIn;
+        }
+    }
+
+    public class DebugAspect : ICompilationAspect
+    {
+        //private static string GetDeclarationLocation(Context context) => context.DeclarationStack.Reverse().Aggregate(new StringBuilder(), (builder, decl) => builder.Append($".{decl.Identifier}")).ToString();
+
+        public Result BeforeIndex(IValue valueBeingIndexed, Identifier identifier, Context context) => Result.Success;
+        public Result<IValue> Index(IValue valueBeingIndexed, Identifier identifier, IValue result, Context context) => new DebugIndex(valueBeingIndexed, identifier, result);
+        public Result BeforeCall(IValue function, IReadOnlyList<IValue> arguments, Context context) => Result.Success;
+        public Result<IValue> Call(IValue function, IReadOnlyList<IValue> arguments, IValue result, Context context) => new DebugCall(function, arguments, result);
+        public Result BeforeDeclaration(Declaration declaration, IScope scope, Context context) => Result.Success;
+        public Result<IValue> Declaration(Declaration declaration, IScope scope, IValue result, Context context) => new DebugDeclaration(declaration, scope, result);
+        public Result BeforeExpression(Expression expression, IScope scope, Context context) => Result.Success;
+        public Result<IValue> Expression(Expression expression, IScope scope, IValue result, Context context) => new DebugExpression(expression, scope, result);
+    }
+    
     /// <summary>
-    /// Contains contextual information about the state of compilation.
+    /// Contains contextual information about the state of compilation including compiler options and current trace stack, call stack etc.
     /// </summary>
     public class Context
     {
+        public static Context CreateFromSourceContext(SourceContext sourceContext, ICompilationAspect? aspect = null) => new Context(sourceContext, aspect);
+        public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions, ICompilationAspect? aspect = null) => new Context(rootScope, compilerOptions, aspect);
+
         private class NoScope : IScope
         {
             private readonly Context _scopelessContext;
@@ -19,36 +125,49 @@ namespace Element
             public Result<IValue> Lookup(Identifier id, Context context) =>
                 throw new InternalCompilerException($"Context '{_scopelessContext}' has no root scope, performing lookup is not possible");
         }
-        
-        public Context(IScope? rootScope, CompilerOptions? compilerOptions)
+
+        private Context(IScope? rootScope, CompilerOptions? compilerOptions, ICompilationAspect? aspect = null)
         {
             RootScope = rootScope ?? new NoScope(this);
-            CompilerOptions = compilerOptions.GetValueOrDefault();
+            CompilerOptions = compilerOptions ?? new CompilerOptions(MessageLevel.Information);
+            Aspect = aspect;
+            /*if (!CompilerOptions.ReleaseMode)
+            {
+                Aspect = new Aspect();
+            }*/
         }
-        public Context(SourceContext sourceContext) : this(sourceContext.GlobalScope, sourceContext.CompilerOptions) { }
         
-        public static Context None { get; } = new Context(null, null);
+        private Context(SourceContext sourceContext, ICompilationAspect? aspect = null) : this(sourceContext.GlobalScope, sourceContext.CompilerOptions, aspect) { }
+        
+        public static Context None { get; } = CreateManually(null, null);
 
         public IScope RootScope { get; }
         public CompilerOptions CompilerOptions { get; }
+        public ICompilationAspect? Aspect { get; }
         public Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
         public Stack<IValue> CallStack { get; } = new Stack<IValue>();
         public Stack<Declaration> DeclarationStack { get; } = new Stack<Declaration>();
         
         public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
-            Parser.Parse<TopLevelExpression>(new SourceInfo("<input expression>", expression), this, CompilerOptions.NoParseTrace)
-                  .Map(tle => tle.Expression)
-                  .Check(expressionObject => expressionObject.Validate(this))
-                  .Bind(expressionObject => expressionObject.ResolveExpression(scopeToEvaluateIn ?? RootScope, this));
+            Parse<Expression>(expression)
+                .Bind(tle => EvaluateExpression(tle, scopeToEvaluateIn));
 
-        public CompilerMessage? Trace(MessageCode messageCode, string? contextString) =>
-            (CompilerMessage.TryGetMessageLevel(messageCode, out var level), level >= CompilerOptions.Verbosity) switch
+        public Result<T> Parse<T>(string source, string sourceName = "<input source>") =>
+            Parser.Parse<TopLevel<T>>(new SourceInfo(sourceName, source), this, CompilerOptions.NoParseTrace)
+                  .Map(parsed => parsed.Object);
+
+        public Result<IValue> EvaluateExpression(Expression expression, IScope? scopeToEvaluateIn = null) =>
+            expression.Validate(this)
+                      .Bind(() => expression.ResolveExpression(scopeToEvaluateIn ?? RootScope, this));
+        
+        public CompilerMessage? Trace(string messageType, int messageCode, string? contextString) =>
+            (CompilerMessage.TryGetMessageLevel(messageType, messageCode, out var level), level >= CompilerOptions.Verbosity) switch
             {
-                (true, true) => new CompilerMessage(messageCode, contextString, TraceStack),
-                (true, false) => null, // No message should be produced 
-                (false, _) => new CompilerMessage(null, MessageLevel.Error, $"Couldn't get {nameof(MessageLevel)} for {messageCode}", null),
+                (true, true) => new CompilerMessage(messageType, messageCode, contextString, TraceStack),
+                (true, false) => null, // No message should be produced
+                (false, _) => new CompilerMessage(messageType, null, MessageLevel.Error, $"Couldn't get {nameof(MessageLevel)} for {messageCode}", null),
             };
 
-        public CompilerMessage Trace(MessageLevel messageLevel, string message) => new CompilerMessage(null, messageLevel, message, TraceStack);
+        public CompilerMessage Trace(MessageLevel messageLevel, string message, string messageType = "") => new CompilerMessage(messageType, null, messageLevel, message, TraceStack);
     }
 }

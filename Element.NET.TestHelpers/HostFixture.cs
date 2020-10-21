@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using NUnit.Framework;
 
@@ -7,62 +8,104 @@ namespace Element.NET.TestHelpers
     {
         protected readonly IHost Host = HostArguments.MakeHost();
         
-        private Result<float[]> EvaluateControlExpression(CompilerInput compilerInput, string controlExpression) 
-            => Host.Evaluate(compilerInput, controlExpression);
-
-        private Result<float[][]> EvaluateExpressions(CompilerInput compilerInput, string[] expressions)
+        public enum EvaluationMode
         {
-            var resultBuilder = new ResultBuilder<float[][]>(new Context(null, compilerInput.Options), new float[expressions.Length][]);
+            Compiled,
+            Interpreted
+        }
+        
+        public static float ToRadians(float val) => (float)Math.PI / 180f * val;
 
-            for (var i = 0; i < expressions.Length; i++)
-            {
-                var expr = expressions[i];
-                var exprResult = Host.Evaluate(compilerInput, expr);
-                resultBuilder.Append(exprResult.Then(results =>
-                {
-                    // ReSharper disable once AccessToModifiedClosure
-                    resultBuilder.Result[i] = results;
-                }));
-            }
-
-            return resultBuilder.ToResult();
+        protected abstract class EvaluationBase
+        {
+            public abstract Result<float[]> Evaluate(CompilerInput input, IHost host);
         }
 
-        private void AssertApproxEqual(CompilerInput compilerInput, string controlExpression, IComparer comparer, params float[][] results) =>
-            EvaluateControlExpression(compilerInput, controlExpression)
-                .Switch((control, messages) =>
-                       {
-                           LogMessages(messages);
-                           foreach (var result in results)
-                           {
-                               CollectionAssert.AreEqual(control, result, comparer);
-                           }
-                       },
+        protected class ExpressionEvaluation : EvaluationBase
+        {
+            public ExpressionEvaluation(string expression, bool interpreted)
+            {
+                Expression = expression;
+                Interpreted = interpreted;
+            }
+            
+            public ExpressionEvaluation(string expression, EvaluationMode mode)
+            {
+                Expression = expression;
+                Interpreted = mode == EvaluationMode.Interpreted;
+            }
+            
+            public string Expression { get; }
+            public bool Interpreted { get; }
+            public override Result<float[]> Evaluate(CompilerInput input, IHost host) => host.EvaluateExpression(input, Expression, Interpreted);
+        }
+        
+        protected class FunctionEvaluation : EvaluationBase
+        {
+            public FunctionEvaluation(string functionExpression, string callExpression, bool interpreted)
+            {
+                FunctionExpression = functionExpression;
+                CallExpression = callExpression;
+                Interpreted = interpreted;
+            }
+            
+            public FunctionEvaluation(string functionExpression, string callExpression, EvaluationMode mode)
+            {
+                FunctionExpression = functionExpression;
+                CallExpression = callExpression;
+                Interpreted = mode == EvaluationMode.Interpreted;
+            }
+
+            public string FunctionExpression { get; }
+            public string CallExpression { get; }
+            public bool Interpreted { get; }
+            public override Result<float[]> Evaluate(CompilerInput input, IHost host) => host.EvaluateFunction(input, FunctionExpression, CallExpression, Interpreted);
+        }
+
+        private void AssertApproxEqual(Result<float[]> result, Result<float[]> expected, IComparer comparer) =>
+            result
+                .Accumulate(() => expected)
+                .Switch((t, messages) =>
+                        {
+                            var (result, expected) = t;
+                            LogMessages(messages);
+                            CollectionAssert.AreEqual(expected, result, comparer);
+                        },
                        messages => ExpectingSuccess(messages, false));
 
-        private void AssertApproxEqual(CompilerInput compilerInput, string controlExpression, IComparer comparer, params string[] expressions) =>
-            EvaluateControlExpression(compilerInput, controlExpression)
-                .Accumulate(() => EvaluateExpressions(compilerInput, expressions))
-                .Switch((evaluated, messages) =>
-                       {
-                           var (control, results) = evaluated;
-                           LogMessages(messages);
-                           foreach (var result in results)
-                           {
-                               CollectionAssert.AreEqual(control, result, comparer);
-                           }
-                       },
-                       messages => ExpectingSuccess(messages, false));
+        protected void AssertApproxEqual(CompilerInput compilerInput, EvaluationBase controlEvaluation, float[] results) =>
+            AssertApproxEqual(controlEvaluation.Evaluate(compilerInput, Host), results, FloatComparer);
 
-        protected void AssertApproxEqual(CompilerInput compilerInput, string controlExpression, params float[][] results) =>
-            AssertApproxEqual(compilerInput, controlExpression, FloatComparer, results);
+        // TODO: Remove this in favour using ExpressionEvaluation
+        protected void AssertApproxEqual(CompilerInput compilerInput, string controlEvaluation, string expectedExpression) =>
+            AssertApproxEqual(compilerInput, new ExpressionEvaluation(controlEvaluation, true), new ExpressionEvaluation(expectedExpression, true));
 
-        protected void AssertApproxEqual(CompilerInput compilerInput, string controlExpression, params string[] expressions)
-            => AssertApproxEqual(compilerInput, controlExpression, FloatComparer, expressions);
+        protected void AssertApproxEqual(CompilerInput compilerInput, EvaluationBase controlEvaluation, EvaluationBase expected) =>
+            AssertApproxEqual(controlEvaluation.Evaluate(compilerInput, Host),
+                              expected.Evaluate(compilerInput, Host),
+                              FloatComparer);
 
-        protected void AssertApproxEqualRelaxed(CompilerInput compilerInput, string controlExpression, params string[] expressions) 
-            => AssertApproxEqual(compilerInput, controlExpression, RelaxedFloatComparer, expressions);
+        protected void AssertApproxEqual(CompilerInput compilerInput, (string ConstantExpression, string ExpectedExpression) args, EvaluationMode evaluationMode) =>
+            AssertApproxEqual(compilerInput,
+                              new ExpressionEvaluation(args.ConstantExpression, evaluationMode == EvaluationMode.Interpreted),
+                              new ExpressionEvaluation(args.ExpectedExpression, true));
 
+        protected void AssertApproxEqual(CompilerInput compilerInput, (string FunctionExpression, string CallExpression, string ExpectedExpression) args, EvaluationMode evaluationMode) =>
+            AssertApproxEqual(compilerInput,
+                              new FunctionEvaluation(args.FunctionExpression, args.CallExpression, evaluationMode == EvaluationMode.Interpreted),
+                              new ExpressionEvaluation(args.ExpectedExpression, true));
+
+        protected void AssertApproxEqualRelaxed(CompilerInput compilerInput, EvaluationBase controlEvaluation, EvaluationBase expected) =>
+            AssertApproxEqual(controlEvaluation.Evaluate(compilerInput, Host),
+                              expected.Evaluate(compilerInput, Host),
+                              RelaxedFloatComparer);
+
+        protected void AssertApproxEqualRelaxed(CompilerInput compilerInput, (string FunctionExpression, string CallExpression, string ExpectedExpression) args, EvaluationMode evaluationMode) =>
+            AssertApproxEqualRelaxed(compilerInput,
+                                     new FunctionEvaluation(args.FunctionExpression, args.CallExpression, evaluationMode == EvaluationMode.Interpreted),
+                                     new ExpressionEvaluation(args.ExpectedExpression, true));
+        
+        // TODO: Remove this in favour using ExpressionEvaluation
         protected void AssertTypeof(CompilerInput compilerInput, string expression, string typeStr) =>
             Host.Typeof(compilerInput, expression)
                 .Switch((result, messages) =>
@@ -71,10 +114,25 @@ namespace Element.NET.TestHelpers
                     Assert.That(result, Is.EqualTo(typeStr));
                 }, messages => ExpectingSuccess(messages, false));
         
-        protected void EvaluateExpectingErrorCode(CompilerInput compilerInput, MessageCode messageCode, string expression)
+        protected void AssertTypeof(CompilerInput compilerInput, ExpressionEvaluation expression, string typeStr) =>
+            Host.Typeof(compilerInput, expression.Expression)
+                .Switch((result, messages) =>
+                {
+                    LogMessages(messages);
+                    Assert.That(result, Is.EqualTo(typeStr));
+                }, messages => ExpectingSuccess(messages, false));
+        
+        // TODO: Remove this in favour using ExpressionEvaluation
+        protected void EvaluateExpectingElementError(CompilerInput compilerInput, EleMessageCode eleMessageCode, string expression)
         {
-            var result = Host.Evaluate(compilerInput, expression);
-            ExpectingError(result.Messages, result.IsSuccess, messageCode);
+            var result = new ExpressionEvaluation(expression, true).Evaluate(compilerInput, Host);
+            ExpectingError(result.Messages, result.IsSuccess, MessageExtensions.TypeString, (int)eleMessageCode);
+        }
+        
+        protected void EvaluateExpectingElementError(CompilerInput compilerInput, EleMessageCode eleMessageCode, EvaluationBase evaluation)
+        {
+            var result = evaluation.Evaluate(compilerInput, Host);
+            ExpectingError(result.Messages, result.IsSuccess, MessageExtensions.TypeString, (int)eleMessageCode);
         }
     }
 }

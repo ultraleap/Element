@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -43,47 +42,53 @@ namespace Element.AST
             public override IValue ReturnConstraint { get; }
 
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-	            arguments[0] is Element.Instruction index
-		                               ? new Result<IValue>(ListElement.Create(index,
-		                                                                       _elements,
-		                                                                       _elements[0].IsFunction() ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort},
-		                                                                       _elements[0].IsFunction() ? _elements[0].ReturnConstraint : AnyConstraint.Instance))
-		                               : context.Trace(MessageCode.ConstraintNotSatisfied, "List Index must be a Num");
+	            arguments[0].IsType(out Instruction index)
+		            ? HomogenousListElement.Create(index, _elements, context)
+		            : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
         }
 
-        private class ListElement : Function
+        private class HomogenousListElement : Function
         {
-            public static IValue Create(Element.Instruction index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputConstraints, IValue outputConstraint) =>
-                index switch
-                {
-	                Constant constantIndex => elements[(int) constantIndex.Value],
-	                {} indexExpr => elements.All(e => e is Instruction)
-		                                ? (IValue) Switch.CreateAndOptimize(indexExpr, elements.Cast<Instruction>())
-		                                : new ListElement(index, elements, inputConstraints, outputConstraint),
-	                _ => throw new ArgumentNullException(nameof(index))
-                };
+	        public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, Context context) =>
+		        index.CompileTimeIndex(0, elements.Count, context)
+		             .Bind(compileConstantIndex => new Result<IValue>(elements[compileConstantIndex]))
+		             .Else(() =>
+		             {
+			             var operands = new Instruction[elements.Count];
+			             
+			             for (var i = 0; i < elements.Count; i++)
+			             {
+				             // If any elements are not instructions then we need to 
+				             if (elements[i].IsType(out Instruction instruction)) operands[i] = instruction;
+				             else return new Result<IValue>(new HomogenousListElement(index, elements));
+			             }
 
-            private ListElement(Element.Instruction index, IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputPorts, IValue output)
+			             return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
+		             });
+
+            private HomogenousListElement(Instruction index, IReadOnlyList<IValue> elements)
             {
                 _index = index;
                 _elements = elements;
-                InputPorts = inputPorts;
-                ReturnConstraint = output;
+                InputPorts = _elements[0].IsFunction ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort};
+                ReturnConstraint = _elements[0].IsFunction ? _elements[0].ReturnConstraint : AnyConstraint.Instance;
             }
 
-            private readonly Element.Instruction _index;
+            private readonly Instruction _index;
             private readonly IReadOnlyList<IValue> _elements;
-            public override string SummaryString => $"List[{_index}]";
+            public override string SummaryString => $"HomogenousListElement({_index})[{string.Join(", ", _elements)}]";
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
+            public override bool IsFunction => _elements[0].IsFunction;
+            public override IValue Inner => _elements[0].Inner;
 
             public override Result<IValue> Index(Identifier id, Context context) =>
 	            _elements.Select(e => e.Index(id, context))
-	                     .MapEnumerable(elements => Create(_index, elements.ToList(), InputPorts, ReturnConstraint));
-            
+	                     .BindEnumerable(elements => Create(_index, elements.ToList(), context));
+
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
 	            _elements.Select(e => e.Call(arguments.ToArray(), context))
-	                     .MapEnumerable(v => Create(_index, v.ToList(), InputPorts, ReturnConstraint));
+	                     .BindEnumerable(v => Create(_index, v.ToList(), context));
         }
 	}
 }

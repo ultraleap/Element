@@ -45,14 +45,14 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
 
         private static Result<(TDelegate Delegate, float[] ArgumentArray)> CompileAndSourceArguments<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
-            new Context(context).EvaluateExpression(expression)
-                                .Bind(function => function.SourceArgumentsFromSerializedArray(new Context(context)))
-                                .Bind(tuple =>
-                                {
-                                    var (capturingValue, captureArray) = tuple;
-                                    return capturingValue.Compile<TDelegate>(new Context(context))
-                                                         .Map(compiled => (compiled, captureArray));
-                                });
+            Context.CreateFromSourceContext(context).EvaluateExpression(expression)
+                   .Bind(function => function.SourceArgumentsFromSerializedArray(Context.CreateFromSourceContext(context)))
+                   .Bind(tuple =>
+                   {
+                       var (capturingValue, captureArray) = tuple;
+                       return capturingValue.Compile<TDelegate>(Context.CreateFromSourceContext(context))
+                                            .Map(compiled => (compiled, captureArray));
+                   });
         
         private static void CompileWithSourcedArgsAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate, float[]> checkFunc)
             where TDelegate : Delegate =>
@@ -65,8 +65,8 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         
         private static Result<TDelegate> CompileDelegate<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
-            new Context(context).EvaluateExpression(expression)
-                                .Bind(fn => fn.Compile<TDelegate>(new Context(context)));
+            Context.CreateFromSourceContext(context).EvaluateExpression(expression)
+                   .Bind(fn => fn.Compile<TDelegate>(Context.CreateFromSourceContext(context)));
         
         private static void CompileAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate> checkFunc)
             where TDelegate : Delegate =>
@@ -91,14 +91,14 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         public void CompileBinaryAsUnaryFails()
         {
             var fn = CompileDelegate<UnaryOp>(MakeSourceContext(), "Num.add");
-            ExpectingError(fn.Messages, fn.IsSuccess, MessageCode.InvalidBoundaryFunction);
+            ExpectingElementError(fn.Messages, fn.IsSuccess, EleMessageCode.InvalidBoundaryFunction);
         }
         
         [Test]
         public void CompileUnaryAsBinaryFails()
         {
             var fn = CompileDelegate<BinaryOp>(MakeSourceContext(), "Num.sqr");
-            ExpectingError(fn.Messages, fn.IsSuccess, MessageCode.InvalidBoundaryFunction);
+            ExpectingElementError(fn.Messages, fn.IsSuccess, EleMessageCode.InvalidBoundaryFunction);
         }
 
         [Test]
@@ -113,7 +113,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         public void NoObjectBoundaryConverter()
         {
             var fn = CompileDelegate<InvalidDelegate>(MakeSourceContext(), "Num.sqr");
-            ExpectingError(fn.Messages, fn.IsSuccess, MessageCode.MissingBoundaryConverter);
+            ExpectingElementError(fn.Messages, fn.IsSuccess, EleMessageCode.MissingBoundaryConverter);
         }
 
         [Test]

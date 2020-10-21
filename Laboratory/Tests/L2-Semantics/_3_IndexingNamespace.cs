@@ -25,16 +25,17 @@ namespace Laboratory.Tests.L2.Semantics
 
         [TestCase("A.foo")]
         [TestCase("A.A.c")]
-        public void IndexingIdentifierNotFound(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.IdentifierNotFound, expression);
+        public void IndexingIdentifierNotFound(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, expression);
         
         [TestCase("A", "Namespace")]
         public void Typeof(string expression, string type) => AssertTypeof(CompilerInput, expression, type);
 
         [TestCase("Any.a")]
         [TestCase("add.b")]
-        public void IndexingNonIndexable(string expression) => EvaluateExpectingErrorCode(CompilerInput, MessageCode.NotIndexable, expression);
+        public void IndexingNonIndexable(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.NotIndexable, expression);
         
-        [TestCase("generate_anonymous_block(5, 10).d",  "10")]
-        public void SomethingSomethingAnonymousBlock(string expression, string expected) => AssertApproxEqual(CompilerInput, expression, expected);
+        [TestCase("makeAnonymousBlock(5, 10).a",  "5")]
+        [TestCase("makeAnonymousBlock(5, 10).b",  "10")]
+        public void IndexAnonymousBlock(string expression, string expected) => AssertApproxEqual(CompilerInput, expression, expected);
     }
 }

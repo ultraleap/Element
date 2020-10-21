@@ -9,21 +9,15 @@ namespace Element.AST
         public Result<IValue> ResolveExpression(IScope parentScope, Context context)
         {
             context.TraceStack.Push(this.MakeTraceSite($"{GetType().Name} '{ToString()}'"));
-            var result = ExpressionImpl(parentScope, context);
+            var resolveResult = (context.Aspect?.BeforeExpression(this, parentScope, context) ?? Result.Success)
+                .Bind(() => ExpressionImpl(parentScope, context));
+            var result = context.Aspect != null
+                             ? resolveResult.Bind(resolvedValue => context.Aspect.Expression(this, parentScope, resolvedValue, context))
+                             : resolveResult;
             context.TraceStack.Pop();
             return result;
         }
 
         protected abstract Result<IValue> ExpressionImpl(IScope parentScope, Context context);
-    }
-
-    [TopLevel]
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class TopLevelExpression
-    {
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
-#pragma warning disable 8618
-        [Term] public Expression Expression { get; private set; }
-#pragma warning restore 8618
     }
 }

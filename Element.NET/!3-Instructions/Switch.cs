@@ -10,20 +10,14 @@ namespace Element
 	/// </summary>
 	public class Switch : Instruction
 	{
-		public static Instruction CreateAndOptimize(Instruction selector, IEnumerable<Instruction> operands)
+		public static Result<Instruction> CreateAndOptimize(Instruction selector, IEnumerable<Instruction> operands, Context context)
 		{
 			var options = operands as Instruction[] ?? operands.ToArray();
 			if (options.Length == 1 || options.All(o => o.Equals(options[0]))) return options[0];
-			if (selector is Constant index)
-			{
-				var idx = index.Value >= options.Length
-					          ? options.Length - 1
-					          : index.Value < 0
-						          ? 0
-						          : index.Value;
-				return options[(int)idx];
-			}
-			return new Switch(selector, options);
+
+			return selector.CompileTimeIndex(0, options.Length, context)
+			               .Branch(idx => new Result<Instruction>(options[idx]),
+			                       () => new Switch(selector, options));
 		}
 		
 		private Switch(Instruction selector, IEnumerable<Instruction> operands)
@@ -40,7 +34,7 @@ namespace Element
 		public ReadOnlyCollection<Instruction> Operands { get; }
 
 		public override IEnumerable<Instruction> Dependent => Operands.Concat(new[] {Selector});
-		public override string SummaryString => $"[{ListJoinToString(Operands)}]:{Selector}";
+		public override string SummaryString => $"Switch(${Selector})[{ListJoinToString(Operands)}]";
 
 		private int? _hashCode;
 

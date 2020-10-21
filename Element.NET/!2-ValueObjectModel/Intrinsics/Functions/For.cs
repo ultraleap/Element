@@ -19,21 +19,21 @@ namespace Element.AST
             var condition = arguments[1];
             var body = arguments[2];
 
-            Result<Element.Instruction> Condition(IReadOnlyCollection<Element.Instruction> state) =>
+            Result<Instruction> Condition(IReadOnlyCollection<Instruction> state) =>
                 initial.Deserialize(state, context)
                        .Bind(value => condition.Call(new[] {value}, context))
-                       .Cast<Element.Instruction>(context);
+                       .CastInner<Instruction>();
             
-            Result<IEnumerable<Element.Instruction>> Body(IReadOnlyCollection<Element.Instruction> state) =>
+            Result<IEnumerable<Instruction>> Body(IReadOnlyCollection<Instruction> state) =>
                 initial.Deserialize(state, context)
                        .Bind(value => body.Call(new[] {value}, context))
                        .Bind(result => result.Serialize(context))
-                       .Cast<IEnumerable<Element.Instruction>>(context);
+                       .Cast<IEnumerable<Instruction>>();
 
             return initial.Serialize(context)
                           .Bind(initialSerialized => Loop.CreateAndOptimize(initialSerialized, Condition, Body, context))
                           .Bind(expressionGroup => initial.Deserialize(Enumerable.Range(0, expressionGroup.Size).Select(i => new InstructionGroupElement(expressionGroup, i)), context))
-                          .Cast<IValue>(context);
+                          .Cast<IValue>();
         }
     }
 }

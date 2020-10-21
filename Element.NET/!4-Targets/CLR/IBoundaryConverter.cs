@@ -34,7 +34,7 @@ namespace Element.CLR
                           (outputType, convertedValue) switch
                           {
                               (_, {} result) when result.Type == outputType => result, // Correct type from convert, return directly
-                              ({} t, {} result) when t == typeof(bool) => LExpression.LessThanOrEqual(result, LExpression.Constant(0f)),
+                              ({} t, {} result) when t == typeof(bool) => LExpression.GreaterThan(result, LExpression.Constant(0f)),
                               (_, {} result) => LExpression.Convert(result, outputType),
                               _ => throw new InternalCompilerException($"Unhandled {nameof(ElementToLinq)} output type")
                           });
@@ -84,11 +84,11 @@ namespace Element.CLR
 
         public Result<IValue> LinqToElement(LExpression parameter, IBoundaryConverter root, Context context) =>
             context.EvaluateExpression(_elementTypeExpression)
-                   .Cast<Struct>(context)
+                   .CastInner<Struct>()
                    .Bind(structDeclaration => StructInstance.Create(structDeclaration, _elementToClrFieldMapping
                                                                                        .Select(pair => new FieldInstruction(root, parameter, pair.Value))
                                                                                        .ToArray(), context)
-                                                            .Cast<IValue>(context));
+                                                            .Cast<IValue>());
 
         private class FieldInstruction : Instruction, ICLRExpression
         {
@@ -120,7 +120,7 @@ namespace Element.CLR
                 assigns.Add(LExpression.Assign(obj, LExpression.New(outputType)));
             }
             
-            if (!(value is StructInstance structInstance)) return context.Trace(MessageCode.InvalidBoundaryData, $"'{value}' is not a struct instance - expected struct instance when converting a struct");
+            if (!value.IsType(out StructInstance structInstance)) return context.Trace(EleMessageCode.InvalidBoundaryData, $"'{value}' is not a struct instance - expected struct instance when converting a struct");
             var builder = new ResultBuilder<LExpression>(context, default!);
             
             foreach (var pair in _elementToClrFieldMapping)
@@ -187,7 +187,7 @@ namespace Element.CLR
         private Result<IBoundaryConverter> TryAddStructConverter(Type clrStructType, Context context)
         {
             if (!(clrStructType.GetCustomAttribute<ElementStructTemplateAttribute>() is {} attr))
-                return context.Trace(MessageCode.MissingBoundaryConverter, $"Could not find or create {nameof(IBoundaryConverter)} for CLR type '{clrStructType}'");
+                return context.Trace(EleMessageCode.MissingBoundaryConverter, $"Could not find or create {nameof(IBoundaryConverter)} for CLR type '{clrStructType}'");
             var boundaryConverter = new StructConverter(attr.ElementTypeExpression, clrStructType);
             Add(clrStructType, boundaryConverter);
             return boundaryConverter;

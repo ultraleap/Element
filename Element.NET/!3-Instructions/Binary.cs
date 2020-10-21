@@ -73,9 +73,12 @@ namespace Element
 				})
 			};
 
-		public static Instruction CreateAndOptimize(Op op, Instruction opA, Instruction opB)
+		public static Result<IValue> CreateAndOptimize(Op op, IValue operandA, IValue operandB, Context context)
 		{
             Constant NaN() => _boolOps.Contains(op) ? Constant.BoolNaN : Constant.NaN;
+
+            if (!operandA.IsType(out Instruction opA)) return context.Trace(EleMessageCode.InvalidCompileTarget, $"'{operandA}' is not an Instruction - only Instructions can be binary operands");
+            if (!operandB.IsType(out Instruction opB)) return context.Trace(EleMessageCode.InvalidCompileTarget, $"'{operandB}' is not an Instruction - only Instructions can be binary operands");
             
             var cA = (opA as Constant)?.Value;
             var cB = (opB as Constant)?.Value;

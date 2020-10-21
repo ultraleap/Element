@@ -10,16 +10,18 @@ namespace Element.AST
             this.VerifyArgumentsAndApplyFunction(arguments, () => ResolveCall(arguments, context), context);
 
         protected abstract Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context);
-        
+
         protected IReadOnlyList<(Identifier Identifier, IValue Value)> MakeNamedArgumentList(IReadOnlyList<IValue> arguments)
         {
+            if (arguments.Count < 1) return Array.Empty<(Identifier Identifier, IValue Value)>();
+
             var namedArguments = new List<(Identifier Identifier, IValue Value)>(InputPorts.Count);
 
             for (var i = 0; i < arguments.Count; i++)
             {
                 var arg = arguments[i];
-                var port = InputPorts[i]; 
-                
+                var port = InputPorts[i];
+
                 if (port?.Identifier.HasValue ?? false) // Ignore adding ports without identifier - they are discards
                 {
                     namedArguments.Add((port!.Identifier!.Value, arg));
@@ -29,14 +31,20 @@ namespace Element.AST
             return namedArguments;
         }
 
+        public override bool IsFunction => true;
+
         public abstract override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public abstract override IValue ReturnConstraint { get; }
+
+        public override string SummaryString => $"({InputPortsJoined}):{ReturnConstraint.SummaryString}";
     }
     
     public class IntrinsicFunction : Function, IIntrinsicValue
     {
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicFunctionImplementation _implementation;
+        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation.GetType() == typeof(TIntrinsicImplementation);
+        public override bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _implementation == intrinsic;
 
         public IntrinsicFunction(IIntrinsicFunctionImplementation implementation, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint)
         {
@@ -74,7 +82,7 @@ namespace Element.AST
             _expressionBody = expressionBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent), context);
+            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent, () => this), context);
     }
     
     public class ScopeBodiedFunction : CustomFunction
@@ -86,28 +94,30 @@ namespace Element.AST
             _scopeBody = scopeBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context)
+            _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context, () => this)
                       .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context));
     }
 
     public static class FunctionExtensions
     {
-        
         public static Result<IValue> VerifyArgumentsAndApplyFunction(this IValue function,
                                                                      IEnumerable<IValue> arguments,
                                                                      Func<Result<IValue>> resolveFunc,
                                                                      Context context)
         {
-            if (context.CallStack.Contains(function)) return context.Trace(MessageCode.RecursionNotAllowed, $"Multiple references to {function} in same call stack - recursion is not allowed");
+            if (context.CallStack.Contains(function)) return context.Trace(EleMessageCode.RecursionNotAllowed, $"Multiple references to {function} in same call stack - recursion is not allowed");
+            if (context.CallStack.Count > context.CompilerOptions.CallStackLimit) return context.Trace(EleMessageCode.CallStackLimitReached, $"Call stack has exceeded limit of {context.CompilerOptions.CallStackLimit} - this can modified as a compiler option");
             context.CallStack.Push(function);
 
             try
             {
-                Result ResultMatchesReturnConstraint(IValue result) =>
-                    function.ReturnConstraint.MatchesConstraint(result, context)
-                            .Bind(matches => matches
-                                                 ? Result.Success
-                                                 : context.Trace(MessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
+                Result ResultMatchesReturnConstraint(IValue result)
+                {
+                    return function.ReturnConstraint.MatchesConstraint(result, context)
+                                   .Bind(matches => matches
+                                                        ? Result.Success
+                                                        : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
+                }
 
 
                 return CheckInputConstraints(function.InputPorts, arguments as IValue[] ?? arguments.ToArray(), context)
@@ -128,7 +138,7 @@ namespace Element.AST
             var isVariadic = ports.Any(p => p == ResolvedPort.VariadicPort);
             if (!isVariadic && arguments.Count != ports.Count)
             {
-                resultBuilder.Append(MessageCode.ArgumentCountMismatch, $"Expected '{ports.Count}' arguments but got '{arguments.Count}'");
+                resultBuilder.Append(EleMessageCode.ArgumentCountMismatch, $"Expected '{ports.Count}' arguments but got '{arguments.Count}'");
             }
 
             for (var i = 0; i < Math.Min(ports.Count, arguments.Count); i++)
@@ -141,7 +151,7 @@ namespace Element.AST
                                          .MatchesConstraint(arg, context)
                                          .Bind(matches => matches
                                                             ? Result.Success
-                                                            : context.Trace(MessageCode.ConstraintNotSatisfied, $"Value '{arg}' for port '{port}' does not match '{port.ResolvedConstraint}' constraint")));
+                                                            : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Value '{arg}' for port '{port}' does not match '{port.ResolvedConstraint}' constraint")));
             }
 
             return resultBuilder.ToResult();

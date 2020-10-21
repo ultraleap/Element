@@ -36,7 +36,7 @@ namespace Element.AST
                     t.Constraint.MatchesConstraint(t.DefaultArgument, context)
                      .Bind(matches => matches
                                           ? Result.Success
-                                          : context.Trace(MessageCode.ConstraintNotSatisfied, $"Default argument value '{t.DefaultArgument}' does not match port constraint '{t.Constraint}'"));
+                                          : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Default argument value '{t.DefaultArgument}' does not match port constraint '{t.Constraint}'"));
 
                 ResolvedPort ToResolvedPort((IValue Constraint, IValue DefaultArgument) t) => new ResolvedPort(Identifier, t.Constraint, t.DefaultArgument);
 
@@ -71,6 +71,8 @@ namespace Element.AST
         public IValue ResolvedConstraint { get; }
         public IValue? ResolvedDefaultArgument { get; }
         public Result<IValue> DefaultValue(Context context) => ResolvedDefaultArgument != null ? new Result<IValue>(ResolvedDefaultArgument) : ResolvedConstraint.DefaultValue(context);
+
+        public override string ToString() => $"{Identifier.GetValueOrDefault(new Identifier("_")).String}:{ResolvedConstraint.SummaryString}{(ResolvedDefaultArgument is {} v ? $" = {v.SummaryString}" : string.Empty)}";
     }
 
     public class VariadicPortMarker : Value

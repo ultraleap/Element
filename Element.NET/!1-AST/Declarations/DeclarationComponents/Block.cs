@@ -10,6 +10,7 @@ namespace Element.AST
     {
 #pragma warning disable 649, 169
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        // ReSharper disable once UnusedMember.Global
         public abstract List<Declaration>? Items { get; protected set; }
 #pragma warning restore 649, 169
         
@@ -21,33 +22,35 @@ namespace Element.AST
                 decl.Validate(builder, context);
                 if (!idHashSet.Add(decl.Identifier))
                 {
-                    builder.Append(MessageCode.MultipleDefinitions, $"Multiple definitions for '{this}'");
+                    builder.Append(EleMessageCode.MultipleDefinitions, $"Multiple definitions for '{this}'");
                 }
             }
             
             if (this is FunctionBlock && !idHashSet.Contains(Parser.ReturnIdentifier))
             {
-                builder.Append(MessageCode.FunctionMissingReturn, $"Scope-bodied function '{this}' is missing return declaration");
+                builder.Append(EleMessageCode.FunctionMissingReturn, $"Scope-bodied function '{this}' is missing return declaration");
             }
         }
 
-        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context) =>
-            ResolveBlockWithCaptures(parentScope, Array.Empty<(Identifier Identifier, IValue Value)>(), context);
+        public Result<ResolvedBlock> ResolveBlock(IScope? parentScope, Context context, Func<IValue?>? valueProducedFrom = null) =>
+            ResolveBlockWithCaptures(parentScope, Array.Empty<(Identifier Identifier, IValue Value)>(), context, valueProducedFrom);
 
         public Result<ResolvedBlock> ResolveBlockWithCaptures(IScope? parentScope,
                                                               IReadOnlyList<(Identifier Identifier, IValue Value)> capturedValues,
-                                                              Context context) =>
+                                                              Context context,
+                                                              Func<IValue?>? valueProducedFrom = null) =>
             Validate(context)
                 .Map(() =>
                 {
                     Result<IValue> IndexFunc(IScope scope, Identifier identifier, Context context) =>
                         Items.FirstOrDefault(d => d.Identifier.Equals(identifier))?.Resolve(scope, context)
-                        ?? (Result<IValue>) context.Trace(MessageCode.IdentifierNotFound, $"'{identifier}' not found when indexing {scope}");
+                        ?? (Result<IValue>) context.Trace(EleMessageCode.IdentifierNotFound, $"'{identifier}' not found when indexing {scope}");
 
                     return new ResolvedBlock(Items?.Select(d => d.Identifier).ToArray() ?? Array.Empty<Identifier>(),
                                      capturedValues,
                                      IndexFunc,
-                                     parentScope);
+                                     parentScope,
+                                     valueProducedFrom);
                 });
     }
 

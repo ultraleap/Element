@@ -5,8 +5,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
     internal class Vector2 : StandardLibraryFixture
     {
         [
-            TestCase("Vector2.Zero", "Vector2(0, 0)"),
-            TestCase("Vector2.One", "Vector2(1, 1)"),
+            TestCase("Vector2.zero", "Vector2(0, 0)"),
+            TestCase("Vector2.one", "Vector2(1, 1)"),
             //TestCase("Vector2.Right", "Vector3(1, 0)"),
             //TestCase("Vector2.Left", "Vector3(-1, 0)"),
             //TestCase("Vector2.Up", "Vector3(0, 1)"),
@@ -137,13 +137,13 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
                 
         [
-            TestCase("Vector2.lerp(-0.25, Vector2.Zero, Vector2.One)", "Vector2(-0.25, -0.25)"), //extrapolation
-            TestCase("Vector2.lerp(0,     Vector2.Zero, Vector2.One)", "Vector2(0, 0)"),
-            TestCase("Vector2.lerp(0.25,  Vector2.Zero, Vector2.One)", "Vector2(0.25, 0.25)"),
-            TestCase("Vector2.lerp(0.5,   Vector2.Zero, Vector2.One)", "Vector2(0.5, 0.5)"),
-            TestCase("Vector2.lerp(0.75,  Vector2.Zero, Vector2.One)", "Vector2(0.75, 0.75)"),
-            TestCase("Vector2.lerp(1,     Vector2.Zero, Vector2.One)", "Vector2(1, 1)"),
-            TestCase("Vector2.lerp(1.25,  Vector2.Zero, Vector2.One)", "Vector2(1.25, 1.25)"), //extrapolation
+            TestCase("Vector2.lerp(-0.25, Vector2.zero, Vector2.one)", "Vector2(-0.25, -0.25)"), //extrapolation
+            TestCase("Vector2.lerp(0,     Vector2.zero, Vector2.one)", "Vector2(0, 0)"),
+            TestCase("Vector2.lerp(0.25,  Vector2.zero, Vector2.one)", "Vector2(0.25, 0.25)"),
+            TestCase("Vector2.lerp(0.5,   Vector2.zero, Vector2.one)", "Vector2(0.5, 0.5)"),
+            TestCase("Vector2.lerp(0.75,  Vector2.zero, Vector2.one)", "Vector2(0.75, 0.75)"),
+            TestCase("Vector2.lerp(1,     Vector2.zero, Vector2.one)", "Vector2(1, 1)"),
+            TestCase("Vector2.lerp(1.25,  Vector2.zero, Vector2.one)", "Vector2(1.25, 1.25)"), //extrapolation
         ]
         public void LinearInterpolation(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);

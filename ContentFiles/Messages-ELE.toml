@@ -160,6 +160,18 @@ level = "Error"
 name = "NotConstraint"
 level = "Error"
 
+[ELE39]
+name = "PackageNotFound"
+level = "Error"
+
+[ELE40]
+name = "CallStackLimitReached"
+level = "Error"
+
+[ELE41]
+name = "NotImplemented"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"
