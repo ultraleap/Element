@@ -25,7 +25,8 @@ endforeach()
 
 file(GLOB_RECURSE LIBELEMENT_SOURCES
         ${CMAKE_SOURCE_DIR}/../libelement/src/*.cpp
-        ${CMAKE_SOURCE_DIR}/../libelement/src/*.hpp)
+        ${CMAKE_SOURCE_DIR}/../libelement/src/*.hpp
+        ${CMAKE_SOURCE_DIR}/../libelement/include/element/*.h)
 
 foreach (file IN LISTS LIBELEMENT_SOURCES)
     string(APPEND LIBELEMENT_FILES " \"${file}\"")
