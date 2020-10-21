@@ -91,19 +91,21 @@ TEST_CASE("ObjectModel", "[API]")
         result = element_object_index(my_struct_instance, compilation_ctx, "a", &my_struct_instance_a);
         CHECK(result == ELEMENT_OK);
 
-        element_inputs input;
-        input.values = nullptr;
-        input.count = 0;
-        element_outputs output;
-        float outputs[] = { 0 };
-        output.values = outputs;
-        output.count = 1;
-        element_instruction* instruction;
-        result = element_object_to_instruction(my_struct_instance_a, &instruction);
-        CHECK(result == ELEMENT_OK);
-        result = element_interpreter_evaluate(interpreter, nullptr, instruction, &input, &output);
-        CHECK(result == ELEMENT_OK);
-        REQUIRE(outputs[0] == 5);
+        {
+            element_inputs input;
+            input.values = nullptr;
+            input.count = 0;
+            element_outputs output;
+            float outputs[] = { 0 };
+            output.values = outputs;
+            output.count = 1;
+            element_instruction* instruction;
+            result = element_object_to_instruction(my_struct_instance_a, &instruction);
+            CHECK(result == ELEMENT_OK);
+            result = element_interpreter_evaluate(interpreter, nullptr, instruction, &input, &output);
+            CHECK(result == ELEMENT_OK);
+            REQUIRE(outputs[0] == 5);
+        }
 
     cleanup:
         element_delete_object(&my_struct_instance_a);
