@@ -76,6 +76,11 @@ struct element_log_ctx
             compilation_step_indent_level -= 1;
     }
 
+    int log_step_get_indent_level() const
+    {
+        return compilation_step_indent_level;
+    }
+
     mutable int compilation_step_indent_level = 0;
 };
 

@@ -1,4 +1,4 @@
-#include "function_instance.hpp"
+﻿#include "function_instance.hpp"
 
 //LIBS
 #include <fmt/format.h>
@@ -75,10 +75,6 @@ object_const_shared_ptr function_instance::call(
     std::vector<object_const_shared_ptr> compiled_args,
     const source_information& source_info) const
 {
-    if constexpr (should_log_compilation_step())
-        context.get_logger()->log_step("{} - calling {}function with {} arguments, plus {} already provided\n",
-                                       declarer->name.value, declarer->is_variadic() ? "variadic " : "", compiled_args.size(), provided_arguments.size());
-
     compiled_args.insert(std::begin(compiled_args), std::begin(provided_arguments), std::end(provided_arguments));
 
     //todo: error checks
@@ -109,7 +105,13 @@ object_const_shared_ptr function_instance::call(
             if (i < static_cast<int>(declarer->inputs.size()) - 1)
                 input_string += ", ";
         }
-        context.get_logger()->log_step("\\___ {}({})\n", declarer->name.value, std::move(input_string));
+
+        context.get_logger()->log_step("{}({})\n", declarer->name.value, std::move(input_string));
+        context.get_logger()->log_step("\\__\"{}\" @ {}:{}:{}\n", source_info.line_in_source->c_str(), source_info.filename, source_info.line, source_info.character_start);
+        /*std::string indents(context.get_logger()->log_step_get_indent_level(), '\t');
+        indents += std::string(source_info.character_start, ' ');
+        std::string arrows(source_info.character_end - source_info.character_start, '^');
+        context.get_logger()->log_step("    {}{}\n", indents, arrows);*/
     }
 
     const bool is_variadic = declarer->is_variadic();
@@ -134,8 +136,6 @@ object_const_shared_ptr function_instance::call(
 
     if constexpr (should_log_compilation_step())
     {
-        context.get_logger()->log_step("{} - pushing to capture and call stack\n",
-                                       declarer->name.value);
         context.get_logger()->log_step_indent();
     }
 
@@ -149,11 +149,6 @@ object_const_shared_ptr function_instance::call(
     };
 
     auto element = std::visit(visitor, declarer->body);
-    if constexpr (should_log_compilation_step())
-    {
-        context.get_logger()->log_step("{} - returned {}\n",
-                                       declarer->name.value, element->to_string());
-    }
     std::swap(captures, context.captures);
 
     captures.pop();
@@ -161,8 +156,8 @@ object_const_shared_ptr function_instance::call(
     if constexpr (should_log_compilation_step())
     {
         context.get_logger()->log_step_unindent();
-        context.get_logger()->log_step("{} - popping from capture and call stack\n",
-                                       declarer->name.value);
+        context.get_logger()->log_step("{} - returned '{}'\n",
+                                       declarer->name.value, element->to_string());
     }
 
     if (!element)
@@ -195,26 +190,10 @@ object_const_shared_ptr function_instance::compile(const compilation_context& co
 
     //variadic intrinsics (e.g. list) need at least one input, they aren't nullary
     if (variadic && !provided_arguments.empty())
-    {
-        if constexpr (should_log_compilation_step())
-            context.get_logger()->log_step("{} - compiling variadic function with {} arguments\n",
-                                           declarer->name.value, provided_arguments.size());
-
         return call(context, {}, source_info);
-    }
 
     if (!variadic && provided_arguments.size() == declarer->inputs.size())
-    {
-        if constexpr (should_log_compilation_step())
-            context.get_logger()->log_step("{} - compiling function with {} arguments\n",
-                                           declarer->name.value, provided_arguments.size());
-
         return call(context, {}, source_info);
-    }
-
-    /*if constexpr (should_log_compilation_step())
-        context.get_logger()->log_step("{} - compiling function with {} arguments which is insufficient. {} arguments required\n",
-                   declarer->name.value, provided_arguments.size(), declarer->inputs.size());*/
 
     return shared_from_this();
 }
