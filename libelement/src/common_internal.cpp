@@ -179,7 +179,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     {
         const auto& nullary = expression.as<element::instruction_nullary>();
         string += "NULLARY: ";
-        char* c = nullptr;
+        const char* c = nullptr;
         switch (nullary->operation())
         {
             //num
@@ -198,7 +198,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     {
         const auto& unary = expression.as<element::instruction_unary>();
         string += "UNARY: ";
-        char* c = nullptr;
+        const char* c = nullptr;
         switch (unary->operation())
         {
             //num
@@ -223,7 +223,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     {
         const auto& binary = expression.as<element::instruction_binary>();
         string += "BINARY: ";
-        char* c = nullptr;
+        const char* c = nullptr;
         switch (binary->operation())
         {
             //num
