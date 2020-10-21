@@ -202,8 +202,11 @@ element_result element_object_get_source_information(const element_object* objec
     src_info.character_start = obj_src_info.character_start;
     src_info.character_end = obj_src_info.character_end;
     src_info.line = obj_src_info.line;
+    src_info.filename = (char*)calloc(strlen(obj_src_info.filename) + 1, sizeof(char));
     strcpy(src_info.filename, obj_src_info.filename);
+    src_info.line_in_source = (char*)calloc(obj_src_info.line_in_source->length() + 1, sizeof(char));
     strcpy(src_info.line_in_source, obj_src_info.line_in_source->c_str());
+    src_info.text = (char*)calloc(obj_src_info.get_text().length() + 1, sizeof(char));
     strcpy(src_info.text, obj_src_info.get_text().c_str());
     *output = src_info;
 
