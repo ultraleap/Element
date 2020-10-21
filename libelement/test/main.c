@@ -29,8 +29,9 @@ int main(int argc, char** argv)
     element_object* const_int;
     element_object* my_struct_instance;
     element_object* my_struct_instance_a;
+    element_instruction* instruction;
 
-    auto result = element_interpreter_load_string(interpreter, input_element, "<input>");
+    element_result result = element_interpreter_load_string(interpreter, input_element, "<input>");
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -66,25 +67,26 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    element_instruction* instruction;
-
     result = element_object_to_instruction(my_struct_instance_a, &instruction);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    element_inputs input;
-    input.values = NULL;
-    input.count = 0;
-    element_outputs output;
-    float outputs[] = { 0 };
-    output.values = outputs;
-    output.count = 1;
-    result = element_interpreter_evaluate(interpreter, NULL, instruction, &input, &output);
-    if (result != ELEMENT_OK)
-        goto cleanup;
+    {
+        element_inputs input;
+        input.values = NULL;
+        input.count = 0;
+        element_outputs output;
+        float outputs[] = { 0 };
+        output.values = outputs;
+        output.count = 1;
+        result = element_interpreter_evaluate(interpreter, NULL, instruction, &input, &output);
 
-    if (outputs[0] == 5)
-        printf("Success");
+        if (result != ELEMENT_OK)
+            goto cleanup;
+
+        if (outputs[0] == 5)
+            printf("Success");
+    }
 
 cleanup:
     element_delete_object(&my_struct_instance_a);
