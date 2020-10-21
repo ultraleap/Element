@@ -3,6 +3,8 @@
 
 #include "element/common.h"
 
+#include <stddef.h>
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
