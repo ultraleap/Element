@@ -120,7 +120,7 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     }
     else
     {
-        char* c;
+        const char* c;
         switch (ast->type)
         {
             PRINTCASE(ELEMENT_AST_NODE_ROOT)
