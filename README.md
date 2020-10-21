@@ -8,7 +8,7 @@ One of these formats is the bytecode format, [LMNTIL (Element Intermediate Langu
 * Structured types using `struct`
 * First class functions and local functions
 * Intrinsics (math intrinsics, collection intrinsics, control flow)
-* Genericity via implicit interfaces with `Any` type
+* Genericity via `Any` type
 
 Example:
 ```
@@ -24,7 +24,7 @@ Element includes a core set of functionality in the base library [Prelude](Commo
 Element also comes with a [Standard Library](Common/StandardLibrary).
 
 ## Repository Layout
-* [Laboratory - The Element Host Test Suite](Laboratory) - .NET Core 2.1 CLI
+* [Laboratory - The Element Host Test Suite](Laboratory) - .NET Core 3.0 CLI
     * Test runner using NUnit containing host compliance tests, prelude tests and standard library tests.
     * Can test Element.NET directly or invoke other compilers via CLI convention
 
@@ -53,9 +53,9 @@ Element also comes with a [Standard Library](Common/StandardLibrary).
         * ARMv7-A - planned
 
 ### Command Line Interfaces (CLIs)
-* [Alchemist](Alchemist) - .NET Core 2.1 using [Element.NET](Element.NET) ![](https://github.com/ultraleap/Element/workflows/Alchemist.yml/badge.svg)
+* [Alchemist](Alchemist) - .NET Core 3.0 CLI for [Element.NET](Element.NET) ![](https://github.com/ultraleap/Element/workflows/Alchemist.yml/badge.svg)
     * CLI for executing Element via a REPL or compiling to other targets
-* [libelement.CLI](libelement.CLI) - C++ using [libelement](libelement)
+* [libelement.CLI](libelement.CLI) - C++ CLI for [libelement](libelement)
     * CLI for executing Element via a REPL or compiling to other targets
 
 ### Integrations/Tooling
