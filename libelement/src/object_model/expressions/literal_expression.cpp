@@ -15,5 +15,5 @@ literal_expression::literal_expression(element_value value, const expression_cha
 
 [[nodiscard]] object_const_shared_ptr literal_expression::resolve(const compilation_context& context, const object* obj)
 {
-    return std::make_shared<element_instruction_constant>(value);
+    return std::make_shared<element::instruction_constant>(value);
 }

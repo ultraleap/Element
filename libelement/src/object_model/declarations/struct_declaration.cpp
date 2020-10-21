@@ -125,7 +125,7 @@ object_const_shared_ptr struct_declaration::generate_placeholder(const compilati
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
         //note: generate_placeholder is called before context.boundaries has the new boundary pushed back, so we use the current size as the future index, when usually it would be size - 1
         //todo: ideally we would modify it so that we already have the boundary at this point
-        auto expr = std::make_shared<element_instruction_input>(context.boundaries.size(), placeholder_index);
+        auto expr = std::make_shared<element::instruction_input>(context.boundaries.size(), placeholder_index);
         expr->actual_type = intrinsic->get_type();
         placeholder_index += 1; //todo: fix when we have lists, size() on intrinsic? on type?
         return expr;

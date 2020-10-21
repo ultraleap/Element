@@ -19,7 +19,7 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
     if (index_error)
         return index_error;
 
-    const auto* selector_constant = dynamic_cast<const element_instruction_constant*>(selector_object.get());
+    const auto* selector_constant = dynamic_cast<const element::instruction_constant*>(selector_object.get());
     if (selector_constant)
     {
         assert(!option_objects.empty());
@@ -28,7 +28,7 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
         return option_objects[index];
     }
 
-    auto selector = std::dynamic_pointer_cast<const element_instruction>(selector_object);
+    auto selector = std::dynamic_pointer_cast<const instruction>(selector_object);
     if (!selector || selector->actual_type != type::num.get())
     {
         return std::make_shared<const error>(
@@ -53,7 +53,7 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
     bool list_elements_are_expressions = true;
     for (const auto& element : option_objects)
     {
-        if (!dynamic_cast<const element_instruction*>(element.get()))
+        if (!dynamic_cast<const instruction*>(element.get()))
             list_elements_are_expressions = false;
     }
 
@@ -63,10 +63,10 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
         options.reserve(option_objects.size());
         for (const auto& option : option_objects)
         {
-            options.push_back(std::dynamic_pointer_cast<const element_instruction>(option));
+            options.push_back(std::dynamic_pointer_cast<const instruction>(option));
         }
 
-        auto select = std::make_shared<const element_instruction_select>(std::move(selector), std::move(options));
+        auto select = std::make_shared<const element::instruction_select>(std::move(selector), std::move(options));
         select->actual_type = select->options[0]->actual_type;
         return select;
     }
@@ -74,7 +74,7 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
     return std::make_shared<const list_wrapper>(std::move(selector), option_objects);
 }
 
-list_wrapper::list_wrapper(std::shared_ptr<const element_instruction> selector, std::vector<object_const_shared_ptr> options)
+list_wrapper::list_wrapper(std::shared_ptr<const instruction> selector, std::vector<object_const_shared_ptr> options)
     : selector(std::move(selector))
     , options(std::move(options))
 {
@@ -142,7 +142,7 @@ object_const_shared_ptr list_wrapper::compile(const compilation_context& context
     return create_or_optimise(selector, new_options, source_info);
 }
 
-std::shared_ptr<const element_instruction> list_wrapper::to_instruction() const
+std::shared_ptr<const instruction> list_wrapper::to_instruction() const
 {
     std::vector<object_const_shared_ptr> new_options;
     new_options.reserve(options.size());
@@ -150,5 +150,5 @@ std::shared_ptr<const element_instruction> list_wrapper::to_instruction() const
         new_options.push_back(option->to_instruction());
 
     auto result = create_or_optimise(selector, new_options, {});
-    return std::dynamic_pointer_cast<const element_instruction>(std::move(result));
+    return std::dynamic_pointer_cast<const instruction>(std::move(result));
 }

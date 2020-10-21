@@ -35,6 +35,6 @@ object_const_shared_ptr intrinsic_list::compile(const compilation_context& conte
     std::vector<object_const_shared_ptr> compiled_arguments;
     compiled_arguments.reserve(2);
     compiled_arguments.push_back(std::move(list_indexer));
-    compiled_arguments.push_back(std::make_shared<const element_instruction_constant>(static_cast<element_value>(count)));
+    compiled_arguments.push_back(std::make_shared<const element::instruction_constant>(static_cast<element_value>(count)));
     return list_constructor->call(context, compiled_arguments, source_info);
 }

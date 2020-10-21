@@ -1,7 +1,7 @@
 #pragma once
 
 //SELF
-#include "../object.hpp"
+#include "../object_internal.hpp"
 #include "../capture_stack.hpp"
 
 namespace element

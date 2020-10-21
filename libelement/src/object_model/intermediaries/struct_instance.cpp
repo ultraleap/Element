@@ -71,7 +71,7 @@ object_const_shared_ptr struct_instance::compile(const compilation_context& cont
     return shared_from_this();
 }
 
-std::shared_ptr<const element_instruction> struct_instance::to_instruction() const
+std::shared_ptr<const instruction> struct_instance::to_instruction() const
 {
     std::vector<instruction_const_shared_ptr> dependents;
     std::vector<std::string> dependents_names;
@@ -90,5 +90,5 @@ std::shared_ptr<const element_instruction> struct_instance::to_instruction() con
         dependents_names.push_back(input.get_name());
     }
 
-    return std::make_shared<element_instruction_serialised_structure>(std::move(dependents), std::move(dependents_names), declarer->get_name());
+    return std::make_shared<element::instruction_serialised_structure>(std::move(dependents), std::move(dependents_names), declarer->get_name());
 }

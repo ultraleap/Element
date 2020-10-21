@@ -1,15 +1,12 @@
-#include <catch2/catch.hpp>
-
 //STD
 #include <array>
 #include <cstring>
 
 //LIBS
 #include <fmt/format.h>
+#include <catch2/catch.hpp>
 
 //SELF
-#include "element/token.h"
-#include "element/ast.h"
 #include "element/interpreter.h"
 #include "element/common.h"
 
@@ -17,55 +14,13 @@
 #include "instruction_tree/instructions.hpp"
 #include "instruction_tree/evaluator.hpp"
 
-void log_callback(const element_log_message* msg, void* user_data)
-{
-    //TODO: This is a bit of a hack for now... Setting a constant length instead and using for both buffers
-    const int space = 512;
-    char buffer[space];
-    buffer[0] = '^';
-    buffer[1] = '\0';
-    const char* buffer_str = NULL;
-    if (msg->character - 1 >= 0)
-    {
-        const int padding_count = msg->character - 1;
-        for (int i = 0; i < padding_count; ++i)
-        {
-            buffer[i] = ' ';
-        }
-
-        int end = padding_count + msg->length;
-        for (int i = padding_count; i < end; ++i)
-        {
-            buffer[i] = '^';
-        }
-
-        buffer[end] = '\0';
-
-        buffer_str = &buffer[0];
-    }
-
-    std::vector<char> output_buffer_array;
-    output_buffer_array.resize(msg->message_length + 4 * space);
-    char* output_buffer = output_buffer_array.data();
-
-    sprintf(output_buffer, "\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
-            msg->message_code,
-            msg->filename,
-            msg->line,
-            msg->line_in_source ? msg->line_in_source : "",
-            msg->line,
-            buffer_str,
-            msg->message);
-
-    printf("%s", output_buffer);
-    UNSCOPED_INFO(output_buffer);
-}
+#include "util.test.hpp"
 
 element_result eval(const char* evaluate)
 {
     element_interpreter_ctx* context = NULL;
     element_declaration* declaration = NULL;
-    element_object* object = NULL;
+    element_instruction* instruction = NULL;
 
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback, nullptr);
@@ -82,13 +37,16 @@ element_result eval(const char* evaluate)
 
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
+    {
+        printf("Output buffer too small");
         goto cleanup;
+    }
 
     result = element_interpreter_find(context, "evaluate", &declaration);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_compile(context, NULL, declaration, &object);
+    result = element_interpreter_compile(context, NULL, declaration, &instruction);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -98,7 +56,7 @@ element_result eval(const char* evaluate)
     output.values = outputs;
     output.count = 1;
 
-    result = element_interpreter_evaluate(context, NULL, object, &input, &output);
+    result = element_interpreter_evaluate(context, NULL, instruction, &input, &output);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -117,9 +75,9 @@ element_result eval(const char* evaluate)
     UNSCOPED_INFO(output_buffer);
 
 cleanup:
-    element_delete_declaration(context, &declaration);
-    element_delete_object(context, &object);
-    element_interpreter_delete(context);
+    element_delete_declaration(&declaration);
+    element_delete_instruction(&instruction);
+    element_interpreter_delete(&context);
     return result;
 }
 
@@ -127,7 +85,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
 {
     element_interpreter_ctx* context = NULL;
     element_declaration* declaration = NULL;
-    element_object* object = NULL;
+    element_instruction* instruction = NULL;
 
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback, nullptr);
@@ -144,7 +102,10 @@ element_result eval_with_source(const char* source, const char* evaluate)
 
     element_result result = element_interpreter_load_string(context, source, "<source>");
     if (result != ELEMENT_OK)
+    {
+        printf("Output buffer too small");
         goto cleanup;
+    }
 
     result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
@@ -154,7 +115,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_compile(context, NULL, declaration, &object);
+    result = element_interpreter_compile(context, NULL, declaration, &instruction);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -164,7 +125,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     output.values = outputs;
     output.count = 1;
 
-    result = element_interpreter_evaluate(context, NULL, object, &input, &output);
+    result = element_interpreter_evaluate(context, NULL, instruction, &input, &output);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -183,9 +144,9 @@ element_result eval_with_source(const char* source, const char* evaluate)
     UNSCOPED_INFO(output_buffer);
 
 cleanup:
-    element_delete_declaration(context, &declaration);
-    element_delete_object(context, &object);
-    element_interpreter_delete(context);
+    element_delete_declaration(&declaration);
+    element_delete_instruction(&instruction);
+    element_interpreter_delete(&context);
     return result;
 }
 
@@ -193,7 +154,7 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
 {
     element_interpreter_ctx* context = NULL;
     element_declaration* declaration = NULL;
-    element_object* object = NULL;
+    element_instruction* instruction = NULL;
 
     element_interpreter_create(&context);
     element_interpreter_set_log_callback(context, log_callback, nullptr);
@@ -211,17 +172,20 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
 
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
     if (result != ELEMENT_OK)
+    {
+        printf("Output buffer too small");
         goto cleanup;
+    }
 
     result = element_interpreter_find(context, "evaluate", &declaration);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_compile(context, NULL, declaration, &object);
+    result = element_interpreter_compile(context, NULL, declaration, &instruction);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_interpreter_evaluate(context, NULL, object, inputs, outputs);
+    result = element_interpreter_evaluate(context, NULL, instruction, inputs, outputs);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -240,9 +204,9 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     UNSCOPED_INFO(output_buffer);
 
 cleanup:
-    element_delete_declaration(context, &declaration);
-    element_delete_object(context, &object);
-    element_interpreter_delete(context);
+    element_delete_declaration(&declaration);
+    element_delete_instruction(&instruction);
+    element_interpreter_delete(&context);
     return result;
 }
 
@@ -875,12 +839,12 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         std::array<element_value, 10> inputs{ 1, 2, 3 };
                         element_inputs input;
                         input.values = inputs.data();
-                        input.count = inputs.size();
+                        input.count = static_cast<int>(inputs.size());
 
                         element_outputs output;
                         std::array<element_value, 2> outputs{ 0, 0 };
                         output.values = outputs.data();
-                        output.count = outputs.size();
+                        output.count = static_cast<int>(outputs.size());
 
                         std::string src = "evaluate(a:Num, b:Num, c:Num):Num = list(1, 2, 3).at({})";
 
@@ -920,12 +884,12 @@ TEST_CASE("Interpreter", "[Evaluate]")
                         std::array<element_value, 10> inputs{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
                         element_inputs input;
                         input.values = inputs.data();
-                        input.count = inputs.size();
+                        input.count = static_cast<int>(inputs.size());
 
                         element_outputs output;
                         std::array<element_value, 2> outputs{ 0, 0 };
                         output.values = outputs.data();
-                        output.count = outputs.size();
+                        output.count = static_cast<int>(outputs.size());
 
                         SECTION("Error - Mixed Element Types, Runtime Index")
                         {
@@ -981,7 +945,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 {
                                     for (int i = 0; i < 3; ++i)
                                     {
-                                        inputs[6] = i;
+                                        inputs[6] = static_cast<float>(i);
                                         result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                                         REQUIRE(result == ELEMENT_OK);
                                         REQUIRE(outputs[0] == inputs[i * 2]);
@@ -1022,7 +986,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                                 {
                                     for (int i = 0; i < 3; ++i)
                                     {
-                                        inputs[7] = i;
+                                        inputs[7] = static_cast<float>(i);
                                         result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                                         REQUIRE(result != ELEMENT_OK);
                                     }
@@ -1145,7 +1109,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             {
                                 for (int i = 0; i < 3; ++i)
                                 {
-                                    inputs[3] = i;
+                                    inputs[3] = static_cast<float>(i);
 
                                     result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                                     REQUIRE(result == ELEMENT_OK);
@@ -1207,8 +1171,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 3> inputs = { 4, 2, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size())};
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size())};
 
                         const char* src = "evaluate(a:Num, b:Num, idx:Num):Num = list(1, 2, a).map(_(n:Num) = n.mul(b)).at(idx)";
 
@@ -1284,8 +1248,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 4, 2, 1, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const char* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = list(Vector2(a, b), Vector3(c, b, a)).map(_(n) = n.magnitudeSquared).at(idx)";
 
@@ -1378,8 +1342,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c), list(3, 2, 1, 0), Num.add)";
 
@@ -1399,8 +1363,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c, 0), list(3, 2, 1), Num.add)";
 
@@ -1420,8 +1384,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size())};
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size())};
 
                         const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c), list(3, 2, 1), Num.add).at(idx)";
 
@@ -2402,7 +2366,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             {
                                 for (int i = 0; i < 3; ++i)
                                 {
-                                    inputs[3] = i;
+                                    inputs[3] = static_cast<float>(i);
                                     result = eval_with_inputs(src, &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
                                     REQUIRE(outputs[0] == inputs[i]);
@@ -2665,7 +2629,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             {
                                 for (int i = 0; i < 2; ++i)
                                 {
-                                    inputs[3] = i;
+                                    inputs[3] = static_cast<float>(i);
                                     result = eval_with_inputs(src, &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
                                     REQUIRE(outputs[0] == inputs[i]);
@@ -2854,7 +2818,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
                             {
                                 for (int i = 0; i < 3; ++i)
                                 {
-                                    inputs[0] = i;
+                                    inputs[0] = static_cast<float>(i);
                                     result = eval_with_inputs(new_src.c_str(), &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
                                     REQUIRE(outputs[0] == 3 - i);
@@ -3004,8 +2968,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const char* src = "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list({}, {}, {}).fold({}, Num.add)";
 
@@ -3140,8 +3104,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 0, 0, 0, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size())};
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size())};
 
                         const char* src = "evaluate(a:Bool, b:Bool, c:Bool, start:Bool):Bool = list(a, b, c).fold(start, Bool.or)";
 
@@ -3206,8 +3170,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 7> inputs = { 2, 2, 2, 2, 2, 2, 0 };
                         std::array<float, 2> outputs = { 0 };
-                        element_inputs input{ inputs.data(), inputs.size() };
-                        element_outputs output{ outputs.data(), outputs.size() };
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const char* src = "evaluate(a:Vector2, b:Vector2, c:Vector2, start:Num):Num = list(a, b, c).fold(Vector2(start, start), Vector2.add).x";
 
@@ -3882,6 +3846,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         element_outputs output;
         float outputs_buffer[] = { 0 };
@@ -3891,13 +3856,14 @@ TEST_CASE("Interpreter", "[Evaluate]")
         auto result = element_interpreter_evaluate_expression(context, nullptr, "1", &output);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs_buffer[0] == 1);
-        element_interpreter_delete(context);
+        element_interpreter_delete(&context);
     }
 
     SECTION("element_interpreter_evaluate_expression twice")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         element_outputs output;
         float outputs_buffer[] = { 0 };
@@ -3911,30 +3877,32 @@ TEST_CASE("Interpreter", "[Evaluate]")
         result = element_interpreter_evaluate_expression(context, nullptr, "2", &output);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs_buffer[0] == 2);
-        element_interpreter_delete(context);
+        element_interpreter_delete(&context);
     }
 
     SECTION("element_interpreter_typeof_expression once")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         std::string buffer(256, '\0');
 
-        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), buffer.size());
+        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), static_cast<int>(buffer.size()));
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Num") == 0);
-        element_interpreter_delete(context);
+        element_interpreter_delete(&context);
     }
 
     SECTION("element_interpreter_typeof_expression twice")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         std::string buffer(256, '\0');
 
-        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), buffer.size());
+        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), static_cast<int>(buffer.size()));
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Num") == 0);
 
@@ -3943,26 +3911,27 @@ TEST_CASE("Interpreter", "[Evaluate]")
         buffer.clear();
         buffer.resize(256, '\0');
 
-        result = element_interpreter_typeof_expression(context, nullptr, "Bool(1)", buffer.data(), buffer.size());
+        result = element_interpreter_typeof_expression(context, nullptr, "Bool(1)", buffer.data(), static_cast<int>(buffer.size()));
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Bool") == 0);
-        element_interpreter_delete(context);
+        element_interpreter_delete(&context);
     }
 
     SECTION("Compile Time Select")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         std::vector<element_value> outputs = { 0 };
 
-        auto selector = std::make_shared<element_instruction_constant>(1);
-        std::vector<instruction_const_shared_ptr> options{
-            std::make_shared<const element_instruction_constant>(0),
-            std::make_shared<const element_instruction_constant>(1)
+        auto selector = std::make_shared<element::instruction_constant>(1.0f);
+        std::vector<element::instruction_const_shared_ptr> options{
+            std::make_shared<const element::instruction_constant>(0.0f),
+            std::make_shared<const element::instruction_constant>(1.0f)
         };
 
-        auto expr = std::make_shared<element_instruction_select>(std::move(selector), std::move(options));
+        auto expr = std::make_shared<element::instruction_select>(std::move(selector), std::move(options));
         const auto result = element_evaluate(*context, expr, {}, outputs, {});
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);
@@ -3972,21 +3941,22 @@ TEST_CASE("Interpreter", "[Evaluate]")
     {
         element_interpreter_ctx* context;
         element_interpreter_create(&context);
+        element_interpreter_set_log_callback(context, log_callback, nullptr);
 
         std::vector<element_value> inputs = { 1 };
         std::vector<element_value> outputs = { 0, 0 };
 
-        auto selector = std::make_shared<element_instruction_input>(0, 0);
-        std::vector<instruction_const_shared_ptr> options{
-            std::make_shared<const element_instruction_constant>(0),
-            std::make_shared<const element_instruction_constant>(1)
+        auto selector = std::make_shared<element::instruction_input>(0, 0);
+        std::vector<element::instruction_const_shared_ptr> options{
+            std::make_shared<const element::instruction_constant>(0.0f),
+            std::make_shared<const element::instruction_constant>(1.0f)
         };
 
-        auto expr = std::make_shared<element_instruction_select>(std::move(selector), std::move(options));
-        std::vector<instruction_const_shared_ptr> deps;
+        auto expr = std::make_shared<element::instruction_select>(std::move(selector), std::move(options));
+        std::vector<element::instruction_const_shared_ptr> deps;
         deps.push_back(expr);
         deps.push_back(expr);
-        auto new_expr = std::make_shared<element_instruction_serialised_structure>(std::move(deps), std::vector<std::string>{}, "");
+        auto new_expr = std::make_shared<element::instruction_serialised_structure>(std::move(deps), std::vector<std::string>{}, "");
         const auto result = element_evaluate(*context, new_expr, inputs, outputs, {});
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);

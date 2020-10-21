@@ -1,7 +1,7 @@
 #include "indexing_expression.hpp"
 
 //SELF
-#include "object_model/object.hpp"
+#include "object_model/object_internal.hpp"
 #include "object_model/error.hpp"
 #include "object_model/error_map.hpp"
 

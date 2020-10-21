@@ -48,7 +48,7 @@ namespace libelement::cli
             {
                 auto type = ELEMENT_ERROR_UNKNOWN;
                 if (result > 0)
-                    type = static_cast<message_type>(result);
+                    type = result;
                 return compiler_message(type,
                                         "Failed to compile: " + expression + " with element_result " + std::to_string(result),
                                         compilation_input.get_log_json());

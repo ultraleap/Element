@@ -41,5 +41,5 @@ constexpr log_flags logging_bitmask = @LOG_VERBOSITY@;
 
 constexpr bool should_log_compilation_step()
 {
-    return logging_bitmask == log_flags::none || (static_cast<int>(logging_bitmask) & static_cast<int>(log_flags::output_compilation_steps)) != 0;
+    return (static_cast<int>(logging_bitmask) & static_cast<int>(log_flags::output_compilation_steps)) != 0;
 }

@@ -6,18 +6,17 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <stddef.h>
+#include <stdbool.h>
 
+/**
+ * @brief value type
+ */
 typedef float element_value;
 
-typedef struct element_ast_ctx element_ast_ctx;
-
-typedef struct
-{
-    element_ast_ctx* ast;
-} element_ctx;
-
-typedef enum message_type
+/**
+ * @brief result type
+ */
+typedef enum element_result
 {
     //ELEMENT
     ELEMENT_OK = 0,
@@ -92,11 +91,27 @@ typedef enum message_type
     ELEMENT_ERROR_CONSTRAINT_INVALID_BODY = -215,
     ELEMENT_ERROR_MISSING_COMMA_IN_ANONYMOUS_BLOCK = -216,
     ELEMENT_ERROR_COMPILETIME_LOOP_TOO_MANY_ITERATIONS = -217,
-} message_type;
+    ELEMENT_ERROR_API_INSTRUCTION_IS_NULL = -10000,
+    ELEMENT_ERROR_API_OBJECT_IS_NOT_ERROR = -10001,
+    ELEMENT_ERROR_API_OBJECT_IS_NULL = -10002,
+    ELEMENT_ERROR_API_DUNNO = -10003,
+    ELEMENT_ERROR_API_DECLARATION_IS_NULL = -10004,
+    ELEMENT_ERROR_API_STRING_IS_NULL = -10005,
+    ELEMENT_ERROR_API_INSUFFICIENT_BUFFER = -10006,
+    ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL = -10007,
+    ELEMENT_ERROR_API_OUTPUT_IS_NULL = -10008,
+    ELEMENT_ERROR_API_INVALID_INPUT = -10009,
+    ELEMENT_ERROR_API_AST_IS_NULL = -10010,
+    ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL = -10011,
+    ELEMENT_ERROR_API_PARSER_CTX_IS_NULL = -10012,
+    ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL = -10012,
+    ELEMENT_ERROR_API_UNKNOWN = -20000,
+} element_result;
 
-typedef int32_t element_result;
-
-typedef enum message_stage
+/**
+ * @brief compilation stage
+ */
+typedef enum element_stage
 {
     ELEMENT_STAGE_INVALID = -1,
     ELEMENT_STAGE_MISC,
@@ -104,12 +119,16 @@ typedef enum message_stage
     ELEMENT_STAGE_PARSER,
     ELEMENT_STAGE_COMPILER,
     ELEMENT_STAGE_EVALUATOR
-} message_stage;
+} element_stage;
 
-typedef int32_t element_stage;
-
+/**
+ * @brief log message
+ */
 typedef struct element_log_message element_log_message;
 
+/**
+ * @brief log message definition
+ */
 struct element_log_message
 {
     // determines which values in this struct will be relevant

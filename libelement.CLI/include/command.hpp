@@ -141,7 +141,7 @@ namespace libelement::cli
             element_interpreter_create(&context);
         }
 
-        virtual ~command() { element_interpreter_delete(context); }
+        virtual ~command() { element_interpreter_delete(&context); }
 
         // remove copy/move to be certain no implcit conversion is happening
         command(const command& other) = delete;

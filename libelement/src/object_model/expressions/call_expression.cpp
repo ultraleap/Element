@@ -5,7 +5,7 @@
 
 //SELF
 #include "expression_chain.hpp"
-#include "object_model/object.hpp"
+#include "object_model/object_internal.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/error.hpp"
 #include "object_model/error_map.hpp"

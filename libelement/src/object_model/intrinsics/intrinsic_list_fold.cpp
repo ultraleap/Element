@@ -30,7 +30,7 @@ object_const_shared_ptr compile_time_fold(
     if (!list_count->is_constant())
         return nullptr;
 
-    const auto list_count_constant = std::dynamic_pointer_cast<const element_instruction_constant>(list_count);
+    const auto list_count_constant = std::dynamic_pointer_cast<const element::instruction_constant>(list_count);
 
     std::vector<object_const_shared_ptr> indexer_arguments;
     indexer_arguments.resize(1);
@@ -38,7 +38,7 @@ object_const_shared_ptr compile_time_fold(
     auto aggregate = initial;
     for (int i = 0; i < list_count_constant->value(); ++i)
     {
-        indexer_arguments[0] = std::make_shared<const element_instruction_constant>(static_cast<element_value>(i));
+        indexer_arguments[0] = std::make_shared<const element::instruction_constant>(static_cast<element_value>(i));
         auto at_index = list->index(context, identifier::list_at_identifier, source_info)->call(context, indexer_arguments, source_info);
         if (!at_index->is_constant())
             return nullptr;

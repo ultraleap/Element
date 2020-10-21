@@ -54,7 +54,7 @@ namespace element
             return empty;
         };
 
-        [[nodiscard]] virtual std::shared_ptr<const element_instruction> to_instruction() const { return nullptr; };
+        [[nodiscard]] virtual std::shared_ptr<const instruction> to_instruction() const { return nullptr; };
 
         source_information source_info;
 

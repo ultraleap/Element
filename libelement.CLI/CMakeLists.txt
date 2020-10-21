@@ -52,13 +52,12 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${DEPENDENCIES_DIR}/toml11"
         "${DEPENDENCIES_DIR}/rapidjson/include"
-        "${ELEMENT_LIB_DIR}/include"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libelement CLI11::CLI11 fmt)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11 fmt)
 
 if (UNIX AND NOT APPLE)
     target_link_libraries(libelement_cli PRIVATE "m" "atomic" "pthread" "stdc++fs")
