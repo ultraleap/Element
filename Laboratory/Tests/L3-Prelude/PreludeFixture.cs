@@ -9,7 +9,7 @@ namespace Laboratory.Tests.L3.Prelude
         protected CompilerInput ValidatedCompilerInput => new CompilerInput(TestPackageRegistry,
                                                                             Array.Empty<PackageSpecifier>(),
                                                                             new[]{GetEleFile("PreludeTestCode")},
-                                                                            default);
+                                                                            new CompilerOptions(default));
         protected CompilerInput NonValidatedCompilerInput => new CompilerInput(TestPackageRegistry,
                                                                                Array.Empty<PackageSpecifier>(),
                                                                                new[]{GetEleFile("PreludeTestCode")},
