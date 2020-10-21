@@ -12,11 +12,11 @@
 
 using namespace element;
 
-port::port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation, std::unique_ptr<element::expression_chain> expression_chain)
+port::port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation, std::unique_ptr<element::expression_chain> expr_chain)
     : declarer(declarer)
     , name{ std::move(name) }
     , annotation{ std::move(annotation) }
-    , expression_chain{ std::move(expression_chain) }
+    , expr_chain{ std::move(expr_chain) }
 {
 }
 
