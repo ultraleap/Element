@@ -228,7 +228,7 @@ namespace element
     {
         DECLARE_TYPE_ID();
 
-        explicit element::instruction_for(instruction_const_shared_ptr initial, instruction_const_shared_ptr condition, instruction_const_shared_ptr body);
+        explicit instruction_for(instruction_const_shared_ptr initial, instruction_const_shared_ptr condition, instruction_const_shared_ptr body);
         [[nodiscard]] const instruction_const_shared_ptr& initial() const { return m_dependents[0]; }
         [[nodiscard]] const instruction_const_shared_ptr& condition() const { return m_dependents[1]; }
         [[nodiscard]] const instruction_const_shared_ptr& body() const { return m_dependents[2]; }
@@ -240,7 +240,7 @@ namespace element
     {
         DECLARE_TYPE_ID();
 
-        explicit element::instruction_fold(instruction_const_shared_ptr list, instruction_const_shared_ptr initial, instruction_const_shared_ptr accumulator);
+        explicit instruction_fold(instruction_const_shared_ptr list, instruction_const_shared_ptr initial, instruction_const_shared_ptr accumulator);
         [[nodiscard]] const instruction_const_shared_ptr& list() const { return m_dependents[0]; }
         [[nodiscard]] const instruction_const_shared_ptr& initial() const { return m_dependents[1]; }
         [[nodiscard]] const instruction_const_shared_ptr& accumulator() const { return m_dependents[2]; }
@@ -264,7 +264,7 @@ namespace element
     {
         DECLARE_TYPE_ID();
 
-        explicit element::instruction_select(instruction_const_shared_ptr selector, std::vector<instruction_const_shared_ptr> options);
+        explicit instruction_select(instruction_const_shared_ptr selector, std::vector<instruction_const_shared_ptr> options);
 
         [[nodiscard]] size_t get_size() const override { return 1; }
 
@@ -276,13 +276,13 @@ namespace element
 ////
 //// instruction groups
 ////
-//struct element::instruction_group : public instruction
+//struct instruction_group : public instruction
 //{
 //    DECLARE_TYPE_ID();
 //
 //    //todo: do we still need instruction groups?
 //protected:
-//    element::instruction_group()
+//    instruction_group()
 //        : instruction(type_id)
 //    {
 //    }
@@ -290,11 +290,11 @@ namespace element
 //    // virtual size_t group_size() const = 0;
 //};
 //
-//struct element::instruction_unbound_arg : public instruction
+//struct instruction_unbound_arg : public instruction
 //{
 //    DECLARE_TYPE_ID();
 //
-//    element::instruction_unbound_arg(size_t idx)
+//    instruction_unbound_arg(size_t idx)
 //        : instruction(type_id)
 //        , m_index(idx)
 //    {
