@@ -44,7 +44,7 @@ intrinsic struct List(at:Indexer, count:Num)
         return = List(index, count)
     }
 
-    cycle(a:List):Stream = Stream(_(idx:Num) = a.at(idx.mod(count)))
+    cycle(a:List):Stream = Stream(_(idx:Num) = a.at(idx.mod(a.count)))
 
     countWhere(a:List, predicate:Predicate):Num = a.fold(0, _(current, next) = if(predicate(next), add(current, 1), current))
 

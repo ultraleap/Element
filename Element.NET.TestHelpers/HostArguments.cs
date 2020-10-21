@@ -139,8 +139,11 @@ namespace Element.NET.TestHelpers
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine(e.ToString());
+                    Debug.WriteLine(e.ToString());
                     messages.Add(e.ToString());
-                    _hostBuildErrors.Add(_processHostInfo, messages);
+                    if(!_hostBuildErrors.ContainsKey(_processHostInfo))
+                        _hostBuildErrors.Add(_processHostInfo, messages);
                 }
             }
 

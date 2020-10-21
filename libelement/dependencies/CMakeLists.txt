@@ -20,7 +20,7 @@ include(FetchContent)
 FetchContent_Declare(
     utfcpp
     GIT_REPOSITORY https://github.com/nemtrif/utfcpp
-    GIT_TAG v3.1
+    GIT_TAG v3.1.1
 )
 FetchContent_GetProperties(utfcpp)
 if (NOT utfcpp_POPULATED)
@@ -28,3 +28,16 @@ if (NOT utfcpp_POPULATED)
     add_library(utf8cpp INTERFACE)
     target_include_directories(utf8cpp INTERFACE "${utfcpp_SOURCE_DIR}/source")
 endif ()
+
+if(BUILD_TESTING)
+    FetchContent_Declare(Catch2
+            GIT_REPOSITORY https://github.com/catchorg/Catch2
+            GIT_TAG        v2.11.1
+            )
+    FetchContent_GetProperties(Catch2)
+    if(NOT Catch2_POPULATED)
+        FetchContent_Populate(Catch2)
+        add_subdirectory(${catch2_SOURCE_DIR} ${catch2_BINARY_DIR})
+    endif()
+    FetchContent_MakeAvailable(Catch2)
+endif()

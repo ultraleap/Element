@@ -1,25 +1,26 @@
 #pragma once
 
+//STD
 #include <memory>
+
+//SELF
 #include "common_internal.hpp"
 
-struct element_scope;
-using scope_unique_ptr = std::unique_ptr<element_scope>;
+enum class element_nullary_op
+{
+    //num
+    nan,
+    positive_infinity,
+    negative_infinity,
 
-struct element_constraint;
-using constraint_shared_ptr = std::shared_ptr<element_constraint>;
-using constraint_const_shared_ptr = std::shared_ptr<const element_constraint>;
-
-struct element_type;
-using type_shared_ptr = std::shared_ptr<element_type>;
-using type_const_shared_ptr = std::shared_ptr<const element_type>;
-
-struct element_function;
-using function_shared_ptr = std::shared_ptr<element_function>;
-using function_const_shared_ptr = std::shared_ptr<const element_function>;
+    //boolean
+    true_value,
+    false_value,
+};
 
 enum class element_unary_op
 {
+    //num
     sin,
     cos,
     tan,
@@ -30,10 +31,14 @@ enum class element_unary_op
     abs,
     ceil,
     floor,
+
+    //boolean
+    not_, //reserved keyword
 };
 
 enum class element_binary_op
 {
+    //num
     add,
     sub,
     mul,
@@ -44,4 +49,16 @@ enum class element_binary_op
     max,
     log,
     atan2,
+
+    //boolean
+    and_, //reserved keyword
+    or_,  //reserved keyword
+
+    //comparison
+    eq,
+    neq,
+    lt,
+    leq,
+    gt,
+    geq
 };
