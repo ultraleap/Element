@@ -78,7 +78,8 @@ namespace libelement::cli
                 ->required();
 
             command->callback([callback, common_arguments, arguments]() {
-                callback(typeof_command(*common_arguments, *arguments));
+                typeof_command cmd(*common_arguments, *arguments);
+                callback(cmd);
             });
         }
     };

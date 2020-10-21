@@ -29,8 +29,7 @@ namespace libelement::cli
         evaluate_command(common_command_arguments common_arguments,
                          evaluate_command_arguments custom_arguments)
             : command(std::move(common_arguments))
-            , custom_arguments{ std::move(
-                  custom_arguments) }
+            , custom_arguments{ std::move(custom_arguments) }
         {}
 
         [[nodiscard]] compiler_message
@@ -75,14 +74,15 @@ namespace libelement::cli
         {
             const auto arguments = std::make_shared<evaluate_command_arguments>();
 
-            const auto command = app.add_subcommand("evaluate")->fallthrough();
+            auto command = app.add_subcommand("evaluate")->fallthrough();
             command
                 ->add_option("-e,--expression", arguments->expression,
                              "Expression to evaluate.")
                 ->required();
 
             command->callback([callback, common_arguments, arguments]() {
-                callback(evaluate_command(*common_arguments, *arguments));
+                evaluate_command cmd(*common_arguments, *arguments);
+                callback(cmd);
             });
         }
     };

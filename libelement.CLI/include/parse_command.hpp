@@ -72,7 +72,8 @@ namespace libelement::cli
                               "Expression to evaluate.");
 
             command->callback([callback, common_arguments, arguments]() {
-                callback(parse_command(*common_arguments, *arguments));
+                parse_command cmd(*common_arguments, *arguments);
+                callback(cmd);
             });
         }
     };
