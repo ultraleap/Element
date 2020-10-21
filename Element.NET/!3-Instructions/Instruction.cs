@@ -49,9 +49,18 @@ namespace Element
 		public override Result<IValue> Deserialize(Func<Instruction> nextValue, Context context)
 		{
 			var result = nextValue();
-			return result.StructImplementation == StructImplementation
-				       ? new Result<IValue>(result)
-				       : context.Trace(EleMessageCode.SerializationError, $"'{result}' deserialized to incorrect type: is '{result.StructImplementation}' - expected '{StructImplementation}'");
+			
+			//HACK: REMOVE THIS WHEN BUG IS FIXED, TEMPORARILY REQUIRED FOR INITIAL IMPLEMENTATION OF FORCEFIELD
+			if (StructImplementation is BoolStruct && result.StructImplementation is NumStruct)
+			{
+				return new Result<IValue>(result);
+			}
+			
+			if (result.StructImplementation == StructImplementation)
+				return new Result<IValue>(result);
+			else
+				return context.Trace(EleMessageCode.SerializationError,
+					$"'{result}' deserialized to incorrect type: is '{result.StructImplementation}' - expected '{StructImplementation}'");
 		}
 	}
 

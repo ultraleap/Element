@@ -44,9 +44,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Vector3(0, 0, 0).normalize", "Vector3(Num.NaN, Num.NaN, Num.NaN)"),
-            TestCase("Vector3(1, 1, 1).normalize", "Vector3(1.div(3.sqrt), 1.div(3.sqrt), 1.div(3.sqrt))"),
-            TestCase("Vector3(1, 2, 2).normalize", "Vector3(1.div(3), 2.div(3), 2.div(3))"),
+            TestCase("Vector3(0, 0, 0).normalise", "Vector3(Num.NaN, Num.NaN, Num.NaN)"),
+            TestCase("Vector3(1, 1, 1).normalise", "Vector3(1.div(3.sqrt), 1.div(3.sqrt), 1.div(3.sqrt))"),
+            TestCase("Vector3(1, 2, 2).normalise", "Vector3(1.div(3), 2.div(3), 2.div(3))"),
         ]
         public void Normalize(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
