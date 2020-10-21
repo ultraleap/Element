@@ -42,9 +42,6 @@ Element also comes with a [Standard Library](Common/StandardLibrary).
     * Element function evaluation
     * AoT compilation to:
         * [LMNTIL](LMNT/Bytecode.md) - planned
-* [PyElement](PyElement) - Python
-    * Element parser using [TatSu](https://github.com/neogeny/TatSu)
-    * Element interpreter using Python [eval()](https://docs.python.org/3/library/functions.html)
 * [LMNT](LMNT) - C
     * [LMNTIL](LMNT/Bytecode.md) interpreter
     * JIT compiler using [DynASM](https://luajit.org/dynasm.html)

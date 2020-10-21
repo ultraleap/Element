@@ -28,7 +28,6 @@ Name | Language | Evaluation | Compilation
 ---|---|---|---
 Element.NET | C# | [LINQ.Expressions](https://docs.microsoft.com/en-us/dotnet/api/system.linq.expressions.expression) | Bytecode, C
 libelement | C++ | Supported | -
-PyElement | Python | [eval()](https://docs.python.org/3/library/functions.html#eval) | -
 
 
 
