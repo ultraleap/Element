@@ -25,9 +25,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\ContentFiles\**" PackagePath="contentFiles\any\any;content" CopyToOutputDirectory="Always" PackageCopyToOutput="true" />
-    <Content Update="..\ContentFiles\ElementPackages\StandardLibrary\Time.ele">
-      <Link>ElementPackages\StandardLibrary\Time.ele</Link>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <_UnmanagedRegistrationCache Remove="obj\Element.NET.csproj.UnmanagedRegistration.cache" />
