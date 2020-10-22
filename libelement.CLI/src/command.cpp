@@ -28,6 +28,8 @@ void command::configure(CLI::App& app, command::callback callback)
     app.add_flag("--no-parse-trace", arguments->log_json,
                  "--NOT IMPLEMENTED-- Controls whether or not to display the "
                  "parse trace if parsing fails.");
+    app.add_flag("--interpreted", arguments->compiletime,
+                 "");
 
     // not a big fan of this but it works, so leaving it for now
     parse_command::configure(app, arguments, callback);

@@ -54,7 +54,7 @@ namespace libelement::cli
 
         // this is nasty, static initialisation that performs file reading, reconsider
         // if it proves problematic
-        inline static message_codes codes{ message_codes("Messages.toml") };
+        inline static message_codes codes{ message_codes("Messages-ELE.toml") };
 
     public:
         compiler_message(std::string message, bool log_json,

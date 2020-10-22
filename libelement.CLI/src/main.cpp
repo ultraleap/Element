@@ -106,6 +106,15 @@ void command_callback(command& command)
 
 int main(const int argc, char** argv)
 {
+    /*#if !defined(NDEBUG) && defined(WIN32)
+    std::string args;
+    for (int i = 0; i < argc; ++i)
+    {
+        args += argv[i];
+    }
+    std::cout << args << " " << std::endl;
+    #endif*/
+    
     // parse arguments and construct exactly one required command
     CLI::App app{ "CLI interface for libelement" };
     app.set_help_all_flag("--help-all", "Expand all help");

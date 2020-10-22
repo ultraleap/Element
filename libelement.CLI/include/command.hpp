@@ -19,6 +19,7 @@ namespace libelement::cli
         bool debug = false;
         bool log_json = false;
         bool no_parse_trace = false;
+        bool compiletime = false;
         message_level verbosity = message_level::Information;
         std::vector<std::string> packages{};
         std::vector<std::string> source_files{};
@@ -66,8 +67,6 @@ namespace libelement::cli
     // into libelement
     class compilation_input
     {
-        common_command_arguments common_arguments;
-
     public:
         explicit compilation_input(common_command_arguments arguments)
             : common_arguments{ std::move(arguments) }
@@ -76,29 +75,13 @@ namespace libelement::cli
             common_arguments.packages = select(common_arguments.packages, directory_exists);
         }
 
-        [[nodiscard]] bool get_no_prelude() const
-        {
-            return common_arguments.no_prelude;
-        }
-
-        [[nodiscard]] const std::vector<std::string>& get_source_files() const
-        {
-            return common_arguments.source_files;
-        }
-
-        [[nodiscard]] const std::vector<std::string>& get_packages() const
-        {
-            return common_arguments.packages;
-        }
-
+        [[nodiscard]] bool get_no_prelude() const { return common_arguments.no_prelude; }
+        [[nodiscard]] const std::vector<std::string>& get_source_files() const { return common_arguments.source_files; }
+        [[nodiscard]] const std::vector<std::string>& get_packages() const {return common_arguments.packages;}
         [[nodiscard]] bool get_debug() const { return common_arguments.debug; }
-
-        [[nodiscard]] message_level get_verbosity() const
-        {
-            return common_arguments.verbosity;
-        }
-
+        [[nodiscard]] message_level get_verbosity() const { return common_arguments.verbosity; }
         [[nodiscard]] bool get_log_json() const { return common_arguments.log_json; }
+        [[nodiscard]] bool get_compiletime() const { return common_arguments.compiletime; }
 
     private:
         [[nodiscard]] static bool file_exists(const std::string& file)
@@ -126,6 +109,8 @@ namespace libelement::cli
                          predicate);
             return result;
         }
+
+        common_command_arguments common_arguments;
     };
 
     class command
