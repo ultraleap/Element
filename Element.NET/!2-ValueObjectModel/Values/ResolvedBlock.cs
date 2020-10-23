@@ -7,29 +7,37 @@ namespace Element.AST
     public class ResolvedBlock : Value, IScope
     {
         private readonly Func<IScope, Identifier, Context, Result<IValue>> _indexFunc;
+        private readonly Func<IValue?>? _valueProducedFrom;
         private readonly Dictionary<Identifier, Result<IValue>> _resultCache;
-      
+
+        public override string SummaryString => _valueProducedFrom?.Invoke()?.SummaryString ?? base.SummaryString;
+        public override string TypeOf => _valueProducedFrom?.Invoke()?.TypeOf ?? base.TypeOf;
+
         public ResolvedBlock(IReadOnlyList<Identifier> allMembers,
                              IEnumerable<(Identifier Identifier, IValue Value)> resolvedValues,
                              Func<IScope, Identifier, Context, Result<IValue>> indexFunc,
-                             IScope? parent)
+                             IScope? parent,
+                             Func<IValue?>? valueProducedFrom = null)
         {
             Members = allMembers;
             _indexFunc = indexFunc;
+            _valueProducedFrom = valueProducedFrom;
             Parent = parent;
             _resultCache = resolvedValues.ToDictionary(t => t.Identifier, t => new Result<IValue>(t.Value));
         }
         
-        public ResolvedBlock(IReadOnlyList<(Identifier Identifier, IValue Value)> resolvedValues, IScope? parent)
+        public ResolvedBlock(IReadOnlyList<(Identifier Identifier, IValue Value)> resolvedValues,
+                             IScope? parent,
+                             Func<IValue?>? valueProducedFrom = null)
             :this(resolvedValues.Select(m => m.Identifier).ToArray(),
                   resolvedValues,
                   (resolvedBlock, id, context) =>
                   {
                       var (foundId, value) = resolvedValues.FirstOrDefault(m => m.Identifier.Equals(id));
-                      return !foundId.Equals(default)
+                      return !foundId.Equals(default) // if we found a non-default ID then FirstOrDefault succeeded
                                  ? new Result<IValue>(value)
                                  : context.Trace(EleMessageCode.IdentifierNotFound, $"'{id}' not found when indexing {resolvedBlock}");
-                  }, parent)
+                  }, parent, valueProducedFrom)
         { }
 
         public override Result<IValue> Index(Identifier id, Context context) => 
@@ -49,7 +57,7 @@ namespace Element.AST
             foreach (var member in Members)
             {
                 resultBuilder.Append(Index(member, context)
-                                         .Then(v => v.Serialize(resultBuilder, context)));
+                                         .Do(v => v.Serialize(resultBuilder, context)));
             }
         }
 

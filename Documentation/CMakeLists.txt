@@ -13,8 +13,9 @@ set(SPHINX_RST
         "Overview.rst"
         "UserGuide.rst"
         "element_dotnet/index.rst"
+        "element_dotnet/Overview.rst"
         "libelement/index.rst"
-        "PyElement/index.rst")
+        "libelement/Overview.rst")
 
 file(GLOB_RECURSE ELEMENT_DOTNET_SOURCES
         ${CMAKE_SOURCE_DIR}/../Element.NET/*.cs)
@@ -32,13 +33,6 @@ foreach (file IN LISTS LIBELEMENT_SOURCES)
     string(APPEND LIBELEMENT_FILES " \"${file}\"")
 endforeach()
 
-file(GLOB_RECURSE PYELEMENT_SOURCES
-        ${CMAKE_SOURCE_DIR}/../PyElement/*.py)
-
-foreach (file IN LISTS PYELEMENT_SOURCES)
-    string(APPEND PYELEMENT_FILES " \"${file}\"")
-endforeach()
-
 
 ## --------------------- Doxygen Target ---------------------
 
@@ -49,19 +43,15 @@ set(DOXYGEN_INPUT_FILES ${ELEMENT_DOTNET_FILES})
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in" "${CMAKE_CURRENT_BINARY_DIR}/DotnetDoxyfile")
 set(DOXYGEN_INPUT_FILES ${LIBELEMENT_FILES})
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in" "${CMAKE_CURRENT_BINARY_DIR}/LibDoxyfile")
-set(DOXYGEN_INPUT_FILES ${PYELEMENT_FILES})
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in" "${CMAKE_CURRENT_BINARY_DIR}/PyDoxyfile")
 
 set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/doc)
 set(ELEMENT_DOTNET_OUTPUT_DIR ${DOXYGEN_OUTPUT_DIR}/dotnet)
 set(LIBELEMENT_OUTPUT_DIR ${DOXYGEN_OUTPUT_DIR}/libelement)
-set(PYELEMENT_OUTPUT_DIR ${DOXYGEN_OUTPUT_DIR}/pyelement)
 
 # Build all directories required and copy images to correct location
 add_custom_command(
         COMMAND "${CMAKE_COMMAND}" -E make_directory ${ELEMENT_DOTNET_OUTPUT_DIR}
         COMMAND "${CMAKE_COMMAND}" -E make_directory ${LIBELEMENT_OUTPUT_DIR}
-        COMMAND "${CMAKE_COMMAND}" -E make_directory ${PYELEMENT_OUTPUT_DIR}
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${DOXYGEN_OUTPUT_DIR}/img"
         COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/img" "${DOXYGEN_OUTPUT_DIR}/img"
         COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_BINARY_DIR}/doc.stamp"
@@ -88,20 +78,9 @@ add_custom_command(
         OUTPUT "${LIBELEMENT_OUTPUT_DIR}/doc.stamp"
 )
 
-# Build libelement xml
-add_custom_command(
-        COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/PyDoxyfile"
-        COMMAND "${CMAKE_COMMAND}" -E touch "${PYELEMENT_OUTPUT_DIR}/doc.stamp"
-        DEPENDS ${PYELEMENT_SOURCES} "${CMAKE_CURRENT_BINARY_DIR}/doc.stamp"
-        WORKING_DIRECTORY "${PYELEMENT_OUTPUT_DIR}"
-        COMMENT "Generating element.NET documentation"
-        OUTPUT "${PYELEMENT_OUTPUT_DIR}/doc.stamp"
-)
-
 add_custom_target(Doxygen_Generation
         DEPENDS "${ELEMENT_DOTNET_OUTPUT_DIR}/doc.stamp"
-        "${LIBELEMENT_OUTPUT_DIR}/doc.stamp"
-        "${PYELEMENT_OUTPUT_DIR}/doc.stamp")
+        "${LIBELEMENT_OUTPUT_DIR}/doc.stamp")
 
 
 ## --------------------- Sphinx Installation ---------------------
@@ -137,7 +116,6 @@ add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
         COMMAND ${SPHINX_EXECUTABLE} -b html
         -D breathe_projects.ElementDotNET=${ELEMENT_DOTNET_OUTPUT_DIR}/xml
         -D breathe_projects.Libelement=${LIBELEMENT_OUTPUT_DIR}/xml
-        -D breathe_projects.PyElement=${PYELEMENT_OUTPUT_DIR}/xml
         ${SPHINX_SOURCE} ${SPHINX_BUILD}
         DEPENDS
         ${SPHINX_RST}

@@ -1,4 +1,13 @@
 struct TimePoint(whole:Num, fractional:Num)
 {
-    value(this:TimePoint, period:Num) = this.whole.rem(period).add(this.fractional).rem(period)
+    from_num(x:Num):TimePoint = TimePoint(x.floor, x.sub(x.floor))
+
+    value(this:TimePoint, period:Num):Num = this.whole.rem(period).add(this.fractional).rem(period)
+    cycles(this:TimePoint, period:Num):Num = this.whole.div(period).add(this.fractional.div(period).floor)
+
+    mul(this:TimePoint, x:Num):Num = this.whole.mul(x).add(this.fractional.mul(x))
+    div(this:TimePoint, x:Num):Num = this.whole.div(x).add(this.fractional.div(x))
+
+    add(this:TimePoint, that:TimePoint):TimePoint = TimePoint(this.whole.add(that.whole.add), this.whole.fractional.add(that.whole.fractional))
+    sub(this:TimePoint, that:TimePoint):TimePoint = TimePoint(this.whole.add(that.whole.add), this.whole.fractional.add(that.whole.fractional))
 }

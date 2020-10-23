@@ -47,10 +47,13 @@ namespace Element
 			})
 		};
 
-		public static Instruction CreateAndOptimize(Op op, Instruction operand) => operand is Constant c
-			                                                                         ? (Instruction) Evaluate(op, c.Value)
-			                                                                         : new Unary(op, operand);
-		
+		public static Result<IValue> CreateAndOptimize(Op op, IValue operandValue, Context context) =>
+			operandValue.IsType<Constant>(out var c)
+				? Evaluate(op, c.Value)
+				: operandValue.IsType<Instruction>(out var operand)
+					? new Result<IValue>(new Unary(op, operand))
+					: context.Trace(EleMessageCode.InvalidCompileTarget, $"'{operandValue}' is not an Instruction - only Instructions can be a unary operand");
+
 		private Unary(Op operation, Instruction operand)
 			: base(operation switch
 			{

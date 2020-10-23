@@ -11,6 +11,7 @@ namespace Element
             Source = source;
             Line = line;
             Column = column;
+            _string = $"{What} at {Source}:{Line},{Column}";
         }
 
         public readonly string What;
@@ -18,6 +19,7 @@ namespace Element
         public readonly int Line;
         public readonly int Column;
 
-        public override string ToString() => $"{What} at {Source}:{Line},{Column}";
+        private readonly string _string;
+        public override string ToString() => _string;
     }
 }

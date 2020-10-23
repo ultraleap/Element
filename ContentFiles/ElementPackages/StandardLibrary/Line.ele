@@ -5,7 +5,7 @@ struct Line2(direction:Vector2, offset:Vector2)
     distanceFromPoint(line:Line2, point:Vector2):Num
     {
         w = point.sub(line.offset)
-        l = line.direction.normalize
+        l = line.direction.normalise
         return = w.sub(l.mul(w.dot(l))).magnitude
     }
 }
@@ -15,7 +15,7 @@ struct Line3(direction:Vector3, offset:Vector3)
     distanceFromPoint(line:Line3, point:Vector3):Num
     {
         w = point.sub(line.offset)
-        l = line.direction.normalize
+        l = line.direction.normalise
         return = w.sub(l.mul(w.dot(l))).magnitude
     }
 }

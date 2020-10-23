@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <type_traits>
 #include <utility>
+#include <functional>
 
 typedef size_t element_type_id;
 
@@ -34,17 +35,18 @@ public:
     }
 
 protected:
-    rtti_type(element_type_id id) : m_type_id(id) {}
+    rtti_type(element_type_id id)
+        : m_type_id(id)
+    {}
 
 private:
     const element_type_id m_type_id;
 };
 
-
 struct pair_hash
 {
     template <class T1, class T2>
-    std::size_t operator() (const std::pair<T1, T2> &pair) const
+    std::size_t operator()(const std::pair<T1, T2>& pair) const
     {
         return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
     }

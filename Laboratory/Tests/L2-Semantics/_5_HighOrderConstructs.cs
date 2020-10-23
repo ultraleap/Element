@@ -16,6 +16,9 @@ namespace Laboratory.Tests.L2.Semantics
         [Test]
         public void CallFunctionWithFunctionResult() => AssertTypeof(CompilerInput, "getAdd(0)", "AppliedFunction");
 
+        [Theory]
+        public void ReturnScopeBodiedLocal(EvaluationMode mode) => AssertTypeof(CompilerInput, new ExpressionEvaluation("scopeBodiedLocal(5)", mode), "ScopeBodiedFunction");
+
         [
             TestCase("returnsNumFunction(numFunctionInstance)", true, "ExpressionBodiedFunction"),
             TestCase("returnsNumFunction(notNumFunctionInstance)", false),
@@ -120,5 +123,9 @@ namespace Laboratory.Tests.L2.Semantics
         [Test]
         public void NamespacesShouldBeFullyResolvedBeforeSuccessiveCall() => AssertApproxEqual(CompilerInput, "getNamespace.i", "2");
 
+        [Theory]
+        public void TripleNestedHighOrderFunction(EvaluationMode mode) => AssertApproxEqual(CompilerInput, ("numRenderer(5)(addFiveEvaluator)(0).at(0)", "10"), mode);
+        
+        
     }
 }

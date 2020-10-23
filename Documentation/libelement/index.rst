@@ -7,4 +7,3 @@ libelement Index
 .. doxygenindex::
     :project: Libelement
 
-

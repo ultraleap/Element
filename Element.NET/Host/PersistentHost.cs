@@ -21,7 +21,7 @@ namespace Element
 
         public Result<float[]> EvaluateExpression(CompilerInput input, string expression, bool interpreted)
         {
-            var context = new Context(_srcContext);
+            var context = Context.CreateFromSourceContext(_srcContext);
             return _srcContext.LoadCompilerInput(input)
                               .Bind(_ => context.EvaluateExpression(expression))
                               .Bind(expr => interpreted
@@ -40,7 +40,7 @@ namespace Element
 
         public Result<float[]> EvaluateFunction(CompilerInput input, string functionExpression, string argumentsAsCallExpression, bool interpreted)
         {
-            var context = new Context(_srcContext);
+            var context = Context.CreateFromSourceContext(_srcContext);
             return _srcContext.LoadCompilerInput(input)
                               // Evaluate the function expression and argument call expression
                               .Bind(_ => context.EvaluateExpression(functionExpression)
@@ -56,11 +56,10 @@ namespace Element
 
         public Result<string> Typeof(CompilerInput input, string expression) => Stringify(input, expression, value => value.TypeOf);
         public Result<string> Summary(CompilerInput input, string expression) => Stringify(input, expression, value => value.SummaryString);
-        public Result<string> NormalForm(CompilerInput input, string expression) => Stringify(input, expression, value => value.NormalizedFormString);
 
         private Result<string> Stringify(CompilerInput input, string expression, Func<IValue, string> stringify) =>
             _srcContext.LoadCompilerInput(input)
-                       .Bind(_ => new Context(_srcContext).EvaluateExpression(expression))
+                       .Bind(_ => Context.CreateFromSourceContext(_srcContext).EvaluateExpression(expression))
                        .Map(stringify);
     }
 }

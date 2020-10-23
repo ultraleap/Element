@@ -14,6 +14,5 @@ Contents
     UserGuide
     element_dotnet/Overview
     libelement/Overview
-    PyElement/Overview
 
 See whole :ref:`genindex`

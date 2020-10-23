@@ -22,6 +22,9 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.asin", "({0})", MathF.Asin),
 			("Num.acos", "({0})", MathF.Acos),
 			("Num.atan", "({0})", MathF.Atan),
+			("Num.floor", "({0})", MathF.Floor),
+			("Num.ceil", "({0})", MathF.Ceiling),
+			("Num.abs", "({0})", MathF.Abs),
 		};
 
 		[Test, Pairwise]
@@ -42,6 +45,7 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.min", "({0}, {1})", MathF.Min),
 			("Num.max", "({0}, {1})", MathF.Max),
 			("Num.atan2", "({0}, {1})", MathF.Atan2),
+			("Num.log", "({0}, {1})", MathF.Log),
 		};
 		
 		[Test, Pairwise]
@@ -107,6 +111,11 @@ namespace Laboratory.Tests.L3.Prelude
 		[DatapointSource]
 		public (string FunctionExpression, string CallExpression, string ExpectedExpression)[] FunctionCallData =
 		{
+			("Num", "(0)", "0"),
+			("Num", "(Num.NegativeInfinity)", "Num.NegativeInfinity"),
+			("Num", "(False)", "0"),
+			("Num", "(True)", "1"),
+
 			("Num.ln", "(0)", "Num.NegativeInfinity"),
 			("Num.ln", "(1)", "0"),
 			("Num.ln", "(Num.e)", "1"),
@@ -242,6 +251,7 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.max", "(-4, 25)", "25"),
 			("Num.max", "(25, 150)", "150"),
 			("Num.max", "(-140, -2)", "-2"),
+			("Num.max", "(-140, -2)", "-2"),
 			
 			("Num.log", "(0, 0)", "Num.NaN"),
 			("Num.log", "(0, 10)", "Num.NegativeInfinity"),
@@ -306,6 +316,8 @@ namespace Laboratory.Tests.L3.Prelude
 		[DatapointSource]
 		public (string FunctionExpression, string CallExpression, EleMessageCode ExpectedError)[] FunctionCallErrorCases =
 		{
+			("Num", "(Bool)", EleMessageCode.ConstraintNotSatisfied),
+			("Num", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
 			("Num.mod", "(0, 0)", EleMessageCode.ArgumentOutOfRange),
 			("Num.mod", "(2, 0)", EleMessageCode.ArgumentOutOfRange),
 		};

@@ -6,15 +6,16 @@ project(libelement_cli
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(ELEMENT_LIB_DIR "../libelement")
 set(DEPENDENCIES_DIR "../dependencies")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 find_package(RapidJSON)
-add_subdirectory("dependencies" EXCLUDE_FROM_ALL) 
+add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
 
 set(libelement_cli_sources
-
     "include/compiler_message.hpp"
     "include/command.hpp"
     "include/evaluate_command.hpp"
@@ -43,7 +44,7 @@ set_target_properties(libelement_cli PROPERTIES
 add_custom_command (
 	TARGET libelement_cli POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	"${CMAKE_SOURCE_DIR}/../Common"
+	"${CMAKE_SOURCE_DIR}/../ContentFiles"
 	"${debug_dir}")
 
 target_include_directories(${CMAKE_PROJECT_NAME}
@@ -51,10 +52,17 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${DEPENDENCIES_DIR}/toml11"
         "${DEPENDENCIES_DIR}/rapidjson/include"
-        "${ELEMENT_LIB_DIR}/include"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11 fmt::fmt-header-only)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11 fmt)
+
+if (UNIX AND NOT APPLE)
+    target_link_libraries(libelement_cli PRIVATE "m" "atomic" "pthread" "stdc++fs")
+endif ()
+
+if (CODE_COVERAGE)
+    add_test(NAME test_cli COMMAND libelement_cli)
+endif()

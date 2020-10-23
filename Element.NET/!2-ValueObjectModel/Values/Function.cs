@@ -31,6 +31,8 @@ namespace Element.AST
             return namedArguments;
         }
 
+        public override bool IsFunction => true;
+
         public abstract override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public abstract override IValue ReturnConstraint { get; }
 
@@ -41,6 +43,8 @@ namespace Element.AST
     {
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicFunctionImplementation _implementation;
+        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation.GetType() == typeof(TIntrinsicImplementation);
+        public override bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _implementation == intrinsic;
 
         public IntrinsicFunction(IIntrinsicFunctionImplementation implementation, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint)
         {
@@ -78,7 +82,7 @@ namespace Element.AST
             _expressionBody = expressionBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent), context);
+            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent, () => this), context);
     }
     
     public class ScopeBodiedFunction : CustomFunction
@@ -90,7 +94,7 @@ namespace Element.AST
             _scopeBody = scopeBody;
 
         protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context)
+            _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context, () => this)
                       .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context));
     }
 
@@ -107,11 +111,13 @@ namespace Element.AST
 
             try
             {
-                Result ResultMatchesReturnConstraint(IValue result) =>
-                    function.ReturnConstraint.MatchesConstraint(result, context)
-                            .Bind(matches => matches
-                                                 ? Result.Success
-                                                 : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
+                Result ResultMatchesReturnConstraint(IValue result)
+                {
+                    return function.ReturnConstraint.MatchesConstraint(result, context)
+                                   .Bind(matches => matches
+                                                        ? Result.Success
+                                                        : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
+                }
 
 
                 return CheckInputConstraints(function.InputPorts, arguments as IValue[] ?? arguments.ToArray(), context)

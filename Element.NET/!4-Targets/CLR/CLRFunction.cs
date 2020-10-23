@@ -19,6 +19,8 @@ namespace Element.CLR
 		    {Unary.Op.ACos, ((Func<double, double>)Math.Acos).Method},
 		    {Unary.Op.Tan, ((Func<double, double>)Math.Tan).Method},
 		    {Unary.Op.ATan, ((Func<double, double>)Math.Atan).Method},
+		    {Unary.Op.Floor, ((Func<double, double>)Math.Floor).Method},
+		    {Unary.Op.Ceil, ((Func<double, double>)Math.Ceiling).Method},
 		    {Unary.Op.Abs, ((Func<float, float>)Math.Abs).Method},
 	    };
 	    
@@ -33,7 +35,7 @@ namespace Element.CLR
 	    private static readonly Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>> _unaryLinqOps =
 		    new Dictionary<Unary.Op, Func<LinqExpression, UnaryExpression>>
 		    {
-			    {Unary.Op.Not, LinqExpression.Not}
+			    {Unary.Op.Not, LinqExpression.Not},
 		    };
 
 	    private static readonly Dictionary<Unary.Op, (Type In, Type Out)> _unaryLinqSignatures =
@@ -104,9 +106,9 @@ namespace Element.CLR
 		    };
 	    
 	    // TODO: Move this to BoundaryConverter? Should support more than just Num/Bool structs
-	    private static Type? ToClrType(Struct elementType) => elementType.IsIntrinsic<NumStruct>()
+	    private static Type? ToClrType(Struct elementType) => elementType.IsIntrinsicOfType<NumStruct>()
 		                                                          ? typeof(float)
-		                                                          : elementType.IsIntrinsic<BoolStruct>()
+		                                                          : elementType.IsIntrinsicOfType<BoolStruct>()
 			                                                          ? typeof(bool)
 			                                                          : null;
 
@@ -143,7 +145,7 @@ namespace Element.CLR
 				case ICLRExpression s:
 					return s.Compile(e => CompileInstruction(e, data));
 				case Constant c:
-					return LinqExpression.Constant(c.Value);
+					return ConvertExpressionType(LinqExpression.Constant(c.Value), ToClrType(c.StructImplementation));
 				case Cast c:
 					return ConvertExpressionType(CompileInstruction(c.Instruction, data), ToClrType(c.StructImplementation));
 				case Unary u:
@@ -298,16 +300,13 @@ namespace Element.CLR
 					}
 
 					var breakLabel = LinqExpression.Label();
-					var body = LinqExpression.Block(s1
-					                             .Concat(new[]
-					                             {
-						                             LinqExpression.IfThen(
-							                             LinqExpression.LessThan(condition, LinqExpression.Constant(1f)),
-							                             LinqExpression.Break(breakLabel))
-					                             })
-					                             .Concat(s2)
-					                             .Concat(newState.Select((e, i) =>
-						                             LinqExpression.Assign(stateList[i], e))));
+					var body = LinqExpression.Block(s1.Concat(new[]
+					                                  {
+						                                  LinqExpression.IfThen(LinqExpression.IsFalse(condition),
+						                                                        LinqExpression.Break(breakLabel))
+					                                  })
+					                                  .Concat(s2)
+					                                  .Concat(newState.Select((e, i) => LinqExpression.Assign(stateList[i], e))));
 					parentStatements.Add(LinqExpression.Loop(body, breakLabel));
 					return stateList.ToArray();
 				default:
@@ -327,7 +326,7 @@ namespace Element.CLR
 		/// The function inputs are mapped directly to the arrays contents.
 		/// </returns>
 		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, Context context) =>
-			function.IsFunction()
+			function.IsFunction
 				? function.InputPorts.Select(c => c.DefaultValue(context))
 				          .BindEnumerable(defaultValues =>
 				          {
@@ -348,7 +347,7 @@ namespace Element.CLR
 					                           // For each array index, create an ArrayIndex expression
 					                           .Select(i => NumberConverter.Instance
 					                                                       .LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), null!, context)
-					                                                       .Cast<Instruction>(context))
+					                                                       .Cast<Instruction>())
 					                           // Aggregate enumerable of results into single result
 					                           .ToResultArray()
 					                           .Bind(expressions =>
@@ -369,25 +368,25 @@ namespace Element.CLR
 
 		public static Result<Delegate> CompileDynamic(this IValue value, Context context, IBoundaryConverter? boundaryConverter = default)
 		{
-			Result<Struct> ConstraintToStruct(IValue constraint) => constraint is Struct s
+			Result<Struct> ConstraintToStruct(IValue constraint) => constraint.IsType<Struct>(out var s)
 				                                                        ? new Result<Struct>(s)
 				                                                        : new Result<Struct>(context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{constraint}' is not a struct - all top-level function ports must be serializable struct types"));
 
-			var inputStructs = value.IsFunction()
+			var inputStructs = value.IsFunction
 				                   ? value.InputPorts.Select(p => ConstraintToStruct(p.ResolvedConstraint)).ToResultArray()
 				                   : Array.Empty<Struct>();
 			
 			return inputStructs
-			       .Accumulate(() => value.IsFunction() switch
+			       .Accumulate(() => value.IsFunction switch
 			       {
 				       true => ConstraintToStruct(value.ReturnConstraint),
-				       false when value is Struct s => s,
-				       false when value is StructInstance s => ConstraintToStruct(s.DeclaringStruct),
-				       false when value is Instruction i => i.LookupIntrinsicStruct(context),
+				       false when value.IsType<Struct>(out var s) => s,
+				       false when value.IsType<StructInstance>(out var s) => ConstraintToStruct(s.DeclaringStruct),
+				       false when value.IsType<Instruction>(out var i) => i.LookupIntrinsicStruct(context),
 				       false => context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{value}' is not recognized as a function, struct, struct instance or primitive value, cannot deduce the return type for compiling a delegate")
 			       })
 			       .Bind(types => types.Item1.Append(types.Item2)
-			                           .Select(elementStruct => ToClrType(elementStruct) is {} type
+			                           .Select(elementStruct => ToClrType(elementStruct) is {} type // check for non-null type
 				                                                    ? new Result<Type>(type)
 				                                                    : context.Trace(EleMessageCode.InvalidBoundaryFunction,"Only Num/Bool are currently implemented for input/return parameter when compiling dynamically"))
 			                           .BindEnumerable(clrPortTypes => Compile(value, context, LinqExpression.GetFuncType(clrPortTypes.ToArray()), boundaryConverter)));
@@ -414,7 +413,7 @@ namespace Element.CLR
             var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
             
-            if (value.IsFunction() && value.InputPorts.Count != delegateParameters.Length)
+            if (value.IsFunction && value.InputPorts.Count != delegateParameters.Length)
             {
 	            return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
             }
@@ -422,7 +421,7 @@ namespace Element.CLR
             var resultBuilder = new ResultBuilder<Delegate>(context, default!);
             IValue outputExpression = value;
             // If input value is not a function we just try to use it directly
-            if (value.IsFunction())
+            if (value.IsFunction)
             {
 	            var outputExpr = value.InputPorts
 	                                  .Select((f, idx) => boundaryConverter.LinqToElement(parameterExpressions[idx], boundaryConverter, context))
@@ -460,7 +459,7 @@ namespace Element.CLR
 					return value.Serialize(context)
 					         .Bind(serialized => serialized.Count switch
 					         {
-						         1 when IsPrimitiveElementType(outputType) => CompileInstruction(serialized[0].Cache(data.CSECache, context), data),
+						         1 when IsPrimitiveElementType(outputType) => CompileInstruction(serialized[0]/*.Cache(data.CSECache, context)*/, data),
 						         _ => boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context)
 					         });
 				}

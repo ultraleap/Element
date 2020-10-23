@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Element.AST;
 
 namespace Element
 {
@@ -87,7 +86,7 @@ namespace Element
             else onError(Messages);
         }
         public TResult Match<TResult>(Func<IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(Messages) : onError(Messages);
-        public Result Then(Action action)
+        public Result Do(Action action)
         {
             if (IsSuccess) action();
             return this;
@@ -96,6 +95,7 @@ namespace Element
         public Result And(Func<Result> action) => IsSuccess ? new Result(Messages.Combine(action().Messages)) : this;
         public Result<TResult> Map<TResult>(Func<TResult> mapFunc) => IsSuccess ? Merge(new Result<TResult>(mapFunc())) : new Result<TResult>(Messages);
         public Result<TResult> Bind<TResult>(Func<Result<TResult>> bindFunc) => IsSuccess ? Merge(bindFunc()) : new Result<TResult>(Messages);
+        public Result Merge(in Result newResult) => new Result(Messages.Combine(newResult.Messages));
         public Result<TResult> Merge<TResult>(in Result<TResult> newResult) => new Result<TResult>(newResult, Messages.Combine(newResult.Messages));
     }
 
@@ -174,26 +174,18 @@ namespace Element
     
     public readonly struct Result<T> : IEquatable<Result<T>>
     {
-        public Result(T value)
-        {
-            IsSuccess = true;
-            _value = value;
-            Messages = Array.Empty<CompilerMessage>();
-        }
-        
         public Result(T value, IReadOnlyCollection<CompilerMessage> messages)
         {
-            IsSuccess = !messages.Any(m => m.MessageLevel >= MessageLevel.Error);
+            IsSuccess = value != null && !messages.Any(m => m.MessageLevel >= MessageLevel.Error);
             _value = value;
             Messages = messages;
         }
-
+        
+        public Result(T value) : this(value, Array.Empty<CompilerMessage>()) { }
         public Result(T value, CompilerMessage? message) :this(value, message == null ? Array.Empty<CompilerMessage>() : new []{message}) {}
         public Result(Result<T> value, CompilerMessage? message) :this(value._value, message == null ? value.Messages : value.Messages.Append(message).ToArray()) { }
         public Result(Result<T> value, IReadOnlyCollection<CompilerMessage> messages) :this(value._value, messages) { }
-
         public Result(CompilerMessage? message) : this(message == null ? Array.Empty<CompilerMessage>() : new []{message}) { }
-
         public Result(IReadOnlyCollection<CompilerMessage> messages)
         {
             IsSuccess = false; // No value was passed, a result with no messages is an error whether there are any error messages or not
@@ -217,8 +209,10 @@ namespace Element
         }
 
         public TResult Match<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(_value, Messages) : onError(Messages);
+
+        public Result<TResult> Branch<TResult>(Func<T, Result<TResult>> success, Func<TResult> error) => IsSuccess ? Merge(success(_value)) : error();
         
-        public Result<T> Then(Action<T> action)
+        public Result<T> Do(Action<T> action)
         {
             if (IsSuccess) action(_value);
             return this;
@@ -268,13 +262,12 @@ namespace Element
             if (IsSuccess && !assertPredicate(_value)) throw new InternalCompilerException(exceptionErrorMessageIfFalse);
             return this;
         }
-        
-        public Result<TResult> Cast<TResult>(Context context, string? contextString = null)
+
+        public Result<TResult> Cast<TResult>()
         {
             if (!IsSuccess) return new Result<TResult>(Messages);
             if (_value is TResult casted) return new Result<TResult>(casted, Messages);
-            var msg = context.Trace(EleMessageCode.InvalidCast, contextString ?? $"'{_value}' failed to cast to '{typeof(TResult)}'");
-            return msg != null ? new Result<TResult>(Messages.Append(msg).ToArray()) : new Result<TResult>(Messages);
+            throw new InvalidCastException($"'{_value}' failed to cast to '{typeof(TResult)}'");
         }
 
         public Result<T> Else(Func<Result<T>> elseFunc)

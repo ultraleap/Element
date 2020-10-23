@@ -14,22 +14,10 @@ namespace Element
 		{
 			var options = operands as Instruction[] ?? operands.ToArray();
 			if (options.Length == 1 || options.All(o => o.Equals(options[0]))) return options[0];
-			if (selector is Constant index)
-			{
-				if (float.IsNaN(index.Value))
-				{
-					// TODO: Return error type, not an error message
-					return context.Trace(EleMessageCode.ArgumentOutOfRange, "Switch selector cannot be NaN");
-				}
-				
-				var asInt = (int) index.Value;
-				var inRange = asInt >= 0 && asInt <= options.Length;
-				return inRange
-					       ? new Result<Instruction>(options[asInt])
-					       // TODO: Return error type, not an error message
-					       : context.Trace(EleMessageCode.ArgumentOutOfRange, $"'{asInt}' not in range of {options.Length} cases specified");
-			}
-			return new Switch(selector, options);
+
+			return selector.CompileTimeIndex(0, options.Length, context)
+			               .Branch(idx => new Result<Instruction>(options[idx]),
+			                       () => new Switch(selector, options));
 		}
 		
 		private Switch(Instruction selector, IEnumerable<Instruction> operands)

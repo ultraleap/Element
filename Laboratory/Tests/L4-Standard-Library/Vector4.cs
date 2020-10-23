@@ -5,8 +5,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
     internal class Vector4 : StandardLibraryFixture
     {
         [
-            TestCase("Vector4.Zero", "Vector4(0, 0, 0, 0)"),
-            TestCase("Vector4.One", "Vector4(1, 1, 1, 1)"),
+            TestCase("Vector4.zero", "Vector4(0, 0, 0, 0)"),
+            TestCase("Vector4.one", "Vector4(1, 1, 1, 1)"),
         ]
         public void Constants(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
@@ -38,9 +38,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Vector4(0, 0, 0, 0).normalize", "Vector4(Num.NaN, Num.NaN, Num.NaN, Num.NaN)"),
-            TestCase("Vector4(1, 1, 1, 1).normalize", "Vector4(1.div(2), 1.div(2), 1.div(2), 1.div(2))"),
-            TestCase("Vector4(2, 2, 4, 5).normalize", "Vector4(2.div(7), 2.div(7), 4.div(7), 5.div(7))"),
+            TestCase("Vector4(0, 0, 0, 0).normalise", "Vector4(Num.NaN, Num.NaN, Num.NaN, Num.NaN)"),
+            TestCase("Vector4(1, 1, 1, 1).normalise", "Vector4(1.div(2), 1.div(2), 1.div(2), 1.div(2))"),
+            TestCase("Vector4(2, 2, 4, 5).normalise", "Vector4(2.div(7), 2.div(7), 4.div(7), 5.div(7))"),
         ]
         public void Normalize(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
@@ -102,13 +102,13 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
             
         [
-            TestCase("Vector4.lerp(-0.25, Vector4.Zero, Vector4.One)", "Vector4(-0.25, -0.25, -0.25, -0.25)"), //extrapolation
-            TestCase("Vector4.lerp(0,     Vector4.Zero, Vector4.One)", "Vector4(0, 0, 0, 0)"),
-            TestCase("Vector4.lerp(0.25,  Vector4.Zero, Vector4.One)", "Vector4(0.25, 0.25, 0.25, 0.25)"),
-            TestCase("Vector4.lerp(0.5,   Vector4.Zero, Vector4.One)", "Vector4(0.5, 0.5, 0.5, 0.5)"),
-            TestCase("Vector4.lerp(0.75,  Vector4.Zero, Vector4.One)", "Vector4(0.75, 0.75, 0.75, 0.75)"),
-            TestCase("Vector4.lerp(1,     Vector4.Zero, Vector4.One)", "Vector4(1, 1, 1, 1)"),
-            TestCase("Vector4.lerp(1.25,  Vector4.Zero, Vector4.One)", "Vector4(1.25, 1.25, 1.25, 1.25)"), //extrapolation
+            TestCase("Vector4.lerp(-0.25, Vector4.zero, Vector4.one)", "Vector4(-0.25, -0.25, -0.25, -0.25)"), //extrapolation
+            TestCase("Vector4.lerp(0,     Vector4.zero, Vector4.one)", "Vector4(0, 0, 0, 0)"),
+            TestCase("Vector4.lerp(0.25,  Vector4.zero, Vector4.one)", "Vector4(0.25, 0.25, 0.25, 0.25)"),
+            TestCase("Vector4.lerp(0.5,   Vector4.zero, Vector4.one)", "Vector4(0.5, 0.5, 0.5, 0.5)"),
+            TestCase("Vector4.lerp(0.75,  Vector4.zero, Vector4.one)", "Vector4(0.75, 0.75, 0.75, 0.75)"),
+            TestCase("Vector4.lerp(1,     Vector4.zero, Vector4.one)", "Vector4(1, 1, 1, 1)"),
+            TestCase("Vector4.lerp(1.25,  Vector4.zero, Vector4.one)", "Vector4(1.25, 1.25, 1.25, 1.25)"), //extrapolation
         ]
         public void LinearInterpolation(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
@@ -126,7 +126,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Vector4(1, 1, 1, 1).transform(Matrix4x4.Identity)", "Vector4(1, 1, 1, 1)")
+            TestCase("Vector4(1, 1, 1, 1).transform(Matrix4x4.identity)", "Vector4(1, 1, 1, 1)")
         ]
         public void Transform(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);

@@ -9,7 +9,6 @@ namespace Element.AST
         string ToString();
         string TypeOf { get; }
         string SummaryString { get; }
-        string NormalizedFormString { get; }
         
         Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context);
         IReadOnlyList<ResolvedPort> InputPorts { get; }
@@ -18,8 +17,19 @@ namespace Element.AST
         IReadOnlyList<Identifier> Members { get; }
         Result<bool> MatchesConstraint(IValue value, Context context);
         Result<IValue> DefaultValue(Context context);
-        void Serialize(ResultBuilder<List<Element.Instruction>> resultBuilder, Context context);
-        Result<IValue> Deserialize(Func<Element.Instruction> nextValue, Context context);
+        void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context);
+        Result<IValue> Deserialize(Func<Instruction> nextValue, Context context);
+
+        bool IsFunction { get; }
+        bool IsIntrinsic { get; }
+        bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation;
+        bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic);
+
+        /// <summary>
+        /// Get the inner value being wrapped.
+        /// If a value is not being wrapped it will return itself.
+        /// </summary>
+        IValue Inner { get; }
     }
 
     public abstract class Value : IValue
@@ -31,7 +41,6 @@ namespace Element.AST
         public sealed override string ToString() => _cachedString ??= SummaryString;
         public virtual string SummaryString => TypeOf;
         public virtual string TypeOf => GetType().Name;
-        public virtual string NormalizedFormString => SummaryString;
         public virtual Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => context.Trace(EleMessageCode.NotFunction, $"'{this}' cannot be called, it is not a function");
         
         public virtual IReadOnlyList<ResolvedPort> InputPorts => Array.Empty<ResolvedPort>();
@@ -43,23 +52,17 @@ namespace Element.AST
         public virtual Result<bool> MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.NotConstraint, $"'{this}' cannot be used as a port annotation, it is not a constraint");
         
         public virtual Result<IValue> DefaultValue(Context context) => context.Trace(EleMessageCode.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
-        public virtual void Serialize(ResultBuilder<List<Element.Instruction>> resultBuilder, Context context) => resultBuilder.Append(EleMessageCode.SerializationError, $"'{this}' is not serializable");
-        public virtual Result<IValue> Deserialize(Func<Element.Instruction> nextValue, Context context) => context.Trace(EleMessageCode.SerializationError, $"'{this}' cannot be deserialized");
+        public virtual void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => resultBuilder.Append(EleMessageCode.SerializationError, $"'{this}' is not serializable");
+        public virtual Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => context.Trace(EleMessageCode.SerializationError, $"'{this}' cannot be deserialized");
+        public virtual bool IsFunction => false;
+        public bool IsIntrinsic => IsIntrinsicOfType<IIntrinsicImplementation>();
+        public virtual bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => false;
+        public virtual bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => false;
+        public virtual IValue Inner => this;
     }
 
     public static class ValueExtensions
     {
-        public static bool IsFunction(this IValue value) => value.InputPorts.Count > 0; // This works for variadic intrinsics too as variadicness is signified with a single variadic port marker
-        
-        public static bool IsIntrinsic<TIntrinsicImplementation>(this IValue value)
-            where TIntrinsicImplementation : IIntrinsicImplementation =>
-            value is IIntrinsicValue c
-            && c.Implementation.GetType() == typeof(TIntrinsicImplementation);
-        
-        public static bool IsIntrinsic(this IValue value, IIntrinsicImplementation implementation) =>
-            value is IIntrinsicValue intrinsic
-            && intrinsic.Implementation == implementation;
-
         public static Result<IValue> IndexPositionally(this IValue value, int index, Context context)
         {
             var members = value.Members;
@@ -70,9 +73,9 @@ namespace Element.AST
 
         public static Result<IReadOnlyList<IValue>> MemberValues(this IValue value, Context context) => value.Members.Select(m => value.Index(m, context)).ToResultReadOnlyList();
 
-        public static Result<List<Element.Instruction>> Serialize(this IValue value, Context context)
+        public static Result<List<Instruction>> Serialize(this IValue value, Context context)
         {
-            var result = new ResultBuilder<List<Element.Instruction>>(context, new List<Element.Instruction>());
+            var result = new ResultBuilder<List<Instruction>>(context, new List<Instruction>());
             value.Serialize(result, context);
             return result.ToResult();
         }
@@ -116,5 +119,31 @@ namespace Element.AST
         public static Result<float[]> SerializeToFloats(this IValue value, Context context) =>
             value.Serialize(context)
                  .Bind(serialized => serialized.ToFloats(context));
+        
+        public static bool IsType<T>(this IValue value, out T result) where T : IValue
+        {
+            if (value.Inner is T t)
+            {
+                result = t;
+                return true;
+            }
+            result = default;
+            return false;
+        }
+
+        public static bool IsInstance(this IValue value, IValue other) => ReferenceEquals(value.Inner, other.Inner);
+        
+        public static Result<TValueOut> CastInner<TValueIn, TValueOut>(in this Result<TValueIn> input)
+            where TValueIn : IValue
+            where TValueOut : IValue
+            => input.Bind(value => value.IsType<TValueOut>(out var output)
+                                       ? new Result<TValueOut>(output)
+                                       : throw new InvalidCastException($"'{value}' cannot be casted to {typeof(TValueOut).Name}"));
+        
+        public static Result<TValueOut> CastInner<TValueOut>(in this Result<IValue> input)
+            where TValueOut : IValue
+            => input.Bind(value => value.IsType<TValueOut>(out var output)
+                                       ? new Result<TValueOut>(output)
+                                       : throw new InvalidCastException($"'{value}' cannot be casted to {typeof(TValueOut).Name}"));
     }
 }

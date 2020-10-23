@@ -21,7 +21,7 @@ namespace Element.AST
         protected abstract string Qualifier { get; }
         protected abstract Type[] BodyAlternatives { get; }
 
-        public override string ToString() => $"{GetType().Name} '{Identifier}'";
+        public override string ToString() => $"{Identifier} <{GetType().Name}>";
 
         public Result<IValue> Resolve(IScope scope, Context context)
         {
@@ -32,7 +32,15 @@ namespace Element.AST
             
             context.DeclarationStack.Push(this);
             context.TraceStack.Push(this.MakeTraceSite(ToString()));
-            var result = Validate(context).Bind(() => ResolveImpl(scope, context));
+            var result = Validate(context)
+                         .And(() => context.Aspect?.BeforeDeclaration(this, scope, context) ?? Result.Success)
+                         .Bind(() =>
+                         {
+                             var resolveResult = ResolveImpl(scope, context);
+                             return context.Aspect != null
+                                        ? resolveResult.Bind(resolvedValue => context.Aspect.Declaration(this, scope, resolvedValue, context))
+                                        : resolveResult;
+                         });
             context.TraceStack.Pop();
             context.DeclarationStack.Pop();
             return result;

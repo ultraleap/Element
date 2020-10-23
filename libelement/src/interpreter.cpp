@@ -1,524 +1,630 @@
-#include "interpreter_internal.hpp"
+#include "element/interpreter.h"
 
+//STD
 #include <algorithm>
 #include <functional>
 #include <cassert>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <sstream>
+#include <memory>
 
+//LIBS
 #include <fmt/format.h>
 
+//SELF
+#include "element/ast.h"
+#include "instruction_tree/evaluator.hpp"
+#include "ast/parser_internal.hpp"
 #include "common_internal.hpp"
-#include "etree/compiler.hpp"
-#include "etree/evaluator.hpp"
-#include "ast/ast_indexes.hpp"
 #include "token_internal.hpp"
 #include "configuration.hpp"
+#include "log_errors.hpp"
+#include "object_model/object_model_builder.hpp"
+#include "object_model/declarations/function_declaration.hpp"
+#include "object_model/error.hpp"
+#include "object_model/compilation_context.hpp"
+#include "object_model/expressions/expression_chain.hpp"
+#include "log_errors.hpp"
+#include "element/ast.h"
+#include "ast/parser_internal.hpp"
+#include "object_model/intrinsics/intrinsic.hpp"
 
-bool file_exists(const std::string& file)
+element_result element_interpreter_create(element_interpreter_ctx** interpreter)
 {
-    return std::filesystem::exists(file) && std::filesystem::is_regular_file(file);
+    if (!interpreter)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *interpreter = new element_interpreter_ctx();
+    return ELEMENT_OK;
 }
 
-bool directory_exists(const std::string& directory)
+void element_interpreter_delete(element_interpreter_ctx** interpreter)
 {
-    return std::filesystem::exists(directory) && std::filesystem::is_directory(directory);
+    if (!interpreter)
+        return;
+
+    delete *interpreter;
+    *interpreter = nullptr;
 }
 
-static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
+element_result element_interpreter_load_string(element_interpreter_ctx* interpreter, const char* string, const char* filename)
 {
-    switch (node->type) {
-    case ELEMENT_AST_NODE_ROOT:
-    {
-        auto root = scope_new(parent, "<global>", node);
-        for (const auto& t : node->children) {
-            auto cptr = get_names(root.get(), t.get());
-            root->children.emplace(cptr->name, std::move(cptr));
-        }
-        return std::move(root);
-    }
-    case ELEMENT_AST_NODE_PORT:
-    {
-        if (!node->identifier.empty())
-            return scope_new(parent, node->identifier, node);
-        else
-            return scope_new_anonymous(parent, node);
-    }
-    case ELEMENT_AST_NODE_NAMESPACE:
-    {
-        auto item = scope_new(parent, node->identifier, node);
-        // body
-        if (node->children[ast_idx::ns::body]->type == ELEMENT_AST_NODE_SCOPE) {
-            for (const auto& t : node->children[ast_idx::ns::body]->children) {
-                auto cptr = get_names(item.get(), t.get());
-                item->children.try_emplace(cptr->name, std::move(cptr));
-            }
-        }
-        return std::move(item);
-    }
-    case ELEMENT_AST_NODE_FUNCTION:
-    case ELEMENT_AST_NODE_CONSTRAINT:
-    case ELEMENT_AST_NODE_STRUCT:
-    {
-        assert(node->children.size() > ast_idx::fn::declaration);
-        element_ast* declnode = node->children[ast_idx::fn::declaration].get();
-        assert(declnode->type == ELEMENT_AST_NODE_DECLARATION);
-        auto item = scope_new(parent, declnode->identifier, node);
-        // inputs
-        if (declnode->children.size() > ast_idx::decl::inputs && declnode->children[ast_idx::decl::inputs]->type == ELEMENT_AST_NODE_PORTLIST) {
-            for (const auto& t : declnode->children[ast_idx::decl::inputs]->children) {
-                auto cptr = get_names(item.get(), t.get());
-                item->children.emplace(cptr->name, std::move(cptr));
-            }
-        }
-        // body
-        if (node->children.size() > ast_idx::fn::body) {
-            if (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_SCOPE) {
-                for (const auto& t : node->children[ast_idx::fn::body]->children) {
-                    auto cptr = get_names(item.get(), t.get());
-                    item->children.try_emplace(cptr->name, std::move(cptr));
-                }
-            }
-        }
-        // outputs
-        if (declnode->children.size() > ast_idx::decl::outputs) {
-            element_ast* outputnode = declnode->children[ast_idx::decl::outputs].get();
-            // these should typically already exist from the body, so just try
-            if (node->children.size() > ast_idx::fn::body) {
-            	//TODO: JM - What does this do?
-                if (outputnode->type == ELEMENT_AST_NODE_PORTLIST) {
-                    for (const auto& t : outputnode->children) {
-                        auto cptr = get_names(item.get(), t.get());
-                        item->children.try_emplace(cptr->name, std::move(cptr));
-                    }
-                }
-                else if (outputnode->type == ELEMENT_AST_NODE_TYPENAME) {
-                    auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
-                    item->children.try_emplace(cptr->name, std::move(cptr));
-                }
-                else if (outputnode->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE) {
-                    // implied any return
-                    auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
-                    item->children.try_emplace(cptr->name, std::move(cptr));
-                }
-                else {
-                    assert(false);
-                }
-            }
-        }
-        return std::move(item);
-    }
-    default:
-        return scope_unique_ptr(nullptr);
-    }
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!string || !filename)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    return interpreter->load(string, filename);
 }
 
-static element_result add_ast_names(std::unordered_map<const element_ast*, const element_scope*>& map, const element_scope* root)
+element_result element_interpreter_load_file(element_interpreter_ctx* interpreter, const char* file)
 {
-    if (map.try_emplace(root->node, root).second) {
-        for (const auto& kv : root->children)
-            ELEMENT_OK_OR_RETURN(add_ast_names(map, kv.second.get()));
-        return ELEMENT_OK;
-    } else {
-        return ELEMENT_ERROR_INVALID_OPERATION;
-    }
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!file)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    return interpreter->load_file(file);
 }
 
-static element_result merge_names(scope_unique_ptr& a, scope_unique_ptr b, const element_scope* parent)
+element_result element_interpreter_load_files(element_interpreter_ctx* interpreter, const char** files, const int files_count)
 {
-    if (!a) {
-        a = std::move(b);
-        a->parent = parent;
-        return ELEMENT_OK;
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!files)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    std::vector<std::string> actual_files;
+    actual_files.resize(files_count);
+    for (auto i = 0; i < files_count; ++i)
+    {
+        //std::cout << fmt::format("load_file {}\n", files[i]); //todo: proper logging
+        actual_files[i] = files[i];
     }
 
-    if (a->item_type() != b->item_type()) {
-        return ELEMENT_ERROR_INVALID_ARCHIVE; // TODO
+    return interpreter->load_files(actual_files);
+}
+
+element_result element_interpreter_load_package(element_interpreter_ctx* interpreter, const char* package)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!package)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    //std::cout << fmt::format("load_package {}\n", package); //todo: proper logging
+    return interpreter->load_package(package);
+}
+
+element_result element_interpreter_load_packages(element_interpreter_ctx* interpreter, const char** packages, const int packages_count)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!packages)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    std::vector<std::string> actual_packages;
+    actual_packages.resize(packages_count);
+    for (auto i = 0; i < packages_count; ++i)
+    {
+        //std::cout << fmt::format("load_packages {}\n", packages[i]); //todo: proper logging
+        actual_packages[i] = packages[i];
     }
 
-    if (a->item_type() != ELEMENT_ITEM_NAMESPACE && a->item_type() != ELEMENT_ITEM_ROOT) {
-        return ELEMENT_ERROR_INVALID_ARCHIVE;
+    return interpreter->load_packages(actual_packages);
+}
+
+element_result element_interpreter_load_prelude(element_interpreter_ctx* interpreter)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    return interpreter->load_prelude();
+}
+
+element_result element_interpreter_set_log_callback(element_interpreter_ctx* interpreter, void (*log_callback)(const element_log_message*, void*), void* user_data)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    interpreter->set_log_callback(log_callback, user_data);
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_set_parse_only(element_interpreter_ctx* interpreter, bool parse_only)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    interpreter->parse_only = parse_only;
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_clear(element_interpreter_ctx* interpreter)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    return interpreter->clear();
+}
+
+void element_delete_declaration(element_declaration** declaration)
+{
+    if (!declaration)
+        return;
+
+    delete *declaration;
+    *declaration = nullptr;
+}
+
+void element_delete_instruction(element_instruction** instruction)
+{
+    if (!instruction)
+        return;
+
+    delete *instruction;
+    *instruction = nullptr;
+}
+
+element_result element_interpreter_find(element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!path)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!declaration)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const auto* scope = interpreter->global_scope.get();
+
+    const std::string delimiter = ".";
+    const std::string full_path = path;
+    const element::declaration* decl = nullptr;
+
+    size_t start = 0;
+    auto end = full_path.find(delimiter);
+    if (end != std::string::npos)
+    {
+        //find all but last string
+        while (end != std::string::npos)
+        {
+            const auto identifier = full_path.substr(start, end - start);
+
+            start = end + delimiter.length();
+            end = full_path.find(delimiter, start);
+
+            decl = scope->find(element::identifier(identifier), false);
+            scope = decl->get_scope();
+        }
     }
 
-    b->parent = a->parent;
-
-    for (auto& bc : b->children) {
-        // get the target scope, or create it if it doesn't already exist
-        auto& child = a->children[bc.first];
-        ELEMENT_OK_OR_RETURN(merge_names(child, std::move(bc.second), a.get()));
+    //find last string
+    const auto identifier = full_path.substr(start, full_path.length() - start);
+    decl = scope->find(element::identifier(identifier), false);
+    if (!decl)
+    {
+        *declaration = nullptr;
+        interpreter->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("API - failed to find '{}'.", path));
+        return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND;
     }
+
+    //todo: don't need to new
+    *declaration = new element_declaration{ decl };
+    return ELEMENT_OK;
+}
+
+element_result valid_boundary_function(
+    element_interpreter_ctx* interpreter,
+    const element::compilation_context& compilation_context,
+    const element_compiler_options* options,
+    const element_declaration* declaration)
+{
+    const auto func_decl = dynamic_cast<const element::function_declaration*>(declaration->decl);
+    if (!func_decl)
+        return ELEMENT_ERROR_UNKNOWN;
+
+    const bool is_valid = func_decl->valid_at_boundary(compilation_context);
+    if (!is_valid)
+        return ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE;
 
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_ctx::load(const char* str, const char* filename)
+element_result element_interpreter_compile(
+    element_interpreter_ctx* interpreter,
+    const element_compiler_options* options,
+    const element_declaration* declaration,
+    element_instruction** instruction)
 {
-	//HACK: JM - Not a fan of this...
-    std::string file = filename;
-    const auto starts_with_prelude = file.rfind("Prelude\\", 0) == 0;
-	
-    element_tokeniser_ctx* tokeniser;
-    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
 
-    tokeniser->logger = logger;
+    if (!declaration || !declaration->decl)
+        return ELEMENT_ERROR_API_DECLARATION_IS_NULL;
+
+    if (!instruction)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    if (!options)
+        options = &element_compiler_options_default;
+
+    const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
+
+    const bool declaration_is_nullary = declaration->decl->get_inputs().empty();
+    const bool check_boundary = declaration_is_nullary ? options->check_valid_boundary_function_when_nullary : options->check_valid_boundary_function;
+    if (check_boundary)
+    {
+        const auto result = valid_boundary_function(interpreter, compilation_context, options, declaration);
+        if (result != ELEMENT_OK)
+        {
+            interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
+            *instruction = nullptr;
+            return result;
+        }
+    }
+
+    element_result result = ELEMENT_OK;
+    const auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), result, {});
+    if (!compiled || result != ELEMENT_OK)
+    {
+        interpreter->log(result, "Tried to compile placeholders but it failed.");
+        *instruction = nullptr;
+        return result;
+    }
+
+    auto instr = compiled->to_instruction();
+    if (!instr)
+    {
+        interpreter->log(result, "Failed to compile declaration to an instruction tree.");
+        *instruction = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    *instruction = new element_instruction{ std::move(instr) };
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_evaluate(
+    element_interpreter_ctx* interpreter,
+    const element_evaluator_options* options,
+    const element_instruction* instruction,
+    const element_inputs* inputs,
+    element_outputs* outputs)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!instruction || !instruction->instruction)
+        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
+
+    if (!inputs)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    if (!outputs)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    element_evaluator_options opts{};
+
+    if (options)
+        opts = *options;
+
+    const auto err = std::dynamic_pointer_cast<const element::error>(instruction->instruction);
+    if (err)
+        return err->log_once(interpreter->logger.get());
+
+    const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
+
+    if constexpr (log_expression_tree)
+        interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*instruction->instruction));
+
+    std::size_t count = outputs->count;
+    const auto result = element_evaluate(
+        *interpreter,
+        instruction->instruction,
+        inputs->values,
+        inputs->count,
+        outputs->values,
+        count,
+        opts);
+    outputs->count = static_cast<int>(count);
+
+    if (result != ELEMENT_OK)
+        interpreter->log(result, fmt::format("Failed to evaluate {}", instruction->instruction->typeof_info()), "<input>");
+
+    return result;
+}
+
+element_result expression_to_object(
+    element_interpreter_ctx* interpreter,
+    const element_compiler_options* options,
+    const char* expression_string,
+    element_object** object)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!object)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
+
+    element_tokeniser_ctx* tokeniser;
+    auto result = element_tokeniser_create(&tokeniser);
+    if (result != ELEMENT_OK)
+        return result;
+
+    tokeniser->logger = interpreter->logger;
 
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
-    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(tokeniser, element_tokeniser_delete);
+    auto element_tokeniser_delete_ptr = [](element_tokeniser_ctx* tokeniser) {
+        element_tokeniser_delete(&tokeniser);
+    };
 
-    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, filename))
+    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(element_tokeniser_delete_ptr)>(tokeniser, element_tokeniser_delete_ptr);
+
+    //create the file info struct to be used by the object model later
+    element::file_information info;
+    info.file_name = std::make_unique<std::string>("<REMOVE>");
+
+    //hack: forcing terminal on expression
+    std::string expr = std::string(expression_string);
+    //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
+    result = element_tokeniser_run(tokeniser, expr.c_str(), info.file_name->data());
+    if (result != ELEMENT_OK)
+        return result;
+
     if (tokeniser->tokens.empty())
         return ELEMENT_OK;
 
-    auto log_tokens = starts_with_prelude
-        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
-        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
-	
-    if (log_tokens) {
-			log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
-    }
+    const auto total_lines_parsed = tokeniser->line;
+
+    //lines start at 1
+    for (auto i = 0; i < total_lines_parsed; ++i)
+        info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
+
+    auto* const data = info.file_name->data();
+    //todo: remove file_info added to interpreter source interpreter
+    interpreter->src_context->file_info[data] = std::move(info);
+
+    const auto log_tokens = flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+
+    if (log_tokens)
+        interpreter->log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
 
     element_parser_ctx parser;
     parser.tokeniser = tokeniser;
-    parser.logger = logger;
-     
-    auto result = parser.ast_build();
-    //todo: hacky message to help with unit tests until we add logging for all error cases
-    if (result < ELEMENT_OK) {
-        log(result, std::string("element_ast_build failed"), filename);
-    }
-    ELEMENT_OK_OR_RETURN(result)
+    parser.logger = interpreter->logger;
+    parser.src_context = interpreter->src_context;
 
-    auto log_ast = starts_with_prelude
-        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
-        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
-	
-    if (log_ast) {
-        log("\n---\nAST\n---\n" + ast_to_string(parser.root));
-    }
+    element_ast root(nullptr);
+    //root.nearest_token = &tokeniser->cur_token;
+    parser.root = &root;
 
-    auto ast = ast_unique_ptr(parser.root, element_ast_delete);
-    scope_unique_ptr root = get_names(nullptr, parser.root);
-    result = add_ast_names(ast_names, root.get());
-    //todo: hacky message to help with unit tests until we add logging for all error cases
-    if (result < ELEMENT_OK) {
-        log(result, std::string("add_ast_names failed"), filename);
-    }
-    ELEMENT_OK_OR_RETURN(result)
+    size_t first_token = 0;
+    auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRESSION);
+    result = parser.parse_expression(&first_token, ast);
+    if (result != ELEMENT_OK)
+        return result;
 
-    result = merge_names(names, std::move(root), nullptr);
-    //todo: hacky message to help with unit tests until we add logging for all error cases
-    if (result < ELEMENT_OK) {
-        log(result, std::string("merge_names failed"), filename);
-    }
-    ELEMENT_OK_OR_RETURN(result)
+    const auto log_ast = flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
 
-    trees.push_back(std::make_pair(filename, std::move(ast)));
+    if (log_ast)
+        interpreter->log("\n---\nAST\n---\n" + ast_to_string(parser.root));
 
-    // TODO: HACK
-    update_scopes(names.get());
-
-    return ELEMENT_OK;
-}
-
-element_result element_interpreter_ctx::load_file(const std::string& file)
-{
-    if (!file_exists(file)) {
-        const auto abs = std::filesystem::absolute(std::filesystem::path(file)).string();
-        std::cout << fmt::format("file {} was not found at path {}\n",
-            file, abs.c_str()); //todo: proper logging
-        return ELEMENT_ERROR_FILE_NOT_FOUND;
-    }
-
-    std::string buffer;
-
-    std::ifstream f(file);
-    f.seekg(0, std::ios::end);
-    buffer.resize(f.tellg());
-    f.seekg(0);
-    f.read(buffer.data(), buffer.size());
-
-    element_result result = load(buffer.c_str(), file.c_str());
-    if (result != ELEMENT_OK) {
-        //std::cout << fmt::format("interpreter failed to parse file {}. element_result = {}\n", 
-        //    file, result); //todo: proper logging
-    }
-
-    return result;
-}
-
-element_result element_interpreter_ctx::load_files(const std::vector<std::string>& files)
-{
-    element_result ret = ELEMENT_OK;
-
-    for (const auto& filename : files) {
-        if (!file_exists(filename)) {
-            auto abs = std::filesystem::absolute(std::filesystem::path(filename)).string();
-            std::cout << fmt::format("file {} was not found at path {}\n",
-                filename, abs); //todo: proper logging
-            continue; //todo: error handling
-        }
-
-        element_result result = load_file(filename);
-        if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
-            ret = result;
-    }
-
-    return ret;
-}
-
-element_result element_interpreter_ctx::load_package(const std::string& package)
-{
-    if (!directory_exists(package))
+    //parse only enabled, skip object model generation to avoid error codes with positive values
+    //i.e. errors returned other than ELEMENT_ERROR_PARSE
+    if (interpreter->parse_only)
     {
-        auto abs = std::filesystem::absolute(std::filesystem::path(package)).string();
-        std::cout << fmt::format("package {} does not exist at path {}\n",
-            package, abs); //todo: proper logging
-        return ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
+        root.children.clear();
+        return ELEMENT_OK;
     }
 
-    element_result ret = ELEMENT_OK;
+    //todo: urgh, this is horrible now...
+    element::deferred_expressions deferred_expressions;
+    auto dummy_identifier = element::identifier{ "<REMOVE>" };
+    auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, interpreter->global_scope.get(), element::function_declaration::kind::expression_bodied);
+    parser.root->nearest_token = &tokeniser->tokens[0];
+    assign_source_information(interpreter, dummy_declaration, parser.root);
+    auto expression_chain = build_expression_chain(interpreter, ast, dummy_declaration.get(), deferred_expressions, result);
 
-    for (const auto& file : std::filesystem::recursive_directory_iterator(package)) {
-        const auto filename = file.path().string();
-        const auto extension = file.path().extension().string();
-        if (extension == ".ele")
+    if (deferred_expressions.empty())
+    {
+        dummy_declaration->body = std::move(expression_chain);
+    }
+    else
+    {
+        for (auto& [identifier, expression] : deferred_expressions)
         {
-            const element_result result = load_file(file.path().string());
-            if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
-                ret = result;
+            element_result output_result = ELEMENT_OK;
+            auto lambda = build_lambda_declaration(interpreter, identifier, expression, dummy_declaration->our_scope.get(), output_result);
+            if (output_result != ELEMENT_OK)
+                throw;
+
+            const auto is_added = dummy_declaration->our_scope->add_declaration(std::move(lambda));
+            if (!is_added)
+            {
+                //todo: error
+            }
         }
-        else
-        {
-            std::cout << fmt::format("file {} in package {} has extension {} instead of '.ele'\n", 
-                filename, package, extension); //todo: proper logging
-        }
+
+        auto lambda_return_decl = std::make_unique<element::function_declaration>(element::identifier::return_identifier, dummy_declaration->our_scope.get(), element::function_declaration::kind::expression_bodied);
+        assign_source_information(interpreter, lambda_return_decl, parser.root);
+        lambda_return_decl->body = std::move(expression_chain);
+
+        dummy_declaration->body = std::move(lambda_return_decl);
     }
 
-    return ret;
-}
+    root.children.clear();
 
-element_result element_interpreter_ctx::load_packages(const std::vector<std::string>& packages)
-{
-    element_result ret = ELEMENT_OK;
-
-    for (const auto& package : packages) {
-        if (!directory_exists(package)) {
-            auto abs = std::filesystem::absolute(std::filesystem::path(package)).string();
-            std::cout << fmt::format("package {} was not found at location {}\n",
-                package, abs); //todo: proper logging
-            continue; //todo: error handling
-        }
-
-        element_result result = load_package(package);
-        if (result != ELEMENT_OK && ret != ELEMENT_OK) //todo: only returns first error
-            ret = result;
-    }
-
-    return ret;
-}
-
-element_result element_interpreter_ctx::load_prelude()
-{
-    if (prelude_loaded)
-        return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
-
-    element_result result = load_package("Prelude");
-    if (result == ELEMENT_OK) {
-        prelude_loaded = true;
+    if (result != ELEMENT_OK)
+    {
+        interpreter->log(result, fmt::format("building object model failed with element_result {}", result), info.file_name->data());
         return result;
     }
 
-    if (result == ELEMENT_ERROR_DIRECTORY_NOT_FOUND) {
-        auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
-        std::cout << fmt::format("could not find prelude at {}\n", abs); //todo: proper logging
+    bool success = interpreter->global_scope->add_declaration(std::move(dummy_declaration));
+    if (!success)
+    {
+        (*object)->obj = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
     }
+
+    const auto* found_dummy_decl = interpreter->global_scope->find(dummy_identifier, false);
+    assert(found_dummy_decl);
+    auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
+
+    if (!compiled)
+    {
+        (*object)->obj = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    (*object)->obj = std::move(compiled);
+
+    const auto* err = dynamic_cast<const element::error*>((*object)->obj.get());
+    if (err)
+        return err->log_once(interpreter->logger.get());
+
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_compile_expression(
+    element_interpreter_ctx* interpreter,
+    const element_compiler_options* options,
+    const char* expression_string,
+    element_instruction** instruction)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!instruction)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    element_object object;
+    auto* object_ptr = &object;
+    const auto result = expression_to_object(interpreter, options, expression_string, &object_ptr);
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+
+    if (result != ELEMENT_OK)
+    {
+        (*instruction)->instruction = nullptr;
+        return result;
+    }
+
+    auto instr = object.obj->to_instruction();
+    if (!instr)
+    {
+        (*instruction)->instruction = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    (*instruction)->instruction = std::move(instr);
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_evaluate_expression(
+    element_interpreter_ctx* interpreter,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    element_outputs* outputs)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!outputs)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    element_instruction instruction;
+    auto* instruction_ptr = &instruction;
+    auto result = element_interpreter_compile_expression(interpreter, nullptr, expression_string, &instruction_ptr);
+    if (result != ELEMENT_OK)
+    {
+        outputs->count = 0;
+        return result;
+    }
+
+    constexpr auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
+    if constexpr (log_expression_tree)
+        interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*instruction.instruction));
+
+    float inputs[] = { 0 };
+    element_inputs input;
+    input.values = inputs;
+    input.count = 1;
+
+    result = element_interpreter_evaluate(interpreter, options, instruction_ptr, &input, outputs);
 
     return result;
 }
 
-void element_interpreter_ctx::set_log_callback(LogCallback callback)
+element_result element_interpreter_typeof_expression(
+    element_interpreter_ctx* interpreter,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    char* buffer,
+    const int buffer_size)
 {
-    logger = std::make_shared<element_log_ctx>();
-    logger->callback = callback;
-}
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
 
-void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename)
-{
-    if (logger == nullptr)
-        return;
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
 
-	logger->log(*this, code, message, filename);
-}
+    if (!buffer)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-void element_interpreter_ctx::log(const std::string& message) const
-{
-    if (logger == nullptr)
-        return;
+    //sure there is a shorthand for this
+    element_object object;
+    auto* object_ptr = &object;
+    const auto result = expression_to_object(interpreter, nullptr, expression_string, &object_ptr);
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
 
-    logger->log(message, message_stage::ELEMENT_STAGE_MISC);
-}
-
-element_interpreter_ctx::element_interpreter_ctx()
-{
-    // TODO: hack, remove
-    clear();
-}
-
-element_result element_interpreter_ctx::clear()
-{
-    trees.clear();
-    names.reset();
-    ast_names.clear();
-
-    return ELEMENT_OK;
-}
-
-element_result element_interpreter_create(element_interpreter_ctx** ctx)
-{
-    *ctx = new element_interpreter_ctx();
-    return ELEMENT_OK;
-}
-
-void element_interpreter_delete(element_interpreter_ctx* ctx)
-{
-    delete ctx;
-}
-
-element_result element_interpreter_load_string(element_interpreter_ctx* ctx, const char* string, const char* filename)
-{
-    assert(ctx);
-    return ctx->load(string, filename);
-}
-
-element_result element_interpreter_load_file(element_interpreter_ctx* ctx, const char* file)
-{
-    assert(ctx);
-    return ctx->load_file(file);
-}
-
-element_result element_interpreter_load_files(element_interpreter_ctx* ctx, const char** files, int files_count)
-{
-    assert(ctx);
-
-    std::vector<std::string> actual_files;
-    for (int i = 0; i < files_count; ++i) {
-        //std::cout << fmt::format("load_file {}\n", files[i]); //todo: proper logging
-        actual_files.push_back(files[i]);
-    }
-
-    return ctx->load_files(actual_files);
-}
-
-
-element_result element_interpreter_load_package(element_interpreter_ctx* ctx, const char* package)
-{
-    assert(ctx);
-    //std::cout << fmt::format("load_package {}\n", package); //todo: proper logging
-    return ctx->load_package(package);
-}
-
-element_result element_interpreter_load_packages(element_interpreter_ctx* ctx, const char** packages, int packages_count)
-{
-    assert(ctx);
-
-    std::vector<std::string> actual_packages;
-    for (int i = 0; i < packages_count; ++i) {
-        //std::cout << fmt::format("load_packages {}\n", packages[i]); //todo: proper logging
-        actual_packages.push_back(packages[i]);
-    }
-
-    return ctx->load_packages(actual_packages);
-}
-
-element_result element_interpreter_load_prelude(element_interpreter_ctx* ctx)
-{
-    assert(ctx);
-    return ctx->load_prelude();
-}
-
-void element_interpreter_set_log_callback(element_interpreter_ctx* ctx, void (*log_callback)(const element_log_message* const))
-{
-    assert(ctx);
-    ctx->set_log_callback(log_callback);
-}
-
-element_result element_interpreter_clear(element_interpreter_ctx* ctx)
-{
-    assert(ctx);
-    return ctx->clear();
-}
-
-element_result element_interpreter_get_function(element_interpreter_ctx* ctx, const char* name, const element_function** fn)
-{
-    assert(ctx);
-    assert(name);
-    if (!ctx->names) return ELEMENT_ERROR_NOT_FOUND;
-    const element_scope* scope = ctx->names->lookup(name);
-    if (scope && scope->function()) {
-        *fn = scope->function().get();
-        return ELEMENT_OK;
-    } else {
-
-        auto result = ELEMENT_ERROR_NOT_FOUND;
-        ctx->log(result, fmt::format("Cannot find {}", name), "<input>");
+    if (result != ELEMENT_OK)
+    {
+        //todo:
+        interpreter->log(result, "tried to get typeof an expression that failed to compile");
         return result;
     }
-}
 
-element_result element_interpreter_compile_function(
-    element_interpreter_ctx* ctx,
-    const element_function* fn,
-    element_compiled_function** cfn,
-    const element_compiler_options* opts)
-{
-    assert(ctx);
-    assert(fn);
-    assert(cfn);
-    element_compiler_options options;
-    if (opts)
-        options = *opts;
-    expression_shared_ptr fn_expr;
-
-    auto result = element_compile(*ctx, fn, fn_expr, options);
-	if(result != ELEMENT_OK)
-	{
-        ctx->log(result, fmt::format("Failed to compile {}", fn->name()), "<input>");
-        return result;
-	}
-	
-    *cfn = new element_compiled_function;
-    (*cfn)->function = fn;
-    (*cfn)->expression = std::move(fn_expr);
-
-    if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_expression_tree))
-        ctx->log("\n---------------\nEXPRESSION TREE\n---------------\n" + expression_to_string(*(*cfn)->expression));
-	
-    return ELEMENT_OK;
-}
-
-void element_interpreter_delete_compiled_function(element_compiled_function* cfn)
-{
-    delete cfn;
-}
-
-element_result element_interpreter_evaluate_function(
-    element_interpreter_ctx* ctx,
-    const element_compiled_function* cfn,
-    const element_value* inputs, size_t inputs_count,
-    element_value* outputs, size_t outputs_count,
-    const element_evaluator_options* opts)
-{
-    assert(ctx);
-    assert(cfn);
-    element_evaluator_options options;
-    if (opts)
-        options = *opts;
-    auto result = element_evaluate(*ctx, cfn->expression, inputs, inputs_count, outputs, outputs_count, options);
-    if (result != ELEMENT_OK) {
-        ctx->log(result, fmt::format("Failed to evaluate {}", cfn->function->name()), "<input>");
+    const auto typeof = object.obj->typeof_info();
+    if (buffer_size < static_cast<int>(typeof.size()))
+    {
+        //todo:
+        interpreter->log(ELEMENT_ERROR_API_INSUFFICIENT_BUFFER, fmt::format("buffer size of {} isn't sufficient for string of {} characters", buffer_size, typeof.size()));
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
     }
 
-	return result;
+    strncpy(buffer, typeof.c_str(), typeof.size());
+    return ELEMENT_OK;
 }

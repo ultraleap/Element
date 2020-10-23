@@ -7,6 +7,8 @@ namespace Element.AST
     {
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicConstraintImplementation _implementation;
+        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation.GetType() == typeof(TIntrinsicImplementation);
+        public override bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _implementation == intrinsic;
         public IntrinsicConstraint(IIntrinsicConstraintImplementation implementation) => _implementation = implementation;
         public override Result<bool> MatchesConstraint(IValue value, Context context) => _implementation.MatchesConstraint(value, context);
     }
@@ -37,10 +39,9 @@ namespace Element.AST
                 // This port pair passes if the expected port is Any (all constraints are narrower than Any)
                 // otherwise it must be exactly the same constraint since there is no type/constraint hierarchy
                 // TODO: Does Nothing need to be handled specially here?
-                var portMatches = resultBuilder.Result &=
-                                      expectedConstraint.IsIntrinsic<AnyConstraint>()
-                                      // ReSharper disable once PossibleUnintendedReferenceComparison
-                                      || argConstraint == expectedConstraint;
+                var portMatches = expectedConstraint.IsIntrinsicOfType<AnyConstraint>()
+                                  || argConstraint.IsInstance(expectedConstraint);
+                resultBuilder.Result &= portMatches;
                 
                 if (!portMatches)
                 {

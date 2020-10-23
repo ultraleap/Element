@@ -10,11 +10,8 @@ namespace Element
     /// </summary>
     public class SourceContext
     {
-        public SourceContext(CompilerOptions compilerOptions)
-        {
-            CompilerOptions = compilerOptions;
-        }
-        
+        public SourceContext(CompilerOptions compilerOptions) => CompilerOptions = compilerOptions;
+
         public GlobalScope GlobalScope { get; } = new GlobalScope();
         public CompilerOptions CompilerOptions { get; }
 
@@ -31,7 +28,7 @@ namespace Element
         {
             lock (_syncRoot)
             {
-                return GlobalScope.AddSource(info, new Context(this)).Map(() => this);
+                return GlobalScope.AddSource(info, Context.CreateFromSourceContext(this)).Map(() => this);
             }
         }
 
@@ -43,7 +40,7 @@ namespace Element
         {
             lock (_syncRoot)
             {
-                var context = new Context(this);
+                var context = Context.CreateFromSourceContext(this);
                 if (_loadedPackages.TryGetValue(packageInfo.Name, out var loaded))
                 {
                     return context.Trace(EleMessageCode.DuplicateSourceFile, $"Tried to load package {loaded} when {loaded} is already loaded");
@@ -79,7 +76,7 @@ namespace Element
         {
             lock (_syncRoot)
             {
-                var builder = new ResultBuilder<SourceContext>(new Context(this), this);
+                var builder = new ResultBuilder<SourceContext>(Context.CreateFromSourceContext(this), this);
 
                 if (input.PreludeVersion != null)
                 {

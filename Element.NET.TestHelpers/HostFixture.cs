@@ -29,6 +29,12 @@ namespace Element.NET.TestHelpers
                 Interpreted = interpreted;
             }
             
+            public ExpressionEvaluation(string expression, EvaluationMode mode)
+            {
+                Expression = expression;
+                Interpreted = mode == EvaluationMode.Interpreted;
+            }
+            
             public string Expression { get; }
             public bool Interpreted { get; }
             public override Result<float[]> Evaluate(CompilerInput input, IHost host) => host.EvaluateExpression(input, Expression, Interpreted);
@@ -41,6 +47,13 @@ namespace Element.NET.TestHelpers
                 FunctionExpression = functionExpression;
                 CallExpression = callExpression;
                 Interpreted = interpreted;
+            }
+            
+            public FunctionEvaluation(string functionExpression, string callExpression, EvaluationMode mode)
+            {
+                FunctionExpression = functionExpression;
+                CallExpression = callExpression;
+                Interpreted = mode == EvaluationMode.Interpreted;
             }
 
             public string FunctionExpression { get; }

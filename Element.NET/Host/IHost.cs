@@ -7,6 +7,5 @@ namespace Element
         Result<float[]> EvaluateFunction(CompilerInput input, string functionExpression, string argumentsAsCallExpression, bool interpreted);
         Result<string> Typeof(CompilerInput input, string expression);
         Result<string> Summary(CompilerInput input, string expression);
-        Result<string> NormalForm(CompilerInput input, string expression);
     }
 }

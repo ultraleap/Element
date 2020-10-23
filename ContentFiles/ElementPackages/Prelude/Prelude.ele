@@ -14,8 +14,6 @@ constraint Predicate(a):Bool
 #   Vector3Add(a, b) = infer(Vector3, memberwise(Num.add, a, b))
 #intrinsic function infer(function, instance)
 
-
-
 # memberwise(function, ...)...
 # Returns a mapping of functions which call the argument function with the passed variadic parameters.
 # The supplied function's arity must be equal to the number of variadic parameters, e.g.

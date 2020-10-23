@@ -42,7 +42,7 @@ namespace Element.AST
             (LitOrId switch
                 {
                     // If the start of the list is an identifier, find the value that it identifies
-                    Identifier id => parentScope.Lookup(id, context).Map(v => v),
+                    Identifier id => parentScope.Lookup(id, context),
                     Constant constant => constant,
                     _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
                 })
@@ -84,7 +84,15 @@ namespace Element.AST
             protected override Result<IValue> SubExpressionImpl(IValue previous, IScope scope, Context context) =>
                 Expressions.List
                            .Select(argExpr => argExpr.ResolveExpression(scope, context))
-                           .BindEnumerable(args => previous.Call(args.ToArray(), context));
+                           .ToResultReadOnlyList()
+                           .Then(args => context.Aspect?.BeforeCall(previous, args, context) ?? Result.Success)
+                           .Bind(args =>
+                           {
+                               var callResult = previous.Call(args.ToArray(), context);
+                               return context.Aspect != null
+                                          ? callResult.Bind(result => context.Aspect.Call(previous, args, result, context))
+                                          : callResult;
+                           });
         }
 
         // ReSharper disable once UnusedType.Global
@@ -97,7 +105,10 @@ namespace Element.AST
 
             public override string ToString() => $".{Identifier}";
             protected override void ValidateImpl(ResultBuilder builder, Context context) => Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
-            protected override Result<IValue> SubExpressionImpl(IValue previous, IScope _, Context context) => previous.Index(Identifier, context);
+            protected override Result<IValue> SubExpressionImpl(IValue previous, IScope _, Context context) =>
+                (context.Aspect?.BeforeIndex(previous, Identifier, context) ?? Result.Success)
+                .Bind(() => previous.Index(Identifier, context))
+                .Bind(indexResult => context.Aspect?.Index(previous, Identifier, indexResult, context) ?? new Result<IValue>(indexResult));
         }
     }
 }

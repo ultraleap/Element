@@ -12,7 +12,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             TestPackageRegistry,
             new[] {new PackageSpecifier("StandardLibrary", new Range("*"))},
             Array.Empty<FileInfo>(),
-            default);
+            new CompilerOptions(default));
 
         protected CompilerInput NonValidatedCompilerInput { get; } = new CompilerInput(
             TestPackageRegistry,

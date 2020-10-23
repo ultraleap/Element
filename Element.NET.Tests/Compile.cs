@@ -45,14 +45,14 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
 
         private static Result<(TDelegate Delegate, float[] ArgumentArray)> CompileAndSourceArguments<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
-            new Context(context).EvaluateExpression(expression)
-                                .Bind(function => function.SourceArgumentsFromSerializedArray(new Context(context)))
-                                .Bind(tuple =>
-                                {
-                                    var (capturingValue, captureArray) = tuple;
-                                    return capturingValue.Compile<TDelegate>(new Context(context))
-                                                         .Map(compiled => (compiled, captureArray));
-                                });
+            Context.CreateFromSourceContext(context).EvaluateExpression(expression)
+                   .Bind(function => function.SourceArgumentsFromSerializedArray(Context.CreateFromSourceContext(context)))
+                   .Bind(tuple =>
+                   {
+                       var (capturingValue, captureArray) = tuple;
+                       return capturingValue.Compile<TDelegate>(Context.CreateFromSourceContext(context))
+                                            .Map(compiled => (compiled, captureArray));
+                   });
         
         private static void CompileWithSourcedArgsAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate, float[]> checkFunc)
             where TDelegate : Delegate =>
@@ -65,8 +65,8 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         
         private static Result<TDelegate> CompileDelegate<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
-            new Context(context).EvaluateExpression(expression)
-                                .Bind(fn => fn.Compile<TDelegate>(new Context(context)));
+            Context.CreateFromSourceContext(context).EvaluateExpression(expression)
+                   .Bind(fn => fn.Compile<TDelegate>(Context.CreateFromSourceContext(context)));
         
         private static void CompileAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate> checkFunc)
             where TDelegate : Delegate =>
