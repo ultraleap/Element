@@ -19,7 +19,7 @@ sys.path.append(os.path.abspath('./_ext'))
 # -- Project information -----------------------------------------------------
 
 project = 'Element Documentation'
-copyright = '2019, Ultraleap'
+copyright = '2020, Ultraleap'
 author = 'Ultraleap'
 
 
@@ -30,7 +30,8 @@ author = 'Ultraleap'
 # ones.
 extensions = ["breathe",
               "examplecode",
-              "sphinx_csharp"]
+              "sphinx_csharp",
+              "sphinx_rtd_theme"]
 
 # Breathe Configuration
 breathe_default_project = "ElementDotNET"
@@ -70,9 +71,8 @@ master_doc = 'index'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
-import sphinx_bootstrap_theme
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+import sphinx_rtd_theme
+html_theme = 'sphinx_rtd_theme'
 
 html_sidebars = {'**': ['localtoc.html', 'searchbox.html']}
 
@@ -81,9 +81,8 @@ html_logo = "img/element.png"
 mater_doc = 'index'
 
 html_theme_options = {
-    'navbar_title': "Element",
-    'bootswatch_theme': "yeti",
-    'globaltoc_depth': 2
+    'logo_only': True,
+    'style_nav_header_background': "#EA7601"
 }
 
 html_favicon = 'img/favicon.ico'
@@ -96,4 +95,8 @@ html_static_path = ['static']
 html_css_files = [
     'theme.css'
 ]
+
+
+def setup(app):
+    app.add_css_file('theme.css')
 
