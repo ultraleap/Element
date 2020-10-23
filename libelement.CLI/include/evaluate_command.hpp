@@ -99,11 +99,21 @@ namespace libelement::cli
             call_output.values = call_outputs_buffer.data();
             call_output.count = max_output_size;
 
-            result = element_interpreter_evaluate_call_expression(context, nullptr, custom_arguments.arguments.c_str(), &call_output);
-
             element_inputs input;
-            input.values = call_output.values;
-            input.count = call_output.count;
+            input.values = nullptr;
+            input.count = 0;
+
+            if (!custom_arguments.arguments.empty())
+            {
+                result = element_interpreter_evaluate_call_expression(context, nullptr, custom_arguments.arguments.c_str(), &call_output);
+                if (result != ELEMENT_OK)
+                    return compiler_message(error_conversion(result),
+                                            "Failed to evaluate: " + expression + " called with " + custom_arguments.arguments + " with element_result " + std::to_string(result),
+                                            compilation_input.get_log_json());
+
+                input.values = call_output.values;
+                input.count = call_output.count;
+            }
 
             element_value outputs_buffer[max_output_size];
             element_outputs output;
