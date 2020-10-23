@@ -19,7 +19,7 @@ namespace libelement::cli
             std::stringstream ss;
             ss << "evaluate --expression \"" << expression << "\"";
             if (!arguments.empty())
-                ss << "--arguments \"" << arguments << "\"";
+                ss << " --arguments \"" << arguments << "\"";
             return ss.str();
         }
     };
@@ -75,10 +75,44 @@ namespace libelement::cli
         }
 
         [[nodiscard]] compiler_message execute_runtime(const compilation_input& compilation_input) const
-        {
-            return compiler_message(ELEMENT_ERROR_UNKNOWN,
-                                    "Runtime evaluation is not supported",
-                                    compilation_input.get_log_json()); // todo
+        {            
+            const auto expression = custom_arguments.expression;
+
+            constexpr auto max_output_size = 512;
+
+            element_declaration* function;
+            auto result = element_interpreter_find(context, custom_arguments.expression.c_str(), &function);
+            if (result != ELEMENT_OK)
+                return compiler_message(error_conversion(result),
+                                        "Failed to find: " + expression + " with element_result " + std::to_string(result),
+                                        compilation_input.get_log_json());
+
+            element_instruction* compiled_function;
+            result = element_interpreter_compile(context, nullptr, function, &compiled_function);
+            if (result != ELEMENT_OK)
+                return compiler_message(error_conversion(result),
+                                        "Failed to compile: " + expression + " with element_result " + std::to_string(result),
+                                        compilation_input.get_log_json());
+
+            element_outputs call_output;
+            std::array<element_value, max_output_size> call_outputs_buffer;
+            call_output.values = call_outputs_buffer.data();
+            call_output.count = max_output_size;
+
+            result = element_interpreter_evaluate_call_expression(context, nullptr, custom_arguments.arguments.c_str(), &call_output);
+
+            element_inputs input;
+            input.values = call_output.values;
+            input.count = call_output.count;
+
+            element_value outputs_buffer[max_output_size];
+            element_outputs output;
+            output.values = outputs_buffer;
+            output.count = max_output_size;
+
+            element_interpreter_evaluate(context, nullptr, compiled_function, &input, &output);
+
+            return generate_response(result, output, compilation_input.get_log_json());
         }
 
         [[nodiscard]] std::string as_string() const override

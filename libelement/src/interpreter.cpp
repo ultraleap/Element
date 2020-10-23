@@ -27,6 +27,9 @@
 #include "element/ast.h"
 #include "ast/parser_internal.hpp"
 #include "object_model/intrinsics/intrinsic.hpp"
+#include "object_model/expressions/expression_chain.hpp"
+#include "object_model/expressions/call_expression.hpp"
+#include "object_model/intermediaries/function_instance.hpp"
 
 element_result element_interpreter_create(element_interpreter_ctx** interpreter)
 {
@@ -513,6 +516,115 @@ element_result expression_to_object(
     return ELEMENT_OK;
 }
 
+
+element_result call_expression_to_objects(
+    element_interpreter_ctx* interpreter,
+    const element_compiler_options* options,
+    const char* call_expression_string,
+    std::vector<element::object_const_shared_ptr>& objects)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!call_expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    element_tokeniser_ctx* tokeniser;
+    auto result = element_tokeniser_create(&tokeniser);
+    if (result != ELEMENT_OK)
+        return result;
+
+    tokeniser->logger = interpreter->logger;
+
+    // Make a smart pointer out of the tokeniser so it's deleted on an early return
+    auto element_tokeniser_delete_ptr = [](element_tokeniser_ctx* tokeniser) {
+        element_tokeniser_delete(&tokeniser);
+    };
+
+    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(element_tokeniser_delete_ptr)>(tokeniser, element_tokeniser_delete_ptr);
+
+    //create the file info struct to be used by the object model later
+    element::file_information info;
+    info.file_name = std::make_unique<std::string>("<REMOVE>");
+
+    //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
+    result = element_tokeniser_run(tokeniser, call_expression_string, info.file_name->data());
+    if (result != ELEMENT_OK)
+        return result;
+
+    if (tokeniser->tokens.empty())
+        return ELEMENT_OK;
+
+    const auto total_lines_parsed = tokeniser->line;
+
+    //lines start at 1
+    for (auto i = 0; i < total_lines_parsed; ++i)
+        info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
+
+    auto* const data = info.file_name->data();
+    //todo: remove file_info added to interpreter source interpreter
+    interpreter->src_context->file_info[data] = std::move(info);
+
+    const auto log_tokens = flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+
+    if (log_tokens)
+        interpreter->log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+
+    element_parser_ctx parser;
+    parser.tokeniser = tokeniser;
+    parser.logger = interpreter->logger;
+    parser.src_context = interpreter->src_context;
+
+    element_ast root(nullptr);
+    //root.nearest_token = &tokeniser->cur_token;
+    parser.root = &root;
+
+    size_t first_token = 0;
+    auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRLIST);
+    result = parser.parse_exprlist(&first_token, ast);
+    if (result != ELEMENT_OK)
+        return result;
+
+    const auto log_ast = flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+
+    if (log_ast)
+        interpreter->log("\n---\nAST\n---\n" + ast_to_string(parser.root));
+
+    //parse only enabled, skip object model generation to avoid error codes with positive values
+    //i.e. errors returned other than ELEMENT_ERROR_PARSE
+    if (interpreter->parse_only)
+    {
+        root.children.clear();
+        return ELEMENT_OK;
+    }
+
+    auto chain = std::make_unique<element::expression_chain>(nullptr);
+    chain->expressions.emplace_back(std::make_unique<element::call_expression>(nullptr)); //create empty expression so build_call_expression doesn't fail
+    element::assign_source_information(interpreter, chain, ast);
+    element::deferred_expressions deferred_expressions;
+    auto expr = element::build_call_expression(interpreter, ast, chain.get(), deferred_expressions, result);
+    auto* call_expr = static_cast<const element::call_expression*>(expr.get());
+
+    //lambdas in our expr chain. need to fix lambda desugaring first, and not important for boundary functions as it can't be a lambda
+    if (!deferred_expressions.empty())
+        return ELEMENT_ERROR_UNKNOWN;
+
+    root.children.clear();
+
+    if (result != ELEMENT_OK)
+    {
+        interpreter->log(result, fmt::format("building object model failed with element_result {}", result), interpreter->src_context->file_info[data].file_name->data());
+        return result;
+    }
+
+    const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
+
+    for (const auto& arg : call_expr->arguments)
+        objects.emplace_back(arg->compile(compilation_context, call_expr->source_info));
+
+    return ELEMENT_OK;
+}
+
 element_result element_interpreter_compile_expression(
     element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
@@ -626,5 +738,66 @@ element_result element_interpreter_typeof_expression(
     }
 
     strncpy(buffer, typeof.c_str(), typeof.size());
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_evaluate_call_expression(
+    element_interpreter_ctx* interpreter,
+    const element_evaluator_options* options,
+    const char* call_expression,
+    element_outputs* outputs)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!call_expression)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!outputs)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    std::vector<element::object_const_shared_ptr> arguments;
+    const auto result = call_expression_to_objects(interpreter, nullptr, call_expression, arguments);
+    if (result != ELEMENT_OK)
+        return result;
+
+    std::vector<std::vector<element_value>> serialised_arguments;
+    for (const auto& arg : arguments)
+    {
+        const auto* err = dynamic_cast<const element::error*>(arg.get());
+        if (err)
+            return err->log_once(interpreter->logger.get());
+
+        const auto instruction = arg->to_instruction();
+
+        serialised_arguments.emplace_back();
+        serialised_arguments.back().resize(1024);
+
+        const auto eval_result = element_evaluate(
+            *interpreter,
+            instruction,
+            {},
+            serialised_arguments.back(),
+            {});
+
+        if (eval_result != ELEMENT_OK)
+            return eval_result;
+    }
+
+    int serialised_size = 0;
+    for (const auto& arg : serialised_arguments)
+        serialised_size += arg.size();
+
+    if (serialised_size > outputs->count)
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+
+    outputs->count = 0;
+
+    for (const auto& arg : serialised_arguments)
+    {
+        std::copy_n(arg.data(), arg.size(), outputs->values + outputs->count);
+        outputs->count += arg.size();
+    }
+
     return ELEMENT_OK;
 }

@@ -356,6 +356,12 @@ element_result element_interpreter_typeof_expression(
     char* buffer,
     int buffer_size);
 
+element_result element_interpreter_evaluate_call_expression(
+    element_interpreter_ctx* interpreter,
+    const element_evaluator_options* options,
+    const char* call_expression,
+    element_outputs* outputs);
+
 #if defined(__cplusplus)
 }
 #endif
