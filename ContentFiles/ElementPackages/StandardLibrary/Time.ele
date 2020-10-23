@@ -1,6 +1,6 @@
 struct TimePoint(whole:Num, fractional:Num)
 {
-    from_num(x:Num):TimePoint = TimePoint(x.floor, x.sub(x.floor))
+    fromNum(x:Num):TimePoint = TimePoint(x.floor, x.sub(x.floor))
 
     value(this:TimePoint, period:Num):Num = this.whole.rem(period).add(this.fractional).rem(period)
     cycles(this:TimePoint, period:Num):Num = this.whole.div(period).add(this.fractional.div(period).floor)

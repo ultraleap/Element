@@ -30,7 +30,7 @@ struct Plane(normal:Vector3, distance:Num)
             
         return = Line3(direction, point)
     }
-    
+
     signedDistanceFromPoint(plane:Plane, point:Vector3):Num
     {
         #creates a position vector from the origin to the nearest point on the plane
