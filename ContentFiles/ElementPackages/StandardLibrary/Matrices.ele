@@ -37,7 +37,7 @@ struct Matrix3x3(x:Vector3, y:Vector3, z:Vector3)
 
 #column-major 4x4 homogeneous coordinate matrix for representing affine transformations
 struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
-{        
+{
      identity = 
          Matrix4x4(
             Vector4(1, 0, 0, 0),
@@ -59,7 +59,7 @@ struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
                                                 Vector3(m.x.y, m.y.y, m.z.y),
                                                 Vector3(m.x.z, m.y.z, m.z.z))
     
-    #this makes the assumption that Matrix4x4 is affine                                
+    #this makes the assumption that Matrix4x4 is affine
     hasInverse(a:Matrix4x4):Bool = a.rotation_submatrix.determinant.neq(0)
 
     translation(translation:Vector3):Matrix4x4 = 
