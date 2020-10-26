@@ -597,7 +597,8 @@ element_result call_expression_to_objects(
         return ELEMENT_OK;
     }
 
-    auto chain = std::make_unique<element::expression_chain>(nullptr);
+    auto declaration = std::make_unique<element::function_declaration>(element::identifier{ "DUMMY" }, interpreter->global_scope.get(), element::function_declaration::kind::expression_bodied);
+    auto chain = std::make_unique<element::expression_chain>(declaration.get());
     chain->expressions.emplace_back(std::make_unique<element::call_expression>(nullptr)); //create empty expression so build_call_expression doesn't fail
     element::assign_source_information(interpreter, chain, ast);
     element::deferred_expressions deferred_expressions;
