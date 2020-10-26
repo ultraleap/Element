@@ -641,7 +641,7 @@ element_result element_interpreter_compile_expression(
 
     element_object object;
     auto* object_ptr = &object;
-    const auto result = expression_to_object(interpreter, options, expression_string, &object_ptr);
+    auto result = expression_to_object(interpreter, options, expression_string, &object_ptr);
     interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
 
     *instruction = new element_instruction();
@@ -652,10 +652,44 @@ element_result element_interpreter_compile_expression(
         return result;
     }
 
-    auto instr = object.obj->to_instruction();
+    const auto* function_instance = dynamic_cast<const element::function_instance*>(object.obj.get());
+    if (!function_instance)
+    {
+        auto instr = object.obj->to_instruction();
+        if (!instr)
+        {
+            (*instruction)->instruction = nullptr;
+            return ELEMENT_ERROR_UNKNOWN;
+        }
+
+        (*instruction)->instruction = std::move(instr);
+        return ELEMENT_OK;
+    }
+
+    const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
+    element_declaration declaration{ function_instance->declarer };
+    result = valid_boundary_function(interpreter, compilation_context, options, &declaration);
+    if (result != ELEMENT_OK)
+    {
+        interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
+        *instruction = nullptr;
+        return result;
+    }
+    
+    result = ELEMENT_OK;
+    const auto compiled = compile_placeholder_expression(compilation_context, *function_instance, declaration.decl->get_inputs(), result, {});
+    if (!compiled || result != ELEMENT_OK)
+    {
+        interpreter->log(result, "Tried to compile placeholders but it failed.");
+        *instruction = nullptr;
+        return result;
+    }
+
+    auto instr = compiled->to_instruction();
     if (!instr)
     {
-        (*instruction)->instruction = nullptr;
+        interpreter->log(result, "Failed to compile declaration to an instruction tree.");
+        *instruction = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 

@@ -136,13 +136,15 @@ std::pair<std::vector<object_const_shared_ptr>, size_t> element::generate_placeh
     const compilation_context& compilation_context,
     const std::vector<port>& inputs,
     element_result& out_result,
-    const int index_offset)
+    const int index_offset,
+    const int inputs_to_ignore)
 {
     std::pair<std::vector<object_const_shared_ptr>, size_t> placeholder_inputs;
     auto placeholder_index = index_offset;
 
-    for (const auto& input : inputs)
+    for (int i = inputs_to_ignore; i < inputs.size(); ++i)
     {
+        const auto& input = inputs[i];
         auto placeholder = input.generate_placeholder(compilation_context, placeholder_index);
         if (!placeholder)
             out_result = ELEMENT_ERROR_UNKNOWN;

@@ -75,23 +75,16 @@ namespace libelement::cli
         }
 
         [[nodiscard]] compiler_message execute_runtime(const compilation_input& compilation_input) const
-        {            
+        {
             const auto expression = custom_arguments.expression;
 
             constexpr auto max_output_size = 512;
 
-            element_declaration* function;
-            auto result = element_interpreter_find(context, custom_arguments.expression.c_str(), &function);
-            if (result != ELEMENT_OK)
-                return compiler_message(error_conversion(result),
-                                        "Failed to find: " + expression + " with element_result " + std::to_string(result),
-                                        compilation_input.get_log_json());
-
             element_instruction* compiled_function;
-            result = element_interpreter_compile(context, nullptr, function, &compiled_function);
+            element_result result = element_interpreter_compile_expression(context, nullptr, expression.c_str(), &compiled_function);
             if (result != ELEMENT_OK)
                 return compiler_message(error_conversion(result),
-                                        "Failed to compile: " + expression + " with element_result " + std::to_string(result),
+                                        "Failed to compile: " + expression + " at runtime with element_result " + std::to_string(result),
                                         compilation_input.get_log_json());
 
             element_outputs call_output;
@@ -108,7 +101,7 @@ namespace libelement::cli
                 result = element_interpreter_evaluate_call_expression(context, nullptr, custom_arguments.arguments.c_str(), &call_output);
                 if (result != ELEMENT_OK)
                     return compiler_message(error_conversion(result),
-                                            "Failed to evaluate: " + expression + " called with " + custom_arguments.arguments + " with element_result " + std::to_string(result),
+                                            "Failed to evaluate: " + expression + " called with " + custom_arguments.arguments + " at runtime with element_result " + std::to_string(result),
                                             compilation_input.get_log_json());
 
                 input.values = call_output.values;
