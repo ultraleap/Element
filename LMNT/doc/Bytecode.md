@@ -47,8 +47,8 @@ The strings table contains a deduplicated list of all strings required by the ar
 The format of each entry can be summarised as:
 ```c
 struct {
-	uint16_t length;
-	char value[length];
+    uint16_t length;
+    char value[length];
 }
 ```
 Note that all strings are stored as UTF-8 and are C-strings (i.e. the last character must be '\0'). The length field is in bytes, **not** characters and its value includes the null terminator.
@@ -73,7 +73,7 @@ struct {
     uint16_t args_count;
     uint16_t rvals_count;
     uint8_t bases_count;
-	uint32_t bases[bases_count];
+    uint32_t bases[bases_count];
 }
 ```
 
@@ -97,17 +97,17 @@ The code table contains a set of instructions to be executed.
 The format can be summarised as:
 ```c
 struct {
-	uint32_t instructions_count;
-	instruction instructions[instructions_count];
+    uint32_t instructions_count;
+    instruction instructions[instructions_count];
 }
 ```
 ... where `instruction` is ...
 ```c
 struct {
-	uint16_t opcode;
-	uint16_t arg1;
-	uint16_t arg2;
-	uint16_t arg3;
+    uint16_t opcode;
+    uint16_t arg1;
+    uint16_t arg2;
+    uint16_t arg3;
 }
 ```
 Inputs are filled from the left, and outputs are filled from the right; thus, `arg1` and `arg2` are most commonly used for inputs and `arg3` is typically for results. For some instructions, inputs or outputs are specified across two arguments (`arg1` and `arg2` for inputs, `arg2` and `arg3` for outputs). In all of these cases, the first argument is the low half, and the second argument is the high half.
@@ -136,7 +136,7 @@ struct {
 }
 ```
 
-The remainder of the table consists of the constants present in the various sections. Sections _are_ permitted to overlap, as long as the entire section starts after the metadata at the start of the table, and ends before the end of the table.
+The remainder of the table consists of the data values present in the various sections. Sections _are_ permitted to overlap, as long as the entire section starts after the metadata at the start of the table, and ends before the end of the table.
 
 **This table must be aligned to a minimum of 4 bytes within the archive data. Pad the end of the previous table if needed to achieve this.**
 
