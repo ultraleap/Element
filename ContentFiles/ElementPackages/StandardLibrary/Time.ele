@@ -1,20 +1,15 @@
 # TODO: Rename TimePoint to TimeSpan
-struct TimePoint(integer:Num, fractional:Num)
+struct TimePoint(integer:Num, fractional:Num, isPositive:Bool)
 {
-    # Internally TimeSpan stores negative intervals with a negative "integer"
-    # and a positive "fractional".
-
-    fromSeconds(x:Num):TimePoint = TimePoint(x.floor, x.sub(x.floor))
+    fromSeconds(x:Num):TimePoint = TimePoint(x.abs.floor, x.abs.sub(x.abs.floor), x.geq(0))
 
     value(this:TimePoint, period:Num):Num = this.integer.rem(period).add(this.fractional).rem(period)
     cycles(this:TimePoint, period:Num):Num = this.integer.div(period).add(this.fractional.div(period).floor)
 
     mul(this:TimePoint, x:Num):TimePoint
     {
-        newPositiveFractional = if(this.integer.gt(0), this.fractional.mul(x.abs), 1.sub(this.fractional).mul(x.abs))
-
-        #return = TimePoint(this.integer.mul(x), this.fractional.mul(x.abs)).regularised
-        return = TimePoint(this.integer.mul(x), newPositiveFractional).regularised
+        xIsPositive = x.geq(0)
+        return = TimePoint(this.integer.mul(x.abs), this.fractional.mul(x.abs), this.isPositive.xnor(xIsPositive)).regularise
     }
 
     div(this:TimePoint, x:Num):Num
@@ -24,33 +19,56 @@ struct TimePoint(integer:Num, fractional:Num)
 
     add(this:TimePoint, other:TimePoint):TimePoint
     {
-        return = TimePoint(this.integer.add(other.integer), this.fractional.add(other.fractional)).regularised
+        struct AddableTimeSpan(encodedInteger, encodedFractional)
+        {
+            fromTimeSpan(ts:TimePoint):AddableTimeSpan
+            {
+                return = if(
+                    ts.isPositive,
+                    AddableTimeSpan(ts.integer, ts.fractional),
+                    AddableTimeSpan(ts.integer.mul(-1).sub(1), 1.sub(ts.fractional))
+                )
+            }
+
+            toTimeSpan(ats:AddableTimeSpan):TimePoint
+            {
+                return = if(
+                    ats.encodedInteger.geq(0),
+                    TimePoint(ats.encodedInteger, ats.encodedFractional, true).regularise,
+                    TimePoint(ats.encodedInteger.abs.sub(1), 1.sub(ats.encodedFractional), false).regularise
+                )
+            }
+
+            add(this:AddableTimeSpan, other:AddableTimeSpan)
+            {
+                encodedIntegerSum = this.encodedInteger.add(other.encodedInteger)
+                encodedFractionalSum = this.encodedFractional.add(other.encodedFractional)
+                return = AddableTimeSpan(encodedIntegerSum.add(encodedFractionalSum.floor), encodedFractionalSum.rem(1))
+            }
+        }
+
+        addableThis = AddableTimeSpan.fromTimeSpan(this)
+        addableOther = AddableTimeSpan.fromTimeSpan(other)
+        return = addableThis.add(addableOther).toTimeSpan
     }
 
     sub(this:TimePoint, other:TimePoint):TimePoint
     {
-        return = this.add(other.mul(-1))
+        return = this.add(other.negate)
     }
 
-    regularised(this:TimePoint)
+    regularise(this:TimePoint)
     {
-        return = TimePoint(this.integer.add(this.fractional.floor), this.fractional.rem(1))
+        return = TimePoint(this.integer.add(this.fractional.floor), this.fractional.rem(1), this.isPositive)
     }
 
     abs(this:TimePoint):TimePoint
     {
-        one = 1
-        fractionalComplement = one.sub(this.fractional)
-        #return = this
-        return = if(this.integer.geq(0), this, TimePoint(this.integer.abs.add(fractionalComplement.floor).sub(1), fractionalComplement.rem(1)))
+        return = TimePoint(this.integer, this.fractional, true)
     }
 
     negate(this:TimePoint):TimePoint
     {
-        # Return -1 times this TimePoint
-        signNonZero = this.integer.geq(0)
-
-        #toReturnIfPositiveToNegative = TimePoint(this.integer.mul(-1).sub(1), this.fractional)
-        return = TimePoint(this.integer.mul(-1), 1.sub(this.fractional))
+        return = TimePoint(this.integer, this.fractional, not(this.isPositive))
     }
 }
