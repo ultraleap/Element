@@ -131,12 +131,24 @@ namespace Element.CLR
 
 		private static LinqExpression CompileInstruction(Instruction value, CompilationData data)
 		{
-			static LinqExpression ConvertExpressionType(LinqExpression expr, Type targetType) =>
-				expr.Type == targetType
+			static LinqExpression ConvertExpressionType(LinqExpression expr, Type targetType)
+			{
+				return expr.Type == targetType
 					? expr
 					: _conversionFunctions.TryGetValue((expr.Type, targetType), out var convert)
 						? convert(expr)
 						: throw new NotSupportedException($"Conversion not defined from '{expr}' to '{targetType}'");
+			}
+
+			static LinqExpression ConvertOutputExpressionType(LinqExpression expr, Type targetType)
+			{
+				if(expr.Type == typeof(double) && targetType == typeof(double))
+					 return _conversionFunctions.TryGetValue((expr.Type, typeof(float)), out var forceConvert)
+						 ? forceConvert(expr)
+						 : throw new NotSupportedException($"Conversion not defined from '{expr}' to '{targetType}'");
+				
+				return ConvertExpressionType(expr, targetType);
+			}
 			
 			data.Cache ??= new Dictionary<CachedInstruction, ParameterExpression>();
 			data.GroupCache ??= new Dictionary<InstructionGroup, LinqExpression[]>();
@@ -160,7 +172,7 @@ namespace Element.CLR
 					
 					if (_unaryMethodOps.TryGetValue(u.Operation, out var unaryMethod))
 					{
-						return ConvertExpressionType(LinqExpression.Call(unaryMethod, ConvertExpressionType(ua, unaryMethod.GetParameters()[0].ParameterType)),
+						return ConvertOutputExpressionType(LinqExpression.Call(unaryMethod, ConvertExpressionType(ua, unaryMethod.GetParameters()[0].ParameterType)),
 						                             unaryMethod.ReturnParameter!.ParameterType);
 					}
 
@@ -178,7 +190,7 @@ namespace Element.CLR
 
 					if (_binaryMethodOps.TryGetValue(b.Operation, out var binaryMethod))
 					{
-						return ConvertExpressionType(LinqExpression.Call(binaryMethod,
+						return ConvertOutputExpressionType(LinqExpression.Call(binaryMethod,
 						                                                 ConvertExpressionType(ba, binaryMethod.GetParameters()[0].ParameterType),
 						                                                 ConvertExpressionType(bb, binaryMethod.GetParameters()[1].ParameterType)),
 						                             binaryMethod.ReturnParameter!.ParameterType);
@@ -201,9 +213,12 @@ namespace Element.CLR
 
 					if (m.Operands.Count == 2)
 					{
+						var a = CompileInstruction(m.Operands[1], data);//ConvertExpressionType(CompileInstruction(m.Operands[1], data), m.Operands[1].GetType());
+						var b = CompileInstruction(m.Operands[0], data);//ConvertExpressionType(CompileInstruction(m.Operands[0], data), m.Operands[0].GetType());
+
 						return LinqExpression.Condition(ConvertExpressionType(CompileInstruction(m.Selector, data), typeof(bool)),
-						                                CompileInstruction(m.Operands[1], data),
-						                                CompileInstruction(m.Operands[0], data));
+							CompileInstruction(m.Operands[1], data),
+							CompileInstruction(m.Operands[0], data));
 					}
 
 					var sel = LinqExpression.Convert(CompileInstruction(m.Selector, data), typeof(int));
