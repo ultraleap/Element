@@ -1,87 +1,65 @@
 #pragma once
 
-#include "element/ast.h"
-
+//STD
 #include <vector>
 #include <string>
 #include <memory>
 #include <functional>
 
-using ast_unique_ptr = std::unique_ptr<element_ast, void(*)(element_ast*)>;
+//SELF
+#include "ast_indexes.hpp"
+#include "common_internal.hpp"
+#include "element/ast.h"
+#include "element/token.h"
+#include <cassert>
+
+using ast_unique_ptr = std::unique_ptr<element_ast, void (*)(element_ast*)>;
 
 struct element_ast
 {
+public:
+    element_ast(element_ast* ast_parent);
+
+    static void move(element_ast* from, element_ast* to, bool reparent);
+
+    element_ast* new_child(element_ast_node_type type = ELEMENT_AST_NODE_NONE);
+    void clear_children();
+
+    [[nodiscard]] bool has_flag(element_ast_flags flag) const;
+    [[nodiscard]] bool has_identifier() const;
+    [[nodiscard]] bool has_literal() const;
+
+    [[nodiscard]] bool in_function_scope() const;
+    [[nodiscard]] bool in_lambda_scope() const;
+
+    [[nodiscard]] bool struct_is_valid() const;
+    [[nodiscard]] bool struct_has_body() const;
+    [[nodiscard]] const element_ast* struct_get_declaration() const;
+    [[nodiscard]] const element_ast* struct_get_body() const;
+
+    [[nodiscard]] bool function_is_valid() const;
+    [[nodiscard]] bool function_has_body() const;
+    [[nodiscard]] const element_ast* function_get_declaration() const;
+    [[nodiscard]] const element_ast* function_get_body() const;
+
+    [[nodiscard]] bool declaration_is_valid() const;
+    [[nodiscard]] bool declaration_has_inputs() const;
+    [[nodiscard]] const element_ast* declaration_get_inputs() const;
+    [[nodiscard]] bool declaration_has_outputs() const;
+    [[nodiscard]] const element_ast* declaration_get_outputs() const;
+
+    [[nodiscard]] element_ast* get_root();
+    [[nodiscard]] const element_ast* get_root() const;
+
+    union
+    {
+        element_value literal = 0; // active for AST_NODE_LITERAL
+        element_ast_flags flags;   // active for all other node types
+    };
+
     element_ast_node_type type;
     std::string identifier;
-    union {
-        element_value literal;   // active for AST_NODE_LITERAL
-        element_ast_flags flags; // active for all other node types
-    };
-    element_ast* parent;
+    element_ast* parent = nullptr;
     std::vector<ast_unique_ptr> children;
-    // TODO: track source token?
-
-    element_ast* find_child(std::function<bool(const element_ast* elem)> fn)
-    {
-        for (const auto& t : children) {
-            if (fn(t.get()))
-                return t.get();
-        }
-        return nullptr;
-    }
-
-    element_ast* first_child_of_type(element_ast_node_type type) const
-    {
-        for (const auto& t : children) {
-            if (t->type == type)
-                return t.get();
-        }
-        return nullptr;
-    }
-
-    template <size_t N>
-    element_ast* nth_parent()
-    {
-        element_ast* p = this;
-        for (size_t i = 0; i < N; ++i) {
-            if (!p) break;
-            p = p->parent;
-        }
-        return p;
-    }
-
-    template <size_t N>
-    const element_ast* nth_parent() const
-    {
-        const element_ast* p = this;
-        for (size_t i = 0; i < N; ++i) {
-            if (!p) break;
-            p = p->parent;
-        }
-        return p;
-    }
-
-
-    enum class walk_step { stop, step_in, next, step_out };
-    using walker = std::function<walk_step(element_ast*)>;
-    using const_walker = std::function<walk_step(const element_ast*)>;
-
-    walk_step walk(const walker& fn);
-    walk_step walk(const const_walker& fn) const;
-
-    element_ast(element_ast* iparent) : parent(iparent) {}
+    const element_token* nearest_token = nullptr;
 };
-
-
-inline bool ast_node_has_identifier(const element_ast* n)
-{
-    return n->type == ELEMENT_AST_NODE_DECLARATION
-        || n->type == ELEMENT_AST_NODE_IDENTIFIER
-        || n->type == ELEMENT_AST_NODE_CALL
-        || n->type == ELEMENT_AST_NODE_PORT;
-}
-
-inline bool ast_node_has_literal(const element_ast* n)
-{
-    return n->type == ELEMENT_AST_NODE_LITERAL;
-}

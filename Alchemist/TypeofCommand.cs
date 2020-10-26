@@ -10,12 +10,8 @@ namespace Alchemist
         public string Expression { get; set; }
 
         protected override bool _skipValidation => false;
+        protected override bool _noParseTrace => false;
 
-        protected override (int ExitCode, string Result) CommandImplementation(CompilationInput input) =>
-            (0, new AtomicHost().Typeof(input, Expression) switch
-            {
-                (true, {} result) => result,
-                _ => "<error>"
-            });
+        protected override Result<string> CommandImplementation(CompilerInput input) => new AtomicHost().Typeof(input, Expression);
     }
 }

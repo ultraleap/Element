@@ -1,8 +1,0 @@
-struct Line(direction:Vector3, offset:Vector3)
-{
-    distanceFromPoint(line:Line, point:Vector3):Num
-    {
-        fromPointToPointOnLine = point.sub(line.offset);
-        return = fromPointToPointOnLine.dot(line.direction);
-    }
-}

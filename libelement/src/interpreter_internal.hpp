@@ -1,53 +1,65 @@
 #pragma once
 
-#include <unordered_map>
+//STD
 #include <vector>
 #include <string>
 #include <memory>
+#include <unordered_map>
 
+//SELF
 #include "element/interpreter.h"
-#include "ast/ast_internal.hpp"
+#include "common_internal.hpp"
+#include "object_model/scope.hpp"
 
-#include "construct.hpp"
-#include "ast/functions.hpp"
-#include "ast/scope.hpp"
-#include "ast/types.hpp"
-#include "etree/fwd.hpp"
-#include "etree/expressions.hpp"
+struct element_declaration
+{
+    const element::declaration* decl;
+};
 
+struct element_object
+{
+    std::shared_ptr<const element::object> obj;
+};
 
-#define LIBELEMENT_CONCAT(a, b) a ## b
-#define CREATE_CAST_CONVENIENCE_FUNCTIONS(T) \
-static inline bool LIBELEMENT_CONCAT(is_, T)(const construct_shared_ptr& ptr) { return std::dynamic_pointer_cast<LIBELEMENT_CONCAT(element_, T)>(ptr) != nullptr; }\
-static inline bool LIBELEMENT_CONCAT(is_, T)(const construct_const_shared_ptr& ptr) { return std::dynamic_pointer_cast<const LIBELEMENT_CONCAT(element_, T)>(ptr) != nullptr; }\
-static inline bool LIBELEMENT_CONCAT(is_, T)(const element_construct* ptr) { return dynamic_cast<const LIBELEMENT_CONCAT(element_, T)*>(ptr) != nullptr; }\
-static inline LIBELEMENT_CONCAT(T, _shared_ptr) LIBELEMENT_CONCAT(as_, T)(const construct_shared_ptr& ptr) { return std::dynamic_pointer_cast<LIBELEMENT_CONCAT(element_, T)>(ptr); }\
-static inline LIBELEMENT_CONCAT(T, _const_shared_ptr) LIBELEMENT_CONCAT(as_, T)(const construct_const_shared_ptr& ptr) { return std::dynamic_pointer_cast<const LIBELEMENT_CONCAT(element_, T)>(ptr); }\
-static inline LIBELEMENT_CONCAT(element_, T)* LIBELEMENT_CONCAT(as_, T)(element_construct* ptr) { return dynamic_cast<LIBELEMENT_CONCAT(element_, T)*>(ptr); }\
-static inline const LIBELEMENT_CONCAT(element_, T)* LIBELEMENT_CONCAT(as_, T)(const element_construct* ptr) { return dynamic_cast<const LIBELEMENT_CONCAT(element_, T)*>(ptr); }
+struct element_instruction
+{
+    std::shared_ptr<const element::instruction> instruction;
+};
 
-CREATE_CAST_CONVENIENCE_FUNCTIONS(type_constraint)
-CREATE_CAST_CONVENIENCE_FUNCTIONS(type)
-CREATE_CAST_CONVENIENCE_FUNCTIONS(function)
-
-#undef CREATE_CAST_CONVENIENCE_FUNCTIONS
-#undef LIBELEMENT_CONCAT
-
+struct element_compilation_ctx
+{
+    std::unique_ptr<element::compilation_context> ctx;
+};
 
 struct element_interpreter_ctx
 {
+public:
     element_interpreter_ctx();
 
-    std::vector<std::pair<std::string, ast_unique_ptr>> trees;
-    scope_unique_ptr names;
-    std::unordered_map<const element_ast*, const element_scope*> ast_names;
-
+    element_result load_into_scope(const char* str, const char* filename, element::scope*);
     element_result load(const char* str, const char* filename = "<input>");
+    element_result load_file(const std::string& file);
+    element_result load_files(const std::vector<std::string>& files);
+    element_result load_package(const std::string& package);
+    element_result load_packages(const std::vector<std::string>& packages);
+    element_result load_prelude();
     element_result clear();
-};
+    void set_log_callback(LogCallback callback, void* user_data);
+    void log(element_result message_code, const std::string& message, const std::string& filename = std::string()) const;
+    void log(const std::string& message) const;
 
-struct element_compiled_function
-{
-    const element_function* function;
-    expression_shared_ptr expression;
+    struct Deleter
+    {
+        void operator()(element::intrinsic* i) const;
+        void operator()(const element::intrinsic* i) const;
+    };
+
+    using intrinsic_map_type = std::unordered_map<const element::declaration*, std::unique_ptr<const element::intrinsic, Deleter>>;
+    mutable intrinsic_map_type intrinsic_map;
+
+    bool parse_only = false;
+    bool prelude_loaded = false;
+    std::shared_ptr<element_log_ctx> logger;
+    std::shared_ptr<element::source_context> src_context;
+    std::unique_ptr<element::scope> global_scope;
 };

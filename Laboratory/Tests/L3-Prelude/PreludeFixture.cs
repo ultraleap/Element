@@ -1,10 +1,18 @@
+using System;
 using Element;
+using Element.NET.TestHelpers;
 
-namespace Laboratory.Tests
+namespace Laboratory.Tests.L3.Prelude
 {
     internal abstract class PreludeFixture : HostFixture
     {
-        protected CompilationInput ValidatedCompilationInput { get; } = new CompilationInput(FailOnError);
-        protected CompilationInput NonValidatedCompilationInput { get; } = new CompilationInput(FailOnError) {SkipValidation = true};
+        protected CompilerInput ValidatedCompilerInput => new CompilerInput(TestPackageRegistry,
+                                                                            Array.Empty<PackageSpecifier>(),
+                                                                            new[]{GetEleFile("PreludeTestCode")},
+                                                                            new CompilerOptions(default));
+        protected CompilerInput NonValidatedCompilerInput => new CompilerInput(TestPackageRegistry,
+                                                                               Array.Empty<PackageSpecifier>(),
+                                                                               new[]{GetEleFile("PreludeTestCode")},
+                                                                               new CompilerOptions(default, default, true));
     }
 }

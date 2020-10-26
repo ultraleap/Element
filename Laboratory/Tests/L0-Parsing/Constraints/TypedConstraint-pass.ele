@@ -1,3 +1,0 @@
-intrinsic struct Num;
-intrinsic struct Bool;
-constraint Predicate(a:Num):Bool;

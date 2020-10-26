@@ -1,0 +1,92 @@
+intrinsic struct Num
+{
+    # Arithmetic functions
+    # a + b
+    intrinsic function add(a:Num, b:Num):Num
+    # a - b
+    intrinsic function sub(a:Num, b:Num):Num
+    # a * b
+    intrinsic function mul(a:Num, b:Num):Num
+    # a / b
+    intrinsic function div(a:Num, b:Num):Num
+
+    # a ^ b
+    intrinsic function pow(a:Num, b:Num):Num
+    # a % b - rounds towards negative infinity
+    intrinsic function rem(a:Num, b:Num):Num
+
+    # Finds the minimum of 2 numbers
+    intrinsic function min(a:Num, b:Num):Num
+
+    # Finds the maximum of 2 numbers
+    intrinsic function max(a:Num, b:Num):Num
+
+    # |a| - absolute value function
+    intrinsic function abs(a:Num):Num
+
+    # ⌈a⌉ - smallest next integer
+    intrinsic function ceil(a:Num):Num
+    # ⌊a⌋ - largest previous integer
+    intrinsic function floor(a:Num):Num
+
+    # Trigonometric functions
+    intrinsic function sin(theta:Num):Num
+    intrinsic function cos(theta:Num):Num
+    intrinsic function tan(theta:Num):Num
+
+    intrinsic function asin(theta:Num):Num
+    intrinsic function acos(theta:Num):Num
+    intrinsic function atan(theta:Num):Num
+
+    # 2 argument arctangent function where a and b specify a cartesian coordinate
+    intrinsic function atan2(y:Num, x:Num):Num
+
+    degrees(radians:Num):Num = radians.mul(180.div(pi))
+    radians(degrees:Num):Num = degrees.mul(pi.div(180))
+
+
+    # Logarithmic functions
+    intrinsic function ln(a:Num):Num
+    intrinsic function log(a:Num, b:Num):Num
+
+    # Constants
+    intrinsic function NaN
+    intrinsic function PositiveInfinity
+    intrinsic function NegativeInfinity
+    pi   = 3.14159265359
+    tau  = pi.mul(2)
+    e    = 2.718281828459045
+
+    sqr(a:Num):Num          = a.mul(a)
+    sqrt(a:Num):Num         = a.pow(0.5)
+    half(a:Num):Num         = mul(a, 0.5)
+    
+    exp(a:Num, e:Num):Num   = a.pow(e)
+
+    # remainder rounded towards 0
+    mod(a:Num, b:Num):Num
+    {
+        c = a.rem(b)
+        return = c.mul(b).lt(0)
+                         .if(add(c, b),
+                             c)
+    }
+
+    negate(a:Num):Num                   = 0.sub(a)
+    roundToZero(a:Num):Num              = a.sub(a.rem(1))
+    sign(n:Num):Num                     = n.gt(0).if(1, n.eq(0).if(0, -1))
+    dist(a:Num, b:Num):Num              = a.sub(b).abs
+    lerp(t:Num, a:Num, b:Num):Num       = a.add(t.mul(b.sub(a))) #t.lt(0).if(a, t.gt(1).if(b, a.add(t.mul(b.sub(a)))))
+    clamp(a:Num, min:Num, max:Num):Num  = a.max(min).min(max)
+    
+
+    # Comparison functions
+    intrinsic function eq(a:Num, b:Num):Bool
+    intrinsic function neq(a:Num, b:Num):Bool
+    intrinsic function lt(a:Num, b:Num):Bool
+    intrinsic function leq(a:Num, b:Num):Bool
+    intrinsic function gt(a:Num, b:Num):Bool
+    intrinsic function geq(a:Num, b:Num):Bool
+
+    to(a:Num, constructor:Unary) = constructor(a)
+}

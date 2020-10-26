@@ -1,262 +1,188 @@
-#include "token_internal.hpp"
+#include "element/token.h"
 
-#include <cctype>
-#include <cstring>
+//STD
 #include <cassert>
-#include <cstdlib>
 #include <cstdio>
 
-#define INCREMENT_TOKEN_LEN(s) { ++((s)->pos); ++((s)->col); ++((s)->cur_token.tok_len); }
+//LIBS
+#include <fmt/format.h>
 
-element_result element_tokeniser_get_filename(const element_tokeniser_ctx* state, const char** filename)
+//SELF
+#include "token_internal.hpp"
+
+element_result element_tokeniser_to_string(const element_tokeniser_ctx* tokeniser, const element_token* token_to_mark, char* output_buffer, int output_buffer_size)
 {
-    assert(state);
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!output_buffer)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const auto str = tokens_to_string(tokeniser, token_to_mark);
+    if (static_cast<int>(str.size()) > output_buffer_size)
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+
+    sprintf(output_buffer, "%s", str.c_str());
+    return ELEMENT_OK;
+}
+
+element_result element_tokeniser_get_filename(const element_tokeniser_ctx* tokeniser, const char** filename)
+{
+    assert(tokeniser);
     assert(filename);
-    *filename = state->filename.c_str();
+
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!filename)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *filename = tokeniser->filename.c_str();
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_get_input(const element_tokeniser_ctx* state, const char** input)
+element_result element_tokeniser_get_input(const element_tokeniser_ctx* tokeniser, const char** input)
 {
-    assert(state);
+    assert(tokeniser);
     assert(input);
-    *input = state->input.c_str();
+
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!input)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *input = tokeniser->input.c_str();
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_get_token_count(const element_tokeniser_ctx* state, size_t* count)
+element_result element_tokeniser_get_token_count(const element_tokeniser_ctx* tokeniser, size_t* count)
 {
-    assert(state);
+    assert(tokeniser);
     assert(count);
-    *count = state->tokens.size();
+
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!count)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *count = tokeniser->tokens.size();
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_get_token(const element_tokeniser_ctx* state, const size_t index, const element_token** token)
+element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokeniser, const size_t index, const element_token** token, const char* msg)
 {
-    assert(state);
+    assert(tokeniser);
     assert(token);
-    if (index >= state->tokens.size())
-        return ELEMENT_ERROR_INVALID_OPERATION;
-    *token = &state->tokens[index];
-    return ELEMENT_OK;
-}
 
-static void reset_token(element_tokeniser_ctx* state)
-{
-    if (state->cur_token.type != ELEMENT_TOK_NONE || state->cur_token.post_len > 0) {
-        // save current token
-        state->tokens.push_back(state->cur_token);
-        state->cur_token.pre_pos = -1;
-        state->cur_token.pre_len = 0;
-    }
-    state->cur_token.type = ELEMENT_TOK_NONE;
-    state->cur_token.tok_pos = -1;
-    state->cur_token.tok_len = 0;
-    state->cur_token.post_pos = -1;
-    state->cur_token.post_len = 0;
-}
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
 
-// literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
-static element_result tokenise_number(const std::string& input, element_tokeniser_ctx* state)
-{
-    assert(state->cur_token.type == ELEMENT_TOK_NONE);
-    state->cur_token.type = ELEMENT_TOK_NUMBER;
-    state->cur_token.tok_pos = state->pos;
-    if (input[state->pos] == '-' || input[state->pos] == '+') {
-        INCREMENT_TOKEN_LEN(state);
-    }
-    assert(isdigit(input[state->pos]));
-    do {
-        INCREMENT_TOKEN_LEN(state);
-    } while (isdigit(input[state->pos]));
-    if (input[state->pos] == '.') {
-        INCREMENT_TOKEN_LEN(state);
-        while (isdigit(input[state->pos])) {
-            INCREMENT_TOKEN_LEN(state);
-        }
-    }
-    if (input[state->pos] == 'e' || input[state->pos] == 'E') {
-        INCREMENT_TOKEN_LEN(state);
-        if (input[state->pos] == '-' || input[state->pos] == '+') {
-            INCREMENT_TOKEN_LEN(state);
-        }
-        if (!isdigit(input[state->pos]))
-            goto error;
-        do {
-            INCREMENT_TOKEN_LEN(state);
-        } while (isdigit(input[state->pos]));
-    }
-    reset_token(state);
-    return ELEMENT_OK;
-error:
-    return ELEMENT_ERROR_INVALID_ARCHIVE;
-}
+    if (!token)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-// identifier ::= '_'? [a-zA-Z\u00F0-\uFFFF] [_a-zA-Z0-9\u00F0-\uFFFF]*
-static element_result tokenise_identifier(const std::string& input, element_tokeniser_ctx* state)
-{
-    assert(state->cur_token.type == ELEMENT_TOK_NONE);
-    state->cur_token.type = ELEMENT_TOK_IDENTIFIER;
-    state->cur_token.tok_pos = state->pos;
-    // TODO: allow \u00F0-\uFFFF
-    if (input[state->pos] == '_') {
-        INCREMENT_TOKEN_LEN(state);
-    }
-    assert(isalpha(input[state->pos]));
-    INCREMENT_TOKEN_LEN(state);
-    while (isalnum(input[state->pos]) || input[state->pos] == '_') {
-        INCREMENT_TOKEN_LEN(state);
-    }
+    std::string message = msg ? msg : "";
 
-    reset_token(state);
-    return ELEMENT_OK;
-}
+    if (index >= tokeniser->tokens.size())
+    {
 
-static void add_token(element_tokeniser_ctx* state, element_token_type t, int n)
-{
-    assert(state->cur_token.type == ELEMENT_TOK_NONE);
-    state->cur_token.type = t;
-    state->cur_token.tok_pos = state->pos;
-    state->cur_token.tok_len = n;
-    state->pos += n;
-    reset_token(state);
-}
+        if (message.empty())
+        {
+            message = fmt::format("tried to access token at index {} but there are only {} tokens.",
+                                  index, tokeniser->tokens.size());
 
-element_result element_tokeniser_create(element_tokeniser_ctx** state)
-{
-    *state = new element_tokeniser_ctx();
-    reset_token(*state);
-    return ELEMENT_OK;
-}
-
-element_result element_tokeniser_delete(element_tokeniser_ctx* state)
-{
-    delete state;
-    return ELEMENT_OK;
-}
-
-element_result element_tokeniser_run(element_tokeniser_ctx* state, const char* cinput, const char* cfilename)
-{
-    state->filename = cfilename;
-    state->input = cinput;
-    state->pos = 0;
-    state->line = 1;
-    state->col = 1;
-    reset_token(state);
-
-    const std::string& input = state->input;
-    char c;
-    while (input[state->pos] != '\0') {
-        c = input[state->pos];
-        if (isspace(c) || state->cur_token.post_pos >= 0) {
-            if (c == '\n') {
-                ++state->line;
-                state->col = 0;
-                reset_token(state);
-            } else {
-                if (state->cur_token.tok_pos >= 0) {
-                    if (state->cur_token.post_pos < 0)
-                        state->cur_token.post_pos = state->pos;
-                    ++state->cur_token.post_len;
-                } else {
-                    ++state->cur_token.pre_len;
-                }
+            //if the token requested is only one after the end
+            if (!tokeniser->tokens.empty() && index == tokeniser->tokens.size())
+            {
+                message += "\nnote: perhaps your source code is incomplete.";
             }
-            ++state->pos;
-        } else if (c == '#') {
-            if (state->cur_token.post_pos < 0)
-                state->cur_token.post_pos = state->pos;
-            ++state->cur_token.post_len;
-            ++state->pos;
-        } else if (c == '-' || c == '+') {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                if (isdigit(input[state->pos+1])) {
-                    ELEMENT_OK_OR_RETURN(tokenise_number(input, state));
-                } else {
-                    goto error;
-                }
-            } else {
-                goto error;
-            }
-        } else if (c == '=') {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                if (input[state->pos+1] == '>') {
-                    add_token(state, ELEMENT_TOK_ARROW, 2);
-                } else {
-                    add_token(state, ELEMENT_TOK_EQUALS, 1);
-                }
-            } else {
-                goto error;
-            }
-        } else if (isdigit(c)) {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                ELEMENT_OK_OR_RETURN(tokenise_number(input, state));
-            } else {
-                goto error;
-            }
-        } else if (c == '_') {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                if (isalpha(input[state->pos + 1])) {
-                    ELEMENT_OK_OR_RETURN(tokenise_identifier(input, state));
-                } else {
-                    add_token(state, ELEMENT_TOK_UNDERSCORE, 1);
-                }
-            } else {
-                goto error;
-            }
-        } else if (isalpha(c)) {
-            if (state->cur_token.type == ELEMENT_TOK_NONE) {
-                ELEMENT_OK_OR_RETURN(tokenise_identifier(input, state));
-            } else {
-                goto error;
-            }
-        } else {
-            switch (input[state->pos]) {
-            case '.': add_token(state, ELEMENT_TOK_DOT, 1); break;
-            case '(': add_token(state, ELEMENT_TOK_BRACKETL, 1); break;
-            case ')': add_token(state, ELEMENT_TOK_BRACKETR, 1); break;
-            case ';': add_token(state, ELEMENT_TOK_SEMICOLON, 1); break;
-            case ',': add_token(state, ELEMENT_TOK_COMMA, 1); break;
-            case ':': add_token(state, ELEMENT_TOK_COLON, 1); break;
-            case '{': add_token(state, ELEMENT_TOK_BRACEL, 1); break;
-            case '}': add_token(state, ELEMENT_TOK_BRACER, 1); break;
-            case '=': add_token(state, ELEMENT_TOK_EQUALS, 1); break;
-            default: goto error;
+            else
+            {
+                message += "\nnote: perhaps an internal compiler error.";
             }
         }
-    }
-    return ELEMENT_OK;
 
-error:
-    return ELEMENT_ERROR_INVALID_ARCHIVE;
+        *token = nullptr;
+        if (tokeniser->tokens.empty())
+        {
+            tokeniser->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg ? msg : "");
+            return ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
+        }
+        else
+        {
+            const auto& last_token = tokeniser->tokens[tokeniser->tokens.size() - 1];
+            element_log_message log_msg;
+            const std::string line_in_source = tokeniser->text_on_line(last_token.line);
+            log_msg.line_in_source = line_in_source.c_str();
+            log_msg.message = message.c_str();
+            log_msg.message_length = static_cast<int>(message.length());
+            log_msg.filename = last_token.file_name;
+            log_msg.length = last_token.tok_len;
+            log_msg.line = last_token.line;
+            log_msg.message_code = ELEMENT_ERROR_PARTIAL_GRAMMAR;
+            log_msg.related_log_message = nullptr;
+            log_msg.stage = ELEMENT_STAGE_PARSER; //todo: could be tokeniser
+            log_msg.character = last_token.character;
+
+            tokeniser->logger->log(log_msg);
+            return ELEMENT_ERROR_PARTIAL_GRAMMAR;
+        }
+    }
+
+    *token = &tokeniser->tokens[index];
+    return ELEMENT_OK;
 }
 
-#define PRINTCASE(a) case a: c = #a; break;
-void element_tokeniser_print(const element_tokeniser_ctx* state)
+element_result element_tokeniser_set_log_callback(element_tokeniser_ctx* tokeniser, void (*log_callback)(const element_log_message*, void*), void* user_data)
 {
-    for (const auto& t : state->tokens) {
-        const char* c;
-        switch (t.type) {
-            PRINTCASE(ELEMENT_TOK_NONE);
-            PRINTCASE(ELEMENT_TOK_NUMBER);
-            PRINTCASE(ELEMENT_TOK_IDENTIFIER);
-            PRINTCASE(ELEMENT_TOK_UNDERSCORE);
-            PRINTCASE(ELEMENT_TOK_DOT);
-            PRINTCASE(ELEMENT_TOK_BRACKETL);
-            PRINTCASE(ELEMENT_TOK_BRACKETR);
-            PRINTCASE(ELEMENT_TOK_SEMICOLON);
-            PRINTCASE(ELEMENT_TOK_ARROW);
-            PRINTCASE(ELEMENT_TOK_COLON);
-            PRINTCASE(ELEMENT_TOK_COMMA);
-            PRINTCASE(ELEMENT_TOK_BRACEL);
-            PRINTCASE(ELEMENT_TOK_BRACER);
-            PRINTCASE(ELEMENT_TOK_EQUALS);
-            default: "ELEMENT_TOK_<UNKNOWN>"; break;
-        }
-        std::string buf;
-        if (t.tok_len > 0)
-            buf = state->input.substr(t.tok_pos, t.tok_len);
-        printf("%-10s  %s\n", c + strlen("ELEMENT_TOK_"), buf.c_str());
-    }
+    assert(tokeniser);
+    assert(log_callback);
+
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    //todo: if log callback is null, use a default? or support no callback?
+
+    tokeniser->set_log_callback(log_callback, user_data);
+    return ELEMENT_OK;
+}
+
+element_result element_tokeniser_create(element_tokeniser_ctx** tokeniser)
+{
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *tokeniser = new element_tokeniser_ctx();
+    (*tokeniser)->reset_token();
+    return ELEMENT_OK;
+}
+
+void element_tokeniser_delete(element_tokeniser_ctx** tokeniser)
+{
+    if (!tokeniser)
+        return;
+
+    delete *tokeniser;
+    *tokeniser = nullptr;
+}
+
+element_result element_tokeniser_clear(element_tokeniser_ctx* tokeniser)
+{
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    tokeniser->clear();
+    return ELEMENT_OK;
+}
+
+element_result element_tokeniser_run(element_tokeniser_ctx* tokeniser, const char* cinput, const char* cfilename)
+{
+    if (!tokeniser)
+        return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
+
+    if (!cinput || !cfilename)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    return tokeniser->run(cinput, cfilename);
 }

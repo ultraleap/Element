@@ -1,266 +1,630 @@
-#include "interpreter_internal.hpp"
-#include "common_internal.hpp"
-#include "etree/compiler.hpp"
-#include "etree/evaluator.hpp"
-#include "ast/ast_indexes.hpp"
+#include "element/interpreter.h"
 
+//STD
 #include <algorithm>
 #include <functional>
 #include <cassert>
+#include <filesystem>
+#include <memory>
 
+//LIBS
+#include <fmt/format.h>
 
-static scope_unique_ptr get_names(element_scope* parent, element_ast* node)
+//SELF
+#include "element/ast.h"
+#include "instruction_tree/evaluator.hpp"
+#include "ast/parser_internal.hpp"
+#include "common_internal.hpp"
+#include "token_internal.hpp"
+#include "configuration.hpp"
+#include "log_errors.hpp"
+#include "object_model/object_model_builder.hpp"
+#include "object_model/declarations/function_declaration.hpp"
+#include "object_model/error.hpp"
+#include "object_model/compilation_context.hpp"
+#include "object_model/expressions/expression_chain.hpp"
+#include "log_errors.hpp"
+#include "element/ast.h"
+#include "ast/parser_internal.hpp"
+#include "object_model/intrinsics/intrinsic.hpp"
+
+element_result element_interpreter_create(element_interpreter_ctx** interpreter)
 {
-    switch (node->type) {
-    case ELEMENT_AST_NODE_ROOT:
-    {
-        auto root = scope_new(parent, "<global>", node);
-        for (const auto& t : node->children) {
-            auto cptr = get_names(root.get(), t.get());
-            root->children.emplace(cptr->name, std::move(cptr));
-        }
-        return std::move(root);
-    }
-    case ELEMENT_AST_NODE_PORT:
-    {
-        if (!node->identifier.empty())
-            return scope_new(parent, node->identifier, node);
-        else
-            return scope_new_anonymous(parent, node);
-    }
-    case ELEMENT_AST_NODE_NAMESPACE:
-    {
-        auto item = scope_new(parent, node->identifier, node);
-        // body
-        if (node->children[ast_idx::ns::body]->type == ELEMENT_AST_NODE_SCOPE) {
-            for (const auto& t : node->children[ast_idx::ns::body]->children) {
-                auto cptr = get_names(item.get(), t.get());
-                item->children.try_emplace(cptr->name, std::move(cptr));
-            }
-        }
-        return std::move(item);
-    }
-    case ELEMENT_AST_NODE_FUNCTION:
-    case ELEMENT_AST_NODE_STRUCT:
-    {
-        assert(node->children.size() > ast_idx::fn::body);
-        element_ast* declnode = node->children[ast_idx::fn::declaration].get();
-        assert(declnode->type == ELEMENT_AST_NODE_DECLARATION);
-        auto item = scope_new(parent, declnode->identifier, node);
-        // inputs
-        if (declnode->children.size() > ast_idx::decl::inputs && declnode->children[ast_idx::decl::inputs]->type == ELEMENT_AST_NODE_PORTLIST) {
-            for (const auto& t : declnode->children[ast_idx::decl::inputs]->children) {
-                auto cptr = get_names(item.get(), t.get());
-                item->children.emplace(cptr->name, std::move(cptr));
-            }
-        }
-        // body
-        if (node->children[ast_idx::fn::body]->type == ELEMENT_AST_NODE_SCOPE) {
-            for (const auto& t : node->children[ast_idx::fn::body]->children) {
-                auto cptr = get_names(item.get(), t.get());
-                item->children.try_emplace(cptr->name, std::move(cptr));
-            }
-        }
-        // outputs
-        if (declnode->children.size() > ast_idx::decl::outputs) {
-            element_ast* outputnode = declnode->children[ast_idx::decl::outputs].get();
-            // these should typically already exist from the body, so just try
-            if (outputnode->type == ELEMENT_AST_NODE_PORTLIST) {
-                for (const auto& t : outputnode->children) {
-                    auto cptr = get_names(item.get(), t.get());
-                    item->children.try_emplace(cptr->name, std::move(cptr));
-                }
-            } else if (outputnode->type == ELEMENT_AST_NODE_TYPENAME) {
-                auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
-                item->children.try_emplace(cptr->name, std::move(cptr));
-            } else if (outputnode->type == ELEMENT_AST_NODE_NONE) {
-                // implied any return
-                auto cptr = scope_new(item.get(), "return", node->children[ast_idx::fn::body].get());
-                item->children.try_emplace(cptr->name, std::move(cptr));
-            } else {
-                assert(false);
-            }
-        }
-        return std::move(item);
-    }
-    default:
-        return scope_unique_ptr(nullptr);
-    }
+    if (!interpreter)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *interpreter = new element_interpreter_ctx();
+    return ELEMENT_OK;
 }
 
-static element_result add_ast_names(std::unordered_map<const element_ast*, const element_scope*>& map, const element_scope* root)
+void element_interpreter_delete(element_interpreter_ctx** interpreter)
 {
-    if (map.try_emplace(root->node, root).second) {
-        for (const auto& kv : root->children)
-            ELEMENT_OK_OR_RETURN(add_ast_names(map, kv.second.get()));
-        return ELEMENT_OK;
-    } else {
-        return ELEMENT_ERROR_INVALID_OPERATION;
-    }
+    if (!interpreter)
+        return;
+
+    delete *interpreter;
+    *interpreter = nullptr;
 }
 
-static element_result merge_names(scope_unique_ptr& a, scope_unique_ptr b, const element_scope* parent)
+element_result element_interpreter_load_string(element_interpreter_ctx* interpreter, const char* string, const char* filename)
 {
-    if (!a) {
-        a = std::move(b);
-        a->parent = parent;
-        return ELEMENT_OK;
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!string || !filename)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    return interpreter->load(string, filename);
+}
+
+element_result element_interpreter_load_file(element_interpreter_ctx* interpreter, const char* file)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!file)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    return interpreter->load_file(file);
+}
+
+element_result element_interpreter_load_files(element_interpreter_ctx* interpreter, const char** files, const int files_count)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!files)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    std::vector<std::string> actual_files;
+    actual_files.resize(files_count);
+    for (auto i = 0; i < files_count; ++i)
+    {
+        //std::cout << fmt::format("load_file {}\n", files[i]); //todo: proper logging
+        actual_files[i] = files[i];
     }
 
-    if (a->item_type() != b->item_type()) {
-        return ELEMENT_ERROR_INVALID_ARCHIVE; // TODO
+    return interpreter->load_files(actual_files);
+}
+
+element_result element_interpreter_load_package(element_interpreter_ctx* interpreter, const char* package)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!package)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    //std::cout << fmt::format("load_package {}\n", package); //todo: proper logging
+    return interpreter->load_package(package);
+}
+
+element_result element_interpreter_load_packages(element_interpreter_ctx* interpreter, const char** packages, const int packages_count)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!packages)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    std::vector<std::string> actual_packages;
+    actual_packages.resize(packages_count);
+    for (auto i = 0; i < packages_count; ++i)
+    {
+        //std::cout << fmt::format("load_packages {}\n", packages[i]); //todo: proper logging
+        actual_packages[i] = packages[i];
     }
 
-    if (a->item_type() != ELEMENT_ITEM_NAMESPACE && a->item_type() != ELEMENT_ITEM_ROOT) {
-        return ELEMENT_ERROR_INVALID_ARCHIVE;
+    return interpreter->load_packages(actual_packages);
+}
+
+element_result element_interpreter_load_prelude(element_interpreter_ctx* interpreter)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    return interpreter->load_prelude();
+}
+
+element_result element_interpreter_set_log_callback(element_interpreter_ctx* interpreter, void (*log_callback)(const element_log_message*, void*), void* user_data)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    interpreter->set_log_callback(log_callback, user_data);
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_set_parse_only(element_interpreter_ctx* interpreter, bool parse_only)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    interpreter->parse_only = parse_only;
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_clear(element_interpreter_ctx* interpreter)
+{
+    assert(interpreter);
+
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    return interpreter->clear();
+}
+
+void element_delete_declaration(element_declaration** declaration)
+{
+    if (!declaration)
+        return;
+
+    delete *declaration;
+    *declaration = nullptr;
+}
+
+void element_delete_instruction(element_instruction** instruction)
+{
+    if (!instruction)
+        return;
+
+    delete *instruction;
+    *instruction = nullptr;
+}
+
+element_result element_interpreter_find(element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!path)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!declaration)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const auto* scope = interpreter->global_scope.get();
+
+    const std::string delimiter = ".";
+    const std::string full_path = path;
+    const element::declaration* decl = nullptr;
+
+    size_t start = 0;
+    auto end = full_path.find(delimiter);
+    if (end != std::string::npos)
+    {
+        //find all but last string
+        while (end != std::string::npos)
+        {
+            const auto identifier = full_path.substr(start, end - start);
+
+            start = end + delimiter.length();
+            end = full_path.find(delimiter, start);
+
+            decl = scope->find(element::identifier(identifier), false);
+            scope = decl->get_scope();
+        }
     }
 
-    b->parent = a->parent;
-
-    for (auto& bc : b->children) {
-        // get the target scope, or create it if it doesn't already exist
-        auto& child = a->children[bc.first];
-        ELEMENT_OK_OR_RETURN(merge_names(child, std::move(bc.second), a.get()));
+    //find last string
+    const auto identifier = full_path.substr(start, full_path.length() - start);
+    decl = scope->find(element::identifier(identifier), false);
+    if (!decl)
+    {
+        *declaration = nullptr;
+        interpreter->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("API - failed to find '{}'.", path));
+        return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND;
     }
+
+    //todo: don't need to new
+    *declaration = new element_declaration{ decl };
+    return ELEMENT_OK;
+}
+
+element_result valid_boundary_function(
+    element_interpreter_ctx* interpreter,
+    const element::compilation_context& compilation_context,
+    const element_compiler_options* options,
+    const element_declaration* declaration)
+{
+    const auto func_decl = dynamic_cast<const element::function_declaration*>(declaration->decl);
+    if (!func_decl)
+        return ELEMENT_ERROR_UNKNOWN;
+
+    const bool is_valid = func_decl->valid_at_boundary(compilation_context);
+    if (!is_valid)
+        return ELEMENT_ERROR_INVALID_BOUNDARY_FUNCTION_INTERFACE;
 
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_ctx::load(const char* str, const char* filename)
+element_result element_interpreter_compile(
+    element_interpreter_ctx* interpreter,
+    const element_compiler_options* options,
+    const element_declaration* declaration,
+    element_instruction** instruction)
 {
-    element_tokeniser_ctx* raw_tctx;
-    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&raw_tctx));
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!declaration || !declaration->decl)
+        return ELEMENT_ERROR_API_DECLARATION_IS_NULL;
+
+    if (!instruction)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    if (!options)
+        options = &element_compiler_options_default;
+
+    const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
+
+    const bool declaration_is_nullary = declaration->decl->get_inputs().empty();
+    const bool check_boundary = declaration_is_nullary ? options->check_valid_boundary_function_when_nullary : options->check_valid_boundary_function;
+    if (check_boundary)
+    {
+        const auto result = valid_boundary_function(interpreter, compilation_context, options, declaration);
+        if (result != ELEMENT_OK)
+        {
+            interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
+            *instruction = nullptr;
+            return result;
+        }
+    }
+
+    element_result result = ELEMENT_OK;
+    const auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), result, {});
+    if (!compiled || result != ELEMENT_OK)
+    {
+        interpreter->log(result, "Tried to compile placeholders but it failed.");
+        *instruction = nullptr;
+        return result;
+    }
+
+    auto instr = compiled->to_instruction();
+    if (!instr)
+    {
+        interpreter->log(result, "Failed to compile declaration to an instruction tree.");
+        *instruction = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    *instruction = new element_instruction{ std::move(instr) };
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_evaluate(
+    element_interpreter_ctx* interpreter,
+    const element_evaluator_options* options,
+    const element_instruction* instruction,
+    const element_inputs* inputs,
+    element_outputs* outputs)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!instruction || !instruction->instruction)
+        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
+
+    if (!inputs)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    if (!outputs)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    element_evaluator_options opts{};
+
+    if (options)
+        opts = *options;
+
+    const auto err = std::dynamic_pointer_cast<const element::error>(instruction->instruction);
+    if (err)
+        return err->log_once(interpreter->logger.get());
+
+    const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
+
+    if constexpr (log_expression_tree)
+        interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*instruction->instruction));
+
+    std::size_t count = outputs->count;
+    const auto result = element_evaluate(
+        *interpreter,
+        instruction->instruction,
+        inputs->values,
+        inputs->count,
+        outputs->values,
+        count,
+        opts);
+    outputs->count = static_cast<int>(count);
+
+    if (result != ELEMENT_OK)
+        interpreter->log(result, fmt::format("Failed to evaluate {}", instruction->instruction->typeof_info()), "<input>");
+
+    return result;
+}
+
+element_result expression_to_object(
+    element_interpreter_ctx* interpreter,
+    const element_compiler_options* options,
+    const char* expression_string,
+    element_object** object)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!object)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
+
+    element_tokeniser_ctx* tokeniser;
+    auto result = element_tokeniser_create(&tokeniser);
+    if (result != ELEMENT_OK)
+        return result;
+
+    tokeniser->logger = interpreter->logger;
+
     // Make a smart pointer out of the tokeniser so it's deleted on an early return
-    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(&element_tokeniser_delete)>(raw_tctx, element_tokeniser_delete);
-    ELEMENT_OK_OR_RETURN(element_tokeniser_run(raw_tctx, str, filename));
+    auto element_tokeniser_delete_ptr = [](element_tokeniser_ctx* tokeniser) {
+        element_tokeniser_delete(&tokeniser);
+    };
 
-    element_ast* raw_ast = NULL;
-    ELEMENT_OK_OR_RETURN(element_ast_build(raw_tctx, &raw_ast));
-    // element_ast_print(raw_ast);
-    auto ast = ast_unique_ptr(raw_ast, element_ast_delete);
+    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(element_tokeniser_delete_ptr)>(tokeniser, element_tokeniser_delete_ptr);
 
-    scope_unique_ptr root = get_names(nullptr, raw_ast);
-    ELEMENT_OK_OR_RETURN(add_ast_names(ast_names, root.get()));
-    ELEMENT_OK_OR_RETURN(merge_names(names, std::move(root), nullptr));
-    trees.push_back(std::make_pair(filename, std::move(ast)));
+    //create the file info struct to be used by the object model later
+    element::file_information info;
+    info.file_name = std::make_unique<std::string>("<REMOVE>");
 
-    return ELEMENT_OK;
-}
+    //hack: forcing terminal on expression
+    std::string expr = std::string(expression_string);
+    //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
+    result = element_tokeniser_run(tokeniser, expr.c_str(), info.file_name->data());
+    if (result != ELEMENT_OK)
+        return result;
 
-element_interpreter_ctx::element_interpreter_ctx()
-{
-    // TODO: hack, remove
-    clear();
-}
-
-element_result element_interpreter_ctx::clear()
-{
-    trees.clear();
-    names.reset();
-    ast_names.clear();
-
-    // TODO: temporary hack to get intrinsics in
-    std::string input = " \
-    num; \
-    add(a:num, b:num):num; \
-    acos(a:num); \
-    asin(a:num); \
-    atan(a:num); \
-    atan2(a:num, b : num); \
-    ceil(a:num); \
-    cos(a:num); \
-    div(a:num, b:num); \
-    floor(a:num); \
-    ln(a:num):num; \
-    log(a:num, b:num):num; \
-    max(a:num, b:num):num; \
-    min(a:num, b:num):num; \
-    mul(a:num, b:num):num; \
-    pow(a:num, b:num):num; \
-    rem(a:num, b:num):num; \
-    sin(a:num):num; \
-    sub(a:num, b:num):num; \
-    tan(a:num):num; \
-    ";
-    load(input.c_str());
-
-    return ELEMENT_OK;
-}
-
-
-element_result element_interpreter_create(element_interpreter_ctx** ctx)
-{
-    *ctx = new element_interpreter_ctx();
-    return ELEMENT_OK;
-}
-
-void element_interpreter_delete(element_interpreter_ctx* ctx)
-{
-    delete ctx;
-}
-
-element_result element_interpreter_load_string(element_interpreter_ctx* ctx, const char* string, const char* filename)
-{
-    assert(ctx);
-    return ctx->load(string, filename);
-}
-
-element_result element_interpreter_clear(element_interpreter_ctx* ctx)
-{
-    assert(ctx);
-    return ctx->clear();
-}
-
-element_result element_interpreter_get_function(element_interpreter_ctx* ctx, const char* name, const element_function** fn)
-{
-    assert(ctx);
-    assert(name);
-    if (!ctx->names) return ELEMENT_ERROR_NOT_FOUND;
-    const element_scope* scope = ctx->names->lookup(name);
-    if (scope && scope->function()) {
-        *fn = scope->function().get();
+    if (tokeniser->tokens.empty())
         return ELEMENT_OK;
-    } else {
-        return ELEMENT_ERROR_NOT_FOUND;
-    }
-}
 
-element_result element_interpreter_compile_function(
-    element_interpreter_ctx* ctx,
-    const element_function* fn,
-    element_compiled_function** cfn,
-    const element_compiler_options* opts)
-{
-    assert(ctx);
-    assert(fn);
-    assert(cfn);
-    element_compiler_options options;
-    if (opts)
-        options = *opts;
-    expression_shared_ptr fn_expr;
-    ELEMENT_OK_OR_RETURN(element_compile(*ctx, fn, fn_expr, options));
-    *cfn = new element_compiled_function;
-    (*cfn)->function = fn;
-    (*cfn)->expression = std::move(fn_expr);
+    const auto total_lines_parsed = tokeniser->line;
+
+    //lines start at 1
+    for (auto i = 0; i < total_lines_parsed; ++i)
+        info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
+
+    auto* const data = info.file_name->data();
+    //todo: remove file_info added to interpreter source interpreter
+    interpreter->src_context->file_info[data] = std::move(info);
+
+    const auto log_tokens = flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+
+    if (log_tokens)
+        interpreter->log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+
+    element_parser_ctx parser;
+    parser.tokeniser = tokeniser;
+    parser.logger = interpreter->logger;
+    parser.src_context = interpreter->src_context;
+
+    element_ast root(nullptr);
+    //root.nearest_token = &tokeniser->cur_token;
+    parser.root = &root;
+
+    size_t first_token = 0;
+    auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRESSION);
+    result = parser.parse_expression(&first_token, ast);
+    if (result != ELEMENT_OK)
+        return result;
+
+    const auto log_ast = flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+
+    if (log_ast)
+        interpreter->log("\n---\nAST\n---\n" + ast_to_string(parser.root));
+
+    //parse only enabled, skip object model generation to avoid error codes with positive values
+    //i.e. errors returned other than ELEMENT_ERROR_PARSE
+    if (interpreter->parse_only)
+    {
+        root.children.clear();
+        return ELEMENT_OK;
+    }
+
+    //todo: urgh, this is horrible now...
+    element::deferred_expressions deferred_expressions;
+    auto dummy_identifier = element::identifier{ "<REMOVE>" };
+    auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, interpreter->global_scope.get(), element::function_declaration::kind::expression_bodied);
+    parser.root->nearest_token = &tokeniser->tokens[0];
+    assign_source_information(interpreter, dummy_declaration, parser.root);
+    auto expression_chain = build_expression_chain(interpreter, ast, dummy_declaration.get(), deferred_expressions, result);
+
+    if (deferred_expressions.empty())
+    {
+        dummy_declaration->body = std::move(expression_chain);
+    }
+    else
+    {
+        for (auto& [identifier, expression] : deferred_expressions)
+        {
+            element_result output_result = ELEMENT_OK;
+            auto lambda = build_lambda_declaration(interpreter, identifier, expression, dummy_declaration->our_scope.get(), output_result);
+            if (output_result != ELEMENT_OK)
+                throw;
+
+            const auto is_added = dummy_declaration->our_scope->add_declaration(std::move(lambda));
+            if (!is_added)
+            {
+                //todo: error
+            }
+        }
+
+        auto lambda_return_decl = std::make_unique<element::function_declaration>(element::identifier::return_identifier, dummy_declaration->our_scope.get(), element::function_declaration::kind::expression_bodied);
+        assign_source_information(interpreter, lambda_return_decl, parser.root);
+        lambda_return_decl->body = std::move(expression_chain);
+
+        dummy_declaration->body = std::move(lambda_return_decl);
+    }
+
+    root.children.clear();
+
+    if (result != ELEMENT_OK)
+    {
+        interpreter->log(result, fmt::format("building object model failed with element_result {}", result), info.file_name->data());
+        return result;
+    }
+
+    bool success = interpreter->global_scope->add_declaration(std::move(dummy_declaration));
+    if (!success)
+    {
+        (*object)->obj = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    const auto* found_dummy_decl = interpreter->global_scope->find(dummy_identifier, false);
+    assert(found_dummy_decl);
+    auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
+
+    if (!compiled)
+    {
+        (*object)->obj = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    (*object)->obj = std::move(compiled);
+
+    const auto* err = dynamic_cast<const element::error*>((*object)->obj.get());
+    if (err)
+        return err->log_once(interpreter->logger.get());
+
     return ELEMENT_OK;
 }
 
-void element_interpreter_delete_compiled_function(element_compiled_function* cfn)
+element_result element_interpreter_compile_expression(
+    element_interpreter_ctx* interpreter,
+    const element_compiler_options* options,
+    const char* expression_string,
+    element_instruction** instruction)
 {
-    delete cfn;
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!instruction)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    element_object object;
+    auto* object_ptr = &object;
+    const auto result = expression_to_object(interpreter, options, expression_string, &object_ptr);
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+
+    if (result != ELEMENT_OK)
+    {
+        (*instruction)->instruction = nullptr;
+        return result;
+    }
+
+    auto instr = object.obj->to_instruction();
+    if (!instr)
+    {
+        (*instruction)->instruction = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    (*instruction)->instruction = std::move(instr);
+    return ELEMENT_OK;
 }
 
-element_result element_interpreter_evaluate_function(
-    element_interpreter_ctx* ctx,
-    const element_compiled_function* cfn,
-    const element_value* inputs, size_t inputs_count,
-    element_value* outputs, size_t outputs_count,
-    const element_evaluator_options* opts)
+element_result element_interpreter_evaluate_expression(
+    element_interpreter_ctx* interpreter,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    element_outputs* outputs)
 {
-    assert(ctx);
-    assert(cfn);
-    element_evaluator_options options;
-    if (opts)
-        options = *opts;
-    return element_evaluate(*ctx, cfn->expression, inputs, inputs_count, outputs, outputs_count, options);
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!outputs)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    element_instruction instruction;
+    auto* instruction_ptr = &instruction;
+    auto result = element_interpreter_compile_expression(interpreter, nullptr, expression_string, &instruction_ptr);
+    if (result != ELEMENT_OK)
+    {
+        outputs->count = 0;
+        return result;
+    }
+
+    constexpr auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
+    if constexpr (log_expression_tree)
+        interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*instruction.instruction));
+
+    float inputs[] = { 0 };
+    element_inputs input;
+    input.values = inputs;
+    input.count = 1;
+
+    result = element_interpreter_evaluate(interpreter, options, instruction_ptr, &input, outputs);
+
+    return result;
+}
+
+element_result element_interpreter_typeof_expression(
+    element_interpreter_ctx* interpreter,
+    const element_evaluator_options* options,
+    const char* expression_string,
+    char* buffer,
+    const int buffer_size)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!buffer)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    //sure there is a shorthand for this
+    element_object object;
+    auto* object_ptr = &object;
+    const auto result = expression_to_object(interpreter, nullptr, expression_string, &object_ptr);
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+
+    if (result != ELEMENT_OK)
+    {
+        //todo:
+        interpreter->log(result, "tried to get typeof an expression that failed to compile");
+        return result;
+    }
+
+    const auto typeof = object.obj->typeof_info();
+    if (buffer_size < static_cast<int>(typeof.size()))
+    {
+        //todo:
+        interpreter->log(ELEMENT_ERROR_API_INSUFFICIENT_BUFFER, fmt::format("buffer size of {} isn't sufficient for string of {} characters", buffer_size, typeof.size()));
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+    }
+
+    strncpy(buffer, typeof.c_str(), typeof.size());
+    return ELEMENT_OK;
 }

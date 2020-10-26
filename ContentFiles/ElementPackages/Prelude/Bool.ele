@@ -1,0 +1,20 @@
+intrinsic struct Bool
+{
+    intrinsic function if(condition:Bool, ifTrue, ifFalse)
+    
+    intrinsic function not(a:Bool):Bool
+    intrinsic function and(a:Bool, b:Bool):Bool
+    intrinsic function or(a:Bool, b:Bool):Bool
+    
+    nand(a:Bool, b:Bool):Bool   = not(a.and(b))
+    nor(a:Bool, b:Bool):Bool    = not(a.or(b))
+    xor(a:Bool, b:Bool):Bool    = a.and(not(b)).or(b.and(not(a)))
+    xnor(a:Bool, b:Bool):Bool   = a.and(b).or(not(b).and(not(a)))
+}
+
+if = Bool.if
+intrinsic function True
+true = True
+intrinsic function False
+false = False
+not = Bool.not

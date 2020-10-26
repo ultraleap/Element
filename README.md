@@ -4,12 +4,11 @@ Element code runs using a host which can interpret or compile it to other format
 One of these formats is the bytecode format, [LMNTIL (Element Intermediate Language)](LMNT), for use in native and embedded applications.
 
 ## Element Language
-This is a brief summary, see the [Element Reference Manual](Language/ElementReferenceManual.md) for full details.
 * Single number data type `Num`
 * Structured types using `struct`
 * First class functions and local functions
 * Intrinsics (math intrinsics, collection intrinsics, control flow)
-* Genericity via implicit interfaces with `Any` type
+* Genericity via `Any` type
 
 Example:
 ```
@@ -17,14 +16,15 @@ sum(list) = list.fold(0, Num.add);
 factorial(n) = List.range(0, n).fold(1, Num.mul);
 ```
 
+For full details see the [Element Reference Manual](Language/ElementReferenceManual.md).
+
 ### Element Libraries
-Element includes a library of core functionality called [Prelude](Common/Prelude).
+Element includes a core set of functionality in the base library [Prelude](Common/Prelude).
 
 Element also comes with a [Standard Library](Common/StandardLibrary).
-New features will generally be implemented as part of the standard library rather than as language features.
 
 ## Repository Layout
-* [Laboratory - The Element Host Test Suite](Laboratory) - .NET Core 2.1 CLI
+* [Laboratory - The Element Host Test Suite](Laboratory) - .NET Core 3.0 CLI
     * Test runner using NUnit containing host compliance tests, prelude tests and standard library tests.
     * Can test Element.NET directly or invoke other compilers via CLI convention
 
@@ -41,10 +41,7 @@ New features will generally be implemented as part of the standard library rathe
     * Element parser
     * Element function evaluation
     * AoT compilation to:
-        * [LMNTIL](LMNT) - planned
-* [PyElement](PyElement) - Python
-    * Element parser using [TatSu](https://github.com/neogeny/TatSu)
-    * Element interpreter using Python [eval()](https://docs.python.org/3/library/functions.html)
+        * [LMNTIL](LMNT/doc/Bytecode.md) - planned
 * [LMNT](LMNT) - C
     * [LMNTIL](LMNT/doc/Bytecode.md) interpreter
     * JIT compiler using [DynASM](https://luajit.org/dynasm.html)
@@ -53,9 +50,9 @@ New features will generally be implemented as part of the standard library rathe
         * ARMv7-A - planned
 
 ### Command Line Interfaces (CLIs)
-* [Alchemist](Alchemist) - .NET Core 2.1 using [Element.NET](Element.NET) ![](https://github.com/ultraleap/Element/workflows/Alchemist.yml/badge.svg)
+* [Alchemist](Alchemist) - .NET Core 3.0 CLI for [Element.NET](Element.NET) ![](https://github.com/ultraleap/Element/workflows/Alchemist.yml/badge.svg)
     * CLI for executing Element via a REPL or compiling to other targets
-* [libelement.CLI](libelement.CLI) - C++ using [libelement](libelement)
+* [libelement.CLI](libelement.CLI) - C++ CLI for [libelement](libelement)
     * CLI for executing Element via a REPL or compiling to other targets
 
 ### Integrations/Tooling

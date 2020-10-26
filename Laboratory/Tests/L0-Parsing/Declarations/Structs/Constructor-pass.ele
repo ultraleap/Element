@@ -1,0 +1,2 @@
+struct MyStruct(a, b)
+instance = MyStruct(5, 10)

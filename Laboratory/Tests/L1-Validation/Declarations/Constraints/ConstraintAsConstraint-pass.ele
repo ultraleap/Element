@@ -1,0 +1,2 @@
+constraint Foo(a)
+constraint Bar(b:Foo):Bar

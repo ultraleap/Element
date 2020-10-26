@@ -1,0 +1,1 @@
+struct MyStruct(a:Num, b:Num)

@@ -1,0 +1,37 @@
+/* A literal number including sign and decimal point, also including e notation */
+literal         ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
+/* Any string including most UTF8 characters but not exactly '_' */
+identifier      ::= _? [a-zA-Z#x0080-#xFFFF] [_a-zA-Z0-9#x0080-#xFFFF]*
+unidentifier    ::= '_'
+
+/* Literals can be indexed to call instance functions
+   Expression list is optional so that constants/nullary functions don't require redundant parentheses */
+expression      ::= ((identifier | literal) (indexExpression | callExpression)*) | lambda | anonymousBlock
+indexExpression ::= '.' identifier
+callExpression  ::= '(' expression (',' expression)* ')'
+lambda          ::= unidentifier portList portConstraint? functionBody
+anonymousBlock  ::= '{' (declaration (',' declaration)*)? '}'
+
+/* Ports can have no identifier to be discarded (may require being declared with a constraint to match a function constraints)
+   Ports can have a default argument declared using the expression body */
+portConstraint  ::= ':' expression
+port            ::= (identifier | unidentifier) portConstraint? expressionBody?
+portList        ::= '(' port (',' port)* ')'
+
+block           ::= '{' declaration* '}'
+expressionBody  ::= '=' expression
+functionBody    ::= expressionBody | block
+
+function        ::= identifier portList? portConstraint? functionBody
+intrFunction    ::= 'intrinsic function' identifier portList? portConstraint?
+
+struct          ::= 'struct' identifier portList? block?
+intrStruct      ::= 'intrinsic struct' identifier portList? block?
+
+fnConstraint    ::= 'constraint' identifier portList? portConstraint?
+intrConstraint  ::= 'intrinsic constraint' identifier
+
+namespace       ::= 'namespace' identifier block
+
+declaration     ::= function | struct | namespace | constraint
+grammar         ::= declaration*

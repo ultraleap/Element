@@ -1,9 +1,0 @@
-# Represents an infinite set of elements
-struct Stream(at:Indexer)
-{
-    repeat(value):Stream = Stream(_(_) = value);
-
-    take(a:Stream, count:Num):List = List(a.at, count);
-
-    skip(a:Stream, count:Num):Stream = Stream(_(idx) = a.at(idx.add(count)));
-}
