@@ -302,7 +302,7 @@ element_result element_interpreter_evaluate(
  * @param[in] interpreter       interpreter context
  * @param[in] options           compilation options
  * @param[in] expression_string expression to compile
- * @param[in] instruction       instruction tree result
+ * @param[out] instruction       instruction tree result
  *
  * @return ELEMENT_OK compiled an expression to an instruction tree successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null

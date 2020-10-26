@@ -516,7 +516,6 @@ element_result expression_to_object(
     return ELEMENT_OK;
 }
 
-
 element_result call_expression_to_objects(
     element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
@@ -644,6 +643,8 @@ element_result element_interpreter_compile_expression(
     auto* object_ptr = &object;
     const auto result = expression_to_object(interpreter, options, expression_string, &object_ptr);
     interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+
+    *instruction = new element_instruction();
 
     if (result != ELEMENT_OK)
     {
