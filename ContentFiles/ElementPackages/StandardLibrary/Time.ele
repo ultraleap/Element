@@ -1,13 +1,56 @@
-struct TimePoint(whole:Num, fractional:Num)
+# TODO: Rename TimePoint to TimeSpan
+struct TimePoint(integer:Num, fractional:Num)
 {
-    fromNum(x:Num):TimePoint = TimePoint(x.floor, x.sub(x.floor))
+    # Internally TimeSpan stores negative intervals with a negative "integer"
+    # and a positive "fractional".
 
-    value(this:TimePoint, period:Num):Num = this.whole.rem(period).add(this.fractional).rem(period)
-    cycles(this:TimePoint, period:Num):Num = this.whole.div(period).add(this.fractional.div(period).floor)
+    fromSeconds(x:Num):TimePoint = TimePoint(x.floor, x.sub(x.floor))
 
-    mul(this:TimePoint, x:Num):Num = this.whole.mul(x).add(this.fractional.mul(x))
-    div(this:TimePoint, x:Num):Num = this.whole.div(x).add(this.fractional.div(x))
+    value(this:TimePoint, period:Num):Num = this.integer.rem(period).add(this.fractional).rem(period)
+    cycles(this:TimePoint, period:Num):Num = this.integer.div(period).add(this.fractional.div(period).floor)
 
-    add(this:TimePoint, that:TimePoint):TimePoint = TimePoint(this.whole.add(that.whole.add), this.whole.fractional.add(that.whole.fractional))
-    sub(this:TimePoint, that:TimePoint):TimePoint = TimePoint(this.whole.add(that.whole.add), this.whole.fractional.add(that.whole.fractional))
+    mul(this:TimePoint, x:Num):TimePoint
+    {
+        newPositiveFractional = if(this.integer.gt(0), this.fractional.mul(x.abs), 1.sub(this.fractional).mul(x.abs))
+
+        #return = TimePoint(this.integer.mul(x), this.fractional.mul(x.abs)).regularised
+        return = TimePoint(this.integer.mul(x), newPositiveFractional).regularised
+    }
+
+    div(this:TimePoint, x:Num):Num
+    {
+        return = this.mul(1.div(x))
+    }
+
+    add(this:TimePoint, other:TimePoint):TimePoint
+    {
+        return = TimePoint(this.integer.add(other.integer), this.fractional.add(other.fractional)).regularised
+    }
+
+    sub(this:TimePoint, other:TimePoint):TimePoint
+    {
+        return = this.add(other.mul(-1))
+    }
+
+    regularised(this:TimePoint)
+    {
+        return = TimePoint(this.integer.add(this.fractional.floor), this.fractional.rem(1))
+    }
+
+    abs(this:TimePoint):TimePoint
+    {
+        one = 1
+        fractionalComplement = one.sub(this.fractional)
+        #return = this
+        return = if(this.integer.geq(0), this, TimePoint(this.integer.abs.add(fractionalComplement.floor).sub(1), fractionalComplement.rem(1)))
+    }
+
+    negate(this:TimePoint):TimePoint
+    {
+        # Return -1 times this TimePoint
+        signNonZero = this.integer.geq(0)
+
+        #toReturnIfPositiveToNegative = TimePoint(this.integer.mul(-1).sub(1), this.fractional)
+        return = TimePoint(this.integer.mul(-1), 1.sub(this.fractional))
+    }
 }

@@ -1,10 +1,73 @@
 using System;
 using System.Linq;
+using NUnit.Framework;
 
 namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class TimePoint : StandardLibraryFixture
     {
+
+        // Most tests are written for the "fromSeconds" factory function, as the default constructor hides the implementation
+        // detail of separating out the fractional and integer components.
+        [
+            TestCase("TimePoint.fromSeconds(1).add(TimePoint.fromSeconds(2))", "TimePoint.fromSeconds(3)"),  // Integer seconds can be added 
+            TestCase("TimePoint.fromSeconds(1).add(TimePoint.fromSeconds(4))", "TimePoint.fromSeconds(5)"),
+            TestCase("TimePoint.fromSeconds(0.2).add(TimePoint.fromSeconds(0.3))", "TimePoint.fromSeconds(0.5)"),  // Fractional parts can be added 
+            TestCase("TimePoint.fromSeconds(0.7).add(TimePoint.fromSeconds(0.8))", "TimePoint.fromSeconds(1.5)"),
+            TestCase("TimePoint.fromSeconds(3.5).add(TimePoint.fromSeconds(4.8))", "TimePoint.fromSeconds(8.3)"),  // Complete numbers can be added
+        ]
+        public void AddPositive(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
+        [
+            TestCase("TimePoint.fromSeconds(-1).add(TimePoint.fromSeconds(-3))", "TimePoint.fromSeconds(-4)"),    // The integer parts can be added
+            TestCase("TimePoint.fromSeconds(-1.3).add(TimePoint.fromSeconds(-1.2))", "TimePoint.fromSeconds(-2.5)"),    // The fractional parts can be added
+        ]
+        public void AddNegative(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
+        [
+            TestCase("TimePoint.fromSeconds(2.3).mul(2)", "TimePoint.fromSeconds(4.6)"),  // Numbers can be multiplied
+            TestCase("TimePoint.fromSeconds(2.7).mul(2)", "TimePoint.fromSeconds(5.4)"),      // Fractional parts cannot exceed 1
+            TestCase("TimePoint.fromSeconds(2.72).mul(10)", "TimePoint.fromSeconds(27.2)"),
+        ]
+        public void MulPositive(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
+        [
+            TestCase("TimePoint.fromSeconds(1.7).mul(-1)", "TimePoint.fromSeconds(-1.7)"),    // Numbers can be multiplied by negative numbers
+            TestCase("TimePoint.fromSeconds(2.7).mul(-2)", "TimePoint.fromSeconds(-5.4)"),
+            TestCase("TimePoint.fromSeconds(2.72).mul(-10)", "TimePoint.fromSeconds(-27.2)"),
+
+        ]
+        public void MulNegative(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
+        [
+            TestCase("TimePoint.fromSeconds(1).abs", "TimePoint.fromSeconds(1)"),
+            TestCase("TimePoint.fromSeconds(1.5).abs", "TimePoint.fromSeconds(1.5)"),
+            TestCase("TimePoint.fromSeconds(1.75).abs", "TimePoint.fromSeconds(1.75)"),
+            TestCase("TimePoint.fromSeconds(2).abs", "TimePoint.fromSeconds(2)"),
+            TestCase("TimePoint.fromSeconds(-1.5).abs", "TimePoint.fromSeconds(1.5).abs"),
+            TestCase("TimePoint.fromSeconds(-1.75).abs", "TimePoint.fromSeconds(1.75).abs"),
+            TestCase("TimePoint.fromSeconds(-2).abs", "TimePoint.fromSeconds(2).abs"),
+        ]
+        public void Abs(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
+        [
+            TestCase("TimePoint.fromSeconds(1).negate", "TimePoint.fromSeconds(-1)"),
+            TestCase("TimePoint.fromSeconds(1.5).negate", "TimePoint.fromSeconds(-1.5)"),
+            TestCase("TimePoint.fromSeconds(1.75).negate", "TimePoint.fromSeconds(-1.75)"),
+            TestCase("TimePoint.fromSeconds(2).negate", "TimePoint.fromSeconds(-2)"),
+            TestCase("TimePoint.fromSeconds(-1).negate", "TimePoint.fromSeconds(1)"),
+            TestCase("TimePoint.fromSeconds(-1.5).negate", "TimePoint.fromSeconds(1.5).abs"),
+            TestCase("TimePoint.fromSeconds(-1.75).negate", "TimePoint.fromSeconds(1.75).abs"),
+            TestCase("TimePoint.fromSeconds(-2).negate", "TimePoint.fromSeconds(2).abs"),
+        ]
+        public void Negate(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
         private static (int FrameIndex, int SampleRate, float Period)[] _args =
             new[]
                 {
@@ -35,10 +98,10 @@ namespace Laboratory.Tests.L4.StandardLibrary
                                                       TimeSpan.FromDays(1),
                                                   }.Select(time => ((int)(time.TotalSeconds * sampleRate), sampleRate, period))))
                  .ToArray();
-        
+
         // TODO: Test that TimePoint.value returns comparable interval of values for periods at large offsets
         // e.g. value(n) = n*period...n*period+period == n*period+offset...n*period+offset+period should return same values
-        
+
         /*[TestCaseSource(nameof(_args))]
         public void TimePointStability((int FrameIndex, int SampleRate, float Period) args)
         {
