@@ -1,20 +1,65 @@
+#   TimeSpan objects store time using two Nums to gain increased precision
+#
+#   It is not recommended to construct manually from the constructor, but instead
+#   to use a factory function such as "fromSeconds" if you need to create one.
+#
 struct TimeSpan(integer:Num, fractional:Num)
 {
+    # Internally the integer component can be positive or negative,
+    # and the fractional component is a non-negative number between 0 and 1.
+    #
+    # The encoding of numbers is such that the stored number is equal to the integer member
+    # plus the fractional member.
+    # eg: value = this.integer.add(this.fractional)
+    #
+    # This applied to negative numbers too, so that
+    # eg: -0.75 is encoded as integer = -1, fractional = 0.25
+    #
+    # This makes addition and negation quick and easy. Multiplication is a little more difficult.
+
+    # Create a TimeSpan from the specified number, in seconds
     fromSeconds(x:Num):TimeSpan = TimeSpan(x.floor, x.sub(x.floor))
 
+    # Return the value of the TimeSpan, modulo one "period"
     value(this:TimeSpan, period:Num):Num = this.integer.rem(period).add(this.fractional).rem(period)
+
+    # Return the integer number of elapsed periods
     cycles(this:TimeSpan, period:Num):Num = this.integer.div(period).add(this.fractional.div(period).floor)
+
+    abs(this:TimeSpan):TimeSpan
+    {
+        return = if(this.integer.geq(0), this, this.negate)
+    }
+
+    negate(this:TimeSpan):TimeSpan
+    {
+        return = TimeSpan(this.integer.mul(-1).sub(1), 1.sub(this.fractional))._regularise
+    }
+
+    add(this:TimeSpan, other:TimeSpan):TimeSpan
+    {
+        return = TimeSpan(this.integer.add(other.integer), this.fractional.add(other.fractional))._regularise
+    }
+
+    sub(this:TimeSpan, other:TimeSpan):TimeSpan
+    {
+        return = this.add(other.negate)
+    }
 
     mul(this:TimeSpan, x:Num):TimeSpan
     {
         struct MultiplicableTimeSpan(encodedInteger:Num, encodedFractional:Num, isPositive:Bool)
         {
+            # This struct is an alternate encoding of timespans which requires "encodedInteger" and
+            # "encodedFractional" to be positive, and the sign of the MultiplicableTimeSpan is defined
+            # by "isPositive". This makes multiplying by numbers simple.
+
             fromTimeSpan(ts:TimeSpan):MultiplicableTimeSpan
             {
                 return = if(
                     ts.integer.geq(0),
-                    MultiplicableTimeSpan(ts.integer, ts.fractional, true).regularise,
-                    MultiplicableTimeSpan(ts.integer.abs.sub(1), 1.sub(ts.fractional), false).regularise
+                    MultiplicableTimeSpan(ts.integer, ts.fractional, true)._regularise,
+                    MultiplicableTimeSpan(ts.integer.abs.sub(1), 1.sub(ts.fractional), false)._regularise
                 )
             }
 
@@ -27,7 +72,7 @@ struct TimeSpan(integer:Num, fractional:Num)
                 )
             }
 
-            multiply(this:MultiplicableTimeSpan, x:Num)
+            multiply(this:MultiplicableTimeSpan, x:Num):MultiplicableTimeSpan
             {
                 resultIsPositive = this.isPositive.xnor(x.geq(0))
                 multipliedInteger = this.encodedInteger.mul(x.abs)
@@ -38,46 +83,27 @@ struct TimeSpan(integer:Num, fractional:Num)
                 newInteger = multipliedInteger.floor
                 newFractional = multipliedFractional.add(multipliedInteger.rem(1))
 
-                return = MultiplicableTimeSpan(newInteger, newFractional, resultIsPositive).regularise
+                return = MultiplicableTimeSpan(newInteger, newFractional, resultIsPositive)._regularise
             }
 
-            regularise(this:MultiplicableTimeSpan)
+            _regularise(this:MultiplicableTimeSpan):MultiplicableTimeSpan
             {
                 return = MultiplicableTimeSpan(this.encodedInteger.add(this.encodedFractional.floor), this.encodedFractional.rem(1), this.isPositive)
             }
         }
 
-        multiplicableTimeSpan = MultiplicableTimeSpan.fromTimeSpan(this)
-        return = multiplicableTimeSpan.multiply(x).toTimeSpan.regularise
+        return = MultiplicableTimeSpan.fromTimeSpan(this).multiply(x).toTimeSpan._regularise
     }
 
     div(this:TimeSpan, x:Num):TimeSpan
     {
         return = this.mul(1.div(x))
     }
-
-    add(this:TimeSpan, other:TimeSpan):TimeSpan
+    
+    _regularise(this:TimeSpan):TimeSpan
     {
-        return = TimeSpan(this.integer.add(other.integer), this.fractional.add(other.fractional)).regularise
-    }
-
-    sub(this:TimeSpan, other:TimeSpan):TimeSpan
-    {
-        return = this.add(other.negate)
-    }
-
-    regularise(this:TimeSpan):TimeSpan
-    {
+        # Regularising a TimeSpan means ensuring that the fractional component is between 0 and 1,
+        # and adjusting the integer component appropriately.
         return = TimeSpan(this.integer.add(this.fractional.floor), this.fractional.rem(1))
-    }
-
-    negate(this:TimeSpan):TimeSpan
-    {
-        return = TimeSpan(this.integer.mul(-1).sub(1), 1.sub(this.fractional)).regularise
-    }
-
-    abs(this:TimeSpan):TimeSpan
-    {
-        return = if(this.integer.geq(0), this, this.mul(-1))
     }
 }
