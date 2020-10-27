@@ -3,19 +3,19 @@ using System.Globalization;
 
 namespace Element.CLR
 {
-    [ElementStructTemplate("TimePoint")]
-    public struct TimePoint
+    [ElementStructTemplate("TimeSpan")]
+    public struct ElementTimeSpan
     {
         public float whole;
         public float fractional;
 
-        public TimePoint(double time)
+        public ElementTimeSpan(double time)
         {
             whole = (float)Math.Floor(time);
             fractional = (float)(time - whole);
         }
 	
-        public TimePoint(float whole, float fractional)
+        public ElementTimeSpan(float whole, float fractional)
         {
             this.whole = whole;
             this.fractional = fractional;

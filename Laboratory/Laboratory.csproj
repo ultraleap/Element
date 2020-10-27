@@ -61,4 +61,21 @@
     <ProjectReference Include="..\Element.NET\Element.NET.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Tests\L0-Parsing\Declarations\Identifiers\%27_%27-fail.ele">
+      <Link>L0-Parsing\Declarations\Identifiers\%27_%27-fail.ele</Link>
+    </Content>
+    <Content Update="Tests\L1-Validation\ReservedIdentifiers\%27return%27-fail-15.ele">
+      <Link>L1-Validation\ReservedIdentifiers\%27return%27-fail-15.ele</Link>
+    </Content>
+    <Content Update="Tests\L1-Validation\ReservedIdentifiers\%27struct%27-fail-15.ele">
+      <Link>L1-Validation\ReservedIdentifiers\%27struct%27-fail-15.ele</Link>
+    </Content>
+    <Content Update="Tests\L1-Validation\ReservedIdentifiers\%27namespace%27-fail-15.ele">
+      <Link>L1-Validation\ReservedIdentifiers\%27namespace%27-fail-15.ele</Link>
+    </Content>
+    <Content Update="Tests\L1-Validation\ReservedIdentifiers\%27intrinsic%27-fail-15.ele">
+      <Link>L1-Validation\ReservedIdentifiers\%27intrinsic%27-fail-15.ele</Link>
+    </Content>
+  </ItemGroup>
 </Project>
