@@ -111,10 +111,10 @@ namespace Laboratory.Tests.L3.Prelude
 		[DatapointSource]
 		public (string FunctionExpression, string CallExpression, string ExpectedExpression)[] FunctionCallData =
 		{
-			("Num", "(0)", "0"),
-			("Num", "(Num.NegativeInfinity)", "Num.NegativeInfinity"),
-			("Num", "(False)", "0"),
-			("Num", "(True)", "1"),
+			("_(a:Num):Num = Num(a)", "(0)", "0"),
+			("_(a:Num):Num = Num(a)", "(Num.NegativeInfinity)", "Num.NegativeInfinity"),
+			("_(a:Num):Num = Num(a)", "(False)", "0"),
+			("_(a:Num):Num = Num(a)", "(True)", "1"),
 
 			("Num.ln", "(0)", "Num.NegativeInfinity"),
 			("Num.ln", "(1)", "0"),
@@ -268,6 +268,9 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.mod", "(5, 2)", "1"),
 			("Num.mod", "(5, -2)", "-1"),
 			
+			("Num.mod", "(0, 0)", "Num.NaN"),
+			("Num.mod", "(2, 0)", "Num.NaN"),
+			
 			("Num.atan2", "(0, 0)", "0"),
 			("Num.atan2", "(0, 0)", $"{ToRadians(0)}"),
 			("Num.atan2", "(1, 0)", $"{ToRadians(90)}"),
@@ -318,8 +321,6 @@ namespace Laboratory.Tests.L3.Prelude
 		{
 			("_(a:Num):Num = Num(a)", "(Bool)", EleMessageCode.ConstraintNotSatisfied),
 			("_(a:Num):Num = Num(a)", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
-			("Num.mod", "(0, 0)", EleMessageCode.ArgumentOutOfRange),
-			("Num.mod", "(2, 0)", EleMessageCode.ArgumentOutOfRange),
 		};
 		
 		[Theory]
