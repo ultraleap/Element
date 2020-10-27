@@ -6,7 +6,7 @@ namespace Element.AST
     public class IntrinsicStructDeclaration : Declaration
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic";
-        protected override string Qualifier { get; } = "struct";
+        protected override string Qualifier { get; } = "struct ";
         protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             IntrinsicImplementationCache.Get<IIntrinsicStructImplementation>(Identifier, context)
@@ -48,7 +48,7 @@ namespace Element.AST
     public class CustomStructDeclaration : Declaration
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;
-        protected override string Qualifier { get; } = "struct";
+        protected override string Qualifier { get; } = "struct ";
         protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             PortList.ResolveInputConstraints(scope, context, false, false)

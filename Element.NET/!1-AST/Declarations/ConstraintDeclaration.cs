@@ -5,7 +5,7 @@ namespace Element.AST
     public class IntrinsicConstraintDeclaration : Declaration
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic";
-        protected override string Qualifier { get; } = "constraint";
+        protected override string Qualifier { get; } = "constraint ";
         protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, context)
@@ -23,7 +23,7 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;
 
-        protected override string Qualifier { get; } = "constraint";
+        protected override string Qualifier { get; } = "constraint ";
         protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             PortList.ResolveInputConstraints(scope, context, false, false)

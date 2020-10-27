@@ -32,7 +32,7 @@ namespace Laboratory.Tests.L2.Semantics
         [Test]
         public void RecursionIndirectDisallowed() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "recurseIndirect(5)");
         [Test]
-        public void SelfReferencingLocalWithOuter() => AssertApproxEqual(CompilerInput, "selfReferencingLocalWithOuter", "3.14");
+        public void SelfReferencingLocalWithOuter() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "selfReferencingLocalWithOuter");
         [Test]
         public void SelfReferencingLocal() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "selfReferencingLocal");
         
@@ -49,5 +49,8 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("5(10)")]
         [TestCase("pi(2)")]
         public void CallNonFunction(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.NotFunction, expression);
+        
+        [Test]
+        public void LookupError() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "funcWithLookupError");
     }
 }

@@ -6,7 +6,7 @@ namespace Element.AST
     public class NamespaceDeclaration : Declaration
     {
         protected override string IntrinsicQualifier => string.Empty;
-        protected override string Qualifier { get; } = "namespace";
+        protected override string Qualifier { get; } = "namespace ";
         protected override Type[] BodyAlternatives { get; } = {typeof(NamespaceBlock)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) => Namespace.Create(((NamespaceBlock) Body), scope, context);
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)
