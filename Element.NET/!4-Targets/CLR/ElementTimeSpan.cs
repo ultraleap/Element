@@ -4,18 +4,18 @@ using System.Globalization;
 namespace Element.CLR
 {
     [ElementStructTemplate("TimeSpan")]
-    public struct ElementTimeSpan
+    public struct TimeSpan
     {
         public float whole;
         public float fractional;
 
-        public ElementTimeSpan(double time)
+        public TimeSpan(double time)
         {
             whole = (float)Math.Floor(time);
             fractional = (float)(time - whole);
         }
 	
-        public ElementTimeSpan(float whole, float fractional)
+        public TimeSpan(float whole, float fractional)
         {
             this.whole = whole;
             this.fractional = fractional;
