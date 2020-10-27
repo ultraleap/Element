@@ -26,6 +26,23 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void AddNegative(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
 
+
+
+        [
+            TestCase("TimePoint.fromSeconds(10).sub(TimePoint.fromSeconds(3.4))", "TimePoint.fromSeconds(6.6)"),
+            TestCase("TimePoint.fromSeconds(10).sub(TimePoint.fromSeconds(3.6))", "TimePoint.fromSeconds(6.4)"),
+            TestCase("TimePoint.fromSeconds(1).sub(TimePoint.fromSeconds(0.4))", "TimePoint.fromSeconds(0.6)"),
+            TestCase("TimePoint.fromSeconds(1).sub(TimePoint.fromSeconds(0.5))", "TimePoint.fromSeconds(0.5)"),
+            TestCase("TimePoint.fromSeconds(1).sub(TimePoint.fromSeconds(0.6))", "TimePoint.fromSeconds(0.4)"),
+            TestCase("TimePoint.fromSeconds(1).sub(TimePoint.fromSeconds(1))", "TimePoint.fromSeconds(0)"),
+            TestCase("TimePoint.fromSeconds(1).sub(TimePoint.fromSeconds(1.4))", "TimePoint.fromSeconds(-0.4)"),
+            TestCase("TimePoint.fromSeconds(1).sub(TimePoint.fromSeconds(1.6))", "TimePoint.fromSeconds(-0.6)"),
+            TestCase("TimePoint.fromSeconds(1).sub(TimePoint.fromSeconds(2.5))", "TimePoint.fromSeconds(-1.5)"),
+        ]
+        public void Subtract(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
+
         [
             TestCase("TimePoint.fromSeconds(2.3).mul(2)", "TimePoint.fromSeconds(4.6)"),  // Numbers can be multiplied
             TestCase("TimePoint.fromSeconds(2.7).mul(2)", "TimePoint.fromSeconds(5.4)"),      // Fractional parts cannot exceed 1
@@ -38,9 +55,24 @@ namespace Laboratory.Tests.L4.StandardLibrary
             TestCase("TimePoint.fromSeconds(1.7).mul(-1)", "TimePoint.fromSeconds(-1.7)"),    // Numbers can be multiplied by negative numbers
             TestCase("TimePoint.fromSeconds(2.7).mul(-2)", "TimePoint.fromSeconds(-5.4)"),
             TestCase("TimePoint.fromSeconds(2.72).mul(-10)", "TimePoint.fromSeconds(-27.2)"),
+            TestCase("TimePoint.fromSeconds(-2.3).mul(-2)", "TimePoint.fromSeconds(4.6)"),
+            TestCase("TimePoint.fromSeconds(-2.7).mul(-2)", "TimePoint.fromSeconds(5.4)"),
+            TestCase("TimePoint.fromSeconds(-2.72).mul(-10)", "TimePoint.fromSeconds(27.2)"),
 
         ]
         public void MulNegative(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
+
+        [
+            TestCase("TimePoint.fromSeconds(2.3).div(2)", "TimePoint.fromSeconds(1.15)"),  // Numbers can be multiplied
+            TestCase("TimePoint.fromSeconds(2.7).div(2)", "TimePoint.fromSeconds(1.35)"),      // Fractional parts cannot exceed 1
+            TestCase("TimePoint.fromSeconds(2.72).div(10)", "TimePoint.fromSeconds(0.272)"),
+            TestCase("TimePoint.fromSeconds(1.7).div(-1)", "TimePoint.fromSeconds(-1.7)"),    // Numbers can be multiplied by negative numbers
+            TestCase("TimePoint.fromSeconds(2.7).div(-2)", "TimePoint.fromSeconds(-1.35)"),
+            TestCase("TimePoint.fromSeconds(2.72).div(-10)", "TimePoint.fromSeconds(-0.272)"),
+        ]
+        public void Div(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
 
         [
@@ -67,6 +99,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         ]
         public void Negate(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
 
         private static (int FrameIndex, int SampleRate, float Period)[] _args =
             new[]

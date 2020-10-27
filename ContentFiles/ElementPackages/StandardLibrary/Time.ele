@@ -1,4 +1,3 @@
-# TODO: Rename TimePoint to TimeSpan
 struct TimePoint(integer:Num, fractional:Num)
 {
     fromSeconds(x:Num):TimePoint = TimePoint(x.floor, x.sub(x.floor))
@@ -31,7 +30,15 @@ struct TimePoint(integer:Num, fractional:Num)
             multiply(this:MultiplicableTimeSpan, x:Num)
             {
                 resultIsPositive = this.isPositive.xnor(x.geq(0))
-                return = MultiplicableTimeSpan(this.encodedInteger.mul(x.abs), this.encodedFractional.mul(x.abs), resultIsPositive).regularise
+                multipliedInteger = this.encodedInteger.mul(x.abs)
+                multipliedFractional = this.encodedFractional.mul(x.abs)
+
+                # The multipliedInteger may have acquired a fractional component, so move this
+                # onto the newFractional component.
+                newInteger = multipliedInteger.floor
+                newFractional = multipliedFractional.add(multipliedInteger.rem(1))
+
+                return = MultiplicableTimeSpan(newInteger, newFractional, resultIsPositive).regularise
             }
 
             regularise(this:MultiplicableTimeSpan)
@@ -44,7 +51,7 @@ struct TimePoint(integer:Num, fractional:Num)
         return = multiplicableTimeSpan.multiply(x).toTimeSpan.regularise
     }
 
-    div(this:TimePoint, x:Num):Num
+    div(this:TimePoint, x:Num):TimePoint
     {
         return = this.mul(1.div(x))
     }
@@ -59,7 +66,7 @@ struct TimePoint(integer:Num, fractional:Num)
         return = this.add(other.negate)
     }
 
-    regularise(this:TimePoint)
+    regularise(this:TimePoint):TimePoint
     {
         return = TimePoint(this.integer.add(this.fractional.floor), this.fractional.rem(1))
     }
