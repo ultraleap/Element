@@ -316,8 +316,8 @@ namespace Laboratory.Tests.L3.Prelude
 		[DatapointSource]
 		public (string FunctionExpression, string CallExpression, EleMessageCode ExpectedError)[] FunctionCallErrorCases =
 		{
-			("Num", "(Bool)", EleMessageCode.ConstraintNotSatisfied),
-			("Num", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
+			("_(a:Num):Num = Num(a)", "(Bool)", EleMessageCode.ConstraintNotSatisfied),
+			("_(a:Num):Num = Num(a)", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
 			("Num.mod", "(0, 0)", EleMessageCode.ArgumentOutOfRange),
 			("Num.mod", "(2, 0)", EleMessageCode.ArgumentOutOfRange),
 		};

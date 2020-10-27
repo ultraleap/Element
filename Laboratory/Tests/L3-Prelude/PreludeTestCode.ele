@@ -12,8 +12,8 @@ struct Vector3(x:Num, y:Num, z:Num)
 factorial(a:Num):Num
 {
     return = for(Vector2(1, 1), condition, body).y
-    condition(v):Bool = v.x.leq(a)
-    body(v) = Vector2(v.x.add(1), v.y.mul(v.x))
+    condition(v:Vector2):Bool = v.x.leq(a)
+    body(v:Vector2):Vector2 = Vector2(v.x.add(1), v.y.mul(v.x))
 }
 
 returnVec2(a:Vector2):Num = a.x
@@ -26,7 +26,7 @@ factorialExpressionBodied(a:Num):Num = for({i = a, v = 1},
 struct MyStruct(vector:Vector3)
 makeMyStruct(a:Num) = MyStruct(Vector3(a, a, a))
 predicate(a:MyStruct):Bool = false
-iterateWithMyStruct(a:Num):Num = for(makeMyStruct(a), predicate, _(a) = a).vector.add(Vector3(2, 2, 2)).x
+iterateWithMyStruct(a:Num):Num = for(makeMyStruct(a), predicate, _(a:MyStruct):MyStruct = a).vector.add(Vector3(2, 2, 2)).x
 
 struct LoopState(value:Num)
 NestedForLoop(a:Num):Num
