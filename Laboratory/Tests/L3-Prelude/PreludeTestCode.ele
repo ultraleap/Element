@@ -37,3 +37,14 @@ NestedForLoop(a:Num):Num
    predicate(input:LoopState):Bool = input.value.lt(200)
    return = for(LoopState(a), predicate, body).value
 }
+
+resolveDifferentReturnTypes(a:Num)
+{
+    return:List 
+    {
+        index(idx:Num) = Bool.if(a.gt(0), Num.floor(a), 0)
+        return = List(index, 1)
+    }
+    
+    #return = Bool.if(a.gt(0), Num.floor(a), Num.floor(0))
+}

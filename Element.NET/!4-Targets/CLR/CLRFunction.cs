@@ -213,12 +213,12 @@ namespace Element.CLR
 
 					if (m.Operands.Count == 2)
 					{
-						var a = CompileInstruction(m.Operands[1], data);//ConvertExpressionType(CompileInstruction(m.Operands[1], data), m.Operands[1].GetType());
-						var b = CompileInstruction(m.Operands[0], data);//ConvertExpressionType(CompileInstruction(m.Operands[0], data), m.Operands[0].GetType());
+						var sa = CompileInstruction(m.Operands[1], data);
+						var sb = CompileInstruction(m.Operands[0], data);
 
 						return LinqExpression.Condition(ConvertExpressionType(CompileInstruction(m.Selector, data), typeof(bool)),
-							CompileInstruction(m.Operands[1], data),
-							CompileInstruction(m.Operands[0], data));
+							sa,
+							sb);
 					}
 
 					var sel = LinqExpression.Convert(CompileInstruction(m.Selector, data), typeof(int));
