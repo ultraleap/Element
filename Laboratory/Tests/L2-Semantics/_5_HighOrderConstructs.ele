@@ -106,18 +106,18 @@ createVecFromVec(vec:Vector2):Vector2 = Vector2(vec.i.add(1), vec.v.add(1))
 getVec = createVecFromVec(createVecFromVec(Vector2(0, 1)))
 
 
-struct structContainer(who_cares) { i = 0 v = 1 }
-createStructFromStruct(prev) {
-    struct return(who_cares) { i = prev.i.add(1) v = prev.v.add(1) }
-}
-getStruct = createStructFromStruct(createStructFromStruct(structContainer))
-
-
-namespace namespaceContainer { i = 0 v = 1 }
-createNamespaceFromNamespace(prev) {
-    namespace return { i = prev.i.add(1) v = prev.v.add(1) }
-}
-getNamespace = createNamespaceFromNamespace(createNamespaceFromNamespace(namespaceContainer))
+#struct structContainer(who_cares) { i = 0 v = 1 }
+#createStructFromStruct(prev) {
+#    struct return(who_cares) { i = prev.i.add(1) v = prev.v.add(1) }
+#}
+#getStruct = createStructFromStruct(createStructFromStruct(structContainer))
+#
+#
+#namespace namespaceContainer { i = 0 v = 1 }
+#createNamespaceFromNamespace(prev) {
+#    namespace return { i = prev.i.add(1) v = prev.v.add(1) }
+#}
+#getNamespace = createNamespaceFromNamespace(createNamespaceFromNamespace(namespaceContainer))
 
 
 
