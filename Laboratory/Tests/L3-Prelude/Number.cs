@@ -113,8 +113,8 @@ namespace Laboratory.Tests.L3.Prelude
 		{
 			("_(a:Num):Num = Num(a)", "(0)", "0"),
 			("_(a:Num):Num = Num(a)", "(Num.NegativeInfinity)", "Num.NegativeInfinity"),
-			("_(a:Num):Num = Num(a)", "(False)", "0"),
-			("_(a:Num):Num = Num(a)", "(True)", "1"),
+			("_(a:Bool):Num = Num(a)", "(False)", "0"),
+			("_(a:Bool):Num = Num(a)", "(True)", "1"),
 
 			("Num.ln", "(0)", "Num.NegativeInfinity"),
 			("Num.ln", "(1)", "0"),

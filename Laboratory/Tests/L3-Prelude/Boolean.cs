@@ -19,12 +19,12 @@ namespace Laboratory.Tests.L3.Prelude
 
 		[DatapointSource] public (string FunctionExpression, string CallExpression, string ExpectedExpression)[] FunctionCallData =
 		{
-			("_(a:Bool):Bool = Bool(a)" ,"(0)", "False"),
-			("_(a:Bool):Bool = Bool(a)" ,"(1)", "True"),
-			("_(a:Bool):Bool = Bool(a)" ,"(1.2)", "True"),
-			("_(a:Bool):Bool = Bool(a)" ,"(9999)", "True"),
-			("_(a:Bool):Bool = Bool(a)" ,"(0.1)", "True"),
-			("_(a:Bool):Bool = Bool(a)" ,"(-0.1)", "False"),
+			("_(a:Num):Bool = Bool(a)" ,"(0)", "False"),
+			("_(a:Num):Bool = Bool(a)" ,"(1)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(1.2)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(9999)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(0.1)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(-0.1)", "False"),
 			
 			("Bool.not" ,"(True)", "False"),
 			("Bool.not" ,"(False)", "True"),

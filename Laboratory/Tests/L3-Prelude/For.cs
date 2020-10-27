@@ -16,7 +16,7 @@ namespace Laboratory.Tests.L3.Prelude
         {
             ("_(input:Num):Num = for(input, _(n:Num):Bool = False, _(n:Num):Num = n)", "(5)", "5"),
             ("_(input:Bool):Bool = for(input, _(n:Bool):Bool = False, _(n:Bool):Bool = n)", "(True)", "True"),
-            ("_(input:Vector2):Vector2 = for(input, _(n:Vector2):Bool = False, _(n:Vector2):Vector2 = n)", "(Vector3(10, 20))", "Vector2(10, 20)"),
+            ("_(input:Vector2):Vector2 = for(input, _(n:Vector2):Bool = False, _(n:Vector2):Vector2 = n)", "(Vector2(10, 20))", "Vector2(10, 20)"),
         };
         
         [Test]
