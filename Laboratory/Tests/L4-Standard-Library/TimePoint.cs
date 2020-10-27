@@ -61,9 +61,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
             TestCase("TimePoint.fromSeconds(1.75).negate", "TimePoint.fromSeconds(-1.75)"),
             TestCase("TimePoint.fromSeconds(2).negate", "TimePoint.fromSeconds(-2)"),
             TestCase("TimePoint.fromSeconds(-1).negate", "TimePoint.fromSeconds(1)"),
-            TestCase("TimePoint.fromSeconds(-1.5).negate", "TimePoint.fromSeconds(1.5).abs"),
-            TestCase("TimePoint.fromSeconds(-1.75).negate", "TimePoint.fromSeconds(1.75).abs"),
-            TestCase("TimePoint.fromSeconds(-2).negate", "TimePoint.fromSeconds(2).abs"),
+            TestCase("TimePoint.fromSeconds(-1.5).negate", "TimePoint.fromSeconds(1.5)"),
+            TestCase("TimePoint.fromSeconds(-1.75).negate", "TimePoint.fromSeconds(1.75)"),
+            TestCase("TimePoint.fromSeconds(-2).negate", "TimePoint.fromSeconds(2)"),
         ]
         public void Negate(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
