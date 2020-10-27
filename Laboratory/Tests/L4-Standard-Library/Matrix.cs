@@ -40,5 +40,12 @@ namespace Laboratory.Tests.L4.StandardLibrary
         ]
         public void Position(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+        
+        [
+            TestCase("Matrix4x4.identity.transform(Vector4(1, 1, 1, 0))", "Vector4(1, 1, 1, 0)"),
+            TestCase("Matrix4x4.fromAxisAngle(Vector3(0, 0, 1), Num.pi.div(2)).transform(Vector4(1, 1, 0, 0))", "Vector4(-1, 1, 0, 0)")
+        ]
+        public void Transform(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
     }
 }
