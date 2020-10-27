@@ -643,12 +643,12 @@ element_result element_interpreter_compile_expression(
     element_object object;
     auto* object_ptr = &object;
     auto result = expression_to_object(interpreter, options, expression_string, &object_ptr);
-    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
 
     *instruction = new element_instruction();
 
     if (result != ELEMENT_OK)
     {
+        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
         (*instruction)->instruction = nullptr;
         return result;
     }
@@ -656,6 +656,7 @@ element_result element_interpreter_compile_expression(
     const auto* function_instance = dynamic_cast<const element::function_instance*>(object.obj.get());
     if (!function_instance)
     {
+        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
         auto instr = object.obj->to_instruction();
         if (!instr)
         {
@@ -672,6 +673,7 @@ element_result element_interpreter_compile_expression(
     result = valid_boundary_function(interpreter, compilation_context, options, &declaration);
     if (result != ELEMENT_OK)
     {
+        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
         interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
         *instruction = nullptr;
         return result;
@@ -679,6 +681,7 @@ element_result element_interpreter_compile_expression(
     
     result = ELEMENT_OK;
     const auto compiled = compile_placeholder_expression(compilation_context, *function_instance, declaration.decl->get_inputs(), result, {});
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
     if (!compiled || result != ELEMENT_OK)
     {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
