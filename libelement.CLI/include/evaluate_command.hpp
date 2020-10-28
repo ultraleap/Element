@@ -1,8 +1,7 @@
 #pragma once
 
-#include <element/common.h>
-
-#include "element/interpreter.h"
+#include <element/element.h>
+#include <../../libelement/src/interpreter_internal.hpp>
 
 #include "command.hpp"
 #include "compiler_message.hpp"
@@ -51,23 +50,92 @@ namespace libelement::cli
 
         [[nodiscard]] compiler_message execute_compiletime(const compilation_input& compilation_input) const
         {
-            auto expression = custom_arguments.expression;
+            const auto expression = custom_arguments.expression;
+
+            element_compilation_ctx* compilation_context;
+            auto result = element_create_compilation_ctx(context, &compilation_context);
+            if (result != ELEMENT_OK)
+            {
+                return compiler_message(error_conversion(result),
+                                        "Failed to create compilation context: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
+                                        compilation_input.get_log_json());
+            }
+
+            element_object* expression_object;
+            result = context->expression_to_object(nullptr, expression.c_str(), &expression_object);
+            if (result != ELEMENT_OK)
+            {
+                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                return compiler_message(error_conversion(result),
+                                        "Failed to convert expression to object: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
+                                        compilation_input.get_log_json());
+            }
+
+            element_object* result_object;
             if (!custom_arguments.arguments.empty())
-                expression += custom_arguments.arguments;
+            {
+                element_object* call_objects;
+                int call_objects_count;
+                result = context->call_expression_to_objects(nullptr, custom_arguments.arguments.c_str(), &call_objects, &call_objects_count);
+                if (result != ELEMENT_OK)
+                {
+                    for (int i = 0; i < call_objects_count; ++i)
+                    {
+                        element_object* obj = &call_objects[i];
+                        element_delete_object(&obj);
+                    }
+                    context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                    return compiler_message(error_conversion(result),
+                                            "Failed to convert call expression to objects: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
+                                            compilation_input.get_log_json());
+                }
+
+                result = element_object_call(expression_object, compilation_context, call_objects, call_objects_count, &result_object);
+                if (result != ELEMENT_OK)
+                {
+                    for (int i = 0; i < call_objects_count; ++i)
+                    {
+                        element_object* obj = &call_objects[i];
+                        element_delete_object(&obj);
+                    }
+                    context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                    return compiler_message(error_conversion(result),
+                                            "Failed to call object with arguments: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
+                                            compilation_input.get_log_json());
+                }
+            }
+            else
+            {
+                result_object = expression_object;
+            }
+
+            element_instruction* result_instruction;
+            result = element_object_to_instruction(result_object, &result_instruction);
+            if (result != ELEMENT_OK)
+            {
+                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                return compiler_message(error_conversion(result),
+                                        "Failed to convert object to instruction: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
+                                        compilation_input.get_log_json());
+            }
 
             constexpr auto max_output_size = 512;
-            element_value outputs_buffer[max_output_size];
+            element_inputs input;
+            input.values = nullptr;
+            input.count = 0;
+
             element_outputs output;
+            element_value outputs_buffer[max_output_size];
             output.values = outputs_buffer;
             output.count = max_output_size;
+            result = element_interpreter_evaluate(context, nullptr, result_instruction, &input, &output);
 
-            const auto result = element_interpreter_evaluate_expression(
-                context, nullptr, expression.c_str(), &output);
+            context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
 
             if (result != ELEMENT_OK)
             {
                 return compiler_message(error_conversion(result),
-                                        "Failed to evaluate: " + expression + " with element_result " + std::to_string(result),
+                                        "Failed to evaluate: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                                         compilation_input.get_log_json());
             }
 
