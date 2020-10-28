@@ -146,7 +146,7 @@ namespace Element.CLR
 				return (isDouble, converterExists) switch
 				{
 					(true, true) => forceConvert(expr),
-					(true, false) => ConvertExpressionType(expr, targetType),
+					(_, false) => ConvertExpressionType(expr, targetType),
 					_ => throw new NotSupportedException($"Conversion not defined from '{expr}' to '{targetType}'")
 				};
 			}
