@@ -33,7 +33,7 @@ struct Vector2(x:Num, y:Num)
        len = magnitude(v)
        return = v.div(len)
     }
-    
+
     #scalar operations
     mul(a:Vector2, b:Num):Vector2 = Vector2(a.x.mul(b), a.y.mul(b))
     div(a:Vector2, b:Num):Vector2 = Vector2(a.x.div(b), a.y.div(b))
@@ -47,30 +47,49 @@ struct Vector2(x:Num, y:Num)
         s = Vector2(a.x.mul(b.x), a.y.mul(b.y))
         return = s.x.add(s.y)
     }
-        
+
     distance(a:Vector2, b:Vector2):Num 
     {
-       diff = a.sub(b)
-       return = diff.magnitude
+        # Return the distance from a to b
+        diff = a.sub(b)
+        return = diff.magnitude
     }
 
     angle(a:Vector2, b:Vector2):Num 
     {
+        # Return the unsigned angle between a and b in degrees
         dot = a.dot(b)
         mag = a.magnitude.mul(b.magnitude)
         clamped = dot.div(mag).clamp(-1, 1)
         theta = Num.acos(clamped)
         return = Num.degrees(theta)
     }
-    
-    reflect(l:Vector2, n:Vector2):Vector2
+
+    signedAngle(from:Vector2, to:Vector2):Num
     {
-        dot = n.dot(l)
+        # Return the angle between "from" and "to".
+        # The output is between -180 and 180
+        # Positive means the angle is clockwise
+
+        a = from
+        b = to
+
+        bx_ay = b.x.mul(a.y)
+        by_ax = b.y.mul(a.x)
+
+        b_cross_a = bx_ay.sub(by_ax)
+        angleSign = b_cross_a.sign
+        return = angleSign.mul(Vector2.angle(a, b))
+    }
+
+    reflect(v:Vector2, n:Vector2):Vector2
+    {
+        dot = n.dot(v)
         s = 2.mul(dot)
         t = n.mul(s)
-        return = t.sub(l)
+        return = t.sub(v)
     }
-    
+
     lerp(t:Num, a:Vector2, b:Vector2) 
     {
         return = Vector2(t.lerp(a.x, b.x), t.lerp(a.y, b.y))
@@ -92,17 +111,16 @@ struct Vector3(x:Num, y:Num, z:Num)
     #vector properties
     magnitudeSquared(v:Vector3):Num = v.dot(v)
     magnitude(v:Vector3):Num = Num.sqrt(v.magnitudeSquared)
-    
+
     #operations
     negate(v:Vector3):Vector3 = zero.sub(v)
-    
+
     normalise(v:Vector3):Vector3
     {
-       #return zero vector if len = 0
        len = magnitude(v)
        return = v.div(len)
     }
-    
+
     #scalar operations
     mul(a:Vector3, b:Num):Vector3 = Vector3(a.x.mul(b), a.y.mul(b), a.z.mul(b))
     div(a:Vector3, b:Num):Vector3 = Vector3(a.x.div(b), a.y.div(b), a.z.div(b))
@@ -110,13 +128,13 @@ struct Vector3(x:Num, y:Num, z:Num)
     #vector operations
     add(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z))
     sub(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.sub(b.x), a.y.sub(b.y), a.z.sub(b.z))
-    
+
     dot(a:Vector3, b:Vector3):Num
     {
         s = Vector3(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z))
         return = s.x.add(s.y).add(s.z)
     }
-        
+
     distance(a:Vector3, b:Vector3):Num 
     {
        diff = a.sub(b)
@@ -125,13 +143,14 @@ struct Vector3(x:Num, y:Num, z:Num)
 
     angle(a:Vector3, b:Vector3):Num 
     {
+        # Return the unsigned angle between a and b in degrees
         dot = a.dot(b)
         mag = a.magnitude.mul(b.magnitude)
         clamped = Num.clamp(dot.div(mag), -1, 1)
         theta = Num.acos(clamped)
         return = Num.degrees(theta)  
     }
-        
+
     reflect(l:Vector3, n:Vector3):Vector3
     {
         dot = n.dot(l)
@@ -139,12 +158,12 @@ struct Vector3(x:Num, y:Num, z:Num)
         t = n.mul(s)
         return = t.sub(l)
     }
-    
+
     lerp(t:Num, a:Vector3, b:Vector3) 
     {
         return = Vector3(t.lerp(a.x, b.x), t.lerp(a.y, b.y), t.lerp(a.z, b.z))
     }
-    
+
     cross(a:Vector3, b:Vector3) 
     {
         ay_bz = a.y.mul(b.z)
@@ -184,7 +203,6 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
     
     normalise(v:Vector4):Vector4
     {
-       #return zero vector if len = 0
        len = magnitude(v)
        return = v.div(len)
     }
@@ -202,7 +220,7 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
         s = Vector4(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z), a.w.mul(b.w))
         return = s.x.add(s.y).add(s.z).add(s.w)
     }
-    
+
     direction(v:Vector3):Vector4 = Vector4(v.x, v.y, v.z, 0)
     position(v:Vector3):Vector4 = Vector4(v.x, v.y, v.z, 1)
 

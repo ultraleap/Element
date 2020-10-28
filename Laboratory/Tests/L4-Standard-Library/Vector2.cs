@@ -111,7 +111,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         ]
         public void Distance(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
-        
+
         [
             TestCase("Vector2(0, 0).angle(Vector2(0, 0))", "Num.NaN"),
             TestCase("Vector2(0, 1).angle(Vector2(0, 1))", "0"),
@@ -122,7 +122,18 @@ namespace Laboratory.Tests.L4.StandardLibrary
         ]
         public void Angle(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
-        
+
+        [
+            TestCase("Vector2(0, 0).signedAngle(Vector2(0, 0))", "Num.NaN"),
+            TestCase("Vector2(0, 1).signedAngle(Vector2(0, 1))", "0"),
+            TestCase("Vector2(0, 1).signedAngle(Vector2(1, 1))", "45"),
+            TestCase("Vector2(0, 1).signedAngle(Vector2(-1, 1))", "-45"),
+            TestCase("Vector2(0, 1).signedAngle(Vector2(1, -1))", "135"),
+            TestCase("Vector2(0, 1).signedAngle(Vector2(-1, -1))", "-135"),
+        ]
+        public void SignedAngle(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
         [
             TestCase("Vector2(1, 1).reflect(Vector2(0, 1))", "Vector2(-1, 1)"),
             TestCase("Vector2(-1, 1).reflect(Vector2(0, 1))", "Vector2(1, 1)"),
