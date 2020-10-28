@@ -25,7 +25,7 @@ struct Vector2(x:Num, y:Num)
     magnitude(v:Vector2):Num = Num.sqrt(v.magnitudeSquared)
 
     #operations
-    negate(v:Vector2):Vector2 = zero.sub(v)
+    negate(v:Vector2):Vector2 = v.mul(-1)
     
     normalise(v:Vector2):Vector2
     {
@@ -35,12 +35,12 @@ struct Vector2(x:Num, y:Num)
     }
 
     #scalar operations
-    mul(a:Vector2, b:Num):Vector2 = Vector2(a.x.mul(b), a.y.mul(b))
-    div(a:Vector2, b:Num):Vector2 = Vector2(a.x.div(b), a.y.div(b))
+    mul(v:Vector2, k:Num):Vector2 = Vector2(v.x.mul(k), v.y.mul(k))
+    div(v:Vector2, k:Num):Vector2 = v.mul(1.div(k))
     
     #vector operations
     add(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.add(b.x), a.y.add(b.y))
-    sub(a:Vector2, b:Vector2):Vector2 = Vector2(a.x.sub(b.x), a.y.sub(b.y))
+    sub(a:Vector2, b:Vector2):Vector2 = a.add(b.negate)
     
     dot(a:Vector2, b:Vector2):Num
     {
@@ -84,6 +84,7 @@ struct Vector2(x:Num, y:Num)
 
     reflect(v:Vector2, n:Vector2):Vector2
     {
+        # Reflect "v" in the direction "n"
         dot = n.dot(v)
         s = 2.mul(dot)
         t = n.mul(s)
@@ -113,7 +114,7 @@ struct Vector3(x:Num, y:Num, z:Num)
     magnitude(v:Vector3):Num = Num.sqrt(v.magnitudeSquared)
 
     #operations
-    negate(v:Vector3):Vector3 = zero.sub(v)
+    negate(v:Vector3):Vector3 = v.mul(-1)
 
     normalise(v:Vector3):Vector3
     {
@@ -122,12 +123,12 @@ struct Vector3(x:Num, y:Num, z:Num)
     }
 
     #scalar operations
-    mul(a:Vector3, b:Num):Vector3 = Vector3(a.x.mul(b), a.y.mul(b), a.z.mul(b))
-    div(a:Vector3, b:Num):Vector3 = Vector3(a.x.div(b), a.y.div(b), a.z.div(b))
-    
+    mul(v:Vector3, k:Num):Vector3 = Vector3(v.x.mul(k), v.y.mul(k), v.z.mul(k))
+    div(v:Vector3, k:Num):Vector3 = v.mul(1.div(k))
+
     #vector operations
     add(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z))
-    sub(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.sub(b.x), a.y.sub(b.y), a.z.sub(b.z))
+    sub(a:Vector3, b:Vector3):Vector3 = a.add(b.negate)
 
     dot(a:Vector3, b:Vector3):Num
     {
@@ -149,6 +150,15 @@ struct Vector3(x:Num, y:Num, z:Num)
         clamped = Num.clamp(dot.div(mag), -1, 1)
         theta = Num.acos(clamped)
         return = Num.degrees(theta)  
+    }
+
+    signedAngle(from:Vector3, to:Vector3, axis:Vector3):Num
+    {
+        # Return the signed angle between "from" and "to",
+        # about the axis "axis". The result is between 180*-180d
+
+        angleSign = to.cross(from).dot(axis).sign
+        return = Vector3.angle(from, to).mul(angleSign)
     }
 
     reflect(l:Vector3, n:Vector3):Vector3

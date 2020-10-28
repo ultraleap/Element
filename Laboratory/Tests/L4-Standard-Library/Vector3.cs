@@ -124,7 +124,20 @@ namespace Laboratory.Tests.L4.StandardLibrary
         ]
         public void Angle(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
-        
+
+
+        [
+            TestCase("Vector3(0, 0, 0).signedAngle(Vector3(0, 0, 0), Vector3(0, 0, 1))", "Num.NaN"),
+            TestCase("Vector3(1, 0, 0).signedAngle(Vector3(0, 1, 0), Vector3(0, 0, 1))", "-90"),
+            TestCase("Vector3(1, 0, 0).signedAngle(Vector3(0, 1, 0), Vector3(0, 0, -1))", "90"),
+            TestCase("Vector3(0, 1, 0).signedAngle(Vector3(0, 0, 1), Vector3(1, 0, 0))", "-90"),
+            TestCase("Vector3(0, 1, 0).signedAngle(Vector3(0, 0, 1), Vector3(-1, 0, 0))", "90"),
+            TestCase("Vector3(0, 0, 1).signedAngle(Vector3(1, 0, 0), Vector3(0, 1, 0))", "-90"),
+            TestCase("Vector3(0, 0, 1).signedAngle(Vector3(1, 0, 0), Vector3(0, -1, 0))", "90"),
+        ]
+        public void SignedAngle(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
         [
             TestCase("Vector3(1, 1, 1).reflect(Vector3(0, 1, 0))", "Vector3(-1, 1, -1)"),
             TestCase("Vector3(-1, 1, 1).reflect(Vector3(0, 1, 0))", "Vector3(1, 1, -1)"),
