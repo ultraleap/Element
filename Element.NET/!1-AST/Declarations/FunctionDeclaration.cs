@@ -6,8 +6,8 @@ namespace Element.AST
 {
     public sealed class IntrinsicFunctionDeclaration : Declaration
     {
-        protected override string IntrinsicQualifier => "intrinsic";
-        protected override string Qualifier => "function";
+        protected override string IntrinsicQualifier => "intrinsic ";
+        protected override string Qualifier => "function ";
         protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
 
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>

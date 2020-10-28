@@ -5,7 +5,7 @@ namespace Element.AST
 {
     public class IntrinsicStructDeclaration : Declaration
     {
-        protected override string IntrinsicQualifier { get; } = "intrinsic";
+        protected override string IntrinsicQualifier { get; } = "intrinsic ";
         protected override string Qualifier { get; } = "struct ";
         protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
