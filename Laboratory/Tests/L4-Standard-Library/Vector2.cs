@@ -7,10 +7,10 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [
             TestCase("Vector2.zero", "Vector2(0, 0)"),
             TestCase("Vector2.one", "Vector2(1, 1)"),
-            //TestCase("Vector2.Right", "Vector3(1, 0)"),
-            //TestCase("Vector2.Left", "Vector3(-1, 0)"),
-            //TestCase("Vector2.Up", "Vector3(0, 1)"),
-            //TestCase("Vector2.Down", "Vector3(0, -1)"),
+            TestCase("Vector2.right", "Vector2(1, 0)"),
+            TestCase("Vector2.left", "Vector2(-1, 0)"),
+            TestCase("Vector2.up", "Vector2(0, 1)"),
+            TestCase("Vector2.down", "Vector2(0, -1)"),
         ]
         public void Constants(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);

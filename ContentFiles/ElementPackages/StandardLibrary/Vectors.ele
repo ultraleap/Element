@@ -11,14 +11,14 @@
 #}
 
 struct Vector2(x:Num, y:Num)
-{   
-     zero = Vector2(0, 0)
-     one = Vector2(1, 1)
-     
-#    Right = Vector2(1, 0)
-#    Left = Vector2(-1, 0)
-#    Up = Vector2(0, 1)    #Not sure what to do here, axis contradicts Vector3 definitions of up/down 
-#    Down = Vector2(0, -1) #Not sure what to do here, axis contradicts Vector3 definitions of up/down
+{
+    zero = Vector2(0, 0)
+    one = Vector2(1, 1)
+
+    right = Vector2(1, 0)
+    left = Vector2(-1, 0)
+    up = Vector2(0, 1)
+    down = Vector2(0, -1)
 
     #vector properties
     magnitudeSquared(v:Vector2):Num = v.dot(v)
