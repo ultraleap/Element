@@ -32,13 +32,13 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Vector2(0, 0).opposite", "Vector2(0, 0)"),
-            TestCase("Vector2(1, 2).opposite", "Vector2(-1, -2)"),
-            TestCase("Vector2(-1, 2).opposite", "Vector2(1, -2)"),
-            TestCase("Vector2(1, -2).opposite", "Vector2(-1, 2)"),
-            TestCase("Vector2(-1, -2).opposite", "Vector2(1, 2)"),
+            TestCase("Vector2(0, 0).negate", "Vector2(0, 0)"),
+            TestCase("Vector2(1, 2).negate", "Vector2(-1, -2)"),
+            TestCase("Vector2(-1, 2).negate", "Vector2(1, -2)"),
+            TestCase("Vector2(1, -2).negate", "Vector2(-1, 2)"),
+            TestCase("Vector2(-1, -2).negate", "Vector2(1, 2)"),
         ]
-        public void Opposite(string expression, string expected) =>
+        public void Negate(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [

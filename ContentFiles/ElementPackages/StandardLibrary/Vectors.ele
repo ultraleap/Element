@@ -25,7 +25,7 @@ struct Vector2(x:Num, y:Num)
     magnitude(v:Vector2):Num = Num.sqrt(v.magnitudeSquared)
 
     #operations
-    opposite(v:Vector2):Vector2 = zero.sub(v)
+    negate(v:Vector2):Vector2 = zero.sub(v)
     
     normalise(v:Vector2):Vector2
     {
@@ -94,7 +94,7 @@ struct Vector3(x:Num, y:Num, z:Num)
     magnitude(v:Vector3):Num = Num.sqrt(v.magnitudeSquared)
     
     #operations
-    opposite(v:Vector3):Vector3 = zero.sub(v)
+    negate(v:Vector3):Vector3 = zero.sub(v)
     
     normalise(v:Vector3):Vector3
     {
@@ -180,7 +180,7 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
     magnitude(v:Vector4):Num = Num.sqrt(v.magnitudeSquared)
 
     #operations
-    opposite(v:Vector4):Vector4 = zero.sub(v)
+    negate(v:Vector4):Vector4 = zero.sub(v)
     
     normalise(v:Vector4):Vector4
     {
