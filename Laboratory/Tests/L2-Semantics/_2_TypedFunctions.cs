@@ -64,5 +64,8 @@ namespace Laboratory.Tests.L2.Semantics
 
         [TestCase("Any(20)")]
         public void CallNonFunction(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.NotFunction, expression);
+
+        [Test]
+        public void ConstraintLookupError() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "constraintLookupError");
     }
 }

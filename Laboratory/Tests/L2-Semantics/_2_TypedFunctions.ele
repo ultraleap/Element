@@ -18,3 +18,5 @@ addFive(a:Num):Num = add(a, 5)
 
 literalNumNotAConstraint(a:5):10 = a
 literalFunctionNotAConstraint(a:onlyNum):returnsNum = a
+
+constraintLookupError(a:ConstraintThatDoesntExist) = a
