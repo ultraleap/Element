@@ -319,13 +319,27 @@ namespace Laboratory.Tests.L3.Prelude
 		[DatapointSource]
 		public (string FunctionExpression, string CallExpression, EleMessageCode ExpectedError)[] FunctionCallErrorCases =
 		{
-			("_(a:Num):Num = Num(a)", "(Bool)", EleMessageCode.ConstraintNotSatisfied),
-			("_(a:Num):Num = Num(a)", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
+			("_(a:Vector3):Num = Num(a)", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
 		};
 		
 		[Theory]
 		public void ErrorCases((string FunctionExpression, string CallExpression, EleMessageCode ExpectedError) args, EvaluationMode evaluationMode) =>
 			EvaluateExpectingElementError(ValidatedCompilerInput, args.ExpectedError, new FunctionEvaluation(args.FunctionExpression, args.CallExpression, evaluationMode == EvaluationMode.Interpreted));
+		
+		public static (string Expression, EleMessageCode ExpectedError)[] ArgsList =
+		{
+			("Num(list(1))", EleMessageCode.ConstraintNotSatisfied),
+			("Num(_(_) = 1)", EleMessageCode.ConstraintNotSatisfied),
+			("Num({ a = 0 })", EleMessageCode.ConstraintNotSatisfied),
+		};
+
+		[Test]
+		public void NumConstructorError([ValueSource(nameof(ArgsList))] (string expression, EleMessageCode expectedError) args, [Values(EvaluationMode.Interpreted)] EvaluationMode mode)
+		{
+			EvaluateExpectingElementError(ValidatedCompilerInput,
+				args.expectedError,
+				new ExpressionEvaluation(args.expression, mode));
+		}
 
 		private static object GenerateLogData(int index, int baseValue) 
 			=> new object[] {$"Num.log({MathF.Pow(baseValue, index - 1)}, {baseValue})", $"{(index - 1)}"};

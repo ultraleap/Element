@@ -111,15 +111,6 @@ getVec = createVecFromVec(createVecFromVec(Vector2(0, 1)))
 #    struct return(who_cares) { i = prev.i.add(1) v = prev.v.add(1) }
 #}
 #getStruct = createStructFromStruct(createStructFromStruct(structContainer))
-#
-#
-#namespace namespaceContainer { i = 0 v = 1 }
-#createNamespaceFromNamespace(prev) {
-#    namespace return { i = prev.i.add(1) v = prev.v.add(1) }
-#}
-#getNamespace = createNamespaceFromNamespace(createNamespaceFromNamespace(namespaceContainer))
-
-
 
 constraint EvaluateSingle(t:Num)
 struct Evaluator(at:EvaluateSingle)
