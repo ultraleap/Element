@@ -182,7 +182,7 @@ struct Vector3(x:Num, y:Num, z:Num)
         ax_bz = a.x.mul(b.z)
         ax_by = a.x.mul(b.y)
         ay_bx = a.y.mul(b.x)
-       
+
         return = Vector3(ay_bz.sub(az_by), az_bx.sub(ax_bz), ax_by.sub(ay_bx))
     }
 

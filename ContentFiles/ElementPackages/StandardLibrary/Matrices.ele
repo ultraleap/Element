@@ -1,15 +1,48 @@
-#column-major 2x2 coordinate matrix for representing linear transformations - INCOMPLETE
-struct Matrix2x2(x:Vector2, y:Vector2)
+# Matrix definitions
+#
+# In Element, matrices are stored in column-major form.
+# In practice all this means is that we construct them via column vectors.
+# They can still be thought of as usual matrices which should be indexed as
+#       M_12 = first row, second column.
+
+struct Matrix2x2(xCol:Vector2, yCol:Vector2)
 {
-    xRow(a:Matrix2x2) = Vector2(a.x.x, a.y.x)
-    yRow(a:Matrix2x2) = Vector2(a.x.y, a.y.y)
-    
+    # Factories
+    identity:Matrix2x2 = Matrix2x2(Vector2(1, 0), Vector2(0, 1))
+    fromDiagonal(diag:Vector2):Matrix2x2
+    {
+        # Create a diagonal matrix from the specified vector
+        return = Matrix2x2(Vector2(diag.x, 0), Vector2(0, diag.y))
+    }
+
+    # Matrix Properties
+    xRow(m:Matrix2x2):Vector2 = Vector2(m.xCol.x, m.yCol.x)
+    yRow(m:Matrix2x2):Vector2 = Vector2(m.xCol.y, m.yCol.y)
+    diagonal(m:Matrix2x2):Vector2 = Vector2(m.xCol.x, m.yCol.y)
+
     transpose(m:Matrix2x2):Matrix2x2 = Matrix2x2(m.xRow, m.yRow)
-      
+
     determinant(m:Matrix2x2):Num
     {
-        return = m.x.x.mul(m.y.y).sub(m.x.y.mul(m.y.x))
-    } 
+        return = m.xCol.x.mul(m.yCol.y).sub(m.xCol.y.mul(m.yCol.x))
+    }
+
+    # Operations
+    mul(a:Matrix2x2, b:Matrix2x2):Matrix2x2
+    {
+        m_00 = a.xRow.dot(b.xCol)
+        m_01 = a.xRow.dot(b.yCol)
+        m_10 = a.yRow.dot(b.xCol)
+        m_11 = a.yRow.dot(b.yCol)
+        mxCol = Vector2(m_00, m_10)
+        myCol = Vector2(m_01, m_11)
+        return = Matrix2x2(mxCol, myCol)
+    }
+
+    mulVec(m:Matrix2x2, v:Vector2):Vector2
+    {
+        return = Vector2(m.xRow.dot(v), m.yRow.dot(v))
+    }
 }
 
 
