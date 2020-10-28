@@ -34,15 +34,15 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public static string TimeSpanSubtractor = "_(a:Num, b:Num):TimeSpan = TimeSpan.fromSeconds(a).sub(TimeSpan.fromSeconds(b))";
         public static (string LeftHandArgs, string RightHandArgs)[] SubArgsList =
         {
-            ("10, 3.4", "6.6"),
-            ("10, 3.6", "6.4"),
-            ("1, 0.4", "0.6"),
-            ("1, 0.5", "0.5"),
-            ("1, 0.6", "0.4"),
-            ("1, 1", "0"),
-            ("1, 1.4", "-0.4"),
-            ("1, 1.6", "-0.5"),
-            ("1, 2.5", "-1.5"),
+            ("(10, 3.4)", "(6.6)"),
+            ("(10, 3.6)", "(6.4)"),
+            ("(1, 0.4)", "(0.6)"),
+            ("(1, 0.5)", "(0.5)"),
+            ("(1, 0.6)", "(0.4)"),
+            ("(1, 1)", "(0)"),
+            ("(1, 1.4)", "(-0.4)"),
+            ("(1, 1.6)", "(-0.6)"),
+            ("(1, 2.5)", "(-1.5)"),
         };
 
         [Test]
