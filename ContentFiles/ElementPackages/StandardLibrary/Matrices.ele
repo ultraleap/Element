@@ -8,12 +8,12 @@
 struct Matrix2x2(xCol:Vector2, yCol:Vector2)
 {
     # Factories
-    identity:Matrix2x2 = Matrix2x2(Vector2(1, 0), Vector2(0, 1))
     fromDiagonal(diag:Vector2):Matrix2x2
     {
         # Create a diagonal matrix from the specified vector
         return = Matrix2x2(Vector2(diag.x, 0), Vector2(0, diag.y))
     }
+    identity:Matrix2x2 = Matrix2x2.fromDiagonal(Vector2.one)
 
     # Matrix Properties
     xRow(m:Matrix2x2):Vector2 = Vector2(m.xCol.x, m.yCol.x)
@@ -46,25 +46,71 @@ struct Matrix2x2(xCol:Vector2, yCol:Vector2)
 }
 
 
-
-#column-major 3x3 coordinate matrix for representing linear transformations - INCOMPLETE
-struct Matrix3x3(x:Vector3, y:Vector3, z:Vector3)
+struct Matrix3x3(xCol:Vector3, yCol:Vector3, zCol:Vector3)
 {
-    xRow(a:Matrix3x3) = Vector3(a.x.x, a.y.x, a.z.x)
-    yRow(a:Matrix3x3) = Vector3(a.x.y, a.y.y, a.z.y)
-    zRow(a:Matrix3x3) = Vector3(a.x.z, a.y.z, a.z.z)
-    
+    # Factories
+    fromDiagonal(diag:Vector3):Matrix3x3
+    {
+        # Create a diagonal matrix from the specified vector
+        return = Matrix3x3(Vector3(diag.x, 0, 0), Vector3(0, diag.y, 0), Vector3(0, 0, diag.z))
+    }
+
+    identity:Matrix3x3 = Matrix3x3.fromDiagonal(Vector3.one)
+
+    # Properties
+    xRow(m:Matrix3x3) = Vector3(m.xCol.x, m.yCol.x, m.zCol.x)
+    yRow(m:Matrix3x3) = Vector3(m.xCol.y, m.yCol.y, m.zCol.y)
+    zRow(m:Matrix3x3) = Vector3(m.xCol.z, m.yCol.z, m.zCol.z)
+    diagonal(m:Matrix3x3) = Vector3(m.xCol.x, m.yCol.y, m.zCol.z)
+
     transpose(m:Matrix3x3):Matrix3x3 = Matrix3x3(m.xRow, m.yRow, m.zRow)
-      
-    #UNTESTED
+
     determinant(m:Matrix3x3):Num
     {
-        a = m.x.x.mul(m.y.y.mul(m.z.z).sub(m.y.z.mul(m.z.y)))
-        b = m.y.x.mul(m.x.x.mul(m.z.z).sub(m.x.z.mul(m.z.x)))
-        c = m.z.x.mul(m.x.x.mul(m.y.y).sub(m.x.y.mul(m.x.y)))
-        
-        return = a.sub(b).add(c)
-    } 
+        signVector:Vector3 = Vector3(1, -1, 1)
+        topRow:Vector3 = m.xRow
+
+        xSubCol:Vector2 = Vector2(m.xCol.y, m.xCol.z)
+        ySubCol:Vector2 = Vector2(m.yCol.y, m.yCol.z)
+        zSubCol:Vector2 = Vector2(m.zCol.y, m.zCol.z)
+
+        subDeterminants:Vector3 = Vector3(
+            Matrix2x2(ySubCol, zSubCol).determinant,
+            Matrix2x2(xSubCol, zSubCol).determinant,
+            Matrix2x2(xSubCol, ySubCol).determinant
+        )
+        resultComponents:Vector3 = Vector3(
+            topRow.x.mul(subDeterminants.x),
+            topRow.y.mul(subDeterminants.y),
+            topRow.z.mul(subDeterminants.z)
+        )
+
+        return = resultComponents.dot(signVector)
+    }
+
+    # Operations
+
+    mul(a:Matrix3x3, b:Matrix3x3):Matrix3x3
+    {
+        createNewRow = _(v:Vector3, m:Matrix3x3)
+        {
+            return = Vector3(v.dot(m.xCol), v.dot(m.yCol), v.dot(m.zCol))
+        }
+
+        multipliedMatrix = Matrix3x3(
+            createNewRow(a.xRow, b),
+            createNewRow(a.yRow, b),
+            createNewRow(a.zRow, b)
+        ).transpose
+
+        return = multipliedMatrix
+    }
+
+    mulVec(m:Matrix3x3, v:Vector3):Vector3
+    {
+        return = Vector3(m.xRow.dot(v), m.yRow.dot(v), m.zRow.dot(v))
+    }
+
 }
 
 
