@@ -124,11 +124,5 @@ namespace Laboratory.Tests.L4.StandardLibrary
         ]
         public void Position(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
-        
-        [
-            TestCase("Vector4(1, 1, 1, 1).transform(Matrix4x4.identity)", "Vector4(1, 1, 1, 1)")
-        ]
-        public void Transform(string expression, string expected) =>
-            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
     }
 }

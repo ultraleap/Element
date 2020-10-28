@@ -1,13 +1,84 @@
-struct TimePoint(whole:Num, fractional:Num)
+#   TimeSpan objects store time using two Nums to gain increased precision
+#
+#   It is not recommended to construct manually from the constructor, but instead
+#   to use a factory function such as "fromSeconds" if you need to create one.
+#
+struct TimeSpan(integer:Num, fractional:Num)
 {
-    fromNum(x:Num):TimePoint = TimePoint(x.floor, x.sub(x.floor))
+    # Internally the integer component can be positive or negative,
+    # and the fractional component is a non-negative number between 0 and 1.
+    #
+    # The encoding of numbers is such that the stored number is equal to the integer member
+    # plus the fractional member.
+    # eg: value = this.integer.add(this.fractional)
+    #
+    # This applied to negative numbers too, so that
+    # eg: -0.75 is encoded as integer = -1, fractional = 0.25
+    #
+    # This makes addition and negation quick and easy. Multiplication is a little more difficult.
 
-    value(this:TimePoint, period:Num):Num = this.whole.rem(period).add(this.fractional).rem(period)
-    cycles(this:TimePoint, period:Num):Num = this.whole.div(period).add(this.fractional.div(period).floor)
+    # Create a TimeSpan from the specified number, in seconds
+    fromSeconds(x:Num):TimeSpan = TimeSpan(x.floor, x.sub(x.floor))
 
-    mul(this:TimePoint, x:Num):Num = this.whole.mul(x).add(this.fractional.mul(x))
-    div(this:TimePoint, x:Num):Num = this.whole.div(x).add(this.fractional.div(x))
+    # Return the value of the TimeSpan, modulo one "period"
+    value(this:TimeSpan, period:Num):Num = this.integer.rem(period).add(this.fractional).rem(period)
 
-    add(this:TimePoint, that:TimePoint):TimePoint = TimePoint(this.whole.add(that.whole.add), this.whole.fractional.add(that.whole.fractional))
-    sub(this:TimePoint, that:TimePoint):TimePoint = TimePoint(this.whole.add(that.whole.add), this.whole.fractional.add(that.whole.fractional))
+    # Return the integer number of elapsed periods
+    cycles(this:TimeSpan, period:Num):Num = this.integer.div(period).add(this.fractional.div(period).floor)
+
+    abs(this:TimeSpan):TimeSpan
+    {
+        return = if(this.integer.geq(0), this, this.negate)
+    }
+
+    negate(this:TimeSpan):TimeSpan
+    {
+        return = TimeSpan(this.integer.mul(-1).sub(1), 1.sub(this.fractional))._regularise
+    }
+
+    add(this:TimeSpan, other:TimeSpan):TimeSpan
+    {
+        return = TimeSpan(this.integer.add(other.integer), this.fractional.add(other.fractional))._regularise
+    }
+
+    sub(this:TimeSpan, other:TimeSpan):TimeSpan
+    {
+        return = this.add(other.negate)
+    }
+
+    mul(this:TimeSpan, x:Num):TimeSpan
+    {
+        # In this encoding, multiplying positive TimeSpans by positive numbers is simple,
+        # as is negation. So, convert to positive values and convert back if needed.
+
+        resultIsPositive:Bool = this.integer.geq(0).xnor(x.geq(0))
+
+        thisUnsigned = this.abs
+        xUnsigned = x.abs
+
+        unsignedMultipliedInteger = thisUnsigned.integer.mul(xUnsigned)
+        unsignedMultipliedFractional = thisUnsigned.fractional.mul(xUnsigned)
+
+        # The multipliedInteger may have acquired a fractional component, so move this
+        # onto the newFractional component.
+        newUnsignedInteger = unsignedMultipliedInteger.floor
+        newUnsignedFractional = unsignedMultipliedFractional.add(unsignedMultipliedInteger.rem(1))
+
+        unsignedResult = TimeSpan(newUnsignedInteger, newUnsignedFractional)._regularise
+
+        signedResult = if(resultIsPositive, unsignedResult, unsignedResult.negate)
+        return = signedResult
+    }
+
+    div(this:TimeSpan, x:Num):TimeSpan
+    {
+        return = this.mul(1.div(x))
+    }
+    
+    _regularise(this:TimeSpan):TimeSpan
+    {
+        # Regularising a TimeSpan means ensuring that the fractional component is between 0 and 1,
+        # and adjusting the integer component appropriately.
+        return = TimeSpan(this.integer.add(this.fractional.floor), this.fractional.rem(1))
+    }
 }

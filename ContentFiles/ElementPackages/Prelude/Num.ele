@@ -78,7 +78,6 @@ intrinsic struct Num
     dist(a:Num, b:Num):Num              = a.sub(b).abs
     lerp(t:Num, a:Num, b:Num):Num       = a.add(t.mul(b.sub(a))) #t.lt(0).if(a, t.gt(1).if(b, a.add(t.mul(b.sub(a)))))
     clamp(a:Num, min:Num, max:Num):Num  = a.max(min).min(max)
-    
 
     # Comparison functions
     intrinsic function eq(a:Num, b:Num):Bool

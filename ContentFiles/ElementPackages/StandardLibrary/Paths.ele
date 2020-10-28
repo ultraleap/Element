@@ -1,5 +1,5 @@
 constraint PathFunc(u:Num):Vector3
-constraint EvaluatePath(time:TimePoint):List
+constraint EvaluatePath(time:TimeSpan):List
 constraint PathRenderer(path:Path):EvaluatePath
 
 struct Segment(a:Vector3, b:Vector3)
@@ -9,7 +9,7 @@ struct Path(at:PathFunc, length:Num)
     # Renderers
     renderWithVelocity(velocity:Num):PathRenderer
         = _(path:Path):EvaluatePath
-            = _(time:TimePoint):List
+            = _(time:TimeSpan):List
             {
                 period = path.length.div(velocity)
                 index(idx:Num) = path.at(time.value(period).mul(velocity.div(path.length)))
@@ -18,7 +18,7 @@ struct Path(at:PathFunc, length:Num)
         
     renderWithFrequency(frequency:Num):PathRenderer
         = _(path:Path):EvaluatePath
-            = _(time:TimePoint):List
+            = _(time:TimeSpan):List
             {
                 period = 1.div(frequency)
                 index(idx:Num) = path.at(time.value(period).mul(frequency))
@@ -27,7 +27,7 @@ struct Path(at:PathFunc, length:Num)
             
     renderWithPeriod(period:Num):PathRenderer
         = _(path:Path):EvaluatePath
-            = _(time:TimePoint):List
+            = _(time:TimeSpan):List
             {
                 index(idx:Num) = path.at(time.value(period).div(period))
                 return = List(index, 1)
