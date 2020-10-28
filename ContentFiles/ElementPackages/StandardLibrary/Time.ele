@@ -48,51 +48,26 @@ struct TimeSpan(integer:Num, fractional:Num)
 
     mul(this:TimeSpan, x:Num):TimeSpan
     {
-        struct MultiplicableTimeSpan(encodedInteger:Num, encodedFractional:Num, isPositive:Bool)
-        {
-            # This struct is an alternate encoding of timespans which requires "encodedInteger" and
-            # "encodedFractional" to be positive, and the sign of the MultiplicableTimeSpan is defined
-            # by "isPositive". This makes multiplying by numbers simple.
+        # In this encoding, multiplying positive TimeSpans by positive numbers is simple,
+        # as is negation. So, convert to positive values and convert back if needed.
 
-            fromTimeSpan(ts:TimeSpan):MultiplicableTimeSpan
-            {
-                return = if(
-                    ts.integer.geq(0),
-                    MultiplicableTimeSpan(ts.integer, ts.fractional, true)._regularise,
-                    MultiplicableTimeSpan(ts.integer.abs.sub(1), 1.sub(ts.fractional), false)._regularise
-                )
-            }
+        resultIsPositive:Bool = this.integer.geq(0).xnor(x.geq(0))
 
-            toTimeSpan(mts:MultiplicableTimeSpan):TimeSpan
-            {
-                return = if(
-                    mts.isPositive,
-                    TimeSpan(mts.encodedInteger, mts.encodedFractional),
-                    TimeSpan(mts.encodedInteger.mul(-1).sub(1), 1.sub(mts.encodedFractional))
-                )
-            }
+        thisUnsigned = this.abs
+        xUnsigned = x.abs
 
-            multiply(this:MultiplicableTimeSpan, x:Num):MultiplicableTimeSpan
-            {
-                resultIsPositive = this.isPositive.xnor(x.geq(0))
-                multipliedInteger = this.encodedInteger.mul(x.abs)
-                multipliedFractional = this.encodedFractional.mul(x.abs)
+        unsignedMultipliedInteger = thisUnsigned.integer.mul(xUnsigned)
+        unsignedMultipliedFractional = thisUnsigned.fractional.mul(xUnsigned)
 
-                # The multipliedInteger may have acquired a fractional component, so move this
-                # onto the newFractional component.
-                newInteger = multipliedInteger.floor
-                newFractional = multipliedFractional.add(multipliedInteger.rem(1))
+        # The multipliedInteger may have acquired a fractional component, so move this
+        # onto the newFractional component.
+        newUnsignedInteger = unsignedMultipliedInteger.floor
+        newUnsignedFractional = unsignedMultipliedFractional.add(unsignedMultipliedInteger.rem(1))
 
-                return = MultiplicableTimeSpan(newInteger, newFractional, resultIsPositive)._regularise
-            }
+        unsignedResult = TimeSpan(newUnsignedInteger, newUnsignedFractional)._regularise
 
-            _regularise(this:MultiplicableTimeSpan):MultiplicableTimeSpan
-            {
-                return = MultiplicableTimeSpan(this.encodedInteger.add(this.encodedFractional.floor), this.encodedFractional.rem(1), this.isPositive)
-            }
-        }
-
-        return = MultiplicableTimeSpan.fromTimeSpan(this).multiply(x).toTimeSpan._regularise
+        signedResult = if(resultIsPositive, unsignedResult, unsignedResult.negate)
+        return = signedResult
     }
 
     div(this:TimeSpan, x:Num):TimeSpan
