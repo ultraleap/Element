@@ -9,12 +9,19 @@ namespace Element.AST
     {
         private NumStruct() { }
         public static NumStruct Instance { get; } = new NumStruct();
+
         public Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, Context context) =>
-            // If the incoming value isn't a num, emit a cast to change it to num
-            // Else do nothing - the argument will have been type checked already by Call before getting to here
-            arguments[0].IsType(out Instruction i) && i.StructImplementation != this
-                ? Cast.Create(i, this)
-                : new Result<IValue>(arguments[0]);
+            // If the incoming value is an instruction and is num, do nothing
+            // If the incoming value is an instruction and isn't a num, emit a cast to change it to num
+            // Else the incoming value is not an instruction, which is an error
+            
+            (arguments[0].IsType(out Instruction i), i?.StructImplementation == this) switch
+            {
+                (true, true) => new Result<IValue>(arguments[0]),
+                (true, false) => Cast.Create(i, this),
+                _ => context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Argument '{arguments[0]}' is not convertible to Num")
+            };
+        
         public Result<IValue> DefaultValue(Context _) => Constant.Zero;
         public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => value.IsType<Instruction>(out var instruction) && instruction.StructImplementation == Instance;
         public Identifier Identifier { get; } = new Identifier("Num");

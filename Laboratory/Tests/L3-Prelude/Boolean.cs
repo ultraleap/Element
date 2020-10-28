@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using Element;
 
 namespace Laboratory.Tests.L3.Prelude
 {
@@ -19,12 +20,17 @@ namespace Laboratory.Tests.L3.Prelude
 
 		[DatapointSource] public (string FunctionExpression, string CallExpression, string ExpectedExpression)[] FunctionCallData =
 		{
-			("Bool" ,"(0)", "False"),
-			("Bool" ,"(1)", "True"),
-			("Bool" ,"(1.2)", "True"),
-			("Bool" ,"(9999)", "True"),
-			("Bool" ,"(0.1)", "True"),
-			("Bool" ,"(-0.1)", "False"),
+			("_(a:Num):Bool = Bool(a)" ,"(0)", "False"),
+			("_(a:Num):Bool = Bool(a)" ,"(1)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(1.2)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(9999)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(0.1)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(-0.1)", "False"),
+			("_(a:Bool):Bool = Bool(a)" ,"(False)", "False"),
+			("_(a:Bool):Bool = Bool(a)" ,"(True)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(Num.NaN)", "Num.NaN"),
+			("_(a:Num):Bool = Bool(a)" ,"(Num.PositiveInfinity)", "True"),
+			("_(a:Num):Bool = Bool(a)" ,"(Num.NegativeInfinity)", "False"),
 			
 			("Bool.not" ,"(True)", "False"),
 			("Bool.not" ,"(False)", "True"),
@@ -77,5 +83,30 @@ namespace Laboratory.Tests.L3.Prelude
 			("_(cond:Bool, a:Num, b:Num):Num = Bool.if(cond, a, b)" ,"(True, 1, 0)", "1"),
 			("_(cond:Bool, a:Num, b:Num):Num = Bool.if(cond, a, b)" ,"(False, 1, 0)", "0"),
 		};
+		
+		[DatapointSource]
+		public (string FunctionExpression, string CallExpression, EleMessageCode ExpectedError)[] FunctionCallErrorCases =
+		{
+			("_(a:Vector3):Bool = Bool(a)" ,"(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
+		};
+		
+		[Theory]
+		public void ErrorCases((string FunctionExpression, string CallExpression, EleMessageCode ExpectedError) args, EvaluationMode evaluationMode) =>
+			EvaluateExpectingElementError(ValidatedCompilerInput, args.ExpectedError, new FunctionEvaluation(args.FunctionExpression, args.CallExpression, evaluationMode));
+		
+		public static (string Expression, EleMessageCode ExpectedError)[] ArgsList =
+		{
+			("Bool(list(True))", EleMessageCode.ConstraintNotSatisfied),
+			("Bool(_(_) = True)", EleMessageCode.ConstraintNotSatisfied),
+			("Bool({ a = False })", EleMessageCode.ConstraintNotSatisfied),
+		};
+
+		[Test]
+		public void BoolConstructorError([ValueSource(nameof(ArgsList))] (string expression, EleMessageCode expectedError) args, [Values(EvaluationMode.Interpreted)] EvaluationMode mode)
+		{
+			EvaluateExpectingElementError(ValidatedCompilerInput,
+				args.expectedError,
+				new ExpressionEvaluation(args.expression, mode));
+		}
 	}
 }
