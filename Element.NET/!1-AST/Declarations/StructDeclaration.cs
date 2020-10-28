@@ -92,7 +92,7 @@ namespace Element.AST
     {
         public void ValidateIdentifiers(ResultBuilder builder, Identifier structIdentifier)
         {
-            foreach (var decl in Items ?? Enumerable.Empty<Declaration>())
+            foreach (var decl in Items)
             {
                 decl.Identifier.Validate(builder,new[] {structIdentifier}, Array.Empty<Identifier>());
             }

@@ -131,25 +131,26 @@ namespace Element.CLR
 
 		private static LinqExpression CompileInstruction(Instruction value, CompilationData data)
 		{
-			static LinqExpression ConvertExpressionType(LinqExpression expr, Type targetType)
-			{
-				return expr.Type == targetType
+			static LinqExpression ConvertExpressionType(LinqExpression expr, Type targetType) =>
+				expr.Type == targetType
 					? expr
 					: _conversionFunctions.TryGetValue((expr.Type, targetType), out var convert)
 						? convert(expr)
 						: throw new NotSupportedException($"Conversion not defined from '{expr}' to '{targetType}'");
-			}
 
 			static LinqExpression ConvertOutputExpressionType(LinqExpression expr, Type targetType)
 			{
-				if(expr.Type == typeof(double) && targetType == typeof(double))
-					 return _conversionFunctions.TryGetValue((expr.Type, typeof(float)), out var forceConvert)
-						 ? forceConvert(expr)
-						 : throw new NotSupportedException($"Conversion not defined from '{expr}' to '{targetType}'");
+				var isDouble = expr.Type == typeof(double) && targetType == typeof(double);
+				var converterExists = _conversionFunctions.TryGetValue((expr.Type, typeof(float)), out var forceConvert);
 				
-				return ConvertExpressionType(expr, targetType);
+				return (isDouble, converterExists) switch
+				{
+					(true, true) => forceConvert(expr),
+					(true, false) => ConvertExpressionType(expr, targetType),
+					_ => throw new NotSupportedException($"Conversion not defined from '{expr}' to '{targetType}'")
+				};
 			}
-			
+
 			data.Cache ??= new Dictionary<CachedInstruction, ParameterExpression>();
 			data.GroupCache ??= new Dictionary<InstructionGroup, LinqExpression[]>();
 			switch (value)

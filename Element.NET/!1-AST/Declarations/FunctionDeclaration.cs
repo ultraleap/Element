@@ -78,7 +78,7 @@ namespace Element.AST
                 foreach (var id in PortList.Ports.List
                                            .Where(p => p.Identifier.HasValue)
                                            .Select(p => p.Identifier!.Value)
-                                           .Concat((((FunctionBlock) Body).Items ?? Enumerable.Empty<Declaration>()).Select(d => d.Identifier)))
+                                           .Concat(((FunctionBlock) Body).Items.Select(d => d.Identifier)))
                 {
                     if (!distinctLocalIdentifiers.Add(id))
                     {
@@ -113,7 +113,7 @@ namespace Element.AST
     {
         public void ValidateIdentifiers(ResultBuilder builder)
         {
-            foreach (var decl in Items ?? Enumerable.Empty<Declaration>())
+            foreach (var decl in Items)
             {
                 decl.Identifier.Validate(builder,Array.Empty<Identifier>(), new[] {Parser.ReturnIdentifier});
             }

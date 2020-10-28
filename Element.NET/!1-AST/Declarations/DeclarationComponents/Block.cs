@@ -11,13 +11,15 @@ namespace Element.AST
 #pragma warning disable 649, 169
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
         // ReSharper disable once UnusedMember.Global
-        public abstract List<Declaration>? Items { get; protected set; }
+        protected abstract List<Declaration>? _items { get; set; }
 #pragma warning restore 649, 169
+
+        public IReadOnlyList<Declaration> Items => _items ?? (IReadOnlyList<Declaration>)Array.Empty<Declaration>();
         
         protected override void ValidateImpl(ResultBuilder builder, Context context)
         {
             var idHashSet = new HashSet<Identifier>();
-            foreach (var decl in Items ?? Enumerable.Empty<Declaration>())
+            foreach (var decl in Items)
             {
                 decl.Validate(builder, context);
                 if (!idHashSet.Add(decl.Identifier))
@@ -46,26 +48,26 @@ namespace Element.AST
                         Items.FirstOrDefault(d => d.Identifier.Equals(identifier))?.Resolve(scope, context)
                         ?? (Result<IValue>) context.Trace(EleMessageCode.IdentifierNotFound, $"'{identifier}' not found when indexing {scope}");
 
-                    return new ResolvedBlock(Items?.Select(d => d.Identifier).ToArray() ?? Array.Empty<Identifier>(),
-                                     capturedValues,
-                                     IndexFunc,
-                                     parentScope,
-                                     valueProducedFrom);
+                    return new ResolvedBlock(Items.Select(d => d.Identifier).ToArray(),
+                                             capturedValues,
+                                             IndexFunc,
+                                             parentScope,
+                                             valueProducedFrom);
                 });
     }
 
     public class FreeformBlock : Block
     {
-        [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional] public override List<Declaration>? Items { get; protected set; }
+        [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional] protected override List<Declaration>? _items { get; set; }
     }
 
     public class CommaSeparatedBlock : Block
     {
-        [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional, SeparatedBy(typeof(ListSeparator))] public override List<Declaration>? Items { get; protected set; }
+        [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional, SeparatedBy(typeof(ListSeparator))] protected override List<Declaration>? _items { get; set; }
     }
 
     public class DeclarationBlock : FreeformBlock, IDeclarationScope
     {
-        public IReadOnlyList<Declaration> Declarations => Items as IReadOnlyList<Declaration> ?? Array.Empty<Declaration>();
+        public IReadOnlyList<Declaration> Declarations => Items;
     }
 }

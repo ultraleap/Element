@@ -25,7 +25,7 @@ namespace Element.AST
     {
         public void ValidateIdentifiers(ResultBuilder builder)
         {
-            foreach (var decl in Items ?? Enumerable.Empty<Declaration>())
+            foreach (var decl in Items)
             {
                 decl.Identifier.Validate(builder,Array.Empty<Identifier>(), Array.Empty<Identifier>());
             }
