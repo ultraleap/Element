@@ -7,7 +7,7 @@ using namespace libelement::cli;
 
 message_level compiler_message::get_level() const
 {
-    return level.has_value() ? level.value() : message_level::Unknown;
+    return level.has_value() ? level.value() : message_level::Information;
 }
 
 std::string compiler_message::serialize() const
@@ -18,6 +18,10 @@ std::string compiler_message::serialize() const
         rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
         writer.StartObject();
+
+        writer.String(key_message_type);
+        writer.String(key_message_value);
+
         if (type.has_value())
         {
             writer.String(key_message_code);

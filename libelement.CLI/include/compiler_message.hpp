@@ -41,6 +41,8 @@ namespace libelement::cli
 
     class compiler_message
     {
+        static constexpr const char* const key_message_type{ "MessageType" };
+        static constexpr const char* const key_message_value{ "ELE" };
         static constexpr const char* const key_message_code{ "MessageCode" };
         static constexpr const char* const key_message_level{ "MessageLevel" };
         static constexpr const char* const key_context{ "Context" };

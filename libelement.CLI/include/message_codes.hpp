@@ -13,16 +13,16 @@ namespace libelement::cli
         Verbose = 0,
         Information,
         Warning,
-        Error,
-        Fatal,
-        Unknown = 0xFFFF
+        Error
     };
 
     struct message_code
     {
-        typedef const std::map<std::string, message_level>::const_iterator
+    private:
+        typedef const std::vector<std::pair<message_level, std::string>>::const_iterator
             message_level_const_iterator;
 
+    public:
         element_result type;
         std::string name;
         message_level level;
@@ -34,31 +34,41 @@ namespace libelement::cli
         {}
 
     private:
+        static std::vector<std::pair<message_level, std::string>> message_levels;
+
         static message_level get_message_level(const std::string& level)
         {
-            static std::map<std::string, message_level> map_message_level = {
-                { "Fatal", message_level::Fatal },
-                { "Warning", message_level::Warning },
-                { "Error", message_level::Error },
-                { "Information", message_level::Information },
-                { "Verbose", message_level::Verbose }
+            auto predicate = [level](const std::pair<message_level, std::string>& pair) -> bool {
+                return level == pair.second;
             };
 
-            message_level_const_iterator it = map_message_level.find(level);
-            if (it != map_message_level.end())
+            message_level_const_iterator it = std::find_if(std::begin(message_levels), std::end(message_levels), predicate);
+            if (it != message_levels.end())
+                return it->first;
+
+            return message_level::Error;
+        }
+
+        static std::string get_message_level(const message_level level)
+        {
+            auto predicate = [level](const std::pair<message_level, std::string>& pair) -> bool {
+                return level == pair.first;
+            };
+
+            message_level_const_iterator it = std::find_if(std::begin(message_levels), std::end(message_levels), predicate);
+            if (it != message_levels.end())
                 return it->second;
 
-            return message_level::Unknown;
+            return "Error";
         }
     };
 
     class message_codes
     {
-        typedef const std::map<element_result, message_code>::const_iterator
-            message_code_const_iterator;
+        typedef const std::map<element_result, message_code>::const_iterator message_code_const_iterator;
 
     public:
-        message_codes(const std::string& path)
+        explicit message_codes(const std::string& path)
         {
             auto data = toml::parse(path);
             auto table = toml::get<toml::table>(data);
@@ -74,20 +84,20 @@ namespace libelement::cli
             }
         }
 
-        const message_code* get_code(element_result type) const
+        [[nodiscard]] const message_code* get_code(element_result type) const
         {
-            message_code_const_iterator it = code_map.find(type);
+            const auto it = code_map.find(type);
             if (it != code_map.end())
                 return &it->second;
 
             return nullptr;
         }
 
-        message_level get_level(element_result type) const
+         [[nodiscard]] message_level get_level(element_result type) const
         {
-            const message_code* message_code = get_code(type);
+            const auto* const message_code = get_code(type);
             if (message_code == nullptr)
-                return message_level::Unknown;
+                return message_level::Error;
 
             return message_code->level;
         }

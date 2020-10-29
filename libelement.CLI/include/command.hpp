@@ -40,7 +40,7 @@ namespace libelement::cli
             if (no_parse_trace)
                 ss << "--no-parse-trace ";
 
-            if (verbosity != message_level::Unknown)
+            if (verbosity != message_level::Information)
                 ss << "--verbosity " << static_cast<int>(verbosity) << " ";
 
             if (!packages.empty())
