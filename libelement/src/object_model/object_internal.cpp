@@ -67,7 +67,7 @@ namespace element
             {
                 error(fmt::format("typename '{}' for port {}({}) of {} could not be found",
                                   input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
-                      ELEMENT_ERROR_NOT_A_CONSTRAINT, declarer->source_info)
+                      ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, declarer->source_info)
                     .log_once(context.get_logger());
                 return false;
             }
