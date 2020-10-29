@@ -42,6 +42,9 @@ struct Matrix2x2(xRow:Vector2, yRow:Vector2)
     # Operations
     mul(a:Matrix2x2, b:Matrix2x2):Matrix2x2
     {
+        # Multiply two square matrices
+        # Matrix "a" on the left and Matrix "b" is on the right
+
         m_00 = a.xRow.dot(b.xCol)
         m_01 = a.xRow.dot(b.yCol)
         m_10 = a.yRow.dot(b.xCol)
@@ -51,8 +54,11 @@ struct Matrix2x2(xRow:Vector2, yRow:Vector2)
         return = Matrix2x2.fromRows(mxRow, myRow)
     }
 
-    mulVector(m:Matrix2x2, v:Vector2):Vector2
+    vectorMul(m:Matrix2x2, v:Vector2):Vector2
     {
+        # Multiply a vector by the matrix
+        # The matrix is on the left, the vector is on the right
+    
         return = Vector2(m.xRow.dot(v), m.yRow.dot(v))
     }
 }
@@ -114,6 +120,9 @@ struct Matrix3x3(xRow:Vector3, yRow:Vector3, zRow:Vector3)
     # Operations
     mul(a:Matrix3x3, b:Matrix3x3):Matrix3x3
     {
+        # Multiply two square matrices
+        # Matrix "a" on the left and Matrix "b" is on the right
+
         createNewRow = _(v:Vector3, m:Matrix3x3)
         {
             return = Vector3(v.dot(m.xCol), v.dot(m.yCol), v.dot(m.zCol))
@@ -128,8 +137,11 @@ struct Matrix3x3(xRow:Vector3, yRow:Vector3, zRow:Vector3)
         return = multipliedMatrix
     }
 
-    mulVector(m:Matrix3x3, v:Vector3):Vector3
+    vectorMul(m:Matrix3x3, v:Vector3):Vector3
     {
+        # Multiply a vector by the matrix
+        # The matrix is on the left, the vector is on the right
+
         return = Vector3(m.xRow.dot(v), m.yRow.dot(v), m.zRow.dot(v))
     }
 }
@@ -200,6 +212,9 @@ struct Matrix4x4(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4)
 
     mul(a:Matrix4x4, b:Matrix4x4):Matrix4x4
     {
+        # Multiply two square matrices
+        # Matrix "a" on the left and Matrix "b" is on the right
+
         createNewRow = _(v:Vector4, m:Matrix4x4)
         {
             return = Vector4(v.dot(m.xCol), v.dot(m.yCol), v.dot(m.zCol), v.dot(m.wCol))
@@ -215,8 +230,11 @@ struct Matrix4x4(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4)
         return = multipliedMatrix
     }
 
-    mulVector(this:Matrix4x4, v:Vector4):Vector4
+    vectorMul(this:Matrix4x4, v:Vector4):Vector4
     {
+        # Multiply a vector by the matrix
+        # The matrix is on the left, the vector is on the right
+
         multiply(matrixRow:Vector4):Num = matrixRow.dot(v)
         x = multiply(this.xRow)
         y = multiply(this.yRow)

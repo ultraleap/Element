@@ -53,7 +53,7 @@ struct Transform(matrix:Matrix4x4)
     # Operations
     applyToVector4(this:Transform, v:Vector4):Vector4
     {
-        return = this.matrix.mulVector(v)
+        return = this.matrix.vectorMul(v)
     }
 
     applyToPosition(this:Transform, v:Vector3):Vector3

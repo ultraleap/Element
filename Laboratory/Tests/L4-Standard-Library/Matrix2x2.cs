@@ -74,12 +74,12 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [
             TestCase(
                 "Matrix2x2.identity" +
-                ".mulVector(Vector2(-5, 6))",
+                ".vectorMul(Vector2(-5, 6))",
                 "Vector2(-5, 6)"
             ),
             TestCase(
                 "Matrix2x2.fromCols(Vector2(3, 1), Vector2(-2, 4))" +
-                ".mulVector(Vector2(-5, 6))",
+                ".vectorMul(Vector2(-5, 6))",
                 "Vector2(-27, 19)"
             ),
         ]
