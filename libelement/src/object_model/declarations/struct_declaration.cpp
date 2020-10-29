@@ -26,7 +26,7 @@ object_const_shared_ptr struct_declaration::index(
     const source_information& source_info) const
 {
     if (our_scope->is_empty())
-        return std::make_shared<const error>("Structs with empty scopes cannot be indexed", ELEMENT_ERROR_NOT_INDEXABLE, source_info);
+        return std::make_shared<const error>("Structs with empty scopes cannot be indexed", ELEMENT_ERROR_INVALID_EXPRESSION, source_info);
 
     const auto* found = our_scope->find(name, false);
     if (!found)
