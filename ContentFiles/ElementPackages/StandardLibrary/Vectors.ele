@@ -186,18 +186,6 @@ struct Vector3(x:Num, y:Num, z:Num)
 
         return = Vector3(ay_bz.sub(az_by), az_bx.sub(ax_bz), ax_by.sub(ay_bx))
     }
-
-    transformPosition(a:Vector3, matrix:Matrix4x4):Vector3
-    {
-        result = matrix.transform(Vector4.position(a))
-        return = Vector3(result.x, result.y, result.z)
-    }
-
-    transformDirection(a:Vector3, matrix:Matrix4x4):Vector3
-    {
-        result = matrix.transform(Vector4.direction(a))
-        return = Vector3(result.x, result.y, result.z)
-    }
 }
 
 struct Vector4(x:Num, y:Num, z:Num, w:Num)
@@ -205,8 +193,8 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
     zero = Vector4(0, 0, 0, 0)
     one = Vector4(1, 1, 1, 1)
 
-    fromVec3(v:Vector3, w:Num):Vector4 = Vector4(v.x, v.y, v.z, w)
-    toVec3(this:Vector4):Vector3 = Vector3(this.x, this.y, this.z)
+    fromVector3(v:Vector3, w:Num):Vector4 = Vector4(v.x, v.y, v.z, w)
+    toVector3(this:Vector4):Vector3 = Vector3(this.x, this.y, this.z)
 
     #vector properties
     magnitudeSquared(v:Vector4):Num = v.dot(v)

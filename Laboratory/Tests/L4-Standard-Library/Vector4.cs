@@ -121,10 +121,10 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Vector4.fromVec3(Vector3(1, 1, 1), 0)", "Vector4(1, 1, 1, 0)"),
-            TestCase("Vector4.fromVec3(Vector3(1, 1, 1), 1)", "Vector4(1, 1, 1, 1)"),
-            TestCase("Vector4(1, 1, 1, 1).toVec3", "Vector3(1, 1, 1)"),
-            TestCase("Vector4(1, 1, 1, 0).toVec3", "Vector3(1, 1, 1)"),
+            TestCase("Vector4.fromVector3(Vector3(1, 1, 1), 0)", "Vector4(1, 1, 1, 0)"),
+            TestCase("Vector4.fromVector3(Vector3(1, 1, 1), 1)", "Vector4(1, 1, 1, 1)"),
+            TestCase("Vector4(1, 1, 1, 1).toVector3", "Vector3(1, 1, 1)"),
+            TestCase("Vector4(1, 1, 1, 0).toVector3", "Vector3(1, 1, 1)"),
         ]
         public void ToAndFromVec3(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
