@@ -1,26 +1,39 @@
 # Matrix definitions
 #
-# In Element, matrices are stored in column-major form.
-# In practice all this means is that we construct them via column vectors.
-# They can still be thought of as usual matrices which should be indexed as
-#       M_12 = first row, second column.
+# The default constructors for Matrices use row Vectors,
+# and there are also a "fromCols" function to allow definition
+# using column vectors. A corresponding "fromRows" function
+# also exists which can be used to help with code readability.
 
-struct Matrix2x2(xCol:Vector2, yCol:Vector2)
+struct Matrix2x2(xRow:Vector2, yRow:Vector2)
 {
     # Factories
+    identity:Matrix2x2 = Matrix2x2.fromDiagonal(Vector2.one)
+
+    fromRows(xRow:Vector2, yRow:Vector2):Matrix2x2
+    {
+        return = Matrix2x2(xRow, yRow)
+    }
+
+    fromCols(xCol:Vector2, yCol:Vector2):Matrix2x2
+    {
+        return = Matrix2x2(xCol, yCol).transpose
+    }
+
     fromDiagonal(diag:Vector2):Matrix2x2
     {
         # Create a diagonal matrix from the specified vector
         return = Matrix2x2(Vector2(diag.x, 0), Vector2(0, diag.y))
     }
-    identity:Matrix2x2 = Matrix2x2.fromDiagonal(Vector2.one)
 
-    # Matrix Properties
-    xRow(m:Matrix2x2):Vector2 = Vector2(m.xCol.x, m.yCol.x)
-    yRow(m:Matrix2x2):Vector2 = Vector2(m.xCol.y, m.yCol.y)
-    diagonal(m:Matrix2x2):Vector2 = Vector2(m.xCol.x, m.yCol.y)
+    # Properties
 
-    transpose(m:Matrix2x2):Matrix2x2 = Matrix2x2(m.xRow, m.yRow)
+    xCol(m:Matrix2x2):Vector2 = Vector2(m.xRow.x, m.yRow.x)
+    yCol(m:Matrix2x2):Vector2 = Vector2(m.xRow.y, m.yRow.y)
+
+    diagonal(m:Matrix2x2):Vector2 = Vector2(m.xRow.x, m.yRow.y)
+
+    transpose(m:Matrix2x2):Matrix2x2 = Matrix2x2(m.xCol, m.yCol)
 
     determinant(m:Matrix2x2):Num
     {
@@ -34,9 +47,9 @@ struct Matrix2x2(xCol:Vector2, yCol:Vector2)
         m_01 = a.xRow.dot(b.yCol)
         m_10 = a.yRow.dot(b.xCol)
         m_11 = a.yRow.dot(b.yCol)
-        mxCol = Vector2(m_00, m_10)
-        myCol = Vector2(m_01, m_11)
-        return = Matrix2x2(mxCol, myCol)
+        mxRow = Vector2(m_00, m_01)
+        myRow = Vector2(m_10, m_11)
+        return = Matrix2x2.fromRows(mxRow, myRow)
     }
 
     mulVec(m:Matrix2x2, v:Vector2):Vector2
@@ -46,24 +59,35 @@ struct Matrix2x2(xCol:Vector2, yCol:Vector2)
 }
 
 
-struct Matrix3x3(xCol:Vector3, yCol:Vector3, zCol:Vector3)
+struct Matrix3x3(xRow:Vector3, yRow:Vector3, zRow:Vector3)
 {
     # Factories
+    identity:Matrix3x3 = Matrix3x3.fromDiagonal(Vector3.one)
+
+    fromCols(xCol:Vector3, yCol:Vector3, zCol:Vector3):Matrix3x3
+    {
+        return = Matrix3x3(xCol, yCol, zCol).transpose
+    }
+
+    fromRows(xRow:Vector3, yRow:Vector3, zRow:Vector3):Matrix3x3
+    {
+        return = Matrix3x3(xRow, yRow, zRow)
+    }
+
     fromDiagonal(diag:Vector3):Matrix3x3
     {
         # Create a diagonal matrix from the specified vector
         return = Matrix3x3(Vector3(diag.x, 0, 0), Vector3(0, diag.y, 0), Vector3(0, 0, diag.z))
     }
 
-    identity:Matrix3x3 = Matrix3x3.fromDiagonal(Vector3.one)
-
     # Properties
-    xRow(m:Matrix3x3) = Vector3(m.xCol.x, m.yCol.x, m.zCol.x)
-    yRow(m:Matrix3x3) = Vector3(m.xCol.y, m.yCol.y, m.zCol.y)
-    zRow(m:Matrix3x3) = Vector3(m.xCol.z, m.yCol.z, m.zCol.z)
-    diagonal(m:Matrix3x3) = Vector3(m.xCol.x, m.yCol.y, m.zCol.z)
+    xCol(m:Matrix3x3) = Vector3(m.xRow.x, m.yRow.x, m.zRow.x)
+    yCol(m:Matrix3x3) = Vector3(m.xRow.y, m.yRow.y, m.zRow.y)
+    zCol(m:Matrix3x3) = Vector3(m.xRow.z, m.yRow.z, m.zRow.z)
 
-    transpose(m:Matrix3x3):Matrix3x3 = Matrix3x3(m.xRow, m.yRow, m.zRow)
+    diagonal(m:Matrix3x3) = Vector3(m.xRow.x, m.yRow.y, m.zRow.z)
+
+    transpose(m:Matrix3x3):Matrix3x3 = Matrix3x3(m.xCol, m.yCol, m.zCol)
 
     determinant(m:Matrix3x3):Num
     {
@@ -75,9 +99,9 @@ struct Matrix3x3(xCol:Vector3, yCol:Vector3, zCol:Vector3)
         zSubCol:Vector2 = Vector2(m.zCol.y, m.zCol.z)
 
         subDeterminants:Vector3 = Vector3(
-            Matrix2x2(ySubCol, zSubCol).determinant,
-            Matrix2x2(xSubCol, zSubCol).determinant,
-            Matrix2x2(xSubCol, ySubCol).determinant
+            Matrix2x2.fromCols(ySubCol, zSubCol).determinant,
+            Matrix2x2.fromCols(xSubCol, zSubCol).determinant,
+            Matrix2x2.fromCols(xSubCol, ySubCol).determinant
         )
         resultComponents:Vector3 = Vector3(
             topRow.x.mul(subDeterminants.x),
@@ -89,7 +113,6 @@ struct Matrix3x3(xCol:Vector3, yCol:Vector3, zCol:Vector3)
     }
 
     # Operations
-
     mul(a:Matrix3x3, b:Matrix3x3):Matrix3x3
     {
         createNewRow = _(v:Vector3, m:Matrix3x3)
@@ -101,7 +124,7 @@ struct Matrix3x3(xCol:Vector3, yCol:Vector3, zCol:Vector3)
             createNewRow(a.xRow, b),
             createNewRow(a.yRow, b),
             createNewRow(a.zRow, b)
-        ).transpose
+        )
 
         return = multipliedMatrix
     }
@@ -110,91 +133,31 @@ struct Matrix3x3(xCol:Vector3, yCol:Vector3, zCol:Vector3)
     {
         return = Vector3(m.xRow.dot(v), m.yRow.dot(v), m.zRow.dot(v))
     }
-
 }
 
 
-#column-major 4x4 homogeneous coordinate matrix for representing affine transformations
-struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
+struct Matrix4x4(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4)
 {
-     identity = 
-         Matrix4x4(
-            Vector4(1, 0, 0, 0),
-            Vector4(0, 1, 0, 0),
-            Vector4(0, 0, 1, 0),
-            Vector4(0, 0, 0, 1))
-               
-    xRow(m:Matrix4x4) = Vector4(m.x.x, m.y.x, m.z.x, m.w.x)
-    yRow(m:Matrix4x4) = Vector4(m.x.y, m.y.y, m.z.y, m.w.y)
-    zRow(m:Matrix4x4) = Vector4(m.x.z, m.y.z, m.z.z, m.w.z)
-    wRow(m:Matrix4x4) = Vector4(m.x.w, m.y.w, m.z.w, m.w.w)
-       
-    transpose(m:Matrix4x4):Matrix4x4 = Matrix4x4(m.xRow, m.yRow, m.zRow, m.wRow)
-    
-    position(m:Matrix4x4):Vector3 = Vector3(m.w.x, m.w.y, m.w.z)
-    
-    rotation(m:Matrix4x4):Matrix3x3 = Matrix3x3(
-                                                Vector3(m.x.x, m.y.x, m.z.x),
-                                                Vector3(m.x.y, m.y.y, m.z.y),
-                                                Vector3(m.x.z, m.y.z, m.z.z))
-    
-    #this makes the assumption that Matrix4x4 is affine
-    hasInverse(a:Matrix4x4):Bool = a.rotation_submatrix.determinant.neq(0)
+    identity = Matrix4x4.fromDiagonal(Vector4.one)
 
-    translation(translation:Vector3):Matrix4x4 = 
-        Matrix4x4(
-            Vector4(1, 0, 0, 0),
-            Vector4(0, 1, 0, 0),
-            Vector4(0, 0, 1, 0),
-            Vector4(translation.x, translation.y, translation.z, 1))
-            
-    fromAxisAngle(axis:Vector3, angle:Num):Matrix4x4 
-    { 
-        c = Num.cos(angle)
-        s = Num.sin(angle)
-        t = 1.sub(c)
-        a = axis.normalise
-
-        m_00 = t.mul(a.x).mul(a.x).add(c)
-        m_11 = t.mul(a.y).mul(a.y).add(c)
-        m_22 = t.mul(a.z).mul(a.z).add(c)
-        
-        row_0_tmp1 = a.x.mul(a.y).mul(t)
-        row_0_tmp2 = a.z.mul(s)
-        m_10 = row_0_tmp1.add(row_0_tmp2)
-        m_01 = row_0_tmp1.sub(row_0_tmp2)
-        
-        row_1_tmp1 = a.x.mul(a.z).mul(t)
-        row_1_tmp2 = a.y.mul(s)
-        m_20 = row_1_tmp1.sub(row_1_tmp2)
-        m_02 = row_1_tmp1.add(row_1_tmp2)
-        
-        row_2_tmp1 = a.y.mul(a.z).mul(t)
-        row_2_tmp2 = a.x.mul(s)
-        m_21 = row_2_tmp1.add(row_2_tmp2)
-        m_12 = row_2_tmp1.sub(row_2_tmp2)
-
-        return = Matrix4x4(
-                           Vector4(m_00, m_10, m_20, 0),
-                           Vector4(m_01, m_11, m_21, 0),
-                           Vector4(m_02, m_12, m_22, 0),
-                           Vector4(0,    0,    0,    1))                       
-    }   
-    
-    transform(this:Matrix4x4, column_vector:Vector4):Vector4
+    fromRows(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4):Matrix4x4
     {
-        multiply(matrixRow_vector:Vector4):Num = matrixRow_vector.dot(column_vector)
-        x = multiply(this.xRow)
-        y = multiply(this.yRow)
-        z = multiply(this.zRow)
-        w = multiply(this.wRow)
-        return = Vector4(x, y, z, w)
-        
-        #TODO: memberwise this later
-        #return = memberwise(multiply, Matrix4x4.transpose(matrix))
-    }   
-    
-    multiply(a:Matrix4x4, b:Matrix4x4):Matrix4x4
+        return = Matrix4x4(xRow, yRow, zRow, wRow)
+    }
+
+    fromCols(xCol:Vector4, yCol:Vector4, zCol:Vector4, wCol:Vector4):Matrix4x4
+    {
+        return = Matrix4x4(xCol, yCol, zCol, wCol).transpose
+    }
+
+    xCol(m:Matrix4x4) = Vector4(m.xRow.x, m.yRow.x, m.zRow.x, m.wRow.x)
+    yCol(m:Matrix4x4) = Vector4(m.xRow.y, m.yRow.y, m.zRow.y, m.wRow.y)
+    zCol(m:Matrix4x4) = Vector4(m.xRow.z, m.yRow.z, m.zRow.z, m.wRow.z)
+    wCol(m:Matrix4x4) = Vector4(m.xRow.w, m.yRow.w, m.zRow.w, m.wRow.w)
+
+    transpose(m:Matrix4x4):Matrix4x4 = Matrix4x4(m.xCol, m.yCol, m.zCol, m.wCol)
+
+    mul(a:Matrix4x4, b:Matrix4x4):Matrix4x4
     {
         x_component = Vector4(a.xRow.dot(b.x), a.yRow.dot(b.x), a.zRow.dot(b.x), a.wRow.dot(b.w))
         y_component = Vector4(a.xRow.dot(b.y), a.yRow.dot(b.y), a.zRow.dot(b.y), a.wRow.dot(b.w))
@@ -203,8 +166,18 @@ struct Matrix4x4(x:Vector4, y:Vector4, z:Vector4, w:Vector4)
     
         return = Matrix4x4(x_component, y_component, z_component, w_component)
     }
-    
-    multiplyScalar(a:Matrix4x4, b:Num):Matrix4x4
+
+    mulVec(this:Matrix4x4, column_vector:Vector4):Vector4
+    {
+        multiply(matrixRow_vector:Vector4):Num = matrixRow_vector.dot(column_vector)
+        x = multiply(this.xRow)
+        y = multiply(this.yRow)
+        z = multiply(this.zRow)
+        w = multiply(this.wRow)
+        return = Vector4(x, y, z, w)
+    }
+
+    mulNum(a:Matrix4x4, b:Num):Matrix4x4
     {
         x_component = a.x.mul(b)
         y_component = a.y.mul(b)

@@ -14,7 +14,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         ]
         public void CheckIdentity(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
-        
+     
         [
             TestCase("Matrix4x4(" +
                  "Vector4(2, 0, 1, 4), " +
@@ -31,21 +31,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Matrix4x4(" +
-                     "Vector4(2, 0, 1, 4), " +
-                     "Vector4(1, 0, 6, 3), " +
-                     "Vector4(1, 1, 3, 3), " +
-                     "Vector4(0, 2, 9, 1)).position", 
-                "Vector3(0, 2, 9)"),
+            TestCase("Matrix4x4.identity.mulVec(Vector4(1, 1, 1, 0))", "Vector4(1, 1, 1, 0)"),
         ]
-        public void Position(string expression, string expected) =>
-            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
-        
-        [
-            TestCase("Matrix4x4.identity.transform(Vector4(1, 1, 1, 0))", "Vector4(1, 1, 1, 0)"),
-            TestCase("Matrix4x4.fromAxisAngle(Vector3(0, 0, 1), Num.pi.div(2)).transform(Vector4(1, 1, 0, 0))", "Vector4(-1, 1, 0, 0)")
-        ]
-        public void Transform(string expression, string expected) =>
+        public void MulVec(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
     }
 }

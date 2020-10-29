@@ -4,6 +4,20 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Matrix2x2 : StandardLibraryFixture
     {
+
+        [
+            TestCase(
+                "Matrix2x2(Vector2(1, 2), Vector2(3, 4))",
+                "Matrix2x2.fromRows(Vector2(1, 2), Vector2(3, 4))"
+            ),
+            TestCase(
+                "Matrix2x2(Vector2(1, 2), Vector2(3, 4))",
+                "Matrix2x2.fromCols(Vector2(1, 3), Vector2(2, 4))"
+            )
+        ]
+        public void Constructors(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
         [
             TestCase("Matrix2x2.identity",
                 "Matrix2x2(" +
@@ -24,10 +38,10 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
 
         [
-            TestCase("Matrix2x2(Vector2(1, 3),Vector2(2, 4)).xCol", "Vector2(1, 3)"),
-            TestCase("Matrix2x2(Vector2(1, 3),Vector2(2, 4)).yCol", "Vector2(2, 4)"),
-            TestCase("Matrix2x2(Vector2(1, 3),Vector2(2, 4)).xRow", "Vector2(1, 2)"),
-            TestCase("Matrix2x2(Vector2(1, 3),Vector2(2, 4)).yRow", "Vector2(3, 4)"),
+            TestCase("Matrix2x2.fromCols(Vector2(1, 3),Vector2(2, 4)).xCol", "Vector2(1, 3)"),
+            TestCase("Matrix2x2.fromCols(Vector2(1, 3),Vector2(2, 4)).yCol", "Vector2(2, 4)"),
+            TestCase("Matrix2x2.fromCols(Vector2(1, 3),Vector2(2, 4)).xRow", "Vector2(1, 2)"),
+            TestCase("Matrix2x2.fromCols(Vector2(1, 3),Vector2(2, 4)).yRow", "Vector2(3, 4)"),
         ]
         public void GetRowsAndCols(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
@@ -64,7 +78,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 "Vector2(-5, 6)"
             ),
             TestCase(
-                "Matrix2x2(Vector2(3, 1), Vector2(-2, 4))" +
+                "Matrix2x2.fromCols(Vector2(3, 1), Vector2(-2, 4))" +
                 ".mulVec(Vector2(-5, 6))",
                 "Vector2(-27, 19)"
             ),
@@ -84,9 +98,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 "Matrix2x2(Vector2(1, 3), Vector2(2, 4))"
             ),
             TestCase(
-                "Matrix2x2(Vector2(1, 3), Vector2(2, 4))" +
-                ".mul(Matrix2x2(Vector2(-1, -5), Vector2(4, 3)))",
-                "Matrix2x2(Vector2(-11, -23), Vector2(10, 24))"
+                "Matrix2x2.fromCols(Vector2(1, 3), Vector2(2, 4))" +
+                ".mul(Matrix2x2.fromCols(Vector2(-1, -5), Vector2(4, 3)))",
+                "Matrix2x2.fromCols(Vector2(-11, -23), Vector2(10, 24))"
             ),
         ]
         public void MultiplyMatrix(string expression, string expected) =>

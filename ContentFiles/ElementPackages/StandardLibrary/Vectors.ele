@@ -154,8 +154,10 @@ struct Vector3(x:Num, y:Num, z:Num)
 
     signedAngle(from:Vector3, to:Vector3, axis:Vector3):Num
     {
-        # Return the signed angle between "from" and "to",
-        # about the axis "axis". The result is between 180*-180d
+        # Return the signed angle between "from" and "to", the result is between
+        # -180 and 180 degrees.
+        # If the rotation is clockwise around the supplied axis then the result
+        # is positive. The axis does not affect the magnitude of the result.
 
         angleSign = to.cross(from).dot(axis).sign
         return = Vector3.angle(from, to).mul(angleSign)
@@ -203,7 +205,10 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
 {
     zero = Vector4(0, 0, 0, 0)
     one = Vector4(1, 1, 1, 1)
-    
+
+    fromVec3(v:Vector3, w:Num):Vector4 = Vector4(v.x, v.y, v.z, w)
+    toVec3(this:Vector4):Vector3 = Vector3(this.x, this.y, this.z)
+
     #vector properties
     magnitudeSquared(v:Vector4):Num = v.dot(v)
     magnitude(v:Vector4):Num = Num.sqrt(v.magnitudeSquared)
@@ -230,9 +235,6 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
         s = Vector4(a.x.mul(b.x), a.y.mul(b.y), a.z.mul(b.z), a.w.mul(b.w))
         return = s.x.add(s.y).add(s.z).add(s.w)
     }
-
-    direction(v:Vector3):Vector4 = Vector4(v.x, v.y, v.z, 0)
-    position(v:Vector3):Vector4 = Vector4(v.x, v.y, v.z, 1)
 
     lerp(t:Num, a:Vector4, b:Vector4) 
     {

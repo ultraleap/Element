@@ -1,0 +1,106 @@
+# Transforms use homogeneous co-ordinate space to perform rotations and
+# translations on position vectors and direction vectors.
+#
+# These wrap around a Matrix4x4 and provide a convenient API for spatial
+# transformations.
+#
+
+struct Transform(matrix:Matrix4x4)
+{
+    # Factories
+
+    identity:Transform = Transform(Matrix4x4.identity)
+
+    # Create a Transform from the rotation and Translation components
+    #fromRotationAndTranslation(m:Matrix3x3, v:Vector3):Transform
+    #{
+    #    return = identity
+    #}
+
+    #fromRotation(m:Matrix3x3):Transform
+    #{
+    #    return = fromRotationAndTranslation(m, Vector3.zero)
+    #}
+
+    #fromTranslation(v:Vector3):Transform
+    #{
+    #    return = fromRotationAndTranslation(Matrix3x3.identity, v)
+    #}
+
+    # Properties
+
+    # Get the translation part of the Transform
+    #translation:Vector3 = matrix.wCol.toVec3
+
+    # Get the rotation part of the Transform
+    #rotation:Matrix3x3 = Matrix3x3.identity
+
+    # Operations
+    #applyToVec4(v:Vector4):Vector4
+    #{
+    #    return = Vector4.zero
+    #}
+
+    #applyToPosition(v:Vector3):Vector3
+    #{
+    #    positionVector:Vector4 = Vector4.fromVec3(v, 1)
+    #    return = Vector3.zero
+    #}
+
+    #applyToDirection(v:Vector3):Vector3
+    #{
+    #    directionVector:Vector4 = Vector4.fromVec3(v, 0)
+    #    return = Vector3.zero
+    #}
+
+    # TODO: Move to Transform
+    #position(m:Matrix4x4):Vector3 = Vector3(m.wCol.x, m.wCol.y, m.wCol.z)
+
+    # TODO: Move to Transform
+    #rotation(m:Matrix4x4):Matrix3x3 = Matrix3x3(
+    #                                            Vector3(m.xCol.x, m.yCol.x, m.zCol.x),
+    #                                            Vector3(m.xCol.y, m.yCol.y, m.zCol.y),
+    #                                            Vector3(m.xCol.z, m.yCol.z, m.zCol.z))
+    
+    # TODO: Move to Transform
+    #translation(translation:Vector3):Matrix4x4 = 
+    #    Matrix4x4(
+    #        Vector4(1, 0, 0, 0),
+    #        Vector4(0, 1, 0, 0),
+    #        Vector4(0, 0, 1, 0),
+    #        Vector4(translation.x, translation.y, translation.z, 1))
+    
+    #fromAxisAngle(axis:Vector3, angle:Num):Matrix4x4 
+    #{ 
+    #    c = Num.cos(angle)
+    #    s = Num.sin(angle)
+    #    t = 1.sub(c)
+    #    a = axis.normalise
+
+    #    m_00 = t.mul(a.x).mul(a.x).add(c)
+    #    m_11 = t.mul(a.y).mul(a.y).add(c)
+    #    m_22 = t.mul(a.z).mul(a.z).add(c)
+
+    #    row_0_tmp1 = a.x.mul(a.y).mul(t)
+    #    row_0_tmp2 = a.z.mul(s)
+    #    m_10 = row_0_tmp1.add(row_0_tmp2)
+    #    m_01 = row_0_tmp1.sub(row_0_tmp2)
+        
+    #    row_1_tmp1 = a.x.mul(a.z).mul(t)
+    #    row_1_tmp2 = a.y.mul(s)
+    #    m_20 = row_1_tmp1.sub(row_1_tmp2)
+    #    m_02 = row_1_tmp1.add(row_1_tmp2)
+        
+    #    row_2_tmp1 = a.y.mul(a.z).mul(t)
+    #    row_2_tmp2 = a.x.mul(s)
+    #    m_21 = row_2_tmp1.add(row_2_tmp2)
+    #    m_12 = row_2_tmp1.sub(row_2_tmp2)
+
+    #    return = Matrix4x4(
+    #                       Vector4(m_00, m_10, m_20, 0),
+    #                       Vector4(m_01, m_11, m_21, 0),
+    #                       Vector4(m_02, m_12, m_22, 0),
+    #                       Vector4(0,    0,    0,    1))
+    #}
+}
+
