@@ -2,6 +2,7 @@
 
 //SELF
 #include "object_model/constraints/type.hpp"
+#include "object_model/error.hpp"
 
 using namespace element;
 
@@ -16,7 +17,10 @@ object_const_shared_ptr intrinsic_constructor_num::call(
     const source_information& source_info) const
 {
     auto expr = std::dynamic_pointer_cast<const instruction>(compiled_args[0]);
-    assert(expr); //todo: I don't think it could be anything but an expression?
+
+    if (!expr)
+        return std::make_shared<const element::error>(fmt::format("Argument to Num was '{}' which is invalid. Must be Num or Bool.", compiled_args[0]->to_string()), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
+
     expr->actual_type = type::num.get();
 
     return evaluate(context, std::move(expr));
