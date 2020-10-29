@@ -84,7 +84,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     while (continue_loop(arguments))
     {
         if (current_loop_iteration > max_loop_iterations)
-            return std::make_shared<const error>(fmt::format("Compile time loop didn't finish after max iteration count of {}", max_loop_iterations), ELEMENT_ERROR_COMPILETIME_LOOP_TOO_MANY_ITERATIONS, source_info);
+            return std::make_shared<const error>(fmt::format("Compile time loop didn't finish after max iteration count of {}", max_loop_iterations), ELEMENT_ERROR_INFINITE_LOOP, source_info);
 
         current_object = next_successor(arguments);
         if (!current_object)
