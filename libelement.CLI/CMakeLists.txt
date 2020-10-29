@@ -24,6 +24,7 @@ set(libelement_cli_sources
     "include/message_codes.hpp"
 
     "src/compiler_message.cpp"
+    "src/message_codes.cpp"
     "src/command.cpp"
     "src/main.cpp"
 )
