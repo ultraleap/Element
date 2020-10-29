@@ -27,7 +27,6 @@ struct Matrix2x2(xRow:Vector2, yRow:Vector2)
     }
 
     # Properties
-
     xCol(m:Matrix2x2):Vector2 = Vector2(m.xRow.x, m.yRow.x)
     yCol(m:Matrix2x2):Vector2 = Vector2(m.xRow.y, m.yRow.y)
 
@@ -150,49 +149,79 @@ struct Matrix4x4(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4)
         return = Matrix4x4(xCol, yCol, zCol, wCol).transpose
     }
 
+    fromDiagonal(diag:Vector4):Matrix4x4
+    {
+        # Create a diagonal matrix from its diagonal components
+        return = Matrix4x4(
+            Vector4(diag.x, 0, 0, 0),
+            Vector4(0, diag.y, 0, 0),
+            Vector4(0, 0, diag.z, 0),
+            Vector4(0, 0, 0, diag.w)
+        )
+    }
+
     xCol(m:Matrix4x4) = Vector4(m.xRow.x, m.yRow.x, m.zRow.x, m.wRow.x)
     yCol(m:Matrix4x4) = Vector4(m.xRow.y, m.yRow.y, m.zRow.y, m.wRow.y)
     zCol(m:Matrix4x4) = Vector4(m.xRow.z, m.yRow.z, m.zRow.z, m.wRow.z)
     wCol(m:Matrix4x4) = Vector4(m.xRow.w, m.yRow.w, m.zRow.w, m.wRow.w)
 
+    diagonal(m:Matrix4x4):Vector4
+    {
+        return = Vector4(m.xRow.x, m.yRow.y, m.zRow.z, m.wRow.w)
+    }
+
     transpose(m:Matrix4x4):Matrix4x4 = Matrix4x4(m.xCol, m.yCol, m.zCol, m.wCol)
+
+    determinant(m:Matrix4x4):Num
+    {
+        signVector:Vector4 = Vector4(1, -1, 1, -1)
+        topRow:Vector4 = m.xRow
+
+        xSubCol:Vector3 = Vector3(m.xCol.y, m.xCol.z, m.xCol.w)
+        ySubCol:Vector3 = Vector3(m.yCol.y, m.yCol.z, m.yCol.w)
+        zSubCol:Vector3 = Vector3(m.zCol.y, m.zCol.z, m.zCol.w)
+        wSubCol:Vector3 = Vector3(m.wCol.y, m.wCol.z, m.wCol.w)
+
+        subDeterminants:Vector4 = Vector4(
+            Matrix3x3.fromCols(ySubCol, zSubCol, wSubCol).determinant,
+            Matrix3x3.fromCols(xSubCol, zSubCol, wSubCol).determinant,
+            Matrix3x3.fromCols(xSubCol, ySubCol, wSubCol).determinant,
+            Matrix3x3.fromCols(xSubCol, ySubCol, zSubCol).determinant
+        )
+
+        resultComponents:Vector4 = Vector4(
+            topRow.x.mul(subDeterminants.x),
+            topRow.y.mul(subDeterminants.y),
+            topRow.z.mul(subDeterminants.z),
+            topRow.w.mul(subDeterminants.w)
+        )
+        return = resultComponents.dot(signVector)
+    }
 
     mul(a:Matrix4x4, b:Matrix4x4):Matrix4x4
     {
-        x_component = Vector4(a.xRow.dot(b.x), a.yRow.dot(b.x), a.zRow.dot(b.x), a.wRow.dot(b.w))
-        y_component = Vector4(a.xRow.dot(b.y), a.yRow.dot(b.y), a.zRow.dot(b.y), a.wRow.dot(b.w))
-        z_component = Vector4(a.xRow.dot(b.z), a.yRow.dot(b.z), a.zRow.dot(b.z), a.wRow.dot(b.w))
-        w_component = Vector4(a.xRow.dot(b.w), a.yRow.dot(b.w), a.zRow.dot(b.w), a.wRow.dot(b.w))
-    
-        return = Matrix4x4(x_component, y_component, z_component, w_component)
+        createNewRow = _(v:Vector4, m:Matrix4x4)
+        {
+            return = Vector4(v.dot(m.xCol), v.dot(m.yCol), v.dot(m.zCol), v.dot(m.wCol))
+        }
+
+        multipliedMatrix = Matrix4x4.fromRows(
+            createNewRow(a.xRow, b),
+            createNewRow(a.yRow, b),
+            createNewRow(a.zRow, b),
+            createNewRow(a.wRow, b)
+        )
+
+        return = multipliedMatrix
     }
 
-    mulVec(this:Matrix4x4, column_vector:Vector4):Vector4
+    mulVec(this:Matrix4x4, v:Vector4):Vector4
     {
-        multiply(matrixRow_vector:Vector4):Num = matrixRow_vector.dot(column_vector)
+        multiply(matrixRow:Vector4):Num = matrixRow.dot(v)
         x = multiply(this.xRow)
         y = multiply(this.yRow)
         z = multiply(this.zRow)
         w = multiply(this.wRow)
         return = Vector4(x, y, z, w)
-    }
-
-    mulNum(a:Matrix4x4, b:Num):Matrix4x4
-    {
-        x_component = a.x.mul(b)
-        y_component = a.y.mul(b)
-        z_component = a.z.mul(b)
-        w_component = a.w.mul(b)
-    
-        return = Matrix4x4(x_component, y_component, z_component, w_component)
-    }
-    
-    add(a:Matrix4x4, b:Matrix4x4):Matrix4x4
-    {
-        return = Matrix4x4(
-            Vector4(a.x.add(b.x)),
-            Vector4(a.y.add(b.y)),
-            Vector4(a.z.add(b.z)),
-            Vector4(a.w.add(b.w)))
     }
 }

@@ -172,7 +172,7 @@ struct Vector3(x:Num, y:Num, z:Num)
     }
 
     lerp(t:Num, a:Vector3, b:Vector3) 
-    {
+    { 
         return = Vector3(t.lerp(a.x, b.x), t.lerp(a.y, b.y), t.lerp(a.z, b.z))
     }
 
