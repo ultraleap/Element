@@ -495,7 +495,6 @@ namespace element
     std::unique_ptr<expression> build_expression(const element_interpreter_ctx* context, const element_ast* const ast, expression_chain* chain, deferred_expressions& deferred_expressions, element_result& output_result)
     {
         assert(chain);
-        assert(chain->declarer);
 
         const auto is_empty = chain->expressions.empty();
 

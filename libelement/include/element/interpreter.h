@@ -302,7 +302,7 @@ element_result element_interpreter_evaluate(
  * @param[in] interpreter       interpreter context
  * @param[in] options           compilation options
  * @param[in] expression_string expression to compile
- * @param[in] instruction       instruction tree result
+ * @param[out] instruction       instruction tree result
  *
  * @return ELEMENT_OK compiled an expression to an instruction tree successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
@@ -355,6 +355,12 @@ element_result element_interpreter_typeof_expression(
     const char* expression_string,
     char* buffer,
     int buffer_size);
+
+element_result element_interpreter_evaluate_call_expression(
+    element_interpreter_ctx* interpreter,
+    const element_evaluator_options* options,
+    const char* call_expression,
+    element_outputs* outputs);
 
 #if defined(__cplusplus)
 }

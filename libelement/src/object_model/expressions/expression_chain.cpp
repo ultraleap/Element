@@ -11,7 +11,6 @@ using namespace element;
 expression_chain::expression_chain(const declaration* declarer)
     : declarer{ declarer }
 {
-    assert(declarer);
     expressions.reserve(20);
 }
 

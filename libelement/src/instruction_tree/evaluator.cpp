@@ -159,7 +159,9 @@ element_result element_evaluate(
     const element_evaluator_options opts)
 {
     auto size = outputs.size();
-    return element_evaluate(context, std::move(fn), inputs.data(), inputs.size(), outputs.data(), size, std::move(opts));
+    auto result = element_evaluate(context, std::move(fn), inputs.data(), inputs.size(), outputs.data(), size, std::move(opts));
+    outputs.resize(size);
+    return std::move(result);
 }
 
 element_result element_evaluate(

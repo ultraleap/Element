@@ -10,6 +10,7 @@
 #include "error_map.hpp"
 #include "compilation_context.hpp"
 #include "intrinsics/intrinsic.hpp"
+#include "object_model/intermediaries/function_instance.hpp"
 
 namespace element
 {
@@ -164,7 +165,14 @@ namespace element
                                                            const source_information& source_info,
                                                            const int placeholder_offset)
     {
-        auto [placeholder, size] = generate_placeholder_inputs(context, inputs, result, placeholder_offset);
+        const auto* function_instance = dynamic_cast<const element::function_instance*>(&object);
+
+        int inputs_to_skip = 0;
+        if (function_instance)
+            inputs_to_skip = function_instance->get_provided_arguments().size();
+
+        auto [placeholder, size] = generate_placeholder_inputs(context, inputs, result, placeholder_offset, inputs_to_skip);
+
         if (result != ELEMENT_OK)
         {
             result = ELEMENT_ERROR_UNKNOWN;

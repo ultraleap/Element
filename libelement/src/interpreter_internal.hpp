@@ -48,6 +48,22 @@ public:
     void log(element_result message_code, const std::string& message, const std::string& filename = std::string()) const;
     void log(const std::string& message) const;
 
+    element_result call_expression_to_objects(
+        const element_compiler_options* options,
+        const char* call_expression_string,
+        std::vector<element::object_const_shared_ptr>& objects);
+
+    element_result call_expression_to_objects(
+        const element_compiler_options* options,
+        const char* call_expression,
+        element_object** objects,
+        int* object_count);
+
+    element_result expression_to_object(
+        const element_compiler_options* options,
+        const char* expression_string,
+        element_object** object);
+
     struct Deleter
     {
         void operator()(element::intrinsic* i) const;

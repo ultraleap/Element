@@ -27,7 +27,7 @@ namespace element
 
         [[nodiscard]] bool is_constant() const override;
         [[nodiscard]] bool valid_at_boundary(const compilation_context& context) const;
-
+        [[nodiscard]] const std::vector<object_const_shared_ptr>& get_provided_arguments() const { return provided_arguments; }
         const function_declaration* const declarer;
 
     private:
