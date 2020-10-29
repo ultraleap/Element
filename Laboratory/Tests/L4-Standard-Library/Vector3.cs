@@ -52,30 +52,30 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Vector3(2, 4, 8).mul(0)", "Vector3(0, 0, 0)"),
-            TestCase("Vector3(2, 4, 8).mul(2)", "Vector3(4, 8, 16)"),
-            TestCase("Vector3(2, 4, 8).mul(0.5)", "Vector3(1, 2, 4)"),
-            TestCase("Vector3(2, 4, 8).mul(-2)", "Vector3(-4, -8, -16)"),
-            TestCase("Vector3(2, 4, 8).mul(-0.5)", "Vector3(-1, -2, -4)"),
-            TestCase("Vector3(-2, -4, -8).mul(2)", "Vector3(-4, -8, -16)"),
-            TestCase("Vector3(-2, -4, -8).mul(0.5)", "Vector3(-1, -2, -4)"),
-            TestCase("Vector3(-2, -4, -8).mul(-2)", "Vector3(4, 8, 16)"),
-            TestCase("Vector3(-2, -4, -8).mul(-0.5)", "Vector3(1, 2, 4)"),
+            TestCase("Vector3(2, 4, 8).scale(0)", "Vector3(0, 0, 0)"),
+            TestCase("Vector3(2, 4, 8).scale(2)", "Vector3(4, 8, 16)"),
+            TestCase("Vector3(2, 4, 8).scale(0.5)", "Vector3(1, 2, 4)"),
+            TestCase("Vector3(2, 4, 8).scale(-2)", "Vector3(-4, -8, -16)"),
+            TestCase("Vector3(2, 4, 8).scale(-0.5)", "Vector3(-1, -2, -4)"),
+            TestCase("Vector3(-2, -4, -8).scale(2)", "Vector3(-4, -8, -16)"),
+            TestCase("Vector3(-2, -4, -8).scale(0.5)", "Vector3(-1, -2, -4)"),
+            TestCase("Vector3(-2, -4, -8).scale(-2)", "Vector3(4, 8, 16)"),
+            TestCase("Vector3(-2, -4, -8).scale(-0.5)", "Vector3(1, 2, 4)"),
         ]
         public void ScalarMultiply(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Vector3(2, 4, 8).div(0)", "Vector3(Num.PositiveInfinity, Num.PositiveInfinity, Num.PositiveInfinity)"),
-            TestCase("Vector3(2, 4, 8).div(-0)", "Vector3(Num.NegativeInfinity, Num.NegativeInfinity, Num.NegativeInfinity)"),
-            TestCase("Vector3(2, 4, 8).div(2)", "Vector3(1, 2, 4)"),
-            TestCase("Vector3(2, 4, 8).div(0.5)", "Vector3(4, 8, 16)"),
-            TestCase("Vector3(2, 4, 8).div(-2)", "Vector3(-1, -2, -4)"),
-            TestCase("Vector3(2, 4, 8).div(-0.5)", "Vector3(-4, -8, -16)"),
-            TestCase("Vector3(-2, -4, -8).div(2)", "Vector3(-1, -2, -4)"),
-            TestCase("Vector3(-2, -4, -8).div(0.5)", "Vector3(-4, -8, -16)"),
-            TestCase("Vector3(-2, -4, -8).div(-2)", "Vector3(1, 2, 4)"),
-            TestCase("Vector3(-2, -4, -8).div(-0.5)", "Vector3(4, 8, 16)"),
+            TestCase("Vector3(2, 4, 8).scale(1.div(0))", "Vector3(Num.PositiveInfinity, Num.PositiveInfinity, Num.PositiveInfinity)"),
+            TestCase("Vector3(2, 4, 8).scale(1.div(-0))", "Vector3(Num.NegativeInfinity, Num.NegativeInfinity, Num.NegativeInfinity)"),
+            TestCase("Vector3(2, 4, 8).scale(1.div(2))", "Vector3(1, 2, 4)"),
+            TestCase("Vector3(2, 4, 8).scale(1.div(0.5))", "Vector3(4, 8, 16)"),
+            TestCase("Vector3(2, 4, 8).scale(1.div(-2))", "Vector3(-1, -2, -4)"),
+            TestCase("Vector3(2, 4, 8).scale(1.div(-0.5))", "Vector3(-4, -8, -16)"),
+            TestCase("Vector3(-2, -4, -8).scale(1.div(2))", "Vector3(-1, -2, -4)"),
+            TestCase("Vector3(-2, -4, -8).scale(1.div(0.5))", "Vector3(-4, -8, -16)"),
+            TestCase("Vector3(-2, -4, -8).scale(1.div(-2))", "Vector3(1, 2, 4)"),
+            TestCase("Vector3(-2, -4, -8).scale(1.div(-0.5))", "Vector3(4, 8, 16)"),
         ]
         public void ScalarDivide(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
@@ -139,14 +139,14 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
 
         [
-            TestCase("Vector3(1, 1, 1).reflect(Vector3(0, 1, 0))", "Vector3(-1, 1, -1)"),
-            TestCase("Vector3(-1, 1, 1).reflect(Vector3(0, 1, 0))", "Vector3(1, 1, -1)"),
-            TestCase("Vector3(1, -1, 1).reflect(Vector3(0, 1, 0))", "Vector3(-1, -1, -1)"),
-            TestCase("Vector3(-1, -1, 1).reflect(Vector3(0, 1, 0))", "Vector3(1, -1, -1)"),
-            TestCase("Vector3(1, 1, -1).reflect(Vector3(1, 0, 0))", "Vector3(1, -1, 1)"),
-            TestCase("Vector3(-1, 1, -1).reflect(Vector3(1, 0, 0))", "Vector3(-1, -1, 1)"),
-            TestCase("Vector3(1, -1, -1).reflect(Vector3(1, 0, 0))", "Vector3(1, 1, 1)"),
-            TestCase("Vector3(-1, -1, -1).reflect(Vector3(1, 0, 0))", "Vector3(-1, 1, 1)"),
+            TestCase("Vector3(1, 1, 1).reflect(Vector3(0, 1, 0))", "Vector3(1, -1, 1)"),
+            TestCase("Vector3(-1, 1, 1).reflect(Vector3(0, 1, 0))", "Vector3(-1, -1, 1)"),
+            TestCase("Vector3(1, -1, 1).reflect(Vector3(0, 1, 0))", "Vector3(1, 1, 1)"),
+            TestCase("Vector3(-1, -1, 1).reflect(Vector3(0, 1, 0))", "Vector3(-1, 1, 1)"),
+            TestCase("Vector3(1, 1, -1).reflect(Vector3(1, 0, 0))", "Vector3(-1, 1, -1)"),
+            TestCase("Vector3(-1, 1, -1).reflect(Vector3(1, 0, 0))", "Vector3(1, 1, -1)"),
+            TestCase("Vector3(1, -1, -1).reflect(Vector3(1, 0, 0))", "Vector3(-1, -1, -1)"),
+            TestCase("Vector3(-1, -1, -1).reflect(Vector3(1, 0, 0))", "Vector3(1, -1, -1)"),
         ]
         public void Reflect(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);

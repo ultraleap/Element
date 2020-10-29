@@ -51,7 +51,7 @@ struct Matrix2x2(xRow:Vector2, yRow:Vector2)
         return = Matrix2x2.fromRows(mxRow, myRow)
     }
 
-    mulVec(m:Matrix2x2, v:Vector2):Vector2
+    mulVector(m:Matrix2x2, v:Vector2):Vector2
     {
         return = Vector2(m.xRow.dot(v), m.yRow.dot(v))
     }
@@ -128,7 +128,7 @@ struct Matrix3x3(xRow:Vector3, yRow:Vector3, zRow:Vector3)
         return = multipliedMatrix
     }
 
-    mulVec(m:Matrix3x3, v:Vector3):Vector3
+    mulVector(m:Matrix3x3, v:Vector3):Vector3
     {
         return = Vector3(m.xRow.dot(v), m.yRow.dot(v), m.zRow.dot(v))
     }
@@ -215,7 +215,7 @@ struct Matrix4x4(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4)
         return = multipliedMatrix
     }
 
-    mulVec(this:Matrix4x4, v:Vector4):Vector4
+    mulVector(this:Matrix4x4, v:Vector4):Vector4
     {
         multiply(matrixRow:Vector4):Num = matrixRow.dot(v)
         x = multiply(this.xRow)

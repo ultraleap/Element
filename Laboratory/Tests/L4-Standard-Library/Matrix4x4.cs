@@ -212,19 +212,19 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
 
         [
-            TestCase("Matrix4x4.identity.mulVec(Vector4(1, 1, 1, 0))", "Vector4(1, 1, 1, 0)"),
-            TestCase("Matrix4x4.identity.mulVec(Vector4(1, 2, 3, 4))", "Vector4(1, 2, 3, 4)"),
+            TestCase("Matrix4x4.identity.mulVector(Vector4(1, 1, 1, 0))", "Vector4(1, 1, 1, 0)"),
+            TestCase("Matrix4x4.identity.mulVector(Vector4(1, 2, 3, 4))", "Vector4(1, 2, 3, 4)"),
             TestCase(
                 "Matrix4x4.fromRows(" +
                 "Vector4(1, 2, 3, 4), " +
                 "Vector4(5, 6, 7, 8), " +
                 "Vector4(9, 10, 11, 12), " +
                 "Vector4(13, 14, 15, 16))" +
-                ".mulVec(Vector4(1, 2, 3, 4))",
+                ".mulVector(Vector4(1, 2, 3, 4))",
                 "Vector4(30, 70, 110, 150)"
             ),
         ]
-        public void MulVec(string expression, string expected) =>
+        public void mulVector(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
     }
 }

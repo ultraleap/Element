@@ -6,7 +6,7 @@ struct Line2(direction:Vector2, offset:Vector2)
     {
         w = point.sub(line.offset)
         l = line.direction.normalise
-        return = w.sub(l.mul(w.dot(l))).magnitude
+        return = w.sub(l.scale(w.dot(l))).magnitude
     }
 }
 
@@ -16,6 +16,6 @@ struct Line3(direction:Vector3, offset:Vector3)
     {
         w = point.sub(line.offset)
         l = line.direction.normalise
-        return = w.sub(l.mul(w.dot(l))).magnitude
+        return = w.sub(l.scale(w.dot(l))).magnitude
     }
 }

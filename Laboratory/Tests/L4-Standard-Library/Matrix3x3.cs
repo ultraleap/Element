@@ -121,16 +121,16 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [
             TestCase(
             "Matrix3x3.identity" +
-            ".mulVec(Vector3(1, 2, 3))",
+            ".mulVector(Vector3(1, 2, 3))",
             "Vector3(1, 2, 3)"
             ),
             TestCase(
             "Matrix3x3.fromCols(Vector3(1, 4, 7), Vector3(2, 5, 8), Vector3(3, 6, 9))" +
-            ".mulVec(Vector3(1, 2, 3))",
+            ".mulVector(Vector3(1, 2, 3))",
             "Vector3(14, 32, 50)"
             ),
         ]
-        public void CheckMulVec(string expression, string expected) =>
+        public void CheckmulVector(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
 
         [

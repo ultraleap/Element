@@ -46,30 +46,30 @@ namespace Laboratory.Tests.L4.StandardLibrary
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Vector4(2, 4, 8, 16).mul(0)", "Vector4(0, 0, 0, 0)"),
-            TestCase("Vector4(2, 4, 8, 16).mul(2)", "Vector4(4, 8, 16, 32)"),
-            TestCase("Vector4(2, 4, 8, 16).mul(0.5)", "Vector4(1, 2, 4, 8)"),
-            TestCase("Vector4(2, 4, 8, 16).mul(-2)", "Vector4(-4, -8, -16, -32)"),
-            TestCase("Vector4(2, 4, 8, 16).mul(-0.5)", "Vector4(-1, -2, -4, -8)"),
-            TestCase("Vector4(-2, -4, -8, -16).mul(2)", "Vector4(-4, -8, -16, -32)"),
-            TestCase("Vector4(-2, -4, -8, -16).mul(0.5)", "Vector4(-1, -2, -4, -8)"),
-            TestCase("Vector4(-2, -4, -8, -16).mul(-2)", "Vector4(4, 8, 16, 32)"),
-            TestCase("Vector4(-2, -4, -8, -16).mul(-0.5)", "Vector4(1, 2, 4, 8)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(0)", "Vector4(0, 0, 0, 0)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(2)", "Vector4(4, 8, 16, 32)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(0.5)", "Vector4(1, 2, 4, 8)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(-2)", "Vector4(-4, -8, -16, -32)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(-0.5)", "Vector4(-1, -2, -4, -8)"),
+            TestCase("Vector4(-2, -4, -8, -16).scale(2)", "Vector4(-4, -8, -16, -32)"),
+            TestCase("Vector4(-2, -4, -8, -16).scale(0.5)", "Vector4(-1, -2, -4, -8)"),
+            TestCase("Vector4(-2, -4, -8, -16).scale(-2)", "Vector4(4, 8, 16, 32)"),
+            TestCase("Vector4(-2, -4, -8, -16).scale(-0.5)", "Vector4(1, 2, 4, 8)"),
         ]
         public void ScalarMultiply(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
         
         [
-            TestCase("Vector4(2, 4, 8, 16).div(0)", "Vector4(Num.PositiveInfinity, Num.PositiveInfinity, Num.PositiveInfinity, Num.PositiveInfinity)"),
-            TestCase("Vector4(2, 4, 8, 16).div(-0)", "Vector4(Num.NegativeInfinity, Num.NegativeInfinity, Num.NegativeInfinity, Num.NegativeInfinity)"),
-            TestCase("Vector4(2, 4, 8, 16).div(2)", "Vector4(1, 2, 4, 8)"),
-            TestCase("Vector4(2, 4, 8, 16).div(0.5)", "Vector4(4, 8, 16, 32)"),
-            TestCase("Vector4(2, 4, 8, 16).div(-2)", "Vector4(-1, -2, -4, -8)"),
-            TestCase("Vector4(2, 4, 8, 16).div(-0.5)", "Vector4(-4, -8, -16, -32)"),
-            TestCase("Vector4(-2, -4, -8, -16).div(2)", "Vector4(-1, -2, -4, -8)"),
-            TestCase("Vector4(-2, -4, -8, -16).div(0.5)", "Vector4(-4, -8, -16, -32)"),
-            TestCase("Vector4(-2, -4, -8, -16).div(-2)", "Vector4(1, 2, 4, 8)"),
-            TestCase("Vector4(-2, -4, -8, -16).div(-0.5)", "Vector4(4, 8, 16, 32)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(1.div(0))", "Vector4(Num.PositiveInfinity, Num.PositiveInfinity, Num.PositiveInfinity, Num.PositiveInfinity)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(1.div(-0))", "Vector4(Num.NegativeInfinity, Num.NegativeInfinity, Num.NegativeInfinity, Num.NegativeInfinity)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(1.div(2))", "Vector4(1, 2, 4, 8)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(1.div(0.5))", "Vector4(4, 8, 16, 32)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(1.div(-2))", "Vector4(-1, -2, -4, -8)"),
+            TestCase("Vector4(2, 4, 8, 16).scale(1.div(-0.5))", "Vector4(-4, -8, -16, -32)"),
+            TestCase("Vector4(-2, -4, -8, -16).scale(1.div(2))", "Vector4(-1, -2, -4, -8)"),
+            TestCase("Vector4(-2, -4, -8, -16).scale(1.div(0.5))", "Vector4(-4, -8, -16, -32)"),
+            TestCase("Vector4(-2, -4, -8, -16).scale(1.div(-2))", "Vector4(1, 2, 4, 8)"),
+            TestCase("Vector4(-2, -4, -8, -16).scale(1.div(-0.5))", "Vector4(4, 8, 16, 32)"),
         ]
         public void ScalarDivide(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
@@ -99,6 +99,13 @@ namespace Laboratory.Tests.L4.StandardLibrary
             TestCase("Vector4(1, 3, 7, 9).dot(Vector4(-2, -5, -4, -5))", "-90"),
         ]
         public void DotProduct(string expression, string expected) =>
+            AssertApproxEqual(ValidatedCompilerInput, expected, expression);
+
+
+        [
+            TestCase("Vector4(1, 0, 0, 0).reflect(Vector4(1, 0, 0, 0))", "Vector4(-1, 0, 0, 0)"),
+        ]
+        public void Reflect(string expression, string expected) =>
             AssertApproxEqual(ValidatedCompilerInput, expected, expression);
             
         [
