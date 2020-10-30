@@ -15,7 +15,6 @@ namespace Laboratory.Tests.L4.StandardLibrary
             ("Vector2.down", "(0, -1)"),
 
         };
-
         [Test]
         public void Constants([ValueSource(nameof(ConstantArgList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
@@ -24,100 +23,82 @@ namespace Laboratory.Tests.L4.StandardLibrary
                               new FunctionEvaluation("Vector2", args.rhs, mode));
         }
 
-        public static (string constructorArgs, string magnitudeSquared)[] MagnitudeSquaredArgList =
+
+        public static (string constructorArgs, string property, string result)[] PropertyArgList =
         {
-            ("(0, 0)", "0"),
-            ("(1, 0)", "1"),
-            ("(3, 4)", "25"),
+            ("(0, 0)", "magnitudeSquared", "0"),
+            ("(1, 0)", "magnitudeSquared", "1"),
+            ("(3, 4)", "magnitudeSquared", "25"),
+            ("(0, 0)", "magnitude", "0"),
+            ("(1, 0)", "magnitude", "1"),
+            ("(3, 4)", "magnitude", "5")
         };
         [Test]
-        public void MagnitudeSquared([ValueSource(nameof(MagnitudeSquaredArgList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        public void Properties([ValueSource(nameof(PropertyArgList))] (string lhs, string property, string rhs) args, [Values] EvaluationMode mode)
         {
-            string magnitudeSquaredGetter = "_(x:Num, y:Num) = Vector2(x, y).magnitudeSquared";
+            // Tests for scalar properties of vectors
+            string getter = "_(x:Num, y:Num) = Vector2(x, y)." + args.property;
+
             AssertApproxEqual(ValidatedCompilerInput,
-                              new FunctionEvaluation(magnitudeSquaredGetter, args.lhs, mode),
+                              new FunctionEvaluation(getter, args.lhs, mode),
                               new ExpressionEvaluation(args.rhs, mode));
         }
 
-
-        public static (string constructorArgs, string magnitude)[] MagnitudeArgsList =
+        public static (string constructArgs, string property, string resultArgs)[] VectorPropertyArgList =
         {
-            ("(0, 0)", "0"),
-            ("(1, 0)", "1"),
-            ("(3, 4)", "5")
+            ("(0, 0)", "negate", "(0, 0)"),
+            ("(1, 2)", "negate", "(-1, -2)"),
+            ("(-1, 2)", "negate", "(1, -2)"),
+            ("(1, -2)", "negate", "(-1, 2)"),
+            ("(-1, -2)", "negate", "(1, 2)"),
+            ("(0, 0)", "normalise", "(Num.NaN, Num.NaN)"),
+            ("(1, 1)", "normalise", "(1.div(2.sqrt), 1.div(2.sqrt))"),
+            ("(3, 4)", "normalise", "(3.div(5), 4.div(5))"),
         };
         [Test]
-        public void Magntitude([ValueSource(nameof(MagnitudeArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        public void VectorProperties([ValueSource(nameof(VectorPropertyArgList))] (string lhs, string property, string rhs) args, [Values] EvaluationMode mode)
         {
-            string magnitudeGetter = "_(x:Num, y:Num) = Vector2(x, y).magnitude";
+            // Tests for scalar properties of vectors
+            //
+
+            string getter = "_(x:Num, y:Num) = Vector2(x, y)." + args.property;
             AssertApproxEqual(ValidatedCompilerInput,
-                new FunctionEvaluation(magnitudeGetter, args.lhs, mode),
-                new ExpressionEvaluation(args.rhs, mode));
+                              new FunctionEvaluation(getter, args.lhs, mode),
+                              new FunctionEvaluation("Vector2", args.rhs, mode));
         }
 
-        public static (string negatorArgs, string negatedArgs)[] NegateArgsList =
+        public static (string inVector, string scale, string outVector)[] ScaleArgsList =
         {
-            ("(0, 0)", "(0, 0)"),
-            ("(1, 2)", "(-1, -2)"),
-            ("(-1, 2)", "(1, -2)"),
-            ("(1, -2)", "(-1, 2)"),
-            ("(-1, -2)", "(1, 2)")
+            ("Vector2(2, 4)", "0", "Vector2(0, 0)"),
+            ("Vector2(2, 4)", "2", "Vector2(4, 8)"),
+            ("Vector2(2, 4)", "0.5", "Vector2(1, 2)"),
+            ("Vector2(2, 4)", "-2", "Vector2(-4, -8)"),
+            ("Vector2(2, 4)", "-0.5", "Vector2(-1, -2)"),
+            ("Vector2(-2, -4)", "2", "Vector2(-4, -8)"),
+            ("Vector2(-2, -4)", "0.5", "Vector2(-1, -2)"),
+            ("Vector2(-2, -4)", "-2", "Vector2(4, 8)"),
+            ("Vector2(-2, -4)", "-0.5", "Vector2(1, 2)"),
+            ("Vector2(2, 4)", "1.div(0)", "Vector2(Num.PositiveInfinity, Num.PositiveInfinity)"),
+            ("Vector2(2, 4)", "1.div(-0)", "Vector2(Num.NegativeInfinity, Num.NegativeInfinity)"),
+            ("Vector2(2, 4)", "1.div(2)", "Vector2(1, 2)"),
+            ("Vector2(2, 4)", "1.div(0.5)", "Vector2(4, 8)"),
+            ("Vector2(2, 4)", "1.div(-2)", "Vector2(-1, -2)"),
+            ("Vector2(2, 4)", "1.div(-0.5)", "Vector2(-4, -8)"),
+            ("Vector2(-2, -4)", "1.div(2)", "Vector2(-1, -2)"),
+            ("Vector2(-2, -4)", "1.div(0.5)", "Vector2(-4, -8)"),
+            ("Vector2(-2, -4)", "1.div(-2)", "Vector2(1, 2)"),
+            ("Vector2(-2, -4)", "1.div(-0.5)", "Vector2(4, 8)"),
         };
         [Test]
-        public void Negate([ValueSource(nameof(NegateArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
-        {
-            string getNegated = "_(x:Num, y:Num) = Vector2(x, y).negate";
-            AssertApproxEqual(ValidatedCompilerInput,
-                new FunctionEvaluation(getNegated, args.lhs, mode),
-                new FunctionEvaluation("Vector2", args.rhs, mode));
-        }
-
-        public static (string constructorArgs, string normalisedArgs)[] NormaliseArgsList =
-        {
-            ("(0, 0)", "(Num.NaN, Num.NaN)"),
-            ("(1, 1)", "(1.div(2.sqrt), 1.div(2.sqrt))"),
-            ("(3, 4)", "(3.div(5), 4.div(5))")
-        };
-        [Test]
-        public void Normalise([ValueSource(nameof(NormaliseArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
-        {
-            string getNormalised = "_(x:Num, y:Num) = Vector2(x, y).normalise";
-            AssertApproxEqual(ValidatedCompilerInput,
-                new FunctionEvaluation(getNormalised, args.lhs, mode),
-                new FunctionEvaluation("Vector2", args.rhs, mode));
-        }
-
-        public static (string scaleArgs, string result)[] ScaleArgsList =
-        {
-            ("(Vector2(2, 4), 0)", "Vector2(0, 0)"),
-            ("(Vector2(2, 4), 2)", "Vector2(4, 8)"),
-            ("(Vector2(2, 4), 0.5)", "Vector2(1, 2)"),
-            ("(Vector2(2, 4), -2)", "Vector2(-4, -8)"),
-            ("(Vector2(2, 4), -0.5)", "Vector2(-1, -2)"),
-            ("(Vector2(-2, -4), 2)", "Vector2(-4, -8)"),
-            ("(Vector2(-2, -4), 0.5)", "Vector2(-1, -2)"),
-            ("(Vector2(-2, -4), -2)", "Vector2(4, 8)"),
-            ("(Vector2(-2, -4), -0.5)", "Vector2(1, 2)"),
-            ("(Vector2(2, 4), 1.div(0))", "Vector2(Num.PositiveInfinity, Num.PositiveInfinity)"),
-            ("(Vector2(2, 4), 1.div(-0))", "Vector2(Num.NegativeInfinity, Num.NegativeInfinity)"),
-            ("(Vector2(2, 4), 1.div(2))", "Vector2(1, 2)"),
-            ("(Vector2(2, 4), 1.div(0.5))", "Vector2(4, 8)"),
-            ("(Vector2(2, 4), 1.div(-2))", "Vector2(-1, -2)"),
-            ("(Vector2(2, 4), 1.div(-0.5))", "Vector2(-4, -8)"),
-            ("(Vector2(-2, -4), 1.div(2))", "Vector2(-1, -2)"),
-            ("(Vector2(-2, -4), 1.div(0.5))", "Vector2(-4, -8)"),
-            ("(Vector2(-2, -4), 1.div(-2))", "Vector2(1, 2)"),
-            ("(Vector2(-2, -4), 1.div(-0.5))", "Vector2(4, 8)"),
-        };
-        [Test]
-        public void Scale([ValueSource(nameof(ScaleArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        public void Scale([ValueSource(nameof(ScaleArgsList))] (string inVec, string scale, string outVec) args, [Values] EvaluationMode mode)
         {
             string getScaled = "_(v:Vector2, s:Num) = v.scale(s)";
-            AssertApproxEqual(ValidatedCompilerInput,
-                new FunctionEvaluation(getScaled, args.lhs, mode),
-                new ExpressionEvaluation(args.rhs, mode));
-        }
+            string getScaledArgs = "(" + args.inVec + ", " + args.scale + ")";
 
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(getScaled, getScaledArgs, mode),
+                new ExpressionEvaluation(args.outVec, mode));
+        }
 
         public static (string addArgs, string result)[] AddArgsList =
         {
@@ -249,7 +230,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             ("(-0.25, Vector2.zero, Vector2.one)", "Vector2(-0.25, -0.25)"),    //extrapolation
             ("(0, Vector2.zero, Vector2.one)", "Vector2(0, 0)"),
             ("(0.25, Vector2.zero, Vector2.one)", "Vector2(0.25, 0.25)"),
-            ("(5, Vector2.zero, Vector2.one)", "Vector2(0.5, 0.5)"),
+            ("(0.5, Vector2.zero, Vector2.one)", "Vector2(0.5, 0.5)"),
             ("(0.75, Vector2.zero, Vector2.one)", "Vector2(0.75, 0.75)"),
             ("(1, Vector2.zero, Vector2.one)", "Vector2(1, 1)"),
             ("(1.25, Vector2.zero, Vector2.one)", "Vector2(1.25, 1.25)"),     //extrapolation
