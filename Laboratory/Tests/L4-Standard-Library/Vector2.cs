@@ -58,9 +58,6 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void VectorProperties([ValueSource(nameof(VectorPropertyArgList))] (string lhs, string property, string rhs) args, [Values] EvaluationMode mode)
         {
-            // Tests for scalar properties of vectors
-            //
-
             string getter = "_(x:Num, y:Num) = Vector2(x, y)." + args.property;
             AssertApproxEqual(ValidatedCompilerInput,
                               new FunctionEvaluation(getter, args.lhs, mode),
