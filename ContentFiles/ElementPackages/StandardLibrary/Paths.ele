@@ -33,7 +33,7 @@ struct Path(at:PathFunc, length:Num)
                 return = List(index, 1)
             }
             
-    withVelocity(this:Path, velocity:Num):EvaluatePath = renderWithVelocity(velocity)(this)    
+    withVelocity(this:Path, velocity:Num):EvaluatePath = renderWithVelocity(velocity)(this)
     withFrequency(this:Path, frequency:Num):EvaluatePath = renderWithFrequency(frequency)(this)
     withPeriod(this:Path, period:Num):EvaluatePath = renderWithPeriod(period)(this)
 
@@ -45,7 +45,7 @@ struct Path(at:PathFunc, length:Num)
             y = radius.mul(Num.cos(u.mul(Num.tau)))
             return = position.add(Vector3(x, y, 0))
         }
-        
+
         length = Num.mul(radius, Num.tau)
         return = Path(at, length)
     }
@@ -168,7 +168,7 @@ struct Path(at:PathFunc, length:Num)
 
     transform(path:Path, matrix:Matrix4x4):Path
     {
-        at(u:Num):Vector3 = path.at(u).transformPosition(matrix)
+        at(u:Num):Vector3 = Tranform(matrix).applyToPosition(path.at(u))
         return = Path(at, path.length)
     } 
 }
