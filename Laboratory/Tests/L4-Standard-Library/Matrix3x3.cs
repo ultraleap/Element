@@ -60,6 +60,19 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new ExpressionEvaluation(args.rhs, mode));
         }
         
+        public static (string constructorArgs, string resultConstructorArgs)[] TransposeArgsList =
+        {
+            ("(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))", "(Vector3(1, 4, 7), Vector3(2, 5, 8), Vector3(3, 6, 9))"),
+        };
+        [Test]
+        public void Transpose([ValueSource(nameof(TransposeArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string getTranspose = "_(v1, v2, v3) = Matrix3x3(v1, v2, v3).transpose";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(getTranspose, args.lhs, mode),
+                new FunctionEvaluation("Matrix3x3", args.rhs, mode));
+        }
+        
         public static (string constructorArgs, string result)[] DeterminantArgsList =
         {
             ("(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1))", "1"),
@@ -95,7 +108,6 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new FunctionEvaluation(matrixMultiply, matrixMultiplyArgs, mode),
                 new ExpressionEvaluation(args.output, mode));
         }
-        
         
         public static (string m1, string m2, string output)[] MatrixMulArgsList =
         {
