@@ -233,13 +233,13 @@ namespace Laboratory.Tests.L4.StandardLibrary
         
         public static (string lerpArgs, string result)[] LerpArgsList =
         {
-            ("(-0.25, Vector3.zero, Vector3.one)", "Vector3(-0.25, -0.25)"),    //extrapolation
-            ("(0, Vector3.zero, Vector3.one)", "Vector3(0, 0)"),
-            ("(0.25, Vector3.zero, Vector3.one)", "Vector3(0.25, 0.25)"),
-            ("(0.5, Vector3.zero, Vector3.one)", "Vector3(0.5, 0.5)"),
-            ("(0.75, Vector3.zero, Vector3.one)", "Vector3(0.75, 0.75)"),
-            ("(1, Vector3.zero, Vector3.one)", "Vector3(1, 1)"),
-            ("(1.25, Vector3.zero, Vector3.one)", "Vector3(1.25, 1.25)"),     //extrapolation
+            ("(-0.25, Vector3.zero, Vector3.one)", "Vector3.one.scale(-0.25)"),    //extrapolation
+            ("(0, Vector3.zero, Vector3.one)", "Vector3.one.scale(0)"),
+            ("(0.25, Vector3.zero, Vector3.one)", "Vector3.one.scale(0.25)"),
+            ("(0.5, Vector3.zero, Vector3.one)", "Vector3.one.scale(0.5)"),
+            ("(0.75, Vector3.zero, Vector3.one)", "Vector3.one.scale(0.75)"),
+            ("(1, Vector3.zero, Vector3.one)", "Vector3.one"),
+            ("(1.25, Vector3.zero, Vector3.one)", "Vector3.one.scale(1.25)"),     //extrapolation
         };
         [Test]
         public void Lerp([ValueSource(nameof(LerpArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
