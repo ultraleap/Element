@@ -13,7 +13,7 @@ struct Transform(matrix:Matrix4x4)
     # Factories
     identity:Transform = Transform(Matrix4x4.identity)
 
-    # Create a Transform from the rotation and Translation components
+    # Create a Transform from the rotation and translation components
     fromRotationAndTranslation(m:Matrix3x3, v:Vector3):Transform
     {
         transformMatrix = Matrix4x4.fromCols(
