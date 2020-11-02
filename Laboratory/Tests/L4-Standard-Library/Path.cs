@@ -4,89 +4,40 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Paths : StandardLibraryFixture
     {
-        /*TestCase("Path.circle(Vector3.zero, 5).at(0)", "Vector3(0, 5, 0)"),
-        TestCase("Path.circle(Vector3.zero, 5).at(0.125)", "Vector3(5.mul(1.div(Num.sqrt(2))), 5.mul(1.div(Num.sqrt(2))), 0)"),
-        TestCase("Path.circle(Vector3.zero, 5).at(0.25)", "Vector3(5, 0, 0)"),
-        TestCase("Path.circle(Vector3.zero, 5).at(0.375)", "Vector3(5.mul(1.div(Num.sqrt(2))), -5.mul(1.div(Num.sqrt(2))), 0)"),
-        TestCase("Path.circle(Vector3.zero, 5).at(0.5)", "Vector3(0,-5, 0)"),
-        TestCase("Path.circle(Vector3.zero, 5).at(0.625)", "Vector3(-5.mul(1.div(Num.sqrt(2))), -5.mul(1.div(Num.sqrt(2))), 0)"),
-        TestCase("Path.circle(Vector3.zero, 5).at(0.75)", "Vector3(-5, 0, 0)"),
-        TestCase("Path.circle(Vector3.zero, 5).at(0.875)", "Vector3(-5.mul(1.div(Num.sqrt(2))), 5.mul(1.div(Num.sqrt(2))), 0)"),
-        TestCase("Path.circle(Vector3.zero, 5).at(1)", "Vector3(0, 5, 0)"),
-        TestCase("Path.repeatingLine(Vector3.zero, Vector3(10, 20, 30)).at(-0.25)", "Vector3(7.5, 15, 22.5)"),
-        TestCase("Path.repeatingLine(Vector3.zero, Vector3(10, 20, 30)).at(0)", "Vector3(0, 0, 0)"),
-        TestCase("Path.repeatingLine(Vector3.zero, Vector3(10, 20, 30)).at(0.25)", "Vector3(2.5, 5, 7.5)"),
-        TestCase("Path.repeatingLine(Vector3.zero, Vector3(10, 20, 30)).at(0.5)", "Vector3(5, 10, 15)"),
-        TestCase("Path.repeatingLine(Vector3.zero, Vector3(10, 20, 30)).at(0.75)", "Vector3(7.5, 15, 22.5)"),
-        TestCase("Path.repeatingLine(Vector3.zero, Vector3(10, 20, 30)).at(1)", "Vector3(0, 0, 0)"),
-        TestCase("Path.repeatingLine(Vector3.zero, Vector3(10, 20, 30)).at(1.25)", "Vector3(2.5, 5, 7.5)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(-2)", "Vector3(0, 0, 0)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(-1.75)", "Vector3(2.5, 5, 7.5)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(-1.5)", "Vector3(5, 10, 15)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(-1.25)", "Vector3(7.5, 15, 22.5)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(-1)", "Vector3(10, 20, 30)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(-0.75)", "Vector3(7.5, 15, 22.5)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(-0.5)", "Vector3(5, 10, 15)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(-0.25)", "Vector3(2.5, 5, 7.5)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(0)", "Vector3(0, 0, 0)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(0.25)", "Vector3(2.5, 5, 7.5)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(0.5)", "Vector3(5, 10, 15)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(0.75)", "Vector3(7.5, 15, 22.5)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(1)", "Vector3(10, 20, 30)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(1.25)", "Vector3(7.5, 15, 22.5)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(1.5)", "Vector3(5, 10, 15)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(1.75)", "Vector3(2.5, 5, 7.5)"),
-        TestCase("Path.pingPongLine(Vector3.zero, Vector3(10, 20, 30)).at(2)", "Vector3(0, 0, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-1.125)", "Vector3(-5, 0, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-1)", "Vector3(-5, -5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-0.875)", "Vector3(0, -5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-0.75)", "Vector3(5, -5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-0.625)", "Vector3(5, 0, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-0.45)", "Vector3(3, 5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-0.5)", "Vector3(5, 5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-0.55)", "Vector3(5, 3, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-0.375)", "Vector3(0, 5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-0.25)", "Vector3(-5, 5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(-0.125)", "Vector3(-5, 0, 0)"),
-        TestCase("Path.rectangle(10, 10).at(0)", "Vector3(-5, -5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(0.125)", "Vector3(0, -5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(0.25)", "Vector3(5, -5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(0.375)", "Vector3(5, 0, 0)"),
-        TestCase("Path.rectangle(10, 10).at(0.5)", "Vector3(5, 5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(0.625)", "Vector3(0, 5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(0.75)", "Vector3(-5, 5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(0.875)", "Vector3(-5, 0, 0)"),
-        TestCase("Path.rectangle(10, 10).at(1)", "Vector3(-5, -5, 0)"),
-        TestCase("Path.rectangle(10, 10).at(1.125)", "Vector3(0, -5, 0)"),
-                
-        //TODO EvaluateLissajousPath 
-        //TODO EvaluateRosePath 
+        public static (string lhs, string rhs)[] ScaleBoundsArgs =
+        {
+            ("(0, 1, 3, 4, 3)", "0"),
+            ("(0, 1, 3, 4, 3.5)", "0.5"),
+            ("(0, 1, 3, 4, 4)", "1"),
+            ("(2, 3, 3, 6, 3)", "2"),
+            ("(2, 3, 3, 6, 4.5)", "2.5"),
+            ("(2, 3, 3, 6, 6)", "3"),
+        };
+        [Test]
+        public void ScaleBounds([ValueSource(nameof(ScaleBoundsArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string testFunction = "_(l1:Num, u1:Num, l2:Num, u2:Num, t:Num):Num = " +
+                                  "Path.scaleInputBounds(StandardPaths.line(Vector3.zero, Vector3.one), l1, u1, l2, u2)(t).x";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, args.lhs, mode),
+                new ExpressionEvaluation(args.rhs, mode));
+        }
         
-        //Modifiers
+        public static (string lhs, string rhs)[] PingPongArgs =
+        {
+            ("0", "0"),
+            ("0.5", "1"),
+            ("1", "0"),
+        };
+        [Test]
+        public void PingPong([ValueSource(nameof(PingPongArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string testArgs = "(" + args.lhs+ ")";
+            string testFunction = "_(u:Num):Num = Path.pingPong(StandardPaths.line(Vector3.zero, Vector3.one))(u).x";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, testArgs, mode),
+                new ExpressionEvaluation(args.rhs, mode));
+        }
         
-        //TODO EvaluateWithBounds 
-        //TODO EvaluateLineBetween 
-        //TODO EvaluateConcatenate
-        //TODO EvaluateAnimate  
-        //TODO EvaluateOffset 
-        //TODO EvaluateReverse  
-        //TODO EvaluateTranslate  
-        //TODO EvaluateTransform
-        
-        // Bounded Paths
-        
-        TestCase("BoundedPath.line(Vector3.zero, Vector3(10, 20, 30)).atBounded(-0.5)", "Vector3(0, 0, 0)"),
-        TestCase("BoundedPath.line(Vector3.zero, Vector3(10, 20, 30)).atBounded(0)", "Vector3(0, 0, 0)"),
-        TestCase("BoundedPath.line(Vector3.zero, Vector3(10, 20, 30)).atBounded(0.5)", "Vector3(5, 10, 15)"),
-        TestCase("BoundedPath.line(Vector3.zero, Vector3(10, 20, 30)).atBounded(1)", "Vector3(10, 20, 30)"),
-        TestCase("BoundedPath.line(Vector3.zero, Vector3(10, 20, 30)).atBounded(1.5)", "Vector3(10, 20, 30)"),*/
-            
-        //Modifiers
-        
-        //TODO EvaluatePingPong
-        //TODO EvaluateRepeat
-        //TODO EvaluateEasing
-        //TODO EvaluatePathSegment
     }
-      
 }

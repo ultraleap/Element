@@ -310,6 +310,9 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.lerp", "(0.5, 0, 1)", "0.5"),
 			("Num.lerp", "(1, 0, 1)", "1"),
 			("Num.lerp", "(1.25, 0, 1)", "1.25"),
+			("Num.lerp", "(0, 5, 10)", "5"),
+			("Num.lerp", "(0.5, 5, 10)", "7.5"),
+			("Num.lerp", "(1, 5, 10)", "10"),
 			
 			("Num.clamp", "(5, 0, 10)", "5"),
 			("Num.clamp", "(5, -10, 0)", "0"),

@@ -32,6 +32,44 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new FunctionEvaluation(testFunction, testArgs, mode),
                 new ExpressionEvaluation(args.expected, mode));
         }
+        
+        public static (string circleRadius, string expectedCircumference)[] CircleLengthArgsList =
+        {
+            ("2", "Num.pi.mul(4)"),
+            ("10", "Num.pi.mul(20)"),
+        };
+        [Test]
+        public void CircleLength([ValueSource(nameof(CircleLengthArgsList))]
+            (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string callArgs = "(" + args.lhs + ")";
+            AssertApproxEqualRelaxed(ValidatedCompilerInput,
+                new FunctionEvaluation("StandardPaths.circleLength", callArgs, mode),
+                new ExpressionEvaluation(args.rhs, mode));
+        }
+        
+        public static (string constructorArgs, string evaluationArgs, string expected)[] LineArgsList =
+        {
+            ("Vector3.zero, Vector3(1, 0, 0)", "0", "Vector3(0, 0, 0)"),
+            ("Vector3.zero, Vector3(1, 0, 0)", "0.25", "Vector3(0.25, 0, 0)"),
+            ("Vector3.zero, Vector3(1, 0, 0)", "0.5", "Vector3(0.5, 0, 0)"),
+            ("Vector3.zero, Vector3(1, 0, 0)", "0.75", "Vector3(0.75, 0, 0)"),
+            ("Vector3.zero, Vector3(1, 0, 0)", "1", "Vector3(1, 0, 0)"),
+            ("Vector3(1, 1, 1), Vector3(2, 3, 4)", "0", "Vector3(1, 1, 1)"),
+            ("Vector3(1, 1, 1), Vector3(2, 3, 4)", "0.5", "Vector3(1.5, 2, 2.5)"),
+            ("Vector3(1, 1, 1), Vector3(2, 3, 4)", "1", "Vector3(2, 3, 4)"),
+        };
+        [Test]
+        public void Line([ValueSource(nameof(LineArgsList))]
+            (string constructor, string evaluation, string expected) args,
+            [Values] EvaluationMode mode)
+        {
+            string testFunction = "_(a:Vector3, b:Vector3, u:Num):Vector3 = StandardPaths.line(a, b)(u)";
+            string testArgs = "(" + args.constructor + ", " + args.evaluation + ")";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, testArgs, mode),
+                new ExpressionEvaluation(args.expected, mode));
+        }
 
     }
 }

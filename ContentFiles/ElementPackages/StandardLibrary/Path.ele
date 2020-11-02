@@ -2,27 +2,41 @@ constraint PathFunc(u:Num):Vector3
 
 namespace Path
 {
-    bar = 1
+    constraint ScalarTransform(x:Num):Num
+
+    scaleInputBounds(path:PathFunc, oldLower:Num, oldUpper:Num, newLower:Num, newUpper:Num):PathFunc
+    {
+        uTransform = _(u:Num):Num
+        {
+            return = Num.lerp(u.sub(newLower).div(newUpper.sub(newLower)), oldLower, oldUpper)
+        }
+        return = applyInputTransform(path, uTransform)
+    }
+
+    pingPong(path:PathFunc):PathFunc
+    {
+        # Maps the range 0-1 to 0-1-0
+        uTransform = _(u:Num):Num
+        {
+            w = u.mul(2)
+            return = if(w.gt(1), 2.sub(w), w)
+        }
+        return = applyInputTransform(path, uTransform)
+    }
+
+    applyInputTransform(path:PathFunc, inputTransform:ScalarTransform):PathFunc
+    {
+        # Apply a transform to the input argument of a path
+        return = _(u:Num):Vector3
+        {
+            return = path(inputTransform(u))
+        }
+    }
 }
 
 #namespace Path
 #{
-#    constraint ScalarTransform(x:Num):Num
-#
-#    pingPong(path:PathFunc, lower:Num=0, upper:Num=1):PathFunc
-#    {
-#        # Apply a transform to the input parameter between "lower" and "upper"
-#        #
-#        # The transform 
-#        uTransform = _(u:Num):Num
-#        {
-#            progress = u.sub(lower).div(upper.sub(lower))
-#            doubleProgress = progress.mul(2)
-#            progress = if(doubleProgress.gt(1), 2.sub(doubleProgress), doubleProgress)
-#            return = Num.lerp(progress, lower, upper)
-#        }
-#        return = applyInputTransform(uTransform)
-#    }
+#    
 #
 #    oscillate(path:PathFunc, lower:Num=0, upper:Num=1):PathFunc
 #    {
@@ -35,14 +49,6 @@ namespace Path
 #        return = applyInputTransform(path, uTransform)
 #    }
 #
-#    applyInputTransform(path:PathFunc, inputTransform:ScalarTransform):PathFunc
-#    {
-#        # Apply a transform to the input argument of a path
-#        return = _(u:Num):Vector3
-#        {
-#            return = path(inputTransform(u))
-#        }
-#    }
 #
 #    applyTransform(path:PathFunc, transform:Transform):PathFunc
 #    {
