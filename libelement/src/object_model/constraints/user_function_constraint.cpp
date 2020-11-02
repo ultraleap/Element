@@ -13,6 +13,12 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
         const constraint* our_input_constraint = nullptr;
         const constraint* their_input_constraint = nullptr;
 
+        if (!our_input.is_valid(context))
+            return true; //allow constraint matching for invalid ports, to propagate errors and catch multiple
+
+        if (!their_input.is_valid(context))
+            return true; //allow constraint matching for invalid ports, to propagate errors and catch multiple
+
         if (our_input.has_annotation())
             our_input_type = our_input.resolve_annotation(context);
 
@@ -55,6 +61,12 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
     //no one has a return constraint
     if (!declarer->output && !other->output)
         return true;
+
+    if (declarer->output && !declarer->output->is_valid(context))
+        return true; //allow constraint matching for invalid ports, to propagate errors and catch multiple
+
+    if (other->output && !other->output->is_valid(context))
+        return true; //allow constraint matching for invalid ports, to propagate errors and catch multiple
 
     //check return types match since at least one of them has one
     if (declarer->output && other->output)

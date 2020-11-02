@@ -5,6 +5,7 @@
 #include "object_model/intermediaries/function_instance.hpp"
 #include "object_model/intrinsics/intrinsic_function.hpp"
 #include "object_model/compilation_context.hpp"
+#include "object_model/error.hpp"
 
 using namespace element;
 
@@ -31,6 +32,12 @@ object_const_shared_ptr function_declaration::call(
     std::vector<object_const_shared_ptr> compiled_args,
     const source_information& source_info) const
 {
+    if (!ports_validated)
+        validate_ports(context);
+
+    if (!valid_ports)
+        return std::make_shared<const error>(fmt::format("One or more ports on '{}' could not be found", to_string()), ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, this->source_info);
+
     //todo: check, if there is a first argument, that this is a valid instance function
     //todo: check that there is only one argument
     const auto instance = std::make_shared<function_instance>(this, context.captures, source_info, compiled_args);
@@ -40,6 +47,12 @@ object_const_shared_ptr function_declaration::call(
 object_const_shared_ptr function_declaration::compile(const compilation_context& context,
                                                       const source_information& source_info) const
 {
+    if (!ports_validated)
+        validate_ports(context);
+
+    if (!valid_ports)
+        return std::make_shared<const error>(fmt::format("One or more ports on '{}' could not be found", to_string()), ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, this->source_info);
+
     const auto instance = std::make_shared<function_instance>(this, context.captures, source_info);
     return instance->compile(context, source_info);
 }
@@ -57,6 +70,12 @@ const constraint* function_declaration::get_constraint() const
 bool function_declaration::valid_at_boundary(const compilation_context& context) const
 {
     if (!output)
+        return false;
+
+    if (!ports_validated)
+        validate_ports(context);
+
+    if (!valid_ports)
         return false;
 
     //outputs must be serializable
@@ -78,4 +97,19 @@ bool function_declaration::valid_at_boundary(const compilation_context& context)
 bool function_declaration::is_intrinsic() const
 {
     return function_kind == kind::intrinsic;
+}
+
+void function_declaration::validate_ports(const compilation_context& context) const
+{
+    ports_validated = true;
+    valid_ports = true;
+
+    for (const auto& port : inputs)
+    {
+        if (!port.is_valid(context))
+            valid_ports = false;
+    }
+
+    if (output && output->has_annotation() && !output->is_valid(context))
+        valid_ports = false;
 }
