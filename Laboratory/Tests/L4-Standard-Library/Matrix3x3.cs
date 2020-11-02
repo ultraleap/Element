@@ -54,7 +54,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             // Tests which construct the matrix and get the named property
 
-            string getter = "_(x:Vector3, y:Vector3, z:Vector3) = Matrix3x3(x, y, z)." + args.prop;
+            string getter = "_(x:Vector3, y:Vector3, z:Vector3):Vector3 = Matrix3x3(x, y, z)." + args.prop;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -67,7 +67,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Transpose([ValueSource(nameof(TransposeArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getTranspose = "_(v1, v2, v3) = Matrix3x3(v1, v2, v3).transpose";
+            string getTranspose = "_(v1:Vector3, v2:Vector3, v3:Vector3):Matrix3x3 = Matrix3x3(v1, v2, v3).transpose";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getTranspose, args.lhs, mode),
                 new FunctionEvaluation("Matrix3x3", args.rhs, mode));
@@ -82,7 +82,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Determinant([ValueSource(nameof(DeterminantArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getDeterminant = "_(v1:Vector3, v2:Vector3, v3:Vector3) = Matrix3x3(v1, v2, v3).determinant";
+            string getDeterminant = "_(v1:Vector3, v2:Vector3, v3:Vector3):Num = Matrix3x3(v1, v2, v3).determinant";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getDeterminant, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -102,7 +102,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void MultiplyVector([ValueSource(nameof(VectorMulArgsList))] (string matrix, string vector, string output) args,
             [Values] EvaluationMode mode)
         {
-            string matrixMultiply = "_(m:Matrix3x3, v:Vector3) = m.vectorMul(v)";
+            string matrixMultiply = "_(m:Matrix3x3, v:Vector3):Vector3 = m.vectorMul(v)";
             string matrixMultiplyArgs = "(" + args.matrix + ", " + args.vector + ")";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(matrixMultiply, matrixMultiplyArgs, mode),
@@ -131,7 +131,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void MultiplyMatrix([ValueSource(nameof(MatrixMulArgsList))] (string m1, string m2, string output) args,
             [Values] EvaluationMode mode)
         {
-            string matrixMultiply = "_(m1:Matrix3x3, m2:Matrix3x3) = m1.mul(m2)";
+            string matrixMultiply = "_(m1:Matrix3x3, m2:Matrix3x3):Matrix3x3 = m1.mul(m2)";
             string matrixMultiplyArgs = "(" + args.m1 + ", " + args.m2 + ")";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(matrixMultiply, matrixMultiplyArgs, mode),

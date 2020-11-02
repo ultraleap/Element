@@ -33,13 +33,27 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new FunctionEvaluation(altConstructor, args.rhs, mode));
         }
 
-        public static (string constructorArgs, string property, string result)[] GetPropertiesArgsList =
+        public static (string constructorArgs, string property, string result)[] GetVectorPropertiesArgsList =
         {
             (
                 "(Matrix4x4.fromRows(Vector4(1, 2, 3, 10), Vector4(4, 5, 6, 11), Vector4(7, 8, 9, 12), Vector4(0, 0, 0, 1)))",
                 "translation",
                 "Vector3(10, 11, 12)"
             ),
+        };
+        [Test]
+        public void GetVectorProperties([ValueSource(nameof(GetVectorPropertiesArgsList))] (string lhs, string prop, string rhs) args, [Values] EvaluationMode mode)
+        {
+            // Tests which construct the matrix and get the named property
+
+            string getter = "_(m:Matrix4x4):Vector3 = Transform(m)." + args.prop;
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(getter, args.lhs, mode),
+                new ExpressionEvaluation(args.rhs, mode));
+        }
+        
+        public static (string constructorArgs, string property, string result)[] GetMatrixPropertiesArgsList =
+        {
             (
                 "(Matrix4x4.fromRows(Vector4(1, 2, 3, 10), Vector4(4, 5, 6, 11), Vector4(7, 8, 9, 12), Vector4(0, 0, 0, 1)))",
                 "rotation",
@@ -47,11 +61,11 @@ namespace Laboratory.Tests.L4.StandardLibrary
             ),
         };
         [Test]
-        public void GetProperties([ValueSource(nameof(GetPropertiesArgsList))] (string lhs, string prop, string rhs) args, [Values] EvaluationMode mode)
+        public void GetMatrixProperties([ValueSource(nameof(GetMatrixPropertiesArgsList))] (string lhs, string prop, string rhs) args, [Values] EvaluationMode mode)
         {
             // Tests which construct the matrix and get the named property
 
-            string getter = "_(m:Matrix4x4) = Transform(m)." + args.prop;
+            string getter = "_(m:Matrix4x4):Matrix3x3 = Transform(m)." + args.prop;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -90,7 +104,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             (string transform, string application, string vector, string output) args,
             [Values] EvaluationMode mode)
         {
-            string applyTransform = "_(v:Vector3) = " + args.transform + "." + args.application + "(v)";
+            string applyTransform = "_(v:Vector3):Vector3 = " + args.transform + "." + args.application + "(v)";
             
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(applyTransform, args.vector, mode),
@@ -110,7 +124,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             (string axisAngleArgs, string vector, string output) args,
             [Values] EvaluationMode mode)
         {
-            string applyTransform = "_(v:Vector3, n:Num) = Transform.fromAxisAngle(v, n).applyToDirection(" + args.vector + ")";
+            string applyTransform = "_(v:Vector3, n:Num):Vector3 = Transform.fromAxisAngle(v, n).applyToDirection(" + args.vector + ")";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(applyTransform, args.axisAngleArgs, mode),
                 new ExpressionEvaluation(args.output, mode));

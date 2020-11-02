@@ -4,8 +4,6 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Matrix4x4 : StandardLibraryFixture
     {
-        
-        
         public static (string constructorArgs, string constant)[] ConstantArgList =
         {
             ("(Vector4(1, 0, 0, 0), Vector4(0, 1, 0, 0), Vector4(0, 0, 1, 0), Vector4(0, 0, 0, 1))", "Matrix4x4.identity"),
@@ -66,7 +64,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             // Tests which construct the matrix and get the named property
 
-            string getter = "_(x:Vector4, y:Vector4, z:Vector4, w:Vector4) = Matrix4x4(x, y, z, w)." + args.prop;
+            string getter = "_(x:Vector4, y:Vector4, z:Vector4, w:Vector4):Vector4 = Matrix4x4(x, y, z, w)." + args.prop;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -82,7 +80,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             // Tests which construct the matrix and get the named property
 
-            string getter = "_(x:Vector4, y:Vector4, z:Vector4, w:Vector4) = Matrix4x4(x, y, z, w).transpose";
+            string getter = "_(x:Vector4, y:Vector4, z:Vector4, w:Vector4):Matrix4x4 = Matrix4x4(x, y, z, w).transpose";
             string defaultConstructor = "Matrix4x4";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
@@ -98,7 +96,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Determinant([ValueSource(nameof(DeterminantArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getDeterminant = "_(v1, v2, v3, v4) = Matrix4x4(v1, v2, v3, v4).determinant";
+            string getDeterminant = "_(v1:Vector4, v2:Vector4, v3:Vector4, v4:Vector4):Num = Matrix4x4(v1, v2, v3, v4).determinant";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getDeterminant, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -121,7 +119,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void MultiplyVector([ValueSource(nameof(VectorMulArgsList))] (string matrix, string vector, string output) args,
             [Values] EvaluationMode mode)
         {
-            string matrixMultiply = "_(m:Matrix4x4, v:Vector4) = m.vectorMul(v)";
+            string matrixMultiply = "_(m:Matrix4x4, v:Vector4):Vector4 = m.vectorMul(v)";
             string matrixMultiplyArgs = "(" + args.matrix + ", " + args.vector + ")";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(matrixMultiply, matrixMultiplyArgs, mode),
@@ -151,7 +149,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void MultiplyMatrix([ValueSource(nameof(MatrixMulArgsList))] (string m1, string m2, string output) args,
             [Values] EvaluationMode mode)
         {
-            string matrixMultiply = "_(m1:Matrix4x4, m2:Matrix4x4) = m1.mul(m2)";
+            string matrixMultiply = "_(m1:Matrix4x4, m2:Matrix4x4):Matrix4x4 = m1.mul(m2)";
             string matrixMultiplyArgs = "(" + args.m1 + ", " + args.m2 + ")";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(matrixMultiply, matrixMultiplyArgs, mode),

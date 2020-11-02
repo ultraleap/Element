@@ -59,7 +59,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             [Values] EvaluationMode mode
         )
         {
-            string getter = "_(a:Num, b:Num) = Complex(a, b)." + args.property;
+            string getter = "_(a:Num, b:Num):Num = Complex(a, b)." + args.property;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.constructorArgs, mode),
                 new ExpressionEvaluation(args.result, mode));
@@ -88,7 +88,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             [Values] EvaluationMode mode
         )
         {
-            string getter = "_(a:Num, b:Num) = Complex(a, b)." + args.property;
+            string getter = "_(a:Num, b:Num):Num = Complex(a, b)." + args.property;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.constructorArgs, mode),
                 new ExpressionEvaluation(args.result, mode));
@@ -108,7 +108,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             [Values] EvaluationMode mode
         )
         {
-            string getter = "_(a:Num, b:Num) = Complex(a, b).conjugate";
+            string getter = "_(a:Num, b:Num):Complex = Complex(a, b).conjugate";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
                 new FunctionEvaluation("Complex", args.rhs, mode));

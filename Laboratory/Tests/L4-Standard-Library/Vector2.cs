@@ -37,7 +37,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void Properties([ValueSource(nameof(PropertyArgList))] (string lhs, string property, string rhs) args, [Values] EvaluationMode mode)
         {
             // Tests for scalar properties of vectors
-            string getter = "_(x:Num, y:Num) = Vector2(x, y)." + args.property;
+            string getter = "_(x:Num, y:Num):Num = Vector2(x, y)." + args.property;
 
             AssertApproxEqual(ValidatedCompilerInput,
                               new FunctionEvaluation(getter, args.lhs, mode),
@@ -58,7 +58,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void VectorProperties([ValueSource(nameof(VectorPropertyArgList))] (string lhs, string property, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getter = "_(x:Num, y:Num) = Vector2(x, y)." + args.property;
+            string getter = "_(x:Num, y:Num):Vector2 = Vector2(x, y)." + args.property;
             AssertApproxEqual(ValidatedCompilerInput,
                               new FunctionEvaluation(getter, args.lhs, mode),
                               new FunctionEvaluation("Vector2", args.rhs, mode));
@@ -89,7 +89,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Scale([ValueSource(nameof(ScaleArgsList))] (string inVec, string scale, string outVec) args, [Values] EvaluationMode mode)
         {
-            string getScaled = "_(v:Vector2, s:Num) = v.scale(s)";
+            string getScaled = "_(v:Vector2, s:Num):Vector2 = v.scale(s)";
             string getScaledArgs = "(" + args.inVec + ", " + args.scale + ")";
 
             AssertApproxEqual(ValidatedCompilerInput,
@@ -108,7 +108,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void VectorAdd([ValueSource(nameof(AddArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string vectorAdd = "_(a:Vector2, b:Vector2) = a.add(b)";
+            string vectorAdd = "_(a:Vector2, b:Vector2):Vector2 = a.add(b)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(vectorAdd, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -125,7 +125,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void VectorSubtract([ValueSource(nameof(SubArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string vectorAdd = "_(a:Vector2, b:Vector2) = a.sub(b)";
+            string vectorAdd = "_(a:Vector2, b:Vector2):Vector2 = a.sub(b)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(vectorAdd, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -143,7 +143,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void DotProduct([ValueSource(nameof(DotArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string vectorDot = "_(a:Vector2, b:Vector2) = a.dot(b)";
+            string vectorDot = "_(a:Vector2, b:Vector2):Num = a.dot(b)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(vectorDot, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -157,7 +157,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Distance([ValueSource(nameof(DistanceArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string vectorDistance = "_(a:Vector2, b:Vector2) = a.distance(b)";
+            string vectorDistance = "_(a:Vector2, b:Vector2):Num = a.distance(b)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(vectorDistance, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -177,7 +177,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Angle([ValueSource(nameof(AngleArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string vectorAngle = "_(a:Vector2, b:Vector2) = a.angle(b)";
+            string vectorAngle = "_(a:Vector2, b:Vector2):Num = a.angle(b)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(vectorAngle, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -196,7 +196,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void SignedAngle([ValueSource(nameof(SignedAngleArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string vectorSignedAngle = "_(a:Vector2, b:Vector2) = a.signedAngle(b)";
+            string vectorSignedAngle = "_(a:Vector2, b:Vector2):Num = a.signedAngle(b)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(vectorSignedAngle, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -216,7 +216,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Reflect([ValueSource(nameof(ReflectArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string vectorReflect = "_(a:Vector2, b:Vector2) = a.reflect(b)";
+            string vectorReflect = "_(a:Vector2, b:Vector2):Vector2 = a.reflect(b)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(vectorReflect, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));

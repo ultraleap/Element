@@ -39,7 +39,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void Properties([ValueSource(nameof(PropertyArgList))] (string lhs, string property, string rhs) args, [Values] EvaluationMode mode)
         {
             // Tests for scalar properties of vectors
-            string getter = "_(x:Num, y:Num, z:Num) = Vector3(x, y, z)." + args.property;
+            string getter = "_(x:Num, y:Num, z:Num):Num = Vector3(x, y, z)." + args.property;
 
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
@@ -60,7 +60,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void VectorProperties([ValueSource(nameof(VectorPropertyArgList))] (string lhs, string property, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getter = "_(x:Num, y:Num, z:Num) = Vector3(x, y, z)." + args.property;
+            string getter = "_(x:Num, y:Num, z:Num):Vector3 = Vector3(x, y, z)." + args.property;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
                 new FunctionEvaluation("Vector3", args.rhs, mode));
