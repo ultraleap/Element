@@ -168,7 +168,7 @@ struct Path(at:PathFunc, length:Num)
 
     transform(path:Path, matrix:Matrix4x4):Path
     {
-        at(u:Num):Vector3 = Tranform(matrix).applyToPosition(path.at(u))
+        at(u:Num):Vector3 = Transform(matrix).applyToPosition(path.at(u))
         return = Path(at, path.length)
     } 
 }
