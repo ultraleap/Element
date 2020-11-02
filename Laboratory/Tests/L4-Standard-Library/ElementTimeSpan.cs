@@ -10,6 +10,37 @@ namespace Laboratory.Tests.L4.StandardLibrary
         // detail of separating out the fractional and integer components.
         public static string TimeSpanFromSeconds = "TimeSpan.fromSeconds";
 
+        public static (string TimeSpanArgs, string Property, string Period, string Output)[] PropertiesArgsList = 
+        {
+            ("0, 0", "cycles", "1",  "0"),
+            ("0, 0.9", "cycles", "1",  "0"),
+            ("5, 0", "cycles", "1",  "5"),
+            ("5, 0.9", "cycles", "1",  "5"),
+            ("5, 0", "cycles", "5",  "1"),
+            ("4, 0.9", "cycles", "5",  "0"),
+            ("0, 0.9", "cycles", "0.2",  "4"),
+            ("10, 0.9", "cycles", "0.2",  "54"),
+            ("0, 0", "value", "1",  "0"),
+            ("0, 0.9", "value", "1",  "0.9"),
+            ("5, 0", "value", "1",  "0"),
+            ("5, 0.9", "value", "1",  "0.9"),
+            ("5, 0", "value", "5",  "0"),
+            ("4, 0.9", "value", "5",  "4.9"),
+            ("0, 0.9", "value", "0.2",  "0.1"),
+            ("10, 0.9", "value", "0.2",  "0.1"),
+        };
+
+        [Test]
+        public void GetProperties([ValueSource(nameof(PropertiesArgsList))] (string tsargs, string property, string period, string output) args,
+            [Values] EvaluationMode mode)
+        {
+            string getPropertyArgs = "(" + args.tsargs + ", " + args.period + ")";
+            string getProperty = "_(a:Num, b:Num, p:Num):Num = TimeSpan(a, b)." + args.property + "(" + args.period + ")";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(getProperty, getPropertyArgs, mode),
+                new ExpressionEvaluation(args.output, mode));
+        }
+
         public static string TimeSpanAdder = "_(a:Num, b:Num):TimeSpan = TimeSpan.fromSeconds(a).add(TimeSpan.fromSeconds(b))";
         public static (string LeftHandArgs, string RightHandArgs)[] AddArgsList =
         {
