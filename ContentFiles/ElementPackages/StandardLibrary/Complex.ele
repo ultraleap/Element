@@ -1,8 +1,8 @@
-struct Complex(real:Num, imaginary:Num)
+struct Complex(real:Num, imag:Num)
 {
     zero = Complex(0, 0)
     unitReal = Complex(1, 0)
-    unitImaginary = Complex(0, 1)
+    unitImag = Complex(0, 1)
 
     fromPolar(r:Num, theta:Num):Complex
     {
@@ -14,12 +14,9 @@ struct Complex(real:Num, imaginary:Num)
         return = Complex(x, y)
     }
 
-    re(c:Complex):Num = c.real
-    im(c:Complex):Num = c.imaginary
+    conjugate(c:Complex):Complex = Complex(c.real, c.imag.mul(-1))
 
-    conjugate(c:Complex):Complex = Complex(c.re, c.im.mul(-1))
-
-    modulusSquared(c:Complex):Num = c.mul(c.conjugate).re
+    modulusSquared(c:Complex):Num = c.mul(c.conjugate).real
     modulus(c:Complex):Num = Num.sqrt(c.modulusSquared)
 
     argument(c:Complex):Num
@@ -28,19 +25,19 @@ struct Complex(real:Num, imaginary:Num)
         # Answer between -pi and pi
 
         angle = Num.acos(c.re.div(c.modulus))
-        angleSign = if(c.im.geq(0), 1, -1)
+        angleSign = if(c.imag.geq(0), 1, -1)
         return = angle.mul(angleSign)
     }
 
-    scale(c:Complex, n:Num) = Complex(c.re.mul(n), c.im.mul(n))
+    scale(c:Complex, n:Num) = Complex(c.real.mul(n), c.imag.mul(n))
 
-    add(u:Complex, v:Complex):Complex = Complex(u.re.add(v.re), u.im.add(v.im))
-    sub(u:Complex, v:Complex):Complex = Complex(u.re.sub(v.re), u.im.sub(v.im))
+    add(u:Complex, v:Complex):Complex = Complex(u.real.add(v.real), u.imag.add(v.imag))
+    sub(u:Complex, v:Complex):Complex = Complex(u.real.sub(v.real), u.imag.sub(v.imag))
 
     mul(u:Complex, v:Complex):Complex
     {
-        newReal = u.re.mul(v.re).sub(u.im.mul(v.im))
-        newImaginary = u.re.mul(v.im).add(u.im.mul(v.re))
+        newReal = u.real.mul(v.real).sub(u.imag.mul(v.imag))
+        newImaginary = u.real.mul(v.imag).add(u.imag.mul(v.real))
         return = Complex(newReal, newImaginary)
     }
 
