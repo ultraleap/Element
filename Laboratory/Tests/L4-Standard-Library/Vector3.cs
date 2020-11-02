@@ -148,10 +148,10 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             ("Vector3(0, 0, 0)", "Vector3(0, 0, 0)", "Num.NaN"),
             ("Vector3(0, 1, 1)", "Vector3(0, 1, 1)", "0"),
-            ("Vector3(0, 1, 1)", "Vector3(1, 1, 0)", "60"),
-            ("Vector3(0, 1, 1)", "Vector3(-1, 0, 1)", "60"),
-            ("Vector3(0, 1, 1)", "Vector3(1, -1, 1)", "90"),
-            ("Vector3(0, 1, 1)", "Vector3(-1, -1, 0)", "120"),
+            ("Vector3(0, 1, 1)", "Vector3(1, 1, 0)", "Num.pi.div(3)"),
+            ("Vector3(0, 1, 1)", "Vector3(-1, 0, 1)", "Num.pi.div(3)"),
+            ("Vector3(0, 1, 1)", "Vector3(1, -1, 1)", "Num.pi.div(2)"),
+            ("Vector3(0, 1, 1)", "Vector3(-1, -1, 0)", "Num.pi.mul(2).div(3)"),
         };
         [Test]
         public void Angle([ValueSource(nameof(AngleArgsList))]
@@ -168,12 +168,12 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public static (string v1, string v2, string axis, string output)[] SignedAngleArgsList =
         {
             ("Vector3(0, 0, 0)", "Vector3(0, 0, 0)", "Vector3(0, 0, 1)", "Num.NaN"),
-            ("Vector3(1, 0, 0)", "Vector3(0, 1, 0)", "Vector3(0, 0, 1)", "-90"),
-            ("Vector3(1, 0, 0)", "Vector3(0, 1, 0)", "Vector3(0, 0, -1)", "90"),
-            ("Vector3(0, 1, 0)", "Vector3(0, 0, 1)", "Vector3(1, 0, 0)", "-90"),
-            ("Vector3(0, 1, 0)", "Vector3(0, 0, 1)", "Vector3(-1, 0, 0)", "90"),
-            ("Vector3(0, 0, 1)", "Vector3(1, 0, 0)", "Vector3(0, 1, 0)", "-90"),
-            ("Vector3(0, 0, 1)", "Vector3(1, 0, 0)", "Vector3(0, -1, 0)", "90"),
+            ("Vector3(1, 0, 0)", "Vector3(0, 1, 0)", "Vector3(0, 0, 1)", "Num.pi.div(2).mul(-1)"),
+            ("Vector3(1, 0, 0)", "Vector3(0, 1, 0)", "Vector3(0, 0, -1)", "Num.pi.div(2)"),
+            ("Vector3(0, 1, 0)", "Vector3(0, 0, 1)", "Vector3(1, 0, 0)", "Num.pi.div(2).mul(-1)"),
+            ("Vector3(0, 1, 0)", "Vector3(0, 0, 1)", "Vector3(-1, 0, 0)", "Num.pi.div(2)"),
+            ("Vector3(0, 0, 1)", "Vector3(1, 0, 0)", "Vector3(0, 1, 0)", "Num.pi.div(2).mul(-1)"),
+            ("Vector3(0, 0, 1)", "Vector3(1, 0, 0)", "Vector3(0, -1, 0)", "Num.pi.div(2)"),
         };
 
         [Test]

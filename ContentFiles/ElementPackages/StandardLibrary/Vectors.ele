@@ -56,18 +56,17 @@ struct Vector2(x:Num, y:Num)
 
     angle(a:Vector2, b:Vector2):Num 
     {
-        # Return the unsigned angle between a and b in degrees
+        # Return the unsigned angle between a and b in radians
         dot = a.dot(b)
         mag = a.magnitude.mul(b.magnitude)
         clamped = dot.div(mag).clamp(-1, 1)
-        theta = Num.acos(clamped)
-        return = Num.degrees(theta)
+        return = Num.acos(clamped)
     }
 
     signedAngle(from:Vector2, to:Vector2):Num
     {
         # Return the angle between "from" and "to".
-        # The output is between -180 and 180
+        # The output is between -pi and pi
         # Positive means the angle is clockwise
 
         a = from
@@ -142,12 +141,11 @@ struct Vector3(x:Num, y:Num, z:Num)
 
     angle(a:Vector3, b:Vector3):Num 
     {
-        # Return the unsigned angle between a and b in degrees
+        # Return the unsigned angle between a and b in radians
         dot = a.dot(b)
         mag = a.magnitude.mul(b.magnitude)
         clamped = Num.clamp(dot.div(mag), -1, 1)
-        theta = Num.acos(clamped)
-        return = Num.degrees(theta)  
+        return = Num.acos(clamped) 
     }
 
     signedAngle(from:Vector3, to:Vector3, axis:Vector3):Num

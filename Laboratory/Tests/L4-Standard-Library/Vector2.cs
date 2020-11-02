@@ -168,10 +168,10 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             ("(Vector2(0, 0), Vector2(0, 0))", "Num.NaN"),
             ("(Vector2(0, 1), Vector2(0, 1))", "0"),
-            ("(Vector2(0, 1), Vector2(1, 1))", "45"),
-            ("(Vector2(0, 1), Vector2(-1, 1))", "45"),
-            ("(Vector2(0, 1), Vector2(1, -1))", "135"),
-            ("(Vector2(0, 1), Vector2(-1, -1))", "135"),
+            ("(Vector2(0, 1), Vector2(1, 1))", "Num.pi.div(4)"),
+            ("(Vector2(0, 1), Vector2(-1, 1))", "Num.pi.div(4)"),
+            ("(Vector2(0, 1), Vector2(1, -1))", "Num.pi.mul(3).div(4)"),
+            ("(Vector2(0, 1), Vector2(-1, -1))", "Num.pi.mul(3).div(4)"),
 
         };
         [Test]
@@ -187,10 +187,10 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             ("(Vector2(0, 0), Vector2(0, 0))", "Num.NaN"),
             ("(Vector2(0, 1), Vector2(0, 1))", "0"),
-            ("(Vector2(0, 1), Vector2(1, 1))", "45"),
-            ("(Vector2(0, 1), Vector2(-1, 1))", "-45"),
-            ("(Vector2(0, 1), Vector2(1, -1))", "135"),
-            ("(Vector2(0, 1), Vector2(-1, -1))", "-135"),
+            ("(Vector2(0, 1), Vector2(1, 1))", "Num.pi.div(4)"),
+            ("(Vector2(0, 1), Vector2(-1, 1))", "Num.pi.div(4).mul(-1)"),
+            ("(Vector2(0, 1), Vector2(1, -1))", "Num.pi.mul(3).div(4)"),
+            ("(Vector2(0, 1), Vector2(-1, -1))", "Num.pi.mul(3).div(4).mul(-1)"),
 
         };
         [Test]
