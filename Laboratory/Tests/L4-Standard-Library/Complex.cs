@@ -33,7 +33,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void FromPolar([ValueSource(nameof(FromPolarArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            AssertApproxEqual(ValidatedCompilerInput,
+            AssertApproxEqualRelaxed(ValidatedCompilerInput,
                 new FunctionEvaluation("Complex.fromPolar", args.lhs, mode),
                 new FunctionEvaluation("Complex", args.rhs, mode));
         }
