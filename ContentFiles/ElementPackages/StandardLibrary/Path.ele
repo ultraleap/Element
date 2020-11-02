@@ -1,0 +1,105 @@
+constraint PathFunc(u:Num):Vector3
+
+namespace Path
+{
+    bar = 1
+}
+
+#namespace Path
+#{
+#    constraint ScalarTransform(x:Num):Num
+#
+#    pingPong(path:PathFunc, lower:Num=0, upper:Num=1):PathFunc
+#    {
+#        # Apply a transform to the input parameter between "lower" and "upper"
+#        #
+#        # The transform 
+#        uTransform = _(u:Num):Num
+#        {
+#            progress = u.sub(lower).div(upper.sub(lower))
+#            doubleProgress = progress.mul(2)
+#            progress = if(doubleProgress.gt(1), 2.sub(doubleProgress), doubleProgress)
+#            return = Num.lerp(progress, lower, upper)
+#        }
+#        return = applyInputTransform(uTransform)
+#    }
+#
+#    oscillate(path:PathFunc, lower:Num=0, upper:Num=1):PathFunc
+#    {
+#        uTransform = _(u:Num):Num
+#        {
+#            progress = u.sub(lower).div(upper.sub(lower))
+#            newProgress = Num.sin(progress.mul(Num.tau))
+#            return = Num.lerp(newProgress, lower, upper)
+#        }
+#        return = applyInputTransform(path, uTransform)
+#    }
+#
+#    applyInputTransform(path:PathFunc, inputTransform:ScalarTransform):PathFunc
+#    {
+#        # Apply a transform to the input argument of a path
+#        return = _(u:Num):Vector3
+#        {
+#            return = path(inputTransform(u))
+#        }
+#    }
+#
+#    applyTransform(path:PathFunc, transform:Transform):PathFunc
+#    {
+#        # Apply a transform to the 
+#        return = _(u:Num):Vector3
+#        {
+#            return = transform.applyToPosition(path(u))
+#        }
+#    }
+#
+#    easing(a:Path):Path
+#    {
+#        smoothstep(t:Num) = 3.mul(t.mul(t)).sub(2.mul(t.mul(t).mul(t)))
+#        at(u:Num):Vector3 = a.at(smoothstep(u))
+#        return = Path(at, a.length)
+#    }
+#
+#   concatenate(a:Path, b:Path):Path
+#   {
+#       at(u:Num):Vector3 = Bool.if(Num.lt(u, 0.5), a.at(Num.mul(u, 2)), b.at(Num.mul(u, 2)))
+#       length = Num.add(a.length, b.length)
+#       return = Path(at, length)
+#   }
+#
+#   animate(path:Path, trajectory:Path, duration:Num, time:Num):Path
+#   {
+#       offset = trajectory.at(Num.div(time, duration))
+#       at(u:Num):Vector3 = Vector3.add(path.at(u), offset)
+#       return = Path(at, path.length)
+#   }
+#
+#   offset(path:Path, amount:Num):Path
+#   {
+#       at(u:Num):Vector3 = path.at(Num.rem(Num.add(u, amount), 1))
+#       return = Path(at, path.length)
+#   }
+#
+#   reverse(path:Path):Path
+#   {
+#       at(u:Num):Vector3 = path.at(Num.sub(1, u))
+#       return = Path(at, path.length)
+#   }
+#
+#    #UNTESTED
+#   join(pathArray:PathArray) : BoundedPath
+#   {
+#       pathLength(p:BoundedPath) = p.length
+#       length = aggregate(add, Array.Select(pathArray, pathLength), 0)
+#       return = BoundedPath(at, length)
+#       at(u:Num)
+#       {
+#           adjustedU = mul(u, pathArray.count)
+#           currentPath = pathArray.index(adjustedU)
+#           localU = rem(adjustedU, 1)
+#           return = currentPath.atBounded(localU)
+#       }
+#   }
+#
+#
+#}
