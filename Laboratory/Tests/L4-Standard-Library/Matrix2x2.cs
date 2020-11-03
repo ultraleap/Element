@@ -79,7 +79,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             string getTranspose = "_(v1:Vector2, v2:Vector2):Matrix2x2 = Matrix2x2(v1, v2).transpose";
             AssertApproxEqual(ValidatedCompilerInput,
                               new FunctionEvaluation(getTranspose, args.lhs, mode),
-                              new FunctionEvaluation("Matrix2x2", args.rhs, mode));
+                              new FunctionEvaluation(Matrix2x2Constructor, args.rhs, mode));
         }
 
         public static (string matrix, string vector, string output)[] VectorMulArgsList =
