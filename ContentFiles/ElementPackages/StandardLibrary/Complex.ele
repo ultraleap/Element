@@ -24,7 +24,7 @@ struct Complex(real:Num, imag:Num)
         # The polar angle of the number in radians
         # Answer between -pi and pi
 
-        angle = Num.acos(c.re.div(c.modulus))
+        angle = Num.acos(c.real.div(c.modulus))
         angleSign = if(c.imag.geq(0), 1, -1)
         return = angle.mul(angleSign)
     }

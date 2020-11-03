@@ -9,7 +9,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             ("(0, 0)", "Complex.zero"),
             ("(1, 0)", "Complex.unitReal"),
-            ("(0, 1)", "Complex.unitImaginary"),
+            ("(0, 1)", "Complex.unitImag"),
         };
         [Test]
         public void Constants([ValueSource(nameof(ConstantArgList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)

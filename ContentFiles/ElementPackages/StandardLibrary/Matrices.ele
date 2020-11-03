@@ -86,11 +86,11 @@ struct Matrix3x3(xRow:Vector3, yRow:Vector3, zRow:Vector3)
     }
 
     # Properties
-    xCol(m:Matrix3x3) = Vector3(m.xRow.x, m.yRow.x, m.zRow.x)
-    yCol(m:Matrix3x3) = Vector3(m.xRow.y, m.yRow.y, m.zRow.y)
-    zCol(m:Matrix3x3) = Vector3(m.xRow.z, m.yRow.z, m.zRow.z)
+    xCol(m:Matrix3x3):Vector3 = Vector3(m.xRow.x, m.yRow.x, m.zRow.x)
+    yCol(m:Matrix3x3):Vector3 = Vector3(m.xRow.y, m.yRow.y, m.zRow.y)
+    zCol(m:Matrix3x3):Vector3 = Vector3(m.xRow.z, m.yRow.z, m.zRow.z)
 
-    diagonal(m:Matrix3x3) = Vector3(m.xRow.x, m.yRow.y, m.zRow.z)
+    diagonal(m:Matrix3x3):Vector3 = Vector3(m.xRow.x, m.yRow.y, m.zRow.z)
 
     transpose(m:Matrix3x3):Matrix3x3 = Matrix3x3(m.xCol, m.yCol, m.zCol)
 
@@ -172,10 +172,10 @@ struct Matrix4x4(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4)
         )
     }
 
-    xCol(m:Matrix4x4) = Vector4(m.xRow.x, m.yRow.x, m.zRow.x, m.wRow.x)
-    yCol(m:Matrix4x4) = Vector4(m.xRow.y, m.yRow.y, m.zRow.y, m.wRow.y)
-    zCol(m:Matrix4x4) = Vector4(m.xRow.z, m.yRow.z, m.zRow.z, m.wRow.z)
-    wCol(m:Matrix4x4) = Vector4(m.xRow.w, m.yRow.w, m.zRow.w, m.wRow.w)
+    xCol(m:Matrix4x4):Vector4 = Vector4(m.xRow.x, m.yRow.x, m.zRow.x, m.wRow.x)
+    yCol(m:Matrix4x4):Vector4 = Vector4(m.xRow.y, m.yRow.y, m.zRow.y, m.wRow.y)
+    zCol(m:Matrix4x4):Vector4 = Vector4(m.xRow.z, m.yRow.z, m.zRow.z, m.wRow.z)
+    wCol(m:Matrix4x4):Vector4 = Vector4(m.xRow.w, m.yRow.w, m.zRow.w, m.wRow.w)
 
     diagonal(m:Matrix4x4):Vector4
     {
