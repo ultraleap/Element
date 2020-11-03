@@ -51,6 +51,7 @@ add_custom_command (
 target_include_directories(${CMAKE_PROJECT_NAME}
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${element_SOURCE_DIR}/src"
         "${DEPENDENCIES_DIR}/toml11"
         "${DEPENDENCIES_DIR}/rapidjson/include"
     PRIVATE

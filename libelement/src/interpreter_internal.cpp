@@ -41,7 +41,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
 {
     //HACK: JM - Not a fan of this...
     const std::string file = filename;
-    const auto starts_with_prelude = file.rfind("Prelude\\", 0) == 0;
+    const auto starts_with_prelude = file.rfind("Prelude/", 0) == 0;
     element_tokeniser_ctx* tokeniser;
     ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
 
@@ -170,7 +170,7 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
     if (last_dash != std::string::npos)
         actual_package_name = package.substr(0, last_dash);
 
-    auto package_path = "ElementPackages\\" + actual_package_name;
+    auto package_path = "ElementPackages/" + actual_package_name;
     if (!directory_exists(package_path))
     {
         auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
@@ -207,7 +207,7 @@ element_result element_interpreter_ctx::load_packages(const std::vector<std::str
 
     for (const auto& package : packages)
     {
-        auto package_path = "ElementPackages\\" + package;
+        auto package_path = "ElementPackages/" + package;
         const auto result = load_package(package);
         if (result != ELEMENT_OK && ret != ELEMENT_OK) //todo: only returns first error
             ret = result;
