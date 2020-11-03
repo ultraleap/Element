@@ -7,6 +7,7 @@ namespace Element.AST
 {
     public interface IExpressionChainStart
     {
+        Result<IValue> Resolve(ExpressionChain expressionChain, IScope scope, Context context);
         string TraceString { get; }
     }
     
@@ -15,52 +16,46 @@ namespace Element.AST
     {
         // ReSharper disable UnusedAutoPropertyAccessor.Local
 #pragma warning disable 8618
-        [field: Alternative(typeof(Identifier), typeof(Constant))] public IExpressionChainStart LitOrId { get; private set; }
-        [field: Optional] public List<SubExpression>? Expressions { get; private set; }
+        [field: Alternative(typeof(Identifier), typeof(Constant))] public IExpressionChainStart ExpressionChainStart { get; private set; }
+        [field: Optional] public List<SubExpression>? SubExpressions { get; private set; }
 #pragma warning restore 8618
         // ReSharper restore UnusedAutoPropertyAccessor.Local
 
-        public override string ToString() => $"{LitOrId.TraceString}{(Expressions != null ? string.Concat(Expressions) : string.Empty)}";
+        public override string ToString() => $"{ExpressionChainStart.TraceString}{(SubExpressions != null ? string.Concat(SubExpressions) : string.Empty)}";
 
         protected override void ValidateImpl(ResultBuilder builder, Context context)
         {
-            foreach (var expr in Expressions ?? Enumerable.Empty<SubExpression>())
+            foreach (var expr in SubExpressions ?? Enumerable.Empty<SubExpression>())
             {
                 expr.Validate(builder, context);
             }
         }
 
-        public static Result<IValue> ResolveExpressionChain(IValue start, IEnumerable<SubExpression> subExpressions, IScope parentScope, Context context)
+        private Result<IValue> ResolveExpressionChain(IValue start, IEnumerable<SubExpression> subExpressions, IScope parentScope, Context context)
         {
             Result<IValue> ResolveSubExpression(Result<IValue> previousResult, SubExpression subExpr) =>
-                previousResult.Bind(previous => subExpr.ResolveSubExpression(previous, parentScope, context));
+                previousResult.Bind(previous => subExpr.ResolveSubExpression(this, previous, parentScope, context));
             
             return subExpressions.Aggregate(new Result<IValue>(start), ResolveSubExpression);
         }
 
         protected override Result<IValue> ExpressionImpl(IScope parentScope, Context context) =>
-            (LitOrId switch
-                {
-                    // If the start of the list is an identifier, find the value that it identifies
-                    Identifier id => parentScope.Lookup(id, context),
-                    Constant constant => constant,
-                    _ => throw new InternalCompilerException("Trying to compile expression that doesn't start with literal or identifier - should be impossible")
-                })
-            .Bind(start => Expressions != null // Return the starting value if there's no subexpressions
-                               ? ResolveExpressionChain(start, Expressions, parentScope, context)
+            ExpressionChainStart.Resolve(this, parentScope, context)
+            .Bind(start => SubExpressions != null // Return the starting value if there's no subexpressions
+                               ? ResolveExpressionChain(start, SubExpressions, parentScope, context)
                                : new Result<IValue>(start));
 
         public abstract class SubExpression : AstNode
         {
-            public Result<IValue> ResolveSubExpression(IValue previous, IScope parentScope, Context context)
+            public Result<IValue> ResolveSubExpression(ExpressionChain chain, IValue previous, IScope parentScope, Context context)
             {
                 context.TraceStack.Push(this.MakeTraceSite($"{GetType().Name} '{ToString()}'"));
-                var result = SubExpressionImpl(previous, parentScope, context);
+                var result = SubExpressionImpl(chain, previous, parentScope, context);
                 context.TraceStack.Pop();
                 return result;
             }
 
-            protected abstract Result<IValue> SubExpressionImpl(IValue previous, IScope scope, Context context);
+            protected abstract Result<IValue> SubExpressionImpl(ExpressionChain chain, IValue previous, IScope scope, Context context);
         }
         
         // ReSharper disable once UnusedType.Global
@@ -81,17 +76,18 @@ namespace Element.AST
                 }
             }
 
-            protected override Result<IValue> SubExpressionImpl(IValue previous, IScope scope, Context context) =>
+            protected override Result<IValue> SubExpressionImpl(ExpressionChain chain, IValue previous, IScope scope, Context context) =>
                 Expressions.List
-                           .Select(argExpr => argExpr.ResolveExpression(scope, context))
+                           .Zip(previous.InputPorts, (argExpr, port) =>
+                           {
+                               var argExpressionResult = argExpr.ResolveExpression(scope, context);
+                               return context.Aspect?.CallArgument(previous, argExpr, port, scope, argExpressionResult) ?? argExpressionResult;
+                           })
                            .ToResultReadOnlyList()
-                           .Then(args => context.Aspect?.BeforeCall(previous, args, context) ?? Result.Success)
                            .Bind(args =>
                            {
                                var callResult = previous.Call(args.ToArray(), context);
-                               return context.Aspect != null
-                                          ? callResult.Bind(result => context.Aspect.Call(previous, args, result, context))
-                                          : callResult;
+                               return context.Aspect?.Call(chain, previous, this, args, callResult) ?? callResult;
                            });
         }
 
@@ -105,10 +101,11 @@ namespace Element.AST
 
             public override string ToString() => $".{Identifier}";
             protected override void ValidateImpl(ResultBuilder builder, Context context) => Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
-            protected override Result<IValue> SubExpressionImpl(IValue previous, IScope _, Context context) =>
-                (context.Aspect?.BeforeIndex(previous, Identifier, context) ?? Result.Success)
-                .Bind(() => previous.Index(Identifier, context))
-                .Bind(indexResult => context.Aspect?.Index(previous, Identifier, indexResult, context) ?? new Result<IValue>(indexResult));
+            protected override Result<IValue> SubExpressionImpl(ExpressionChain chain, IValue previous, IScope _, Context context)
+            {
+                var indexResult = previous.Index(Identifier, context);
+                return context.Aspect?.Index(chain, previous, this, indexResult) ?? indexResult;
+            }
         }
     }
 }

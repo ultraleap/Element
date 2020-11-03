@@ -19,6 +19,12 @@ namespace Element.AST
             && obj.GetType() == GetType()
             && Equals((Identifier) obj);
 
+        public Result<IValue> Resolve(ExpressionChain expressionChain, IScope scope, Context context)
+        {
+            var lookupResult = scope.Lookup(this, context);
+            return context.Aspect?.Lookup(expressionChain, this, scope, lookupResult) ?? lookupResult;
+        }
+        
         public string TraceString => String;
     }
 }

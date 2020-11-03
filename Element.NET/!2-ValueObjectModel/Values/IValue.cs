@@ -61,6 +61,12 @@ namespace Element.AST
         public virtual IValue Inner => this;
     }
 
+    public class ErrorValue : Value
+    {
+        private ErrorValue(){}
+        public static ErrorValue Instance { get; } = new ErrorValue();
+    }
+
     public static class ValueExtensions
     {
         public static Result<IValue> IndexPositionally(this IValue value, int index, Context context)

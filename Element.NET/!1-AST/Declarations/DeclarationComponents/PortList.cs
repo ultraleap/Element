@@ -36,11 +36,24 @@ namespace Element.AST
 
     public static class PortListExtensions
     {
-        public static Result<IReadOnlyList<ResolvedPort>> ResolveInputConstraints(this PortList? portList, IScope scope, Context context, bool portListIsOptional, bool portsListCanBeVaradic) =>
-            portList?.Ports.List
-                    .Select(p => p.Resolve(scope, context))
-                    .ToResultReadOnlyList()
-            ?? (portListIsOptional, portsListCanBeVaradic) switch
+        public static Result<(IReadOnlyList<ResolvedPort> InputPorts, IValue ReturnPort)> ResolveFunctionSignature(this PortList? inputPortList,
+                                                                                                                   IScope scope,
+                                                                                                                   bool areInputPortsOptional,
+                                                                                                                   bool canInputsBeVariadic,
+                                                                                                                   PortConstraint? returnConstraint,
+                                                                                                                   Context context) =>
+            inputPortList.ResolveFunctionPortList(scope, areInputPortsOptional, canInputsBeVariadic, context)
+                         .Accumulate(() =>
+                         {
+                             var resolvedReturnConstraint = returnConstraint.ResolvePortConstraint(scope, context);
+                             return context.Aspect?.ReturnConstraint(returnConstraint, scope, resolvedReturnConstraint) ?? resolvedReturnConstraint;
+                         });
+
+        public static Result<IReadOnlyList<ResolvedPort>> ResolveFunctionPortList(this PortList? inputPortList, IScope scope, bool areInputPortsOptional, bool canInputsBeVariadic, Context context) =>
+            inputPortList?.Ports.List
+                         .Select(p => p.Resolve(scope, context))
+                         .ToResultReadOnlyList()
+            ?? (areInputPortsOptional, canInputsBeVariadic) switch
             {
                 (true, false) => Array.Empty<ResolvedPort>(),
                 (_, true) => new Result<IReadOnlyList<ResolvedPort>>(new[] {ResolvedPort.VariadicPort}),

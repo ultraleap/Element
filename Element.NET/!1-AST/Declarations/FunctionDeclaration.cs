@@ -12,8 +12,7 @@ namespace Element.AST
 
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             IntrinsicImplementationCache.Get<IIntrinsicFunctionImplementation>(Identifier, context)
-                                        .Bind(impl => PortList.ResolveInputConstraints(scope, context, true, impl.IsVariadic)
-                                                              .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
+                                        .Bind(impl => PortList.ResolveFunctionSignature(scope, true, impl.IsVariadic, ReturnConstraint, context)
                                                               .Map(t => (impl, t.Item1, t.Item2)))
                                         .Bind(t =>
                                         {
@@ -43,12 +42,10 @@ namespace Element.AST
         protected override Type[] BodyAlternatives { get; } = {typeof(ExpressionBody)};
 
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
-            PortList.ResolveInputConstraints(scope, context, true, false)
-                    .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
+            PortList.ResolveFunctionSignature(scope, true, false, ReturnConstraint, context)
                     .Bind(t =>
                     {
-                        var (inputPort, returnConstraint) = t;
-                        var expressionBodiedFunction = new Result<IValue>(new ExpressionBodiedFunction(inputPort, returnConstraint, (ExpressionBody)Body, scope));
+                        var expressionBodiedFunction = new Result<IValue>(new ExpressionBodiedFunction(t.InputPorts, t.ReturnPort, (ExpressionBody)Body, scope));
                         // Call functions with no args immediately
                         return PortList == null
                                    ? expressionBodiedFunction.Bind(nullary => nullary.Call(Array.Empty<IValue>(), context))
@@ -96,12 +93,10 @@ namespace Element.AST
         }
 
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
-            PortList.ResolveInputConstraints(scope, context, true, false)
-                    .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
+            PortList.ResolveFunctionSignature(scope, true, false, ReturnConstraint, context)
                     .Bind(t =>
                     {
-                        var (inputPort, returnConstraint) = t;
-                        var scopeBodiedFunction = new Result<IValue>(new ScopeBodiedFunction(inputPort, returnConstraint, (FunctionBlock) Body, scope));
+                        var scopeBodiedFunction = new Result<IValue>(new ScopeBodiedFunction(t.InputPorts, t.ReturnPort, (FunctionBlock) Body, scope));
                         // Call functions with no args immediately
                         return PortList == null
                                    ? scopeBodiedFunction.Bind(nullary => nullary.Call(Array.Empty<IValue>(), context))

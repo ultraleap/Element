@@ -2,7 +2,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    public class ReturnConstraint : AstNode
+    public class PortConstraint : AstNode
     {
 #pragma warning disable 169, 8618
         [Literal(":"), WhitespaceSurrounded, MultiLine] private Unnamed _;
@@ -22,7 +22,7 @@ namespace Element.AST
     
     public static class ReturnConstraintExtensions
     {
-        public static Result<IValue> ResolveReturnConstraint(this ReturnConstraint? returnConstraint, IScope scope, Context context) =>
-            returnConstraint?.Expression.ResolveExpression(scope, context) ?? AnyConstraint.Instance;
+        public static Result<IValue> ResolvePortConstraint(this PortConstraint? portConstraint, IScope scope, Context context) =>
+            portConstraint?.Expression.ResolveExpression(scope, context) ?? AnyConstraint.Instance;
     }
 }

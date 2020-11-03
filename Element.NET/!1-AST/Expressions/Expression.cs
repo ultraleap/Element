@@ -9,11 +9,8 @@ namespace Element.AST
         public Result<IValue> ResolveExpression(IScope parentScope, Context context)
         {
             context.TraceStack.Push(this.MakeTraceSite($"{GetType().Name} '{ToString()}'"));
-            var resolveResult = (context.Aspect?.BeforeExpression(this, parentScope, context) ?? Result.Success)
-                .Bind(() => ExpressionImpl(parentScope, context));
-            var result = context.Aspect != null
-                             ? resolveResult.Bind(resolvedValue => context.Aspect.Expression(this, parentScope, resolvedValue, context))
-                             : resolveResult;
+            var resolveResult = ExpressionImpl(parentScope, context);
+            var result = context.Aspect?.Expression(this, parentScope, resolveResult) ?? resolveResult;
             context.TraceStack.Pop();
             return result;
         }

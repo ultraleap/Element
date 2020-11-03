@@ -9,27 +9,35 @@ namespace Element.AST
 #pragma warning disable 649, 8618
         // ReSharper disable UnusedAutoPropertyAccessor.Local
         [Alternative(typeof(Identifier), typeof(Unidentifier))] private object _identifier;
-        [field: Optional] public ReturnConstraint? ReturnConstraint { get; private set; }
+        [field: Optional] public PortConstraint? PortConstraint { get; private set; }
         [field: Optional] public ExpressionBody? DefaultArgument { get; private set; }
         // ReSharper restore UnusedAutoPropertyAccessor.Local
 #pragma warning restore 649, 8618
 
         public Identifier? Identifier => _identifier is Identifier id ? (Identifier?)id : null;
-        public override string ToString() => $"{_identifier}{ReturnConstraint}";
+        public override string ToString() => $"{_identifier}{PortConstraint}";
 
         protected override void ValidateImpl(ResultBuilder builder, Context context)
         {
             if (_identifier is Identifier id) id.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>()); // Don't validate identifier if this port has none
-            ReturnConstraint?.Validate(builder, context);
+            PortConstraint?.Validate(builder, context);
             DefaultArgument?.Expression.Validate(builder, context);
         }
 
         public Result<ResolvedPort> Resolve(IScope scope, Context context)
         {
-            Result<IValue> ResolveConstraint() => ReturnConstraint?.Expression.ResolveExpression(scope, context)
-                                                  ?? AnyConstraint.Instance;
-            Result<IValue> ResolveDefaultArgument() => DefaultArgument.Expression.ResolveExpression(scope, context);
-            
+            Result<IValue> ResolveConstraint()
+            {
+                var resolvedConstraint = PortConstraint.ResolvePortConstraint(scope, context);
+                return context.Aspect?.InputPort(this, PortConstraint?.Expression, scope, resolvedConstraint) ?? resolvedConstraint;
+            }
+
+            Result<IValue> ResolveDefaultArgument()
+            {
+                var resolvedDefaultArg = DefaultArgument.Expression.ResolveExpression(scope, context);
+                return context.Aspect?.DefaultArgument(this, DefaultArgument, scope, resolvedDefaultArg) ?? resolvedDefaultArg;
+            }
+
             Result<ResolvedPort> WithDefaultArgument()
             {
                 Result DefaultArgumentMatchesPortConstraint((IValue Constraint, IValue DefaultArgument) t) =>

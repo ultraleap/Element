@@ -10,7 +10,7 @@ namespace Element.AST
         protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             IntrinsicImplementationCache.Get<IIntrinsicStructImplementation>(Identifier, context)
-                          .Accumulate(() => PortList.ResolveInputConstraints(scope, context, true, false))
+                          .Accumulate(() => PortList.ResolveFunctionPortList(scope, true, false, context))
                           .Bind(t =>
                           {
                               var (structImpl, inputPorts) = t;
@@ -51,7 +51,7 @@ namespace Element.AST
         protected override string Qualifier { get; } = "struct ";
         protected override Type[] BodyAlternatives { get; } = {typeof(StructBlock), typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
-            PortList.ResolveInputConstraints(scope, context, false, false)
+            PortList.ResolveFunctionPortList(scope, false, false, context)
                     .Bind(inputPorts =>
                     {
                         CustomStruct? customStruct = null;
