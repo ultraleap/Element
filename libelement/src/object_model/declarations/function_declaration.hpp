@@ -42,6 +42,10 @@ namespace element
         std::variant<std::unique_ptr<object>, const object*> body;
 
     private:
+        void validate_ports(const compilation_context& context) const;
+
+        mutable bool ports_validated = false;
+        mutable bool valid_ports = false;
         std::unique_ptr<constraint> constraint_;
         kind function_kind;
     };

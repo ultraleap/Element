@@ -149,6 +149,12 @@ namespace element::detail
             ELEMENT_STAGE_PARSER);
 
         register_log_error<std::string>(
+            log_error_message_code::invalid_type_annotation,
+            "type annotation was invalid.\n{}",
+            ELEMENT_ERROR_TYPE_ERROR,
+            ELEMENT_STAGE_PARSER);
+
+        register_log_error<std::string>(
             log_error_message_code::intrinsic_type_mismatch,
             "intrinsic {} type mismatch",
             ELEMENT_ERROR_TYPE_ERROR,

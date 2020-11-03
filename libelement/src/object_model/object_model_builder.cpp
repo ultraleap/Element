@@ -50,14 +50,16 @@ namespace element
         {
             auto* const ident = ast->children[ast_idx::port::type].get();
 
-            //todo: make expression chain, it's not an identifier
-
-            auto element = std::make_unique<type_annotation>(identifier(ident->identifier));
-            assign_source_information(context, element, ast);
-            return element;
+            if (ident->children.empty()) //todo: make expression chain, it's not an identifier
+            {
+                auto element = std::make_unique<type_annotation>(identifier(ident->identifier));
+                assign_source_information(context, element, ast);
+                return element;
+            }
         }
 
-        output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_type_annotation, ast->parent->parent->identifier);
+        output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_type_annotation,
+            ast_to_string(ast->get_root(), 0, ast));
         return nullptr;
     }
 
