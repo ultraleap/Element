@@ -4,6 +4,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Vector4 : StandardLibraryFixture
     {
+
+        public static string Vector4Constructor = "_(a:Num, b:Num, c:Num, d:Num):Vector4 = Vector4(a, b, c, d)";
         
         public static (string constant, string constructorArgs)[] ConstantArgList =
         {
@@ -14,10 +16,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void Constants([ValueSource(nameof(ConstantArgList))] (string lhs, string rhs) args,
             [Values] EvaluationMode mode)
         {
-            string defaultConstructor = "Vector4";
             AssertApproxEqual(ValidatedCompilerInput,
                 new ExpressionEvaluation(args.lhs, mode),
-                new FunctionEvaluation(defaultConstructor, args.rhs, mode));
+                new FunctionEvaluation(Vector4Constructor, args.rhs, mode));
         }
         
         public static (string constructorArgs, string property, string result)[] PropertyArgList =
@@ -59,7 +60,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             string getter = "_(x:Num, y:Num, z:Num, w:Num):Vector4 = Vector4(x, y, z, w)." + args.property;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
-                new FunctionEvaluation("Vector4", args.rhs, mode));
+                new FunctionEvaluation(Vector4Constructor, args.rhs, mode));
         }
         
         public static (string inVector, string scale, string outVector)[] ScaleArgsList =

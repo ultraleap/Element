@@ -4,7 +4,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Matrix3x3 : StandardLibraryFixture
     {
-
+        public static string Matrix3x3Constructor = "_(a:Vector3, b:Vector3, c:Vector3):Matrix3x3 = Matrix3x3(a, b, c)";
+        
         public static (string constructorArgs, string constant)[] ConstantArgList =
         {
             ("(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1))", "Matrix3x3.identity"),
@@ -13,7 +14,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void Constants([ValueSource(nameof(ConstantArgList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
             AssertApproxEqual(ValidatedCompilerInput,
-                new FunctionEvaluation("Matrix3x3", args.lhs, mode),
+                new FunctionEvaluation(Matrix3x3Constructor, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
 
@@ -32,7 +33,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Factory([ValueSource(nameof(FactoryArgsList))] (string lhs, string factory, string rhs) args, [Values] EvaluationMode mode)
         {
-            string defaultConstructor = "Matrix3x3";
+            string defaultConstructor = Matrix3x3Constructor;
             string altConstructor = "Matrix3x3." + args.factory;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(defaultConstructor, args.lhs, mode),
@@ -70,7 +71,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             string getTranspose = "_(v1:Vector3, v2:Vector3, v3:Vector3):Matrix3x3 = Matrix3x3(v1, v2, v3).transpose";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getTranspose, args.lhs, mode),
-                new FunctionEvaluation("Matrix3x3", args.rhs, mode));
+                new FunctionEvaluation(Matrix3x3Constructor, args.rhs, mode));
         }
         
         public static (string constructorArgs, string result)[] DeterminantArgsList =
