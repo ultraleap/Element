@@ -81,8 +81,12 @@ namespace Element.AST
             : base(inputPorts, returnConstraint, parent) =>
             _expressionBody = expressionBody;
 
-        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent, () => this), context);
+        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context)
+        {
+            context.Aspect?.BeforeExpressionBody(_expressionBody, _parent);
+            var result = _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent, () => this), context);
+            return context.Aspect?.ExpressionBody(_expressionBody, _parent, result) ?? result;
+        }
     }
     
     public class ScopeBodiedFunction : CustomFunction
@@ -93,9 +97,13 @@ namespace Element.AST
             : base(inputPorts, returnConstraint, parent) =>
             _scopeBody = scopeBody;
 
-        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-            _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context, () => this)
-                      .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context));
+        protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context)
+        {
+            context.Aspect?.BeforeScopeBody(_scopeBody, _parent);
+            var result = _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context, () => this)
+                                   .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context));
+            return context.Aspect?.ScopeBody(_scopeBody, _parent, result) ?? result;
+        }
     }
 
     public static class FunctionExtensions

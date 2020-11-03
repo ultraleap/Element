@@ -12,6 +12,8 @@ namespace Laboratory.Tests.L2.Semantics
 
         private FileInfo[] SourceFiles { get; }
 
-        protected CompilerInput CompilerInput => new CompilerInput(TestPackageRegistry, null,  Array.Empty<PackageSpecifier>(), SourceFiles, new CompilerOptions(default));
+        protected CompilerInput CompilerInput =>
+            new CompilerInput(TestPackageRegistry, null, Array.Empty<PackageSpecifier>(), SourceFiles,
+                              new CompilerOptions(default, compilationAspectFunc: context => new SummaryLinesAspect(Console.WriteLine, context)));
     }
 }

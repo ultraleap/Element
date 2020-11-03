@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Element.AST;
 
@@ -8,29 +9,25 @@ namespace Element
     /// </summary>
     public class Context
     {
-        public static Context CreateFromSourceContext(SourceContext sourceContext, ICompilationAspect? aspect = null) => new Context(sourceContext, aspect);
-        public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions, ICompilationAspect? aspect = null) => new Context(rootScope, compilerOptions, aspect);
+        public static Context CreateFromSourceContext(SourceContext sourceContext) => new Context(sourceContext.GlobalScope, sourceContext.CompilerOptions, sourceContext.CompilerOptions.CompilationAspectFunc);
+        public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions, Func<Context, ICompilationAspect>? aspect = null) => new Context(rootScope, compilerOptions, aspect);
 
         private class NoScope : IScope
         {
             private readonly Context _scopelessContext;
 
-            public NoScope(Context scopelessContext)
-            {
-                _scopelessContext = scopelessContext;
-            }
+            public NoScope(Context scopelessContext) => _scopelessContext = scopelessContext;
+
             public Result<IValue> Lookup(Identifier id, Context context) =>
                 throw new InternalCompilerException($"Context '{_scopelessContext}' has no root scope, performing lookup is not possible");
         }
 
-        private Context(IScope? rootScope, CompilerOptions? compilerOptions, ICompilationAspect? aspect = null)
+        private Context(IScope? rootScope, CompilerOptions? compilerOptions, Func<Context, ICompilationAspect>? aspectFunc = null)
         {
             RootScope = rootScope ?? new NoScope(this);
             CompilerOptions = compilerOptions ?? new CompilerOptions(MessageLevel.Information);
-            Aspect = aspect;
+            Aspect = aspectFunc?.Invoke(this);
         }
-        
-        private Context(SourceContext sourceContext, ICompilationAspect? aspect = null) : this(sourceContext.GlobalScope, sourceContext.CompilerOptions, aspect) { }
         
         public static Context None { get; } = CreateManually(null, null);
 

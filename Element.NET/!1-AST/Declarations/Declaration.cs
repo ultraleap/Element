@@ -35,6 +35,7 @@ namespace Element.AST
             var result = Validate(context)
                          .Bind(() =>
                          {
+                             context.Aspect?.BeforeDeclaration(this, scope);
                              var resolveResult = ResolveImpl(scope, context);
                              return context.Aspect?.Declaration(this, scope, resolveResult) ?? resolveResult;
                          });

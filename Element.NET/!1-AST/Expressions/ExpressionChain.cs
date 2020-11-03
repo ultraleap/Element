@@ -80,12 +80,14 @@ namespace Element.AST
                 Expressions.List
                            .Zip(previous.InputPorts, (argExpr, port) =>
                            {
+                               context.Aspect?.BeforeCallArgument(previous, argExpr, port, scope);
                                var argExpressionResult = argExpr.ResolveExpression(scope, context);
                                return context.Aspect?.CallArgument(previous, argExpr, port, scope, argExpressionResult) ?? argExpressionResult;
                            })
                            .ToResultReadOnlyList()
                            .Bind(args =>
                            {
+                               context.Aspect?.BeforeCall(chain, previous, this, args);
                                var callResult = previous.Call(args.ToArray(), context);
                                return context.Aspect?.Call(chain, previous, this, args, callResult) ?? callResult;
                            });
@@ -103,6 +105,7 @@ namespace Element.AST
             protected override void ValidateImpl(ResultBuilder builder, Context context) => Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
             protected override Result<IValue> SubExpressionImpl(ExpressionChain chain, IValue previous, IScope _, Context context)
             {
+                context.Aspect?.BeforeIndex(chain, previous, this);
                 var indexResult = previous.Index(Identifier, context);
                 return context.Aspect?.Index(chain, previous, this, indexResult) ?? indexResult;
             }

@@ -45,6 +45,7 @@ namespace Element.AST
             inputPortList.ResolveFunctionPortList(scope, areInputPortsOptional, canInputsBeVariadic, context)
                          .Accumulate(() =>
                          {
+                             context.Aspect?.BeforeReturnConstraint(returnConstraint, scope);
                              var resolvedReturnConstraint = returnConstraint.ResolvePortConstraint(scope, context);
                              return context.Aspect?.ReturnConstraint(returnConstraint, scope, resolvedReturnConstraint) ?? resolvedReturnConstraint;
                          });
