@@ -6,6 +6,10 @@ namespace StandardPaths
     # If the path length is possible to calculate analytically, a
     # separate function is defined to provide it.
 
+    # All StandardPaths expect inputs between 0 and 1, and this
+    # is represented by this struct.
+    bounds:Path.Bounds = Path.Bounds(0, 1)
+
     circle(radius:Num, origin:Vector3):PathFunc
     {
         # Return a clockwise circle in the x-y plane, beginning at

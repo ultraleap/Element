@@ -2,26 +2,84 @@ constraint PathFunc(u:Num):Vector3
 
 namespace Path
 {
-    constraint ScalarTransform(x:Num):Num
+    struct Bounds(lower:Num, upper:Num)
 
-    scaleInputBounds(path:PathFunc, oldLower:Num, oldUpper:Num, newLower:Num, newUpper:Num):PathFunc
+    constraint ScalarTransform(x:Num):Num
+    constraint Vector3Unary(v:Vector3):Vector3
+    constraint Vector3Binary(v1:Vector3, v2:Vector3):Vector3
+
+    scaleInputBounds(path:PathFunc, old:Bounds, new:Bounds):PathFunc
     {
-        uTransform = _(u:Num):Num
+        # Scale the input bounds from "old" to "new".
+        #
+        # This function maps the function "path" to the function "newPath"
+        # such that:
+        #   newPath(new.lower) = path(old.lower)
+        #   newPath(new.upper) = path(old.upper)
+
+        uTransform(u:Num):Num
         {
-            return = Num.lerp(u.sub(newLower).div(newUpper.sub(newLower)), oldLower, oldUpper)
+            return = Num.lerp(u.sub(new.lower).div(new.upper.sub(new.lower)), old.lower, old.upper)
         }
         return = applyInputTransform(path, uTransform)
     }
 
     pingPong(path:PathFunc):PathFunc
     {
-        # Maps the range 0-1 to 0-1-0
-        uTransform = _(u:Num):Num
+        # Maps the input of (0, 1) to the range 0 to 1 and to 0.
+        #
+        # This means that the path length is double the original path length.
+        
+        uTransform(u:Num):Num
         {
             w = u.mul(2)
             return = if(w.gt(1), 2.sub(w), w)
         }
         return = applyInputTransform(path, uTransform)
+    }
+
+    repeat(path:PathFunc, repetitions:Num):PathFunc
+    {
+        # Returns the same path repated ... still takes range (0, 1) but repeats
+        # that range "repetitions" times in that same interval.
+        #
+        # This changes the path length
+        
+        uTransform(u:Num):Num = u.mul(repetitions).rem(1)
+        return = applyInputTransform(path, uTransform)
+    }
+
+    reverse(path:PathFunc):PathFunc
+    {
+        uTransform(u:Num):Num = 1.sub(u)
+        return = applyInputTransform(path, uTransform)
+    }
+
+    oscillate(path:PathFunc):PathFunc
+    {
+        uTransform(u:Num):Num = Num.sub(0.5, Num.cos(u.mul(Num.tau)).div(2))
+        return = applyInputTransform(path, uTransform)
+    }
+
+    easing(path:PathFunc):PathFunc
+    {
+        # Map 0 to 1 to the same range, but more smoothly 
+        smoothstep(t:Num):Num = 3.mul(t.mul(t)).sub(2.mul(t.mul(t).mul(t)))
+        return = applyInputTransform(path, smoothstep)
+    }
+
+    concatenate(path1:PathFunc, path2:PathFunc, boundary:Num):PathFunc
+    {
+        # If "a" and "b" are both PathFuncs defined over the region (0, 1),
+        # and "boundary" is a number between 0 and 1, then this maps (0, boundary) to "a"s (0, 1)
+        # and (boundary, 1) to "b"s (0, 1)
+
+        transformedPath1 = scaleInputBounds(path1, Bounds(0, 1), Bounds(0, boundary))
+        transformedPath2 = scaleInputBounds(path2, Bounds(0, 1), Bounds(boundary, 1))
+        return = _(u:Num):Vector3
+        {
+            return = if(u.leq(boundary), transformedPath1(u), transformedPath2(u))
+        }
     }
 
     applyInputTransform(path:PathFunc, inputTransform:ScalarTransform):PathFunc
@@ -32,80 +90,30 @@ namespace Path
             return = path(inputTransform(u))
         }
     }
-}
 
-#namespace Path
-#{
-#    
-#
-#    oscillate(path:PathFunc, lower:Num=0, upper:Num=1):PathFunc
-#    {
-#        uTransform = _(u:Num):Num
-#        {
-#            progress = u.sub(lower).div(upper.sub(lower))
-#            newProgress = Num.sin(progress.mul(Num.tau))
-#            return = Num.lerp(newProgress, lower, upper)
-#        }
-#        return = applyInputTransform(path, uTransform)
-#    }
-#
-#
-#    applyTransform(path:PathFunc, transform:Transform):PathFunc
-#    {
-#        # Apply a transform to the 
-#        return = _(u:Num):Vector3
-#        {
-#            return = transform.applyToPosition(path(u))
-#        }
-#    }
-#
-#    easing(a:Path):Path
-#    {
-#        smoothstep(t:Num) = 3.mul(t.mul(t)).sub(2.mul(t.mul(t).mul(t)))
-#        at(u:Num):Vector3 = a.at(smoothstep(u))
-#        return = Path(at, a.length)
-#    }
-#
-#   concatenate(a:Path, b:Path):Path
-#   {
-#       at(u:Num):Vector3 = Bool.if(Num.lt(u, 0.5), a.at(Num.mul(u, 2)), b.at(Num.mul(u, 2)))
-#       length = Num.add(a.length, b.length)
-#       return = Path(at, length)
-#   }
-#
-#   animate(path:Path, trajectory:Path, duration:Num, time:Num):Path
-#   {
-#       offset = trajectory.at(Num.div(time, duration))
-#       at(u:Num):Vector3 = Vector3.add(path.at(u), offset)
-#       return = Path(at, path.length)
-#   }
-#
-#   offset(path:Path, amount:Num):Path
-#   {
-#       at(u:Num):Vector3 = path.at(Num.rem(Num.add(u, amount), 1))
-#       return = Path(at, path.length)
-#   }
-#
-#   reverse(path:Path):Path
-#   {
-#       at(u:Num):Vector3 = path.at(Num.sub(1, u))
-#       return = Path(at, path.length)
-#   }
-#
-#    #UNTESTED
-#   join(pathArray:PathArray) : BoundedPath
-#   {
-#       pathLength(p:BoundedPath) = p.length
-#       length = aggregate(add, Array.Select(pathArray, pathLength), 0)
-#       return = BoundedPath(at, length)
-#       at(u:Num)
-#       {
-#           adjustedU = mul(u, pathArray.count)
-#           currentPath = pathArray.index(adjustedU)
-#           localU = rem(adjustedU, 1)
-#           return = currentPath.atBounded(localU)
-#       }
-#   }
-#
-#
-#}
+    applyTransform(path:PathFunc, transform:Transform):PathFunc
+    {
+        # Apply a Transform to all points on the path
+        return = applyUnaryVectorOperation(path, transform.applyToPosition)
+    }
+
+    applyUnaryVectorOperation(path:PathFunc, operation:Vector3Unary):PathFunc
+    {
+        # Apply the operation to all points on the path
+        return = _(u:Num):Vector3
+        {
+            return = operation(path(u))
+        }
+    }
+
+    applyBinaryVectorOperation(path1:PathFunc, path2:PathFunc, operation:Vector3Binary):PathFunc
+    {
+        # Combine the two paths by applying the binary operation at each point
+        return = _(u:Num):Vector3
+        {
+            path1Pos = path1(u)
+            path2Pos = path2(u)
+            return = operation(path1Pos, path2Pos)
+        }
+    }
+}
