@@ -4,6 +4,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Complex : StandardLibraryFixture
     {
+        public static string ComplexConstructor = "_(x:Num, y:Num):Complex = Complex(x, y)";
         
         public static (string constructorArgs, string constant)[] ConstantArgList =
         {
@@ -15,7 +16,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void Constants([ValueSource(nameof(ConstantArgList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
             AssertApproxEqual(ValidatedCompilerInput,
-                new FunctionEvaluation("Complex", args.lhs, mode),
+                new FunctionEvaluation(ComplexConstructor, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
         
@@ -35,7 +36,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             AssertApproxEqualRelaxed(ValidatedCompilerInput,
                 new FunctionEvaluation("Complex.fromPolar", args.lhs, mode),
-                new FunctionEvaluation("Complex", args.rhs, mode));
+                new FunctionEvaluation(ComplexConstructor, args.rhs, mode));
         }
         
         public static (string constructorArgs, string property, string result)[] ComponentsArgsList =
@@ -105,7 +106,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             string getter = "_(a:Num, b:Num):Complex = Complex(a, b).conjugate";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
-                new FunctionEvaluation("Complex", args.rhs, mode));
+                new FunctionEvaluation(ComplexConstructor, args.rhs, mode));
         }
 
         public static (string lhs, string rhs)[] ComplexMulArgsList =

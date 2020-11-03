@@ -5,6 +5,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
     internal class Matrix2x2 : StandardLibraryFixture
     {
 
+        public static string Matrix2x2Constructor = "_(a:Vector2, b:Vector2):Matrix2x2 = Matrix2x2(a, b)";
+        
         public static (string constructorArgs, string constant)[] ConstantArgList =
         {
             ("(Vector2(1, 0), Vector2(0, 1))", "Matrix2x2.identity"),
@@ -13,7 +15,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void Constants([ValueSource(nameof(ConstantArgList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
             AssertApproxEqual(ValidatedCompilerInput,
-                              new FunctionEvaluation("Matrix2x2", args.lhs, mode),
+                              new FunctionEvaluation(Matrix2x2Constructor, args.lhs, mode),
                               new ExpressionEvaluation(args.rhs, mode));
         }
 
@@ -26,10 +28,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Factory([ValueSource(nameof(FactoryArgsList))] (string lhs, string factory, string rhs) args, [Values] EvaluationMode mode)
         {
-            string defaultConstructor = "Matrix2x2";
             string altConstructor = "Matrix2x2." + args.factory;
             AssertApproxEqual(ValidatedCompilerInput,
-                              new FunctionEvaluation(defaultConstructor, args.lhs, mode),
+                              new FunctionEvaluation(Matrix2x2Constructor, args.lhs, mode),
                               new FunctionEvaluation(altConstructor, args.rhs, mode));
         }
 
