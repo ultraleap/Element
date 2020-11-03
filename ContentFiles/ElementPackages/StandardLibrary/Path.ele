@@ -76,6 +76,7 @@ namespace Path
 
         transformedPath1 = scaleInputBounds(path1, Bounds(0, 1), Bounds(0, boundary))
         transformedPath2 = scaleInputBounds(path2, Bounds(0, 1), Bounds(boundary, 1))
+
         return = _(u:Num):Vector3
         {
             return = if(u.leq(boundary), transformedPath1(u), transformedPath2(u))

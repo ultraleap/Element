@@ -25,6 +25,32 @@ namespace StandardPaths
 
     line(a:Vector3, b:Vector3):PathFunc = _(u:Num):Vector3 = Vector3.lerp(u, a, b)
     lineLength(a:Vector3, b:Vector3):Num = Vector3.distance(a, b)
+
+    rectangle(width:Num, height:Num, origin:Vector3):PathFunc
+    {
+        # Create a rectangle in the x-y plane, starting at the origin
+        #
+        # Goes clockwise to the points: (0, 0, 0), (0, height, 0), (width, height, 0), (width, 0, 0)
+        # in that order.
+
+        pointA = Vector3(0, 0, 0)
+        pointB = Vector3(0, height, 0)
+        pointC = Vector3(width, height, 0)
+        pointD = Vector3(width, 0, 0)
+
+        lineAB = line(pointA, pointB)
+        lineBC = line(pointB, pointC)
+        lineCD = line(pointC, pointD)
+        lineDA = line(pointD, pointA)
+
+        concatAC = Path.concatenate(lineAB, lineBC, height.div(width))
+        concatCA = Path.concatenate(lineCD, lineDA, height.div(width))
+        rectangleLine = Path.concatenate(concatAC, concatCA, 0.5)
+
+        applyOffset(v:Vector3):Vector3 = v.add(origin)
+        return = Path.applyUnaryVectorOperation(rectangleLine, applyOffset)
+    }
+    rectangleLength(width:Num, height:Num):Num = 2.mul(width.add(height))
 }
 
 #namespace StandardPaths
@@ -134,5 +160,3 @@ namespace StandardPaths
     #       return = BoundedPath(at, totalLength)
     #   }
 #}
-
-
