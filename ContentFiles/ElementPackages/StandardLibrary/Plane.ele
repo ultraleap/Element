@@ -25,7 +25,7 @@ struct Plane(normal:Vector3, distance:Num)
         
         direction =  n1.cross(n2)
 
-        difference = n1.mul(d2).sub(n2.mul(d1))
+        difference = n1.scale(d2).sub(n2.scale(d1))
         point = direction.cross(difference).div(direction.magnitudeSquared)
             
         return = Line3(direction, point)
@@ -34,7 +34,7 @@ struct Plane(normal:Vector3, distance:Num)
     signedDistanceFromPoint(plane:Plane, point:Vector3):Num
     {
         #creates a position vector from the origin to the nearest point on the plane
-        closestPointOnPlane = plane.normal.mul(plane.distance)
+        closestPointOnPlane = plane.normal.scale(plane.distance)
         #creates a position vector from point on plane to target point
         projectedPoint = point.sub(closestPointOnPlane)
         #projects position vector onto normal to determine distance from the plane

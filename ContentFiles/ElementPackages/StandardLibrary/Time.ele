@@ -24,7 +24,7 @@ struct TimeSpan(integer:Num, fractional:Num)
     value(this:TimeSpan, period:Num):Num = this.integer.rem(period).add(this.fractional).rem(period)
 
     # Return the integer number of elapsed periods
-    cycles(this:TimeSpan, period:Num):Num = this.integer.div(period).add(this.fractional.div(period).floor)
+    cycles(this:TimeSpan, period:Num):Num = this.integer.div(period).add(this.fractional.div(period)).floor
 
     abs(this:TimeSpan):TimeSpan
     {
