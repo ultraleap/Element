@@ -204,23 +204,5 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new FunctionEvaluation(testFunction, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
-        
-        public static (string lhs, string rhs)[] RectangleArgs =
-        {
-            ("(1, 1, 0)", "Vector3(1, 1, 1)"),
-            ("(1, 1, 0.25)", "Vector3(1, 2, 1)"),
-            ("(1, 1, 0.5)", "Vector3(2, 2, 1)"),
-            ("(1, 1, 0.75)", "Vector3(2, 1, 1)"),
-            ("(1, 1, 1)", "Vector3(1, 1, 1)"),
-        };
-        [Test]
-        public void Rectangle([ValueSource(nameof(RectangleArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
-        {
-            string testFunction = "_(width:Num, height:Num, u:Num):Vector3 = " +
-                                  "StandardPaths.rectangle(width, height, Vector3.one)(u)";
-            AssertApproxEqual(ValidatedCompilerInput,
-                new FunctionEvaluation(testFunction, args.lhs, mode),
-                new ExpressionEvaluation(args.rhs, mode));
-        }
     }
 }
