@@ -7,26 +7,26 @@ namespace Laboratory.Tests.L4.StandardLibrary
     {
         public static (string circleConstructorArgs, string evaluationArgs, string expected)[] CircleArgList =
         {
-            ("1, Vector3.zero", "0", "Vector3(0, 1, 0)"),
-            ("1, Vector3.zero", "0.125", "Vector3(2.pow(-0.5), 2.pow(-0.5), 0)"),
-            ("1, Vector3.zero", "0.25", "Vector3(1, 0, 0)"),
-            ("1, Vector3.zero", "0.375", "Vector3(2.pow(-0.5), 2.pow(-0.5).mul(-1), 0)"),
-            ("1, Vector3.zero", "0.5", "Vector3(0, -1, 0)"),
-            ("1, Vector3.zero", "0.625", "Vector3(2.pow(-0.5).mul(-1), 2.pow(-0.5).mul(-1), 0)"),
-            ("1, Vector3.zero", "0.75", "Vector3(-1, 0, 0)"),
-            ("1, Vector3.zero", "0.875", "Vector3(2.pow(-0.5).mul(-1), 2.pow(-0.5), 0)"),
-            ("1, Vector3.zero", "1", "Vector3(0, 1, 0)"),
-            ("2, Vector3(0, 2, 1)", "0", "Vector3(0, 4, 1)"),
-            ("2, Vector3(0, 2, 1)", "0.25", "Vector3(2, 2, 1)"),
-            ("2, Vector3(0, 2, 1)", "0.5", "Vector3(0, 0, 1)"),
-            ("2, Vector3(0, 2, 1)", "0.75", "Vector3(-2, 2, 1)"),
+            ("1", "0", "Vector3(0, 1, 0)"),
+            ("1", "0.125", "Vector3(2.pow(-0.5), 2.pow(-0.5), 0)"),
+            ("1", "0.25", "Vector3(1, 0, 0)"),
+            ("1", "0.375", "Vector3(2.pow(-0.5), 2.pow(-0.5).mul(-1), 0)"),
+            ("1", "0.5", "Vector3(0, -1, 0)"),
+            ("1", "0.625", "Vector3(2.pow(-0.5).mul(-1), 2.pow(-0.5).mul(-1), 0)"),
+            ("1", "0.75", "Vector3(-1, 0, 0)"),
+            ("1", "0.875", "Vector3(2.pow(-0.5).mul(-1), 2.pow(-0.5), 0)"),
+            ("1", "1", "Vector3(0, 1, 0)"),
+            ("2", "0", "Vector3(0, 2, 0)"),
+            ("2", "0.25", "Vector3(2, 0, 0)"),
+            ("2", "0.5", "Vector3(0, -2, 0)"),
+            ("2", "0.75", "Vector3(-2, 0, 0)"),
         };
         [Test]
         public void Circle([ValueSource(nameof(CircleArgList))]
             (string circleConstructor, string circleEvaluation, string expected) args,
             [Values] EvaluationMode mode)
         {
-            string testFunction = "_(a:Num, b:Vector3, u:Num):Vector3 = StandardPaths.circle(a, b)(u)";
+            string testFunction = "_(a:Num, u:Num):Vector3 = StandardPaths.circle(a)(u)";
             string testArgs = "(" + args.circleConstructor + ", " + args.circleEvaluation + ")";
             AssertApproxEqualRelaxed(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, testArgs, mode),
@@ -73,20 +73,89 @@ namespace Laboratory.Tests.L4.StandardLibrary
 
         public static (string lhs, string rhs)[] RectangleArgs =
         {
-            ("(1, 1, 0)", "Vector3(1, 1, 1)"),
-            ("(1, 1, 0.25)", "Vector3(1, 2, 1)"),
-            ("(1, 1, 0.5)", "Vector3(2, 2, 1)"),
-            ("(1, 1, 0.75)", "Vector3(2, 1, 1)"),
-            ("(1, 1, 1)", "Vector3(1, 1, 1)"),
+            ("(1, 1, 0)", "Vector3(0, 0, 0)"),
+            ("(1, 1, 0.25)", "Vector3(0, 1, 0)"),
+            ("(1, 1, 0.5)", "Vector3(1, 1, 0"),
+            ("(1, 1, 0.75)", "Vector3(1, 0, 0)"),
+            ("(1, 1, 1)", "Vector3(0, 0, 0)"),
         };
         [Test]
         public void Rectangle([ValueSource(nameof(RectangleArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
             string testFunction = "_(width:Num, height:Num, u:Num):Vector3 = " +
-                                  "StandardPaths.rectangle(width, height, Vector3.one)(u)";
+                                  "StandardPaths.rectangle(width, height)(u)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
+        
+        
+        public static (string constructorArgs, string evaluationArgs, string expected)[] LissajousArgsList =
+        {
+            (
+                "Vector2(1, 1), Vector2(1, 1), 0",
+                "0", "Vector3(0, 0, 0)"
+            ),
+            (
+                "Vector2(1, 1), Vector2(1, 1), 0",
+                "0.25", "Vector3(1, 1, 0)"
+            ),
+            (
+                "Vector2(1, 1), Vector2(1, 1), 0",
+                "0.5", "Vector3(0, 0, 0)"
+            ),
+            (
+                "Vector2(1, 1), Vector2(1, 1), 0",
+                "0.75", "Vector3(-1, -1, 0)"
+            ),
+            (
+                "Vector2(1, 1), Vector2(1, 1), 0",
+                "1", "Vector3(0, 0, 0)"
+            ),
+            (
+                "Vector2(16, 8), Vector2(2, 4), Num.pi.div(2)",
+                "0", "Vector3(0, 8, 0)"
+            ),
+            (
+                "Vector2(16, 8), Vector2(2, 4), Num.pi.div(2)",
+                "0.125", "Vector3(16, -8, 0)"
+            ),
+            (
+                "Vector2(16, 8), Vector2(2, 4), Num.pi.div(2)",
+                "0.25", "Vector3(0, 8, 0)"
+            ),
+            (
+                "Vector2(16, 8), Vector2(2, 4), Num.pi.div(2)",
+                "0.375", "Vector3(-16, -8, 0)"
+            ),
+            (
+                "Vector2(16, 8), Vector2(2, 4), Num.pi.div(2)",
+                "0.5", "Vector3(0, 8, 0)"
+            ),
+            (
+                "Vector2(16, 8), Vector2(2, 4), Num.pi.div(2)",
+                "0.625", "Vector3(16, -8, 0)"
+            ),
+            (
+                "Vector2(16, 8), Vector2(2, 4), Num.pi.div(2)",
+                "0.75", "Vector3(0, 8, 0)"
+            ),
+            (
+                "Vector2(16, 8), Vector2(2, 4), Num.pi.div(2)",
+                "0.875", "Vector3(-16, -8, 0)"
+            ),
+        };
+        [Test]
+        public void Lissajous([ValueSource(nameof(LissajousArgsList))]
+            (string constructor, string evaluations, string expected) args,
+            [Values] EvaluationMode mode)
+        {
+            string testFunction = "_(r:Vector2, f:Vector2, p:Num, u:Num):Vector3 = StandardPaths.lissajous(r, f, p)(u)";
+            string testArgs = "(" + args.constructor + ", " + args.evaluations + ")";
+            AssertApproxEqualRelaxed(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, testArgs, mode),
+                new ExpressionEvaluation(args.expected, mode));
+        }
+        
     }
 }

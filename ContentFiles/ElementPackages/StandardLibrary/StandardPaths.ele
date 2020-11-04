@@ -10,7 +10,7 @@ namespace StandardPaths
     # is represented by this struct.
     bounds:Path.Bounds = Path.Bounds(0, 1)
 
-    circle(radius:Num, origin:Vector3):PathFunc
+    circle(radius:Num):PathFunc
     {
         # Return a clockwise circle in the x-y plane, beginning at
         # x=0, y=radius
@@ -18,7 +18,7 @@ namespace StandardPaths
         {
             x = radius.mul(Num.sin(u.mul(Num.tau)))
             y = radius.mul(Num.cos(u.mul(Num.tau)))
-            return = origin.add(Vector3(x, y, 0))
+            return = Vector3(x, y, 0)
         }
     }
     circleLength(radius:Num):Num = Num.tau.mul(radius)
@@ -26,7 +26,7 @@ namespace StandardPaths
     line(a:Vector3, b:Vector3):PathFunc = _(u:Num):Vector3 = Vector3.lerp(u, a, b)
     lineLength(a:Vector3, b:Vector3):Num = Vector3.distance(a, b)
 
-    rectangle(width:Num, height:Num, origin:Vector3):PathFunc
+    rectangle(width:Num, height:Num):PathFunc
     {
         # Create a rectangle in the x-y plane, starting at the origin
         #
@@ -43,18 +43,29 @@ namespace StandardPaths
         lineCD = line(pointC, pointD)
         lineDA = line(pointD, pointA)
 
-        concatAC = Path.concatenate(lineAB, lineBC, height.div(width))
-        concatCA = Path.concatenate(lineCD, lineDA, height.div(width))
-        rectangleLine = Path.concatenate(concatAC, concatCA, 0.5)
-
-        applyOffset(v:Vector3):Vector3 = v.add(origin)
-        return = Path.applyUnaryVectorOperation(rectangleLine, applyOffset)
+        concatAC = Path.concatenate(lineAB, lineBC, height.div(height.add(width)))
+        concatCA = Path.concatenate(lineCD, lineDA, height.div(height.add(width)))
+        return = Path.concatenate(concatAC, concatCA, 0.5)
     }
     rectangleLength(width:Num, height:Num):Num = 2.mul(width.add(height))
+
+    lissajous(radii:Vector2, frequencies:Vector2, phaseDifference:Num):PathFunc
+    {
+        omega = frequencies.scale(Num.tau)  # Angular Frequencies
+
+        return = _(u:Num):Vector3
+        {
+            xPhase = u.mul(omega.x)
+            yPhase = u.mul(omega.y).add(phaseDifference)
+            xProgress = Num.sin(xPhase)
+            yProgress = Num.sin(yPhase)
+            xPos = xProgress.mul(radii.x)
+            yPos = yProgress.mul(radii.y)
+            return = Vector3(xPos, yPos, 0)
+        }
+    }
 }
 
-#namespace StandardPaths
-#{
 #    lissajous(position: Vector3, size:Vector2, frequency:Vector2):Path
 #     {
 #        return = _(progress:Num):Vector3
@@ -69,27 +80,6 @@ namespace StandardPaths
 #        }
 #     }
 
-    #struct Segment(a:Vector3, b:Vector3)
-
-    #rectangle(width:Num, height:Num):Path
-    #{
-    #    at(u:Num):Vector3
-    #    {
-    #        t = Bool.if(u.lt(0), u.rem(1).add(1).abs, u.rem(1))
-    #        u1 = Num.mul(width.add(height), t.mul(2).rem(1))
-    #        
-    #        pos = Bool.if(u1.lt(width),
-    #            Vector3(u1, 0, 0),
-    #            Vector3(width, u1.sub(width), 0)
-    #        )
-    #
-    #        return = Bool.if(t.rem(1).lt(0.5),
-    #            pos,
-    #            Vector3.add(Vector3(0, 0, 0).sub(pos), Vector3(width, height, 0))
-    #        )
-    #    }
-    #    return = Path.Translate(Path(at, width.add(height).mul(2)), Vector3(width.div(-2), height.div(-2), 0))
-    #}
 
     #   rose(diameter:Num, n:Num, d:Num, frequency:Num):Path
     #   {
@@ -103,60 +93,3 @@ namespace StandardPaths
     #       }
     #       return = Path(at, Num.mul(Num.mul(diameter, 4), ellipse(k, 1)))
     #   }
-
-    #   #UNTESTED
-    #   polyLineSimple(points:Vec3Array) : BoundedPath
-    #   {
-    #       segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)))
-    #       segments = TArray(sub(points.count, 1), segment)
-    #       return = PolySegmentSimple(segments)
-    #   }
-    #
-    #   #UNTESTED
-    #   polySegmentSimple(segments:SegmentArray) : BoundedPath
-    #   {
-    #       segmentLength(s:Segment) = V3.Distance(s.a, s.b)
-    #       totalLength = aggregate(add, Array.Select(segments, segmentLength), 0)
-    #
-    #       at(u:Num)
-    #       {
-    #           adjustedU = mul(u, segments.count)
-    #           target = segments.index(adjustedU)
-    #           return = Vec.Lerp(rem(adjustedU, 1), target.a, target.b)
-    #       }
-    #       return = BoundedPath(at, totalLength)
-    #   }
-    #
-    #   #UNTESTED
-    #   polyLine(points:Vec3Array) : BoundedPath
-    #   {
-    #       segment(i:Num) = Segment(points.index(i), points.index(add(i, 1)))
-    #       segments = TArray(sub(points.count, 1), segment)
-    #       return = PolySegment(segments)
-    #   }
-    #
-    #   #UNTESTED
-    #   polySegment(segments:SegmentArray) : BoundedPath
-    #   {
-    #       segmentLength(s:Segment) = V3.Distance(s.a, s.b)
-    #       totalLength = aggregate(add, Array.Select(segments, segmentLength), 0)
-    #
-    #       at(u:Num)
-    #       {
-    #           adjustedU = mul(u, totalLength)
-    #           SegmentIteration -> s:Segment, distance:Num, continue:Num
-    #           segmentFinder(current:SegmentIteration, next:Segment) : SegmentIteration =
-    #               if (current.continue,
-    #                   if(lt(current.distance, segmentLength(next)),
-    #                       SegmentIteration(next, current.distance, 0),
-    #                       SegmentIteration(current.s, sub(current.distance, segmentLength(next)), 1)
-    #                   ),
-    #                   current
-    #               )
-    #           findResult = aggregate(segmentFinder, Array.Skip(segments, 1), SegmentIteration(segments.index(0), adjustedU, 1))
-    #           targetU = div(findResult.distance, segmentLength(findResult.s))
-    #           return = Vec.Lerp(targetU, findResult.s.a, findResult.s.b)
-    #       }
-    #       return = BoundedPath(at, totalLength)
-    #   }
-#}

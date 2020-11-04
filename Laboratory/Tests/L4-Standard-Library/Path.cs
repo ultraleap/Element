@@ -179,6 +179,21 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new ExpressionEvaluation(args.rhs, mode));
         }
         
+        public static (string lhs, string rhs)[] ApplyOffsetArgs =
+        {
+            ("(Vector3.one, 0)", "1"),
+            ("(Vector3.one, 0.5)", "1.5"),
+            ("(Vector3.one, 0.9)", "1.9"),
+        };
+        [Test]
+        public void ApplyOffset([ValueSource(nameof(ApplyOffsetArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string testFunction = "_(v:Vector3, u:Num):Num = Path.applyOffset(StandardPaths.line(Vector3.zero, Vector3.one), v)(u).x";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, args.lhs, mode),
+                new ExpressionEvaluation(args.rhs, mode));
+        }
+        
         public static (string lhs, string rhs)[] ConcatenateArgs =
         {
             ("(0.5, 0)", "Vector3(0, 0, 0)"),

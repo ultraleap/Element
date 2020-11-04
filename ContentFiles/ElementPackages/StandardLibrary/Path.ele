@@ -98,6 +98,13 @@ namespace Path
         return = applyUnaryVectorOperation(path, transform.applyToPosition)
     }
 
+    applyOffset(path:PathFunc, offset:Vector3):PathFunc
+    {
+        # Apply an offset to the path
+        adder = _(v:Vector3):Vector3 = v.add(offset)
+        return = applyUnaryVectorOperation(path, adder)
+    }
+
     applyUnaryVectorOperation(path:PathFunc, operation:Vector3Unary):PathFunc
     {
         # Apply the operation to all points on the path
