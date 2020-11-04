@@ -18,5 +18,16 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new FunctionEvaluation(testFunction, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
+        
+        [Test]
+        public void ConstraintError([Values] EvaluationMode mode)
+        {
+            string testFunction = "_(u:Num):Num = Bugs.constraintError(u)";
+            string args = "(0)";
+            string expected = "0";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, args, mode),
+                new ExpressionEvaluation(expected, mode));
+        }
     }
 }

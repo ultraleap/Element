@@ -47,4 +47,17 @@ namespace Bugs
         fooWrappedTwice = wrap(fooWrapped)
         return = fooWrappedTwice
     }
+
+    constraintError(x:Num):Num
+    {
+        constraint NumUnary(n:Num):Num
+        evaluate(f:NumUnary, n:Num):Num = f(n)
+
+        struct Adder(u:Num)
+        {
+            add(this:Adder, x:Num):Num = this.u.add(x)
+        }
+        zeroAdder = Adder(0)
+        return = evaluate(zeroAdder.add, x)
+    }
 }
