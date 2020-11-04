@@ -4,19 +4,18 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Bugs : StandardLibraryFixture
     {
-        public static (string constructorArgs, string constant)[] RecursionErrorArgs =
+        public static (string constructorArgs, string fName, string constant)[] RecursionErrorArgs =
         {
-            ("(1, 1, 0)", "Vector3(1, 1, 1)"),
+            ("(0)", "Bugs.wrappedLambdasOneLine", "0"),
+            ("(0)", "Bugs.wrappedLambdasExplicit", "0"),
         };
         [Test]
-        public void RecursionError([ValueSource(nameof(RecursionErrorArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        public void RecursionError([ValueSource(nameof(RecursionErrorArgs))] (string lhs, string fName, string rhs) args, [Values] EvaluationMode mode)
         {
-            string testFunction = "_(width:Num, height:Num, u:Num):Vector3 = " +
-                                  "Bugs.rectangle(width, height, Vector3.one)(u)";
+            string testFunction = "_(u:Num):Num = " + args.fName + "(u)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
-
     }
 }
