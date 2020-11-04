@@ -51,6 +51,11 @@ namespace StandardPaths
 
     lissajous(radii:Vector2, frequencies:Vector2, phaseDifference:Num):PathFunc
     {
+        # Create a lissajous curve in the x-y plane.
+        #
+        # The frequencies must be integers for the
+        # path to start and end at the same position.
+
         omega = frequencies.scale(Num.tau)  # Angular Frequencies
 
         return = _(u:Num):Vector3
@@ -64,32 +69,21 @@ namespace StandardPaths
             return = Vector3(xPos, yPos, 0)
         }
     }
+
+    rose(radius:Num, frequency:Num, petalConstant:Num):PathFunc
+    {
+        # Create a rose curve in the x-y plane.
+        # The petalConstant must be an integer for the
+        # path to start and end at the same position.
+
+        omega = frequency.mul(Num.tau)
+        return = _(u:Num):Vector3
+        {
+            phase = omega.mul(u)
+            roseFactor = Num.cos(petalConstant.mul(phase))
+            xPos = Num.cos(phase).mul(roseFactor)
+            yPos = Num.sin(phase).mul(roseFactor)
+            return = Vector3(xPos, yPos, 0)
+        }
+    }
 }
-
-#    lissajous(position: Vector3, size:Vector2, frequency:Vector2):Path
-#     {
-#        return = _(progress:Num):Vector3
-#        {
-#            angularFrequency = Vector2(Num.tau.mul(frequency.x),
-#                                        Num.tau.mul(frequency.y))
-
-#            point = Vector2(size.x.mul(Num.cos(angularFrequency.x.mul(progress))),
-#                            size.y.mul(Num.sin(angularFrequency.y.mul(progress))))
-
-#            return = position.add(Vector3(point.x, point.y, 0))
-#        }
-#     }
-
-
-    #   rose(diameter:Num, n:Num, d:Num, frequency:Num):Path
-    #   {
-    #       k = Num.div(n, d)
-    #       at(u:Num):Vector3
-    #       {
-    #           ut = Num.mul(u, tau)
-    #           r = Num.mul(diameter, Num.cos(Num.mul(ut, k)))
-    #
-    #           return = Vector3(Num.mul(r, Num.cos(Num.mul(ut, frequency))), Num.mul(r, Num.sin(Num.mul(ut, frequency))), 0)
-    #       }
-    #       return = Path(at, Num.mul(Num.mul(diameter, 4), ellipse(k, 1)))
-    #   }

@@ -157,5 +157,25 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new ExpressionEvaluation(args.expected, mode));
         }
         
+                
+        public static (string constructorArgs, string evaluationArgs, string expected)[] RoseArgsList =
+        {
+            (
+                "1, 1, 1",
+                "0", "Vector3(1, 0, 0)"
+            ),
+        };
+        [Test]
+        public void Rose([ValueSource(nameof(RoseArgsList))]
+            (string constructor, string evaluations, string expected) args,
+            [Values] EvaluationMode mode)
+        {
+            string testFunction = "_(r:Num, f:Num, k:Num, u:Num):Vector3 = StandardPaths.rose(r, f, k)(u)";
+            string testArgs = "(" + args.constructor + ", " + args.evaluations + ")";
+            AssertApproxEqualRelaxed(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, testArgs, mode),
+                new ExpressionEvaluation(args.expected, mode));
+        }
+        
     }
 }
