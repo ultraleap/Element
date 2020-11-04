@@ -1,0 +1,72 @@
+namespace Bugs
+{
+    struct Bounds(lower:Num, upper:Num)
+    constraint ScalarTransform(x:Num):Num
+
+    applyInputTransform(path:PathFunc, inputTransform:ScalarTransform):PathFunc
+    {
+        # Apply a transform to the input argument of a path
+        return = _(u:Num):Vector3
+        {
+            return = path(inputTransform(u))
+        }
+    }
+
+    scaleInputBounds(path:PathFunc, old:Bounds, new:Bounds):PathFunc
+    {
+        # Scale the input bounds from "old" to "new".
+        #
+        # This function maps the function "path" to the function "newPath"
+        # such that:
+        #   newPath(new.lower) = path(old.lower)
+        #   newPath(new.upper) = path(old.upper)
+
+        uTransform(u:Num):Num
+        {
+            return = Num.lerp(u.sub(new.lower).div(new.upper.sub(new.lower)), old.lower, old.upper)
+        }
+        return = applyInputTransform(path, uTransform)
+    }
+
+    concatenate(path1:PathFunc, path2:PathFunc, boundary:Num):PathFunc
+    {
+        # If "a" and "b" are both PathFuncs defined over the region (0, 1),
+        # and "boundary" is a number between 0 and 1, then this maps (0, boundary) to "a"s (0, 1)
+        # and (boundary, 1) to "b"s (0, 1)
+
+        transformedPath1 = scaleInputBounds(path1, Bounds(0, 1), Bounds(0, boundary))
+        transformedPath2 = scaleInputBounds(path2, Bounds(0, 1), Bounds(boundary, 1))
+
+        return = _(u:Num):Vector3
+        {
+            return = if(u.leq(boundary), transformedPath1(u), transformedPath2(u))
+        }
+    }
+
+    line(a:Vector3, b:Vector3):PathFunc = _(u:Num):Vector3 = Vector3.lerp(u, a, b)
+
+    rectangle(width:Num, height:Num, origin:Vector3):PathFunc
+    {
+        # Create a rectangle in the x-y plane, starting at the origin
+        #
+        # Goes clockwise to the points: (0, 0, 0), (0, height, 0), (width, height, 0), (width, 0, 0)
+        # in that order.
+
+        pointA = Vector3(0, 0, 0)
+        pointB = Vector3(0, height, 0)
+        pointC = Vector3(width, height, 0)
+        pointD = Vector3(width, 0, 0)
+
+        lineAB = line(pointA, pointB)
+        lineBC = line(pointB, pointC)
+        lineCD = line(pointC, pointD)
+        lineDA = line(pointD, pointA)
+
+        concatAC = concatenate(lineAB, lineBC, height.div(width))
+        concatCA = concatenate(lineCD, lineDA, height.div(width))
+        rectangleLine = concatenate(concatAC, concatCA, 0.5)
+
+        applyOffset(v:Vector3):Vector3 = v.add(origin)
+        return = Path.applyUnaryVectorOperation(rectangleLine, applyOffset)
+    }
+}
