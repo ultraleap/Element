@@ -30,4 +30,21 @@ namespace Bugs
         fooWrappedTwice = wrap(fooWrapped)
         return = fooWrappedTwice
     }
+
+    wrappedLambdasNamed:Unary
+    {
+        wrap(unary:Unary):Unary
+        {
+            namedFunction(x:Num):Num
+            {
+                return = unary(x)
+            }
+            return = namedFunction
+        }
+
+        foo = _(u:Num):Num = u
+        fooWrapped = wrap(foo)
+        fooWrappedTwice = wrap(fooWrapped)
+        return = fooWrappedTwice
+    }
 }
