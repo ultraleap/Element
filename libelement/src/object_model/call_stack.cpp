@@ -49,17 +49,22 @@ std::shared_ptr<error> call_stack::build_recursive_error(
             params += fmt::format("{}{} = {}",
                                   input.get_name(),
                                   input.has_annotation() ? ":" + input.get_annotation()->to_string() : "",
-                                  it->compiled_arguments[i]->typeof_info());
+                                  it->compiled_arguments[i]->to_string());
 
             if (i != func->inputs.size() - 1)
                 params += ", ";
         }
 
-        trace += fmt::format("{}:{} at {}({})",
+        std::string ret = "";
+        if (func->output && func->output->get_annotation())
+            ret = ":" + func->output->get_annotation()->to_string();
+
+        trace += fmt::format("{}:{} at {}({}){}",
                              func->source_info.filename,
                              func->source_info.line,
-                             func->typeof_info(),
-                             params);
+                             func->name.value,
+                             params,
+                             ret);
 
         if (func == decl)
             trace += " <-- here";
@@ -68,5 +73,5 @@ std::shared_ptr<error> call_stack::build_recursive_error(
             trace += "\n";
     }
 
-    return build_error_and_log(context, source_info, error_message_code::recursion_detected, decl->typeof_info(), trace);
+    return build_error_and_log(context, source_info, error_message_code::recursion_detected, decl->to_string(), trace);
 }

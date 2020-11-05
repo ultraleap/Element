@@ -40,6 +40,15 @@ namespace element
                    : function_declaration::kind::expression_bodied;
     };
 
+    void flatten_ast(element_ast* root, std::vector<const element_ast*>& vec)
+    {
+        for (const auto& child : root->children)
+        {
+            vec.push_back(child.get());
+            flatten_ast(child.get(), vec);
+        }
+    }
+
     std::unique_ptr<type_annotation> build_type_annotation(const element_interpreter_ctx* context, const element_ast* ast, element_result& output_result)
     {
         //todo: instead of nullptr, use an object to represent nothing? can't use Any, as user might not have it in source
@@ -50,16 +59,20 @@ namespace element
         {
             auto* const ident = ast->children[ast_idx::port::type].get();
 
-            if (ident->children.empty()) //todo: make expression chain, it's not an identifier
-            {
-                auto element = std::make_unique<type_annotation>(identifier(ident->identifier));
-                assign_source_information(context, element, ast);
-                return element;
-            }
+            //todo: make expression chain, it's not an identifier
+
+            std::vector<const element_ast*> flattened_ast;
+            flatten_ast(ident, flattened_ast);
+
+            std::string type_annotation_string = ident->identifier;
+            for (const auto* child : flattened_ast)
+                type_annotation_string += "." + child->identifier;
+
+            auto element = std::make_unique<type_annotation>(identifier(type_annotation_string));
+            assign_source_information(context, element, ast);
+            return element;
         }
 
-        output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_type_annotation,
-            ast_to_string(ast->get_root(), 0, ast));
         return nullptr;
     }
 
