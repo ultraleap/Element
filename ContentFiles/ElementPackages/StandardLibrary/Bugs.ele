@@ -1,10 +1,10 @@
 namespace Bugs
 {
-    constraint Unary(x:Num):Num
+    constraint NumUnary(x:Num):Num
 
-    wrappedLambdasOneLine:Unary
+    wrappedLambdasOneLine:NumUnary
     {
-        wrap(unary:Unary):Unary
+        wrap(unary:NumUnary):NumUnary
         {
             return(x:Num):Num = unary(x)
         }
@@ -15,9 +15,9 @@ namespace Bugs
         return = fooWrappedTwice
     }
 
-    wrappedLambdasExplicit:Unary
+    wrappedLambdasExplicit:NumUnary
     {
-        wrap(unary:Unary):Unary
+        wrap(unary:NumUnary):NumUnary
         {
             return = _(x:Num):Num
             {
@@ -31,9 +31,9 @@ namespace Bugs
         return = fooWrappedTwice
     }
 
-    wrappedLambdasNamed:Unary
+    wrappedLambdasNamed:NumUnary
     {
-        wrap(unary:Unary):Unary
+        wrap(unary:NumUnary):NumUnary
         {
             namedFunction(x:Num):Num
             {
@@ -48,9 +48,75 @@ namespace Bugs
         return = fooWrappedTwice
     }
 
+    adderRecursionLambdas(x:Num):Num
+    {
+        getAdder(n:Num):NumUnary
+        {
+            return = _(x:Num):Num
+            {
+                return = x.add(n)
+            }
+        }
+
+        oneAdder = getAdder(1)
+        twoAdder = getAdder(2)
+        threeAdder = getAdder(3)
+        fourAdder = getAdder(4)
+
+        combineAdders(a1:NumUnary, a2:NumUnary):NumUnary
+        {
+            return = _(x:Num):Num
+            {
+                return = a2(a1(x))
+            }
+        }
+
+        myThreeAdder = combineAdders(oneAdder, twoAdder)
+        mySevenAdder = combineAdders(threeAdder, fourAdder)
+
+        myTenAdder = combineAdders(myThreeAdder, mySevenAdder)
+        
+        # This evaluates to:
+        # myTenAdder = combineAdders(combineAdders(oneAdder, twoAdder), combineAdders(myThreeAdder, mySevenAdder))
+        # which is recognised as recursion
+
+        return = myTenAdder(x)
+    }
+
+
+    adderRecursionReturnFunction(x:Num):Num
+    {
+        getAdder(n:Num):NumUnary
+        {
+            return(x:Num):Num = x.add(n)
+        }
+
+        oneAdder = getAdder(1)
+        twoAdder = getAdder(2)
+        threeAdder = getAdder(3)
+        fourAdder = getAdder(4)
+
+        combineAdders(a1:NumUnary, a2:NumUnary):NumUnary
+        {
+            return(x:Num):Num = a2(a1(x))
+        }
+
+        myThreeAdder = combineAdders(oneAdder, twoAdder)
+        mySevenAdder = combineAdders(threeAdder, fourAdder)
+
+        myTenAdder = combineAdders(myThreeAdder, mySevenAdder)
+        
+        # This evaluates to:
+        # myTenAdder = combineAdders(combineAdders(oneAdder, twoAdder), combineAdders(myThreeAdder, mySevenAdder))
+        # which is recognised as recursion
+
+        return = myTenAdder(x)
+    }
+
+    
+
     constraintError(x:Num):Num
     {
-        constraint NumUnary(n:Num):Num
         evaluate(f:NumUnary, n:Num):Num = f(n)
 
         struct Adder(u:Num)

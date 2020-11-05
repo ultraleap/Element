@@ -9,6 +9,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
             ("(0)", "Bugs.wrappedLambdasOneLine", "0"),
             ("(0)", "Bugs.wrappedLambdasExplicit", "0"),
             ("(0)", "Bugs.wrappedLambdasNamed", "0"),
+            ("(0)", "Bugs.adderRecursionLambdas", "10"),
+            ("(0)", "Bugs.adderRecursionReturnFunction", "10"),
         };
         [Test]
         public void RecursionError([ValueSource(nameof(RecursionErrorArgs))] (string lhs, string fName, string rhs) args, [Values] EvaluationMode mode)
