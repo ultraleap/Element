@@ -11,12 +11,14 @@
 #include "object_model/error.hpp"
 #include "object_model/error_map.hpp"
 #include "object_model/compilation_context.hpp"
+#include "object_model/constraints/user_function_constraint.hpp"
 
 using namespace element;
 
 function_instance::function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info)
     : declarer(declarer)
     , captures(std::move(captures))
+    , our_constraint(std::make_unique<user_function_constraint>(declarer, false))
 {
     this->source_info = std::move(source_info);
 }
@@ -25,6 +27,7 @@ function_instance::function_instance(const function_declaration* declarer, captu
     : declarer(declarer)
     , captures(std::move(captures))
     , provided_arguments(std::move(args))
+    , our_constraint(std::make_unique<user_function_constraint>(declarer, true))
 {
     this->source_info = std::move(source_info);
 }
@@ -51,12 +54,12 @@ std::string function_instance::to_string() const
 
 bool function_instance::matches_constraint(const compilation_context& context, const constraint* constraint) const
 {
-    return declarer->get_constraint()->matches_constraint(context, constraint);
+    return our_constraint->matches_constraint(context, constraint);
 }
 
 const constraint* function_instance::get_constraint() const
 {
-    return declarer->get_constraint();
+    return our_constraint.get();
 }
 
 bool has_defaults(const function_instance* instance)

@@ -41,6 +41,7 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
         return our_input_constraint->matches_constraint(context, their_input_constraint);
     };
 
+    //todo: nothing should currently use the any constraint, not even intrinsic any, it's all nullptr
     if (!constraint_ || constraint_ == any.get())
         return true;
 
@@ -49,24 +50,29 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
     if (!other)
         return false;
 
-    for (unsigned i = 0; i < declarer->inputs.size(); ++i)
-    {
-        const auto& our_input = declarer->inputs[i];
-        const auto& their_input = other->inputs[i];
+    unsigned int our_input_length = declarer->inputs.size();
+    unsigned int offset = 0;
 
-        if (!check_match(our_input, their_input))
-            return false;
+    if (applied)
+    {
+        our_input_length--;
+        offset++;
     }
 
-    //no one has a return constraint
-    if (!declarer->output && !other->output)
+    if (our_input_length != other->get_inputs().size())
+        return false;
+
+    for (unsigned int i = 0; i < our_input_length; ++i)
+        if (!check_match(declarer->inputs[i + offset], other->inputs[i]))
+            return false;
+
+    const bool no_return_annotations = !declarer->output && !other->output;
+    //allow constraint matching for invalid ports, to propagate errors and catch multiple
+    const bool our_annotation_is_invalid = declarer->output && !declarer->output->is_valid(context);
+    const bool their_annotation_is_invalid = other->output && !other->output->is_valid(context);
+
+    if (no_return_annotations || our_annotation_is_invalid || their_annotation_is_invalid)
         return true;
-
-    if (declarer->output && !declarer->output->is_valid(context))
-        return true; //allow constraint matching for invalid ports, to propagate errors and catch multiple
-
-    if (other->output && !other->output->is_valid(context))
-        return true; //allow constraint matching for invalid ports, to propagate errors and catch multiple
 
     //check return types match since at least one of them has one
     if (declarer->output && other->output)
