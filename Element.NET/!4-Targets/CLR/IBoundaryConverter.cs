@@ -201,11 +201,15 @@ namespace Element.CLR
                     .Bind(structConverter => structConverter.LinqToElement(parameter, root, context));
 
         public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
-                                                 Context context) =>
-            // TODO: Detect circular conversion
-            TryGetValue(outputType, out var output)
+                                                 Context context)
+        {
+            if(value.HasWrapper(out List.HomogenousListElement listElement))
+                return context.Trace(EleMessageCode.MissingBoundaryConverter, $"Lists are not currently supported at the boundary");
+
+            return TryGetValue(outputType, out var output)
                 ? output!.ElementToLinq(value, outputType, convertFunction, context)
                 : TryAddStructConverter(outputType, context)
                     .Bind(converter => converter.ElementToLinq(value, outputType, convertFunction, context));
+        }
     }
 }
