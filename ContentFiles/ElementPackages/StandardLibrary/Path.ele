@@ -77,7 +77,7 @@ namespace Path
         transformedPath1 = scaleInputBounds(path1, Bounds(0, 1), Bounds(0, boundary))
         transformedPath2 = scaleInputBounds(path2, Bounds(0, 1), Bounds(boundary, 1))
 
-        return = _(u:Num):Vector3
+        return(u:Num):Vector3
         {
             return = if(u.leq(boundary), transformedPath1(u), transformedPath2(u))
         }
@@ -86,7 +86,7 @@ namespace Path
     applyInputTransform(path:PathFunc, inputTransform:ScalarTransform):PathFunc
     {
         # Apply a transform to the input argument of a path
-        return = _(u:Num):Vector3
+        return(u:Num):Vector3
         {
             return = path(inputTransform(u))
         }
@@ -108,7 +108,7 @@ namespace Path
     applyUnaryVectorOperation(path:PathFunc, operation:Vector3Unary):PathFunc
     {
         # Apply the operation to all points on the path
-        return = _(u:Num):Vector3
+        return(u:Num):Vector3
         {
             return = operation(path(u))
         }
@@ -117,7 +117,7 @@ namespace Path
     applyBinaryVectorOperation(path1:PathFunc, path2:PathFunc, operation:Vector3Binary):PathFunc
     {
         # Combine the two paths by applying the binary operation at each point
-        return = _(u:Num):Vector3
+        return(u:Num):Vector3
         {
             path1Pos = path1(u)
             path2Pos = path2(u)

@@ -157,7 +157,6 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new ExpressionEvaluation(args.expected, mode));
         }
         
-                
         public static (string constructorArgs, string evaluationArgs, string expected)[] RoseArgsList =
         {
             (
