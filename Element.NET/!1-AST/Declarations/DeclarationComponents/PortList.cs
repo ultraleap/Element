@@ -23,12 +23,12 @@ namespace Element.AST
             foreach (var port in Ports.List)
             {
                 if (port.DefaultArgument != null) anyDefaultArgumentsSoFar = true;
-                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) builder.Append(EleMessageCode.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{context.DeclarationStack.Peek()}' is unreachable");
+                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) builder.Append(EleMessageCode.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{this}' is unreachable");
                 port.Validate(builder, context);
                 if (!(port.Identifier is { } id)) continue;
                 if (!distinctPortIdentifiers.Add(id.String))
                 {
-                    builder.Append(EleMessageCode.MultipleDefinitions, $"'{context.DeclarationStack.Peek()}' has duplicate input ports named '{id}'");
+                    builder.Append(EleMessageCode.MultipleDefinitions, $"'{this}' has duplicate input ports named '{id}'");
                 }
             }
         }

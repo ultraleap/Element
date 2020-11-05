@@ -36,7 +36,7 @@ namespace Element
         public ICompilationAspect? Aspect { get; }
         public Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
         public Stack<IValue> CallStack { get; } = new Stack<IValue>();
-        public Stack<Declaration> DeclarationStack { get; } = new Stack<Declaration>();
+        public Stack<UniqueValueSite<Declaration>> DeclarationStack { get; } = new Stack<UniqueValueSite<Declaration>>();
         
         public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
             Parse<Expression>(expression)

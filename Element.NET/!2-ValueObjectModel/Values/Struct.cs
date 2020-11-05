@@ -92,8 +92,9 @@ namespace Element.AST
 
         public override string TypeOf => DeclaringStruct.Identifier.String;
         public override Result<IValue> Index(Identifier id, Context context) =>
-            _resolvedBlock.Index(id, context)
-                          .Else(() => DeclaringStruct.ResolveInstanceFunction(this, id, context));
+            Members.Any(identifier => identifier.Equals(id))
+                ? _resolvedBlock.Index(id, context)
+                : DeclaringStruct.ResolveInstanceFunction(this, id, context);
 
         public override IReadOnlyList<Identifier> Members => _resolvedBlock.Members;
 

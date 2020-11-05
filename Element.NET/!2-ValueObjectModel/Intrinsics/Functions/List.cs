@@ -52,20 +52,22 @@ namespace Element.AST
         {
 	        public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, Context context) =>
 		        index.CompileTimeIndex(0, elements.Count, context)
-		             .Bind(compileConstantIndex => new Result<IValue>(elements[compileConstantIndex]))
-		             .Else(() =>
-		             {
-			             var operands = new Instruction[elements.Count];
-			             
-			             for (var i = 0; i < elements.Count; i++)
-			             {
-				             // If any elements are not instructions then we need to 
-				             if (elements[i].IsType(out Instruction instruction)) operands[i] = instruction;
-				             else return new Result<IValue>(new HomogenousListElement(index, elements));
-			             }
+		             .Branch(compileConstantIndex => compileConstantIndex < elements.Count
+			                                           ? new Result<IValue>(elements[compileConstantIndex])
+			                                           : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
+		                     () =>
+		                     {
+			                     var operands = new Instruction[elements.Count];
 
-			             return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
-		             });
+			                     for (var i = 0; i < elements.Count; i++)
+			                     {
+				                     // If any elements are not instructions then we need to 
+				                     if (elements[i].IsType(out Instruction instruction)) operands[i] = instruction;
+				                     else return new Result<IValue>(new HomogenousListElement(index, elements));
+			                     }
+
+			                     return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
+		                     });
 
             private HomogenousListElement(Instruction index, IReadOnlyList<IValue> elements)
 				: base(elements[0])

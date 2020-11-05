@@ -25,12 +25,13 @@ namespace Element.AST
 
         public Result<IValue> Resolve(IScope scope, Context context)
         {
-            if (context.DeclarationStack.Contains(this))
+            var uniqueSite = new UniqueValueSite<Declaration>(this, scope);
+            if (context.DeclarationStack.Contains(uniqueSite))
             {
                 return context.Trace(EleMessageCode.RecursionNotAllowed, $"{this} has self-referencing implementation");
             }
             
-            context.DeclarationStack.Push(this);
+            context.DeclarationStack.Push(uniqueSite);
             context.TraceStack.Push(this.MakeTraceSite(ToString()));
             var result = Validate(context)
                          .Bind(() =>
@@ -48,11 +49,9 @@ namespace Element.AST
 
         protected sealed override void ValidateImpl(ResultBuilder builder, Context context)
         {
-            context.DeclarationStack.Push(this);
             context.TraceStack.Push(this.MakeTraceSite(ToString()));
             ValidateDeclaration(builder, context);
             context.TraceStack.Pop();
-            context.DeclarationStack.Pop();
         }
 
         protected abstract void ValidateDeclaration(ResultBuilder builder, Context context);

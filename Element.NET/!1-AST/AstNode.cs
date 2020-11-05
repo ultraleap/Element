@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Lexico;
 
 namespace Element.AST
@@ -32,6 +33,31 @@ namespace Element.AST
         }
 
         protected abstract void ValidateImpl(ResultBuilder builder, Context context);
+    }
+    
+    public readonly struct UniqueValueSite<TNode>
+        where TNode : AstNode
+    {
+        public bool Equals(UniqueValueSite<TNode> other) => EqualityComparer<TNode>.Default.Equals(AstNode, other.AstNode) && Scope.Equals(other.Scope);
+
+        public override bool Equals(object? obj) => obj is UniqueValueSite<TNode> other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (EqualityComparer<TNode>.Default.GetHashCode(AstNode) * 397) ^ Scope.GetHashCode();
+            }
+        }
+
+        public UniqueValueSite(TNode astNode, IScope scope)
+        {
+            AstNode = astNode;
+            Scope = scope;
+        }
+
+        public TNode AstNode { get; }
+        public IScope Scope { get; }
     }
 
     public interface ISourceLocation

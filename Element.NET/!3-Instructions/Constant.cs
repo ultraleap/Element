@@ -42,7 +42,7 @@ namespace Element
         public override bool Equals(Instruction other) => (other as Constant)?.Value == Value;
         // ReSharper disable once NonReadonlyMemberInGetHashCode
         public override int GetHashCode() => new {Value, Type = StructImplementation}.GetHashCode();
-        public Result<IValue> Resolve(ExpressionChain expressionChain, IScope scope, Context context) => context.Aspect?.Literal(expressionChain, this) ?? this;
+        public Result<IValue> Resolve(ExpressionChain expressionChain, IScope scope, Context context) => context.Aspect?.Literal(expressionChain, scope, this) ?? this;
 
         public string TraceString => SummaryString;
     }
