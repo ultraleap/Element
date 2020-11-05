@@ -26,7 +26,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             (string circleConstructor, string circleEvaluation, string expected) args,
             [Values] EvaluationMode mode)
         {
-            string testFunction = "_(a:Num, u:Num):Vector3 = StandardPaths.circle(a)(u)";
+            string testFunction = "_(a:Num, u:Num):Vector3 = StandardPaths.circle(a).at(u)";
             string testArgs = "(" + args.circleConstructor + ", " + args.circleEvaluation + ")";
             AssertApproxEqualRelaxed(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, testArgs, mode),
@@ -64,7 +64,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             (string constructor, string evaluation, string expected) args,
             [Values] EvaluationMode mode)
         {
-            string testFunction = "_(a:Vector3, b:Vector3, u:Num):Vector3 = StandardPaths.line(a, b)(u)";
+            string testFunction = "_(a:Vector3, b:Vector3, u:Num):Vector3 = StandardPaths.line(a, b).at(u)";
             string testArgs = "(" + args.constructor + ", " + args.evaluation + ")";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, testArgs, mode),
@@ -75,7 +75,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             ("(1, 1, 0)", "Vector3(0, 0, 0)"),
             ("(1, 1, 0.25)", "Vector3(0, 1, 0)"),
-            ("(1, 1, 0.5)", "Vector3(1, 1, 0"),
+            ("(1, 1, 0.5)", "Vector3(1, 1, 0)"),
             ("(1, 1, 0.75)", "Vector3(1, 0, 0)"),
             ("(1, 1, 1)", "Vector3(0, 0, 0)"),
         };
@@ -83,7 +83,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void Rectangle([ValueSource(nameof(RectangleArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
             string testFunction = "_(width:Num, height:Num, u:Num):Vector3 = " +
-                                  "StandardPaths.rectangle(width, height)(u)";
+                                  "StandardPaths.rectangle(width, height).at(u)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -150,7 +150,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             (string constructor, string evaluations, string expected) args,
             [Values] EvaluationMode mode)
         {
-            string testFunction = "_(r:Vector2, f:Vector2, p:Num, u:Num):Vector3 = StandardPaths.lissajous(r, f, p)(u)";
+            string testFunction = "_(r:Vector2, f:Vector2, p:Num, u:Num):Vector3 = StandardPaths.lissajous(r, f, p).at(u)";
             string testArgs = "(" + args.constructor + ", " + args.evaluations + ")";
             AssertApproxEqualRelaxed(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, testArgs, mode),
@@ -169,7 +169,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             (string constructor, string evaluations, string expected) args,
             [Values] EvaluationMode mode)
         {
-            string testFunction = "_(r:Num, f:Num, k:Num, u:Num):Vector3 = StandardPaths.rose(r, f, k)(u)";
+            string testFunction = "_(r:Num, f:Num, k:Num, u:Num):Vector3 = StandardPaths.rose(r, f, k).at(u)";
             string testArgs = "(" + args.constructor + ", " + args.evaluations + ")";
             AssertApproxEqualRelaxed(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, testArgs, mode),
