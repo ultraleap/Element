@@ -9,7 +9,7 @@ namespace Element
     /// </summary>
     public class Context
     {
-        public static Context CreateFromSourceContext(SourceContext sourceContext) => new Context(sourceContext.GlobalScope, sourceContext.CompilerOptions, sourceContext.CompilerOptions.CompilationAspectFunc);
+        public static Context CreateFromSourceContext(SourceContext sourceContext) => new Context(sourceContext.GlobalScope, sourceContext.CompilerOptions, sourceContext.CompilerOptions?.CompilationAspectFunc);
         public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions, Func<Context, ICompilationAspect>? aspect = null) => new Context(rootScope, compilerOptions, aspect);
 
         private class NoScope : IScope

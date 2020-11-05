@@ -10,10 +10,10 @@ namespace Element
     /// </summary>
     public class SourceContext
     {
-        public SourceContext(CompilerOptions compilerOptions) => CompilerOptions = compilerOptions;
+        public SourceContext(CompilerOptions? compilerOptions) => CompilerOptions = compilerOptions;
 
         public GlobalScope GlobalScope { get; } = new GlobalScope();
-        public CompilerOptions CompilerOptions { get; }
+        public CompilerOptions? CompilerOptions { get; }
 
         /// <summary>
         /// Create a source context from a compilation input.
