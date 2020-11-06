@@ -144,43 +144,44 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new ExpressionEvaluation(args.rhs, mode));
         }
 
-        public static (string lhs, string rhs)[] BinaryOpArgs =
+        public static (string op, string lhs, string rhs)[] BinaryOpArgs =
         {
-            ("(Vector3.add, 0)", "1"),
-            ("(Vector3.add, 0.5)", "2"),
-            ("(Vector3.add, 1)", "3"),
-            ("(Vector3.sub, 0)", "-1"),
-            ("(Vector3.sub, 0.5)", "-1"),
-            ("(Vector3.sub, 1)", "-1"),
+            ("Vector3.add", "(0)", "1"),
+            ("Vector3.add", "(0.5)", "2"),
+            ("Vector3.add", "(1)", "3"),
+            ("Vector3.sub", "(0)", "-1"),
+            ("Vector3.sub", "(0.5)", "-1"),
+            ("Vector3.sub", "(1)", "-1"),
         };
         [Test]
-        public void PathBinaryOp([ValueSource(nameof(BinaryOpArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        public void PathBinaryOp([ValueSource(nameof(BinaryOpArgs))] (string op, string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
             // Apply the binary operation to the two lines from (0, 0, 0) to (1, 1, 1), and from (1, 1, 1) to (2, 2, 2)
-            string testFunction = "_(op:Path.Vector3Binary, u:Num):Num = " +
+            string testFunction = "_(u:Num):Num = " +
                                   "Path.applyBinaryVectorOperation(" +
                                   "StandardPaths.line(Vector3.zero, Vector3.one)," +
                                   "StandardPaths.line(Vector3.one, Vector3.one.scale(2))," +
-                                  "op).at(u).x";
+                                  args.op + ").at(u).x";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
         
-        public static (string lhs, string rhs)[] UnaryOpArgs =
+        public static (string op, string lhs, string rhs)[] UnaryOpArgs =
         {
-            ("(_(v:Vector3):Vector3 = v.add(Vector3.one), 0)", "1"),
-            ("(_(v:Vector3):Vector3 = v.add(Vector3.one), 0.5)", "1.5"),
-            ("(_(v:Vector3):Vector3 = v.add(Vector3.one), 0.9)", "1.9"),
-            ("(_(v:Vector3):Vector3 = v.sub(Vector3.one), 0)", "-1"),
-            ("(_(v:Vector3):Vector3 = v.sub(Vector3.one), 0.5)", "-0.5"),
-            ("(_(v:Vector3):Vector3 = v.sub(Vector3.one), 0.9)", "-0.1"),
+            ("_(v:Vector3):Vector3 = v.add(Vector3.one)", "(0)", "1"),
+            ("_(v:Vector3):Vector3 = v.add(Vector3.one)", "(0.5)", "1.5"),
+            ("_(v:Vector3):Vector3 = v.add(Vector3.one)", "(0.9)", "1.9"),
+            ("_(v:Vector3):Vector3 = v.sub(Vector3.one)", "(0)", "-1"),
+            ("_(v:Vector3):Vector3 = v.sub(Vector3.one)", "(0.5)", "-0.5"),
+            ("_(v:Vector3):Vector3 = v.sub(Vector3.one)", "(0.9)", "-0.1"),
         };
         [Test]
-        public void PathUnaryOp([ValueSource(nameof(UnaryOpArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        public void PathUnaryOp([ValueSource(nameof(UnaryOpArgs))] (string op, string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string testFunction = "_(op:Path.Vector3Unary, u:Num):Num = Path.applyUnaryVectorOperation(" +
-                                  "StandardPaths.line(Vector3.zero, Vector3.one), op).at(u).x";
+            string testFunction = "_(u:Num):Num = Path.applyUnaryVectorOperation(" +
+                                  "StandardPaths.line(Vector3.zero, Vector3.one)," +
+                                  args.op + ").at(u).x";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
