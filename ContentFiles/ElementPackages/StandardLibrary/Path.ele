@@ -115,11 +115,7 @@ struct Path(at:PathFunc, domain:Bounds)
     applyUnaryVectorOperation(this:Path, operation:Vector3Unary):Path
     {
         # Apply the operation to all points on the path
-
-        newPathFunction(u:Num):Vector3
-        {
-            return = operation(this.at(u))
-        }
+        newPathFunction(u:Num):Vector3 = operation(this.at(u))
         return = Path(newPathFunction, this.domain)
     }
 
