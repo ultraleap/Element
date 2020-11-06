@@ -15,8 +15,10 @@ struct Path(at:PathFunc, domain:Bounds)
     {
         # Change the path domain from the current domain "newDomain".
         #
-        # This function returns a new path "newPath" such that
+        # This function returns a new path where the "newDomain" maps
+        # onto the original domain.
         #
+        # This returned path, "newPath" has the properties:
         #   newPath.domain = newDomain
         #   newPath.at(newDomain.lower) = this.at(this.domain.lower)
         #   newPath.at(newDomain.upper) = this.at(this.domain.lower)
@@ -34,12 +36,14 @@ struct Path(at:PathFunc, domain:Bounds)
         # Returns a path which pingPongs along the original path
         # in the original domain.
         #
-        # Eg, if the original domain is (0, 1), then the returned
-        # path also has a domain of (0, 1) has pingPonged from end to end.
+        # Eg, if the original domain is (0, 1) then the returned
+        # path also has a domain (0, 1). Over this domain, the returned
+        # path travels to the end of the original path and back again.
         #
-        # newPath(0) = oldPath(0)
-        # newPath(0.5) = oldPath(1)
-        # newPath(1) = oldPath(0)
+        # newPath.domain = oldPath.domain
+        # newPath.at(0) = oldPath.at(0)
+        # newPath.at(0.5) = oldPath.at(1)
+        # newPath.at(1) = oldPath.at(0)
         #
         # This means that the path length is double the original path length.
 
@@ -49,10 +53,10 @@ struct Path(at:PathFunc, domain:Bounds)
 
     repeat(this:Path, repetitions:Num):Path
     {
-        # Returns the same path repated "repetitions" times over
+        # Returns the same path repeated "repetitions" times over
         # the same domain.
         #
-        # This changes the path length
+        # This changes the path length.
 
         unitaryTransform(u:Num):Num = u.mul(repetitions).rem(1)
         return = this.applyTransformToDomain(unitaryTransform)

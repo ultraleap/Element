@@ -1,9 +1,10 @@
 namespace StandardPaths
 {
-    # Standard Paths are pre-defined Paths. They all have the domain (0, 1)
+    # Standard Paths are pre-defined Paths. They all have the domain (0, 1).
     #
-    # If the path length is possible to calculate analytically, a
-    # separate function is defined to provide it.
+    # If the path length is possible to calculate analytically, a separate
+    # function is defined to provide it. Note that applying transforms
+    # to these paths may change the path length.
 
     circle(radius:Num):Path
     {
