@@ -81,14 +81,22 @@ bool function_declaration::valid_at_boundary(const compilation_context& context)
     //outputs must be serializable
     const auto* return_type = output->resolve_annotation(context);
     if (!return_type || !return_type->serializable(context))
+    {
+        error e(fmt::format("output '{}' of function '{}' is not deserializable, so it's not valid on the boundary", output.value().typeof_info(), name.value), ELEMENT_ERROR_UNKNOWN, source_info);
+        e.log_once(context.get_logger());
         return false;
+    }
 
     //inputs must be deserializable
     for (const auto& input : inputs)
     {
         const auto& type = input.resolve_annotation(context);
         if (!type || !type->deserializable(context))
+        {
+            error e(fmt::format("input '{}' of function '{}' is not deserializable, so it's not valid on the boundary", input.typeof_info(), name.value), ELEMENT_ERROR_UNKNOWN, source_info);
+            e.log_once(context.get_logger());
             return false;
+        }
     }
 
     return true;
