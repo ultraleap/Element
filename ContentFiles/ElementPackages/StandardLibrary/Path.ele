@@ -47,8 +47,8 @@ struct Path(at:PathFunc, domain:Bounds)
         #
         # This means that the path length is double the original path length.
 
-        unitaryTransform(u:Num):Num = if(u.gt(0.5), 1.sub(u).mul(2), u.mul(2))
-        return = this.applyTransformToDomain(unitaryTransform)
+        unitIntervalTransform(u:Num):Num = if(u.gt(0.5), 1.sub(u).mul(2), u.mul(2))
+        return = this.applyUnitIntervalTransformToDomain(unitIntervalTransform)
     }
 
     repeat(this:Path, repetitions:Num):Path
@@ -58,8 +58,8 @@ struct Path(at:PathFunc, domain:Bounds)
         #
         # This changes the path length.
 
-        unitaryTransform(u:Num):Num = u.mul(repetitions).rem(1)
-        return = this.applyTransformToDomain(unitaryTransform)
+        unitIntervalTransform(u:Num):Num = u.mul(repetitions).rem(1)
+        return = this.applyUnitIntervalTransformToDomain(unitIntervalTransform)
         
     }
 
@@ -76,15 +76,15 @@ struct Path(at:PathFunc, domain:Bounds)
 
     oscillate(this:Path):Path
     {
-        unitaryTransform(u:Num):Num = Num.sub(0.5, Num.cos(u.mul(Num.tau)).div(2))
-        return = this.applyTransformToDomain(unitaryTransform)
+        unitIntervalTransform(u:Num):Num = Num.sub(0.5, Num.cos(u.mul(Num.tau)).div(2))
+        return = this.applyUnitIntervalTransformToDomain(unitIntervalTransform)
     }
 
     easing(this:Path):Path
     {
         # Map 0 to 1 to the same range, but more smoothly 
         smoothstep(t:Num):Num = 3.mul(t.mul(t)).sub(2.mul(t.mul(t).mul(t)))
-        return = this.applyTransformToDomain(smoothstep)
+        return = this.applyUnitIntervalTransformToDomain(smoothstep)
     }
 
     concatenate(path1:Path, path2:Path, boundary:Num):Path
@@ -139,16 +139,19 @@ struct Path(at:PathFunc, domain:Bounds)
         return = Path(newPathFunction, path1.domain)
     }
 
-    applyTransformToDomain(this:Path, unitaryTransform:ScalarTransform):Path
+    applyUnitIntervalTransformToDomain(this:Path, unitIntervalTransform:ScalarTransform):Path
     {
-        # Take a function which maps a point in the range (0, 1) to another point in the same range
-        # and return a function which maps this.domain to this.domain
+        # Apply the unitIntervalTransform to the path inputs over the domain
+        #
+        # The unitIntervalTransform must map a point in the range (0, 1) to another point in this range.
+        # The returned Path has the same domain at the original Path, but with the transform applied
+        # to all inputs.
 
         domainTransform(u:Num):Num
         {
             domainLength = this.domain.upper.sub(this.domain.lower)
             w = u.sub(this.domain.lower).div(domainLength)
-            wNew = unitaryTransform(w)
+            wNew = unitIntervalTransform(w)
             return = wNew.mul(domainLength).add(this.domain.lower)
         }
         transformedPathFunc(u:Num):Vector3 = this.at(domainTransform(u))
