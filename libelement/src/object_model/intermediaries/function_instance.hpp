@@ -33,5 +33,6 @@ namespace element
     private:
         mutable capture_stack captures;
         std::vector<object_const_shared_ptr> provided_arguments;
+        std::unique_ptr<constraint> our_constraint;
     };
 } // namespace element
