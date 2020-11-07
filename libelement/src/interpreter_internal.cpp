@@ -459,17 +459,16 @@ element_result element_interpreter_ctx::expression_to_object(
     parser.src_context = src_context;
 
     element_ast root(nullptr);
-    //root.nearest_token = &tokeniser->cur_token;
     parser.root = &root;
 
     size_t first_token = 0;
-    auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRESSION);
-    parser.ast = ast;
+    parser.ast = parser.root;
     parser.token = tokeniser->get_token(first_token, result);
+    parser.ast->nearest_token = parser.token;
     if (result != ELEMENT_OK)
         return result;
 
-    result = parser.parse_expression();
+    result = parser.parse_expression(parser.root);
     if (result != ELEMENT_OK)
         return result;
 
@@ -492,7 +491,7 @@ element_result element_interpreter_ctx::expression_to_object(
     auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, global_scope.get(), element::function_declaration::kind::expression_bodied);
     parser.root->nearest_token = &tokeniser->tokens[0];
     element::assign_source_information(this, dummy_declaration, parser.root);
-    auto expression_chain = build_expression_chain(this, ast, dummy_declaration.get(), deferred_expressions, result);
+    auto expression_chain = build_expression_chain(this, parser.root->children[0].get(), dummy_declaration.get(), deferred_expressions, result);
 
     if (deferred_expressions.empty())
     {

@@ -82,8 +82,7 @@ element_result element_parser_ctx::parse_typename()
     typename_ast->nearest_token = token;
     typename_ast->type = ELEMENT_AST_NODE_TYPENAME;
 
-    ast = typename_ast->new_child();
-    const element_result result = parse_expression();
+    const element_result result = parse_expression(typename_ast);
     if (result != ELEMENT_OK)
     {
         //todo: change error from identifier to invalid expression
@@ -131,12 +130,14 @@ element_result element_parser_ctx::parse_port()
         ELEMENT_OK_OR_RETURN(parse_typename());
     }
 
-    ast = port_ast->new_child(ELEMENT_AST_NODE_UNSPECIFIED_DEFAULT);
-    ast->nearest_token = token;
     if (token->type == ELEMENT_TOK_EQUALS)
     {
         ELEMENT_OK_OR_RETURN(next_token());
-        ELEMENT_OK_OR_RETURN(parse_expression());
+        ELEMENT_OK_OR_RETURN(parse_expression(port_ast));
+    }
+    else
+    {
+        new_ast(port_ast, token, ELEMENT_AST_NODE_UNSPECIFIED_DEFAULT);
     }
 
     return ELEMENT_OK;
@@ -179,9 +180,7 @@ element_result element_parser_ctx::parse_exprlist()
     {
         do
         {
-            ast = exprlist_ast->new_child();
-            ast->nearest_token = token;
-            ELEMENT_OK_OR_RETURN(parse_expression());
+            ELEMENT_OK_OR_RETURN(parse_expression(exprlist_ast));
         } while (token->type == ELEMENT_TOK_COMMA && next_token() == ELEMENT_OK);
     }
     else
@@ -211,7 +210,7 @@ element_result element_parser_ctx::parse_exprlist()
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_call()
+element_result element_parser_ctx::parse_call(element_ast* parent)
 {
     /* The first AST node is either LITERAL or CALL
      * LITERAL or CALL can have children, which indicates that they are the start of a chain (literals are always at the start of a chain)
@@ -242,16 +241,13 @@ element_result element_parser_ctx::parse_call()
      *                 LITERAL 2
      */
 
-    element_ast* root_call = ast;
+    auto* root_call = new_ast(parent, token, ELEMENT_AST_NODE_CALL);
     if (token->type == ELEMENT_TOK_IDENTIFIER)
     {
-        // get identifier
         ELEMENT_OK_OR_RETURN(parse_identifier(root_call));
-        root_call->type = ELEMENT_AST_NODE_CALL;
     }
     else if (token->type == ELEMENT_TOK_NUMBER)
     {
-        // this will change root's type to LITERAL
         ELEMENT_OK_OR_RETURN(parse_literal(root_call));
     }
     else
@@ -261,7 +257,7 @@ element_result element_parser_ctx::parse_call()
             src_context.get(),
             token,
             element::log_error_message_code::parse_call_invalid_expression,
-            ast->parent->identifier,
+            root_call->parent->identifier,
             tokeniser->text(token));
     }
 
@@ -272,30 +268,27 @@ element_result element_parser_ctx::parse_call()
             // call with args
             // TODO: bomb out if we're trying to call a literal, keep track of previous node
 
-            ast = root_call->new_child();
+            auto* expr = new_ast(root_call, token, ELEMENT_AST_NODE_EXPRESSION);
             ELEMENT_OK_OR_RETURN(parse_exprlist());
         }
         else if (token->type == ELEMENT_TOK_DOT)
         {
             //advance over the dot so we're now at (what should be) the identifier token
             ELEMENT_OK_OR_RETURN(next_token());
-
-            ast = root_call->new_child(ELEMENT_AST_NODE_CALL);
-            ELEMENT_OK_OR_RETURN(parse_identifier(ast));
+            auto* expr = new_ast(root_call, token, ELEMENT_AST_NODE_CALL);
+            ELEMENT_OK_OR_RETURN(parse_identifier(expr));
         }
     }
 
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_lambda()
+element_result element_parser_ctx::parse_lambda(element_ast* parent)
 {
     //the caller should ensure it's an underscore
     assert(token->type == ELEMENT_TOK_UNDERSCORE);
 
-    auto* lambda_ast = ast;
-    lambda_ast->nearest_token = token;
-    lambda_ast->type = ELEMENT_AST_NODE_LAMBDA;
+    auto* lambda_ast = new_ast(parent, token, ELEMENT_AST_NODE_LAMBDA);
 
     ELEMENT_OK_OR_RETURN(next_token());
 
@@ -305,8 +298,7 @@ element_result element_parser_ctx::parse_lambda()
 
     ELEMENT_OK_OR_RETURN(next_token());
 
-    element_ast* ports = lambda_ast->new_child();
-    ast = ports;
+    element_ast* ports = new_ast(lambda_ast, token, ELEMENT_AST_NODE_PORT);
     ELEMENT_OK_OR_RETURN(parse_portlist());
 
     //todo: logging
@@ -315,9 +307,7 @@ element_result element_parser_ctx::parse_lambda()
 
     ELEMENT_OK_OR_RETURN(next_token());
 
-    element_ast* type = lambda_ast->new_child();
-    ast = type;
-    type->nearest_token = token;
+    element_ast* type = new_ast(lambda_ast, token, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
     const auto has_return = token->type == ELEMENT_TOK_COLON;
     if (has_return)
     {
@@ -325,27 +315,24 @@ element_result element_parser_ctx::parse_lambda()
         return parse_typename();
     }
 
-    type->type = ELEMENT_AST_NODE_UNSPECIFIED_TYPE;
     return parse_function_body(lambda_ast);
 }
 
-element_result element_parser_ctx::parse_expression()
+element_result element_parser_ctx::parse_expression(element_ast* parent)
 {
-    ast->nearest_token = token;
-
     if (token->type == ELEMENT_TOK_IDENTIFIER || token->type == ELEMENT_TOK_NUMBER)
-        return parse_call();
+        return parse_call(parent);
 
     if (token->type == ELEMENT_TOK_UNDERSCORE)
-        return parse_lambda();
+        return parse_lambda(parent);
 
     if (token->type == ELEMENT_TOK_BRACEL)
-        return parse_anonymous_block();
+        return parse_anonymous_block(parent);
 
     return log_error(
         logger.get(),
         src_context.get(),
-        ast,
+        parent,
         element::log_error_message_code::parse_expression_failed,
         tokeniser->text(token));
 }
@@ -447,11 +434,9 @@ element_result element_parser_ctx::parse_scope(element_ast* parent)
     return next_token();
 }
 
-element_result element_parser_ctx::parse_anonymous_block()
+element_result element_parser_ctx::parse_anonymous_block(element_ast* parent)
 {
-    auto* block_ast = ast;
-    block_ast->nearest_token = token;
-    block_ast->type = ELEMENT_AST_NODE_ANONYMOUS_BLOCK;
+    auto* block_ast = new_ast(parent, token, ELEMENT_AST_NODE_ANONYMOUS_BLOCK);
 
     if (token->type == ELEMENT_TOK_BRACEL)
         ELEMENT_OK_OR_RETURN(next_token());
@@ -467,8 +452,7 @@ element_result element_parser_ctx::parse_anonymous_block()
             ELEMENT_OK_OR_RETURN(next_token());
     }
 
-    ELEMENT_OK_OR_RETURN(next_token());
-    return ELEMENT_OK;
+    return next_token();
 }
 
 element_result element_parser_ctx::parse_function_body(element_ast* parent)
@@ -479,9 +463,8 @@ element_result element_parser_ctx::parse_function_body(element_ast* parent)
 
     if (token->type == ELEMENT_TOK_EQUALS)
     {
-        auto* body_node = new_ast(parent, token, ELEMENT_AST_NODE_NO_BODY);
         ELEMENT_OK_OR_RETURN(next_token());
-        return parse_expression();
+        return parse_expression(parent);
     }
 
     const element::log_error_message_code code = ast->parent->type == ELEMENT_AST_NODE_FUNCTION

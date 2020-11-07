@@ -15,6 +15,7 @@ namespace element
     template <typename Context, typename Obj, typename AST>
     void assign_source_information(const Context* context, Obj& t, const AST* ast)
     {
+        assert(ast->nearest_token);
         const auto& file_info = context->src_context->file_info.at(ast->nearest_token->file_name);
         const std::string* filename = file_info.file_name.get();
         const std::string* line_in_source = file_info.source_lines[static_cast<std::size_t>(ast->nearest_token->line) - 1].get();

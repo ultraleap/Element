@@ -36,11 +36,11 @@ public:
     // exprlist ::= expression (',' expression)*
     element_result parse_exprlist();
     // call ::= (identifier | literal) ('(' exprlist ')' | '.' identifier)*
-    element_result parse_call();
+    element_result parse_call(element_ast* parent);
     // lambda ::= unidentifier '(' portlist ')' body
-    element_result parse_lambda();
+    element_result parse_lambda(element_ast* parent);
     // expression ::= call | lambda
-    element_result parse_expression();
+    element_result parse_expression(element_ast* parent);
     // qualifier ::= 'intrinsic' | 'extern'
     element_result parse_qualifiers(element_ast_flags* flags);
     // declaration ::= identifier ('(' portlist ')')?
@@ -49,7 +49,7 @@ public:
     // scope ::= '{' item* '}'
     element_result parse_scope(element_ast* parent);
     // anonymous_block ::= '{' item* '}'
-    element_result parse_anonymous_block();
+    element_result parse_anonymous_block(element_ast* parent);
     element_result parse_function_body(element_ast* parent);
     // function ::= qualifier* declaration type? (scope | statement | interface)
     // note qualifiers parsed further out and passed in
