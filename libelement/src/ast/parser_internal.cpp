@@ -327,16 +327,11 @@ element_result element_parser_ctx::parse_lambda()
     if (has_return)
     {
         ELEMENT_OK_OR_RETURN(next_token());
-        ELEMENT_OK_OR_RETURN(parse_typename());
-    }
-    else
-    {
-        type->type = ELEMENT_AST_NODE_UNSPECIFIED_TYPE;
+        return parse_typename();
     }
 
-    ast = lambda_ast;
-    ELEMENT_OK_OR_RETURN(parse_body());
-    return ELEMENT_OK;
+    type->type = ELEMENT_AST_NODE_UNSPECIFIED_TYPE;
+    return parse_function_body(lambda_ast);
 }
 
 element_result element_parser_ctx::parse_expression()
@@ -519,20 +514,15 @@ element_result element_parser_ctx::parse_anonymous_block()
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_body()
-{
-    //todo: parse body is only called for lambdas and functions?
-    
+element_result element_parser_ctx::parse_function_body(element_ast* parent)
+{    
     //function body is a scope
     if (token->type == ELEMENT_TOK_BRACEL)
-        return parse_scope(ast);
+        return parse_scope(parent);
 
     if (token->type == ELEMENT_TOK_EQUALS)
     {
-        auto* body_node = ast->new_child();
-        ast = body_node;
-        body_node->nearest_token = token;
-        body_node->type = ELEMENT_AST_NODE_NO_BODY;
+        auto* body_node = new_ast(parent, token, ELEMENT_AST_NODE_NO_BODY);
         ELEMENT_OK_OR_RETURN(next_token());
         return parse_expression();
     }
@@ -550,42 +540,27 @@ element_result element_parser_ctx::parse_body()
         tokeniser->text(token));
 }
 
-element_result element_parser_ctx::parse_function(element_ast_flags declflags)
+element_result element_parser_ctx::parse_function(element_ast* parent, element_ast_flags declflags)
 {
     //consume "function" token ONLY if "intrinsic" qualifier precedes it
     if (tokeniser->text(token) == "function" && (declflags & ELEMENT_AST_FLAG_DECL_INTRINSIC) == ELEMENT_AST_FLAG_DECL_INTRINSIC)
         ELEMENT_OK_OR_RETURN(next_token());
 
-    ast = ast->new_child();
-    auto* func_ast = ast;
-    func_ast->nearest_token = token;
-    func_ast->type = ELEMENT_AST_NODE_FUNCTION;
-    element_ast* const declaration = func_ast->new_child();
-    ast = declaration;
+    auto* func_ast = new_ast(parent, token, ELEMENT_AST_NODE_FUNCTION);
+    auto* const declaration = new_ast(func_ast, token, ELEMENT_AST_NODE_DECLARATION, declflags);
     ELEMENT_OK_OR_RETURN(parse_declaration(true));
-    declaration->flags = declflags;
 
     if (token->type == ELEMENT_TOK_BRACEL || token->type == ELEMENT_TOK_EQUALS)
-    {
-        ast = func_ast;
-        ELEMENT_OK_OR_RETURN(parse_body());
-        return ELEMENT_OK;
-    }
+        return parse_function_body(func_ast);
 
-    auto* body_node = func_ast->new_child();
-    ast = body_node;
-    body_node->nearest_token = token;
-    body_node->type = ELEMENT_AST_NODE_NO_BODY;
-    if (declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC))
-    {
-        //ELEMENT_OK_OR_RETURN(next_token());
+    new_ast(func_ast, token, ELEMENT_AST_NODE_NO_BODY);
+    if (declaration->declaration_is_intrinsic())
         return ELEMENT_OK;
-    }
 
     return log_error(
         logger.get(),
         src_context.get(),
-        func_ast,
+        declaration,
         element::log_error_message_code::parse_function_missing_body,
         declaration->identifier);
 }
@@ -670,7 +645,7 @@ element_result element_parser_ctx::parse_item(element_ast* parent)
     else if (tokeniser->text(token) == "constraint")
         ELEMENT_OK_OR_RETURN(parse_constraint(parent, flags));
     else
-        ELEMENT_OK_OR_RETURN(parse_function(flags));
+        ELEMENT_OK_OR_RETURN(parse_function(parent, flags));
 
     return ELEMENT_OK;
 }

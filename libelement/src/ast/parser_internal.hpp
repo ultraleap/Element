@@ -50,10 +50,10 @@ public:
     element_result parse_scope(element_ast* parent);
     // anonymous_block ::= '{' item* '}'
     element_result parse_anonymous_block();
-    element_result parse_body();
+    element_result parse_function_body(element_ast* parent);
     // function ::= qualifier* declaration type? (scope | statement | interface)
     // note qualifiers parsed further out and passed in
-    element_result parse_function(element_ast_flags declflags);
+    element_result parse_function(element_ast* parent, element_ast_flags declflags);
     // struct ::= qualifier* 'struct' declaration (scope | interface)
     // note qualifiers parsed further out and passed in
     element_result parse_struct(element_ast* parent, element_ast_flags declflags);
