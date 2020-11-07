@@ -980,18 +980,20 @@ element_result element_parser_ctx::validate_scope(element_ast* ast)
 
 #pragma endregion validation
 
-void element_parser_ctx::log(element_result message_code, const std::string& message, const element_ast* nearest_ast) const
+element_result element_parser_ctx::log(element_result message_code, const std::string& message, const element_ast* nearest_ast) const
 {
     if (logger == nullptr)
-        return;
+        return message_code;
 
     logger->log(*this, message_code, message, nearest_ast);
+    return message_code;
 }
 
-void element_parser_ctx::log(const std::string& message) const
+element_result element_parser_ctx::log(const std::string& message) const
 {
     if (logger == nullptr)
-        return;
+        return ELEMENT_OK;
 
     logger->log(message, element_stage::ELEMENT_STAGE_MISC);
+    return ELEMENT_OK;
 }

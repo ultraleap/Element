@@ -74,8 +74,8 @@ public:
     //TODO: Move to object model as this one is already disgustingly large
     element_result validate(element_ast* ast);
 
-    void log(element_result message_code, const std::string& message = "", const element_ast* nearest_ast = nullptr) const;
-    void log(const std::string& message) const;
+    element_result log(element_result message_code, const std::string& message = "", const element_ast* nearest_ast = nullptr) const;
+    element_result log(const std::string& message) const;
 
 private:
     element_result validate_type(element_ast* ast);
