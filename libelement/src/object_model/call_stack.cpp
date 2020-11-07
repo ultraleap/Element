@@ -21,15 +21,20 @@ void call_stack::pop()
     frames.pop_back();
 }
 
-bool call_stack::is_recursive(std::shared_ptr<const function_instance> function) const
+unsigned int call_stack::recursive_calls(std::shared_ptr<const function_instance> function) const
 {
+    auto count = 0;
+
     for (auto it = frames.rbegin(); it != frames.rend(); ++it)
     {
-        if (it->function->declarer == function->declarer)
-            return it->function->declarer->recursive_handler(*this, function->declarer, it);
+        if (it->function->declarer == function->declarer
+            && it->function->declarer->recursive_handler(*this, function->declarer, it))
+        {
+            count++;
+        }
     }
 
-    return false;
+    return count;
 }
 
 std::shared_ptr<error> call_stack::build_recursive_error(
@@ -67,7 +72,7 @@ std::shared_ptr<error> call_stack::build_recursive_error(
                              params,
                              ret);
 
-        if (func == function)
+        if (func->declarer == function->declarer)
             trace += " <-- here";
 
         if (it != context.calls.frames.rend() - 1)

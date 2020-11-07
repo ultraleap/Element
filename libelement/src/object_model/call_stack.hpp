@@ -20,7 +20,7 @@ namespace element
         frame& push(std::shared_ptr<const function_instance> function, std::vector<object_const_shared_ptr> compiled_arguments);
         void pop();
 
-        [[nodiscard]] bool is_recursive(std::shared_ptr<const function_instance> function) const;
+        [[nodiscard]] unsigned int recursive_calls(std::shared_ptr<const function_instance> function) const;
         [[nodiscard]] std::shared_ptr<error> build_recursive_error(
             std::shared_ptr<const function_instance> function,
             const compilation_context& context,
