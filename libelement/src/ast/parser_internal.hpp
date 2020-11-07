@@ -67,6 +67,7 @@ public:
     element_result ast_build();
 
     element_result next_token();
+    element_ast* new_ast(element_ast* parent, element_token* token, element_ast_node_type type, element_ast_flags flags = 0);
     unsigned int token_index = 0;
     element_token* token = nullptr;
     element_ast* ast = nullptr;

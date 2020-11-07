@@ -334,9 +334,7 @@ element_result element_parser_ctx::parse_lambda()
         type->type = ELEMENT_AST_NODE_UNSPECIFIED_TYPE;
     }
 
-    element_ast* body = lambda_ast->new_child();
-    ast = body;
-    body->nearest_token = token;
+    ast = lambda_ast;
     ELEMENT_OK_OR_RETURN(parse_body());
     return ELEMENT_OK;
 }
@@ -486,19 +484,15 @@ element_result element_parser_ctx::parse_declaration(bool find_return_type)
 
 element_result element_parser_ctx::parse_scope()
 {
-    auto* scope_ast = ast;
-    scope_ast->nearest_token = token;
-    scope_ast->type = ELEMENT_AST_NODE_SCOPE;
+    auto* our_ast = new_ast(ast, token, ELEMENT_AST_NODE_SCOPE);
 
     if (token->type == ELEMENT_TOK_BRACEL)
         ELEMENT_OK_OR_RETURN(next_token());
 
     while (token->type != ELEMENT_TOK_BRACER)
-    {
-        ELEMENT_OK_OR_RETURN(parse_item(scope_ast));
-    }
-    ELEMENT_OK_OR_RETURN(next_token());
-    return ELEMENT_OK;
+        ELEMENT_OK_OR_RETURN(parse_item(our_ast));
+
+    return next_token();
 }
 
 element_result element_parser_ctx::parse_anonymous_block()
@@ -527,32 +521,33 @@ element_result element_parser_ctx::parse_anonymous_block()
 
 element_result element_parser_ctx::parse_body()
 {
+    //todo: parse body is only called for lambdas and functions?
+    
+    //function body is a scope
     if (token->type == ELEMENT_TOK_BRACEL)
+        return parse_scope();
+
+    if (token->type == ELEMENT_TOK_EQUALS)
     {
-        // scope (function body)
-        ELEMENT_OK_OR_RETURN(parse_scope());
-    }
-    else if (token->type == ELEMENT_TOK_EQUALS)
-    {
+        auto* body_node = ast->new_child();
+        ast = body_node;
+        body_node->nearest_token = token;
+        body_node->type = ELEMENT_AST_NODE_NO_BODY;
         ELEMENT_OK_OR_RETURN(next_token());
-        ELEMENT_OK_OR_RETURN(parse_expression());
-    }
-    else
-    {
-        const element::log_error_message_code code = ast->parent->type == ELEMENT_AST_NODE_FUNCTION
-                                                   ? element::log_error_message_code::parse_body_missing_body_for_function
-                                                   : element::log_error_message_code::parse_body_missing_body;
-
-        return log_error(
-            logger.get(),
-            src_context.get(),
-            token,
-            code,
-            ast->parent->children[ast_idx::function::declaration]->identifier,
-            tokeniser->text(token));
+        return parse_expression();
     }
 
-    return ELEMENT_OK;
+    const element::log_error_message_code code = ast->parent->type == ELEMENT_AST_NODE_FUNCTION
+                                                     ? element::log_error_message_code::parse_body_missing_body_for_function
+                                                     : element::log_error_message_code::parse_body_missing_body;
+
+    return log_error(
+        logger.get(),
+        src_context.get(),
+        token,
+        code,
+        ast->parent->children[ast_idx::function::declaration]->identifier,
+        tokeniser->text(token));
 }
 
 element_result element_parser_ctx::parse_function(element_ast_flags declflags)
@@ -570,15 +565,16 @@ element_result element_parser_ctx::parse_function(element_ast_flags declflags)
     ELEMENT_OK_OR_RETURN(parse_declaration(true));
     declaration->flags = declflags;
 
-    auto* body_node = func_ast->new_child();
-    ast = body_node;
-    body_node->nearest_token = token;
     if (token->type == ELEMENT_TOK_BRACEL || token->type == ELEMENT_TOK_EQUALS)
     {
+        ast = func_ast;
         ELEMENT_OK_OR_RETURN(parse_body());
         return ELEMENT_OK;
     }
 
+    auto* body_node = func_ast->new_child();
+    ast = body_node;
+    body_node->nearest_token = token;
     body_node->type = ELEMENT_AST_NODE_NO_BODY;
     if (declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC))
     {
@@ -633,18 +629,13 @@ element_result element_parser_ctx::parse_struct(element_ast_flags declflags)
             tokeniser->text(struct_ast->nearest_token));
     }
 
-    element_ast* body_node = struct_ast->new_child();
-    ast = body_node;
-    body_node->nearest_token = token;
-    //constraint, we have to assume this with no terminator, the next parsed statement will fail if syntax is incorrect
-    body_node->type = ELEMENT_AST_NODE_NO_BODY;
-
+    ast = struct_ast;
+    //struct body is a scope
     if (token->type == ELEMENT_TOK_BRACEL)
-    {
-        // scope (struct body)
-        ELEMENT_OK_OR_RETURN(parse_scope());
-    }
+        return parse_scope();
 
+    //there is no body
+    new_ast(struct_ast, token, ELEMENT_AST_NODE_NO_BODY);
     return ELEMENT_OK;
 }
 
@@ -709,27 +700,10 @@ element_result element_parser_ctx::parse_constraint(element_ast_flags declflags)
 
 element_result element_parser_ctx::parse_namespace()
 {
-    ast = ast->new_child();
-    ast->nearest_token = token;
+    new_ast(ast, token, ELEMENT_AST_NODE_NAMESPACE);
     ELEMENT_OK_OR_RETURN(next_token());
-
-    if (token->type == ELEMENT_TOK_EQUALS)
-    {
-        log(ELEMENT_ERROR_INVALID_IDENTIFIER,
-            "invalid identifier found, cannot use '=' after a namespace without an identifier",
-            ast);
-        return ELEMENT_ERROR_INVALID_IDENTIFIER;
-    }
-
-    ast->nearest_token = token;
-    ast->type = ELEMENT_AST_NODE_NAMESPACE;
     ELEMENT_OK_OR_RETURN(parse_identifier());
-
-    element_ast* scope = ast->new_child();
-    ast = scope;
-    ELEMENT_OK_OR_RETURN(parse_scope());
-
-    return ELEMENT_OK;
+    return parse_scope();
 }
 
 element_result element_parser_ctx::parse_item(element_ast* parent)
@@ -816,6 +790,17 @@ element_result element_parser_ctx::next_token()
     } while (token_index < tokeniser->tokens.size() - 1 && token && token->type == ELEMENT_TOK_NONE);
 
     return result;
+}
+
+element_ast* element_parser_ctx::new_ast(element_ast* parent, element_token* token, element_ast_node_type type, element_ast_flags flags)
+{
+    assert(parent);
+
+    auto* ast = parent->new_child(type);
+    this->ast = ast;
+    ast->nearest_token = token;
+    ast->flags = flags;
+    return ast;
 }
 
 #pragma region validation
