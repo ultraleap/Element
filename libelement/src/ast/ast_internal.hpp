@@ -42,6 +42,9 @@ public:
     [[nodiscard]] const element_ast* function_get_declaration() const;
     [[nodiscard]] const element_ast* function_get_body() const;
 
+    [[nodiscard]] bool constraint_is_valid() const;
+    [[nodiscard]] const element_ast* constraint_get_declaration() const;
+
     [[nodiscard]] bool declaration_is_valid() const;
     [[nodiscard]] bool declaration_has_inputs() const;
     [[nodiscard]] const element_ast* declaration_get_inputs() const;
