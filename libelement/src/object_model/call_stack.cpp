@@ -5,14 +5,15 @@
 
 //SELF
 #include "declarations/declaration.hpp"
+#include "intermediaries/function_instance.hpp"
 #include "compilation_context.hpp"
 #include "error_map.hpp"
 
 using namespace element;
 
-call_stack::frame& call_stack::push(const declaration* function, std::vector<object_const_shared_ptr> compiled_arguments)
+call_stack::frame& call_stack::push(std::shared_ptr<const function_instance> function, std::vector<object_const_shared_ptr> compiled_arguments)
 {
-    return frames.emplace_back(frame{ function, std::move(compiled_arguments) });
+    return frames.emplace_back(frame{ std::move(function), std::move(compiled_arguments) });
 }
 
 void call_stack::pop()
@@ -20,19 +21,19 @@ void call_stack::pop()
     frames.pop_back();
 }
 
-bool call_stack::is_recursive(const declaration* declaration) const
+bool call_stack::is_recursive(std::shared_ptr<const function_instance> function) const
 {
     for (auto it = frames.rbegin(); it != frames.rend(); ++it)
     {
-        if (it->function == declaration)
-            return it->function->recursive_handler(*this, declaration, it);
+        if (it->function->declarer == function->declarer)
+            return it->function->declarer->recursive_handler(*this, function->declarer, it);
     }
 
     return false;
 }
 
 std::shared_ptr<error> call_stack::build_recursive_error(
-    const declaration* decl,
+    std::shared_ptr<const function_instance> function,
     const compilation_context& context,
     const source_information& source_info)
 {
@@ -43,35 +44,35 @@ std::shared_ptr<error> call_stack::build_recursive_error(
         auto& func = it->function;
 
         std::string params;
-        for (unsigned i = 0; i < func->inputs.size(); ++i)
+        for (unsigned i = 0; i < func->declarer->inputs.size(); ++i)
         {
-            const auto& input = func->inputs[i];
+            const auto& input = func->declarer->inputs[i];
             params += fmt::format("{}{} = {}",
                                   input.get_name(),
                                   input.has_annotation() ? ":" + input.get_annotation()->to_string() : "",
                                   it->compiled_arguments[i]->to_string());
 
-            if (i != func->inputs.size() - 1)
+            if (i != func->declarer->inputs.size() - 1)
                 params += ", ";
         }
 
         std::string ret = "";
-        if (func->output && func->output->get_annotation())
-            ret = ":" + func->output->get_annotation()->to_string();
+        if (func->declarer->output && func->declarer->output->get_annotation())
+            ret = ":" + func->declarer->output->get_annotation()->to_string();
 
         trace += fmt::format("{}:{} at {}({}){}",
                              func->source_info.filename,
                              func->source_info.line,
-                             func->name.value,
+                             func->declarer->name.value,
                              params,
                              ret);
 
-        if (func == decl)
+        if (func == function)
             trace += " <-- here";
 
         if (it != context.calls.frames.rend() - 1)
             trace += "\n";
     }
 
-    return build_error_and_log(context, source_info, error_message_code::recursion_detected, decl->to_string(), trace);
+    return build_error_and_log(context, source_info, error_message_code::recursion_detected, function->to_string(), trace);
 }

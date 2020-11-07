@@ -134,15 +134,10 @@ object_const_shared_ptr function_instance::call(
     if (!is_variadic && !valid_call(context, declarer, compiled_args))
         return build_error_for_invalid_call(context, declarer, compiled_args);
 
-    if (context.calls.is_recursive(declarer))
-        return context.calls.build_recursive_error(declarer, context, source_info);
-
     if constexpr (should_log_compilation_step())
-    {
         context.get_logger()->log_step_indent();
-    }
 
-    context.calls.push(declarer, compiled_args);
+    context.calls.push(shared_from_this(), compiled_args);
     captures.push(declarer->our_scope.get(), &declarer->get_inputs(), compiled_args);
 
     std::swap(captures, context.captures);

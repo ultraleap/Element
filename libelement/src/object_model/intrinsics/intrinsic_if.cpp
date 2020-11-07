@@ -1,7 +1,7 @@
 #include "intrinsic_if.hpp"
 
 //SELF
-#include "object_model/declarations/declaration.hpp"
+#include "object_model/intermediaries/function_instance.hpp"
 #include "object_model/error.hpp"
 #include "object_model/intermediaries/list_wrapper.hpp"
 
@@ -16,7 +16,7 @@ object_const_shared_ptr intrinsic_if::compile(const compilation_context& context
                                               const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
-    const auto& declarer = *frame.function;
+    const auto& declarer = *static_cast<const declaration*>(frame.function->declarer);
     assert(declarer.inputs.size() == 3);
     assert(frame.compiled_arguments.size() == 3);
 
