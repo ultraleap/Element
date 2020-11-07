@@ -57,7 +57,7 @@ public:
     // struct ::= qualifier* 'struct' declaration (scope | interface)
     // note qualifiers parsed further out and passed in
     element_result parse_struct(element_ast_flags declflags);
-    element_result parse_constraint(element_ast_flags declflags);
+    element_result parse_constraint(element_ast* parent, element_ast_flags declflags);
     // namespace ::= 'namespace' identifier scope
     element_result parse_namespace(element_ast* parent);
     // item ::= namespace | struct | function

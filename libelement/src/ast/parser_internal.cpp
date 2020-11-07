@@ -638,62 +638,35 @@ element_result element_parser_ctx::parse_struct(element_ast_flags declflags)
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_constraint(element_ast_flags declflags)
+element_result element_parser_ctx::parse_constraint(element_ast* parent, element_ast_flags declflags)
 {
-    ast = ast->new_child();
-    ast->nearest_token = token;
     ELEMENT_OK_OR_RETURN(next_token());
-
-    if (token->type == ELEMENT_TOK_EQUALS)
-    {
-        return log_error(
-            logger.get(),
-            src_context.get(),
-            ast,
-            element::log_error_message_code::parse_constraint_invalid_identifier,
-            tokeniser->text(token));
-    }
-
-    auto* constraint_ast = ast;
-    constraint_ast->nearest_token = token;
-    constraint_ast->type = ELEMENT_AST_NODE_CONSTRAINT;
-    auto* declaration = constraint_ast->new_child();
-    ast = declaration;
-    declaration->flags = declflags;
-
-    // constraints can have return types
+    auto* constraint_ast = new_ast(parent, token, ELEMENT_AST_NODE_CONSTRAINT);
+    auto* declaration = new_ast(constraint_ast, token, ELEMENT_AST_NODE_DECLARATION, declflags);
     ELEMENT_OK_OR_RETURN(parse_declaration(true));
-
-    const auto is_intrinsic = declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-    const auto has_portlist = !declaration->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
+    new_ast(constraint_ast, token, ELEMENT_AST_NODE_NO_BODY);
 
     //todo: ask craig, port list for struct
-    if (!is_intrinsic && !has_portlist)
+    if (!declaration->declaration_is_intrinsic() && !declaration->declaration_has_portlist())
     {
         return log_error(
             logger.get(),
             src_context.get(),
-            ast,
+            declaration,
             element::log_error_message_code::parse_constraint_nonintrinsic_missing_portlist,
-            tokeniser->text(ast->nearest_token));
+            declaration->identifier);
     }
-
-    element_ast* body_node = constraint_ast->new_child();
-    ast = body_node;
-    body_node->nearest_token = token;
-    //tokenlist_advance(tokeniser, tindex);
 
     if (token->type == ELEMENT_TOK_BRACEL)
     {
         return log_error(
             logger.get(),
             src_context.get(),
-            ast,
+            declaration,
             element::log_error_message_code::parse_constraint_has_body,
-            ast->identifier);
+            declaration->identifier);
     }
 
-    body_node->type = ELEMENT_AST_NODE_NO_BODY;
     return ELEMENT_OK;
 }
 
@@ -718,7 +691,7 @@ element_result element_parser_ctx::parse_item(element_ast* parent)
     if (tokeniser->text(token) == "struct")
         ELEMENT_OK_OR_RETURN(parse_struct(flags));
     else if (tokeniser->text(token) == "constraint")
-        ELEMENT_OK_OR_RETURN(parse_constraint(flags));
+        ELEMENT_OK_OR_RETURN(parse_constraint(parent, flags));
     else
         ELEMENT_OK_OR_RETURN(parse_function(flags));
 
