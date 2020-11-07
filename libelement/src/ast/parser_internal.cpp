@@ -590,43 +590,21 @@ element_result element_parser_ctx::parse_function(element_ast_flags declflags)
         declaration->identifier);
 }
 
-element_result element_parser_ctx::parse_struct(element_ast_flags declflags)
+element_result element_parser_ctx::parse_struct(element_ast* parent, element_ast_flags declflags)
 {
-    ast = ast->new_child();
-    ast->nearest_token = token;
     ELEMENT_OK_OR_RETURN(next_token());
-
-    if (token->type != ELEMENT_TOK_IDENTIFIER)
-    {
-        return log_error(
-            logger.get(),
-            src_context.get(),
-            ast,
-            element::log_error_message_code::parse_struct_missing_identifier,
-            tokeniser->text(token));
-    }
-
-    auto* struct_ast = ast;
-    struct_ast->nearest_token = token;
-    struct_ast->type = ELEMENT_AST_NODE_STRUCT;
-    element_ast* declaration = struct_ast->new_child();
-    ast = declaration;
-    declaration->flags = declflags;
-
+    auto* struct_ast = new_ast(parent, token, ELEMENT_AST_NODE_STRUCT);
+    element_ast* declaration = new_ast(struct_ast, token, ELEMENT_AST_NODE_DECLARATION, declflags);
     ELEMENT_OK_OR_RETURN(parse_declaration(false));
 
-    const auto is_intrinsic = declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
-    const auto has_portlist = !declaration->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
-
-    //todo: ask craig
-    if (!is_intrinsic && !has_portlist)
+    if (!declaration->declaration_is_intrinsic() && !declaration->declaration_has_portlist())
     {
         return log_error(
             logger.get(),
             src_context.get(),
-            struct_ast,
+            declaration,
             element::log_error_message_code::parse_struct_nonintrinsic_missing_portlist,
-            tokeniser->text(struct_ast->nearest_token));
+            declaration->identifier);
     }
 
     //struct body is a scope
@@ -646,7 +624,6 @@ element_result element_parser_ctx::parse_constraint(element_ast* parent, element
     ELEMENT_OK_OR_RETURN(parse_declaration(true));
     new_ast(constraint_ast, token, ELEMENT_AST_NODE_NO_BODY);
 
-    //todo: ask craig, port list for struct
     if (!declaration->declaration_is_intrinsic() && !declaration->declaration_has_portlist())
     {
         return log_error(
@@ -689,7 +666,7 @@ element_result element_parser_ctx::parse_item(element_ast* parent)
     ELEMENT_OK_OR_RETURN(parse_qualifiers(&flags));
 
     if (tokeniser->text(token) == "struct")
-        ELEMENT_OK_OR_RETURN(parse_struct(flags));
+        ELEMENT_OK_OR_RETURN(parse_struct(parent, flags));
     else if (tokeniser->text(token) == "constraint")
         ELEMENT_OK_OR_RETURN(parse_constraint(parent, flags));
     else
