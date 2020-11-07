@@ -133,6 +133,9 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
             PRINTCASE(ELEMENT_AST_NODE_PORTLIST)
             PRINTCASE(ELEMENT_AST_NODE_TYPENAME)
             PRINTCASE(ELEMENT_AST_NODE_LAMBDA)
+            PRINTCASE(ELEMENT_AST_NODE_UNSPECIFIED_DEFAULT)
+            PRINTCASE(ELEMENT_AST_NODE_UNSPECIFIED_TYPE)
+            PRINTCASE(ELEMENT_AST_NODE_ANONYMOUS_BLOCK)
         default:
             c = "ELEMENT_AST_NODE_<UNKNOWN>";
             break;
