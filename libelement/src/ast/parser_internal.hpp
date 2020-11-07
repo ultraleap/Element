@@ -24,47 +24,52 @@ public:
     element_ast* root = nullptr;
 
     // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
-    element_result parse_literal(size_t* tindex, element_ast* ast);
+    element_result parse_literal();
     // identifier ::= '_'? [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
-    element_result parse_identifier(size_t* tindex, element_ast* ast, bool allow_reserved_args = false, bool allow_reserved_names = false);
+    element_result parse_identifier(bool allow_reserved_args = false, bool allow_reserved_names = false);
     // type ::= ':' identifier ('.' identifier)*
-    element_result parse_typename(size_t* tindex, element_ast* ast);
+    element_result parse_typename();
     // port ::= (identifier | unidentifier) type?
-    element_result parse_port(size_t* tindex, element_ast* ast);
+    element_result parse_port();
     // portlist ::= port (',' port)*
-    element_result parse_portlist(size_t* tindex, element_ast* ast);
+    element_result parse_portlist();
     // exprlist ::= expression (',' expression)*
-    element_result parse_exprlist(size_t* tindex, element_ast* ast);
+    element_result parse_exprlist();
     // call ::= (identifier | literal) ('(' exprlist ')' | '.' identifier)*
-    element_result parse_call(size_t* tindex, element_ast* ast);
+    element_result parse_call();
     // lambda ::= unidentifier '(' portlist ')' body
-    element_result parse_lambda(size_t* tindex, element_ast* ast);
+    element_result parse_lambda();
     // expression ::= call | lambda
-    element_result parse_expression(size_t* tindex, element_ast* ast);
+    element_result parse_expression();
     // qualifier ::= 'intrinsic' | 'extern'
-    element_result parse_qualifiers(size_t* tindex, element_ast_flags* flags);
+    element_result parse_qualifiers(element_ast_flags* flags);
     // declaration ::= identifier ('(' portlist ')')?
     // note that we also grab an optional type on the end at AST level for simplicity
-    element_result parse_declaration(size_t* tindex, element_ast* ast, bool find_return_type);
+    element_result parse_declaration(bool find_return_type);
     // scope ::= '{' item* '}'
-    element_result parse_scope(size_t* tindex, element_ast* ast);
+    element_result parse_scope();
     // anonymous_block ::= '{' item* '}'
-    element_result parse_anonymous_block(size_t* tindex, element_ast* ast);
-    element_result parse_body(size_t* tindex, element_ast* ast);
+    element_result parse_anonymous_block();
+    element_result parse_body();
     // function ::= qualifier* declaration type? (scope | statement | interface)
     // note qualifiers parsed further out and passed in
-    element_result parse_function(size_t* tindex, element_ast* ast, element_ast_flags declflags);
+    element_result parse_function(element_ast_flags declflags);
     // struct ::= qualifier* 'struct' declaration (scope | interface)
     // note qualifiers parsed further out and passed in
-    element_result parse_struct(size_t* tindex, element_ast* ast, element_ast_flags declflags);
-    element_result parse_constraint(size_t* tindex, element_ast* ast, element_ast_flags declflags);
+    element_result parse_struct(element_ast_flags declflags);
+    element_result parse_constraint(element_ast_flags declflags);
     // namespace ::= 'namespace' identifier scope
-    element_result parse_namespace(size_t* tindex, element_ast* ast);
+    element_result parse_namespace();
     // item ::= namespace | struct | function
-    element_result parse_item(size_t* tindex, element_ast* ast);
+    element_result parse_item();
     // start : /^/ (<item>)* /$/;
-    element_result parse(size_t* tindex, element_ast* ast);
+    element_result parse(size_t* tindex, element_ast* input_ast);
     element_result ast_build();
+
+    element_result next_token();
+    unsigned int token_index = 0;
+    element_token* token = nullptr;
+    element_ast* ast = nullptr;
 
     //TODO: Move to object model as this one is already disgustingly large
     element_result validate(element_ast* ast);

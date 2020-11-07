@@ -321,7 +321,12 @@ element_result element_interpreter_ctx::call_expression_to_objects(
 
     size_t first_token = 0;
     auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRLIST);
-    result = parser.parse_exprlist(&first_token, ast);
+    parser.ast = ast;
+    parser.token = tokeniser->get_token(first_token, result);
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = parser.parse_exprlist();
     if (result != ELEMENT_OK)
         return result;
 
@@ -459,7 +464,12 @@ element_result element_interpreter_ctx::expression_to_object(
 
     size_t first_token = 0;
     auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRESSION);
-    result = parser.parse_expression(&first_token, ast);
+    parser.ast = ast;
+    parser.token = tokeniser->get_token(first_token, result);
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = parser.parse_expression();
     if (result != ELEMENT_OK)
         return result;
 

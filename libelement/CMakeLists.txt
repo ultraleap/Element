@@ -65,6 +65,7 @@ set(element_sources
     "src/ast/ast_internal.cpp"
     "src/ast/parser.cpp"
     "src/ast/parser_internal.cpp"
+    "src/ast/parser_internal.hpp"
     "src/ast/ast_indexes.hpp"
     "src/ast/fwd.hpp"
     
