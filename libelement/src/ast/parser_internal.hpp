@@ -47,7 +47,7 @@ public:
     // note that we also grab an optional type on the end at AST level for simplicity
     element_result parse_declaration(bool find_return_type);
     // scope ::= '{' item* '}'
-    element_result parse_scope();
+    element_result parse_scope(element_ast* parent);
     // anonymous_block ::= '{' item* '}'
     element_result parse_anonymous_block();
     element_result parse_body();
@@ -59,7 +59,7 @@ public:
     element_result parse_struct(element_ast_flags declflags);
     element_result parse_constraint(element_ast_flags declflags);
     // namespace ::= 'namespace' identifier scope
-    element_result parse_namespace();
+    element_result parse_namespace(element_ast* parent);
     // item ::= namespace | struct | function
     element_result parse_item(element_ast* parent);
     // start : /^/ (<item>)* /$/;

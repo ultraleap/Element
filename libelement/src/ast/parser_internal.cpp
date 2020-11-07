@@ -482,9 +482,9 @@ element_result element_parser_ctx::parse_declaration(bool find_return_type)
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_scope()
+element_result element_parser_ctx::parse_scope(element_ast* parent)
 {
-    auto* our_ast = new_ast(ast, token, ELEMENT_AST_NODE_SCOPE);
+    auto* our_ast = new_ast(parent, token, ELEMENT_AST_NODE_SCOPE);
 
     if (token->type == ELEMENT_TOK_BRACEL)
         ELEMENT_OK_OR_RETURN(next_token());
@@ -525,7 +525,7 @@ element_result element_parser_ctx::parse_body()
     
     //function body is a scope
     if (token->type == ELEMENT_TOK_BRACEL)
-        return parse_scope();
+        return parse_scope(ast);
 
     if (token->type == ELEMENT_TOK_EQUALS)
     {
@@ -629,10 +629,9 @@ element_result element_parser_ctx::parse_struct(element_ast_flags declflags)
             tokeniser->text(struct_ast->nearest_token));
     }
 
-    ast = struct_ast;
     //struct body is a scope
     if (token->type == ELEMENT_TOK_BRACEL)
-        return parse_scope();
+        return parse_scope(struct_ast);
 
     //there is no body
     new_ast(struct_ast, token, ELEMENT_AST_NODE_NO_BODY);
@@ -698,12 +697,12 @@ element_result element_parser_ctx::parse_constraint(element_ast_flags declflags)
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_namespace()
+element_result element_parser_ctx::parse_namespace(element_ast* parent)
 {
-    new_ast(ast, token, ELEMENT_AST_NODE_NAMESPACE);
+    auto* our_ast = new_ast(parent, token, ELEMENT_AST_NODE_NAMESPACE);
     ELEMENT_OK_OR_RETURN(next_token());
     ELEMENT_OK_OR_RETURN(parse_identifier());
-    return parse_scope();
+    return parse_scope(our_ast);
 }
 
 element_result element_parser_ctx::parse_item(element_ast* parent)
@@ -711,7 +710,7 @@ element_result element_parser_ctx::parse_item(element_ast* parent)
     ast = parent;
 
     if (tokeniser->text(token) == "namespace")
-        return parse_namespace();
+        return parse_namespace(parent);
 
     element_ast_flags flags = 0;
     ELEMENT_OK_OR_RETURN(parse_qualifiers(&flags));
