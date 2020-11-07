@@ -43,7 +43,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     const std::string file = filename;
     const auto starts_with_prelude = file.rfind("Prelude/", 0) == 0;
     element_tokeniser_ctx* tokeniser;
-    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
+    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser));
 
     auto element_tokeniser_delete_ptr = [](element_tokeniser_ctx* tokeniser) {
         element_tokeniser_delete(&tokeniser);
@@ -57,7 +57,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     element::file_information info;
     info.file_name = std::make_unique<std::string>(filename);
     //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
-    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()))
+    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()));
     const auto total_lines_parsed = tokeniser->line;
 
     for (auto i = 0; i < total_lines_parsed; ++i)
@@ -84,7 +84,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     parser.src_context = src_context;
 
     auto result = parser.ast_build();
-    ELEMENT_OK_OR_RETURN(result)
+    ELEMENT_OK_OR_RETURN(result);
 
     const auto log_ast = starts_with_prelude
                              ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)

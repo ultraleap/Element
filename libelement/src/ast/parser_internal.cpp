@@ -111,7 +111,7 @@ element_result element_parser_ctx::parse_port()
 
     if (token->type == ELEMENT_TOK_IDENTIFIER)
     {
-        ELEMENT_OK_OR_RETURN(parse_identifier(true))
+        ELEMENT_OK_OR_RETURN(parse_identifier(true));
     }
     else if (token->type == ELEMENT_TOK_UNDERSCORE)
     {
@@ -133,7 +133,7 @@ element_result element_parser_ctx::parse_port()
     if (token->type == ELEMENT_TOK_COLON)
     {
         ELEMENT_OK_OR_RETURN(next_token());
-        ELEMENT_OK_OR_RETURN(parse_typename())
+        ELEMENT_OK_OR_RETURN(parse_typename());
     }
 
     ast = port_ast->new_child(ELEMENT_AST_NODE_UNSPECIFIED_DEFAULT);
@@ -141,7 +141,7 @@ element_result element_parser_ctx::parse_port()
     if (token->type == ELEMENT_TOK_EQUALS)
     {
         ELEMENT_OK_OR_RETURN(next_token());
-        ELEMENT_OK_OR_RETURN(parse_expression())
+        ELEMENT_OK_OR_RETURN(parse_expression());
     }
 
     return ELEMENT_OK;
@@ -410,7 +410,7 @@ element_result element_parser_ctx::parse_declaration(bool find_return_type)
             src_context.get(),
             decl_ast,
             element::log_error_message_code::parse_declaration_invalid_identifier,
-            decl_ast->identifier);
+            tokeniser->text(token));
     }
 
     bool function_declaration = false;
@@ -614,7 +614,7 @@ element_result element_parser_ctx::parse_struct(element_ast_flags declflags)
     ast = declaration;
     declaration->flags = declflags;
 
-    ELEMENT_OK_OR_RETURN(parse_declaration(false))
+    ELEMENT_OK_OR_RETURN(parse_declaration(false));
 
     const auto is_intrinsic = declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
     const auto has_portlist = !declaration->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
@@ -665,7 +665,7 @@ element_result element_parser_ctx::parse_constraint(element_ast_flags declflags)
     declaration->flags = declflags;
 
     // constraints can have return types
-    ELEMENT_OK_OR_RETURN(parse_declaration(true))
+    ELEMENT_OK_OR_RETURN(parse_declaration(true));
 
     const auto is_intrinsic = declaration->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
     const auto has_portlist = !declaration->children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
