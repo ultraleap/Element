@@ -45,7 +45,7 @@ public:
     element_result parse_qualifiers(element_ast_flags* flags);
     // declaration ::= identifier ('(' portlist ')')?
     // note that we also grab an optional type on the end at AST level for simplicity
-    element_result parse_declaration(bool find_return_type);
+    element_result parse_declaration(element_ast* parent, element_ast_flags flags);
     // scope ::= '{' item* '}'
     element_result parse_scope(element_ast* parent);
     // anonymous_block ::= '{' item* '}'
