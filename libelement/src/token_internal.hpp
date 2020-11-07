@@ -34,6 +34,8 @@ public:
     void log(const std::string& message) const;
     void set_log_callback(LogCallback callback, void* user_data);
 
+    element_token* get_token(unsigned int token_index, element_result& out_result);
+
     std::shared_ptr<element_log_ctx> logger = nullptr;
     const char* raw_filename = nullptr;
     std::string filename;
