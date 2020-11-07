@@ -61,7 +61,7 @@ public:
     // namespace ::= 'namespace' identifier scope
     element_result parse_namespace();
     // item ::= namespace | struct | function
-    element_result parse_item();
+    element_result parse_item(element_ast* parent);
     // start : /^/ (<item>)* /$/;
     element_result parse(size_t* tindex, element_ast* input_ast);
     element_result ast_build();

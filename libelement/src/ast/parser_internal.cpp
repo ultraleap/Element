@@ -495,8 +495,7 @@ element_result element_parser_ctx::parse_scope()
 
     while (token->type != ELEMENT_TOK_BRACER)
     {
-        ast = scope_ast;
-        ELEMENT_OK_OR_RETURN(parse_item());
+        ELEMENT_OK_OR_RETURN(parse_item(scope_ast));
     }
     ELEMENT_OK_OR_RETURN(next_token());
     return ELEMENT_OK;
@@ -513,8 +512,7 @@ element_result element_parser_ctx::parse_anonymous_block()
 
     while (token->type != ELEMENT_TOK_BRACER)
     {
-        ast = block_ast;
-        ELEMENT_OK_OR_RETURN(parse_item());
+        ELEMENT_OK_OR_RETURN(parse_item(block_ast));
 
         if (token->type != ELEMENT_TOK_BRACER && token->type != ELEMENT_TOK_COMMA)
             return ELEMENT_ERROR_MISSING_COMMA_IN_ANONYMOUS_BLOCK;
@@ -734,8 +732,10 @@ element_result element_parser_ctx::parse_namespace()
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_item()
+element_result element_parser_ctx::parse_item(element_ast* parent)
 {
+    ast = parent;
+
     if (tokeniser->text(token) == "namespace")
         return parse_namespace();
 
@@ -778,8 +778,7 @@ element_result element_parser_ctx::parse(size_t* tindex, element_ast* input_ast)
         if (token->type == ELEMENT_TOK_EOF)
             return ELEMENT_OK;
 
-        ast = input_ast;
-        ELEMENT_OK_OR_RETURN(parse_item());
+        ELEMENT_OK_OR_RETURN(parse_item(input_ast));
         if (*tindex < tcount && token->type == ELEMENT_TOK_NONE)
             ELEMENT_OK_OR_RETURN(next_token());
     }
