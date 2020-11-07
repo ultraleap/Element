@@ -24,9 +24,9 @@ public:
     element_ast* root = nullptr;
 
     // literal ::= [-+]? [0-9]+ ('.' [0-9]*)? ([eE] [-+]? [0-9]+)?
-    element_result parse_literal();
+    element_result parse_literal(element_ast* terminal);
     // identifier ::= '_'? [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
-    element_result parse_identifier(bool allow_reserved_args = false, bool allow_reserved_names = false);
+    element_result parse_identifier(element_ast* terminal, bool allow_reserved_args = false, bool allow_reserved_names = false);
     // type ::= ':' identifier ('.' identifier)*
     element_result parse_typename();
     // port ::= (identifier | unidentifier) type?

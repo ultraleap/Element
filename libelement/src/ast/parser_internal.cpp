@@ -36,41 +36,40 @@ static element_result check_reserved_words(const std::string& text, bool allow_r
     return valid ? ELEMENT_OK : ELEMENT_ERROR_RESERVED_IDENTIFIER;
 }
 
-element_result element_parser_ctx::parse_literal()
+element_result element_parser_ctx::parse_literal(element_ast* terminal)
 {
     assert(token->type == ELEMENT_TOK_NUMBER);
-    ast->type = ELEMENT_AST_NODE_LITERAL;
-    ast->literal = std::stof(tokeniser->text(token));
-    ELEMENT_OK_OR_RETURN(next_token());
-    return ELEMENT_OK;
+    terminal->type = ELEMENT_AST_NODE_LITERAL;
+    terminal->literal = std::stof(tokeniser->text(token));
+    return next_token();
 }
 
-element_result element_parser_ctx::parse_identifier(bool allow_reserved_args, bool allow_reserved_names)
+element_result element_parser_ctx::parse_identifier(element_ast* terminal, bool allow_reserved_args, bool allow_reserved_names)
 {
-    ast->nearest_token = token;
-    ast->identifier.assign(tokeniser->text(token));
+    terminal->nearest_token = token;
+    terminal->identifier.assign(tokeniser->text(token));
 
     if (token->type != ELEMENT_TOK_IDENTIFIER)
     {
         return log_error(
             logger.get(),
             src_context.get(),
-            ast,
+            terminal,
             element::log_error_message_code::parse_identifier_failed,
-            ast->identifier);
+            terminal->identifier);
     }
 
     ELEMENT_OK_OR_RETURN(next_token());
 
-    const auto result = check_reserved_words(ast->identifier, allow_reserved_args, allow_reserved_names);
+    const auto result = check_reserved_words(terminal->identifier, allow_reserved_args, allow_reserved_names);
     if (result != ELEMENT_OK)
     {
         return log_error(
             logger.get(),
             src_context.get(),
-            ast,
+            terminal,
             element::log_error_message_code::parse_identifier_reserved,
-            ast->identifier);
+            terminal->identifier);
     }
 
     return result;
@@ -107,7 +106,7 @@ element_result element_parser_ctx::parse_port()
 
     if (token->type == ELEMENT_TOK_IDENTIFIER)
     {
-        ELEMENT_OK_OR_RETURN(parse_identifier(true));
+        ELEMENT_OK_OR_RETURN(parse_identifier(port_ast, true));
     }
     else if (token->type == ELEMENT_TOK_UNDERSCORE)
     {
@@ -119,7 +118,7 @@ element_result element_parser_ctx::parse_port()
         return log_error(
             logger.get(),
             src_context.get(),
-            ast,
+            port_ast,
             element::log_error_message_code::parse_port_failed,
             tokeniser->text(token));
     }
@@ -247,13 +246,13 @@ element_result element_parser_ctx::parse_call()
     if (token->type == ELEMENT_TOK_IDENTIFIER)
     {
         // get identifier
-        ELEMENT_OK_OR_RETURN(parse_identifier());
+        ELEMENT_OK_OR_RETURN(parse_identifier(root_call));
         root_call->type = ELEMENT_AST_NODE_CALL;
     }
     else if (token->type == ELEMENT_TOK_NUMBER)
     {
         // this will change root's type to LITERAL
-        ELEMENT_OK_OR_RETURN(parse_literal());
+        ELEMENT_OK_OR_RETURN(parse_literal(root_call));
     }
     else
     {
@@ -282,7 +281,7 @@ element_result element_parser_ctx::parse_call()
             ELEMENT_OK_OR_RETURN(next_token());
 
             ast = root_call->new_child(ELEMENT_AST_NODE_CALL);
-            ELEMENT_OK_OR_RETURN(parse_identifier());
+            ELEMENT_OK_OR_RETURN(parse_identifier(ast));
         }
     }
 
@@ -395,7 +394,7 @@ element_result element_parser_ctx::parse_declaration(element_ast* parent, elemen
     const bool allow_reserved_names = function_declaration && in_scope;
 
     auto* decl_ast = new_ast(parent, token, ELEMENT_AST_NODE_DECLARATION, flags);
-    ELEMENT_OK_OR_RETURN(parse_identifier(false, allow_reserved_names));
+    ELEMENT_OK_OR_RETURN(parse_identifier(decl_ast, false, allow_reserved_names));
 
     // always create the args node, even if it ends up being none/empty
     auto* args = new_ast(decl_ast, token, ELEMENT_AST_NODE_NONE);
@@ -595,7 +594,7 @@ element_result element_parser_ctx::parse_namespace(element_ast* parent)
 {
     auto* our_ast = new_ast(parent, token, ELEMENT_AST_NODE_NAMESPACE);
     ELEMENT_OK_OR_RETURN(next_token());
-    ELEMENT_OK_OR_RETURN(parse_identifier());
+    ELEMENT_OK_OR_RETURN(parse_identifier(our_ast));
     return parse_scope(our_ast);
 }
 
