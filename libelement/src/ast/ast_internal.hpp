@@ -47,6 +47,8 @@ public:
     [[nodiscard]] const element_ast* declaration_get_inputs() const;
     [[nodiscard]] bool declaration_has_outputs() const;
     [[nodiscard]] const element_ast* declaration_get_outputs() const;
+    [[nodiscard]] bool declaration_is_intrinsic() const;
+    [[nodiscard]] bool declaration_has_portlist() const;
 
     [[nodiscard]] element_ast* get_root();
     [[nodiscard]] const element_ast* get_root() const;

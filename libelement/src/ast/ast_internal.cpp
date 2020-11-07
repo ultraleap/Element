@@ -172,6 +172,18 @@ const element_ast* element_ast::declaration_get_outputs() const
     return children[ast_idx::declaration::outputs].get();
 }
 
+bool element_ast::declaration_is_intrinsic() const
+{
+    assert(declaration_is_valid());
+    return has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+}
+
+bool element_ast::declaration_has_portlist() const
+{
+    assert(declaration_is_valid());
+    return !children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
+}
+
 element_ast* element_ast::get_root()
 {
     element_ast* ast = this;
