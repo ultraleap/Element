@@ -317,15 +317,13 @@ element_result element_interpreter_ctx::call_expression_to_objects(
 
     element_ast root(nullptr);
     parser.root = &root;
+    parser.current_token = tokeniser->get_token(0, result);
+    root.nearest_token = parser.current_token;
 
-    size_t first_token = 0;
-    parser.ast = parser.root;
-    parser.token = tokeniser->get_token(first_token, result);
-    parser.ast->nearest_token = parser.token;
     if (result != ELEMENT_OK)
         return result;
 
-    result = parser.parse_exprlist(parser.root);
+    result = parser.parse_exprlist(root);
     if (result != ELEMENT_OK)
         return result;
 
@@ -459,15 +457,13 @@ element_result element_interpreter_ctx::expression_to_object(
 
     element_ast root(nullptr);
     parser.root = &root;
+    parser.current_token = tokeniser->get_token(0, result);
+    root.nearest_token = parser.current_token;
 
-    size_t first_token = 0;
-    parser.ast = parser.root;
-    parser.token = tokeniser->get_token(first_token, result);
-    parser.ast->nearest_token = parser.token;
     if (result != ELEMENT_OK)
         return result;
 
-    result = parser.parse_expression(parser.root);
+    result = parser.parse_expression(root);
     if (result != ELEMENT_OK)
         return result;
 

@@ -485,7 +485,7 @@ void element_tokeniser_ctx::set_log_callback(LogCallback callback, void* user_da
     logger->user_data = user_data;
 }
 
-element_token* element_tokeniser_ctx::get_token(unsigned int token_index, element_result& out_result)
+element_token* element_tokeniser_ctx::get_token(std::size_t token_index, element_result& out_result)
 {
     if (token_index >= tokens.size())
     {
