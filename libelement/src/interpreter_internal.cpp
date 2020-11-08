@@ -343,14 +343,9 @@ element_result element_interpreter_ctx::call_expression_to_objects(
     auto declaration = std::make_unique<element::function_declaration>(element::identifier{ "DUMMY" }, global_scope.get(), element::function_declaration::kind::expression_bodied);
     auto chain = std::make_unique<element::expression_chain>(declaration.get());
     chain->expressions.emplace_back(std::make_unique<element::call_expression>(nullptr)); //create empty expression so build_call_expression doesn't fail
-    element::assign_source_information(this, chain, parser.root->children[0].get());
-    element::deferred_expressions deferred_expressions;
-    auto expr = element::build_call_expression(this, parser.root->children[0].get(), chain.get(), deferred_expressions, result);
+    assign_source_information(this, chain, parser.root->children[0].get());
+    auto expr = element::build_call_expression(this, parser.root->children[0].get(), chain.get(), result);
     auto* call_expr = static_cast<const element::call_expression*>(expr.get());
-
-    //lambdas in our expr chain. need to fix lambda desugaring first, and not important for boundary functions as it can't be a lambda
-    if (!deferred_expressions.empty())
-        return ELEMENT_ERROR_UNKNOWN;
 
     root.children.clear();
 
@@ -480,40 +475,12 @@ element_result element_interpreter_ctx::expression_to_object(
         return ELEMENT_OK;
     }
 
-    //todo: urgh, this is horrible now...
-    element::deferred_expressions deferred_expressions;
     auto dummy_identifier = element::identifier{ "<REMOVE>" };
     auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, global_scope.get(), element::function_declaration::kind::expression_bodied);
     parser.root->nearest_token = &tokeniser->tokens[0];
     element::assign_source_information(this, dummy_declaration, parser.root);
-    auto expression_chain = build_expression_chain(this, parser.root->children[0].get(), dummy_declaration.get(), deferred_expressions, result);
-
-    if (deferred_expressions.empty())
-    {
-        dummy_declaration->body = std::move(expression_chain);
-    }
-    else
-    {
-        for (auto& [identifier, expression] : deferred_expressions)
-        {
-            element_result output_result = ELEMENT_OK;
-            auto lambda = build_lambda_declaration(this, identifier, expression, dummy_declaration->our_scope.get(), output_result);
-            if (output_result != ELEMENT_OK)
-                throw;
-
-            const auto is_added = dummy_declaration->our_scope->add_declaration(std::move(lambda));
-            if (!is_added)
-            {
-                //todo: error
-            }
-        }
-
-        auto lambda_return_decl = std::make_unique<element::function_declaration>(element::identifier::return_identifier, dummy_declaration->our_scope.get(), element::function_declaration::kind::expression_bodied);
-        element::assign_source_information(this, lambda_return_decl, parser.root);
-        lambda_return_decl->body = std::move(expression_chain);
-
-        dummy_declaration->body = std::move(lambda_return_decl);
-    }
+    auto expression_chain = build_expression_chain(this, parser.root->children[0].get(), dummy_declaration.get(), result);
+    dummy_declaration->body = std::move(expression_chain);
 
     root.children.clear();
 
