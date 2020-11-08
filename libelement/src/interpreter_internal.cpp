@@ -316,17 +316,16 @@ element_result element_interpreter_ctx::call_expression_to_objects(
     parser.src_context = src_context;
 
     element_ast root(nullptr);
-    //root.nearest_token = &tokeniser->cur_token;
     parser.root = &root;
 
     size_t first_token = 0;
-    auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRLIST);
-    parser.ast = ast;
+    parser.ast = parser.root;
     parser.token = tokeniser->get_token(first_token, result);
+    parser.ast->nearest_token = parser.token;
     if (result != ELEMENT_OK)
         return result;
 
-    result = parser.parse_exprlist();
+    result = parser.parse_exprlist(parser.root);
     if (result != ELEMENT_OK)
         return result;
 
@@ -346,9 +345,9 @@ element_result element_interpreter_ctx::call_expression_to_objects(
     auto declaration = std::make_unique<element::function_declaration>(element::identifier{ "DUMMY" }, global_scope.get(), element::function_declaration::kind::expression_bodied);
     auto chain = std::make_unique<element::expression_chain>(declaration.get());
     chain->expressions.emplace_back(std::make_unique<element::call_expression>(nullptr)); //create empty expression so build_call_expression doesn't fail
-    element::assign_source_information(this, chain, ast);
+    element::assign_source_information(this, chain, parser.root->children[0].get());
     element::deferred_expressions deferred_expressions;
-    auto expr = element::build_call_expression(this, ast, chain.get(), deferred_expressions, result);
+    auto expr = element::build_call_expression(this, parser.root->children[0].get(), chain.get(), deferred_expressions, result);
     auto* call_expr = static_cast<const element::call_expression*>(expr.get());
 
     //lambdas in our expr chain. need to fix lambda desugaring first, and not important for boundary functions as it can't be a lambda

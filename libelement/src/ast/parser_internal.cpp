@@ -165,49 +165,36 @@ element_result element_parser_ctx::parse_portlist()
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_exprlist()
+element_result element_parser_ctx::parse_exprlist(element_ast* parent)
 {
     //the caller should ensure it's a '('
     const auto* previous_token = token;
     assert(previous_token->type == ELEMENT_TOK_BRACKETL);
 
     ELEMENT_OK_OR_RETURN(next_token());
-    auto* exprlist_ast = ast;
-    ast->nearest_token = token;
-    ast->type = ELEMENT_AST_NODE_EXPRLIST;
+    auto* exprlist_ast = new_ast(parent, token, ELEMENT_AST_NODE_EXPRLIST);
 
-    if (token->type != ELEMENT_TOK_BRACKETR)
-    {
-        do
-        {
-            ELEMENT_OK_OR_RETURN(parse_expression(exprlist_ast));
-        } while (token->type == ELEMENT_TOK_COMMA && next_token() == ELEMENT_OK);
-    }
-    else
-    {
-        //should be '(' for previous and ')' for current
-        auto info = build_source_info(src_context.get(), previous_token, token->tok_len);
-
-        return log_error(
-            logger.get(),
-            info,
+    //should be '(' for previous and ')' for current
+    if (token->type == ELEMENT_TOK_BRACKETR)
+        return log_error(logger.get(),
+            build_source_info(src_context.get(), previous_token, token->tok_len),
             element::log_error_message_code::parse_exprlist_empty,
             exprlist_ast->parent->identifier);
-    }
+
+    do
+    {
+        ELEMENT_OK_OR_RETURN(parse_expression(exprlist_ast));
+    } while (token->type == ELEMENT_TOK_COMMA && next_token() == ELEMENT_OK);
 
     if (token->type != ELEMENT_TOK_BRACKETR)
-    {
-        return log_error(
-            logger.get(),
+        return log_error(logger.get(),
             src_context.get(),
             token,
             element::log_error_message_code::parse_exprlist_missing_closing_parenthesis,
             exprlist_ast->parent->identifier,
             tokeniser->text(token));
-    }
 
-    ELEMENT_OK_OR_RETURN(next_token());
-    return ELEMENT_OK;
+    return next_token();
 }
 
 element_result element_parser_ctx::parse_call(element_ast* parent)
@@ -267,9 +254,7 @@ element_result element_parser_ctx::parse_call(element_ast* parent)
         {
             // call with args
             // TODO: bomb out if we're trying to call a literal, keep track of previous node
-
-            auto* expr = new_ast(root_call, token, ELEMENT_AST_NODE_EXPRESSION);
-            ELEMENT_OK_OR_RETURN(parse_exprlist());
+            ELEMENT_OK_OR_RETURN(parse_exprlist(root_call));
         }
         else if (token->type == ELEMENT_TOK_DOT)
         {
