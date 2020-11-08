@@ -63,6 +63,8 @@ public:
     element_result ast_build();
 
     element_result advance();
+    element_result advance_then_check(element_token_type type, element_result result_on_failed_match);
+    element_result advance_then_check_not(element_token_type type, element_result result_on_successful_match);
     element_ast& make_node(element_ast& parent, element_token* token, element_ast_node_type type, element_ast_flags flags = 0) const;
     unsigned int token_index = 0;
     element_token* previous_token = nullptr;

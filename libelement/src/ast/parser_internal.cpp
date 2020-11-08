@@ -46,7 +46,6 @@ element_result element_parser_ctx::parse_literal(element_ast& terminal)
 
 element_result element_parser_ctx::parse_identifier(element_ast& terminal, bool allow_reserved_args, bool allow_reserved_names)
 {
-    terminal.nearest_token = current_token;
     terminal.identifier.assign(tokeniser->text(current_token));
 
     if (current_token->type != ELEMENT_TOK_IDENTIFIER)
@@ -262,18 +261,13 @@ element_result element_parser_ctx::parse_lambda(element_ast& parent)
 
     auto& lambda = make_node(parent, current_token, ELEMENT_AST_NODE_LAMBDA);
 
-    ELEMENT_OK_OR_RETURN(advance());
-
-    //todo: logging
-    if (current_token->type != ELEMENT_TOK_BRACKETL)
-        return ELEMENT_ERROR_INVALID_OPERATION;
-
+    ELEMENT_OK_OR_RETURN(advance_then_check(ELEMENT_TOK_BRACKETL, ELEMENT_ERROR_PARSE));
     ELEMENT_OK_OR_RETURN(advance());
     ELEMENT_OK_OR_RETURN(parse_portlist(lambda));
 
     //todo: logging
     if (current_token->type != ELEMENT_TOK_BRACKETR)
-        return ELEMENT_ERROR_INVALID_OPERATION;
+        return ELEMENT_ERROR_PARSE;
 
     ELEMENT_OK_OR_RETURN(advance());
 
@@ -405,10 +399,10 @@ element_result element_parser_ctx::parse_scope(element_ast& parent)
 
 element_result element_parser_ctx::parse_anonymous_block(element_ast& parent)
 {
-    auto& block = make_node(parent, current_token, ELEMENT_AST_NODE_ANONYMOUS_BLOCK);
+    assert(current_token->type == ELEMENT_TOK_BRACEL);
+    ELEMENT_OK_OR_RETURN(advance_then_check_not(ELEMENT_TOK_BRACER, ELEMENT_ERROR_PARSE));
 
-    if (current_token->type == ELEMENT_TOK_BRACEL)
-        ELEMENT_OK_OR_RETURN(advance());
+    auto& block = make_node(parent, current_token, ELEMENT_AST_NODE_ANONYMOUS_BLOCK);
 
     while (current_token->type != ELEMENT_TOK_BRACER)
     {
@@ -416,7 +410,7 @@ element_result element_parser_ctx::parse_anonymous_block(element_ast& parent)
 
         if (current_token->type != ELEMENT_TOK_BRACER && current_token->type != ELEMENT_TOK_COMMA)
             return ELEMENT_ERROR_MISSING_COMMA_IN_ANONYMOUS_BLOCK;
-
+        
         if (current_token->type == ELEMENT_TOK_COMMA)
             ELEMENT_OK_OR_RETURN(advance());
     }
@@ -541,8 +535,8 @@ element_result element_parser_ctx::parse_constraint(element_ast& parent, element
 
 element_result element_parser_ctx::parse_namespace(element_ast& parent)
 {
-    auto& namespace_node = make_node(parent, current_token, ELEMENT_AST_NODE_NAMESPACE);
     ELEMENT_OK_OR_RETURN(advance());
+    auto& namespace_node = make_node(parent, current_token, ELEMENT_AST_NODE_NAMESPACE);
     ELEMENT_OK_OR_RETURN(parse_identifier(namespace_node));
     return parse_scope(namespace_node);
 }
@@ -618,6 +612,28 @@ element_result element_parser_ctx::advance()
     } while (token_index < tokeniser->tokens.size() - 1 && current_token && current_token->type == ELEMENT_TOK_NONE);
 
     return result;
+}
+
+element_result element_parser_ctx::advance_then_check(element_token_type type, element_result result_on_failed_match)
+{
+    ELEMENT_OK_OR_RETURN(advance());
+
+    //todo: logging
+    if (current_token->type != type)
+        return result_on_failed_match;
+
+    return ELEMENT_OK;
+}
+
+element_result element_parser_ctx::advance_then_check_not(element_token_type type, element_result result_on_successful_match)
+{
+    ELEMENT_OK_OR_RETURN(advance());
+
+    //todo: logging
+    if (current_token->type == type)
+        return result_on_successful_match;
+
+    return ELEMENT_OK;
 }
 
 element_ast& element_parser_ctx::make_node(element_ast& parent, element_token* token, element_ast_node_type type, element_ast_flags flags) const
