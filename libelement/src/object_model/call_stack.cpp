@@ -61,9 +61,9 @@ std::shared_ptr<error> call_stack::build_recursive_error(
                 params += ", ";
         }
 
-        std::string ret = "";
-        if (func->declarer->output && func->declarer->output->get_annotation())
-            ret = ":" + func->declarer->output->get_annotation()->to_string();
+        std::string ret;
+        if (func->declarer->output.get_annotation() && !func->declarer->output.get_annotation()->to_string().empty())
+            ret = ":" + func->declarer->output.get_annotation()->to_string();
 
         trace += fmt::format("{}:{} at {}({}){}",
                              func->source_info.filename,

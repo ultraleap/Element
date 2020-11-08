@@ -167,11 +167,9 @@ object_const_shared_ptr function_instance::call(
 
     //type check return
     //todo: nicer?
-    const constraint* constraint = nullptr;
-    const declaration* type = nullptr;
-    if (declarer->output)
-        type = declarer->output->resolve_annotation(context);
+    const declaration* type = declarer->output.resolve_annotation(context);
 
+    const constraint* constraint = nullptr;
     if (type)
         constraint = type->get_constraint();
 

@@ -69,9 +69,6 @@ const constraint* function_declaration::get_constraint() const
 
 bool function_declaration::valid_at_boundary(const compilation_context& context) const
 {
-    if (!output)
-        return false;
-
     if (!ports_validated)
         validate_ports(context);
 
@@ -79,10 +76,10 @@ bool function_declaration::valid_at_boundary(const compilation_context& context)
         return false;
 
     //outputs must be serializable
-    const auto* return_type = output->resolve_annotation(context);
+    const auto* return_type = output.resolve_annotation(context);
     if (!return_type || !return_type->serializable(context))
     {
-        error e(fmt::format("output '{}' of function '{}' is not deserializable, so it's not valid on the boundary", output.value().typeof_info(), name.value), ELEMENT_ERROR_UNKNOWN, source_info);
+        error e(fmt::format("output '{}' of function '{}' is not deserializable, so it's not valid on the boundary", output.typeof_info(), name.value), ELEMENT_ERROR_UNKNOWN, source_info);
         e.log_once(context.get_logger());
         return false;
     }
@@ -118,6 +115,6 @@ void function_declaration::validate_ports(const compilation_context& context) co
             valid_ports = false;
     }
 
-    if (output && output->has_annotation() && !output->is_valid(context))
+    if (!output.is_valid(context))
         valid_ports = false;
 }

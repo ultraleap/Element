@@ -14,6 +14,11 @@
 
 using namespace element;
 
+port::port()
+    : port(nullptr, identifier{ "" }, std::make_unique<type_annotation>(identifier{""}), nullptr)
+{
+}
+
 port::port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation, std::unique_ptr<element::expression_chain> expr_chain)
     : declarer(declarer)
     , name{ std::move(name) }
@@ -27,7 +32,7 @@ const declaration* port::resolve_annotation(const compilation_context& context) 
     if (!is_valid(context))
         return nullptr;
 
-    if (!annotation)
+    if (!annotation || !declarer)
         return nullptr;
 
     return declarer->get_scope()->find(annotation->to_string(), true);
@@ -55,7 +60,7 @@ void port::validate(const compilation_context& context) const
     validated = true;
     valid = true;
 
-    if (!annotation)
+    if (!annotation || !declarer)
         return;
 
     const auto* decl = resolve_annotation(context);
