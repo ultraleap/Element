@@ -75,12 +75,9 @@ element_result element_parser_ctx::parse_identifier(element_ast* terminal, bool 
     return result;
 }
 
-element_result element_parser_ctx::parse_typename()
+element_result element_parser_ctx::parse_typename(element_ast* parent)
 {
-    auto* typename_ast = ast;
-    auto* typename_token = token;
-    typename_ast->nearest_token = token;
-    typename_ast->type = ELEMENT_AST_NODE_TYPENAME;
+    auto* typename_ast = new_ast(parent, token, ELEMENT_AST_NODE_TYPENAME);
 
     const element_result result = parse_expression(typename_ast);
     if (result != ELEMENT_OK)
@@ -91,17 +88,15 @@ element_result element_parser_ctx::parse_typename()
             src_context.get(),
             typename_ast,
             element::log_error_message_code::parse_typename_not_identifier,
-            tokeniser->text(typename_token));
+            tokeniser->text(typename_ast->nearest_token));
     }
 
     return result;
 }
 
-element_result element_parser_ctx::parse_port()
+element_result element_parser_ctx::parse_port(element_ast* parent)
 {
-    auto* port_ast = ast;
-    port_ast->nearest_token = token;
-    port_ast->type = ELEMENT_AST_NODE_PORT;
+    auto* port_ast = new_ast(parent, token, ELEMENT_AST_NODE_PORT);
 
     if (token->type == ELEMENT_TOK_IDENTIFIER)
     {
@@ -122,12 +117,14 @@ element_result element_parser_ctx::parse_port()
             tokeniser->text(token));
     }
 
-    ast = port_ast->new_child(ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
-    ast->nearest_token = token;
     if (token->type == ELEMENT_TOK_COLON)
     {
         ELEMENT_OK_OR_RETURN(next_token());
-        ELEMENT_OK_OR_RETURN(parse_typename());
+        ELEMENT_OK_OR_RETURN(parse_typename(port_ast));
+    }
+    else
+    {
+        new_ast(port_ast, token, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
     }
 
     if (token->type == ELEMENT_TOK_EQUALS)
@@ -143,23 +140,14 @@ element_result element_parser_ctx::parse_port()
     return ELEMENT_OK;
 }
 
-element_result element_parser_ctx::parse_portlist()
+element_result element_parser_ctx::parse_portlist(element_ast* parent)
 {
     //the previous token is the bracket
-    element_result result = ELEMENT_OK;
-    ast->nearest_token = tokeniser->get_token(token_index - 1, result);
-    if (result != ELEMENT_OK)
-        return result;
-
-    ast->type = ELEMENT_AST_NODE_PORTLIST;
-    ast->flags = 0;
-
-    auto* port_ast = ast;
+    auto* port_ast = new_ast(parent, previous_token, ELEMENT_AST_NODE_PORTLIST);
 
     do
     {
-        ast = port_ast->new_child();
-        ELEMENT_OK_OR_RETURN(parse_port());
+        ELEMENT_OK_OR_RETURN(parse_port(port_ast));
     } while (token->type == ELEMENT_TOK_COMMA && next_token() == ELEMENT_OK);
 
     return ELEMENT_OK;
@@ -168,8 +156,7 @@ element_result element_parser_ctx::parse_portlist()
 element_result element_parser_ctx::parse_exprlist(element_ast* parent)
 {
     //the caller should ensure it's a '('
-    const auto* previous_token = token;
-    assert(previous_token->type == ELEMENT_TOK_BRACKETL);
+    assert(token->type == ELEMENT_TOK_BRACKETL);
 
     ELEMENT_OK_OR_RETURN(next_token());
     auto* exprlist_ast = new_ast(parent, token, ELEMENT_AST_NODE_EXPRLIST);
@@ -283,8 +270,7 @@ element_result element_parser_ctx::parse_lambda(element_ast* parent)
 
     ELEMENT_OK_OR_RETURN(next_token());
 
-    element_ast* ports = new_ast(lambda_ast, token, ELEMENT_AST_NODE_PORT);
-    ELEMENT_OK_OR_RETURN(parse_portlist());
+    ELEMENT_OK_OR_RETURN(parse_portlist(lambda_ast));
 
     //todo: logging
     if (token->type != ELEMENT_TOK_BRACKETR)
@@ -292,12 +278,15 @@ element_result element_parser_ctx::parse_lambda(element_ast* parent)
 
     ELEMENT_OK_OR_RETURN(next_token());
 
-    element_ast* type = new_ast(lambda_ast, token, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
     const auto has_return = token->type == ELEMENT_TOK_COLON;
     if (has_return)
     {
         ELEMENT_OK_OR_RETURN(next_token());
-        return parse_typename();
+        ELEMENT_OK_OR_RETURN(parse_typename(lambda_ast));
+    }
+    else
+    {
+        new_ast(lambda_ast, token, ELEMENT_AST_NODE_UNSPECIFIED_TYPE);
     }
 
     return parse_function_body(lambda_ast);
@@ -368,12 +357,10 @@ element_result element_parser_ctx::parse_declaration(element_ast* parent, elemen
     auto* decl_ast = new_ast(parent, token, ELEMENT_AST_NODE_DECLARATION, flags);
     ELEMENT_OK_OR_RETURN(parse_identifier(decl_ast, false, allow_reserved_names));
 
-    // always create the args node, even if it ends up being none/empty
-    auto* args = new_ast(decl_ast, token, ELEMENT_AST_NODE_NONE);
     if (token->type == ELEMENT_TOK_BRACKETL)
     {
         ELEMENT_OK_OR_RETURN(next_token());
-        ELEMENT_OK_OR_RETURN(parse_portlist());
+        ELEMENT_OK_OR_RETURN(parse_portlist(decl_ast));
 
         if (token->type != ELEMENT_TOK_BRACKETR)
         {
@@ -390,15 +377,14 @@ element_result element_parser_ctx::parse_declaration(element_ast* parent, elemen
     }
     else
     {
-        args->flags |= ELEMENT_AST_FLAG_DECL_EMPTY_INPUT;
+        new_ast(decl_ast, token, ELEMENT_AST_NODE_NONE, ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
     }
 
     const bool has_return = token->type == ELEMENT_TOK_COLON;
     if (has_return)
     {
         ELEMENT_OK_OR_RETURN(next_token());
-        element_ast* type = new_ast(decl_ast, token, ELEMENT_AST_NODE_TYPENAME);
-        return parse_typename();
+        return parse_typename(decl_ast);
     }
 
     // implied any output
@@ -638,6 +624,7 @@ element_result element_parser_ctx::ast_build()
 element_result element_parser_ctx::next_token()
 {
     element_result result = ELEMENT_OK;
+    previous_token = token;
 
     // TODO: do something with NONE tokens, we might need them later to preserve formatting...
     do

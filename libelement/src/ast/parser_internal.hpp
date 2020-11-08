@@ -24,11 +24,11 @@ public:
     // identifier ::= '_'? [a-zA-Z#x00F0-#xFFFF] [_a-zA-Z0-9#x00F0-#xFFFF]*
     element_result parse_identifier(element_ast* terminal, bool allow_reserved_args = false, bool allow_reserved_names = false);
     // type ::= ':' identifier ('.' identifier)*
-    element_result parse_typename();
+    element_result parse_typename(element_ast* parent);
     // port ::= (identifier | unidentifier) type?
-    element_result parse_port();
+    element_result parse_port(element_ast* parent);
     // portlist ::= port (',' port)*
-    element_result parse_portlist();
+    element_result parse_portlist(element_ast* parent);
     // exprlist ::= expression (',' expression)*
     element_result parse_exprlist(element_ast* parent);
     // call ::= (identifier | literal) ('(' exprlist ')' | '.' identifier)*
@@ -65,6 +65,7 @@ public:
     element_result next_token();
     element_ast* new_ast(element_ast* parent, element_token* token, element_ast_node_type type, element_ast_flags flags = 0);
     unsigned int token_index = 0;
+    element_token* previous_token = nullptr;
     element_token* token = nullptr;
     element_ast* ast = nullptr;
 
