@@ -154,7 +154,6 @@ const element_ast* element_ast::constraint_get_declaration() const
 bool element_ast::declaration_is_valid() const
 {
     assert(children.size() > ast_idx::declaration::outputs);
-    //todo: do all valid declarations have inputs?
     return type == ELEMENT_AST_NODE_DECLARATION;
 }
 
