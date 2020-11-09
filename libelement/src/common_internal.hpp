@@ -108,11 +108,18 @@ namespace element
             return log_msg;
         }
 
+        void append_text(std::string txt)
+        {
+            msg += txt;
+            this->log_msg.message = this->msg.c_str();
+            this->log_msg.message_length = static_cast<int>(this->msg.length());
+        }
+
         const element_result result;
 
     private:
         element_log_message log_msg;
-        const std::string msg;
+        std::string msg;
     };
 
     struct file_information

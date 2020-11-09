@@ -484,3 +484,14 @@ void element_tokeniser_ctx::set_log_callback(LogCallback callback, void* user_da
     logger->callback = callback;
     logger->user_data = user_data;
 }
+
+element_token* element_tokeniser_ctx::get_token(unsigned int token_index, element_result& out_result)
+{
+    if (token_index >= tokens.size())
+    {
+        out_result = ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
+        return nullptr;
+    }
+
+    return &tokens[token_index];
+}
