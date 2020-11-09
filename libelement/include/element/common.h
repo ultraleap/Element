@@ -155,11 +155,11 @@ struct element_log_message
 };
 
 #define ELEMENT_OK_OR_RETURN(t)                         \
-    {                                                   \
+    do {                                                \
         const element_result ok_or_return_result = (t); \
         if (ok_or_return_result != ELEMENT_OK)          \
             return ok_or_return_result;                 \
-    }
+    } while (0)
 
 #if defined(__cplusplus)
 }

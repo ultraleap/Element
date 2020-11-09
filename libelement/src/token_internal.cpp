@@ -28,6 +28,12 @@
         c = #a;      \
         break;
 
+// replacements for C stdlib functions which rely on slow locale stuff
+static bool element_isalpha(uint32_t c) { return unsigned((c & (~(1 << 5))) - 'A') <= 'Z' - 'A'; }
+static bool element_isdigit(uint32_t c) { return unsigned(c - '0') <= '9' - '0'; }
+static bool element_isalnum(uint32_t c) { return element_isalpha(c) || element_isdigit(c); }
+static bool element_isspace(uint32_t c) { return c == ' ' || (c >= 0x09 && c <= 0x0D); }
+static bool element_iseol(uint32_t c) { return c == '\n'; }
 static bool isid_alpha(uint32_t c) { return element_isalpha(c) || c == '_' || (c >= 0x00F0 && c <= 0xFFFF); }
 static bool isid_alnum(uint32_t c) { return element_isalnum(c) || (c >= 0x00F0 && c <= 0xFFFF); }
 
@@ -137,29 +143,17 @@ element_result element_tokeniser_ctx::run(const char* cinput, const char* cfilen
                 break;
             case '_':
             {
-                //in case there is nothing after this, add the token first first, and remove later if it's an identifier
-                add_token(ELEMENT_TOK_UNDERSCORE, 1);
-
                 const auto next = UTF8_PEEK_NEXT(it + 1, end);
                 if (isid_alpha(next))
                 {
-                    //remove token
-                    tokens.pop_back();
-                    pos -= 1;
-                    character -= 1;
-
                     const auto begin_it = it;
                     const auto result = tokenise_identifier(it, end);
                     if (result != ELEMENT_OK)
-                    {
-                        log(result,
-                                       fmt::format("Failed to parse identifier '{}'",
-                                                   std::string(begin_it, it)));
-                        return result;
-                    }
+                        return log(result, fmt::format("Failed to parse identifier '{}'", std::string(begin_it, it)));
                 }
                 else
                 {
+                    add_token(ELEMENT_TOK_UNDERSCORE, 1);
                     UTF8_NEXT(it, end);
                 }
                 break;
@@ -171,24 +165,14 @@ element_result element_tokeniser_ctx::run(const char* cinput, const char* cfilen
                     const auto begin_it = it;
                     const auto result = tokenise_identifier(it, end);
                     if (result != ELEMENT_OK)
-                    {
-                        log(result,
-                                       fmt::format("Failed to parse identifier '{}'",
-                                                   std::string(begin_it, it)));
-                        return result;
-                    }
+                        return log(result, fmt::format("Failed to parse identifier '{}'", std::string(begin_it, it)));
                 }
                 else if (element_isdigit(c) || c == '-' || c == '+')
                 {
                     const auto begin_it = it;
                     const auto result = tokenise_number(it, end);
                     if (result != ELEMENT_OK)
-                    {
-                        log(result,
-                                       fmt::format("Failed to parse number '{}'",
-                                                   std::string(begin_it, it)));
-                        return result;
-                    }
+                        return log(result, fmt::format("Failed to parse number '{}'", std::string(begin_it, it)));
                 }
                 else if (element_iseol(c))
                 {
@@ -216,10 +200,9 @@ element_result element_tokeniser_ctx::run(const char* cinput, const char* cfilen
                     assert(pos - line_start_position >= 0);
                     assert(pos >= 0);
                     memcpy(source_line.data(), cinput + line_start_position, static_cast<std::size_t>(pos) - line_start_position);
-                    log(ELEMENT_ERROR_PARSE,
-                                   fmt::format("Encountered invalid character '{}' in file {} on line {} character {}\n{}",
-                                               std::string(begin_it, it), cfilename, line, character, source_line));
-                    return ELEMENT_ERROR_PARSE;
+                    return log(ELEMENT_ERROR_PARSE,
+                               fmt::format("Encountered invalid character '{}' in file {} on line {} character {}\n{}",
+                                           std::string(begin_it, it), cfilename, line, character, source_line));
                 }
             }
             }
@@ -229,17 +212,13 @@ element_result element_tokeniser_ctx::run(const char* cinput, const char* cfilen
     }
     catch (const std::exception& e)
     {
-        log(ELEMENT_ERROR_EXCEPTION,
-                       fmt::format("Exception occured: {}", e.what()));
-
-        return ELEMENT_ERROR_EXCEPTION;
+        return log(ELEMENT_ERROR_EXCEPTION,
+                   fmt::format("Exception occured: {}", e.what()));
     }
     catch (...) //potentially EOF when last source character is UTF?
     {
-        log(ELEMENT_ERROR_EXCEPTION,
-                       fmt::format("Exception occured"));
-
-        return ELEMENT_ERROR_EXCEPTION;
+        return log(ELEMENT_ERROR_EXCEPTION,
+                   fmt::format("Exception occured"));
     }
 }
 
@@ -302,12 +281,11 @@ element_result element_tokeniser_ctx::tokenise_number(std::string::iterator& it,
         {
             const auto it_rhs_start = it_next;
             UTF8_NEXT(it_next, end);
-            log(ELEMENT_ERROR_BAD_INDEX_INTO_NUMBER,
+            
+            return log(ELEMENT_ERROR_BAD_INDEX_INTO_NUMBER,
                        fmt::format("Found {} which was thought to be a number being indexed, "
                                    "but encountered invalid character '{}' on the right hand side of '.'",
                                    std::string(it_begin, it), std::string(it_rhs_start, it_next)));
-
-            return ELEMENT_ERROR_BAD_INDEX_INTO_NUMBER;
         }
     }
 
@@ -328,13 +306,10 @@ element_result element_tokeniser_ctx::tokenise_number(std::string::iterator& it,
             }
 
             if (!element_isdigit(c))
-            {
-                log(ELEMENT_ERROR_BAD_NUMBER_EXPONENT,
+                return log(ELEMENT_ERROR_BAD_NUMBER_EXPONENT,
                            fmt::format("Found {} which was thought to be a number in scientific notation, "
                                        "but encountered invalid character '{}' instead of the exponent number",
                                        std::string(it_begin, it), std::string(it_prev_character, it)));
-                return ELEMENT_ERROR_BAD_NUMBER_EXPONENT;
-            }
 
             while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
                 c = UTF8_NEXT(it, end);
@@ -360,10 +335,9 @@ element_result element_tokeniser_ctx::tokenise_comment(std::string::iterator& it
     const auto it_before = it;
     try
     {
+        //will throw at EOF
         while (it != end && !element_iseol(UTF8_PEEK_NEXT(it, end)))
-        { //will throw at EOF
             UTF8_NEXT(it, end);
-        }
     }
     catch (...)
     {
@@ -454,28 +428,31 @@ void element_tokeniser_ctx::clear()
     reset_token();
 }
 
-void element_tokeniser_ctx::log(element_result message_code, const std::string& message) const
+element_result element_tokeniser_ctx::log(element_result message_code, const std::string& message) const
 {
     if (logger == nullptr)
-        return;
+        return message_code;
 
     logger->log(*this, message_code, message);
+    return message_code;
 }
 
-void element_tokeniser_ctx::log(element_result message_code, const std::string& message, int length, element_log_message* related_message) const
+element_result element_tokeniser_ctx::log(element_result message_code, const std::string& message, int length, element_log_message* related_message) const
 {
     if (logger == nullptr)
-        return;
+        return message_code;
 
     logger->log(*this, message_code, message, length, related_message);
+    return message_code;
 }
 
-void element_tokeniser_ctx::log(const std::string& message) const
+element_result element_tokeniser_ctx::log(const std::string& message) const
 {
     if (logger == nullptr)
-        return;
+        return ELEMENT_OK;
 
     logger->log(message, element_stage::ELEMENT_STAGE_MISC);
+    return ELEMENT_OK;
 }
 
 void element_tokeniser_ctx::set_log_callback(LogCallback callback, void* user_data)
@@ -485,7 +462,7 @@ void element_tokeniser_ctx::set_log_callback(LogCallback callback, void* user_da
     logger->user_data = user_data;
 }
 
-element_token* element_tokeniser_ctx::get_token(unsigned int token_index, element_result& out_result)
+element_token* element_tokeniser_ctx::get_token(std::size_t token_index, element_result& out_result)
 {
     if (token_index >= tokens.size())
     {

@@ -43,7 +43,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     const std::string file = filename;
     const auto starts_with_prelude = file.rfind("Prelude/", 0) == 0;
     element_tokeniser_ctx* tokeniser;
-    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
+    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser));
 
     auto element_tokeniser_delete_ptr = [](element_tokeniser_ctx* tokeniser) {
         element_tokeniser_delete(&tokeniser);
@@ -57,7 +57,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     element::file_information info;
     info.file_name = std::make_unique<std::string>(filename);
     //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
-    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()))
+    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()));
     const auto total_lines_parsed = tokeniser->line;
 
     for (auto i = 0; i < total_lines_parsed; ++i)
@@ -84,7 +84,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     parser.src_context = src_context;
 
     auto result = parser.ast_build();
-    ELEMENT_OK_OR_RETURN(result)
+    ELEMENT_OK_OR_RETURN(result);
 
     const auto log_ast = starts_with_prelude
                              ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
@@ -316,12 +316,14 @@ element_result element_interpreter_ctx::call_expression_to_objects(
     parser.src_context = src_context;
 
     element_ast root(nullptr);
-    //root.nearest_token = &tokeniser->cur_token;
     parser.root = &root;
+    parser.current_token = tokeniser->get_token(0, result);
+    root.nearest_token = parser.current_token;
 
-    size_t first_token = 0;
-    auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRLIST);
-    result = parser.parse_exprlist(&first_token, ast);
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = parser.parse_exprlist(root);
     if (result != ELEMENT_OK)
         return result;
 
@@ -341,9 +343,9 @@ element_result element_interpreter_ctx::call_expression_to_objects(
     auto declaration = std::make_unique<element::function_declaration>(element::identifier{ "DUMMY" }, global_scope.get(), element::function_declaration::kind::expression_bodied);
     auto chain = std::make_unique<element::expression_chain>(declaration.get());
     chain->expressions.emplace_back(std::make_unique<element::call_expression>(nullptr)); //create empty expression so build_call_expression doesn't fail
-    element::assign_source_information(this, chain, ast);
+    element::assign_source_information(this, chain, parser.root->children[0].get());
     element::deferred_expressions deferred_expressions;
-    auto expr = element::build_call_expression(this, ast, chain.get(), deferred_expressions, result);
+    auto expr = element::build_call_expression(this, parser.root->children[0].get(), chain.get(), deferred_expressions, result);
     auto* call_expr = static_cast<const element::call_expression*>(expr.get());
 
     //lambdas in our expr chain. need to fix lambda desugaring first, and not important for boundary functions as it can't be a lambda
@@ -454,12 +456,14 @@ element_result element_interpreter_ctx::expression_to_object(
     parser.src_context = src_context;
 
     element_ast root(nullptr);
-    //root.nearest_token = &tokeniser->cur_token;
     parser.root = &root;
+    parser.current_token = tokeniser->get_token(0, result);
+    root.nearest_token = parser.current_token;
 
-    size_t first_token = 0;
-    auto* ast = parser.root->new_child(ELEMENT_AST_NODE_EXPRESSION);
-    result = parser.parse_expression(&first_token, ast);
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = parser.parse_expression(root);
     if (result != ELEMENT_OK)
         return result;
 
@@ -482,7 +486,7 @@ element_result element_interpreter_ctx::expression_to_object(
     auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, global_scope.get(), element::function_declaration::kind::expression_bodied);
     parser.root->nearest_token = &tokeniser->tokens[0];
     element::assign_source_information(this, dummy_declaration, parser.root);
-    auto expression_chain = build_expression_chain(this, ast, dummy_declaration.get(), deferred_expressions, result);
+    auto expression_chain = build_expression_chain(this, parser.root->children[0].get(), dummy_declaration.get(), deferred_expressions, result);
 
     if (deferred_expressions.empty())
     {

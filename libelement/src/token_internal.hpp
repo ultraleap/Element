@@ -29,12 +29,12 @@ public:
     [[nodiscard]] std::string text(const element_token* t) const;
     [[nodiscard]] std::string text_on_line(int line) const;
 
-    void log(element_result message_code, const std::string& message) const;
-    void log(element_result message_code, const std::string& message, int length, element_log_message* related_message) const;
-    void log(const std::string& message) const;
+    element_result log(element_result message_code, const std::string& message) const;
+    element_result log(element_result message_code, const std::string& message, int length, element_log_message* related_message) const;
+    element_result log(const std::string& message) const;
     void set_log_callback(LogCallback callback, void* user_data);
 
-    element_token* get_token(unsigned int token_index, element_result& out_result);
+    element_token* get_token(std::size_t token_index, element_result& out_result);
 
     std::shared_ptr<element_log_ctx> logger = nullptr;
     const char* raw_filename = nullptr;
@@ -48,10 +48,3 @@ public:
     std::vector<element_token> tokens;
     std::vector<int> line_number_to_line_pos{ 0 };
 };
-
-// replacements for C stdlib functions which rely on slow locale stuff
-inline bool element_isalpha(uint32_t c) { return unsigned((c & (~(1 << 5))) - 'A') <= 'Z' - 'A'; }
-inline bool element_isdigit(uint32_t c) { return unsigned(c - '0') <= '9' - '0'; }
-inline bool element_isalnum(uint32_t c) { return element_isalpha(c) || element_isdigit(c); }
-inline bool element_isspace(uint32_t c) { return c == ' ' || (c >= 0x09 && c <= 0x0D); }
-inline bool element_iseol(uint32_t c) { return c == '\n'; }

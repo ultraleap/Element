@@ -140,8 +140,20 @@ const element_ast* element_ast::function_get_body() const
     return children[ast_idx::function::body].get();
 }
 
+bool element_ast::constraint_is_valid() const
+{
+    return type == ELEMENT_AST_NODE_CONSTRAINT && children.size() > ast_idx::function::declaration;
+}
+
+const element_ast* element_ast::constraint_get_declaration() const
+{
+    assert(constraint_is_valid());
+    return children[ast_idx::function::declaration].get();
+}
+
 bool element_ast::declaration_is_valid() const
 {
+    assert(children.size() > ast_idx::declaration::outputs);
     //todo: do all valid declarations have inputs?
     return type == ELEMENT_AST_NODE_DECLARATION;
 }
@@ -162,14 +174,25 @@ const element_ast* element_ast::declaration_get_inputs() const
 bool element_ast::declaration_has_outputs() const
 {
     assert(declaration_is_valid());
-    return children.size() > ast_idx::declaration::outputs;
+    return children[ast_idx::declaration::outputs]->type != ELEMENT_AST_NODE_UNSPECIFIED_TYPE;
 }
 
 const element_ast* element_ast::declaration_get_outputs() const
 {
     assert(declaration_is_valid());
-    assert(declaration_has_outputs());
     return children[ast_idx::declaration::outputs].get();
+}
+
+bool element_ast::declaration_is_intrinsic() const
+{
+    assert(declaration_is_valid());
+    return has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
+}
+
+bool element_ast::declaration_has_portlist() const
+{
+    assert(declaration_is_valid());
+    return !children[0]->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT);
 }
 
 element_ast* element_ast::get_root()
