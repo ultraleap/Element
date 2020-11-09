@@ -267,7 +267,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void Comparison([ValueSource(nameof(ComparisonArgsList))] (string lhs, string op, string rhs) args, [Values] EvaluationMode mode)
         {
             string testFunction =
-                "_(a, b) = TimeSpan." + args.op + "(TimeSpan.fromSeconds(a), TimeSpan.fromSeconds(b))";
+                "_(a:Num, b:Num):Bool = TimeSpan." + args.op + "(TimeSpan.fromSeconds(a), TimeSpan.fromSeconds(b))";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
