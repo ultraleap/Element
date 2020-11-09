@@ -65,10 +65,10 @@ namespace element
             const auto* const type = input.resolve_annotation(context);
             if (!type)
             {
-                error(fmt::format("typename '{}' for port {}({}) of {} could not be found",
-                                  input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
-                      ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, declarer->source_info)
-                    .log_once(context.get_logger());
+                auto e = error(fmt::format("typename '{}' for port {}({}) of {} could not be found",
+                                           input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
+                               ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, declarer->source_info);
+                e.log_once(context.get_logger());
                 return false;
             }
 

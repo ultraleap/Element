@@ -53,10 +53,10 @@ namespace element
         {
             const auto it = func_map.find(code);
             if (it == func_map.end())
-            {
-                //todo: not valid so do something better
-                throw;
-            }
+                return std::make_shared<error>(
+                    fmt::format("An error occured but no message associated with it was found. Report to developers. Internal Error Code {}", code),
+                    ELEMENT_ERROR_UNKNOWN,
+                    source_info);
 
             return it->second(source_info, args...);
         }
@@ -82,10 +82,10 @@ namespace element
         {
             const auto it = func_map.find(code);
             if (it == func_map.end())
-            {
-                //todo: not valid so do something better
-                throw;
-            }
+                return std::make_shared<error>(
+                    fmt::format("An error occured but no message associated with it was found. Report to developers. Internal Error Code {}", code), 
+                    ELEMENT_ERROR_UNKNOWN,
+                    source_info);
 
             return it->second(source_info);
         }
