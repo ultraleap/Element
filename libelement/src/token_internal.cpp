@@ -244,7 +244,11 @@ element_result element_tokeniser_ctx::tokenise_number(std::string::iterator& it,
         UTF8_NEXT(it, end);
         c = UTF8_PEEK_NEXT(it, end);
     }
-    assert(element_isdigit(c));
+
+    if (!element_isdigit((c)))
+    {
+        return ELEMENT_ERROR_PARSE;
+    }
 
     while (it != end && element_isdigit(UTF8_PEEK_NEXT(it, end)))
         c = UTF8_NEXT(it, end);
