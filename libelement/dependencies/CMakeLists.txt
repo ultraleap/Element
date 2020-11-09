@@ -14,6 +14,11 @@ FetchContent_GetProperties(fmt)
 if (NOT fmt_POPULATED)
     FetchContent_Populate(fmt)
     add_subdirectory("${fmt_SOURCE_DIR}" "${fmt_BINARY_DIR}" EXCLUDE_FROM_ALL)
+    # mark as SYSTEM library to silence warnings
+    get_target_property(fmt_INCLUDES fmt INTERFACE_INCLUDE_DIRECTORIES)
+    set_target_properties(fmt
+        PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${fmt_INCLUDES}"
+    )
 endif ()
 
 include(FetchContent)
