@@ -39,11 +39,14 @@ namespace Element.AST
             return subExpressions.Aggregate(new Result<IValue>(start), ResolveSubExpression);
         }
 
-        protected override Result<IValue> ExpressionImpl(IScope parentScope, Context context) =>
-            ExpressionChainStart.Resolve(this, parentScope, context)
-            .Bind(start => SubExpressions != null // Return the starting value if there's no subexpressions
-                               ? ResolveExpressionChain(start, SubExpressions, parentScope, context)
-                               : new Result<IValue>(start));
+        protected override Result<IValue> ExpressionImpl(IScope parentScope, Context context)
+        {
+            Result<IValue> ResolveSubExpressions(IValue start) => ResolveExpressionChain(start, SubExpressions, parentScope, context);
+
+            return SubExpressions?.Count > 0
+                       ? ExpressionChainStart.Resolve(this, parentScope, context).Bind(ResolveSubExpressions)
+                       : ExpressionChainStart.Resolve(this, parentScope, context);
+        }
 
         public abstract class SubExpression : AstNode
         {

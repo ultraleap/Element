@@ -8,29 +8,27 @@ namespace Element.AST
     {
         public static Result<IValue> PartiallyApply(this IValue function, IValue[] arguments, Context context)
         {
-            var appliedFunction = function switch
-            {
-                AppliedFunction af => new AppliedFunction(af.AppliedArguments.Concat(arguments), af.Function),
-                _ => new AppliedFunction(arguments, function)
-            };
-            return appliedFunction.CanBeFullyApplied ? appliedFunction.Call(Array.Empty<IValue>(), context) : appliedFunction;
+            if (!function.IsFunction) return context.Trace(EleMessageCode.NotFunction, "Cannot partially apply arguments to a non-function value");
+            var appliedFunction = function.IsType(out AppliedFunction af)
+                                      ? new AppliedFunction(af.AppliedArguments.Concat(arguments), af.WrappedValue)
+                                      : new AppliedFunction(arguments, function);
+            
+            return appliedFunction.CanBeFullyApplied
+                       ? appliedFunction.Call(Array.Empty<IValue>(), context)
+                       : appliedFunction;
         }
 
-        private class AppliedFunction : Function
+        private class AppliedFunction : WrapperValue
         {
             public AppliedFunction(IEnumerable<IValue> arguments, IValue function)
-            {
+                : base(function) =>
                 AppliedArguments = arguments.ToList();
-                Function = function;
-            }
 
-            public readonly IValue Function;
             public readonly List<IValue> AppliedArguments;
-            public bool CanBeFullyApplied => AppliedArguments.Count >= Function.InputPorts.Count;
-            public override string SummaryString => $"{Function} <partially applied {AppliedArguments.Count}/{Function.InputPorts.Count}>";
-            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) => Function.Call(AppliedArguments.Concat(arguments).ToArray(), context);
-            public override IReadOnlyList<ResolvedPort> InputPorts => Function.InputPorts.Skip(AppliedArguments.Count).ToList();
-            public override IValue ReturnConstraint => Function.ReturnConstraint;
+            public bool CanBeFullyApplied => AppliedArguments.Count >= WrappedValue.InputPorts.Count;
+            public override string SummaryString => $"{WrappedValue} <partially applied {AppliedArguments.Count}/{WrappedValue.InputPorts.Count}>";
+            public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => this.VerifyArgumentsAndApplyFunction(arguments, () => WrappedValue.Call(AppliedArguments.Concat(arguments).ToArray(), context), context);
+            public override IReadOnlyList<ResolvedPort> InputPorts => WrappedValue.InputPorts.Skip(AppliedArguments.Count).ToList();
         }
     }
 }

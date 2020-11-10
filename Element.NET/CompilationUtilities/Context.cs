@@ -9,8 +9,8 @@ namespace Element
     /// </summary>
     public class Context
     {
-        public static Context CreateFromSourceContext(SourceContext sourceContext) => new Context(sourceContext.GlobalScope, sourceContext.CompilerOptions, sourceContext.CompilerOptions?.CompilationAspectFunc);
-        public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions, Func<Context, ICompilationAspect>? aspect = null) => new Context(rootScope, compilerOptions, aspect);
+        public static Context CreateFromSourceContext(SourceContext sourceContext) => new Context(sourceContext.GlobalScope, sourceContext.CompilerOptions);
+        public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions) => new Context(rootScope, compilerOptions);
 
         private class NoScope : IScope
         {
@@ -22,11 +22,11 @@ namespace Element
                 throw new InternalCompilerException($"Context '{_scopelessContext}' has no root scope, performing lookup is not possible");
         }
 
-        private Context(IScope? rootScope, CompilerOptions? compilerOptions, Func<Context, ICompilationAspect>? aspectFunc = null)
+        private Context(IScope? rootScope, CompilerOptions? compilerOptions)
         {
             RootScope = rootScope ?? new NoScope(this);
             CompilerOptions = compilerOptions ?? new CompilerOptions(MessageLevel.Information);
-            Aspect = aspectFunc?.Invoke(this);
+            Aspect = CompilerOptions.CompilationAspectFunc?.Invoke(this);
         }
         
         public static Context None { get; } = CreateManually(null, null);

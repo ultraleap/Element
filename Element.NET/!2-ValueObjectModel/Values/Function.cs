@@ -43,7 +43,7 @@ namespace Element.AST
     {
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicFunctionImplementation _implementation;
-        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation.GetType() == typeof(TIntrinsicImplementation);
+        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation is TIntrinsicImplementation;
         public override bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _implementation == intrinsic;
 
         public IntrinsicFunction(IIntrinsicFunctionImplementation implementation, IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint)
