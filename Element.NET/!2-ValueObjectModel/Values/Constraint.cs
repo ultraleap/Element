@@ -7,7 +7,7 @@ namespace Element.AST
     {
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicConstraintImplementation _implementation;
-        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation.GetType() == typeof(TIntrinsicImplementation);
+        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation is TIntrinsicImplementation;
         public override bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _implementation == intrinsic;
         public IntrinsicConstraint(IIntrinsicConstraintImplementation implementation) => _implementation = implementation;
         public override Result<bool> MatchesConstraint(IValue value, Context context) => _implementation.MatchesConstraint(value, context);

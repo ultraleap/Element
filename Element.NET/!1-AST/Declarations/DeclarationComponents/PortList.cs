@@ -23,12 +23,12 @@ namespace Element.AST
             foreach (var port in Ports.List)
             {
                 if (port.DefaultArgument != null) anyDefaultArgumentsSoFar = true;
-                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) builder.Append(EleMessageCode.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{context.DeclarationStack.Peek()}' is unreachable");
+                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) builder.Append(EleMessageCode.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{this}' is unreachable");
                 port.Validate(builder, context);
                 if (!(port.Identifier is { } id)) continue;
                 if (!distinctPortIdentifiers.Add(id.String))
                 {
-                    builder.Append(EleMessageCode.MultipleDefinitions, $"'{context.DeclarationStack.Peek()}' has duplicate input ports named '{id}'");
+                    builder.Append(EleMessageCode.MultipleDefinitions, $"'{this}' has duplicate input ports named '{id}'");
                 }
             }
         }
@@ -36,15 +36,29 @@ namespace Element.AST
 
     public static class PortListExtensions
     {
-        public static Result<IReadOnlyList<ResolvedPort>> ResolveInputConstraints(this PortList? portList, IScope scope, Context context, bool portListIsOptional, bool portsListCanBeVaradic) =>
-            portList?.Ports.List
-                    .Select(p => p.Resolve(scope, context))
-                    .ToResultReadOnlyList()
-            ?? (portListIsOptional, portsListCanBeVaradic) switch
+        public static Result<(IReadOnlyList<ResolvedPort> InputPorts, IValue ReturnPort)> ResolveFunctionSignature(this PortList? inputPortList,
+                                                                                                                   IScope scope,
+                                                                                                                   bool areInputPortsOptional,
+                                                                                                                   bool canInputsBeVariadic,
+                                                                                                                   PortConstraint? returnConstraint,
+                                                                                                                   Context context) =>
+            inputPortList.ResolveFunctionPortList(scope, areInputPortsOptional, canInputsBeVariadic, context)
+                         .Accumulate(() =>
+                         {
+                             context.Aspect?.BeforeReturnConstraint(returnConstraint, scope);
+                             var resolvedReturnConstraint = returnConstraint.ResolvePortConstraint(scope, context);
+                             return context.Aspect?.ReturnConstraint(returnConstraint, scope, resolvedReturnConstraint) ?? resolvedReturnConstraint;
+                         });
+
+        public static Result<IReadOnlyList<ResolvedPort>> ResolveFunctionPortList(this PortList? inputPortList, IScope scope, bool areInputPortsOptional, bool canInputsBeVariadic, Context context) =>
+            inputPortList?.Ports.List
+                         .Select(p => p.Resolve(scope, context))
+                         .ToResultReadOnlyList()
+            ?? (areInputPortsOptional, canInputsBeVariadic) switch
             {
                 (true, false) => Array.Empty<ResolvedPort>(),
                 (_, true) => new Result<IReadOnlyList<ResolvedPort>>(new[] {ResolvedPort.VariadicPort}),
-                _ => context.Trace(EleMessageCode.MissingPorts, $"'{context.DeclarationStack.Peek()}' must have a port list")
+                _ => context.Trace(EleMessageCode.MissingPorts, $"'{context.DeclarationStack.Peek().AstNode}' must have a port list")
             };
     }
 }

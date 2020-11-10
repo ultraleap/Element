@@ -210,7 +210,8 @@ namespace Element
 
         public TResult Match<TResult>(Func<T, IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(_value, Messages) : onError(Messages);
 
-        public Result<TResult> Branch<TResult>(Func<T, Result<TResult>> success, Func<TResult> error) => IsSuccess ? Merge(success(_value)) : error();
+        public Result<TResult> Branch<TResult>(Func<T, TResult> success, Func<TResult> error) => IsSuccess ? Merge(new Result<TResult>(success(_value))) : error();
+        public Result<TResult> Branch<TResult>(Func<T, Result<TResult>> success, Func<Result<TResult>> error) => IsSuccess ? Merge(success(_value)) : error();
         
         public Result<T> Do(Action<T> action)
         {

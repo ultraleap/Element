@@ -61,6 +61,12 @@ namespace Element.AST
         public virtual IValue Inner => this;
     }
 
+    public class ErrorValue : Value
+    {
+        private ErrorValue(){}
+        public static ErrorValue Instance { get; } = new ErrorValue();
+    }
+
     public static class ValueExtensions
     {
         public static Result<IValue> IndexPositionally(this IValue value, int index, Context context)
@@ -130,7 +136,24 @@ namespace Element.AST
             result = default;
             return false;
         }
+        
+        public static bool HasWrapper<TWrapperValue>(this IValue value, out TWrapperValue? wrapperValue) where TWrapperValue : WrapperValue
+        {
+            while (value is WrapperValue wrapper)
+            {
+                if (wrapper is TWrapperValue found)
+                {
+                    wrapperValue = found;
+                    return true;
+                }
 
+                value = wrapper.WrappedValue;
+            }
+
+            wrapperValue = null;
+            return false;
+        }
+  
         public static bool IsInstance(this IValue value, IValue other) => ReferenceEquals(value.Inner, other.Inner);
         
         public static Result<TValueOut> CastInner<TValueIn, TValueOut>(in this Result<TValueIn> input)

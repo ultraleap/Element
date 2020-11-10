@@ -49,7 +49,7 @@ namespace Element.AST
     {
         IIntrinsicImplementation IIntrinsicValue.Implementation => _implementation;
         private readonly IIntrinsicStructImplementation _implementation;
-        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation.GetType() == typeof(TIntrinsicImplementation);
+        public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation is TIntrinsicImplementation;
         public override bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _implementation == intrinsic;
 
         public IntrinsicStruct(IIntrinsicStructImplementation implementation, IReadOnlyList<ResolvedPort> fields, ResolvedBlock? associatedBlock, IScope parent)
@@ -92,8 +92,9 @@ namespace Element.AST
 
         public override string TypeOf => DeclaringStruct.Identifier.String;
         public override Result<IValue> Index(Identifier id, Context context) =>
-            _resolvedBlock.Index(id, context)
-                          .Else(() => DeclaringStruct.ResolveInstanceFunction(this, id, context));
+            Members.Any(identifier => identifier.Equals(id))
+                ? _resolvedBlock.Index(id, context)
+                : DeclaringStruct.ResolveInstanceFunction(this, id, context);
 
         public override IReadOnlyList<Identifier> Members => _resolvedBlock.Members;
 

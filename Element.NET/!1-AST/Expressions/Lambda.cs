@@ -8,7 +8,7 @@ namespace Element.AST
         // ReSharper disable UnassignedField.Global UnusedAutoPropertyAccessor.Local
         [Term] private Unidentifier _;
         [Term] public PortList PortList;
-        [Optional] public ReturnConstraint? ReturnConstraint;
+        [Optional] public PortConstraint? ReturnConstraint;
         [Alternative(typeof(ExpressionBody), typeof(FunctionBlock)), WhitespaceSurrounded, MultiLine] public object Body;
         // ReSharper restore UnassignedField.Global UnusedAutoPropertyAccessor.Local
 #pragma warning restore 649, 169, 8618
@@ -30,18 +30,13 @@ namespace Element.AST
         }
 
         protected override Result<IValue> ExpressionImpl(IScope parentScope, Context context) =>
-            PortList.ResolveInputConstraints(parentScope, context, false, false)
-                    .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(parentScope, context))
-                    .Map(t =>
+            PortList.ResolveFunctionSignature(parentScope, false, false, ReturnConstraint, context)
+                    .Map(t => Body switch
                     {
-                        var (inputPorts, returnConstraint) = t;
-                        return Body switch
-                        {
-                            // ReSharper disable once RedundantCast
-                            ExpressionBody exprBody => (IValue)new ExpressionBodiedFunction(inputPorts, returnConstraint, exprBody, parentScope),
-                            FunctionBlock functionBlock => new ScopeBodiedFunction(inputPorts, returnConstraint, functionBlock, parentScope),
-                            _ => throw new InternalCompilerException($"Unknown function body type '{Body}'")
-                        };
+                        // ReSharper disable once RedundantCast
+                        ExpressionBody exprBody => (IValue)new ExpressionBodiedFunction(t.InputPorts, t.ReturnPort, exprBody, parentScope),
+                        FunctionBlock functionBlock => new ScopeBodiedFunction(t.InputPorts, t.ReturnPort, functionBlock, parentScope),
+                        _ => throw new InternalCompilerException($"Unknown function body type '{Body}'")
                     });
     }
 }

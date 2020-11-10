@@ -24,7 +24,7 @@ namespace Laboratory.Tests.L0.Parsing
                 (nameof(ExpressionBody), "= 5", typeof(ExpressionBody)),
                 ("Empty Block", "{ }", typeof(FreeformBlock)),
                 ("Block with Declarations", "{ a = 5, b = 10 }", typeof(CommaSeparatedBlock)),
-                (nameof(ReturnConstraint), ":Foo.Bar", typeof(ReturnConstraint)),
+                (nameof(PortConstraint), ":Foo.Bar", typeof(PortConstraint)),
                 (nameof(Expression), "a.b(c).d.e(5)", typeof(Expression)),
                 (nameof(ExpressionChain.CallExpression), "(5, a(10, c))", typeof(ExpressionChain.CallExpression)),
                 (nameof(ExpressionChain.IndexingExpression), ".identifier", typeof(ExpressionChain.IndexingExpression)),
