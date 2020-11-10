@@ -58,7 +58,7 @@ namespace Element.AST
             {
                 (true, false) => Array.Empty<ResolvedPort>(),
                 (_, true) => new Result<IReadOnlyList<ResolvedPort>>(new[] {ResolvedPort.VariadicPort}),
-                _ => context.Trace(EleMessageCode.MissingPorts, $"'{context.DeclarationStack.Peek()}' must have a port list")
+                _ => context.Trace(EleMessageCode.MissingPorts, $"'{context.DeclarationStack.Peek().AstNode}' must have a port list")
             };
     }
 }
