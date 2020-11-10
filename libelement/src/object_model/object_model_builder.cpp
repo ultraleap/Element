@@ -80,7 +80,7 @@ namespace element
     void build_output(const element_interpreter_ctx* context, element_ast* output, declaration& declaration, element_result& output_result)
     {
         auto type_annotation = build_type_annotation(context, output, output_result);
-        declaration.output.emplace(port{ &declaration, identifier::return_identifier, std::move(type_annotation), nullptr });
+        declaration.output = port{ &declaration, identifier::return_identifier, std::move(type_annotation), nullptr };
     }
 
     void build_inputs(const element_interpreter_ctx* context, element_ast* inputs, declaration& declaration, element_result& output_result)

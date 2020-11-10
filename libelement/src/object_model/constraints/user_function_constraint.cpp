@@ -66,21 +66,16 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
         if (!check_match(declarer->inputs[i + offset], other->inputs[i]))
             return false;
 
-    const bool no_return_annotations = !declarer->output && !other->output;
     //allow constraint matching for invalid ports, to propagate errors and catch multiple
-    const bool our_annotation_is_invalid = declarer->output && !declarer->output->is_valid(context);
-    const bool their_annotation_is_invalid = other->output && !other->output->is_valid(context);
+    const bool our_annotation_is_invalid = !declarer->output.is_valid(context);
+    const bool their_annotation_is_invalid = !other->output.is_valid(context);
 
-    if (no_return_annotations || our_annotation_is_invalid || their_annotation_is_invalid)
+    if (our_annotation_is_invalid || their_annotation_is_invalid)
         return true;
 
-    //check return types match since at least one of them has one
-    if (declarer->output && other->output)
-    {
-        //todo: nullptr checks?
-        if (!check_match(declarer->output.value(), other->output.value()))
-            return false;
-    }
+    //todo: nullptr checks?
+    if (!check_match(declarer->output, other->output))
+        return false;
 
     return true;
 }

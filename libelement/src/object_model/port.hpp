@@ -9,6 +9,7 @@ namespace element
     class port final
     {
     public:
+        explicit port();
         explicit port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation, std::unique_ptr<expression_chain> expr_chain);
 
         [[nodiscard]] bool has_annotation() const { return annotation != nullptr; }

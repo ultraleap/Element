@@ -48,9 +48,9 @@ namespace element
             return empty;
         };
         [[nodiscard]] virtual const scope* get_scope() const { return nullptr; };
-        [[nodiscard]] virtual const std::optional<port>& get_output() const
+        [[nodiscard]] virtual const port& get_output() const
         {
-            static std::optional<port> empty;
+            static port empty;
             return empty;
         };
 
