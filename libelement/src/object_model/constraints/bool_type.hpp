@@ -21,5 +21,7 @@ namespace element
 
     private:
         static identifier name;
+        mutable bool cached = false;
+        mutable const declaration* cached_declaration = nullptr;
     };
 } // namespace element

@@ -29,9 +29,11 @@ namespace element
         [[nodiscard]] bool valid_at_boundary(const compilation_context& context) const;
         [[nodiscard]] const std::vector<object_const_shared_ptr>& get_provided_arguments() const { return provided_arguments; }
         const function_declaration* const declarer;
+        [[nodiscard]] const capture_stack& get_captures() const { return captures; };
 
     private:
         mutable capture_stack captures;
         std::vector<object_const_shared_ptr> provided_arguments;
+        std::unique_ptr<constraint> our_constraint;
     };
 } // namespace element

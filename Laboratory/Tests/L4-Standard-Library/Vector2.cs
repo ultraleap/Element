@@ -5,6 +5,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
     internal class Vector2 : StandardLibraryFixture
     {
 
+        public static string Vector2Constructor = "_(a:Num, b:Num):Vector2 = Vector2(a, b)";
+
         public static (string constant, string constructorArgs)[] ConstantArgList =
         {
             ("Vector2.zero", "(0, 0)"),
@@ -20,7 +22,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             AssertApproxEqual(ValidatedCompilerInput,
                               new ExpressionEvaluation(args.lhs, mode),
-                              new FunctionEvaluation("Vector2", args.rhs, mode));
+                              new FunctionEvaluation(Vector2Constructor, args.rhs, mode));
         }
 
 
@@ -61,7 +63,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             string getter = "_(x:Num, y:Num):Vector2 = Vector2(x, y)." + args.property;
             AssertApproxEqual(ValidatedCompilerInput,
                               new FunctionEvaluation(getter, args.lhs, mode),
-                              new FunctionEvaluation("Vector2", args.rhs, mode));
+                              new FunctionEvaluation(Vector2Constructor, args.rhs, mode));
         }
 
         public static (string inVector, string scale, string outVector)[] ScaleArgsList =

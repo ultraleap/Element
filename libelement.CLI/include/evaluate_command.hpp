@@ -106,7 +106,14 @@ namespace libelement::cli
             }
             else
             {
-                result_object = expression_object;
+                result = element_object_compile(expression_object, compilation_context, &result_object);
+                if (result != ELEMENT_OK)
+                {
+                    context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                    return compiler_message(error_conversion(result),
+                                            "Failed to compile object: " + expression + " at compile-time with element_result " + std::to_string(result),
+                                            compilation_input.get_log_json());
+                }
             }
 
             element_instruction* result_instruction;

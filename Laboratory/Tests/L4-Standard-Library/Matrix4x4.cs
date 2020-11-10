@@ -4,6 +4,10 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Matrix4x4 : StandardLibraryFixture
     {
+
+        public static string Matrix4x4Constructor =
+            "_(a:Vector4, b:Vector4, c:Vector4, d:Vector4):Matrix4x4 = Matrix4x4(a, b, c, d)";
+        
         public static (string constructorArgs, string constant)[] ConstantArgList =
         {
             ("(Vector4(1, 0, 0, 0), Vector4(0, 1, 0, 0), Vector4(0, 0, 1, 0), Vector4(0, 0, 0, 1))", "Matrix4x4.identity"),
@@ -12,7 +16,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         public void Constants([ValueSource(nameof(ConstantArgList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
             AssertApproxEqual(ValidatedCompilerInput,
-                new FunctionEvaluation("Matrix4x4", args.lhs, mode),
+                new FunctionEvaluation(Matrix4x4Constructor, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
         
@@ -31,10 +35,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Factory([ValueSource(nameof(FactoryArgsList))] (string lhs, string factory, string rhs) args, [Values] EvaluationMode mode)
         {
-            string defaultConstructor = "Matrix4x4";
             string altConstructor = "Matrix4x4." + args.factory;
             AssertApproxEqual(ValidatedCompilerInput,
-                new FunctionEvaluation(defaultConstructor, args.lhs, mode),
+                new FunctionEvaluation(Matrix4x4Constructor, args.lhs, mode),
                 new FunctionEvaluation(altConstructor, args.rhs, mode));
         }
         
@@ -81,10 +84,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
             // Tests which construct the matrix and get the named property
 
             string getter = "_(x:Vector4, y:Vector4, z:Vector4, w:Vector4):Matrix4x4 = Matrix4x4(x, y, z, w).transpose";
-            string defaultConstructor = "Matrix4x4";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
-                new FunctionEvaluation(defaultConstructor, args.rhs, mode));
+                new FunctionEvaluation(Matrix4x4Constructor, args.rhs, mode));
         }
 
         public static (string constructorArgs, string result)[] DeterminantArgsList =

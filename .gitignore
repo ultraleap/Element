@@ -488,3 +488,6 @@ build*/
 
 # vim swap files
 *.swp
+
+# macOS files
+*.DS_Store

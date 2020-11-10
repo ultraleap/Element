@@ -3,16 +3,23 @@
 //SELF
 #include "object_model/compilation_context.hpp"
 #include "object_model/declarations/declaration.hpp"
+#include "object_model/error.hpp"
 
 using namespace element;
 
 object_const_shared_ptr bool_type::index(const compilation_context& context, const identifier& name,
                                          const source_information& source_info) const
 {
-    //todo: cache, but don't use static
-    const auto* declaration = context.get_global_scope()->find(bool_type::name, false);
-    assert(declaration);
-    return declaration->index(context, name, source_info);
+    if (!cached)
+    {
+        cached_declaration = context.get_global_scope()->find(bool_type::name, false);
+        cached = true;
+    }
+
+    if (!cached_declaration)
+        return std::make_shared<const error>("tried to index bool, but bool was not found", ELEMENT_ERROR_NOT_FOUND, source_info);
+
+    return cached_declaration->index(context, name, source_info);
 }
 
 bool bool_type::is_constant() const

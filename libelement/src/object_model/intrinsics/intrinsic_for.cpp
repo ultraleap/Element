@@ -166,7 +166,7 @@ object_const_shared_ptr intrinsic_for::compile(const compilation_context& contex
                                                const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
-    const auto& declarer = *frame.function;
+    const auto& declarer = *static_cast<const declaration*>(frame.function->declarer);
     assert(declarer.inputs.size() == 3);
     assert(frame.compiled_arguments.size() == 3);
 

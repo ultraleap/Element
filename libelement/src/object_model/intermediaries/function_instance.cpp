@@ -11,12 +11,14 @@
 #include "object_model/error.hpp"
 #include "object_model/error_map.hpp"
 #include "object_model/compilation_context.hpp"
+#include "object_model/constraints/user_function_constraint.hpp"
 
 using namespace element;
 
 function_instance::function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info)
     : declarer(declarer)
     , captures(std::move(captures))
+    , our_constraint(std::make_unique<user_function_constraint>(declarer, false))
 {
     this->source_info = std::move(source_info);
 }
@@ -25,6 +27,7 @@ function_instance::function_instance(const function_declaration* declarer, captu
     : declarer(declarer)
     , captures(std::move(captures))
     , provided_arguments(std::move(args))
+    , our_constraint(std::make_unique<user_function_constraint>(declarer, true))
 {
     this->source_info = std::move(source_info);
 }
@@ -51,12 +54,12 @@ std::string function_instance::to_string() const
 
 bool function_instance::matches_constraint(const compilation_context& context, const constraint* constraint) const
 {
-    return declarer->get_constraint()->matches_constraint(context, constraint);
+    return our_constraint->matches_constraint(context, constraint);
 }
 
 const constraint* function_instance::get_constraint() const
 {
-    return declarer->get_constraint();
+    return our_constraint.get();
 }
 
 bool has_defaults(const function_instance* instance)
@@ -131,15 +134,14 @@ object_const_shared_ptr function_instance::call(
     if (!is_variadic && !valid_call(context, declarer, compiled_args))
         return build_error_for_invalid_call(context, declarer, compiled_args);
 
-    if (context.calls.is_recursive(declarer))
-        return context.calls.build_recursive_error(declarer, context, source_info);
+    const auto us = shared_from_this();
+    if (context.calls.recursive_calls(us) > 100)
+        return context.calls.build_recursive_error(us, context, source_info);
 
     if constexpr (should_log_compilation_step())
-    {
         context.get_logger()->log_step_indent();
-    }
 
-    context.calls.push(declarer, compiled_args);
+    context.calls.push(us, compiled_args);
     captures.push(declarer->our_scope.get(), &declarer->get_inputs(), compiled_args);
 
     std::swap(captures, context.captures);
@@ -165,11 +167,9 @@ object_const_shared_ptr function_instance::call(
 
     //type check return
     //todo: nicer?
-    const constraint* constraint = nullptr;
-    const declaration* type = nullptr;
-    if (declarer->output)
-        type = declarer->output->resolve_annotation(context);
+    const declaration* type = declarer->output.resolve_annotation(context);
 
+    const constraint* constraint = nullptr;
     if (type)
         constraint = type->get_constraint();
 

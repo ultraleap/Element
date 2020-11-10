@@ -87,13 +87,50 @@ const std::map<identifier, std::unique_ptr<declaration>>& scope::get_declaration
     return declarations;
 }
 
+
 const declaration* scope::find(const identifier& name, const bool recurse = false) const
 {
-    const auto name_it = declarations.find(name);
-    if (name_it != declarations.end())
-        return name_it->second.get();
+    const std::string delimiter = ".";
+    const std::string full_path = name.value;
+    std::vector<std::string> split_path;
 
-    return (recurse && parent_scope) ? parent_scope->find(name, true) : nullptr;
+    size_t start = 0;
+    auto end = full_path.find(delimiter);
+    if (end != std::string::npos)
+    {
+        //find all but last string
+        while (end != std::string::npos)
+        {
+            const auto identifier = full_path.substr(start, end - start);
+            split_path.push_back(identifier);
+
+            start = end + delimiter.length();
+            end = full_path.find(delimiter, start);
+        }
+    }
+    split_path.push_back(full_path.substr(start, full_path.length() - start));
+
+    static constexpr auto find_identifier = [](const scope& scope, identifier name, bool recurse) -> const declaration* {
+        const auto name_it = scope.declarations.find(name);
+
+        if (name_it != scope.declarations.end())
+            return name_it->second.get();
+
+        if (recurse && scope.parent_scope)
+            return scope.parent_scope->find(name, recurse);
+
+        return nullptr;
+    };
+
+    const declaration* decl = find_identifier(*this, identifier{ split_path[0] }, recurse);
+    for (int i = 1; i < split_path.size(); ++i)
+    {
+        if (!decl)
+            return nullptr;
+        decl = find_identifier(*decl->our_scope, split_path[i], false);
+    }
+
+    return decl;
 }
 
 const scope* scope::get_global() const

@@ -167,6 +167,111 @@ namespace Laboratory.Tests.L4.StandardLibrary
                               new FunctionEvaluation(TimeSpanNegator, args.lhs, mode),
                               new FunctionEvaluation(TimeSpanFromSeconds, args.rhs, mode));
         }
+        
+        public static (string fromSecondsArgs, string defaultConstructorArgs)[] FromSecondsConstructorArgs =
+        {
+            ("(0)", "(0, 0)"),
+            ("(0.5)", "(0, 0.5)"),
+            ("(1.1)", "(1, 0.1)"),
+            ("(1.8)", "(1, 0.8)"),
+        };
+
+        [Test]
+        public void FromSecondsConstructor([ValueSource(nameof(FromSecondsConstructorArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string fromSecondsConstructor = "_(s) = TimeSpan.fromSeconds(s)";
+            string defaultConstructor = "_(a, b) = TimeSpan(a, b)";
+                
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(fromSecondsConstructor, args.lhs, mode),
+                new FunctionEvaluation(defaultConstructor, args.rhs, mode));
+        }
+        
+        
+        public static (string seconds, string op, string expected)[] ComparisonArgsList =
+        {
+            ("(1, 1)", "eq", "true"),
+            ("(1, 1)", "neq", "false"),
+            ("(1, 1)", "lt", "false"),
+            ("(1, 1)", "leq", "true"),
+            ("(1, 1)", "gt", "false"),
+            ("(1, 1)", "geq", "true"),
+            ("(1.3, 1.3)", "eq", "true"),
+            ("(1.3, 1.3)", "neq", "false"),
+            ("(1.3, 1.3)", "lt", "false"),
+            ("(1.3, 1.3)", "leq", "true"),
+            ("(1.3, 1.3)", "gt", "false"),
+            ("(1.3, 1.3)", "geq", "true"),
+            ("(-1.3, -1.3)", "eq", "true"),
+            ("(-1.3, -1.3)", "neq", "false"),
+            ("(-1.3, -1.3)", "lt", "false"),
+            ("(-1.3, -1.3)", "leq", "true"),
+            ("(-1.3, -1.3)", "gt", "false"),
+            ("(-1.3, -1.3)", "geq", "true"),
+            ("(1.1, 1.3)", "eq", "false"),
+            ("(1.1, 1.3)", "neq", "true"),
+            ("(1.1, 1.3)", "lt", "true"),
+            ("(1.1, 1.3)", "leq", "true"),
+            ("(1.1, 1.3)", "gt", "false"),
+            ("(1.1, 1.3)", "geq", "false"),
+            ("(1.1, 2)", "eq", "false"),
+            ("(1.1, 2)", "neq", "true"),
+            ("(1.1, 2)", "lt", "true"),
+            ("(1.1, 2)", "leq", "true"),
+            ("(1.1, 2)", "gt", "false"),
+            ("(1.1, 2)", "geq", "false"),
+            ("(2, 1.1)", "eq", "false"),
+            ("(2, 1.1)", "neq", "true"),
+            ("(2, 1.1)", "lt", "false"),
+            ("(2, 1.1)", "leq", "false"),
+            ("(2, 1.1)", "gt", "true"),
+            ("(2, 1.1)", "geq", "true"),
+            ("(1.8, 1.1)", "eq", "false"),
+            ("(1.8, 1.1)", "neq", "true"),
+            ("(1.8, 1.1)", "lt", "false"),
+            ("(1.8, 1.1)", "leq", "false"),
+            ("(1.8, 1.1)", "gt", "true"),
+            ("(1.8, 1.1)", "geq", "true"),
+            ("(-1, -1)", "eq", "true"),
+            ("(-1, -1)", "neq", "false"),
+            ("(-1, -1)", "lt", "false"),
+            ("(-1, -1)", "leq", "true"),
+            ("(-1, -1)", "gt", "false"),
+            ("(-1, -1)", "geq", "true"),
+            ("(-1, -1.5)", "eq", "false"),
+            ("(-1, -1.5)", "neq", "true"),
+            ("(-1, -1.5)", "lt", "false"),
+            ("(-1, -1.5)", "leq", "false"),
+            ("(-1, -1.5)", "gt", "true"),
+            ("(-1, -1.5)", "geq", "true"),
+            ("(-1, -2.5)", "eq", "false"),
+            ("(-1, -2.5)", "neq", "true"),
+            ("(-1, -2.5)", "lt", "false"),
+            ("(-1, -2.5)", "leq", "false"),
+            ("(-1, -2.5)", "gt", "true"),
+            ("(-1, -2.5)", "geq", "true"),
+            ("(-1.5, -1)", "eq", "false"),
+            ("(-1.5, -1)", "neq", "true"),
+            ("(-1.5, -1)", "lt", "true"),
+            ("(-1.5, -1)", "leq", "true"),
+            ("(-1.5, -1)", "gt", "false"),
+            ("(-1.5, -1)", "geq", "false"),
+            ("(-2.5, -1)", "eq", "false"),
+            ("(-2.5, -1)", "neq", "true"),
+            ("(-2.5, -1)", "lt", "true"),
+            ("(-2.5, -1)", "leq", "true"),
+            ("(-2.5, -1)", "gt", "false"),
+            ("(-2.5, -1)", "geq", "false"),
+        };
+        [Test]
+        public void Comparison([ValueSource(nameof(ComparisonArgsList))] (string lhs, string op, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string testFunction =
+                "_(a, b) = TimeSpan." + args.op + "(TimeSpan.fromSeconds(a), TimeSpan.fromSeconds(b))";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, args.lhs, mode),
+                new ExpressionEvaluation(args.rhs, mode));
+        }
 
         private static (int FrameIndex, int SampleRate, float Period)[] _args =
             new[]

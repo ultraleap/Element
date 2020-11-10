@@ -3,7 +3,7 @@
 //SELF
 #include "object_model/constraints/type.hpp"
 #include "object_model/compilation_context.hpp"
-#include "object_model/declarations/declaration.hpp"
+#include "object_model/intermediaries/function_instance.hpp"
 #include "instruction_tree/instructions.hpp"
 
 using namespace element;
@@ -21,7 +21,7 @@ object_const_shared_ptr intrinsic_unary::compile(const compilation_context& cont
                                                  const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
-    const auto& declarer = *frame.function;
+    const auto& declarer = *static_cast<const declaration*>(frame.function->declarer);
     assert(declarer.inputs.size() == 1);
     assert(frame.compiled_arguments.size() == 1);
 

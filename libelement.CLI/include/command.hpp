@@ -97,7 +97,7 @@ namespace libelement::cli
             if (last_dash != std::string::npos)
                 actual_package_name = directory.substr(0, last_dash);
 
-            const auto package_path = "ElementPackages\\" + actual_package_name;
+            const auto package_path = "ElementPackages/" + actual_package_name;
             return std::filesystem::exists(package_path) && std::filesystem::is_directory(package_path);
         }
 

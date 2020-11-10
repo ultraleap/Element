@@ -15,6 +15,7 @@ namespace element
     template <typename Context, typename Obj, typename AST>
     void assign_source_information(const Context* context, Obj& t, const AST* ast)
     {
+        assert(ast->nearest_token);
         const auto& file_info = context->src_context->file_info.at(ast->nearest_token->file_name);
         const std::string* filename = file_info.file_name.get();
         const std::string* line_in_source = file_info.source_lines[static_cast<std::size_t>(ast->nearest_token->line) - 1].get();
@@ -29,8 +30,8 @@ namespace element
     typedef std::vector<std::pair<identifier, const element_ast*>> deferred_expressions;
 
     std::unique_ptr<declaration> build_lambda_declaration(const element_interpreter_ctx* context, identifier& identifier, const element_ast* expression, const scope* parent_scope, element_result& output_result);
-    std::unique_ptr<expression> build_expression(const element_interpreter_ctx* context, const element_ast* ast, expression_chain* chain, deferred_expressions& deferred_expressions, element_result& output_result);
-    std::unique_ptr<expression_chain> build_expression_chain(const element_interpreter_ctx* context, const element_ast* const ast, const declaration* declarer, deferred_expressions& deferred_expressions, element_result& output_result);
-    std::unique_ptr<expression> build_call_expression(const element_interpreter_ctx* context, const element_ast* ast, expression_chain* chain, deferred_expressions& deferred_expressions, element_result& output_result);
+    std::unique_ptr<expression> build_expression(const element_interpreter_ctx* context, const element_ast* ast, expression_chain* chain, element_result& output_result);
+    std::unique_ptr<expression_chain> build_expression_chain(const element_interpreter_ctx* context, const element_ast* const ast, const declaration* declarer, element_result& output_result);
+    std::unique_ptr<expression> build_call_expression(const element_interpreter_ctx* context, const element_ast* ast, expression_chain* chain, element_result& output_result);
     std::unique_ptr<scope> build_root_scope(const element_interpreter_ctx* context, const element_ast* ast, element_result& output_result);
 } // namespace element

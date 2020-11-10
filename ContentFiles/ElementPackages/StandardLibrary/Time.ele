@@ -74,6 +74,31 @@ struct TimeSpan(integer:Num, fractional:Num)
     {
         return = this.mul(1.div(x))
     }
+
+    eq(a:TimeSpan, b:TimeSpan):Bool = Bool.and(a.integer.eq(b.integer), a.fractional.eq(b.fractional))
+    neq(a:TimeSpan, b:TimeSpan):Bool = not(eq(a, b))
+    lt(a:TimeSpan, b:TimeSpan):Bool
+    {
+        return = if(a.integer.lt(b.integer),
+                        true,
+                        if(a.integer.eq(b.integer),
+                            a.fractional.lt(b.fractional),
+                            false
+                        )
+                )
+    }
+    leq(a:TimeSpan, b:TimeSpan):Bool
+    {
+        return = if(a.integer.lt(b.integer),
+                        true,
+                        if(a.integer.eq(b.integer),
+                            a.fractional.leq(b.fractional),
+                            false
+                        )
+                )
+    }
+    gt(a:TimeSpan, b:TimeSpan):Bool = not(a.leq(b))
+    geq(a:TimeSpan, b:TimeSpan):Bool = not(a.lt(b))
     
     _regularise(this:TimeSpan):TimeSpan
     {

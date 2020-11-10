@@ -108,7 +108,9 @@ jobs:
           mkdir build
           cd build
           cmake -DBUILD_TESTING=ON -DCODE_COVERAGE=ON ..
+          set +e
           cmake --build . --target libelement_test_coverage
+          set -e
           cd ../..
 
           # ----- Laboratory Tests Coverage ------

@@ -26,7 +26,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Factory([ValueSource(nameof(FactoryArgsList))] (string lhs, string factory, string rhs) args, [Values] EvaluationMode mode)
         {
-            string defaultConstructor = "Transform";
+            string defaultConstructor = "_(m:Matrix4x4):Transform = Transform(m)";
             string altConstructor = "Transform." + args.factory;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(defaultConstructor, args.lhs, mode),
