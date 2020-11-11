@@ -455,6 +455,24 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
     log(msg);
 }
 
+
+void element_log_ctx::log(const element_interpreter_ctx& context, element_result code, const std::string& message) const
+{
+    auto msg = element_log_message();
+    msg.message = message.c_str();
+    msg.message_length = static_cast<int>(message.length());
+    msg.message_code = code;
+    msg.line = -1;
+    msg.character = -1;
+    msg.length = -1;
+    msg.stage = ELEMENT_STAGE_EVALUATOR;
+    msg.filename = nullptr;
+    msg.related_log_message = nullptr;
+    msg.line_in_source = nullptr;
+
+    log(msg);
+}
+
 void element_log_ctx::log(const element_interpreter_ctx& context, element_result code, const std::string& message, const std::string& filename) const
 {
     auto msg = element_log_message();

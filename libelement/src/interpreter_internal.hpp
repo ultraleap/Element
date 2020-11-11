@@ -45,7 +45,8 @@ public:
     element_result load_prelude();
     element_result clear();
     void set_log_callback(LogCallback callback, void* user_data);
-    void log(element_result message_code, const std::string& message, const std::string& filename = std::string()) const;
+    void log(element_result message_code, const std::string& message, const std::string& filename) const;
+    void log(element_result code, const std::string& message) const;
     void log(const std::string& message) const;
 
     element_result call_expression_to_objects(

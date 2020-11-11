@@ -174,9 +174,11 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
     if (!directory_exists(package_path))
     {
         auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
-        std::cout << fmt::format("package {} does not exist at path {}\n",
-                                 package_path, abs); //todo: proper logging
-        return ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
+        std::string msg = fmt::format("package {} does not exist at path {}\n",
+                                      package_path, abs);
+        element_result result = ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
+        log(result, msg);
+        return result;
     }
 
     element_result ret = ELEMENT_OK;
@@ -250,6 +252,15 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
         return;
 
     logger->log(*this, code, message, filename);
+}
+
+void element_interpreter_ctx::log(element_result code, const std::string & message) const
+{
+    if (logger == nullptr)
+    {
+        return;
+    }
+    logger->log(*this, code, message);
 }
 
 void element_interpreter_ctx::log(const std::string& message) const
