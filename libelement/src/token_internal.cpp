@@ -149,7 +149,7 @@ element_result element_tokeniser_ctx::run(const char* cinput, const char* cfilen
                     const auto begin_it = it;
                     const auto result = tokenise_identifier(it, end);
                     if (result != ELEMENT_OK)
-                        return log(result, fmt::format("Failed to parse identifier '{}'", std::string(begin_it, it)));
+                        return log(result, fmt::format("Failed to parse identifier '{}' following '_'.", std::string(begin_it, it)));
                 }
                 else
                 {
