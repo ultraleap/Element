@@ -176,11 +176,19 @@ element_result element_tokeniser_get_token(
     const char* msg);
 
 /**
- * @brief converts a token to string
+ * @brief converts a tokeniser to string
  *
- * @param[in] tokeniser             tokeniser context  
- * @param[in] token_to_mark         token to highlight in output string 
- * @param[in] output_buffer         output buffer
+ * Create a string which displays all tokens in the tokeniser.
+ * Each token is on a new line.
+ *
+ * A pointer to a specified token can be passed in via "token_to_mark".
+ * If this is supplied, the line containing the token will be marked with
+ * "<--- HERE". A NULL or invalid pointer will still quietly continue and
+ * not display the marking message.
+ *
+ * @param[in] tokeniser             tokeniser context
+ * @param[in] token_to_mark         token to highlight in output string
+ * @param[out] output_buffer        output buffer
  * @param[in] output_buffer_size    output buffer size
  *
  * @return ELEMENT_OK converted tokeniser to string successfully
