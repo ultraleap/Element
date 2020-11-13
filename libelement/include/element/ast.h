@@ -187,7 +187,7 @@ element_result element_ast_get_child(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node pointer is null
  */
 element_result element_ast_get_root(
-    element_ast* ast, 
+    element_ast* ast,
     element_ast** root);
 
 /**

@@ -554,7 +554,7 @@ namespace element
     {
         if (ast->type != ELEMENT_AST_NODE_ROOT)
         {
-            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::failed_to_build_declaration, ast->nearest_token->file_name);
+            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::failed_to_build_declaration, ast->nearest_token->source_name);
             return nullptr;
         }
 

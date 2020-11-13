@@ -46,7 +46,7 @@ typedef struct
     int line;
     int line_start_position; //the position at which the line starts in the input string
     int character;           //the position in the line where the token starts (starting from 1, not 0)
-    const char* file_name;
+    const char* source_name;
 } element_token;
 
 /**
@@ -74,20 +74,25 @@ void element_tokeniser_delete(
     element_tokeniser_ctx** tokeniser);
 
 /**
- * @brief runs converts an input expression to a sequence of tokens
+ * @brief converts an input expression to tokens
+ *
+ * Take an input string and convert to a sequence of tokens.
+ * The source of the string must be given a name, which is used in logging
+ * and error reporting. This could be, for example, the name of the file
+ * from which the input was read.
  *
  * @param[in] tokeniser         tokeniser context 
- * @param[in] input             file data
- * @param[in] filename          file name
+ * @param[in] input             input to tokenise
+ * @param[in] source_name       source name
  * *
  * @return ELEMENT_OK tokeniser executed successfully
  * @return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL tokeniser pointer is null
- * @return ELEMENT_ERROR_API_STRING_IS_NULL file name pointer is null
+ * @return ELEMENT_ERROR_API_STRING_IS_NULL source_name pointer is null
  */
 element_result element_tokeniser_run(
     element_tokeniser_ctx* tokeniser, 
     const char* input, 
-    const char* filename);
+    const char* source_name);
 
 /**
  * @brief clears the tokeniser context
@@ -115,19 +120,20 @@ element_result element_tokeniser_set_log_callback(
     element_log_callback log_callback, 
     void* user_data);
 
+
 /**
- * @brief gets the file name associated with a tokeniser
+ * @brief gets the source name associated with a tokeniser
  *
  * @param[in] tokeniser         tokeniser context  
- * @param[in] filename          file name
+ * @param[in] source_name       source name
  *
- * @return ELEMENT_OK retrieved file name successfully
+ * @return ELEMENT_OK retrieved source name successfully
  * @return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL tokeniser pointer is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL file name pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL source_name pointer is null
  */
-element_result element_tokeniser_get_filename(
+element_result element_tokeniser_get_source_name(
     const element_tokeniser_ctx* tokeniser,
-    const char** filename);
+    const char** source_name);
 
 /**
  * @brief gets the input associated with a tokeniser
