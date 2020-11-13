@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include "element/common.h"
 #include "element/interpreter.h"
 
 /**

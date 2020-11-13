@@ -6,6 +6,9 @@ extern "C" {
 #endif
 
 #include "element/ast.h"
+#include "element/common.h"
+#include "element/token.h"
+
 /**
  * @brief opaque pointer to element_parser_ctx
 */
