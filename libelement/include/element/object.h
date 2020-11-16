@@ -18,7 +18,7 @@ typedef struct element_object element_object;
  *
  * @param[in,out] object        object to delete
 */
-void element_delete_object(element_object** object);
+void element_object_delete(element_object** object);
 
 /**
  * @brief compilation context
@@ -35,7 +35,7 @@ typedef struct element_compilation_ctx element_compilation_ctx;
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter context pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL output pointer is null
 */
-element_result element_create_compilation_ctx(element_interpreter_ctx* interpreter, element_compilation_ctx** output);
+element_result element_compilation_ctx_create(element_interpreter_ctx* interpreter, element_compilation_ctx** output);
 
 /**
  * @brief releases memory associated with compilation context and assigns nullptr
@@ -44,7 +44,8 @@ element_result element_create_compilation_ctx(element_interpreter_ctx* interpret
  *
  * @return ELEMENT_OK object compiled successfully
 */
-element_result element_delete_compilation_ctx(element_compilation_ctx** context);
+
+element_result element_compilation_ctx_delete(element_compilation_ctx** context);
 
 /**
  * @brief wraps a declaration in an object so that it can be assigned as a

@@ -384,7 +384,7 @@ element_result element_interpreter_compile_expression(
     {
         interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
         (*instruction)->instruction = nullptr;
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return result;
     }
 
@@ -396,12 +396,12 @@ element_result element_interpreter_compile_expression(
         if (!instr)
         {
             (*instruction)->instruction = nullptr;
-            element_delete_object(&object_ptr);
+            element_object_delete(&object_ptr);
             return ELEMENT_ERROR_UNKNOWN;
         }
 
         (*instruction)->instruction = std::move(instr);
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return ELEMENT_OK;
     }
 
@@ -413,7 +413,7 @@ element_result element_interpreter_compile_expression(
         interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
         interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
         *instruction = nullptr;
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return result;
     }
     
@@ -424,7 +424,7 @@ element_result element_interpreter_compile_expression(
     {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
         *instruction = nullptr;
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return result;
     }
 
@@ -433,12 +433,12 @@ element_result element_interpreter_compile_expression(
     {
         interpreter->log(result, "Failed to compile declaration to an instruction tree.");
         *instruction = nullptr;
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return ELEMENT_ERROR_UNKNOWN;
     }
 
     (*instruction)->instruction = std::move(instr);
-    element_delete_object(&object_ptr);
+    element_object_delete(&object_ptr);
     return ELEMENT_OK;
 }
 
@@ -504,7 +504,7 @@ element_result element_interpreter_typeof_expression(
     {
         //todo:
         interpreter->log(result, "tried to get typeof an expression that failed to compile");
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return result;
     }
 
@@ -513,12 +513,12 @@ element_result element_interpreter_typeof_expression(
     {
         //todo:
         interpreter->log(ELEMENT_ERROR_API_INSUFFICIENT_BUFFER, fmt::format("buffer size of {} isn't sufficient for string of {} characters", buffer_size, typeof.size()));
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
     }
 
     strncpy(buffer, typeof.c_str(), typeof.size());
-    element_delete_object(&object_ptr);
+    element_object_delete(&object_ptr);
     return ELEMENT_OK;
 }
 

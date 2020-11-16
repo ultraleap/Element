@@ -71,7 +71,7 @@ TEST_CASE("ObjectModel", "[API]")
         result = element_declaration_to_object(const_int_declaration, &const_int_obj);
         CHECK(result == ELEMENT_OK);
 
-        result = element_create_compilation_ctx(interpreter, &compilation_ctx);
+        result = element_compilation_ctx_create(interpreter, &compilation_ctx);
         CHECK(result == ELEMENT_OK);
 
         result = element_object_compile(const_int_obj, compilation_ctx, &const_int);
@@ -108,12 +108,12 @@ TEST_CASE("ObjectModel", "[API]")
         }
 
     cleanup:
-        element_delete_object(&my_struct_instance_a);
-        element_delete_object(&my_struct_instance);
-        element_delete_object(&my_struct_obj);
-        element_delete_object(&const_int_obj);
-        element_delete_object(&const_int);
-        element_delete_compilation_ctx(&compilation_ctx);
+        element_object_delete(&my_struct_instance_a);
+        element_object_delete(&my_struct_instance);
+        element_object_delete(&my_struct_obj);
+        element_object_delete(&const_int_obj);
+        element_object_delete(&const_int);
+        element_compilation_ctx_delete(&compilation_ctx);
         element_declaration_delete(&my_struct_declaration);
         element_declaration_delete(&const_int_declaration);
         element_interpreter_delete(&interpreter);

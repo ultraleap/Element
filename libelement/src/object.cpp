@@ -13,7 +13,7 @@
 #include "object_model/compilation_context.hpp"
 #include "object_model/intermediaries/declaration_wrapper.hpp"
 
-void element_delete_object(element_object** object)
+void element_object_delete(element_object** object)
 {
     if (!object)
         return;
@@ -23,7 +23,7 @@ void element_delete_object(element_object** object)
     return;
 }
 
-element_result element_create_compilation_ctx(element_interpreter_ctx* interpreter, element_compilation_ctx** output)
+element_result element_compilation_ctx_create(element_interpreter_ctx* interpreter, element_compilation_ctx** output)
 {
     if (!interpreter)
         return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
@@ -37,7 +37,7 @@ element_result element_create_compilation_ctx(element_interpreter_ctx* interpret
     return ELEMENT_OK;
 }
 
-element_result element_delete_compilation_ctx(element_compilation_ctx** context)
+element_result element_compilation_ctx_delete(element_compilation_ctx** context)
 {
     if (!context)
         return ELEMENT_OK;
