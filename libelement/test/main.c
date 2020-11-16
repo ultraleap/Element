@@ -79,7 +79,7 @@ int main(int argc, char** argv)
         float outputs[] = { 0 };
         output.values = outputs;
         output.count = 1;
-        result = element_interpreter_evaluate(interpreter, NULL, instruction, &input, &output);
+        result = element_interpreter_evaluate_declaration(interpreter, NULL, instruction, &input, &output);
 
         if (result != ELEMENT_OK)
             goto cleanup;

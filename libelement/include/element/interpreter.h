@@ -242,7 +242,7 @@ void element_instruction_delete(
  *
  * @param[in] interpreter       interpreter context
  * @param[in] path              declaration name
- * @param[in] declaration       result object
+ * @param[out] declaration      result
  *
  * @return ELEMENT_OK found declaration successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
@@ -256,23 +256,42 @@ element_result element_interpreter_find(
     element_declaration** declaration);
 
 /**
- * @brief compiles a declaration
+ * @brief compiles a declaration into an instruction tree
  *
  * @param[in] interpreter       interpreter context
  * @param[in] options           compilation options
  * @param[in] declaration       declaration to compile
- * @param[out] instruction      result object
+ * @param[out] instruction      result
  *
  * @return ELEMENT_OK compiled declaration successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
  * @return ELEMENT_ERROR_API_DECLARATION_IS_NULL declaration pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL result object pointer is null
  */
-element_result element_interpreter_compile(
+element_result element_interpreter_compile_declaration(
     element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
     const element_declaration* declaration,
     element_instruction** instruction);
+
+/**
+ * @brief compiles an expression to an instruction tree
+ *
+ * @param[in] interpreter       interpreter context
+ * @param[in] options           compilation options
+ * @param[in] expression_string expression to compile
+ * @param[out] instruction      instruction tree result
+ *
+ * @return ELEMENT_OK compiled an expression to an instruction tree successfully
+ * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
+ * @return ELEMENT_ERROR_API_STRING_IS_NULL expression_string is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL instruction is null
+ */
+element_result element_interpreter_compile_expression(
+        element_interpreter_ctx* interpreter,
+        const element_compiler_options* options,
+        const char* expression_string,
+        element_instruction** instruction);
 
 /**
  * @brief evaluates an instruction tree with the provided (boundary) inputs
@@ -289,7 +308,7 @@ element_result element_interpreter_compile(
  * @return ELEMENT_ERROR_API_INVALID_INPUT inputs pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL outputs pointer is null
  */
-element_result element_interpreter_evaluate(
+element_result element_interpreter_evaluate_declaration(
     element_interpreter_ctx* interpreter,
     const element_evaluator_options* options,
     const element_instruction* instruction,
@@ -297,31 +316,12 @@ element_result element_interpreter_evaluate(
     element_outputs* outputs);
 
 /**
- * @brief compiles an expression to an instruction tree
+ * @brief evaluates an expression
  *
  * @param[in] interpreter       interpreter context
  * @param[in] options           compilation options
  * @param[in] expression_string expression to compile
- * @param[out] instruction       instruction tree result
- *
- * @return ELEMENT_OK compiled an expression to an instruction tree successfully
- * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
- * @return ELEMENT_ERROR_API_STRING_IS_NULL expression_string is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL instruction is null
- */
-element_result element_interpreter_compile_expression(
-    element_interpreter_ctx* interpreter,
-    const element_compiler_options* options,
-    const char* expression_string,
-    element_instruction** instruction);
-
-/**
- * @brief evaluates an expression to an instruction tree
- *
- * @param[in] interpreter       interpreter context
- * @param[in] options           compilation options
- * @param[in] expression_string expression to compile
- * @param[in] outputs           outputs
+ * @param[out] outputs          outputs
  *
  * @return ELEMENT_OK evaluated an expression successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
@@ -333,6 +333,25 @@ element_result element_interpreter_evaluate_expression(
     const element_evaluator_options* options,
     const char* expression_string,
     element_outputs* outputs);
+
+/**
+ * @brief evaluates a call_expression
+ *
+ * @param[in] interpreter       interpreter context
+ * @param[in] options           compilation options
+ * @param[in] expression_string expression to compile
+ * @param[out] outputs          outputs
+ *
+ * @return ELEMENT_OK evaluated an expression successfully
+ * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
+ * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL instruction pointer is null
+ * @return ELEMENT_ERROR_API_INVALID_INPUT outputs pointer is null
+ */
+element_result element_interpreter_evaluate_call_expression(
+        element_interpreter_ctx* interpreter,
+        const element_evaluator_options* options,
+        const char* call_expression,
+        element_outputs* outputs);
 
 /**
  * @brief determines typeof information for a given expression
@@ -356,11 +375,6 @@ element_result element_interpreter_typeof_expression(
     char* buffer,
     int buffer_size);
 
-element_result element_interpreter_evaluate_call_expression(
-    element_interpreter_ctx* interpreter,
-    const element_evaluator_options* options,
-    const char* call_expression,
-    element_outputs* outputs);
 
 #if defined(__cplusplus)
 }
