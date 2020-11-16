@@ -33,7 +33,7 @@ namespace element
         return ELEMENT_ERROR_INVALID_PTR; \
     }
 
-using LogCallback = void (*)(const element_log_message*, void*);
+using LogCallback = element_log_callback;
 
 struct element_log_ctx
 {

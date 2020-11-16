@@ -155,6 +155,8 @@ struct element_log_message
     element_log_message* related_log_message;
 };
 
+typedef void (*element_log_callback)(const element_log_message*, void*);
+
 #define ELEMENT_OK_OR_RETURN(t)                         \
     do {                                                \
         const element_result ok_or_return_result = (t); \

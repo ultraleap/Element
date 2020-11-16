@@ -177,7 +177,7 @@ element_result element_interpreter_clear(
  */
 element_result element_interpreter_set_log_callback(
     element_interpreter_ctx* interpreter,
-    void (*log_callback)(const element_log_message*, void*),
+    element_log_callback log_callback,
     void* user_data);
 
 /**

@@ -134,7 +134,7 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_set_log_callback(element_tokeniser_ctx* tokeniser, void (*log_callback)(const element_log_message*, void*), void* user_data)
+element_result element_tokeniser_set_log_callback(element_tokeniser_ctx* tokeniser, element_log_callback log_callback, void* user_data)
 {
     assert(tokeniser);
     assert(log_callback);
