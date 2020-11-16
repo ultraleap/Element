@@ -38,7 +38,8 @@ element_result error::log_once(const element_log_ctx* logger) const
     if (!logged)
     {
         logged = true;
-        logger->log(get_log_message());
+        if (logger)
+            logger->log(get_log_message());
     }
 
     return code;

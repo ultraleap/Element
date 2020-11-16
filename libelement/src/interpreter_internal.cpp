@@ -255,27 +255,21 @@ void element_interpreter_ctx::set_log_callback(LogCallback callback, void* user_
 
 void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename) const
 {
-    if (logger == nullptr)
-        return;
-
-    logger->log(*this, code, message, filename);
+    if (logger)
+        logger->log(*this, code, message, filename);
 }
 
 void element_interpreter_ctx::log(element_result code, const std::string & message) const
 {
-    if (logger == nullptr)
-        return;
-    logger->log(*this, code, message);
+    if (logger)
+        logger->log(*this, code, message);
 }
 
 void element_interpreter_ctx::log(const std::string& message) const
 {
-    if (logger == nullptr)
-        return;
-
-    logger->log(message, element_stage::ELEMENT_STAGE_MISC);
+    if (logger)
+        logger->log(message, element_stage::ELEMENT_STAGE_MISC);
 }
-
 
 element_result element_interpreter_ctx::call_expression_to_objects(
     const element_compiler_options* options,

@@ -53,7 +53,8 @@ namespace element
         {
             const auto error = element::build_log_error(context->src_context.get(),
                                                         ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
-            context->logger->log(error);
+            if (context->logger)
+                context->logger->log(error);
 
             return false;
         }
@@ -66,7 +67,8 @@ namespace element
         {
             const auto error = element::build_log_error(context->src_context.get(),
                                                         ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
-            context->logger->log(error);
+            if (context->logger)
+                context->logger->log(error);
 
             return false;
         }
@@ -77,7 +79,8 @@ namespace element
         {
             const auto error = element::build_log_error(context->src_context.get(),
                                                         ast, log_error_message_code::intrinsic_type_mismatch, declaration.name.value);
-            context->logger->log(error);
+            if (context->logger)
+                context->logger->log(error);
 
             return false;
         }

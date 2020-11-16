@@ -105,11 +105,9 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
 
         *token = nullptr;
         if (tokeniser->tokens.empty())
-        {
-            tokeniser->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg ? msg : "");
-            return ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
-        }
-        else
+            return tokeniser->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg ? msg : "");
+
+        if (tokeniser->logger)
         {
             const auto& last_token = tokeniser->tokens[tokeniser->tokens.size() - 1];
             element_log_message log_msg;
@@ -126,8 +124,9 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
             log_msg.character = last_token.character;
 
             tokeniser->logger->log(log_msg);
-            return ELEMENT_ERROR_PARTIAL_GRAMMAR;
         }
+
+        return ELEMENT_ERROR_PARTIAL_GRAMMAR;
     }
 
     *token = &tokeniser->tokens[index];

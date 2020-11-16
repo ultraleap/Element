@@ -165,7 +165,6 @@ namespace libelement::cli
         void set_log_callback(const command::log_callback log_callback,
                               void* user_data) const
         {
-
             element_interpreter_set_log_callback(context, log_callback, user_data);
         }
 

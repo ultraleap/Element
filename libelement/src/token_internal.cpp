@@ -434,28 +434,25 @@ void element_tokeniser_ctx::clear()
 
 element_result element_tokeniser_ctx::log(element_result message_code, const std::string& message) const
 {
-    if (logger == nullptr)
-        return message_code;
+    if (logger)
+        logger->log(*this, message_code, message);
 
-    logger->log(*this, message_code, message);
     return message_code;
 }
 
 element_result element_tokeniser_ctx::log(element_result message_code, const std::string& message, int length, element_log_message* related_message) const
 {
-    if (logger == nullptr)
-        return message_code;
+    if (logger)
+        logger->log(*this, message_code, message, length, related_message);
 
-    logger->log(*this, message_code, message, length, related_message);
     return message_code;
 }
 
 element_result element_tokeniser_ctx::log(const std::string& message) const
 {
-    if (logger == nullptr)
-        return ELEMENT_OK;
+    if (logger)
+        logger->log(message, element_stage::ELEMENT_STAGE_MISC);
 
-    logger->log(message, element_stage::ELEMENT_STAGE_MISC);
     return ELEMENT_OK;
 }
 
