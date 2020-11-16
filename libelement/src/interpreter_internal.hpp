@@ -26,7 +26,7 @@ struct element_instruction
     std::shared_ptr<const element::instruction> instruction;
 };
 
-struct element_compilation_ctx
+struct element_object_model_ctx
 {
     std::unique_ptr<element::compilation_context> ctx;
 };

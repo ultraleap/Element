@@ -52,8 +52,8 @@ namespace libelement::cli
         {
             const auto expression = custom_arguments.expression;
 
-            element_compilation_ctx* compilation_context;
-            auto result = element_compilation_ctx_create(context, &compilation_context);
+            element_object_model_ctx* compilation_context;
+            auto result = element_object_model_ctx_create(context, &compilation_context);
             if (result != ELEMENT_OK)
             {
                 return compiler_message(error_conversion(result),
@@ -106,7 +106,7 @@ namespace libelement::cli
             }
             else
             {
-                result = element_object_compile(expression_object, compilation_context, &result_object);
+                result = element_object_simplify(expression_object, compilation_context, &result_object);
                 if (result != ELEMENT_OK)
                 {
                     context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
