@@ -75,8 +75,8 @@ element_result eval(const char* evaluate)
     UNSCOPED_INFO(output_buffer);
 
 cleanup:
-    element_delete_declaration(&declaration);
-    element_delete_instruction(&instruction);
+    element_declaration_delete(&declaration);
+    element_instruction_delete(&instruction);
     element_interpreter_delete(&context);
     return result;
 }
@@ -144,8 +144,8 @@ element_result eval_with_source(const char* source, const char* evaluate)
     UNSCOPED_INFO(output_buffer);
 
 cleanup:
-    element_delete_declaration(&declaration);
-    element_delete_instruction(&instruction);
+    element_declaration_delete(&declaration);
+    element_instruction_delete(&instruction);
     element_interpreter_delete(&context);
     return result;
 }
@@ -204,8 +204,8 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     UNSCOPED_INFO(output_buffer);
 
 cleanup:
-    element_delete_declaration(&declaration);
-    element_delete_instruction(&instruction);
+    element_declaration_delete(&declaration);
+    element_instruction_delete(&instruction);
     element_interpreter_delete(&context);
     return result;
 }

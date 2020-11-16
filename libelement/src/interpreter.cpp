@@ -172,7 +172,7 @@ element_result element_interpreter_clear(element_interpreter_ctx* interpreter)
     return interpreter->clear();
 }
 
-void element_delete_declaration(element_declaration** declaration)
+void element_declaration_delete(element_declaration** declaration)
 {
     if (!declaration)
         return;
@@ -181,7 +181,7 @@ void element_delete_declaration(element_declaration** declaration)
     *declaration = nullptr;
 }
 
-void element_delete_instruction(element_instruction** instruction)
+void element_instruction_delete(element_instruction** instruction)
 {
     if (!instruction)
         return;

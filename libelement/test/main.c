@@ -95,8 +95,8 @@ cleanup:
     element_delete_object(&const_int_obj);
     element_delete_object(&const_int);
     element_delete_compilation_ctx(&compilation_ctx);
-    element_delete_declaration(&my_struct_declaration);
-    element_delete_declaration(&const_int_declaration);
+    element_declaration_delete(&my_struct_declaration);
+    element_declaration_delete(&const_int_declaration);
     element_interpreter_delete(&interpreter);
 
     return 0;

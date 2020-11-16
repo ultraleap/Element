@@ -159,7 +159,7 @@ namespace libelement::cli
             element_result result = element_interpreter_compile_expression(context, nullptr, expression.c_str(), &compiled_function);
             if (result != ELEMENT_OK)
             {
-                element_delete_instruction(&compiled_function);
+                element_instruction_delete(&compiled_function);
                 return compiler_message(error_conversion(result),
                                         "Failed to compile: " + expression + " at runtime with element_result " + std::to_string(result),
                                         compilation_input.get_log_json());
@@ -179,7 +179,7 @@ namespace libelement::cli
                 result = element_interpreter_evaluate_call_expression(context, nullptr, custom_arguments.arguments.c_str(), &call_output);
                 if (result != ELEMENT_OK)
                 {
-                    element_delete_instruction(&compiled_function);
+                    element_instruction_delete(&compiled_function);
                     return compiler_message(error_conversion(result),
                                             "Failed to evaluate: " + expression + " called with " + custom_arguments.arguments + " at runtime with element_result " + std::to_string(result),
                                             compilation_input.get_log_json());
@@ -195,7 +195,7 @@ namespace libelement::cli
             output.count = max_output_size;
 
             element_interpreter_evaluate(context, nullptr, compiled_function, &input, &output);
-            element_delete_instruction(&compiled_function);
+            element_instruction_delete(&compiled_function);
 
             return generate_response(result, output, compilation_input.get_log_json());
         }

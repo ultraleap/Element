@@ -226,7 +226,7 @@ typedef struct element_instruction element_instruction;
  *
  * @param[in,out] declaration   declaration to delete
  */
-void element_delete_declaration(
+void element_declaration_delete(
     element_declaration** declaration);
 
 /**
@@ -234,7 +234,7 @@ void element_delete_declaration(
  *
  * @param[in] instruction       instruction to delete
  */
-void element_delete_instruction(
+void element_instruction_delete(
     element_instruction** instruction);
 
 /**
