@@ -74,30 +74,32 @@ namespace libelement::cli
             element_object* result_object;
             if (!custom_arguments.arguments.empty())
             {
-                element_object* call_objects;
-                int call_objects_count;
-                result = context->call_expression_to_objects(nullptr, custom_arguments.arguments.c_str(), &call_objects, &call_objects_count);
+                std::vector<element::object_const_shared_ptr> objs;
+                result = context->call_expression_to_objects(nullptr, custom_arguments.arguments.c_str(), objs);
+
                 if (result != ELEMENT_OK)
                 {
-                    for (int i = 0; i < call_objects_count; ++i)
-                    {
-                        element_object* obj = &call_objects[i];
-                        element_object_delete(&obj);
-                    }
                     context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
                     return compiler_message(error_conversion(result),
                                             "Failed to convert call expression to objects: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                                             compilation_input.get_log_json());
                 }
 
+                const int call_objects_count = static_cast<int>(objs.size());
+                element_object** call_objects = new element_object*[call_objects_count];
+
+                for (int i = 0; i < call_objects_count; ++i)
+                    call_objects[i] = new element_object{ std::move(objs[i]) };
+
                 result = element_object_call(expression_object, compilation_context, call_objects, call_objects_count, &result_object);
+
+                for (int i = 0; i < call_objects_count; ++i)
+                    element_object_delete(&call_objects[i]);
+
+                delete[] call_objects;
+
                 if (result != ELEMENT_OK)
                 {
-                    for (int i = 0; i < call_objects_count; ++i)
-                    {
-                        element_object* obj = &call_objects[i];
-                        element_object_delete(&obj);
-                    }
                     context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
                     return compiler_message(error_conversion(result),
                                             "Failed to call object with arguments: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),

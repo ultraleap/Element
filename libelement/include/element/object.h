@@ -100,7 +100,7 @@ element_result element_object_simplify(
 element_result element_object_call(
     const element_object* object,
     element_object_model_ctx* context,
-    const element_object* arguments,
+    element_object** arguments,
     unsigned int arguments_count,
     element_object** output);
 

@@ -85,7 +85,7 @@ TEST_CASE("ObjectModel", "[API]")
 
         args[0] = const_int;
 
-        result = element_object_call(my_struct_obj, compilation_ctx, *args, args_count, &my_struct_instance);
+        result = element_object_call(my_struct_obj, compilation_ctx, &args[0], args_count, &my_struct_instance);
         CHECK(result == ELEMENT_OK);
 
         result = element_object_index(my_struct_instance, compilation_ctx, "a", &my_struct_instance_a);
