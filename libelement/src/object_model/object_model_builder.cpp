@@ -142,7 +142,12 @@ namespace element
         if (intrinsic)
         {
             //todo: handle the intrinsic not existing once we have them all (don't break using the prelude for everything else)
-            intrinsic::register_intrinsic<struct_declaration>(context, ast, *struct_decl);
+            const bool success = intrinsic::register_intrinsic<struct_declaration>(context, ast, *struct_decl);
+            if (!success)
+            {
+                output_result = ELEMENT_ERROR_UNKNOWN; //logged by register_intrinsic
+                return nullptr;
+            }
         }
 
         if (ast->children.size() > ast_idx::function::body)
@@ -179,7 +184,12 @@ namespace element
 
         if (intrinsic)
         {
-            intrinsic::register_intrinsic<constraint_declaration>(context, ast, *constraint_decl);
+            const bool success = intrinsic::register_intrinsic<constraint_declaration>(context, ast, *constraint_decl);
+            if (!success)
+            {
+                output_result = ELEMENT_ERROR_UNKNOWN; //logged by register_intrinsic
+                return nullptr;
+            }
         }
 
         return std::move(constraint_decl);
@@ -284,8 +294,14 @@ namespace element
         }
         else if (intrinsic && body->type == ELEMENT_AST_NODE_NO_BODY)
         {
-            if (intrinsic::register_intrinsic<function_declaration>(context, ast, *function_decl))
-                function_decl->body = intrinsic::get_intrinsic(context, *function_decl);
+            const bool success = intrinsic::register_intrinsic<function_declaration>(context, ast, *function_decl);
+            if (!success)
+            {
+                output_result = ELEMENT_ERROR_UNKNOWN; //logged by register_intrinsic
+                return nullptr;
+            }
+
+            function_decl->body = intrinsic::get_intrinsic(context, *function_decl);
         }
         else
         {
