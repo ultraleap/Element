@@ -38,7 +38,6 @@ public:
 
     std::shared_ptr<element_log_ctx> logger = nullptr;
     const char* raw_source_name = nullptr;
-    std::string source_name;
     std::string input;
     int pos = 0; //position in the source file
     int line = 1;

@@ -89,7 +89,6 @@ void element_tokeniser_ctx::reset_token()
 element_result element_tokeniser_ctx::run(const char* cinput, const char* csource_name)
 {
     raw_source_name = csource_name;
-    source_name = csource_name;
     input = cinput;
     pos = 0;
     line = 1;
@@ -423,7 +422,6 @@ std::string element_tokeniser_ctx::text_on_line(int line) const
 void element_tokeniser_ctx::clear()
 {
     tokens.clear();
-    source_name.clear();
     raw_source_name = nullptr;
     input.clear();
     line = 1;

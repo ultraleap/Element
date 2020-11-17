@@ -510,7 +510,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
 {
     assert(context.tokeniser);
 
-    const bool starts_with_prelude = context.tokeniser->source_name.rfind("Prelude/", 0) == 0;
+    const bool starts_with_prelude = std::string(context.tokeniser->raw_source_name).rfind("Prelude/", 0) == 0;
     if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude))
     {
         return; //early out if prelude logging disabled
