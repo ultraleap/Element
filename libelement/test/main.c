@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 
     args[0] = const_int;
 
-    result = element_object_call(my_struct_obj, compilation_ctx, *args, 1, &my_struct_instance);
+    result = element_object_call(my_struct_obj, compilation_ctx, &args[0], 1, &my_struct_instance);
     if (result != ELEMENT_OK)
         goto cleanup;
 

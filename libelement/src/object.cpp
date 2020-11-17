@@ -88,11 +88,11 @@ element_result element_object_simplify(
 }
 
 element_result element_object_call(
-        const element_object* object,
-        element_object_model_ctx* context,
-        const element_object* arguments,
-        unsigned int arguments_count,
-        element_object** output)
+    const element_object* object,
+    element_object_model_ctx* context,
+    element_object** arguments,
+    unsigned int arguments_count,
+    element_object** output)
 {
     if (!context || !context->ctx)
         return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
@@ -110,7 +110,7 @@ element_result element_object_call(
     args.reserve(arguments_count);
 
     for (auto i = 0U; i < arguments_count; ++i)
-        args.push_back(arguments[i].obj);
+        args.push_back(arguments[i]->obj);
 
     auto compiled = object->obj->call(*context->ctx, std::move(args), object->obj->source_info);
     *output = new element_object{ std::move(compiled) };

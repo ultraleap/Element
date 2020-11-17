@@ -373,30 +373,6 @@ element_result element_interpreter_ctx::call_expression_to_objects(
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_ctx::call_expression_to_objects(
-    const element_compiler_options* options,
-    const char* call_expression,
-    element_object** objects,
-    int* object_count)
-{
-    if (!call_expression)
-        return ELEMENT_ERROR_API_STRING_IS_NULL;
-
-    if (!objects)
-        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
-
-    std::vector<element::object_const_shared_ptr> objs;
-    call_expression_to_objects(options, call_expression, objs);
-
-    *objects = new element_object[objs.size()];
-    *object_count = objs.size();
-
-    for (int i = 0; i < objs.size(); ++i)
-        (*objects)[i].obj = std::move(objs[i]);
-
-    return ELEMENT_OK;
-}
-
 element_result element_interpreter_ctx::expression_to_object(
     const element_compiler_options* options,
     const char* expression_string,
