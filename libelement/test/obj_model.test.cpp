@@ -24,7 +24,7 @@ TEST_CASE("ObjectModel", "[API]")
         element_object* const_int_obj = nullptr;
         element_object* my_struct_obj = nullptr;
         element_interpreter_ctx* interpreter = nullptr;
-        element_compilation_ctx* compilation_ctx = nullptr;
+        element_object_model_ctx* compilation_ctx = nullptr;
 
         const std::string package = "";
 
@@ -71,10 +71,10 @@ TEST_CASE("ObjectModel", "[API]")
         result = element_declaration_to_object(const_int_declaration, &const_int_obj);
         CHECK(result == ELEMENT_OK);
 
-        result = element_create_compilation_ctx(interpreter, &compilation_ctx);
+        result = element_object_model_ctx_create(interpreter, &compilation_ctx);
         CHECK(result == ELEMENT_OK);
 
-        result = element_object_compile(const_int_obj, compilation_ctx, &const_int);
+        result = element_object_simplify(const_int_obj, compilation_ctx, &const_int);
         CHECK(result == ELEMENT_OK);
 
         result = element_interpreter_find(interpreter, "my_struct", &my_struct_declaration);
@@ -102,20 +102,20 @@ TEST_CASE("ObjectModel", "[API]")
             element_instruction* instruction;
             result = element_object_to_instruction(my_struct_instance_a, &instruction);
             CHECK(result == ELEMENT_OK);
-            result = element_interpreter_evaluate(interpreter, nullptr, instruction, &input, &output);
+            result = element_interpreter_evaluate_instruction(interpreter, nullptr, instruction, &input, &output);
             CHECK(result == ELEMENT_OK);
             REQUIRE(outputs[0] == 5);
         }
 
     cleanup:
-        element_delete_object(&my_struct_instance_a);
-        element_delete_object(&my_struct_instance);
-        element_delete_object(&my_struct_obj);
-        element_delete_object(&const_int_obj);
-        element_delete_object(&const_int);
-        element_delete_compilation_ctx(&compilation_ctx);
-        element_delete_declaration(&my_struct_declaration);
-        element_delete_declaration(&const_int_declaration);
+        element_object_delete(&my_struct_instance_a);
+        element_object_delete(&my_struct_instance);
+        element_object_delete(&my_struct_obj);
+        element_object_delete(&const_int_obj);
+        element_object_delete(&const_int);
+        element_object_model_ctx_delete(&compilation_ctx);
+        element_declaration_delete(&my_struct_declaration);
+        element_declaration_delete(&const_int_declaration);
         element_interpreter_delete(&interpreter);
     }
 }

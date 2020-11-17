@@ -26,18 +26,18 @@ element_result element_tokeniser_to_string(const element_tokeniser_ctx* tokenise
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_get_filename(const element_tokeniser_ctx* tokeniser, const char** filename)
+element_result element_tokeniser_get_source_name(const element_tokeniser_ctx* tokeniser, const char** source_name)
 {
     assert(tokeniser);
-    assert(filename);
+    assert(source_name);
 
     if (!tokeniser)
         return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
 
-    if (!filename)
+    if (!source_name)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    *filename = tokeniser->filename.c_str();
+    *source_name = tokeniser->raw_source_name;
     return ELEMENT_OK;
 }
 
@@ -115,7 +115,7 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
             log_msg.line_in_source = line_in_source.c_str();
             log_msg.message = message.c_str();
             log_msg.message_length = static_cast<int>(message.length());
-            log_msg.filename = last_token.file_name;
+            log_msg.filename = last_token.source_name;
             log_msg.length = last_token.tok_len;
             log_msg.line = last_token.line;
             log_msg.message_code = ELEMENT_ERROR_PARTIAL_GRAMMAR;
@@ -175,13 +175,13 @@ element_result element_tokeniser_clear(element_tokeniser_ctx* tokeniser)
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_run(element_tokeniser_ctx* tokeniser, const char* cinput, const char* cfilename)
+element_result element_tokeniser_run(element_tokeniser_ctx* tokeniser, const char* cinput, const char* csource_name)
 {
     if (!tokeniser)
         return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
 
-    if (!cinput || !cfilename)
+    if (!cinput || !csource_name)
         return ELEMENT_ERROR_API_STRING_IS_NULL;
 
-    return tokeniser->run(cinput, cfilename);
+    return tokeniser->run(cinput, csource_name);
 }

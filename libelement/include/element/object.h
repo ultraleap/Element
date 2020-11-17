@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include "element/common.h"
 #include "element/interpreter.h"
 
 /**
@@ -17,33 +18,34 @@ typedef struct element_object element_object;
  *
  * @param[in,out] object        object to delete
 */
-void element_delete_object(element_object** object);
+void element_object_delete(element_object** object);
 
 /**
- * @brief compilation context
+ * @brief object-model context
 */
-typedef struct element_compilation_ctx element_compilation_ctx;
+typedef struct element_object_model_ctx element_object_model_ctx;
 
 /**
- * @brief creates a compilation context from an interpreter context
+ * @brief creates an object-model context from an interpreter context
  *
  * @param[in] interpreter       interpreter context
- * @param[out] output           compilation context
+ * @param[out] output           object-model context
  *
- * @return ELEMENT_OK object compiled successfully
+ * @return ELEMENT_OK successfully created context
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter context pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL output pointer is null
 */
-element_result element_create_compilation_ctx(element_interpreter_ctx* interpreter, element_compilation_ctx** output);
+element_result element_object_model_ctx_create(element_interpreter_ctx* interpreter, element_object_model_ctx** output);
 
 /**
- * @brief releases memory associated with compilation context and assigns nullptr
+ * @brief releases memory associated with object-model context and assigns nullptr
  *
- * @param[out] context          compilation context
+ * @param[out] context          object-model context
  *
- * @return ELEMENT_OK object compiled successfully
+ * @return ELEMENT_OK context deleted successfully
 */
-element_result element_delete_compilation_ctx(element_compilation_ctx** context);
+
+element_result element_object_model_ctx_delete(element_object_model_ctx** context);
 
 /**
  * @brief wraps a declaration in an object so that it can be assigned as a
@@ -52,30 +54,30 @@ element_result element_delete_compilation_ctx(element_compilation_ctx** context)
  * @param[in] declaration       declaration to wrap
  * @param[out] output           result object
  *
- * @return ELEMENT_OK object compiled successfully
+ * @return ELEMENT_OK object created successfully
  * @return ELEMENT_ERROR_API_DECLARATION_IS_NULL declaration pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL output pointer is null
 */
 element_result element_declaration_to_object(const element_declaration* declaration, element_object** output);
 
 /**
- * @brief compiles selected object using the provided context
+ * @brief simplify selected object using the provided context
  *
  * if result was not OK but output object exists, call element_object_to_log_message
  * for more info or assign a log callback to the interpreter
  *
- * @param[in] object            compilation target
- * @param[in] context           compilation context
- * @param[out] output           result object
+ * @param[in] object            unsimplified object
+ * @param[in] context           object-model context
+ * @param[out] output           simplified object
  
- * @return ELEMENT_OK object compiled successfully
- * @return ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL context pointer is null
- * @return ELEMENT_ERROR_API_OBJECT_IS_NULL compilation target pointer is null
+ * @return ELEMENT_OK object simplified successfully
+ * @return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL context pointer is null
+ * @return ELEMENT_ERROR_API_OBJECT_IS_NULL unsimplified object pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL output is null
  */
-element_result element_object_compile(
+element_result element_object_simplify(
     const element_object* object,
-    element_compilation_ctx* context,
+    element_object_model_ctx* context,
     element_object** output);
 
 /**
@@ -84,43 +86,43 @@ element_result element_object_compile(
  * if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
  *
  * @param[in] object            object to call
- * @param[in] context           compilation context
+ * @param[in] context           object-model context
  * @param[in] arguments call    arguments
  * @param[in] arguments_count   call arguments count
  * @param[out] output result    result object
  *
  * @return ELEMENT_OK called object successfully
- * @return ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL context pointer is null
+ * @return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL context pointer is null
  * @return ELEMENT_ERROR_API_OBJECT_IS_NULL object pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL output pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT arguments pointer is null
  */
 element_result element_object_call(
     const element_object* object,
-    element_compilation_ctx* context,
+    element_object_model_ctx* context,
     const element_object* arguments,
     unsigned int arguments_count,
     element_object** output);
 
 /**
- * @brief
+ * @brief indexes the provided object
  *
  * if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
  *
  * @param[in] object            object to index
- * @param[in] context           compilation context
+ * @param[in] context           object-model context
  * @param[in] index             name to index
  * @param[out] output           result object
  *
  * @return ELEMENT_OK indexed object successfully
- * @return ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL context pointer is null
+ * @return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL context pointer is null
  * @return ELEMENT_ERROR_API_OBJECT_IS_NULL object pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL output pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT index pointer is null
  */
 element_result element_object_index(
     const element_object* object,
-    element_compilation_ctx* context,
+    element_object_model_ctx* context,
     const char* index,
     element_object** output);
 
@@ -174,9 +176,9 @@ typedef struct element_source_information
     int character_start;
     int character_end;
 
-    char* filename; //must be deleted by user
+    char* filename;       //must be deleted by user
     char* line_in_source; //must be deleted by user
-    char* text; //must be deleted by user
+    char* text;           //must be deleted by user
 } element_source_information;
 
 /**

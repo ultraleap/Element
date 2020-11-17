@@ -152,7 +152,7 @@ namespace element
 
         if (context && token)
         {
-            const auto& file_info = context->file_info.at(token->file_name);
+            const auto& file_info = context->file_info.at(token->source_name);
             const std::string* filename = file_info.file_name.get();
             const int actual_line = token->line - 1;
             const std::string* line_in_source = actual_line >= 0 ? file_info.source_lines[actual_line].get() : nullptr;

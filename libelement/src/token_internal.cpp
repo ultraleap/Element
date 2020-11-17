@@ -83,13 +83,12 @@ void element_tokeniser_ctx::reset_token()
     cur_token.line = -1;
     cur_token.character = -1;
     cur_token.line_start_position = -1;
-    cur_token.file_name = raw_filename;
+    cur_token.source_name = raw_source_name;
 }
 
-element_result element_tokeniser_ctx::run(const char* cinput, const char* cfilename)
+element_result element_tokeniser_ctx::run(const char* cinput, const char* csource_name)
 {
-    raw_filename = cfilename;
-    filename = cfilename;
+    raw_source_name = csource_name;
     input = cinput;
     pos = 0;
     line = 1;
@@ -202,7 +201,7 @@ element_result element_tokeniser_ctx::run(const char* cinput, const char* cfilen
                     memcpy(source_line.data(), cinput + line_start_position, static_cast<std::size_t>(pos) - line_start_position);
                     return log(ELEMENT_ERROR_PARSE,
                                fmt::format("Encountered invalid character '{}' in file {} on line {} character {}\n{}",
-                                           std::string(begin_it, it), cfilename, line, character, source_line));
+                                           std::string(begin_it, it), raw_source_name, line, character, source_line));
                 }
             }
             }
@@ -423,7 +422,7 @@ std::string element_tokeniser_ctx::text_on_line(int line) const
 void element_tokeniser_ctx::clear()
 {
     tokens.clear();
-    filename.clear();
+    raw_source_name = nullptr;
     input.clear();
     line = 1;
     line_start_position = 0;
