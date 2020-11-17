@@ -114,7 +114,7 @@ namespace libelement::cli
         [[nodiscard]] virtual std::string as_string() const = 0;
 
         using callback = std::function<void(command&)>;
-        using log_callback = void (*)(const element_log_message*, void* user_data);
+        using log_callback = element_log_callback;
         static void configure(CLI::App& app, command::callback callback);
 
         static compiler_message
@@ -165,7 +165,6 @@ namespace libelement::cli
         void set_log_callback(const command::log_callback log_callback,
                               void* user_data) const
         {
-
             element_interpreter_set_log_callback(context, log_callback, user_data);
         }
 

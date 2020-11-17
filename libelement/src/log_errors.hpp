@@ -203,7 +203,8 @@ namespace element
     element_result log_error(const element_log_ctx* logger, Args&&... args)
     {
         const auto error = build_log_error(args...);
-        logger->log(error);
+        if (logger)
+            logger->log(error);
         return error.result;
     }
 

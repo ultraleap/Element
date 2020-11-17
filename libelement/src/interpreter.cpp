@@ -142,7 +142,7 @@ element_result element_interpreter_load_prelude(element_interpreter_ctx* interpr
     return interpreter->load_prelude();
 }
 
-element_result element_interpreter_set_log_callback(element_interpreter_ctx* interpreter, void (*log_callback)(const element_log_message*, void*), void* user_data)
+element_result element_interpreter_set_log_callback(element_interpreter_ctx* interpreter, element_log_callback log_callback, void* user_data)
 {
     assert(interpreter);
 

@@ -786,10 +786,9 @@ element_result element_parser_ctx::validate_scope(element_ast* ast)
 
 element_result element_parser_ctx::log(element_result message_code, const std::string& message, const element_ast* nearest_ast) const
 {
-    if (logger == nullptr)
-        return message_code;
+    if (logger)
+        logger->log(*this, message_code, message, nearest_ast);
 
-    logger->log(*this, message_code, message, nearest_ast);
     return message_code;
 }
 

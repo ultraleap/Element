@@ -112,7 +112,7 @@ element_result element_tokeniser_clear(
  */
 element_result element_tokeniser_set_log_callback(
     element_tokeniser_ctx* tokeniser, 
-    void (*log_callback)(const element_log_message*, void*), 
+    element_log_callback log_callback, 
     void* user_data);
 
 /**
