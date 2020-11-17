@@ -308,7 +308,7 @@ element_result element_interpreter_compile_expression(
  * @return ELEMENT_ERROR_API_INVALID_INPUT inputs pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL outputs pointer is null
  */
-element_result element_interpreter_evaluate_declaration(
+element_result element_interpreter_evaluate_instruction(
     element_interpreter_ctx* interpreter,
     const element_evaluator_options* options,
     const element_instruction* instruction,

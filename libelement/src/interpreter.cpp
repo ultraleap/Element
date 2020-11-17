@@ -310,7 +310,7 @@ element_result element_interpreter_compile_declaration(
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_evaluate_declaration(
+element_result element_interpreter_evaluate_instruction(
     element_interpreter_ctx* interpreter,
     const element_evaluator_options* options,
     const element_instruction* instruction,
@@ -475,7 +475,7 @@ element_result element_interpreter_evaluate_expression(
     input.values = inputs;
     input.count = 1;
 
-    result = element_interpreter_evaluate_declaration(interpreter, options, instruction_ptr, &input, outputs);
+    result = element_interpreter_evaluate_instruction(interpreter, options, instruction_ptr, &input, outputs);
 
     return result;
 }

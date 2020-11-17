@@ -102,7 +102,7 @@ TEST_CASE("ObjectModel", "[API]")
             element_instruction* instruction;
             result = element_object_to_instruction(my_struct_instance_a, &instruction);
             CHECK(result == ELEMENT_OK);
-            result = element_interpreter_evaluate_declaration(interpreter, nullptr, instruction, &input, &output);
+            result = element_interpreter_evaluate_instruction(interpreter, nullptr, instruction, &input, &output);
             CHECK(result == ELEMENT_OK);
             REQUIRE(outputs[0] == 5);
         }
