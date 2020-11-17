@@ -76,9 +76,9 @@ element_result element_declaration_to_object(const element_declaration* declarat
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL output is null
  */
 element_result element_object_simplify(
-        const element_object* object,
-        element_object_model_ctx* context,
-        element_object** output);
+    const element_object* object,
+    element_object_model_ctx* context,
+    element_object** output);
 
 /**
  * @brief call a callable object with provided arguments
@@ -98,11 +98,11 @@ element_result element_object_simplify(
  * @return ELEMENT_ERROR_API_INVALID_INPUT arguments pointer is null
  */
 element_result element_object_call(
-        const element_object* object,
-        element_object_model_ctx* context,
-        const element_object* arguments,
-        unsigned int arguments_count,
-        element_object** output);
+    const element_object* object,
+    element_object_model_ctx* context,
+    const element_object* arguments,
+    unsigned int arguments_count,
+    element_object** output);
 
 /**
  * @brief indexes the provided object
@@ -121,10 +121,10 @@ element_result element_object_call(
  * @return ELEMENT_ERROR_API_INVALID_INPUT index pointer is null
  */
 element_result element_object_index(
-        const element_object* object,
-        element_object_model_ctx* context,
-        const char* index,
-        element_object** output);
+    const element_object* object,
+    element_object_model_ctx* context,
+    const char* index,
+    element_object** output);
 
 /**
  * @brief converts an object to an instruction tree
@@ -176,9 +176,9 @@ typedef struct element_source_information
     int character_start;
     int character_end;
 
-    char* filename; //must be deleted by user
+    char* filename;       //must be deleted by user
     char* line_in_source; //must be deleted by user
-    char* text; //must be deleted by user
+    char* text;           //must be deleted by user
 } element_source_information;
 
 /**

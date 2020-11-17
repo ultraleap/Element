@@ -46,7 +46,6 @@ typedef uint32_t element_ast_flags;
  */
 static const element_ast_flags ELEMENT_AST_FLAG_DECL_INTRINSIC = (1U << 1);
 
-
 /**
  * @brief flag to identify a node as having no input arguments
  */
@@ -86,7 +85,7 @@ element_result element_ast_get_flags(
  * @return ELEMENT_OK success
  */
 element_result element_ast_get_nearest_token(
-    const element_ast* ast, 
+    const element_ast* ast,
     const element_token** token);
 
 /**
@@ -98,7 +97,7 @@ element_result element_ast_get_nearest_token(
  * @return ELEMENT_OK success
  */
 element_result element_ast_get_type(
-    const element_ast* ast, 
+    const element_ast* ast,
     element_ast_node_type* type);
 
 /**
@@ -113,7 +112,7 @@ element_result element_ast_get_type(
  * @return ELEMENT_ERROR_API_INVALID_INPUT value is not an identifier
  */
 element_result element_ast_get_value_as_identifier(
-    const element_ast* ast, 
+    const element_ast* ast,
     const char** value);
 
 /**
@@ -128,7 +127,7 @@ element_result element_ast_get_value_as_identifier(
  * @return ELEMENT_ERROR_API_INVALID_INPUT value is not a literal
  */
 element_result element_ast_get_value_as_literal(
-    const element_ast* ast, 
+    const element_ast* ast,
     element_value* value);
 
 /**
@@ -142,7 +141,7 @@ element_result element_ast_get_value_as_literal(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL ast node has no parent
  */
 element_result element_ast_get_parent(
-    const element_ast* ast, 
+    const element_ast* ast,
     element_ast** parent);
 
 /**
@@ -156,7 +155,7 @@ element_result element_ast_get_parent(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL count pointer is null
  */
 element_result element_ast_get_child_count(
-    const element_ast* ast, 
+    const element_ast* ast,
     size_t* count);
 
 /**
@@ -172,8 +171,8 @@ element_result element_ast_get_child_count(
  * @return ELEMENT_ERROR_API_INVALID_INPUT index exceeds child count
  */
 element_result element_ast_get_child(
-    const element_ast* ast, 
-    size_t index, 
+    const element_ast* ast,
+    size_t index,
     element_ast** child);
 
 /**
@@ -201,7 +200,7 @@ element_result element_ast_get_root(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node pointer is null
  */
 element_result element_ast_get_root_const(
-    const element_ast* ast, 
+    const element_ast* ast,
     const element_ast** root);
 
 /**
@@ -218,9 +217,9 @@ element_result element_ast_get_root_const(
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER result size exceeds output_buffer_size
  */
 element_result element_ast_to_string(
-    const element_ast* ast, 
-    const element_ast* ast_to_mark, 
-    char* output_buffer, 
+    const element_ast* ast,
+    const element_ast* ast_to_mark,
+    char* output_buffer,
     int output_buffer_size);
 
 #if defined(__cplusplus)

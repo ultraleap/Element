@@ -90,8 +90,8 @@ void element_tokeniser_delete(
  * @return ELEMENT_ERROR_API_STRING_IS_NULL source_name pointer is null
  */
 element_result element_tokeniser_run(
-    element_tokeniser_ctx* tokeniser, 
-    const char* input, 
+    element_tokeniser_ctx* tokeniser,
+    const char* input,
     const char* source_name);
 
 /**
@@ -116,10 +116,9 @@ element_result element_tokeniser_clear(
  * @return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL tokeniser pointer is null
  */
 element_result element_tokeniser_set_log_callback(
-    element_tokeniser_ctx* tokeniser, 
-    element_log_callback log_callback, 
+    element_tokeniser_ctx* tokeniser,
+    element_log_callback log_callback,
     void* user_data);
-
 
 /**
  * @brief gets the source name associated with a tokeniser
@@ -146,7 +145,7 @@ element_result element_tokeniser_get_source_name(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL input pointer is null
  */
 element_result element_tokeniser_get_input(
-    const element_tokeniser_ctx* tokeniser, 
+    const element_tokeniser_ctx* tokeniser,
     const char** input);
 
 /**
@@ -160,7 +159,7 @@ element_result element_tokeniser_get_input(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL token count pointer is null
  */
 element_result element_tokeniser_get_token_count(
-    const element_tokeniser_ctx* tokeniser, 
+    const element_tokeniser_ctx* tokeniser,
     size_t* count);
 
 /**
@@ -176,9 +175,9 @@ element_result element_tokeniser_get_token_count(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL token count pointer is null
  */
 element_result element_tokeniser_get_token(
-    const element_tokeniser_ctx* tokeniser, 
-    size_t index, 
-    const element_token** token, 
+    const element_tokeniser_ctx* tokeniser,
+    size_t index,
+    const element_token** token,
     const char* msg);
 
 /**
@@ -203,8 +202,8 @@ element_result element_tokeniser_get_token(
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER buffer size too small
  */
 element_result element_tokeniser_to_string(
-    const element_tokeniser_ctx* tokeniser, 
-    const element_token* token_to_mark, 
+    const element_tokeniser_ctx* tokeniser,
+    const element_token* token_to_mark,
     char* output_buffer,
     int output_buffer_size);
 
