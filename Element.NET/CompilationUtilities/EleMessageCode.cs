@@ -23,6 +23,7 @@ namespace Element
         ArgumentOutOfRange = 28,
         InvalidCast = 30,
         NotImplemented = 41,
+        KeyAlreadyExists = 43,
         UnknownError = 9999,
         
         // LOADING SOURCE/PACKAGES/PARSING
@@ -66,5 +67,6 @@ namespace Element
         NotIndexable = 37,
         NotConstraint = 38,
         CallStackLimitReached = 40,
+        UnmappedBoundaryType = 42,
     }
 }

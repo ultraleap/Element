@@ -18,17 +18,21 @@ namespace Element
         /// <summary>
         /// Create a source context from a compilation input.
         /// </summary>
-        public static Result<SourceContext> CreateAndLoad(CompilerInput compilerInput) => new SourceContext(compilerInput.Options).LoadCompilerInput(compilerInput);
+        public static Result<SourceContext> CreateAndLoad(CompilerInput compilerInput)
+        {
+            var sourceContext = new SourceContext(compilerInput.Options);
+            return sourceContext.LoadCompilerInput(compilerInput).Map(() => sourceContext);
+        }
 
         /// <summary>
         /// Loads an element source intro the source context.
         /// Will fail if the source is a duplicate.
         /// </summary>
-        public Result<SourceContext> LoadElementSource(SourceInfo info)
+        public Result LoadElementSource(SourceInfo info)
         {
             lock (_syncRoot)
             {
-                return GlobalScope.AddSource(info, Context.CreateFromSourceContext(this)).Map(() => this);
+                return GlobalScope.AddSource(info, Context.CreateFromSourceContext(this));
             }
         }
 
@@ -36,7 +40,7 @@ namespace Element
         /// Loads an element package into the source context.
         /// Will fail if another version of the package is already loaded or any of the packages sources fail to load.
         /// </summary>
-        public Result<SourceContext> LoadElementPackage(PackageInfo packageInfo)
+        public Result LoadElementPackage(PackageInfo packageInfo)
         {
             lock (_syncRoot)
             {
@@ -46,8 +50,8 @@ namespace Element
                     return context.Trace(EleMessageCode.DuplicateSourceFile, $"Tried to load package {loaded} when {loaded} is already loaded");
                 }
                 
-                var builder = new ResultBuilder<SourceContext>(context, this);
-                builder.AppendInfo($"Started loading sources in package {packageInfo}");
+                var builder = new ResultBuilder(context);
+                builder.AppendInfo($"Started loading element package: {packageInfo}");
                 foreach (var src in packageInfo.PackageSources)
                 {
                     builder.Append(GlobalScope.AddSource(src, context));
@@ -56,11 +60,11 @@ namespace Element
                 var anyErrors = builder.Messages.Any(msg => msg.MessageLevel >= MessageLevel.Error);
                 if (anyErrors)
                 {
-                    builder.AppendInfo($"Failed to load package {packageInfo}");
+                    builder.AppendInfo($"Failed to load element package: {packageInfo}");
                 }
                 else
                 {
-                    builder.AppendInfo($"Successfully loaded package {packageInfo}");
+                    builder.AppendInfo($"Finished loading element package: {packageInfo}");
                     _loadedPackages[packageInfo.Name] = packageInfo;
                 }
 
@@ -72,11 +76,11 @@ namespace Element
         /// Loads the prelude version, packages and source files specified in a compiler input into the source context.
         /// Ignores source files from within package directories.
         /// </summary>
-        public Result<SourceContext> LoadCompilerInput(CompilerInput input)
+        public Result LoadCompilerInput(CompilerInput input)
         {
             lock (_syncRoot)
             {
-                var builder = new ResultBuilder<SourceContext>(Context.CreateFromSourceContext(this), this);
+                var builder = new ResultBuilder(Context.CreateFromSourceContext(this));
 
                 if (input.PreludeVersion != null)
                 {

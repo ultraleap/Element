@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Element.AST;
 
@@ -22,7 +21,7 @@ namespace Element
                 throw new InternalCompilerException($"Context '{_scopelessContext}' has no root scope, performing lookup is not possible");
         }
 
-        private Context(IScope? rootScope, CompilerOptions? compilerOptions)
+        protected Context(IScope? rootScope, CompilerOptions? compilerOptions)
         {
             RootScope = rootScope ?? new NoScope(this);
             CompilerOptions = compilerOptions ?? new CompilerOptions(MessageLevel.Information);
@@ -58,6 +57,8 @@ namespace Element
                 (false, _) => new CompilerMessage(messageType, null, MessageLevel.Error, $"Couldn't get {nameof(MessageLevel)} for {messageCode}", null),
             };
 
-        public CompilerMessage Trace(MessageLevel messageLevel, string message, string messageType = "") => new CompilerMessage(messageType, null, messageLevel, message, TraceStack);
+        public CompilerMessage? Trace(MessageLevel messageLevel, string message, string messageType = "") => messageLevel >= CompilerOptions.Verbosity
+                                                                                                                 ? new CompilerMessage(messageType, null, messageLevel, message, TraceStack)
+                                                                                                                 : null;
     }
 }

@@ -106,7 +106,7 @@ namespace Element.NET.TestHelpers
                                                           compilerOptions))
                          .Then(context => string.IsNullOrEmpty(extraSource)
                                               ? context // Do nothing if extra source is empty
-                                              : context.LoadElementSource(new SourceInfo("ExtraTestSource", extraSource)))
+                                              : context.LoadElementSource(new SourceInfo("ExtraTestSource", extraSource)).Map(() => context))
                          .Match((context, messages) =>
                          {
                              LogMessages(messages);

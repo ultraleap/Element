@@ -86,12 +86,11 @@ namespace Element
             else onError(Messages);
         }
         public TResult Match<TResult>(Func<IReadOnlyCollection<CompilerMessage>, TResult> onResult, Func<IReadOnlyCollection<CompilerMessage>, TResult> onError) => IsSuccess ? onResult(Messages) : onError(Messages);
-        public Result Do(Action action)
+        public Result And(Action action)
         {
             if (IsSuccess) action();
             return this;
         }
-
         public Result And(Func<Result> action) => IsSuccess ? new Result(Messages.Combine(action().Messages)) : this;
         public Result<TResult> Map<TResult>(Func<TResult> mapFunc) => IsSuccess ? Merge(new Result<TResult>(mapFunc())) : new Result<TResult>(Messages);
         public Result<TResult> Bind<TResult>(Func<Result<TResult>> bindFunc) => IsSuccess ? Merge(bindFunc()) : new Result<TResult>(Messages);
@@ -218,7 +217,7 @@ namespace Element
             if (IsSuccess) action(_value);
             return this;
         }
-        
+
         public Result<T> Then(Func<T, Result> action) => IsSuccess ? new Result<T>(_value, Messages.Combine(action(_value).Messages)) : this;
         public Result<T> Then(Func<T, Result<T>> action) => IsSuccess ? Merge(action(_value)) : this;
 

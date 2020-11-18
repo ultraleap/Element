@@ -20,10 +20,7 @@ namespace Element
         public virtual Result<IValue> DefaultValue(Context context) => WrappedValue.DefaultValue(context);
         public virtual void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => WrappedValue.Serialize(resultBuilder, context);
         public virtual Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => WrappedValue.Deserialize(nextValue, context);
-        public virtual bool IsFunction => WrappedValue.IsFunction;
-        public virtual bool IsIntrinsic => WrappedValue.IsIntrinsic;
         public virtual bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => WrappedValue.IsIntrinsicOfType<TIntrinsicImplementation>();
         public virtual bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => WrappedValue.IsSpecificIntrinsic(intrinsic);
-        public IValue Inner => WrappedValue.Inner;
     }
 }

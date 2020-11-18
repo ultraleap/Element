@@ -68,7 +68,7 @@ namespace Element.JsonArgument
 					switch (value?.Type ?? JTokenType.None)
 					{
 						case JTokenType.Object:
-							ProvisionObject(declaredStruct.Fields, (JObject)value!);
+							ProvisionObject(declaredStruct.InputPorts, (JObject)value!);
 							break;
 						default:
 							builder.Append(EleMessageCode.InvalidBoundaryData, $"Expected object token for element Struct parameter '{fieldIdentifier}'");

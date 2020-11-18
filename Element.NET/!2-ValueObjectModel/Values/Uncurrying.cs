@@ -32,12 +32,12 @@ namespace Element.AST
             
             public static Result<IValue> Create(IValue a, IValue b, Context context)
             {
-                if (!a.IsFunction)
+                if (!a.HasInputs())
                 {
                     return context.Trace(EleMessageCode.NotFunction, $"'{a}' is not a function, only functions can be uncurried");
                 }
                 
-                if (!b.IsFunction)
+                if (!b.HasInputs())
                 {
                     return context.Trace(EleMessageCode.NotFunction, $"'{b}' is not a function, only functions can be uncurried");
                 }
