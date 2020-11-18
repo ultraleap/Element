@@ -121,7 +121,7 @@ namespace Element.AST
     public static class ValueExtensions
     {
         public static IValue Inner(this IValue value) => value is WrapperValue w ? Inner(w.WrappedValue) : value;
-        public static bool HasInputs(this IValue value) => value.InputPorts.Count > 0;
+        public static bool HasInputs(this IValue value) => value.InputPorts.Count > 0; // TODO: This probably doesn't work for intrinsics with no ports declared?
         public static bool IsType(this IValue value) => value.ReturnConstraint == value;
         public static bool IsIntrinsic(this IValue value) => value.IsIntrinsicOfType<IIntrinsicImplementation>();
         

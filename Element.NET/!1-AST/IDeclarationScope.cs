@@ -44,7 +44,7 @@ namespace Element.AST
             void Recurse(IScope? parentScope, IDeclarationScope declScope)
             {
                 builder.Append(declScope.ResolveBlock(parentScope, context)
-                                        .Do(ResolveBlockValues));
+                                        .And(ResolveBlockValues));
                 
                 void ResolveBlockValues(IScope containingScope)
                 {
@@ -59,14 +59,14 @@ namespace Element.AST
                                 if (resolvedValueFilter?.Invoke(resolvedValue) ?? true) builder.Result.Add(resolvedValue);
                             }
 
-                            builder.Append(decl.Resolve(containingScope, context).Do(AddResolvedValueToResults));
+                            builder.Append(decl.Resolve(containingScope, context).And(AddResolvedValueToResults));
                         }
 
                         if (decl.Body is IDeclarationScope childScope)
                         {
                             void RecurseIntoChildScope(IScope resolvedBlockScope) => Recurse(resolvedBlockScope, childScope);
 
-                            builder.Append(childScope.ResolveBlock(containingScope, context).Do(RecurseIntoChildScope));
+                            builder.Append(childScope.ResolveBlock(containingScope, context).And(RecurseIntoChildScope));
                         }
 
                         idStack.Pop();
@@ -75,7 +75,7 @@ namespace Element.AST
             }
 
             builder.Append(declarationScope.ResolveBlock(null, context)
-                                           .Do(scope => Recurse(scope, declarationScope)));
+                                           .And(scope => Recurse(scope, declarationScope)));
             return builder.ToResult();
         }
     }

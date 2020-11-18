@@ -212,7 +212,7 @@ namespace Element
         public Result<TResult> Branch<TResult>(Func<T, TResult> success, Func<TResult> error) => IsSuccess ? Merge(new Result<TResult>(success(_value))) : error();
         public Result<TResult> Branch<TResult>(Func<T, Result<TResult>> success, Func<Result<TResult>> error) => IsSuccess ? Merge(success(_value)) : error();
         
-        public Result<T> Do(Action<T> action)
+        public Result<T> And(Action<T> action)
         {
             if (IsSuccess) action(_value);
             return this;

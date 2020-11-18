@@ -90,6 +90,9 @@ namespace Element.CLR
                                    .ToDictionary(f => f.Name,
                                                  f => $"{char.ToLower(f.Name[0])}{f.Name.Substring(1)}");
             
+            // Below LinqExpression is equivalent to this reflection-based implementation of a getter
+            // IEnumerable<object> getFields(object input) => FieldMap.Select(f => (object)structType.GetField(f).GetValue(input)).ToArray();
+            
             var inputExpr = LExpression.Parameter(typeof(object));
             var parameterAsStructType = LExpression.Convert(inputExpr, structType);
             var getFields = FieldMap.Keys.Select(f => LExpression.Convert(LExpression.Field(parameterAsStructType, structType.GetField(f)), typeof(object)));
@@ -193,13 +196,27 @@ namespace Element.CLR
             {NumStruct.Instance, typeof(float)},
             {BoolStruct.Instance, typeof(bool)}
         };
+        
+        private class AssemblyNameComparer : IEqualityComparer<Assembly>
+        {
+            bool IEqualityComparer<Assembly>.Equals(Assembly x, Assembly y) => x?.FullName == y?.FullName;
+
+            int IEqualityComparer<Assembly>.GetHashCode(Assembly obj) => obj.FullName.GetHashCode();
+        }
+
+        
+        private static readonly Lazy<Assembly[]> _allDistinctNonDynamicAssemblies = new Lazy<Assembly[]>(() =>
+                                                                                                             AppDomain.CurrentDomain.GetAssemblies()
+                                                                                                                      .Distinct(new AssemblyNameComparer())
+                                                                                                                      .Where(asm => !asm.IsDynamic)
+                                                                                                                      .ToArray());
+
 
         private static Dictionary<Type, ElementBoundaryStructAttribute> _boundaryStructTypesWithAttribute { get; } =
-            typeof(BoundaryCache).Assembly
-                                 .GetTypes()
-                                 .Where(t => Attribute.IsDefined(t, typeof(ElementBoundaryStructAttribute)))
-                                 .ToDictionary(t => t,
-                                     t => t.GetCustomAttribute<ElementBoundaryStructAttribute>());
+            _allDistinctNonDynamicAssemblies.Value
+                                            .SelectMany(asm => asm.GetTypes())
+                                            .Where(t => Attribute.IsDefined(t, typeof(ElementBoundaryStructAttribute)))
+                                            .ToDictionary(t => t, t => t.GetCustomAttribute<ElementBoundaryStructAttribute>());
 
         public readonly struct Mapping
         {
@@ -315,6 +332,24 @@ namespace Element.CLR
                                                                                                                        floats.Add(vec3.X);
                                                                                                                        floats.Add(vec3.Y);
                                                                                                                        floats.Add(vec3.Z);
+                                                                                                                       return Result.Success;
+                                                                                                                   }))),
+                       Mapping.Bidirectional(typeof(Vector4), "Vector4",
+                                             StructConverter.FromBoundaryStructInfo(new ExternalBoundaryStructInfo("Vector4",
+                                                                                                                   new Dictionary<string, string>
+                                                                                                                   {
+                                                                                                                       {"x", "X"},
+                                                                                                                       {"y", "Y"},
+                                                                                                                       {"z", "Z"},
+                                                                                                                       {"w", "W"}
+                                                                                                                   },
+                                                                                                                   (v, floats, context) =>
+                                                                                                                   {
+                                                                                                                       var vec4 = (Vector4) v;
+                                                                                                                       floats.Add(vec4.X);
+                                                                                                                       floats.Add(vec4.Y);
+                                                                                                                       floats.Add(vec4.Z);
+                                                                                                                       floats.Add(vec4.W);
                                                                                                                        return Result.Success;
                                                                                                                    }))),
                        Mapping.Bidirectional(typeof(Complex), "Complex",

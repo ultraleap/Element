@@ -12,7 +12,7 @@ namespace Element.NET.Tests
         [Test]
         public void UncurryAddSqr() =>
             Context.CreateFromSourceContext(MakeSourceContext()).ToDefaultBoundaryContext()
-                   .Do(context =>
+                   .And(context =>
                            context.EvaluateExpression("Num.add")
                                   .Accumulate(() => context.EvaluateExpression("Num.sqr"))
                                   .Bind(tuple =>
