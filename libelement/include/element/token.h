@@ -46,7 +46,7 @@ typedef struct
     int line;
     int line_start_position; //the position at which the line starts in the input string
     int character;           //the position in the line where the token starts (starting from 1, not 0)
-    const char* file_name;
+    const char* source_name;
 } element_token;
 
 /**
@@ -74,20 +74,25 @@ void element_tokeniser_delete(
     element_tokeniser_ctx** tokeniser);
 
 /**
- * @brief runs converts an input expression to a sequence of tokens
+ * @brief converts an input expression to tokens
+ *
+ * Take an input string and convert to a sequence of tokens.
+ * The source of the string must be given a name, which is used in logging
+ * and error reporting. This could be, for example, the name of the file
+ * from which the input was read.
  *
  * @param[in] tokeniser         tokeniser context 
- * @param[in] input             file data
- * @param[in] filename          file name
+ * @param[in] input             input to tokenise
+ * @param[in] source_name       source name
  * *
  * @return ELEMENT_OK tokeniser executed successfully
  * @return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL tokeniser pointer is null
- * @return ELEMENT_ERROR_API_STRING_IS_NULL file name pointer is null
+ * @return ELEMENT_ERROR_API_STRING_IS_NULL source_name pointer is null
  */
 element_result element_tokeniser_run(
-    element_tokeniser_ctx* tokeniser, 
-    const char* input, 
-    const char* filename);
+    element_tokeniser_ctx* tokeniser,
+    const char* input,
+    const char* source_name);
 
 /**
  * @brief clears the tokeniser context
@@ -111,23 +116,23 @@ element_result element_tokeniser_clear(
  * @return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL tokeniser pointer is null
  */
 element_result element_tokeniser_set_log_callback(
-    element_tokeniser_ctx* tokeniser, 
-    void (*log_callback)(const element_log_message*, void*), 
+    element_tokeniser_ctx* tokeniser,
+    element_log_callback log_callback,
     void* user_data);
 
 /**
- * @brief gets the file name associated with a tokeniser
+ * @brief gets the source name associated with a tokeniser
  *
  * @param[in] tokeniser         tokeniser context  
- * @param[in] filename          file name
+ * @param[in] source_name       source name
  *
- * @return ELEMENT_OK retrieved file name successfully
+ * @return ELEMENT_OK retrieved source name successfully
  * @return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL tokeniser pointer is null
- * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL file name pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL source_name pointer is null
  */
-element_result element_tokeniser_get_filename(
+element_result element_tokeniser_get_source_name(
     const element_tokeniser_ctx* tokeniser,
-    const char** filename);
+    const char** source_name);
 
 /**
  * @brief gets the input associated with a tokeniser
@@ -140,7 +145,7 @@ element_result element_tokeniser_get_filename(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL input pointer is null
  */
 element_result element_tokeniser_get_input(
-    const element_tokeniser_ctx* tokeniser, 
+    const element_tokeniser_ctx* tokeniser,
     const char** input);
 
 /**
@@ -154,7 +159,7 @@ element_result element_tokeniser_get_input(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL token count pointer is null
  */
 element_result element_tokeniser_get_token_count(
-    const element_tokeniser_ctx* tokeniser, 
+    const element_tokeniser_ctx* tokeniser,
     size_t* count);
 
 /**
@@ -170,17 +175,25 @@ element_result element_tokeniser_get_token_count(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL token count pointer is null
  */
 element_result element_tokeniser_get_token(
-    const element_tokeniser_ctx* tokeniser, 
-    size_t index, 
-    const element_token** token, 
+    const element_tokeniser_ctx* tokeniser,
+    size_t index,
+    const element_token** token,
     const char* msg);
 
 /**
- * @brief converts a token to string
+ * @brief converts a tokeniser to string
  *
- * @param[in] tokeniser             tokeniser context  
- * @param[in] token_to_mark         token to highlight in output string 
- * @param[in] output_buffer         output buffer
+ * Create a string which displays all tokens in the tokeniser.
+ * Each token is on a new line.
+ *
+ * A pointer to a specified token can be passed in via "token_to_mark".
+ * If this is supplied, the line containing the token will be marked with
+ * "<--- HERE". A NULL or invalid pointer will still quietly continue and
+ * not display the marking message.
+ *
+ * @param[in] tokeniser             tokeniser context
+ * @param[in] token_to_mark         token to highlight in output string
+ * @param[out] output_buffer        output buffer
  * @param[in] output_buffer_size    output buffer size
  *
  * @return ELEMENT_OK converted tokeniser to string successfully
@@ -189,8 +202,8 @@ element_result element_tokeniser_get_token(
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER buffer size too small
  */
 element_result element_tokeniser_to_string(
-    const element_tokeniser_ctx* tokeniser, 
-    const element_token* token_to_mark, 
+    const element_tokeniser_ctx* tokeniser,
+    const element_token* token_to_mark,
     char* output_buffer,
     int output_buffer_size);
 

@@ -69,11 +69,7 @@ namespace libelement::cli
     {
     public:
         explicit compilation_input(common_command_arguments arguments)
-            : common_arguments{ std::move(arguments) }
-        {
-            common_arguments.source_files = select(common_arguments.source_files, file_exists);
-            common_arguments.packages = select(common_arguments.packages, directory_exists);
-        }
+            : common_arguments{ std::move(arguments) } {}
 
         [[nodiscard]] bool get_no_prelude() const { return common_arguments.no_prelude; }
         [[nodiscard]] const std::vector<std::string>& get_source_files() const { return common_arguments.source_files; }
@@ -84,32 +80,6 @@ namespace libelement::cli
         [[nodiscard]] bool get_compiletime() const { return common_arguments.compiletime; }
 
     private:
-        [[nodiscard]] static bool file_exists(const std::string& file)
-        {
-            return std::filesystem::exists(file) && std::filesystem::is_regular_file(file);
-        }
-
-        [[nodiscard]] static bool directory_exists(const std::string& directory)
-        {
-            // Bad James, bad!
-            const auto last_dash = directory.find_last_of('-');
-            auto actual_package_name = directory;
-            if (last_dash != std::string::npos)
-                actual_package_name = directory.substr(0, last_dash);
-
-            const auto package_path = "ElementPackages/" + actual_package_name;
-            return std::filesystem::exists(package_path) && std::filesystem::is_directory(package_path);
-        }
-
-        template <typename T, typename Predicate>
-        std::vector<T> select(const std::vector<T>& container, Predicate predicate)
-        {
-            std::vector<T> result;
-            std::copy_if(container.begin(), container.end(), back_inserter(result),
-                         predicate);
-            return result;
-        }
-
         common_command_arguments common_arguments;
     };
 
@@ -144,7 +114,7 @@ namespace libelement::cli
         [[nodiscard]] virtual std::string as_string() const = 0;
 
         using callback = std::function<void(command&)>;
-        using log_callback = void (*)(const element_log_message*, void* user_data);
+        using log_callback = element_log_callback;
         static void configure(CLI::App& app, command::callback callback);
 
         static compiler_message
@@ -195,7 +165,6 @@ namespace libelement::cli
         void set_log_callback(const command::log_callback log_callback,
                               void* user_data) const
         {
-
             element_interpreter_set_log_callback(context, log_callback, user_data);
         }
 

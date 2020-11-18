@@ -156,7 +156,7 @@ namespace element::detail
 
         register_log_error<std::string>(
             log_error_message_code::intrinsic_type_mismatch,
-            "intrinsic {} type mismatch",
+            "intrinsic '{}' type mismatch",
             ELEMENT_ERROR_TYPE_ERROR,
             ELEMENT_STAGE_PARSER);
 

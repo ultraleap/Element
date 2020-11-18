@@ -52,8 +52,8 @@ namespace libelement::cli
         {
             const auto expression = custom_arguments.expression;
 
-            element_compilation_ctx* compilation_context;
-            auto result = element_create_compilation_ctx(context, &compilation_context);
+            element_object_model_ctx* compilation_context;
+            auto result = element_object_model_ctx_create(context, &compilation_context);
             if (result != ELEMENT_OK)
             {
                 return compiler_message(error_conversion(result),
@@ -74,30 +74,32 @@ namespace libelement::cli
             element_object* result_object;
             if (!custom_arguments.arguments.empty())
             {
-                element_object* call_objects;
-                int call_objects_count;
-                result = context->call_expression_to_objects(nullptr, custom_arguments.arguments.c_str(), &call_objects, &call_objects_count);
+                std::vector<element::object_const_shared_ptr> objs;
+                result = context->call_expression_to_objects(nullptr, custom_arguments.arguments.c_str(), objs);
+
                 if (result != ELEMENT_OK)
                 {
-                    for (int i = 0; i < call_objects_count; ++i)
-                    {
-                        element_object* obj = &call_objects[i];
-                        element_delete_object(&obj);
-                    }
                     context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
                     return compiler_message(error_conversion(result),
                                             "Failed to convert call expression to objects: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                                             compilation_input.get_log_json());
                 }
 
+                const int call_objects_count = static_cast<int>(objs.size());
+                element_object** call_objects = new element_object*[call_objects_count];
+
+                for (int i = 0; i < call_objects_count; ++i)
+                    call_objects[i] = new element_object{ std::move(objs[i]) };
+
                 result = element_object_call(expression_object, compilation_context, call_objects, call_objects_count, &result_object);
+
+                for (int i = 0; i < call_objects_count; ++i)
+                    element_object_delete(&call_objects[i]);
+
+                delete[] call_objects;
+
                 if (result != ELEMENT_OK)
                 {
-                    for (int i = 0; i < call_objects_count; ++i)
-                    {
-                        element_object* obj = &call_objects[i];
-                        element_delete_object(&obj);
-                    }
                     context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
                     return compiler_message(error_conversion(result),
                                             "Failed to call object with arguments: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
@@ -106,7 +108,7 @@ namespace libelement::cli
             }
             else
             {
-                result = element_object_compile(expression_object, compilation_context, &result_object);
+                result = element_object_simplify(expression_object, compilation_context, &result_object);
                 if (result != ELEMENT_OK)
                 {
                     context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
@@ -135,7 +137,7 @@ namespace libelement::cli
             element_value outputs_buffer[max_output_size];
             output.values = outputs_buffer;
             output.count = max_output_size;
-            result = element_interpreter_evaluate(context, nullptr, result_instruction, &input, &output);
+            result = element_interpreter_evaluate_instruction(context, nullptr, result_instruction, &input, &output);
 
             context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
 
@@ -159,7 +161,7 @@ namespace libelement::cli
             element_result result = element_interpreter_compile_expression(context, nullptr, expression.c_str(), &compiled_function);
             if (result != ELEMENT_OK)
             {
-                element_delete_instruction(&compiled_function);
+                element_instruction_delete(&compiled_function);
                 return compiler_message(error_conversion(result),
                                         "Failed to compile: " + expression + " at runtime with element_result " + std::to_string(result),
                                         compilation_input.get_log_json());
@@ -179,7 +181,7 @@ namespace libelement::cli
                 result = element_interpreter_evaluate_call_expression(context, nullptr, custom_arguments.arguments.c_str(), &call_output);
                 if (result != ELEMENT_OK)
                 {
-                    element_delete_instruction(&compiled_function);
+                    element_instruction_delete(&compiled_function);
                     return compiler_message(error_conversion(result),
                                             "Failed to evaluate: " + expression + " called with " + custom_arguments.arguments + " at runtime with element_result " + std::to_string(result),
                                             compilation_input.get_log_json());
@@ -194,8 +196,8 @@ namespace libelement::cli
             output.values = outputs_buffer;
             output.count = max_output_size;
 
-            element_interpreter_evaluate(context, nullptr, compiled_function, &input, &output);
-            element_delete_instruction(&compiled_function);
+            element_interpreter_evaluate_instruction(context, nullptr, compiled_function, &input, &output);
+            element_instruction_delete(&compiled_function);
 
             return generate_response(result, output, compilation_input.get_log_json());
         }

@@ -13,7 +13,7 @@
 #include "object_model/compilation_context.hpp"
 #include "object_model/intermediaries/declaration_wrapper.hpp"
 
-void element_delete_object(element_object** object)
+void element_object_delete(element_object** object)
 {
     if (!object)
         return;
@@ -23,7 +23,7 @@ void element_delete_object(element_object** object)
     return;
 }
 
-element_result element_create_compilation_ctx(element_interpreter_ctx* interpreter, element_compilation_ctx** output)
+element_result element_object_model_ctx_create(element_interpreter_ctx* interpreter, element_object_model_ctx** output)
 {
     if (!interpreter)
         return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
@@ -31,13 +31,13 @@ element_result element_create_compilation_ctx(element_interpreter_ctx* interpret
     if (!output)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    *output = new element_compilation_ctx;
+    *output = new element_object_model_ctx;
     (*output)->ctx = std::make_unique<element::compilation_context>(interpreter->global_scope.get(), interpreter);
 
     return ELEMENT_OK;
 }
 
-element_result element_delete_compilation_ctx(element_compilation_ctx** context)
+element_result element_object_model_ctx_delete(element_object_model_ctx** context)
 {
     if (!context)
         return ELEMENT_OK;
@@ -63,13 +63,13 @@ element_result element_declaration_to_object(
     return ELEMENT_OK;
 }
 
-element_result element_object_compile(
-    const element_object* object,
-    element_compilation_ctx* context,
-    element_object** output)
+element_result element_object_simplify(
+        const element_object* object,
+        element_object_model_ctx* context,
+        element_object** output)
 {
     if (!context || !context->ctx)
-        return ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL;
+        return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
 
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
@@ -89,13 +89,13 @@ element_result element_object_compile(
 
 element_result element_object_call(
     const element_object* object,
-    element_compilation_ctx* context,
-    const element_object* arguments,
+    element_object_model_ctx* context,
+    element_object** arguments,
     unsigned int arguments_count,
     element_object** output)
 {
     if (!context || !context->ctx)
-        return ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL;
+        return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
 
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
@@ -110,7 +110,7 @@ element_result element_object_call(
     args.reserve(arguments_count);
 
     for (auto i = 0U; i < arguments_count; ++i)
-        args.push_back(arguments[i].obj);
+        args.push_back(arguments[i]->obj);
 
     auto compiled = object->obj->call(*context->ctx, std::move(args), object->obj->source_info);
     *output = new element_object{ std::move(compiled) };
@@ -123,13 +123,13 @@ element_result element_object_call(
 }
 
 element_result element_object_index(
-    const element_object* object,
-    element_compilation_ctx* context,
-    const char* index,
-    element_object** output)
+        const element_object* object,
+        element_object_model_ctx* context,
+        const char* index,
+        element_object** output)
 {
     if (!context || !context->ctx)
-        return ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL;
+        return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
 
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;

@@ -142,7 +142,7 @@ element_result element_interpreter_load_prelude(element_interpreter_ctx* interpr
     return interpreter->load_prelude();
 }
 
-element_result element_interpreter_set_log_callback(element_interpreter_ctx* interpreter, void (*log_callback)(const element_log_message*, void*), void* user_data)
+element_result element_interpreter_set_log_callback(element_interpreter_ctx* interpreter, element_log_callback log_callback, void* user_data)
 {
     assert(interpreter);
 
@@ -172,7 +172,7 @@ element_result element_interpreter_clear(element_interpreter_ctx* interpreter)
     return interpreter->clear();
 }
 
-void element_delete_declaration(element_declaration** declaration)
+void element_declaration_delete(element_declaration** declaration)
 {
     if (!declaration)
         return;
@@ -181,7 +181,7 @@ void element_delete_declaration(element_declaration** declaration)
     *declaration = nullptr;
 }
 
-void element_delete_instruction(element_instruction** instruction)
+void element_instruction_delete(element_instruction** instruction)
 {
     if (!instruction)
         return;
@@ -256,7 +256,7 @@ element_result valid_boundary_function(
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_compile(
+element_result element_interpreter_compile_declaration(
     element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
     const element_declaration* declaration,
@@ -310,7 +310,7 @@ element_result element_interpreter_compile(
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_evaluate(
+element_result element_interpreter_evaluate_instruction(
     element_interpreter_ctx* interpreter,
     const element_evaluator_options* options,
     const element_instruction* instruction,
@@ -384,7 +384,7 @@ element_result element_interpreter_compile_expression(
     {
         interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
         (*instruction)->instruction = nullptr;
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return result;
     }
 
@@ -396,12 +396,12 @@ element_result element_interpreter_compile_expression(
         if (!instr)
         {
             (*instruction)->instruction = nullptr;
-            element_delete_object(&object_ptr);
+            element_object_delete(&object_ptr);
             return ELEMENT_ERROR_UNKNOWN;
         }
 
         (*instruction)->instruction = std::move(instr);
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return ELEMENT_OK;
     }
 
@@ -413,7 +413,7 @@ element_result element_interpreter_compile_expression(
         interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
         interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
         *instruction = nullptr;
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return result;
     }
     
@@ -424,7 +424,7 @@ element_result element_interpreter_compile_expression(
     {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
         *instruction = nullptr;
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return result;
     }
 
@@ -433,12 +433,12 @@ element_result element_interpreter_compile_expression(
     {
         interpreter->log(result, "Failed to compile declaration to an instruction tree.");
         *instruction = nullptr;
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return ELEMENT_ERROR_UNKNOWN;
     }
 
     (*instruction)->instruction = std::move(instr);
-    element_delete_object(&object_ptr);
+    element_object_delete(&object_ptr);
     return ELEMENT_OK;
 }
 
@@ -475,7 +475,7 @@ element_result element_interpreter_evaluate_expression(
     input.values = inputs;
     input.count = 1;
 
-    result = element_interpreter_evaluate(interpreter, options, instruction_ptr, &input, outputs);
+    result = element_interpreter_evaluate_instruction(interpreter, options, instruction_ptr, &input, outputs);
 
     return result;
 }
@@ -504,7 +504,7 @@ element_result element_interpreter_typeof_expression(
     {
         //todo:
         interpreter->log(result, "tried to get typeof an expression that failed to compile");
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return result;
     }
 
@@ -513,12 +513,12 @@ element_result element_interpreter_typeof_expression(
     {
         //todo:
         interpreter->log(ELEMENT_ERROR_API_INSUFFICIENT_BUFFER, fmt::format("buffer size of {} isn't sufficient for string of {} characters", buffer_size, typeof.size()));
-        element_delete_object(&object_ptr);
+        element_object_delete(&object_ptr);
         return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
     }
 
     strncpy(buffer, typeof.c_str(), typeof.size());
-    element_delete_object(&object_ptr);
+    element_object_delete(&object_ptr);
     return ELEMENT_OK;
 }
 

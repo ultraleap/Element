@@ -129,12 +129,23 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 
 element_result element_interpreter_ctx::load_file(const std::string& file)
 {
+    const auto extension = std::filesystem::path(file).extension().string();
+    if (extension != ".ele")
+    {
+        std::string msg = fmt::format("Invalid file type in 'load_file'. Expected '.ele' and got '{}'", extension);
+        element_result result = ELEMENT_ERROR_INVALID_FILE_TYPE;
+        log(result, msg, file);
+        return result;
+    }
+
     const auto abs = std::filesystem::absolute(std::filesystem::path(file)).string();
 
     if (!file_exists(abs))
     {
-        std::cout << fmt::format("file {} was not found at path {}\n", file, abs.c_str()); //todo: proper logging
-        return ELEMENT_ERROR_FILE_NOT_FOUND;
+        std::string msg = fmt::format("File not file:  {} was not found at path {}\n", file, abs.c_str());
+        element_result result = ELEMENT_ERROR_FILE_NOT_FOUND;
+        log(result, msg, file);
+        return result;
     }
 
     std::string buffer;
@@ -174,9 +185,11 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
     if (!directory_exists(package_path))
     {
         auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
-        std::cout << fmt::format("package {} does not exist at path {}\n",
-                                 package_path, abs); //todo: proper logging
-        return ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
+        std::string msg = fmt::format("package '{}' does not exist at path '{}'\n",
+                                      package_path, abs);
+        element_result result = ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
+        log(result, msg);
+        return result;
     }
 
     element_result ret = ELEMENT_OK;
@@ -185,16 +198,23 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
     {
         const auto filename = file.path().string();
         const auto extension = file.path().extension().string();
+
         if (extension == ".ele")
         {
             const element_result result = load_file(file.path().string());
-            if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
+            if (result != ELEMENT_OK && ret == ELEMENT_OK)
+            {
+                std::string msg = fmt::format("Error when loading '.ele' file '{}' in package '{}'.\n",
+                    package_path, filename);
+                log(msg);
                 ret = result;
+            }
         }
         else if (extension != ".bond")
         {
-            std::cout << fmt::format("file {} in package {} has extension {} instead of '.ele' or '.bond'\n",
-                                     filename, package_path, extension); //todo: proper logging
+            std::string msg = fmt::format("Unexpected file in package '{}'. File '{}' has extension '{}' instead of '.ele' or '.bond'\n",
+                                          package_path, filename, extension);
+            log(msg);
         }
     }
 
@@ -222,18 +242,7 @@ element_result element_interpreter_ctx::load_prelude()
         return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
 
     const auto result = load_package("Prelude");
-    if (result == ELEMENT_OK)
-    {
-        prelude_loaded = true;
-        return result;
-    }
-
-    if (result == ELEMENT_ERROR_DIRECTORY_NOT_FOUND)
-    {
-        auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
-        std::cout << fmt::format("could not find prelude at {}\n", abs); //todo: proper logging
-    }
-
+    prelude_loaded = (result == ELEMENT_OK);
     return result;
 }
 
@@ -246,20 +255,21 @@ void element_interpreter_ctx::set_log_callback(LogCallback callback, void* user_
 
 void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename) const
 {
-    if (logger == nullptr)
-        return;
+    if (logger)
+        logger->log(*this, code, message, filename);
+}
 
-    logger->log(*this, code, message, filename);
+void element_interpreter_ctx::log(element_result code, const std::string & message) const
+{
+    if (logger)
+        logger->log(*this, code, message);
 }
 
 void element_interpreter_ctx::log(const std::string& message) const
 {
-    if (logger == nullptr)
-        return;
-
-    logger->log(message, element_stage::ELEMENT_STAGE_MISC);
+    if (logger)
+        logger->log(message, element_stage::ELEMENT_STAGE_MISC);
 }
-
 
 element_result element_interpreter_ctx::call_expression_to_objects(
     const element_compiler_options* options,
@@ -359,30 +369,6 @@ element_result element_interpreter_ctx::call_expression_to_objects(
 
     for (const auto& arg : call_expr->arguments)
         objects.emplace_back(arg->compile(compilation_context, call_expr->source_info));
-
-    return ELEMENT_OK;
-}
-
-element_result element_interpreter_ctx::call_expression_to_objects(
-    const element_compiler_options* options,
-    const char* call_expression,
-    element_object** objects,
-    int* object_count)
-{
-    if (!call_expression)
-        return ELEMENT_ERROR_API_STRING_IS_NULL;
-
-    if (!objects)
-        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
-
-    std::vector<element::object_const_shared_ptr> objs;
-    call_expression_to_objects(options, call_expression, objs);
-
-    *objects = new element_object[objs.size()];
-    *object_count = objs.size();
-
-    for (int i = 0; i < objs.size(); ++i)
-        (*objects)[i].obj = std::move(objs[i]);
 
     return ELEMENT_OK;
 }

@@ -73,6 +73,7 @@ typedef enum element_result
     ELEMENT_ERROR_PRELUDE_ALREADY_LOADED = -100,
     ELEMENT_ERROR_DIRECTORY_NOT_FOUND = -101,
     ELEMENT_ERROR_FILE_NOT_FOUND = -102,
+    ELEMENT_ERROR_INVALID_FILE_TYPE = -103,
     ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END = -200,
     ELEMENT_ERROR_EXCEPTION = -201,
     ELEMENT_ERROR_CONSTRAINT_HAS_BODY = -202,
@@ -99,7 +100,7 @@ typedef enum element_result
     ELEMENT_ERROR_API_DECLARATION_IS_NULL = -10004,
     ELEMENT_ERROR_API_STRING_IS_NULL = -10005,
     ELEMENT_ERROR_API_INSUFFICIENT_BUFFER = -10006,
-    ELEMENT_ERROR_API_COMPILATION_CTX_IS_NULL = -10007,
+    ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL = -10007,
     ELEMENT_ERROR_API_OUTPUT_IS_NULL = -10008,
     ELEMENT_ERROR_API_INVALID_INPUT = -10009,
     ELEMENT_ERROR_API_AST_IS_NULL = -10010,
@@ -154,8 +155,11 @@ struct element_log_message
     element_log_message* related_log_message;
 };
 
+typedef void (*element_log_callback)(const element_log_message*, void*);
+
 #define ELEMENT_OK_OR_RETURN(t)                         \
-    do {                                                \
+    do                                                  \
+    {                                                   \
         const element_result ok_or_return_result = (t); \
         if (ok_or_return_result != ELEMENT_OK)          \
             return ok_or_return_result;                 \

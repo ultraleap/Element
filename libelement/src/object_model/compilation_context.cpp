@@ -17,13 +17,15 @@ compilation_context::compilation_context(const scope* const scope, element_inter
     auto input_port = port(list_indexer.get(), identifier{ "i" }, std::make_unique<type_annotation>(identifier{ "Num" }), nullptr);
     list_indexer->inputs.push_back(std::move(input_port));
     bool success = intrinsic::register_intrinsic<function_declaration>(interpreter, nullptr, *list_indexer);
-    assert(success);
+    if (!success)
+        throw; //todo
     const auto* body = intrinsic::get_intrinsic(interpreter, *list_indexer);
-    assert(body);
+    if (!body)
+        throw; //todo
     list_indexer->body = body;
     success = compiler_scope->add_declaration(std::move(list_indexer));
     if (!success)
-        throw;
+        throw; //todo
 
     const char* list_fold_src = ""
                                 "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"

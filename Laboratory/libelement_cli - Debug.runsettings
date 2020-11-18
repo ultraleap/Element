@@ -3,9 +3,9 @@
   <!-- Parameters used by tests at runtime -->
   <TestRunParameters>
     <Parameter name="name" value="libelement_cli" />
-    <Parameter name="build-command" value="cmake -S ./libelement.CLI -B ./libelement.CLI/build -DLOG_VERBOSITY=&quot;log_flags::output_ast |  log_flags::output_expression_tree&quot;" />
+    <Parameter name="build-command" value="cmake -S ./libelement.CLI -B ./libelement.CLI/build -DELEMENT_LOG_VERBOSITY=&quot;log_flags::output_ast |  log_flags::output_expression_tree&quot;" />
     <Parameter name="additional-build-command" value="cmake --build ./libelement.CLI/build --config Debug" />
-    <Parameter name="executable-path" value="libelement.CLI/build/Debug/libelement_cli" />
+    <Parameter name="executable-path" value="libelement.CLI/build/Debug/element_cli" />
     <Parameter name="working-directory"  value="libelement.CLI/build/Debug" />
   </TestRunParameters>
 </RunSettings>

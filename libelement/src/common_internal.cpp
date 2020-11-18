@@ -436,7 +436,7 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
     msg.line = context.line;
     msg.character = context.character;
     msg.stage = ELEMENT_STAGE_TOKENISER;
-    msg.filename = context.filename.c_str();
+    msg.filename = context.raw_source_name;
     msg.related_log_message = nullptr;
     msg.line_in_source = nullptr;
 
@@ -451,6 +451,24 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
 
     msg.message = new_log_message.c_str();
     msg.message_length = static_cast<int>(new_log_message.length());
+
+    log(msg);
+}
+
+
+void element_log_ctx::log(const element_interpreter_ctx& context, element_result code, const std::string& message) const
+{
+    auto msg = element_log_message();
+    msg.message = message.c_str();
+    msg.message_length = static_cast<int>(message.length());
+    msg.message_code = code;
+    msg.line = -1;
+    msg.character = -1;
+    msg.length = -1;
+    msg.stage = ELEMENT_STAGE_EVALUATOR;
+    msg.filename = nullptr;
+    msg.related_log_message = nullptr;
+    msg.line_in_source = nullptr;
 
     log(msg);
 }
@@ -492,7 +510,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
 {
     assert(context.tokeniser);
 
-    const bool starts_with_prelude = context.tokeniser->filename.rfind("Prelude/", 0) == 0;
+    const bool starts_with_prelude = std::string(context.tokeniser->raw_source_name).rfind("Prelude/", 0) == 0;
     if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude))
     {
         return; //early out if prelude logging disabled
@@ -504,7 +522,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     msg.character = -1;
     msg.length = -1;
     msg.stage = ELEMENT_STAGE_PARSER;
-    msg.filename = context.tokeniser->filename.c_str();
+    msg.filename = context.tokeniser->raw_source_name;
     msg.related_log_message = nullptr;
 
     std::string new_log_message = message;
