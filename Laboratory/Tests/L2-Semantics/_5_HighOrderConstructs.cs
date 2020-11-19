@@ -131,7 +131,7 @@ namespace Laboratory.Tests.L2.Semantics
             ("(0)", "adderRecursionReturnFunction", "10"),
         };
         [Test]
-        public void MultipleDistinctUsagesOfSameDeclarationShouldNotCauseRecursionError([ValueSource(nameof(RecursionErrorArgs))] (string lhs, string fName, string rhs) args, [Values] EvaluationMode mode)
+        public void DistinctUsagesOfSameDeclarationShouldNotBeDetectedAsRecursion([ValueSource(nameof(RecursionErrorArgs))] (string lhs, string fName, string rhs) args, [Values] EvaluationMode mode)
         {
             string testFunction = "_(u:Num):Num = " + args.fName + "(u)";
             AssertApproxEqual(CompilerInput,
