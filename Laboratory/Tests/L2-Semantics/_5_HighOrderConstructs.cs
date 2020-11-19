@@ -122,6 +122,32 @@ namespace Laboratory.Tests.L2.Semantics
         [Theory]
         public void TripleNestedHighOrderFunction(EvaluationMode mode) => AssertApproxEqual(CompilerInput, ("numRenderer(5)(addFiveEvaluator)(0).at(0)", "10"), mode);
         
+        public static (string constructorArgs, string fName, string constant)[] RecursionErrorArgs =
+        {
+            ("(0)", "wrappedLambdasOneLine", "0"),
+            ("(0)", "wrappedLambdasExplicit", "0"),
+            ("(0)", "wrappedLambdasNamed", "0"),
+            ("(0)", "adderRecursionLambdas", "10"),
+            ("(0)", "adderRecursionReturnFunction", "10"),
+        };
+        [Test]
+        public void MultipleDistinctUsagesOfSameDeclarationShouldNotCauseRecursionError([ValueSource(nameof(RecursionErrorArgs))] (string lhs, string fName, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string testFunction = "_(u:Num):Num = " + args.fName + "(u)";
+            AssertApproxEqual(CompilerInput,
+                              new FunctionEvaluation(testFunction, args.lhs, mode),
+                              new ExpressionEvaluation(args.rhs, mode));
+        }
         
+        [Test]
+        public void ConstraintError([Values] EvaluationMode mode)
+        {
+            string testFunction = "_(u:Num):Num = constraintError(u)";
+            string args = "(0)";
+            string expected = "0";
+            AssertApproxEqual(CompilerInput,
+                              new FunctionEvaluation(testFunction, args, mode),
+                              new ExpressionEvaluation(expected, mode));
+        }
     }
 }
