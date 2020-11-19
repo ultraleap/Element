@@ -17,7 +17,6 @@ using namespace element;
 call_expression::call_expression(const expression_chain* parent)
     : expression(parent)
 {
-    assert(parent);
 }
 
 [[nodiscard]] object_const_shared_ptr call_expression::resolve(const compilation_context& context, const object* obj)

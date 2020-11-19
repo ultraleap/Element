@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -47,46 +48,44 @@ namespace Element.AST
 		            : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
         }
 
-        private class HomogenousListElement : Function
+        public class HomogenousListElement : WrapperValue
         {
 	        public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, Context context) =>
 		        index.CompileTimeIndex(0, elements.Count, context)
-		             .Bind(compileConstantIndex => new Result<IValue>(elements[compileConstantIndex]))
-		             .Else(() =>
-		             {
-			             var operands = new Instruction[elements.Count];
-			             
-			             for (var i = 0; i < elements.Count; i++)
-			             {
-				             // If any elements are not instructions then we need to 
-				             if (elements[i].IsType(out Instruction instruction)) operands[i] = instruction;
-				             else return new Result<IValue>(new HomogenousListElement(index, elements));
-			             }
+		             .Branch(compileConstantIndex => compileConstantIndex < elements.Count
+			                                           ? new Result<IValue>(elements[compileConstantIndex])
+			                                           : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
+		                     () =>
+		                     {
+			                     var operands = new Instruction[elements.Count];
 
-			             return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
-		             });
+			                     for (var i = 0; i < elements.Count; i++)
+			                     {
+				                     // If any elements are not instructions then we need to 
+				                     if (elements[i].IsType(out Instruction instruction)) operands[i] = instruction;
+				                     else return new Result<IValue>(new HomogenousListElement(index, elements));
+			                     }
+
+			                     return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
+		                     });
 
             private HomogenousListElement(Instruction index, IReadOnlyList<IValue> elements)
+				: base(elements[0])
             {
                 _index = index;
                 _elements = elements;
-                InputPorts = _elements[0].IsFunction ? _elements[0].InputPorts : new[] {ResolvedPort.VariadicPort};
-                ReturnConstraint = _elements[0].IsFunction ? _elements[0].ReturnConstraint : AnyConstraint.Instance;
             }
 
             private readonly Instruction _index;
             private readonly IReadOnlyList<IValue> _elements;
             public override string SummaryString => $"HomogenousListElement({_index})[{string.Join(", ", _elements)}]";
-            public override IReadOnlyList<ResolvedPort> InputPorts { get; }
-            public override IValue ReturnConstraint { get; }
             public override bool IsFunction => _elements[0].IsFunction;
-            public override IValue Inner => _elements[0].Inner;
 
             public override Result<IValue> Index(Identifier id, Context context) =>
 	            _elements.Select(e => e.Index(id, context))
 	                     .BindEnumerable(elements => Create(_index, elements.ToList(), context));
 
-            protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
+            public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
 	            _elements.Select(e => e.Call(arguments.ToArray(), context))
 	                     .BindEnumerable(v => Create(_index, v.ToList(), context));
         }

@@ -26,18 +26,18 @@ element_result element_tokeniser_to_string(const element_tokeniser_ctx* tokenise
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_get_filename(const element_tokeniser_ctx* tokeniser, const char** filename)
+element_result element_tokeniser_get_source_name(const element_tokeniser_ctx* tokeniser, const char** source_name)
 {
     assert(tokeniser);
-    assert(filename);
+    assert(source_name);
 
     if (!tokeniser)
         return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
 
-    if (!filename)
+    if (!source_name)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    *filename = tokeniser->filename.c_str();
+    *source_name = tokeniser->raw_source_name;
     return ELEMENT_OK;
 }
 
@@ -105,11 +105,9 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
 
         *token = nullptr;
         if (tokeniser->tokens.empty())
-        {
-            tokeniser->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg ? msg : "");
-            return ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END;
-        }
-        else
+            return tokeniser->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg ? msg : "");
+
+        if (tokeniser->logger)
         {
             const auto& last_token = tokeniser->tokens[tokeniser->tokens.size() - 1];
             element_log_message log_msg;
@@ -117,7 +115,7 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
             log_msg.line_in_source = line_in_source.c_str();
             log_msg.message = message.c_str();
             log_msg.message_length = static_cast<int>(message.length());
-            log_msg.filename = last_token.file_name;
+            log_msg.filename = last_token.source_name;
             log_msg.length = last_token.tok_len;
             log_msg.line = last_token.line;
             log_msg.message_code = ELEMENT_ERROR_PARTIAL_GRAMMAR;
@@ -126,15 +124,16 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
             log_msg.character = last_token.character;
 
             tokeniser->logger->log(log_msg);
-            return ELEMENT_ERROR_PARTIAL_GRAMMAR;
         }
+
+        return ELEMENT_ERROR_PARTIAL_GRAMMAR;
     }
 
     *token = &tokeniser->tokens[index];
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_set_log_callback(element_tokeniser_ctx* tokeniser, void (*log_callback)(const element_log_message*, void*), void* user_data)
+element_result element_tokeniser_set_log_callback(element_tokeniser_ctx* tokeniser, element_log_callback log_callback, void* user_data)
 {
     assert(tokeniser);
     assert(log_callback);
@@ -176,13 +175,13 @@ element_result element_tokeniser_clear(element_tokeniser_ctx* tokeniser)
     return ELEMENT_OK;
 }
 
-element_result element_tokeniser_run(element_tokeniser_ctx* tokeniser, const char* cinput, const char* cfilename)
+element_result element_tokeniser_run(element_tokeniser_ctx* tokeniser, const char* cinput, const char* csource_name)
 {
     if (!tokeniser)
         return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL;
 
-    if (!cinput || !cfilename)
+    if (!cinput || !csource_name)
         return ELEMENT_ERROR_API_STRING_IS_NULL;
 
-    return tokeniser->run(cinput, cfilename);
+    return tokeniser->run(cinput, csource_name);
 }

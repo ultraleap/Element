@@ -13,17 +13,18 @@ namespace Element.AST
         public override string SummaryString => _valueProducedFrom?.Invoke()?.SummaryString ?? base.SummaryString;
         public override string TypeOf => _valueProducedFrom?.Invoke()?.TypeOf ?? base.TypeOf;
 
-        public ResolvedBlock(IReadOnlyList<Identifier> allMembers,
-                             IEnumerable<(Identifier Identifier, IValue Value)> resolvedValues,
+        public ResolvedBlock(IReadOnlyList<Identifier> members,
+                             IEnumerable<(Identifier Identifier, IValue Value)> alreadyResolvedMembers,
                              Func<IScope, Identifier, Context, Result<IValue>> indexFunc,
                              IScope? parent,
                              Func<IValue?>? valueProducedFrom = null)
         {
-            Members = allMembers;
+            alreadyResolvedMembers = alreadyResolvedMembers as IReadOnlyList<(Identifier Identifier, IValue Value)> ?? alreadyResolvedMembers.ToArray();
+            Members = members.Concat(alreadyResolvedMembers.Select(m => m.Identifier)).Distinct().ToArray();
             _indexFunc = indexFunc;
             _valueProducedFrom = valueProducedFrom;
             Parent = parent;
-            _resultCache = resolvedValues.ToDictionary(t => t.Identifier, t => new Result<IValue>(t.Value));
+            _resultCache = alreadyResolvedMembers.ToDictionary(t => t.Identifier, t => new Result<IValue>(t.Value));
         }
         
         public ResolvedBlock(IReadOnlyList<(Identifier Identifier, IValue Value)> resolvedValues,
@@ -45,9 +46,10 @@ namespace Element.AST
                 ? result
                 : _resultCache[id] = _indexFunc(this, id, context); // Cache result from calling the index function
 
-        public Result<IValue> Lookup(Identifier id, Context context) =>
-            Index(id, context)
-                .ElseIf(Parent != null, () => Parent!.Lookup(id, context));
+        public Result<IValue> Lookup(Identifier id, Context context) => 
+            Members.Any(m => m.Equals(id))
+                ? Index(id, context)
+                : Parent?.Lookup(id, context) ?? context.Trace(EleMessageCode.IdentifierNotFound, $"'{id}' not found when indexing {this}");
 
         public override IReadOnlyList<Identifier> Members { get; }
         private IScope? Parent { get; }

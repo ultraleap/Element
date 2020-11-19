@@ -37,7 +37,7 @@ constexpr bool flag_set(const log_flags input_flags, const log_flags flags)
     return static_cast<int>(input_flags & flags);
 }
 
-constexpr log_flags logging_bitmask = @LOG_VERBOSITY@;
+constexpr log_flags logging_bitmask = @ELEMENT_LOG_VERBOSITY@;
 
 constexpr bool should_log_compilation_step()
 {

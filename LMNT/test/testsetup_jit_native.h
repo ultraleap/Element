@@ -3,7 +3,7 @@
 #include "CUnit/CUnitCI.h"
 #include "lmnt/interpreter.h"
 #include "lmnt/jit.h"
-#include "helpers.h"
+#include "testhelpers.h"
 
 #define TESTSETUP_INCLUDED
 

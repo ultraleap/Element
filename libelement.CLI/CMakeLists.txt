@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
 
-project(libelement_cli 
+project(element_cli
 	VERSION 1.0.0 
 	LANGUAGES CXX)
 
+#todo: per-target, but make sure it works on mac os
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -15,7 +16,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 find_package(RapidJSON)
 add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
 
-set(libelement_cli_sources
+set(element_cli_sources
     "include/compiler_message.hpp"
     "include/command.hpp"
     "include/evaluate_command.hpp"
@@ -24,13 +25,16 @@ set(libelement_cli_sources
     "include/message_codes.hpp"
 
     "src/compiler_message.cpp"
+    "src/message_codes.cpp"
     "src/command.cpp"
     "src/main.cpp"
 )
 
+set(ELEMENT_CODE_COVERAGE ${CODE_COVERAGE})
+set(ELEMENT_BUILD_TESTING ${BUILD_TESTING})
 add_subdirectory(${ELEMENT_LIB_DIR} "libelement")
 
-add_executable(${CMAKE_PROJECT_NAME} ${libelement_cli_sources})
+add_executable(${CMAKE_PROJECT_NAME} ${element_cli_sources})
 
 IF (WIN32)
 	set(debug_dir "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
@@ -38,11 +42,11 @@ ELSE()
 	set(debug_dir "${CMAKE_BINARY_DIR}")
 ENDIF()
 
-set_target_properties(libelement_cli PROPERTIES
+set_target_properties(element_cli PROPERTIES
 	VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
 
 add_custom_command (
-	TARGET libelement_cli POST_BUILD 
+	TARGET element_cli POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	"${CMAKE_SOURCE_DIR}/../ContentFiles"
 	"${debug_dir}")
@@ -50,19 +54,20 @@ add_custom_command (
 target_include_directories(${CMAKE_PROJECT_NAME}
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${element_SOURCE_DIR}/src"
         "${DEPENDENCIES_DIR}/toml11"
         "${DEPENDENCIES_DIR}/rapidjson/include"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
-        "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
+        "${fmt_SOURCE_DIR}/include"
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11 fmt)
 
 if (UNIX AND NOT APPLE)
-    target_link_libraries(libelement_cli PRIVATE "m" "atomic" "pthread" "stdc++fs")
-endif ()
+    target_link_libraries(element_cli PRIVATE "m" "atomic" "pthread" "stdc++fs")
+endif()
 
 if (CODE_COVERAGE)
-    add_test(NAME test_cli COMMAND libelement_cli)
+    add_test(NAME test_cli COMMAND element_cli)
 endif()

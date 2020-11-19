@@ -53,7 +53,8 @@ namespace element
         {
             const auto error = element::build_log_error(context->src_context.get(),
                                                         ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
-            context->logger->log(error);
+            if (context->logger)
+                context->logger->log(error);
 
             return false;
         }
@@ -66,7 +67,8 @@ namespace element
         {
             const auto error = element::build_log_error(context->src_context.get(),
                                                         ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
-            context->logger->log(error);
+            if (context->logger)
+                context->logger->log(error);
 
             return false;
         }
@@ -77,7 +79,8 @@ namespace element
         {
             const auto error = element::build_log_error(context->src_context.get(),
                                                         ast, log_error_message_code::intrinsic_type_mismatch, declaration.name.value);
-            context->logger->log(error);
+            if (context->logger)
+                context->logger->log(error);
 
             return false;
         }
@@ -90,6 +93,6 @@ namespace element
     std::pair<std::vector<object_const_shared_ptr>, size_t> generate_placeholder_inputs(
         const compilation_context& compilation_context,
         const std::vector<port>& inputs,
-        element_result& out_result,
-        const int index_offset);
+        int index_offset,
+        unsigned int boundary_scope);
 } // namespace element

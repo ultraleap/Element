@@ -84,7 +84,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     while (continue_loop(arguments))
     {
         if (current_loop_iteration > max_loop_iterations)
-            return std::make_shared<const error>(fmt::format("Compile time loop didn't finish after max iteration count of {}", max_loop_iterations), ELEMENT_ERROR_COMPILETIME_LOOP_TOO_MANY_ITERATIONS, source_info);
+            return std::make_shared<const error>(fmt::format("Compile time loop didn't finish after max iteration count of {}", max_loop_iterations), ELEMENT_ERROR_INFINITE_LOOP, source_info);
 
         current_object = next_successor(arguments);
         if (!current_object)
@@ -104,8 +104,6 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
                                     const source_information& source_info,
                                     const compilation_context& context)
 {
-    element_result result = ELEMENT_OK;
-
     //ensure that these are boundary functions as we'll need to compile them like any other boundary function
     const auto predicate_is_boundary = predicate_function->valid_at_boundary(context);
     if (!predicate_is_boundary)
@@ -116,14 +114,27 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
         return std::make_shared<const error>("body is not a boundary function", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
 
     //compile our functions to instruction trees, with their own placeholder input instructions
-    const auto placeholder_offset = 0;
-    const auto predicate_compiled = compile_placeholder_expression(context, *predicate_function, predicate_function->declarer->get_inputs(), result, source_info, placeholder_offset);
-    if (!predicate_compiled)
-        return std::make_shared<const error>("predicate failed to compile", result, source_info);
+    const auto predicate_compiled = compile_placeholder_expression(context, *predicate_function, predicate_function->get_inputs(), source_info);
+    const auto* err = dynamic_cast<const error*>(predicate_compiled.get());
+    if (err)
+    {
+        err->log_once(context.get_logger());
+        return predicate_compiled;
+    }
 
-    const auto body_compiled = compile_placeholder_expression(context, *body_function, body_function->declarer->get_inputs(), result, source_info, placeholder_offset);
+    if (!predicate_compiled)
+        return std::make_shared<const error>("predicate failed to compile", ELEMENT_ERROR_UNKNOWN, source_info);
+
+    const auto body_compiled = compile_placeholder_expression(context, *body_function, body_function->get_inputs(), source_info);
+    err = dynamic_cast<const error*>(body_compiled.get());
+    if (err)
+    {
+        err->log_once(context.get_logger());
+        return body_compiled;
+    }
+
     if (!body_compiled)
-        return std::make_shared<const error>("body failed to compile", result, source_info);
+        return std::make_shared<const error>("body failed to compile", ELEMENT_ERROR_UNKNOWN, source_info);
 
     auto predicate_expression = predicate_compiled->to_instruction();
     if (!predicate_expression)
@@ -166,7 +177,7 @@ object_const_shared_ptr intrinsic_for::compile(const compilation_context& contex
                                                const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
-    const auto& declarer = *frame.function;
+    const auto& declarer = *static_cast<const declaration*>(frame.function->declarer);
     assert(declarer.inputs.size() == 3);
     assert(frame.compiled_arguments.size() == 3);
 

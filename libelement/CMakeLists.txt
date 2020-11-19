@@ -1,39 +1,47 @@
 cmake_minimum_required(VERSION 3.11)
 
+set(IS_ROOT_PROJECT false)
+get_directory_property(HAS_PARENT PARENT_DIRECTORY)
+if (NOT HAS_PARENT)
+    set(IS_ROOT_PROJECT true)
+endif()
+
 # For VS
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(element VERSION 1.0.0)
 
+#todo: do it per-target, but needs to be checked on mac/xcode
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(LOG_VERBOSITY "log_flags::none" CACHE STRING "logging flags")
+set(ELEMENT_LOG_VERBOSITY "log_flags::none" CACHE STRING "logging flags")
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Code Coverage Configuration
-add_library(coverage_config INTERFACE)
-option(CODE_COVERAGE "Enable coverage reporting" OFF)
-option(GEN_HTML "Enable code coverage html output" OFF)
+add_library(element_coverage_config INTERFACE)
+add_library(element::coverage_config ALIAS element_coverage_config)
+option(ELEMENT_CODE_COVERAGE "Enable coverage reporting" OFF)
+option(ELEMENT_GEN_HTML "Enable code coverage html output" OFF)
 
-if (CODE_COVERAGE)
+if (ELEMENT_CODE_COVERAGE)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        message(STATUS "CODE_COVERAGE ON")
+        message(STATUS "ELEMENT_CODE_COVERAGE ON")
         # Add required flags (GCC & LLVM/Clang)
-        target_compile_options(coverage_config INTERFACE
+        target_compile_options(element_coverage_config INTERFACE
             -O0        # no optimization
             -g         # generate debug info
             --coverage # sets all required flags
         )
 
         if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
-            target_link_options(coverage_config INTERFACE --coverage)
+            target_link_options(element_coverage_config INTERFACE --coverage)
         else()
-            target_link_libraries(coverage_config INTERFACE --coverage)
+            target_link_libraries(element_coverage_config INTERFACE --coverage)
         endif()
     else()
-        message(FATAL_ERROR "CODE_COVERAGE is ON but the compiler is not GNU|Clang")
+        message(FATAL_ERROR "ELEMENT_CODE_COVERAGE is ON but the compiler is not GNU|Clang")
     endif()
 endif()
 
@@ -65,6 +73,7 @@ set(element_sources
     "src/ast/ast_internal.cpp"
     "src/ast/parser.cpp"
     "src/ast/parser_internal.cpp"
+    "src/ast/parser_internal.hpp"
     "src/ast/ast_indexes.hpp"
     "src/ast/fwd.hpp"
     
@@ -105,6 +114,8 @@ set(element_sources
     "src/object_model/expressions/literal_expression.hpp"
     "src/object_model/expressions/anonymous_block_expression.cpp"
     "src/object_model/expressions/anonymous_block_expression.hpp"
+    "src/object_model/expressions/lambda_expression.cpp"
+    "src/object_model/expressions/lambda_expression.hpp"
 
     "src/object_model/intermediaries/declaration_wrapper.cpp"
     "src/object_model/intermediaries/declaration_wrapper.hpp"
@@ -192,7 +203,6 @@ set(element_sources
 
     #MISC
     "src/configuration.hpp.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp"
 )
 
 add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
@@ -201,17 +211,20 @@ if(MSVC)
 endif()
 
 add_library(element STATIC ${element_sources})
+add_library(element::element ALIAS element)
 
 # For VS
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${element_sources})
+source_group(TREE ${CMAKE_CURRENT_BINARY_DIR} FILES "${CMAKE_CURRENT_BINARY_DIR}/configuration.hpp")
 
 # Don't rely on compiler extensions
 set_property(TARGET element PROPERTY CMAKE_CXX_EXTENSIONS OFF)
 
+#todo: probably not good enough
 IF (WIN32)
-    set(debug_dir "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+    set(debug_dir "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
 ELSE()
-    set(debug_dir "${CMAKE_BINARY_DIR}")
+    set(debug_dir "${CMAKE_CURRENT_BINARY_DIR}")
 ENDIF()
 
 # Copy prelude alongside built library
@@ -229,30 +242,30 @@ target_include_directories(element
         "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/memorypool"
         # TODO: this, much nicer
         "${CMAKE_CURRENT_SOURCE_DIR}/../LMNT/include"
-        "${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
+        "${fmt_SOURCE_DIR}/include"
         "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-target_link_libraries(element PRIVATE utf8cpp fmt::fmt )
-target_link_libraries(element PUBLIC coverage_config)
+target_link_libraries(element PRIVATE utf8cpp fmt::fmt)
+target_link_libraries(element PUBLIC element_coverage_config)
 
 if (UNIX AND NOT APPLE)
     target_link_libraries(element PRIVATE "m" "atomic" "pthread" "stdc++fs")
 endif ()
 
 ## A C project to ensure our C API is correct
-add_executable(libelement_c_app "${CMAKE_CURRENT_SOURCE_DIR}/test/main.c")
-target_link_libraries(libelement_c_app PRIVATE element)
-target_include_directories(libelement_c_app PRIVATE "${element_SOURCE_DIR}/include")
-set_target_properties(libelement_c_app PROPERTIES
+add_executable(element_app_c "${CMAKE_CURRENT_SOURCE_DIR}/test/main.c")
+target_link_libraries(element_app_c PRIVATE element)
+target_include_directories(element_app_c PRIVATE "${element_SOURCE_DIR}/include")
+set_target_properties(element_app_c PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
 add_custom_command (
-        TARGET libelement_c_app POST_BUILD
+        TARGET element_app_c POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
         "${debug_dir}")
 
-if (BUILD_TESTING)
+if (ELEMENT_BUILD_TESTING)
     include(CTest)
     set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/catch2)
     add_library(Catch INTERFACE)
@@ -263,41 +276,41 @@ if (BUILD_TESTING)
             "${PROJECT_SOURCE_DIR}/test/*.test.hpp"
             )
 
-    add_executable(libelement_test_app ${TEST_SOURCES})
-    target_link_libraries(libelement_test_app PRIVATE Catch2 element fmt::fmt )
-    target_link_libraries(libelement_test_app PUBLIC coverage_config)
-    target_include_directories(libelement_test_app PRIVATE "${element_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}/_deps/fmt-src/include")
+    add_executable(element_tests ${TEST_SOURCES})
+    target_link_libraries(element_tests PRIVATE Catch2 element fmt::fmt )
+    target_link_libraries(element_tests PUBLIC element_coverage_config)
+    target_include_directories(element_tests PRIVATE "${element_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}/_deps/fmt-src/include")
     add_test(NAME libelement_test
-            COMMAND libelement_test_app -r junit -o ${CMAKE_BINARY_DIR}/libemelement_test_app_details.xml)
+            COMMAND element_tests -r junit -o ${CMAKE_BINARY_DIR}/libemelement_test_app_details.xml)
 
-    set_target_properties(libelement_test_app PROPERTIES
+    set_target_properties(element_tests PROPERTIES
         VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
 
     # Copy prelude alongside built library
     add_custom_command (
-            TARGET libelement_test_app POST_BUILD
+            TARGET element_tests POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
             "${debug_dir}")
 
-    if (CODE_COVERAGE)
+    if (ELEMENT_CODE_COVERAGE)
         # Add an OR exit 0 in case tests fail but still want coverage of tests ran
-        add_custom_target(libelement_test_coverage
-                COMMAND ./libelement_test_app || (exit 0)
-                DEPENDS libelement_test_app)
+        add_custom_target(element_test_coverage
+                COMMAND ./element_tests || (exit 0)
+                DEPENDS element_tests)
 
         # Ensure that lcov has been installed
         find_package(Lcov)
 
         if(Lcov_FOUND)
             add_custom_command(
-                    TARGET libelement_test_coverage POST_BUILD
+                    TARGET element_test_coverage POST_BUILD
                     COMMAND ${LCOV_BIN} --capture --directory . --output-file coverage.info
                     COMMAND ${LCOV_BIN} --remove coverage.info '/Library/*' '${CMAKE_BINARY_DIR}/*' '${CMAKE_SOURCE_DIR}/dependencies/*' '${CMAKE_SOURCE_DIR}/test/*' --output-file coverage.info
                     COMMAND ${LCOV_BIN} --list coverage.info)
 
             if(GEN_HTML)
-                add_custom_command(TARGET libelement_test_coverage POST_BUILD
+                add_custom_command(TARGET element_test_coverage POST_BUILD
                         COMMAND mkdir -p coverage-html
                         COMMAND ${GENHTML_BIN} -o coverage-html coverage.info)
             endif()
@@ -308,14 +321,19 @@ if (BUILD_TESTING)
 endif()
 
 find_program(CLANG_FORMAT clang-format)
-
 if (CLANG_FORMAT)
     find_package(Python)
-    add_custom_target(clang-check
-            COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/run-clang-format.py -r ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/test
-            COMMENT "Checking src & test folder against clang format styling.")
+    add_custom_target(element_clang_check
+            COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/run-clang-format.py -r
+                ${CMAKE_CURRENT_SOURCE_DIR}/src
+                ${CMAKE_CURRENT_SOURCE_DIR}/test
+                ${CMAKE_CURRENT_SOURCE_DIR}/include
+            COMMENT "Checking element sources against clang format styling.")
 
-    add_custom_target(clang-format
-            COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/run-clang-format.py -i -r ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/test
-            COMMENT "Formatting src & test folder to match clang format styling.")
+    add_custom_target(element_clang_format
+            COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/run-clang-format.py -i -r
+                ${CMAKE_CURRENT_SOURCE_DIR}/src
+                ${CMAKE_CURRENT_SOURCE_DIR}/test
+                ${CMAKE_CURRENT_SOURCE_DIR}/include
+            COMMENT "Formatting element sources to match clang format styling.")
 endif()

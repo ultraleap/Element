@@ -1,6 +1,6 @@
 #include "CUnit/CUnitCI.h"
 #include "lmnt/interpreter.h"
-#include "helpers.h"
+#include "testhelpers.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
@@ -14,7 +14,7 @@ static void test_assignss(void)
     archive a = create_archive_array("test", 1, 1, 2, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNSS, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -41,7 +41,7 @@ static void test_assignvv(void)
     archive a = create_archive_array("test", 4, 4, 8, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNVV, 0x00, 0x00, 0x04)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -70,7 +70,7 @@ static void test_assignsv(void)
     archive a = create_archive_array("test", 1, 4, 5, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNSV, 0x00, 0x00, 0x01)
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -113,7 +113,7 @@ static void test_assigniis(void)
     lmnt_value rvals[1];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
     archive a;
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
 
     a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x002A, 0x0000, 0x00)
@@ -157,7 +157,7 @@ static void test_assignibs(void)
     lmnt_value rvals[1];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
     archive a;
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
 
     a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x00)
@@ -210,7 +210,7 @@ static void test_assigniiv(void)
     lmnt_value rvals[4];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
     archive a;
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
 
     a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIV, 0x002A, 0x0000, 0x00)
@@ -266,7 +266,7 @@ static void test_assignibv(void)
     lmnt_value rvals[4];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
     archive a;
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
 
     a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIBV, 0x0000, 0x3F80, 0x00)
@@ -334,7 +334,7 @@ static void test_dloadiis(void)
     lmnt_value rvals[3];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
 
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     archive a;
 
     a = create_archive_array("test", 0, 3, 3, 3, 8, 0,
@@ -382,7 +382,7 @@ static void test_dloadiiv(void)
     lmnt_value rvals[12];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
 
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     archive a;
 
     a = create_archive_array("test", 0, 12, 12, 3, 8, 0,
@@ -439,7 +439,7 @@ static void test_dloadirs(void)
     lmnt_value rvals[3];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
 
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     archive a;
 
     a = create_archive_array("test", 3, 3, 6, 3, 8, 0,
@@ -494,7 +494,7 @@ static void test_dloadirv(void)
     lmnt_value rvals[12];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
 
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     archive a;
 
     a = create_archive_array("test", 3, 12, 15, 3, 8, 0,
@@ -548,7 +548,7 @@ static void test_dseclen(void)
     lmnt_value rvals[1];
     const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
 
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     archive a;
 
     a = create_archive_array("test", 0, 1, 1, 1, 8, 0,
@@ -606,7 +606,7 @@ static void test_indexris(void)
         LMNT_OP_BYTES(LMNT_OP_INDEXRIS, 0x04, 0x00, 0x05),
         350.0f, 700.0f, -100.0f, 50.0f
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 
@@ -642,7 +642,7 @@ static void test_indexrir(void)
         LMNT_OP_BYTES(LMNT_OP_INDEXRIR, 0x04, 0x00, 0x05),
         350.0f, 700.0f, -100.0f, 50.0f
     );
-    test_function_data fndata;
+    test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
 

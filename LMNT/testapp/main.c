@@ -92,9 +92,9 @@ static long long get_current_usec()
 }
 #endif
 
-lmnt_result double_a_thing(lmnt_ictx* ctx, const lmnt_value* args, lmnt_offset args_count, lmnt_value* rvals, lmnt_offset rvals_count)
+lmnt_result double_a_thing(lmnt_ictx* ctx, const lmnt_extcall_info* callinfo, const lmnt_value* args, lmnt_value* rvals)
 {
-    assert(args_count == 1 && rvals_count == 1);
+    assert(callinfo->args_count == 1 && callinfo->rvals_count == 1);
     rvals[0] = args[0] * 2.0f;
     return LMNT_OK;
 }

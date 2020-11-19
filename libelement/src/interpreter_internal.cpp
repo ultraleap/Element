@@ -21,6 +21,8 @@
 #include "object_model/intrinsics/intrinsic.hpp"
 #include "object_model/object_model_builder.hpp"
 #include "object_model/error_map.hpp"
+#include "object_model/expressions/expression_chain.hpp"
+#include "object_model/expressions/call_expression.hpp"
 
 void element_interpreter_ctx::Deleter::operator()(element::intrinsic* i) const { delete i; }
 void element_interpreter_ctx::Deleter::operator()(const element::intrinsic* i) const { delete i; }
@@ -39,9 +41,9 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
 {
     //HACK: JM - Not a fan of this...
     const std::string file = filename;
-    const auto starts_with_prelude = file.rfind("Prelude\\", 0) == 0;
+    const auto starts_with_prelude = file.rfind("Prelude/", 0) == 0;
     element_tokeniser_ctx* tokeniser;
-    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser))
+    ELEMENT_OK_OR_RETURN(element_tokeniser_create(&tokeniser));
 
     auto element_tokeniser_delete_ptr = [](element_tokeniser_ctx* tokeniser) {
         element_tokeniser_delete(&tokeniser);
@@ -55,7 +57,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     element::file_information info;
     info.file_name = std::make_unique<std::string>(filename);
     //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
-    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()))
+    ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()));
     const auto total_lines_parsed = tokeniser->line;
 
     for (auto i = 0; i < total_lines_parsed; ++i)
@@ -82,7 +84,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     parser.src_context = src_context;
 
     auto result = parser.ast_build();
-    ELEMENT_OK_OR_RETURN(result)
+    ELEMENT_OK_OR_RETURN(result);
 
     const auto log_ast = starts_with_prelude
                              ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
@@ -127,12 +129,23 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 
 element_result element_interpreter_ctx::load_file(const std::string& file)
 {
+    const auto extension = std::filesystem::path(file).extension().string();
+    if (extension != ".ele")
+    {
+        std::string msg = fmt::format("Invalid file type in 'load_file'. Expected '.ele' and got '{}'", extension);
+        element_result result = ELEMENT_ERROR_INVALID_FILE_TYPE;
+        log(result, msg, file);
+        return result;
+    }
+
     const auto abs = std::filesystem::absolute(std::filesystem::path(file)).string();
 
     if (!file_exists(abs))
     {
-        std::cout << fmt::format("file {} was not found at path {}\n", file, abs.c_str()); //todo: proper logging
-        return ELEMENT_ERROR_FILE_NOT_FOUND;
+        std::string msg = fmt::format("File not file:  {} was not found at path {}\n", file, abs.c_str());
+        element_result result = ELEMENT_ERROR_FILE_NOT_FOUND;
+        log(result, msg, file);
+        return result;
     }
 
     std::string buffer;
@@ -168,13 +181,15 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
     if (last_dash != std::string::npos)
         actual_package_name = package.substr(0, last_dash);
 
-    auto package_path = "ElementPackages\\" + actual_package_name;
+    auto package_path = "ElementPackages/" + actual_package_name;
     if (!directory_exists(package_path))
     {
         auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
-        std::cout << fmt::format("package {} does not exist at path {}\n",
-                                 package_path, abs); //todo: proper logging
-        return ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
+        std::string msg = fmt::format("package '{}' does not exist at path '{}'\n",
+                                      package_path, abs);
+        element_result result = ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
+        log(result, msg);
+        return result;
     }
 
     element_result ret = ELEMENT_OK;
@@ -183,16 +198,23 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
     {
         const auto filename = file.path().string();
         const auto extension = file.path().extension().string();
+
         if (extension == ".ele")
         {
             const element_result result = load_file(file.path().string());
-            if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
+            if (result != ELEMENT_OK && ret == ELEMENT_OK)
+            {
+                std::string msg = fmt::format("Error when loading '.ele' file '{}' in package '{}'.\n",
+                    package_path, filename);
+                log(msg);
                 ret = result;
+            }
         }
         else if (extension != ".bond")
         {
-            std::cout << fmt::format("file {} in package {} has extension {} instead of '.ele' or '.bond'\n",
-                                     filename, package_path, extension); //todo: proper logging
+            std::string msg = fmt::format("Unexpected file in package '{}'. File '{}' has extension '{}' instead of '.ele' or '.bond'\n",
+                                          package_path, filename, extension);
+            log(msg);
         }
     }
 
@@ -205,7 +227,7 @@ element_result element_interpreter_ctx::load_packages(const std::vector<std::str
 
     for (const auto& package : packages)
     {
-        auto package_path = "ElementPackages\\" + package;
+        auto package_path = "ElementPackages/" + package;
         const auto result = load_package(package);
         if (result != ELEMENT_OK && ret != ELEMENT_OK) //todo: only returns first error
             ret = result;
@@ -220,18 +242,7 @@ element_result element_interpreter_ctx::load_prelude()
         return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED;
 
     const auto result = load_package("Prelude");
-    if (result == ELEMENT_OK)
-    {
-        prelude_loaded = true;
-        return result;
-    }
-
-    if (result == ELEMENT_ERROR_DIRECTORY_NOT_FOUND)
-    {
-        auto abs = std::filesystem::absolute(std::filesystem::path("Prelude")).string();
-        std::cout << fmt::format("could not find prelude at {}\n", abs); //todo: proper logging
-    }
-
+    prelude_loaded = (result == ELEMENT_OK);
     return result;
 }
 
@@ -244,18 +255,251 @@ void element_interpreter_ctx::set_log_callback(LogCallback callback, void* user_
 
 void element_interpreter_ctx::log(element_result code, const std::string& message, const std::string& filename) const
 {
-    if (logger == nullptr)
-        return;
+    if (logger)
+        logger->log(*this, code, message, filename);
+}
 
-    logger->log(*this, code, message, filename);
+void element_interpreter_ctx::log(element_result code, const std::string & message) const
+{
+    if (logger)
+        logger->log(*this, code, message);
 }
 
 void element_interpreter_ctx::log(const std::string& message) const
 {
-    if (logger == nullptr)
-        return;
+    if (logger)
+        logger->log(message, element_stage::ELEMENT_STAGE_MISC);
+}
 
-    logger->log(message, element_stage::ELEMENT_STAGE_MISC);
+element_result element_interpreter_ctx::call_expression_to_objects(
+    const element_compiler_options* options,
+    const char* call_expression_string,
+    std::vector<element::object_const_shared_ptr>& objects)
+{
+    if (!call_expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    element_tokeniser_ctx* tokeniser;
+    auto result = element_tokeniser_create(&tokeniser);
+    if (result != ELEMENT_OK)
+        return result;
+
+    tokeniser->logger = logger;
+
+    // Make a smart pointer out of the tokeniser so it's deleted on an early return
+    auto element_tokeniser_delete_ptr = [](element_tokeniser_ctx* tokeniser) {
+        element_tokeniser_delete(&tokeniser);
+    };
+
+    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(element_tokeniser_delete_ptr)>(tokeniser, element_tokeniser_delete_ptr);
+
+    //create the file info struct to be used by the object model later
+    element::file_information info;
+    info.file_name = std::make_unique<std::string>("<REMOVE>");
+
+    //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
+    result = element_tokeniser_run(tokeniser, call_expression_string, info.file_name->data());
+    if (result != ELEMENT_OK)
+        return result;
+
+    if (tokeniser->tokens.empty())
+        return ELEMENT_OK;
+
+    const auto total_lines_parsed = tokeniser->line;
+
+    //lines start at 1
+    for (auto i = 0; i < total_lines_parsed; ++i)
+        info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
+
+    auto* const data = info.file_name->data();
+    //todo: remove file_info added to interpreter source interpreter
+    src_context->file_info[data] = std::move(info);
+
+    const auto log_tokens = flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+
+    if (log_tokens)
+        log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+
+    element_parser_ctx parser;
+    parser.tokeniser = tokeniser;
+    parser.logger = logger;
+    parser.src_context = src_context;
+
+    element_ast root(nullptr);
+    parser.root = &root;
+    parser.current_token = tokeniser->get_token(0, result);
+    root.nearest_token = parser.current_token;
+
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = parser.parse_exprlist(root);
+    if (result != ELEMENT_OK)
+        return result;
+
+    const auto log_ast = flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+
+    if (log_ast)
+        log("\n---\nAST\n---\n" + ast_to_string(parser.root));
+
+    //parse only enabled, skip object model generation to avoid error codes with positive values
+    //i.e. errors returned other than ELEMENT_ERROR_PARSE
+    if (parse_only)
+    {
+        root.children.clear();
+        return ELEMENT_OK;
+    }
+
+    auto declaration = std::make_unique<element::function_declaration>(element::identifier{ "DUMMY" }, global_scope.get(), element::function_declaration::kind::expression_bodied);
+    auto chain = std::make_unique<element::expression_chain>(declaration.get());
+    chain->expressions.emplace_back(std::make_unique<element::call_expression>(nullptr)); //create empty expression so build_call_expression doesn't fail
+    assign_source_information(this, chain, parser.root->children[0].get());
+    auto expr = element::build_call_expression(this, parser.root->children[0].get(), chain.get(), result);
+    auto* call_expr = static_cast<const element::call_expression*>(expr.get());
+
+    root.children.clear();
+
+    if (result != ELEMENT_OK)
+    {
+        log(result, fmt::format("building object model failed with element_result {}", result), src_context->file_info[data].file_name->data());
+        return result;
+    }
+
+    const element::compilation_context compilation_context(global_scope.get(), this);
+
+    for (const auto& arg : call_expr->arguments)
+        objects.emplace_back(arg->compile(compilation_context, call_expr->source_info));
+
+    return ELEMENT_OK;
+}
+
+element_result element_interpreter_ctx::expression_to_object(
+    const element_compiler_options* options,
+    const char* expression_string,
+    element_object** object)
+{
+    if (!expression_string)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    if (!object)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *object = new element_object();
+
+    const element::compilation_context compilation_context(global_scope.get(), this);
+
+    element_tokeniser_ctx* tokeniser;
+    auto result = element_tokeniser_create(&tokeniser);
+    if (result != ELEMENT_OK)
+        return result;
+
+    tokeniser->logger = logger;
+
+    // Make a smart pointer out of the tokeniser so it's deleted on an early return
+    auto element_tokeniser_delete_ptr = [](element_tokeniser_ctx* tokeniser) {
+        element_tokeniser_delete(&tokeniser);
+    };
+
+    auto tctx = std::unique_ptr<element_tokeniser_ctx, decltype(element_tokeniser_delete_ptr)>(tokeniser, element_tokeniser_delete_ptr);
+
+    //create the file info struct to be used by the object model later
+    element::file_information info;
+    info.file_name = std::make_unique<std::string>("<REMOVE>");
+
+    //hack: forcing terminal on expression
+    std::string expr = std::string(expression_string);
+    //pass the pointer to the filename, so that the pointer stored in tokens matches the one we have
+    result = element_tokeniser_run(tokeniser, expr.c_str(), info.file_name->data());
+    if (result != ELEMENT_OK)
+        return result;
+
+    if (tokeniser->tokens.empty())
+        return ELEMENT_OK;
+
+    const auto total_lines_parsed = tokeniser->line;
+
+    //lines start at 1
+    for (auto i = 0; i < total_lines_parsed; ++i)
+        info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
+
+    auto* const data = info.file_name->data();
+    //todo: remove file_info added to interpreter source interpreter
+    src_context->file_info[data] = std::move(info);
+
+    const auto log_tokens = flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+
+    if (log_tokens)
+        log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
+
+    element_parser_ctx parser;
+    parser.tokeniser = tokeniser;
+    parser.logger = logger;
+    parser.src_context = src_context;
+
+    element_ast root(nullptr);
+    parser.root = &root;
+    parser.current_token = tokeniser->get_token(0, result);
+    root.nearest_token = parser.current_token;
+
+    if (result != ELEMENT_OK)
+        return result;
+
+    result = parser.parse_expression(root);
+    if (result != ELEMENT_OK)
+        return result;
+
+    const auto log_ast = flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+
+    if (log_ast)
+        log("\n---\nAST\n---\n" + ast_to_string(parser.root));
+
+    //parse only enabled, skip object model generation to avoid error codes with positive values
+    //i.e. errors returned other than ELEMENT_ERROR_PARSE
+    if (parse_only)
+    {
+        root.children.clear();
+        return ELEMENT_OK;
+    }
+
+    auto dummy_identifier = element::identifier{ "<REMOVE>" };
+    auto dummy_declaration = std::make_unique<element::function_declaration>(dummy_identifier, global_scope.get(), element::function_declaration::kind::expression_bodied);
+    parser.root->nearest_token = &tokeniser->tokens[0];
+    element::assign_source_information(this, dummy_declaration, parser.root);
+    auto expression_chain = build_expression_chain(this, parser.root->children[0].get(), dummy_declaration.get(), result);
+    dummy_declaration->body = std::move(expression_chain);
+
+    root.children.clear();
+
+    if (result != ELEMENT_OK)
+    {
+        log(result, fmt::format("building object model failed with element_result {}", result), info.file_name->data());
+        return result;
+    }
+
+    bool success = global_scope->add_declaration(std::move(dummy_declaration));
+    if (!success)
+    {
+        (*object)->obj = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    const auto* found_dummy_decl = global_scope->find(dummy_identifier, false);
+    assert(found_dummy_decl);
+    auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
+
+    if (!compiled)
+    {
+        (*object)->obj = nullptr;
+        return ELEMENT_ERROR_UNKNOWN;
+    }
+
+    (*object)->obj = std::move(compiled);
+
+    const auto* err = dynamic_cast<const element::error*>((*object)->obj.get());
+    if (err)
+        return err->log_once(logger.get());
+
+    return ELEMENT_OK;
 }
 
 element_interpreter_ctx::element_interpreter_ctx()
@@ -278,3 +522,5 @@ element_result element_interpreter_ctx::clear()
 
     return ELEMENT_OK;
 }
+
+

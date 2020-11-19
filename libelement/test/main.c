@@ -13,7 +13,7 @@ int main(int argc, char** argv)
     element_object* const_int_obj;
     element_object* my_struct_obj;
     element_interpreter_ctx* interpreter;
-    element_compilation_ctx* compilation_ctx;
+    element_object_model_ctx* compilation_ctx;
 
     element_interpreter_create(&interpreter);
     //element_interpreter_set_log_callback(interpreter, log_callback, nullptr);
@@ -43,11 +43,11 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_create_compilation_ctx(interpreter, &compilation_ctx);
+    result = element_object_model_ctx_create(interpreter, &compilation_ctx);
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_object_compile(const_int_obj, compilation_ctx, &const_int);
+    result = element_object_simplify(const_int_obj, compilation_ctx, &const_int);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 
     args[0] = const_int;
 
-    result = element_object_call(my_struct_obj, compilation_ctx, *args, 1, &my_struct_instance);
+    result = element_object_call(my_struct_obj, compilation_ctx, &args[0], 1, &my_struct_instance);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
         float outputs[] = { 0 };
         output.values = outputs;
         output.count = 1;
-        result = element_interpreter_evaluate(interpreter, NULL, instruction, &input, &output);
+        result = element_interpreter_evaluate_instruction(interpreter, NULL, instruction, &input, &output);
 
         if (result != ELEMENT_OK)
             goto cleanup;
@@ -89,14 +89,14 @@ int main(int argc, char** argv)
     }
 
 cleanup:
-    element_delete_object(&my_struct_instance_a);
-    element_delete_object(&my_struct_instance);
-    element_delete_object(&my_struct_obj);
-    element_delete_object(&const_int_obj);
-    element_delete_object(&const_int);
-    element_delete_compilation_ctx(&compilation_ctx);
-    element_delete_declaration(&my_struct_declaration);
-    element_delete_declaration(&const_int_declaration);
+    element_object_delete(&my_struct_instance_a);
+    element_object_delete(&my_struct_instance);
+    element_object_delete(&my_struct_obj);
+    element_object_delete(&const_int_obj);
+    element_object_delete(&const_int);
+    element_object_model_ctx_delete(&compilation_ctx);
+    element_declaration_delete(&my_struct_declaration);
+    element_declaration_delete(&const_int_declaration);
     element_interpreter_delete(&interpreter);
 
     return 0;

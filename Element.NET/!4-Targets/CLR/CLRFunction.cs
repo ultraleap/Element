@@ -137,7 +137,20 @@ namespace Element.CLR
 					: _conversionFunctions.TryGetValue((expr.Type, targetType), out var convert)
 						? convert(expr)
 						: throw new NotSupportedException($"Conversion not defined from '{expr}' to '{targetType}'");
-			
+
+			static LinqExpression ConvertOutputExpressionType(LinqExpression expr, Type targetType)
+			{
+				var isDouble = expr.Type == typeof(double) && targetType == typeof(double);
+				var converterExists = _conversionFunctions.TryGetValue((expr.Type, typeof(float)), out var forceConvert);
+				
+				return (isDouble, converterExists) switch
+				{
+					(true, true) => forceConvert(expr),
+					(_, false) => ConvertExpressionType(expr, targetType),
+					_ => throw new NotSupportedException($"Conversion not defined from '{expr}' to '{targetType}'")
+				};
+			}
+
 			data.Cache ??= new Dictionary<CachedInstruction, ParameterExpression>();
 			data.GroupCache ??= new Dictionary<InstructionGroup, LinqExpression[]>();
 			switch (value)
@@ -160,7 +173,7 @@ namespace Element.CLR
 					
 					if (_unaryMethodOps.TryGetValue(u.Operation, out var unaryMethod))
 					{
-						return ConvertExpressionType(LinqExpression.Call(unaryMethod, ConvertExpressionType(ua, unaryMethod.GetParameters()[0].ParameterType)),
+						return ConvertOutputExpressionType(LinqExpression.Call(unaryMethod, ConvertExpressionType(ua, unaryMethod.GetParameters()[0].ParameterType)),
 						                             unaryMethod.ReturnParameter!.ParameterType);
 					}
 
@@ -178,7 +191,7 @@ namespace Element.CLR
 
 					if (_binaryMethodOps.TryGetValue(b.Operation, out var binaryMethod))
 					{
-						return ConvertExpressionType(LinqExpression.Call(binaryMethod,
+						return ConvertOutputExpressionType(LinqExpression.Call(binaryMethod,
 						                                                 ConvertExpressionType(ba, binaryMethod.GetParameters()[0].ParameterType),
 						                                                 ConvertExpressionType(bb, binaryMethod.GetParameters()[1].ParameterType)),
 						                             binaryMethod.ReturnParameter!.ParameterType);
@@ -201,9 +214,12 @@ namespace Element.CLR
 
 					if (m.Operands.Count == 2)
 					{
+						var sa = CompileInstruction(m.Operands[1], data);
+						var sb = CompileInstruction(m.Operands[0], data);
+
 						return LinqExpression.Condition(ConvertExpressionType(CompileInstruction(m.Selector, data), typeof(bool)),
-						                                CompileInstruction(m.Operands[1], data),
-						                                CompileInstruction(m.Operands[0], data));
+							sa,
+							sb);
 					}
 
 					var sel = LinqExpression.Convert(CompileInstruction(m.Selector, data), typeof(int));
@@ -446,28 +462,28 @@ namespace Element.CLR
             
             // Compile delegate
             var detectCircular = new Stack<IValue>();
-            Result<LinqExpression> ConvertFunction(IValue value, Type outputType, Context context)
+            Result<LinqExpression> ConvertFunction(IValue nestedValue, Type outputType, Context context)
 			{
-				if (detectCircular.Count >= 1 && detectCircular.Peek() == value)
+				if (detectCircular.Count >= 1 && detectCircular.Peek() == nestedValue)
 				{
-					return context.Trace(EleMessageCode.RecursionNotAllowed, $"Circular dependency when compiling '{value}'");
+					return context.Trace(EleMessageCode.RecursionNotAllowed, $"Circular dependency when compiling '{nestedValue}'");
 				}
 
 				// If this value is serializable then serialize and use it
-				if (value.IsSerializable(context))
+				if (nestedValue.IsSerializable(context))
 				{
-					return value.Serialize(context)
+					return nestedValue.Serialize(context)
 					         .Bind(serialized => serialized.Count switch
 					         {
 						         1 when IsPrimitiveElementType(outputType) => CompileInstruction(serialized[0]/*.Cache(data.CSECache, context)*/, data),
-						         _ => boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context)
+						         _ => boundaryConverter.ElementToLinq(nestedValue, outputType, ConvertFunction, context)
 					         });
 				}
 
 				// Else we try to use a boundary converter to convert to serializable instructions
 				// TODO: Move circular checks to boundary converters
-				detectCircular.Push(value);
-				var retval = boundaryConverter.ElementToLinq(value, outputType, ConvertFunction, context);
+				detectCircular.Push(nestedValue);
+				var retval = boundaryConverter.ElementToLinq(nestedValue, outputType, ConvertFunction, context);
 				detectCircular.Pop();
 				return retval;
 			}

@@ -1,14 +1,15 @@
+//STD
 #include <iostream>
 
-//dependencies
+//LIBS
 #include <toml.hpp>
-
 #include <fmt/format.h>
-
-//user
-#include <CLI/CLI.hpp>
 #include <element/common.h>
-
+#include <CLI/CLI.hpp>
+#ifdef WIN32
+#include "Windows.h"
+#endif
+//SELF
 #include "command.hpp"
 #include "compiler_message.hpp"
 
@@ -73,7 +74,7 @@ void log_callback(const element_log_message* const message, void* user_data)
 
 void command_callback(command& command)
 {
-    /*#if !defined(NDEBUG) && defined(WIN32)
+    #if !defined(NDEBUG) && defined(WIN32)
           //TODO: JM - TEMPORARY - Remove me later
           SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX |
   SEM_NOOPENFILEERRORBOX);
@@ -86,7 +87,7 @@ void command_callback(command& command)
 
           _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
           _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
-  #endif*/
+  #endif
 
     // set a log callback, so that when we get errors, messages are logged
     command.set_log_callback(log_callback, static_cast<void*>(&command));
@@ -106,6 +107,15 @@ void command_callback(command& command)
 
 int main(const int argc, char** argv)
 {
+    /*#if !defined(NDEBUG) && defined(WIN32)
+    std::string args;
+    for (int i = 0; i < argc; ++i)
+    {
+        args += argv[i];
+    }
+    std::cout << args << " " << std::endl;
+    #endif*/
+    
     // parse arguments and construct exactly one required command
     CLI::App app{ "CLI interface for libelement" };
     app.set_help_all_flag("--help-all", "Expand all help");

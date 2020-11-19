@@ -10,6 +10,7 @@
 #include "error_map.hpp"
 #include "compilation_context.hpp"
 #include "intrinsics/intrinsic.hpp"
+#include "object_model/intermediaries/function_instance.hpp"
 
 namespace element
 {
@@ -64,10 +65,10 @@ namespace element
             const auto* const type = input.resolve_annotation(context);
             if (!type)
             {
-                error(fmt::format("typename '{}' for port {}({}) of {} could not be found",
-                                  input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
-                      ELEMENT_ERROR_NOT_A_CONSTRAINT, declarer->source_info)
-                    .log_once(context.get_logger());
+                auto e = error(fmt::format("typename '{}' for port {}({}) of {} could not be found",
+                                           input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
+                               ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, declarer->source_info);
+                e.log_once(context.get_logger());
                 return false;
             }
 
@@ -122,7 +123,7 @@ namespace element
                                        const source_information& source_info)
     {
         if (type->our_scope->is_empty())
-            return std::make_shared<const error>("Structs with empty scopes cannot be indexed", ELEMENT_ERROR_NOT_INDEXABLE, source_info);
+            return std::make_shared<const error>("Structs with empty scopes cannot be indexed", ELEMENT_ERROR_INVALID_EXPRESSION, source_info);
 
         const auto* func = dynamic_cast<const function_declaration*>(type->our_scope->find(name, false));
 
@@ -160,33 +161,22 @@ namespace element
     object_const_shared_ptr compile_placeholder_expression(const compilation_context& context,
                                                            const object& object,
                                                            const std::vector<port>& inputs,
-                                                           element_result& result,
                                                            const source_information& source_info,
-                                                           const int placeholder_offset)
+                                                           const int placeholder_offset,
+                                                           int boundary_scope)
     {
-        auto [placeholder, size] = generate_placeholder_inputs(context, inputs, result, placeholder_offset);
-        if (result != ELEMENT_OK)
-        {
-            result = ELEMENT_ERROR_UNKNOWN;
-            return nullptr;
-        }
+        assert(!context.boundaries.empty());
+        const unsigned int boundary = boundary_scope < 0 ? context.boundaries.size() - 1 : boundary_scope;
+        auto [placeholders, size] = generate_placeholder_inputs(context, inputs, placeholder_offset, boundary);
+        context.boundaries[boundary].size = size;
 
-        context.boundaries.push_back({ size });
-        auto compiled = object.call(context, std::move(placeholder), source_info);
+        context.boundaries.push_back({});
+        auto compiled = object.call(context, std::move(placeholders), source_info);
         context.boundaries.pop_back();
 
-        if (!compiled)
-        {
-            result = ELEMENT_ERROR_UNKNOWN;
-            return nullptr;
-        }
-
-        const auto err = std::dynamic_pointer_cast<const element::error>(compiled);
+        const auto err = std::dynamic_pointer_cast<const error>(compiled);
         if (err)
-        {
-            result = err->log_once(context.interpreter->logger.get());
-            return err;
-        }
+            err->log_once(context.interpreter->logger.get());
 
         return compiled;
     }

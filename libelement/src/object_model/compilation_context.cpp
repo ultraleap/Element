@@ -17,13 +17,15 @@ compilation_context::compilation_context(const scope* const scope, element_inter
     auto input_port = port(list_indexer.get(), identifier{ "i" }, std::make_unique<type_annotation>(identifier{ "Num" }), nullptr);
     list_indexer->inputs.push_back(std::move(input_port));
     bool success = intrinsic::register_intrinsic<function_declaration>(interpreter, nullptr, *list_indexer);
-    assert(success);
+    if (!success)
+        throw; //todo
     const auto* body = intrinsic::get_intrinsic(interpreter, *list_indexer);
-    assert(body);
+    if (!body)
+        throw; //todo
     list_indexer->body = body;
     success = compiler_scope->add_declaration(std::move(list_indexer));
     if (!success)
-        throw;
+        throw; //todo
 
     const char* list_fold_src = ""
                                 "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"
@@ -31,11 +33,12 @@ compilation_context::compilation_context(const scope* const scope, element_inter
                                 "   end_of_list(tuple:Any):Bool = tuple.idx.lt(myList.count)\n"
                                 "   accumulate(tuple:Any):Any = {idx = tuple.idx.add(1), accumulated_value = someFunc(tuple.accumulated_value, myList.at(tuple.idx))}\n"
                                 "   return:Any = for({idx = 0, accumulated_value = initial_value}, end_of_list, accumulate).accumulated_value\n"
-                                "}\n"
-                                "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list_fold(list(a, b, c), start, Num.add)\n";
+                                "}\n";
 
     interpreter->load_into_scope(list_fold_src, "compiler_generated_list_fold", compiler_scope.get());
     compiler_scope->mark_declaration_compiler_generated(identifier{ "list_fold" });
+
+    boundaries.push_back({});
 }
 
 const element_log_ctx* compilation_context::get_logger() const

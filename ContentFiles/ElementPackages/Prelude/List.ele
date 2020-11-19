@@ -6,9 +6,9 @@ intrinsic function list:List
 # Represents a finite set of elements
 intrinsic struct List(at:Indexer, count:Num)
 {
-    # fold summarizes a list
+    # fold summarises a list
     # Invokes accumulator(total, element) with each element of the list, starting with initial as the total and returning a new total each iteration.
-    # For example, fold(array(1, 2, 3), 0, add) evaluates to 0.add(1).add(2).add(3).
+    # For example, fold(list(1, 2, 3), 0, Num.add) evaluates to Num.add(Num.add(Num.add(0, 1), 2), 3)
     intrinsic function fold(list:List, initial, accumulator:Binary)
 
     map(a:List, mapper:Unary):List = List(_(idx:Num) = mapper(a.at(idx)), a.count)
@@ -46,7 +46,7 @@ intrinsic struct List(at:Indexer, count:Num)
 
     cycle(a:List):Stream = Stream(_(idx:Num) = a.at(idx.mod(a.count)))
 
-    countWhere(a:List, predicate:Predicate):Num = a.fold(0, _(current, next) = if(predicate(next), add(current, 1), current))
+    countWhere(a:List, predicate:Predicate):Num = a.fold(0, _(current, next) = if(predicate(next), Num.add(current, 1), current))
 
     reverse(a:List):List = List(_(idx:Num) = a.at(count.sub(idx).sub(1)), a.count)
 

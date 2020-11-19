@@ -52,5 +52,18 @@ namespace Laboratory.Tests.L3.Prelude
 		[TestCaseSource(nameof(_factorialArguments))]
 		public void FactorialUsingForWithTupleAndLambdas((float factorial, float expectedResult) f) =>
 			AssertApproxEqual(ValidatedCompilerInput, f.expectedResult.ToString(CultureInfo.InvariantCulture), $"factorialExpressionBodied({f.factorial.ToString(CultureInfo.InvariantCulture)})");
+		
+		private static readonly (float, float)[] _resolveDifferentReturnTypesArguments =
+		{
+			(-1.75f, 0f),
+			(1.75f, 1f),
+		};
+
+		[TestCaseSource(nameof(_resolveDifferentReturnTypesArguments))]
+		public void CheckResolveDifferentReturnTypes((float a, float expectedResult) f) 
+			=> AssertApproxEqual( ValidatedCompilerInput, 
+				new FunctionEvaluation("_(idx:Num):Num = resolveDifferentReturnTypes(idx).at(0)", $"({f.a.ToString(CultureInfo.InvariantCulture)})", EvaluationMode.Compiled), 
+				new[] {f.expectedResult});
+
 	}
 }

@@ -50,12 +50,12 @@ intrinsic struct Num
     intrinsic function log(a:Num, b:Num):Num
 
     # Constants
-    intrinsic function NaN
-    intrinsic function PositiveInfinity
-    intrinsic function NegativeInfinity
-    pi   = 3.14159265359
-    tau  = pi.mul(2)
-    e    = 2.718281828459045
+    intrinsic function NaN:Num
+    intrinsic function PositiveInfinity:Num
+    intrinsic function NegativeInfinity:Num
+    pi:Num   = 3.14159265359
+    tau:Num  = pi.mul(2)
+    e:Num    = 2.718281828459045
 
     sqr(a:Num):Num          = a.mul(a)
     sqrt(a:Num):Num         = a.pow(0.5)
@@ -78,7 +78,6 @@ intrinsic struct Num
     dist(a:Num, b:Num):Num              = a.sub(b).abs
     lerp(t:Num, a:Num, b:Num):Num       = a.add(t.mul(b.sub(a))) #t.lt(0).if(a, t.gt(1).if(b, a.add(t.mul(b.sub(a)))))
     clamp(a:Num, min:Num, max:Num):Num  = a.max(min).min(max)
-    
 
     # Comparison functions
     intrinsic function eq(a:Num, b:Num):Bool

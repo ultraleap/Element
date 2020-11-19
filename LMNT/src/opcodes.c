@@ -1,12 +1,12 @@
 #include "lmnt/opcodes.h"
 
 #include "lmnt/interpreter.h"
+#include "lmnt/ops_bounds.h"
 #include "lmnt/ops_branch.h"
 #include "lmnt/ops_fncall.h"
 #include "lmnt/ops_math.h"
 #include "lmnt/ops_misc.h"
 #include "lmnt/ops_trig.h"
-#include "lmnt/ops_util.h"
 
 LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_noop,
@@ -46,6 +46,10 @@ LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_powvs,
     lmnt_op_sqrts,
     lmnt_op_sqrtv,
+    lmnt_op_log,
+    lmnt_op_ln,
+    lmnt_op_log2,
+    lmnt_op_log10,
     lmnt_op_abss,
     lmnt_op_absv,
     lmnt_op_sumv,
@@ -120,6 +124,10 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "POWVS",     LMNT_OPERAND_STACK4,   LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK4   },
     { "SQRTS",     LMNT_OPERAND_STACK1,   LMNT_OPERAND_UNUSED,   LMNT_OPERAND_STACK1   },
     { "SQRTV",     LMNT_OPERAND_STACK4,   LMNT_OPERAND_UNUSED,   LMNT_OPERAND_STACK4   },
+    { "LOG",       LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK1   },
+    { "LN",        LMNT_OPERAND_STACK1,   LMNT_OPERAND_UNUSED,   LMNT_OPERAND_STACK1   },
+    { "LOG2",      LMNT_OPERAND_STACK1,   LMNT_OPERAND_UNUSED,   LMNT_OPERAND_STACK1   },
+    { "LOG10",     LMNT_OPERAND_STACK1,   LMNT_OPERAND_UNUSED,   LMNT_OPERAND_STACK1   },
     { "ABSS",      LMNT_OPERAND_STACK1,   LMNT_OPERAND_UNUSED,   LMNT_OPERAND_STACK1   },
     { "ABSV",      LMNT_OPERAND_STACK4,   LMNT_OPERAND_UNUSED,   LMNT_OPERAND_STACK4   },
     { "SUMV",      LMNT_OPERAND_STACK4,   LMNT_OPERAND_UNUSED,   LMNT_OPERAND_STACK1   },
@@ -157,6 +165,10 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
 };
 
 lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END] = {
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
+    lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,

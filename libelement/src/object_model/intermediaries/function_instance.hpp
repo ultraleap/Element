@@ -25,13 +25,19 @@ namespace element
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
                                                       const source_information& source_info) const override;
 
+        [[nodiscard]] const std::vector<port>& get_inputs() const override;
+
         [[nodiscard]] bool is_constant() const override;
         [[nodiscard]] bool valid_at_boundary(const compilation_context& context) const;
-
+        [[nodiscard]] const std::vector<object_const_shared_ptr>& get_provided_arguments() const { return provided_arguments; }
         const function_declaration* const declarer;
+        [[nodiscard]] const capture_stack& get_captures() const { return captures; };
 
     private:
+        const std::vector<port>& inputs;
+        std::vector<port> inputs_except_provided;
         mutable capture_stack captures;
         std::vector<object_const_shared_ptr> provided_arguments;
+        std::unique_ptr<constraint> our_constraint;
     };
 } // namespace element

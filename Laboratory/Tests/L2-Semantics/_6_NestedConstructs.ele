@@ -104,3 +104,16 @@ struct rootStruct(a:Num)
         a = 5
     }
 }
+
+localFuncWithConstraintError
+{
+    localFn(a:ConstraintThatDoesntExist) = a
+    return = localFn(5)
+}
+
+localFnThatShadows = 10
+localFuncWithErrorThatShadowsOuterId
+{
+    localFnThatShadows(a:ConstraintThatDoesntExist) = a
+    return = localFnThatShadows(5)
+}

@@ -16,7 +16,6 @@ namespace element
         explicit expression(const expression_chain* parent)
             : parent(parent)
         {
-            assert(parent);
         }
 
         virtual ~expression() = default;

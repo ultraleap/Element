@@ -23,12 +23,9 @@ namespace Element.AST
                 .Accumulate(() => context.RootScope.Lookup(NumStruct.Instance.Identifier, context))
                 // ReSharper disable once PossibleUnintendedReferenceComparison
                 .Bind(t =>
-                {
-                    var (optionListIndexer, numStruct) = t;
-                    // Change condition to a numerical index for the list
-                    return numStruct.Call(new[] {arguments[0]}, context)
-                                    .CastInner<Instruction>()
-                                    .Bind(index => optionListIndexer.Call(new [] {index}, context));
-                });
+                          // Change condition to a numerical index for the list
+                          t.Item2.Call(new[] {arguments[0]}, context)
+                           .CastInner<Instruction>()
+                           .Bind(index => t.Item1.Call(new[] {index}, context)));
     }
 }

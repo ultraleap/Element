@@ -13,6 +13,12 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
         const constraint* our_input_constraint = nullptr;
         const constraint* their_input_constraint = nullptr;
 
+        if (!our_input.is_valid(context))
+            return true; //allow constraint matching for invalid ports, to propagate errors and catch multiple
+
+        if (!their_input.is_valid(context))
+            return true; //allow constraint matching for invalid ports, to propagate errors and catch multiple
+
         if (our_input.has_annotation())
             our_input_type = our_input.resolve_annotation(context);
 
@@ -35,6 +41,7 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
         return our_input_constraint->matches_constraint(context, their_input_constraint);
     };
 
+    //todo: nothing should currently use the any constraint, not even intrinsic any, it's all nullptr
     if (!constraint_ || constraint_ == any.get())
         return true;
 
@@ -43,26 +50,32 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
     if (!other)
         return false;
 
-    for (unsigned i = 0; i < declarer->inputs.size(); ++i)
-    {
-        const auto& our_input = declarer->inputs[i];
-        const auto& their_input = other->inputs[i];
+    unsigned int our_input_length = declarer->inputs.size();
+    unsigned int offset = 0;
 
-        if (!check_match(our_input, their_input))
-            return false;
+    if (applied)
+    {
+        our_input_length--;
+        offset++;
     }
 
-    //no one has a return constraint
-    if (!declarer->output && !other->output)
+    if (our_input_length != other->get_inputs().size())
+        return false;
+
+    for (unsigned int i = 0; i < our_input_length; ++i)
+        if (!check_match(declarer->inputs[i + offset], other->inputs[i]))
+            return false;
+
+    //allow constraint matching for invalid ports, to propagate errors and catch multiple
+    const bool our_annotation_is_invalid = !declarer->output.is_valid(context);
+    const bool their_annotation_is_invalid = !other->output.is_valid(context);
+
+    if (our_annotation_is_invalid || their_annotation_is_invalid)
         return true;
 
-    //check return types match since at least one of them has one
-    if (declarer->output && other->output)
-    {
-        //todo: nullptr checks?
-        if (!check_match(declarer->output.value(), other->output.value()))
-            return false;
-    }
+    //todo: nullptr checks?
+    if (!check_match(declarer->output, other->output))
+        return false;
 
     return true;
 }

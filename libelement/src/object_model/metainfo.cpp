@@ -156,8 +156,7 @@ std::string constraint_declaration::to_code(const int depth) const
         ports = "(" + input_ports + ")";
     }
 
-    if (has_output())
-        ports += output->to_code(depth);
+    ports += output.to_code(depth);
 
     result += is_intrinsic() ? "intrinsic constraint " : "constraint ";
     result += name.value + ports;
@@ -185,8 +184,7 @@ std::string function_declaration::to_code(const int depth) const
         ports = "(" + input_ports + ")";
     }
 
-    if (has_output())
-        ports += output->to_code(depth);
+    ports += output.to_code(depth);
 
     //intrinsic declaration
     if (is_intrinsic())

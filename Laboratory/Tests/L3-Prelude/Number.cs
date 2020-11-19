@@ -111,10 +111,10 @@ namespace Laboratory.Tests.L3.Prelude
 		[DatapointSource]
 		public (string FunctionExpression, string CallExpression, string ExpectedExpression)[] FunctionCallData =
 		{
-			("Num", "(0)", "0"),
-			("Num", "(Num.NegativeInfinity)", "Num.NegativeInfinity"),
-			("Num", "(False)", "0"),
-			("Num", "(True)", "1"),
+			("_(a:Num):Num = Num(a)", "(0)", "0"),
+			("_(a:Num):Num = Num(a)", "(Num.NegativeInfinity)", "Num.NegativeInfinity"),
+			("_(a:Bool):Num = Num(a)", "(False)", "0"),
+			("_(a:Bool):Num = Num(a)", "(True)", "1"),
 
 			("Num.ln", "(0)", "Num.NegativeInfinity"),
 			("Num.ln", "(1)", "0"),
@@ -268,6 +268,9 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.mod", "(5, 2)", "1"),
 			("Num.mod", "(5, -2)", "-1"),
 			
+			("Num.mod", "(0, 0)", "Num.NaN"),
+			("Num.mod", "(2, 0)", "Num.NaN"),
+			
 			("Num.atan2", "(0, 0)", "0"),
 			("Num.atan2", "(0, 0)", $"{ToRadians(0)}"),
 			("Num.atan2", "(1, 0)", $"{ToRadians(90)}"),
@@ -307,6 +310,9 @@ namespace Laboratory.Tests.L3.Prelude
 			("Num.lerp", "(0.5, 0, 1)", "0.5"),
 			("Num.lerp", "(1, 0, 1)", "1"),
 			("Num.lerp", "(1.25, 0, 1)", "1.25"),
+			("Num.lerp", "(0, 5, 10)", "5"),
+			("Num.lerp", "(0.5, 5, 10)", "7.5"),
+			("Num.lerp", "(1, 5, 10)", "10"),
 			
 			("Num.clamp", "(5, 0, 10)", "5"),
 			("Num.clamp", "(5, -10, 0)", "0"),
@@ -316,15 +322,27 @@ namespace Laboratory.Tests.L3.Prelude
 		[DatapointSource]
 		public (string FunctionExpression, string CallExpression, EleMessageCode ExpectedError)[] FunctionCallErrorCases =
 		{
-			("Num", "(Bool)", EleMessageCode.ConstraintNotSatisfied),
-			("Num", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
-			("Num.mod", "(0, 0)", EleMessageCode.ArgumentOutOfRange),
-			("Num.mod", "(2, 0)", EleMessageCode.ArgumentOutOfRange),
+			("_(a:Vector3):Num = Num(a)", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
 		};
 		
 		[Theory]
 		public void ErrorCases((string FunctionExpression, string CallExpression, EleMessageCode ExpectedError) args, EvaluationMode evaluationMode) =>
 			EvaluateExpectingElementError(ValidatedCompilerInput, args.ExpectedError, new FunctionEvaluation(args.FunctionExpression, args.CallExpression, evaluationMode == EvaluationMode.Interpreted));
+		
+		public static (string Expression, EleMessageCode ExpectedError)[] ArgsList =
+		{
+			("Num(list(1))", EleMessageCode.ConstraintNotSatisfied),
+			("Num(_(_) = 1)", EleMessageCode.ConstraintNotSatisfied),
+			("Num({ a = 0 })", EleMessageCode.ConstraintNotSatisfied),
+		};
+
+		[Test]
+		public void NumConstructorError([ValueSource(nameof(ArgsList))] (string expression, EleMessageCode expectedError) args, [Values(EvaluationMode.Interpreted)] EvaluationMode mode)
+		{
+			EvaluateExpectingElementError(ValidatedCompilerInput,
+				args.expectedError,
+				new ExpressionEvaluation(args.expression, mode));
+		}
 
 		private static object GenerateLogData(int index, int baseValue) 
 			=> new object[] {$"Num.log({MathF.Pow(baseValue, index - 1)}, {baseValue})", $"{(index - 1)}"};

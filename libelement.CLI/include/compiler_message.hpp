@@ -41,6 +41,8 @@ namespace libelement::cli
 
     class compiler_message
     {
+        static constexpr const char* const key_message_type{ "MessageType" };
+        static constexpr const char* const key_message_value{ "ELE" };
         static constexpr const char* const key_message_code{ "MessageCode" };
         static constexpr const char* const key_message_level{ "MessageLevel" };
         static constexpr const char* const key_context{ "Context" };
@@ -54,7 +56,7 @@ namespace libelement::cli
 
         // this is nasty, static initialisation that performs file reading, reconsider
         // if it proves problematic
-        inline static message_codes codes{ message_codes("Messages.toml") };
+        inline static message_codes codes{ message_codes("Messages-ELE.toml") };
 
     public:
         compiler_message(std::string message, bool log_json,

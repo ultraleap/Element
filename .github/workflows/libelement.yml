@@ -107,8 +107,10 @@ jobs:
           cd libelement
           mkdir build
           cd build
-          cmake -DBUILD_TESTING=ON -DCODE_COVERAGE=ON ..
-          cmake --build . --target libelement_test_coverage
+          cmake -DELEMENT_BUILD_TESTING=ON -DELEMENT_CODE_COVERAGE=ON ..
+          set +e
+          cmake --build . --target element_test_coverage
+          set -e
           cd ../..
 
           # ----- Laboratory Tests Coverage ------
@@ -175,4 +177,4 @@ jobs:
           cd build
           cmake ..
           # Run clang-format to see if code matches our style guide, clang-format target can be used to apply changes
-          cmake --build . --target clang-check
+          cmake --build . --target element_clang_check

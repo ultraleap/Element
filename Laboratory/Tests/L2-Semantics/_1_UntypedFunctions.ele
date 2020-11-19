@@ -27,3 +27,11 @@ selfReferencingLocal
     loc = loc
     return = loc
 }
+
+# This shouldn't be found by return in funcWithLookupError!
+myId = 10
+funcWithLookupError
+{
+    myId = add(lookupError, 5)
+    return = myId
+}

@@ -1,3 +1,4 @@
+using Element;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L2.Semantics
@@ -41,5 +42,10 @@ namespace Laboratory.Tests.L2.Semantics
         
         [Test]
         public void NestedNamespacesInStructBody() => AssertTypeof(CompilerInput, "rootStruct.nestedNamespace", "Namespace");
+
+        [Test]
+        public void LocalFunctionConstraintNotFound() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "localFuncWithConstraintError");
+        [Test]
+        public void LocalFunctionConstraintNotFoundDoesntContinueLookup() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "localFuncWithErrorThatShadowsOuterId");
     }
 }

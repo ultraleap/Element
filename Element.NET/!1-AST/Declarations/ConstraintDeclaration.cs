@@ -4,8 +4,8 @@ namespace Element.AST
 {
     public class IntrinsicConstraintDeclaration : Declaration
     {
-        protected override string IntrinsicQualifier { get; } = "intrinsic";
-        protected override string Qualifier { get; } = "constraint";
+        protected override string IntrinsicQualifier { get; } = "intrinsic ";
+        protected override string Qualifier { get; } = "constraint ";
         protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
             IntrinsicImplementationCache.Get<IIntrinsicConstraintImplementation>(Identifier, context)
@@ -23,16 +23,11 @@ namespace Element.AST
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;
 
-        protected override string Qualifier { get; } = "constraint";
+        protected override string Qualifier { get; } = "constraint ";
         protected override Type[] BodyAlternatives { get; } = {typeof(Nothing)};
         protected override Result<IValue> ResolveImpl(IScope scope, Context context) =>
-            PortList.ResolveInputConstraints(scope, context, false, false)
-                    .Accumulate(() => ReturnConstraint.ResolveReturnConstraint(scope, context))
-                    .Map(t =>
-                    {
-                        var (inputPorts, returnConstraint) = t;
-                        return (IValue)new FunctionConstraint(inputPorts, returnConstraint);
-                    });
+            PortList.ResolveFunctionSignature(scope, false, false, ReturnConstraint, context)
+                    .Map(t => (IValue)new FunctionConstraint(t.InputPorts, t.ReturnPort));
 
         protected override void ValidateDeclaration(ResultBuilder builder, Context context)
         {

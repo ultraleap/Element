@@ -2,10 +2,11 @@
 
 using namespace libelement::cli;
 
-std::map<std::string, message_level> message_code::map_message_level = {
-    { "Fatal", message_level::FATAL },
-    { "Warning", message_level::WARNING },
-    { "Error", message_level::ERROR },
-    { "Information", message_level::INFORMATION },
-    { "Verbose", message_level::VERBOSE }
+//it's possible that static initialisation going to sting me here due to method call in constructor accessing this vector...
+//will worry about it if it becomes a concern
+std::vector<std::pair<message_level, std::string>> message_code::message_levels = {
+    { message_level::Warning, "Warning" },
+    { message_level::Error, "Error" },
+    { message_level::Information, "Information" },
+    { message_level::Verbose, "Verbose" }
 };

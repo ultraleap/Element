@@ -14,6 +14,7 @@
 #include "ast/ast_internal.hpp"
 #include "source_information.hpp"
 #include "interpreter_internal.hpp"
+#include "configuration.hpp"
 
 namespace element
 {
@@ -79,10 +80,8 @@ namespace element
         {
             auto it = func_map.find(code);
             if (it == func_map.end())
-            {
-                //todo: not valid so do something better
-                throw;
-            }
+                return log_message({},
+                    fmt::format("An error occured but no message associated with it was found. Report to developers. Internal Error Code {}", code));
 
             return it->second(source_info, args...);
         }
@@ -108,10 +107,8 @@ namespace element
         {
             const auto it = func_map.find(code);
             if (it == func_map.end())
-            {
-                //todo: not valid so do something better
-                throw;
-            }
+                return log_message({},
+                    fmt::format("An error occured but no message associated with it was found. Report to developers. Internal Error Code {}", code));
 
             return it->second(source_info);
         }
@@ -155,7 +152,7 @@ namespace element
 
         if (context && token)
         {
-            const auto& file_info = context->file_info.at(token->file_name);
+            const auto& file_info = context->file_info.at(token->source_name);
             const std::string* filename = file_info.file_name.get();
             const int actual_line = token->line - 1;
             const std::string* line_in_source = actual_line >= 0 ? file_info.source_lines[actual_line].get() : nullptr;
@@ -186,7 +183,17 @@ namespace element
     {
         if (ast && ast->nearest_token)
         {
-            return build_log_error(context, ast->nearest_token, code, std::forward<Args>(args)...);
+            log_message msg = build_log_error(context, ast->nearest_token, code, std::forward<Args>(args)...);
+
+            const auto starts_with_prelude = std::string(msg.get_log_message().filename).rfind("Prelude/", 0) == 0;
+            const auto log_ast = starts_with_prelude
+                                     ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
+                                     : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+
+            if (ast && log_ast)
+                msg.append_text("\n---\nAST\n---\n" + ast_to_string(ast->get_root(), 0, ast));
+
+            return msg;
         }
 
         return log_error_map<Args...>::build_error(source_information{}, code, args...);
@@ -196,7 +203,8 @@ namespace element
     element_result log_error(const element_log_ctx* logger, Args&&... args)
     {
         const auto error = build_log_error(args...);
-        logger->log(error);
+        if (logger)
+            logger->log(error);
         return error.result;
     }
 

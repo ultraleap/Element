@@ -12,7 +12,7 @@ namespace Element.AST
         [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed __;
         [Term] public Identifier Identifier;
         [Optional] public PortList? PortList;
-        [Optional] public ReturnConstraint? ReturnConstraint;
+        [Optional] public PortConstraint? ReturnConstraint;
         [IndirectAlternative(nameof(BodyAlternatives)), WhitespaceSurrounded, MultiLine] public object Body;
         // ReSharper restore UnassignedField.Global UnusedAutoPropertyAccessor.Local UnusedAutoPropertyAccessor.Global
 #pragma warning restore 649, 8618, 169
@@ -25,21 +25,20 @@ namespace Element.AST
 
         public Result<IValue> Resolve(IScope scope, Context context)
         {
-            if (context.DeclarationStack.Contains(this))
+            var uniqueSite = new UniqueValueSite<Declaration>(this, scope);
+            if (context.DeclarationStack.Contains(uniqueSite))
             {
                 return context.Trace(EleMessageCode.RecursionNotAllowed, $"{this} has self-referencing implementation");
             }
             
-            context.DeclarationStack.Push(this);
+            context.DeclarationStack.Push(uniqueSite);
             context.TraceStack.Push(this.MakeTraceSite(ToString()));
             var result = Validate(context)
-                         .And(() => context.Aspect?.BeforeDeclaration(this, scope, context) ?? Result.Success)
                          .Bind(() =>
                          {
+                             context.Aspect?.BeforeDeclaration(this, scope);
                              var resolveResult = ResolveImpl(scope, context);
-                             return context.Aspect != null
-                                        ? resolveResult.Bind(resolvedValue => context.Aspect.Declaration(this, scope, resolvedValue, context))
-                                        : resolveResult;
+                             return context.Aspect?.Declaration(this, scope, resolveResult) ?? resolveResult;
                          });
             context.TraceStack.Pop();
             context.DeclarationStack.Pop();
@@ -50,11 +49,9 @@ namespace Element.AST
 
         protected sealed override void ValidateImpl(ResultBuilder builder, Context context)
         {
-            context.DeclarationStack.Push(this);
             context.TraceStack.Push(this.MakeTraceSite(ToString()));
             ValidateDeclaration(builder, context);
             context.TraceStack.Pop();
-            context.DeclarationStack.Pop();
         }
 
         protected abstract void ValidateDeclaration(ResultBuilder builder, Context context);

@@ -1,0 +1,105 @@
+# Transforms use homogeneous co-ordinate space to perform rotations and
+# translations on position vectors and direction vectors.
+#
+# These wrap around a Matrix4x4 and provide a convenient API for spatial
+# transformations.
+#
+# As a 4x4 matrix, the 3x3 rotation matrix is stored as the upper-left part,
+# and the 1x3 translation vector is stored as the top of the rightmost column.
+# The lower-right element is always 1.
+
+struct Transform(matrix:Matrix4x4)
+{
+    # Factories
+    identity:Transform = Transform(Matrix4x4.identity)
+
+    # Create a Transform from the rotation and translation components
+    fromRotationAndTranslation(m:Matrix3x3, v:Vector3):Transform
+    {
+        transformMatrix = Matrix4x4.fromCols(
+            Vector4.fromVector3(m.xCol, 0),
+            Vector4.fromVector3(m.yCol, 0),
+            Vector4.fromVector3(m.zCol, 0),
+            Vector4.fromVector3(v, 1)
+        )
+        return = Transform(transformMatrix)
+    }
+
+    fromRotation(m:Matrix3x3):Transform
+    {
+        return = fromRotationAndTranslation(m, Vector3.zero)
+    }
+
+    fromTranslation(v:Vector3):Transform
+    {
+        return = fromRotationAndTranslation(Matrix3x3.identity, v)
+    }
+
+    # Properties
+    # Get the translation part of the Transform
+    translation(this:Transform):Vector3 = this.matrix.wCol.toVector3
+
+    # Get the rotation part of the Transform
+    rotation(this:Transform):Matrix3x3
+    {
+        rotationMatrix = Matrix3x3.fromCols(
+            this.matrix.xCol.toVector3,
+            this.matrix.yCol.toVector3,
+            this.matrix.zCol.toVector3
+        )
+        return = rotationMatrix
+    }
+
+    # Operations
+    applyToVector4(this:Transform, v:Vector4):Vector4
+    {
+        return = this.matrix.vectorMul(v)
+    }
+
+    applyToPosition(this:Transform, v:Vector3):Vector3
+    {
+        positionVector = Vector4.fromVector3(v, 1)
+        return = this.applyToVector4(positionVector).toVector3
+    }
+
+    applyToDirection(this:Transform, v:Vector3):Vector3
+    {
+        directionVector = Vector4.fromVector3(v, 0)
+        return = this.applyToVector4(directionVector).toVector3
+    }
+
+    fromAxisAngle(axis:Vector3, angle:Num):Transform 
+    { 
+        c = Num.cos(angle)
+        s = Num.sin(angle)
+        t = 1.sub(c)
+        a = axis.normalise
+
+        m_00 = t.mul(a.x).mul(a.x).add(c)
+        m_11 = t.mul(a.y).mul(a.y).add(c)
+        m_22 = t.mul(a.z).mul(a.z).add(c)
+
+        row_0_tmp1 = a.x.mul(a.y).mul(t)
+        row_0_tmp2 = a.z.mul(s)
+        m_10 = row_0_tmp1.add(row_0_tmp2)
+        m_01 = row_0_tmp1.sub(row_0_tmp2)
+        
+        row_1_tmp1 = a.x.mul(a.z).mul(t)
+        row_1_tmp2 = a.y.mul(s)
+        m_20 = row_1_tmp1.sub(row_1_tmp2)
+        m_02 = row_1_tmp1.add(row_1_tmp2)
+        
+        row_2_tmp1 = a.y.mul(a.z).mul(t)
+        row_2_tmp2 = a.x.mul(s)
+        m_21 = row_2_tmp1.add(row_2_tmp2)
+        m_12 = row_2_tmp1.sub(row_2_tmp2)
+
+        rotationMatrix = Matrix3x3.fromRows(
+            Vector3(m_00, m_01, m_02),
+            Vector3(m_10, m_11, m_12),
+            Vector3(m_20, m_21, m_22)
+        )
+        return = Transform.fromRotation(rotationMatrix)
+    }
+}
+
