@@ -104,6 +104,26 @@ element_result element_object_call(
     unsigned int arguments_count,
     element_object** output);
 
+
+ /**
+ * @brief call a callable object with placeholder arguments
+ *
+ * if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
+ *
+ * @param[in] object            object to call
+ * @param[in] context           object-model context
+ * @param[out] output result    result object
+ *
+ * @return ELEMENT_OK called object successfully
+ * @return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL context pointer is null
+ * @return ELEMENT_ERROR_API_OBJECT_IS_NULL object pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL output pointer is null
+ */
+element_result element_object_call_with_placeholders(
+    const element_object* object,
+    element_object_model_ctx* context,
+    element_object** output);
+
 /**
  * @brief indexes the provided object
  *
