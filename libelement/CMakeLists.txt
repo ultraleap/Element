@@ -154,6 +154,8 @@ set(element_sources
     "src/object_model/intrinsics/intrinsic_list_fold.hpp"
     "src/object_model/intrinsics/intrinsic_compiler_list_indexer.cpp"
     "src/object_model/intrinsics/intrinsic_compiler_list_indexer.hpp"
+    "src/object_model/intrinsics/intrinsic_memberwise.cpp"
+    "src/object_model/intrinsics/intrinsic_memberwise.hpp"
 
     "src/object_model/call_stack.cpp"
     "src/object_model/call_stack.hpp"
@@ -203,7 +205,7 @@ set(element_sources
 
     #MISC
     "src/configuration.hpp.in"
-)
+        src/object_model/intrinsics/intrinsic_memberwise.hpp src/object_model/intrinsics/intrinsic_memberwise.cpp)
 
 add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
 if(MSVC)
