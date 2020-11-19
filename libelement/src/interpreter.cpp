@@ -290,7 +290,11 @@ element_result element_interpreter_compile_declaration(
     }
 
     element_result result = ELEMENT_OK;
-    const auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), result, {});
+    const auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), {});
+    const auto* err = dynamic_cast<const element::error*>(compiled.get());
+    if (err)
+        result = err->log_once(interpreter->logger.get());
+
     if (!compiled || result != ELEMENT_OK)
     {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
@@ -418,7 +422,11 @@ element_result element_interpreter_compile_expression(
     }
     
     result = ELEMENT_OK;
-    const auto compiled = compile_placeholder_expression(compilation_context, *function_instance, declaration.decl->get_inputs(), result, {});
+    const auto compiled = compile_placeholder_expression(compilation_context, *function_instance, function_instance->get_inputs(), {});
+    const auto* err = dynamic_cast<const element::error*>(compiled.get());
+    if (err)
+        result = err->log_once(interpreter->logger.get());
+
     interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
     if (!compiled || result != ELEMENT_OK)
     {

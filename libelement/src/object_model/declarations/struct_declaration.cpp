@@ -117,15 +117,13 @@ bool struct_declaration::deserializable(const compilation_context& context) cons
     return true;
 }
 
-object_const_shared_ptr struct_declaration::generate_placeholder(const compilation_context& context, int& placeholder_index) const
+object_const_shared_ptr struct_declaration::generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const
 {
     if (inputs.empty())
     {
         assert(is_intrinsic());
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
-        //note: generate_placeholder is called before context.boundaries has the new boundary pushed back, so we use the current size as the future index, when usually it would be size - 1
-        //todo: ideally we would modify it so that we already have the boundary at this point
-        auto expr = std::make_shared<element::instruction_input>(context.boundaries.size(), placeholder_index);
+        auto expr = std::make_shared<instruction_input>(boundary_scope, placeholder_index);
         expr->actual_type = intrinsic->get_type();
         placeholder_index += 1; //todo: fix when we have lists, size() on intrinsic? on type?
         return expr;
@@ -135,12 +133,13 @@ object_const_shared_ptr struct_declaration::generate_placeholder(const compilati
     for (const auto& input : get_inputs())
     {
         const auto& type = get_scope()->find(input.get_annotation()->to_string(), true);
-        auto placeholder = type->generate_placeholder(context, placeholder_index);
+        auto placeholder = type->generate_placeholder(context, placeholder_index, boundary_scope);
 
         if (!placeholder)
         {
-            assert(!"this type can't be deserialised");
-            return nullptr;
+            auto err = std::make_shared<const error>(fmt::format("The type '{}' can't be deserialised.", to_string()), ELEMENT_ERROR_SERIALISATION, source_info);
+            err->log_once(context.get_logger());
+            return err;
         }
 
         placeholder_inputs.push_back(std::move(placeholder));

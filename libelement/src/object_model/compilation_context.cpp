@@ -37,6 +37,8 @@ compilation_context::compilation_context(const scope* const scope, element_inter
 
     interpreter->load_into_scope(list_fold_src, "compiler_generated_list_fold", compiler_scope.get());
     compiler_scope->mark_declaration_compiler_generated(identifier{ "list_fold" });
+
+    boundaries.push_back({});
 }
 
 const element_log_ctx* compilation_context::get_logger() const

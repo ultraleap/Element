@@ -73,7 +73,7 @@ namespace element
     object_const_shared_ptr compile_placeholder_expression(const compilation_context& context,
                                                            const object& object,
                                                            const std::vector<port>& inputs,
-                                                           element_result& result,
                                                            const source_information& source_info,
-                                                           const int placeholder_offset = 0);
+                                                           int placeholder_offset = 0,
+                                                           int boundary_scope = -1);
 } // namespace element

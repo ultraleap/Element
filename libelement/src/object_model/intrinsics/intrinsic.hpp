@@ -93,7 +93,6 @@ namespace element
     std::pair<std::vector<object_const_shared_ptr>, size_t> generate_placeholder_inputs(
         const compilation_context& compilation_context,
         const std::vector<port>& inputs,
-        element_result& out_result,
         int index_offset,
-        int inputs_to_ignore);
+        unsigned int boundary_scope);
 } // namespace element

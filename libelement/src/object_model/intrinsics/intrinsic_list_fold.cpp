@@ -61,11 +61,16 @@ object_const_shared_ptr runtime_fold(
     if (!accumulator_is_boundary)
         return std::make_shared<const error>("accumulator is not a boundary function", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
 
-    element_result result = ELEMENT_OK;
-    const auto placeholder_offset = 0;
-    const auto accumulator_compiled = compile_placeholder_expression(context, *accumulator_function, accumulator_function->declarer->get_inputs(), result, source_info, placeholder_offset);
+    auto accumulator_compiled = compile_placeholder_expression(context, *accumulator_function, accumulator_function->get_inputs(), source_info);
+    const auto* err = dynamic_cast<const error*>(accumulator_compiled.get());
+    if (err)
+    {
+        err->log_once(context.get_logger());
+        return accumulator_compiled;
+    }
+
     if (!accumulator_compiled)
-        return std::make_shared<const error>("accumulator failed to compile", result, source_info);
+        return std::make_shared<const error>("accumulator failed to compile", ELEMENT_ERROR_UNKNOWN, source_info);
 
     const auto accumulator_expression = accumulator_compiled->to_instruction();
     if (!accumulator_expression)
