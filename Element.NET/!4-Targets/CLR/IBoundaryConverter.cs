@@ -8,13 +8,13 @@ using LExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
 {
-    public delegate Result<System.Linq.Expressions.Expression> ConvertFunction(IValue value, Type outputType, BoundaryContext context);
+    public delegate Result<System.Linq.Expressions.Expression> ConvertFunction(IValue value, Type outputType, ClrBoundaryContext context);
     
     public interface IBoundaryConverter
     {
-        Result<IValue> LinqToElement(LExpression parameter, BoundaryContext context);
-        Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, BoundaryContext context);
-        Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context);
+        Result<IValue> LinqToElement(LExpression parameter, ClrBoundaryContext context);
+        Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, ClrBoundaryContext context);
+        Result SerializeClrInstance(object clrInstance, ICollection<float> floats, ClrBoundaryContext context);
     }
 
     public class NumberConverter : IBoundaryConverter
@@ -22,14 +22,14 @@ namespace Element.CLR
         private NumberConverter(){}
         public static NumberConverter Instance { get; } = new NumberConverter();
 
-        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, BoundaryContext context) =>
+        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, ClrBoundaryContext context) =>
             parameter.Type switch
         {
             {} t when t == typeof(bool) => new NumberInstruction(LExpression.Condition(parameter, LExpression.Constant(1f), LExpression.Constant(0f)), BoolStruct.Instance),
             _ => new NumberInstruction(LExpression.Convert(parameter, typeof(float)))
         };
 
-        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, BoundaryContext context) =>
+        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, ClrBoundaryContext context) =>
             convertFunction(value, typeof(float), context)
                 .Map(convertedValue =>
                           (outputType, convertedValue) switch
@@ -40,7 +40,7 @@ namespace Element.CLR
                               _ => throw new InternalCompilerException($"Unhandled {nameof(ElementToLinq)} output type")
                           });
 
-        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context)
+        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, ClrBoundaryContext context)
         {
             floats.Add((float)clrInstance);
             return Result.Success;
@@ -73,7 +73,7 @@ namespace Element.CLR
     {
         string ElementExpression { get; }
         Dictionary<string, string> FieldMap { get; }
-        Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context);
+        Result SerializeClrInstance(object clrInstance, ICollection<float> floats, ClrBoundaryContext context);
     }
 
     public class BoundaryStructInfo : IBoundaryStructInfo
@@ -102,7 +102,7 @@ namespace Element.CLR
 
         public string ElementExpression { get; }
         public Dictionary<string, string> FieldMap { get; }
-        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context) =>
+        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, ClrBoundaryContext context) =>
             _structType.IsInstanceOfType(clrInstance)
                 ? _getFieldsFunc(clrInstance).Select(f => context.SerializeClrInstance(f, floats)).Fold()
                 : throw new InvalidOperationException($"Expected '{nameof(clrInstance)}' to be of type '{_structType}'");
@@ -110,18 +110,18 @@ namespace Element.CLR
 
     public class ExternalBoundaryStructInfo : IBoundaryStructInfo
     {
-        public ExternalBoundaryStructInfo(string elementExpression, Dictionary<string, string> fieldMap, Func<object, ICollection<float>, BoundaryContext, Result> serializeFunc)
+        public ExternalBoundaryStructInfo(string elementExpression, Dictionary<string, string> fieldMap, Func<object, ICollection<float>, ClrBoundaryContext, Result> serializeFunc)
         {
             ElementExpression = elementExpression;
             FieldMap = fieldMap;
             _serializeFunc = serializeFunc;
         }
 
-        private readonly Func<object, ICollection<float>, BoundaryContext, Result> _serializeFunc;
+        private readonly Func<object, ICollection<float>, ClrBoundaryContext, Result> _serializeFunc;
 
         public string ElementExpression { get; }
         public Dictionary<string, string> FieldMap { get; }
-        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context) => _serializeFunc(clrInstance, floats, context);
+        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, ClrBoundaryContext context) => _serializeFunc(clrInstance, floats, context);
     }
 
     public class StructConverter : IBoundaryConverter
@@ -132,7 +132,7 @@ namespace Element.CLR
 
         private StructConverter(IBoundaryStructInfo boundaryStructInfo) => _boundaryStructInfo = boundaryStructInfo;
 
-        public Result<IValue> LinqToElement(LExpression parameter, BoundaryContext context) =>
+        public Result<IValue> LinqToElement(LExpression parameter, ClrBoundaryContext context) =>
             context.EvaluateExpression(_boundaryStructInfo.ElementExpression)
                    .CastInner<Struct>()
                    .Bind(structDeclaration => StructInstance.Create(structDeclaration, _boundaryStructInfo.FieldMap
@@ -156,7 +156,7 @@ namespace Element.CLR
             public override string SummaryString => $"{_parameter}.{_clrField}";
         }
 
-        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, BoundaryContext context)
+        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, ClrBoundaryContext context)
         {
             var obj = LExpression.Variable(outputType);
             var assigns = new List<LExpression>();
@@ -182,10 +182,10 @@ namespace Element.CLR
             return builder.ToResult();
         }
 
-        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context) => _boundaryStructInfo.SerializeClrInstance(clrInstance, floats, context);
+        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, ClrBoundaryContext context) => _boundaryStructInfo.SerializeClrInstance(clrInstance, floats, context);
     }
     
-    public class BoundaryCache
+    public class ClrBoundary
     {
         private readonly Dictionary<Type, IBoundaryConverter> _convertersByClrType = new Dictionary<Type, IBoundaryConverter>();
         private readonly Dictionary<Struct, Type> _elementToClrMappings = new Dictionary<Struct, Type>();
@@ -247,7 +247,7 @@ namespace Element.CLR
                 _ => Kind.BidirectionalConverter
             };
 
-            public bool AddToCache(BoundaryCache cache)
+            public bool AddToCache(ClrBoundary cache)
             {
                 switch (MappingKind)
                 {
@@ -265,7 +265,7 @@ namespace Element.CLR
                 }
             }
 
-            public Result Resolve(BoundaryCache cache, Context context)
+            public Result Resolve(ClrBoundary cache, Context context)
             {
                 var expr = ElementStructExpression!;
                 var type = ClrType;
@@ -279,15 +279,15 @@ namespace Element.CLR
             }
         }
 
-        public static BoundaryCache Create(IEnumerable<Mapping> mappings) =>
-            mappings.Aggregate(new BoundaryCache(),
+        public static ClrBoundary Create(IEnumerable<Mapping> mappings) =>
+            mappings.Aggregate(new ClrBoundary(),
                                (cache, mapping) =>
                                {
                                    cache.AddConverter(mapping);
                                    return cache;
                                });
 
-        public static BoundaryCache CreateDefault() =>
+        public static ClrBoundary CreateDefault() =>
             Create(_boundaryStructTypesWithAttribute
                    .Select(pair =>
                    {
@@ -393,7 +393,7 @@ namespace Element.CLR
                        {typeof(float[]), new Array1D()}*/
                    }));
 
-        private BoundaryCache() { }
+        private ClrBoundary() { }
 
         public bool AddConverter(Mapping mapping) => mapping.AddToCache(this);
         
@@ -412,12 +412,12 @@ namespace Element.CLR
             _unresolvedMappings.Clear();
         }
 
-        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, BoundaryContext context) =>
+        public Result<IValue> LinqToElement(System.Linq.Expressions.Expression parameter, ClrBoundaryContext context) =>
             GetConverter(parameter.Type, context)
                 .Bind(boundaryConverter => boundaryConverter.LinqToElement(parameter, context));
 
         public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
-                                                 BoundaryContext context) =>
+                                                 ClrBoundaryContext context) =>
             value.HasWrapper(out List.HomogenousListElement _)
                 ? context.Trace(EleMessageCode.MissingBoundaryConverter, $"List Elements are not currently supported at the boundary")
                 : GetConverter(outputType, context)
@@ -439,25 +439,25 @@ namespace Element.CLR
     }
     
     // TODO: Make IContext and pass through to a wrapped context
-    public class BoundaryContext : Context
+    public class ClrBoundaryContext : Context
     {
-        public BoundaryCache BoundaryCache { get; }
-        public static BoundaryContext FromContext(Context context, BoundaryCache cache) => new BoundaryContext(context, cache);
+        public ClrBoundary ClrBoundary { get; }
+        public static ClrBoundaryContext FromContext(Context context, ClrBoundary cache) => new ClrBoundaryContext(context, cache);
 
-        private BoundaryContext(Context context, BoundaryCache cache) : base(context.RootScope, context.CompilerOptions) => BoundaryCache = cache;
+        private ClrBoundaryContext(Context context, ClrBoundary cache) : base(context.RootScope, context.CompilerOptions) => ClrBoundary = cache;
 
-        public Result<IValue> LinqToElement(LExpression parameter) => BoundaryCache.LinqToElement(parameter, this);
-        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction) => BoundaryCache.ElementToLinq(value, outputType, convertFunction, this);
-        public Result<Type> ElementToClr(Struct elementStruct) => BoundaryCache.ElementToClr(elementStruct, this);
-        public Result<Type> ElementToClr(IIntrinsicStructImplementation elementStruct) => BoundaryCache.ElementToClr(elementStruct, this);
+        public Result<IValue> LinqToElement(LExpression parameter) => ClrBoundary.LinqToElement(parameter, this);
+        public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction) => ClrBoundary.ElementToLinq(value, outputType, convertFunction, this);
+        public Result<Type> ElementToClr(Struct elementStruct) => ClrBoundary.ElementToClr(elementStruct, this);
+        public Result<Type> ElementToClr(IIntrinsicStructImplementation elementStruct) => ClrBoundary.ElementToClr(elementStruct, this);
         public Result SerializeClrInstance(object clrInstance, ICollection<float> floats) =>
-            BoundaryCache.GetConverter(clrInstance.GetType(), this)
-                         .Bind(converter => converter.SerializeClrInstance(clrInstance, floats, this));
+            ClrBoundary.GetConverter(clrInstance.GetType(), this)
+                       .Bind(converter => converter.SerializeClrInstance(clrInstance, floats, this));
     }
 	
     public static class BoundaryContextExtensions
     {
-        public static BoundaryContext ToBoundaryContext(this Context context, BoundaryCache cache) => BoundaryContext.FromContext(context, cache);
-        public static Result<BoundaryContext> ToDefaultBoundaryContext(this Context context) => context.ToBoundaryContext(BoundaryCache.CreateDefault());
+        public static ClrBoundaryContext ToBoundaryContext(this Context context, ClrBoundary cache) => ClrBoundaryContext.FromContext(context, cache);
+        public static Result<ClrBoundaryContext> ToDefaultBoundaryContext(this Context context) => context.ToBoundaryContext(ClrBoundary.CreateDefault());
     }
 }
