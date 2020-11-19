@@ -146,7 +146,6 @@ element_result element_object_call_with_placeholders(
         *context->ctx,
         *function_instance,
         function_instance->declarer->get_inputs(),
-        result,
         {},
         0);
 
