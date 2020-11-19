@@ -19,20 +19,20 @@ namespace element
 
         [[nodiscard]] object_const_shared_ptr index(const compilation_context& context,
                                                     const identifier& name,
-                                                    const source_information& source_info) const override { return shared_from_this(); };
+                                                    const source_information& source_info) const override { return shared_from_this(); }
 
         [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,
                                                    std::vector<object_const_shared_ptr> compiled_args,
-                                                   const source_information& source_info) const override { return shared_from_this(); };
+                                                   const source_information& source_info) const override { return shared_from_this(); }
 
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
-                                                      const source_information& source_info) const override { return shared_from_this(); };
+                                                      const source_information& source_info) const override { return shared_from_this(); }
 
         [[nodiscard]] element_result get_result() const;
         [[nodiscard]] const std::string& get_message() const;
         [[nodiscard]] element_log_message get_log_message() const;
 
-        [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override { return true; };
+        [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override { return true; }
 
         element_result log_once(const element_log_ctx* logger) const;
 

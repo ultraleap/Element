@@ -161,40 +161,22 @@ namespace element
     object_const_shared_ptr compile_placeholder_expression(const compilation_context& context,
                                                            const object& object,
                                                            const std::vector<port>& inputs,
-                                                           element_result& result,
                                                            const source_information& source_info,
-                                                           const int placeholder_offset)
+                                                           const int placeholder_offset,
+                                                           int boundary_scope)
     {
-        const auto* function_instance = dynamic_cast<const element::function_instance*>(&object);
+        assert(!context.boundaries.empty());
+        const unsigned int boundary = boundary_scope < 0 ? context.boundaries.size() - 1 : boundary_scope;
+        auto [placeholders, size] = generate_placeholder_inputs(context, inputs, placeholder_offset, boundary);
+        context.boundaries[boundary].size = size;
 
-        int inputs_to_skip = 0;
-        if (function_instance)
-            inputs_to_skip = function_instance->get_provided_arguments().size();
-
-        auto [placeholder, size] = generate_placeholder_inputs(context, inputs, result, placeholder_offset, inputs_to_skip);
-
-        if (result != ELEMENT_OK)
-        {
-            result = ELEMENT_ERROR_UNKNOWN;
-            return nullptr;
-        }
-
-        context.boundaries.push_back({ size });
-        auto compiled = object.call(context, std::move(placeholder), source_info);
+        context.boundaries.push_back({});
+        auto compiled = object.call(context, std::move(placeholders), source_info);
         context.boundaries.pop_back();
 
-        if (!compiled)
-        {
-            result = ELEMENT_ERROR_UNKNOWN;
-            return nullptr;
-        }
-
-        const auto err = std::dynamic_pointer_cast<const element::error>(compiled);
+        const auto err = std::dynamic_pointer_cast<const error>(compiled);
         if (err)
-        {
-            result = err->log_once(context.interpreter->logger.get());
-            return err;
-        }
+            err->log_once(context.interpreter->logger.get());
 
         return compiled;
     }

@@ -17,6 +17,7 @@ using namespace element;
 
 function_instance::function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info)
     : declarer(declarer)
+    , inputs(declarer->get_inputs())
     , captures(std::move(captures))
     , our_constraint(std::make_unique<user_function_constraint>(declarer, false))
 {
@@ -25,6 +26,8 @@ function_instance::function_instance(const function_declaration* declarer, captu
 
 function_instance::function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info, std::vector<object_const_shared_ptr> args)
     : declarer(declarer)
+    , inputs(inputs_except_provided)
+    , inputs_except_provided(declarer->get_inputs().begin() + args.size(), declarer->get_inputs().end())
     , captures(std::move(captures))
     , provided_arguments(std::move(args))
     , our_constraint(std::make_unique<user_function_constraint>(declarer, true))
@@ -196,6 +199,11 @@ object_const_shared_ptr function_instance::compile(const compilation_context& co
         return call(context, {}, source_info);
 
     return shared_from_this();
+}
+
+const std::vector<port>& function_instance::get_inputs() const
+{
+    return inputs;
 }
 
 bool function_instance::is_constant() const

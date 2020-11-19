@@ -31,7 +31,7 @@ namespace element
 
         [[nodiscard]] virtual bool serializable(const compilation_context& context) const { return false; }
         [[nodiscard]] virtual bool deserializable(const compilation_context& context) const { return false; }
-        [[nodiscard]] virtual object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index) const { return nullptr; }
+        [[nodiscard]] virtual object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const;
 
         [[nodiscard]] virtual std::string location() const;
         [[nodiscard]] virtual bool recursive_handler(const call_stack& stack, const declaration* other_declaration, std::vector<call_stack::frame>::const_reverse_iterator iterator) const

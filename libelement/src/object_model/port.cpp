@@ -15,11 +15,11 @@
 using namespace element;
 
 port::port()
-    : port(nullptr, identifier{ "" }, std::make_unique<type_annotation>(identifier{""}), nullptr)
+    : port(nullptr, identifier{ "" }, std::make_shared<const type_annotation>(identifier{""}), nullptr)
 {
 }
 
-port::port(const declaration* declarer, identifier name, std::unique_ptr<type_annotation> annotation, std::unique_ptr<element::expression_chain> expr_chain)
+port::port(const declaration* declarer, identifier name, std::shared_ptr<const type_annotation> annotation, std::shared_ptr<expression_chain> expr_chain)
     : declarer(declarer)
     , name{ std::move(name) }
     , annotation{ std::move(annotation) }
@@ -38,13 +38,20 @@ const declaration* port::resolve_annotation(const compilation_context& context) 
     return declarer->get_scope()->find(annotation->to_string(), true);
 }
 
-object_const_shared_ptr port::generate_placeholder(const compilation_context& context, int& placeholder_index) const
+object_const_shared_ptr port::generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const
 {
     const auto* type = resolve_annotation(context);
     if (!type)
-        return nullptr;
+    {
+        auto err = std::make_shared<const error>(
+            fmt::format("Failed to resolve annotation '{}'", annotation ? annotation->to_string() : ""),
+            ELEMENT_ERROR_UNKNOWN,
+            declarer ? declarer->source_info : source_information{});
+        err->log_once(context.get_logger());
+        return err;
+    }
 
-    return type->generate_placeholder(context, placeholder_index);
+    return type->generate_placeholder(context, placeholder_index, boundary_scope);
 }
 
 bool port::is_valid(const compilation_context& context) const
