@@ -48,3 +48,9 @@ resolveDifferentReturnTypes(a:Num)
     
     #return = Bool.if(a.gt(0), Num.floor(a), Num.floor(0))
 }
+
+topLevelStructFromListElements(a:Num):Vector3
+{
+    makeVec(b) = Vector3(b, b, b)
+    return = list(makeVec(5), makeVec(10), makeVec(15)).at(a)
+}

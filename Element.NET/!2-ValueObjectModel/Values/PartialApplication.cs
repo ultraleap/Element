@@ -8,8 +8,8 @@ namespace Element.AST
     {
         public static Result<IValue> PartiallyApply(this IValue function, IValue[] arguments, Context context)
         {
-            if (!function.IsFunction) return context.Trace(EleMessageCode.NotFunction, "Cannot partially apply arguments to a non-function value");
-            var appliedFunction = function.IsType(out AppliedFunction af)
+            if (!function.HasInputs()) return context.Trace(EleMessageCode.NotFunction, "Cannot partially apply arguments to a non-function value");
+            var appliedFunction = function.InnerIs(out AppliedFunction af)
                                       ? new AppliedFunction(af.AppliedArguments.Concat(arguments), af.WrappedValue)
                                       : new AppliedFunction(arguments, function);
             
@@ -23,6 +23,8 @@ namespace Element.AST
             public AppliedFunction(IEnumerable<IValue> arguments, IValue function)
                 : base(function) =>
                 AppliedArguments = arguments.ToList();
+
+            public override string TypeOf => "AppliedFunction";
 
             public readonly List<IValue> AppliedArguments;
             public bool CanBeFullyApplied => AppliedArguments.Count >= WrappedValue.InputPorts.Count;

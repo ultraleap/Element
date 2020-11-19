@@ -65,5 +65,17 @@ namespace Laboratory.Tests.L3.Prelude
 				new FunctionEvaluation("_(idx:Num):Num = resolveDifferentReturnTypes(idx).at(0)", $"({f.a.ToString(CultureInfo.InvariantCulture)})", EvaluationMode.Compiled), 
 				new[] {f.expectedResult});
 
+		private static readonly (int, string)[] _topLevelStructInstanceValueArguments =
+		{
+			(0, "Vector3(5, 5, 5)"),
+			(1, "Vector3(10, 10, 10)"),
+			(2, "Vector3(15, 15, 15)")
+		};
+
+		[Test]
+		public void TopLevelStructInstancePickedFromListIsSerializable([ValueSource(nameof(_topLevelStructInstanceValueArguments))]
+		                                                               (int index, string resultExpression) args,
+		                                                               [Values] EvaluationMode mode) =>
+			AssertApproxEqual(ValidatedCompilerInput, new ExpressionEvaluation($"topLevelStructFromListElements({args.index})", mode), new ExpressionEvaluation(args.resultExpression, EvaluationMode.Interpreted));
 	}
 }

@@ -37,15 +37,15 @@ namespace Element.AST
         }
 
         public Result AddSource(SourceInfo source, Context context) =>
-            ContainsSource(source.Name)
-                ? context.Trace(EleMessageCode.DuplicateSourceFile, $"Duplicate source '{source.Name}'")
+            ContainsSource(source.FullName)
+                ? context.Trace(EleMessageCode.DuplicateSourceFile, $"Duplicate source '{source.FullName}'")
                 : Parser.Parse<SourceBlob>(source, context, context.CompilerOptions.NoParseTrace)
                         .Bind(blob =>
                         {
-                            _sourceScopes[source.Name] = blob;
+                            _sourceScopes[source.FullName] = blob;
                             _cachedList = null;
                             var validateResult = Validate(context);
-                            if (validateResult.IsError) RemoveSource(source.Name);
+                            if (validateResult.IsError) RemoveSource(source.FullName);
                             return validateResult;
                         });
 
@@ -59,7 +59,7 @@ namespace Element.AST
         public Result Validate(Context context)
         {
             var builder = new ResultBuilder(context);
-            builder.AppendInfo("Validating global scope...");
+            builder.AppendVerbose("Validating global scope...");
             var idHashSet = new HashSet<Identifier>();
             foreach (var decl in Declarations)
             {
@@ -71,7 +71,7 @@ namespace Element.AST
                 }
             }
             
-            builder.AppendInfo("Successfully validated global scope");
+            builder.AppendVerbose("Successfully validated global scope");
  
             return builder.ToResult();
         }

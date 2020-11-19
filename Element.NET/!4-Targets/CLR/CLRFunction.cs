@@ -105,17 +105,6 @@ namespace Element.CLR
 			    {(typeof(double), typeof(float)), expression => LinqExpression.Convert(expression, typeof(float))}
 		    };
 	    
-	    // TODO: Move this to BoundaryConverter? Should support more than just Num/Bool structs
-	    private static Type? ToClrType(Struct elementType) => elementType.IsIntrinsicOfType<NumStruct>()
-		                                                          ? typeof(float)
-		                                                          : elementType.IsIntrinsicOfType<BoolStruct>()
-			                                                          ? typeof(bool)
-			                                                          : null;
-
-	    // TODO: Move this to BoundaryConverter?
-	    private static Type? ToClrType(IIntrinsicStructImplementation structImplementation) => structImplementation == NumStruct.Instance ? typeof(float) : structImplementation == BoolStruct.Instance ? typeof(bool) : null;
-
-
 	    private struct CompilationData
 		{
 			public List<LinqExpression> Statements;
@@ -123,13 +112,9 @@ namespace Element.CLR
 			public Dictionary<CachedInstruction, ParameterExpression> Cache;
 			public Dictionary<InstructionGroup, LinqExpression[]> GroupCache;
 			public Func<State, LinqExpression>? ResolveState;
-			//public List<float> StateValues;
-			//public ParameterExpression StateArray;
-			public Dictionary<Instruction, CachedInstruction> CSECache;
-			//public Dictionary<ElementExpression, ElementExpression> ConstantCache;
 		}
 
-		private static LinqExpression CompileInstruction(Instruction value, CompilationData data)
+		private static LinqExpression CompileInstruction(Instruction value, CompilationData data, ClrBoundaryContext context)
 		{
 			static LinqExpression ConvertExpressionType(LinqExpression expr, Type targetType) =>
 				expr.Type == targetType
@@ -151,18 +136,22 @@ namespace Element.CLR
 				};
 			}
 
-			data.Cache ??= new Dictionary<CachedInstruction, ParameterExpression>();
-			data.GroupCache ??= new Dictionary<InstructionGroup, LinqExpression[]>();
 			switch (value)
 			{
 				case ICLRExpression s:
-					return s.Compile(e => CompileInstruction(e, data));
+					return s.Compile();
 				case Constant c:
-					return ConvertExpressionType(LinqExpression.Constant(c.Value), ToClrType(c.StructImplementation));
+					return context.ElementToClr(c.StructImplementation)
+					              .Match((type, messages) => ConvertExpressionType(LinqExpression.Constant(c.Value), type),
+					                     // TODO: Return error instead of throwing
+					                     messages => throw new InternalCompilerException($"No CLR type mapped for '{c.StructImplementation}'"));
 				case Cast c:
-					return ConvertExpressionType(CompileInstruction(c.Instruction, data), ToClrType(c.StructImplementation));
+					return context.ElementToClr(c.StructImplementation)
+					              .Match((type, messages) => ConvertExpressionType(CompileInstruction(c.Instruction, data, context), type),
+					                     // TODO: Return error instead of throwing
+					                     messages => throw new InternalCompilerException($"No CLR type mapped for '{c.StructImplementation}'"));
 				case Unary u:
-					var ua = CompileInstruction(u.Operand, data);
+					var ua = CompileInstruction(u.Operand, data, context);
 					
 					if (_unaryLinqOps.TryGetValue(u.Operation, out var linqUnaryOp))
 					{
@@ -179,8 +168,8 @@ namespace Element.CLR
 
 					break;
 				case Binary b:
-					var ba = CompileInstruction(b.OpA, data);
-					var bb = CompileInstruction(b.OpB, data);
+					var ba = CompileInstruction(b.OpA, data, context);
+					var bb = CompileInstruction(b.OpB, data, context);
 					
 					if (_binaryLinqOps.TryGetValue(b.Operation, out var linqBinaryOp))
 					{
@@ -201,7 +190,7 @@ namespace Element.CLR
 				case CachedInstruction v:
 					if (!data.Cache.TryGetValue(v, out var varExpr))
 					{
-						var result = CompileInstruction(v.Value, data);
+						var result = CompileInstruction(v.Value, data, context);
 						data.Cache.Add(v, varExpr = LinqExpression.Parameter(result.Type));
 						data.Statements.Add(LinqExpression.Assign(varExpr, result));
 						data.Variables.Add(varExpr);
@@ -214,21 +203,21 @@ namespace Element.CLR
 
 					if (m.Operands.Count == 2)
 					{
-						var sa = CompileInstruction(m.Operands[1], data);
-						var sb = CompileInstruction(m.Operands[0], data);
+						var sa = CompileInstruction(m.Operands[1], data, context);
+						var sb = CompileInstruction(m.Operands[0], data, context);
 
-						return LinqExpression.Condition(ConvertExpressionType(CompileInstruction(m.Selector, data), typeof(bool)),
+						return LinqExpression.Condition(ConvertExpressionType(CompileInstruction(m.Selector, data, context), typeof(bool)),
 							sa,
 							sb);
 					}
 
-					var sel = LinqExpression.Convert(CompileInstruction(m.Selector, data), typeof(int));
+					var sel = LinqExpression.Convert(CompileInstruction(m.Selector, data, context), typeof(int));
 					var clampedSel =
 						LinqExpression.Condition(
 							LinqExpression.GreaterThanOrEqual(sel, LinqExpression.Constant(m.Operands.Count)),
 							LinqExpression.Constant(m.Operands.Count - 1), sel);
 					var cases = m.Operands.Select(
-						             (c, i) => LinqExpression.SwitchCase(CompileInstruction(c, data), LinqExpression.Constant(i)))
+						             (c, i) => LinqExpression.SwitchCase(CompileInstruction(c, data, context), LinqExpression.Constant(i)))
 					             .ToArray();
 					return LinqExpression.Switch(clampedSel, cases[0].Body, cases);
 				case State s:
@@ -241,7 +230,7 @@ namespace Element.CLR
 				case InstructionGroupElement groupElement:
 					if (!data.GroupCache.TryGetValue(groupElement.Group, out var groupList))
 					{
-						data.GroupCache.Add(groupElement.Group, groupList = CompileGroup(groupElement.Group, data));
+						data.GroupCache.Add(groupElement.Group, groupList = CompileGroup(groupElement.Group, data, context));
 					}
 
 					return groupList[groupElement.Index];
@@ -250,40 +239,15 @@ namespace Element.CLR
 			throw new Exception("Unknown expression " + value);
 		}
 
-		private static LinqExpression[] CompileGroup(InstructionGroup group, CompilationData data)
+		private static LinqExpression[] CompileGroup(InstructionGroup group, CompilationData data, ClrBoundaryContext context)
 		{
 			switch (group)
 			{
-				/*case Persist p:
-					foreach (var s in p.State)
-					{
-						if (!(s.InitialValue is Constant))
-						{
-							throw new Exception("Persist initial value is not constant");
-						}
-
-						data.StateValues.Add(((Constant)s.InitialValue).Value);
-					}
-
-					var assigns = new List<LinqExpression>();
-					// TODO: Resolve parent scopes
-					data.ResolveState = s => LinqExpression.ArrayAccess(data.StateArray, LinqExpression.Constant(s.Id));
-					for (var i = 0; i < p.NewValue.Count; i++)
-					{
-						var newValueExpr = Compile(p.NewValue[i], data);
-						assigns.Add(LinqExpression.Assign(
-							LinqExpression.ArrayAccess(data.StateArray, LinqExpression.Constant(i)), newValueExpr));
-					}
-
-					data.Statements.AddRange(assigns);
-					return Enumerable.Range(0, p.Size)
-					                 .Select(i => LinqExpression.ArrayAccess(data.StateArray, LinqExpression.Constant(i)))
-					                 .ToArray();*/
 				case Loop l:
 					var stateList = new List<ParameterExpression>();
 					foreach (var s in l.State)
 					{
-						var initial = CompileInstruction(s.InitialValue, data);
+						var initial = CompileInstruction(s.InitialValue, data, context);
 						var variable = LinqExpression.Variable(initial.Type);
 						data.Statements.Add(LinqExpression.Assign(variable, initial));
 						data.Variables.Add(variable);
@@ -298,9 +262,9 @@ namespace Element.CLR
 
 					// Create a new statements list to put in the loop body
 					var s1 = data.Statements = new List<LinqExpression>();
-					var condition = CompileInstruction(l.Condition, data);
+					var condition = CompileInstruction(l.Condition, data, context);
 					var s2 = data.Statements = new List<LinqExpression>();
-					var newState = l.Body.Select(e => CompileInstruction(e, data)).ToArray();
+					var newState = l.Body.Select(e => CompileInstruction(e, data, context)).ToArray();
 
 					// Ensure that the entire state is only set at the end of the loop
 					for (var i = 0; i < newState.Length; i++)
@@ -341,8 +305,8 @@ namespace Element.CLR
 		/// The result of calling the given function with all its inputs and a pre-allocated argument array.
 		/// The function inputs are mapped directly to the arrays contents.
 		/// </returns>
-		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, Context context) =>
-			function.IsFunction
+		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, ClrBoundaryContext context) =>
+			function.HasInputs()
 				? function.InputPorts.Select(c => c.DefaultValue(context))
 				          .BindEnumerable(defaultValues =>
 				          {
@@ -362,7 +326,7 @@ namespace Element.CLR
 					          return Enumerable.Range(0, totalSerializedSize)
 					                           // For each array index, create an ArrayIndex expression
 					                           .Select(i => NumberConverter.Instance
-					                                                       .LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), null!, context)
+					                                                       .LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), context)
 					                                                       .Cast<Instruction>())
 					                           // Aggregate enumerable of results into single result
 					                           .ToResultArray()
@@ -378,42 +342,38 @@ namespace Element.CLR
 				          })
 				: context.Trace(EleMessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
 
-		public static Result<TDelegate> Compile<TDelegate>(this IValue value, Context context, IBoundaryConverter? boundaryConverter = default)
+		public static Result<TDelegate> Compile<TDelegate>(this IValue value, ClrBoundaryContext clrBoundaryContext)
 			where TDelegate : Delegate =>
-			Compile(value, context, typeof(TDelegate), boundaryConverter).Map(result => (TDelegate)result);
+			Compile(value, typeof(TDelegate), clrBoundaryContext).Map(result => (TDelegate)result);
 
-		public static Result<Delegate> CompileDynamic(this IValue value, Context context, IBoundaryConverter? boundaryConverter = default)
+		public static Result<Delegate> CompileDynamic(this IValue value, ClrBoundaryContext context)
 		{
-			Result<Struct> ConstraintToStruct(IValue constraint) => constraint.IsType<Struct>(out var s)
+			Result<Struct> ConstraintToStruct(IValue constraint) => constraint.InnerIs<Struct>(out var s)
 				                                                        ? new Result<Struct>(s)
-				                                                        : new Result<Struct>(context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{constraint}' is not a struct - all top-level function ports must be serializable struct types"));
+				                                                        : context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{constraint}' is not a struct - all top-level function ports must be serializable struct types");
 
-			var inputStructs = value.IsFunction
+			var inputStructs = value.HasInputs()
 				                   ? value.InputPorts.Select(p => ConstraintToStruct(p.ResolvedConstraint)).ToResultArray()
 				                   : Array.Empty<Struct>();
 			
+			
+			
 			return inputStructs
-			       .Accumulate(() => value.IsFunction switch
+			       .Accumulate(() => value.HasInputs() switch
 			       {
 				       true => ConstraintToStruct(value.ReturnConstraint),
-				       false when value.IsType<Struct>(out var s) => s,
-				       false when value.IsType<StructInstance>(out var s) => ConstraintToStruct(s.DeclaringStruct),
-				       false when value.IsType<Instruction>(out var i) => i.LookupIntrinsicStruct(context),
+				       false when value.InnerIs<Struct>(out var s) => s,
+				       false when value.InnerIs<StructInstance>(out var s) => ConstraintToStruct(s.DeclaringStruct),
+				       false when value.InnerIs<Instruction>(out var i) => i.LookupIntrinsicStruct(context),
 				       false => context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{value}' is not recognized as a function, struct, struct instance or primitive value, cannot deduce the return type for compiling a delegate")
 			       })
-			       .Bind(types => types.Item1.Append(types.Item2)
-			                           .Select(elementStruct => ToClrType(elementStruct) is {} type // check for non-null type
-				                                                    ? new Result<Type>(type)
-				                                                    : context.Trace(EleMessageCode.InvalidBoundaryFunction,"Only Num/Bool are currently implemented for input/return parameter when compiling dynamically"))
-			                           .BindEnumerable(clrPortTypes => Compile(value, context, LinqExpression.GetFuncType(clrPortTypes.ToArray()), boundaryConverter)));
+			       .Bind(types => types.Item1.Append(types.Item2).Select(context.ElementToClr)
+			                           .BindEnumerable(clrPortTypes => Compile(value, LinqExpression.GetFuncType(clrPortTypes.ToArray()), context)));
 		}
 
-		private static Result<Delegate> Compile(IValue value, Context context, 
-		                                 Type delegateType, IBoundaryConverter? boundaryConverter = default)
+		private static Result<Delegate> Compile(IValue value, Type delegateType, ClrBoundaryContext context)
         {
-	        boundaryConverter ??= new BoundaryConverter();
-
-            // Check return type/single out parameter of delegate
+	        // Check return type/single out parameter of delegate
             var method = delegateType.GetMethod(nameof(Action.Invoke));
             if (method == null) return context.Trace(EleMessageCode.InvalidBoundaryFunction, $"{delegateType} did not have invoke method");
 
@@ -429,7 +389,7 @@ namespace Element.CLR
             var returnExpression = LinqExpression.Parameter(delegateReturn.ParameterType, delegateReturn.Name);
 
             
-            if (value.IsFunction && value.InputPorts.Count != delegateParameters.Length)
+            if (value.HasInputs() && value.InputPorts.Count != delegateParameters.Length)
             {
 	            return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
             }
@@ -437,10 +397,10 @@ namespace Element.CLR
             var resultBuilder = new ResultBuilder<Delegate>(context, default!);
             IValue outputExpression = value;
             // If input value is not a function we just try to use it directly
-            if (value.IsFunction)
+            if (value.HasInputs())
             {
 	            var outputExpr = value.InputPorts
-	                                  .Select((f, idx) => boundaryConverter.LinqToElement(parameterExpressions[idx], boundaryConverter, context))
+	                                  .Select((f, idx) => context.LinqToElement(parameterExpressions[idx]))
 	                                  .BindEnumerable(args => value.Call(args.ToArray(), context));
 	            resultBuilder.Append(in outputExpr);
 	            if (outputExpr.IsError) return resultBuilder.ToResult();
@@ -449,20 +409,17 @@ namespace Element.CLR
 
             var data = new CompilationData
             {
-                //StateArray = LinqExpression.Variable(typeof(float[])),
-                //StateValues = new List<float>(),
                 Statements = new List<LinqExpression>(),
                 Variables = new List<ParameterExpression>(),
                 Cache = new Dictionary<CachedInstruction, ParameterExpression>(),
-                CSECache = new Dictionary<Instruction, CachedInstruction>(),
-                //ConstantCache = new Dictionary<ElementExpression, ElementExpression>()
+                GroupCache = new Dictionary<InstructionGroup, LinqExpression[]>()
             };
 
             static bool IsPrimitiveElementType(Type t) => t == typeof(float) || t == typeof(bool);
             
             // Compile delegate
             var detectCircular = new Stack<IValue>();
-            Result<LinqExpression> ConvertFunction(IValue nestedValue, Type outputType, Context context)
+            Result<LinqExpression> ConvertFunction(IValue nestedValue, Type outputType, ClrBoundaryContext context)
 			{
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == nestedValue)
 				{
@@ -475,31 +432,31 @@ namespace Element.CLR
 					return nestedValue.Serialize(context)
 					         .Bind(serialized => serialized.Count switch
 					         {
-						         1 when IsPrimitiveElementType(outputType) => CompileInstruction(serialized[0]/*.Cache(data.CSECache, context)*/, data),
-						         _ => boundaryConverter.ElementToLinq(nestedValue, outputType, ConvertFunction, context)
+						         1 when IsPrimitiveElementType(outputType) => new Result<LinqExpression>(CompileInstruction(serialized[0]/*.Cache(data.CSECache, context)*/, data, context)),
+						         _ => context.ElementToLinq(nestedValue, outputType, ConvertFunction)
 					         });
 				}
 
 				// Else we try to use a boundary converter to convert to serializable instructions
 				// TODO: Move circular checks to boundary converters
 				detectCircular.Push(nestedValue);
-				var retval = boundaryConverter.ElementToLinq(nestedValue, outputType, ConvertFunction, context);
+				var retval = context.ElementToLinq(nestedValue, outputType, ConvertFunction);
 				detectCircular.Pop();
 				return retval;
 			}
 
-            return boundaryConverter.ElementToLinq(outputExpression, returnExpression.Type, ConvertFunction, context)
-                                    .Map(convertedOutputExpression =>
-                                    {
-	                                    var outputAssign = LinqExpression.Assign(returnExpression, convertedOutputExpression);
+            return context.ElementToLinq(outputExpression, returnExpression.Type, ConvertFunction)
+                          .Map(convertedOutputExpression =>
+                          {
+	                          var outputAssign = LinqExpression.Assign(returnExpression, convertedOutputExpression);
 
-	                                    data.Variables.Add(returnExpression);
-	                                    data.Statements.Add(outputAssign);
+	                          data.Variables.Add(returnExpression);
+	                          data.Statements.Add(outputAssign);
 
-	                                    // Put everything into a single code block, and wrap it in the Delegate
-	                                    var fnBody = LinqExpression.Block(data.Variables, data.Statements);
-	                                    return LinqExpression.Lambda(delegateType, fnBody, false, parameterExpressions).Compile();
-                                    });
-        }
-    }
+	                          // Put everything into a single code block, and wrap it in the Delegate
+	                          var fnBody = LinqExpression.Block(data.Variables, data.Statements);
+	                          return LinqExpression.Lambda(delegateType, fnBody, false, parameterExpressions).Compile();
+                          });
+		}
+	}
 }

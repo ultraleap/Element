@@ -172,6 +172,14 @@ level = "Error"
 name = "NotImplemented"
 level = "Error"
 
+[ELE42]
+name = "UnmappedBoundaryType"
+level = "Error"
+
+[ELE43]
+name = "KeyAlreadyExists"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

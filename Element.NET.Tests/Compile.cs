@@ -18,14 +18,14 @@ struct MyCustomElementStruct(floatField:Num, vector3Field:Vector3)
 struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vector3Field:Vector3)
 ";
 
-        [ElementStructTemplate("MyCustomElementStruct")]
+        [ElementBoundaryStruct("MyCustomElementStruct")]
         private struct MyCustomElementStruct
         {
             public float floatField;
             public Vector3 vector3Field;
         }
         
-        [ElementStructTemplate("CustomNestedStruct")]
+        [ElementBoundaryStruct("CustomNestedStruct")]
         private struct CustomNestedStruct
         {
             public MyCustomElementStruct structField;
@@ -45,13 +45,13 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
 
         private static Result<(TDelegate Delegate, float[] ArgumentArray)> CompileAndSourceArguments<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
-            Context.CreateFromSourceContext(context).EvaluateExpression(expression)
-                   .Bind(function => function.SourceArgumentsFromSerializedArray(Context.CreateFromSourceContext(context)))
+            Context.CreateFromSourceContext(context).ToDefaultBoundaryContext()
+                   .Bind(boundaryContext => boundaryContext.EvaluateExpression(expression).Map(function => (function, boundaryContext)))
+                   .Bind(tuple => tuple.function.SourceArgumentsFromSerializedArray(tuple.boundaryContext).Map(valueTuple => (valueTuple, tuple.boundaryContext)))
                    .Bind(tuple =>
                    {
-                       var (capturingValue, captureArray) = tuple;
-                       return capturingValue.Compile<TDelegate>(Context.CreateFromSourceContext(context))
-                                            .Map(compiled => (compiled, captureArray));
+                       var ((capturingValue, captureArray), boundaryContext) = tuple;
+                       return capturingValue.Compile<TDelegate>(boundaryContext).Map(compiled => (compiled, captureArray));
                    });
         
         private static void CompileWithSourcedArgsAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate, float[]> checkFunc)
@@ -65,8 +65,9 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         
         private static Result<TDelegate> CompileDelegate<TDelegate>(SourceContext context, string expression)
             where TDelegate : Delegate =>
-            Context.CreateFromSourceContext(context).EvaluateExpression(expression)
-                   .Bind(fn => fn.Compile<TDelegate>(Context.CreateFromSourceContext(context)));
+            Context.CreateFromSourceContext(context).ToDefaultBoundaryContext()
+                   .Bind(boundaryContext => boundaryContext.EvaluateExpression(expression).Map(function => (function, boundaryContext)))
+                   .Bind(tuple => tuple.function.Compile<TDelegate>(tuple.boundaryContext));
         
         private static void CompileAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate> checkFunc)
             where TDelegate : Delegate =>

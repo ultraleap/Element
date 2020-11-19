@@ -71,7 +71,7 @@ namespace Element.AST
         public static TraceSite MakeTraceSite(this ISourceLocation location, string what)
         {
             var (line, _, lineCharacterIndex) = location.SourceInfo.CalculateLineAndColumnFromIndex(location.IndexInSource);
-            return new TraceSite(what, location.SourceInfo.Name, line, lineCharacterIndex);
+            return new TraceSite(what, location.SourceInfo.FullName, line, lineCharacterIndex);
         }
     }
 }

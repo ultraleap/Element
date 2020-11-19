@@ -43,7 +43,7 @@ namespace Element.AST
             public override IValue ReturnConstraint { get; }
 
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-	            arguments[0].IsType(out Instruction index)
+	            arguments[0].InnerIs(out Instruction index)
 		            ? HomogenousListElement.Create(index, _elements, context)
 		            : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
         }
@@ -62,7 +62,7 @@ namespace Element.AST
 			                     for (var i = 0; i < elements.Count; i++)
 			                     {
 				                     // If any elements are not instructions then we need to 
-				                     if (elements[i].IsType(out Instruction instruction)) operands[i] = instruction;
+				                     if (elements[i].InnerIs(out Instruction instruction)) operands[i] = instruction;
 				                     else return new Result<IValue>(new HomogenousListElement(index, elements));
 			                     }
 
@@ -79,7 +79,6 @@ namespace Element.AST
             private readonly Instruction _index;
             private readonly IReadOnlyList<IValue> _elements;
             public override string SummaryString => $"HomogenousListElement({_index})[{string.Join(", ", _elements)}]";
-            public override bool IsFunction => _elements[0].IsFunction;
 
             public override Result<IValue> Index(Identifier id, Context context) =>
 	            _elements.Select(e => e.Index(id, context))
