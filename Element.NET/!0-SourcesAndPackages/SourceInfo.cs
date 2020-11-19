@@ -10,22 +10,18 @@ namespace Element
     /// </summary>
     public class SourceInfo
     {
-        public static SourceInfo FromFilePath(string path)
-        {
-            var file = new FileInfo(path);
-            return FromStream(file.FullName, File.OpenRead(file.FullName));
-        }
-
-        public static SourceInfo FromFile(FileInfo file) => FromStream(file.FullName, File.OpenRead(file.FullName));
-        public static SourceInfo FromStream(string sourceName, Stream stream)
+        public static SourceInfo FromFilePath(string path) => FromFile(new FileInfo(path));
+        public static SourceInfo FromFile(FileInfo file) => FromStream(file.FullName, File.OpenRead(file.FullName), file.Name);
+        public static SourceInfo FromStream(string sourceName, Stream stream, string? displayName = null)
         {
             using var reader = new StreamReader(stream);
-            return new SourceInfo(sourceName, reader.ReadToEnd());
+            return new SourceInfo(sourceName, reader.ReadToEnd(), displayName);
         }
 
-        public SourceInfo(string name, string text)
+        public SourceInfo(string fullName, string text, string? displayName = null)
         {
-            Name = name;
+            FullName = fullName;
+            DisplayName = displayName ?? fullName;
             OriginalText = text;
             PreprocessedText = Parser.Preprocess(text);
             var splitByNewLine = PreprocessedText.Split(new []{"\r\n", "\n", "\r"}, 3, StringSplitOptions.RemoveEmptyEntries);
@@ -37,7 +33,8 @@ namespace Element
             };
         }
         
-        public readonly string Name;
+        public readonly string FullName;
+        public string DisplayName { get; }
         public readonly string OriginalText;
         public readonly string PreprocessedText;
         public readonly string FirstNonEmptyLine;

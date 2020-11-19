@@ -77,7 +77,7 @@ namespace Element
             if (location != null)
             {
                 var (lineIdx, columnIdx, indexOnLine) = location.SourceInfo.CalculateLineAndColumnFromIndex(location.IndexInSource);
-                line = $"{line} in {location.SourceInfo.Name}:{lineIdx},{columnIdx}";
+                line = $"{line} in {location.SourceInfo.FullName}:{lineIdx},{columnIdx}";
             }
             CallbackLine(line);
             _indent++;

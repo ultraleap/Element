@@ -39,11 +39,14 @@ namespace Element
             }
 
             return FromStrings(Path.GetFileNameWithoutExtension(manifestFiles[0].FullName), File.ReadAllText(manifestFiles[0].FullName),
-                               directoryInfo.GetFiles("*.ele", SearchOption.AllDirectories).Select(s =>(s.FullName, File.ReadAllText(s.FullName))).ToArray(),
+                               directoryInfo
+                                   .GetFiles("*.ele", SearchOption.AllDirectories)
+                                   .Select(s => (s.FullName, File.ReadAllText(s.FullName), s.Name))
+                                   .ToArray(),
                                context);
         }
 
-        public static Result<PackageInfo> FromStreams(string packageName, Stream manifestStream, IEnumerable<(string Name, Stream Stream)> sourceStreams, Context context)
+        public static Result<PackageInfo> FromStreams(string packageName, Stream manifestStream, IEnumerable<(string FullName, Stream Stream, string? DisplayName)> sourceStreams, Context context)
         {
             static string ReadStream(Stream stream)
             {
@@ -51,15 +54,15 @@ namespace Element
                 return reader.ReadToEnd();
             }
 
-            return FromStrings(packageName, ReadStream(manifestStream), sourceStreams.Select(t => (t.Name, ReadStream(t.Stream))).ToArray(), context);
+            return FromStrings(packageName, ReadStream(manifestStream), sourceStreams.Select(t => (t.FullName, ReadStream(t.Stream), t.DisplayName)).ToArray(), context);
         }
 
-        public static Result<PackageInfo> FromStrings(string packageName, string manifestString, IEnumerable<(string Name, string Source)> sources, Context context)
+        public static Result<PackageInfo> FromStrings(string packageName, string manifestString, IEnumerable<(string FullName, string Source, string? DisplayName)> sources, Context context)
         {
             try
             {
                 return PackageManifest.ParseFromJsonString(manifestString, context)
-                                      .Map(manifest => new PackageInfo(packageName, manifest, sources.Select(t => new SourceInfo($"{packageName}:{t.Name}", t.Source)).ToArray()));
+                                      .Map(manifest => new PackageInfo(packageName, manifest, sources.Select(t => new SourceInfo($"{packageName}:{t.FullName}", t.Source, t.DisplayName)).ToArray()));
             }
             catch (Exception e)
             {

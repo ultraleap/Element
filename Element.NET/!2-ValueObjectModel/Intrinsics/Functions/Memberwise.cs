@@ -16,7 +16,7 @@ namespace Element.AST
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
             arguments.Skip(1).Select(arg =>
-                                         arg.IsType<StructInstance>(out var structInstance)
+                                         arg.InnerIs<StructInstance>(out var structInstance)
                                              ? new Result<StructInstance>(structInstance)
                                              : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected a struct instance but got '{arg}' - memberwise can only be applied to struct instances"))
                      .ToResultArray()
@@ -31,7 +31,7 @@ namespace Element.AST
                              structs.Select(inst => inst!.Index(p.Identifier!.Value, context))
                                     .BindEnumerable(fields => arguments[0].Call(fields.ToArray(), context));
 
-                         return structType.Fields
+                         return structType.InputPorts
                                           .Select(ApplyFuncToMemberPair)
                                           .BindEnumerable(resultFields => StructInstance.Create(structType, resultFields.ToArray(), context)
                                                                                         .Cast<IValue>());

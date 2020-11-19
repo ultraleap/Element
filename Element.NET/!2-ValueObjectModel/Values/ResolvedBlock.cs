@@ -59,7 +59,7 @@ namespace Element.AST
             foreach (var member in Members)
             {
                 resultBuilder.Append(Index(member, context)
-                                         .Do(v => v.Serialize(resultBuilder, context)));
+                                         .And(v => v.Serialize(resultBuilder, context)));
             }
         }
 

@@ -105,7 +105,7 @@ namespace Element.NET.TestHelpers
                                                          Array.Empty<FileInfo>(),
                                                           compilerOptions))
                          .Then(context => string.IsNullOrEmpty(extraSource)
-                                              ? context // Do nothing if extra source is empty
+                                              ? Result.Success
                                               : context.LoadElementSource(new SourceInfo("ExtraTestSource", extraSource)))
                          .Match((context, messages) =>
                          {

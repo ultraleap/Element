@@ -3,24 +3,24 @@ using System.Globalization;
 
 namespace Element.CLR
 {
-    [ElementStructTemplate("TimeSpan")]
+    [ElementBoundaryStruct("TimeSpan")]
     public struct TimeSpan
     {
-        public float whole;
+        public float integer;
         public float fractional;
 
         public TimeSpan(double time)
         {
-            whole = (float)Math.Floor(time);
-            fractional = (float)(time - whole);
+            integer = (float)Math.Floor(time);
+            fractional = (float)(time - integer);
         }
 	
-        public TimeSpan(float whole, float fractional)
+        public TimeSpan(float integer, float fractional)
         {
-            this.whole = whole;
+            this.integer = integer;
             this.fractional = fractional;
         }
 
-        public override string ToString() => ((double)whole + fractional).ToString(CultureInfo.InvariantCulture);
+        public override string ToString() => ((double)integer + fractional).ToString(CultureInfo.InvariantCulture);
     }
 }

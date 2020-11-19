@@ -48,9 +48,9 @@ namespace Element
 		};
 
 		public static Result<IValue> CreateAndOptimize(Op op, IValue operandValue, Context context) =>
-			operandValue.IsType<Constant>(out var c)
+			operandValue.InnerIs<Constant>(out var c)
 				? Evaluate(op, c.Value)
-				: operandValue.IsType<Instruction>(out var operand)
+				: operandValue.InnerIs<Instruction>(out var operand)
 					? new Result<IValue>(new Unary(op, operand))
 					: context.Trace(EleMessageCode.InvalidCompileTarget, $"'{operandValue}' is not an Instruction - only Instructions can be a unary operand");
 

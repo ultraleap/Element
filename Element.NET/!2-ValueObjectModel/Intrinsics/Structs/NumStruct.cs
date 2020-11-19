@@ -15,7 +15,7 @@ namespace Element.AST
             // If the incoming value is an instruction and isn't a num, emit a cast to change it to num
             // Else the incoming value is not an instruction, which is an error
             
-            (arguments[0].IsType(out Instruction i), i?.StructImplementation == this) switch
+            (arguments[0].InnerIs(out Instruction i), i?.StructImplementation == this) switch
             {
                 (true, true) => new Result<IValue>(arguments[0]),
                 (true, false) => Cast.Create(i, this),
@@ -23,7 +23,7 @@ namespace Element.AST
             };
         
         public Result<IValue> DefaultValue(Context _) => Constant.Zero;
-        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => value.IsType<Instruction>(out var instruction) && instruction.StructImplementation == Instance;
+        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => value.InnerIs<Instruction>(out var instruction) && instruction.StructImplementation == Instance;
         public Identifier Identifier { get; } = new Identifier("Num");
     }
 }

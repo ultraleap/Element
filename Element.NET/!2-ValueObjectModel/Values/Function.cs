@@ -31,8 +31,6 @@ namespace Element.AST
             return namedArguments;
         }
 
-        public override bool IsFunction => true;
-
         public abstract override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public abstract override IValue ReturnConstraint { get; }
 
