@@ -1,0 +1,7 @@
+wheel
+sphinx>=3.2.1
+breathe>=4.22.0
+exhale
+sphinx_bootstrap_theme
+git+https://github.com/rogerbarton/sphinx-csharp.git
+sphinx-rtd-theme
