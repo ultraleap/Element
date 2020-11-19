@@ -137,16 +137,14 @@ element_result element_object_call_with_placeholders(
     if (!output)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    const auto* function_instance = dynamic_cast<const element::function_instance*>(object->obj.get());
+    const auto placeholder_offset = context->ctx->boundaries[0].size;
 
-    element_result result = ELEMENT_OK;
-
-    //do we need to pass arguments_offset to callsite?
     auto compiled = compile_placeholder_expression(
         *context->ctx,
-        *function_instance,
-        function_instance->declarer->get_inputs(),
+        *object->obj,
+        object->obj->get_inputs(),
         {},
+        placeholder_offset,
         0);
 
     *output = new element_object{ std::move(compiled) };
