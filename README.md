@@ -19,9 +19,9 @@ factorial(n) = List.range(0, n).fold(1, Num.mul);
 For full details see the [Element Reference Manual](Language/ElementReferenceManual.md).
 
 ### Element Libraries
-Element includes a core set of functionality in the base library [Prelude](ContentFiles/Prelude).
+Element includes a core set of functionality in the base library [Prelude](ContentFiles/ElementPackages/Prelude/).
 
-Element also comes with a [Standard Library](ContentFiles/StandardLibrary).
+Element also comes with a [Standard Library](ContentFiles/ElementPackages/StandardLibrary).
 
 ## Repository Layout
 * [Laboratory - The Element Host Test Suite](Laboratory) - .NET Core 3.0 CLI
