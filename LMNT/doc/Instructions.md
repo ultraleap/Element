@@ -25,7 +25,7 @@ These assumptions apply to all instructions unless otherwise noted.
 * **Dependencies**: instructions are not directly dependent on each other.
 * **Aliasing**: input and output stack locations may be aliased. For vector operations, the aliasing must be aligned - i.e. the output location must be the same as the input location(s) or they must not overlap at all.
 * **Rounding**: all rounding uses default IEEE754 behaviour.
-* **NaNs**: any operation involving one or more NaNs will produce a result of NaN. For memberwise vector operations, other lanes of the operation must not be affected.
+* **NaNs**: any operation involving one or more NaNs will produce a result of NaN.
 
 # Instruction Reference
 

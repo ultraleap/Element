@@ -6,7 +6,6 @@ struct Vector2(x:Num, y:Num)
 struct Vector3(x:Num, y:Num, z:Num)
 {
     add(a:Vector3, b:Vector3):Vector3 = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z))
-    mul(a:Vector3, b:Vector3) = memberwise(Num.mul, a, b)
 }
 
 factorial(a:Num):Num
