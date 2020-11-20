@@ -16,8 +16,7 @@ namespace Element.AST
                     For.Instance,
                     Fold.Instance,
                     List.Instance,
-                    If.Instance,
-                    Memberwise.Instance
+                    If.Instance
                 }.Concat(Nullary.Instances.Values)
                  .Concat(Unary.Instances.Values)
                  .Concat(Binary.Instances.Values))

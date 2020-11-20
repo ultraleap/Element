@@ -12,7 +12,7 @@ namespace Element.NET.Tests
     {
         private const string _compileSource = @"struct Vector3(x:Num, y:Num, z:Num)
 {
-    add(a:Vector3, b:Vector3) = memberwise(Num.add, a, b)
+    add(a:Vector3, b:Vector3) = Vector3(a.x.add(b.x), a.y.add(b.y), a.z.add(b.z))
 }
 struct MyCustomElementStruct(floatField:Num, vector3Field:Vector3)
 struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vector3Field:Vector3)
