@@ -1,9 +1,9 @@
 
 struct Polynomial(coefficients:List)
 {
-    eval(this:Polynomial, x:Num)
+    eval(this:Polynomial, x:Num):Num
     {
-        evaluator(a:Num, b:List.EnumeratedElement):Num
+        evaluator(a:Num, b):Num
         {
             return = a.add(b.val.mul(x.pow(b.idx)))
         }
@@ -14,5 +14,6 @@ struct Polynomial(coefficients:List)
 
 namespace StandardPolynomials
 {
-    foo = 0
+    # Should only be called in the range [0-1]
+    smoothstep = Polynomial(list(0, 0, 3, -2))
 }

@@ -57,11 +57,10 @@ intrinsic struct List(at:Indexer, count:Num)
     first(a:List) = a.at(0)
     last(a:List) = a.at(a.count.sub(1))
 
-    struct EnumeratedElement(idx:Num, val)
     enumerate(this:List):List
     {
         return = List(
-            _(i:Num):EnumeratedElement = EnumeratedElement(i, this.at(i)),
+            _(i:Num) = {idx=i, val=this.at(i)},
             this.count
         )
     }
