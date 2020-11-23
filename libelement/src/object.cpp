@@ -18,6 +18,7 @@ void element_object_delete(element_object** object)
     if (!object)
         return;
 
+    (*object)->obj = nullptr;
     delete *object;
     *object = nullptr;
     return;
@@ -37,15 +38,14 @@ element_result element_object_model_ctx_create(element_interpreter_ctx* interpre
     return ELEMENT_OK;
 }
 
-element_result element_object_model_ctx_delete(element_object_model_ctx** context)
+void element_object_model_ctx_delete(element_object_model_ctx** context)
 {
     if (!context)
-        return ELEMENT_OK;
+        return;
 
+    (*context)->ctx = nullptr;
     delete *context;
-    (*context) = nullptr;
-
-    return ELEMENT_OK;
+    *context = nullptr;
 }
 
 element_result element_declaration_to_object(

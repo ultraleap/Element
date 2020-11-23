@@ -177,6 +177,7 @@ void element_declaration_delete(element_declaration** declaration)
     if (!declaration)
         return;
 
+    (*declaration)->decl = nullptr;
     delete *declaration;
     *declaration = nullptr;
 }
@@ -186,6 +187,7 @@ void element_instruction_delete(element_instruction** instruction)
     if (!instruction)
         return;
 
+    (*instruction)->instruction = nullptr;
     delete *instruction;
     *instruction = nullptr;
 }
