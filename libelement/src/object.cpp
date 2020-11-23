@@ -12,6 +12,7 @@
 #include "object_model/error.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/intermediaries/declaration_wrapper.hpp"
+#include "object_model/intermediaries/function_instance.hpp"
 
 void element_object_delete(element_object** object)
 {
@@ -113,6 +114,39 @@ element_result element_object_call(
         args.push_back(arguments[i]->obj);
 
     auto compiled = object->obj->call(*context->ctx, std::move(args), object->obj->source_info);
+    *output = new element_object{ std::move(compiled) };
+
+    const auto* err = dynamic_cast<const element::error*>((*output)->obj.get());
+    if (err)
+        return err->log_once(context->ctx->get_logger());
+
+    return ELEMENT_OK;
+}
+
+element_result element_object_call_with_placeholders(
+    const element_object* object,
+    element_object_model_ctx* context,
+    element_object** output)
+{
+    if (!context || !context->ctx)
+        return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
+
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+
+    if (!output)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const auto placeholder_offset = context->ctx->boundaries[0].size;
+
+    auto compiled = compile_placeholder_expression(
+        *context->ctx,
+        *object->obj,
+        object->obj->get_inputs(),
+        {},
+        placeholder_offset,
+        0);
+
     *output = new element_object{ std::move(compiled) };
 
     const auto* err = dynamic_cast<const element::error*>((*output)->obj.get());
