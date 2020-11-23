@@ -45,7 +45,7 @@ element_result element_object_model_ctx_create(element_interpreter_ctx* interpre
  * @return ELEMENT_OK context deleted successfully
 */
 
-element_result element_object_model_ctx_delete(element_object_model_ctx** context);
+void element_object_model_ctx_delete(element_object_model_ctx** context);
 
 /**
  * @brief wraps a declaration in an object so that it can be assigned as a
