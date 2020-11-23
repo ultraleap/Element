@@ -12,11 +12,3 @@ random(seed:Num):Num
     t4 = t1.add(t2).add(t3)
     return = t4.rem(E).div(E)
 }
-
-
-#ellipse(a:Num, b:Num):Num
-#{
-#    l = a.div(b);
-#    x = Num.div(l.mul(pi), l.add(1));
-#    return = Num.mul(b, x.div(sin(x)));
-#}
