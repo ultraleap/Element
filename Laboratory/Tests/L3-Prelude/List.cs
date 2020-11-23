@@ -76,6 +76,6 @@ namespace Laboratory.Tests.L3.Prelude
 		public void TopLevelStructInstancePickedFromListIsSerializable([ValueSource(nameof(_topLevelStructInstanceValueArguments))]
 		                                                               (int index, string resultExpression) args,
 		                                                               [Values] EvaluationMode mode) =>
-			AssertApproxEqual(ValidatedCompilerInput, new ExpressionEvaluation($"topLevelStructFromListElements({args.index})", mode), new ExpressionEvaluation(args.resultExpression, EvaluationMode.Interpreted));
+			AssertApproxEqual(ValidatedCompilerInput, new FunctionEvaluation("topLevelStructFromListElements", $"({args.index})", mode), new ExpressionEvaluation(args.resultExpression, EvaluationMode.Interpreted));
 	}
 }
