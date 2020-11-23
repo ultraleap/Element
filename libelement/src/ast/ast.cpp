@@ -10,7 +10,6 @@
 
 void element_ast_delete(element_ast** ast)
 {
-    assert(ast);
     if (!ast)
         return;
 
@@ -18,7 +17,7 @@ void element_ast_delete(element_ast** ast)
         (*ast)->clear_children();
 
     delete *ast;
-    (*ast) = nullptr;
+    *ast = nullptr;
 }
 
 element_result element_ast_to_string(const element_ast* ast, const element_ast* ast_to_mark, char* output_buffer, int output_buffer_size)
