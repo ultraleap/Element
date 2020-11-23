@@ -72,7 +72,7 @@ namespace StandardPaths
         return = Path(lissajousFunction, Bounds(0, 1))
     }
 
-    rose(radius:Num, frequency:Num, petalConstant:Num):PathFunc
+    rose(radius:Num, frequency:Num, petalConstant:Num):Path
     {
         # Create a rose curve in the x-y plane.
         # The petalConstant must be an integer for the

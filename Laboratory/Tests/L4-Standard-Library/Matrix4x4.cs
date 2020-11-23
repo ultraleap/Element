@@ -6,7 +6,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
     {
 
         public static string Matrix4x4Constructor =
-            "_(a:Vector4, b:Vector4, c:Vector4, d:Vector4):Matrix4x4 = Matrix4x4(a, b, c, d)";
+            "_(a:Vector4, b:Vector4, c:Vector4, d:Vector4):Matrix4x4 = Matrix4x4.fromRows(a, b, c, d)";
         
         public static (string constructorArgs, string constant)[] ConstantArgList =
         {
@@ -19,6 +19,26 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new FunctionEvaluation(Matrix4x4Constructor, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
+
+        public static (string constructorArgs, string factoryArgs)[] FromRowsArgsList =
+        {
+            ("(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)",
+                "(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))"),
+        };
+        [Test]
+        public void FromRows([ValueSource(nameof(FromRowsArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string constructor =
+                "_(a:Num, b:Num, c:Num, d:Num," +
+                "e:Num, f:Num, g:Num, h:Num," +
+                "i:Num, j:Num, k:Num, l:Num," +
+                "m:Num, n:Num, o:Num, p:Num):Matrix4x4 = Matrix4x4(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)";
+            string altConstructor = "_(a:Vector4, b:Vector4, c:Vector4, d:Vector4):Matrix4x4 =" +
+                                    " Matrix4x4.fromRows(a, b, c, d)";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(constructor, args.lhs, mode),
+                new FunctionEvaluation(altConstructor, args.rhs, mode));
+        }
         
         public static (string constructorArgs, string factory, string factoryArgs)[] FactoryArgsList =
         {
@@ -27,15 +47,26 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 "(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))"),
             ("(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))",
                 "fromCols",
-                "(Vector4(1, 5, 9, 13), Vector4(2, 6, 10, 14), Vector4(3, 7, 11, 15), Vector4(4, 8, 12, 16))"),
-            ("(Vector4(1, 0, 0, 0), Vector4(0, 2, 0, 0), Vector4(0, 0, 3, 0), Vector4(0, 0, 0, 4))",
-                "fromDiagonal",
-                "(Vector4(1, 2, 3, 4))"),
+                "(Vector4(1, 5, 9, 13), Vector4(2, 6, 10, 14), Vector4(3, 7, 11, 15), Vector4(4, 8, 12, 16))")
         };
         [Test]
         public void Factory([ValueSource(nameof(FactoryArgsList))] (string lhs, string factory, string rhs) args, [Values] EvaluationMode mode)
         {
-            string altConstructor = "Matrix4x4." + args.factory;
+            string altConstructor = "_(a:Vector4, b:Vector4, c:Vector4, d:Vector4):Matrix4x4 = Matrix4x4." + args.factory + "(a, b, c, d)";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(Matrix4x4Constructor, args.lhs, mode),
+                new FunctionEvaluation(altConstructor, args.rhs, mode));
+        }
+        
+        public static (string constructorArgs, string factoryArgs)[] DiagonalFactoryArgsList =
+        {
+            ("(Vector4(1, 0, 0, 0), Vector4(0, 2, 0, 0), Vector4(0, 0, 3, 0), Vector4(0, 0, 0, 4))",
+                "(Vector4(1, 2, 3, 4))"),
+        };
+        [Test]
+        public void DiagonalFactory([ValueSource(nameof(DiagonalFactoryArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string altConstructor = "_(v:Vector4):Matrix4x4 = Matrix4x4.fromDiagonal(v)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(Matrix4x4Constructor, args.lhs, mode),
                 new FunctionEvaluation(altConstructor, args.rhs, mode));
@@ -67,7 +98,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             // Tests which construct the matrix and get the named property
 
-            string getter = "_(x:Vector4, y:Vector4, z:Vector4, w:Vector4):Vector4 = Matrix4x4(x, y, z, w)." + args.prop;
+            string getter = "_(x:Vector4, y:Vector4, z:Vector4, w:Vector4):Vector4 = Matrix4x4.fromRows(x, y, z, w)." + args.prop;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -83,7 +114,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             // Tests which construct the matrix and get the named property
 
-            string getter = "_(x:Vector4, y:Vector4, z:Vector4, w:Vector4):Matrix4x4 = Matrix4x4(x, y, z, w).transpose";
+            string getter = "_(x:Vector4, y:Vector4, z:Vector4, w:Vector4):Matrix4x4 = Matrix4x4.fromRows(x, y, z, w).transpose";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
                 new FunctionEvaluation(Matrix4x4Constructor, args.rhs, mode));
@@ -98,7 +129,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Determinant([ValueSource(nameof(DeterminantArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getDeterminant = "_(v1:Vector4, v2:Vector4, v3:Vector4, v4:Vector4):Num = Matrix4x4(v1, v2, v3, v4).determinant";
+            string getDeterminant = "_(v1:Vector4, v2:Vector4, v3:Vector4, v4:Vector4):Num = Matrix4x4.fromRows(v1, v2, v3, v4).determinant";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getDeterminant, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -113,7 +144,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
             ("Matrix4x4.identity",
                 "Vector4(1, 1, 1, 0)",
                 "Vector4(1, 1, 1, 0)"),
-            ("Matrix4x4(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))",
+            ("Matrix4x4.fromRows(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))",
                 "Vector4(1, 2, 3, 4)",
                 "Vector4(30, 70, 110, 150)"),
         };
@@ -137,14 +168,14 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 "Matrix4x4.identity"
             ),
             (
-                "Matrix4x4(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))",
+                "Matrix4x4.fromRows(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))",
                 "Matrix4x4.identity",
-                "Matrix4x4(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))"
+                "Matrix4x4.fromRows(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))"
             ),
             (
-                "Matrix4x4(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))",
+                "Matrix4x4.fromRows(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))",
                 "Matrix4x4.fromCols(Vector4(1, 2, 3, 4), Vector4(5, 6, 7, 8), Vector4(9, 10, 11, 12), Vector4(13, 14, 15, 16))",
-                "Matrix4x4(Vector4(30, 70, 110, 150), Vector4(70, 174, 278, 382), Vector4(110, 278, 446, 614), Vector4(150, 382, 614, 846))"
+                "Matrix4x4.fromRows(Vector4(30, 70, 110, 150), Vector4(70, 174, 278, 382), Vector4(110, 278, 446, 614), Vector4(150, 382, 614, 846))"
             ),
         };
         [Test]
