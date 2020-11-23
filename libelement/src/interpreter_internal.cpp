@@ -24,9 +24,6 @@
 #include "object_model/expressions/expression_chain.hpp"
 #include "object_model/expressions/call_expression.hpp"
 
-void element_interpreter_ctx::Deleter::operator()(element::intrinsic* i) const { delete i; }
-void element_interpreter_ctx::Deleter::operator()(const element::intrinsic* i) const { delete i; }
-
 static bool file_exists(const std::string& file)
 {
     return std::filesystem::exists(file) && std::filesystem::is_regular_file(file);
