@@ -15,9 +15,8 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
                                                          const std::vector<object_const_shared_ptr>& option_objects,
                                                          const source_information& source_info)
 {
-    auto index_error = std::dynamic_pointer_cast<const error>(selector_object);
-    if (index_error)
-        return index_error;
+    if (selector_object->is_error())
+        return selector_object;
 
     const auto* selector_constant = dynamic_cast<const element::instruction_constant*>(selector_object.get());
     if (selector_constant)
@@ -33,7 +32,8 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
     {
         return std::make_shared<const error>(
             "Tried to create a selector but it must be of type 'Num'\nnote: typeof selector is \"" + selector_object->typeof_info() + "\"",
-            ELEMENT_ERROR_UNKNOWN, source_info);
+            ELEMENT_ERROR_UNKNOWN,
+            source_info); //todo: pass logger from context
     }
 
     //the selector is not constant, so all types must be homogenous
@@ -43,9 +43,18 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
     {
         if (obj->get_constraint() != actual_type)
         {
+            auto error_msg = "All elements within a list must be of the same type, if that list is ever indexed with a runtime value."
+                "\nnote: The first element of the list is of type '"
+                + option_objects[0]->typeof_info()
+                + "' yet element at index '"
+                + std::to_string(option_objects.size() - 1)
+                + "' is of type '"
+                + option_objects.back()->typeof_info()
+                + "'";
             return std::make_shared<const error>(
-                "All elements within a list must be of the same type, if that list is ever indexed with a runtime value.\nnote: The first element of the list is of type '" + option_objects[0]->typeof_info() + "' yet element at index '" + std::to_string(option_objects.size() - 1) + "' is of type '" + option_objects.back()->typeof_info() + "'",
-                ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
+                std::move(error_msg),
+                ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED,
+                source_info); //todo: pass logger from context
         }
     }
 

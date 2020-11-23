@@ -495,9 +495,8 @@ element_result element_interpreter_ctx::expression_to_object(
 
     (*object)->obj = std::move(compiled);
 
-    const auto* err = dynamic_cast<const element::error*>((*object)->obj.get());
-    if (err)
-        return err->log_once(logger.get());
+    if ((*object)->obj->is_error())
+        return (*object)->obj->log_any_error(logger.get());
 
     return ELEMENT_OK;
 }

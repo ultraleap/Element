@@ -10,10 +10,19 @@
 #include "error_map.hpp"
 #include "compilation_context.hpp"
 #include "intrinsics/intrinsic.hpp"
-#include "object_model/intermediaries/function_instance.hpp"
 
 namespace element
 {
+    bool object::is_error() const
+    {
+        return false;
+    }
+
+    element_result object::log_any_error(const element_log_ctx* logger) const
+    {
+        return ELEMENT_OK;
+    }
+
     bool object::is_constant() const
     {
         return false;
@@ -65,10 +74,9 @@ namespace element
             const auto* const type = input.resolve_annotation(context);
             if (!type)
             {
-                auto e = error(fmt::format("typename '{}' for port {}({}) of {} could not be found",
-                                           input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value),
-                               ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, declarer->source_info);
-                e.log_once(context.get_logger());
+                auto error_msg = fmt::format("typename '{}' for port {}({}) of {} could not be found",
+                                             input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value);
+                auto e = error(std::move(error_msg), ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, declarer->source_info, context.get_logger());
                 return false;
             }
 
@@ -123,7 +131,11 @@ namespace element
                                        const source_information& source_info)
     {
         if (type->our_scope->is_empty())
-            return std::make_shared<const error>("Structs with empty scopes cannot be indexed", ELEMENT_ERROR_INVALID_EXPRESSION, source_info);
+            return std::make_shared<const error>(
+                "Structs with empty scopes cannot be indexed",
+                ELEMENT_ERROR_INVALID_EXPRESSION,
+                source_info,
+                context.get_logger());
 
         const auto* func = dynamic_cast<const function_declaration*>(type->our_scope->find(name, false));
 
@@ -174,10 +186,7 @@ namespace element
         auto compiled = object.call(context, std::move(placeholders), source_info);
         context.boundaries.pop_back();
 
-        const auto err = std::dynamic_pointer_cast<const error>(compiled);
-        if (err)
-            err->log_once(context.interpreter->logger.get());
-
+        compiled->log_any_error(context.get_logger());
         return compiled;
     }
 

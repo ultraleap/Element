@@ -29,13 +29,11 @@ object_const_shared_ptr intrinsic_binary::compile(const compilation_context& con
     assert(intrinsic);
     assert(intrinsic == this);
 
-    auto expr1_err = std::dynamic_pointer_cast<const error>(frame.compiled_arguments[0]);
-    if (expr1_err)
-        return expr1_err;
+    if (frame.compiled_arguments[0]->is_error())
+        return frame.compiled_arguments[0];
 
-    auto expr2_err = std::dynamic_pointer_cast<const error>(frame.compiled_arguments[1]);
-    if (expr2_err)
-        return expr2_err;
+    if (frame.compiled_arguments[1]->is_error())
+        return frame.compiled_arguments[1];
 
     auto expr1 = std::dynamic_pointer_cast<const instruction>(frame.compiled_arguments[0]);
     auto expr2 = std::dynamic_pointer_cast<const instruction>(frame.compiled_arguments[1]);

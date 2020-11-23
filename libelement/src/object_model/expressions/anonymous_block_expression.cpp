@@ -23,7 +23,11 @@ anonymous_block_expression::anonymous_block_expression(const expression_chain* p
 object_const_shared_ptr anonymous_block_expression::resolve(const compilation_context& context, const object* obj)
 {
     if (obj)
-        return std::make_shared<const error>("anonymous block isn't the first thing in the chain", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>(
+            "anonymous block isn't the first thing in the chain",
+            ELEMENT_ERROR_UNKNOWN,
+            source_info,
+            context.get_logger());
 
     std::map<identifier, object_const_shared_ptr> compiled_declarations;
     for (const auto& [identifier, declaration] : our_scope->get_declarations())
@@ -31,8 +35,7 @@ object_const_shared_ptr anonymous_block_expression::resolve(const compilation_co
 
     for (const auto& [identifier, obj] : compiled_declarations)
     {
-        const auto* err = dynamic_cast<const error*>(obj.get());
-        if (err)
+        if (obj->is_error())
             return obj;
     }
 

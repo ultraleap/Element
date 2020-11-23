@@ -291,13 +291,10 @@ element_result element_interpreter_compile_declaration(
         }
     }
 
-    element_result result = ELEMENT_OK;
+    const element_result result = ELEMENT_OK;
     const auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), {});
-    const auto* err = dynamic_cast<const element::error*>(compiled.get());
-    if (err)
-        result = err->log_once(interpreter->logger.get());
 
-    if (!compiled || result != ELEMENT_OK)
+    if (!compiled || compiled->is_error())
     {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
         *instruction = nullptr;
@@ -340,9 +337,8 @@ element_result element_interpreter_evaluate_instruction(
     if (options)
         opts = *options;
 
-    const auto err = std::dynamic_pointer_cast<const element::error>(instruction->instruction);
-    if (err)
-        return err->log_once(interpreter->logger.get());
+    if (instruction->instruction->is_error())
+        return instruction->instruction->log_any_error(interpreter->logger.get());
 
     const auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
 
@@ -425,12 +421,9 @@ element_result element_interpreter_compile_expression(
     
     result = ELEMENT_OK;
     const auto compiled = compile_placeholder_expression(compilation_context, *function_instance, function_instance->get_inputs(), {});
-    const auto* err = dynamic_cast<const element::error*>(compiled.get());
-    if (err)
-        result = err->log_once(interpreter->logger.get());
 
     interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
-    if (!compiled || result != ELEMENT_OK)
+    if (!compiled || compiled->is_error())
     {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
         *instruction = nullptr;
@@ -555,9 +548,8 @@ element_result element_interpreter_evaluate_call_expression(
     std::vector<std::vector<element_value>> serialised_arguments;
     for (const auto& arg : arguments)
     {
-        const auto* err = dynamic_cast<const element::error*>(arg.get());
-        if (err)
-            return err->log_once(interpreter->logger.get());
+        if (arg->is_error())
+            return arg->log_any_error(interpreter->logger.get());
 
         const auto instruction = arg->to_instruction();
 

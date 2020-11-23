@@ -26,7 +26,11 @@ object_const_shared_ptr struct_declaration::index(
     const source_information& source_info) const
 {
     if (our_scope->is_empty())
-        return std::make_shared<const error>("Structs with empty scopes cannot be indexed", ELEMENT_ERROR_INVALID_EXPRESSION, source_info);
+        return std::make_shared<const error>(
+            "Structs with empty scopes cannot be indexed",
+            ELEMENT_ERROR_INVALID_EXPRESSION,
+            source_info,
+            context.get_logger());
 
     const auto* found = our_scope->find(name, false);
     if (!found)
@@ -137,9 +141,11 @@ object_const_shared_ptr struct_declaration::generate_placeholder(const compilati
 
         if (!placeholder)
         {
-            auto err = std::make_shared<const error>(fmt::format("The type '{}' can't be deserialised.", to_string()), ELEMENT_ERROR_SERIALISATION, source_info);
-            err->log_once(context.get_logger());
-            return err;
+            return std::make_shared<const error>(
+                fmt::format("The type '{}' can't be deserialised.", to_string()),
+                ELEMENT_ERROR_SERIALISATION,
+                source_info,
+                context.get_logger());
         }
 
         placeholder_inputs.push_back(std::move(placeholder));

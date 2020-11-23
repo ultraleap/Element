@@ -1,6 +1,19 @@
 #include "error.hpp"
 
+//SELF
+#include "object_model/compilation_context.hpp"
+
 using namespace element;
+
+bool error::is_error() const
+{
+    return true;
+}
+
+element_result error::log_any_error(const element_log_ctx* logger) const
+{
+    return log_once(logger);
+}
 
 bool error::is_constant() const
 {
