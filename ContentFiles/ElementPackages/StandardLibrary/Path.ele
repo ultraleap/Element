@@ -83,7 +83,7 @@ struct Path(at:PathFunc, domain:Bounds)
     easing(this:Path):Path
     {
         # Map 0 to 1 to the same range, but more smoothly 
-        smoothstep(t:Num):Num = 3.mul(t.mul(t)).sub(2.mul(t.mul(t).mul(t)))
+        smoothstep(t:Num):Num = 3.mul(t).mul(t).sub(2.mul(t).mul(t).mul(t))
         return = this.applyUnitIntervalTransformToDomain(smoothstep)
     }
 

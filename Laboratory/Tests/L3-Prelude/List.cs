@@ -77,5 +77,25 @@ namespace Laboratory.Tests.L3.Prelude
 		                                                               (int index, string resultExpression) args,
 		                                                               [Values] EvaluationMode mode) =>
 			AssertApproxEqual(ValidatedCompilerInput, new FunctionEvaluation("topLevelStructFromListElements", $"({args.index})", mode), new ExpressionEvaluation(args.resultExpression, EvaluationMode.Interpreted));
+
+		public static (string inputList, string callArgs, string component, string expected)[] EnumeratedArguments =
+		{
+			("list(10, 11, 12)", "(0)", "idx", "0"),
+			("list(10, 11, 12)", "(0)", "val", "10"),
+			("list(10, 11, 12)", "(1)", "idx", "1"),
+			("list(10, 11, 12)", "(1)", "val", "11"),
+			("list(10, 11, 12)", "(2)", "idx", "2"),
+			("list(10, 11, 12)", "(2)", "val", "12"),
+		};
+		[Test]
+		public void Enumerate([ValueSource(nameof(EnumeratedArguments))]
+			(string inputList, string element, string component, string expected) args,
+			[Values] EvaluationMode mode)
+		{
+			string evalFunc = "_(i:Num):Num = " + args.inputList + ".enumerate.at(i)." + args.component;
+			AssertApproxEqual(ValidatedCompilerInput,
+				new FunctionEvaluation(evalFunc, args.element, mode),
+				new ExpressionEvaluation(args.expected, mode));
+		}
 	}
 }
