@@ -15,6 +15,17 @@ namespace element
             source_info = std::move(src_info);
         }
 
+        explicit error(std::string message, element_result code, source_information src_info, const element_log_ctx* logger)
+            : message{ std::move(message) }
+            , code(code)
+        {
+            source_info = std::move(src_info);
+            log_once(logger);
+        }
+
+        [[nodiscard]] bool is_error() const override;
+        element_result log_any_error(const element_log_ctx* logger) const override;
+
         [[nodiscard]] bool is_constant() const override;
 
         [[nodiscard]] object_const_shared_ptr index(const compilation_context& context,

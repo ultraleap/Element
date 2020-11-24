@@ -166,7 +166,11 @@ object_const_shared_ptr function_instance::call(
     }
 
     if (!element)
-        return std::make_shared<const error>(fmt::format("call to {} caused an internal error", declarer->name.value), ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>(
+            fmt::format("call to {} caused an internal error", declarer->name.value),
+            ELEMENT_ERROR_UNKNOWN,
+            source_info,
+            context.get_logger());
 
     //type check return
     //todo: nicer?

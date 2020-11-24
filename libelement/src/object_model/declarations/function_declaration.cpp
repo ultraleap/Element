@@ -36,7 +36,11 @@ object_const_shared_ptr function_declaration::call(
         validate_ports(context);
 
     if (!valid_ports)
-        return std::make_shared<const error>(fmt::format("One or more ports on '{}' could not be found", to_string()), ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, this->source_info);
+        return std::make_shared<const error>(
+            fmt::format("One or more ports on '{}' could not be found", to_string()),
+            ELEMENT_ERROR_IDENTIFIER_NOT_FOUND,
+            this->source_info,
+            context.get_logger());
 
     //todo: check, if there is a first argument, that this is a valid instance function
     //todo: check that there is only one argument
@@ -51,7 +55,11 @@ object_const_shared_ptr function_declaration::compile(const compilation_context&
         validate_ports(context);
 
     if (!valid_ports)
-        return std::make_shared<const error>(fmt::format("One or more ports on '{}' could not be found", to_string()), ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, this->source_info);
+        return std::make_shared<const error>(
+            fmt::format("One or more ports on '{}' could not be found", to_string()),
+            ELEMENT_ERROR_IDENTIFIER_NOT_FOUND,
+            this->source_info,
+            context.get_logger());
 
     const auto instance = std::make_shared<function_instance>(this, context.captures, source_info);
     return instance->compile(context, source_info);
@@ -79,8 +87,11 @@ bool function_declaration::valid_at_boundary(const compilation_context& context)
     const auto* return_type = output.resolve_annotation(context);
     if (!return_type || !return_type->serializable(context))
     {
-        error e(fmt::format("output '{}' of function '{}' is not deserializable, so it's not valid on the boundary", output.typeof_info(), name.value), ELEMENT_ERROR_UNKNOWN, source_info);
-        e.log_once(context.get_logger());
+        error err(
+            fmt::format("output '{}' of function '{}' is not deserializable, so it's not valid on the boundary", output.typeof_info(), name.value), 
+            ELEMENT_ERROR_UNKNOWN,
+            source_info,
+            context.get_logger());
         return false;
     }
 
@@ -90,8 +101,11 @@ bool function_declaration::valid_at_boundary(const compilation_context& context)
         const auto& type = input.resolve_annotation(context);
         if (!type || !type->deserializable(context))
         {
-            error e(fmt::format("input '{}' of function '{}' is not deserializable, so it's not valid on the boundary", input.typeof_info(), name.value), ELEMENT_ERROR_UNKNOWN, source_info);
-            e.log_once(context.get_logger());
+            error err(
+                fmt::format("input '{}' of function '{}' is not deserializable, so it's not valid on the boundary", input.typeof_info(), name.value),
+                ELEMENT_ERROR_UNKNOWN,
+                source_info,
+                context.get_logger());
             return false;
         }
     }

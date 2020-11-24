@@ -26,9 +26,11 @@ bool declaration::has_scope() const
 
 object_const_shared_ptr declaration::generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const
 {
-    auto err = std::make_shared<const error>(fmt::format("Tried to generate a placeholder for an unexpected declaration"), ELEMENT_ERROR_UNKNOWN, source_info);
-    err->log_once(context.get_logger());
-    return err;
+    return std::make_shared<const error>(
+        fmt::format("Tried to generate a placeholder for an unexpected declaration"),
+        ELEMENT_ERROR_UNKNOWN,
+        source_info,
+        context.get_logger());
 }
 
 std::string declaration::location() const
