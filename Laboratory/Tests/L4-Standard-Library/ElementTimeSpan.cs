@@ -179,8 +179,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void FromSecondsConstructor([ValueSource(nameof(FromSecondsConstructorArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string fromSecondsConstructor = "_(s) = TimeSpan.fromSeconds(s)";
-            string defaultConstructor = "_(a, b) = TimeSpan(a, b)";
+            string fromSecondsConstructor = "_(s:Num):TimeSpan = TimeSpan.fromSeconds(s)";
+            string defaultConstructor = "_(a:Num, b:Num):TimeSpan = TimeSpan(a, b)";
                 
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(fromSecondsConstructor, args.lhs, mode),
