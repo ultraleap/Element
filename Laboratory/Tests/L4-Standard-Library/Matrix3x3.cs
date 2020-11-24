@@ -4,7 +4,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
 {
     internal class Matrix3x3 : StandardLibraryFixture
     {
-        public static string Matrix3x3Constructor = "_(a:Vector3, b:Vector3, c:Vector3):Matrix3x3 = Matrix3x3(a, b, c)";
+        // The .fromRows constructor is used by a lot of tests
+        public static string Matrix3x3Constructor = "_(a:Vector3, b:Vector3, c:Vector3):Matrix3x3 = Matrix3x3.fromRows(a, b, c)";
         
         public static (string constructorArgs, string constant)[] ConstantArgList =
         {
@@ -17,12 +18,25 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new FunctionEvaluation(Matrix3x3Constructor, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
+        
+        public static (string constructorArgs, string factoryArgs)[] FromRowsArgsList =
+        {
+            ("(1, 2, 3, 4, 5, 6, 7, 8, 9)",
+                "(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))"),
+        };
+        [Test]
+        public void FromRows([ValueSource(nameof(FromRowsArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            // Tests the .fromRows constructor against the default
+            string defaultConstructor = "_(a:Num, b:Num, c:Num, d:Num, e:Num, f:Num, g:Num, h:Num, i:Num):Matrix3x3 = Matrix3x3(a, b, c, d, e, f, g, h, i)";
+            string altConstructor = "_(a:Vector3, b:Vector3, c:Vector3):Matrix3x3 = Matrix3x3.fromRows(a, b, c)";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(defaultConstructor, args.lhs, mode),
+                new FunctionEvaluation(altConstructor, args.rhs, mode));
+        }
 
         public static (string constructorArgs, string factory, string factoryArgs)[] FactoryArgsList =
         {
-            ("(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))",
-                "fromRows",
-                "(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))"),
             ("(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))",
                 "fromCols",
                 "(Vector3(1, 4, 7), Vector3(2, 5, 8), Vector3(3, 6, 9))"),
@@ -33,6 +47,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Factory([ValueSource(nameof(FactoryArgsList))] (string lhs, string factory, string rhs) args, [Values] EvaluationMode mode)
         {
+            // Tests other factories against the default "fromRows" constructor
             string defaultConstructor = Matrix3x3Constructor;
             string altConstructor = "Matrix3x3." + args.factory;
             AssertApproxEqual(ValidatedCompilerInput,
@@ -55,7 +70,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         {
             // Tests which construct the matrix and get the named property
 
-            string getter = "_(x:Vector3, y:Vector3, z:Vector3):Vector3 = Matrix3x3(x, y, z)." + args.prop;
+            string getter = "_(x:Vector3, y:Vector3, z:Vector3):Vector3 = Matrix3x3.fromRows(x, y, z)." + args.prop;
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getter, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -68,7 +83,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Transpose([ValueSource(nameof(TransposeArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getTranspose = "_(v1:Vector3, v2:Vector3, v3:Vector3):Matrix3x3 = Matrix3x3(v1, v2, v3).transpose";
+            string getTranspose = "_(v1:Vector3, v2:Vector3, v3:Vector3):Matrix3x3 = Matrix3x3.fromRows(v1, v2, v3).transpose";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getTranspose, args.lhs, mode),
                 new FunctionEvaluation(Matrix3x3Constructor, args.rhs, mode));
@@ -83,7 +98,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void Determinant([ValueSource(nameof(DeterminantArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getDeterminant = "_(v1:Vector3, v2:Vector3, v3:Vector3):Num = Matrix3x3(v1, v2, v3).determinant";
+            string getDeterminant = "_(v1:Vector3, v2:Vector3, v3:Vector3):Num = Matrix3x3.fromRows(v1, v2, v3).determinant";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(getDeterminant, args.lhs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
@@ -118,12 +133,12 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 "Matrix3x3.identity"
             ),
             (
-                "Matrix3x3(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))",
+                "Matrix3x3.fromRows(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))",
                 "Matrix3x3.identity",
-                "Matrix3x3(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))"
+                "Matrix3x3.fromRows(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))"
             ),
             (
-                "Matrix3x3(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))",
+                "Matrix3x3.fromRows(Vector3(1, 2, 3), Vector3(4, 5, 6), Vector3(7, 8, 9))",
                 "Matrix3x3.fromCols(Vector3(9, 6, 3), Vector3(8, 5, 2), Vector3(7, 4, 1))",
                 "Matrix3x3.fromCols(Vector3(30, 84, 138), Vector3(24, 69, 114), Vector3(18, 54, 90))"
             ),

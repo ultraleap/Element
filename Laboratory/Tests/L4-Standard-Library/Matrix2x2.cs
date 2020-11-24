@@ -5,11 +5,11 @@ namespace Laboratory.Tests.L4.StandardLibrary
     internal class Matrix2x2 : StandardLibraryFixture
     {
 
-        public static string Matrix2x2Constructor = "_(a:Vector2, b:Vector2):Matrix2x2 = Matrix2x2(a, b)";
+        public static string Matrix2x2Constructor = "_(a:Num, b:Num, c:Num, d:Num):Matrix2x2 = Matrix2x2(a, b, c, d)";
         
         public static (string constructorArgs, string constant)[] ConstantArgList =
         {
-            ("(Vector2(1, 0), Vector2(0, 1))", "Matrix2x2.identity"),
+            ("(1, 0, 0, 1)", "Matrix2x2.identity"),
         };
         [Test]
         public void Constants([ValueSource(nameof(ConstantArgList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
@@ -21,33 +21,44 @@ namespace Laboratory.Tests.L4.StandardLibrary
 
         public static (string constructorArgs, string factory, string factoryArgs)[] FactoryArgsList =
         {
-            ("(Vector2(1, 2), Vector2(3, 4))", "fromRows", "(Vector2(1, 2), Vector2(3, 4))"),
-            ("(Vector2(1, 2), Vector2(3, 4))", "fromCols", "(Vector2(1, 3), Vector2(2, 4))"),
-            ("(Vector2(3, 0), Vector2(0, 5))", "fromDiagonal", "(Vector2(3, 5))"),
+            ("(1, 2, 3, 4)", "fromRows", "(Vector2(1, 2), Vector2(3, 4))"),
+            ("(1, 2, 3, 4)", "fromCols", "(Vector2(1, 3), Vector2(2, 4))")
         };
         [Test]
         public void Factory([ValueSource(nameof(FactoryArgsList))] (string lhs, string factory, string rhs) args, [Values] EvaluationMode mode)
         {
-            string altConstructor = "Matrix2x2." + args.factory;
+            string altConstructor = "_(v1:Vector2, v2:Vector2):Matrix2x2 = Matrix2x2." + args.factory + "(v1, v2)";
             AssertApproxEqual(ValidatedCompilerInput,
-                              new FunctionEvaluation(Matrix2x2Constructor, args.lhs, mode),
-                              new FunctionEvaluation(altConstructor, args.rhs, mode));
+                new FunctionEvaluation(Matrix2x2Constructor, args.lhs, mode),
+                new FunctionEvaluation(altConstructor, args.rhs, mode));
+        }
+        
+        public static (string constructorArgs, string factoryArgs)[] DiagonalFactoryArgsList =
+        {
+            ("(3, 0, 0, 5)", "(Vector2(3, 5))"),
+        };
+        [Test]
+        public void DiagonalFactory([ValueSource(nameof(DiagonalFactoryArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string altConstructor = "_(v1:Vector2):Matrix2x2 = Matrix2x2.fromDiagonal(v1)";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(Matrix2x2Constructor, args.lhs, mode),
+                new FunctionEvaluation(altConstructor, args.rhs, mode));
         }
 
         public static (string constructorArgs, string property, string result)[] GetPropertiesArgsList =
         {
-            ("(Vector2(1, 2), Vector2(3, 4))", "xCol", "Vector2(1, 3)"),
-            ("(Vector2(1, 2), Vector2(3, 4))", "yCol", "Vector2(2, 4)"),
-            ("(Vector2(1, 2), Vector2(3, 4))", "xRow", "Vector2(1, 2)"),
-            ("(Vector2(1, 2), Vector2(3, 4))", "yRow", "Vector2(3, 4)"),
-            ("(Vector2(1, 2), Vector2(3, 4))", "diagonal", "Vector2(1, 4)"),
+            ("(1, 2, 3, 4)", "xCol", "Vector2(1, 3)"),
+            ("(1, 2, 3, 4)", "yCol", "Vector2(2, 4)"),
+            ("(1, 2, 3, 4)", "xRow", "Vector2(1, 2)"),
+            ("(1, 2, 3, 4)", "yRow", "Vector2(3, 4)"),
+            ("(1, 2, 3, 4)", "diagonal", "Vector2(1, 4)"),
         };
         [Test]
         public void GetProperties([ValueSource(nameof(GetPropertiesArgsList))] (string lhs, string prop, string rhs) args, [Values] EvaluationMode mode)
         {
             // Tests which construct the matrix and get the named property
-
-            string getter = "_(v1:Vector2, v2:Vector2):Vector2 = Matrix2x2(v1, v2)." + args.prop;
+            string getter = "_(a:Num, b:Num, c:Num, d:Num):Vector2 = Matrix2x2(a, b, c, d)" + "." + args.prop;
             AssertApproxEqual(ValidatedCompilerInput,
                               new FunctionEvaluation(getter, args.lhs, mode),
                               new ExpressionEvaluation(args.rhs, mode));
@@ -55,15 +66,15 @@ namespace Laboratory.Tests.L4.StandardLibrary
 
         public static (string constructorArgs, string result)[] DeterminantArgsList =
         {
-            ("(Vector2(1, 0), Vector2(0, 1))", "1"),
-            ("(Vector2(1, 2), Vector2(3, 4))", "-2"),
-            ("(Vector2(5, 1), Vector2(2, 5))", "23"),
-            ("(Vector2(1, 1), Vector2(2, 1))", "-1")
+            ("(1, 0, 0, 1)", "1"),
+            ("(1, 2, 3, 4)", "-2"),
+            ("(5, 1, 2, 5)", "23"),
+            ("(1, 1, 2, 1)", "-1")
         };
         [Test]
         public void Determinant([ValueSource(nameof(DeterminantArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getDeterminant = "_(v1:Vector2, v2:Vector2):Num = Matrix2x2(v1, v2).determinant";
+            string getDeterminant = "_(a:Num, b:Num, c:Num, d:Num):Num = Matrix2x2(a, b, c, d)" + ".determinant";
             AssertApproxEqual(ValidatedCompilerInput,
                               new FunctionEvaluation(getDeterminant, args.lhs, mode),
                               new ExpressionEvaluation(args.rhs, mode));
@@ -71,12 +82,12 @@ namespace Laboratory.Tests.L4.StandardLibrary
 
         public static (string constructorArgs, string resultConstructorArgs)[] TransposeArgsList =
         {
-            ("(Vector2(1, 2), Vector2(3, 4))", "(Vector2(1, 3), Vector2(2, 4))"),
+            ("(1, 2, 3, 4)", "(1, 3, 2, 4)"),
         };
         [Test]
         public void Transpose([ValueSource(nameof(TransposeArgsList))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string getTranspose = "_(v1:Vector2, v2:Vector2):Matrix2x2 = Matrix2x2(v1, v2).transpose";
+            string getTranspose = "_(a:Num, b:Num, c:Num, d:Num):Matrix2x2 = Matrix2x2(a, b, c, d)" + ".transpose";
             AssertApproxEqual(ValidatedCompilerInput,
                               new FunctionEvaluation(getTranspose, args.lhs, mode),
                               new FunctionEvaluation(Matrix2x2Constructor, args.rhs, mode));
@@ -111,14 +122,14 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 "Matrix2x2.identity"
             ),
             (
-                "Matrix2x2(Vector2(1, 2), Vector2(3, 4))",
+                "Matrix2x2(1, 2, 3, 4)",
                 "Matrix2x2.identity",
-                "Matrix2x2(Vector2(1, 2), Vector2(3, 4))"
+                "Matrix2x2(1, 2, 3, 4)"
             ),
             (
-                "Matrix2x2(Vector2(1, 2), Vector2(3, 4))",
-                "Matrix2x2(Vector2(-1, 4), Vector2(-5, 3))",
-                "Matrix2x2(Vector2(-11, 10), Vector2(-23, 24))"
+                "Matrix2x2(1, 2, 3, 4)",
+                "Matrix2x2(-1, 4, -5, 3)",
+                "Matrix2x2(-11, 10, -23, 24)"
             ),
         };
         [Test]
