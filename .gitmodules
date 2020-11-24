@@ -6,7 +6,7 @@
 	url = https://github.com/CLIUtils/CLI11
 [submodule "dependencies/rapidjson"]
 	path = dependencies/rapidjson
-	url = git@github.com:Tencent/rapidjson.git
+	url = https://github.com/Tencent/rapidjson.git
 [submodule "dependencies/toml11"]
 	path = dependencies/toml11
-	url = git@github.com:ToruNiina/toml11.git
+	url = https://github.com/ToruNiina/toml11.git
