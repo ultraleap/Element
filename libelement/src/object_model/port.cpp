@@ -43,12 +43,11 @@ object_const_shared_ptr port::generate_placeholder(const compilation_context& co
     const auto* type = resolve_annotation(context);
     if (!type)
     {
-        auto err = std::make_shared<const error>(
+        return std::make_shared<const error>(
             fmt::format("Failed to resolve annotation '{}'", annotation ? annotation->to_string() : ""),
             ELEMENT_ERROR_UNKNOWN,
-            declarer ? declarer->source_info : source_information{});
-        err->log_once(context.get_logger());
-        return err;
+            declarer ? declarer->source_info : source_information{},
+            context.get_logger());
     }
 
     return type->generate_placeholder(context, placeholder_index, boundary_scope);
@@ -73,10 +72,11 @@ void port::validate(const compilation_context& context) const
     const auto* decl = resolve_annotation(context);
     if (!decl)
     {
-        error(fmt::format("constraint '{}' could not be found", annotation->to_string()),
-              ELEMENT_ERROR_NOT_A_CONSTRAINT,
-              declarer->source_info)
-            .log_once(context.get_logger());
+        auto e = error(
+            fmt::format("constraint '{}' could not be found", annotation->to_string()),
+            ELEMENT_ERROR_NOT_A_CONSTRAINT,
+            declarer->source_info,
+            context.get_logger());
         valid = false;
         return;
     }
@@ -85,9 +85,11 @@ void port::validate(const compilation_context& context) const
     const auto* constraint_decl = dynamic_cast<const constraint_declaration*>(decl);
     if (!struct_decl && !constraint_decl)
     {
-        error(fmt::format("'{}' is not a struct nor a constraint", annotation->to_string()),
+        auto e = error(
+            fmt::format("'{}' is not a struct nor a constraint", annotation->to_string()),
             ELEMENT_ERROR_NOT_A_CONSTRAINT,
-            declarer->source_info).log_once(context.get_logger());
+            declarer->source_info,
+            context.get_logger());
         valid = false;
     }
 }

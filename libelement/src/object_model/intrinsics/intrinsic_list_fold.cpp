@@ -59,26 +59,30 @@ object_const_shared_ptr runtime_fold(
 {
     const auto accumulator_is_boundary = accumulator_function->valid_at_boundary(context);
     if (!accumulator_is_boundary)
-        return std::make_shared<const error>("accumulator is not a boundary function", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
+        return std::make_shared<const error>(
+            "accumulator is not a boundary function",
+            ELEMENT_ERROR_UNKNOWN,
+            accumulator_function->source_info,
+            context.get_logger());
 
     auto accumulator_compiled = compile_placeholder_expression(context, *accumulator_function, accumulator_function->get_inputs(), source_info);
-    const auto* err = dynamic_cast<const error*>(accumulator_compiled.get());
-    if (err)
-    {
-        err->log_once(context.get_logger());
+    if (accumulator_compiled->is_error())
         return accumulator_compiled;
-    }
 
     if (!accumulator_compiled)
-        return std::make_shared<const error>("accumulator failed to compile", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>("accumulator failed to compile", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
     const auto accumulator_expression = accumulator_compiled->to_instruction();
     if (!accumulator_expression)
-        return std::make_shared<const error>("accumulator failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, accumulator_function->source_info);
+        return std::make_shared<const error>(
+            "accumulator failed to compile to an instruction tree",
+            ELEMENT_ERROR_UNKNOWN,
+            accumulator_function->source_info,
+            context.get_logger());
 
     const auto* listfold = context.get_compiler_scope()->find(identifier{ "@list_fold" }, false);
     if (!listfold)
-        return std::make_shared<const error>("failed to find @list_fold", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>("failed to find @list_fold", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
     std::vector<object_const_shared_ptr> list_fold_args{ list, initial, accumulator_function };
     return listfold->call(context, std::move(list_fold_args), source_info);
@@ -99,11 +103,19 @@ object_const_shared_ptr intrinsic_list_fold::compile(
 
     const auto list_struct = std::dynamic_pointer_cast<const struct_instance>(list);
     if (!list_struct)
-        return std::make_shared<const error>("first argument must be a list struct instance", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>(
+            "first argument must be a list struct instance",
+            ELEMENT_ERROR_UNKNOWN,
+            source_info,
+            context.get_logger());
 
     const auto accumulator_instance = std::dynamic_pointer_cast<const function_instance>(accumulator);
     if (!accumulator_instance)
-        return std::make_shared<const error>("first argument must be a binary function instance", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>(
+            "first argument must be a binary function instance",
+            ELEMENT_ERROR_UNKNOWN,
+            source_info,
+            context.get_logger());
 
     auto compile_time_result = compile_time_fold(context, list_struct, initial, accumulator_instance, source_info);
     if (compile_time_result)

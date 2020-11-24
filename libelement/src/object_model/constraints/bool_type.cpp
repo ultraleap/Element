@@ -17,7 +17,11 @@ object_const_shared_ptr bool_type::index(const compilation_context& context, con
     }
 
     if (!cached_declaration)
-        return std::make_shared<const error>("tried to index bool, but bool was not found", ELEMENT_ERROR_NOT_FOUND, source_info);
+        return std::make_shared<const error>(
+            "tried to index bool, but bool was not found",
+            ELEMENT_ERROR_NOT_FOUND,
+            source_info,
+            context.get_logger());
 
     return cached_declaration->index(context, name, source_info);
 }
