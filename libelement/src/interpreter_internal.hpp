@@ -59,13 +59,7 @@ public:
         const char* expression_string,
         element_object** object);
 
-    struct Deleter
-    {
-        void operator()(element::intrinsic* i) const;
-        void operator()(const element::intrinsic* i) const;
-    };
-
-    using intrinsic_map_type = std::unordered_map<const element::declaration*, std::unique_ptr<const element::intrinsic, Deleter>>;
+    using intrinsic_map_type = std::unordered_map<const element::declaration*, std::unique_ptr<const element::intrinsic>>;
     mutable intrinsic_map_type intrinsic_map;
 
     bool parse_only = false;
