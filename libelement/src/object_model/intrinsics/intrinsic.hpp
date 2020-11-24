@@ -34,7 +34,7 @@ namespace element
         [[nodiscard]] virtual type_const_ptr get_type() const { return nullptr; };
 
     private:
-        const static std::unordered_map<std::string, std::function<std::unique_ptr<const intrinsic, element_interpreter_ctx::Deleter>(const declaration*)>> validation_func_map;
+        const static std::unordered_map<std::string, std::function<std::unique_ptr<const intrinsic>(const declaration*)>> validation_func_map;
     };
 
     class intrinsic_not_implemented final : public intrinsic
