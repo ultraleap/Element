@@ -27,9 +27,9 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     const auto continue_loop = [&predicate_evaluated_to_constant, &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool {
         const auto ret = predicate_function->call(context, input, source_info);
 
-        if (const auto* err = dynamic_cast<const error*>(ret.get()))
+        if (ret->is_error())
         {
-            err->log_once(context.interpreter->logger.get());
+            ret->log_any_error(context.get_logger());
             return false;
         }
 
@@ -59,10 +59,10 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
         if (!ret->is_constant())
             return nullptr;
 
-        if (auto err = std::dynamic_pointer_cast<const error>(ret))
+        if (ret->is_error())
         {
-            err->log_once(context.interpreter->logger.get());
-            return err;
+            ret->log_any_error(context.get_logger());
+            return ret;
         }
 
         //todo: we could allow for a compile-time for loop to return a different type than it started with, but for now let's check
@@ -84,7 +84,11 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     while (continue_loop(arguments))
     {
         if (current_loop_iteration > max_loop_iterations)
-            return std::make_shared<const error>(fmt::format("Compile time loop didn't finish after max iteration count of {}", max_loop_iterations), ELEMENT_ERROR_INFINITE_LOOP, source_info);
+            return std::make_shared<const error>(
+                fmt::format("Compile time loop didn't finish after max iteration count of {}", max_loop_iterations),
+                ELEMENT_ERROR_INFINITE_LOOP,
+                source_info,
+                context.get_logger());
 
         current_object = next_successor(arguments);
         if (!current_object)
@@ -107,53 +111,54 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
     //ensure that these are boundary functions as we'll need to compile them like any other boundary function
     const auto predicate_is_boundary = predicate_function->valid_at_boundary(context);
     if (!predicate_is_boundary)
-        return std::make_shared<const error>("predicate is not a boundary function", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info);
+        return std::make_shared<const error>(
+            "predicate is not a boundary function",
+            ELEMENT_ERROR_UNKNOWN,
+            predicate_function->source_info,
+            context.get_logger());
 
     const auto body_is_boundary = body_function->valid_at_boundary(context);
     if (!body_is_boundary)
-        return std::make_shared<const error>("body is not a boundary function", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
+        return std::make_shared<const error>(
+            "body is not a boundary function",
+            ELEMENT_ERROR_UNKNOWN,
+            body_function->source_info,
+            context.get_logger());
 
     //compile our functions to instruction trees, with their own placeholder input instructions
-    const auto predicate_compiled = compile_placeholder_expression(context, *predicate_function, predicate_function->get_inputs(), source_info);
-    const auto* err = dynamic_cast<const error*>(predicate_compiled.get());
-    if (err)
-    {
-        err->log_once(context.get_logger());
+    auto predicate_compiled = compile_placeholder_expression(context, *predicate_function, predicate_function->get_inputs(), source_info);
+    auto body_compiled = compile_placeholder_expression(context, *body_function, body_function->get_inputs(), source_info);
+
+    if (predicate_compiled->is_error())
         return predicate_compiled;
-    }
 
     if (!predicate_compiled)
-        return std::make_shared<const error>("predicate failed to compile", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>("predicate failed to compile", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
-    const auto body_compiled = compile_placeholder_expression(context, *body_function, body_function->get_inputs(), source_info);
-    err = dynamic_cast<const error*>(body_compiled.get());
-    if (err)
-    {
-        err->log_once(context.get_logger());
+    if (body_compiled->is_error())
         return body_compiled;
-    }
 
     if (!body_compiled)
-        return std::make_shared<const error>("body failed to compile", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>("body failed to compile", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
     auto predicate_expression = predicate_compiled->to_instruction();
     if (!predicate_expression)
-        return std::make_shared<const error>("predicate failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info);
+        return std::make_shared<const error>("predicate failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info, context.get_logger());
 
     auto body_expression = body_compiled->to_instruction();
     if (!body_expression)
-        return std::make_shared<const error>("body failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, body_function->source_info);
+        return std::make_shared<const error>("body failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, body_function->source_info, context.get_logger());
 
     //everything is an instruction, so make a for instruction. note: initial_object is either Num or Bool.
     auto initial_expression = std::dynamic_pointer_cast<const instruction>(initial_object);
     if (initial_expression)
-        return std::make_shared<element::instruction_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression));
+        return std::make_shared<instruction_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression));
 
     //if it wasn't an instruction, let's convert it in to one.
     //if we can't then this for-loop can't be done at runtime, since it can't be represented in the instruction tree
     initial_expression = initial_object->to_instruction();
     if (!initial_expression)
-        return std::make_shared<const error>("tried to create a runtime for but a non-serializable initial value was given", ELEMENT_ERROR_UNKNOWN, source_info);
+        return std::make_shared<const error>("tried to create a runtime for but a non-serializable initial value was given", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
     //initial_object should be a struct, so the output of the for loop is going to be the same type of struct, except all the fields (flattened struct) are instructions referring to the for loop
     const auto for_expression = std::make_shared<element::instruction_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression));
@@ -181,7 +186,7 @@ object_const_shared_ptr intrinsic_for::compile(const compilation_context& contex
     assert(declarer.inputs.size() == 3);
     assert(frame.compiled_arguments.size() == 3);
 
-    const auto initial = frame.compiled_arguments[0];
+    auto initial = frame.compiled_arguments[0];
     const auto predicate = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[1]);
     const auto body = std::dynamic_pointer_cast<const function_instance>(frame.compiled_arguments[2]);
 
@@ -189,9 +194,8 @@ object_const_shared_ptr intrinsic_for::compile(const compilation_context& contex
     assert(predicate);
     assert(body);
 
-    auto initial_error = std::dynamic_pointer_cast<const error>(initial);
-    if (initial_error)
-        return initial_error;
+    if (initial->is_error())
+        return initial;
 
     auto compile_time_result = compile_time_for(initial, predicate, body, source_info, context);
     if (compile_time_result)

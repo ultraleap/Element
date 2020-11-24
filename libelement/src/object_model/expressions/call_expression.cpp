@@ -27,8 +27,7 @@ call_expression::call_expression(const expression_chain* parent)
 
     for (const auto& arg : compiled_arguments)
     {
-        const auto* err = dynamic_cast<const error*>(arg.get());
-        if (err)
+        if (arg->is_error())
             return arg;
     }
 

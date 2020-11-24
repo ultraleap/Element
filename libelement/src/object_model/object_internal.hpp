@@ -24,6 +24,9 @@ namespace element
         object& operator=(const object& scope) = delete;
         object& operator=(object&& scope) = delete;
 
+        [[nodiscard]] virtual bool is_error() const;
+        virtual element_result log_any_error(const element_log_ctx* logger) const;
+
         [[nodiscard]] virtual bool is_constant() const;
         [[nodiscard]] virtual std::string typeof_info() const { return "<Unknown>"; }
         [[nodiscard]] virtual std::string to_code(const int depth) const { return "<Unknown>"; }

@@ -92,7 +92,12 @@ namespace element
             }
 
             assert(!"wasn't a num, bool, or stuct, so probably a HOF. not serialisable, caller should check");
-            clone->fields.try_emplace(name, std::make_shared<const error>("wasn't a num, bool, or struct, so probably a HOF. not serialisable, caller should check", ELEMENT_ERROR_UNKNOWN, source_information{}));
+            clone->fields.try_emplace(
+                name,
+                std::make_shared<const error>(
+                    "wasn't a num, bool, or struct, so probably a HOF. not serialisable, caller should check",
+                    ELEMENT_ERROR_UNKNOWN,
+                    source_information{})); //todo: pass logger from compilation context, but can't include it in this header for this template
         }
 
         return clone;

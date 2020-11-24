@@ -24,9 +24,6 @@
 #include "object_model/expressions/expression_chain.hpp"
 #include "object_model/expressions/call_expression.hpp"
 
-void element_interpreter_ctx::Deleter::operator()(element::intrinsic* i) const { delete i; }
-void element_interpreter_ctx::Deleter::operator()(const element::intrinsic* i) const { delete i; }
-
 static bool file_exists(const std::string& file)
 {
     return std::filesystem::exists(file) && std::filesystem::is_regular_file(file);
@@ -495,9 +492,8 @@ element_result element_interpreter_ctx::expression_to_object(
 
     (*object)->obj = std::move(compiled);
 
-    const auto* err = dynamic_cast<const element::error*>((*object)->obj.get());
-    if (err)
-        return err->log_once(logger.get());
+    if ((*object)->obj->is_error())
+        return (*object)->obj->log_any_error(logger.get());
 
     return ELEMENT_OK;
 }

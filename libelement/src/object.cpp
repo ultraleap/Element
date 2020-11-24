@@ -19,10 +19,8 @@ void element_object_delete(element_object** object)
     if (!object)
         return;
 
-    (*object)->obj = nullptr;
     delete *object;
     *object = nullptr;
-    return;
 }
 
 element_result element_object_model_ctx_create(element_interpreter_ctx* interpreter, element_object_model_ctx** output)
@@ -44,7 +42,6 @@ void element_object_model_ctx_delete(element_object_model_ctx** context)
     if (!context)
         return;
 
-    (*context)->ctx = nullptr;
     delete *context;
     *context = nullptr;
 }
@@ -81,9 +78,8 @@ element_result element_object_simplify(
     auto compiled = object->obj->compile(*context->ctx, object->obj->source_info);
     *output = new element_object{ std::move(compiled) };
 
-    const auto* err = dynamic_cast<const element::error*>((*output)->obj.get());
-    if (err)
-        return err->log_once(context->ctx->get_logger());
+    if ((*output)->obj->is_error())
+        return (*output)->obj->log_any_error(context->ctx->get_logger());
 
     return ELEMENT_OK;
 }
@@ -116,9 +112,8 @@ element_result element_object_call(
     auto compiled = object->obj->call(*context->ctx, std::move(args), object->obj->source_info);
     *output = new element_object{ std::move(compiled) };
 
-    const auto* err = dynamic_cast<const element::error*>((*output)->obj.get());
-    if (err)
-        return err->log_once(context->ctx->get_logger());
+    if ((*output)->obj->is_error())
+        return (*output)->obj->log_any_error(context->ctx->get_logger());
 
     return ELEMENT_OK;
 }
@@ -149,9 +144,8 @@ element_result element_object_call_with_placeholders(
 
     *output = new element_object{ std::move(compiled) };
 
-    const auto* err = dynamic_cast<const element::error*>((*output)->obj.get());
-    if (err)
-        return err->log_once(context->ctx->get_logger());
+    if ((*output)->obj->is_error())
+        return (*output)->obj->log_any_error(context->ctx->get_logger());
 
     return ELEMENT_OK;
 }
@@ -177,9 +171,8 @@ element_result element_object_index(
     auto compiled = object->obj->index(*context->ctx, element::identifier{ index }, object->obj->source_info);
     *output = new element_object{ std::move(compiled) };
 
-    const auto* err = dynamic_cast<const element::error*>((*output)->obj.get());
-    if (err)
-        return err->log_once(context->ctx->get_logger());
+    if ((*output)->obj->is_error())
+        return (*output)->obj->log_any_error(context->ctx->get_logger());
 
     return ELEMENT_OK;
 }

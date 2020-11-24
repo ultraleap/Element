@@ -34,10 +34,7 @@ object_const_shared_ptr expression_chain::compile(const compilation_context& con
         current = expression->resolve(context, previous.get())->compile(context, source_info);
     }
 
-    const auto* err = dynamic_cast<const error*>(current.get());
-    if (err)
-        err->log_once(context.interpreter->logger.get());
-
+    current->log_any_error(context.get_logger());
     return current;
 }
 
