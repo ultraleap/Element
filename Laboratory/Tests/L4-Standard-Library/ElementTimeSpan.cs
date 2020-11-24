@@ -8,7 +8,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
     {
         // Most tests are written for the "fromSeconds" factory function, as the default constructor hides the implementation
         // detail of separating out the fractional and integer components.
-        public static string TimeSpanFromSeconds = "TimeSpan.fromSeconds";
+        public static string TimeSpanFromSeconds = "_(s:Num):TimeSpan = TimeSpan.fromSeconds(s)";
 
         public static (string TimeSpanArgs, string Property, string Period, string Output)[] PropertiesArgsList = 
         {
@@ -179,8 +179,8 @@ namespace Laboratory.Tests.L4.StandardLibrary
         [Test]
         public void FromSecondsConstructor([ValueSource(nameof(FromSecondsConstructorArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
-            string fromSecondsConstructor = "_(s) = TimeSpan.fromSeconds(s)";
-            string defaultConstructor = "_(a, b) = TimeSpan(a, b)";
+            string fromSecondsConstructor = "_(s:Num):TimeSpan = TimeSpan.fromSeconds(s)";
+            string defaultConstructor = "_(a:Num, b:Num):TimeSpan = TimeSpan(a, b)";
                 
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(fromSecondsConstructor, args.lhs, mode),

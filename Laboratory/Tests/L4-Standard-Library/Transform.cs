@@ -87,13 +87,13 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 "Vector3(2, 3, 4)"
             ),
             (
-                "Transform.fromRotationAndTranslation(Matrix3x3(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), Vector3.one)",
+                "Transform.fromRotationAndTranslation(Matrix3x3.fromRows(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), Vector3.one)",
                 "applyToDirection",
                 "(Vector3(1, 2, 3))",
                 "Vector3(2, -1, 3)"
             ),
             (
-                "Transform.fromRotationAndTranslation(Matrix3x3(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), Vector3.one)",
+                "Transform.fromRotationAndTranslation(Matrix3x3.fromRows(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), Vector3.one)",
                 "applyToPosition",
                 "(Vector3(1, 2, 3))",
                 "Vector3(3, 0, 4)"

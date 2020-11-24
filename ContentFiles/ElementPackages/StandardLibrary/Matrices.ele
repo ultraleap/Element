@@ -5,38 +5,40 @@
 # using column vectors. A corresponding "fromRows" function
 # also exists which can be used to help with code readability.
 
-struct Matrix2x2(xRow:Vector2, yRow:Vector2)
+struct Matrix2x2(m00:Num, m01:Num, m10:Num, m11:Num)
 {
     # Factories
     identity:Matrix2x2 = Matrix2x2.fromDiagonal(Vector2.one)
 
     fromRows(xRow:Vector2, yRow:Vector2):Matrix2x2
     {
-        return = Matrix2x2(xRow, yRow)
+        return = Matrix2x2(xRow.x, xRow.y, yRow.x, yRow.y)
     }
 
     fromCols(xCol:Vector2, yCol:Vector2):Matrix2x2
     {
-        return = Matrix2x2(xCol, yCol).transpose
+        return = Matrix2x2.fromRows(xCol, yCol).transpose
     }
 
     fromDiagonal(diag:Vector2):Matrix2x2
     {
         # Create a diagonal matrix from the specified vector
-        return = Matrix2x2(Vector2(diag.x, 0), Vector2(0, diag.y))
+        return = Matrix2x2(diag.x, 0, 0, diag.y)
     }
 
     # Properties
+    xRow(m:Matrix2x2):Vector2 = Vector2(m.m00, m.m01)
+    yRow(m:Matrix2x2):Vector2 = Vector2(m.m10, m.m11)
     xCol(m:Matrix2x2):Vector2 = Vector2(m.xRow.x, m.yRow.x)
     yCol(m:Matrix2x2):Vector2 = Vector2(m.xRow.y, m.yRow.y)
 
     diagonal(m:Matrix2x2):Vector2 = Vector2(m.xRow.x, m.yRow.y)
 
-    transpose(m:Matrix2x2):Matrix2x2 = Matrix2x2(m.xCol, m.yCol)
+    transpose(m:Matrix2x2):Matrix2x2 = Matrix2x2.fromRows(m.xCol, m.yCol)
 
     determinant(m:Matrix2x2):Num
     {
-        return = m.xCol.x.mul(m.yCol.y).sub(m.xCol.y.mul(m.yCol.x))
+        return = m.m00.mul(m.m11).sub(m.m10.mul(m.m01))
     }
 
     # Operations
@@ -45,13 +47,11 @@ struct Matrix2x2(xRow:Vector2, yRow:Vector2)
         # Multiply two square matrices
         # Matrix "a" on the left and Matrix "b" is on the right
 
-        m_00 = a.xRow.dot(b.xCol)
-        m_01 = a.xRow.dot(b.yCol)
-        m_10 = a.yRow.dot(b.xCol)
-        m_11 = a.yRow.dot(b.yCol)
-        mxRow = Vector2(m_00, m_01)
-        myRow = Vector2(m_10, m_11)
-        return = Matrix2x2.fromRows(mxRow, myRow)
+        new_m00 = a.xRow.dot(b.xCol)
+        new_m01 = a.xRow.dot(b.yCol)
+        new_m10 = a.yRow.dot(b.xCol)
+        new_m11 = a.yRow.dot(b.yCol)
+        return = Matrix2x2(new_m00, new_m01, new_m10, new_m11)
     }
 
     vectorMul(m:Matrix2x2, v:Vector2):Vector2
@@ -64,35 +64,40 @@ struct Matrix2x2(xRow:Vector2, yRow:Vector2)
 }
 
 
-struct Matrix3x3(xRow:Vector3, yRow:Vector3, zRow:Vector3)
+struct Matrix3x3(m00:Num, m01:Num, m02:Num, m10:Num, m11:Num, m12:Num, m20:Num, m21:Num, m22:Num)
 {
     # Factories
     identity:Matrix3x3 = Matrix3x3.fromDiagonal(Vector3.one)
 
     fromCols(xCol:Vector3, yCol:Vector3, zCol:Vector3):Matrix3x3
     {
-        return = Matrix3x3(xCol, yCol, zCol).transpose
+        return = Matrix3x3.fromRows(xCol, yCol, zCol).transpose
     }
 
     fromRows(xRow:Vector3, yRow:Vector3, zRow:Vector3):Matrix3x3
     {
-        return = Matrix3x3(xRow, yRow, zRow)
+        return = Matrix3x3(xRow.x, xRow.y, xRow.z,
+                            yRow.x, yRow.y, yRow.z,
+                            zRow.x, zRow.y, zRow.z)
     }
 
     fromDiagonal(diag:Vector3):Matrix3x3
     {
         # Create a diagonal matrix from the specified vector
-        return = Matrix3x3(Vector3(diag.x, 0, 0), Vector3(0, diag.y, 0), Vector3(0, 0, diag.z))
+        return = Matrix3x3.fromRows(Vector3(diag.x, 0, 0), Vector3(0, diag.y, 0), Vector3(0, 0, diag.z))
     }
 
     # Properties
+    xRow(m:Matrix3x3):Vector3 = Vector3(m.m00, m.m01, m.m02)
+    yRow(m:Matrix3x3):Vector3 = Vector3(m.m10, m.m11, m.m12)
+    zRow(m:Matrix3x3):Vector3 = Vector3(m.m20, m.m21, m.m22)
     xCol(m:Matrix3x3):Vector3 = Vector3(m.xRow.x, m.yRow.x, m.zRow.x)
     yCol(m:Matrix3x3):Vector3 = Vector3(m.xRow.y, m.yRow.y, m.zRow.y)
     zCol(m:Matrix3x3):Vector3 = Vector3(m.xRow.z, m.yRow.z, m.zRow.z)
 
     diagonal(m:Matrix3x3):Vector3 = Vector3(m.xRow.x, m.yRow.y, m.zRow.z)
 
-    transpose(m:Matrix3x3):Matrix3x3 = Matrix3x3(m.xCol, m.yCol, m.zCol)
+    transpose(m:Matrix3x3):Matrix3x3 = Matrix3x3.fromRows(m.xCol, m.yCol, m.zCol)
 
     determinant(m:Matrix3x3):Num
     {
@@ -128,7 +133,7 @@ struct Matrix3x3(xRow:Vector3, yRow:Vector3, zRow:Vector3)
             return = Vector3(v.dot(m.xCol), v.dot(m.yCol), v.dot(m.zCol))
         }
 
-        multipliedMatrix = Matrix3x3(
+        multipliedMatrix = Matrix3x3.fromRows(
             createNewRow(a.xRow, b),
             createNewRow(a.yRow, b),
             createNewRow(a.zRow, b)
@@ -147,30 +152,41 @@ struct Matrix3x3(xRow:Vector3, yRow:Vector3, zRow:Vector3)
 }
 
 
-struct Matrix4x4(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4)
+struct Matrix4x4(m00:Num, m01:Num, m02:Num, m03:Num,
+                m10:Num, m11:Num, m12:Num, m13:Num,
+                m20:Num, m21:Num, m22:Num, m23:Num,
+                m30:Num, m31:Num, m32:Num, m33:Num)
 {
     identity = Matrix4x4.fromDiagonal(Vector4.one)
 
     fromRows(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4):Matrix4x4
     {
-        return = Matrix4x4(xRow, yRow, zRow, wRow)
+        return = Matrix4x4(xRow.x, xRow.y, xRow.z, xRow.w,
+                            yRow.x, yRow.y, yRow.z, yRow.w,
+                            zRow.x, zRow.y, zRow.z, zRow.w,
+                            wRow.x, wRow.y, wRow.z, wRow.w)
     }
 
     fromCols(xCol:Vector4, yCol:Vector4, zCol:Vector4, wCol:Vector4):Matrix4x4
     {
-        return = Matrix4x4(xCol, yCol, zCol, wCol).transpose
+        return = Matrix4x4.fromRows(xCol, yCol, zCol, wCol).transpose
     }
 
     fromDiagonal(diag:Vector4):Matrix4x4
     {
         # Create a diagonal matrix from its diagonal components
-        return = Matrix4x4(
+        return = Matrix4x4.fromRows(
             Vector4(diag.x, 0, 0, 0),
             Vector4(0, diag.y, 0, 0),
             Vector4(0, 0, diag.z, 0),
             Vector4(0, 0, 0, diag.w)
         )
     }
+
+    xRow(m:Matrix4x4):Vector4 = Vector4(m.m00, m.m01, m.m02, m.m03)
+    yRow(m:Matrix4x4):Vector4 = Vector4(m.m10, m.m11, m.m12, m.m13)
+    zRow(m:Matrix4x4):Vector4 = Vector4(m.m20, m.m21, m.m22, m.m23)
+    wRow(m:Matrix4x4):Vector4 = Vector4(m.m30, m.m31, m.m32, m.m33)
 
     xCol(m:Matrix4x4):Vector4 = Vector4(m.xRow.x, m.yRow.x, m.zRow.x, m.wRow.x)
     yCol(m:Matrix4x4):Vector4 = Vector4(m.xRow.y, m.yRow.y, m.zRow.y, m.wRow.y)
@@ -182,7 +198,7 @@ struct Matrix4x4(xRow:Vector4, yRow:Vector4, zRow:Vector4, wRow:Vector4)
         return = Vector4(m.xRow.x, m.yRow.y, m.zRow.z, m.wRow.w)
     }
 
-    transpose(m:Matrix4x4):Matrix4x4 = Matrix4x4(m.xCol, m.yCol, m.zCol, m.wCol)
+    transpose(m:Matrix4x4):Matrix4x4 = Matrix4x4.fromRows(m.xCol, m.yCol, m.zCol, m.wCol)
 
     determinant(m:Matrix4x4):Num
     {

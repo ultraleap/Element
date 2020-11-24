@@ -352,6 +352,48 @@ namespace Element.CLR
                                                                                                                        floats.Add(vec4.W);
                                                                                                                        return Result.Success;
                                                                                                                    }))),
+                       Mapping.Bidirectional(typeof(Matrix4x4), "Matrix4x4",
+                                             StructConverter.FromBoundaryStructInfo(new ExternalBoundaryStructInfo("Matrix4x4",
+                                                                                                                   new Dictionary<string, string>
+                                                                                                                   {
+                                                                                                                       {"m00", "M11"},
+                                                                                                                       {"m01", "M12"},
+                                                                                                                       {"m02", "M13"},
+                                                                                                                       {"m03", "M14"},
+                                                                                                                       {"m10", "M21"},
+                                                                                                                       {"m11", "M22"},
+                                                                                                                       {"m12", "M23"},
+                                                                                                                       {"m13", "M24"},
+                                                                                                                       {"m20", "M31"},
+                                                                                                                       {"m21", "M32"},
+                                                                                                                       {"m22", "M33"},
+                                                                                                                       {"m23", "M34"},
+                                                                                                                       {"m30", "M41"},
+                                                                                                                       {"m31", "M42"},
+                                                                                                                       {"m32", "M43"},
+                                                                                                                       {"m33", "M44"},
+                                                                                                                   },
+                                                                                                                   (m, floats, context) =>
+                                                                                                                   {
+                                                                                                                       var matrix = (Matrix4x4) m;
+                                                                                                                       floats.Add(matrix.M11);
+                                                                                                                       floats.Add(matrix.M12);
+                                                                                                                       floats.Add(matrix.M13);
+                                                                                                                       floats.Add(matrix.M14);
+                                                                                                                       floats.Add(matrix.M21);
+                                                                                                                       floats.Add(matrix.M22);
+                                                                                                                       floats.Add(matrix.M23);
+                                                                                                                       floats.Add(matrix.M24);
+                                                                                                                       floats.Add(matrix.M31);
+                                                                                                                       floats.Add(matrix.M32);
+                                                                                                                       floats.Add(matrix.M33);
+                                                                                                                       floats.Add(matrix.M34);
+                                                                                                                       floats.Add(matrix.M41);
+                                                                                                                       floats.Add(matrix.M42);
+                                                                                                                       floats.Add(matrix.M43);
+                                                                                                                       floats.Add(matrix.M44);
+                                                                                                                       return Result.Success;
+                                                                                                                   }))),
                        Mapping.Bidirectional(typeof(Complex), "Complex",
                                              StructConverter.FromBoundaryStructInfo(new ExternalBoundaryStructInfo("Complex",
                                                                                                                    new Dictionary<string, string>
