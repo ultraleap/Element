@@ -32,6 +32,7 @@ namespace Element
 		
 		public abstract override string SummaryString { get; }
 		public override string TypeOf => StructImplementation.Identifier.String;
+		public override Result<IValue> InstanceType(Context context) => LookupIntrinsicStruct(context).Cast<IValue>();
 
 		public override bool Equals(object obj) => obj is Instruction instruction && Equals(instruction);
 		public virtual bool Equals(Instruction other) => other?.ToString() == ToString();

@@ -30,7 +30,7 @@ namespace Element.AST
         public Result<IValue> Lookup(Identifier id, Context context) => (_associatedBlock ?? _parent).Lookup(id, context);
         public override IReadOnlyList<Identifier> Members => _associatedBlock?.Members ?? Array.Empty<Identifier>();
         public abstract override Result<IValue> DefaultValue(Context context);
-        public Result<bool> IsInstanceOfStruct(IValue value) => value.InnerIs<StructInstance>(out var instance) && instance.DeclaringStruct == this;
+        public Result<bool> IsInstanceOfStruct(IValue value, Context context) => value.IsInstanceOfType(this, context);
         public Result<IValue> ResolveInstanceFunction(IValue instance, Identifier id, Context context) =>
             Index(id, context)
                 .Bind(v => v switch
@@ -65,7 +65,7 @@ namespace Element.AST
             : base(identifier, fields, associatedBlock, parent) { }
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => StructInstance.Create(this, arguments, context).Cast<IValue>();
-        public override Result<bool> MatchesConstraint(IValue value, Context context) => IsInstanceOfStruct(value);
+        public override Result<bool> MatchesConstraint(IValue value, Context context) => IsInstanceOfStruct(value, context);
         public override Result<IValue> DefaultValue(Context context) =>
             InputPorts.Select(field => field.DefaultValue(context))
                       .BindEnumerable(defaults => StructInstance.Create(this, defaults.ToArray(), context)
@@ -89,6 +89,7 @@ namespace Element.AST
         }
 
         public override string TypeOf => DeclaringStruct.Identifier.String;
+        public override Result<IValue> InstanceType(Context context) => DeclaringStruct;
         public override Result<IValue> Index(Identifier id, Context context) =>
             Members.Any(identifier => identifier.Equals(id))
                 ? _resolvedBlock.Index(id, context)

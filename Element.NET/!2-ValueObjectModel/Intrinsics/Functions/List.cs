@@ -48,45 +48,58 @@ namespace Element.AST
 		            : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
         }
 
-        public class HomogenousListElement : WrapperValue
-        {
-	        public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, Context context) =>
-		        index.CompileTimeIndex(0, elements.Count, context)
-		             .Branch(compileConstantIndex => compileConstantIndex < elements.Count
-			                                           ? new Result<IValue>(elements[compileConstantIndex])
-			                                           : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
-		                     () =>
-		                     {
-			                     var operands = new Instruction[elements.Count];
+		private class HomogenousListElement : IValue
+		{
+			public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, Context context) =>
+				elements[0].InstanceType(context)
+				           .Bind(listElementInstanceType =>
+					                 elements.AreAllOfInstanceType(listElementInstanceType, context)
+						                 ? index.CompileTimeIndex(0, elements.Count, context)
+						                        .Branch(compileConstantIndex => compileConstantIndex < elements.Count
+							                                                        ? new Result<IValue>(elements[compileConstantIndex])
+							                                                        : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
+						                                () =>
+						                                {
+							                                var operands = new Instruction[elements.Count];
 
-			                     for (var i = 0; i < elements.Count; i++)
-			                     {
-				                     // If any elements are not instructions then we need to 
-				                     if (elements[i].InnerIs(out Instruction instruction)) operands[i] = instruction;
-				                     else return new Result<IValue>(new HomogenousListElement(index, elements));
-			                     }
+							                                for (var i = 0; i < elements.Count; i++)
+							                                {
+								                                // If any elements are not instructions then we need to 
+								                                if (elements[i].InnerIs(out Instruction instruction)) operands[i] = instruction;
+								                                else return new Result<IValue>(new HomogenousListElement(index, elements));
+							                                }
 
-			                     return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
-		                     });
+							                                return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
+						                                })
+						                 : context.Trace(EleMessageCode.ExpectedHomogenousItems, "Elements of a list must be of the same type"));
 
-            private HomogenousListElement(Instruction index, IReadOnlyList<IValue> elements)
-				: base(elements[0])
-            {
+			private HomogenousListElement(Instruction index, IReadOnlyList<IValue> elements)
+			{
                 _index = index;
                 _elements = elements;
             }
 
             private readonly Instruction _index;
             private readonly IReadOnlyList<IValue> _elements;
-            public override string SummaryString => $"HomogenousListElement({_index})[{string.Join(", ", _elements)}]";
+            public string TypeOf => $"HomogenousListElement({_index})[{string.Join(", ", _elements.Select(e => e.TypeOf))}]";
+            public string SummaryString => $"HomogenousListElement({_index})[{string.Join(", ", _elements)}]";
 
-            public override Result<IValue> Index(Identifier id, Context context) =>
-	            _elements.Select(e => e.Index(id, context))
-	                     .BindEnumerable(elements => Create(_index, elements.ToList(), context));
+            private Result<IValue> ApplyToAllElements(Func<IValue, Result<IValue>> func, Context context)
+	            => _elements.Select(func)
+	                        .BindEnumerable(elements => Create(_index, elements.ToArray(), context));
 
-            public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
-	            _elements.Select(e => e.Call(arguments.ToArray(), context))
-	                     .BindEnumerable(v => Create(_index, v.ToList(), context));
-        }
+            public IReadOnlyList<ResolvedPort> InputPorts => _elements[0].InputPorts;
+            public IValue ReturnConstraint => _elements[0].ReturnConstraint;
+            public IReadOnlyList<Identifier> Members => _elements[0].Members;
+            public Result<IValue> Index(Identifier id, Context context) => ApplyToAllElements(e => e.Index(id, context), context);
+            public Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => ApplyToAllElements(e => e.Call(arguments.ToArray(), context), context);
+            public Result<bool> MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used as a constraint");
+            public Result<IValue> DefaultValue(Context context) => ApplyToAllElements(e => e.DefaultValue(context), context);
+            public void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be serialized");
+            public Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used to deserialize");
+            public Result<IValue> InstanceType(Context context) => _elements[0].InstanceType(context);
+            public bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => false;
+            public bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => false;
+		}
 	}
 }
