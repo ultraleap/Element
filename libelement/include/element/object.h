@@ -14,6 +14,16 @@ extern "C" {
 typedef struct element_object element_object;
 
 /**
+ * @brief represents a parameter or return;
+*/
+typedef struct element_port element_port;
+
+/**
+ * @brief represents multiple ports;
+*/
+typedef struct element_ports element_ports;
+
+/**
  * @brief releases memory associated with object and assigns nullptr
  *
  * @param[in,out] object        object to delete
@@ -224,7 +234,7 @@ element_result element_object_get_name(
     size_t buffer_size);
 
 /**
- * @brief converts an object to typeof information
+ * @brief converts an object to typeof information. e.g. ExpressionBodied for a function
  *
  * @param[in] object            object to convert
  * @param[out] buffer           output buffer
@@ -239,6 +249,75 @@ element_result element_object_get_typeof(
     const element_object* object,
     char* buffer,
     int buffer_size);
+
+/**
+ * @brief gets any and all inputs of an object, such as the parameters of a function
+ */
+element_result element_object_get_inputs(
+    const element_object* object,
+    element_ports** inputs);
+
+/**
+ * @brief gets the output of an object, such as the return of a function
+ */
+element_result element_object_get_output(
+    const element_object* object,
+    element_port** output);
+
+/**
+ * @brief gets a port from a list of ports. do not delete
+ */
+element_result element_ports_get_port(
+    const element_ports* ports,
+    size_t index,
+    element_port** port);
+
+/**
+ * @brief gets the number of ports in the list
+ */
+element_result element_ports_get_count(
+    const element_ports* ports,
+    size_t* count);
+
+/**
+ * @brief deletes all of the ports
+ */
+void element_ports_delete(element_ports** ports);
+
+/**
+ * @brief gets the name of the port if it has one (such as the parameter name), otherwise empty string
+ */
+element_result element_port_get_name(
+    element_port* port,
+    const char** name);
+
+/**
+ * @brief gets the string in source of the type, e.g. func(a:MyNamespace.MyStruct) returns "MyNamespace.MyStruct"
+ */
+element_result element_port_get_constraint_annotation(
+    element_port* port,
+    const char** annotation);
+
+/**
+ * @brief gets the constraint after interpreting the annotation, e,g. func(a:MyNamespace.MyStruct) returns an object that is the "MyStruct" struct
+ */
+element_result element_port_get_constraint_object(
+    element_port* port,
+    element_object_model_ctx* object_model_context, 
+    element_object** object);
+
+/**
+ * @brief gets the default after interpreting, e,g. func(a:Num = 5.add(2)) returns an object that is a "Num" with the value "7"
+ */
+element_result element_port_get_default_object(
+    element_port* port,
+    element_object_model_ctx* object_model_context,
+    element_object** object);
+
+/**
+ * @brief deletes a port
+ */
+void element_port_delete(element_port** port);
 
 #if defined(__cplusplus)
 }
