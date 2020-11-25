@@ -40,7 +40,6 @@ namespace element
         [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const override;
 
         [[nodiscard]] bool is_intrinsic() const override;
-        [[nodiscard]] std::string get_name() const { return type->get_name(); }
 
     private:
         std::unique_ptr<user_type> type;

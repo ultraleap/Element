@@ -24,3 +24,8 @@ object_const_shared_ptr intrinsic_constructor_list::call(
     //todo: type checking in the intrinsic or in the constructor for a struct instance?
     return std::make_unique<struct_instance>(list_struct, compiled_args);
 }
+
+std::string intrinsic_constructor_list::get_name() const
+{
+    return "List";
+}

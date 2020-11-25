@@ -35,6 +35,11 @@ function_instance::function_instance(const function_declaration* declarer, captu
     this->source_info = std::move(source_info);
 }
 
+std::string function_instance::get_name() const
+{
+    return declarer->get_name();
+}
+
 std::string function_instance::to_string() const
 {
     if (provided_arguments.empty())

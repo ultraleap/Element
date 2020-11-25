@@ -12,6 +12,7 @@ namespace element
         explicit struct_instance(const struct_declaration* declarer);
         explicit struct_instance(const struct_declaration* declarer, const std::vector<object_const_shared_ptr>& expressions);
 
+        [[nodiscard]] std::string get_name() const override;
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_string() const override;
 

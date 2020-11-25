@@ -12,6 +12,7 @@ namespace element
         explicit function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info);
         explicit function_instance(const function_declaration* declarer, capture_stack captures, source_information source_info, std::vector<object_const_shared_ptr> args);
 
+        [[nodiscard]] std::string get_name() const override;
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_string() const override;
 

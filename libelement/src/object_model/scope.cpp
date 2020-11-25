@@ -88,6 +88,11 @@ const std::map<identifier, std::unique_ptr<declaration>>& scope::get_declaration
 }
 
 
+std::string scope::get_name() const
+{
+    return "";
+}
+
 const declaration* scope::find(const identifier& name, const bool recurse = false) const
 {
     const std::string delimiter = ".";

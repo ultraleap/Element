@@ -15,6 +15,11 @@ struct_instance::struct_instance(const struct_declaration* declarer)
 {
 }
 
+[[nodiscard]] std::string struct_instance::get_name() const
+{
+    return declarer->get_name();
+}
+
 std::string struct_instance::to_string() const
 {
     std::string input_string;

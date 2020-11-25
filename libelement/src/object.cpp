@@ -240,6 +240,22 @@ element_result element_object_get_source_information(const element_object* objec
     return ELEMENT_OK;
 }
 
+element_result element_object_get_name(const element_object* object, char* buffer, size_t buffer_size)
+{
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+
+    if (!buffer)
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+
+    const auto str = object->obj->get_name();
+    if (buffer_size < str.size())
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+
+    strcpy(buffer, str.c_str());
+    return ELEMENT_OK;
+}
+
 element_result element_object_get_typeof(const element_object* object, char* buffer, int buffer_size)
 {
     if (!object || !object->obj)

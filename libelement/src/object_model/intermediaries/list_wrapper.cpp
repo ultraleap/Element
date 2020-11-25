@@ -96,6 +96,19 @@ list_wrapper::list_wrapper(std::shared_ptr<const instruction> selector, std::vec
     }
 }
 
+std::string list_wrapper::get_name() const
+{
+    std::string name;
+    for (unsigned int i = 0; i < options.size(); ++i)
+    {
+        name += options[i]->get_name();
+        if (i != options.size() - 1)
+            name += " or ";
+    }
+
+    return name;
+}
+
 std::string list_wrapper::typeof_info() const
 {
     return "?";

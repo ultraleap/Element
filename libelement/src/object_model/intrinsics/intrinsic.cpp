@@ -43,6 +43,11 @@ static bool is_type_of(const declaration* decl)
     return dynamic_cast<const T*>(decl) ? true : false;
 }
 
+[[nodiscard]] std::string intrinsic::get_name() const
+{
+    return ""; //todo: the map has all the names...
+}
+
 //TODO: This is a horrible, temporary hack. Remove and replace once we start dealing with constraints
 const std::unordered_map<std::string, std::function<std::unique_ptr<const intrinsic>(const declaration*)>> intrinsic::validation_func_map{
     //type
