@@ -9,12 +9,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(ELEMENT_LIB_DIR "../libelement")
-set(DEPENDENCIES_DIR "../dependencies")
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(RapidJSON)
 add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
+find_package(RapidJSON)
 
 set(element_cli_sources
     "include/compiler_message.hpp"
@@ -55,14 +55,11 @@ target_include_directories(${CMAKE_PROJECT_NAME}
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${element_SOURCE_DIR}/src"
-        "${DEPENDENCIES_DIR}/toml11"
-        "${DEPENDENCIES_DIR}/rapidjson/include"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
-        "${fmt_SOURCE_DIR}/include"
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11 fmt)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11 fmt::fmt toml11::toml11 rapidjson)
 
 if (UNIX AND NOT APPLE)
     target_link_libraries(element_cli PRIVATE "m" "atomic" "pthread" "stdc++fs")
