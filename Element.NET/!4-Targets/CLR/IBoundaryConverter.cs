@@ -173,9 +173,12 @@ namespace Element.CLR
             }
 
             return value.InstanceType(context)
+                        .Check(v => v.Members.Count < 1
+                                    // TODO: More relevant message code - this error case is always a result of API misuse (using struct converter for non-struct instance)
+                                    ? context.Trace(EleMessageCode.InvalidBoundaryData, $"Expected instance of a struct with members but got '{value}'")
+                                    : Result.Success)
                         .Bind(instanceType =>
                         {
-                            if (value.Members.Count < 1) throw new InternalCompilerException($"'{value}' a primitive value - expected instance of a struct with members");
                             var builder = new ResultBuilder<LExpression>(context, default!);
             
                             foreach (var pair in _boundaryStructInfo.FieldMap)
