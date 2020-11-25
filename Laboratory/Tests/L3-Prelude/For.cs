@@ -41,6 +41,10 @@ namespace Laboratory.Tests.L3.Prelude
         [DatapointSource]
         public (string FunctionExpression, string CallExpression, string ExpectedExpression)[] LoopFunctionCalls =
         {
+            ("factorial", "(1)", "1"),
+            ("factorial", "(2)", "2"),
+            ("factorial", "(3)", "6"),
+            ("factorial", "(4)", "24"),
             ("factorial", "(5)", "120"),
             ("NestedForLoop", "(0)", "200"),
             ("iterateWithMyStruct", "(5)", "7"),
