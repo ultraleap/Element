@@ -325,7 +325,9 @@ std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const el
     while (predicate_value > 0) //predicate returned true
     {
         result = do_evaluate(context, body, body_output_buffer.data(), value_size, intermediate_written);
-        std::move(body_output_buffer.begin(), body_output_buffer.end(), inputs.begin());
+
+        std::swap(body_output_buffer, inputs);
+        context.boundaries.back().inputs = inputs.data();
 
         if (result != ELEMENT_OK)
             throw;
