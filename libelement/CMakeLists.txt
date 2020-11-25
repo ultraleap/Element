@@ -13,10 +13,12 @@ project(element VERSION 1.0.0)
 
 #todo: do it per-target, but needs to be checked on mac/xcode
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(ELEMENT_LOG_VERBOSITY "log_flags::none" CACHE STRING "logging flags")
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Code Coverage Configuration
@@ -242,11 +244,10 @@ target_include_directories(element
         "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/memorypool"
         # TODO: this, much nicer
         "${CMAKE_CURRENT_SOURCE_DIR}/../LMNT/include"
-        "${fmt_SOURCE_DIR}/include"
         "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-target_link_libraries(element PRIVATE utf8cpp fmt::fmt)
+target_link_libraries(element PRIVATE utfcpp fmt::fmt)
 target_link_libraries(element PUBLIC element_coverage_config)
 
 if (UNIX AND NOT APPLE)
