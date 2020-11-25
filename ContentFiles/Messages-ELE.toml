@@ -180,6 +180,10 @@ level = "Error"
 name = "KeyAlreadyExists"
 level = "Error"
 
+[ELE44]
+name = "ExpectedHomogenousItems"
+level = "Error"
+
 [ELE9999]
 name = "UnknownError"
 level = "Error"

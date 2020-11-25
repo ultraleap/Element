@@ -23,7 +23,7 @@ namespace Element.AST
             };
         
         public Result<IValue> DefaultValue(Context _) => Constant.Zero;
-        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => value.InnerIs<Instruction>(out var instruction) && instruction.StructImplementation == Instance;
+        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => value.InstanceType(context).Branch(type => type.IsSpecificIntrinsic(Instance), () => false);
         public Identifier Identifier { get; } = new Identifier("Num");
     }
 }

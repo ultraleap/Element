@@ -40,11 +40,18 @@ namespace Element.CLR
                               _ => throw new InternalCompilerException($"Unhandled {nameof(ElementToLinq)} output type")
                           });
 
-        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, ClrBoundaryContext context)
-        {
-            floats.Add((float)clrInstance);
-            return Result.Success;
-        }
+        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, ClrBoundaryContext context) =>
+            (clrInstance switch
+                {
+                    float f => new Result<float>(f),
+                    bool b => new Result<float>(b ? 1f : 0f),
+                    _ => context.Trace(EleMessageCode.SerializationError, $"{nameof(NumberConverter)} doesn't support serializing '{clrInstance}'")
+                })
+            .Bind(f =>
+            {
+                floats.Add(f);
+                return Result.Success;
+            });
 
         private class NumberInstruction : Instruction, ICLRExpression
         {
@@ -164,22 +171,29 @@ namespace Element.CLR
             {
                 assigns.Add(LExpression.Assign(obj, LExpression.New(outputType)));
             }
+
+            return value.InstanceType(context)
+                        .Check(v => v.Members.Count < 1
+                                    // TODO: More relevant message code - this error case is always a result of API misuse (using struct converter for non-struct instance)
+                                    ? context.Trace(EleMessageCode.InvalidBoundaryData, $"Expected instance of a struct with members but got '{value}'")
+                                    : Result.Success)
+                        .Bind(instanceType =>
+                        {
+                            var builder = new ResultBuilder<LExpression>(context, default!);
             
-            if (!value.InnerIs(out StructInstance structInstance)) return context.Trace(EleMessageCode.InvalidBoundaryData, $"'{value}' is not a struct instance - expected struct instance when converting a struct");
-            var builder = new ResultBuilder<LExpression>(context, default!);
+                            foreach (var pair in _boundaryStructInfo.FieldMap)
+                            {
+                                var memberExpression = LExpression.PropertyOrField(obj, pair.Value);
+                                var fieldResult = value.Index(new Identifier(pair.Key), context).Bind(fieldValue => convertFunction(fieldValue, memberExpression.Type, context));
+                                builder.Append(in fieldResult);
+                                if (!fieldResult.IsSuccess) continue;
+                                assigns.Add(LExpression.Assign(memberExpression, fieldResult.ResultOr(default!)));
+                            }
             
-            foreach (var pair in _boundaryStructInfo.FieldMap)
-            {
-                var memberExpression = LExpression.PropertyOrField(obj, pair.Value);
-                var fieldResult = structInstance.Index(new Identifier(pair.Key), context).Bind(fieldValue => convertFunction(fieldValue, memberExpression.Type, context));
-                builder.Append(in fieldResult);
-                if (!fieldResult.IsSuccess) continue;
-                assigns.Add(LExpression.Assign(memberExpression, fieldResult.ResultOr(default!)));
-            }
-            
-            assigns.Add(obj);
-            builder.Result = LExpression.Block(new[] {obj}, assigns);
-            return builder.ToResult();
+                            assigns.Add(obj);
+                            builder.Result = LExpression.Block(new[] {obj}, assigns);
+                            return builder.ToResult();
+                        });
         }
 
         public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, ClrBoundaryContext context) => _boundaryStructInfo.SerializeClrInstance(clrInstance, floats, context);
@@ -460,10 +474,8 @@ namespace Element.CLR
 
         public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
                                                  ClrBoundaryContext context) =>
-            value.HasWrapper(out List.HomogenousListElement _)
-                ? context.Trace(EleMessageCode.MissingBoundaryConverter, $"List Elements are not currently supported at the boundary")
-                : GetConverter(outputType, context)
-                    .Bind(converter => converter.ElementToLinq(value, outputType, convertFunction, context));
+            GetConverter(outputType, context)
+                .Bind(converter => converter.ElementToLinq(value, outputType, convertFunction, context));
 
         public Result<Type> ElementToClr(Struct elementType, Context context)
         {

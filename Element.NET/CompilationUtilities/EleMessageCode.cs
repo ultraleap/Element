@@ -68,5 +68,6 @@ namespace Element
         NotConstraint = 38,
         CallStackLimitReached = 40,
         UnmappedBoundaryType = 42,
+        ExpectedHomogenousItems = 44,
     }
 }

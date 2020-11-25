@@ -86,8 +86,16 @@ namespace Element.AST
         /// </summary>
         Result<IValue> Deserialize(Func<Instruction> nextValue, Context context);
 
+        /// <summary>
+        /// Retrieve the type this value is an instance of.
+        /// Will error if the value is not a primitive value or struct instance.
+        /// </summary>
+        Result<IValue> InstanceType(Context context);
+        
         bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation;
         bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic);
+        
+        
     }
 
     public abstract class Value : IValue
@@ -108,6 +116,8 @@ namespace Element.AST
         public virtual Result<IValue> DefaultValue(Context context) => context.Trace(EleMessageCode.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
         public virtual void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => resultBuilder.Append(EleMessageCode.SerializationError, $"'{this}' is not serializable");
         public virtual Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => context.Trace(EleMessageCode.SerializationError, $"'{this}' cannot be deserialized");
+        public virtual Result<IValue> InstanceType(Context context) => context.Trace(EleMessageCode.TypeError, $"'{this}' is not an instance of a type");
+
         public virtual bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => false;
         public virtual bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => false;
     }
@@ -181,7 +191,13 @@ namespace Element.AST
         public static Result<float[]> SerializeToFloats(this IValue value, Context context) =>
             value.Serialize(context)
                  .Bind(serialized => serialized.ToFloats(context));
-        
+
+        public static bool IsInstanceOfType(this IValue value, IValue type, Context context) => value.InstanceType(context)
+                                                                                                     .Match( (instanceType, _) => instanceType == type,
+                                                                                                       _ => false);
+
+        public static bool AreAllOfInstanceType(this IReadOnlyList<IValue> items, IValue type, Context context) => items.All(value => value.IsInstanceOfType(type, context));
+
         public static bool InnerIs<T>(this IValue value, out T result) where T : IValue
         {
             if (value.Inner() is T t)
