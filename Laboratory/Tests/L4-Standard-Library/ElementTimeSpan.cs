@@ -29,6 +29,9 @@ namespace Laboratory.Tests.L4.StandardLibrary
             ("0, 0.9", "value", "0.2",  "0.1"),
             ("10, 0.9", "value", "0.2",  "0.1"),
             ("1, 0", "progress", "1", "0"),
+            ("1, 0.5", "progress", "1", "0.5"),
+            ("2, 0.5", "progress", "1", "0.5"),
+            ("10, 0.5", "progress", "2", "0.25"),
         };
 
         [Test]
