@@ -26,6 +26,9 @@ struct TimeSpan(integer:Num, fractional:Num)
     # Return the integer number of elapsed periods
     cycles(this:TimeSpan, period:Num):Num = this.integer.div(period).add(this.fractional.div(period)).floor
 
+    # Return the progress of the current time period. Between 0 and 1.
+    progress(this:TimeSpan, period:Num):Num = this.value(period).div(period)
+
     abs(this:TimeSpan):TimeSpan
     {
         return = if(this.integer.geq(0), this, this.negate)
