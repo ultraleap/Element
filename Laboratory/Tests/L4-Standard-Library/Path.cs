@@ -167,6 +167,25 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new ExpressionEvaluation(args.rhs, mode));
         }
         
+        public static (string lhs, string rhs)[] PathAddArgs =
+        {
+            ("(0)", "1"),
+            ("(0.5)", "2"),
+            ("(1)", "3"),
+        };
+        [Test]
+        public void PathAdd([ValueSource(nameof(PathAddArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            // Add the two lines from (0, 0, 0) to (1, 1, 1), and from (1, 1, 1) to (2, 2, 2)
+            string testFunction = "_(u:Num):Num = " +
+                                  "Path.add(" +
+                                  "StandardPaths.line(Vector3.zero, Vector3.one)," +
+                                  "StandardPaths.line(Vector3.one, Vector3.one.scale(2))).at(u).x";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, args.lhs, mode),
+                new ExpressionEvaluation(args.rhs, mode));
+        }
+        
         public static (string op, string lhs, string rhs)[] UnaryOpArgs =
         {
             ("_(v:Vector3):Vector3 = v.add(Vector3.one)", "(0)", "1"),

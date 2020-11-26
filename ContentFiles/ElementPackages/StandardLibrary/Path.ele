@@ -103,6 +103,16 @@ struct Path(at:PathFunc, domain:Bounds)
         return = Path(newPathFunction, Bounds(0, 1))
     }
 
+    add(path1:Path, path2:Path):Path
+    {
+        # Combine the two paths by adding the positions at each point
+        #
+        # The two paths must have the same domain for this operation to be valid.
+        # If they are not the same, the domain of path1 will be used.
+        #
+        return = Path.applyBinaryVectorOperation(path1, path2, Vector3.add)
+    }
+
     applyTransform(this:Path, transform:Transform):Path
     {
         # Apply a Transform to all points on the path
