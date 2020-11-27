@@ -35,28 +35,28 @@ struct Vector2(x:Num, y:Num)
         return = s.x.add(s.y)
     }
 
+    #!  Return the distance from a to b     #.
     distance(a:Vector2, b:Vector2):Num 
     {
-        # Return the distance from a to b
         diff = a.sub(b)
         return = diff.magnitude
     }
 
+    #!  Return the unsigned angle between a and b in radians    #.
     angle(a:Vector2, b:Vector2):Num 
     {
-        # Return the unsigned angle between a and b in radians
         dot = a.dot(b)
         mag = a.magnitude.mul(b.magnitude)
         clamped = dot.div(mag).clamp(-1, 1)
         return = Num.acos(clamped)
     }
 
+    #!  Return the angle between "from" and "to".
+    #   The output is between -pi and pi
+    #   Positive means the angle is clockwise
+    #.
     signedAngle(from:Vector2, to:Vector2):Num
     {
-        # Return the angle between "from" and "to".
-        # The output is between -pi and pi
-        # Positive means the angle is clockwise
-
         a = from
         b = to
 
@@ -68,9 +68,9 @@ struct Vector2(x:Num, y:Num)
         return = angleSign.mul(Vector2.angle(a, b))
     }
 
+    #!  Reflect "v" in the direction "n"    #.
     reflect(v:Vector2, n:Vector2):Vector2
     {
-        # Reflect "v" in the direction "n"
         dot = n.dot(v)
         s = 2.mul(dot)
         t = n.scale(s)
@@ -127,29 +127,29 @@ struct Vector3(x:Num, y:Num, z:Num)
        return = diff.magnitude
     }
 
+    #!  Return the unsigned angle between a and b in radians    #.
     angle(a:Vector3, b:Vector3):Num 
     {
-        # Return the unsigned angle between a and b in radians
         dot = a.dot(b)
         mag = a.magnitude.mul(b.magnitude)
         clamped = Num.clamp(dot.div(mag), -1, 1)
         return = Num.acos(clamped) 
     }
 
+    #!  Return the signed angle between "from" and "to", the result is between
+    #   -180 and 180 degrees.
+    #   If the rotation is clockwise around the supplied axis then the result
+    #   is positive. The axis does not affect the magnitude of the result.
+    #.
     signedAngle(from:Vector3, to:Vector3, axis:Vector3):Num
     {
-        # Return the signed angle between "from" and "to", the result is between
-        # -180 and 180 degrees.
-        # If the rotation is clockwise around the supplied axis then the result
-        # is positive. The axis does not affect the magnitude of the result.
-
         angleSign = to.cross(from).dot(axis).sign
         return = Vector3.angle(from, to).mul(angleSign)
     }
 
+    #!  Reflect "v" in the direction "n"    #.
     reflect(v:Vector3, n:Vector3):Vector3
     {
-        # Reflect "v" in the direction "n"
         dot = n.dot(v)
         s = 2.mul(dot)
         t = n.scale(s)
@@ -208,9 +208,9 @@ struct Vector4(x:Num, y:Num, z:Num, w:Num)
         return = s.x.add(s.y).add(s.z).add(s.w)
     }
 
+    #!  Reflect "v" in the direction "n"    #.
     reflect(v:Vector4, n:Vector4):Vector4
     {
-        # Reflect "v" in the direction "n"
         dot = n.dot(v)
         s = 2.mul(dot)
         t = n.scale(s)

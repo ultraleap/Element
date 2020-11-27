@@ -1,13 +1,13 @@
 
+#!  A Polynomial defined by its coefficients.
+#   The coefficients must be numbers, and are stored in ascending
+#   powers of the argument.
+#
+#   For example
+#       Polynomial(list(5, 6, 7, 8)).eval(x) = 5 + 6x + 7x^2 + 8x^3
+#.
 struct Polynomial(coefficients:List)
 {
-    # A Polynomial defined by its coefficients.
-    # The coefficients must be numbers, and are stored in ascending
-    # powers of the argument.
-    #
-    # For example
-    #   Polynomial(list(5, 6, 7, 8)).eval(x) = 5 + 6x + 7x^2 + 8x^3
-
     eval(this:Polynomial, x:Num):Num
     {
         evaluator(a:Num, b):Num
@@ -21,6 +21,6 @@ struct Polynomial(coefficients:List)
 
 namespace StandardPolynomials
 {
-    # Should only be called in the range [0-1]
+    #!  Should only be called in the range [0-1] #.
     smoothstep = Polynomial(list(0, 0, 3, -2))
 }

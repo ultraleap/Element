@@ -1,28 +1,27 @@
 constraint PathFunc(u:Num):Vector3
 struct Bounds(lower:Num, upper:Num)
 
-
+#!  A Path is defined by a parametric equation of a path,
+#   and a domain over which the function is valid.
+#.
 struct Path(at:PathFunc, domain:Bounds)
 {
-    # A Path is defined by a parametric equation for a path,
-    # and a domain over which the function is valid.
-
     constraint ScalarTransform(x:Num):Num
     constraint Vector3Unary(v:Vector3):Vector3
     constraint Vector3Binary(v1:Vector3, v2:Vector3):Vector3
 
+    #!  Change the path domain from the current domain "newDomain".
+    #
+    #   This function returns a new path where the "newDomain" maps
+    #   onto the original domain.
+    #
+    #   This returned path, "newPath" has the properties:
+    #       newPath.domain = newDomain
+    #       newPath.at(newDomain.lower) = this.at(this.domain.lower)
+    #       newPath.at(newDomain.upper) = this.at(this.domain.lower)
+    #.
     changeDomain(this:Path, newDomain:Bounds):Path
     {
-        # Change the path domain from the current domain "newDomain".
-        #
-        # This function returns a new path where the "newDomain" maps
-        # onto the original domain.
-        #
-        # This returned path, "newPath" has the properties:
-        #   newPath.domain = newDomain
-        #   newPath.at(newDomain.lower) = this.at(this.domain.lower)
-        #   newPath.at(newDomain.upper) = this.at(this.domain.lower)
-
         uTransform(u:Num):Num
         {
             return = Num.lerp(u.sub(newDomain.lower).div(newDomain.upper.sub(newDomain.lower)), this.domain.lower, this.domain.upper)
@@ -31,32 +30,33 @@ struct Path(at:PathFunc, domain:Bounds)
         return = Path(transformedPathFunc, newDomain)
     }
 
+    #!  Returns a path which pingPongs along the original path
+    #   in the original domain.
+    #
+    #   Eg, if the original domain is (0, 1) then the returned
+    #   path also has a domain (0, 1). Over this domain, the returned
+    #   path travels to the end of the original path and back again.
+    #
+    #   newPath.domain = oldPath.domain
+    #   newPath.at(0) = oldPath.at(0)
+    #   newPath.at(0.5) = oldPath.at(1)
+    #   newPath.at(1) = oldPath.at(0)
+    #
+    #   This means that the path length is double the original path length.
+    #.
     pingPong(this:Path):Path
     {
-        # Returns a path which pingPongs along the original path
-        # in the original domain.
-        #
-        # Eg, if the original domain is (0, 1) then the returned
-        # path also has a domain (0, 1). Over this domain, the returned
-        # path travels to the end of the original path and back again.
-        #
-        # newPath.domain = oldPath.domain
-        # newPath.at(0) = oldPath.at(0)
-        # newPath.at(0.5) = oldPath.at(1)
-        # newPath.at(1) = oldPath.at(0)
-        #
-        # This means that the path length is double the original path length.
-
         unitIntervalTransform(u:Num):Num = if(u.gt(0.5), 1.sub(u).mul(2), u.mul(2))
         return = this.applyUnitIntervalTransformToDomain(unitIntervalTransform)
     }
 
+    #!  Returns the same path repeated "repetitions" times over
+    #   the same domain.
+    #
+    #   This changes the path length.
+    #.
     repeat(this:Path, repetitions:Num):Path
     {
-        # Returns the same path repeated "repetitions" times over
-        # the same domain.
-        #
-        # This changes the path length.
 
         unitIntervalTransform(u:Num):Num = u.mul(repetitions).rem(1)
         return = this.applyUnitIntervalTransformToDomain(unitIntervalTransform)
@@ -80,21 +80,21 @@ struct Path(at:PathFunc, domain:Bounds)
         return = this.applyUnitIntervalTransformToDomain(unitIntervalTransform)
     }
 
+    #!  Map 0 to 1 to the same range, but more smoothly #.
     easing(this:Path):Path
     {
-        # Map 0 to 1 to the same range, but more smoothly 
         smoothstep(t:Num):Num = 3.mul(t).mul(t).sub(2.mul(t).mul(t).mul(t))
         return = this.applyUnitIntervalTransformToDomain(smoothstep)
     }
 
+    #!  Concetenate the two paths. "boundary" must be a number between 0 and 1
+    #
+    #   The concatenated path has a domain (0, 1).
+    #   The domain (0, boundary) maps to the domain of path1, and
+    #   the domain (boundary, 1) maps to the domain of path2
+    #.
     concatenate(path1:Path, path2:Path, boundary:Num):Path
     {
-        # Concetenate the two paths. "boundary" must be a number between 0 and 1
-        #
-        # The concatenated path has a domain (0, 1).
-        # The domain (0, boundary) maps to the domain of path1, and
-        # the domain (boundary, 1) maps to the domain of path2
-
         pathA = path1.changeDomain(Bounds(0, boundary))
         pathB = path2.changeDomain(Bounds(boundary, 1))
 
@@ -103,43 +103,43 @@ struct Path(at:PathFunc, domain:Bounds)
         return = Path(newPathFunction, Bounds(0, 1))
     }
 
+    #!  Combine the two paths by adding the positions at each point
+    #
+    #   The two paths must have the same domain for this operation to be valid.
+    #   If they are not the same, the domain of path1 will be used.
+    #.
     add(path1:Path, path2:Path):Path
     {
-        # Combine the two paths by adding the positions at each point
-        #
-        # The two paths must have the same domain for this operation to be valid.
-        # If they are not the same, the domain of path1 will be used.
-        #
         return = Path.applyBinaryVectorOperation(path1, path2, Vector3.add)
     }
 
+    #!  Apply a Transform to all points on the path #.
     applyTransform(this:Path, transform:Transform):Path
     {
-        # Apply a Transform to all points on the path
         return = applyUnaryVectorOperation(this, transform.applyToPosition)
     }
 
+    #!  Apply an offset to the path #.
     applyOffset(this:Path, offset:Vector3):Path
     {
-        # Apply an offset to the path
         adder = _(v:Vector3):Vector3 = v.add(offset)
         return = applyUnaryVectorOperation(this, adder)
     }
 
+    #!  Apply an operation to all points on the path #.
     applyUnaryVectorOperation(this:Path, operation:Vector3Unary):Path
     {
-        # Apply the operation to all points on the path
         newPathFunction(u:Num):Vector3 = operation(this.at(u))
         return = Path(newPathFunction, this.domain)
     }
 
+    #!  Combine the two paths by applying the binary operation at each point
+    #
+    #   The two paths must have the same domain for this operation to be valid.
+    #   If they are not the same, the domain of path1 will be used.
+    #.
     applyBinaryVectorOperation(path1:Path, path2:Path, operation:Vector3Binary):Path
     {
-        # Combine the two paths by applying the binary operation at each point
-        #
-        # The two paths must have the same domain for this operation to be valid.
-        # If they are not the same, the domain of path1 will be used.
-        #
         newPathFunction(u:Num):Vector3
         {
             path1Pos = path1.at(u)
@@ -149,13 +149,14 @@ struct Path(at:PathFunc, domain:Bounds)
         return = Path(newPathFunction, path1.domain)
     }
 
+    #!  Apply the unitIntervalTransform to the path inputs over the domain
+    #
+    #   The unitIntervalTransform must map a point in the range (0, 1) to another point in this range.
+    #   The returned Path has the same domain at the original Path, but with the transform applied
+    #   to all inputs.
+    #.
     applyUnitIntervalTransformToDomain(this:Path, unitIntervalTransform:ScalarTransform):Path
     {
-        # Apply the unitIntervalTransform to the path inputs over the domain
-        #
-        # The unitIntervalTransform must map a point in the range (0, 1) to another point in this range.
-        # The returned Path has the same domain at the original Path, but with the transform applied
-        # to all inputs.
 
         domainTransform(u:Num):Num
         {

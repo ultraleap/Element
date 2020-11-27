@@ -1,32 +1,32 @@
 intrinsic struct Num
 {
     # Arithmetic functions
-    # a + b
+    #!  a + b   #.
     intrinsic function add(a:Num, b:Num):Num
-    # a - b
+    #!  a - b   #.
     intrinsic function sub(a:Num, b:Num):Num
-    # a * b
+    #!  a * b   #.
     intrinsic function mul(a:Num, b:Num):Num
-    # a / b
+    #!  a / b   #.
     intrinsic function div(a:Num, b:Num):Num
 
-    # a ^ b
+    #!  a ^ b   #.
     intrinsic function pow(a:Num, b:Num):Num
-    # a % b - rounds towards negative infinity
+    #!  a % b - rounded towards negative infinity   #.
     intrinsic function rem(a:Num, b:Num):Num
 
-    # Finds the minimum of 2 numbers
+    #!  Find the minimum of 2 numbers   #.
     intrinsic function min(a:Num, b:Num):Num
 
-    # Finds the maximum of 2 numbers
+    #!  Find the maximum of 2 numbers   #.
     intrinsic function max(a:Num, b:Num):Num
 
-    # |a| - absolute value function
+    #!  |a| - absolute value function   #.
     intrinsic function abs(a:Num):Num
 
-    # ⌈a⌉ - smallest next integer
+    #!  ⌈a⌉ - smallest next integer     #.
     intrinsic function ceil(a:Num):Num
-    # ⌊a⌋ - largest previous integer
+    #!  ⌊a⌋ - largest previous integer  #.
     intrinsic function floor(a:Num):Num
 
     # Trigonometric functions
@@ -38,7 +38,7 @@ intrinsic struct Num
     intrinsic function acos(theta:Num):Num
     intrinsic function atan(theta:Num):Num
 
-    # 2 argument arctangent function where a and b specify a cartesian coordinate
+    #!  2 argument arctangent function where a and b specify a cartesian coordinate #.
     intrinsic function atan2(y:Num, x:Num):Num
 
     degrees(radians:Num):Num = radians.mul(180.div(pi))
@@ -63,7 +63,7 @@ intrinsic struct Num
     
     exp(a:Num, e:Num):Num   = a.pow(e)
 
-    # remainder rounded towards 0
+    #!  remainder rounded towards 0 #.
     mod(a:Num, b:Num):Num
     {
         c = a.rem(b)

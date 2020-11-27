@@ -1,16 +1,28 @@
-# list(...):List
-# Creates a literal List from the parameters
-# Elements must be homogeneous
+#!  List constructor.
+#   list(...):List
+#   Create a literal List from the parameters.
+#   Elements must be homogeneous.
+#
+#   Example:
+#       list(1, 2, 3)
+#.
 intrinsic function list:List
 
-# Represents a finite set of elements
+#!  Represent a finite set of elements #.
 intrinsic struct List(at:Indexer, count:Num)
 {
-    # fold summarises a list
-    # Invokes accumulator(total, element) with each element of the list, starting with initial as the total and returning a new total each iteration.
-    # For example, fold(list(1, 2, 3), 0, Num.add) evaluates to Num.add(Num.add(Num.add(0, 1), 2), 3)
+    #!  Summarise a List
+    #
+    #   Invoke accumulator(total, element) with each element of the list,
+    #   starting with initial as the total and returning a new total each iteration.
+    #   For example:
+    #       fold(list(1, 2, 3), 0, Num.add)
+    #   evaluates to:
+    #       Num.add(Num.add(Num.add(0, 1), 2), 3)
+    #.
     intrinsic function fold(list:List, initial, accumulator:Binary)
 
+    #!  Apply a mapper to each element of the list #.
     map(a:List, mapper:Unary):List = List(_(idx:Num) = mapper(a.at(idx)), a.count)
 
     zip(a:List, b:List, zipper:Binary):List = List(_(idx:Num) = zipper(a.at(idx), b.at(idx)), a.count)

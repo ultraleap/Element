@@ -4,11 +4,11 @@ struct Complex(real:Num, imag:Num)
     unitReal = Complex(1, 0)
     unitImag = Complex(0, 1)
 
+    #!  Create a Complex number from its polar coordinates
+    #   The angle must be in radians
+    #.
     fromPolar(r:Num, theta:Num):Complex
     {
-        # Create a Complex number from its polar coordinates
-        # the angle theta must be in radians
-
         x = r.mul(Num.cos(theta))
         y = r.mul(Num.sin(theta))
         return = Complex(x, y)
@@ -19,11 +19,11 @@ struct Complex(real:Num, imag:Num)
     modulusSquared(c:Complex):Num = c.mul(c.conjugate).real
     modulus(c:Complex):Num = Num.sqrt(c.modulusSquared)
 
+    #!  Get the polar angle of the number in radians
+    #   Result is between -pi and pi
+    #.
     argument(c:Complex):Num
     {
-        # The polar angle of the number in radians
-        # Answer between -pi and pi
-
         angle = Num.acos(c.real.div(c.modulus))
         angleSign = if(c.imag.geq(0), 1, -1)
         return = angle.mul(angleSign)
