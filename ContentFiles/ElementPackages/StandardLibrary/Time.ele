@@ -1,8 +1,8 @@
-#!  TimeSpan objects store time using two Nums to gain increased precision
+#[[ TimeSpan objects store time using two Nums to gain increased precision
 #
 #   It is not recommended to construct manually from the constructor, but instead
 #   to use a factory function such as "fromSeconds" if you need to create one.
-#.
+#]]
 struct TimeSpan(integer:Num, fractional:Num)
 {
     # Internally the integer component can be positive or negative,
@@ -17,16 +17,16 @@ struct TimeSpan(integer:Num, fractional:Num)
     #
     # This makes addition and negation quick and easy. Multiplication is a little more difficult.
 
-    #!  Create a TimeSpan from the specified number, in seconds  #.
+    #[[ Create a TimeSpan from the specified number, in seconds ]]
     fromSeconds(x:Num):TimeSpan = TimeSpan(x.floor, x.sub(x.floor))
 
-    #!  Return the value of the TimeSpan, modulo one "period"    #.
+    #[[ Return the value of the TimeSpan, modulo one "period" ]]
     value(this:TimeSpan, period:Num):Num = this.integer.rem(period).add(this.fractional).rem(period)
 
-    #!  Return the integer number of elapsed periods    #.
+    #[[ Return the integer number of elapsed periods ]]
     cycles(this:TimeSpan, period:Num):Num = this.integer.div(period).add(this.fractional.div(period)).floor
 
-    #!  Return the progress of the current time period. Between 0 and 1. #.
+    #[[ Return the progress of the current time period. Between 0 and 1. ]]
     progress(this:TimeSpan, period:Num):Num = this.value(period).div(period)
 
     abs(this:TimeSpan):TimeSpan

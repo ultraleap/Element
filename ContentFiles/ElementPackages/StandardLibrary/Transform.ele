@@ -1,4 +1,4 @@
-#!  Transforms use homogeneous co-ordinate space to perform rotations and
+#[[ Transforms use homogeneous co-ordinate space to perform rotations and
 #   translations on position vectors and direction vectors.
 #
 #   These wrap around a Matrix4x4 and provide a convenient API for spatial
@@ -7,14 +7,14 @@
 #   As a 4x4 matrix, the 3x3 rotation matrix is stored as the upper-left part,
 #   and the 1x3 translation vector is stored as the top of the rightmost column.
 #   The lower-right element is always 1.
-#.
+#]]
 
 struct Transform(matrix:Matrix4x4)
 {
     # Factories
     identity:Transform = Transform(Matrix4x4.identity)
 
-    #!  Create a Transform from the rotation and translation components #.
+    #[[ Create a Transform from the rotation and translation components ]]
     fromRotationAndTranslation(m:Matrix3x3, v:Vector3):Transform
     {
         transformMatrix = Matrix4x4.fromCols(
@@ -37,10 +37,10 @@ struct Transform(matrix:Matrix4x4)
     }
 
     # Properties
-    #!  Get the translation part of the Transform   #.
+    #[[ Get the translation part of the Transform ]]
     translation(this:Transform):Vector3 = this.matrix.wCol.toVector3
 
-    #!  Get the rotation part of the Transform  #.
+    #[[ Get the rotation part of the Transform ]]
     rotation(this:Transform):Matrix3x3
     {
         rotationMatrix = Matrix3x3.fromCols(

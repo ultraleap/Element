@@ -1,14 +1,14 @@
-#!  Standard Paths are pre-defined Paths. They all have the domain (0, 1).
+#[[ Standard Paths are pre-defined Paths. They all have the domain (0, 1).
 #
 #   If the path length is possible to calculate analytically, a separate
 #   function is defined to provide it. Note that applying transforms
 #   to these paths may change the path length.
-#.
+#]]
 namespace StandardPaths
 {
-    #!  A clockwise circle in the x-y plane, beginning at
+    #[[ A clockwise circle in the x-y plane, beginning at
     #   x=0, y=radius
-    #.
+    #]]
     circle(radius:Num):Path
     {
         circleFunction(u:Num):Vector3
@@ -21,7 +21,7 @@ namespace StandardPaths
     }
     circleLength(radius:Num):Num = Num.tau.mul(radius)
 
-    #!  A straight line from point 'a' to point 'b' #.
+    #[[ A straight line from point 'a' to point 'b' ]]
     line(a:Vector3, b:Vector3):Path
     {
         lineFunction(u:Num):Vector3 = Vector3.lerp(u, a, b)
@@ -29,12 +29,12 @@ namespace StandardPaths
     }
     lineLength(a:Vector3, b:Vector3):Num = Vector3.distance(a, b)
 
-    #!  A rectangle in the x-y plane, starting at the origin
+    #[[ A rectangle in the x-y plane, starting at the origin
     #
     #   Goes clockwise to the points:
     #       (0, 0, 0), (0, height, 0), (width, height, 0), (width, 0, 0)
     #   in that order.
-    #.
+    #]]
     rectangle(width:Num, height:Num):Path
     {
         pointA = Vector3(0, 0, 0)
@@ -53,11 +53,11 @@ namespace StandardPaths
     }
     rectangleLength(width:Num, height:Num):Num = 2.mul(width.add(height))
 
-    #!  Create a lissajous curve in the x-y plane.
+    #[[ Create a lissajous curve in the x-y plane.
     #
     #   The frequencies must be integers for the
     #   path to start and end at the same position.
-    #.
+    #]]
     lissajous(radii:Vector2, frequencies:Vector2, phaseDifference:Num):Path
     {
         omega = frequencies.scale(Num.tau)  # Angular Frequencies
@@ -75,11 +75,11 @@ namespace StandardPaths
         return = Path(lissajousFunction, Bounds(0, 1))
     }
 
-    #!  Create a rose curve in the x-y plane.
+    #[[ Create a rose curve in the x-y plane.
     #
     #   The petalConstant must be an integer for the
     #   path to start and end at the same position.
-    #.
+    #]]
     rose(radius:Num, frequency:Num, petalConstant:Num):Path
     {
         omega = frequency.mul(Num.tau)
