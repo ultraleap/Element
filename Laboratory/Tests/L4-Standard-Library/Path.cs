@@ -237,7 +237,7 @@ namespace Laboratory.Tests.L4.StandardLibrary
                 new ExpressionEvaluation(args.rhs, mode));
         }
         
-        public static (string lhs, string rhs)[] ConcatenateArgs =
+        public static (string lhs, string rhs)[] ConcateByDomainArgs =
         {
             ("(0.5, 0)", "Vector3(0, 0, 0)"),
             ("(0.5, 0.4)", "Vector3(0.8, 0, 0)"),
@@ -251,15 +251,73 @@ namespace Laboratory.Tests.L4.StandardLibrary
             ("(0.2, 1)", "Vector3(1, 1, 0)"),
         };
         [Test]
-        public void Concatenate([ValueSource(nameof(ConcatenateArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        public void ConcatByDomain([ValueSource(nameof(ConcateByDomainArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
         {
             string testFunction = "_(boundary:Num, u:Num):Vector3 = " +
-                                  "Path.concatenate(" +
+                                  "Path.concatByDomainBoundary(" +
                                   "StandardPaths.line(Vector3(0, 0, 0), Vector3(1, 0, 0))," +
                                   "StandardPaths.line(Vector3(1, 0, 0), Vector3(1, 1, 0))," +
                                   "boundary).at(u)";
             AssertApproxEqual(ValidatedCompilerInput,
                 new FunctionEvaluation(testFunction, args.lhs, mode),
+                new ExpressionEvaluation(args.rhs, mode));
+        }
+        
+                
+        public static (string lhs, string rhs)[] ConcatByLengthRatioArgs =
+        {
+            ("(1, 0)", "Vector3(0, 0, 0)"),
+            ("(1, 0.4)", "Vector3(0.8, 0, 0)"),
+            ("(1, 0.5)", "Vector3(1, 0, 0)"),
+            ("(1, 0.9)", "Vector3(1, 0.8, 0)"),
+            ("(1, 1)", "Vector3(1, 1, 0)"),
+            ("(4, 0)", "Vector3(0, 0, 0)"),
+            ("(4, 0.1)", "Vector3(0.5, 0, 0)"),
+            ("(4, 0.2)", "Vector3(1, 0, 0)"),
+            ("(4, 0.6)", "Vector3(1, 0.5, 0)"),
+            ("(4, 1)", "Vector3(1, 1, 0)"),
+        };
+        [Test]
+        public void ConcatByLengthRatio([ValueSource(nameof(ConcatByLengthRatioArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string testFunction = "_(lengthRatio:Num, u:Num):Vector3 = " +
+                                  "Path.concatByLengthRatio(" +
+                                  "StandardPaths.line(Vector3(0, 0, 0), Vector3(1, 0, 0))," +
+                                  "StandardPaths.line(Vector3(1, 0, 0), Vector3(1, 1, 0))," +
+                                  "lengthRatio).at(u)";
+            AssertApproxEqual(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, args.lhs, mode),
+                new ExpressionEvaluation(args.rhs, mode));
+        }
+        
+        
+        public static (string lhs, string rhs)[] ConcatAllArgs =
+        {
+            ("0", "Vector3(0, 0, 0)"),
+            ("0.1", "Vector3(1, 0, 0)"),
+            ("0.2", "Vector3(2, 0, 0)"),
+            ("0.3", "Vector3(3, 0, 0)"),
+            ("0.4", "Vector3(3, 1, 0)"),
+            ("0.5", "Vector3(3, 2, 0)"),
+            ("0.6", "Vector3(2, 2, 0)"),
+            ("0.7", "Vector3(1, 2, 0)"),
+            ("0.8", "Vector3(0, 2, 0)"),
+            ("0.9", "Vector3(0, 1, 0)"),
+            ("1", "Vector3(0, 0, 0)"),
+        };
+        [Test]
+        public void ConcatAll([ValueSource(nameof(ConcatAllArgs))] (string lhs, string rhs) args, [Values] EvaluationMode mode)
+        {
+            string testFunction = "_(u:Num):Vector3 = " +
+                                  "Path.concatAll(list(" +
+                                  "{path=StandardPaths.line(Vector3.zero, Vector3(3, 0, 0)), length=3}," +
+                                  "{path=StandardPaths.line(Vector3(3, 0, 0), Vector3(3, 2, 0)), length=2}," +
+                                  "{path=StandardPaths.line(Vector3(3, 2, 0), Vector3(0, 2, 0)), length=3}," +
+                                  "{path=StandardPaths.line(Vector3(0, 2, 0), Vector3(0, 0, 0)), length=2}" +
+                                  ")).at(u)";
+            string evalArgs = "(" + args.lhs + ")";
+            AssertApproxEqualRelaxed(ValidatedCompilerInput,
+                new FunctionEvaluation(testFunction, evalArgs, mode),
                 new ExpressionEvaluation(args.rhs, mode));
         }
     }

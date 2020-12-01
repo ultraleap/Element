@@ -95,13 +95,75 @@ struct Path(at:PathFunc, domain:Bounds)
         return = this.applyUnitIntervalTransformToDomain(uiTransform)
     }
 
-    #[[ Concetenate the two paths. "boundary" must be a number between 0 and 1
+    #[[ Concatenate multiple paths
     #
-    #   The concatenated path has a domain (0, 1).
+    #   Supply a list of paths and their corresponding lengths.
+    #
+    #   The input needs to be a list of anonymous blocks, each
+    #   with a 'path' and a 'length' field (see example below).
+    #
+    #   Note that the absolute values of the lengths do not need to
+    #   be accurate, only their relative values are used. All pathLengths
+    #   must be positive numbers.
+    #
+    #   Usage:
+    #       path1 = Path(...)
+    #       path2 = Path(...)
+    #       length1 = (...)
+    #       length2 = (...)
+    #       result = concatAll(
+    #           list(
+    #               {path=path1, length=length1},
+    #               {path=path2, length=length2}
+    #           )
+    #       )
+    #
+    #]]
+    concatAll(pathsAndLengths:List):Path
+    {
+        firstPathAndLength = pathsAndLengths.at(0)
+        otherPathsAndLengths = pathsAndLengths.skip(1)
+
+        accumulator(current, next)
+        {
+            lengthRatio = next.length.div(current.length)
+            newPath = current.path.concatByLengthRatio(next.path, lengthRatio)
+
+            newLength = current.length.add(next.length)
+            return = {path=newPath, length=newLength}
+        }
+
+        return = otherPathsAndLengths.fold(firstPathAndLength, accumulator).path
+    }
+
+    #[[ Concatenate two paths by specifying the length ratio
+    #
+    #   The "lengthRatio" needs to be (path2Length / path1Length)
+    #
+    #   The new path has a domain (0, 1), and goes along path1 and
+    #   then path2. The lengthRatio is used to determine where in this
+    #   domain path1 should end and path2 should begin.
+    #]]
+    concatByLengthRatio(path1:Path, path2:Path, lengthRatio:Num):Path
+    {
+        #   The domain boundary is calculated by
+        #   boundary = length1 / (length1 + length2)
+    
+        boundary = 1.div(1.add(lengthRatio))
+        return = concatByDomainBoundary(path1, path2, boundary)
+    }
+
+    #[[ Concatenate two paths by specifying the new domain boundary
+    #
+    #   The output path has a domain (0, 1)
+    #
+    #   The "boundary" parameter defines at which point in this domain
+    #   "path1" should end and "path1" should begin.
+    #
     #   The domain (0, boundary) maps to the domain of path1, and
     #   the domain (boundary, 1) maps to the domain of path2
     #]]
-    concatenate(path1:Path, path2:Path, boundary:Num):Path
+    concatByDomainBoundary(path1:Path, path2:Path, boundary:Num):Path
     {
         pathA = path1.changeDomain(Bounds(0, boundary))
         pathB = path2.changeDomain(Bounds(boundary, 1))

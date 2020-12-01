@@ -42,14 +42,14 @@ namespace StandardPaths
         pointC = Vector3(width, height, 0)
         pointD = Vector3(width, 0, 0)
 
-        lineAB = line(pointA, pointB)
-        lineBC = line(pointB, pointC)
-        lineCD = line(pointC, pointD)
-        lineDA = line(pointD, pointA)
-
-        concatAC = Path.concatenate(lineAB, lineBC, height.div(height.add(width)))
-        concatCA = Path.concatenate(lineCD, lineDA, height.div(height.add(width)))
-        return = Path.concatenate(concatAC, concatCA, 0.5)
+        return = Path.concatAll(
+            list(
+                {path=line(pointA, pointB), length=height},
+                {path=line(pointB, pointC), length=width},
+                {path=line(pointC, pointD), length=height},
+                {path=line(pointD, pointA), length=width}
+            )
+        )
     }
     rectangleLength(width:Num, height:Num):Num = 2.mul(width.add(height))
 
