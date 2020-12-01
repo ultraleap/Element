@@ -1,4 +1,4 @@
-# Anything at all!
+#[[ Anything at all! ]]
 intrinsic constraint Any
 
 # Arity-based function constraints
@@ -10,11 +10,12 @@ constraint Indexer(i:Num)
 constraint Predicate(a):Bool
 
 
-# Calls body repeatedly until condition is not met
-# WARNING: Usage of this function breaks halting guarantees
-# Body is a Unary function supplied with the output from the previous body starting with initial
-# Thus the types of initial and both the parameter and return of Unary must have compatible interfaces
-# List.fold is recommended as a constant-time alternative when iteration count is known
+#[[ Call body repeatedly until condition is not met
+#   WARNING: Usage of this function breaks halting guarantees
+#   Body is a Unary function supplied with the output from the previous body starting with initial
+#   Thus the types of initial and both the parameter and return of Unary must have compatible interfaces
+#   List.fold is recommended as a constant-time alternative when iteration count is known
+#]]
 intrinsic function for(initial, condition:Predicate, body:Unary)
 
 
