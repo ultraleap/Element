@@ -57,10 +57,8 @@ struct Path(at:PathFunc, domain:Bounds)
     #]]
     repeat(this:Path, repetitions:Num):Path
     {
-
         unitIntervalTransform(u:Num):Num = u.mul(repetitions).rem(1)
         return = this.applyUnitIntervalTransformToDomain(unitIntervalTransform)
-        
     }
 
     reverse(this:Path):Path
@@ -85,6 +83,16 @@ struct Path(at:PathFunc, domain:Bounds)
     {
         smoothstep(t:Num):Num = 3.mul(t).mul(t).sub(2.mul(t).mul(t).mul(t))
         return = this.applyUnitIntervalTransformToDomain(smoothstep)
+    }
+
+    #[[ Quantise the positions on the path with nSteps ]]
+    quantise(this:Path, nSteps:Num):Path
+    {
+        uiTransform(u:Num):Num
+        {
+            return = u.mul(nSteps).floor.div(nSteps.sub(1))
+        }
+        return = this.applyUnitIntervalTransformToDomain(uiTransform)
     }
 
     #[[ Concetenate the two paths. "boundary" must be a number between 0 and 1
