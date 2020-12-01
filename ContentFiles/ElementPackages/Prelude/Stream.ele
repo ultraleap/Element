@@ -1,4 +1,4 @@
-#[[ Represents an infinite set of elements  #.
+#[[ Represents an infinite set of elements ]]
 struct Stream(at:Indexer)
 {
     repeat(value):Stream = Stream(_(_) = value)
