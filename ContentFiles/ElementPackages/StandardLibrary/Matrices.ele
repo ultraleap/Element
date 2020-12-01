@@ -4,6 +4,7 @@
 # and there are also a "fromCols" function to allow definition
 # using column vectors. A corresponding "fromRows" function
 # also exists which can be used to help with code readability.
+#
 
 struct Matrix2x2(m00:Num, m01:Num, m10:Num, m11:Num)
 {
@@ -20,9 +21,9 @@ struct Matrix2x2(m00:Num, m01:Num, m10:Num, m11:Num)
         return = Matrix2x2.fromRows(xCol, yCol).transpose
     }
 
+    #[[ Create a diagonal matrix from the specified vector ]]
     fromDiagonal(diag:Vector2):Matrix2x2
     {
-        # Create a diagonal matrix from the specified vector
         return = Matrix2x2(diag.x, 0, 0, diag.y)
     }
 
@@ -42,11 +43,12 @@ struct Matrix2x2(m00:Num, m01:Num, m10:Num, m11:Num)
     }
 
     # Operations
+
+    #[[ Multiply two square matrices
+    #   Matrix 'a' is on the left and Matrix 'b' is on the right.
+    #]]
     mul(a:Matrix2x2, b:Matrix2x2):Matrix2x2
     {
-        # Multiply two square matrices
-        # Matrix "a" on the left and Matrix "b" is on the right
-
         new_m00 = a.xRow.dot(b.xCol)
         new_m01 = a.xRow.dot(b.yCol)
         new_m10 = a.yRow.dot(b.xCol)
@@ -54,11 +56,11 @@ struct Matrix2x2(m00:Num, m01:Num, m10:Num, m11:Num)
         return = Matrix2x2(new_m00, new_m01, new_m10, new_m11)
     }
 
+    #[[ Multiple a vector by the matrix
+    #   The matrix is on the left, and the vector is on the right.
+    #]]
     vectorMul(m:Matrix2x2, v:Vector2):Vector2
     {
-        # Multiply a vector by the matrix
-        # The matrix is on the left, the vector is on the right
-    
         return = Vector2(m.xRow.dot(v), m.yRow.dot(v))
     }
 }
@@ -81,9 +83,9 @@ struct Matrix3x3(m00:Num, m01:Num, m02:Num, m10:Num, m11:Num, m12:Num, m20:Num, 
                             zRow.x, zRow.y, zRow.z)
     }
 
+    #[[ Create a diagonal matrix from a the specified vector ]]
     fromDiagonal(diag:Vector3):Matrix3x3
     {
-        # Create a diagonal matrix from the specified vector
         return = Matrix3x3.fromRows(Vector3(diag.x, 0, 0), Vector3(0, diag.y, 0), Vector3(0, 0, diag.z))
     }
 
@@ -123,11 +125,12 @@ struct Matrix3x3(m00:Num, m01:Num, m02:Num, m10:Num, m11:Num, m12:Num, m20:Num, 
     }
 
     # Operations
+
+    #[[ Multiply two square matrices
+    #   Matrix 'a' is on the left and 'b' is on the right
+    #]]
     mul(a:Matrix3x3, b:Matrix3x3):Matrix3x3
     {
-        # Multiply two square matrices
-        # Matrix "a" on the left and Matrix "b" is on the right
-
         createNewRow = _(v:Vector3, m:Matrix3x3)
         {
             return = Vector3(v.dot(m.xCol), v.dot(m.yCol), v.dot(m.zCol))
@@ -142,11 +145,11 @@ struct Matrix3x3(m00:Num, m01:Num, m02:Num, m10:Num, m11:Num, m12:Num, m20:Num, 
         return = multipliedMatrix
     }
 
+    #[[ Multiple a vector by the matrix
+    #   The matrix is on the left, and the vector is on the right.
+    #]]
     vectorMul(m:Matrix3x3, v:Vector3):Vector3
     {
-        # Multiply a vector by the matrix
-        # The matrix is on the left, the vector is on the right
-
         return = Vector3(m.xRow.dot(v), m.yRow.dot(v), m.zRow.dot(v))
     }
 }
@@ -172,9 +175,9 @@ struct Matrix4x4(m00:Num, m01:Num, m02:Num, m03:Num,
         return = Matrix4x4.fromRows(xCol, yCol, zCol, wCol).transpose
     }
 
+    #[[ Create a diagonal matrix from its diagonal components ]]
     fromDiagonal(diag:Vector4):Matrix4x4
     {
-        # Create a diagonal matrix from its diagonal components
         return = Matrix4x4.fromRows(
             Vector4(diag.x, 0, 0, 0),
             Vector4(0, diag.y, 0, 0),
@@ -226,11 +229,11 @@ struct Matrix4x4(m00:Num, m01:Num, m02:Num, m03:Num,
         return = resultComponents.dot(signVector)
     }
 
+    #[[ Multiply two square matrices
+    #   Matrix 'a' is on the left and 'b' is on the right
+    #]]
     mul(a:Matrix4x4, b:Matrix4x4):Matrix4x4
     {
-        # Multiply two square matrices
-        # Matrix "a" on the left and Matrix "b" is on the right
-
         createNewRow = _(v:Vector4, m:Matrix4x4)
         {
             return = Vector4(v.dot(m.xCol), v.dot(m.yCol), v.dot(m.zCol), v.dot(m.wCol))
@@ -246,11 +249,11 @@ struct Matrix4x4(m00:Num, m01:Num, m02:Num, m03:Num,
         return = multipliedMatrix
     }
 
+    #[[ Multiple a vector by the matrix
+    #   The matrix is on the left, and the vector is on the right.
+    #]]
     vectorMul(this:Matrix4x4, v:Vector4):Vector4
     {
-        # Multiply a vector by the matrix
-        # The matrix is on the left, the vector is on the right
-
         multiply(matrixRow:Vector4):Num = matrixRow.dot(v)
         x = multiply(this.xRow)
         y = multiply(this.yRow)
