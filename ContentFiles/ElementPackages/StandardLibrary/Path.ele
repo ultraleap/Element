@@ -18,7 +18,7 @@ struct Path(at:PathFunc, domain:Bounds)
     #   This returned path, "newPath" has the properties:
     #       newPath.domain = newDomain
     #       newPath.at(newDomain.lower) = this.at(this.domain.lower)
-    #       newPath.at(newDomain.upper) = this.at(this.domain.lower)
+    #       newPath.at(newDomain.upper) = this.at(this.domain.upper)
     #]]
     changeDomain(this:Path, newDomain:Bounds):Path
     {
