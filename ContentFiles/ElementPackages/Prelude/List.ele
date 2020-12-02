@@ -60,7 +60,7 @@ intrinsic struct List(at:Indexer, count:Num)
 
     countWhere(a:List, predicate:Predicate):Num = a.fold(0, _(current, next) = if(predicate(next), Num.add(current, 1), current))
 
-    reverse(a:List):List = List(_(idx:Num) = a.at(count.sub(idx).sub(1)), a.count)
+    reverse(a:List):List = List(_(idx:Num) = a.at(a.count.sub(idx).sub(1)), a.count)
 
     findLast(a:List, predicate:Predicate, default) = a.fold(default, _(current, next) = predicate(next).if(next, current))
 
