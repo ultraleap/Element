@@ -15,6 +15,11 @@ element_result error::log_any_error(const element_log_ctx* logger) const
     return log_once(logger);
 }
 
+std::string error::get_name() const
+{
+    return "";
+}
+
 bool error::is_constant() const
 {
     return true;

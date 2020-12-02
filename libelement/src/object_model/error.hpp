@@ -26,6 +26,7 @@ namespace element
         [[nodiscard]] bool is_error() const override;
         element_result log_any_error(const element_log_ctx* logger) const override;
 
+        [[nodiscard]] std::string get_name() const override;
         [[nodiscard]] bool is_constant() const override;
 
         [[nodiscard]] object_const_shared_ptr index(const compilation_context& context,

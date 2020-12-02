@@ -57,6 +57,11 @@ std::string namespace_declaration::typeof_info() const
     return "Namespace";
 }
 
+std::string expression_chain::get_name() const
+{
+    return "";
+}
+
 std::string expression_chain::typeof_info() const
 {
     //TODO: We need an override here since object::typeof_info is pure virtual, but is a value required here?
@@ -108,6 +113,14 @@ std::string port::typeof_info() const
 std::string constraint::to_code(const int depth) const
 {
     return "?";
+}
+
+std::string constraint::get_name() const
+{
+    if (declarer)
+        return declarer->get_name();
+
+    return "";
 }
 
 std::string struct_declaration::to_code(const int depth) const

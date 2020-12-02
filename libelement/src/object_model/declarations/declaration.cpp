@@ -19,6 +19,11 @@ declaration::declaration(identifier name, const scope* parent)
     assert(parent);
 }
 
+std::string declaration::get_name() const
+{
+    return name.value;
+}
+
 bool declaration::has_scope() const
 {
     return !our_scope->is_empty();

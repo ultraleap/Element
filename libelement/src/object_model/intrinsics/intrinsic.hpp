@@ -17,6 +17,7 @@ namespace element
     public:
         intrinsic(element_type_id id);
 
+        [[nodiscard]] std::string get_name() const override;
         [[nodiscard]] std::string typeof_info() const override;
 
         template <typename T>

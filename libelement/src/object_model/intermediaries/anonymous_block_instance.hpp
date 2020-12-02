@@ -13,6 +13,7 @@ namespace element
 
         //[[nodiscard]] std::string typeof_info() const override;
 
+        [[nodiscard]] std::string get_name() const override;
         [[nodiscard]] bool is_constant() const override;
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;

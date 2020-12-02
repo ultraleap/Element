@@ -25,3 +25,8 @@ object_const_shared_ptr intrinsic_constructor_num::call(
 
     return evaluate(context, std::move(expr));
 }
+
+std::string intrinsic_constructor_num::get_name() const
+{
+    return "Num";
+}

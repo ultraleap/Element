@@ -12,6 +12,7 @@ namespace element
     public:
         explicit expression_chain(const declaration* declarer);
 
+        [[nodiscard]] std::string get_name() const override;
         [[nodiscard]] std::string typeof_info() const override;
         [[nodiscard]] std::string to_code(const int depth = 0) const override;
         [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,

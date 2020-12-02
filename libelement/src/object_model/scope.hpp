@@ -15,6 +15,7 @@ namespace element
     public:
         scope(const scope* parent_scope, const object* declaration_or_expression);
 
+        [[nodiscard]] std::string get_name() const override;
         [[nodiscard]] const declaration* find(const identifier& name, bool recurse) const;
         [[nodiscard]] bool is_root() const { return parent_scope == nullptr; }
         [[nodiscard]] bool is_empty() const { return declarations.empty(); }

@@ -37,3 +37,8 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
 
     return evaluate(context, std::move(new_expr));
 }
+
+std::string intrinsic_constructor_bool::get_name() const
+{
+    return "Bool";
+}

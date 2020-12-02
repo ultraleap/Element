@@ -12,6 +12,7 @@ namespace element
             : declarer(declarer)
         {}
 
+        [[nodiscard]] std::string get_name() const override { return declarer->get_name(); }
         [[nodiscard]] std::string typeof_info() const override { return declarer->typeof_info(); }
         [[nodiscard]] std::string to_code(const int depth) const override { return declarer->to_code(depth); }
         [[nodiscard]] bool has_inputs() const { return declarer->has_inputs(); }
