@@ -238,6 +238,20 @@ void element_instruction_delete(
     element_instruction** instruction);
 
 /**
+ * @brief gets the size of the instruction (number of element_value's it represents), including the size of any children
+ */
+element_result element_instruction_get_size(
+    element_instruction* instruction,
+    size_t* size);
+
+/**
+ * @brief whether the instruction is a constant (i.e. a literal number) or not
+ */
+element_result element_instruction_is_constant(
+    element_instruction* instruction,
+    bool* constant);
+
+/**
  * @brief finds a declaration from the loaded element code
  *
  * @param[in] interpreter       interpreter context

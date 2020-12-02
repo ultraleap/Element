@@ -190,6 +190,30 @@ void element_instruction_delete(element_instruction** instruction)
     *instruction = nullptr;
 }
 
+element_result element_instruction_get_size(element_instruction* instruction, size_t* size)
+{
+    if (!instruction || !instruction->instruction)
+        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
+
+    if (!size)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *size = instruction->instruction->get_size();
+    return ELEMENT_OK;
+}
+
+element_result element_instruction_is_constant(element_instruction* instruction, bool* constant)
+{
+    if (!instruction || !instruction->instruction)
+        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
+
+    if (!constant)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *constant = instruction->instruction->is_constant();
+    return ELEMENT_OK;
+}
+
 element_result element_interpreter_find(element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
 {
     if (!interpreter)
