@@ -42,11 +42,10 @@ namespace element
             return false;
         }
 
-        [[nodiscard]] const constraint* get_constraint() const final { return actual_type; };
-
+        [[nodiscard]] const constraint* get_constraint() const final { return actual_type; }
+        [[nodiscard]] std::string get_name() const override { return actual_type->get_name(); }
         [[nodiscard]] std::string typeof_info() const override;
-
-        [[nodiscard]] std::shared_ptr<const instruction> to_instruction() const final { return shared_from_this(); };
+        [[nodiscard]] std::shared_ptr<const instruction> to_instruction() const final { return shared_from_this(); }
 
         //todo: this is changed by the num constructor, but it should actually copy the instruction with the new type
         mutable type_const_ptr actual_type;

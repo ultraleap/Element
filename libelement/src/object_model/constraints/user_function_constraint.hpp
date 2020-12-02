@@ -5,7 +5,7 @@
 
 namespace element
 {
-    class user_function_constraint : public constraint
+    class user_function_constraint final : public constraint
     {
     public:
         DECLARE_TYPE_ID();

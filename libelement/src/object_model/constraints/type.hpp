@@ -14,6 +14,7 @@ namespace element
         static const type_const_unique_ptr boolean;
 
         [[nodiscard]] identifier get_identifier() const { return name; }
+        [[nodiscard]] std::string get_name() const final { return name.value; }
 
     protected:
         type(element_type_id id, identifier name, const declaration* declarer)

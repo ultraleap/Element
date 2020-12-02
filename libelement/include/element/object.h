@@ -216,6 +216,14 @@ element_result element_object_get_source_information(
     element_source_information* output);
 
 /**
+ * @brief gets the name of an object, if it has one. e.g the name of a function or struct
+ */
+element_result element_object_get_name(
+    const element_object* object,
+    char* buffer,
+    size_t buffer_size);
+
+/**
  * @brief converts an object to typeof information
  *
  * @param[in] object            object to convert

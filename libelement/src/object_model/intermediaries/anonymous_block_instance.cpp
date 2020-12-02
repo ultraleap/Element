@@ -25,7 +25,12 @@ anonymous_block_instance::anonymous_block_instance(const anonymous_block_express
     }
 }
 
-bool element::anonymous_block_instance::is_constant() const
+std::string anonymous_block_instance::get_name() const
+{
+    return "";
+}
+
+bool anonymous_block_instance::is_constant() const
 {
     return true;
 }
