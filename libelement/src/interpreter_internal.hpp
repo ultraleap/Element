@@ -13,7 +13,7 @@
 
 struct element_declaration
 {
-    const element::declaration* decl;
+    const element::declaration* decl = nullptr;
 };
 
 struct element_object
@@ -29,6 +29,17 @@ struct element_instruction
 struct element_object_model_ctx
 {
     std::unique_ptr<element::compilation_context> ctx;
+};
+
+struct element_port
+{
+    const element::port* port = nullptr;
+};
+
+struct element_ports
+{
+    using port_deleter = void(*)(element_port*);
+    std::vector<std::unique_ptr<element_port, port_deleter>> ports;
 };
 
 struct element_interpreter_ctx

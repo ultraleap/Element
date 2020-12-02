@@ -13,6 +13,7 @@
 #include "object_model/compilation_context.hpp"
 #include "object_model/intermediaries/declaration_wrapper.hpp"
 #include "object_model/intermediaries/function_instance.hpp"
+#include "object_model/expressions/expression_chain.hpp"
 
 void element_object_delete(element_object** object)
 {
@@ -270,4 +271,156 @@ element_result element_object_get_typeof(const element_object* object, char* buf
     strcpy(buffer, object->obj->typeof_info().c_str());
 
     return ELEMENT_OK;
+}
+
+element_result element_object_get_inputs(const element_object* object, element_ports** inputs)
+{
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+
+    if (!inputs)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *inputs = new element_ports();
+    for (const auto& input : object->obj->get_inputs())
+    {
+        auto port = std::unique_ptr<element_port, element_ports::port_deleter>(
+            new element_port{&input},
+            [](element_port* port)
+            {
+                element_port_delete(&port);
+            }
+        );
+
+        (*inputs)->ports.push_back(std::move(port));
+    }
+
+    return ELEMENT_OK;
+}
+
+element_result element_object_get_output(const element_object* object, element_port** output)
+{
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+
+    if (!output)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *output = new element_port{ &object->obj->get_output() };
+    return ELEMENT_OK;
+}
+
+element_result element_ports_get_port(const element_ports* ports, size_t index, element_port** port)
+{
+    if (!ports)
+        return ELEMENT_ERROR_API_PORTS_IS_NULL;
+
+    if (!port)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    if (index >= ports->ports.size())
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    *port = ports->ports[index].get();
+    return ELEMENT_OK;
+}
+
+element_result element_ports_get_count(const element_ports* ports, size_t* count)
+{
+    if (!ports)
+        return ELEMENT_ERROR_API_PORTS_IS_NULL;
+
+    if (!count)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *count = ports->ports.size();
+    return ELEMENT_OK;
+}
+
+void element_ports_delete(element_ports** ports)
+{
+    if (!ports)
+        return;
+
+    delete *ports;
+    *ports = nullptr;
+}
+
+element_result element_port_get_name(element_port* port, const char** name)
+{
+    if (!port)
+        return ELEMENT_ERROR_API_PORT_IS_NULL;
+
+    if (!name)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *name = port->port->get_name().c_str();
+    return ELEMENT_OK;
+}
+
+element_result element_port_get_constraint_annotation(element_port* port, const char** annotation)
+{
+    if (!port)
+        return ELEMENT_ERROR_API_PORT_IS_NULL;
+
+    if (!annotation)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const auto* type = port->port->get_annotation();
+    if (!type)
+        return ELEMENT_OK;
+
+    *annotation = type->to_string().c_str();
+    return ELEMENT_OK;
+}
+
+element_result element_port_get_constraint_object(element_port* port, element_object_model_ctx* object_model_context, element_object** object)
+{
+    if (!port)
+        return ELEMENT_ERROR_API_PORT_IS_NULL;
+
+    if (!object_model_context || !object_model_context->ctx)
+        return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
+
+    if (!object)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const auto* decl = port->port->resolve_annotation(*object_model_context->ctx);
+    if (!decl)
+        return ELEMENT_OK;
+
+    *object = new element_object();
+    (*object)->obj = decl->compile(*object_model_context->ctx, {});
+
+    return ELEMENT_OK;
+}
+
+element_result element_port_get_default_object(element_port* port, element_object_model_ctx* object_model_context, element_object** object)
+{
+    if (!port)
+        return ELEMENT_ERROR_API_PORT_IS_NULL;
+
+    if (!object_model_context || !object_model_context->ctx)
+        return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
+
+    if (!object)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    const auto* default_chain = port->port->get_default();
+    if (!default_chain)
+        return ELEMENT_OK;
+
+    *object = new element_object();
+    (*object)->obj = default_chain->compile(*object_model_context->ctx, {});
+
+    return ELEMENT_OK;
+}
+
+void element_port_delete(element_port** port)
+{
+    if (!port)
+        return;
+
+    delete *port;
+    *port = nullptr;
 }
