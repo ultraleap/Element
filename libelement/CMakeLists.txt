@@ -247,7 +247,7 @@ target_include_directories(element
         "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-target_link_libraries(element PRIVATE utfcpp fmt::fmt)
+target_link_libraries(element PRIVATE utfcpp fmt::fmt-header-only)
 target_link_libraries(element PUBLIC element_coverage_config)
 
 if (UNIX AND NOT APPLE)
