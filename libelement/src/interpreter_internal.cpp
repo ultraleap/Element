@@ -2,7 +2,6 @@
 
 //STD
 #include <algorithm>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -23,15 +22,16 @@
 #include "object_model/error_map.hpp"
 #include "object_model/expressions/expression_chain.hpp"
 #include "object_model/expressions/call_expression.hpp"
+#include "filesystem.hpp"
 
 static bool file_exists(const std::string& file)
 {
-    return std::filesystem::exists(file) && std::filesystem::is_regular_file(file);
+    return fs::exists(file) && fs::is_regular_file(file);
 }
 
 static bool directory_exists(const std::string& directory)
 {
-    return std::filesystem::exists(directory) && std::filesystem::is_directory(directory);
+    return fs::exists(directory) && fs::is_directory(directory);
 }
 
 element_result element_interpreter_ctx::load_into_scope(const char* str, const char* filename, element::scope* src_scope)
@@ -126,7 +126,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 
 element_result element_interpreter_ctx::load_file(const std::string& file)
 {
-    const auto extension = std::filesystem::path(file).extension().string();
+    const auto extension = fs::path(file).extension().string();
     if (extension != ".ele")
     {
         std::string msg = fmt::format("Invalid file type in 'load_file'. Expected '.ele' and got '{}'", extension);
@@ -135,7 +135,7 @@ element_result element_interpreter_ctx::load_file(const std::string& file)
         return result;
     }
 
-    const auto abs = std::filesystem::absolute(std::filesystem::path(file)).string();
+    const auto abs = fs::absolute(fs::path(file)).string();
 
     if (!file_exists(abs))
     {
@@ -181,7 +181,7 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
     auto package_path = "ElementPackages/" + actual_package_name;
     if (!directory_exists(package_path))
     {
-        auto abs = std::filesystem::absolute(std::filesystem::path(package_path)).string();
+        auto abs = fs::absolute(fs::path(package_path)).string();
         std::string msg = fmt::format("package '{}' does not exist at path '{}'\n",
                                       package_path, abs);
         element_result result = ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
@@ -191,7 +191,7 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
 
     element_result ret = ELEMENT_OK;
 
-    for (const auto& file : std::filesystem::recursive_directory_iterator(package_path))
+    for (const auto& file : fs::recursive_directory_iterator(package_path))
     {
         const auto filename = file.path().string();
         const auto extension = file.path().extension().string();
