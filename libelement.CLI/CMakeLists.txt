@@ -23,6 +23,7 @@ set(element_cli_sources
     "include/parse_command.hpp"
     "include/typeof_command.hpp"
     "include/message_codes.hpp"
+    "include/filesystem.hpp"
 
     "src/compiler_message.cpp"
     "src/message_codes.cpp"
@@ -59,7 +60,15 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE element CLI11::CLI11 fmt::fmt toml11::toml11 rapidjson)
+target_link_libraries(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        element
+        CLI11::CLI11
+        fmt::fmt-header-only
+        toml11::toml11
+        rapidjson
+        ghc_filesystem
+)
 
 if (UNIX AND NOT APPLE)
     target_link_libraries(element_cli PRIVATE "m" "atomic" "pthread" "stdc++fs")
