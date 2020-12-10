@@ -1,0 +1,36 @@
+
+:root {
+    --primary-color: #EA7601;
+    --medium-color: #e58f39;
+    --light-color: #f7ddc3;
+}
+
+a {
+    color: var(--primary-color);
+}
+
+a:hover {
+    color: var(--primary-color);
+}
+
+.wy-side-nav-search {
+    background-color: var(--primary-color);
+}
+
+.wy-side-nav-search input[type=text] {
+    border-color: var(--primary-color);
+}
+
+.wy-nav-top {
+    background: var(--primary-color);
+}
+
+.wy-menu-vertical a:active {
+    background-color: var(--primary-color);
+}
+
+html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)>dt {
+    color: var(--primary-color);
+    background: var(--light-color);
+    border-top: 3px solid var(--medium-color);
+}
