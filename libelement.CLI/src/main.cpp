@@ -15,61 +15,37 @@
 
 using namespace libelement::cli;
 
-void log_callback(const element_log_message* const message, void* user_data)
+void log_callback(const element_log_message* const msg, void* user_data)
 {
-    auto message_code = message->message_code;
+    auto message_code = msg->message_code;
 
-    std::string msg_type;
-    switch (message->stage)
+    std::string formatted_error = fmt::format("ELE {} ------------- {}\n{}\n\n",
+                                              msg->message_code,
+                                              msg->filename ? msg->filename : "<no filename>",
+                                              msg->message ? msg->message : "<no message>");
+
+    if (msg->line > 0)
     {
-    case ELEMENT_STAGE_INVALID:
-        msg_type = "libelement in invalid state\n";
-        break;
-    case ELEMENT_STAGE_MISC:
-        msg_type = "Misc Message\n";
-        break;
-    case ELEMENT_STAGE_TOKENISER:
-        msg_type = "Tokeniser Message\n";
-        break;
-    case ELEMENT_STAGE_PARSER:
-        msg_type = "Parser Message\n";
-        break;
-    case ELEMENT_STAGE_COMPILER:
-        msg_type = "Compiler Message\n";
-        break;
-    case ELEMENT_STAGE_EVALUATOR:
-        msg_type = "Evaluator Message\n";
-        break;
-    default:
-        msg_type = "Unknown Message\n";
-        break;
-    }
+        formatted_error += fmt::format("{}|{}\n", msg->line, msg->line_in_source ? msg->line_in_source : "<no source line>");
 
-    std::string msg_info;
-
-    if (message->stage != ELEMENT_STAGE_MISC)
-    {
-        if (message_code == ELEMENT_OK)
+        if (msg->character > 0)
         {
-            msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}\n", message->message_code, message->filename ? message->filename : "");
-        }
-        else
-        {
-            msg_info = msg_type + fmt::format("libelement result: {}\nfile: {}:{},{} length {}\n", message->message_code, message->filename ? message->filename : "", message->line, message->character, message->length);
+            const auto digits = std::to_string(msg->line).size();
+            formatted_error += fmt::format("{}{}",
+                                           std::string(digits + msg->character, ' '),
+                                           std::string(msg->length, '^'));
         }
     }
-
-    std::string message_with_info = msg_info + message->message;
 
     // todo: hack to force parse errors
     auto log = compiler_message(
-        message_code, message_with_info,
+        message_code, formatted_error,
         static_cast<command*>(user_data)->get_common_arguments().log_json);
     std::cout << log.serialize() << std::endl;
 
     // todo: might want to do this differently in the future
-    if (message->related_log_message)
-        log_callback(message->related_log_message, user_data);
+    if (msg->related_log_message)
+        log_callback(msg->related_log_message, user_data);
 }
 
 void command_callback(command& command)
