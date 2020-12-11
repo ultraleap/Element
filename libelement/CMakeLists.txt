@@ -6,6 +6,8 @@ if (NOT HAS_PARENT)
     set(IS_ROOT_PROJECT true)
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
 # For VS
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -214,6 +216,7 @@ if(MSVC)
 endif()
 
 add_library(element STATIC ${element_sources})
+set_property(TARGET element PROPERTY POSITION_INDEPENDENT_CODE ON)
 add_library(element::element ALIAS element)
 
 # For VS
