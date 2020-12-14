@@ -282,7 +282,7 @@ if (ELEMENT_BUILD_TESTING)
             )
 
     add_executable(element_tests ${TEST_SOURCES})
-    target_link_libraries(element_tests PRIVATE Catch2 element fmt::fmt-header-only )
+    target_link_libraries(element_tests PRIVATE Catch2 element fmt::fmt-header-only)
     target_link_libraries(element_tests PUBLIC element_coverage_config)
     target_include_directories(element_tests PRIVATE "${element_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}/_deps/fmt-src/include")
     add_test(NAME libelement_test
