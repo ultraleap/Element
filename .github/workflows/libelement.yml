@@ -32,7 +32,7 @@ jobs:
           name: libelement Test App Results
           path: libelement/build/libemelement_test_app_details.xml
 
-  run-laboratory-tests:
+  run-laboratory-tests-ubuntu:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -57,7 +57,7 @@ jobs:
           name: libelement Laboratory Results
           path: Laboratory/TestResults
 
-  run-laboratory-tests:
+  run-laboratory-tests-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2

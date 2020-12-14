@@ -13,6 +13,8 @@ set(ELEMENT_LIB_DIR "../libelement")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+option(ELEMENT_FORCE_FALLBACK_FS "Force element to use the fallback filesystem instead of <filesystem>" OFF)
+
 add_subdirectory("dependencies" EXCLUDE_FROM_ALL)
 find_package(RapidJSON)
 
@@ -59,6 +61,10 @@ target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
+
+if (ELEMENT_FORCE_FALLBACK_FS)
+    add_definitions(-DELEMENT_FORCE_FALLBACK_FS)
+endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
