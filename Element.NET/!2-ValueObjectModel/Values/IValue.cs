@@ -132,8 +132,23 @@ namespace Element.AST
     {
         public static IValue Inner(this IValue value) => value is WrapperValue w ? Inner(w.WrappedValue) : value;
         public static bool HasInputs(this IValue value) => value.InputPorts.Count > 0; // TODO: This probably doesn't work for intrinsics with no ports declared?
+
+        public static bool IsCallable(this IValue value, Context context)
+            => value.Call(Array.Empty<IValue>(), context)
+                    .Match((_, _) => true,
+                           messages => messages.All(msg => (EleMessageCode) msg.MessageCode.GetValueOrDefault(0) != EleMessageCode.NotFunction));
+        
         public static bool IsType(this IValue value) => value.ReturnConstraint == value;
         public static bool IsIntrinsic(this IValue value) => value.IsIntrinsicOfType<IIntrinsicImplementation>();
+
+        public static Result<IValue[]> GetInputPortDefaults(this IValue function, Context context) => function.InputPorts.Select(c => c.DefaultValue(context)).ToResultArray();
+        public static Result<IEnumerable<Instruction>> SerializeAndFlattenValues(this IEnumerable<IValue> values, Context context) =>
+            values.Select(v => v.Serialize(context))
+                  .MapEnumerable(serializedValues => serializedValues.SelectMany(v => v));
+
+        public static Result<(IValue[] InputDefaultValues, Instruction[] AllDefaultsSerialized)> SerializeAllInputPortDefaults(this IValue function, Context context)
+            => function.GetInputPortDefaults(context)
+                       .Bind(defaultValues => defaultValues.SerializeAndFlattenValues(context).Map(allSerialized => (defaultValues, allSerialized.ToArray())));
         
         public static Result<IValue> IndexPositionally(this IValue value, int index, Context context)
         {
@@ -153,16 +168,6 @@ namespace Element.AST
         }
 
         public static bool IsSerializable(this IValue value, Context context) => value.Serialize(context).IsSuccess;
-
-        public static Result<int> SerializedSize(this IValue value, Context context)
-        {
-            var size = 0;
-            return value.Deserialize(() =>
-            {
-                size++;
-                return Constant.Zero;
-            }, context).Map(_ => size); // Discard the value and just check the size
-        }
 
         public static Result<IValue> Deserialize(this IValue value, IEnumerable<Instruction> expressions, Context context) =>
             value.Deserialize(new Queue<Instruction>(expressions).Dequeue, context);

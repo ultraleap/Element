@@ -305,42 +305,51 @@ namespace Element.CLR
 		/// The result of calling the given function with all its inputs and a pre-allocated argument array.
 		/// The function inputs are mapped directly to the arrays contents.
 		/// </returns>
-		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, ClrBoundaryContext context) =>
-			function.HasInputs()
-				? function.InputPorts.Select(c => c.DefaultValue(context))
-				          .BindEnumerable(defaultValues =>
-				          {
-					          var defaults = defaultValues as IValue[] ?? defaultValues.ToArray();
-					          return defaults.Select(value => value.SerializedSize(context))
-					                         .MapEnumerable(argSizes => (defaults, argSizes));
-				          })
-				          .Bind(tuple =>
-				          {
-					          var (defaultValues, argSizes) = tuple;
-					          var totalSerializedSize = argSizes.Sum();
+		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, ClrBoundaryContext context)
+		{
+			if (!function.IsCallable(context)) return context.Trace(EleMessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
+			
+			return function.SerializeAllInputPortDefaults(context)
+			               .Bind(tuple =>
+			               {
+				               var (defaultValues, allDefaultsSerialized) = tuple;
 
-					          // Allocate the array and make an instructions for it
-					          var array = new float[totalSerializedSize];
-					          var arrayObjectExpr = LinqExpression.Constant(array);
+				               // Allocate the array and make an instructions for it
+				               var array = new float[allDefaultsSerialized.Length];
+				               var arrayObjectExpr = LinqExpression.Constant(array);
 
-					          return Enumerable.Range(0, totalSerializedSize)
-					                           // For each array index, create an ArrayIndex expression
-					                           .Select(i => NumberConverter.Instance
-					                                                       .LinqToElement(LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i)), context)
-					                                                       .Cast<Instruction>())
-					                           // Aggregate enumerable of results into single result
-					                           .ToResultArray()
-					                           .Bind(expressions =>
-					                           {
-						                           // Create a func for accessing the array items
-						                           var flattenedValIdx = 0;
-						                           Instruction NextValue() => expressions[flattenedValIdx++];
-						                           return defaultValues.Select(v => v.Deserialize(NextValue, context))
-						                                               .BindEnumerable(arguments => function.Call(arguments.ToArray(), context));
-					                           })
-					                           .Map(result => (result, array));
-				          })
-				: context.Trace(EleMessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
+				               Result<Instruction> SourceFromArrayIndex(Instruction instruction, int i) =>
+					               context.ElementToClr(instruction.StructImplementation)
+					                      .Bind(instructionClrType =>
+					                      {
+						                      Result<Instruction> GenerateNumberInstruction(LinqExpression expr) => NumberConverter.Instance
+						                                                                                                           .LinqToElement(expr, context)
+						                                                                                                           .Cast<Instruction>();
+						                      var arrayIndexExpr = LinqExpression.ArrayIndex(arrayObjectExpr, LinqExpression.Constant(i));
+						                      return GenerateNumberInstruction(instructionClrType == typeof(float)
+							                                                       ? arrayIndexExpr
+							                                                       : _conversionFunctions[(typeof(float), instructionClrType)](arrayIndexExpr));
+					                      });
+
+				               // Go over all the individual instructions (single leaf values) and source them from the array
+				               Result<IValue> DeserializeArraySourcedInstructionsToObjectModel(Instruction[] instructions)
+				               {
+					               // Create a func for accessing the array items individually for deserializing
+					               var flattenedValIdx = 0;
+					               Instruction NextValue() => instructions[flattenedValIdx++];
+
+					               // Deserialize the array-sourced instructions into element object model
+					               // Then call the function to compile it further now that all the arguments are sourced from the array
+					               return defaultValues.Select(v => v.Deserialize(NextValue, context))
+					                                   .BindEnumerable(arguments => function.Call(arguments.ToArray(), context));
+				               }
+
+				               return allDefaultsSerialized.Select(SourceFromArrayIndex)
+				                                           .ToResultArray()
+				                                           .Bind(DeserializeArraySourcedInstructionsToObjectModel)
+				                                           .Map(result => (result, array));
+			               });
+		}
 
 		public static Result<TDelegate> Compile<TDelegate>(this IValue value, ClrBoundaryContext clrBoundaryContext)
 			where TDelegate : Delegate =>
