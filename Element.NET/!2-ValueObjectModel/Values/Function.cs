@@ -138,7 +138,7 @@ namespace Element.AST
         
         private static Result CheckInputConstraints(IReadOnlyList<ResolvedPort> ports, IReadOnlyList<IValue> arguments, Context context)
         {
-            if (arguments.Count <= 0) return Result.Success;
+            if (ports.Count <= 0) return Result.Success;
             var resultBuilder = new ResultBuilder(context);
                 
             var isVariadic = ports.Any(p => p == ResolvedPort.VariadicPort);

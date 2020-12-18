@@ -30,6 +30,7 @@ namespace Element.AST
         {
             // Function arity must match the constraint
             if (fn.InputPorts.Count != InputPorts.Count) return false;
+            if (!fn.IsCallable(context)) return false;
 
             var resultBuilder = new ResultBuilder<bool>(context, true);
 
