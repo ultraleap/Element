@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
+#if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include) && !defined(ELEMENT_FORCE_FALLBACK_FS)
     #if __has_include(<filesystem>)
         #define GHC_USE_STD_FS
         #include <filesystem>
