@@ -29,6 +29,7 @@ add_library(element::coverage_config ALIAS element_coverage_config)
 option(ELEMENT_CODE_COVERAGE "Enable coverage reporting" OFF)
 option(ELEMENT_GEN_HTML "Enable code coverage html output" OFF)
 option(ELEMENT_FORCE_FALLBACK_FS "Force element to use the fallback filesystem instead of <filesystem>" OFF)
+option(ELEMENT_USE_EXTERNAL_FMT "Indicate that the fmt library is already available and does not need to be acquired" OFF)
 
 if (ELEMENT_CODE_COVERAGE)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -256,7 +257,10 @@ target_include_directories(element
         "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-target_link_libraries(element PRIVATE utfcpp fmt::fmt-header-only ghc_filesystem)
+target_link_libraries(element PRIVATE utfcpp ghc_filesystem)
+if (NOT ELEMENT_USE_EXTERNAL_FMT)
+    target_link_libraries(element PRIVATE fmt::fmt-header-only)
+endif ()
 target_link_libraries(element PUBLIC element_coverage_config)
 
 if (UNIX AND NOT APPLE)
@@ -287,7 +291,10 @@ if (ELEMENT_BUILD_TESTING)
             )
 
     add_executable(element_tests ${TEST_SOURCES})
-    target_link_libraries(element_tests PRIVATE Catch2 element fmt::fmt-header-only)
+    target_link_libraries(element_tests PRIVATE Catch2 element)
+    if (NOT ELEMENT_USE_EXTERNAL_FMT)
+        target_link_libraries(element_tests PRIVATE fmt::fmt-header-only)
+    endif ()
     target_link_libraries(element_tests PUBLIC element_coverage_config)
     target_include_directories(element_tests PRIVATE "${element_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}/_deps/fmt-src/include")
     add_test(NAME libelement_test
