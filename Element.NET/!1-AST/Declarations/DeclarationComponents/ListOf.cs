@@ -12,6 +12,7 @@ namespace Element.AST
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         // ReSharper disable once CollectionNeverUpdated.Global
         [
+            field:
             SurroundBy("(", ")"),
             SeparatedBy(typeof(ListSeparator))
         ] public List<T> List { get; private set; }

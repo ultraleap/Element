@@ -49,6 +49,7 @@ namespace Element.AST
                        : ExpressionChainStart.Resolve(this, parentScope, context);
         }
 
+        [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace)]
         public abstract class SubExpression : AstNode
         {
             public Result<IValue> ResolveSubExpression(ExpressionChain chain, IValue previous, IScope parentScope, Context context)

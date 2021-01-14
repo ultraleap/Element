@@ -9,7 +9,7 @@ namespace Element.AST
     {
 #pragma warning disable 8618
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [field: Sequence] public ListOf<Port> Ports { get; private set; }
+        [field: Sequence, WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace)] public ListOf<Port> Ports { get; private set; }
 #pragma warning restore 8618
 
         public override string ToString() => Ports.ToString();
