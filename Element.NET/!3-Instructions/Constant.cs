@@ -26,14 +26,15 @@ namespace Element
             False
         }
         
-        public static Constant True { get; } = new Constant(1f,  BoolStruct.Instance);
-        public static Constant False { get; } = new Constant(0f, BoolStruct.Instance);
-        public static Constant BoolNaN { get; } = new Constant(float.NaN, BoolStruct.Instance); // TODO: Find another solution for propagating NaNs and remove this
-        public static Constant Zero { get; } = new Constant(0f);
-        public static Constant One { get; } = new Constant(1f);
-        public static Constant NaN { get; } = new Constant(float.NaN);
-        public static Constant PositiveInfinity { get; } = new Constant(float.PositiveInfinity);
-        public static Constant NegativeInfinity { get; } = new Constant(float.NegativeInfinity);
+        // NOTE: These are computed properties deliberately! There should be no static instances of IValue implementations otherwise caching breaks.
+        public static Constant True => new Constant(1f,  BoolStruct.Instance);
+        public static Constant False => new Constant(0f, BoolStruct.Instance);
+        public static Constant BoolNaN => new Constant(float.NaN, BoolStruct.Instance); // TODO: Find another solution for propagating NaNs and remove this
+        public static Constant Zero => new Constant(0f);
+        public static Constant One => new Constant(1f);
+        public static Constant NaN => new Constant(float.NaN);
+        public static Constant PositiveInfinity => new Constant(float.PositiveInfinity);
+        public static Constant NegativeInfinity => new Constant(float.NegativeInfinity);
 
         public override Result<Constant> CompileTimeConstant(Context context) => this;
         public override IEnumerable<Instruction> Dependent { get; } = Array.Empty<Instruction>();
