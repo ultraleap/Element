@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
+using Lexico;
 
 namespace Element.AST
 {
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public class IntrinsicStructDeclaration : Declaration
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic ";
@@ -45,6 +47,7 @@ namespace Element.AST
         }
     }
     
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public class CustomStructDeclaration : Declaration
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;

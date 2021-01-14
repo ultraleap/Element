@@ -5,7 +5,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded, MultiLine]
+    [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine]
     public abstract class Block : AstNode
     {
 #pragma warning disable 649, 169
@@ -58,12 +58,21 @@ namespace Element.AST
 
     public class FreeformBlock : Block
     {
-        [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional] protected override List<Declaration>? _items { get; set; }
+        [
+            SurroundBy("{", "}"),
+            WhitespaceSurrounded,
+            Optional
+        ] protected override List<Declaration>? _items { get; set; }
     }
 
     public class CommaSeparatedBlock : Block
     {
-        [field: SurroundBy("{", "}"), WhitespaceSurrounded, Optional, SeparatedBy(typeof(ListSeparator))] protected override List<Declaration>? _items { get; set; }
+        [
+            SurroundBy("{", "}"),
+            WhitespaceSurrounded,
+            Optional,
+            SeparatedBy(typeof(ListSeparator))
+        ] protected override List<Declaration>? _items { get; set; }
     }
 
     public class DeclarationBlock : FreeformBlock, IDeclarationScope

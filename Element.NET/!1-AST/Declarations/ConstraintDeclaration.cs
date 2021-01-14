@@ -1,7 +1,9 @@
 using System;
+using Lexico;
 
 namespace Element.AST
 {
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public class IntrinsicConstraintDeclaration : Declaration
     {
         protected override string IntrinsicQualifier { get; } = "intrinsic ";
@@ -19,6 +21,7 @@ namespace Element.AST
         }
     }
     
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public class CustomConstraintDeclaration : Declaration
     {
         protected override string IntrinsicQualifier { get; } = string.Empty;

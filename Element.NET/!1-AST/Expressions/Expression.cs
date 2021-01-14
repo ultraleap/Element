@@ -2,7 +2,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded, MultiLine]
+    [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine]
     // ReSharper disable once ClassNeverInstantiated.Global
     public abstract class Expression : AstNode
     {

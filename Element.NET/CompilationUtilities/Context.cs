@@ -4,7 +4,7 @@ using Element.AST;
 namespace Element
 {
     /// <summary>
-    /// Contains contextual information about the state of compilation including compiler options and current trace stack, call stack etc.
+    /// Contains contextual information about the state of compilation including compiler flags and current trace stack, call stack etc.
     /// </summary>
     public class Context
     {

@@ -5,18 +5,21 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded, MultiLine]
+    [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine]
     // ReSharper disable once ClassNeverInstantiated.Global
     public class ListOf<T>
     {
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         // ReSharper disable once CollectionNeverUpdated.Global
-        [field: SurroundBy("(", ")"), SeparatedBy(typeof(ListSeparator))] public List<T> List { get; private set; }
+        [
+            SurroundBy("(", ")"),
+            SeparatedBy(typeof(ListSeparator))
+        ] public List<T> List { get; private set; }
         
         public override string ToString() => $"({string.Join(", ", List)})";
     }
     
-    [WhitespaceSurrounded, MultiLine]
+    [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine]
     internal struct ListSeparator
     {
         [Literal(",")] private Unnamed _;

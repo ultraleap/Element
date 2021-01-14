@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using Element;
 using Element.AST;
@@ -53,15 +54,20 @@ namespace Laboratory.Tests.L0.Parsing
         }
 
         [TestCaseSource(nameof(GenerateParseTestData))]
-        public void Parse((FileInfo fileInfo, EleMessageCode? messageCode) info) => SyntaxTest(info, true);
+        public void Parse((FileInfo fileInfo, EleMessageCode? messageCode) info) => SyntaxTest(info, true, true);
+
+        private class PartialSyntaxTrace : UserTrace
+        {
+            public PartialSyntaxTrace() : base(Console.WriteLine) { }
+        }
         
         // TODO: Force consuming the whole text in all of these parsers
         // TODO: Make this test use an IHost so that it can test process hosts!
         [TestCaseSource(nameof(PartialSyntaxTestData))]
         public void ParsePartialSyntaxItems((string text, Type syntaxItem) info)
         {
-            if(!(Host is AtomicHost)) Assert.Inconclusive("Test only implemented for self host");
-            Assert.That(Lexico.Lexico.TryParse(info.text, info.syntaxItem, out _, new ConsoleTrace()), Is.True);
+            if (!(Host is AtomicHost)) Assert.Inconclusive("Test only implemented for self host");
+            Assert.That(Lexico.Lexico.TryParse(info.text, info.syntaxItem, out _, new PartialSyntaxTrace()), Is.True);
         }
     }
 }

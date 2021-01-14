@@ -2,11 +2,12 @@ using Lexico;
 
 namespace Element.AST
 {
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public class AnonymousBlock : Expression
     {
 #pragma warning disable 8618
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        [Term] public CommaSeparatedBlock Block { get; private set; }
+        [Sequence] public CommaSeparatedBlock Block { get; private set; }
 #pragma warning restore 8618
 
         protected override void ValidateImpl(ResultBuilder builder, Context context) => Block.Validate(builder, context);

@@ -135,7 +135,7 @@ namespace Element.AST
 
         public static bool IsCallable(this IValue value, Context context)
             => value.Call(Array.Empty<IValue>(), context)
-                    .Match((_, _) => true,
+                    .Match((_, __) => true,
                            messages => messages.All(msg => (EleMessageCode) msg.MessageCode.GetValueOrDefault(0) != EleMessageCode.NotFunction));
         
         public static bool IsType(this IValue value) => value.ReturnConstraint == value;

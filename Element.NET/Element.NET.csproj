@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>default</LangVersion>
+    <LangVersion>8</LangVersion>
     <NoWarn>NU1701</NoWarn>
     <Nullable>enable</Nullable>
 
@@ -17,7 +17,6 @@
   <ItemGroup>
     <PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.3.0-beta.0" />
     <PackageReference Include="ErrorProne.NET.Structs" Version="0.3.0-beta.0" />
-    <PackageReference Include="Lexico" Version="1.0.0-alpha4" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="SemanticVersioning" Version="1.2.2" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
@@ -46,5 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <DeployManifest Remove="obj\Debug\netstandard2.0\Element.NET.application" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\dependencies\Lexico\Lexico\Lexico.csproj" />
   </ItemGroup>
 </Project>

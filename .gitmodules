@@ -10,3 +10,6 @@
 [submodule "dependencies/toml11"]
 	path = dependencies/toml11
 	url = https://github.com/ToruNiina/toml11.git
+[submodule "dependencies/Lexico"]
+	path = dependencies/Lexico
+	url = https://github.com/hamish-milne/Lexico.git

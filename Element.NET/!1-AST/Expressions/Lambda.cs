@@ -2,6 +2,7 @@ using Lexico;
 
 namespace Element.AST
 {
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public class Lambda : Expression
     {
 #pragma warning disable 649, 169, 8618
@@ -9,7 +10,7 @@ namespace Element.AST
         [Term] private Unidentifier _;
         [Term] public PortList PortList;
         [Optional] public PortConstraint? ReturnConstraint;
-        [Alternative(typeof(ExpressionBody), typeof(FunctionBlock)), WhitespaceSurrounded, MultiLine] public object Body;
+        [Alternative(typeof(ExpressionBody), typeof(FunctionBlock)), WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine] public object Body;
         // ReSharper restore UnassignedField.Global UnusedAutoPropertyAccessor.Local
 #pragma warning restore 649, 169, 8618
 

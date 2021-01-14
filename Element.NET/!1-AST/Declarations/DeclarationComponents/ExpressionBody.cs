@@ -2,7 +2,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded]
+    [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace)]
     public class ExpressionBody
     {
 #pragma warning disable 169, 8618

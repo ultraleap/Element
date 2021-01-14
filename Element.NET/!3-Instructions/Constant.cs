@@ -14,7 +14,7 @@ namespace Element
         public Constant(float value, IIntrinsicStructImplementation structImplementationOverride) : base(structImplementationOverride) => Value = value;
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
-        [Term] public float Value { get; private set; }
+        [Number(ParserFlags = ParserFlags.IgnoreInTrace)] public float Value { get; private set; }
         public static implicit operator float(Constant l) => l.Value;
         
         public enum Intrinsic
