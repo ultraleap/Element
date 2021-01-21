@@ -53,25 +53,24 @@ namespace Element.AST
 			public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, Context context) =>
 				elements[0].InstanceType(context)
 				           .Bind(listElementInstanceType =>
-					                 elements.AreAllOfInstanceType(listElementInstanceType, context)
-						                 ? index.CompileTimeIndex(0, elements.Count, context)
-						                        .Branch(compileConstantIndex => compileConstantIndex < elements.Count
-							                                                        ? new Result<IValue>(elements[compileConstantIndex])
-							                                                        : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
-						                                () =>
-						                                {
-							                                var operands = new Instruction[elements.Count];
+					                 elements.VerifyValuesAreAllOfInstanceType(listElementInstanceType,
+					                                                           () => index.CompileTimeIndex(0, elements.Count, context)
+					                                                                      .Branch(compileConstantIndex => compileConstantIndex < elements.Count
+						                                                                                                      ? new Result<IValue>(elements[compileConstantIndex])
+						                                                                                                      : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
+					                                                                              () =>
+					                                                                              {
+						                                                                              var operands = new Instruction[elements.Count];
 
-							                                for (var i = 0; i < elements.Count; i++)
-							                                {
-								                                // If any elements are not instructions then we need to 
-								                                if (elements[i].InnerIs(out Instruction instruction)) operands[i] = instruction;
-								                                else return new Result<IValue>(new HomogenousListElement(index, elements));
-							                                }
+						                                                                              for (var i = 0; i < elements.Count; i++)
+						                                                                              {
+							                                                                              // If any elements are not instructions then we need to 
+							                                                                              if (elements[i].InnerIs(out Instruction instruction)) operands[i] = instruction;
+							                                                                              else return new Result<IValue>(new HomogenousListElement(index, elements));
+						                                                                              }
 
-							                                return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
-						                                })
-						                 : context.Trace(EleMessageCode.ExpectedHomogenousItems, "Elements of a list must be of the same type"));
+						                                                                              return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
+					                                                                              }), context));
 
 			private HomogenousListElement(Instruction index, IReadOnlyList<IValue> elements)
 			{

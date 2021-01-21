@@ -24,10 +24,11 @@ namespace Element
 				                 Result<Instruction> HasCompileTimeIndex(int idx) => new Result<Instruction>(options[idx]);
 				                 Result<Instruction> NotCompileTimeIndexable() => new Switch(selector, options, options[0].StructImplementation);
 
-				                 return options.Cast<IValue>().ToList().AreAllOfInstanceType(expectedType, context)
-					                        ? selector.CompileTimeIndex(0, options.Length, context)
-					                                  .Branch(HasCompileTimeIndex, NotCompileTimeIndexable)
-					                        : context.Trace(EleMessageCode.ExpectedHomogenousItems, $"Expected all Switch branches to be type '{options[0].StructImplementation.Identifier}'");
+				                 return options.Cast<IValue>()
+				                               .ToList()
+				                               .VerifyValuesAreAllOfInstanceType(expectedType, () => selector.CompileTimeIndex(0, options.Length, context)
+				                                                                                             .Branch(HasCompileTimeIndex, NotCompileTimeIndexable),
+				                                                                 context);
 			                 });
 		}
 		

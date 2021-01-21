@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Element.AST
 {
@@ -158,7 +159,7 @@ namespace Element.AST
                        : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Cannot access member {index} - '{value}' has {members.Count} members");
         }
 
-        public static Result<IReadOnlyList<IValue>> MemberValues(this IValue value, Context context) => value.Members.Select(m => value.Index(m, context)).ToResultReadOnlyList();
+        public static Result<IReadOnlyList<(Identifier Identifier, IValue Value)>> MemberValues(this IValue value, Context context) => value.Members.Select(m => value.Index(m, context).Map(v => (m, v))).ToResultReadOnlyList();
 
         public static Result<List<Instruction>> Serialize(this IValue value, Context context)
         {
@@ -201,7 +202,24 @@ namespace Element.AST
                                                                                                      .Match( (instanceType, _) => instanceType == type,
                                                                                                        _ => false);
 
-        public static bool AreAllOfInstanceType(this IReadOnlyList<IValue> items, IValue type, Context context) => items.All(value => value.IsInstanceOfType(type, context));
+        public static Result<T> VerifyValuesAreAllOfInstanceType<T>(this IReadOnlyList<IValue> items, IValue type, Func<Result<T>> continuation, Context context)
+        {
+            var errorString = new StringBuilder($"Expected all items to be of type '{type}' - the following items are different types:");
+            var isError = false;
+            for (var index = 0; index < items.Count; index++)
+            {
+                var value = items[index];
+                if (!value.IsInstanceOfType(type, context))
+                {
+                    errorString.AppendLine($"[{index}]: '{value}'");
+                    isError = true;
+                }
+            }
+
+            return !isError
+                       ? continuation()
+                       : context.Trace(EleMessageCode.ExpectedHomogenousItems, errorString.ToString());
+        }
 
         public static bool InnerIs<T>(this IValue value, out T result) where T : IValue
         {

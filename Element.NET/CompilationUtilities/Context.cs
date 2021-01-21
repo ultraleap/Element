@@ -8,8 +8,8 @@ namespace Element
     /// </summary>
     public class Context
     {
-        public static Context CreateFromSourceContext(SourceContext sourceContext) => new Context(sourceContext.GlobalScope, sourceContext.CompilerOptions);
-        public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions) => new Context(rootScope, compilerOptions);
+        public static Context CreateFromSourceContext(SourceContext sourceContext) => new Context(sourceContext.GlobalScope, sourceContext.CompilerOptions, sourceContext.GeneratedStructuralTuples);
+        public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions) => new Context(rootScope, compilerOptions, new List<StructuralTuple>());
 
         private class NoScope : IScope
         {
@@ -21,8 +21,9 @@ namespace Element
                 throw new InternalCompilerException($"Context '{_scopelessContext}' has no root scope, performing lookup is not possible");
         }
 
-        protected Context(IScope? rootScope, CompilerOptions? compilerOptions)
+        protected Context(IScope? rootScope, CompilerOptions? compilerOptions, List<StructuralTuple> structuralTuples)
         {
+            StructuralTuples = structuralTuples;
             RootScope = rootScope ?? new NoScope(this);
             CompilerOptions = compilerOptions ?? new CompilerOptions(MessageLevel.Information);
             Aspect = CompilerOptions.CompilationAspectFunc?.Invoke(this);
@@ -36,6 +37,7 @@ namespace Element
         public Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
         public Stack<IValue> CallStack { get; } = new Stack<IValue>();
         public Stack<UniqueValueSite<Declaration>> DeclarationStack { get; } = new Stack<UniqueValueSite<Declaration>>();
+        public List<StructuralTuple> StructuralTuples { get; }
         
         public Result<IValue> EvaluateExpression(string expression, IScope? scopeToEvaluateIn = null) =>
             Parse<Expression>(expression)
