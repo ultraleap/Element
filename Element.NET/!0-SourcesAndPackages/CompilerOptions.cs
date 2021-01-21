@@ -3,7 +3,7 @@ using System;
 namespace Element
 {
     /// <summary>
-    /// Options which change how the compiler operates.
+    /// Flags which change how the compiler operates.
     /// </summary>
     public class CompilerOptions // TODO: Change to record type when available
     {

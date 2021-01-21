@@ -1,8 +1,9 @@
 using System;
-using System.Linq;
+using Lexico;
 
 namespace Element.AST
 {
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public class NamespaceDeclaration : Declaration
     {
         protected override string IntrinsicQualifier => string.Empty;

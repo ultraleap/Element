@@ -8,13 +8,16 @@ namespace Element.AST
     /// <summary>
     /// Represents a top-level blob of Element source code.
     /// </summary>
-    [WhitespaceSurrounded, MultiLine, TopLevel]
+    [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine, TopLevel(ParserFlags = ParserFlags.IgnoreInTrace)]
     // ReSharper disable once ClassNeverInstantiated.Global
     public class SourceBlob : AstNode, IEnumerable<Declaration>
     {
 #pragma warning disable 649
         // ReSharper disable once CollectionNeverUpdated.Local
-        [Optional] private List<Declaration>? _items;
+        [
+            Repeat,
+            Optional
+        ] private List<Declaration>? _items;
 #pragma warning restore 649
         
         public IEnumerator<Declaration> GetEnumerator() => _items?.GetEnumerator() ?? Enumerable.Empty<Declaration>().GetEnumerator();

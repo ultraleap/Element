@@ -15,7 +15,7 @@ namespace Element.AST
         public bool IsVariadic => false;
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
-            // Make a list out of the true and false options
+            // Make a list out of the true and false flags
             List.Instance.Call(arguments.Skip(1).Reverse().ToArray(), context)
                 .CastInner<StructInstance>()
                 // Get the option lists indexer (field 0)

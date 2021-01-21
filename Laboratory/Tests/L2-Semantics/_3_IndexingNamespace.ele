@@ -1,5 +1,6 @@
 intrinsic constraint Any
 intrinsic function add(a, b)
+intrinsic struct Num
 
 namespace A
 {

@@ -8,7 +8,7 @@ namespace Element.AST
         public Identifier(string value) => String = value;
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
-        [field: Regex(@"_?[a-zA-Z\u0080-\uFFFF][_a-zA-Z0-9\u0080-\uFFFF]*")]
+        [field: Regex(@"_?[a-zA-Z\u0080-\uFFFF][_a-zA-Z0-9\u0080-\uFFFF]*", ParserFlags = ParserFlags.IgnoreInTrace)]
         public string String { get; private set; }
         public override string ToString() => String;
         // ReSharper disable once NonReadonlyMemberInGetHashCode

@@ -12,12 +12,13 @@ namespace Element.AST
     }
     
     // ReSharper disable once ClassNeverInstantiated.Global
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public class ExpressionChain : Expression
     {
         // ReSharper disable UnusedAutoPropertyAccessor.Local
 #pragma warning disable 8618
         [field: Alternative(typeof(Identifier), typeof(Constant))] public IExpressionChainStart ExpressionChainStart { get; private set; }
-        [field: Optional] public List<SubExpression>? SubExpressions { get; private set; }
+        [field: Repeat, Optional] public List<SubExpression>? SubExpressions { get; private set; }
 #pragma warning restore 8618
         // ReSharper restore UnusedAutoPropertyAccessor.Local
 
@@ -48,6 +49,7 @@ namespace Element.AST
                        : ExpressionChainStart.Resolve(this, parentScope, context);
         }
 
+        [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace)]
         public abstract class SubExpression : AstNode
         {
             public Result<IValue> ResolveSubExpression(ExpressionChain chain, IValue previous, IScope parentScope, Context context)
@@ -66,7 +68,7 @@ namespace Element.AST
         {
 #pragma warning disable 169, 8618
             // ReSharper disable once UnusedAutoPropertyAccessor.Local
-            [field: Term] public ListOf<Expression> Expressions { get; private set; }
+            [field: Sequence] public ListOf<Expression> Expressions { get; private set; }
 #pragma warning restore 169, 8618
 
             public override string ToString() => Expressions.ToString();

@@ -3,17 +3,17 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded, MultiLine]
+    [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine]
     public abstract class Declaration : AstNode
     {
 #pragma warning disable 649, 8618, 169
         // ReSharper disable UnassignedField.Global UnusedAutoPropertyAccessor.Local UnusedAutoPropertyAccessor.Global
         [IndirectLiteral(nameof(IntrinsicQualifier))] protected Unnamed _;
-        [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded] protected Unnamed __;
+        [IndirectLiteral(nameof(Qualifier)), WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace)] protected Unnamed __;
         [Term] public Identifier Identifier;
         [Optional] public PortList? PortList;
         [Optional] public PortConstraint? ReturnConstraint;
-        [IndirectAlternative(nameof(BodyAlternatives)), WhitespaceSurrounded, MultiLine] public object Body;
+        [IndirectAlternative(nameof(BodyAlternatives)), WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine] public object Body;
         // ReSharper restore UnassignedField.Global UnusedAutoPropertyAccessor.Local UnusedAutoPropertyAccessor.Global
 #pragma warning restore 649, 8618, 169
 

@@ -68,8 +68,7 @@ namespace Element.AST
         public override Result<bool> MatchesConstraint(IValue value, Context context) => IsInstanceOfStruct(value, context);
         public override Result<IValue> DefaultValue(Context context) =>
             InputPorts.Select(field => field.DefaultValue(context))
-                      .BindEnumerable(defaults => StructInstance.Create(this, defaults.ToArray(), context)
-                                                                .Cast<IValue>());
+                      .BindEnumerable(defaults => Call(defaults.ToArray(), context).Cast<IValue>());
     }
     
     public sealed class StructInstance : Value
@@ -111,6 +110,6 @@ namespace Element.AST
 
         public override Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) =>
             _resolvedBlock.DeserializeMembers(nextValue, context)
-                          .Map(deserializedFields => (IValue) new StructInstance(DeclaringStruct, deserializedFields));
+                          .Bind(deserializedFields => DeclaringStruct.Call(deserializedFields.ToArray(), context));
     }
 }
