@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lexico;
 
 namespace Element.AST
 {
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public sealed class IntrinsicFunctionDeclaration : Declaration
     {
         protected override string IntrinsicQualifier => "intrinsic ";
@@ -35,6 +37,7 @@ namespace Element.AST
         }
     }
     
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public sealed class ExpressionBodiedFunctionDeclaration : Declaration
     {
         protected override string IntrinsicQualifier => string.Empty;
@@ -60,6 +63,7 @@ namespace Element.AST
         }
     }
     
+    [Sequence(ParserFlags = ParserFlags.TraceHeader)]
     public sealed class ScopeBodiedFunctionDeclaration : Declaration
     {
         protected override string IntrinsicQualifier => string.Empty;

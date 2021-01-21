@@ -13,6 +13,7 @@ namespace Element
         public SourceContext(CompilerOptions? compilerOptions) => CompilerOptions = compilerOptions;
 
         public GlobalScope GlobalScope { get; } = new GlobalScope();
+        public List<StructuralTuple> GeneratedStructuralTuples { get; } = new List<StructuralTuple>();
         public CompilerOptions? CompilerOptions { get; }
 
         /// <summary>

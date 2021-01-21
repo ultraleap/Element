@@ -5,7 +5,7 @@ namespace Element.AST
     public class PortConstraint : AstNode
     {
 #pragma warning disable 169, 8618
-        [Literal(":"), WhitespaceSurrounded, MultiLine] private Unnamed _;
+        [Literal(":"), WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine] private Unnamed _;
 
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         [field: Term] public Expression Expression { get; private set; }

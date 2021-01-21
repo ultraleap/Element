@@ -4,77 +4,76 @@ using System.Linq;
 
 namespace Element.AST
 {
-	public class List : IntrinsicValue, IIntrinsicFunctionImplementation
-	{
-		private List()
-		{
-			Identifier = new Identifier("list");
-		}
-		
-		public static List Instance { get; } = new List();
-		public override Identifier Identifier { get; }
-		public bool IsVariadic => true;
+    public class List : IntrinsicValue, IIntrinsicFunctionImplementation
+    {
+        private List()
+        {
+            Identifier = new Identifier("list");
+        }
 
-		public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
-			context.RootScope.Lookup(ListStruct.Instance.Identifier, context)
-			       .Accumulate(() => context.RootScope.Lookup(NumStruct.Instance.Identifier, context))
-			       .Bind(t =>
-			       {
-				       var (listStruct, numStruct) = t;
-				       return listStruct.Call(new IValue[]
-				       {
-					       new ListIndexer(arguments, new[]{new ResolvedPort(numStruct)}, AnyConstraint.Instance),
-					       new Constant(arguments.Count)
-				       }, context);
-			       });
-		
-		private class ListIndexer : Function
+        public static List Instance { get; } = new List();
+        public override Identifier Identifier { get; }
+        public bool IsVariadic => true;
+
+        public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) =>
+            context.RootScope.Lookup(ListStruct.Instance.Identifier, context)
+                   .Accumulate(() => context.RootScope.Lookup(NumStruct.Instance.Identifier, context))
+                   .Bind(t =>
+                    {
+                        var (listStruct, numStruct) = t;
+                        return listStruct.Call(new IValue[]
+                        {
+                            new ListIndexer(arguments, new[] {new ResolvedPort(numStruct)}, AnyConstraint.Instance),
+                            new Constant(arguments.Count)
+                        }, context);
+                    });
+
+        private class ListIndexer : Function
         {
             private readonly IReadOnlyList<IValue> _elements;
 
             public ListIndexer(IReadOnlyList<IValue> elements, IReadOnlyList<ResolvedPort> inputPorts, IValue output)
             {
-	            _elements = elements;
-	            InputPorts = inputPorts;
-	            ReturnConstraint = output;
+                _elements = elements;
+                InputPorts = inputPorts;
+                ReturnConstraint = output;
             }
 
             public override IReadOnlyList<ResolvedPort> InputPorts { get; }
             public override IValue ReturnConstraint { get; }
 
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
-	            arguments[0].InnerIs(out Instruction index)
-		            ? HomogenousListElement.Create(index, _elements, context)
-		            : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
+                arguments[0].InnerIs(out Instruction index)
+                    ? HomogenousListElement.Create(index, _elements, context)
+                    : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
         }
 
-		private class HomogenousListElement : IValue
-		{
-			public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, Context context) =>
-				elements[0].InstanceType(context)
-				           .Bind(listElementInstanceType =>
-					                 elements.AreAllOfInstanceType(listElementInstanceType, context)
-						                 ? index.CompileTimeIndex(0, elements.Count, context)
-						                        .Branch(compileConstantIndex => compileConstantIndex < elements.Count
-							                                                        ? new Result<IValue>(elements[compileConstantIndex])
-							                                                        : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
-						                                () =>
-						                                {
-							                                var operands = new Instruction[elements.Count];
+        private class HomogenousListElement : IValue
+        {
+            public static Result<IValue> Create(Instruction index, IReadOnlyList<IValue> elements, Context context) =>
+                elements[0].InstanceType(context)
+                           .Bind(listElementInstanceType => elements.VerifyValuesAreAllOfInstanceType(
+                                listElementInstanceType,
+                                () => index.CompileTimeIndex(0, elements.Count, context)
+                                           .Branch(compileConstantIndex => compileConstantIndex < elements.Count
+                                                    ? new Result<IValue>(elements[compileConstantIndex])
+                                                    : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
+                                                () =>
+                                                {
+                                                    var operands = new Instruction[elements.Count];
 
-							                                for (var i = 0; i < elements.Count; i++)
-							                                {
-								                                // If any elements are not instructions then we need to 
-								                                if (elements[i].InnerIs(out Instruction instruction)) operands[i] = instruction;
-								                                else return new Result<IValue>(new HomogenousListElement(index, elements));
-							                                }
+                                                    for (var i = 0; i < elements.Count; i++)
+                                                    {
+                                                        // If any elements are not instructions then we need to 
+                                                        if (elements[i].InnerIs(out Instruction instruction)) operands[i] = instruction;
+                                                        else return new Result<IValue>(new HomogenousListElement(index, elements));
+                                                    }
 
-							                                return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
-						                                })
-						                 : context.Trace(EleMessageCode.ExpectedHomogenousItems, "Elements of a list must be of the same type"));
+                                                    return Switch.CreateAndOptimize(index, operands, context).Cast<IValue>();
+                                                }), context));
 
-			private HomogenousListElement(Instruction index, IReadOnlyList<IValue> elements)
-			{
+            private HomogenousListElement(Instruction index, IReadOnlyList<IValue> elements)
+            {
                 _index = index;
                 _elements = elements;
             }
@@ -85,8 +84,8 @@ namespace Element.AST
             public string SummaryString => $"HomogenousListElement({_index})[{string.Join(", ", _elements)}]";
 
             private Result<IValue> ApplyToAllElements(Func<IValue, Result<IValue>> func, Context context)
-	            => _elements.Select(func)
-	                        .BindEnumerable(elements => Create(_index, elements.ToArray(), context));
+                => _elements.Select(func)
+                            .BindEnumerable(elements => Create(_index, elements.ToArray(), context));
 
             public IReadOnlyList<ResolvedPort> InputPorts => _elements[0].InputPorts;
             public IValue ReturnConstraint => _elements[0].ReturnConstraint;
@@ -100,6 +99,6 @@ namespace Element.AST
             public Result<IValue> InstanceType(Context context) => _elements[0].InstanceType(context);
             public bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => false;
             public bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => false;
-		}
-	}
+        }
+    }
 }

@@ -3,7 +3,7 @@ using Lexico;
 
 namespace Element.AST
 {
-    [WhitespaceSurrounded, MultiLine]
+    [WhitespaceSurrounded(ParserFlags = ParserFlags.IgnoreInTrace), MultiLine]
     public class Port : AstNode
     {
 #pragma warning disable 649, 8618

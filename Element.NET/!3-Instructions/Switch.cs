@@ -1,3 +1,5 @@
+using Element.AST;
+
 namespace Element
 {
 	using System;
@@ -13,14 +15,24 @@ namespace Element
 		public static Result<Instruction> CreateAndOptimize(Instruction selector, IEnumerable<Instruction> operands, Context context)
 		{
 			var options = operands as Instruction[] ?? operands.ToArray();
+			if (options.Length < 1) return context.Trace(EleMessageCode.ArgumentCountMismatch, "Switch requires at least 1 option");
 			if (options.Length == 1 || options.All(o => o.Equals(options[0]))) return options[0];
 
-			return selector.CompileTimeIndex(0, options.Length, context)
-			               .Branch(idx => new Result<Instruction>(options[idx]),
-			                       () => new Switch(selector, options));
+			return options[0].LookupIntrinsicStruct(context)
+			                 .Bind(expectedType =>
+			                 {
+				                 Result<Instruction> HasCompileTimeIndex(int idx) => new Result<Instruction>(options[idx]);
+				                 Result<Instruction> NotCompileTimeIndexable() => new Switch(selector, options, options[0].StructImplementation);
+
+				                 return options.Cast<IValue>()
+				                               .ToList()
+				                               .VerifyValuesAreAllOfInstanceType(expectedType, () => selector.CompileTimeIndex(0, options.Length, context)
+				                                                                                             .Branch(HasCompileTimeIndex, NotCompileTimeIndexable),
+				                                                                 context);
+			                 });
 		}
 		
-		private Switch(Instruction selector, IEnumerable<Instruction> operands)
+		private Switch(Instruction selector, IEnumerable<Instruction> operands, IIntrinsicStructImplementation type) : base(type)
 		{
 			Selector = selector ?? throw new ArgumentNullException(nameof(selector));
 			Operands = new ReadOnlyCollection<Instruction>(operands.ToArray());

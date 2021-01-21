@@ -37,7 +37,7 @@ namespace Laboratory.Tests
             }
         }
         
-        public void SyntaxTest((FileInfo ParseTestFile, EleMessageCode? ExpectedMessageCode) info, bool skipValidation)
+        public void SyntaxTest((FileInfo ParseTestFile, EleMessageCode? ExpectedMessageCode) info, bool skipValidation, bool showParseTraceForErrors)
         {
             var (fileInfo, messageCode) = info;
             var expectingError = messageCode.HasValue;
@@ -46,7 +46,7 @@ namespace Laboratory.Tests
                                                      null,
                                                      Array.Empty<PackageSpecifier>(),
                                                      new[] {fileInfo},
-                                                     new CompilerOptions(default, default, skipValidation, expectingError));
+                                                     new CompilerOptions(default, default, skipValidation, expectingError && !showParseTraceForErrors));
 
             var result = Host.Parse(compilationInput);
             if (expectingError)

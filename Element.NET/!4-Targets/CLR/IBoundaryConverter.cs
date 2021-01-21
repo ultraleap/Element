@@ -498,7 +498,7 @@ namespace Element.CLR
         public ClrBoundary ClrBoundary { get; }
         public static ClrBoundaryContext FromContext(Context context, ClrBoundary cache) => new ClrBoundaryContext(context, cache);
 
-        private ClrBoundaryContext(Context context, ClrBoundary cache) : base(context.RootScope, context.CompilerOptions) => ClrBoundary = cache;
+        private ClrBoundaryContext(Context context, ClrBoundary cache) : base(context.RootScope, context.CompilerOptions, context.StructuralTuples) => ClrBoundary = cache;
 
         public Result<IValue> LinqToElement(LExpression parameter) => ClrBoundary.LinqToElement(parameter, this);
         public Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction) => ClrBoundary.ElementToLinq(value, outputType, convertFunction, this);
