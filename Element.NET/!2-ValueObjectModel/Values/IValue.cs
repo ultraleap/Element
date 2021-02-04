@@ -67,7 +67,7 @@ namespace Element.AST
         /// Determine if another value matches the constraint that this value represents.
         /// Will error if this value does not represent a constraint.
         /// </summary>
-        Result<bool> MatchesConstraint(IValue value, Context context);
+        Result MatchesConstraint(IValue value, Context context);
         
         /// <summary>
         /// Get the default value of this type.
@@ -113,7 +113,7 @@ namespace Element.AST
         public virtual IValue ReturnConstraint => NothingConstraint.Instance;
         public virtual Result<IValue> Index(Identifier id, Context context) => context.Trace(EleMessageCode.NotIndexable, $"'{this}' is not indexable");
         public virtual IReadOnlyList<Identifier> Members => Array.Empty<Identifier>();
-        public virtual Result<bool> MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.NotConstraint, $"'{this}' cannot be used as a port annotation, it is not a constraint");
+        public virtual Result MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.NotConstraint, $"'{this}' is not a constraint");
         public virtual Result<IValue> DefaultValue(Context context) => context.Trace(EleMessageCode.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
         public virtual void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => resultBuilder.Append(EleMessageCode.SerializationError, $"'{this}' is not serializable");
         public virtual Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => context.Trace(EleMessageCode.SerializationError, $"'{this}' cannot be deserialized");

@@ -11,7 +11,7 @@ namespace Element.AST
             Identifier = new Identifier("Any");
         }
         public static AnyConstraint Instance { get; } = new AnyConstraint();
-        public override Result<bool> MatchesConstraint(IValue value, Context context) => true;
+        public override Result MatchesConstraint(IValue value, Context context) => Result.Success;
         public override Identifier Identifier { get; }
     }
 }

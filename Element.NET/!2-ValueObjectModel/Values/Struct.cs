@@ -24,13 +24,13 @@ namespace Element.AST
         public override string SummaryString => Identifier.String;
 
         public abstract override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context);
-        public abstract override Result<bool> MatchesConstraint(IValue value, Context context);
+        public abstract override Result MatchesConstraint(IValue value, Context context);
         public override Result<IValue> Index(Identifier id, Context context) => _associatedBlock?.Index(id, context)
                                                                                  ?? (Result<IValue>)context.Trace(EleMessageCode.InvalidExpression, $"'{this}' has no associated scope - it cannot be indexed");
         public Result<IValue> Lookup(Identifier id, Context context) => (_associatedBlock ?? _parent).Lookup(id, context);
         public override IReadOnlyList<Identifier> Members => _associatedBlock?.Members ?? Array.Empty<Identifier>();
         public abstract override Result<IValue> DefaultValue(Context context);
-        public Result<bool> IsInstanceOfStruct(IValue value, Context context) => value.IsInstanceOfType(this, context);
+        public bool IsInstanceOfStruct(IValue value, Context context) => value.IsInstanceOfType(this, context);
         public Result<IValue> ResolveInstanceFunction(IValue instance, Identifier id, Context context) =>
             Index(id, context)
                 .Bind(v => v switch
@@ -55,7 +55,7 @@ namespace Element.AST
             _implementation = implementation;
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => _implementation.Construct(this, arguments, context);
-        public override Result<bool> MatchesConstraint(IValue value, Context context) => _implementation.MatchesConstraint(this, value, context);
+        public override Result MatchesConstraint(IValue value, Context context) => _implementation.MatchesConstraint(this, value, context);
         public override Result<IValue> DefaultValue(Context context) => _implementation.DefaultValue(context);
     }
 
@@ -65,7 +65,7 @@ namespace Element.AST
             : base(identifier, fields, associatedBlock, parent) { }
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => StructInstance.Create(this, arguments, context).Cast<IValue>();
-        public override Result<bool> MatchesConstraint(IValue value, Context context) => IsInstanceOfStruct(value, context);
+        public override Result MatchesConstraint(IValue value, Context context) => IsInstanceOfStruct(value, context) ? Result.Success : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected {this} instance but got {value}");
         public override Result<IValue> DefaultValue(Context context) =>
             InputPorts.Select(field => field.DefaultValue(context))
                       .BindEnumerable(defaults => Call(defaults.ToArray(), context).Cast<IValue>());

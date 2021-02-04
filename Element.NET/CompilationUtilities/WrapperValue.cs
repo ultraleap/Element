@@ -16,7 +16,7 @@ namespace Element
         public virtual IValue ReturnConstraint => WrappedValue.ReturnConstraint;
         public virtual Result<IValue> Index(Identifier id, Context context) => WrappedValue.Index(id, context);
         public virtual IReadOnlyList<Identifier> Members => WrappedValue.Members;
-        public virtual Result<bool> MatchesConstraint(IValue value, Context context) => WrappedValue.MatchesConstraint(value, context);
+        public virtual Result MatchesConstraint(IValue value, Context context) => WrappedValue.MatchesConstraint(value, context);
         public virtual Result<IValue> DefaultValue(Context context) => WrappedValue.DefaultValue(context);
         public virtual void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => WrappedValue.Serialize(resultBuilder, context);
         public virtual Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => WrappedValue.Deserialize(nextValue, context);

@@ -42,11 +42,7 @@ namespace Element.AST
 
             Result<ResolvedPort> WithDefaultArgument()
             {
-                Result DefaultArgumentMatchesPortConstraint((IValue Constraint, IValue DefaultArgument) t) =>
-                    t.Constraint.MatchesConstraint(t.DefaultArgument, context)
-                     .Bind(matches => matches
-                                          ? Result.Success
-                                          : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Default argument value '{t.DefaultArgument}' does not match port constraint '{t.Constraint}'"));
+                Result DefaultArgumentMatchesPortConstraint((IValue Constraint, IValue DefaultArgument) t) => t.Constraint.MatchesConstraint(t.DefaultArgument, context);
 
                 ResolvedPort ToResolvedPort((IValue Constraint, IValue DefaultArgument) t) => new ResolvedPort(Identifier, t.Constraint, t.DefaultArgument);
 

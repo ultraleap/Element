@@ -117,18 +117,11 @@ namespace Element.AST
 
             try
             {
-                Result ResultMatchesReturnConstraint(IValue result)
-                {
-                    return function.ReturnConstraint.MatchesConstraint(result, context)
-                                   .Bind(matches => matches
-                                                        ? Result.Success
-                                                        : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Result '{result}' for function '{function}' does not match '{function.ReturnConstraint}' constraint"));
-                }
-
+                Result ResultMatchesReturnConstraint(IValue result) => function.ReturnConstraint.MatchesConstraint(result, context);
 
                 return CheckInputConstraints(function.InputPorts, arguments as IValue[] ?? arguments.ToArray(), context)
-                       .Bind(resolveFunc)
-                       .Check(ResultMatchesReturnConstraint);
+                      .Bind(resolveFunc)
+                      .Check(ResultMatchesReturnConstraint);
             }
             finally
             {
@@ -153,11 +146,7 @@ namespace Element.AST
                 var port = ports[i];
                 if (port == ResolvedPort.VariadicPort)
                     break; // If we find a variadic port we can't do any more constraint checking here, it must be done within the functions implementation.
-                resultBuilder.Append(port.ResolvedConstraint
-                                         .MatchesConstraint(arg, context)
-                                         .Bind(matches => matches
-                                                            ? Result.Success
-                                                            : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Value '{arg}' for port '{port}' does not match '{port.ResolvedConstraint}' constraint")));
+                resultBuilder.Append(port.ResolvedConstraint.MatchesConstraint(arg, context));
             }
 
             return resultBuilder.ToResult();

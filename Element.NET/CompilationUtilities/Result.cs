@@ -163,6 +163,7 @@ namespace Element
             return previous;
         }
         
+        
         public static Result<IEnumerable<TResult>> ToResultEnumerable<TResult>(this IEnumerable<Result<TResult>> enumerable) =>
             MapEnumerable(enumerable, e => e);
         public static Result<TResult[]> ToResultArray<TResult>(this IEnumerable<Result<TResult>> enumerable) =>

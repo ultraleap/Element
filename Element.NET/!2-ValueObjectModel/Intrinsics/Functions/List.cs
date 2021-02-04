@@ -92,7 +92,7 @@ namespace Element.AST
             public IReadOnlyList<Identifier> Members => _elements[0].Members;
             public Result<IValue> Index(Identifier id, Context context) => ApplyToAllElements(e => e.Index(id, context), context);
             public Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => ApplyToAllElements(e => e.Call(arguments.ToArray(), context), context);
-            public Result<bool> MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used as a constraint");
+            public Result MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used as a constraint");
             public Result<IValue> DefaultValue(Context context) => ApplyToAllElements(e => e.DefaultValue(context), context);
             public void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be serialized");
             public Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used to deserialize");
