@@ -200,7 +200,7 @@ namespace Element.AST
                  .Bind(serialized => serialized.ToFloats(context));
 
         public static bool IsInstanceOfType(this IValue value, IValue type, Context context) => value.InstanceType(context)
-                                                                                                     .Match( (instanceType, _) => instanceType == type,
+                                                                                                     .Match( (instanceType, _) => instanceType.Inner() == type.Inner(),
                                                                                                        _ => false);
 
         public static Result<T> VerifyValuesAreAllOfInstanceType<T>(this IReadOnlyList<IValue> items, IValue type, Func<Result<T>> continuation, Context context)

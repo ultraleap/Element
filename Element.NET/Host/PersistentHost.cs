@@ -30,7 +30,7 @@ namespace Element
                                                                   : value.CompileDynamic(context)
                                                                          .Bind(compiled => InvokeAndConvertResult(compiled, context))));
 
-        private static Result<float[]> InvokeAndConvertResult(Delegate compiledDelegate, ClrBoundaryContext context, params object[] args)
+        private static Result<float[]> InvokeAndConvertResult(Delegate compiledDelegate, BoundaryContext context, params object[] args)
         {
             var result = new List<float>();
             return context.SerializeClrInstance(compiledDelegate.DynamicInvoke(args), result)

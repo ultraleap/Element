@@ -8,12 +8,12 @@ namespace Element
 {
     public class BoundaryValue
     {
-        private BoundaryValue(string name, string path, SourceContext sourceContext, ClrBoundary clrBoundary, IReadOnlyList<ParameterInfo> parameters, IValue value, SourceInfo sourceInfo)
+        private BoundaryValue(string name, string path, SourceContext sourceContext, BoundaryMap boundaryMap, IReadOnlyList<ParameterInfo> parameters, IValue value, SourceInfo sourceInfo)
         {
             Name = name;
             Path = path;
             SourceContext = sourceContext;
-            ClrBoundary = clrBoundary;
+            BoundaryMap = boundaryMap;
             Parameters = parameters;
             Value = value;
             SourceInfo = sourceInfo;
@@ -39,7 +39,7 @@ namespace Element
             WalkParameters(Parameters);
         }
 
-        public static Result<BoundaryValue> Create(ValueWithLocation value, SourceContext sourceContext, ClrBoundary clrBoundary)
+        public static Result<BoundaryValue> Create(ValueWithLocation value, SourceContext sourceContext, BoundaryMap boundaryMap)
         {
             var context = Context.CreateFromSourceContext(sourceContext);
             var idStack = new Stack<Identifier>();
@@ -86,7 +86,7 @@ namespace Element
             return value.InputPorts
                         .Select(TopLevelPortToParameter)
                         .ToResultReadOnlyList()
-                        .Map(parameterInfos => new BoundaryValue(value.Identifier.String, value.FullPath, sourceContext, clrBoundary, parameterInfos, value, value.SourceInfo));
+                        .Map(parameterInfos => new BoundaryValue(value.Identifier.String, value.FullPath, sourceContext, boundaryMap, parameterInfos, value, value.SourceInfo));
         }
         
         public string Name { get; }
@@ -94,7 +94,7 @@ namespace Element
         public IValue Value { get; }
         public SourceInfo SourceInfo { get; }
         public SourceContext SourceContext { get; }
-        public ClrBoundary ClrBoundary { get; }
+        public BoundaryMap BoundaryMap { get; }
         public IReadOnlyList<ParameterInfo> Parameters { get; }
         public IReadOnlyList<LeafParameterInfo> FlattenedParameters { get; }
 
