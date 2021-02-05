@@ -354,6 +354,11 @@ namespace Element.CLR
 		public static Result<TDelegate> Compile<TDelegate>(this IValue value, ClrBoundaryContext clrBoundaryContext)
 			where TDelegate : Delegate =>
 			Compile(value, typeof(TDelegate), clrBoundaryContext).Map(result => (TDelegate)result);
+		
+		private delegate TInstance InstanceDelegate<out TInstance>();
+
+		public static Result<TInstance> CompileInstance<TInstance>(this IValue value, ClrBoundaryContext context) =>
+			value.Compile<InstanceDelegate<TInstance>>(context).Map(fn => fn());
 
 		public static Result<Delegate> CompileDynamic(this IValue value, ClrBoundaryContext context)
 		{
@@ -400,7 +405,7 @@ namespace Element.CLR
             
             if (value.HasInputs() && value.InputPorts.Count != delegateParameters.Length)
             {
-	            return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
+	            return context.Trace(EleMessageCode.InvalidBoundaryFunction, $"Function being compiled expected {value.InputPorts.Count} parameters but delegate type has {delegateParameters.Length}");
             }
 
             var resultBuilder = new ResultBuilder<Delegate>(context, default!);

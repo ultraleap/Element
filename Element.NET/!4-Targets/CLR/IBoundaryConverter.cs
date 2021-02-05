@@ -513,5 +513,20 @@ namespace Element.CLR
     {
         public static ClrBoundaryContext ToBoundaryContext(this Context context, ClrBoundary cache) => ClrBoundaryContext.FromContext(context, cache);
         public static Result<ClrBoundaryContext> ToDefaultBoundaryContext(this Context context) => context.ToBoundaryContext(ClrBoundary.CreateDefault());
+        
+        public static Result<IValue> ClrToElement(this IValue elementType, object clrInstance, ClrBoundaryContext context)
+        {
+            var serialized = new List<float>();
+            return context.SerializeClrInstance(clrInstance, serialized)
+                          .Bind(() => elementType.DefaultValue(context))
+                          .Bind(defaultValue => elementType.GetInputPortDefaults(context)
+                                                           .Bind(fieldDefaults => fieldDefaults.SerializeAndFlattenValues(context))
+                                                           .Bind(fieldDefaultsSerialized =>
+                                                            {
+                                                                static Constant MakeConstant(float f, Instruction instruction) => new Constant(f, instruction.StructImplementation);
+                                                                var fieldQueue = new Queue<Instruction>(serialized.Zip(fieldDefaultsSerialized, MakeConstant));
+                                                                return defaultValue.Deserialize(fieldQueue.Dequeue, context);
+                                                            }));
+        }
     }
 }

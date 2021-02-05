@@ -149,7 +149,8 @@ namespace Element.AST
 
         public static Result<(IValue[] InputDefaultValues, Instruction[] AllDefaultsSerialized)> SerializeAllInputPortDefaults(this IValue function, Context context)
             => function.GetInputPortDefaults(context)
-                       .Bind(defaultValues => defaultValues.SerializeAndFlattenValues(context).Map(allSerialized => (defaultValues, allSerialized.ToArray())));
+                       .Bind(defaultValues => defaultValues.SerializeAndFlattenValues(context)
+                                                           .Map(allSerialized => (defaultValues, allSerialized.ToArray())));
         
         public static Result<IValue> IndexPositionally(this IValue value, int index, Context context)
         {

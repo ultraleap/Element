@@ -42,7 +42,6 @@ namespace Element
         public static Result<BoundaryValue> Create(ValueWithLocation value, SourceContext sourceContext, ClrBoundary clrBoundary)
         {
             var context = Context.CreateFromSourceContext(sourceContext);
-            var offset = 0;
             var idStack = new Stack<Identifier>();
             string IdStackToPath() => string.Join(".", idStack.Reverse()); // Stack needs to be reversed as stacks are last in first out
 
@@ -54,23 +53,22 @@ namespace Element
                                      {
                                          if (!port.Identifier.HasValue) return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Boundary value ports must not contain discards");
                                          var portId = port.Identifier.Value;
-                                         idStack.Push(portId);
                                          var argumentPath = IdStackToPath();
+                                         idStack.Push(portId);
 
                                          Result<ParameterInfo> result;
                                          if (port.ResolvedConstraint.InputPorts.Count < 1) // If there's no fields then we're a number
                                          {
                                              result = portDefaultValue.InnerIs(out Constant constant)
-                                                 ? (Result<ParameterInfo>) new LeafParameterInfo(portId.String, argumentPath, offset++, parent, port.ResolvedConstraint, constant)
+                                                 ? (Result<ParameterInfo>) new LeafParameterInfo(portId.String, argumentPath, parent, port.ResolvedConstraint, constant)
                                                  : context.Trace(EleMessageCode.InvalidBoundaryFunction, $"Expected a {nameof(Constant)} but got {portDefaultValue}");
                                          }
                                          else
                                          {
                                              result = portDefaultValue.MemberValues(context).Bind(defaultMemberValues =>
                                              {
-                                                 var structureOffset = offset;
                                                  Result<ParameterInfo> FieldToParameterInfo(ResolvedPort field) => PortToParameter(field, parent, defaultMemberValues.FirstOrDefault(defaultField => field.Identifier.Value.Equals(defaultField.Identifier)).Value);
-                                                 ParameterInfo MakeStructuredParameterInfo(IReadOnlyList<ParameterInfo> fieldParameterInfos) => new StructuredParameterInfo(portId.String, argumentPath, structureOffset, parent, port.ResolvedConstraint, portDefaultValue, fieldParameterInfos);
+                                                 ParameterInfo MakeStructuredParameterInfo(IReadOnlyList<ParameterInfo> fieldParameterInfos) => new StructuredParameterInfo(portId.String, argumentPath, parent, port.ResolvedConstraint, portDefaultValue, fieldParameterInfos);
                                                  return port.ResolvedConstraint.InputPorts.Select(FieldToParameterInfo)
                                                             .ToResultReadOnlyList()
                                                             .Map(MakeStructuredParameterInfo);
@@ -107,11 +105,10 @@ namespace Element
     {
         private string? _fullPath;
 
-        protected ParameterInfo(string name, string path, int offset, ParameterInfo? parent, IValue parameterType)
+        protected ParameterInfo(string name, string path, ParameterInfo? parent, IValue parameterType)
         {
             Name = name;
             Path = path;
-            Offset = offset;
             Parent = parent;
             ParameterType = parameterType;
         }
@@ -121,15 +118,14 @@ namespace Element
         public string FullPath => _fullPath ??= string.IsNullOrEmpty(Path) ? Name : $"{Path}.{Name}";
         public ParameterInfo? Parent { get; }
         public IValue ParameterType { get; }
-        public int Offset { get; }
         public abstract Result<IValue> GetValue(IBoundaryArgumentSource source, Context context);
         public abstract Result SetValue(IBoundaryArgumentSource source, IValue value, Context context);
     }
 
     public class LeafParameterInfo : ParameterInfo
     {
-        public LeafParameterInfo(string name, string path, int offset, ParameterInfo? parent, IValue parameterType, Constant @default)
-            : base(name, path, offset, parent, parameterType)
+        public LeafParameterInfo(string name, string path, ParameterInfo? parent, IValue parameterType, Constant @default)
+            : base(name, path, parent, parameterType)
         {
             Default = @default;
         }
@@ -150,8 +146,8 @@ namespace Element
 
     public class StructuredParameterInfo : ParameterInfo
     {
-        public StructuredParameterInfo(string name, string path, int offset, ParameterInfo? parent, IValue parameterType, IValue @default, IReadOnlyList<ParameterInfo> fields)
-            : base(name, path, offset, parent, parameterType)
+        public StructuredParameterInfo(string name, string path, ParameterInfo? parent, IValue parameterType, IValue @default, IReadOnlyList<ParameterInfo> fields)
+            : base(name, path, parent, parameterType)
         {
             Default = @default;
             Fields = fields;

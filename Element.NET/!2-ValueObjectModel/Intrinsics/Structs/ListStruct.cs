@@ -34,7 +34,7 @@ namespace Element.AST
                                   Instruction e => context.Trace(EleMessageCode.NotCompileConstant, $"List count '{e}' is not a compile-time constant expression"),
                                   _ => throw new InternalCompilerException($"Couldn't get List.'{CountId}' from '{listInstance}'. Count must be an expression.")
                               })
-                : context.Trace(EleMessageCode.TypeError, "Struct instance is not a list");
+                : context.Trace(EleMessageCode.TypeError, "Struct instance is not a List");
 
         public static Result<IValue[]> EvaluateElements(StructInstance listInstance, Context context) =>
             ConstantCount(listInstance, context)
