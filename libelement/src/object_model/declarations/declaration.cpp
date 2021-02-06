@@ -29,7 +29,10 @@ bool declaration::has_scope() const
     return !our_scope->is_empty();
 }
 
-object_const_shared_ptr declaration::generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const
+object_const_shared_ptr declaration::generate_placeholder(
+    const compilation_context& context,
+    std::size_t& placeholder_index,
+    const std::size_t boundary_scope) const
 {
     return std::make_shared<const error>(
         fmt::format("Tried to generate a placeholder for an unexpected declaration"),

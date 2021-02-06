@@ -657,7 +657,7 @@ element_result element_interpreter_evaluate_call_expression(
 
     int serialised_size = 0;
     for (const auto& arg : serialised_arguments)
-        serialised_size += arg.size();
+        serialised_size += static_cast<int>(arg.size());
 
     if (serialised_size > outputs->count)
         return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
@@ -667,7 +667,7 @@ element_result element_interpreter_evaluate_call_expression(
     for (const auto& arg : serialised_arguments)
     {
         std::copy_n(arg.data(), arg.size(), outputs->values + outputs->count);
-        outputs->count += arg.size();
+        outputs->count += static_cast<int>(arg.size());
     }
 
     return ELEMENT_OK;

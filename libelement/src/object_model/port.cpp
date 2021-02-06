@@ -38,7 +38,10 @@ const declaration* port::resolve_annotation(const compilation_context& context) 
     return declarer->get_scope()->find(annotation->to_string(), context.interpreter->caches, true);
 }
 
-object_const_shared_ptr port::generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const
+object_const_shared_ptr port::generate_placeholder(
+    const compilation_context& context,
+    std::size_t& placeholder_index,
+    const std::size_t boundary_scope) const
 {
     const auto* type = resolve_annotation(context);
     if (!type)

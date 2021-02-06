@@ -174,11 +174,11 @@ namespace element
                                                            const object& object,
                                                            const std::vector<port>& inputs,
                                                            const source_information& source_info,
-                                                           const int placeholder_offset,
-                                                           int boundary_scope)
+                                                           const std::size_t placeholder_offset,
+                                                           const int boundary_scope)
     {
         assert(!context.boundaries.empty());
-        const unsigned int boundary = boundary_scope < 0 ? context.boundaries.size() - 1 : boundary_scope;
+        const std::size_t boundary = boundary_scope < 0 ? context.boundaries.size() - 1 : boundary_scope;
         auto [placeholders, size] = generate_placeholder_inputs(context, inputs, placeholder_offset, boundary);
         context.boundaries[boundary].size = size;
 

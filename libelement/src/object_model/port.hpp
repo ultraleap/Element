@@ -21,7 +21,7 @@ namespace element
         [[nodiscard]] const type_annotation* get_annotation() const { return annotation.get(); }
 
         [[nodiscard]] const declaration* resolve_annotation(const compilation_context& context) const;
-        [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const;
+        [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, std::size_t& placeholder_index, std::size_t boundary_scope) const;
 
         [[nodiscard]] bool has_default() const { return get_default(); }
         [[nodiscard]] expression_chain* get_default() const { return expr_chain.get(); }

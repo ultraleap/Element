@@ -24,25 +24,25 @@ namespace element
         [[nodiscard]] const port& get_output() const override { return declarer->get_output(); }
         [[nodiscard]] bool serializable(const compilation_context& context) const { return declarer->serializable(context); }
         [[nodiscard]] bool deserializable(const compilation_context& context) const { return declarer->deserializable(context); }
-        [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const { return declarer->generate_placeholder(context, placeholder_index, boundary_scope); }
+        [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, std::size_t& placeholder_index, std::size_t boundary_scope) const { return declarer->generate_placeholder(context, placeholder_index, boundary_scope); }
         //[[nodiscard]] std::string location() const { return declarer->location(); }
 
         [[nodiscard]] object_const_shared_ptr index(const compilation_context& context,
                                                     const identifier& name,
-                                                    const source_information& source_info) const
+                                                    const source_information& source_info) const override
         {
             return declarer->index(context, name, source_info);
         }
 
         [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,
                                                    std::vector<object_const_shared_ptr> compiled_args,
-                                                   const source_information& source_info) const
+                                                   const source_information& source_info) const override
         {
             return declarer->call(context, std::move(compiled_args), source_info);
         }
 
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
-                                                      const source_information& source_info) const
+                                                      const source_information& source_info) const override
         {
             return declarer->compile(context, source_info);
         }

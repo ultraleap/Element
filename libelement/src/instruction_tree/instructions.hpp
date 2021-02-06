@@ -85,9 +85,9 @@ namespace element
 
         explicit instruction_constant(element_value val);
 
-        [[nodiscard]] virtual object_const_shared_ptr call(const compilation_context& context,
+        [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,
                                                            std::vector<object_const_shared_ptr> compiled_args,
-                                                           const source_information& source_info) const;
+                                                           const source_information& source_info) const override;
         [[nodiscard]] element_value value() const { return m_value; }
         [[nodiscard]] size_t get_size() const override { return 1; }
         [[nodiscard]] std::string to_string() const override
@@ -354,7 +354,11 @@ namespace element
                 break;
             }
 
-            //todo: optimise other operators
+            default:
+            {
+                //todo: optimise other operators
+                break;
+            }
         }
 
         return nullptr;

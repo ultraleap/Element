@@ -297,7 +297,7 @@ if (ELEMENT_BUILD_TESTING)
         target_link_libraries(element_tests PRIVATE fmt::fmt-header-only)
     endif ()
     target_link_libraries(element_tests PUBLIC element_coverage_config)
-    target_include_directories(element_tests PRIVATE "${element_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}/_deps/fmt-src/include")
+    target_include_directories(element_tests PRIVATE "${element_SOURCE_DIR}/src")
     add_test(NAME libelement_test
             COMMAND element_tests -r junit -o ${CMAKE_BINARY_DIR}/libemelement_test_app_details.xml)
 

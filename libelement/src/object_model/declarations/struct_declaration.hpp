@@ -37,7 +37,7 @@ namespace element
 
         [[nodiscard]] bool serializable(const compilation_context& context) const override;
         [[nodiscard]] bool deserializable(const compilation_context& context) const override;
-        [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const override;
+        [[nodiscard]] object_const_shared_ptr generate_placeholder(const compilation_context& context, std::size_t& placeholder_index, std::size_t boundary_scope) const override;
 
         [[nodiscard]] bool is_intrinsic() const override;
 
