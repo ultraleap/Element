@@ -8,7 +8,7 @@ using LinqExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
 {
-	public static class CLRFunction
+	public static class Boundary
 	{
 		private static readonly Dictionary<Unary.Op, MethodInfo> _unaryMethodOps = new Dictionary<Unary.Op, MethodInfo>
 	    {
@@ -114,7 +114,7 @@ namespace Element.CLR
 			public Func<State, LinqExpression>? ResolveState;
 		}
 
-		private static LinqExpression CompileInstruction(Instruction value, CompilationData data, ClrBoundaryContext context)
+		private static LinqExpression CompileInstruction(Instruction value, CompilationData data, BoundaryContext context)
 		{
 			static LinqExpression ConvertExpressionType(LinqExpression expr, Type targetType) =>
 				expr.Type == targetType
@@ -138,8 +138,8 @@ namespace Element.CLR
 
 			switch (value)
 			{
-				case ICLRExpression s:
-					return s.Compile();
+				case ILinqExpression linqExpression:
+					return linqExpression.Expression;
 				case Constant c:
 					return context.ElementToClr(c.StructImplementation)
 					              .Match((type, messages) => ConvertExpressionType(LinqExpression.Constant(c.Value), type),
@@ -239,7 +239,7 @@ namespace Element.CLR
 			throw new Exception("Unknown expression " + value);
 		}
 
-		private static LinqExpression[] CompileGroup(InstructionGroup group, CompilationData data, ClrBoundaryContext context)
+		private static LinqExpression[] CompileGroup(InstructionGroup group, CompilationData data, BoundaryContext context)
 		{
 			switch (group)
 			{
@@ -305,7 +305,7 @@ namespace Element.CLR
 		/// The result of calling the given function with all its inputs and a pre-allocated argument array.
 		/// The function inputs are mapped directly to the arrays contents.
 		/// </returns>
-		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, ClrBoundaryContext context)
+		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, BoundaryContext context)
 		{
 			if (!function.IsCallable(context)) return context.Trace(EleMessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
 			
@@ -351,11 +351,16 @@ namespace Element.CLR
 			               });
 		}
 
-		public static Result<TDelegate> Compile<TDelegate>(this IValue value, ClrBoundaryContext clrBoundaryContext)
+		public static Result<TDelegate> Compile<TDelegate>(this IValue value, BoundaryContext boundaryContext)
 			where TDelegate : Delegate =>
-			Compile(value, typeof(TDelegate), clrBoundaryContext).Map(result => (TDelegate)result);
+			Compile(value, typeof(TDelegate), boundaryContext).Map(result => (TDelegate)result);
+		
+		private delegate TInstance InstanceDelegate<out TInstance>();
 
-		public static Result<Delegate> CompileDynamic(this IValue value, ClrBoundaryContext context)
+		public static Result<TInstance> CompileInstance<TInstance>(this IValue value, BoundaryContext context) =>
+			value.Compile<InstanceDelegate<TInstance>>(context).Map(fn => fn());
+
+		public static Result<Delegate> CompileDynamic(this IValue value, BoundaryContext context)
 		{
 			Result<Struct> ConstraintToStruct(IValue constraint) => constraint.InnerIs<Struct>(out var s)
 				                                                        ? new Result<Struct>(s)
@@ -380,7 +385,7 @@ namespace Element.CLR
 			                           .BindEnumerable(clrPortTypes => Compile(value, LinqExpression.GetFuncType(clrPortTypes.ToArray()), context)));
 		}
 
-		private static Result<Delegate> Compile(IValue value, Type delegateType, ClrBoundaryContext context)
+		private static Result<Delegate> Compile(IValue value, Type delegateType, BoundaryContext context)
         {
 	        // Check return type/single out parameter of delegate
             var method = delegateType.GetMethod(nameof(Action.Invoke));
@@ -400,7 +405,7 @@ namespace Element.CLR
             
             if (value.HasInputs() && value.InputPorts.Count != delegateParameters.Length)
             {
-	            return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Mismatch in number of parameters between delegate type and the function being compiled");
+	            return context.Trace(EleMessageCode.InvalidBoundaryFunction, $"Function being compiled expected {value.InputPorts.Count} parameters but delegate type has {delegateParameters.Length}");
             }
 
             var resultBuilder = new ResultBuilder<Delegate>(context, default!);
@@ -428,7 +433,7 @@ namespace Element.CLR
             
             // Compile delegate
             var detectCircular = new Stack<IValue>();
-            Result<LinqExpression> ConvertFunction(IValue nestedValue, Type outputType, ClrBoundaryContext context)
+            Result<LinqExpression> ConvertFunction(IValue nestedValue, Type outputType, BoundaryContext context)
 			{
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == nestedValue)
 				{
@@ -466,6 +471,26 @@ namespace Element.CLR
 	                          var fnBody = LinqExpression.Block(data.Variables, data.Statements);
 	                          return LinqExpression.Lambda(delegateType, fnBody, false, parameterExpressions).Compile();
                           });
+		}
+		
+		public static Result<IValue> ClrToElement(this IValue elementType, object clrInstance, BoundaryContext context)
+		{
+			var serialized = new List<float>();
+			return context.SerializeClrInstance(clrInstance, serialized)
+			              .Bind(() => elementType.DefaultValue(context))
+			              .Bind(defaultValue => defaultValue.InnerIs(out Instruction instruction)
+				               // If the default value is a single instruction then we are a primitive value (Num or Bool)
+				               ? serialized.Count == 1
+					               ? defaultValue.Deserialize(() => new Constant(serialized[0], instruction.StructImplementation), context)
+					               : context.Trace(EleMessageCode.InvalidBoundaryData, $"When converting to type {elementType} - expected {clrInstance} to serialize to 1 float but serialized to {serialized.Count} floats")
+				               : elementType.GetInputPortDefaults(context)
+				                            .Bind(fieldDefaults => fieldDefaults.SerializeAndFlattenValues(context))
+				                            .Bind(fieldDefaultsSerialized =>
+				                             {
+					                             static Constant MakeConstant(float f, Instruction instruction) => new Constant(f, instruction.StructImplementation);
+					                             var fieldQueue = new Queue<Instruction>(serialized.Zip(fieldDefaultsSerialized, MakeConstant));
+					                             return defaultValue.Deserialize(fieldQueue.Dequeue, context);
+				                             }));
 		}
 	}
 }

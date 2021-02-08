@@ -11,7 +11,7 @@ namespace Element.AST
             Identifier = new Identifier("Nothing");
         }
         public static NothingConstraint Instance { get; } = new NothingConstraint();
-        public override Result<bool> MatchesConstraint(IValue value, Context context) => false;
+        public override Result MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.ConstraintNotSatisfied, "Nothing constraint cannot be matched");
         public override Identifier Identifier { get; }
     }
 }

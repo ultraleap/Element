@@ -55,7 +55,10 @@ namespace Element.AST
 
         public override string SummaryString => $"Tuple<{string.Join(", ", _fields.Select(f => f.Type))}>";
 
-        public override Result<bool> MatchesConstraint(IValue value, Context context) => value.IsInstanceOfType(this, context);
+        public override Result MatchesConstraint(IValue value, Context context) =>
+            value.IsInstanceOfType(this, context)
+                ? Result.Success
+                : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected {this} instance but got {value}");
 
         private sealed class StructuralTupleInstance : Value
         {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json.Linq;
 
-namespace Element.JsonArgument
+namespace Element
 {
 	/// <summary>
 	/// Provides function arguments from a JObject loaded from file or a json string.

@@ -18,7 +18,11 @@ namespace Element.AST
         public Identifier Identifier { get; }
 
         public Result<IValue> Construct(Struct @struct, IReadOnlyList<IValue> arguments, Context context) => StructInstance.Create(@struct, arguments, context).Cast<IValue>();
-        public Result<bool> MatchesConstraint(Struct @struct, IValue value, Context context) => @struct.IsInstanceOfStruct(value, context);
+        public Result MatchesConstraint(Struct @struct, IValue value, Context context) =>
+            @struct.IsInstanceOfStruct(value, context)
+                ? Result.Success
+                : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected {Identifier} instance but got {value}");
+
         public Result<IValue> DefaultValue(Context context) => List.Instance.Call(Array.Empty<IValue>(), context);
 
         public static Result<int> ConstantCount(StructInstance listInstance, Context context) =>
@@ -30,7 +34,7 @@ namespace Element.AST
                                   Instruction e => context.Trace(EleMessageCode.NotCompileConstant, $"List count '{e}' is not a compile-time constant expression"),
                                   _ => throw new InternalCompilerException($"Couldn't get List.'{CountId}' from '{listInstance}'. Count must be an expression.")
                               })
-                : context.Trace(EleMessageCode.TypeError, "Struct instance is not a list");
+                : context.Trace(EleMessageCode.TypeError, "Struct instance is not a List");
 
         public static Result<IValue[]> EvaluateElements(StructInstance listInstance, Context context) =>
             ConstantCount(listInstance, context)

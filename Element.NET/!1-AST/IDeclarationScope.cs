@@ -18,16 +18,18 @@ namespace Element.AST
     /// </summary>
     public class ValueWithLocation : WrapperValue
     {
-        public ValueWithLocation(Identifier[] identifiersInPath, IValue value) : base(value)
+        public ValueWithLocation(Identifier[] identifiersInPath, IValue value, SourceInfo sourceInfo) : base(value)
         {
             Identifier = identifiersInPath.Last();
             IdentifiersInPath = identifiersInPath;
+            SourceInfo = sourceInfo;
             FullPath = string.Join(".", IdentifiersInPath);
         }
 
         public Identifier Identifier { get; }
         public Identifier[] IdentifiersInPath { get; }
         public string FullPath { get; }
+        public SourceInfo SourceInfo { get; }
     }
     
     public static class DeclarationScopeExtensions
@@ -55,7 +57,7 @@ namespace Element.AST
                         {
                             void AddResolvedValueToResults(IValue v)
                             {
-                                var resolvedValue = new ValueWithLocation(idStack.Reverse().ToArray(), v);
+                                var resolvedValue = new ValueWithLocation(idStack.Reverse().ToArray(), v, decl.SourceInfo);
                                 if (resolvedValueFilter?.Invoke(resolvedValue) ?? true) builder.Result.Add(resolvedValue);
                             }
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Element.AST
 {
@@ -10,7 +11,7 @@ namespace Element.AST
         public override bool IsIntrinsicOfType<TIntrinsicImplementation>() => _implementation is TIntrinsicImplementation;
         public override bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => _implementation == intrinsic;
         public IntrinsicConstraint(IIntrinsicConstraintImplementation implementation) => _implementation = implementation;
-        public override Result<bool> MatchesConstraint(IValue value, Context context) => _implementation.MatchesConstraint(value, context);
+        public override Result MatchesConstraint(IValue value, Context context) => _implementation.MatchesConstraint(value, context);
     }
     
     public class FunctionConstraint : Value
@@ -26,29 +27,27 @@ namespace Element.AST
             ReturnConstraint = returnConstraint;
         }
 
-        public override Result<bool> MatchesConstraint(IValue fn, Context context)
+        public override Result MatchesConstraint(IValue fn, Context context)
         {
+            if (!fn.IsCallable(context)) return context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected a callable function but got {fn}");
             // Function arity must match the constraint
-            if (fn.InputPorts.Count != InputPorts.Count) return false;
-            if (!fn.IsCallable(context)) return false;
+            if (fn.InputPorts.Count != InputPorts.Count) return context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected function with {InputPorts.Count} parameters but has {fn.InputPorts.Count}");
 
-            var resultBuilder = new ResultBuilder<bool>(context, true);
+            StringBuilder? errorMessageBuilder = null;
 
             void CompareConstraintPair(IValue argConstraint, IValue expectedConstraint, bool portIsInput)
             {
-                var succeedingSoFar = resultBuilder.Result;
                 // This port pair passes if the expected port is Any (all constraints are narrower than Any)
                 // otherwise it must be exactly the same constraint since there is no type/constraint hierarchy
                 // TODO: Does Nothing need to be handled specially here?
                 var portMatches = expectedConstraint.IsIntrinsicOfType<AnyConstraint>()
                                   || argConstraint.IsInstance(expectedConstraint);
-                resultBuilder.Result &= portMatches;
                 
                 if (!portMatches)
                 {
                     // On first port error, add extra message about the function constraint not matching
-                    if (succeedingSoFar) resultBuilder.Append(EleMessageCode.ConstraintNotSatisfied, $"Expected function signature to match '{this}' but was '{fn}'");
-                    resultBuilder.Append(EleMessageCode.ConstraintNotSatisfied, $"Expected {(portIsInput ? "input" : "return")} port '{expectedConstraint}' but was '{argConstraint}'");
+                    errorMessageBuilder ??= new StringBuilder($"Expected function signature to match '{this}' but was '{fn}'");
+                    errorMessageBuilder.Append($"\n    Expected {(portIsInput ? "input" : "return")} port '{expectedConstraint}' but was '{argConstraint}'");
                 }
             }
 
@@ -59,7 +58,9 @@ namespace Element.AST
 
             CompareConstraintPair(fn.ReturnConstraint, ReturnConstraint, false);
 
-            return resultBuilder.ToResult();
+            return errorMessageBuilder == null
+                ? Result.Success
+                : context.Trace(EleMessageCode.ConstraintNotSatisfied, errorMessageBuilder.ToString());
         }
     }
 }
