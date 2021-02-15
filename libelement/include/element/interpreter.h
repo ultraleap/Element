@@ -199,8 +199,8 @@ element_result element_interpreter_set_parse_only(
  */
 typedef struct element_inputs
 {
-    element_value* values;
-    int count;
+    const element_value* values;
+    size_t count;
 } element_inputs;
 
 /**
@@ -209,7 +209,7 @@ typedef struct element_inputs
 typedef struct element_outputs
 {
     element_value* values;
-    int count;
+    size_t count;
 } element_outputs;
 
 /**
