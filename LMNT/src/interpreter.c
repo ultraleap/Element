@@ -155,8 +155,8 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
         ctx->cur_def = NULL;
         ctx->cur_stack_count = 0;
     }
-    // If we hit a return instruction, that's an OK return
-    if (opresult == LMNT_RETURNING) {
+    // If we hit a return instruction or a branch past the function end, that's an OK return
+    if (opresult == LMNT_RETURNING || opresult == LMNT_BRANCHING) {
         opresult = LMNT_OK;
     }
 

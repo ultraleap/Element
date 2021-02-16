@@ -1063,6 +1063,12 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | vmrs
             break;
 
+        case LMNT_OP_CMPZ:
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, vtmps1);
+            | vcmpz.f32 s(reg1)
+            | vmrs
+            break;
+
         case LMNT_OP_BRANCHCEQ:
             platformWriteAndEvictAll(state);
             | beq =>cur_branch
@@ -1189,6 +1195,18 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         if (result != LMNT_OK)
             break;
 #endif
+    }
+
+    // has someone made a branch target to the end of the function?
+    if (state->cur_in == next_target) {
+        // if we may have just jumped here, our cache status is unknown, so nuke everything
+        platformWriteAndEvictAll(state);
+        // find which label(s) we're meant to be
+        for (size_t t = 0; t < num_pc_labels; ++t) {
+            if (state->cur_in == branch_targets[t]) {
+                | =>t:
+            }
+        }
     }
 
     | ->ok_return:

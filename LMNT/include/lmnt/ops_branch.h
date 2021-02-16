@@ -8,6 +8,7 @@
 LMNT_ATTR_FAST lmnt_result lmnt_op_return(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_cmp(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_cmpz(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_branch(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 

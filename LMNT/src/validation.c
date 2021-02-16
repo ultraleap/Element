@@ -138,7 +138,8 @@ static inline lmnt_validation_result validate_operand_codeptr(const lmnt_archive
 {
     const lmnt_loffset target_offset = LMNT_COMBINE_OFFSET(arglo, arghi);
     const lmnt_code* code = validated_get_code(archive, def->code);
-    return (target_offset < code->instructions_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
+    // allow a target offset to be "one off the end" to signal branching to end-of-function
+    return (target_offset <= code->instructions_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
 static lmnt_validation_result validate_instruction(const lmnt_archive* archive, const lmnt_def* def, lmnt_opcode code, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3, size_t constants_count, size_t rw_stack_count, lmnt_offset* defstack, size_t defstack_count)
@@ -285,6 +286,9 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_CMP:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
+        return LMNT_VALIDATION_OK;
+    case LMNT_OP_CMPZ:
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
     case LMNT_OP_BRANCHZ:
     case LMNT_OP_BRANCHNZ:

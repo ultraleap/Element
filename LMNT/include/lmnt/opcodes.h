@@ -93,6 +93,8 @@ enum
     LMNT_OP_INDEXRIR,
     // compare: stack, stack, null
     LMNT_OP_CMP,
+    // compare: stack, null, null
+    LMNT_OP_CMPZ,
     // branch: null, codelo, codehi
     LMNT_OP_BRANCH,
     LMNT_OP_BRANCHCEQ,

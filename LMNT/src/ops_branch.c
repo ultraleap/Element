@@ -22,6 +22,16 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_cmp(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_of
     return LMNT_OK;
 }
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_cmpz(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+{
+    ctx->status_flags &= ~(LMNT_ISTATUS_CMP_EQ | LMNT_ISTATUS_CMP_LT | LMNT_ISTATUS_CMP_GT | LMNT_ISTATUS_CMP_UN);
+    ctx->status_flags |= (ctx->stack[arg1] == 0.0) * LMNT_ISTATUS_CMP_EQ;
+    ctx->status_flags |= (ctx->stack[arg1] <  0.0) * LMNT_ISTATUS_CMP_LT;
+    ctx->status_flags |= (ctx->stack[arg1] >  0.0) * LMNT_ISTATUS_CMP_GT;
+    ctx->status_flags |= (isnan(ctx->stack[arg1])) * LMNT_ISTATUS_CMP_UN;
+    return LMNT_OK;
+}
+
 LMNT_ATTR_FAST lmnt_result lmnt_op_branch(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->cur_instr = LMNT_COMBINE_OFFSET(arg2, arg3);
