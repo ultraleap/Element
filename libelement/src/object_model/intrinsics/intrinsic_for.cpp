@@ -51,7 +51,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
             return false;
         }
 
-        return ret_as_constant->value() > 0;
+        return to_bool(ret_as_constant->value());
     };
 
     const auto next_successor = [&initial_object, &body_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> object_const_shared_ptr {

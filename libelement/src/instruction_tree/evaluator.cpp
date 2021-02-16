@@ -5,6 +5,8 @@
 #include <cassert>
 #include <cmath>
 
+using namespace element;
+
 struct evaluator_ctx
 {
     struct boundary
@@ -266,9 +268,9 @@ element_value element_evaluate_binary(element::instruction_binary::op op, elemen
 
     //boolean
     case element::instruction_binary::op::and_:
-        return a && b;
+        return to_bool(a) && to_bool(b);
     case element::instruction_binary::op::or_:
-        return a || b;
+        return to_bool(a) || to_bool(b);
 
     //comparison
     case element::instruction_binary::op::eq:
@@ -292,8 +294,7 @@ element_value element_evaluate_binary(element::instruction_binary::op op, elemen
 //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
 element_value element_evaluate_if(element_value predicate, element_value if_true, element_value if_false)
 {
-    //Element treats negative numbers and 0 as false
-    return predicate > 0 ? if_true : if_false;
+    return to_bool(predicate) ? if_true : if_false;
 }
 
 std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const element::instruction_const_shared_ptr& initial, const element::instruction_const_shared_ptr& condition, const element::instruction_const_shared_ptr& body)
@@ -322,7 +323,7 @@ std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const el
     // of the body.
     std::vector<element_value> body_output_buffer(value_size);
 
-    while (predicate_value > 0) //predicate returned true
+    while (to_bool(predicate_value)) //predicate returned true
     {
         result = do_evaluate(context, body, body_output_buffer.data(), value_size, intermediate_written);
 
