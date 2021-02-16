@@ -15,6 +15,13 @@
 
 namespace element
 {
+    //Element treats negative numbers and 0 as false
+    //todo: update to handle NAN's, once we've decided if they're truthy or falsy
+    [[nodiscard]] constexpr static bool to_bool(element_value value)
+    {
+        return value > element_value{ 0 };
+    }
+
     struct instruction : object, rtti_type<instruction>, std::enable_shared_from_this<instruction>
     {
     public:
@@ -86,7 +93,7 @@ namespace element
         [[nodiscard]] std::string to_string() const override
         {
             if (actual_type == type::boolean.get())
-                return m_value > 0 ? "true" : "false";
+                return to_bool(m_value) ? "true" : "false";
 
             return fmt::format("{:g}", m_value);
         }
