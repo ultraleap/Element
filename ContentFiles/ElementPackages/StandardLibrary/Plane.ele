@@ -13,10 +13,8 @@ struct Plane(normal:Vector3, distance:Num)
     }
 
     intersection(a:Plane, b:Plane):Line3
-    { 
-        #http://geomalgorithms.com/a05-_intersect-1.html
-        
-        #sanity check on normals
+    {
+        # sanity check on normals
         d1 = a.distance
         n1 = a.normal.normalise
         
@@ -35,8 +33,10 @@ struct Plane(normal:Vector3, distance:Num)
     {
         #creates a position vector from the origin to the nearest point on the plane
         closestPointOnPlane = plane.normal.scale(plane.distance)
+
         #creates a position vector from point on plane to target point
         projectedPoint = point.sub(closestPointOnPlane)
+
         #projects position vector onto normal to determine distance from the plane
         return = projectedPoint.dot(plane.normal)
     }
