@@ -13,7 +13,7 @@ object_const_shared_ptr bool_type::index(const compilation_context& context, con
     if (!cached)
     {
         cached_declaration = context.get_global_scope()->find(bool_type::name, false);
-        cached = true;
+        //cached = true; //todo: type.hpp defines a static version of this class, unsafe to do caching with multiple interpreters, move ownership to interpreter
     }
 
     if (!cached_declaration)
