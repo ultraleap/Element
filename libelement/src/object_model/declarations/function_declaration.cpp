@@ -19,12 +19,18 @@ function_declaration::function_declaration(identifier name, const scope* parent_
 
 bool function_declaration::is_variadic() const
 {
-    constexpr auto visitor = [](const auto& body) {
-        const auto* body_intrinsic = dynamic_cast<const intrinsic_function*>(&*body);
-        return body_intrinsic && body_intrinsic->is_variadic();
-    };
+    if (!is_variadic_cached)
+    {
+        constexpr auto visitor = [](const auto& body) {
+            const auto* body_intrinsic = dynamic_cast<const intrinsic_function*>(&*body);
+            return body_intrinsic && body_intrinsic->is_variadic();
+        };
 
-    return std::visit(visitor, body);
+        is_variadic_cached = true;
+        cached_variadic = std::visit(visitor, body);
+    }
+
+    return cached_variadic;
 }
 
 object_const_shared_ptr function_declaration::call(
@@ -116,6 +122,17 @@ bool function_declaration::valid_at_boundary(const compilation_context& context)
 bool function_declaration::is_intrinsic() const
 {
     return function_kind == kind::intrinsic;
+}
+
+const function_declaration::body_type& function_declaration::get_body() const
+{
+    return body;
+}
+
+void function_declaration::set_body(body_type body)
+{
+    is_variadic_cached = false;
+    this->body = std::move(body);
 }
 
 void function_declaration::validate_ports(const compilation_context& context) const

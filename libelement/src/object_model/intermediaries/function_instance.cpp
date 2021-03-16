@@ -155,10 +155,11 @@ object_const_shared_ptr function_instance::call(
 
     //todo: we really shouldn't need variant for the body here, there's a better solution
     object_const_shared_ptr element;
-    if (std::holds_alternative<std::unique_ptr<object>>(declarer->body))
-        element = std::get<std::unique_ptr<object>>(declarer->body)->compile(context, source_info);
+    const auto& body = declarer->get_body();
+    if (std::holds_alternative<std::unique_ptr<object>>(body))
+        element = std::get<std::unique_ptr<object>>(body)->compile(context, source_info);
     else
-        element = std::get<const object*>(declarer->body)->compile(context, source_info);
+        element = std::get<const object*>(body)->compile(context, source_info);
 
     std::swap(captures, context.captures);
 

@@ -463,7 +463,7 @@ element_result element_interpreter_ctx::expression_to_object(
     parser.root->nearest_token = &tokeniser->tokens[0];
     element::assign_source_information(this, dummy_declaration, parser.root);
     auto expression_chain = build_expression_chain(this, parser.root->children[0].get(), dummy_declaration.get(), result);
-    dummy_declaration->body = std::move(expression_chain);
+    dummy_declaration->set_body(std::move(expression_chain));
 
     root.children.clear();
 

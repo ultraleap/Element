@@ -229,14 +229,14 @@ namespace element
                 return nullptr;
             }
 
-            lambda_function_decl->body = return_func;
+            lambda_function_decl->set_body(return_func);
         }
         else
         {
             auto chain = build_expression_chain(context, lambda_body, lambda_function_decl.get(), output_result);
             assert(!chain->expressions.empty());
             assert(chain->expressions[0]);
-            lambda_function_decl->body = std::move(chain);
+            lambda_function_decl->set_body(std::move(chain));
         }
 
         return std::move(lambda_function_decl);
@@ -272,7 +272,7 @@ namespace element
                 return nullptr;
             }
 
-            function_decl->body = return_func;
+            function_decl->set_body(return_func);
         }
         else if (expression_bodied)
         {
@@ -290,7 +290,7 @@ namespace element
                 return nullptr;
             }
 
-            function_decl->body = std::move(chain);
+            function_decl->set_body(std::move(chain));
         }
         else if (intrinsic && body->type == ELEMENT_AST_NODE_NO_BODY)
         {
@@ -301,7 +301,7 @@ namespace element
                 return nullptr;
             }
 
-            function_decl->body = intrinsic::get_intrinsic(context, *function_decl);
+            function_decl->set_body(intrinsic::get_intrinsic(context, *function_decl));
         }
         else
         {
