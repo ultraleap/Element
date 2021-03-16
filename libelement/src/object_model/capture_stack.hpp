@@ -18,7 +18,7 @@ namespace element
             std::vector<object_const_shared_ptr> compiled_arguments;
         };
 
-        capture_stack() = default;
+        capture_stack();
 
         void push(const scope* local_scope, const std::vector<port>* parameters, std::vector<object_const_shared_ptr> compiled_arguments);
         void push(const declaration& declaration, std::vector<object_const_shared_ptr> compiled_arguments);

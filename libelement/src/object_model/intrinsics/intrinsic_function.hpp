@@ -20,14 +20,16 @@ namespace element
         bool variadic = false;
     };
 
-    static std::shared_ptr<const instruction> evaluate(const compilation_context& context, std::shared_ptr<const instruction> expr)
+    static std::shared_ptr<const instruction> evaluate(const compilation_context& context, instruction_const_shared_ptr expr)
     {
-        std::vector<element_value> outputs = { 0 };
-        const auto result = element_evaluate(*context.interpreter, expr, {}, outputs, {});
+        float output = 0;
+        std::size_t output_count = 1;
+        
+        const auto result = element_evaluate(*context.interpreter, expr, nullptr, 0, &output, output_count, {});
         if (result != ELEMENT_OK)
             return expr;
 
-        auto new_expr = std::make_unique<element::instruction_constant>(outputs[0]);
+        auto new_expr = std::make_shared<const instruction_constant>(output);
         new_expr->actual_type = expr->actual_type;
         return new_expr;
     }

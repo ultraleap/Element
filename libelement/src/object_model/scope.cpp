@@ -115,7 +115,7 @@ const declaration* scope::find(const identifier& name, const bool recurse = fals
     }
     split_path.push_back(full_path.substr(start, full_path.length() - start));
 
-    static constexpr auto find_identifier = [](const scope& scope, identifier name, bool recurse) -> const declaration* {
+    static constexpr auto find_identifier = [](const scope& scope, const identifier& name, bool recurse) -> const declaration* {
         const auto name_it = scope.declarations.find(name);
 
         if (name_it != scope.declarations.end())

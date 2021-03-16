@@ -7,6 +7,11 @@
 
 using namespace element;
 
+capture_stack::capture_stack()
+{
+    frames.reserve(100);
+}
+
 void capture_stack::push(const scope* local_scope, const std::vector<port>* parameters, std::vector<object_const_shared_ptr> compiled_arguments)
 {
     frames.emplace_back(frame{ local_scope, parameters, std::move(compiled_arguments) });

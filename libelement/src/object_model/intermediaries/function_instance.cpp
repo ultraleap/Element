@@ -142,23 +142,24 @@ object_const_shared_ptr function_instance::call(
     if (!is_variadic && !valid_call(context, declarer, compiled_args))
         return build_error_for_invalid_call(context, declarer, compiled_args);
 
-    const auto us = shared_from_this();
-    if (context.calls.recursive_calls(us) > 100)
-        return context.calls.build_recursive_error(us, context, source_info);
+    if (context.calls.recursive_calls(this) > 100)
+        return context.calls.build_recursive_error(this, context, source_info);
 
     if constexpr (should_log_compilation_step())
         context.get_logger()->log_step_indent();
 
-    context.calls.push(us, compiled_args);
+    context.calls.push(shared_from_this(), compiled_args);
     captures.push(declarer->our_scope.get(), &declarer->get_inputs(), compiled_args);
 
     std::swap(captures, context.captures);
 
-    const auto visitor = [&context, &source_info](auto& body) {
-        return body->compile(context, source_info);
-    };
+    //todo: we really shouldn't need variant for the body here, there's a better solution
+    object_const_shared_ptr element;
+    if (std::holds_alternative<std::unique_ptr<object>>(declarer->body))
+        element = std::get<std::unique_ptr<object>>(declarer->body)->compile(context, source_info);
+    else
+        element = std::get<const object*>(declarer->body)->compile(context, source_info);
 
-    auto element = std::visit(visitor, declarer->body);
     std::swap(captures, context.captures);
 
     captures.pop();
