@@ -5,6 +5,7 @@
 #include "capture_stack.hpp"
 #include "interpreter_internal.hpp"
 #include "configuration.hpp"
+#include "scope_caches.hpp"
 
 //todo: move to cpp
 #include "declarations/function_declaration.hpp"
@@ -43,7 +44,6 @@ namespace element
 
     private:
         const scope* global_scope;
-
         //Used to store declarations that aren't in user code, but which we need to store somewhere
         //e.g. a declaration for the compiler-provided list indexer when a user creates a List using the intrinsic function list
         std::unique_ptr<scope> compiler_scope;

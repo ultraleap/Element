@@ -137,7 +137,7 @@ namespace element
                 source_info,
                 context.get_logger());
 
-        const auto* func = dynamic_cast<const function_declaration*>(type->our_scope->find(name, false));
+        const auto* func = dynamic_cast<const function_declaration*>(type->our_scope->find(name, context.interpreter->caches, false));
 
         //todo: not exactly working type checking, good enough for now though
         const bool has_inputs = func && func->has_inputs();

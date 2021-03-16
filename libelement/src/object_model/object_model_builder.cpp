@@ -222,7 +222,7 @@ namespace element
         {
             build_scope(context, lambda_body, *lambda_function_decl, output_result);
 
-            const auto* return_func = lambda_function_decl->our_scope->find(identifier::return_identifier, false);
+            const auto* return_func = lambda_function_decl->our_scope->find(identifier::return_identifier, context->caches, false);
             if (!return_func)
             {
                 output_result = log_error(context, context->src_context.get(), expression, log_error_message_code::function_missing_return, lambda_function_decl->name.value);
@@ -265,7 +265,7 @@ namespace element
             assert(!intrinsic);
             build_scope(context, body, *function_decl, output_result);
 
-            const auto* return_func = function_decl->our_scope->find(identifier::return_identifier, false);
+            const auto* return_func = function_decl->our_scope->find(identifier::return_identifier, context->caches, false);
             if (!return_func)
             {
                 output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::function_missing_return, function_decl->name.value);
@@ -312,7 +312,7 @@ namespace element
         bool had_default = false;
         for (const auto& input : function_decl->inputs)
         {
-            if (function_decl->our_scope->find(identifier{ input.get_name() }, false))
+            if (function_decl->our_scope->find(identifier{ input.get_name() }, context->caches, false))
                 output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::multiple_definition_with_parameter, input.get_name(), function_decl->name.value);
 
             if (input.has_default())
@@ -536,7 +536,7 @@ namespace element
             }
 
             assert(decl);
-            const bool success = our_scope->add_declaration(std::move(decl));
+            const bool success = our_scope->add_declaration(std::move(decl), context->caches);
             if (!success)
             {
                 if (output_result == ELEMENT_OK)

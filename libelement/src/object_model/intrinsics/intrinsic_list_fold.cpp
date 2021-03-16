@@ -81,7 +81,7 @@ object_const_shared_ptr runtime_fold(
             accumulator_function->source_info,
             context.get_logger());
 
-    const auto* listfold = context.get_compiler_scope()->find(identifier{ "@list_fold" }, false);
+    const auto* listfold = context.get_compiler_scope()->find(identifier{ "@list_fold" }, context.interpreter->caches, false);
     if (!listfold)
         return std::make_shared<const error>("failed to find @list_fold", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 

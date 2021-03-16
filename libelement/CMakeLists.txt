@@ -184,6 +184,8 @@ set(element_sources
     "src/object_model/port.hpp"
     "src/object_model/scope.cpp"
     "src/object_model/scope.hpp"
+    "src/object_model/scope_caches.cpp"
+    "src/object_model/scope_caches.hpp"
     "src/object_model/type_annotation.cpp"
     "src/object_model/type_annotation.hpp"
 

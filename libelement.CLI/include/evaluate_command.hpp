@@ -65,7 +65,7 @@ namespace libelement::cli
             result = context->expression_to_object(nullptr, expression.c_str(), &expression_object);
             if (result != ELEMENT_OK)
             {
-                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
                 return compiler_message(error_conversion(result),
                                         "Failed to convert expression to object: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                                         compilation_input.get_log_json());
@@ -79,7 +79,7 @@ namespace libelement::cli
 
                 if (result != ELEMENT_OK)
                 {
-                    context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                    context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
                     return compiler_message(error_conversion(result),
                                             "Failed to convert call expression to objects: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                                             compilation_input.get_log_json());
@@ -100,7 +100,7 @@ namespace libelement::cli
 
                 if (result != ELEMENT_OK)
                 {
-                    context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                    context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
                     return compiler_message(error_conversion(result),
                                             "Failed to call object with arguments: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                                             compilation_input.get_log_json());
@@ -111,7 +111,7 @@ namespace libelement::cli
                 result = element_object_simplify(expression_object, compilation_context, &result_object);
                 if (result != ELEMENT_OK)
                 {
-                    context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                    context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
                     return compiler_message(error_conversion(result),
                                             "Failed to compile object: " + expression + " at compile-time with element_result " + std::to_string(result),
                                             compilation_input.get_log_json());
@@ -122,7 +122,7 @@ namespace libelement::cli
             result = element_object_to_instruction(result_object, &result_instruction);
             if (result != ELEMENT_OK)
             {
-                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
                 return compiler_message(error_conversion(result),
                                         "Failed to convert object to instruction: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                                         compilation_input.get_log_json());
@@ -139,7 +139,7 @@ namespace libelement::cli
             output.count = max_output_size;
             result = element_interpreter_evaluate_instruction(context, nullptr, result_instruction, &input, &output);
 
-            context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+            context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
 
             if (result != ELEMENT_OK)
             {

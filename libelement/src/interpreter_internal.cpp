@@ -473,14 +473,14 @@ element_result element_interpreter_ctx::expression_to_object(
         return result;
     }
 
-    bool success = global_scope->add_declaration(std::move(dummy_declaration));
+    bool success = global_scope->add_declaration(std::move(dummy_declaration), caches);
     if (!success)
     {
         (*object)->obj = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto* found_dummy_decl = global_scope->find(dummy_identifier, false);
+    const auto* found_dummy_decl = global_scope->find(dummy_identifier, caches, false);
     assert(found_dummy_decl);
     auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
 

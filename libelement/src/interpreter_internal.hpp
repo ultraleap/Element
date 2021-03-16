@@ -10,6 +10,7 @@
 #include "element/interpreter.h"
 #include "common_internal.hpp"
 #include "object_model/scope.hpp"
+#include "object_model/scope_caches.hpp"
 
 struct element_declaration
 {
@@ -78,4 +79,6 @@ public:
     std::shared_ptr<element_log_ctx> logger;
     std::shared_ptr<element::source_context> src_context;
     std::unique_ptr<element::scope> global_scope;
+
+    mutable element::scope_caches caches;
 };

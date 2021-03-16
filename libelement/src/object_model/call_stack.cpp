@@ -4,7 +4,7 @@
 #include <fmt/format.h>
 
 //SELF
-#include "declarations/declaration.hpp"
+#include "declarations/function_declaration.hpp"
 #include "intermediaries/function_instance.hpp"
 #include "compilation_context.hpp"
 #include "error_map.hpp"

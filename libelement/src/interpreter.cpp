@@ -225,32 +225,7 @@ element_result element_interpreter_find(element_interpreter_ctx* interpreter, co
     if (!declaration)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    const auto* scope = interpreter->global_scope.get();
-
-    const std::string delimiter = ".";
-    const std::string full_path = path;
-    const element::declaration* decl = nullptr;
-
-    size_t start = 0;
-    auto end = full_path.find(delimiter);
-    if (end != std::string::npos)
-    {
-        //find all but last string
-        while (end != std::string::npos)
-        {
-            const auto identifier = full_path.substr(start, end - start);
-
-            start = end + delimiter.length();
-            end = full_path.find(delimiter, start);
-
-            decl = scope->find(element::identifier(identifier), false);
-            scope = decl->get_scope();
-        }
-    }
-
-    //find last string
-    const auto identifier = full_path.substr(start, full_path.length() - start);
-    decl = scope->find(element::identifier(identifier), false);
+    const auto* decl = interpreter->global_scope->find(element::identifier(path), interpreter->caches, false);
     if (!decl)
     {
         *declaration = nullptr;
@@ -406,7 +381,7 @@ element_result element_interpreter_compile_expression(
 
     if (result != ELEMENT_OK)
     {
-        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
         (*instruction)->instruction = nullptr;
         element_object_delete(&object_ptr);
         return result;
@@ -415,7 +390,7 @@ element_result element_interpreter_compile_expression(
     const auto* function_instance = dynamic_cast<const element::function_instance*>(object_ptr->obj.get());
     if (!function_instance)
     {
-        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
         auto instr = object_ptr->obj->to_instruction();
         if (!instr)
         {
@@ -434,7 +409,7 @@ element_result element_interpreter_compile_expression(
     result = valid_boundary_function(interpreter, compilation_context, options, &declaration);
     if (result != ELEMENT_OK)
     {
-        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
         interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
         *instruction = nullptr;
         element_object_delete(&object_ptr);
@@ -444,7 +419,7 @@ element_result element_interpreter_compile_expression(
     result = ELEMENT_OK;
     const auto compiled = compile_placeholder_expression(compilation_context, *function_instance, function_instance->get_inputs(), {});
 
-    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
     if (!compiled || compiled->is_error())
     {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
@@ -523,7 +498,7 @@ element_result element_interpreter_typeof_expression(
 
     element_object* object_ptr;
     const auto result = interpreter->expression_to_object(nullptr, expression_string, &object_ptr);
-    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" });
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
 
     if (result != ELEMENT_OK)
     {

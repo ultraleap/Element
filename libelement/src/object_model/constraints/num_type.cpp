@@ -13,7 +13,7 @@ object_const_shared_ptr num_type::index(const compilation_context& context,
 {
     if (!cached)
     {
-        cached_declaration = context.get_global_scope()->find(num_type::name, false);
+        cached_declaration = context.get_global_scope()->find(num_type::name, context.interpreter->caches, false);
         //cached = true; //todo: type.hpp defines a static version of this class, unsafe to do caching with multiple interpreters, move ownership to interpreter
     }
 

@@ -20,7 +20,7 @@ object_const_shared_ptr namespace_declaration::index(
 {
     if (our_scope)
     {
-        const auto* found = our_scope->find(name, false);
+        const auto* found = our_scope->find(name, context.interpreter->caches, false);
         if (found)
             return found->compile(context, source_info);
 

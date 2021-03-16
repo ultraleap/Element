@@ -21,11 +21,11 @@ object_const_shared_ptr intrinsic_list::compile(const compilation_context& conte
 
     assert(count != 0); //todo
 
-    const auto* list_decl = context.get_global_scope()->find(identifier{ "List" }, false);
+    const auto* list_decl = context.get_global_scope()->find(identifier{ "List" }, context.interpreter->caches, false);
     assert(list_decl);
     const auto* list_constructor = intrinsic::get_intrinsic(context.interpreter, *list_decl);
 
-    const auto* list_indexer_decl = context.get_compiler_scope()->find(identifier{ "@list_indexer" }, false);
+    const auto* list_indexer_decl = context.get_compiler_scope()->find(identifier{ "@list_indexer" }, context.interpreter->caches, false);
     assert(list_indexer_decl);
     const auto* list_indexer_func = static_cast<const function_declaration*>(list_indexer_decl);
     assert(list_indexer_func);
