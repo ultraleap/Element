@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Lexico;
 
 namespace Element.AST
@@ -79,6 +81,54 @@ namespace Element.AST
         public Result<IValue> DefaultValue(Context context) => ResolvedDefaultArgument != null ? new Result<IValue>(ResolvedDefaultArgument) : ResolvedConstraint.DefaultValue(context);
 
         public override string ToString() => $"{Identifier.GetValueOrDefault(new Identifier("_")).String}:{ResolvedConstraint.SummaryString}{(ResolvedDefaultArgument is {} v ? $" = {v.SummaryString}" : string.Empty)}";
+    }
+
+    public static class ResolvedPortExtensions
+    {
+        public static Result<ParameterInfo> ToParameterInfo(this ResolvedPort resolvedPort, Context context)
+        {
+            var idStack = new Stack<Identifier>();
+            string IdStackToPath() => string.Join(".", idStack.Reverse()); // Stack needs to be reversed as stacks are last in first out
+
+            Result<ParameterInfo> TopLevelPortToParameter(ResolvedPort topLevelPort) =>
+                topLevelPort.DefaultValue(context)
+                    .Bind(topLevelPortDefault =>
+                                 {
+                                     Result<ParameterInfo> PortToParameter(ResolvedPort port, ParameterInfo? parent, IValue portDefaultValue)
+                                     {
+                                         if (!port.Identifier.HasValue) return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Boundary value ports must not contain discards");
+                                         var portId = port.Identifier.Value;
+                                         var argumentPath = IdStackToPath();
+                                         idStack.Push(portId);
+
+                                         Result<ParameterInfo> result;
+                                         if (port.ResolvedConstraint.InputPorts.Count < 1) // If there's no fields then we're a number
+                                         {
+                                             result = portDefaultValue.InnerIs(out Constant constant)
+                                                 ? (Result<ParameterInfo>) new LeafParameterInfo(portId.String, argumentPath, parent, port.ResolvedConstraint, constant)
+                                                 : context.Trace(EleMessageCode.InvalidBoundaryFunction, $"Expected a {nameof(Constant)} but got {portDefaultValue}");
+                                         }
+                                         else
+                                         {
+                                             result = portDefaultValue.MemberValues(context).Bind(defaultMemberValues =>
+                                             {
+                                                 Result<ParameterInfo> FieldToParameterInfo(ResolvedPort field) => PortToParameter(field, parent, defaultMemberValues.FirstOrDefault(defaultField => field.Identifier.Value.Equals(defaultField.Identifier)).Value);
+                                                 ParameterInfo MakeStructuredParameterInfo(IReadOnlyList<ParameterInfo> fieldParameterInfos) => new StructuredParameterInfo(portId.String, argumentPath, parent, port.ResolvedConstraint, portDefaultValue, fieldParameterInfos);
+                                                 return port.ResolvedConstraint.InputPorts.Select(FieldToParameterInfo)
+                                                            .ToResultReadOnlyList()
+                                                            .Map(MakeStructuredParameterInfo);
+                                             });
+                                         }
+
+                                         idStack.Pop();
+                                         return result;
+                                     }
+                                     
+                                     return PortToParameter(topLevelPort, null, topLevelPortDefault);
+                                 });
+
+            return TopLevelPortToParameter(resolvedPort);
+        }
     }
 
     public class VariadicPortMarker : Value

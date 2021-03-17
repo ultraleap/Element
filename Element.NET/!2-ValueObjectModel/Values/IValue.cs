@@ -151,7 +151,12 @@ namespace Element.AST
             => function.GetInputPortDefaults(context)
                        .Bind(defaultValues => defaultValues.SerializeAndFlattenValues(context)
                                                            .Map(allSerialized => (defaultValues, allSerialized.ToArray())));
-        
+
+        public static Result<IReadOnlyList<ParameterInfo>> InputPortsToParameterInfos(this IValue value, Context context) =>
+            value.InputPorts
+                 .Select(p => p.ToParameterInfo(context))
+                 .ToResultReadOnlyList();
+
         public static Result<IValue> IndexPositionally(this IValue value, int index, Context context)
         {
             var members = value.Members;

@@ -8,95 +8,28 @@ namespace Element
 {
     public class BoundaryValue
     {
-        private BoundaryValue(string name, string path, SourceContext sourceContext, BoundaryMap boundaryMap, IReadOnlyList<ParameterInfo> parameters, IValue value, SourceInfo sourceInfo)
+        private readonly ValueWithLocation _value;
+        
+        protected BoundaryValue(ValueWithLocation value, SourceContext sourceContext, BoundaryMap boundaryMap, IReadOnlyList<ParameterInfo> parameters)
         {
-            Name = name;
-            Path = path;
+            _value = value;
             SourceContext = sourceContext;
             BoundaryMap = boundaryMap;
             Parameters = parameters;
-            Value = value;
-            SourceInfo = sourceInfo;
-            var flattenedParameterInfos = new List<LeafParameterInfo>();
-            FlattenedParameters = flattenedParameterInfos;
-            
-            void WalkParameters(IEnumerable<ParameterInfo> parameters)
-            {
-                foreach (var param in parameters)
-                {
-                    switch (param)
-                    {
-                    case LeafParameterInfo t:
-                        flattenedParameterInfos.Add(t);
-                        break;
-                    case StructuredParameterInfo s:
-                        WalkParameters(s.Fields);
-                        break;
-                    default: throw new ArgumentOutOfRangeException(nameof(param));
-                    }
-                }
-            }
-            WalkParameters(Parameters);
         }
 
-        public static Result<BoundaryValue> Create(ValueWithLocation value, SourceContext sourceContext, BoundaryMap boundaryMap)
-        {
-            var context = Context.CreateFromSourceContext(sourceContext);
-            var idStack = new Stack<Identifier>();
-            string IdStackToPath() => string.Join(".", idStack.Reverse()); // Stack needs to be reversed as stacks are last in first out
+        public static Result<BoundaryValue> Create(ValueWithLocation value, SourceContext sourceContext, BoundaryMap boundaryMap) =>
+            value.InputPortsToParameterInfos(Context.CreateFromSourceContext(sourceContext))
+                 .Map(parameterInfos => new BoundaryValue(value, sourceContext, boundaryMap, parameterInfos));
 
-            Result<ParameterInfo> TopLevelPortToParameter(ResolvedPort topLevelPort) =>
-                topLevelPort.DefaultValue(context)
-                    .Bind(topLevelPortDefault =>
-                                 {
-                                     Result<ParameterInfo> PortToParameter(ResolvedPort port, ParameterInfo? parent, IValue portDefaultValue)
-                                     {
-                                         if (!port.Identifier.HasValue) return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Boundary value ports must not contain discards");
-                                         var portId = port.Identifier.Value;
-                                         var argumentPath = IdStackToPath();
-                                         idStack.Push(portId);
-
-                                         Result<ParameterInfo> result;
-                                         if (port.ResolvedConstraint.InputPorts.Count < 1) // If there's no fields then we're a number
-                                         {
-                                             result = portDefaultValue.InnerIs(out Constant constant)
-                                                 ? (Result<ParameterInfo>) new LeafParameterInfo(portId.String, argumentPath, parent, port.ResolvedConstraint, constant)
-                                                 : context.Trace(EleMessageCode.InvalidBoundaryFunction, $"Expected a {nameof(Constant)} but got {portDefaultValue}");
-                                         }
-                                         else
-                                         {
-                                             result = portDefaultValue.MemberValues(context).Bind(defaultMemberValues =>
-                                             {
-                                                 Result<ParameterInfo> FieldToParameterInfo(ResolvedPort field) => PortToParameter(field, parent, defaultMemberValues.FirstOrDefault(defaultField => field.Identifier.Value.Equals(defaultField.Identifier)).Value);
-                                                 ParameterInfo MakeStructuredParameterInfo(IReadOnlyList<ParameterInfo> fieldParameterInfos) => new StructuredParameterInfo(portId.String, argumentPath, parent, port.ResolvedConstraint, portDefaultValue, fieldParameterInfos);
-                                                 return port.ResolvedConstraint.InputPorts.Select(FieldToParameterInfo)
-                                                            .ToResultReadOnlyList()
-                                                            .Map(MakeStructuredParameterInfo);
-                                             });
-                                         }
-
-                                         
-                                         idStack.Pop();
-                                         return result;
-                                     }
-                                     
-                                     return PortToParameter(topLevelPort, null, topLevelPortDefault);
-                                 });
-
-            return value.InputPorts
-                        .Select(TopLevelPortToParameter)
-                        .ToResultReadOnlyList()
-                        .Map(parameterInfos => new BoundaryValue(value.Identifier.String, value.FullPath, sourceContext, boundaryMap, parameterInfos, value, value.SourceInfo));
-        }
-        
-        public string Name { get; }
-        public string Path { get; }
-        public IValue Value { get; }
-        public SourceInfo SourceInfo { get; }
+        public string Name => _value.Identifier.String;
+        public string Path => _value.FullPath;
+        public IValue Value => _value;
+        public SourceInfo SourceInfo => _value.SourceInfo;
         public SourceContext SourceContext { get; }
         public BoundaryMap BoundaryMap { get; }
         public IReadOnlyList<ParameterInfo> Parameters { get; }
-        public IReadOnlyList<LeafParameterInfo> FlattenedParameters { get; }
+        public IReadOnlyList<LeafParameterInfo> FlattenedParameters => Parameters.SelectMany(p => p.FlattenedParameters()).ToList();
 
         public override string ToString() => Path;
     }
@@ -105,12 +38,13 @@ namespace Element
     {
         private string? _fullPath;
 
-        protected ParameterInfo(string name, string path, ParameterInfo? parent, IValue parameterType)
+        protected ParameterInfo(string name, string path, ParameterInfo? parent, IValue parameterType, IValue @default)
         {
             Name = name;
             Path = path;
             Parent = parent;
             ParameterType = parameterType;
+            Default = @default;
         }
 
         public string Name { get; }
@@ -118,6 +52,8 @@ namespace Element
         public string FullPath => _fullPath ??= string.IsNullOrEmpty(Path) ? Name : $"{Path}.{Name}";
         public ParameterInfo? Parent { get; }
         public IValue ParameterType { get; }
+        public IValue Default { get; }
+        public abstract IEnumerable<LeafParameterInfo> FlattenedParameters();
         public abstract Result<IValue> GetValue(IBoundaryArgumentSource source, Context context);
         public abstract Result SetValue(IBoundaryArgumentSource source, IValue value, Context context);
     }
@@ -125,12 +61,10 @@ namespace Element
     public class LeafParameterInfo : ParameterInfo
     {
         public LeafParameterInfo(string name, string path, ParameterInfo? parent, IValue parameterType, Constant @default)
-            : base(name, path, parent, parameterType)
-        {
+            : base(name, path, parent, parameterType, @default) =>
             Default = @default;
-        }
-        
-        public Constant Default { get; }
+
+        public new Constant Default { get; }
         
         public Result<float> GetValue(IBoundaryArgumentSource source) => source.Get(FullPath);
         public Result SetValue(IBoundaryArgumentSource source, float value) => source.Set(FullPath, value);
@@ -142,39 +76,20 @@ namespace Element
             && constant.IsInstanceOfType(ParameterType, context)
                 ? SetValue(source, constant)
                 : context.Trace(EleMessageCode.TypeError, $"Expected {ParameterType} value but got {value} of type {value.TypeOf}");
+
+        public override IEnumerable<LeafParameterInfo> FlattenedParameters()
+        {
+            yield return this;
+        }
     }
 
     public class StructuredParameterInfo : ParameterInfo
     {
         public StructuredParameterInfo(string name, string path, ParameterInfo? parent, IValue parameterType, IValue @default, IReadOnlyList<ParameterInfo> fields)
-            : base(name, path, parent, parameterType)
-        {
-            Default = @default;
+            : base(name, path, parent, parameterType, @default) =>
             Fields = fields;
-            var flattenedFields = new List<LeafParameterInfo>();
-            FlattenedFields = flattenedFields;
 
-            void WalkFields(IEnumerable<ParameterInfo> parameterInfos)
-            {
-                foreach (var pi in parameterInfos)
-                {
-                    switch (pi)
-                    {
-                    case LeafParameterInfo lpi:
-                        flattenedFields.Add(lpi);
-                        break;
-                    case StructuredParameterInfo spi:
-                        WalkFields(spi.Fields);
-                        break;
-                    }
-                }
-            }
-            WalkFields(Fields);
-        }
-        
-        public IValue Default { get; }
         public IReadOnlyList<ParameterInfo> Fields { get; }
-        public IReadOnlyList<LeafParameterInfo> FlattenedFields { get; }
         
         public override Result<IValue> GetValue(IBoundaryArgumentSource source, Context context)
         {
@@ -195,13 +110,16 @@ namespace Element
                                          .Map(floats =>
                                           {
                                               var resultBuilder = new ResultBuilder(context);
-                                              for (var index = 0; index < FlattenedFields.Count; index++)
+                                              var flattenedFields = FlattenedParameters().ToArray();
+                                              for (var index = 0; index < flattenedFields.Length; index++)
                                               {
-                                                  var field = FlattenedFields[index];
+                                                  var field = flattenedFields[index];
                                                   resultBuilder.Append(field.SetValue(source, new Constant(floats[index], field.Default.StructImplementation)));
                                               }
 
                                               return resultBuilder.ToResult();
                                           }));
+
+        public override IEnumerable<LeafParameterInfo> FlattenedParameters() => Fields.SelectMany(f => f.FlattenedParameters());
     }
 }
