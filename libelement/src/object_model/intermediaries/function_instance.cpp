@@ -154,7 +154,8 @@ object_const_shared_ptr function_instance::call(
 
     std::swap(captures, context.captures);
 
-    //todo: we really shouldn't need variant for the body here, there's a better solution
+    //todo: the use of std::variant for the body is unecessary, it was just the simplest solution at the time.
+    //std::visit is quite slow, so we're manually doing the branching instead.
     object_const_shared_ptr element;
     const auto& body = declarer->get_body();
     if (std::holds_alternative<std::unique_ptr<object>>(body))
