@@ -142,7 +142,8 @@ object_const_shared_ptr function_instance::call(
     if (!is_variadic && !valid_call(context, declarer, compiled_args))
         return build_error_for_invalid_call(context, declarer, compiled_args);
 
-    if (context.calls.recursive_calls(this) > 100)
+    //todo: we limit how many recursive calls there can be, as we had issues detecting recursive cases and it was causing errors in reasonable code
+    if (context.calls.recursive_calls(this) > reasonable_function_call_limit)
         return context.calls.build_recursive_error(this, context, source_info);
 
     if constexpr (should_log_compilation_step())

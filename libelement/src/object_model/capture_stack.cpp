@@ -10,7 +10,8 @@ using namespace element;
 
 capture_stack::capture_stack()
 {
-    frames.reserve(100);
+    // the capture stack can never contain more frames than the callstack
+    frames.reserve(reasonable_function_call_limit);
 }
 
 void capture_stack::push(const scope* local_scope, const std::vector<port>* parameters, std::vector<object_const_shared_ptr> compiled_arguments)

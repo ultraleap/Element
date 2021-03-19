@@ -13,7 +13,7 @@ using namespace element;
 
 call_stack::call_stack()
 {
-    frames.reserve(100);
+    frames.reserve(reasonable_function_call_limit);
 }
 
 call_stack::frame& call_stack::push(std::shared_ptr<const function_instance> function, std::vector<object_const_shared_ptr> compiled_arguments)
