@@ -32,7 +32,7 @@ object_const_shared_ptr struct_declaration::index(
             source_info,
             context.get_logger());
 
-    const auto* found = our_scope->find(name, false);
+    const auto* found = our_scope->find(name, context.interpreter->caches, false);
     if (!found)
         return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, typeof_info());
 
@@ -112,7 +112,7 @@ bool struct_declaration::deserializable(const compilation_context& context) cons
     for (const auto& input : get_inputs())
     {
         //todo: we can cache all of the resolving annotation things everywhere
-        const auto& type = get_scope()->find(input.get_annotation()->to_string(), true);
+        const auto& type = get_scope()->find(input.get_annotation()->to_string(), context.interpreter->caches, true);
         assert(type);
         if (!type->deserializable(context))
             return false;
@@ -136,7 +136,7 @@ object_const_shared_ptr struct_declaration::generate_placeholder(const compilati
     std::vector<object_const_shared_ptr> placeholder_inputs;
     for (const auto& input : get_inputs())
     {
-        const auto& type = get_scope()->find(input.get_annotation()->to_string(), true);
+        const auto& type = get_scope()->find(input.get_annotation()->to_string(), context.interpreter->caches, true);
         auto placeholder = type->generate_placeholder(context, placeholder_index, boundary_scope);
 
         if (!placeholder)

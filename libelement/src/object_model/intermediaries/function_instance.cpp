@@ -142,23 +142,27 @@ object_const_shared_ptr function_instance::call(
     if (!is_variadic && !valid_call(context, declarer, compiled_args))
         return build_error_for_invalid_call(context, declarer, compiled_args);
 
-    const auto us = shared_from_this();
-    if (context.calls.recursive_calls(us) > 100)
-        return context.calls.build_recursive_error(us, context, source_info);
+    //todo: we limit how many recursive calls there can be, as we had issues detecting recursive cases and it was causing errors in reasonable code
+    if (context.calls.recursive_calls(this) > reasonable_function_call_limit)
+        return context.calls.build_recursive_error(this, context, source_info);
 
     if constexpr (should_log_compilation_step())
         context.get_logger()->log_step_indent();
 
-    context.calls.push(us, compiled_args);
+    context.calls.push(shared_from_this(), compiled_args);
     captures.push(declarer->our_scope.get(), &declarer->get_inputs(), compiled_args);
 
     std::swap(captures, context.captures);
 
-    const auto visitor = [&context, &source_info](auto& body) {
-        return body->compile(context, source_info);
-    };
+    //todo: the use of std::variant for the body is unecessary, it was just the simplest solution at the time.
+    //std::visit is quite slow, so we're manually doing the branching instead.
+    object_const_shared_ptr element;
+    const auto& body = declarer->get_body();
+    if (std::holds_alternative<std::unique_ptr<object>>(body))
+        element = std::get<std::unique_ptr<object>>(body)->compile(context, source_info);
+    else
+        element = std::get<const object*>(body)->compile(context, source_info);
 
-    auto element = std::visit(visitor, declarer->body);
     std::swap(captures, context.captures);
 
     captures.pop();

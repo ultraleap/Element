@@ -3,6 +3,7 @@
 //SELF
 #include "object_model/declarations/declaration.hpp"
 #include "object_model/expressions/expression_chain.hpp"
+#include "object_model/scope_caches.hpp"
 #include "object_model/error.hpp"
 
 using namespace element;
@@ -71,15 +72,25 @@ bool scope::mark_declaration_compiler_generated(const identifier& name)
 //    //return declaration_or_expression ? declaration_or_expression->location() : "Not available";
 //}
 
-bool scope::add_declaration(std::unique_ptr<declaration> declaration)
+bool scope::add_declaration(std::unique_ptr<declaration> declaration, scope_caches& caches)
 {
-    const auto& [it, success] = declarations.try_emplace(declaration->name.value, std::move(declaration));
+    auto name = declaration->name.value;
+    const auto& [it, success] = declarations.try_emplace(std::move(name), std::move(declaration));
+
+    if (success)
+        caches.mark_to_clear();
+
     return success;
 }
 
-bool scope::remove_declaration(const identifier& name)
+bool scope::remove_declaration(const identifier& name, scope_caches& caches)
 {
-    return declarations.erase(name.value) != 0;
+    const bool removed = declarations.erase(name.value) != 0;
+
+    if (removed)
+        caches.mark_to_clear();
+
+    return removed;
 }
 
 const std::map<identifier, std::unique_ptr<declaration>>& scope::get_declarations() const
@@ -93,49 +104,61 @@ std::string scope::get_name() const
     return "";
 }
 
-const declaration* scope::find(const identifier& name, const bool recurse = false) const
+std::vector<std::string> split(const std::string& full_string, char delimiter = '.')
 {
-    const std::string delimiter = ".";
-    const std::string full_path = name.value;
-    std::vector<std::string> split_path;
+    std::vector<std::string> split_strings;
 
     size_t start = 0;
-    auto end = full_path.find(delimiter);
-    if (end != std::string::npos)
+    auto end = full_string.find(delimiter);
+    //find all but last string
+    while (end != std::string::npos)
     {
-        //find all but last string
-        while (end != std::string::npos)
-        {
-            const auto identifier = full_path.substr(start, end - start);
-            split_path.push_back(identifier);
+        const auto identifier = full_string.substr(start, end - start);
+        split_strings.push_back(identifier);
 
-            start = end + delimiter.length();
-            end = full_path.find(delimiter, start);
-        }
+        start = end + 1 /*delimiter legth*/;
+        end = full_string.find(delimiter, start);
     }
-    split_path.push_back(full_path.substr(start, full_path.length() - start));
 
-    static constexpr auto find_identifier = [](const scope& scope, identifier name, bool recurse) -> const declaration* {
-        const auto name_it = scope.declarations.find(name);
+    split_strings.push_back(full_string.substr(start, full_string.length() - start));
+    return split_strings;
+}
 
-        if (name_it != scope.declarations.end())
-            return name_it->second.get();
+const declaration* scope::find_identifier(const identifier& name, scope_caches& caches, bool recurse) const
+{
+    const auto name_it = declarations.find(name);
 
-        if (recurse && scope.parent_scope)
-            return scope.parent_scope->find(name, recurse);
+    if (name_it != declarations.end())
+        return name_it->second.get();
 
-        return nullptr;
-    };
+    if (recurse && parent_scope)
+        return parent_scope->find(name, caches, recurse);
 
-    const declaration* decl = find_identifier(*this, identifier{ split_path[0] }, recurse);
-    for (int i = 1; i < split_path.size(); ++i)
+    return nullptr;
+};
+
+const declaration* scope::find(const identifier& name, scope_caches& caches, const bool recurse = false) const
+{
+    auto& cache = caches.get(this);
+    const auto name_it = cache.find(name.value);
+    if (name_it != cache.end())
+        return name_it->second;
+
+    auto split_path = split(name.value);
+
+    const auto* scope = this;
+    const declaration* found_decl = nullptr;
+    for (const auto& ident : split_path)
     {
-        if (!decl)
+        found_decl = scope->find_identifier(ident, caches, recurse);
+        if (!found_decl)
             return nullptr;
-        decl = find_identifier(*decl->our_scope, split_path[i], false);
-    }
 
-    return decl;
+        scope = found_decl->our_scope.get();
+    }
+    
+    cache[name.value] = found_decl;
+    return found_decl;
 }
 
 const scope* scope::get_global() const

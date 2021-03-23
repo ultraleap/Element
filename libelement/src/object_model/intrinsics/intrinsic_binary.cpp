@@ -42,8 +42,8 @@ object_const_shared_ptr intrinsic_binary::compile(const compilation_context& con
 
     auto new_expr = std::make_unique<element::instruction_binary>(
         operation,
-        expr1,
-        expr2,
+        std::move(expr1),
+        std::move(expr2),
         return_type);
 
     return evaluate(context, std::move(new_expr));

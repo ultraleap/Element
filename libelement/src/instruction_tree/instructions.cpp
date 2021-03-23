@@ -37,7 +37,7 @@ std::shared_ptr<const object> instruction::index(
     }
 
     //find the declaration of the type that we are
-    const auto* const actual_type_decl = context.get_global_scope()->find(actual_type->get_identifier(), false);
+    const auto* const actual_type_decl = context.get_global_scope()->find(actual_type->get_identifier(), context.interpreter->caches, false);
     if (!actual_type_decl)
     {
         //TODO: Handle as error

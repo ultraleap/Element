@@ -4,8 +4,15 @@
 #include "call_stack.hpp"
 #include "scope.hpp"
 #include "declarations/declaration.hpp"
+#include "compilation_context.hpp"
 
 using namespace element;
+
+capture_stack::capture_stack()
+{
+    // the capture stack can never contain more frames than the callstack
+    frames.reserve(reasonable_function_call_limit);
+}
 
 void capture_stack::push(const scope* local_scope, const std::vector<port>* parameters, std::vector<object_const_shared_ptr> compiled_arguments)
 {
@@ -32,7 +39,7 @@ object_const_shared_ptr capture_stack::find(const scope* local_scope,
     while (current_scope)
     {
         //check the scope and see if it's in there
-        const auto* found = current_scope->find(name, false);
+        const auto* found = current_scope->find(name, context.interpreter->caches, false);
         if (found)
             return found->compile(context, source_info);
 

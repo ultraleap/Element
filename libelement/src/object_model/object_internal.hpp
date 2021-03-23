@@ -14,6 +14,12 @@
 
 namespace element
 {
+    /* currently libelement has no way of caching compilation, rewinding the C++ callstack, and then resuming.
+     * this causes the C++ callstack to become prohibitively large, and a stack overflow will occur.
+     * typically this has been seen with element callstacks approaching ~300 function calls.
+     * 100 was chosen as a safe default for how many function calls deep we can be in element, but can be adjusted in the future. */
+    constexpr auto reasonable_function_call_limit = 100;
+
     class object
     {
     public:

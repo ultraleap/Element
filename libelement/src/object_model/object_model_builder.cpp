@@ -222,21 +222,21 @@ namespace element
         {
             build_scope(context, lambda_body, *lambda_function_decl, output_result);
 
-            const auto* return_func = lambda_function_decl->our_scope->find(identifier::return_identifier, false);
+            const auto* return_func = lambda_function_decl->our_scope->find(identifier::return_identifier, context->caches, false);
             if (!return_func)
             {
                 output_result = log_error(context, context->src_context.get(), expression, log_error_message_code::function_missing_return, lambda_function_decl->name.value);
                 return nullptr;
             }
 
-            lambda_function_decl->body = return_func;
+            lambda_function_decl->set_body(return_func);
         }
         else
         {
             auto chain = build_expression_chain(context, lambda_body, lambda_function_decl.get(), output_result);
             assert(!chain->expressions.empty());
             assert(chain->expressions[0]);
-            lambda_function_decl->body = std::move(chain);
+            lambda_function_decl->set_body(std::move(chain));
         }
 
         return std::move(lambda_function_decl);
@@ -265,14 +265,14 @@ namespace element
             assert(!intrinsic);
             build_scope(context, body, *function_decl, output_result);
 
-            const auto* return_func = function_decl->our_scope->find(identifier::return_identifier, false);
+            const auto* return_func = function_decl->our_scope->find(identifier::return_identifier, context->caches, false);
             if (!return_func)
             {
                 output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::function_missing_return, function_decl->name.value);
                 return nullptr;
             }
 
-            function_decl->body = return_func;
+            function_decl->set_body(return_func);
         }
         else if (expression_bodied)
         {
@@ -290,7 +290,7 @@ namespace element
                 return nullptr;
             }
 
-            function_decl->body = std::move(chain);
+            function_decl->set_body(std::move(chain));
         }
         else if (intrinsic && body->type == ELEMENT_AST_NODE_NO_BODY)
         {
@@ -301,7 +301,7 @@ namespace element
                 return nullptr;
             }
 
-            function_decl->body = intrinsic::get_intrinsic(context, *function_decl);
+            function_decl->set_body(intrinsic::get_intrinsic(context, *function_decl));
         }
         else
         {
@@ -312,7 +312,7 @@ namespace element
         bool had_default = false;
         for (const auto& input : function_decl->inputs)
         {
-            if (function_decl->our_scope->find(identifier{ input.get_name() }, false))
+            if (function_decl->our_scope->find(identifier{ input.get_name() }, context->caches, false))
                 output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::multiple_definition_with_parameter, input.get_name(), function_decl->name.value);
 
             if (input.has_default())
@@ -536,7 +536,7 @@ namespace element
             }
 
             assert(decl);
-            const bool success = our_scope->add_declaration(std::move(decl));
+            const bool success = our_scope->add_declaration(std::move(decl), context->caches);
             if (!success)
             {
                 if (output_result == ELEMENT_OK)

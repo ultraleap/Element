@@ -4,12 +4,17 @@
 #include <fmt/format.h>
 
 //SELF
-#include "declarations/declaration.hpp"
+#include "declarations/function_declaration.hpp"
 #include "intermediaries/function_instance.hpp"
 #include "compilation_context.hpp"
 #include "error_map.hpp"
 
 using namespace element;
+
+call_stack::call_stack()
+{
+    frames.reserve(reasonable_function_call_limit);
+}
 
 call_stack::frame& call_stack::push(std::shared_ptr<const function_instance> function, std::vector<object_const_shared_ptr> compiled_arguments)
 {
@@ -21,24 +26,25 @@ void call_stack::pop()
     frames.pop_back();
 }
 
-unsigned int call_stack::recursive_calls(std::shared_ptr<const function_instance> function) const
+unsigned int call_stack::recursive_calls(const function_instance* function) const
 {
     auto count = 0;
 
+    const bool check_recursion = !function->declarer->is_intrinsic();
+    if (!check_recursion)
+        return count;
+
     for (auto it = frames.rbegin(); it != frames.rend(); ++it)
     {
-        if (it->function->declarer == function->declarer
-            && it->function->declarer->recursive_handler(*this, function->declarer, it))
-        {
+        if (it->function->declarer == function->declarer)
             count++;
-        }
     }
 
     return count;
 }
 
 std::shared_ptr<error> call_stack::build_recursive_error(
-    std::shared_ptr<const function_instance> function,
+    const function_instance* function,
     const compilation_context& context,
     const source_information& source_info)
 {

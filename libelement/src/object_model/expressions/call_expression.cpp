@@ -22,6 +22,8 @@ call_expression::call_expression(const expression_chain* parent)
 [[nodiscard]] object_const_shared_ptr call_expression::resolve(const compilation_context& context, const object* obj)
 {
     std::vector<object_const_shared_ptr> compiled_arguments;
+    compiled_arguments.reserve(arguments.size());
+
     for (const auto& arg : arguments)
         compiled_arguments.push_back(arg->compile(context, source_info));
 

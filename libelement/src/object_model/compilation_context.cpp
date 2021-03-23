@@ -6,6 +6,9 @@
 #include "intrinsics/intrinsic.hpp"
 #include "scope.hpp"
 
+//STD
+#include <exception>
+
 using namespace element;
 
 compilation_context::compilation_context(const scope* const scope, element_interpreter_ctx* interpreter)
@@ -22,8 +25,8 @@ compilation_context::compilation_context(const scope* const scope, element_inter
     const auto* body = intrinsic::get_intrinsic(interpreter, *list_indexer);
     if (!body)
         throw; //todo
-    list_indexer->body = body;
-    success = compiler_scope->add_declaration(std::move(list_indexer));
+    list_indexer->set_body(body);
+    success = compiler_scope->add_declaration(std::move(list_indexer), interpreter->caches);
     if (!success)
         throw; //todo
 

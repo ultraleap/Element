@@ -12,6 +12,8 @@ namespace element
     class function_declaration final : public declaration
     {
     public:
+        using body_type = std::variant<std::unique_ptr<object>, const object*>;
+
         enum class kind
         {
             expression_bodied,
@@ -19,7 +21,6 @@ namespace element
             intrinsic
         };
 
-    public:
         function_declaration(identifier name, const scope* parent_scope, kind function_kind);
 
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
@@ -39,11 +40,15 @@ namespace element
         [[nodiscard]] bool valid_at_boundary(const compilation_context& context) const;
         [[nodiscard]] bool is_intrinsic() const override;
 
-        std::variant<std::unique_ptr<object>, const object*> body;
+        [[nodiscard]] const body_type& get_body() const;
+        void set_body(body_type body);
 
     private:
+        body_type body;
         void validate_ports(const compilation_context& context) const;
 
+        mutable bool is_variadic_cached = false;
+        mutable bool cached_variadic = false;
         mutable bool ports_validated = false;
         mutable bool valid_ports = false;
         std::unique_ptr<constraint> constraint_;
