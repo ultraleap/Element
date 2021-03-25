@@ -93,9 +93,9 @@ namespace element
         [[nodiscard]] std::string to_string() const override
         {
             if (actual_type == type::boolean.get())
-                return to_bool(m_value) ? "true" : "false";
+                return to_bool(m_value) ? "Bool = true" : "Bool = false";
 
-            return fmt::format("{:g}", m_value);
+            return fmt::format("Num = {:g}", m_value);
         }
 
     private:

@@ -15,7 +15,7 @@ namespace element
     public:
         lambda_expression(const expression_chain* parent);
 
-        [[nodiscard]] std::string to_code(const int depth = 0) const override { return function->to_code(depth); };
+        [[nodiscard]] std::string to_code(const int depth = 0) const override { return function->to_code(depth); }
         [[nodiscard]] object_const_shared_ptr resolve(const compilation_context& context, const object* obj) override;
 
         std::unique_ptr<function_declaration> function;

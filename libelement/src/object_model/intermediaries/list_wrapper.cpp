@@ -31,7 +31,7 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
     if (!selector || selector->actual_type != type::num.get())
     {
         return std::make_shared<const error>(
-            "Tried to create a selector but it must be of type 'Num'\nnote: typeof selector is \"" + selector_object->typeof_info() + "\"",
+            "Tried to create a selector but it must be of type 'Num'\nnote: selector is \"" + selector_object->to_string() + "\"",
             ELEMENT_ERROR_UNKNOWN,
             source_info); //todo: pass logger from context
     }

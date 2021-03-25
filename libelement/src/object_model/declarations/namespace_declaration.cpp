@@ -24,7 +24,7 @@ object_const_shared_ptr namespace_declaration::index(
         if (found)
             return found->compile(context, source_info);
 
-        return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, typeof_info());
+        return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, to_string());
     }
 
     throw;

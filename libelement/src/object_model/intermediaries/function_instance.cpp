@@ -193,7 +193,7 @@ object_const_shared_ptr function_instance::call(
     if (!element->matches_constraint(context, constraint))
         return std::make_shared<error>(
             fmt::format("the return of '{}' was '{}' which doesn't match the constraint '{}'",
-                        declarer->name.value, element->typeof_info(), constraint ? type->name.value : "Any"),
+                        declarer->name.value, element->to_string(), constraint ? type->name.value : "Any"),
             ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
 
     return element;
