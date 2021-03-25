@@ -18,7 +18,7 @@ namespace Element.AST
             // Make a list out of the true and false flags
             List.Instance.Call(arguments.Skip(1).Reverse().ToArray(), context)
                 .CastInner<StructInstance>()
-                // Get the option lists indexer (field 0)
+                // GetSingle the option lists indexer (field 0)
                 .Bind(optionListInstance => optionListInstance.Index(ListStruct.IndexerId, context))
                 .Accumulate(() => context.RootScope.Lookup(NumStruct.Instance.Identifier, context))
                 // ReSharper disable once PossibleUnintendedReferenceComparison

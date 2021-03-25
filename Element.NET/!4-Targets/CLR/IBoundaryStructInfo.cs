@@ -6,6 +6,6 @@ namespace Element.CLR
     {
         string ElementExpression { get; }
         Dictionary<string, string> FieldMap { get; }
-        Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context);
+        Result SerializeClrInstance(object clrInstance, ICollection<float> floats, Context context);
     }
 }

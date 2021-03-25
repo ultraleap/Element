@@ -20,42 +20,44 @@ namespace Element
 
         public Result Parse(CompilerInput input) => _srcContext.LoadCompilerInput(input);
 
-        public Result<float[]> EvaluateExpression(CompilerInput input, string expression, bool interpreted) =>
-            Context.CreateFromSourceContext(_srcContext)
-                   .ToDefaultBoundaryContext()
-                   .Bind(context => _srcContext.LoadCompilerInput(input)
-                                               .Bind(() => context.EvaluateExpression(expression))
-                                               .Bind(value => interpreted
-                                                                  ? value.SerializeToFloats(context)
-                                                                  : value.CompileDynamic(context)
-                                                                         .Bind(compiled => InvokeAndConvertResult(compiled, context))));
+        public Result<float[]> EvaluateExpression(CompilerInput input, string expression, bool interpreted)
+        {
+            var context = Context.CreateFromSourceContext(_srcContext);
+            return _srcContext.LoadCompilerInput(input)
+                              .Bind(() => context.EvaluateExpression(expression))
+                              .Bind(value => interpreted
+                                   ? value.SerializeToFloats(context)
+                                   : value.CompileDynamic(context)
+                                          .Bind(compiled => InvokeAndConvertResult(compiled, context)));
+        }
 
-        private static Result<float[]> InvokeAndConvertResult(Delegate compiledDelegate, BoundaryContext context, params object[] args)
+        private static Result<float[]> InvokeAndConvertResult(Delegate compiledDelegate, Context context, params object[] args)
         {
             var result = new List<float>();
             return context.SerializeClrInstance(compiledDelegate.DynamicInvoke(args), result)
                           .Map(() => result.ToArray());
         }
 
-        public Result<float[]> EvaluateFunction(CompilerInput input, string functionExpression, string argumentsAsCallExpression, bool interpreted) =>
-            Context.CreateFromSourceContext(_srcContext)
-                   .ToDefaultBoundaryContext()
-                   .Bind(context => _srcContext.LoadCompilerInput(input)
-                                               // Evaluate the function expression and argument call expression
-                                               .Bind(() => context.EvaluateExpression(functionExpression)
-                                                                  .Accumulate(() => context.Parse<ExpressionChain.CallExpression>(argumentsAsCallExpression, "<evaluation call expression>")
-                                                                                           .Bind(callExpression => callExpression.Expressions.List.Select(ce => context.EvaluateExpression(ce)).ToResultArray())))
-                                               .Bind(t =>
-                                               {
-                                                   var (function, arguments) = t;
-                                                   return interpreted
-                                                              ? function.Call(arguments, context)
-                                                                        .Bind(value => value.SerializeToFloats(context))
-                                                              : function.CompileDynamic(context)
-                                                                        .Accumulate(() => arguments.Select(arg => arg.CompileDynamic(context).Map(fn => fn.DynamicInvoke())).ToResultArray())
-                                                                        .Bind(compiled => InvokeAndConvertResult(compiled.Item1, context, compiled.Item2));
-                                               }));
-        
+        public Result<float[]> EvaluateFunction(CompilerInput input, string functionExpression, string argumentsAsCallExpression, bool interpreted)
+        {
+            var context = Context.CreateFromSourceContext(_srcContext);
+            return _srcContext.LoadCompilerInput(input)
+                               // Evaluate the function expression and argument call expression
+                              .Bind(() => context.EvaluateExpression(functionExpression)
+                                                 .Accumulate(() => context.Parse<ExpressionChain.CallExpression>(argumentsAsCallExpression, "<evaluation call expression>")
+                                                                          .Bind(callExpression => callExpression.Expressions.List.Select(ce => context.EvaluateExpression(ce)).ToResultArray())))
+                              .Bind(t =>
+                               {
+                                   var (function, arguments) = t;
+                                   return interpreted
+                                       ? function.Call(arguments, context)
+                                                 .Bind(value => value.SerializeToFloats(context))
+                                       : function.CompileDynamic(context)
+                                                 .Accumulate(() => arguments.Select(arg => arg.CompileDynamic(context).Map(fn => fn.DynamicInvoke())).ToResultArray())
+                                                 .Bind(compiled => InvokeAndConvertResult(compiled.Item1, context, compiled.Item2));
+                               });
+        }
+
 
         public Result<string> Typeof(CompilerInput input, string expression) => Stringify(input, expression, value => value.TypeOf);
         public Result<string> Summary(CompilerInput input, string expression) => Stringify(input, expression, value => value.SummaryString);

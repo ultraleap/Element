@@ -8,18 +8,17 @@ using Expression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
 {
+    /// <summary>
+    /// Contains Mappings of CLR types to Element types and vice versa.
+    /// </summary>
     public class BoundaryMap
     {
+        // TODO: Support many-to-many mappings with a default mapping rather than restricting bidirectional mappings to one Element type per CLR type
+        
         private readonly Dictionary<Type, IBoundaryConverter> _convertersByClrType = new Dictionary<Type, IBoundaryConverter>();
         private readonly Dictionary<Struct, Type> _elementToClrMappings = new Dictionary<Struct, Type>();
         private readonly List<Mapping> _unresolvedMappings = new List<Mapping>();
 
-        private static readonly Dictionary<IIntrinsicStructImplementation, Type> _intrinsicTypeDictionary = new Dictionary<IIntrinsicStructImplementation, Type>
-        {
-            {NumStruct.Instance, typeof(float)},
-            {BoolStruct.Instance, typeof(bool)}
-        };
-        
         private class AssemblyNameComparer : IEqualityComparer<Assembly>
         {
             bool IEqualityComparer<Assembly>.Equals(Assembly x, Assembly y) => x?.FullName == y?.FullName;
@@ -27,19 +26,44 @@ namespace Element.CLR
             int IEqualityComparer<Assembly>.GetHashCode(Assembly obj) => obj.FullName.GetHashCode();
         }
 
-        
-        private static readonly Lazy<Assembly[]> _allDistinctNonDynamicAssemblies = new Lazy<Assembly[]>(() =>
-            AppDomain.CurrentDomain.GetAssemblies()
-                     .Distinct(new AssemblyNameComparer())
-                     .Where(asm => !asm.IsDynamic)
-                     .ToArray());
 
+        static BoundaryMap()
+        {
+            AllDistinctNonDynamicAssemblies = AppDomain.CurrentDomain.GetAssemblies()
+                                                       .Distinct(new AssemblyNameComparer())
+                                                       .Where(asm => !asm.IsDynamic)
+                                                       .ToList();
 
-        private static Dictionary<Type, ElementBoundaryStructAttribute> _boundaryStructTypesWithAttribute { get; } =
-            _allDistinctNonDynamicAssemblies.Value
-                                            .SelectMany(asm => asm.GetTypes())
-                                            .Where(t => Attribute.IsDefined(t, typeof(ElementBoundaryStructAttribute)))
-                                            .ToDictionary(t => t, t => t.GetCustomAttribute<ElementBoundaryStructAttribute>());
+            static void ScanAssemblyForBoundaryStructs(Assembly assembly)
+            {
+                foreach (var type in assembly.GetTypes().Where(t => Attribute.IsDefined(t, typeof(ElementBoundaryStructAttribute))))
+                {
+                    var attr = type.GetCustomAttribute<ElementBoundaryStructAttribute>();
+                    BoundaryStructTypesWithAttribute[type] = attr;
+                    DiscoverBoundaryStruct?.Invoke(type, attr);
+                }
+            }
+
+            BoundaryStructTypesWithAttribute = new Dictionary<Type, ElementBoundaryStructAttribute>();
+            foreach (var assembly in AllDistinctNonDynamicAssemblies) ScanAssemblyForBoundaryStructs(assembly);
+
+            AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
+            {
+                if (args.LoadedAssembly.IsDynamic) return;
+                AllDistinctNonDynamicAssemblies.Add(args.LoadedAssembly);
+                ScanAssemblyForBoundaryStructs(args.LoadedAssembly);
+            };
+        }
+
+        private static event Action<Type, ElementBoundaryStructAttribute> DiscoverBoundaryStruct;
+
+        private static readonly Dictionary<IIntrinsicStructImplementation, Type> _intrinsicTypeDictionary = new Dictionary<IIntrinsicStructImplementation, Type>
+        {
+            {NumStruct.Instance, typeof(float)},
+            {BoolStruct.Instance, typeof(bool)}
+        };
+        private static List<Assembly> AllDistinctNonDynamicAssemblies { get; }
+        private static Dictionary<Type, ElementBoundaryStructAttribute> BoundaryStructTypesWithAttribute { get; }
 
         public readonly struct Mapping
         {
@@ -102,6 +126,18 @@ namespace Element.CLR
             }
         }
 
+
+        private BoundaryMap()
+        {
+            DiscoverBoundaryStruct += (type, attribute) => AddConverter(MakeMappingFromAttribute(type, attribute));
+        }
+
+        private static Mapping MakeMappingFromAttribute(Type type, ElementBoundaryStructAttribute attr)
+        {
+            var boundaryStruct = new BoundaryStructInfo(type, attr.ElementTypeExpression, null);
+            return Mapping.Bidirectional(type, boundaryStruct.ElementExpression, StructConverter.FromBoundaryStructInfo(boundaryStruct));
+        }
+        
         public static BoundaryMap Create(IEnumerable<Mapping> mappings) =>
             mappings.Aggregate(new BoundaryMap(),
                 (cache, mapping) =>
@@ -111,15 +147,8 @@ namespace Element.CLR
                 });
 
         public static BoundaryMap CreateDefault() =>
-            Create(_boundaryStructTypesWithAttribute
-                  .Select(pair =>
-                   {
-                       var type = pair.Key;
-                       var attr = pair.Value;
-                       var boundaryStruct = new BoundaryStructInfo(type, attr.ElementTypeExpression, null);
-                       var converter = StructConverter.FromBoundaryStructInfo(boundaryStruct);
-                       return Mapping.Bidirectional(type, boundaryStruct.ElementExpression, converter);
-                   })
+            Create(BoundaryStructTypesWithAttribute
+                  .Select(pair => MakeMappingFromAttribute(pair.Key, pair.Value))
                   .Concat(new[]
                    {
                        Mapping.Bidirectional(typeof(float), "Num", NumberConverter.Instance),
@@ -230,33 +259,8 @@ namespace Element.CLR
                                    floats.Add((float) complex.Real);
                                    floats.Add((float) complex.Imaginary);
                                    return Result.Success;
-                               }))),
-
-                       /*{typeof(Point), vector2},
-                       {typeof(PointF), vector2},
-                       {typeof(Rectangle), rect},
-                       {typeof(RectangleF), rect},
-                       {
-                           typeof(Matrix4x4), new Input2D(new Dictionary<string, object>
-                           {
-                               {"x", new Map {{"x", "M11"}, {"y", "M12"}, {"z", "M13"}, {"w", "M14"}}},
-                               {"y", new Map {{"x", "M21"}, {"y", "M22"}, {"z", "M23"}, {"w", "M24"}}},
-                               {"z", new Map {{"x", "M31"}, {"y", "M32"}, {"z", "M33"}, {"w", "M34"}}},
-                               {"w", new Map {{"x", "M41"}, {"y", "M42"}, {"z", "M43"}, {"w", "M44"}}}
-                           })
-                       },
-                       {
-                           typeof(Matrix3x2), new Input2D(new Dictionary<string, object>
-                           {
-                               {"x", new Map {{"x", "M11"}, {"y", "M12"}}},
-                               {"y", new Map {{"x", "M21"}, {"y", "M22"}}},
-                               {"z", new Map {{"x", "M31"}, {"y", "M32"}}}
-                           })
-                       },
-                       {typeof(float[]), new Array1D()}*/
+                               })))
                    }));
-
-        private BoundaryMap() { }
 
         public bool AddConverter(in Mapping mapping) => mapping.AddToCache(this);
         
@@ -275,12 +279,11 @@ namespace Element.CLR
             _unresolvedMappings.Clear();
         }
 
-        public Result<IValue> LinqToElement(Expression parameter, BoundaryContext context) =>
+        public Result<IValue> LinqToElement(Expression parameter, Context context) =>
             GetConverter(parameter.Type, context)
                .Bind(boundaryConverter => boundaryConverter.LinqToElement(parameter, context));
 
-        public Result<Expression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction,
-            BoundaryContext context) =>
+        public Result<Expression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, Context context) =>
             GetConverter(outputType, context)
                .Bind(converter => converter.ElementToLinq(value, outputType, convertFunction, context));
 

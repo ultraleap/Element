@@ -43,17 +43,19 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         private delegate MyCustomElementStruct CustomStructDelegateNoArgs();
         private delegate MyCustomElementStruct CustomStructDelegate(float f, Vector3 v3);
 
-        private static Result<(TDelegate Delegate, float[] ArgumentArray)> CompileAndSourceArguments<TDelegate>(SourceContext context, string expression)
-            where TDelegate : Delegate =>
-            Context.CreateFromSourceContext(context).ToDefaultBoundaryContext()
-                   .Bind(boundaryContext => boundaryContext.EvaluateExpression(expression).Map(function => (function, boundaryContext)))
-                   .Bind(tuple => tuple.function.SourceArgumentsFromSerializedArray(tuple.boundaryContext).Map(valueTuple => (valueTuple, tuple.boundaryContext)))
-                   .Bind(tuple =>
-                   {
-                       var ((capturingValue, captureArray), boundaryContext) = tuple;
-                       return capturingValue.Compile<TDelegate>(boundaryContext).Map(compiled => (compiled, captureArray));
-                   });
-        
+        private static Result<(TDelegate Delegate, float[] ArgumentArray)> CompileAndSourceArguments<TDelegate>(SourceContext sourceContext, string expression)
+            where TDelegate : Delegate
+        {
+            var context = Context.CreateFromSourceContext(sourceContext);
+            return context.EvaluateExpression(expression)
+                          .Bind(function => function.SourceArgumentsFromSerializedArray(context))
+                          .Bind(tuple =>
+                           {
+                               var (capturingValue, captureArray) = tuple;
+                               return capturingValue.Compile<TDelegate>(context).Map(compiled => (compiled, captureArray));
+                           });
+        }
+
         private static void CompileWithSourcedArgsAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate, float[]> checkFunc)
             where TDelegate : Delegate =>
             CompileAndSourceArguments<TDelegate>(sourceContext, expression)
@@ -62,13 +64,14 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
                     LogMessages(messages);
                     checkFunc(t.Delegate, t.ArgumentArray);
                 }, messages => ExpectingSuccess(messages, false));
-        
-        private static Result<TDelegate> CompileDelegate<TDelegate>(SourceContext context, string expression)
-            where TDelegate : Delegate =>
-            Context.CreateFromSourceContext(context).ToDefaultBoundaryContext()
-                   .Bind(boundaryContext => boundaryContext.EvaluateExpression(expression).Map(function => (function, boundaryContext)))
-                   .Bind(tuple => tuple.function.Compile<TDelegate>(tuple.boundaryContext));
-        
+
+        private static Result<TDelegate> CompileDelegate<TDelegate>(SourceContext sourceContext, string expression)
+            where TDelegate : Delegate
+        {
+            var context = Context.CreateFromSourceContext(sourceContext);
+            return context.EvaluateExpression(expression).Bind(function => function.Compile<TDelegate>(context));
+        }
+
         private static void CompileAndCheck<TDelegate>(SourceContext sourceContext, string expression, Action<TDelegate> checkFunc)
             where TDelegate : Delegate =>
             CompileDelegate<TDelegate>(sourceContext, expression)

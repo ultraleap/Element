@@ -20,7 +20,7 @@ namespace Element.CLR
                                        f => $"{char.ToLower(f.Name[0])}{f.Name.Substring(1)}");
             
             // Below LinqExpression is equivalent to this reflection-based implementation of a getter
-            // IEnumerable<object> getFields(object input) => FieldMap.Select(f => (object)structType.GetField(f).GetValue(input)).ToArray();
+            // IEnumerable<object> getFields(object input) => FieldMap.Select(f => (object)structType.GetField(f).GetFloat(input)).ToArray();
             
             var inputExpr = Expression.Parameter(typeof(object));
             var parameterAsStructType = Expression.Convert(inputExpr, structType);
@@ -31,7 +31,7 @@ namespace Element.CLR
 
         public string ElementExpression { get; }
         public Dictionary<string, string> FieldMap { get; }
-        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context) =>
+        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, Context context) =>
             _structType.IsInstanceOfType(clrInstance)
                 ? _getFieldsFunc(clrInstance).Select(f => context.SerializeClrInstance(f, floats)).Fold()
                 : throw new InvalidOperationException($"Expected '{nameof(clrInstance)}' to be of type '{_structType}'");

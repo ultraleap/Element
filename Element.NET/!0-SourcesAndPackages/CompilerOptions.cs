@@ -1,4 +1,5 @@
 using System;
+using Element.CLR;
 
 namespace Element
 {
@@ -8,11 +9,11 @@ namespace Element
     public class CompilerOptions // TODO: Change to record type when available
     {
         public CompilerOptions(MessageLevel verbosity,
-                               bool releaseMode = false,
-                               bool skipValidation = false,
-                               bool noParseTrace = false,
-                               int callStackLimit = 1000,
-                               Func<Context, ICompilationAspect>? compilationAspectFunc = null)
+            bool releaseMode = false,
+            bool skipValidation = false,
+            bool noParseTrace = false,
+            int callStackLimit = 1000,
+            Func<Context, ICompilationAspect>? compilationAspectFunc = null)
         {
             ReleaseMode = releaseMode;
             SkipValidation = skipValidation;
