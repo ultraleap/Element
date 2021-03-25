@@ -98,15 +98,18 @@ std::string intrinsic::typeof_info() const
 
 std::string instruction::typeof_info() const
 {
-    return actual_type ? actual_type->get_identifier().value : "UnknownType:Expression";
+    return actual_type ? actual_type->get_identifier().value : "UnknownType:Instruction";
 }
 
 std::string port::typeof_info() const
 {
-    if (has_annotation())
-        return name.value + ":" + annotation->to_string();
+    if (!has_annotation() ||
+        annotation->to_string().empty())
+    {
+        return name.value;
+    }
 
-    return name.value;
+    return name.value + ":" + annotation->to_string();
 }
 
 //to_code
@@ -179,21 +182,26 @@ std::string constraint_declaration::to_code(const int depth) const
 std::string function_declaration::to_code(const int depth) const
 {
     auto declaration = name.value;
-    std::string ports;
 
     const std::string offset = "    ";
     std::string result;
 
     for (auto i = 0; i < depth; ++i)
         result += offset;
-
+    
+    std::string ports;
     if (has_inputs())
     {
-        static auto accumulate = [depth](std::string accumulator, const port& port) {
-            return std::move(accumulator) + ", " + port.typeof_info() + port.to_code(depth);
+        static constexpr auto accumulate = [](std::string accumulator, const port& port) {
+            return std::move(accumulator) + ", " + port.typeof_info();
         };
 
-        const auto input_ports = std::accumulate(std::next(std::begin(inputs)), std::end(inputs), inputs[0].typeof_info() + inputs[0].to_code(depth), accumulate);
+        const auto input_ports = std::accumulate(
+            std::next(std::begin(inputs)),
+            std::end(inputs),
+            inputs[0].typeof_info(),
+            accumulate);
+
         ports = "(" + input_ports + ")";
     }
 
@@ -213,6 +221,11 @@ std::string function_declaration::to_code(const int depth) const
 
     //expression-bodied
     return result + name.value + ports + " = " + std::visit(visitor, body);
+}
+
+std::string function_declaration::to_string() const
+{
+    return to_code(0);
 }
 
 std::string namespace_declaration::to_code(const int depth) const
@@ -284,5 +297,8 @@ std::string scope::to_code(const int depth) const
 
 std::string type_annotation::to_code(const int depth) const
 {
+    if (name.value.empty())
+        return {};
+
     return ":" + name.value;
 }

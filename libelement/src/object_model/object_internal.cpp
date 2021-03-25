@@ -39,19 +39,19 @@ namespace element
     object_const_shared_ptr object::index(const compilation_context& context, const identifier&,
                                           const source_information& source_info) const
     {
-        return build_error_and_log(context, source_info, error_message_code::not_indexable, typeof_info());
+        return build_error_and_log(context, source_info, error_message_code::not_indexable, to_string());
     }
 
     object_const_shared_ptr object::call(const compilation_context& context, std::vector<object_const_shared_ptr>,
                                          const source_information& source_info) const
     {
-        return build_error_and_log(context, source_info, error_message_code::not_callable, typeof_info());
+        return build_error_and_log(context, source_info, error_message_code::not_callable, to_string());
     }
 
     object_const_shared_ptr object::compile(const compilation_context& context,
                                             const source_information& source_info) const
     {
-        return build_error_and_log(context, source_info, error_message_code::not_compilable, typeof_info());
+        return build_error_and_log(context, source_info, error_message_code::not_compilable, to_string());
     }
 
     bool valid_call(
@@ -107,7 +107,7 @@ namespace element
         for (unsigned i = 0; i < compiled_args.size(); ++i)
         {
             const auto& input = compiled_args[i];
-            given_params += fmt::format("({}) _:{}", i, input->typeof_info());
+            given_params += fmt::format("({}) _:{}", i, input->to_string());
             if (i != compiled_args.size() - 1)
                 given_params += ", ";
         }
@@ -115,7 +115,7 @@ namespace element
         if (compiled_args.size() != declarer->inputs.size())
         {
             return build_error(declarer->source_info, error_message_code::argument_count_mismatch,
-                               declarer->location(), input_params, given_params);
+                               declarer->location(), declarer->inputs.size(), compiled_args.size(), input_params, given_params);
         }
 
         auto error_string = fmt::format("constraint not satisfied for function {}\nfunction has {} inputs\nfunction parameters = {}\narguments passed = {}",
@@ -154,15 +154,15 @@ namespace element
 
         if (!has_inputs)
             return build_error_and_log(context, source_info, error_message_code::instance_function_cannot_be_nullary,
-                                       func->typeof_info(), instance->typeof_info());
+                                       func->to_string(), instance->to_string());
 
         if (!has_type)
             return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
-                                       func->typeof_info(), instance->typeof_info(), func->inputs[0].get_name());
+                                       func->to_string(), instance->to_string(), func->inputs[0].get_name());
 
         if (!types_match)
             return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
-                                       func->typeof_info(), instance->typeof_info(),
+                                       func->to_string(), instance->to_string(),
                                        func->inputs[0].get_name(), func->inputs[0].get_annotation()->to_string(), type->name.value);
 
         //did we miss an error that we need to handle?

@@ -354,7 +354,7 @@ element_result element_interpreter_evaluate_instruction(
     outputs->count = static_cast<int>(count);
 
     if (result != ELEMENT_OK)
-        interpreter->log(result, fmt::format("Failed to evaluate {}", instruction->instruction->typeof_info()), "<input>");
+        interpreter->log(result, fmt::format("Failed to evaluate {}", instruction->instruction->to_string()), "<input>");
 
     return result;
 }

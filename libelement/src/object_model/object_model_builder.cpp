@@ -363,7 +363,7 @@ namespace element
             result = build_namespace_declaration(context, ast, parent_scope, output_result);
 
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_typeof_information))
-            std::cout << result->typeof_info() + "\n";
+            std::cout << result->to_string() + "\n";
 
         return result;
     }
