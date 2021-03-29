@@ -45,8 +45,8 @@ static element_result do_evaluate(evaluator_ctx& context, const element::instruc
 
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
     {
-        auto deps = es->dependents();
-        for (auto& dep : deps)
+        const auto& deps = es->dependents();
+        for (const auto& dep : deps)
         {
             ELEMENT_OK_OR_RETURN(do_evaluate(context, dep, outputs, outputs_count, outputs_written));
         }
@@ -145,8 +145,8 @@ static element_result do_evaluate(evaluator_ctx& context, const element::instruc
         element_value selector;
         ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->selector, &selector, 1, intermediate_written));
         intermediate_written = 0;
-        const auto selected_option = element_evaluate_select(selector, sel->options);
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, selected_option, outputs, outputs_count, outputs_written));
+        const auto selected_option_index = element_evaluate_select(selector, sel->options);
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->options[selected_option_index], outputs, outputs_count, outputs_written));
         return ELEMENT_OK;
     }
 
@@ -175,6 +175,7 @@ element_result element_evaluate(
 {
     evaluator_ctx ectx = { {}, opts };
     ectx.boundaries.push_back({ inputs, inputs_count });
+    ectx.boundaries.reserve(10);
 
     size_t outputs_written = 0;
     const auto result = do_evaluate(ectx, fn, outputs, outputs_count, outputs_written);
@@ -354,9 +355,9 @@ std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const el
     return inputs;
 }
 
-element::instruction_const_shared_ptr element_evaluate_select(element_value selector, std::vector<element::instruction_const_shared_ptr> options)
+std::size_t element_evaluate_select(element_value selector, const std::vector<element::instruction_const_shared_ptr>& options)
 {
     assert(!options.empty());
     const auto clamped_index = std::clamp(static_cast<int>(selector), 0, static_cast<int>(options.size() - 1));
-    return options[clamped_index];
+    return clamped_index;
 }

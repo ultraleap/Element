@@ -26,4 +26,4 @@ element_value element_evaluate_unary(element::instruction_unary::op op, element_
 element_value element_evaluate_binary(element::instruction_binary::op op, element_value a, element_value b);
 element_value element_evaluate_if(element_value predicate, element_value if_true, element_value if_false);
 std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const element::instruction_const_shared_ptr& initial, const element::instruction_const_shared_ptr& condition, const element::instruction_const_shared_ptr&);
-element::instruction_const_shared_ptr element_evaluate_select(element_value selector, std::vector<element::instruction_const_shared_ptr> options);
+std::size_t element_evaluate_select(element_value selector, const std::vector<element::instruction_const_shared_ptr>& options);
