@@ -253,6 +253,18 @@ element_result element_instruction_is_constant(
     bool* constant);
 
 /**
+ * @brief converts an instruction in to a human-readable string
+ *
+ * @param[in] instruction       instruction to represent as a string
+ * @param[out] buffer           output buffer
+ * @param[in,out] buffer_size   output buffer size, modified to represent the number of characters written. if buffer is NULL, the required buffer size will be written
+ */
+element_result element_instruction_to_string(
+    element_instruction* instruction,
+    char* buffer,
+    int* buffer_size);
+
+/**
  * @brief finds a declaration from the loaded element code
  *
  * @param[in] interpreter       interpreter context

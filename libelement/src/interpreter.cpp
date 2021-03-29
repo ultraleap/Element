@@ -214,6 +214,30 @@ element_result element_instruction_is_constant(element_instruction* instruction,
     return ELEMENT_OK;
 }
 
+element_result element_instruction_to_string(
+    element_instruction* instruction,
+    char* buffer,
+    int* buffer_size)
+{
+    if (!instruction || !instruction->instruction)
+        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
+
+    if (!buffer_size)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+    
+    auto string = instruction_to_string(*instruction->instruction);
+
+    if (!buffer)
+    {
+        *buffer_size = static_cast<int>(string.size());
+        return ELEMENT_ERROR_API_STRING_IS_NULL;
+    }
+
+    strncpy(buffer, string.c_str(), string.size());
+
+    return ELEMENT_OK;
+}
+
 element_result element_interpreter_find(element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
 {
     if (!interpreter)
@@ -468,7 +492,7 @@ element_result element_interpreter_evaluate_expression(
 
     constexpr auto log_expression_tree = flag_set(logging_bitmask, log_flags::debug | log_flags::output_instruction_tree);
     if constexpr (log_expression_tree)
-        interpreter->log("\n------\nEXPRESSION\n------\n" + instruction_to_string(*instruction.instruction));
+        interpreter->log("\n------\nINSTRUCTION TREE\n------\n" + instruction_to_string(*instruction.instruction));
 
     float inputs[] = { 0 };
     element_inputs input;
