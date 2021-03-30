@@ -198,6 +198,8 @@ set(element_sources
     #LMNT
     "src/lmnt/compiler.cpp"
     "src/lmnt/compiler.hpp"
+    "src/lmnt/compiler_state.cpp"
+    "src/lmnt/compiler_state.hpp"
 
     #Util
     "src/stringutil.hpp"
