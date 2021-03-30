@@ -13,6 +13,7 @@
 #include "instruction_tree/fwd.hpp"
 #include "instruction_tree/instructions.hpp"
 #include "instruction_tree/evaluator.hpp"
+#include "interpreter_internal.hpp"
 
 #include "util.test.hpp"
 
@@ -3888,7 +3889,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         std::string buffer(256, '\0');
 
-        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), static_cast<int>(buffer.size()));
+        auto result = element_interpreter_typeof_expression(context, "1", buffer.data(), static_cast<int>(buffer.size()));
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Num") == 0);
         element_interpreter_delete(&context);
@@ -3902,7 +3903,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         std::string buffer(256, '\0');
 
-        auto result = element_interpreter_typeof_expression(context, nullptr, "1", buffer.data(), static_cast<int>(buffer.size()));
+        auto result = element_interpreter_typeof_expression(context, "1", buffer.data(), static_cast<int>(buffer.size()));
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Num") == 0);
 
@@ -3911,7 +3912,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
         buffer.clear();
         buffer.resize(256, '\0');
 
-        result = element_interpreter_typeof_expression(context, nullptr, "Bool(1)", buffer.data(), static_cast<int>(buffer.size()));
+        result = element_interpreter_typeof_expression(context, "Bool(1)", buffer.data(), static_cast<int>(buffer.size()));
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(strcmp(buffer.data(), "Bool") == 0);
         element_interpreter_delete(&context);
@@ -3932,7 +3933,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
         };
 
         auto expr = std::make_shared<element::instruction_select>(std::move(selector), std::move(options));
-        const auto result = element_evaluate(*context, expr, {}, outputs, {});
+        element_evaluator_ctx evaluator;
+        const auto result = element_evaluate(evaluator, expr, {}, outputs);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);
     }
@@ -3957,7 +3959,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
         deps.push_back(expr);
         deps.push_back(expr);
         auto new_expr = std::make_shared<element::instruction_serialised_structure>(std::move(deps), std::vector<std::string>{}, "");
-        const auto result = element_evaluate(*context, new_expr, inputs, outputs, {});
+        element_evaluator_ctx evaluator;
+        const auto result = element_evaluate(evaluator, new_expr, inputs, outputs);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);
         REQUIRE(outputs[1] == 1.0f);

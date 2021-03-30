@@ -43,6 +43,18 @@ struct element_ports
     std::vector<std::unique_ptr<element_port, port_deleter>> ports;
 };
 
+//todo: move somewhere else and add a logger so we don't need to pass interpreter in the C API
+struct element_evaluator_ctx
+{
+    struct boundary
+    {
+        const element_value* inputs;
+        const size_t inputs_count;
+    };
+    std::vector<boundary> boundaries;
+    element_evaluator_options options;
+};
+
 struct element_interpreter_ctx
 {
 public:

@@ -137,7 +137,11 @@ namespace libelement::cli
             element_value outputs_buffer[max_output_size];
             output.values = outputs_buffer;
             output.count = max_output_size;
-            result = element_interpreter_evaluate_instruction(context, nullptr, result_instruction, &input, &output);
+
+            element_evaluator_ctx* evaluator;
+            element_evaluator_create(context, &evaluator);
+            result = element_interpreter_evaluate_instruction(context, evaluator, result_instruction, &input, &output);
+            element_evaluator_delete(&evaluator);
 
             context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
 
@@ -178,7 +182,11 @@ namespace libelement::cli
 
             if (!custom_arguments.arguments.empty())
             {
-                result = element_interpreter_evaluate_call_expression(context, nullptr, custom_arguments.arguments.c_str(), &call_output);
+                element_evaluator_ctx* evaluator;
+                element_evaluator_create(context, &evaluator);
+                result = element_interpreter_evaluate_call_expression(context, evaluator, custom_arguments.arguments.c_str(), &call_output);
+                element_evaluator_delete(&evaluator);
+
                 if (result != ELEMENT_OK)
                 {
                     element_instruction_delete(&compiled_function);
@@ -195,8 +203,11 @@ namespace libelement::cli
             element_outputs output;
             output.values = outputs_buffer;
             output.count = max_output_size;
-
-            element_interpreter_evaluate_instruction(context, nullptr, compiled_function, &input, &output);
+            
+            element_evaluator_ctx* evaluator;
+            element_evaluator_create(context, &evaluator);
+            element_interpreter_evaluate_instruction(context, evaluator, compiled_function, &input, &output);
+            element_evaluator_delete(&evaluator);
             element_instruction_delete(&compiled_function);
 
             return generate_response(result, output, compilation_input.get_log_json());

@@ -312,7 +312,7 @@ element_result element_interpreter_compile_declaration(
 
 element_result element_interpreter_evaluate_instruction(
     element_interpreter_ctx* interpreter,
-    const element_evaluator_options* options,
+    element_evaluator_ctx* evaluator,
     const element_instruction* instruction,
     const element_inputs* inputs,
     element_outputs* outputs)
@@ -322,17 +322,15 @@ element_result element_interpreter_evaluate_instruction(
 
     if (!instruction || !instruction->instruction)
         return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
+    
+    if (!evaluator)
+        return ELEMENT_ERROR_API_EVALUATOR_CTX_IS_NULL;
 
     if (!inputs)
         return ELEMENT_ERROR_API_INVALID_INPUT;
 
     if (!outputs)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
-
-    element_evaluator_options opts{};
-
-    if (options)
-        opts = *options;
 
     if (instruction->instruction->is_error())
         return instruction->instruction->log_any_error(interpreter->logger.get());
@@ -344,13 +342,12 @@ element_result element_interpreter_evaluate_instruction(
 
     std::size_t count = outputs->count;
     const auto result = element_evaluate(
-        *interpreter,
+        *evaluator,
         instruction->instruction,
         inputs->values,
         inputs->count,
         outputs->values,
-        count,
-        opts);
+        count);
     outputs->count = static_cast<int>(count);
 
     if (result != ELEMENT_OK)
@@ -442,14 +439,61 @@ element_result element_interpreter_compile_expression(
     return ELEMENT_OK;
 }
 
+element_result element_evaluator_create(element_interpreter_ctx* interpreter, element_evaluator_ctx** evaluator)
+{
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!evaluator)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    *evaluator = new element_evaluator_ctx;
+    return ELEMENT_OK;
+}
+
+element_result element_evaluator_set_options(element_evaluator_ctx* evaluator, element_evaluator_options options)
+{
+    if (!evaluator)
+        return ELEMENT_ERROR_API_EVALUATOR_CTX_IS_NULL;
+
+    evaluator->options = options;
+
+    return ELEMENT_OK;
+}
+
+element_result element_evaluator_get_options(element_evaluator_ctx* evaluator, element_evaluator_options* options)
+{
+    if (!evaluator)
+        return ELEMENT_ERROR_API_EVALUATOR_CTX_IS_NULL;
+
+    if (!evaluator)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    *options = evaluator->options;
+
+    return ELEMENT_OK;
+}
+
+void element_evaluator_delete(element_evaluator_ctx** evaluator)
+{
+    if (!evaluator)
+        return;
+
+    delete *evaluator;
+    *evaluator = nullptr;
+}
+
 element_result element_interpreter_evaluate_expression(
     element_interpreter_ctx* interpreter,
-    const element_evaluator_options* options,
+    element_evaluator_ctx* evaluator,
     const char* expression_string,
     element_outputs* outputs)
 {
     if (!interpreter)
         return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!evaluator)
+        return ELEMENT_ERROR_API_EVALUATOR_CTX_IS_NULL;
 
     if (!expression_string)
         return ELEMENT_ERROR_API_STRING_IS_NULL;
@@ -475,14 +519,13 @@ element_result element_interpreter_evaluate_expression(
     input.values = inputs;
     input.count = 1;
 
-    result = element_interpreter_evaluate_instruction(interpreter, options, instruction_ptr, &input, outputs);
+    result = element_interpreter_evaluate_instruction(interpreter, evaluator, instruction_ptr, &input, outputs);
 
     return result;
 }
 
 element_result element_interpreter_typeof_expression(
     element_interpreter_ctx* interpreter,
-    const element_evaluator_options* options,
     const char* expression_string,
     char* buffer,
     const int buffer_size)
@@ -524,12 +567,15 @@ element_result element_interpreter_typeof_expression(
 
 element_result element_interpreter_evaluate_call_expression(
     element_interpreter_ctx* interpreter,
-    const element_evaluator_options* options,
+    element_evaluator_ctx* evaluator,
     const char* call_expression,
     element_outputs* outputs)
 {
     if (!interpreter)
         return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
+
+    if (!evaluator)
+        return ELEMENT_ERROR_API_EVALUATOR_CTX_IS_NULL;
 
     if (!call_expression)
         return ELEMENT_ERROR_API_STRING_IS_NULL;
@@ -554,11 +600,10 @@ element_result element_interpreter_evaluate_call_expression(
         serialised_arguments.back().resize(1024);
 
         const auto eval_result = element_evaluate(
-            *interpreter,
+            *evaluator,
             instruction,
             {},
-            serialised_arguments.back(),
-            {});
+            serialised_arguments.back());
 
         if (eval_result != ELEMENT_OK)
             return eval_result;

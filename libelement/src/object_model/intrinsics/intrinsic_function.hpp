@@ -20,12 +20,14 @@ namespace element
         bool variadic = false;
     };
 
+    //todo: move somewhere else
     static std::shared_ptr<const instruction> evaluate(const compilation_context& context, instruction_const_shared_ptr expr)
     {
         float output = 0;
         std::size_t output_count = 1;
         
-        const auto result = element_evaluate(*context.interpreter, expr, nullptr, 0, &output, output_count, {});
+        element_evaluator_ctx evaluator;
+        const auto result = element_evaluate(evaluator, expr, nullptr, 0, &output, output_count);
         if (result != ELEMENT_OK)
             return expr;
 
