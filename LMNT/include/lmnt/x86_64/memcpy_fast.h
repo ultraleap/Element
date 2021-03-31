@@ -29,6 +29,10 @@
 #ifndef LMNT_FAST_MEMCPY_H
 #define LMNT_FAST_MEMCPY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <emmintrin.h>
@@ -705,5 +709,9 @@ static void* lmnt_memcpy_fast(void *destination, const void *source, size_t size
 	return destination;
 }
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

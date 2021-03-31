@@ -1,6 +1,10 @@
 #ifndef LMNT_COMMON_H
 #define LMNT_COMMON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -112,6 +116,11 @@ typedef struct lmnt_ictx lmnt_ictx;
 #else
 #define LMNT_LIKELY(expr) (expr)
 #define LMNT_UNLIKELY(expr) (expr)
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

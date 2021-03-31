@@ -1,6 +1,10 @@
 #ifndef LMNT_VALIDATION_H
 #define LMNT_VALIDATION_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 #include "lmnt/common.h"
 #include "lmnt/archive.h"
@@ -11,5 +15,10 @@ lmnt_validation_result lmnt_archive_validate(lmnt_archive* archive, size_t memor
     if (!((a)->flags & LMNT_ARCHIVE_VALIDATED)) \
         return LMNT_ERROR_UNPREPARED_ARCHIVE; \
 }
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

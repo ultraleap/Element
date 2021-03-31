@@ -1,6 +1,10 @@
 #if !defined(LMNT_JITCONFIG_H)
 #define LMNT_JITCONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "lmnt/platform.h"
 
 //
@@ -29,6 +33,11 @@
 // Signature: void fn(void*, size_t)
 #if !defined(LMNT_JIT_FREE_CFN_MEMORY)
 #define LMNT_JIT_FREE_CFN_MEMORY(buf, sz) hostFreeCompiledBuffer((buf), (sz))
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

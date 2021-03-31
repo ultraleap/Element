@@ -1,6 +1,10 @@
 #ifndef LMNT_ARM_PLATFORM_H
 #define LMNT_ARM_PLATFORM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // #if !defined(LMNT_MEMCPY)
 // #define LMNT_MEMORY_HEADER "some_arm_fast_memcpy.h"
 // #define LMNT_MEMCPY lmnt_memcpy_fast
@@ -19,5 +23,10 @@
 
 // Allow use of non-volatile registers?
 #define LMNT_JIT_ARM_ALLOW_NV_REGISTERS
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef LMNT_CONFIG_H
 #define LMNT_CONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "lmnt/platform.h"
 
 // Header which will be included when requiring memory-related functions
@@ -33,6 +37,11 @@
 // Never called unless requested by the user (e.g. lmnt_archive_print) or debug flags are enabled
 #if !defined(LMNT_PRINTF)
 #define LMNT_PRINTF printf
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

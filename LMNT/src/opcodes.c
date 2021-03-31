@@ -166,6 +166,11 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "EXTCALL",   LMNT_OPERAND_DEFPTR,   LMNT_OPERAND_DEFPTR,   LMNT_OPERAND_STACKN   },
 };
 
+const lmnt_op_info* lmnt_get_opcode_info(lmnt_opcode op)
+{
+    return (op < LMNT_OP_END) ? &(lmnt_opcode_info[op]) : NULL;
+}
+
 lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END] = {
     lmnt_op_interrupt,
     lmnt_op_interrupt,

@@ -1,6 +1,10 @@
 #ifndef LMNT_JIT_H
 #define LMNT_JIT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -44,5 +48,10 @@ lmnt_result lmnt_jit_delete_function(lmnt_jit_fn_data* fndata);
 LMNT_ATTR_FAST lmnt_result lmnt_jit_execute(
     lmnt_ictx* ctx, const lmnt_def* def, const lmnt_jit_fn_data* fndata,
     lmnt_value* rvals, const lmnt_offset rvals_count);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

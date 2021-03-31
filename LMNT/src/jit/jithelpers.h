@@ -90,9 +90,9 @@ static inline size_t getAccessSize(lmnt_offset inst, int arg)
     lmnt_operand_type optype;
     switch (arg)
     {
-    case 1: optype = lmnt_opcode_info[inst].operand1; break;
-    case 2: optype = lmnt_opcode_info[inst].operand2; break;
-    case 3: optype = lmnt_opcode_info[inst].operand3; break;
+    case 1: optype = lmnt_get_opcode_info(inst)->operand1; break;
+    case 2: optype = lmnt_get_opcode_info(inst)->operand2; break;
+    case 3: optype = lmnt_get_opcode_info(inst)->operand3; break;
     default: return 0;
     }
     switch (optype)

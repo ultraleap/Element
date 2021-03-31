@@ -209,7 +209,7 @@ lmnt_result lmnt_archive_print(const lmnt_archive* archive)
 
         const lmnt_instruction* insts = (const lmnt_instruction*)(get_code_segment(archive) + offset);
         for (size_t i = 0; i < chdr->instructions_count; ++i)
-            LMNT_PRINTF("                 Instructions[%3zu]: %10s %04X %04X %04X\n", i, lmnt_opcode_info[insts[i].opcode].name, insts[i].arg1, insts[i].arg2, insts[i].arg3);
+            LMNT_PRINTF("                 Instructions[%3zu]: %10s %04X %04X %04X\n", i, lmnt_get_opcode_info(insts[i].opcode)->name, insts[i].arg1, insts[i].arg2, insts[i].arg3);
 
         offset += chdr->instructions_count * sizeof(lmnt_instruction);
     }
