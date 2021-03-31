@@ -25,6 +25,6 @@ element_result element_lmnt_find_constants(
 element_result element_lmnt_compile_function(
     const element_lmnt_compiler_ctx& ctx,
     const element::instruction_const_shared_ptr instruction,
-    const std::vector<element_value>& constants,
+    std::vector<element_value>& constants,
     const size_t inputs_count,
     std::vector<lmnt_instruction>& output);

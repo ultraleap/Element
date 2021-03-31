@@ -67,8 +67,13 @@ static element_result prepare_virtual_constant(
     virtual_result& vr)
 {
     uint16_t index;
-    if (!vr.is_output && (!state.ctx.optimise.minimise_moves || state.find_constant(ec.value(), index) != ELEMENT_OK))
-        ELEMENT_OK_OR_RETURN(state.stack.set_allocation(&ec, 1));
+    if (!vr.is_output && state.find_constant(ec.value(), index) != ELEMENT_OK) {
+        // no hard-constant, allocate
+        ELEMENT_OK_OR_RETURN(state.set_allocation(&ec, 1));
+    } else if (!vr.is_output) {
+        // hard-constant, just use it as-is
+        ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(&ec, allocation_type::constant, index, 1));
+    }
     return ELEMENT_OK;
 }
 
@@ -77,10 +82,6 @@ static element_result optimise_virtual_constant(
     const element::instruction_constant& ec,
     virtual_result& vr)
 {
-    uint16_t index;
-    // if we're optimising moves, just access this from the constants section
-    if (!vr.is_output && (state.ctx.optimise.minimise_moves && state.find_constant(ec.value(), index) == ELEMENT_OK))
-        ELEMENT_OK_OR_RETURN(state.stack.set_stack_index(&ec, index));
     return ELEMENT_OK;
 }
 
@@ -134,9 +135,13 @@ static element_result prepare_virtual_input(
     const element::instruction_input& ei,
     virtual_result& vr)
 {
-    ELEMENT_OK_OR_RETURN(state.stack.use_pinned_allocation(&ei, static_cast<uint16_t>(state.constants.size() + ei.index()), 1));
-    if (!vr.is_output && !state.ctx.optimise.minimise_moves)
-        ELEMENT_OK_OR_RETURN(state.stack.set_allocation(&ei, vr.count));
+    if (!vr.is_output) {
+        // just use it from the input location
+        ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(&ei, allocation_type::input, ei.index(), 1));
+    } else {
+        // input --> output, have to copy it
+        ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&ei, vr.count));
+    }
     return ELEMENT_OK;
 }
 
@@ -145,13 +150,6 @@ static element_result optimise_virtual_input(
     const element::instruction_input& ei,
     virtual_result& vr)
 {
-    if (!vr.is_output)
-    {
-        if (state.ctx.optimise.minimise_moves)
-            ELEMENT_OK_OR_RETURN(state.stack.set_stack_index(&ei, static_cast<uint16_t>(state.constants.size() + ei.index())));
-        else if (!vr.is_output)
-            (void)0; // TODO: set a sensible stack index?
-    }
     return ELEMENT_OK;
 }
 
@@ -162,7 +160,7 @@ static element_result compile_input(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    copy_stack_values(static_cast<uint16_t>(state.constants.size() + ei.index()), stack_idx, 1, output);
+    copy_stack_values(state.get_stack_index(allocation_type::input, ei.index()), stack_idx, 1, output);
     return ELEMENT_OK;
 }
 
@@ -192,13 +190,20 @@ static element_result prepare_virtual_serialised_structure(
     const element::instruction_serialised_structure& es,
     virtual_result& vr)
 {
+    state.set_allocation_if_not_pinned(&es, vr.count);
+
+    uint16_t index = 0;
     for (const auto& d : es.dependents())
     {
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, d.get()));
-        state.stack.use_allocation(&es, d.get());
+        // TODO: handle failure (copy in?)
+        state.set_allocation_parent(d.get(), &es, index);
+        state.use_allocation(&es, d.get());
+
+        virtual_result d_vr;
+        ELEMENT_OK_OR_RETURN(state.find_virtual_result(d.get(), d_vr));
+        index += d_vr.count;
     }
-    if (!vr.is_output && !state.ctx.optimise.minimise_moves)
-        ELEMENT_OK_OR_RETURN(state.stack.set_allocation(&es, vr.count));
 
     return ELEMENT_OK;
 }
@@ -209,7 +214,7 @@ static element_result optimise_virtual_serialised_structure(
     virtual_result& vr)
 {
     // TODO
-    return ELEMENT_ERROR_NO_IMPL;
+    return ELEMENT_OK;
 }
 
 static element_result compile_serialised_structure(
@@ -224,7 +229,6 @@ static element_result compile_serialised_structure(
         virtual_result dvr;
         ELEMENT_OK_OR_RETURN(state.find_virtual_result(d.get(), dvr));
         ELEMENT_OK_OR_RETURN(compile_instruction(state, d.get(), output));
-        
     }
     return ELEMENT_OK;
 }
@@ -249,7 +253,7 @@ static element_result prepare_virtual_nullary(
     const element::instruction_nullary& en,
     virtual_result& vr)
 {
-    return state.stack.set_allocation(&en, 1);
+    return state.set_allocation_if_not_pinned(&en, 1);
 }
 
 static element_result optimise_virtual_nullary(
@@ -258,7 +262,7 @@ static element_result optimise_virtual_nullary(
     virtual_result& vr)
 {
     // TODO
-    return ELEMENT_ERROR_NO_IMPL;
+    return ELEMENT_OK;
 }
 
 static element_result compile_nullary(
@@ -330,8 +334,9 @@ static element_result prepare_virtual_unary(
 {
     const element::instruction* dep0 = eu.dependents()[0].get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
-    state.stack.use_allocation(&eu, dep0);
-    return state.stack.set_allocation(&eu, vr.count);
+    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&eu, vr.count));
+    state.use_allocation(&eu, dep0);
+    return ELEMENT_OK;
 }
 
 static element_result optimise_virtual_unary(
@@ -340,7 +345,7 @@ static element_result optimise_virtual_unary(
     virtual_result& vr)
 {
     // TODO
-    return ELEMENT_ERROR_NO_IMPL;
+    return ELEMENT_OK;
 }
 
 static element_result compile_unary(
@@ -353,7 +358,7 @@ static element_result compile_unary(
     const element::instruction* arg_in = eu.dependents()[0].get();
     // get the argument and ensure it's only 1 wide
     uint16_t arg_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(arg_in, arg_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(arg_in, arg_stack_idx));
     // compile the argument
     ELEMENT_OK_OR_RETURN(compile_instruction(state, arg_in, output));
 
@@ -425,9 +430,10 @@ static element_result prepare_virtual_binary(
     const element::instruction* dep1 = eb.dependents()[1].get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
-    state.stack.use_allocation(&eb, dep0);
-    state.stack.use_allocation(&eb, dep1);
-    return state.stack.set_allocation(&eb, vr.count);
+    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&eb, vr.count));
+    state.use_allocation(&eb, dep0);
+    state.use_allocation(&eb, dep1);
+    return ELEMENT_OK;
 }
 
 static element_result optimise_virtual_binary(
@@ -436,7 +442,7 @@ static element_result optimise_virtual_binary(
     virtual_result& vr)
 {
     // TODO
-    return ELEMENT_ERROR_NO_IMPL;
+    return ELEMENT_OK;
 }
 
 static element_result compile_binary(
@@ -452,8 +458,8 @@ static element_result compile_binary(
     const element::instruction* arg1_in = eb.dependents()[0].get();
     const element::instruction* arg2_in = eb.dependents()[1].get();
     uint16_t arg1_stack_idx, arg2_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(arg1_in, arg1_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(arg2_in, arg2_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(arg1_in, arg1_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(arg2_in, arg2_stack_idx));
     // compile the arguments
     ELEMENT_OK_OR_RETURN(compile_instruction(state, arg1_in, output));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, arg2_in, output));
@@ -574,19 +580,12 @@ static element_result prepare_virtual_if(
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
-    state.stack.use_allocation(&ei, dep0);
-    if (state.ctx.optimise.minimise_moves)
-    {
-        // clear any allocations for the true/false results, we'll override them later
-        state.stack.clear_allocation(dep1);
-        state.stack.clear_allocation(dep2);
-    }
-    else
-    {
-        state.stack.use_allocation(&ei, dep1);
-        state.stack.use_allocation(&ei, dep2);
-    }
-    return state.stack.set_allocation(&ei, vr.count);
+    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&ei, vr.count));
+    state.use_allocation(&ei, dep0);
+    // TODO: account for failure (copy in?)
+    state.set_allocation_parent(dep1, &ei, 0);
+    state.set_allocation_parent(dep2, &ei, 0);
+    return ELEMENT_OK;
 }
 
 static element_result optimise_virtual_if(
@@ -595,7 +594,7 @@ static element_result optimise_virtual_if(
     virtual_result& vr)
 {
     // TODO
-    return ELEMENT_ERROR_NO_IMPL;
+    return ELEMENT_OK;
 }
 
 static element_result compile_if(
@@ -612,9 +611,9 @@ static element_result compile_if(
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(true_in, true_vr));
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(false_in, false_vr));
     uint16_t predicate_stack_idx, true_stack_idx, false_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(predicate_in, predicate_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(true_in, true_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(false_in, false_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(predicate_in, predicate_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(true_in, true_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(false_in, false_stack_idx));
 
     // compile the predicate
     ELEMENT_OK_OR_RETURN(compile_instruction(state, predicate_in, output));
@@ -623,6 +622,7 @@ static element_result compile_if(
     const size_t predicate_branchcle_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in at the end
     // compile the true/false branches
+    // TODO: hoist out anything in the true/false branches that's required elsewhere?
     ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output));
     copy_stack_values(true_stack_idx, stack_idx, true_vr.count, output);
     const size_t branch_past_idx = output.size();
@@ -681,19 +681,12 @@ static element_result prepare_virtual_for(
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
 
-    if (state.ctx.optimise.minimise_moves)
-    {
-        // clear any allocations for the initial/body results, we'll override them later
-        state.stack.clear_allocation(dep0);
-        state.stack.clear_allocation(dep2);
-    }
-    else
-    {
-        state.stack.use_allocation(&ef, dep0);
-        state.stack.use_allocation(&ef, dep2);
-    }
-    state.stack.use_allocation(&ef, dep1);
-    return state.stack.set_allocation(&ef, vr.count);
+    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&ef, vr.count));
+    state.set_allocation_parent(dep0, &ef, 0);
+    state.set_allocation_parent(dep2, &ef, 0);
+
+    state.use_allocation(&ef, dep1);
+    return ELEMENT_OK;
 }
 
 static element_result optimise_virtual_for(
@@ -702,7 +695,7 @@ static element_result optimise_virtual_for(
     virtual_result& vr)
 {
     // TODO
-    return ELEMENT_ERROR_NO_IMPL;
+    return ELEMENT_OK;
 }
 
 static element_result compile_for(
@@ -720,9 +713,9 @@ static element_result compile_for(
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(condition_in, condition_vr));
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(body_in, body_vr));
     uint16_t initial_stack_idx, condition_stack_idx, body_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(initial_in, initial_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(condition_in, condition_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(body_in, body_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(initial_in, initial_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(condition_in, condition_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(body_in, body_stack_idx));
 
     // compile the initial state
     ELEMENT_OK_OR_RETURN(compile_instruction(state, initial_in, output));
@@ -774,11 +767,9 @@ static element_result prepare_virtual_indexer(
     virtual_result& vr)
 {
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, ei.for_instruction.get()));
-    state.stack.use_allocation(&ei, ei.for_instruction.get());
-    if (!state.ctx.optimise.minimise_moves)
-    {
-        ELEMENT_OK_OR_RETURN(state.stack.set_allocation(&ei, vr.count));
-    }
+    state.use_allocation(&ei, ei.for_instruction.get());
+    // TODO: verify this is a good idea
+    state.set_allocation_parent(&ei, ei.for_instruction.get(), ei.index);
     return ELEMENT_OK;
 }
 
@@ -788,7 +779,7 @@ static element_result optimise_virtual_indexer(
     virtual_result& vr)
 {
     // TODO
-    return ELEMENT_ERROR_NO_IMPL;
+    return ELEMENT_OK;
 }
 
 static element_result compile_indexer(
@@ -801,7 +792,7 @@ static element_result compile_indexer(
     virtual_result for_vr;
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(ei.for_instruction.get(), for_vr));
     uint16_t for_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(ei.for_instruction.get(), for_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(ei.for_instruction.get(), for_stack_idx));
 
     const uint16_t for_entry_idx = static_cast<uint16_t>(for_stack_idx + ei.index);
     copy_stack_values(for_entry_idx, stack_idx, 1, output);
@@ -831,6 +822,7 @@ static element_result create_virtual_select(
     ELEMENT_OK_OR_RETURN(state.add_constant(element_value(es.options.size() - 1)));
 
     uint16_t max_count = 0;
+    uint16_t index = 0;
     for (const auto& o : es.options)
     {
         virtual_result option_vr;
@@ -850,17 +842,15 @@ static element_result prepare_virtual_select(
     virtual_result& vr)
 {
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.selector.get()));
-    state.stack.use_allocation(&es, es.selector.get());
+    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&es, vr.count));
+    state.use_allocation(&es, es.selector.get());
     for (const auto& o : es.options)
     {
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, o.get()));
-        // if we're stacking the results on the same spot, we'll give them our spot later
-        if (state.ctx.optimise.minimise_moves)
-            state.stack.clear_allocation(o.get());
-        else
-            state.stack.use_allocation(&es, o.get());
+        // TODO: handle failure (copy in?)
+        state.set_allocation_parent(o.get(), &es, 0);
     }
-    return state.stack.set_allocation(&es, vr.count);
+    return ELEMENT_OK;
 }
 
 static element_result optimise_virtual_select(
@@ -869,7 +859,7 @@ static element_result optimise_virtual_select(
     virtual_result& vr)
 {
     // TODO
-    return ELEMENT_ERROR_NO_IMPL;
+    return ELEMENT_OK;
 }
 
 static element_result compile_select(
@@ -888,7 +878,7 @@ static element_result compile_select(
     virtual_result selector_vr;
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.selector.get(), selector_vr));
     uint16_t selector_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(es.selector.get(), selector_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(es.selector.get(), selector_stack_idx));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, es.selector.get(), output));
     // clamp in range and ensure it's an integer
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
@@ -905,7 +895,7 @@ static element_result compile_select(
     }
 
     uint16_t option0_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(es.options[0].get(), option0_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(es.options[0].get(), option0_stack_idx));
     const bool stacked = (option0_stack_idx == stack_idx);
 
     std::vector<size_t> option_branch_indexes(opts_size);
@@ -915,7 +905,7 @@ static element_result compile_select(
         virtual_result option_vr;
         ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.options[i].get(), option_vr));
         uint16_t option_stack_idx;
-        ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(es.options[i].get(), option_stack_idx));
+        ELEMENT_OK_OR_RETURN(state.get_stack_index(es.options[i].get(), option_stack_idx));
 
         const size_t option_idx = output.size();
         // fill in the target index for this branch option
@@ -1104,7 +1094,7 @@ static element_result compile_instruction(
 
     const virtual_result& vr = state.virtual_results[results_it->second];
     uint16_t index;
-    ELEMENT_OK_OR_RETURN(state.stack.get_stack_index(expr, index));
+    ELEMENT_OK_OR_RETURN(state.get_stack_index(expr, index));
 
     if (const auto* ec = expr->as<element::instruction_constant>())
         return compile_constant(state, *ec, vr, index, output);
@@ -1164,19 +1154,16 @@ element_result element_lmnt_find_constants(
 element_result element_lmnt_compile_function(
     const element_lmnt_compiler_ctx& ctx,
     const element::instruction_const_shared_ptr instruction,
-    std::vector<element_value> constants,
+    std::vector<element_value>& constants,
     const size_t inputs_count,
     std::vector<lmnt_instruction>& output)
 {
-    compiler_state state { ctx, std::move(constants), static_cast<uint16_t>(inputs_count) };
+    compiler_state state { ctx, instruction.get(), constants, static_cast<uint16_t>(inputs_count) };
     // TODO: check for single constant fast path
     virtual_result vr;
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, instruction.get(), vr));
     // set ourselves as being an output
-    vr.is_output = true;
-    const uint16_t output_index = static_cast<uint16_t>(state.constants.size() + inputs_count);
-    ELEMENT_OK_OR_RETURN(state.stack.set_stack_index(instruction.get(), output_index));
-    ELEMENT_OK_OR_RETURN(state.stack.use_pinned_allocation(instruction.get(), output_index, vr.count));
+    ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(instruction.get(), allocation_type::output, 0, vr.count));
     // continue with compilation
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, instruction.get()));
     ELEMENT_OK_OR_RETURN(optimise_virtual_result(state, instruction.get()));
