@@ -217,7 +217,7 @@ element_result element_instruction_is_constant(element_instruction* instruction,
 element_result element_instruction_to_string(
     element_instruction* instruction,
     char* buffer,
-    int* buffer_size)
+    size_t* buffer_size)
 {
     if (!instruction || !instruction->instruction)
         return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
@@ -225,15 +225,24 @@ element_result element_instruction_to_string(
     if (!buffer_size)
         return ELEMENT_ERROR_API_INVALID_INPUT;
     
-    auto string = instruction_to_string(*instruction->instruction);
+    const auto string = instruction_to_string(*instruction->instruction);
+    const auto required_buffer_size = string.size() + 1;
 
     if (!buffer)
     {
-        *buffer_size = static_cast<int>(string.size());
-        return ELEMENT_ERROR_API_STRING_IS_NULL;
+        *buffer_size = required_buffer_size;
+        return ELEMENT_OK;
     }
 
+    if (*buffer_size < required_buffer_size)
+    {
+        *buffer_size = required_buffer_size;
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+    }
+    
+    *buffer_size = required_buffer_size;
     strncpy(buffer, string.c_str(), string.size());
+    buffer[string.size()] = '\0';
 
     return ELEMENT_OK;
 }

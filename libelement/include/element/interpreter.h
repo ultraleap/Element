@@ -256,13 +256,17 @@ element_result element_instruction_is_constant(
  * @brief converts an instruction in to a human-readable string
  *
  * @param[in] instruction       instruction to represent as a string
- * @param[out] buffer           output buffer
- * @param[in,out] buffer_size   output buffer size, modified to represent the number of characters written. if buffer is NULL, the required buffer size will be written
- */
+ * @param[out] buffer           output buffer. if a non-NULL buffer is passed and ELEMENT_OK is returned, the buffer will be null-terminated.
+ * @param[in,out] buffer_size   output buffer size. this is always modified to be the size required to contain the null-terminated string.
+ * @return ELEMENT_OK either buffer was NULL or buffer was not NULL and buffer_size was sufficiently large
+ * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL the instruction is NULL
+ * @return ELEMENT_ERROR_API_INVALID_INPUT the buffer_size is NULL
+ * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
+*/
 element_result element_instruction_to_string(
     element_instruction* instruction,
     char* buffer,
-    int* buffer_size);
+    size_t* buffer_size);
 
 /**
  * @brief finds a declaration from the loaded element code
