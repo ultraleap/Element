@@ -43,7 +43,7 @@ namespace libelement::cli
             std::string typeof(256, '\0');
 
             result = element_interpreter_typeof_expression(
-                context, nullptr, expression.c_str(), typeof.data(), static_cast<int>(typeof.size()));
+                context, expression.c_str(), typeof.data(), static_cast<int>(typeof.size()));
             if (result != ELEMENT_OK)
             {
                 auto type = ELEMENT_ERROR_UNKNOWN;

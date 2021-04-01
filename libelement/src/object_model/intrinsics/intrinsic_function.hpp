@@ -19,18 +19,4 @@ namespace element
         type_const_ptr return_type;
         bool variadic = false;
     };
-
-    static std::shared_ptr<const instruction> evaluate(const compilation_context& context, instruction_const_shared_ptr expr)
-    {
-        float output = 0;
-        std::size_t output_count = 1;
-        
-        const auto result = element_evaluate(*context.interpreter, expr, nullptr, 0, &output, output_count, {});
-        if (result != ELEMENT_OK)
-            return expr;
-
-        auto new_expr = std::make_shared<const instruction_constant>(output);
-        new_expr->actual_type = expr->actual_type;
-        return new_expr;
-    }
 } // namespace element

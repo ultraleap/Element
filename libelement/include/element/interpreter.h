@@ -308,24 +308,46 @@ element_result element_interpreter_compile_expression(
     const char* expression_string,
     element_instruction** instruction);
 
+typedef struct element_evaluator_ctx element_evaluator_ctx;
+
+element_result element_evaluator_create(
+    element_interpreter_ctx* interpreter,
+    element_evaluator_ctx** evaluator
+);
+
+element_result element_evaluator_set_options(
+    element_evaluator_ctx* evaluator,
+    element_evaluator_options options
+);
+
+element_result element_evaluator_get_options(
+    element_evaluator_ctx* evaluator,
+    element_evaluator_options* options
+);
+
+void element_evaluator_delete(
+    element_evaluator_ctx** evaluator
+);
+
 /**
  * @brief evaluates an instruction tree with the provided (boundary) inputs
  *
  * @param[in] interpreter       interpreter context
- * @param[in] options           compilation options
+ * @param[in] evaluator         evaluator context
  * @param[in] instruction       instruction to compile
  * @param[in] inputs            inputs
  * @param[out] outputs          outputs
  *
  * @return ELEMENT_OK evaluated instruction tree successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
+ * @return ELEMENT_ERROR_API_EVALUATOR_CTX_IS_NULL evaluator pointer is null
  * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL instruction pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT inputs pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL outputs pointer is null
  */
 element_result element_interpreter_evaluate_instruction(
     element_interpreter_ctx* interpreter,
-    const element_evaluator_options* options,
+    element_evaluator_ctx* evaluator,
     const element_instruction* instruction,
     const element_inputs* inputs,
     element_outputs* outputs);
@@ -334,18 +356,19 @@ element_result element_interpreter_evaluate_instruction(
  * @brief evaluates an expression
  *
  * @param[in] interpreter       interpreter context
- * @param[in] options           compilation options
+ * @param[in] evaluator         evaluator context
  * @param[in] expression_string expression to compile
  * @param[out] outputs          outputs
  *
  * @return ELEMENT_OK evaluated an expression successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
+ * @return ELEMENT_ERROR_API_EVALUATOR_CTX_IS_NULL evaluator pointer is null
  * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL instruction pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT outputs pointer is null
  */
 element_result element_interpreter_evaluate_expression(
     element_interpreter_ctx* interpreter,
-    const element_evaluator_options* options,
+    element_evaluator_ctx* evaluator,
     const char* expression_string,
     element_outputs* outputs);
 
@@ -353,18 +376,19 @@ element_result element_interpreter_evaluate_expression(
  * @brief evaluates a call_expression
  *
  * @param[in] interpreter       interpreter context
- * @param[in] options           compilation options
- * @param[in] expression_string expression to compile
+ * @param[in] evaluator         evaluator context
+ * @param[in] call_expression   expression to compile
  * @param[out] outputs          outputs
  *
  * @return ELEMENT_OK evaluated an expression successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
+ * @return ELEMENT_ERROR_API_EVALUATOR_CTX_IS_NULL evaluator pointer is null
  * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL instruction pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT outputs pointer is null
  */
 element_result element_interpreter_evaluate_call_expression(
     element_interpreter_ctx* interpreter,
-    const element_evaluator_options* options,
+    element_evaluator_ctx* evaluator,
     const char* call_expression,
     element_outputs* outputs);
 
@@ -372,7 +396,6 @@ element_result element_interpreter_evaluate_call_expression(
  * @brief determines typeof information for a given expression
  *
  * @param[in] interpreter       interpreter context
- * @param[in] options           compilation options
  * @param[in] expression_string expression to evaluate to discover type
  * @param[out] buffer           output buffer
  * @param[in] buffer_size       output buffer size
@@ -385,7 +408,6 @@ element_result element_interpreter_evaluate_call_expression(
  */
 element_result element_interpreter_typeof_expression(
     element_interpreter_ctx* interpreter,
-    const element_evaluator_options* options,
     const char* expression_string,
     char* buffer,
     int buffer_size);

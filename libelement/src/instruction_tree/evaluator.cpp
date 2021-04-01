@@ -1,24 +1,16 @@
 #include "instruction_tree/evaluator.hpp"
 
 //SELF
+#include "interpreter_internal.hpp"
+
+//STD
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 
 using namespace element;
 
-struct evaluator_ctx
-{
-    struct boundary
-    {
-        const element_value* inputs;
-        const size_t inputs_count;
-    };
-    std::vector<boundary> boundaries;
-    element_evaluator_options options;
-};
-
-static element_result do_evaluate(evaluator_ctx& context, const element::instruction_const_shared_ptr& expr, element_value* outputs, size_t outputs_count, size_t& outputs_written)
+static element_result do_evaluate(element_evaluator_ctx& context, const element::instruction_const_shared_ptr& expr, element_value* outputs, size_t outputs_count, size_t& outputs_written)
 {
     if (const auto* ec = expr->as<element::instruction_constant>())
     {
@@ -45,8 +37,8 @@ static element_result do_evaluate(evaluator_ctx& context, const element::instruc
 
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
     {
-        auto deps = es->dependents();
-        for (auto& dep : deps)
+        const auto& deps = es->dependents();
+        for (const auto& dep : deps)
         {
             ELEMENT_OK_OR_RETURN(do_evaluate(context, dep, outputs, outputs_count, outputs_written));
         }
@@ -145,8 +137,8 @@ static element_result do_evaluate(evaluator_ctx& context, const element::instruc
         element_value selector;
         ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->selector, &selector, 1, intermediate_written));
         intermediate_written = 0;
-        const auto selected_option = element_evaluate_select(selector, sel->options);
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, selected_option, outputs, outputs_count, outputs_written));
+        const auto selected_option_index = element_evaluate_select(selector, sel->options);
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->options[selected_option_index], outputs, outputs_count, outputs_written));
         return ELEMENT_OK;
     }
 
@@ -154,30 +146,30 @@ static element_result do_evaluate(evaluator_ctx& context, const element::instruc
 }
 
 element_result element_evaluate(
-    element_interpreter_ctx& context,
-    const element::instruction_const_shared_ptr& fn,
+    element_evaluator_ctx& context,
+    const instruction_const_shared_ptr& fn,
     const std::vector<element_value>& inputs,
-    std::vector<element_value>& outputs,
-    const element_evaluator_options opts)
+    std::vector<element_value>& outputs)
 {
     auto size = outputs.size();
-    auto result = element_evaluate(context, fn, inputs.data(), inputs.size(), outputs.data(), size, opts);
+    auto result = element_evaluate(context, fn, inputs.data(), inputs.size(), outputs.data(), size);
     outputs.resize(size);
     return result;
 }
 
 element_result element_evaluate(
-    element_interpreter_ctx& context,
-    const element::instruction_const_shared_ptr& fn,
-    const element_value* inputs, size_t inputs_count,
-    element_value* outputs, size_t& outputs_count,
-    element_evaluator_options opts)
+    element_evaluator_ctx& context,
+    const instruction_const_shared_ptr& fn,
+    const element_value* inputs,
+    size_t inputs_count,
+    element_value* outputs,
+    size_t& outputs_count)
 {
-    evaluator_ctx ectx = { {}, opts };
-    ectx.boundaries.push_back({ inputs, inputs_count });
+    context.boundaries.clear();
+    context.boundaries.push_back({ inputs, inputs_count });
 
     size_t outputs_written = 0;
-    const auto result = do_evaluate(ectx, fn, outputs, outputs_count, outputs_written);
+    const auto result = do_evaluate(context, fn, outputs, outputs_count, outputs_written);
     outputs_count = outputs_written;
     return result;
 }
@@ -297,7 +289,7 @@ element_value element_evaluate_if(element_value predicate, element_value if_true
     return to_bool(predicate) ? if_true : if_false;
 }
 
-std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const element::instruction_const_shared_ptr& initial, const element::instruction_const_shared_ptr& condition, const element::instruction_const_shared_ptr& body)
+std::vector<element_value> element_evaluate_for(element_evaluator_ctx& context, const element::instruction_const_shared_ptr& initial, const element::instruction_const_shared_ptr& condition, const element::instruction_const_shared_ptr& body)
 {
     size_t intermediate_written = 0;
 
@@ -354,9 +346,9 @@ std::vector<element_value> element_evaluate_for(evaluator_ctx& context, const el
     return inputs;
 }
 
-element::instruction_const_shared_ptr element_evaluate_select(element_value selector, std::vector<element::instruction_const_shared_ptr> options)
+std::size_t element_evaluate_select(element_value selector, const std::vector<element::instruction_const_shared_ptr>& options)
 {
     assert(!options.empty());
     const auto clamped_index = std::clamp(static_cast<int>(selector), 0, static_cast<int>(options.size() - 1));
-    return options[clamped_index];
+    return clamped_index;
 }
