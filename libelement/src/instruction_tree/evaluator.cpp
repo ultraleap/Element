@@ -12,29 +12,7 @@ using namespace element;
 
 static element_result do_evaluate(element_evaluator_ctx& context, const element::instruction_const_shared_ptr& expr, element_value* outputs, size_t outputs_count, size_t& outputs_written)
 {
-    if (const auto* ec = expr->as<element::instruction_constant>())
-    {
-        assert(outputs_count > outputs_written);
-        outputs[outputs_written++] = ec->value();
-        return ELEMENT_OK;
-    }
-
-    if (const auto* ei = expr->as<element::instruction_input>())
-    {
-        if (context.boundaries.size() <= ei->scope()
-            || context.boundaries[ei->scope()].inputs_count <= ei->index()
-            || outputs_count <= outputs_written)
-        {
-            //occurs during constant folding to check if it can be evaluated
-            outputs_written = 0;
-            return ELEMENT_ERROR_UNKNOWN;
-        }
-
-        assert(outputs_count > outputs_written);
-        outputs[outputs_written++] = context.boundaries[ei->scope()].inputs[ei->index()];
-        return ELEMENT_OK;
-    }
-
+    // Currently not caching any multi-valued things. Don't check the cache for anything that can result in multiple values.
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
     {
         const auto& deps = es->dependents();
@@ -42,57 +20,6 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         {
             ELEMENT_OK_OR_RETURN(do_evaluate(context, dep, outputs, outputs_count, outputs_written));
         }
-        return ELEMENT_OK;
-    }
-
-    if (const auto* eu = expr->as<element::instruction_nullary>())
-    {
-        assert(outputs_count > outputs_written);
-        assert(eu->get_size() == 1);
-        outputs[outputs_written++] = element_evaluate_nullary(eu->operation());
-        return ELEMENT_OK;
-    }
-
-    if (const auto* eu = expr->as<element::instruction_unary>())
-    {
-        assert(outputs_count > outputs_written);
-        assert(eu->input()->get_size() == 1);
-        size_t intermediate_written = 0;
-        element_value a;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eu->input(), &a, 1, intermediate_written));
-        outputs[outputs_written++] = element_evaluate_unary(eu->operation(), a);
-        return ELEMENT_OK;
-    }
-
-    if (const auto* eb = expr->as<element::instruction_binary>())
-    {
-        assert(outputs_count > outputs_written);
-        assert(eb->input1()->get_size() == 1);
-        assert(eb->input2()->get_size() == 1);
-        size_t intermediate_written = 0;
-        element_value a, b;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->input1(), &a, 1, intermediate_written));
-        intermediate_written = 0;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->input2(), &b, 1, intermediate_written));
-        outputs[outputs_written++] = element_evaluate_binary(eb->operation(), a, b);
-        return ELEMENT_OK;
-    }
-
-    //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
-    if (const auto* eb = expr->as<element::instruction_if>())
-    {
-        assert(outputs_count > outputs_written);
-        assert(eb->predicate()->get_size() == 1);
-        assert(eb->if_true()->get_size() == 1);
-        assert(eb->if_false()->get_size() == 1);
-        size_t intermediate_written = 0;
-        element_value predicate, if_true, if_false;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->predicate(), &predicate, 1, intermediate_written));
-        intermediate_written = 0;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->if_true(), &if_true, 1, intermediate_written));
-        intermediate_written = 0;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->if_false(), &if_false, 1, intermediate_written));
-        outputs[outputs_written++] = element_evaluate_if(predicate, if_true, if_false);
         return ELEMENT_OK;
     }
 
@@ -117,6 +44,157 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         return ELEMENT_OK;
     }
 
+    if (const auto* sel = expr->as<element::instruction_select>())
+    {
+        assert(outputs_count > outputs_written);
+        size_t intermediate_written = 0;
+        element_value selector;
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->selector(), &selector, 1, intermediate_written));
+        intermediate_written = 0;
+
+        const auto selected_option_index = element_evaluate_select(selector, sel->options_count());
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->options_at(selected_option_index), outputs, outputs_count, outputs_written));
+        return ELEMENT_OK;
+    }
+
+    // Messy right now - experimental changes ....
+    // Everything below here only has a single value, so check the cache
+    auto cache_entry = context.cache.find(expr);
+
+    bool cache_initialised = context.use_cache;
+    if (cache_initialised)
+    {
+        if (cache_entry == context.cache.end())
+        {
+            // Something has gone horribly wrong, it should be here
+            return ELEMENT_ERROR_NO_IMPL;
+        }
+
+        if (cache_entry->second.present)
+        {
+            // Value is already in the cache !!!
+            outputs[outputs_written++] = cache_entry->second.value;
+            return ELEMENT_OK;
+        }
+    }
+
+    if (const auto* ec = expr->as<element::instruction_constant>())
+    {
+        assert(outputs_count > outputs_written);
+        element_value value = ec->value();
+        if (cache_initialised)
+        {
+            cache_entry->second.value = value;
+            cache_entry->second.present = true;
+        }
+        outputs[outputs_written++] = value;
+        return ELEMENT_OK;
+    }
+
+    if (const auto* ei = expr->as<element::instruction_input>())
+    {
+        if (context.boundaries.size() <= ei->scope()
+            || context.boundaries[ei->scope()].inputs_count <= ei->index()
+            || outputs_count <= outputs_written)
+        {
+            //occurs during constant folding to check if it can be evaluated
+            outputs_written = 0;
+            return ELEMENT_ERROR_UNKNOWN;
+        }
+
+        assert(outputs_count > outputs_written);
+
+        element_value value = context.boundaries[ei->scope()].inputs[ei->index()];
+        if (cache_initialised)
+        {
+            cache_entry->second.value = value;
+            cache_entry->second.present = true;
+        }
+        outputs[outputs_written++] = value;
+        return ELEMENT_OK;
+    }
+
+
+    if (const auto* eu = expr->as<element::instruction_nullary>())
+    {
+        assert(outputs_count > outputs_written);
+        assert(eu->get_size() == 1);
+
+        element_value value = element_evaluate_nullary(eu->operation());
+        if (cache_initialised)
+        {
+            cache_entry->second.value = value;
+            cache_entry->second.present = true;
+        }
+        outputs[outputs_written++] = value;
+        return ELEMENT_OK;
+    }
+
+    if (const auto* eu = expr->as<element::instruction_unary>())
+    {
+        assert(outputs_count > outputs_written);
+        assert(eu->input()->get_size() == 1);
+        size_t intermediate_written = 0;
+        element_value a;
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eu->input(), &a, 1, intermediate_written));
+
+        element_value value = element_evaluate_unary(eu->operation(), a);
+        if (cache_initialised)
+        {
+            cache_entry->second.value = value;
+            cache_entry->second.present = true;
+        }
+        outputs[outputs_written++] = value;
+        return ELEMENT_OK;
+    }
+
+    if (const auto* eb = expr->as<element::instruction_binary>())
+    {
+        assert(outputs_count > outputs_written);
+        assert(eb->input1()->get_size() == 1);
+        assert(eb->input2()->get_size() == 1);
+        size_t intermediate_written = 0;
+        element_value a, b;
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->input1(), &a, 1, intermediate_written));
+        intermediate_written = 0;
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->input2(), &b, 1, intermediate_written));
+
+        element_value value = element_evaluate_binary(eb->operation(), a, b);
+        if (cache_initialised)
+        {
+            cache_entry->second.value = value;
+            cache_entry->second.present = true;
+        }
+        outputs[outputs_written++] = value;
+        return ELEMENT_OK;
+    }
+
+    //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
+    if (const auto* eb = expr->as<element::instruction_if>())
+    {
+        assert(outputs_count > outputs_written);
+        assert(eb->predicate()->get_size() == 1);
+        assert(eb->if_true()->get_size() == 1);
+        assert(eb->if_false()->get_size() == 1);
+        size_t intermediate_written = 0;
+        element_value predicate, if_true, if_false;
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->predicate(), &predicate, 1, intermediate_written));
+        intermediate_written = 0;
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->if_true(), &if_true, 1, intermediate_written));
+        intermediate_written = 0;
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->if_false(), &if_false, 1, intermediate_written));
+
+        element_value value = element_evaluate_if(predicate, if_true, if_false);
+        if (cache_initialised)
+        {
+            cache_entry->second.value = value;
+            cache_entry->second.present = true;
+        }
+        outputs[outputs_written++] = value;
+        return ELEMENT_OK;
+    }
+
+
     if (const auto* eb = expr->as<element::instruction_indexer>())
     {
         assert(outputs_count > outputs_written);
@@ -126,19 +204,13 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         std::vector<element_value> for_result(size);
         ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->for_instruction(), for_result.data(), size, intermediate_written));
         intermediate_written = 0;
-        outputs[outputs_written++] = for_result[eb->index];
-        return ELEMENT_OK;
-    }
-
-    if (const auto* sel = expr->as<element::instruction_select>())
-    {
-        assert(outputs_count > outputs_written);
-        size_t intermediate_written = 0;
-        element_value selector;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->selector(), &selector, 1, intermediate_written));
-        intermediate_written = 0;
-        const auto selected_option_index = element_evaluate_select(selector, sel->options_count());
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->options_at(selected_option_index), outputs, outputs_count, outputs_written));
+        element_value value = for_result[eb->index];
+        if (cache_initialised)
+        {
+            cache_entry->second.value = value;
+            cache_entry->second.present = true;
+        }
+        outputs[outputs_written++] = value;
         return ELEMENT_OK;
     }
 

@@ -481,6 +481,7 @@ element_result element_evaluator_create(element_interpreter_ctx* interpreter, el
         return ELEMENT_ERROR_API_INVALID_INPUT;
 
     *evaluator = new element_evaluator_ctx;
+    (*evaluator)->use_cache = false;
     return ELEMENT_OK;
 }
 
@@ -505,6 +506,23 @@ element_result element_evaluator_get_options(element_evaluator_ctx* evaluator, e
     *options = evaluator->options;
 
     return ELEMENT_OK;
+}
+void element_evaluator_initialise_cache(
+    element_evaluator_ctx* evaluator,
+    element_instruction* instruction
+)
+{
+    if (!evaluator)
+        return;
+    evaluator->initialise_cache(instruction);
+    evaluator->use_cache = true;
+}
+
+void element_evaluator_clear_cache(element_evaluator_ctx* evaluator)
+{
+    if (!evaluator)
+        return;
+    evaluator->clear_cache();
 }
 
 void element_evaluator_delete(element_evaluator_ctx** evaluator)
