@@ -274,6 +274,10 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(element PRIVATE "m" "atomic" "pthread" "stdc++fs")
 endif ()
 
+# TODO: this, nicer
+add_subdirectory("${CMAKE_SOURCE_DIR}/../LMNT" "${CMAKE_BINARY_DIR}/lmnt" EXCLUDE_FROM_ALL)
+target_link_libraries(element PRIVATE lmnt)
+
 ## A C project to ensure our C API is correct
 add_executable(element_app_c "${CMAKE_CURRENT_SOURCE_DIR}/test/main.c")
 target_link_libraries(element_app_c PRIVATE element)
@@ -298,7 +302,7 @@ if (ELEMENT_BUILD_TESTING)
             )
 
     add_executable(element_tests ${TEST_SOURCES})
-    target_link_libraries(element_tests PRIVATE Catch2 element)
+    target_link_libraries(element_tests PRIVATE Catch2 element lmnt)
     if (NOT ELEMENT_USE_EXTERNAL_FMT)
         target_link_libraries(element_tests PRIVATE fmt::fmt-header-only)
     endif ()
@@ -342,6 +346,18 @@ if (ELEMENT_BUILD_TESTING)
             message(WARNING "Lcov not found, coverage report not generated for libelement test app.")
         endif()
     endif()
+
+    # TODO: remove this, make it part of Catch tests
+    add_executable(element_lmnt_testapp "test/lmnt_test.cpp")
+    target_link_libraries(element_lmnt_testapp PRIVATE element lmnt)
+    target_include_directories(element_lmnt_testapp PRIVATE "${element_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}/_deps/fmt-src/include")
+    set_target_properties(element_lmnt_testapp PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${debug_dir}")
+    # Copy prelude alongside built library
+    add_custom_command (
+            TARGET element_lmnt_testapp POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
+            "${debug_dir}")
 endif()
 
 find_program(CLANG_FORMAT clang-format)
