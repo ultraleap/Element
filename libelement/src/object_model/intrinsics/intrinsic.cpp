@@ -139,3 +139,18 @@ std::pair<std::vector<object_const_shared_ptr>, size_t> element::generate_placeh
     placeholder_inputs.second = placeholder_index;
     return placeholder_inputs;
 }
+
+std::shared_ptr<const instruction> element::evaluate(const compilation_context& context, instruction_const_shared_ptr expr)
+{
+    float output = 0;
+    std::size_t output_count = 1;
+    
+    element_evaluator_ctx evaluator;
+    const auto result = element_evaluate(evaluator, expr, nullptr, 0, &output, output_count);
+    if (result != ELEMENT_OK)
+        return expr;
+
+    auto new_expr = std::make_shared<const instruction_constant>(output);
+    new_expr->actual_type = expr->actual_type;
+    return new_expr;
+}

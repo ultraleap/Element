@@ -96,4 +96,6 @@ namespace element
         const std::vector<port>& inputs,
         int index_offset,
         unsigned int boundary_scope);
+
+    std::shared_ptr<const instruction> evaluate(const compilation_context& context, instruction_const_shared_ptr expr);
 } // namespace element
