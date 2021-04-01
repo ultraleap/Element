@@ -156,9 +156,10 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     return string;
 }
 
-std::string instruction_to_string(const element::instruction& expression, std::size_t depth)
+std::string instruction_to_string(const element::instruction& expression, std::size_t depth, std::string prefix)
 {
     std::string string(depth, ' ');
+    string += prefix;
 
     if (expression.is<element::instruction_constant>())
     {
@@ -175,7 +176,14 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     if (expression.is<element::instruction_serialised_structure>())
     {
         const auto& structure = expression.as<element::instruction_serialised_structure>();
-        string += "STRUCTURE: ";
+        string += fmt::format("STRUCTURE: {}", structure->get_type_name());
+        if (!structure->get_field_names().empty())
+        {
+            string += "(";
+            for (int i = 0; i < static_cast<int>(structure->get_field_names().size() - 1); ++i)
+                string += structure->get_field_names()[i] + ", ";
+            string += structure->get_field_names().back() + ")";
+        }
     }
 
     if (expression.is<element::instruction_nullary>())
@@ -259,7 +267,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     if (expression.is<element::instruction_if>())
     {
         const auto& if_instruction = expression.as<element::instruction_if>();
-        string += "IF:\n";
+        string += "IF:" + fmt::format(" [{}]\n", fmt::ptr(&expression));
         string += std::string(depth + 1, ' ') + "PREDICATE:\n" + instruction_to_string(*if_instruction->predicate().get(), depth + 2);
         string += std::string(depth + 1, ' ') + "IF_TRUE:\n" + instruction_to_string(*if_instruction->if_true().get(), depth + 2);
         string += std::string(depth + 1, ' ') + "IF_FALSE:\n" + instruction_to_string(*if_instruction->if_false().get(), depth + 2);
@@ -269,7 +277,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     if (expression.is<element::instruction_for>())
     {
         const auto& for_instruction = expression.as<element::instruction_for>();
-        string += "FOR:" + fmt::format(" [{}]", fmt::ptr(&expression)) + "\n";
+        string += "FOR:" + fmt::format(" [{}]\n", fmt::ptr(&expression));
         string += std::string(depth + 1, ' ') + "INITIAL:\n" + instruction_to_string(*for_instruction->initial().get(), depth + 2);
         string += std::string(depth + 1, ' ') + "CONDITION:\n" + instruction_to_string(*for_instruction->condition().get(), depth + 2);
         string += std::string(depth + 1, ' ') + "BODY:\n" + instruction_to_string(*for_instruction->body().get(), depth + 2);
@@ -279,12 +287,12 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     if (expression.is<element::instruction_select>())
     {
         const auto& select_instruction = expression.as<element::instruction_select>();
-        string += "SELECT:\n";
+        string += "SELECT:" + fmt::format(" [{}]\n", fmt::ptr(&expression));
         string += std::string(depth + 1, ' ') + "SELECTOR:\n" + instruction_to_string(*select_instruction->selector.get(), depth + 2);
 
         string += std::string(depth + 1, ' ') + "OPTIONS:\n";
-        for (const auto& dependent : select_instruction->options)
-            string += instruction_to_string(*dependent, depth + 2);
+        for (std::size_t i = 0; i < select_instruction->options.size(); ++i)
+            string += instruction_to_string(*select_instruction->options[i], depth + 2, fmt::format("[{}] ", i));
 
         return string;
     }
@@ -292,14 +300,14 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     if (expression.is<element::instruction_indexer>())
     {
         const auto& indexer_instruction = expression.as<element::instruction_indexer>();
-        string += "INDEXER\n";
+        string += "INDEXER" + fmt::format(" [{}]\n", fmt::ptr(&expression));
         string += instruction_to_string(*indexer_instruction->for_instruction, depth + 1);
         string += std::string(depth + 1, ' ') + "INDEX: " + std::to_string(indexer_instruction->index) + "\n";
 
         return string;
     }
 
-    string += "\n";
+    string += fmt::format(" [{}]\n", fmt::ptr(&expression));
 
     for (const auto& dependent : expression.dependents())
         string += instruction_to_string(*dependent, depth + 1);

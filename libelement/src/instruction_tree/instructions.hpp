@@ -147,6 +147,16 @@ namespace element
             return std::accumulate(m_dependents.begin(), m_dependents.end(), size_t(0),
                                    [](size_t c, const auto& d) { return c + d->get_size(); });
         }
+        
+        [[nodiscard]] std::string get_type_name() const
+        {
+            return m_debug_type_name;
+        }
+
+        [[nodiscard]] std::vector<std::string> get_field_names() const
+        {
+            return m_debug_dependents_names;
+        }
 
     private:
         std::vector<std::string> m_debug_dependents_names;
