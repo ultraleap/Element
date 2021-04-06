@@ -272,7 +272,7 @@ namespace element
 
         [[nodiscard]] size_t get_size() const override { return 1; }
 
-        std::shared_ptr<const instruction_for> for_instruction;
+        [[nodiscard]] const instruction_const_shared_ptr& for_instruction() const { return m_dependents[0]; }
         int index;
     };
 
@@ -283,9 +283,9 @@ namespace element
         explicit instruction_select(instruction_const_shared_ptr selector, std::vector<instruction_const_shared_ptr> options);
 
         [[nodiscard]] size_t get_size() const override { return 1; }
-
-        instruction_const_shared_ptr selector;
-        std::vector<instruction_const_shared_ptr> options;
+        [[nodiscard]] const instruction_const_shared_ptr& options_at(size_t idx) const { return m_dependents[idx+1]; }
+        [[nodiscard]] size_t options_count() const { return m_dependents.size() - 1; };
+        [[nodiscard]] const instruction_const_shared_ptr& selector() const { return m_dependents[0]; };
     };
 } // namespace element
 

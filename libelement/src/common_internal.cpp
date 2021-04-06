@@ -288,11 +288,12 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     {
         const auto& select_instruction = expression.as<element::instruction_select>();
         string += "SELECT:" + fmt::format(" [{}]\n", fmt::ptr(&expression));
-        string += std::string(depth + 1, ' ') + "SELECTOR:\n" + instruction_to_string(*select_instruction->selector.get(), depth + 2);
+        string += std::string(depth + 1, ' ') + "SELECTOR:\n" + instruction_to_string(*select_instruction->selector().get(), depth + 2);
 
         string += std::string(depth + 1, ' ') + "OPTIONS:\n";
-        for (std::size_t i = 0; i < select_instruction->options.size(); ++i)
-            string += instruction_to_string(*select_instruction->options[i], depth + 2, fmt::format("[{}] ", i));
+
+        for (std::size_t i = 0; i < select_instruction->options_count(); ++i)
+            string += instruction_to_string(*select_instruction->options_at(i), depth + 2, fmt::format("[{}] ", i));
 
         return string;
     }
@@ -301,7 +302,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     {
         const auto& indexer_instruction = expression.as<element::instruction_indexer>();
         string += "INDEXER" + fmt::format(" [{}]\n", fmt::ptr(&expression));
-        string += instruction_to_string(*indexer_instruction->for_instruction, depth + 1);
+        string += instruction_to_string(*indexer_instruction->for_instruction(), depth + 1);
         string += std::string(depth + 1, ' ') + "INDEX: " + std::to_string(indexer_instruction->index) + "\n";
 
         return string;
