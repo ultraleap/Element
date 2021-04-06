@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Element.AST;
+using Element.CLR;
 
 namespace Element
 {
@@ -10,11 +11,18 @@ namespace Element
     /// </summary>
     public class SourceContext
     {
-        public SourceContext(CompilerOptions? compilerOptions) => CompilerOptions = compilerOptions;
+        public SourceContext(CompilerOptions compilerOptions, BoundaryMap? boundaryMap = null)
+        {
+            CompilerOptions = compilerOptions;
+            BoundaryMap = boundaryMap ?? BoundaryMap.CreateDefault();
+        }
 
         public GlobalScope GlobalScope { get; } = new GlobalScope();
         public List<StructuralTuple> GeneratedStructuralTuples { get; } = new List<StructuralTuple>();
-        public CompilerOptions? CompilerOptions { get; }
+        public CompilerOptions CompilerOptions { get; }
+        public BoundaryMap BoundaryMap { get; }
+        
+        public Context MakeContext() => Context.CreateFromSourceContext(this);
 
         /// <summary>
         /// Create a source context from a compilation input.

@@ -114,7 +114,7 @@ namespace Element.CLR
 			public Func<State, LinqExpression>? ResolveState;
 		}
 
-		private static LinqExpression CompileInstruction(Instruction value, CompilationData data, BoundaryContext context)
+		private static LinqExpression CompileInstruction(Instruction value, CompilationData data, Context context)
 		{
 			static LinqExpression ConvertExpressionType(LinqExpression expr, Type targetType) =>
 				expr.Type == targetType
@@ -239,7 +239,7 @@ namespace Element.CLR
 			throw new Exception("Unknown expression " + value);
 		}
 
-		private static LinqExpression[] CompileGroup(InstructionGroup group, CompilationData data, BoundaryContext context)
+		private static LinqExpression[] CompileGroup(InstructionGroup group, CompilationData data, Context context)
 		{
 			switch (group)
 			{
@@ -305,7 +305,7 @@ namespace Element.CLR
 		/// The result of calling the given function with all its inputs and a pre-allocated argument array.
 		/// The function inputs are mapped directly to the arrays contents.
 		/// </returns>
-		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, BoundaryContext context)
+		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, Context context)
 		{
 			if (!function.IsCallable(context)) return context.Trace(EleMessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
 			
@@ -351,16 +351,24 @@ namespace Element.CLR
 			               });
 		}
 
-		public static Result<TDelegate> Compile<TDelegate>(this IValue value, BoundaryContext boundaryContext)
+		public static Result<TDelegate> Compile<TDelegate>(this IValue value, Context boundaryContext)
 			where TDelegate : Delegate =>
 			Compile(value, typeof(TDelegate), boundaryContext).Map(result => (TDelegate)result);
 		
 		private delegate TInstance InstanceDelegate<out TInstance>();
 
-		public static Result<TInstance> CompileInstance<TInstance>(this IValue value, BoundaryContext context) =>
+		/// <summary>
+		/// Compile an Element IValue instance into a CLR type instance.
+		/// The type of the Element IValue must be a valid boundary type with a defined CLR Type mapping in the BoundaryMap.
+		/// </summary>
+		public static Result<TInstance> CompileInstance<TInstance>(this IValue value, Context context) =>
 			value.Compile<InstanceDelegate<TInstance>>(context).Map(fn => fn());
 
-		public static Result<Delegate> CompileDynamic(this IValue value, BoundaryContext context)
+		/// <summary>
+		/// Compile a delegate dynamically using an Element value.
+		/// The compiled delegate's signature is based on the Element value's input port types and return type (which all must be valid boundary types).
+		/// </summary>
+		public static Result<Delegate> CompileDynamic(this IValue value, Context context)
 		{
 			Result<Struct> ConstraintToStruct(IValue constraint) => constraint.InnerIs<Struct>(out var s)
 				                                                        ? new Result<Struct>(s)
@@ -385,7 +393,7 @@ namespace Element.CLR
 			                           .BindEnumerable(clrPortTypes => Compile(value, LinqExpression.GetFuncType(clrPortTypes.ToArray()), context)));
 		}
 
-		private static Result<Delegate> Compile(IValue value, Type delegateType, BoundaryContext context)
+		private static Result<Delegate> Compile(IValue value, Type delegateType, Context context)
         {
 	        // Check return type/single out parameter of delegate
             var method = delegateType.GetMethod(nameof(Action.Invoke));
@@ -433,7 +441,7 @@ namespace Element.CLR
             
             // Compile delegate
             var detectCircular = new Stack<IValue>();
-            Result<LinqExpression> ConvertFunction(IValue nestedValue, Type outputType, BoundaryContext context)
+            Result<LinqExpression> ConvertFunction(IValue nestedValue, Type outputType, Context context)
 			{
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == nestedValue)
 				{
@@ -473,13 +481,16 @@ namespace Element.CLR
                           });
 		}
 		
-		public static Result<IValue> ClrToElement(this IValue elementType, object clrInstance, BoundaryContext context)
+		/// <summary>
+		/// Convert a CLR Object into an Element IValue.
+		/// </summary>
+		public static Result<IValue> ClrToElement(this IValue elementType, object clrInstance, Context context)
 		{
 			var serialized = new List<float>();
 			return context.SerializeClrInstance(clrInstance, serialized)
 			              .Bind(() => elementType.DefaultValue(context))
 			              .Bind(defaultValue => defaultValue.InnerIs(out Instruction instruction)
-				               // If the default value is a single instruction then we are a primitive value (Num or Bool)
+				               // If the default value is a single instruction then this is a primitive value (Num or Bool)
 				               ? serialized.Count == 1
 					               ? defaultValue.Deserialize(() => new Constant(serialized[0], instruction.StructImplementation), context)
 					               : context.Trace(EleMessageCode.InvalidBoundaryData, $"When converting to type {elementType} - expected {clrInstance} to serialize to 1 float but serialized to {serialized.Count} floats")

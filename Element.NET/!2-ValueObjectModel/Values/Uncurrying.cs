@@ -8,14 +8,8 @@ namespace Element.AST
         public static Result<IValue> Uncurry(this IValue a, IValue b, Context context) =>
             UncurriedFunction.Create(a, b, context);
 
-        public static Result<IValue> Uncurry(this IValue a, string bFunctionExpression, SourceContext srcContext)
-        {
-            var context = Context.CreateFromSourceContext(srcContext);
-            return context.EvaluateExpression(bFunctionExpression).Bind(fn => a.Uncurry(fn, context));
-        }
-        
-        public static Result<IValue> Uncurry(this IValue a, string bFunctionExpression, Context context) =>
-            context.EvaluateExpression(bFunctionExpression).Bind(fn => a.Uncurry(fn, context));
+        public static Result<IValue> Uncurry(this IValue a, string bFunctionExpression, Context context, bool reverseCallOrder = false) =>
+            context.EvaluateExpression(bFunctionExpression).Bind(b => reverseCallOrder ? b.Uncurry(a, context) : a.Uncurry(b, context));
 
         private class UncurriedFunction : Function
         {

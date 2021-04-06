@@ -5,12 +5,12 @@ using LExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
 {
-    public delegate Result<System.Linq.Expressions.Expression> ConvertFunction(IValue value, Type outputType, BoundaryContext context);
+    public delegate Result<System.Linq.Expressions.Expression> ConvertFunction(IValue value, Type outputType, Context context);
 
     public interface IBoundaryConverter
     {
-        Result<IValue> LinqToElement(LExpression parameter, BoundaryContext context);
-        Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, BoundaryContext context);
-        Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context);
+        Result<IValue> LinqToElement(LExpression parameter, Context context);
+        Result<LExpression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, Context context);
+        Result SerializeClrInstance(object clrInstance, ICollection<float> floats, Context context);
     }
 }

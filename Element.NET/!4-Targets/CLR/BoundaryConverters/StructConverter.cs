@@ -14,7 +14,7 @@ namespace Element.CLR
 
         private StructConverter(IBoundaryStructInfo boundaryStructInfo) => _boundaryStructInfo = boundaryStructInfo;
 
-        public Result<IValue> LinqToElement(Expression parameter, BoundaryContext context) =>
+        public Result<IValue> LinqToElement(Expression parameter, Context context) =>
             context.EvaluateExpression(_boundaryStructInfo.ElementExpression)
                    .CastInner<Struct>()
                    .Bind(structDeclaration => StructInstance.Create(structDeclaration, _boundaryStructInfo.FieldMap
@@ -38,7 +38,7 @@ namespace Element.CLR
             public override string SummaryString => $"{_parameter}.{_clrField}";
         }
 
-        public Result<Expression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, BoundaryContext context)
+        public Result<Expression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, Context context)
         {
             var obj = Expression.Variable(outputType);
             var assigns = new List<Expression>();
@@ -71,6 +71,6 @@ namespace Element.CLR
                          });
         }
 
-        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context) => _boundaryStructInfo.SerializeClrInstance(clrInstance, floats, context);
+        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, Context context) => _boundaryStructInfo.SerializeClrInstance(clrInstance, floats, context);
     }
 }

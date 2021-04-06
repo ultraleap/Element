@@ -10,14 +10,14 @@ namespace Element.CLR
         private NumberConverter(){}
         public static NumberConverter Instance { get; } = new NumberConverter();
 
-        public Result<IValue> LinqToElement(Expression parameter, BoundaryContext context) =>
+        public Result<IValue> LinqToElement(Expression parameter, Context context) =>
             parameter.Type switch
             {
                 {} t when t == typeof(bool) => new NumberInstruction(Expression.Condition(parameter, Expression.Constant(1f), Expression.Constant(0f)), BoolStruct.Instance),
                 _                           => new NumberInstruction(Expression.Convert(parameter, typeof(float)))
             };
 
-        public Result<Expression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, BoundaryContext context) =>
+        public Result<Expression> ElementToLinq(IValue value, Type outputType, ConvertFunction convertFunction, Context context) =>
             convertFunction(value, typeof(float), context)
                .Map(convertedValue =>
                     (outputType, convertedValue) switch
@@ -28,7 +28,7 @@ namespace Element.CLR
                         _                                             => throw new InternalCompilerException($"Unhandled {nameof(ElementToLinq)} output type")
                     });
 
-        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, BoundaryContext context) =>
+        public Result SerializeClrInstance(object clrInstance, ICollection<float> floats, Context context) =>
             (clrInstance switch
             {
                 float f => new Result<float>(f),
