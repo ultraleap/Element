@@ -96,19 +96,18 @@ instruction_fold::instruction_fold(instruction_const_shared_ptr list, instructio
 
 instruction_indexer::instruction_indexer(std::shared_ptr<const element::instruction_for> for_instruction, int index, type_const_ptr type)
     : instruction(type_id, type)
-    , for_instruction{ std::move(for_instruction) }
     , index{ index }
 {
+    m_dependents.emplace_back(std::move(for_instruction));
 }
 
 instruction_select::instruction_select(instruction_const_shared_ptr selector, std::vector<instruction_const_shared_ptr> options)
     : instruction(type_id, nullptr)
-    , selector(std::move(selector))
-    , options(std::move(options))
 {
-    assert(this->selector);
-    for (auto& option : this->options)
-    {
-        assert(option);
+    assert(selector);
+    m_dependents.emplace_back(std::move(selector));
+
+    for (auto&& o : options) {
+        m_dependents.emplace_back(std::move(o));
     }
 }

@@ -121,10 +121,10 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
     {
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
-        size_t size = eb->for_instruction->get_size();
+        size_t size = eb->for_instruction()->get_size();
         assert(eb->index < size);
         std::vector<element_value> for_result(size);
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->for_instruction, for_result.data(), size, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->for_instruction(), for_result.data(), size, intermediate_written));
         intermediate_written = 0;
         outputs[outputs_written++] = for_result[eb->index];
         return ELEMENT_OK;
@@ -135,10 +135,10 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
         element_value selector;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->selector, &selector, 1, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->selector(), &selector, 1, intermediate_written));
         intermediate_written = 0;
-        const auto selected_option_index = element_evaluate_select(selector, sel->options);
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->options[selected_option_index], outputs, outputs_count, outputs_written));
+        const auto selected_option_index = element_evaluate_select(selector, sel->options_count());
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->options_at(selected_option_index), outputs, outputs_count, outputs_written));
         return ELEMENT_OK;
     }
 
@@ -346,9 +346,9 @@ std::vector<element_value> element_evaluate_for(element_evaluator_ctx& context, 
     return inputs;
 }
 
-std::size_t element_evaluate_select(element_value selector, const std::vector<element::instruction_const_shared_ptr>& options)
+std::size_t element_evaluate_select(element_value selector, size_t options_count)
 {
-    assert(!options.empty());
-    const auto clamped_index = std::clamp(static_cast<int>(selector), 0, static_cast<int>(options.size() - 1));
+    assert(options_count != 0);
+    const auto clamped_index = std::clamp(static_cast<int>(selector), 0, static_cast<int>(options_count - 1));
     return clamped_index;
 }
