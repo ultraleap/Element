@@ -195,6 +195,7 @@ set(element_sources
     "src/instruction_tree/instructions.cpp"
     "src/instruction_tree/instructions.hpp"
     "src/instruction_tree/fwd.hpp"
+    "src/instruction_tree/cache.hpp"
 
     #Util
     "src/stringutil.hpp"

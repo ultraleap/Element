@@ -146,7 +146,7 @@ std::shared_ptr<const instruction> element::evaluate(const compilation_context& 
     std::size_t output_count = 1;
     
     element_evaluator_ctx evaluator;
-    const auto result = element_evaluate(evaluator, expr, nullptr, 0, &output, output_count);
+    const auto result = element_evaluate(evaluator, expr, nullptr, nullptr, 0, &output, output_count);
     if (result != ELEMENT_OK)
         return expr;
 

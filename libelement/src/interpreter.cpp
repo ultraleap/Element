@@ -12,6 +12,7 @@
 //SELF
 #include "element/ast.h"
 #include "instruction_tree/evaluator.hpp"
+#include "instruction_tree/cache.hpp"
 #include "ast/parser_internal.hpp"
 #include "common_internal.hpp"
 #include "token_internal.hpp"
@@ -339,7 +340,8 @@ element_result element_interpreter_compile_declaration(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    *instruction = new element_instruction{ std::move(instr) };
+    element::instruction_cache cache(instr);
+    *instruction = new element_instruction{ std::move(instr), std::move(cache) };
     return ELEMENT_OK;
 }
 
@@ -377,6 +379,7 @@ element_result element_interpreter_evaluate_instruction(
     const auto result = element_evaluate(
         *evaluator,
         instruction->instruction,
+        &(instruction->cache),
         inputs->values,
         inputs->count,
         outputs->values,
@@ -467,7 +470,8 @@ element_result element_interpreter_compile_expression(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    (*instruction)->instruction = std::move(instr);
+    element::instruction_cache cache(instr);
+    *instruction = new element_instruction{ std::move(instr), std::move(cache) };
     element_object_delete(&object_ptr);
     return ELEMENT_OK;
 }
@@ -635,6 +639,7 @@ element_result element_interpreter_evaluate_call_expression(
         const auto eval_result = element_evaluate(
             *evaluator,
             instruction,
+            nullptr,
             {},
             serialised_arguments.back());
 

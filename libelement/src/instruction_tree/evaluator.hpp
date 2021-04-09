@@ -5,18 +5,21 @@
 
 #include "element/interpreter.h"
 #include "instruction_tree/instructions.hpp"
+#include "instruction_tree/cache.hpp"
 
 struct element_evaluator_ctx;
 
 element_result element_evaluate(
     element_evaluator_ctx& context,
     const element::instruction_const_shared_ptr& fn,
+    element::instruction_cache* cache,
     const std::vector<element_value>& inputs,
     std::vector<element_value>& outputs);
 
 element_result element_evaluate(
     element_evaluator_ctx& context,
     const element::instruction_const_shared_ptr& fn,
+    element::instruction_cache* cache,
     const element_value* inputs,
     size_t inputs_count,
     element_value* outputs,

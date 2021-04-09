@@ -11,6 +11,8 @@
 #include "common_internal.hpp"
 #include "object_model/scope.hpp"
 #include "object_model/scope_caches.hpp"
+#include "instruction_tree/instructions.hpp"
+#include "instruction_tree/cache.hpp"
 
 struct element_declaration
 {
@@ -25,6 +27,7 @@ struct element_object
 struct element_instruction
 {
     std::shared_ptr<const element::instruction> instruction;
+    mutable element::instruction_cache cache;
 };
 
 struct element_object_model_ctx
