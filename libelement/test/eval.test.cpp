@@ -3934,7 +3934,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
         auto expr = std::make_shared<element::instruction_select>(std::move(selector), std::move(options));
         element_evaluator_ctx evaluator;
-        const auto result = element_evaluate(evaluator, expr, {}, outputs);
+        const auto result = element_evaluate(evaluator, expr, nullptr, {}, outputs);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);
     }
@@ -3960,7 +3960,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
         deps.push_back(expr);
         auto new_expr = std::make_shared<element::instruction_serialised_structure>(std::move(deps), std::vector<std::string>{}, "");
         element_evaluator_ctx evaluator;
-        const auto result = element_evaluate(evaluator, new_expr, inputs, outputs);
+        const auto result = element_evaluate(evaluator, new_expr, nullptr, inputs, outputs);
         REQUIRE(result == ELEMENT_OK);
         REQUIRE(outputs[0] == 1.0f);
         REQUIRE(outputs[1] == 1.0f);

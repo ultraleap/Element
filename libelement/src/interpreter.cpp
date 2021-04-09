@@ -12,6 +12,7 @@
 //SELF
 #include "element/ast.h"
 #include "instruction_tree/evaluator.hpp"
+#include "instruction_tree/cache.hpp"
 #include "ast/parser_internal.hpp"
 #include "common_internal.hpp"
 #include "token_internal.hpp"
@@ -339,7 +340,8 @@ element_result element_interpreter_compile_declaration(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    *instruction = new element_instruction{ std::move(instr) };
+    element::instruction_cache cache(instr);
+    *instruction = new element_instruction{ std::move(instr), std::move(cache) };
     return ELEMENT_OK;
 }
 
@@ -377,6 +379,7 @@ element_result element_interpreter_evaluate_instruction(
     const auto result = element_evaluate(
         *evaluator,
         instruction->instruction,
+        &(instruction->cache),
         inputs->values,
         inputs->count,
         outputs->values,
@@ -467,7 +470,8 @@ element_result element_interpreter_compile_expression(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    (*instruction)->instruction = std::move(instr);
+    element::instruction_cache cache(instr);
+    *instruction = new element_instruction{ std::move(instr), std::move(cache) };
     element_object_delete(&object_ptr);
     return ELEMENT_OK;
 }
@@ -481,7 +485,6 @@ element_result element_evaluator_create(element_interpreter_ctx* interpreter, el
         return ELEMENT_ERROR_API_INVALID_INPUT;
 
     *evaluator = new element_evaluator_ctx;
-    (*evaluator)->use_cache = false;
     return ELEMENT_OK;
 }
 
@@ -506,23 +509,6 @@ element_result element_evaluator_get_options(element_evaluator_ctx* evaluator, e
     *options = evaluator->options;
 
     return ELEMENT_OK;
-}
-void element_evaluator_initialise_cache(
-    element_evaluator_ctx* evaluator,
-    element_instruction* instruction
-)
-{
-    if (!evaluator)
-        return;
-    evaluator->initialise_cache(instruction);
-    evaluator->use_cache = true;
-}
-
-void element_evaluator_clear_cache(element_evaluator_ctx* evaluator)
-{
-    if (!evaluator)
-        return;
-    evaluator->clear_cache();
 }
 
 void element_evaluator_delete(element_evaluator_ctx** evaluator)
@@ -653,6 +639,7 @@ element_result element_interpreter_evaluate_call_expression(
         const auto eval_result = element_evaluate(
             *evaluator,
             instruction,
+            nullptr,
             {},
             serialised_arguments.back());
 

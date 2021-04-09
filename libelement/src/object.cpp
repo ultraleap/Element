@@ -192,10 +192,13 @@ element_result element_object_to_instruction(const element_object* object, eleme
     if (!instr)
     {
         (*output)->instruction = nullptr;
+        (*output)->cache = { };
         return ELEMENT_ERROR_SERIALISATION;
     }
 
+    (*output)->cache = element::instruction_cache(instr);
     (*output)->instruction = std::move(instr);
+
     return ELEMENT_OK;
 }
 

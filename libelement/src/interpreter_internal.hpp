@@ -12,6 +12,7 @@
 #include "object_model/scope.hpp"
 #include "object_model/scope_caches.hpp"
 #include "instruction_tree/instructions.hpp"
+#include "instruction_tree/cache.hpp"
 
 struct element_declaration
 {
@@ -26,6 +27,7 @@ struct element_object
 struct element_instruction
 {
     std::shared_ptr<const element::instruction> instruction;
+    mutable element::instruction_cache cache;
 };
 
 struct element_object_model_ctx
@@ -47,12 +49,6 @@ struct element_ports
 //todo: move somewhere else and add a logger so we don't need to pass interpreter in the C API
 struct element_evaluator_ctx
 {
-    struct cached_value
-    {
-        element_value value;
-        bool present;
-    };
-
     struct boundary
     {
         const element_value* inputs;
@@ -60,33 +56,6 @@ struct element_evaluator_ctx
     };
     std::vector<boundary> boundaries;
     element_evaluator_options options;
-
-    std::unordered_map<element::instruction_const_shared_ptr, cached_value> cache;
-
-    void clear_cache()
-    {
-        for(auto& it: cache)
-        {
-            it.second.present = false;
-        }
-    }
-
-    void initialise_cache(element_instruction* instruction)
-    {
-        initialise_cache(instruction->instruction);
-    }
-
-    bool use_cache = false;
-
-private:
-    void initialise_cache(element::instruction_const_shared_ptr instruction)
-    {
-        cache.emplace(std::make_pair(instruction, cached_value{0, false}));
-        for(auto& dep : instruction->dependents())
-        {
-            initialise_cache(dep);
-        }
-    }
 };
 
 struct element_interpreter_ctx

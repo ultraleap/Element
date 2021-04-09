@@ -10,19 +10,31 @@
 
 using namespace element;
 
-static element_result do_evaluate(element_evaluator_ctx& context, const element::instruction_const_shared_ptr& expr, element_value* outputs, size_t outputs_count, size_t& outputs_written)
+static void add_to_cache(instruction_cache_value* cache_value, element_value value)
 {
-    // Currently not caching any multi-valued things. Don't check the cache for anything that can result in multiple values.
+    if (cache_value)
+    {
+        cache_value->value = value;
+        cache_value->present = true;
+    }
+}
+
+static element_result do_evaluate(element_evaluator_ctx& context, const element::instruction_const_shared_ptr& expr,
+                                  instruction_cache* cache, element_value* outputs, size_t outputs_count, size_t& outputs_written)
+{
+    // Don't check the cache for multi-valued objects, just check their individual values.
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
     {
         const auto& deps = es->dependents();
         for (const auto& dep : deps)
         {
-            ELEMENT_OK_OR_RETURN(do_evaluate(context, dep, outputs, outputs_count, outputs_written));
+            ELEMENT_OK_OR_RETURN(do_evaluate(context, dep, cache, outputs, outputs_count, outputs_written));
         }
         return ELEMENT_OK;
     }
 
+    // Don't do any caching or cache checking for for loops. This is because during evaluation of the for loop,
+    // the evaluation_ctx boundaries change, so caching can be invalid.
     if (const auto* eb = expr->as<element::instruction_for>())
     {
         assert(outputs_count > outputs_written);
@@ -33,7 +45,8 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         size_t intermediate_written = 0;
         std::vector<element_value> initial;
         initial.resize(eb->initial()->get_size());
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->initial(), initial.data(), eb->initial()->get_size(), intermediate_written));
+
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->initial(), nullptr, initial.data(), eb->initial()->get_size(), intermediate_written));
         intermediate_written = 0;
         auto for_result = element_evaluate_for(context, eb->initial(), eb->condition(), eb->body());
         assert(outputs_count >= outputs_written + for_result.size());
@@ -49,44 +62,29 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
         element_value selector;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->selector(), &selector, 1, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->selector(), cache, &selector, 1, intermediate_written));
         intermediate_written = 0;
 
         const auto selected_option_index = element_evaluate_select(selector, sel->options_count());
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->options_at(selected_option_index), outputs, outputs_count, outputs_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, sel->options_at(selected_option_index), cache, outputs, outputs_count, outputs_written));
         return ELEMENT_OK;
     }
 
-    // Messy right now - experimental changes ....
-    // Everything below here only has a single value, so check the cache
-    auto cache_entry = context.cache.find(expr);
+    // Everything below this point only returns a single value
+    instruction_cache_value* cache_entry = cache ? cache->find(expr) : nullptr;
 
-    bool cache_initialised = context.use_cache;
-    if (cache_initialised)
+    if (cache_entry && cache_entry->present)
     {
-        if (cache_entry == context.cache.end())
-        {
-            // Something has gone horribly wrong, it should be here
-            return ELEMENT_ERROR_NO_IMPL;
-        }
-
-        if (cache_entry->second.present)
-        {
-            // Value is already in the cache !!!
-            outputs[outputs_written++] = cache_entry->second.value;
-            return ELEMENT_OK;
-        }
+        // Value is in the cache, use it!
+        outputs[outputs_written++] = cache_entry->value;
+        return ELEMENT_OK;
     }
 
     if (const auto* ec = expr->as<element::instruction_constant>())
     {
         assert(outputs_count > outputs_written);
         element_value value = ec->value();
-        if (cache_initialised)
-        {
-            cache_entry->second.value = value;
-            cache_entry->second.present = true;
-        }
+        add_to_cache(cache_entry, value);
         outputs[outputs_written++] = value;
         return ELEMENT_OK;
     }
@@ -105,11 +103,7 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         assert(outputs_count > outputs_written);
 
         element_value value = context.boundaries[ei->scope()].inputs[ei->index()];
-        if (cache_initialised)
-        {
-            cache_entry->second.value = value;
-            cache_entry->second.present = true;
-        }
+        add_to_cache(cache_entry, value);
         outputs[outputs_written++] = value;
         return ELEMENT_OK;
     }
@@ -121,11 +115,7 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         assert(eu->get_size() == 1);
 
         element_value value = element_evaluate_nullary(eu->operation());
-        if (cache_initialised)
-        {
-            cache_entry->second.value = value;
-            cache_entry->second.present = true;
-        }
+        add_to_cache(cache_entry, value);
         outputs[outputs_written++] = value;
         return ELEMENT_OK;
     }
@@ -136,14 +126,10 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         assert(eu->input()->get_size() == 1);
         size_t intermediate_written = 0;
         element_value a;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eu->input(), &a, 1, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eu->input(), cache, &a, 1, intermediate_written));
 
         element_value value = element_evaluate_unary(eu->operation(), a);
-        if (cache_initialised)
-        {
-            cache_entry->second.value = value;
-            cache_entry->second.present = true;
-        }
+        add_to_cache(cache_entry, value);
         outputs[outputs_written++] = value;
         return ELEMENT_OK;
     }
@@ -155,16 +141,12 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         assert(eb->input2()->get_size() == 1);
         size_t intermediate_written = 0;
         element_value a, b;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->input1(), &a, 1, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->input1(), cache, &a, 1, intermediate_written));
         intermediate_written = 0;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->input2(), &b, 1, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->input2(), cache, &b, 1, intermediate_written));
 
         element_value value = element_evaluate_binary(eb->operation(), a, b);
-        if (cache_initialised)
-        {
-            cache_entry->second.value = value;
-            cache_entry->second.present = true;
-        }
+        add_to_cache(cache_entry, value);
         outputs[outputs_written++] = value;
         return ELEMENT_OK;
     }
@@ -178,18 +160,14 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         assert(eb->if_false()->get_size() == 1);
         size_t intermediate_written = 0;
         element_value predicate, if_true, if_false;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->predicate(), &predicate, 1, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->predicate(), cache, &predicate, 1, intermediate_written));
         intermediate_written = 0;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->if_true(), &if_true, 1, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->if_true(), cache, &if_true, 1, intermediate_written));
         intermediate_written = 0;
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->if_false(), &if_false, 1, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->if_false(), cache, &if_false, 1, intermediate_written));
 
         element_value value = element_evaluate_if(predicate, if_true, if_false);
-        if (cache_initialised)
-        {
-            cache_entry->second.value = value;
-            cache_entry->second.present = true;
-        }
+        add_to_cache(cache_entry, value);
         outputs[outputs_written++] = value;
         return ELEMENT_OK;
     }
@@ -202,14 +180,10 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         size_t size = eb->for_instruction()->get_size();
         assert(eb->index < size);
         std::vector<element_value> for_result(size);
-        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->for_instruction(), for_result.data(), size, intermediate_written));
+        ELEMENT_OK_OR_RETURN(do_evaluate(context, eb->for_instruction(), cache, for_result.data(), size, intermediate_written));
         intermediate_written = 0;
         element_value value = for_result[eb->index];
-        if (cache_initialised)
-        {
-            cache_entry->second.value = value;
-            cache_entry->second.present = true;
-        }
+        add_to_cache(cache_entry, value);
         outputs[outputs_written++] = value;
         return ELEMENT_OK;
     }
@@ -220,11 +194,12 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
 element_result element_evaluate(
     element_evaluator_ctx& context,
     const instruction_const_shared_ptr& fn,
+    instruction_cache* cache,
     const std::vector<element_value>& inputs,
     std::vector<element_value>& outputs)
 {
     auto size = outputs.size();
-    auto result = element_evaluate(context, fn, inputs.data(), inputs.size(), outputs.data(), size);
+    auto result = element_evaluate(context, fn, cache, inputs.data(), inputs.size(), outputs.data(), size);
     outputs.resize(size);
     return result;
 }
@@ -232,6 +207,7 @@ element_result element_evaluate(
 element_result element_evaluate(
     element_evaluator_ctx& context,
     const instruction_const_shared_ptr& fn,
+    instruction_cache* cache,
     const element_value* inputs,
     size_t inputs_count,
     element_value* outputs,
@@ -240,8 +216,11 @@ element_result element_evaluate(
     context.boundaries.clear();
     context.boundaries.push_back({ inputs, inputs_count });
 
+    if (cache)
+        cache->clear_values();
+
     size_t outputs_written = 0;
-    const auto result = do_evaluate(context, fn, outputs, outputs_count, outputs_written);
+    const auto result = do_evaluate(context, fn, cache, outputs, outputs_count, outputs_written);
     outputs_count = outputs_written;
     return result;
 }
@@ -370,14 +349,14 @@ std::vector<element_value> element_evaluate_for(element_evaluator_ctx& context, 
     inputs.resize(value_size);
     context.boundaries.push_back({ inputs.data(), value_size });
 
-    auto result = do_evaluate(context, initial, inputs.data(), value_size, intermediate_written);
+    auto result = do_evaluate(context, initial, nullptr, inputs.data(), value_size, intermediate_written);
     if (result != ELEMENT_OK)
         throw;
 
     intermediate_written = 0;
 
     element_value predicate_value;
-    result = do_evaluate(context, condition, &predicate_value, 1, intermediate_written);
+    result = do_evaluate(context, condition, nullptr, &predicate_value, 1, intermediate_written);
     intermediate_written = 0;
 
     if (result != ELEMENT_OK)
@@ -389,7 +368,7 @@ std::vector<element_value> element_evaluate_for(element_evaluator_ctx& context, 
 
     while (to_bool(predicate_value)) //predicate returned true
     {
-        result = do_evaluate(context, body, body_output_buffer.data(), value_size, intermediate_written);
+        result = do_evaluate(context, body, nullptr, body_output_buffer.data(), value_size, intermediate_written);
 
         std::swap(body_output_buffer, inputs);
         context.boundaries.back().inputs = inputs.data();
@@ -401,7 +380,7 @@ std::vector<element_value> element_evaluate_for(element_evaluator_ctx& context, 
             throw;
 
         intermediate_written = 0;
-        result = do_evaluate(context, condition, &predicate_value, 1, intermediate_written);
+        result = do_evaluate(context, condition, nullptr, &predicate_value, 1, intermediate_written);
         if (result != ELEMENT_OK)
             throw;
 

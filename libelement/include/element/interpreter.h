@@ -341,15 +341,6 @@ element_result element_evaluator_get_options(
     element_evaluator_options* options
 );
 
-void element_evaluator_initialise_cache(
-    element_evaluator_ctx* evaluator,
-    element_instruction* instruction
-    );
-
-void element_evaluator_clear_cache(
-    element_evaluator_ctx* evaluator
-    );
-
 void element_evaluator_delete(
     element_evaluator_ctx** evaluator
 );
