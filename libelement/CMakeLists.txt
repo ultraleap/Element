@@ -22,6 +22,7 @@ set(ELEMENT_LOG_VERBOSITY "log_flags::none" CACHE STRING "logging flags")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(DownloadCPM)
 
 # Code Coverage Configuration
 add_library(element_coverage_config INTERFACE)
