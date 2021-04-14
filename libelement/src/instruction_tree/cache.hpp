@@ -47,6 +47,34 @@ namespace element
             return nullptr;
         }
 
+        [[nodiscard]] std::string to_string() const
+        {
+            int present_entry_count = 0;
+            for (const auto& [key, value] : cache)
+            {
+                if (value.present)
+                    present_entry_count++;
+            }
+
+            std::string as_string = fmt::format(
+                "the cache contains {} entries, {} of which are present\n",
+                cache.size(), 
+                present_entry_count);
+
+            for (const auto& [key, value] : cache)
+            {
+                if (value.present)
+                {
+                    as_string += fmt::format("{} = {}\n{}\n\n",
+                        fmt::ptr(key),
+                        value.value,
+                        instruction_to_string(*key));
+                }
+            }
+
+            return as_string;
+        }
+
     private:
         std::unordered_map<const instruction*, instruction_cache_value> cache;
 
