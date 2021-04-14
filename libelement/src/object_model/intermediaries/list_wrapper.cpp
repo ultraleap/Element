@@ -60,16 +60,20 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
         }
     }
 
-    //note: do not serialize to an expression
-    bool list_elements_are_expressions = true;
+    //note: do not serialize to an instruction
+    bool list_elements_are_instructions = true;
     for (const auto& element : option_objects)
     {
         if (!dynamic_cast<const instruction*>(element.get()))
-            list_elements_are_expressions = false;
+            list_elements_are_instructions = false;
     }
 
-    if (list_elements_are_expressions)
+    if (list_elements_are_instructions)
     {
+        //if the list only contains one instruction then we can optimise it to be that instruction
+        if (option_objects.size() == 1)
+            return option_objects[0];
+
         std::vector<instruction_const_shared_ptr> options;
         options.reserve(option_objects.size());
         for (const auto& option : option_objects)
