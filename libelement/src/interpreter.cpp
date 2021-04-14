@@ -340,7 +340,7 @@ element_result element_interpreter_compile_declaration(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    element::instruction_cache cache(instr);
+    element::instruction_cache cache(instr.get());
     *instruction = new element_instruction{ std::move(instr), std::move(cache) };
     return ELEMENT_OK;
 }
@@ -470,7 +470,7 @@ element_result element_interpreter_compile_expression(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    element::instruction_cache cache(instr);
+    element::instruction_cache cache(instr.get());
     *instruction = new element_instruction{ std::move(instr), std::move(cache) };
     element_object_delete(&object_ptr);
     return ELEMENT_OK;

@@ -19,7 +19,7 @@ namespace element
             : cache()
         {}
 
-        explicit instruction_cache(const instruction_const_shared_ptr& instruction)
+        explicit instruction_cache(const instruction* instruction)
             : cache()
         {
             initialise(instruction);
@@ -37,9 +37,9 @@ namespace element
          * Get a pointer to the value associated with the instruction in the cache
          * If no cache entry exists with that instruction, return nullptr
          */
-        instruction_cache_value* find(const instruction_const_shared_ptr& instruction)
+        instruction_cache_value* find(const instruction* instruction)
         {
-            auto found = cache.find(instruction);
+            const auto found = cache.find(instruction);
             if (found != cache.end())
             {
                 return &(found->second);
@@ -48,14 +48,14 @@ namespace element
         }
 
     private:
-        std::unordered_map<instruction_const_shared_ptr, instruction_cache_value> cache;
+        std::unordered_map<const instruction*, instruction_cache_value> cache;
 
-        void initialise(const instruction_const_shared_ptr& instruction)
+        void initialise(const instruction* instruction)
         {
-            cache.emplace(std::make_pair(instruction, instruction_cache_value{ 0, false }));
+            cache.emplace(instruction, instruction_cache_value{ 0, false });
             for (const auto& dep : instruction->dependents())
             {
-                initialise(dep);
+                initialise(dep.get());
             }
         }
     };

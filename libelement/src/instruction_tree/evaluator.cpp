@@ -71,7 +71,7 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
     }
 
     // Everything below this point only returns a single value
-    instruction_cache_value* cache_entry = cache ? cache->find(expr) : nullptr;
+    instruction_cache_value* cache_entry = cache ? cache->find(expr.get()) : nullptr;
 
     if (cache_entry && cache_entry->present)
     {
