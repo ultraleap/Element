@@ -367,6 +367,14 @@ element_result element_interpreter_evaluate_instruction(
     if (!outputs)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
+    //if it's just a constant then handle it quickly.
+    if (const auto* ic = instruction->instruction->as<element::instruction_constant>())
+    {
+        outputs->count = 1;
+        outputs->values[0] = ic->value();
+        return ELEMENT_OK;
+    }
+
     if (instruction->instruction->is_error())
         return instruction->instruction->log_any_error(interpreter->logger.get());
 
