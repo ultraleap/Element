@@ -80,7 +80,15 @@ namespace element
 
         void initialise(const instruction* instruction)
         {
-            cache.emplace(instruction, instruction_cache_value{ 0, false });
+            const bool skip_caching =
+                instruction->is<instruction_constant>() ||
+                instruction->is<instruction_input>() ||
+                instruction->is<instruction_serialised_structure>() ||
+                instruction->is<instruction_for>();
+
+            if (!skip_caching)
+                cache.emplace(instruction, instruction_cache_value{ 0, false });
+
             for (const auto& dep : instruction->dependents())
             {
                 initialise(dep.get());
