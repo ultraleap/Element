@@ -19,7 +19,7 @@ namespace element
             : cache()
         {}
 
-        explicit instruction_cache(const instruction_const_shared_ptr& instruction)
+        explicit instruction_cache(const instruction* instruction)
             : cache()
         {
             initialise(instruction);
@@ -37,9 +37,9 @@ namespace element
          * Get a pointer to the value associated with the instruction in the cache
          * If no cache entry exists with that instruction, return nullptr
          */
-        instruction_cache_value* find(const instruction_const_shared_ptr& instruction)
+        instruction_cache_value* find(const instruction* instruction)
         {
-            auto found = cache.find(instruction);
+            const auto found = cache.find(instruction);
             if (found != cache.end())
             {
                 return &(found->second);
@@ -47,15 +47,51 @@ namespace element
             return nullptr;
         }
 
-    private:
-        std::unordered_map<instruction_const_shared_ptr, instruction_cache_value> cache;
-
-        void initialise(const instruction_const_shared_ptr& instruction)
+        [[nodiscard]] std::string to_string() const
         {
-            cache.emplace(std::make_pair(instruction, instruction_cache_value{ 0, false }));
+            int present_entry_count = 0;
+            for (const auto& [key, value] : cache)
+            {
+                if (value.present)
+                    present_entry_count++;
+            }
+
+            std::string as_string = fmt::format(
+                "the cache contains {} entries, {} of which are present\n",
+                cache.size(), 
+                present_entry_count);
+
+            for (const auto& [key, value] : cache)
+            {
+                if (value.present)
+                {
+                    as_string += fmt::format("{} = {}\n{}\n\n",
+                        fmt::ptr(key),
+                        value.value,
+                        instruction_to_string(*key));
+                }
+            }
+
+            return as_string;
+        }
+
+    private:
+        std::unordered_map<const instruction*, instruction_cache_value> cache;
+
+        void initialise(const instruction* instruction)
+        {
+            const bool skip_caching =
+                instruction->is<instruction_constant>() ||
+                instruction->is<instruction_input>() ||
+                instruction->is<instruction_serialised_structure>() ||
+                instruction->is<instruction_for>();
+
+            if (!skip_caching)
+                cache.emplace(instruction, instruction_cache_value{ 0, false });
+
             for (const auto& dep : instruction->dependents())
             {
-                initialise(dep);
+                initialise(dep.get());
             }
         }
     };

@@ -19,7 +19,8 @@ public:
     template <typename TD>
     bool is() const
     {
-        return std::is_base_of<T, TD>::value && (subtype() & TD::type_id) != 0;
+        static_assert(std::is_base_of_v<T, TD>, "This type does not derive from the base type");
+        return (subtype() & TD::type_id) != 0;
     }
 
     template <typename TD>

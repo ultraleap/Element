@@ -340,7 +340,7 @@ element_result element_interpreter_compile_declaration(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    element::instruction_cache cache(instr);
+    element::instruction_cache cache(instr.get());
     *instruction = new element_instruction{ std::move(instr), std::move(cache) };
     return ELEMENT_OK;
 }
@@ -366,6 +366,14 @@ element_result element_interpreter_evaluate_instruction(
 
     if (!outputs)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    //if it's just a constant then handle it quickly.
+    if (const auto* ic = instruction->instruction->as<element::instruction_constant>())
+    {
+        outputs->count = 1;
+        outputs->values[0] = ic->value();
+        return ELEMENT_OK;
+    }
 
     if (instruction->instruction->is_error())
         return instruction->instruction->log_any_error(interpreter->logger.get());
@@ -470,7 +478,7 @@ element_result element_interpreter_compile_expression(
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    element::instruction_cache cache(instr);
+    element::instruction_cache cache(instr.get());
     *instruction = new element_instruction{ std::move(instr), std::move(cache) };
     element_object_delete(&object_ptr);
     return ELEMENT_OK;

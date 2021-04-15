@@ -22,6 +22,14 @@ static void add_to_cache(instruction_cache_value* cache_value, element_value val
 static element_result do_evaluate(element_evaluator_ctx& context, const element::instruction_const_shared_ptr& expr,
                                   instruction_cache* cache, element_value* outputs, size_t outputs_count, size_t& outputs_written)
 {
+    // Don't cache constants, faster to grab the value
+    if (const auto* ec = expr->as<element::instruction_constant>())
+    {
+        assert(outputs_count > outputs_written);
+        outputs[outputs_written++] = ec->value();
+        return ELEMENT_OK;
+    }
+
     // Don't check the cache for multi-valued objects, just check their individual values.
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
     {
@@ -57,6 +65,23 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         return ELEMENT_OK;
     }
 
+    // Don't cache inputs, faster to grab the value
+    if (const auto* ei = expr->as<element::instruction_input>())
+    {
+        if (context.boundaries.size() <= ei->scope()
+            || context.boundaries[ei->scope()].inputs_count <= ei->index()
+            || outputs_count <= outputs_written)
+        {
+            //occurs during constant folding to check if it can be evaluated
+            outputs_written = 0;
+            return ELEMENT_ERROR_UNKNOWN;
+        }
+
+        assert(outputs_count > outputs_written);
+        outputs[outputs_written++] = context.boundaries[ei->scope()].inputs[ei->index()];
+        return ELEMENT_OK;
+    }
+
     if (const auto* sel = expr->as<element::instruction_select>())
     {
         assert(outputs_count > outputs_written);
@@ -71,43 +96,13 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
     }
 
     // Everything below this point only returns a single value
-    instruction_cache_value* cache_entry = cache ? cache->find(expr) : nullptr;
-
+    instruction_cache_value* cache_entry = cache ? cache->find(expr.get()) : nullptr;
     if (cache_entry && cache_entry->present)
     {
         // Value is in the cache, use it!
         outputs[outputs_written++] = cache_entry->value;
         return ELEMENT_OK;
     }
-
-    if (const auto* ec = expr->as<element::instruction_constant>())
-    {
-        assert(outputs_count > outputs_written);
-        element_value value = ec->value();
-        add_to_cache(cache_entry, value);
-        outputs[outputs_written++] = value;
-        return ELEMENT_OK;
-    }
-
-    if (const auto* ei = expr->as<element::instruction_input>())
-    {
-        if (context.boundaries.size() <= ei->scope()
-            || context.boundaries[ei->scope()].inputs_count <= ei->index()
-            || outputs_count <= outputs_written)
-        {
-            //occurs during constant folding to check if it can be evaluated
-            outputs_written = 0;
-            return ELEMENT_ERROR_UNKNOWN;
-        }
-
-        assert(outputs_count > outputs_written);
-
-        element_value value = context.boundaries[ei->scope()].inputs[ei->index()];
-        add_to_cache(cache_entry, value);
-        outputs[outputs_written++] = value;
-        return ELEMENT_OK;
-    }
-
 
     if (const auto* eu = expr->as<element::instruction_nullary>())
     {
@@ -171,7 +166,6 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         outputs[outputs_written++] = value;
         return ELEMENT_OK;
     }
-
 
     if (const auto* eb = expr->as<element::instruction_indexer>())
     {

@@ -196,7 +196,7 @@ element_result element_object_to_instruction(const element_object* object, eleme
         return ELEMENT_ERROR_SERIALISATION;
     }
 
-    (*output)->cache = element::instruction_cache(instr);
+    (*output)->cache = element::instruction_cache(instr.get());
     (*output)->instruction = std::move(instr);
 
     return ELEMENT_OK;

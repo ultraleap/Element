@@ -147,10 +147,33 @@ std::shared_ptr<const instruction> element::evaluate(const compilation_context& 
     
     element_evaluator_ctx evaluator;
     const auto result = element_evaluate(evaluator, expr, nullptr, nullptr, 0, &output, output_count);
-    if (result != ELEMENT_OK)
-        return expr;
 
-    auto new_expr = std::make_shared<const instruction_constant>(output);
-    new_expr->actual_type = expr->actual_type;
-    return new_expr;
+    //the tree was fully evaluated, so it has been constant folded
+    if (result == ELEMENT_OK)
+    {
+        auto new_expr = std::make_shared<const instruction_constant>(output);
+        new_expr->actual_type = expr->actual_type;
+        return new_expr;
+    }
+    
+    //we failed to fully evaluate the tree, likely due to boundary inputs (whose value are not known), so try and optimise it differently
+
+    if (const auto* binary = expr->as<const instruction_binary>())
+    {
+        auto optimised = optimise_binary(*binary);
+        if (optimised)
+            return optimised;
+    }
+
+    if (const auto* selector = expr->as<const instruction_select>())
+    {
+        //if there's only one option to pick from then we're guaranteed to pick it, so we can just treat it as that option
+        if (selector->options_count() == 1)
+            return selector->options_at(0);
+    }
+
+    //todo: optimise other instructions
+
+    //we couldn't optimise it, so just return the original tree
+    return expr;
 }

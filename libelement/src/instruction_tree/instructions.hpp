@@ -287,37 +287,76 @@ namespace element
         [[nodiscard]] size_t options_count() const { return m_dependents.size() - 1; };
         [[nodiscard]] const instruction_const_shared_ptr& selector() const { return m_dependents[0]; };
     };
-} // namespace element
 
-////
-//// instruction groups
-////
-//struct instruction_group : public instruction
-//{
-//    DECLARE_TYPE_ID();
-//
-//    //todo: do we still need instruction groups?
-//protected:
-//    instruction_group()
-//        : instruction(type_id)
-//    {
-//    }
-//
-//    // virtual size_t group_size() const = 0;
-//};
-//
-//struct instruction_unbound_arg : public instruction
-//{
-//    DECLARE_TYPE_ID();
-//
-//    instruction_unbound_arg(size_t idx)
-//        : instruction(type_id)
-//        , m_index(idx)
-//    {
-//    }
-//
-//    size_t index() const { return m_index; }
-//
-//protected:
-//    size_t m_index;
-//};
+    //do some additional peephole optimisations based on known operations and operands
+    static instruction_const_shared_ptr optimise_binary(const instruction_binary& binary)
+    {
+        const auto* input1_as_const = binary.input1()->as<const instruction_constant>();
+        const auto* input2_as_const = binary.input2()->as<const instruction_constant>();
+
+        //if it's a numerical op and one of the operands is NaN, then the result is NaN
+        //todo: can we also optimise for +/- Inf?
+        if (binary.operation() < element_binary_op::and_)
+        {
+            if (input1_as_const && std::isnan(input1_as_const->value()))
+                return binary.input1();
+
+            if (input2_as_const && std::isnan(input2_as_const->value()))
+                return binary.input2();
+        }
+
+        switch (binary.operation())
+        {
+            case element_binary_op::add:
+            {
+                if (input1_as_const && input1_as_const->value() == 0.0f)
+                    return binary.input2();
+
+                if (input2_as_const && input2_as_const->value() == 0.0f)
+                    return binary.input1();
+
+                //todo: could transform identical adds to mul(input, 2) if that's faster?
+                //probably machine architecture dependent, should be an optimisation done by the target (e.g. LMNT)
+
+                break;
+            }
+
+            case element_binary_op::sub:
+            {
+                if (input2_as_const && input2_as_const->value() == 0.0f)
+                    return binary.input1();
+
+                break;
+            }
+
+            case element_binary_op::mul:
+            {
+                if (input1_as_const && input1_as_const->value() == 1.0f)
+                    return binary.input2();
+
+                if (input2_as_const && input2_as_const->value() == 1.0f)
+                    return binary.input1();
+
+                // NaN or Inf * 0 = NaN, and since that is valid user input, we can't do that optimisation
+
+                break;
+            }
+
+            case element_binary_op::div:
+            {
+                if (input2_as_const && input2_as_const->value() == 1.0f)
+                    return binary.input1();
+                
+                // We can't optimise for division by 0
+
+                // todo: could transform divs to muls if that's faster
+
+                break;
+            }
+
+            //todo: optimise other operators
+        }
+
+        return nullptr;
+    }
+} // namespace element
