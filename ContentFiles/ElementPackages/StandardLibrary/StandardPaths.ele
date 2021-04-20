@@ -6,15 +6,15 @@
 #]]
 namespace StandardPaths
 {
-    #[[ A clockwise circle in the x-y plane, beginning at
-    #   x=0, y=radius
+    #[[ An anti-clockwise circle in the x-y plane, beginning at
+    #   x=radius, y=0
     #]]
     circle(radius:Num):Path
     {
         circleFunction(u:Num):Vector3
         {
-            x = radius.mul(Num.sin(u.mul(Num.tau)))
-            y = radius.mul(Num.cos(u.mul(Num.tau)))
+            x = radius.mul(Num.cos(u.mul(Num.tau)))
+            y = radius.mul(Num.sin(u.mul(Num.tau)))
             return = Vector3(x, y, 0)
         }
         return = Path(circleFunction, Bounds(0, 1))
