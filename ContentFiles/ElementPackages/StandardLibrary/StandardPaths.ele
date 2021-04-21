@@ -53,28 +53,6 @@ namespace StandardPaths
     }
     rectangleLength(width:Num, height:Num):Num = 2.mul(width.add(height))
 
-    #[[ Create a lissajous curve in the x-y plane.
-    #
-    #   The frequencies must be integers for the
-    #   path to start and end at the same position.
-    #]]
-    lissajous(radii:Vector2, frequencies:Vector2, phaseDifference:Num):Path
-    {
-        omega = frequencies.scale(Num.tau)  # Angular Frequencies
-
-        lissajousFunction(u:Num):Vector3
-        {
-            xPhase = u.mul(omega.x)
-            yPhase = u.mul(omega.y).add(phaseDifference)
-            xProgress = Num.sin(xPhase)
-            yProgress = Num.sin(yPhase)
-            xPos = xProgress.mul(radii.x)
-            yPos = yProgress.mul(radii.y)
-            return = Vector3(xPos, yPos, 0)
-        }
-        return = Path(lissajousFunction, Bounds(0, 1))
-    }
-
     #[[ Create a rose curve in the x-y plane.
     #
     #   The petalConstant must be an integer for the
