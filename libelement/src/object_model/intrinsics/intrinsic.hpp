@@ -52,8 +52,9 @@ namespace element
     {
         if (!declaration.is_intrinsic())
         {
-            const auto error = element::build_log_error(context->src_context.get(),
-                                                        ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
+            const auto error = element::build_log_error<log_error_message_code::intrinsic_not_implemented>(
+                context->src_context.get(), ast, declaration.name.value);
+
             if (context->logger)
                 context->logger->log(error);
 
@@ -66,8 +67,9 @@ namespace element
         const auto it = validation_func_map.find(location);
         if (it == validation_func_map.end())
         {
-            const auto error = element::build_log_error(context->src_context.get(),
-                                                        ast, log_error_message_code::intrinsic_not_implemented, declaration.name.value);
+            const auto error = element::build_log_error<log_error_message_code::intrinsic_not_implemented>(
+                context->src_context.get(), ast, declaration.name.value);
+
             if (context->logger)
                 context->logger->log(error);
 
@@ -78,8 +80,9 @@ namespace element
         auto intrinsic = validation_func(&declaration);
         if (!intrinsic)
         {
-            const auto error = element::build_log_error(context->src_context.get(),
-                                                        ast, log_error_message_code::intrinsic_type_mismatch, declaration.name.value);
+            const auto error = element::build_log_error<log_error_message_code::intrinsic_type_mismatch>(
+                context->src_context.get(), ast, declaration.name.value);
+
             if (context->logger)
                 context->logger->log(error);
 

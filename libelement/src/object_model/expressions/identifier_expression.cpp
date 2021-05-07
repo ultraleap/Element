@@ -22,5 +22,5 @@ identifier_expression::identifier_expression(identifier name, const expression_c
     if (element)
         return element;
 
-    return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_identifier_expr, name.value);
+    return build_error_and_log<error_message_code::failed_to_find_when_resolving_identifier_expr>(context, source_info, name.value);
 }

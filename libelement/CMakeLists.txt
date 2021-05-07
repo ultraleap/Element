@@ -60,7 +60,6 @@ set(element_sources
     "src/source_information.hpp"
 
     "src/log_errors.hpp"
-    "src/log_errors.cpp"
 
     "src/token.cpp"
     "src/token_internal.cpp"
@@ -169,7 +168,6 @@ set(element_sources
     "src/object_model/compilation_context.hpp"
     "src/object_model/error.cpp"
     "src/object_model/error.hpp"
-    "src/object_model/error_map.cpp"
     "src/object_model/error_map.hpp"
     "src/object_model/fwd.hpp"
     "src/object_model/identifier.cpp"

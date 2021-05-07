@@ -89,7 +89,7 @@ namespace element
         {
             if (input->type != ELEMENT_AST_NODE_PORT)
             {
-                output_result = log_error(context, context->src_context.get(), input.get(), log_error_message_code::invalid_grammar_in_portlist, declaration.name.value);
+                output_result = log_error<log_error_message_code::invalid_grammar_in_portlist>(context, context->src_context.get(), input.get(), declaration.name.value);
                 return;
             }
 
@@ -160,7 +160,7 @@ namespace element
         for (const auto& input : struct_decl->inputs)
         {
             if (input.get_name().empty())
-                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::struct_portlist_cannot_contain_discards, struct_decl->name.value);
+                output_result = log_error<log_error_message_code::struct_portlist_cannot_contain_discards>(context, context->src_context.get(), decl, struct_decl->name.value);
         }
 
         if (output_result != ELEMENT_OK)
@@ -225,7 +225,7 @@ namespace element
             const auto* return_func = lambda_function_decl->our_scope->find(identifier::return_identifier, context->caches, false);
             if (!return_func)
             {
-                output_result = log_error(context, context->src_context.get(), expression, log_error_message_code::function_missing_return, lambda_function_decl->name.value);
+                output_result = log_error<log_error_message_code::function_missing_return>(context, context->src_context.get(), expression, lambda_function_decl->name.value);
                 return nullptr;
             }
 
@@ -268,7 +268,7 @@ namespace element
             const auto* return_func = function_decl->our_scope->find(identifier::return_identifier, context->caches, false);
             if (!return_func)
             {
-                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::function_missing_return, function_decl->name.value);
+                output_result = log_error<log_error_message_code::function_missing_return>(context, context->src_context.get(), decl, function_decl->name.value);
                 return nullptr;
             }
 
@@ -279,14 +279,14 @@ namespace element
             assert(!intrinsic);
             if (!function_decl->our_scope)
             {
-                output_result = log_error(context, context->src_context.get(), body, log_error_message_code::missing_declaration_scope, function_decl->name.value);
+                output_result = log_error<log_error_message_code::missing_declaration_scope>(context, context->src_context.get(), body, function_decl->name.value);
                 return nullptr;
             }
 
             auto chain = build_expression_chain(context, body, function_decl.get(), output_result);
             if (chain->expressions.empty())
             {
-                output_result = log_error(context, context->src_context.get(), body, log_error_message_code::expression_chain_cannot_be_empty, function_decl->name.value);
+                output_result = log_error<log_error_message_code::expression_chain_cannot_be_empty>(context, context->src_context.get(), body, function_decl->name.value);
                 return nullptr;
             }
 
@@ -305,7 +305,7 @@ namespace element
         }
         else
         {
-            output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::invalid_function_declaration, function_decl->name.value);
+            output_result = log_error<log_error_message_code::invalid_function_declaration>(context, context->src_context.get(), decl, function_decl->name.value);
             return nullptr;
         }
 
@@ -313,7 +313,7 @@ namespace element
         for (const auto& input : function_decl->inputs)
         {
             if (function_decl->our_scope->find(identifier{ input.get_name() }, context->caches, false))
-                output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::multiple_definition_with_parameter, input.get_name(), function_decl->name.value);
+                output_result = log_error<log_error_message_code::multiple_definition_with_parameter>(context, context->src_context.get(), decl, input.get_name(), function_decl->name.value);
 
             if (input.has_default())
             {
@@ -322,7 +322,7 @@ namespace element
             else if (!input.has_default())
             {
                 if (had_default)
-                    output_result = log_error(context, context->src_context.get(), decl, log_error_message_code::default_argument_not_at_end, input.get_name(), function_decl->name.value);
+                    output_result = log_error<log_error_message_code::default_argument_not_at_end>(context, context->src_context.get(), decl, input.get_name(), function_decl->name.value);
             }
         }
 
@@ -373,7 +373,7 @@ namespace element
         const auto is_empty = chain->expressions.empty();
         if (!is_empty)
         {
-            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_literal_expression_placement);
+            output_result = log_error<log_error_message_code::invalid_literal_expression_placement>(context, context->src_context.get(), ast);
             return nullptr;
         }
 
@@ -403,13 +403,13 @@ namespace element
         const auto is_empty = chain->expressions.empty();
         if (is_empty)
         {
-            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::invalid_call_expression_placement);
+            output_result = log_error<log_error_message_code::invalid_call_expression_placement>(context, context->src_context.get(), ast);
             return nullptr;
         }
 
         if (ast->children.empty())
         {
-            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::empty_expression);
+            output_result = log_error<log_error_message_code::empty_expression>(context, context->src_context.get(), ast);
             return nullptr;
         }
 
@@ -518,7 +518,7 @@ namespace element
             if (result != ELEMENT_OK)
             {
                 std::string identifier = child->children.empty() ? "<unknown>" : child->children[0]->identifier;
-                log_error(context, context->src_context.get(), child.get(), log_error_message_code::failed_to_build_declaration, std::move(identifier));
+                log_error<log_error_message_code::failed_to_build_declaration>(context, context->src_context.get(), child.get(), std::move(identifier));
 
                 if (output_result == ELEMENT_OK)
                     output_result = result;
@@ -529,7 +529,7 @@ namespace element
             //only reaches here if the declaration is nullptr, and no error was reported. should never happen.
             if (!decl)
             {
-                result = log_error(context, context->src_context.get(), child.get(), log_error_message_code::internal_compiler_error);
+                result = log_error<log_error_message_code::internal_compiler_error>(context, context->src_context.get(), child.get());
                 if (output_result == ELEMENT_OK)
                     output_result = result;
                 continue;
@@ -554,7 +554,7 @@ namespace element
     {
         if (ast->type != ELEMENT_AST_NODE_ROOT)
         {
-            output_result = log_error(context, context->src_context.get(), ast, log_error_message_code::failed_to_build_declaration, ast->nearest_token->source_name);
+            output_result = log_error<log_error_message_code::failed_to_build_declaration>(context, context->src_context.get(), ast, ast->nearest_token->source_name);
             return nullptr;
         }
 

@@ -34,7 +34,7 @@ object_const_shared_ptr struct_declaration::index(
 
     const auto* found = our_scope->find(name, context.interpreter->caches, false);
     if (!found)
-        return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, to_string());
+        return build_error_and_log<error_message_code::failed_to_find_when_resolving_indexing_expr>(context, source_info, name.value, to_string());
 
     return found->compile(context, source_info);
 }
@@ -52,7 +52,7 @@ object_const_shared_ptr struct_declaration::call(
             return intrinsic->call(context, compiled_args, source_info);
 
         //todo: could we validate this when creating the object model? then there's less to check during compilation
-        return build_error_and_log(context, source_info, error_message_code::intrinsic_not_implemented);
+        return build_error_and_log<error_message_code::intrinsic_not_implemented>(context, source_info);
     }
 
     if (valid_call(context, this, compiled_args))
