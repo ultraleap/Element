@@ -137,7 +137,7 @@ static element_result prepare_virtual_input(
 {
     if (!vr.is_output) {
         // just use it from the input location
-        ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(&ei, allocation_type::input, ei.index(), 1));
+        ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(&ei, allocation_type::input, uint16_t(ei.index()), 1));
     } else {
         // input --> output, have to copy it
         ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&ei, vr.count));
@@ -160,7 +160,7 @@ static element_result compile_input(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    copy_stack_values(state.get_stack_index(allocation_type::input, ei.index()), stack_idx, 1, output);
+    copy_stack_values(state.calculate_stack_index(allocation_type::input, uint16_t(ei.index())), stack_idx, 1, output);
     return ELEMENT_OK;
 }
 
@@ -358,7 +358,7 @@ static element_result compile_unary(
     const element::instruction* arg_in = eu.dependents()[0].get();
     // get the argument and ensure it's only 1 wide
     uint16_t arg_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(arg_in, arg_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(arg_in, arg_stack_idx));
     // compile the argument
     ELEMENT_OK_OR_RETURN(compile_instruction(state, arg_in, output));
 
@@ -458,8 +458,8 @@ static element_result compile_binary(
     const element::instruction* arg1_in = eb.dependents()[0].get();
     const element::instruction* arg2_in = eb.dependents()[1].get();
     uint16_t arg1_stack_idx, arg2_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(arg1_in, arg1_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(arg2_in, arg2_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(arg1_in, arg1_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(arg2_in, arg2_stack_idx));
     // compile the arguments
     ELEMENT_OK_OR_RETURN(compile_instruction(state, arg1_in, output));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, arg2_in, output));
@@ -611,9 +611,9 @@ static element_result compile_if(
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(true_in, true_vr));
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(false_in, false_vr));
     uint16_t predicate_stack_idx, true_stack_idx, false_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(predicate_in, predicate_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(true_in, true_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(false_in, false_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(predicate_in, predicate_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(true_in, true_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(false_in, false_stack_idx));
 
     // compile the predicate
     ELEMENT_OK_OR_RETURN(compile_instruction(state, predicate_in, output));
@@ -713,9 +713,9 @@ static element_result compile_for(
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(condition_in, condition_vr));
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(body_in, body_vr));
     uint16_t initial_stack_idx, condition_stack_idx, body_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(initial_in, initial_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(condition_in, condition_stack_idx));
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(body_in, body_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(initial_in, initial_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(condition_in, condition_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(body_in, body_stack_idx));
 
     // compile the initial state
     ELEMENT_OK_OR_RETURN(compile_instruction(state, initial_in, output));
@@ -792,7 +792,7 @@ static element_result compile_indexer(
     virtual_result for_vr;
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(ei.for_instruction.get(), for_vr));
     uint16_t for_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(ei.for_instruction.get(), for_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(ei.for_instruction.get(), for_stack_idx));
 
     const uint16_t for_entry_idx = static_cast<uint16_t>(for_stack_idx + ei.index);
     copy_stack_values(for_entry_idx, stack_idx, 1, output);
@@ -878,7 +878,7 @@ static element_result compile_select(
     virtual_result selector_vr;
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.selector.get(), selector_vr));
     uint16_t selector_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(es.selector.get(), selector_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.selector.get(), selector_stack_idx));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, es.selector.get(), output));
     // clamp in range and ensure it's an integer
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
@@ -895,7 +895,7 @@ static element_result compile_select(
     }
 
     uint16_t option0_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(es.options[0].get(), option0_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options[0].get(), option0_stack_idx));
     const bool stacked = (option0_stack_idx == stack_idx);
 
     std::vector<size_t> option_branch_indexes(opts_size);
@@ -905,7 +905,7 @@ static element_result compile_select(
         virtual_result option_vr;
         ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.options[i].get(), option_vr));
         uint16_t option_stack_idx;
-        ELEMENT_OK_OR_RETURN(state.get_stack_index(es.options[i].get(), option_stack_idx));
+        ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options[i].get(), option_stack_idx));
 
         const size_t option_idx = output.size();
         // fill in the target index for this branch option
@@ -1094,7 +1094,7 @@ static element_result compile_instruction(
 
     const virtual_result& vr = state.virtual_results[results_it->second];
     uint16_t index;
-    ELEMENT_OK_OR_RETURN(state.get_stack_index(expr, index));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(expr, index));
 
     if (const auto* ec = expr->as<element::instruction_constant>())
         return compile_constant(state, *ec, vr, index, output);
@@ -1156,7 +1156,7 @@ element_result element_lmnt_compile_function(
     const element::instruction_const_shared_ptr instruction,
     std::vector<element_value>& constants,
     const size_t inputs_count,
-    std::vector<lmnt_instruction>& output)
+    element_lmnt_compiled_function& output)
 {
     compiler_state state { ctx, instruction.get(), constants, static_cast<uint16_t>(inputs_count) };
     // TODO: check for single constant fast path
@@ -1167,5 +1167,10 @@ element_result element_lmnt_compile_function(
     // continue with compilation
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, instruction.get()));
     ELEMENT_OK_OR_RETURN(optimise_virtual_result(state, instruction.get()));
-    return compile_instruction(state, instruction.get(), output);
+    ELEMENT_OK_OR_RETURN(compile_instruction(state, instruction.get(), output.instructions));
+    output.inputs_count = inputs_count;
+    ELEMENT_OK_OR_RETURN(state.find_virtual_result(instruction.get(), vr));
+    output.outputs_count = vr.count;
+    output.required_stack_count = state.get_max_stack_usage();
+    return ELEMENT_OK;
 }

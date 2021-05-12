@@ -56,7 +56,7 @@ void log_callback(const element_log_message* msg, void* user_data)
 }
 
 
-static std::vector<char> create_archive(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, std::vector<lmnt_value> constants, std::vector<lmnt_instruction> function)
+static std::vector<char> create_archive(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, const std::vector<lmnt_value>& constants, const std::vector<lmnt_instruction>& function)
 {
     const size_t name_len = strlen(def_name);
     const size_t instr_count = function.size();
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
     char* output_buffer = output_buffer_array.data();
 
     element_lmnt_compiler_ctx lmnt_ctx;
-    std::vector<lmnt_instruction> lmnt_output;
+    element_lmnt_compiled_function lmnt_output;
     std::vector<element_value> constants;
     lmnt_result lresult = LMNT_OK;
     const char* loperation = "nothing lol";
@@ -213,14 +213,13 @@ int main(int argc, char** argv)
         goto cleanup;
     }
 
-    for (const auto& in : lmnt_output)
+    for (const auto& in : lmnt_output.instructions)
     {
         printf("Instruction: %s %04X %04X %04X\n", lmnt_get_opcode_info(in.opcode)->name, in.arg1, in.arg2, in.arg3);
     }
 
     {
-        uint16_t stack_count = 8; // TODO: be able to get this out
-        auto lmnt_archive_data = create_archive("evaluate", args.size(), output.count, stack_count, constants, lmnt_output);
+        auto lmnt_archive_data = create_archive("evaluate", args.size(), output.count, lmnt_output.required_stack_count, constants, lmnt_output.instructions);
 
         std::vector<char> lmnt_stack(32768);
         lmnt_ictx lctx;

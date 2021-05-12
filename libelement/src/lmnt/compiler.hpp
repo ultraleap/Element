@@ -17,6 +17,14 @@ struct element_lmnt_compiler_ctx
     element_lmnt_compiler_optimisers optimise;
 };
 
+struct element_lmnt_compiled_function
+{
+    std::vector<lmnt_instruction> instructions;
+    size_t required_stack_count;
+    size_t inputs_count;
+    size_t outputs_count;
+};
+
 element_result element_lmnt_find_constants(
     const element_lmnt_compiler_ctx& ctx,
     const element::instruction_const_shared_ptr& instruction,
@@ -27,4 +35,4 @@ element_result element_lmnt_compile_function(
     const element::instruction_const_shared_ptr instruction,
     std::vector<element_value>& constants,
     const size_t inputs_count,
-    std::vector<lmnt_instruction>& output);
+    element_lmnt_compiled_function& output);

@@ -55,25 +55,32 @@ element_result compiler_state::use_pinned_allocation(const element::instruction*
     return ELEMENT_OK;
 }
 
-element_result compiler_state::get_stack_index(const element::instruction* in, uint16_t& index)
+element_result compiler_state::calculate_stack_index(const element::instruction* in, uint16_t& index) const
 {
     auto it = _allocations.find(in);
     if (it == _allocations.end()) return ELEMENT_ERROR_NOT_FOUND;
-    index = get_stack_index(it->second->type(), it->second->index());
+    index = calculate_stack_index(it->second->type(), it->second->index());
     return ELEMENT_OK;
 }
 
-uint16_t compiler_state::get_stack_index(const allocation_type type, uint16_t index)
+uint16_t compiler_state::calculate_stack_index(const allocation_type type, uint16_t index) const
 {
+    // if constant: index is already correct
     if (type == allocation_type::constant)
         return index;
+    // otherwise add constants count
     index += static_cast<uint16_t>(constants.size());
+    // inputs are directly after constants
     if (type == allocation_type::input)
         return index;
+    // otherwise add inputs count
     index += inputs_count;
+    // outputs are after inputs
     if (type == allocation_type::output)
         return index;
-    index += virtual_results[results[return_instruction]].count;
+    // otherwise add outputs count
+    index += virtual_results[results.at(return_instruction)].count;
+    // local stack index
     return index;
 }
 
@@ -91,7 +98,7 @@ element_result compiler_state::add_constant(element_value value, uint16_t* index
     return ELEMENT_OK;
 }
 
-element_result compiler_state::find_constant(element_value value, uint16_t& index)
+element_result compiler_state::find_constant(element_value value, uint16_t& index) const
 {
     if (auto it = std::find(constants.begin(), constants.end(), value); it != constants.end()) {
         index = static_cast<uint16_t>(std::distance(constants.begin(), it));
@@ -101,7 +108,7 @@ element_result compiler_state::find_constant(element_value value, uint16_t& inde
     }
 }
 
-element_result compiler_state::find_virtual_result(const element::instruction* in, virtual_result& vr)
+element_result compiler_state::find_virtual_result(const element::instruction* in, virtual_result& vr) const
 {
     if (auto it = results.find(in); it != results.end() && it->second < virtual_results.size()) {
         vr = virtual_results[it->second];
@@ -109,4 +116,15 @@ element_result compiler_state::find_virtual_result(const element::instruction* i
     } else {
         return ELEMENT_ERROR_NOT_FOUND;
     }
+}
+
+uint16_t compiler_state::get_max_stack_usage() const
+{
+    uint16_t cur = 0;
+    for (const auto& alloc : _allocations) {
+        if (alloc.second->type() == allocation_type::local) {
+            cur = uint16_t((std::max)(cur, uint16_t(alloc.second->index() + alloc.second->count)));
+        }
+    }
+    return cur;
 }
