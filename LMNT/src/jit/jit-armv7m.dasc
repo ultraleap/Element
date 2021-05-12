@@ -335,8 +335,8 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
 
     // Work out if we're executing a locally-defined block or an extern one
     const lmnt_code* defcode;
-    LMNT_OK_OR_RETURN(lmnt_get_code(&ctx->archive, def->code, &defcode));
-    LMNT_OK_OR_RETURN(lmnt_get_code_instructions(&ctx->archive, def->code, &state->instructions));
+    LMNT_OK_OR_RETURN(lmnt_archive_get_code(&ctx->archive, def->code, &defcode));
+    LMNT_OK_OR_RETURN(lmnt_archive_get_code_instructions(&ctx->archive, def->code, &state->instructions));
     state->in_count = defcode->instructions_count;
 
     // Nothing fancy on ARMv7-M :(
@@ -1152,7 +1152,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             lmnt_loffset def_offset = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
             const lmnt_def* def = validated_get_def(&ctx->archive, def_offset);
             const lmnt_extcall_info* extcall;
-            result = lmnt_ictx_extcall_get(ctx, def->code, &extcall);
+            result = lmnt_extcall_get(ctx, def->code, &extcall);
             if (result != LMNT_OK) break;
             // Make sure that anything the extcall has access to isn't cached
             platformWriteAndEvictByStack(state, in.arg3, in.arg3 + extcall->args_count + extcall->rvals_count);

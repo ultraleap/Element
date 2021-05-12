@@ -25,7 +25,7 @@ char mem[8192];
 lmnt_result result;
 
 // initialise interpreter context
-result = lmnt_ictx_init(&ctx, mem, sizeof(mem));
+result = lmnt_init(&ctx, mem, sizeof(mem));
 assert(result == LMNT_OK);
 
 // acquire the archive from the user
@@ -33,11 +33,11 @@ const char* archive = get_archive_from_user();
 size_t archive_size = get_archive_size_from_user();
 
 // load the archive (this can also be loaded in stages)
-result = lmnt_ictx_load_archive(&ctx, archive, archive_size);
+result = lmnt_load_archive(&ctx, archive, archive_size);
 assert(result == LMNT_OK);
 
 // prepare and validate the archive to ensure it's valid
-result = lmnt_ictx_prepare_archive(&ctx, NULL);
+result = lmnt_prepare_archive(&ctx, NULL);
 assert(result == LMNT_OK);
 
 // find the function we want to execute

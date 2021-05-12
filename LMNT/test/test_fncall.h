@@ -143,7 +143,7 @@ static void test_extcall_direct(void)
     lmnt_extcall_info extcalls[] = {
         { "extcall", 1, 1, (lmnt_extcall_fn)(&test_extcall_good) }
     };
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_extcalls_set(ctx, extcalls, 1), LMNT_OK);
+    CU_ASSERT_EQUAL_FATAL(lmnt_extcalls_set(ctx, extcalls, 1), LMNT_OK);
 
     archive a = create_archive_array_with_extcall("test", 3, 1, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x15, 0x00, 0x02)
@@ -197,7 +197,7 @@ static void test_extcall_indirect(void)
     lmnt_extcall_info extcalls[] = {
         { "extcall", 1, 1, (lmnt_extcall_fn)(&test_extcall_good) }
     };
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_extcalls_set(ctx, extcalls, 1), LMNT_OK);
+    CU_ASSERT_EQUAL_FATAL(lmnt_extcalls_set(ctx, extcalls, 1), LMNT_OK);
 
     archive a = create_archive_array_with_extcall("test", 3, 1, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x15, 0x00, 0x02)
@@ -251,7 +251,7 @@ static void test_extcall_recursion(void)
     lmnt_extcall_info extcalls[] = {
         { "extcall", 1, 1, (lmnt_extcall_fn)(&test_extcall_good) }
     };
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_extcalls_set(ctx, extcalls, 1), LMNT_OK);
+    CU_ASSERT_EQUAL_FATAL(lmnt_extcalls_set(ctx, extcalls, 1), LMNT_OK);
 
     archive a = create_archive_array_with_extcall("test", 3, 1, 4, 1, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x00, 0x00, 0x02)

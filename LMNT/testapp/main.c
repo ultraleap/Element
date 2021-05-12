@@ -152,20 +152,20 @@ int main(int argc, char** argv)
 
     lmnt_ictx ctx;
     char mem[8192];
-    lmnt_result ir = lmnt_ictx_init(&ctx, mem, sizeof(mem));
+    lmnt_result ir = lmnt_init(&ctx, mem, sizeof(mem));
     assert(ir == LMNT_OK);
 
     lmnt_extcall_info extcalls[] = {
         { "double", 1, 1, double_a_thing },
     };
-    lmnt_result xr = lmnt_ictx_extcalls_set(&ctx, extcalls, 1);
+    lmnt_result xr = lmnt_extcalls_set(&ctx, extcalls, 1);
     assert(xr == LMNT_OK);
 
-    lmnt_result lr = lmnt_ictx_load_archive(&ctx, THE_TEST, sizeof(THE_TEST));
+    lmnt_result lr = lmnt_load_archive(&ctx, THE_TEST, sizeof(THE_TEST));
     assert(lr == LMNT_OK);
 
     lmnt_validation_result lvr;
-    lmnt_result vr = lmnt_ictx_prepare_archive(&ctx, &lvr);
+    lmnt_result vr = lmnt_prepare_archive(&ctx, &lvr);
     assert(vr == LMNT_OK);
     if (vr != LMNT_OK) {
         printf("VALIDATION FAILED: %u\n", lvr);
@@ -173,7 +173,7 @@ int main(int argc, char** argv)
     }
     
     const lmnt_def* def;
-    lmnt_result dr = lmnt_find_def(&ctx.archive, THE_TEST_DEF, &def);
+    lmnt_result dr = lmnt_find_def(&ctx, THE_TEST_DEF, &def);
     assert(dr == LMNT_OK);
     if (dr != LMNT_OK) {
         printf("FAILED TO FIND DEF: %s\n", THE_TEST_DEF);
@@ -182,8 +182,8 @@ int main(int argc, char** argv)
 
     const lmnt_code* defcode;
     const lmnt_instruction* instructions;
-    lmnt_get_code(&ctx.archive, def->code, &defcode);
-    lmnt_get_code_instructions(&ctx.archive, def->code, &instructions);
+    lmnt_archive_get_code(&ctx.archive, def->code, &defcode);
+    lmnt_archive_get_code_instructions(&ctx.archive, def->code, &instructions);
 
     lmnt_value c_args[] = THE_TEST_ARGS;
     lmnt_value c_rvals[THE_TEST_RVALS_SIZE];
