@@ -26,51 +26,54 @@ lmnt_result lmnt_archive_init(lmnt_archive* archive, const char* data, size_t si
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_constant(const lmnt_archive* archive, uint32_t offset, lmnt_value* value)
+lmnt_result lmnt_archive_get_constant(const lmnt_archive* archive, uint32_t offset, lmnt_value* value)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *value = validated_get_constant(archive, offset);
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_constants(const lmnt_archive* archive, uint32_t offset, const lmnt_value** value)
+lmnt_result lmnt_archive_get_constants(const lmnt_archive* archive, uint32_t offset, const lmnt_value** value)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *value = validated_get_constants(archive, offset);
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_constants_count(const lmnt_archive* archive, lmnt_offset* value)
+lmnt_result lmnt_archive_get_constants_count(const lmnt_archive* archive, lmnt_offset* value)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *value = validated_get_constants_count(archive);
     return LMNT_OK;
 }
 
-int32_t lmnt_get_string(const lmnt_archive* archive, uint32_t offset, const char** ptr)
+int32_t lmnt_archive_get_string(const lmnt_archive* archive, uint32_t offset, const char** ptr)
 {
     LMNT_ENSURE_VALIDATED(archive);
+    if (offset + sizeof(uint16_t) >= get_header(archive)->strings_length)
+        return LMNT_ERROR_ACCESS_VIOLATION;
+
     const uint16_t size = *(uint16_t*)(get_strings_segment(archive) + offset);
     if (ptr)
         *ptr = get_strings_segment(archive) + offset + sizeof(uint16_t);
     return (int32_t)size;
 }
 
-lmnt_result lmnt_get_def(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_def** def)
+lmnt_result lmnt_archive_get_def(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_def** def)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *def = validated_get_def(archive, offset);
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_loffset** bases)
+lmnt_result lmnt_archive_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_loffset** bases)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *bases = validated_get_def_bases(archive, offset);
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code, const lmnt_instruction** instrs)
+lmnt_result lmnt_archive_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code, const lmnt_instruction** instrs)
 {
     LMNT_ENSURE_VALIDATED(archive);
     const char* const base = get_defs_segment(archive) + offset;
@@ -80,56 +83,55 @@ lmnt_result lmnt_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, 
     return LMNT_OK;
 }
 
-lmnt_result lmnt_find_def(const lmnt_archive* archive, const char* name, const lmnt_def** def)
+lmnt_result lmnt_archive_find_def(const lmnt_archive* archive, const char* name, const lmnt_def** def)
 {
     LMNT_ENSURE_VALIDATED(archive);
     const char* pos = get_defs_segment(archive);
-    const char* end = get_code_segment(archive);
+    const char* const end = get_code_segment(archive);
     while (pos < end)
     {
         uint16_t len = *(uint16_t*)(pos);
         assert(len > 0);
 
         lmnt_offset nameoffset = *(lmnt_offset*)(pos + sizeof(uint16_t));
-        const char* testname;
-        int32_t nameresult = lmnt_get_string(archive, nameoffset, &testname);
-        if (nameresult < 0) return nameresult;
-        if (strncmp(name, testname, nameresult) == 0)
-            return lmnt_get_def(archive, (lmnt_loffset)(pos - get_defs_segment(archive)), def);
+        if (strcmp(name, validated_get_string(archive, nameoffset)) == 0) {
+            *def = validated_get_def(archive, (lmnt_loffset)(pos - get_defs_segment(archive)));
+            return LMNT_OK;
+        }
         pos += len;
     }
     return LMNT_ERROR_NOT_FOUND;
 }
 
-lmnt_result lmnt_get_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code)
+lmnt_result lmnt_archive_get_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *code = validated_get_code(archive, offset);
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_code_instructions(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_instruction** instrs)
+lmnt_result lmnt_archive_get_code_instructions(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_instruction** instrs)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *instrs = validated_get_code_instructions(archive, offset);
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count)
+lmnt_result lmnt_archive_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *count = validated_get_data_sections_count(archive);
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section)
+lmnt_result lmnt_archive_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *section = validated_get_data_section(archive, index);
     return LMNT_OK;
 }
 
-lmnt_result lmnt_get_data_block(const lmnt_archive* archive, const lmnt_data_section* section, const lmnt_value** block)
+lmnt_result lmnt_archive_get_data_block(const lmnt_archive* archive, const lmnt_data_section* section, const lmnt_value** block)
 {
     LMNT_ENSURE_VALIDATED(archive);
     *block = validated_get_data_block(archive, section->offset);
@@ -137,7 +139,7 @@ lmnt_result lmnt_get_data_block(const lmnt_archive* archive, const lmnt_data_sec
 }
 
 
-lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count)
+lmnt_result lmnt_archive_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count)
 {
     LMNT_ENSURE_VALIDATED(archive);
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
@@ -190,8 +192,7 @@ lmnt_result lmnt_archive_print(const lmnt_archive* archive)
     while (offset < hdr->defs_length)
     {
         const lmnt_def* dhdr = (const lmnt_def*)(get_defs_segment(archive) + offset);
-        const char* name = "<INVALID>";
-        lmnt_get_string(archive, dhdr->name, &name);
+        const char* name = validated_get_string(archive, dhdr->name);
         if (strlen(name) == 0) name = "<anonymous>";
         LMNT_PRINTF("    [0x%04X] %s (%s)\n", offset, name, (dhdr->flags & LMNT_DEFFLAG_EXTERN) ? "extern" : ((dhdr->flags & LMNT_DEFFLAG_INTERFACE) ? "interface" : "function"));
         LMNT_PRINTF("                 Code offset: 0x%04X\n", (uint32_t)dhdr->code);
@@ -205,10 +206,10 @@ lmnt_result lmnt_archive_print(const lmnt_archive* archive)
         for (size_t i = 0; i < dhdr->bases_count; ++i)
         {
             const lmnt_def* basedef;
-            if (lmnt_get_def(archive, bases[i], &basedef) == LMNT_OK)
+            if (lmnt_archive_get_def(archive, bases[i], &basedef) == LMNT_OK)
             {
                 const char* basename = "<INVALID>";
-                lmnt_get_string(archive, basedef->name, &basename);
+                lmnt_archive_get_string(archive, basedef->name, &basename);
                 LMNT_PRINTF("                 Bases[%zu]: %s\n", i, basename);
             }
             else

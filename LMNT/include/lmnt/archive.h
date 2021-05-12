@@ -87,24 +87,24 @@ typedef struct lmnt_data_section
 lmnt_result lmnt_archive_init(lmnt_archive* archive, const char* data, size_t size);
 lmnt_result lmnt_archive_print(const lmnt_archive* archive);
 
-lmnt_result lmnt_get_constant(const lmnt_archive* archive, uint32_t offset, lmnt_value* value);
-lmnt_result lmnt_get_constants(const lmnt_archive* archive, uint32_t offset, const lmnt_value** value);
-lmnt_result lmnt_get_constants_count(const lmnt_archive* archive, lmnt_offset* value);
+lmnt_result lmnt_archive_get_constant(const lmnt_archive* archive, uint32_t offset, lmnt_value* value);
+lmnt_result lmnt_archive_get_constants(const lmnt_archive* archive, uint32_t offset, const lmnt_value** value);
+lmnt_result lmnt_archive_get_constants_count(const lmnt_archive* archive, lmnt_offset* value);
 
-int32_t lmnt_get_string(const lmnt_archive* archive, uint32_t offset, const char** ptr);
+int32_t lmnt_archive_get_string(const lmnt_archive* archive, uint32_t offset, const char** ptr);
 
-lmnt_result lmnt_get_def(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_def** def);
-lmnt_result lmnt_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code, const lmnt_instruction** instructions);
-lmnt_result lmnt_find_def(const lmnt_archive* archive, const char* name, const lmnt_def** def);
-lmnt_result lmnt_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_loffset** bases);
+lmnt_result lmnt_archive_get_def(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_def** def);
+lmnt_result lmnt_archive_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code, const lmnt_instruction** instructions);
+lmnt_result lmnt_archive_find_def(const lmnt_archive* archive, const char* name, const lmnt_def** def);
+lmnt_result lmnt_archive_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_loffset** bases);
 
-lmnt_result lmnt_get_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code);
-lmnt_result lmnt_get_code_instructions(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_instruction** instrs);
+lmnt_result lmnt_archive_get_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code);
+lmnt_result lmnt_archive_get_code_instructions(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_instruction** instrs);
 
-lmnt_result lmnt_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count);
-lmnt_result lmnt_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section);
-lmnt_result lmnt_get_data_block(const lmnt_archive* archive, const lmnt_data_section* section, const lmnt_value** block);
+lmnt_result lmnt_archive_get_data_sections_count(const lmnt_archive* archive, lmnt_offset* count);
+lmnt_result lmnt_archive_get_data_section(const lmnt_archive* archive, lmnt_offset index, const lmnt_data_section** section);
+lmnt_result lmnt_archive_get_data_block(const lmnt_archive* archive, const lmnt_data_section* section, const lmnt_value** block);
 
-lmnt_result lmnt_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count);
+lmnt_result lmnt_archive_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count);
 
 #endif

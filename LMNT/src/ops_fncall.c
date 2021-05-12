@@ -14,7 +14,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_extcall(lmnt_ictx* ctx, lmnt_offset deflo, lm
 
     // During the archive prep stage, the extcall index is put into the def's code member
     const lmnt_extcall_info* extcall;
-    LMNT_OK_OR_RETURN(lmnt_ictx_extcall_get(ctx, def->code, &extcall));
+    LMNT_OK_OR_RETURN(lmnt_extcall_get(ctx, def->code, &extcall));
 
     lmnt_value* const eargs = &ctx->stack[stack_pos];
     lmnt_value* const ervals = &ctx->stack[stack_pos + extcall->args_count];

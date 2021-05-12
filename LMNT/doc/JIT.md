@@ -7,8 +7,8 @@ The JIT makes use of [a fork of the DynASM library](https://github.com/Esvandiar
 
 ## Workflow
 
-1. The archive is loaded and validated as normal (`lmnt_ictx_load_archive`, `lmnt_ictx_prepare_archive`)
-2. The user selects an LMNT function (`lmnt_ictx_find_def`)
+1. The archive is loaded and validated as normal (`lmnt_load_archive`, `lmnt_prepare_archive`)
+2. The user selects an LMNT function (`lmnt_find_def`)
 3. This function is compiled to native code (`lmnt_jit_compile`)
 4. The user chooses the inputs to use (`lmnt_update_args`)
 5. The native function is executed instead of using the interpreter (`lmnt_jit_execute`)

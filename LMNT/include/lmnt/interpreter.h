@@ -44,41 +44,41 @@ struct lmnt_ictx
 // Initialise an interpreter context with the specified memory area and size in bytes
 // The memory space passed in must remain allocated for the lifetime of the context
 // Returns: LMNT_OK or an error
-lmnt_result lmnt_ictx_init(lmnt_ictx* ctx, char* mem, size_t mem_size);
+lmnt_result lmnt_init(lmnt_ictx* ctx, char* mem, size_t mem_size);
 
 // Load an archive into the specified interpreter context
 // This copies the contents of data into the context's memory space
 // As a result, the memory pointed to by data does not need to remain alive beyond returning from this function
 // Note that essentially no validation is performed on the archive by loading it
 // Returns: LMNT_OK or an error
-lmnt_result lmnt_ictx_load_archive(lmnt_ictx* ctx, const char* data, size_t data_size);
+lmnt_result lmnt_load_archive(lmnt_ictx* ctx, const char* data, size_t data_size);
 
 // Begin loading an archive into the specified interpreter context
 // Returns: LMNT_OK or an error
-lmnt_result lmnt_ictx_load_archive_begin(lmnt_ictx* ctx);
+lmnt_result lmnt_load_archive_begin(lmnt_ictx* ctx);
 // Appends data to the specified interpreter context's current archive
 // Returns: LMNT_OK or an error
-lmnt_result lmnt_ictx_load_archive_append(lmnt_ictx* ctx, const char* data, size_t data_size);
+lmnt_result lmnt_load_archive_append(lmnt_ictx* ctx, const char* data, size_t data_size);
 // Finishes loading the current archive into the specified interpreter context
 // Returns: LMNT_OK or an error
-lmnt_result lmnt_ictx_load_archive_end(lmnt_ictx* ctx);
+lmnt_result lmnt_load_archive_end(lmnt_ictx* ctx);
 
 // Load an archive into the specified intepreter context, using the archive data in place
 // This copies the archive's constants table into the context's memory space
 // The archive data passed in must remain alive for the duration this archive is loaded
 // Note that essentially no validation is performed on the archive by loading it
 // Returns: LMNT_OK or an error
-lmnt_result lmnt_ictx_load_inplace_archive(lmnt_ictx* ctx, const char* data, size_t data_size);
+lmnt_result lmnt_load_inplace_archive(lmnt_ictx* ctx, const char* data, size_t data_size);
 
 // Validates the archive's contents and fills in some information only available at runtime
 // The validation_result argument is optional and can be NULL
 // If a validation error occurs, this function will return LMNT_ERROR_INVALID_ARCHIVE
 // In this case, if a valid pointer has been passed in as validation_result, it will write a more detailed error
 // Returns: LMNT_OK or an error
-lmnt_result lmnt_ictx_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* validation_result);
+lmnt_result lmnt_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* validation_result);
 
-// Convenience function for lmnt_find_def
-lmnt_result lmnt_ictx_find_def(const lmnt_ictx* ctx, const char* name, const lmnt_def** def);
+// Convenience function for lmnt_archive_find_def
+lmnt_result lmnt_find_def(const lmnt_ictx* ctx, const char* name, const lmnt_def** def);
 
 LMNT_ATTR_FAST lmnt_result lmnt_update_args(
     lmnt_ictx* ctx, const lmnt_def* def,

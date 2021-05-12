@@ -6,10 +6,10 @@ The LMNT runtime can best be described as a variable-count register machine: eac
 
 These are the steps that take an LMNT runtime from having an archive sat in external memory to being ready to execute:
 
-1. Interpreter is initialised using `lmnt_ictx_init`
+1. Interpreter is initialised using `lmnt_init`
    * This involves handing the interpreter a static block of memory to work with
-1. Archive is loaded into the interpreter using `lmnt_ictx_load_archive`
-1. Archive is "prepared"/validated using `lmnt_ictx_prepare_archive`
+2. Archive is loaded into the interpreter using `lmnt_load_archive`
+3. Archive is "prepared"/validated using `lmnt_prepare_archive`
    * This performs extensive validation on the archive's contents
      * The archive header describes the size of the archive's tables
      * Each string in the strings table is checked to ensure that its length matches and that it ends with a null terminator
@@ -17,9 +17,9 @@ These are the steps that take an LMNT runtime from having an archive sat in exte
      * Code for every def is checked to ensure it does not attempt to run any illegal instructions or perform any out-of-bounds access
      * The data table is checked for consistency
      * The alignment of the data table and constants table is verified
-1. A def is located via `lmnt_ictx_find_def`
-1. The def's inputs are set via `lmnt_update_args`
-1. Either:
+4. A def is located via `lmnt_find_def`
+5. The def's inputs are set via `lmnt_update_args`
+6. Either:
    * The def can be executed in the interpreter using `lmnt_execute`
    * The def can be JIT-compiled using `lmnt_jit_compile` and then executed with `lmnt_jit_execute`
 

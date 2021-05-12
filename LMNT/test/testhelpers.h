@@ -55,7 +55,7 @@ static lmnt_ictx* create_interpreter_with_size(size_t bufsize)
 {
     lmnt_ictx* ictx = (lmnt_ictx*)malloc(sizeof(lmnt_ictx));
     char* mem = (char*)calloc(bufsize, sizeof(char));
-    if (lmnt_ictx_init(ictx, mem, bufsize) == LMNT_OK) {
+    if (lmnt_init(ictx, mem, bufsize) == LMNT_OK) {
         return ictx;
     } else {
         free(mem);

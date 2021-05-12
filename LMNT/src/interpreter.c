@@ -10,7 +10,7 @@
 extern lmnt_op_fn lmnt_op_functions[LMNT_OP_END];
 extern lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END];
 
-lmnt_result lmnt_ictx_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
+lmnt_result lmnt_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
 {
     memset(ctx, 0, sizeof(lmnt_ictx));
 
@@ -25,20 +25,20 @@ lmnt_result lmnt_ictx_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
     return LMNT_OK;
 }
 
-lmnt_result lmnt_ictx_load_archive(lmnt_ictx* ctx, const char* data, size_t data_size)
+lmnt_result lmnt_load_archive(lmnt_ictx* ctx, const char* data, size_t data_size)
 {
-    LMNT_OK_OR_RETURN(lmnt_ictx_load_archive_begin(ctx));
-    LMNT_OK_OR_RETURN(lmnt_ictx_load_archive_append(ctx, data, data_size));
-    LMNT_OK_OR_RETURN(lmnt_ictx_load_archive_end(ctx));
+    LMNT_OK_OR_RETURN(lmnt_load_archive_begin(ctx));
+    LMNT_OK_OR_RETURN(lmnt_load_archive_append(ctx, data, data_size));
+    LMNT_OK_OR_RETURN(lmnt_load_archive_end(ctx));
     return LMNT_OK;
 }
 
-lmnt_result lmnt_ictx_load_archive_begin(lmnt_ictx* ctx)
+lmnt_result lmnt_load_archive_begin(lmnt_ictx* ctx)
 {
     return lmnt_archive_init(&ctx->archive, ctx->memory_area, 0);
 }
 
-lmnt_result lmnt_ictx_load_archive_append(lmnt_ictx* ctx, const char* data, size_t data_size)
+lmnt_result lmnt_load_archive_append(lmnt_ictx* ctx, const char* data, size_t data_size)
 {
     if (data_size >= ctx->memory_area_size - ctx->archive.size)
         return LMNT_ERROR_MEMORY_SIZE;
@@ -47,18 +47,18 @@ lmnt_result lmnt_ictx_load_archive_append(lmnt_ictx* ctx, const char* data, size
     return LMNT_OK;
 }
 
-lmnt_result lmnt_ictx_load_archive_end(lmnt_ictx* ctx)
+lmnt_result lmnt_load_archive_end(lmnt_ictx* ctx)
 {
     return LMNT_OK;
 }
 
-lmnt_result lmnt_ictx_load_inplace_archive(lmnt_ictx* ctx, const char* data, size_t data_size)
+lmnt_result lmnt_load_inplace_archive(lmnt_ictx* ctx, const char* data, size_t data_size)
 {
     // Don't copy the archive in, just use it where it is
     return lmnt_archive_init(&ctx->archive, data, data_size);
 }
 
-lmnt_result lmnt_ictx_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* vresult)
+lmnt_result lmnt_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* vresult)
 {
     lmnt_validation_result vr = lmnt_archive_validate(&ctx->archive, ctx->memory_area_size, &ctx->stack_count);
     if (vresult)
@@ -83,7 +83,7 @@ lmnt_result lmnt_ictx_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* vr
     ctx->writable_stack = ctx->stack + constants_count;
 
     // fill in extern defs' code value to point to the right extcall
-    lmnt_result er = lmnt_update_def_extcalls(&ctx->archive, ctx->extcalls, ctx->extcalls_count);
+    lmnt_result er = lmnt_archive_update_def_extcalls(&ctx->archive, ctx->extcalls, ctx->extcalls_count);
     if (er != LMNT_OK)
         return LMNT_ERROR_MISSING_EXTCALL;
 
@@ -143,7 +143,7 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
     else
     {
         const lmnt_extcall_info* extcall;
-        LMNT_OK_OR_RETURN(lmnt_ictx_extcall_get(ctx, def->code, &extcall));
+        LMNT_OK_OR_RETURN(lmnt_extcall_get(ctx, def->code, &extcall));
 
         lmnt_value* const eargs = &ctx->writable_stack[0];
         lmnt_value* const ervals = &ctx->writable_stack[extcall->args_count];
@@ -221,7 +221,7 @@ lmnt_result lmnt_update_args(
     return LMNT_OK;
 }
 
-lmnt_result lmnt_ictx_find_def(const lmnt_ictx* ctx, const char* name, const lmnt_def** def)
+lmnt_result lmnt_find_def(const lmnt_ictx* ctx, const char* name, const lmnt_def** def)
 {
-    return lmnt_find_def(&ctx->archive, name, def);
+    return lmnt_archive_find_def(&ctx->archive, name, def);
 }

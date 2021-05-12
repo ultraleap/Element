@@ -15,12 +15,12 @@
 
 #undef  TEST_LOAD_ARCHIVE
 #define TEST_LOAD_ARCHIVE(ctx, name, a, fndata) \
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);\
+    CU_ASSERT_EQUAL_FATAL(lmnt_load_archive((ctx), (a).buf, (a).size), LMNT_OK);\
     {\
         lmnt_validation_result vr;\
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), LMNT_OK);\
+        CU_ASSERT_EQUAL_FATAL(lmnt_prepare_archive((ctx), &vr), LMNT_OK);\
         CU_ASSERT_EQUAL_FATAL(vr, LMNT_VALIDATION_OK);\
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_find_def((ctx), (name), &((fndata).def)), LMNT_OK);\
+        CU_ASSERT_EQUAL_FATAL(lmnt_find_def((ctx), (name), &((fndata).def)), LMNT_OK);\
         lmnt_jit_fn_data* jitfn = (lmnt_jit_fn_data*)calloc(1, sizeof(lmnt_jit_fn_data));\
         CU_ASSERT_EQUAL_FATAL(lmnt_jit_compile((ctx), (fndata).def, LMNT_JIT_TARGET_NATIVE, jitfn), LMNT_OK);\
         (fndata).data = jitfn;\
@@ -28,10 +28,10 @@
 
 #undef  TEST_LOAD_ARCHIVE_FAILS_VALIDATION
 #define TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, name, a, fndata, code, vcode) \
-    CU_ASSERT_EQUAL_FATAL(lmnt_ictx_load_archive((ctx), (a).buf, (a).size), LMNT_OK);\
+    CU_ASSERT_EQUAL_FATAL(lmnt_load_archive((ctx), (a).buf, (a).size), LMNT_OK);\
     {\
         lmnt_validation_result vr;\
-        CU_ASSERT_EQUAL_FATAL(lmnt_ictx_prepare_archive((ctx), &vr), (code));\
+        CU_ASSERT_EQUAL_FATAL(lmnt_prepare_archive((ctx), &vr), (code));\
         CU_ASSERT_EQUAL_FATAL(vr, (vcode));\
     }
 

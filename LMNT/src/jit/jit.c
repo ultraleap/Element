@@ -42,7 +42,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_jit_execute(
     else
     {
         const lmnt_extcall_info* extcall;
-        LMNT_OK_OR_RETURN(lmnt_ictx_extcall_get(ctx, def->code, &extcall));
+        LMNT_OK_OR_RETURN(lmnt_extcall_get(ctx, def->code, &extcall));
 
         lmnt_value* const eargs = &ctx->writable_stack[0];
         lmnt_value* const ervals = &ctx->writable_stack[extcall->args_count];
