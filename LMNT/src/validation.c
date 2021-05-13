@@ -27,9 +27,15 @@ static int32_t validate_string(const lmnt_archive* archive, lmnt_offset str_inde
         return LMNT_VERROR_STRING_HEADER;
     const archive_string_header* shdr = (const archive_string_header*)(get_strings_segment(archive) + str_index);
     str_index += sizeof(archive_string_header);
+    // Zero-length strings are not valid
+    if (shdr->size == 0)
+        return LMNT_VERROR_STRING_SIZE;
     // Does this string extend beyond the end of the strings segment?
     if (shdr->size > (hdr->strings_length - str_index))
         return LMNT_VERROR_STRING_SIZE;
+    // String entries must be 4-byte aligned
+    if ((sizeof(archive_string_header) + shdr->size) % 4 != 0)
+        return LMNT_VERROR_STRING_ALIGN;
     // Strings are C-strings: they must end in a null
     const char* last_char = get_strings_segment(archive) + str_index + shdr->size - 1;
     if (*last_char != '\0')
@@ -45,7 +51,7 @@ static int32_t validate_def_inner(const lmnt_archive* archive, lmnt_offset def_i
     LMNT_V_OK_OR_RETURN(check_defstack(defstack, defstack_count, def_index));
     defstack[defstack_count] = def_index;
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
-    // Do we have space for the required components?
+    // Do we have space?
     if (def_index + sizeof(lmnt_def) > hdr->defs_length)
         return LMNT_VERROR_DEF_SIZE;
     const lmnt_def* dhdr = (const lmnt_def*)(get_defs_segment(archive) + def_index);
@@ -68,22 +74,10 @@ static int32_t validate_def_inner(const lmnt_archive* archive, lmnt_offset def_i
     }
 
     // If interface/extern, check we have zero locals
-    const lmnt_offset computed_stack_count = dhdr->bases_count + dhdr->args_count + dhdr->rvals_count;
+    const lmnt_offset computed_stack_count = dhdr->args_count + dhdr->rvals_count;
     if ((dhdr->flags | (LMNT_DEFFLAG_EXTERN & LMNT_DEFFLAG_INTERFACE)) != 0 && dhdr->stack_count_unaligned != computed_stack_count)
         return LMNT_VERROR_DEF_HEADER;
-
-    // Bases
-    if (def_index + sizeof(lmnt_loffset) * dhdr->bases_count > hdr->defs_length)
-        return LMNT_VERROR_DEF_SIZE;
-    const lmnt_loffset* bases = (const lmnt_loffset*)(get_defs_segment(archive) + def_index);
-    for (size_t i = 0; i < dhdr->bases_count; ++i)
-    {
-        // Check that this base is a valid def
-        lmnt_validation_result bvresult = validate_def_inner(archive, bases[i], constants_count, rw_stack_count, defstack, defstack_count + 1);
-        if (bvresult < 0)
-            return bvresult;
-    }
-    return sizeof(lmnt_def) + (sizeof(lmnt_loffset) * dhdr->bases_count);
+    return sizeof(lmnt_def);
 }
 
 static int32_t validate_def(const lmnt_archive* archive, lmnt_offset def_index, size_t constants_count, size_t rw_stack_count)
@@ -345,13 +339,9 @@ lmnt_validation_result lmnt_archive_validate(lmnt_archive* archive, size_t memor
     if (archive->size != sizeof(lmnt_archive_header) + segs_len)
         return LMNT_VERROR_SEGMENTS_SIZE;
 
-    // The data and constants tables MUST be 4-byte aligned within the archive
-    const size_t data_idx = sizeof(lmnt_archive_header) + hdr->strings_length + hdr->defs_length + hdr->code_length;
-    if ((data_idx % 4) != 0)
-        return LMNT_VERROR_CONSTANTS_ALIGN;
-    const size_t constants_idx = sizeof(lmnt_archive_header) + hdr->strings_length + hdr->defs_length + hdr->code_length + hdr->data_length;
-    if ((constants_idx % 4) != 0)
-        return LMNT_VERROR_CONSTANTS_ALIGN;
+    // All segments must be 4-byte aligned
+    if ((hdr->strings_length | hdr->defs_length | hdr->code_length | hdr->data_length | hdr->constants_length) & 0x03)
+        return LMNT_VERROR_SEGMENTS_ALIGN;
 
     // Determine our total stack count based on available memory space and how far in the constants are
     const size_t total_stack_count = (memory_size - (get_constants_segment(archive) - archive->data)) / sizeof(lmnt_value);

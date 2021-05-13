@@ -14,6 +14,8 @@ The structure of the file is made up of multiple segments:
 * Data Table
 * Constants Table
 
+All segments must be 4-byte aligned to the start of the archive; the format provides for this without padding in most cases. Padding is prohibited except where explicitly specified.
+
 
 ### File Header
 
@@ -51,9 +53,11 @@ struct {
     char value[length];
 }
 ```
-Note that all strings are stored as UTF-8 and are C-strings (i.e. the last character must be '\0'). The length field is in bytes, **not** characters and its value includes the null terminator.
+Note that all strings are stored as UTF-8 and are C-strings (i.e. the last character must be `'\0'`). The length field is in bytes, **not** characters and its value includes the null terminator.
 
-The table consists of a set of these entries. There must not be any padding between entries or at the end of the table.
+Each entry must be aligned to 4 bytes; this must achieved by adding to length and appending zeros to the end of the string until `sizeof(uint16_t) + length` is a multiple of 4.
+
+The table consists of a set of these entries, with no intermediate padding other than that required for 4-byte alignment.
 
 
 ### Definitions Table
@@ -63,31 +67,25 @@ The definitions table contains details of each function which can be executed wi
 The format can be summarised as:
 ```c
 struct {
-    uint16_t length;
     uint16_t name;
     uint16_t flags;
     uint32_t code;
     uint16_t stack_count_unaligned;
     uint16_t stack_count_aligned;
-    uint16_t base_args_count;
     uint16_t args_count;
     uint16_t rvals_count;
-    uint8_t bases_count;
-    uint32_t bases[bases_count];
 }
 ```
 
-* `length`: the full length of this entry, in bytes. (Note: this field has become less necessary over time and may be removed.)
 * `name`: the offset (in bytes) into the string table where the name of this function can be found.
 * `flags`: a set of flags which may apply to this function.
 * `code`: an offset (in bytes) into the code table where the body of this function may be found. Unused if the `extern` flag is set.
 * `stack_count_unaligned`: the total count (in elements) of stack required for this function to execute, including arguments and return values.
 * `stack_count_aligned`: as above, but ensuring alignment for SIMD. Currently unused.
-* `base_args_count`: the total count (in elements) of arguments provided by this function's base types.
 * `args_count`: the total count (in elements) of arguments accepted by this function.
 * `rvals_count`: the total count (in elements) of values returned by this function.
 
-The table consists of a set of these entries. There must not be any padding between entries or at the end of the table.
+The table consists of a set of these entries, with no intermediate padding.
 
 
 ### Code Table
@@ -112,7 +110,7 @@ struct {
 ```
 Inputs are filled from the left, and outputs are filled from the right; thus, `arg1` and `arg2` are most commonly used for inputs and `arg3` is typically for results. For some instructions, inputs or outputs are specified across two arguments (`arg1` and `arg2` for inputs, `arg2` and `arg3` for outputs). In all of these cases, the first argument is the low half, and the second argument is the high half.
 
-The table consists of a set of these entries. Padding is allowed between entries as well as at the end of the table, where it may be necessary (see next).
+The table consists of a set of these entries, with no intermediate padding.
 
 
 ### Data Table
@@ -138,16 +136,11 @@ struct {
 
 The remainder of the table consists of the data values present in the various sections. Sections _are_ permitted to overlap, as long as the entire section starts after the metadata at the start of the table, and ends before the end of the table.
 
-**This table must be aligned to a minimum of 4 bytes within the archive data. Pad the end of the previous table if needed to achieve this.**
-
 ### Constants Table
 
 This is a table of constants used by functions within this archive. When loaded by the interpreter, the start of a function's stack will be the start of this table, allowing for easy "inline" access to these constants.
 
-The table consists of a set of deduplicated LMNT values, with no other metadata.
-
-**This table must be aligned to a minimum of 4 bytes within the archive data. Pad the end of the previous table if needed to achieve this.**
-
+The table consists of a set of deduplicated `lmnt_value` objects, with no other metadata.
 
 ### Instructions
 

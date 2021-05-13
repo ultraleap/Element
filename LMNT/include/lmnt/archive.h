@@ -48,16 +48,13 @@ enum
 
 typedef struct lmnt_def
 {
-    uint16_t length;
     lmnt_offset name; // string
     lmnt_def_flags flags;
     lmnt_loffset code; // code
     uint16_t stack_count_unaligned;
     uint16_t stack_count_aligned;
-    uint16_t base_args_count;
     uint16_t args_count;
     uint16_t rvals_count;
-    uint8_t bases_count;
 } lmnt_def;
 
 typedef struct lmnt_instruction
@@ -97,7 +94,6 @@ int32_t lmnt_archive_get_string(const lmnt_archive* archive, uint32_t offset, co
 lmnt_result lmnt_archive_get_def(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_def** def);
 lmnt_result lmnt_archive_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code, const lmnt_instruction** instructions);
 lmnt_result lmnt_archive_find_def(const lmnt_archive* archive, const char* name, const lmnt_def** def);
-lmnt_result lmnt_archive_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_loffset** bases);
 
 lmnt_result lmnt_archive_get_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code);
 lmnt_result lmnt_archive_get_code_instructions(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_instruction** instrs);

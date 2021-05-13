@@ -86,11 +86,6 @@ static inline const lmnt_def* validated_get_def(const lmnt_archive* archive, lmn
     return (const lmnt_def*)(get_defs_segment(archive) + offset);
 }
 
-static inline const lmnt_loffset* validated_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset)
-{
-    return (const lmnt_loffset*)(get_defs_segment(archive) + offset + sizeof(lmnt_def));
-}
-
 static inline const lmnt_code* validated_get_code(const lmnt_archive* archive, lmnt_loffset offset)
 {
     return (const lmnt_code*)(get_code_segment(archive) + offset);
