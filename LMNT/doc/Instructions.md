@@ -1193,7 +1193,7 @@ Summarily: this functionality is discouraged in most cases, but can allow for a 
 ```c
     def_address = (arg1 | (arg2 << sizeof(arg1)))
     def = find_extern(def_address)
-    if (!function) error(LMNT_ERROR_NOT_FOUND)
+    if (!def.function) error(LMNT_ERROR_NOT_FOUND)
     args = stack + arg3
     rvals = stack + arg3 + def.args_count
     def.function(args, def.args_count, rvals, def.rvals_count)

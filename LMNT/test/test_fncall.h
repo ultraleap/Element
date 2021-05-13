@@ -25,17 +25,18 @@ static const char extcall_name[] = "extcall";
 static archive create_archive_array_with_extcall(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t data_count, uint32_t consts_count, ...)
 {
     const size_t name_len = strlen(def_name);
+    const size_t name_len_padded = LMNT_ROUND_UP(0x02 + name_len + 1, 4) - 2;
     const size_t extname_len = strlen(extcall_name);
-    assert(name_len <= 0xFE);
+    const size_t extname_len_padded = LMNT_ROUND_UP(0x02 + extname_len + 1, 4) - 2;
+    assert(name_len_padded <= 0xFD);
+    assert(extname_len_padded <= 0xFD);
     assert(instr_count <= 0x3FFFFFF0);
     assert(consts_count <= 0x3FFFFFFF);
 
     const size_t header_len = 0x1C;
-    const size_t strings_len = (0x02 + name_len + 1) + (0x02 + extname_len + 1);
-    const size_t defs_len = 0x15 * 2;
-    uint32_t code_len = 0x04 + instr_count * sizeof(lmnt_instruction);
-    const uint32_t code_padding = (4 - ((header_len + strings_len + defs_len + code_len) % 4)) % 4;
-    code_len += code_padding;
+    const size_t strings_len = 0x02 + name_len_padded + 0x02 + extname_len_padded;
+    const size_t defs_len = 0x10 * 2;
+    const uint32_t code_len = 0x04 + instr_count * sizeof(lmnt_instruction);
     const lmnt_loffset data_sec_count = (data_count > 0);
     uint32_t data_len = 0x04 + data_sec_count * (0x08 + 0x04 * data_count);
     const uint32_t consts_len = consts_count * sizeof(lmnt_value);
@@ -56,43 +57,42 @@ static archive create_archive_array_with_extcall(const char* def_name, uint16_t 
     memcpy(buf + idx, header, sizeof(header));
     idx += sizeof(header);
 
-    buf[idx] = (name_len + 1) & 0xFF;
+    buf[idx] = (name_len_padded) & 0xFF;
     idx += 2;
     memcpy(buf + idx, def_name, name_len);
     idx += name_len;
-    buf[idx++] = '\0';
-    buf[idx] = (extname_len + 1) & 0xFF;
+    for (size_t i = name_len; i < name_len_padded; ++i)
+        buf[idx++] = '\0';
+    assert(idx % 4 == 0);
+
+    buf[idx] = (extname_len_padded) & 0xFF;
     idx += 2;
     memcpy(buf + idx, extcall_name, extname_len);
     idx += extname_len;
-    buf[idx++] = '\0';
+    for (size_t i = extname_len; i < extname_len_padded; ++i)
+        buf[idx++] = '\0';
+    assert(idx % 4 == 0);
 
     const char def[] = {
-        0x15, 0x00, // defs[0].length
         0x00, 0x00, // defs[0].name
         0x00, 0x00, // defs[0].flags
         0x00, 0x00, 0x00, 0x00, // defs[0].code
         stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_unaligned
         stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_aligned
-        0x00, 0x00, // defs[0].base_args_count
         args_count & 0xFF, (args_count >> 8) & 0xFF, // defs[0].args_count
         rvals_count & 0xFF, (rvals_count >> 8) & 0xFF, // defs[0].rvals_count
-        0x00        // defs[0].bases_count
     };
     memcpy(buf + idx, def, sizeof(def));
     idx += sizeof(def);
 
     const char extcall[] = {
-        0x15, 0x00, // defs[1].length
-        (uint8_t)(0x02 + name_len + 1), 0x00, // defs[1].name
+        (uint8_t)(0x02 + name_len_padded), 0x00, // defs[1].name
         LMNT_DEFFLAG_EXTERN, 0x00, // defs[1].flags
         0x00, 0x00, 0x00, 0x00, // defs[1].code
         0x02, 0x00, // defs[1].stack_count_unaligned
         0x02, 0x00, // defs[1].stack_count_aligned
-        0x00, 0x00, // defs[1].base_args_count
         0x01, 0x00, // defs[1].args_count
         0x01, 0x00, // defs[1].rvals_count
-        0x00        // defs[1].bases_count
     };
     memcpy(buf + idx, extcall, sizeof(extcall));
     idx += sizeof(extcall);
@@ -108,7 +108,6 @@ static archive create_archive_array_with_extcall(const char* def_name, uint16_t 
         }
     }
 
-    idx += code_padding;
     memcpy(buf + idx, (const char*)(&data_sec_count), sizeof(lmnt_loffset));
     idx += sizeof(lmnt_loffset);
     if (data_sec_count) {
@@ -146,7 +145,7 @@ static void test_extcall_direct(void)
     CU_ASSERT_EQUAL_FATAL(lmnt_extcalls_set(ctx, extcalls, 1), LMNT_OK);
 
     archive a = create_archive_array_with_extcall("test", 3, 1, 4, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x15, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x10, 0x00, 0x02)
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "extcall", a, fndata);
@@ -181,7 +180,7 @@ static void test_extcall_direct(void)
     extcalls[0].function = (lmnt_extcall_fn)(&test_extcall_bad);
 
     a = create_archive_array_with_extcall("test", 3, 1, 4, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x15, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x10, 0x00, 0x02)
     );
     TEST_LOAD_ARCHIVE(ctx, "extcall", a, fndata);
     delete_archive_array(a);
@@ -200,7 +199,7 @@ static void test_extcall_indirect(void)
     CU_ASSERT_EQUAL_FATAL(lmnt_extcalls_set(ctx, extcalls, 1), LMNT_OK);
 
     archive a = create_archive_array_with_extcall("test", 3, 1, 4, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x15, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x10, 0x00, 0x02)
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -235,7 +234,7 @@ static void test_extcall_indirect(void)
     extcalls[0].function = (lmnt_extcall_fn)(&test_extcall_bad);
 
     a = create_archive_array_with_extcall("test", 3, 1, 4, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x15, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x10, 0x00, 0x02)
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);

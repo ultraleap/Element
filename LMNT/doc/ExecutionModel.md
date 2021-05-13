@@ -13,7 +13,7 @@ These are the steps that take an LMNT runtime from having an archive sat in exte
    * This performs extensive validation on the archive's contents
      * The archive header describes the size of the archive's tables
      * Each string in the strings table is checked to ensure that its length matches and that it ends with a null terminator
-     * Each def entry is checked to ensure it is internally consistent and any bases described are also valid defs
+     * Each def entry is checked to ensure it is internally consistent
      * Code for every def is checked to ensure it does not attempt to run any illegal instructions or perform any out-of-bounds access
      * The data table is checked for consistency
      * The alignment of the data table and constants table is verified

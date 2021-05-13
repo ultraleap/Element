@@ -66,13 +66,6 @@ lmnt_result lmnt_archive_get_def(const lmnt_archive* archive, lmnt_loffset offse
     return LMNT_OK;
 }
 
-lmnt_result lmnt_archive_get_def_bases(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_loffset** bases)
-{
-    LMNT_ENSURE_VALIDATED(archive);
-    *bases = validated_get_def_bases(archive, offset);
-    return LMNT_OK;
-}
-
 lmnt_result lmnt_archive_get_def_code(const lmnt_archive* archive, lmnt_loffset offset, const lmnt_code** code, const lmnt_instruction** instrs)
 {
     LMNT_ENSURE_VALIDATED(archive);
@@ -90,15 +83,12 @@ lmnt_result lmnt_archive_find_def(const lmnt_archive* archive, const char* name,
     const char* const end = get_code_segment(archive);
     while (pos < end)
     {
-        uint16_t len = *(uint16_t*)(pos);
-        assert(len > 0);
-
-        lmnt_offset nameoffset = *(lmnt_offset*)(pos + sizeof(uint16_t));
+        const lmnt_offset nameoffset = *(lmnt_offset*)(pos);
         if (strcmp(name, validated_get_string(archive, nameoffset)) == 0) {
             *def = validated_get_def(archive, (lmnt_loffset)(pos - get_defs_segment(archive)));
             return LMNT_OK;
         }
-        pos += len;
+        pos += sizeof(lmnt_def);
     }
     return LMNT_ERROR_NOT_FOUND;
 }
@@ -142,6 +132,10 @@ lmnt_result lmnt_archive_get_data_block(const lmnt_archive* archive, const lmnt_
 lmnt_result lmnt_archive_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count)
 {
     LMNT_ENSURE_VALIDATED(archive);
+    // we shouldn't be overwriting an in-place archive, fail
+    if (archive->flags & LMNT_ARCHIVE_INPLACE)
+        return LMNT_ERROR_ACCESS_VIOLATION;
+
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
     archive->flags &= ~LMNT_ARCHIVE_USES_EXTCALLS; // reset flag before checking below
     size_t defindex = 0;
@@ -153,12 +147,15 @@ lmnt_result lmnt_archive_update_def_extcalls(lmnt_archive* archive, const lmnt_e
         {
             const char* name = validated_get_string(archive, def->name);
             size_t index;
-            LMNT_OK_OR_RETURN(lmnt_extcall_find_index(table, table_count, name, def->args_count, def->rvals_count, &index));
+            lmnt_result fir = lmnt_extcall_find_index(table, table_count, name, def->args_count, def->rvals_count, &index);
+            if (fir != LMNT_OK)
+                return LMNT_ERROR_MISSING_EXTCALL;
+
             def->code = (lmnt_loffset)index;
             // Mark archive as using extcalls
             archive->flags |= LMNT_ARCHIVE_USES_EXTCALLS;
         }
-        defindex += def->length;
+        defindex += sizeof(lmnt_def);
     }
     return LMNT_OK;
 }
@@ -197,27 +194,9 @@ lmnt_result lmnt_archive_print(const lmnt_archive* archive)
         LMNT_PRINTF("    [0x%04X] %s (%s)\n", offset, name, (dhdr->flags & LMNT_DEFFLAG_EXTERN) ? "extern" : ((dhdr->flags & LMNT_DEFFLAG_INTERFACE) ? "interface" : "function"));
         LMNT_PRINTF("                 Code offset: 0x%04X\n", (uint32_t)dhdr->code);
         LMNT_PRINTF("                 Stack count: %u / %u\n", (uint32_t)dhdr->stack_count_unaligned, (uint32_t)dhdr->stack_count_aligned);
-        LMNT_PRINTF("                 Bases count: %u\n", (uint32_t)dhdr->bases_count);
         LMNT_PRINTF("                 Args count: %u\n", (uint32_t)dhdr->args_count);
         LMNT_PRINTF("                 RVals count: %u\n", (uint32_t)dhdr->rvals_count);
         offset += sizeof(lmnt_def);
-
-        const lmnt_loffset* bases = (const lmnt_loffset*)(get_defs_segment(archive) + offset);
-        for (size_t i = 0; i < dhdr->bases_count; ++i)
-        {
-            const lmnt_def* basedef;
-            if (lmnt_archive_get_def(archive, bases[i], &basedef) == LMNT_OK)
-            {
-                const char* basename = "<INVALID>";
-                lmnt_archive_get_string(archive, basedef->name, &basename);
-                LMNT_PRINTF("                 Bases[%zu]: %s\n", i, basename);
-            }
-            else
-            {
-                LMNT_PRINTF("                 Bases[%zu]: <INVALID-DEF>\n", i);
-            }
-        }
-        offset += sizeof(lmnt_loffset) * dhdr->bases_count;
     }
 
     LMNT_PRINTF("\nCode\n");

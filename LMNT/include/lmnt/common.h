@@ -9,51 +9,52 @@
 // Possible enum values for lmnt_result
 enum
 {
-    LMNT_OK                       =   0,
-    LMNT_INTERRUPTED              =  -1,
-    LMNT_ERROR_INVALID_PTR        =  -2,
-    LMNT_ERROR_INVALID_SIZE       =  -3,
-    LMNT_ERROR_INVALID_ARCHIVE    =  -4,
-    LMNT_ERROR_STACK_DEPTH        =  -5,
-    LMNT_ERROR_STACK_SIZE         =  -6,
-    LMNT_ERROR_STACK_IN_USE       =  -7,
-    LMNT_ERROR_ARGS_MISMATCH      =  -8,
-    LMNT_ERROR_RVALS_MISMATCH     =  -9,
-    LMNT_ERROR_DEF_MISMATCH       = -10,
-    LMNT_ERROR_NOT_FOUND          = -11,
-    LMNT_ERROR_NO_IMPL            = -12,
-    LMNT_ERROR_ACCESS_VIOLATION   = -13,
-    LMNT_ERROR_MEMORY_SIZE        = -14,
-    LMNT_ERROR_MISSING_EXTCALL    = -15,
-    LMNT_ERROR_FEATURE_DISABLED   = -16,
-    LMNT_ERROR_UNPREPARED_ARCHIVE = -17,
-    LMNT_ERROR_INTERNAL           = -1024,
+    LMNT_OK                       =  0x00,
+    LMNT_INTERRUPTED              = -0x01,
+    LMNT_ERROR_INVALID_PTR        = -0x02,
+    LMNT_ERROR_INVALID_SIZE       = -0x03,
+    LMNT_ERROR_INVALID_ARCHIVE    = -0x04,
+    LMNT_ERROR_STACK_DEPTH        = -0x10,
+    LMNT_ERROR_STACK_SIZE         = -0x11,
+    LMNT_ERROR_STACK_IN_USE       = -0x12,
+    LMNT_ERROR_ARGS_MISMATCH      = -0x20,
+    LMNT_ERROR_RVALS_MISMATCH     = -0x21,
+    LMNT_ERROR_DEF_MISMATCH       = -0x22,
+    LMNT_ERROR_NOT_FOUND          = -0x30,
+    LMNT_ERROR_ACCESS_VIOLATION   = -0x40,
+    LMNT_ERROR_MEMORY_SIZE        = -0x41,
+    LMNT_ERROR_MISSING_EXTCALL    = -0x50,
+    LMNT_ERROR_FEATURE_DISABLED   = -0x51,
+    LMNT_ERROR_UNPREPARED_ARCHIVE = -0x60,
+    LMNT_ERROR_INTERNAL           = -0xF0,
+    LMNT_ERROR_NO_IMPL            = -0xF1,
     // These error codes are only used internally
-    LMNT_BRANCHING                = -65536,
-    LMNT_RETURNING                = -65537,
+    LMNT_BRANCHING                = -0x10000,
+    LMNT_RETURNING                = -0x10001,
 };
 
 // Possible enum values for lmnt_validation_result
 enum
 {
-    LMNT_VALIDATION_OK           =   0,
-    LMNT_VERROR_STRING_HEADER    =  -1,
-    LMNT_VERROR_STRING_SIZE      =  -2,
-    LMNT_VERROR_STRING_DATA      =  -3,
-    LMNT_VERROR_DEF_HEADER       =  -4,
-    LMNT_VERROR_DEF_FLAGS        =  -5,
-    LMNT_VERROR_DEF_SIZE         =  -6,
-    LMNT_VERROR_DEF_CYCLIC       =  -7,
-    LMNT_VERROR_ACCESS_VIOLATION =  -8,
-    LMNT_VERROR_BAD_INSTRUCTION  =  -9,
-    LMNT_VERROR_CODE_HEADER      = -10,
-    LMNT_VERROR_CODE_SIZE        = -11,
-    LMNT_VERROR_HEADER_MAGIC     = -12,
-    LMNT_VERROR_SEGMENTS_SIZE    = -13,
-    LMNT_VERROR_CONSTANTS_ALIGN  = -14,
-    LMNT_VERROR_STACK_SIZE       = -15,
-    LMNT_VERROR_STACK_DEPTH      = -16,
-    LMNT_VERROR_NO_IMPL          = -17, // get rid of this at some point
+    LMNT_VALIDATION_OK           =  0x00,
+    LMNT_VERROR_STRING_HEADER    = -0x10,
+    LMNT_VERROR_STRING_SIZE      = -0x11,
+    LMNT_VERROR_STRING_DATA      = -0x12,
+    LMNT_VERROR_STRING_ALIGN     = -0x13,
+    LMNT_VERROR_DEF_HEADER       = -0x20,
+    LMNT_VERROR_DEF_FLAGS        = -0x21,
+    LMNT_VERROR_DEF_SIZE         = -0x22,
+    LMNT_VERROR_DEF_CYCLIC       = -0x23,
+    LMNT_VERROR_ACCESS_VIOLATION = -0x30,
+    LMNT_VERROR_BAD_INSTRUCTION  = -0x31,
+    LMNT_VERROR_CODE_HEADER      = -0x40,
+    LMNT_VERROR_CODE_SIZE        = -0x41,
+    LMNT_VERROR_HEADER_MAGIC     = -0x50,
+    LMNT_VERROR_SEGMENTS_SIZE    = -0x51,
+    LMNT_VERROR_SEGMENTS_ALIGN   = -0x52,
+    LMNT_VERROR_STACK_SIZE       = -0x60,
+    LMNT_VERROR_STACK_DEPTH      = -0x61,
+    LMNT_VERROR_NO_IMPL          = -0xF1, // get rid of this at some point
 };
 
 // Result type returned by most library operations
@@ -97,6 +98,8 @@ typedef struct lmnt_ictx lmnt_ictx;
 }
 
 #define LMNT_COMBINE_OFFSET(lo, hi) (lo | (hi << (sizeof(lmnt_offset) * CHAR_BIT)))
+
+#define LMNT_ROUND_UP(n, d) ((n) + ((d) - ((n) % (d))))
 
 // MSVC does not currently include the C11-standard _Static_assert, only the C++-style variant
 #if defined(_MSC_VER)
