@@ -55,7 +55,9 @@ lmnt_result lmnt_load_archive_end(lmnt_ictx* ctx)
 lmnt_result lmnt_load_inplace_archive(lmnt_ictx* ctx, const char* data, size_t data_size)
 {
     // Don't copy the archive in, just use it where it is
-    return lmnt_archive_init(&ctx->archive, data, data_size);
+    LMNT_OK_OR_RETURN(lmnt_archive_init(&ctx->archive, data, data_size));
+    ctx->archive.flags |= LMNT_ARCHIVE_INPLACE;
+    return LMNT_OK;
 }
 
 lmnt_result lmnt_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* vresult)
@@ -67,7 +69,7 @@ lmnt_result lmnt_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* vresult
         return LMNT_ERROR_INVALID_ARCHIVE;
 
     const size_t constants_count = validated_get_constants_count(&ctx->archive);
-    if ((ctx->archive.data >= ctx->memory_area) && (ctx->archive.data < ctx->memory_area + ctx->memory_area_size))
+    if (!(ctx->archive.flags & LMNT_ARCHIVE_INPLACE))
     {
         // Archive is loaded into our memory space
         // Constants are therefore already in the right place, and the stack starts with them

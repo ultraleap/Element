@@ -12,6 +12,7 @@ enum
     LMNT_ARCHIVE_NONE          = (0U << 0),
     LMNT_ARCHIVE_VALIDATED     = (1U << 0),
     LMNT_ARCHIVE_USES_EXTCALLS = (1U << 1),
+    LMNT_ARCHIVE_INPLACE       = (1U << 2),
 };
 
 typedef struct lmnt_archive

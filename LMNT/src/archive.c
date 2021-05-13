@@ -142,6 +142,10 @@ lmnt_result lmnt_archive_get_data_block(const lmnt_archive* archive, const lmnt_
 lmnt_result lmnt_archive_update_def_extcalls(lmnt_archive* archive, const lmnt_extcall_info* table, size_t table_count)
 {
     LMNT_ENSURE_VALIDATED(archive);
+    // we shouldn't be overwriting an in-place archive, fail
+    if (archive->flags & LMNT_ARCHIVE_INPLACE)
+        return LMNT_ERROR_ACCESS_VIOLATION;
+
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
     archive->flags &= ~LMNT_ARCHIVE_USES_EXTCALLS; // reset flag before checking below
     size_t defindex = 0;
