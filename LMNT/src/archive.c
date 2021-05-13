@@ -157,7 +157,10 @@ lmnt_result lmnt_archive_update_def_extcalls(lmnt_archive* archive, const lmnt_e
         {
             const char* name = validated_get_string(archive, def->name);
             size_t index;
-            LMNT_OK_OR_RETURN(lmnt_extcall_find_index(table, table_count, name, def->args_count, def->rvals_count, &index));
+            lmnt_result fir = lmnt_extcall_find_index(table, table_count, name, def->args_count, def->rvals_count, &index);
+            if (fir != LMNT_OK)
+                return LMNT_ERROR_MISSING_EXTCALL;
+
             def->code = (lmnt_loffset)index;
             // Mark archive as using extcalls
             archive->flags |= LMNT_ARCHIVE_USES_EXTCALLS;

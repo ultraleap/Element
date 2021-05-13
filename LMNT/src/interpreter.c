@@ -85,9 +85,7 @@ lmnt_result lmnt_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* vresult
     ctx->writable_stack = ctx->stack + constants_count;
 
     // fill in extern defs' code value to point to the right extcall
-    lmnt_result er = lmnt_archive_update_def_extcalls(&ctx->archive, ctx->extcalls, ctx->extcalls_count);
-    if (er != LMNT_OK)
-        return LMNT_ERROR_MISSING_EXTCALL;
+    LMNT_OK_OR_RETURN(lmnt_archive_update_def_extcalls(&ctx->archive, ctx->extcalls, ctx->extcalls_count));
 
     return LMNT_OK;
 }
