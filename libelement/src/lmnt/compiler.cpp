@@ -751,7 +751,7 @@ static element_result create_virtual_indexer(
     virtual_result& result)
 {
     virtual_result for_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.for_instruction.get(), for_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.for_instruction().get(), for_vr));
     if (ei.index >= for_vr.count)
         return ELEMENT_ERROR_UNKNOWN;
 
@@ -766,10 +766,10 @@ static element_result prepare_virtual_indexer(
     const element::instruction_indexer& ei,
     virtual_result& vr)
 {
-    ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, ei.for_instruction.get()));
-    state.use_allocation(&ei, ei.for_instruction.get());
+    ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, ei.for_instruction().get()));
+    state.use_allocation(&ei, ei.for_instruction().get());
     // TODO: verify this is a good idea
-    state.set_allocation_parent(&ei, ei.for_instruction.get(), ei.index);
+    state.set_allocation_parent(&ei, ei.for_instruction().get(), ei.index);
     return ELEMENT_OK;
 }
 
@@ -790,9 +790,9 @@ static element_result compile_indexer(
     std::vector<lmnt_instruction>& output)
 {
     virtual_result for_vr;
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(ei.for_instruction.get(), for_vr));
+    ELEMENT_OK_OR_RETURN(state.find_virtual_result(ei.for_instruction().get(), for_vr));
     uint16_t for_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(ei.for_instruction.get(), for_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(ei.for_instruction().get(), for_stack_idx));
 
     const uint16_t for_entry_idx = static_cast<uint16_t>(for_stack_idx + ei.index);
     copy_stack_values(for_entry_idx, stack_idx, 1, output);
@@ -810,23 +810,23 @@ static element_result create_virtual_select(
     virtual_result& result)
 {
     virtual_result selector_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, es.selector.get(), selector_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, es.selector().get(), selector_vr));
     if (selector_vr.count != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
-    if (es.options.empty())
+    if (es.options_count() == 0)
         return ELEMENT_ERROR_UNKNOWN;
 
     ELEMENT_OK_OR_RETURN(state.add_constant(0));
     ELEMENT_OK_OR_RETURN(state.add_constant(1));
-    ELEMENT_OK_OR_RETURN(state.add_constant(element_value(es.options.size() - 1)));
+    ELEMENT_OK_OR_RETURN(state.add_constant(element_value(es.options_count() - 1)));
 
     uint16_t max_count = 0;
     uint16_t index = 0;
-    for (const auto& o : es.options)
+    for (size_t i = 0; i < es.options_count(); ++i)
     {
         virtual_result option_vr;
-        ELEMENT_OK_OR_RETURN(create_virtual_result(state, o.get(), option_vr));
+        ELEMENT_OK_OR_RETURN(create_virtual_result(state, es.options_at(i).get(), option_vr));
         max_count = (std::max)(max_count, static_cast<uint16_t>(option_vr.count));
     }
 
@@ -841,14 +841,15 @@ static element_result prepare_virtual_select(
     const element::instruction_select& es,
     virtual_result& vr)
 {
-    ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.selector.get()));
+    ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.selector().get()));
     ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&es, vr.count));
-    state.use_allocation(&es, es.selector.get());
-    for (const auto& o : es.options)
+    state.use_allocation(&es, es.selector().get());
+    const size_t opts_size = es.options_count();
+    for (size_t i = 0; i < opts_size; ++i)
     {
-        ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, o.get()));
+        ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.options_at(i).get()));
         // TODO: handle failure (copy in?)
-        state.set_allocation_parent(o.get(), &es, 0);
+        state.set_allocation_parent(es.options_at(i).get(), &es, 0);
     }
     return ELEMENT_OK;
 }
@@ -869,17 +870,17 @@ static element_result compile_select(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    const size_t opts_size = es.options.size();
+    const size_t opts_size = es.options_count();
     uint16_t zero_idx, one_idx, last_valid_idx;
     ELEMENT_OK_OR_RETURN(state.find_constant(0, zero_idx));
     ELEMENT_OK_OR_RETURN(state.find_constant(1, one_idx));
     ELEMENT_OK_OR_RETURN(state.find_constant(element_value(opts_size - 1), last_valid_idx));
 
     virtual_result selector_vr;
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.selector.get(), selector_vr));
+    ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.selector().get(), selector_vr));
     uint16_t selector_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.selector.get(), selector_stack_idx));
-    ELEMENT_OK_OR_RETURN(compile_instruction(state, es.selector.get(), output));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.selector().get(), selector_stack_idx));
+    ELEMENT_OK_OR_RETURN(compile_instruction(state, es.selector().get(), output));
     // clamp in range and ensure it's an integer
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
     output.emplace_back(lmnt_instruction{LMNT_OP_MAXSS,  selector_stack_idx, zero_idx, stack_idx});
@@ -895,7 +896,7 @@ static element_result compile_select(
     }
 
     uint16_t option0_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options[0].get(), option0_stack_idx));
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(0).get(), option0_stack_idx));
     const bool stacked = (option0_stack_idx == stack_idx);
 
     std::vector<size_t> option_branch_indexes(opts_size);
@@ -903,15 +904,15 @@ static element_result compile_select(
     for (size_t i = 0; i < opts_size; ++i)
     {
         virtual_result option_vr;
-        ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.options[i].get(), option_vr));
+        ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.options_at(i).get(), option_vr));
         uint16_t option_stack_idx;
-        ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options[i].get(), option_stack_idx));
+        ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(i).get(), option_stack_idx));
 
         const size_t option_idx = output.size();
         // fill in the target index for this branch option
         output[branches_start_idx + i*3 + 1].arg2 = U16_LO(option_idx);
         output[branches_start_idx + i*3 + 1].arg3 = U16_HI(option_idx);
-        ELEMENT_OK_OR_RETURN(compile_instruction(state, es.options[i].get(), output));
+        ELEMENT_OK_OR_RETURN(compile_instruction(state, es.options_at(i).get(), output));
         copy_stack_values(option_stack_idx, stack_idx, option_vr.count, output);
         option_branch_indexes[i] = output.size();
         output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, 0, 0}); // target filled in later
@@ -1171,6 +1172,6 @@ element_result element_lmnt_compile_function(
     output.inputs_count = inputs_count;
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(instruction.get(), vr));
     output.outputs_count = vr.count;
-    output.required_stack_count = state.get_max_stack_usage();
+    output.local_stack_count = state.get_max_stack_usage();
     return ELEMENT_OK;
 }

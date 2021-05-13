@@ -20,9 +20,11 @@ struct element_lmnt_compiler_ctx
 struct element_lmnt_compiled_function
 {
     std::vector<lmnt_instruction> instructions;
-    size_t required_stack_count;
+    size_t local_stack_count;
     size_t inputs_count;
     size_t outputs_count;
+
+    size_t total_stack_count() const { return inputs_count + outputs_count + local_stack_count; }
 };
 
 element_result element_lmnt_find_constants(

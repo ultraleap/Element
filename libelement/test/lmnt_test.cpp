@@ -59,22 +59,21 @@ void log_callback(const element_log_message* msg, void* user_data)
 static std::vector<char> create_archive(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, const std::vector<lmnt_value>& constants, const std::vector<lmnt_instruction>& function)
 {
     const size_t name_len = strlen(def_name);
+    const size_t name_len_padded = LMNT_ROUND_UP(0x02 + name_len + 1, 4) - 2;
     const size_t instr_count = function.size();
     const size_t consts_count = constants.size();
     const size_t data_count = 0;
-    assert(name_len <= 0xFE);
+    assert(name_len_padded <= 0xFD);
     assert(instr_count <= 0x3FFFFFF0);
     assert(consts_count <= 0x3FFFFFFF);
 
     const size_t header_len = 0x1C;
-    const size_t strings_len = 0x02 + name_len + 1;
-    const size_t defs_len = 0x15;
-    uint32_t code_len = 0x04 + instr_count * sizeof(lmnt_instruction);
-    const uint32_t code_padding = (4 - ((header_len + strings_len + defs_len + code_len) % 4)) % 4;
-    code_len += code_padding;
+    const size_t strings_len = 0x02 + name_len_padded;
+    const size_t defs_len = 0x10;
+    const size_t code_len = 0x04 + instr_count * sizeof(lmnt_instruction);
     const lmnt_loffset data_sec_count = 0;
-    uint32_t data_len = 0x04 + data_sec_count * (0x08 + 0x04 * data_count);
-    const uint32_t consts_len = consts_count * sizeof(lmnt_value);
+    const size_t data_len = 0x04 + data_sec_count * (0x08 + 0x04 * data_count);
+    const size_t consts_len = consts_count * sizeof(lmnt_value);
 
     const size_t total_size = header_len + strings_len + defs_len + code_len + data_len + consts_len;
     std::vector<char> buf;
@@ -84,33 +83,31 @@ static std::vector<char> create_archive(const char* def_name, uint16_t args_coun
     const char header[] = {
         'L', 'M', 'N', 'T',
         0x00, 0x00, 0x00, 0x00,
-        strings_len & 0xFF, (strings_len >> 8) & 0xFF, (strings_len >> 16) & 0xFF, (strings_len >> 24) & 0xFF, // strings length
-        defs_len & 0xFF, (defs_len >> 8) & 0xFF, (defs_len >> 16) & 0xFF, (defs_len >> 24) & 0xFF,             // defs length
-        code_len & 0xFF, (code_len >> 8) & 0xFF, (code_len >> 16) & 0xFF, (code_len >> 24) & 0xFF,             // code length
-        data_len & 0xFF, (data_len >> 8) & 0xFF, (data_len >> 16) & 0xFF, (data_len >> 24) & 0xFF,             // data length
-        consts_len & 0xFF, (consts_len >> 8) & 0xFF, (consts_len >> 16) & 0xFF, (consts_len >> 24) & 0xFF      // constants_length
+        char(strings_len & 0xFF), char((strings_len >> 8) & 0xFF), char((strings_len >> 16) & 0xFF), char((strings_len >> 24) & 0xFF), // strings length
+        char(defs_len & 0xFF), char((defs_len >> 8) & 0xFF), char((defs_len >> 16) & 0xFF), char((defs_len >> 24) & 0xFF),             // defs length
+        char(code_len & 0xFF), char((code_len >> 8) & 0xFF), char((code_len >> 16) & 0xFF), char((code_len >> 24) & 0xFF),             // code length
+        char(data_len & 0xFF), char((data_len >> 8) & 0xFF), char((data_len >> 16) & 0xFF), char((data_len >> 24) & 0xFF),             // data length
+        char(consts_len & 0xFF), char((consts_len >> 8) & 0xFF), char((consts_len >> 16) & 0xFF), char((consts_len >> 24) & 0xFF)      // constants_length
     };
     memcpy(buf.data() + idx, header, sizeof(header));
     idx += sizeof(header);
 
-    buf[idx] = (name_len + 1) & 0xFF;
+    buf[idx] = name_len_padded & 0xFF;
     idx += 2;
 
     memcpy(buf.data() + idx, def_name, name_len);
     idx += name_len;
-    buf[idx++] = '\0';
+    for (size_t i = name_len; i < name_len_padded; ++i)
+        buf[idx++] = '\0';
 
     const char def[] = {
-        0x15, 0x00,                                    // defs[0].length
         0x00, 0x00,                                    // defs[0].name
         0x00, 0x00,                                    // defs[0].flags
         0x00, 0x00, 0x00, 0x00,                        // defs[0].code
         stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_unaligned
         stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_aligned
-        0x00, 0x00,                                    // defs[0].base_args_count
         args_count & 0xFF, (args_count >> 8) & 0xFF,   // defs[0].args_count
         rvals_count & 0xFF, (rvals_count >> 8) & 0xFF, // defs[0].rvals_count
-        0x00                                           // defs[0].bases_count
     };
     memcpy(buf.data() + idx, def, sizeof(def));
     idx += sizeof(def);
@@ -121,7 +118,6 @@ static std::vector<char> create_archive(const char* def_name, uint16_t args_coun
     memcpy(buf.data() + idx, function.data(), instr_count * sizeof(lmnt_instruction));
     idx += instr_count * sizeof(lmnt_instruction);
 
-    idx += code_padding;
     memcpy(buf.data() + idx, (const char*)(&data_sec_count), sizeof(lmnt_loffset));
     idx += sizeof(lmnt_loffset);
 
@@ -139,7 +135,7 @@ int main(int argc, char** argv)
 {
     if (argc < 2) {
         printf("give me something to run!\n");
-        printf("Usage: %s <function-definition> [<input> ...]");
+        printf("Usage: %s <function-definition> [<input> ...]", argv[0]);
         return 1;
     }
     std::vector<element_value> args;
@@ -147,6 +143,7 @@ int main(int argc, char** argv)
         args.emplace_back(std::stof(argv[i]));
 
     element_interpreter_ctx* context = nullptr;
+    element_evaluator_ctx* econtext = nullptr;
     element_declaration* declaration = nullptr;
     element_instruction* instruction = nullptr;
 
@@ -166,6 +163,7 @@ int main(int argc, char** argv)
     element_lmnt_compiled_function lmnt_output;
     std::vector<element_value> constants;
     lmnt_result lresult = LMNT_OK;
+    lmnt_validation_result lvresult = LMNT_VALIDATION_OK;
     const char* loperation = "nothing lol";
 
     element_result result = element_interpreter_load_string(context, argv[1], "<input>");
@@ -183,13 +181,17 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         goto cleanup;
 
+    result = element_evaluator_create(context, &econtext);
+    if (result != ELEMENT_OK)
+        goto cleanup;
+
     input.values = args.data();
     input.count = args.size();
 
     output.values = outputs;
     output.count = 1;
 
-    result = element_interpreter_evaluate_instruction(context, NULL, instruction, &input, &output);
+    result = element_interpreter_evaluate_instruction(context, econtext, instruction, &input, &output);
     if (result != ELEMENT_OK)
         goto cleanup;
 
@@ -218,48 +220,53 @@ int main(int argc, char** argv)
         printf("Instruction: %s %04X %04X %04X\n", lmnt_get_opcode_info(in.opcode)->name, in.arg1, in.arg2, in.arg3);
     }
 
+    printf("Inputs: %zu, outputs: %zu, locals: %zu\n", lmnt_output.inputs_count, lmnt_output.outputs_count, lmnt_output.local_stack_count);
+
     {
-        auto lmnt_archive_data = create_archive("evaluate", args.size(), output.count, lmnt_output.required_stack_count, constants, lmnt_output.instructions);
+        auto lmnt_archive_data = create_archive("evaluate", uint16_t(args.size()), uint16_t(output.count), uint16_t(lmnt_output.total_stack_count()), constants, lmnt_output.instructions);
 
         std::vector<char> lmnt_stack(32768);
         lmnt_ictx lctx;
         lmnt_result lresult;
 
-        loperation = "ictx init";
-        printf("doing %s\n", loperation);
-        lresult = lmnt_ictx_init(&lctx, lmnt_stack.data(), lmnt_stack.size());
+        loperation = "init";
+        printf("lmnt: doing %s\n", loperation);
+        lresult = lmnt_init(&lctx, lmnt_stack.data(), lmnt_stack.size());
         if (lresult != LMNT_OK)
             goto lmnt_error;
             
         loperation = "archive load";
-        printf("doing %s\n", loperation);
-        lresult = lmnt_ictx_load_archive(&lctx, lmnt_archive_data.data(), lmnt_archive_data.size());
+        printf("lmnt: doing %s\n", loperation);
+        lresult = lmnt_load_archive(&lctx, lmnt_archive_data.data(), lmnt_archive_data.size());
         if (lresult != LMNT_OK)
             goto lmnt_error;
 
         loperation = "archive prepare";
-        printf("doing %s\n", loperation);
-        lresult = lmnt_ictx_prepare_archive(&lctx, nullptr);
+        printf("lmnt: doing %s\n", loperation);
+        lresult = lmnt_prepare_archive(&lctx, &lvresult);
         if (lresult != LMNT_OK)
+        {
+            printf("LMNT validation error: %d\n", lvresult);
             goto lmnt_error;
+        }
 
         loperation = "def search";
-        printf("doing %s\n", loperation);
+        printf("lmnt: doing %s\n", loperation);
         const lmnt_def* def = nullptr;
-        lresult = lmnt_ictx_find_def(&lctx, "evaluate", &def);
+        lresult = lmnt_find_def(&lctx, "evaluate", &def);
         if (lresult != LMNT_OK)
             goto lmnt_error;
 
         loperation = "setting args";
-        printf("%s\n", loperation);
-        lresult = lmnt_update_args(&lctx, def, 0, args.data(), args.size());
+        printf("lmnt: %s\n", loperation);
+        lresult = lmnt_update_args(&lctx, def, 0, args.data(), lmnt_offset(args.size()));
         if (lresult != LMNT_OK)
             goto lmnt_error;
 
         loperation = "executing def";
-        printf("%s\n", loperation);
+        printf("lmnt: %s\n", loperation);
         std::vector<lmnt_value> lmnt_results(output.count);
-        lresult = lmnt_execute(&lctx, def, lmnt_results.data(), lmnt_results.size());
+        lresult = lmnt_execute(&lctx, def, lmnt_results.data(), lmnt_offset(lmnt_results.size()));
         if (lresult != lmnt_results.size())
             goto lmnt_error;
 
@@ -277,5 +284,9 @@ cleanup:
     element_declaration_delete(&declaration);
     element_instruction_delete(&instruction);
     element_interpreter_delete(&context);
+    if (result != ELEMENT_OK)
+    {
+        printf("ELEMENT ERROR: %d\n", result);
+    }
     return result;
 }
