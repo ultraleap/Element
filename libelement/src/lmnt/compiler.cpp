@@ -18,7 +18,7 @@ element_result prepare_virtual_result(
     compiler_state& state,
     const element::instruction* expr);
 
-element_result optimise_virtual_result(
+element_result allocate_virtual_result(
     compiler_state& state,
     const element::instruction* expr);
 
@@ -77,7 +77,7 @@ static element_result prepare_virtual_constant(
     return ELEMENT_OK;
 }
 
-static element_result optimise_virtual_constant(
+static element_result allocate_virtual_constant(
     compiler_state& state,
     const element::instruction_constant& ec,
     virtual_result& vr)
@@ -145,7 +145,7 @@ static element_result prepare_virtual_input(
     return ELEMENT_OK;
 }
 
-static element_result optimise_virtual_input(
+static element_result allocate_virtual_input(
     compiler_state& state,
     const element::instruction_input& ei,
     virtual_result& vr)
@@ -208,7 +208,7 @@ static element_result prepare_virtual_serialised_structure(
     return ELEMENT_OK;
 }
 
-static element_result optimise_virtual_serialised_structure(
+static element_result allocate_virtual_serialised_structure(
     compiler_state& state,
     const element::instruction_serialised_structure& es,
     virtual_result& vr)
@@ -256,7 +256,7 @@ static element_result prepare_virtual_nullary(
     return state.set_allocation_if_not_pinned(&en, 1);
 }
 
-static element_result optimise_virtual_nullary(
+static element_result allocate_virtual_nullary(
     compiler_state& state,
     const element::instruction_nullary& en,
     virtual_result& vr)
@@ -339,7 +339,7 @@ static element_result prepare_virtual_unary(
     return ELEMENT_OK;
 }
 
-static element_result optimise_virtual_unary(
+static element_result allocate_virtual_unary(
     compiler_state& state,
     const element::instruction_unary& eu,
     virtual_result& vr)
@@ -436,7 +436,7 @@ static element_result prepare_virtual_binary(
     return ELEMENT_OK;
 }
 
-static element_result optimise_virtual_binary(
+static element_result allocate_virtual_binary(
     compiler_state& state,
     const element::instruction_binary& eb,
     virtual_result& vr)
@@ -588,7 +588,7 @@ static element_result prepare_virtual_if(
     return ELEMENT_OK;
 }
 
-static element_result optimise_virtual_if(
+static element_result allocate_virtual_if(
     compiler_state& state,
     const element::instruction_if& ei,
     virtual_result& vr)
@@ -689,7 +689,7 @@ static element_result prepare_virtual_for(
     return ELEMENT_OK;
 }
 
-static element_result optimise_virtual_for(
+static element_result allocate_virtual_for(
     compiler_state& state,
     const element::instruction_for& ef,
     virtual_result& vr)
@@ -773,7 +773,7 @@ static element_result prepare_virtual_indexer(
     return ELEMENT_OK;
 }
 
-static element_result optimise_virtual_indexer(
+static element_result allocate_virtual_indexer(
     compiler_state& state,
     const element::instruction_indexer& ei,
     virtual_result& vr)
@@ -854,7 +854,7 @@ static element_result prepare_virtual_select(
     return ELEMENT_OK;
 }
 
-static element_result optimise_virtual_select(
+static element_result allocate_virtual_select(
     compiler_state& state,
     const element::instruction_select& es,
     virtual_result& vr)
@@ -1034,7 +1034,7 @@ static element_result prepare_virtual_result(
 }
 
 
-static element_result optimise_virtual_result(
+static element_result allocate_virtual_result(
     compiler_state& state,
     const element::instruction* expr)
 {
@@ -1048,34 +1048,34 @@ static element_result optimise_virtual_result(
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
     if (const auto* ec = expr->as<element::instruction_constant>())
-        oresult = optimise_virtual_constant(state, *ec, vr);
+        oresult = allocate_virtual_constant(state, *ec, vr);
 
     if (const auto* ei = expr->as<element::instruction_input>())
-        oresult = optimise_virtual_input(state, *ei, vr);
+        oresult = allocate_virtual_input(state, *ei, vr);
 
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
-        oresult = optimise_virtual_serialised_structure(state, *es, vr);
+        oresult = allocate_virtual_serialised_structure(state, *es, vr);
 
     if (const auto* en = expr->as<element::instruction_nullary>())
-        oresult = optimise_virtual_nullary(state, *en, vr);
+        oresult = allocate_virtual_nullary(state, *en, vr);
 
     if (const auto* eu = expr->as<element::instruction_unary>())
-        oresult = optimise_virtual_unary(state, *eu, vr);
+        oresult = allocate_virtual_unary(state, *eu, vr);
 
     if (const auto* eb = expr->as<element::instruction_binary>())
-        oresult = optimise_virtual_binary(state, *eb, vr);
+        oresult = allocate_virtual_binary(state, *eb, vr);
 
     if (const auto* ei = expr->as<element::instruction_if>())
-        oresult = optimise_virtual_if(state, *ei, vr);
+        oresult = allocate_virtual_if(state, *ei, vr);
 
     if (const auto* ef = expr->as<element::instruction_for>())
-        oresult = optimise_virtual_for(state, *ef, vr);
+        oresult = allocate_virtual_for(state, *ef, vr);
 
     if (const auto* ei = expr->as<element::instruction_indexer>())
-        oresult = optimise_virtual_indexer(state, *ei, vr);
+        oresult = allocate_virtual_indexer(state, *ei, vr);
 
     if (const auto* sel = expr->as<element::instruction_select>())
-        oresult = optimise_virtual_select(state, *sel, vr);
+        oresult = allocate_virtual_select(state, *sel, vr);
 
     if (oresult == ELEMENT_OK)
         vr.prepared = true;
@@ -1167,7 +1167,7 @@ element_result element_lmnt_compile_function(
     ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(instruction.get(), allocation_type::output, 0, vr.count));
     // continue with compilation
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, instruction.get()));
-    ELEMENT_OK_OR_RETURN(optimise_virtual_result(state, instruction.get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, instruction.get()));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, instruction.get(), output.instructions));
     output.inputs_count = inputs_count;
     ELEMENT_OK_OR_RETURN(state.find_virtual_result(instruction.get(), vr));
