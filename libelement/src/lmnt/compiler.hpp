@@ -7,7 +7,7 @@
 struct element_lmnt_compiler_optimisers
 {
     // bool cse; // required
-    size_t constant_reuse_threshold = 2;
+    size_t constant_reuse_threshold = 1;
     bool minimise_moves = true;
     bool stack_reuse = true;
 };

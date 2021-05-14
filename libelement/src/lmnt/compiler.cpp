@@ -46,6 +46,14 @@ element_result copy_stack_values(const uint16_t src_index, const uint16_t dst_in
 // Constant
 //
 
+static element_result add_candidate_constant(compiler_state& state, element_value value)
+{
+    state.candidate_constants.try_emplace(value, 0);
+    if (++state.candidate_constants[value] >= state.ctx.optimise.constant_reuse_threshold)
+        return state.add_constant(value);
+    return ELEMENT_OK;
+}
+
 static element_result create_virtual_constant(
     compiler_state& state,
     const element::instruction_constant& ec,
@@ -54,11 +62,7 @@ static element_result create_virtual_constant(
     result.instruction = &ec;
     result.count = 1;
 
-    state.candidate_constants.try_emplace(ec.value(), 0);
-    if (++state.candidate_constants[ec.value()] >= state.ctx.optimise.constant_reuse_threshold)
-        state.add_constant(ec.value());
-
-    return ELEMENT_OK;
+    return add_candidate_constant(state, ec.value());
 }
 
 static element_result prepare_virtual_constant(
@@ -66,11 +70,12 @@ static element_result prepare_virtual_constant(
     const element::instruction_constant& ec,
     virtual_result& vr)
 {
+    const bool is_output = state.is_allocation_type(&ec, allocation_type::output);
     uint16_t index;
-    if (!vr.is_output && state.find_constant(ec.value(), index) != ELEMENT_OK) {
+    if (!is_output && state.find_constant(ec.value(), index) != ELEMENT_OK) {
         // no hard-constant, allocate
         ELEMENT_OK_OR_RETURN(state.set_allocation(&ec, 1));
-    } else if (!vr.is_output) {
+    } else if (!is_output) {
         // hard-constant, just use it as-is
         ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(&ec, allocation_type::constant, index, 1));
     }
@@ -135,7 +140,7 @@ static element_result prepare_virtual_input(
     const element::instruction_input& ei,
     virtual_result& vr)
 {
-    if (!vr.is_output) {
+    if (!state.is_allocation_type(&ei, allocation_type::output)) {
         // just use it from the input location
         ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(&ei, allocation_type::input, uint16_t(ei.index()), 1));
     } else {
@@ -190,7 +195,7 @@ static element_result prepare_virtual_serialised_structure(
     const element::instruction_serialised_structure& es,
     virtual_result& vr)
 {
-    state.set_allocation_if_not_pinned(&es, vr.count);
+    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&es, vr.count));
 
     uint16_t index = 0;
     for (const auto& d : es.dependents())
@@ -238,6 +243,29 @@ static element_result compile_serialised_structure(
 // Nullary
 //
 
+static element_value get_nullary_constant(element::instruction_nullary::op op)
+{
+    switch (op)
+    {
+    //num
+    case element::instruction_nullary::op::positive_infinity:
+        return std::numeric_limits<float>::infinity();
+    case element::instruction_nullary::op::negative_infinity:
+        return -std::numeric_limits<float>::infinity();
+    case element::instruction_nullary::op::nan:
+        return std::numeric_limits<float>::quiet_NaN();
+
+    //boolean
+    case element::instruction_nullary::op::true_value:
+        return 1;
+    case element::instruction_nullary::op::false_value:
+        return 0;
+    default:
+        assert(false);
+        return std::numeric_limits<float>::signaling_NaN();
+    }
+}
+
 static element_result create_virtual_nullary(
     compiler_state& state,
     const element::instruction_nullary& en,
@@ -245,6 +273,11 @@ static element_result create_virtual_nullary(
 {
     result.instruction = &en;
     result.count = 1;
+
+    // make this value eligible for hard-const
+    element_value value = get_nullary_constant(en.operation());
+    add_candidate_constant(state, value);
+
     return ELEMENT_OK;
 }
 
@@ -272,27 +305,7 @@ static element_result compile_nullary(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    // TODO: hard-const these?
-    element_value value;
-    switch (en.operation())
-    {
-    //num
-    case element::instruction_nullary::op::positive_infinity:
-        value = std::numeric_limits<float>::infinity(); break;
-    case element::instruction_nullary::op::negative_infinity:
-        value = -std::numeric_limits<float>::infinity(); break;
-    case element::instruction_nullary::op::nan:
-        value = std::numeric_limits<float>::quiet_NaN(); break;
-
-    //boolean
-    case element::instruction_nullary::op::true_value:
-        value = 1; break;
-    case element::instruction_nullary::op::false_value:
-        value = 0; break;
-    default:
-        assert(false);
-        return ELEMENT_ERROR_UNKNOWN;
-    }
+    element_value value = get_nullary_constant(en.operation());
     return compile_constant_value(state, value, stack_idx, output);
 }
 
@@ -976,6 +989,7 @@ static element_result create_virtual_result(
 
     if (oresult == ELEMENT_OK)
     {
+        result.stage = compilation_stage::created;
         state.results.emplace(expr, state.virtual_results.size());
         state.virtual_results.emplace_back(result);
     }
@@ -992,7 +1006,7 @@ static element_result prepare_virtual_result(
     if (it == state.results.end()) return ELEMENT_ERROR_NOT_FOUND;
 
     virtual_result& vr = state.virtual_results[it->second];
-    if (vr.prepared)
+    if (vr.stage >= compilation_stage::prepared)
         return ELEMENT_OK;
 
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
@@ -1028,7 +1042,7 @@ static element_result prepare_virtual_result(
         oresult = prepare_virtual_select(state, *sel, vr);
 
     if (oresult == ELEMENT_OK)
-        vr.prepared = true;
+        vr.stage = compilation_stage::prepared;
 
     return oresult;
 }
@@ -1042,7 +1056,7 @@ static element_result allocate_virtual_result(
     if (it == state.results.end()) return ELEMENT_ERROR_NOT_FOUND;
 
     virtual_result& vr = state.virtual_results[it->second];
-    if (vr.prepared)
+    if (vr.stage >= compilation_stage::allocated)
         return ELEMENT_OK;
 
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
@@ -1078,7 +1092,7 @@ static element_result allocate_virtual_result(
         oresult = allocate_virtual_select(state, *sel, vr);
 
     if (oresult == ELEMENT_OK)
-        vr.prepared = true;
+        vr.stage = compilation_stage::allocated;
 
     return oresult;
 }
@@ -1093,41 +1107,49 @@ static element_result compile_instruction(
     if (results_it == state.results.end())
         return ELEMENT_ERROR_UNKNOWN;
 
-    const virtual_result& vr = state.virtual_results[results_it->second];
+    virtual_result& vr = state.virtual_results[results_it->second];
+    if (vr.stage >= compilation_stage::compiled)
+        return ELEMENT_OK;
+
     uint16_t index;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(expr, index));
 
+    element_result oresult = ELEMENT_ERROR_NO_IMPL;
+
     if (const auto* ec = expr->as<element::instruction_constant>())
-        return compile_constant(state, *ec, vr, index, output);
+        oresult = compile_constant(state, *ec, vr, index, output);
 
     if (const auto* ei = expr->as<element::instruction_input>())
-        return compile_input(state, *ei, vr, index, output);
+        oresult = compile_input(state, *ei, vr, index, output);
 
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
-        return compile_serialised_structure(state, *es, vr, index, output);
+        oresult = compile_serialised_structure(state, *es, vr, index, output);
 
     if (const auto* en = expr->as<element::instruction_nullary>())
-        return compile_nullary(state, *en, vr, index, output);
+        oresult = compile_nullary(state, *en, vr, index, output);
 
     if (const auto* eu = expr->as<element::instruction_unary>())
-        return compile_unary(state, *eu, vr, index, output);
+        oresult = compile_unary(state, *eu, vr, index, output);
 
     if (const auto* eb = expr->as<element::instruction_binary>())
-        return compile_binary(state, *eb, vr, index, output);
+        oresult = compile_binary(state, *eb, vr, index, output);
 
     if (const auto* ei = expr->as<element::instruction_if>())
-        return compile_if(state, *ei, vr, index, output);
+        oresult = compile_if(state, *ei, vr, index, output);
 
     if (const auto* ef = expr->as<element::instruction_for>())
-        return compile_for(state, *ef, vr, index, output);
+        oresult = compile_for(state, *ef, vr, index, output);
 
     if (const auto* ei = expr->as<element::instruction_indexer>())
-        return compile_indexer(state, *ei, vr, index, output);
+        oresult = compile_indexer(state, *ei, vr, index, output);
 
     if (const auto* sel = expr->as<element::instruction_select>())
-        return compile_select(state, *sel, vr, index, output);
+        oresult = compile_select(state, *sel, vr, index, output);
 
-    return ELEMENT_ERROR_NO_IMPL;
+    if (oresult == ELEMENT_OK)
+        vr.stage = compilation_stage::compiled;
+
+    return oresult;
 }
 
 

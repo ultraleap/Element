@@ -7,12 +7,21 @@
 
 // represents a placeholder of space that (potentially) needs to be reserved for an instruction's result
 // this doesn't say anything about where it is on the stack or whether it actually needs reserving
+
+enum class compilation_stage
+{
+    none,
+    created,
+    prepared,
+    allocated,
+    compiled
+};
+
 struct virtual_result
 {
     const element::instruction* instruction = nullptr;
     uint16_t count = 0;
-    bool prepared = false;
-    bool is_output = false;
+    compilation_stage stage = compilation_stage::none;
 };
 
 enum class allocation_type
@@ -49,6 +58,8 @@ struct compiler_state
 
     uint16_t get_max_stack_usage() const;
 
+    element_result get_allocation_type(const element::instruction* in, allocation_type& type) const;
+    bool is_allocation_type(const element::instruction* in, allocation_type type) const;
     element_result set_allocation(const element::instruction* in, uint16_t count);
     element_result set_allocation_if_not_pinned(const element::instruction* in, uint16_t count);
     element_result set_allocation_parent(const element::instruction* child, const element::instruction* parent, uint16_t rel_index);

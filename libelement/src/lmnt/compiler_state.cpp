@@ -1,10 +1,28 @@
 #include "lmnt/compiler_state.hpp"
 
+
+element_result compiler_state::get_allocation_type(const element::instruction* in, allocation_type& type) const
+{
+    auto it = _allocations.find(in);
+    if (it != _allocations.end())
+    {
+        type = it->second->type();
+        return ELEMENT_OK;
+    }
+    return ELEMENT_ERROR_NOT_FOUND;
+}
+
+bool compiler_state::is_allocation_type(const element::instruction* in, allocation_type type) const
+{
+    auto it = _allocations.find(in);
+    return (it != _allocations.end() && it->second->type() == type);
+}
+
 element_result compiler_state::set_allocation(const element::instruction* in, uint16_t count)
 {
     size_t inst_idx = results.at(in);
     auto result = _allocations.try_emplace(in, std::make_shared<stack_allocation>(stack_allocation{in, count, inst_idx, inst_idx}));
-    return (result.second) ? ELEMENT_OK : ELEMENT_ERROR_UNKNOWN;
+    return (result.second) ? ELEMENT_OK : ELEMENT_ERROR_NOT_FOUND;
 }
 
 element_result compiler_state::set_allocation_if_not_pinned(const element::instruction* in, uint16_t count)
@@ -14,7 +32,7 @@ element_result compiler_state::set_allocation_if_not_pinned(const element::instr
     auto it = _allocations.find(in);
     if (it != _allocations.end() && it->second->count == count && it->second->pinned)
         return ELEMENT_OK;
-    return ELEMENT_ERROR_UNKNOWN;
+    return ELEMENT_ERROR_NOT_FOUND;
 }
 
 element_result compiler_state::clear_allocation(const element::instruction* in)
