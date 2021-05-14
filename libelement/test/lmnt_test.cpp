@@ -195,7 +195,7 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    sprintf(output_buffer + strlen(output_buffer), "%s -> {", argv[1]);
+    sprintf(output_buffer + strlen(output_buffer), "Element: %s -> {", argv[1]);
     for (int i = 0; i < output.count; ++i)
     {
         sprintf(output_buffer + strlen(output_buffer), "%f", output.values[i]);
@@ -215,10 +215,10 @@ int main(int argc, char** argv)
         goto cleanup;
     }
 
-    for (const auto& in : lmnt_output.instructions)
-    {
-        printf("Instruction: %s %04X %04X %04X\n", lmnt_get_opcode_info(in.opcode)->name, in.arg1, in.arg2, in.arg3);
-    }
+    // for (const auto& in : lmnt_output.instructions)
+    // {
+    //     printf("Instruction: %s %04X %04X %04X\n", lmnt_get_opcode_info(in.opcode)->name, in.arg1, in.arg2, in.arg3);
+    // }
 
     printf("Inputs: %zu, outputs: %zu, locals: %zu\n", lmnt_output.inputs_count, lmnt_output.outputs_count, lmnt_output.local_stack_count);
 
@@ -249,6 +249,9 @@ int main(int argc, char** argv)
             printf("LMNT validation error: %d\n", lvresult);
             goto lmnt_error;
         }
+
+        printf("\n");
+        lmnt_archive_print(&lctx.archive);
 
         loperation = "def search";
         printf("lmnt: doing %s\n", loperation);
