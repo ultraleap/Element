@@ -949,7 +949,7 @@ static element_result create_virtual_result(
     virtual_result& result)
 {
     // CSE
-    if (auto it = state.results.find(expr); it != state.results.end())
+    if (auto it = state.inst_indices.find(expr); it != state.inst_indices.end())
     {
         result = state.virtual_results[it->second];
         return ELEMENT_OK;
@@ -990,7 +990,7 @@ static element_result create_virtual_result(
     if (oresult == ELEMENT_OK)
     {
         result.stage = compilation_stage::created;
-        state.results.emplace(expr, state.virtual_results.size());
+        state.inst_indices.emplace(expr, state.virtual_results.size());
         state.virtual_results.emplace_back(result);
     }
 
@@ -1002,8 +1002,8 @@ static element_result prepare_virtual_result(
     compiler_state& state,
     const element::instruction* expr)
 {
-    auto it = state.results.find(expr);
-    if (it == state.results.end()) return ELEMENT_ERROR_NOT_FOUND;
+    auto it = state.inst_indices.find(expr);
+    if (it == state.inst_indices.end()) return ELEMENT_ERROR_NOT_FOUND;
 
     virtual_result& vr = state.virtual_results[it->second];
     if (vr.stage >= compilation_stage::prepared)
@@ -1052,8 +1052,8 @@ static element_result allocate_virtual_result(
     compiler_state& state,
     const element::instruction* expr)
 {
-    auto it = state.results.find(expr);
-    if (it == state.results.end()) return ELEMENT_ERROR_NOT_FOUND;
+    auto it = state.inst_indices.find(expr);
+    if (it == state.inst_indices.end()) return ELEMENT_ERROR_NOT_FOUND;
 
     virtual_result& vr = state.virtual_results[it->second];
     if (vr.stage >= compilation_stage::allocated)
@@ -1103,8 +1103,8 @@ static element_result compile_instruction(
     const element::instruction* expr,
     std::vector<lmnt_instruction>& output)
 {
-    auto results_it = state.results.find(expr);
-    if (results_it == state.results.end())
+    auto results_it = state.inst_indices.find(expr);
+    if (results_it == state.inst_indices.end())
         return ELEMENT_ERROR_UNKNOWN;
 
     virtual_result& vr = state.virtual_results[results_it->second];

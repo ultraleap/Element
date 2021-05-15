@@ -20,7 +20,7 @@ bool compiler_state::is_allocation_type(const element::instruction* in, allocati
 
 element_result compiler_state::set_allocation(const element::instruction* in, uint16_t count)
 {
-    size_t inst_idx = results.at(in);
+    size_t inst_idx = inst_indices.at(in);
     auto result = _allocations.try_emplace(in, std::make_shared<stack_allocation>(stack_allocation{in, count, inst_idx, inst_idx}));
     return (result.second) ? ELEMENT_OK : ELEMENT_ERROR_NOT_FOUND;
 }
@@ -59,13 +59,13 @@ element_result compiler_state::use_allocation(const element::instruction* curren
     auto it = _allocations.find(alloc_in);
     if (it == _allocations.end()) return ELEMENT_ERROR_NOT_FOUND;
 
-    it->second->last_used_instruction = results.at(current_in);
+    it->second->last_used_instruction = inst_indices.at(current_in);
     return ELEMENT_OK;
 }
 
 element_result compiler_state::use_pinned_allocation(const element::instruction* in, allocation_type type, uint16_t index, uint16_t count)
 {
-    const size_t inst_idx = results.at(in);
+    const size_t inst_idx = inst_indices.at(in);
     auto it = _allocations.try_emplace(in, std::make_shared<stack_allocation>(stack_allocation{in, count, 0, inst_idx, nullptr, type, index, true}));
     if (!it.first->second->pinned || it.first->second->cur_type != type || it.first->second->rel_index != index || it.first->second->count != count)
         return ELEMENT_ERROR_UNKNOWN;
@@ -97,7 +97,7 @@ uint16_t compiler_state::calculate_stack_index(const allocation_type type, uint1
     if (type == allocation_type::output)
         return index;
     // otherwise add outputs count
-    index += virtual_results[results.at(return_instruction)].count;
+    index += virtual_results[inst_indices.at(return_instruction)].count;
     // local stack index
     return index;
 }
@@ -128,7 +128,7 @@ element_result compiler_state::find_constant(element_value value, uint16_t& inde
 
 element_result compiler_state::find_virtual_result(const element::instruction* in, virtual_result& vr) const
 {
-    if (auto it = results.find(in); it != results.end() && it->second < virtual_results.size()) {
+    if (auto it = inst_indices.find(in); it != inst_indices.end() && it->second < virtual_results.size()) {
         vr = virtual_results[it->second];
         return ELEMENT_OK;
     } else {

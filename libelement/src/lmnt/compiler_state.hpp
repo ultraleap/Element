@@ -47,7 +47,7 @@ struct compiler_state
     std::vector<element_value>& constants;
     uint16_t inputs_count;
 
-    std::unordered_map<const element::instruction*, size_t> results;
+    std::unordered_map<const element::instruction*, size_t> inst_indices;
     std::vector<virtual_result> virtual_results;
     std::unordered_map<element_value, size_t> candidate_constants;
 
@@ -70,7 +70,6 @@ struct compiler_state
     uint16_t calculate_stack_index(const allocation_type type, uint16_t index) const;
     element_result calculate_stack_index(const element::instruction* in, uint16_t& index) const;
 
-private:
     struct stack_allocation
     {
         const element::instruction* originating_instruction;
