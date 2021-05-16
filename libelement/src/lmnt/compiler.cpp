@@ -12,15 +12,17 @@
 element_result create_virtual_result(
     compiler_state& state,
     const element::instruction* expr,
-    virtual_result& result);
+    stack_allocation** result = nullptr);
 
 element_result prepare_virtual_result(
     compiler_state& state,
-    const element::instruction* expr);
+    const element::instruction* expr,
+    stack_allocation** result = nullptr);
 
 element_result allocate_virtual_result(
     compiler_state& state,
-    const element::instruction* expr);
+    const element::instruction* expr,
+    stack_allocation** result = nullptr);
 
 element_result compile_instruction(
     compiler_state& state,
@@ -56,38 +58,31 @@ static element_result add_candidate_constant(compiler_state& state, element_valu
 
 static element_result create_virtual_constant(
     compiler_state& state,
-    const element::instruction_constant& ec,
-    virtual_result& result)
+    const element::instruction_constant& ec)
 {
-    result.instruction = &ec;
-    result.count = 1;
-
+    ELEMENT_OK_OR_RETURN(state.allocator->set_count(&ec, 1));
     return add_candidate_constant(state, ec.value());
 }
 
 static element_result prepare_virtual_constant(
     compiler_state& state,
-    const element::instruction_constant& ec,
-    virtual_result& vr)
+    const element::instruction_constant& ec)
 {
-    const bool is_output = state.is_allocation_type(&ec, allocation_type::output);
+    const bool is_output = state.allocator->is_type(&ec, allocation_type::output);
     uint16_t index;
-    if (!is_output && state.find_constant(ec.value(), index) != ELEMENT_OK) {
-        // no hard-constant, allocate
-        ELEMENT_OK_OR_RETURN(state.set_allocation(&ec, 1));
-    } else if (!is_output) {
+    if (!is_output && state.find_constant(ec.value(), index) == ELEMENT_OK) {
         // hard-constant, just use it as-is
-        ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(&ec, allocation_type::constant, index, 1));
+        ELEMENT_OK_OR_RETURN(state.allocator->set_pinned(&ec, allocation_type::constant, index, 1));
     }
+    // else we have to copy it
     return ELEMENT_OK;
 }
 
 static element_result allocate_virtual_constant(
     compiler_state& state,
-    const element::instruction_constant& ec,
-    virtual_result& vr)
+    const element::instruction_constant& ec)
 {
-    return ELEMENT_OK;
+    return state.allocator->allocate(&ec);
 }
 
 static element_result compile_constant_value(
@@ -113,7 +108,6 @@ static element_result compile_constant_value(
 static element_result compile_constant(
     compiler_state& state,
     const element::instruction_constant& ec,
-    const virtual_result& vr,
     const uint16_t outidx,
     std::vector<lmnt_instruction>& output)
 {
@@ -127,41 +121,33 @@ static element_result compile_constant(
 
 static element_result create_virtual_input(
     compiler_state& state,
-    const element::instruction_input& ei,
-    virtual_result& result)
+    const element::instruction_input& ei)
 {
-    result.instruction = &ei;
-    result.count = 1;
-    return ELEMENT_OK;
+    return state.allocator->set_count(&ei, 1);
 }
 
 static element_result prepare_virtual_input(
     compiler_state& state,
-    const element::instruction_input& ei,
-    virtual_result& vr)
+    const element::instruction_input& ei)
 {
-    if (!state.is_allocation_type(&ei, allocation_type::output)) {
+    if (!state.allocator->is_type(&ei, allocation_type::output)) {
         // just use it from the input location
-        ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(&ei, allocation_type::input, uint16_t(ei.index()), 1));
-    } else {
-        // input --> output, have to copy it
-        ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&ei, vr.count));
+        ELEMENT_OK_OR_RETURN(state.allocator->set_pinned(&ei, allocation_type::input, uint16_t(ei.index()), 1));
     }
+    // else input --> output, have to copy it
     return ELEMENT_OK;
 }
 
 static element_result allocate_virtual_input(
     compiler_state& state,
-    const element::instruction_input& ei,
-    virtual_result& vr)
+    const element::instruction_input& ei)
 {
-    return ELEMENT_OK;
+    return state.allocator->allocate(&ei);
 }
 
 static element_result compile_input(
     compiler_state& state,
     const element::instruction_input& ei,
-    const virtual_result& vr,
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
@@ -176,38 +162,33 @@ static element_result compile_input(
 
 static element_result create_virtual_serialised_structure(
     compiler_state& state,
-    const element::instruction_serialised_structure& es,
-    virtual_result& result)
+    const element::instruction_serialised_structure& es)
 {
-    result.instruction = &es;
-    result.count = 0;
+    uint16_t count = 0;
     for (const auto& d : es.dependents())
     {
-        virtual_result vr;
-        ELEMENT_OK_OR_RETURN(create_virtual_result(state, d.get(), vr));
-        result.count += vr.count;
+        stack_allocation* vr;
+        ELEMENT_OK_OR_RETURN(create_virtual_result(state, d.get(), &vr));
+        count += vr->count;
     }
-    return ELEMENT_OK;
+    return state.allocator->set_count(&es, count);
 }
 
 static element_result prepare_virtual_serialised_structure(
     compiler_state& state,
-    const element::instruction_serialised_structure& es,
-    virtual_result& vr)
+    const element::instruction_serialised_structure& es)
 {
-    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&es, vr.count));
-
     uint16_t index = 0;
     for (const auto& d : es.dependents())
     {
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, d.get()));
         // TODO: handle failure (copy in?)
-        state.set_allocation_parent(d.get(), &es, index);
-        state.use_allocation(&es, d.get());
+        state.allocator->set_parent(d.get(), &es, index);
+        state.allocator->use(&es, d.get());
 
-        virtual_result d_vr;
-        ELEMENT_OK_OR_RETURN(state.find_virtual_result(d.get(), d_vr));
-        index += d_vr.count;
+        stack_allocation* d_vr = state.allocator->get(d.get());
+        if (!d_vr) return ELEMENT_ERROR_UNKNOWN;
+        index += d_vr->count;
     }
 
     return ELEMENT_OK;
@@ -215,24 +196,21 @@ static element_result prepare_virtual_serialised_structure(
 
 static element_result allocate_virtual_serialised_structure(
     compiler_state& state,
-    const element::instruction_serialised_structure& es,
-    virtual_result& vr)
+    const element::instruction_serialised_structure& es)
 {
-    // TODO
-    return ELEMENT_OK;
+    for (const auto& d : es.dependents())
+        ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, d.get()));
+    return state.allocator->allocate(&es);
 }
 
 static element_result compile_serialised_structure(
     compiler_state& state,
     const element::instruction_serialised_structure& es,
-    const virtual_result& vr,
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
     for (const auto& d : es.dependents())
     {
-        virtual_result dvr;
-        ELEMENT_OK_OR_RETURN(state.find_virtual_result(d.get(), dvr));
         ELEMENT_OK_OR_RETURN(compile_instruction(state, d.get(), output));
     }
     return ELEMENT_OK;
@@ -268,11 +246,9 @@ static element_value get_nullary_constant(element::instruction_nullary::op op)
 
 static element_result create_virtual_nullary(
     compiler_state& state,
-    const element::instruction_nullary& en,
-    virtual_result& result)
+    const element::instruction_nullary& en)
 {
-    result.instruction = &en;
-    result.count = 1;
+    ELEMENT_OK_OR_RETURN(state.allocator->set_count(&en, 1));
 
     // make this value eligible for hard-const
     element_value value = get_nullary_constant(en.operation());
@@ -283,25 +259,27 @@ static element_result create_virtual_nullary(
 
 static element_result prepare_virtual_nullary(
     compiler_state& state,
-    const element::instruction_nullary& en,
-    virtual_result& vr)
+    const element::instruction_nullary& en)
 {
-    return state.set_allocation_if_not_pinned(&en, 1);
+    const bool is_output = state.allocator->is_type(&en, allocation_type::output);
+    uint16_t index;
+    if (!is_output && state.find_constant(get_nullary_constant(en.operation()), index) == ELEMENT_OK) {
+        // hard-constant, just use it as-is
+        ELEMENT_OK_OR_RETURN(state.allocator->set_pinned(&en, allocation_type::constant, index, 1));
+    }
+    return ELEMENT_OK;
 }
 
 static element_result allocate_virtual_nullary(
     compiler_state& state,
-    const element::instruction_nullary& en,
-    virtual_result& vr)
+    const element::instruction_nullary& en)
 {
-    // TODO
-    return ELEMENT_OK;
+    return state.allocator->allocate(&en);
 }
 
 static element_result compile_nullary(
     compiler_state& state,
     const element::instruction_nullary& en,
-    const virtual_result& vr,
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
@@ -316,18 +294,16 @@ static element_result compile_nullary(
 
 static element_result create_virtual_unary(
     compiler_state& state,
-    const element::instruction_unary& eu,
-    virtual_result& result)
+    const element::instruction_unary& eu)
 {
-    result.instruction = &eu;
-    result.count = 1;
+    ELEMENT_OK_OR_RETURN(state.allocator->set_count(&eu, 1));
 
     if (eu.dependents().size() != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
-    virtual_result arg_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eu.dependents()[0].get(), arg_vr));
-    if (arg_vr.count != 1)
+    stack_allocation* arg_vr;
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eu.dependents()[0].get(), &arg_vr));
+    if (arg_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
     // if we're doing boolean not we need to bring a couple of constants along
@@ -342,29 +318,25 @@ static element_result create_virtual_unary(
 
 static element_result prepare_virtual_unary(
     compiler_state& state,
-    const element::instruction_unary& eu,
-    virtual_result& vr)
+    const element::instruction_unary& eu)
 {
     const element::instruction* dep0 = eu.dependents()[0].get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
-    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&eu, vr.count));
-    state.use_allocation(&eu, dep0);
+    state.allocator->use(&eu, dep0);
     return ELEMENT_OK;
 }
 
 static element_result allocate_virtual_unary(
     compiler_state& state,
-    const element::instruction_unary& eu,
-    virtual_result& vr)
+    const element::instruction_unary& eu)
 {
-    // TODO
-    return ELEMENT_OK;
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, eu.dependents()[0].get()));
+    return state.allocator->allocate(&eu);
 }
 
 static element_result compile_unary(
     compiler_state& state,
     const element::instruction_unary& eu,
-    const virtual_result& vr,
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
@@ -421,47 +393,45 @@ static element_result compile_unary(
 
 static element_result create_virtual_binary(
     compiler_state& state,
-    const element::instruction_binary& eb,
-    virtual_result& result)
+    const element::instruction_binary& eb)
 {
-    result.instruction = &eb;
-    result.count = 1;
+    ELEMENT_OK_OR_RETURN(state.allocator->set_count(&eb, 1));
 
-    virtual_result arg1_vr, arg2_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eb.dependents()[0].get(), arg1_vr));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eb.dependents()[1].get(), arg2_vr));
+    stack_allocation* arg1_vr;
+    stack_allocation* arg2_vr;
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eb.dependents()[0].get(), &arg1_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eb.dependents()[1].get(), &arg2_vr));
+    if (arg1_vr->count != 1 || arg2_vr->count != 1)
+        return ELEMENT_ERROR_UNKNOWN;
 
     return ELEMENT_OK;
 }
 
 static element_result prepare_virtual_binary(
     compiler_state& state,
-    const element::instruction_binary& eb,
-    virtual_result& vr)
+    const element::instruction_binary& eb)
 {
     const element::instruction* dep0 = eb.dependents()[0].get();
     const element::instruction* dep1 = eb.dependents()[1].get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
-    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&eb, vr.count));
-    state.use_allocation(&eb, dep0);
-    state.use_allocation(&eb, dep1);
+    state.allocator->use(&eb, dep0);
+    state.allocator->use(&eb, dep1);
     return ELEMENT_OK;
 }
 
 static element_result allocate_virtual_binary(
     compiler_state& state,
-    const element::instruction_binary& eb,
-    virtual_result& vr)
+    const element::instruction_binary& eb)
 {
-    // TODO
-    return ELEMENT_OK;
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, eb.dependents()[0].get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, eb.dependents()[1].get()));
+    return state.allocator->allocate(&eb);
 }
 
 static element_result compile_binary(
     compiler_state& state,
     const element::instruction_binary& eb,
-    const virtual_result& vr,
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
@@ -505,7 +475,7 @@ static element_result compile_binary(
 
     const uint32_t start_idx = static_cast<uint32_t>(output.size()); // index of the next op
 
-    switch(eb.operation())
+    switch (eb.operation())
     {
         //boolean
         case element::instruction_binary::op::and_:
@@ -557,35 +527,31 @@ static element_result compile_binary(
 
 static element_result create_virtual_if(
     compiler_state& state,
-    const element::instruction_if& ei,
-    virtual_result& result)
+    const element::instruction_if& ei)
 {
     if (ei.dependents().size() != 3)
         return ELEMENT_ERROR_UNKNOWN;
 
     // ensure the predicate is only 1 wide
-    virtual_result predicate_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.dependents()[0].get(), predicate_vr));
-    if (predicate_vr.count != 1)
+    stack_allocation* predicate_vr;
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.dependents()[0].get(), &predicate_vr));
+    if (predicate_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
     // ensure both results of the if are at least the same size
-    virtual_result true_vr, false_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.dependents()[1].get(), true_vr));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.dependents()[2].get(), false_vr));
-    if (true_vr.count != false_vr.count)
+    stack_allocation* true_vr;
+    stack_allocation* false_vr;
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.dependents()[1].get(), &true_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.dependents()[2].get(), &false_vr));
+    if (true_vr->count != false_vr->count)
         return ELEMENT_ERROR_UNKNOWN;
 
-    result.instruction = &ei;
-    result.count = true_vr.count;
-
-    return ELEMENT_OK;
+    return state.allocator->set_count(&ei, true_vr->count);
 }
 
 static element_result prepare_virtual_if(
     compiler_state& state,
-    const element::instruction_if& ei,
-    virtual_result& vr)
+    const element::instruction_if& ei)
 {
     const element::instruction* dep0 = ei.dependents()[0].get();
     const element::instruction* dep1 = ei.dependents()[1].get();
@@ -593,36 +559,36 @@ static element_result prepare_virtual_if(
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
-    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&ei, vr.count));
-    state.use_allocation(&ei, dep0);
+    state.allocator->use(&ei, dep0);
     // TODO: account for failure (copy in?)
-    state.set_allocation_parent(dep1, &ei, 0);
-    state.set_allocation_parent(dep2, &ei, 0);
+    state.allocator->set_parent(dep1, &ei, 0);
+    state.allocator->set_parent(dep2, &ei, 0);
     return ELEMENT_OK;
 }
 
 static element_result allocate_virtual_if(
     compiler_state& state,
-    const element::instruction_if& ei,
-    virtual_result& vr)
+    const element::instruction_if& ei)
 {
-    // TODO
-    return ELEMENT_OK;
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.dependents()[0].get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.dependents()[1].get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.dependents()[2].get()));
+    return state.allocator->allocate(&ei);
 }
 
 static element_result compile_if(
     compiler_state& state,
     const element::instruction_if& ei,
-    const virtual_result& vr,
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
     const element::instruction* predicate_in = ei.dependents()[0].get();
     const element::instruction* true_in      = ei.dependents()[1].get();
     const element::instruction* false_in     = ei.dependents()[2].get();
-    virtual_result true_vr, false_vr;
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(true_in, true_vr));
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(false_in, false_vr));
+    stack_allocation* true_vr = state.allocator->get(true_in);
+    stack_allocation* false_vr = state.allocator->get(false_in);
+    if (!true_vr || !false_vr) return ELEMENT_ERROR_UNKNOWN;
+
     uint16_t predicate_stack_idx, true_stack_idx, false_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(predicate_in, predicate_stack_idx));
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(true_in, true_stack_idx));
@@ -637,12 +603,12 @@ static element_result compile_if(
     // compile the true/false branches
     // TODO: hoist out anything in the true/false branches that's required elsewhere?
     ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output));
-    copy_stack_values(true_stack_idx, stack_idx, true_vr.count, output);
+    copy_stack_values(true_stack_idx, stack_idx, true_vr->count, output);
     const size_t branch_past_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, 0, 0}); // target filled in at the end
     const size_t false_idx = output.size();
     ELEMENT_OK_OR_RETURN(compile_instruction(state, false_in, output));
-    copy_stack_values(false_stack_idx, stack_idx, false_vr.count, output);
+    copy_stack_values(false_stack_idx, stack_idx, false_vr->count, output);
     const size_t past_idx = output.size();
 
     // fill in targets for our branches
@@ -661,31 +627,28 @@ static element_result compile_if(
 
 static element_result create_virtual_for(
     compiler_state& state,
-    const element::instruction_for& ef,
-    virtual_result& result)
+    const element::instruction_for& ef)
 {
     if (ef.dependents().size() != 3)
         return ELEMENT_ERROR_UNKNOWN;
 
-    virtual_result initial_vr, condition_vr, body_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.dependents()[0].get(), initial_vr));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.dependents()[1].get(), condition_vr));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.dependents()[2].get(), body_vr));
-    if (condition_vr.count != 1)
+    stack_allocation* initial_vr;
+    stack_allocation* condition_vr;
+    stack_allocation* body_vr;
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.dependents()[0].get(), &initial_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.dependents()[1].get(), &condition_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.dependents()[2].get(), &body_vr));
+    if (condition_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
-    if (initial_vr.count != body_vr.count)
+    if (initial_vr->count != body_vr->count)
         return ELEMENT_ERROR_UNKNOWN;
 
-    result.instruction = &ef;
-    result.count = initial_vr.count;
-
-    return ELEMENT_OK;
+    return state.allocator->set_count(&ef, initial_vr->count);
 }
 
 static element_result prepare_virtual_for(
     compiler_state& state,
-    const element::instruction_for& ef,
-    virtual_result& vr)
+    const element::instruction_for& ef)
 {
     const element::instruction* dep0 = ef.dependents()[0].get();
     const element::instruction* dep1 = ef.dependents()[1].get();
@@ -694,37 +657,37 @@ static element_result prepare_virtual_for(
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
 
-    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&ef, vr.count));
-    state.set_allocation_parent(dep0, &ef, 0);
-    state.set_allocation_parent(dep2, &ef, 0);
+    state.allocator->set_parent(dep0, &ef, 0);
+    state.allocator->set_parent(dep2, &ef, 0);
 
-    state.use_allocation(&ef, dep1);
+    state.allocator->use(&ef, dep1);
     return ELEMENT_OK;
 }
 
 static element_result allocate_virtual_for(
     compiler_state& state,
-    const element::instruction_for& ef,
-    virtual_result& vr)
+    const element::instruction_for& ef)
 {
-    // TODO
-    return ELEMENT_OK;
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.dependents()[0].get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.dependents()[1].get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.dependents()[2].get()));
+    return state.allocator->allocate(&ef);
 }
 
 static element_result compile_for(
     compiler_state& state,
     const element::instruction_for& ef,
-    const virtual_result& vr,
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
     const element::instruction* initial_in = ef.dependents()[0].get();
     const element::instruction* condition_in = ef.dependents()[1].get();
     const element::instruction* body_in = ef.dependents()[2].get();
-    virtual_result initial_vr, condition_vr, body_vr;
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(initial_in, initial_vr));
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(condition_in, condition_vr));
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(body_in, body_vr));
+    stack_allocation* initial_vr = state.allocator->get(initial_in);
+    stack_allocation* condition_vr = state.allocator->get(condition_in);
+    stack_allocation* body_vr = state.allocator->get(body_in);
+    if (!initial_vr || !condition_vr || !body_vr) return ELEMENT_ERROR_UNKNOWN;
+
     uint16_t initial_stack_idx, condition_stack_idx, body_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(initial_in, initial_stack_idx));
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(condition_in, condition_stack_idx));
@@ -732,16 +695,16 @@ static element_result compile_for(
 
     // compile the initial state
     ELEMENT_OK_OR_RETURN(compile_instruction(state, initial_in, output));
-    copy_stack_values(initial_stack_idx, stack_idx, initial_vr.count, output);
+    copy_stack_values(initial_stack_idx, stack_idx, initial_vr->count, output);
     // compile condition logic
     const size_t condition_index = output.size();
-    ELEMENT_OK_OR_RETURN(compile_instruction(state, condition_vr.instruction, output));
+    ELEMENT_OK_OR_RETURN(compile_instruction(state, condition_vr->instruction, output));
     output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, condition_stack_idx, 0, 0});
     const size_t condition_branchcle_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in at the end
     // compile the loop body
-    ELEMENT_OK_OR_RETURN(compile_instruction(state, body_vr.instruction, output));
-    copy_stack_values(body_stack_idx, stack_idx, body_vr.count, output);
+    ELEMENT_OK_OR_RETURN(compile_instruction(state, body_vr->instruction, output));
+    copy_stack_values(body_stack_idx, stack_idx, body_vr->count, output);
     const size_t branch_past_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, U16_LO(condition_index), U16_HI(condition_index)}); // branch --> condition
     const size_t past_idx = output.size();
@@ -760,50 +723,41 @@ static element_result compile_for(
 
 static element_result create_virtual_indexer(
     compiler_state& state,
-    const element::instruction_indexer& ei,
-    virtual_result& result)
+    const element::instruction_indexer& ei)
 {
-    virtual_result for_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.for_instruction().get(), for_vr));
-    if (ei.index >= for_vr.count)
+    stack_allocation* for_vr;
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.for_instruction().get(), &for_vr));
+    if (ei.index >= for_vr->count)
         return ELEMENT_ERROR_UNKNOWN;
 
-    result.instruction = &ei;
-    result.count = 1;
-
-    return ELEMENT_OK;
+    return state.allocator->set_count(&ei, 1);
 }
 
 static element_result prepare_virtual_indexer(
     compiler_state& state,
-    const element::instruction_indexer& ei,
-    virtual_result& vr)
+    const element::instruction_indexer& ei)
 {
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, ei.for_instruction().get()));
-    state.use_allocation(&ei, ei.for_instruction().get());
+    state.allocator->use(&ei, ei.for_instruction().get());
     // TODO: verify this is a good idea
-    state.set_allocation_parent(&ei, ei.for_instruction().get(), ei.index);
+    state.allocator->set_parent(&ei, ei.for_instruction().get(), ei.index);
     return ELEMENT_OK;
 }
 
 static element_result allocate_virtual_indexer(
     compiler_state& state,
-    const element::instruction_indexer& ei,
-    virtual_result& vr)
+    const element::instruction_indexer& ei)
 {
-    // TODO
-    return ELEMENT_OK;
+    // TODO: do we need to allocate the for here?
+    return state.allocator->allocate(&ei);
 }
 
 static element_result compile_indexer(
     compiler_state& state,
     const element::instruction_indexer& ei,
-    const virtual_result& vr,
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    virtual_result for_vr;
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(ei.for_instruction().get(), for_vr));
     uint16_t for_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(ei.for_instruction().get(), for_stack_idx));
 
@@ -819,12 +773,11 @@ static element_result compile_indexer(
 
 static element_result create_virtual_select(
     compiler_state& state,
-    const element::instruction_select& es,
-    virtual_result& result)
+    const element::instruction_select& es)
 {
-    virtual_result selector_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, es.selector().get(), selector_vr));
-    if (selector_vr.count != 1)
+    stack_allocation* selector_vr;
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, es.selector().get(), &selector_vr));
+    if (selector_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
     if (es.options_count() == 0)
@@ -838,48 +791,44 @@ static element_result create_virtual_select(
     uint16_t index = 0;
     for (size_t i = 0; i < es.options_count(); ++i)
     {
-        virtual_result option_vr;
-        ELEMENT_OK_OR_RETURN(create_virtual_result(state, es.options_at(i).get(), option_vr));
-        max_count = (std::max)(max_count, static_cast<uint16_t>(option_vr.count));
+        stack_allocation* option_vr;
+        ELEMENT_OK_OR_RETURN(create_virtual_result(state, es.options_at(i).get(), &option_vr));
+        max_count = (std::max)(max_count, static_cast<uint16_t>(option_vr->count));
     }
 
-    result.instruction = &es;
-    result.count = max_count;
-
-    return ELEMENT_OK;
+    return state.allocator->set_count(&es, max_count);
 }
 
 static element_result prepare_virtual_select(
     compiler_state& state,
-    const element::instruction_select& es,
-    virtual_result& vr)
+    const element::instruction_select& es)
 {
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.selector().get()));
-    ELEMENT_OK_OR_RETURN(state.set_allocation_if_not_pinned(&es, vr.count));
-    state.use_allocation(&es, es.selector().get());
+    state.allocator->use(&es, es.selector().get());
     const size_t opts_size = es.options_count();
     for (size_t i = 0; i < opts_size; ++i)
     {
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.options_at(i).get()));
         // TODO: handle failure (copy in?)
-        state.set_allocation_parent(es.options_at(i).get(), &es, 0);
+        state.allocator->set_parent(es.options_at(i).get(), &es, 0);
     }
     return ELEMENT_OK;
 }
 
 static element_result allocate_virtual_select(
     compiler_state& state,
-    const element::instruction_select& es,
-    virtual_result& vr)
+    const element::instruction_select& es)
 {
-    // TODO
-    return ELEMENT_OK;
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, es.selector().get()));
+    const size_t opts_size = es.options_count();
+    for (size_t i = 0; i < opts_size; ++i)
+        ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, es.options_at(i).get()));
+    return state.allocator->allocate(&es);
 }
 
 static element_result compile_select(
     compiler_state& state,
     const element::instruction_select& es,
-    const virtual_result& vr,
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
@@ -889,8 +838,9 @@ static element_result compile_select(
     ELEMENT_OK_OR_RETURN(state.find_constant(1, one_idx));
     ELEMENT_OK_OR_RETURN(state.find_constant(element_value(opts_size - 1), last_valid_idx));
 
-    virtual_result selector_vr;
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.selector().get(), selector_vr));
+    stack_allocation* selector_vr = state.allocator->get(es.selector().get());
+    if (!selector_vr) return ELEMENT_ERROR_UNKNOWN;
+
     uint16_t selector_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.selector().get(), selector_stack_idx));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, es.selector().get(), output));
@@ -916,8 +866,9 @@ static element_result compile_select(
 
     for (size_t i = 0; i < opts_size; ++i)
     {
-        virtual_result option_vr;
-        ELEMENT_OK_OR_RETURN(state.find_virtual_result(es.options_at(i).get(), option_vr));
+        stack_allocation* option_vr = state.allocator->get(es.options_at(i).get());
+        if (!option_vr) return ELEMENT_ERROR_UNKNOWN;
+
         uint16_t option_stack_idx;
         ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(i).get(), option_stack_idx));
 
@@ -926,7 +877,7 @@ static element_result compile_select(
         output[branches_start_idx + i*3 + 1].arg2 = U16_LO(option_idx);
         output[branches_start_idx + i*3 + 1].arg3 = U16_HI(option_idx);
         ELEMENT_OK_OR_RETURN(compile_instruction(state, es.options_at(i).get(), output));
-        copy_stack_values(option_stack_idx, stack_idx, option_vr.count, output);
+        copy_stack_values(option_stack_idx, stack_idx, option_vr->count, output);
         option_branch_indexes[i] = output.size();
         output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, 0, 0}); // target filled in later
     }
@@ -946,103 +897,116 @@ static element_result compile_select(
 static element_result create_virtual_result(
     compiler_state& state,
     const element::instruction* expr,
-    virtual_result& result)
+    stack_allocation** vr)
 {
-    // CSE
-    if (auto it = state.inst_indices.find(expr); it != state.inst_indices.end())
+    // CSE: if this is non-null, we already did this
+    stack_allocation* existing_vr = state.allocator->get(expr);
+    if (existing_vr)
     {
-        result = state.virtual_results[it->second];
+        if (vr) *vr = existing_vr;
         return ELEMENT_OK;
     }
+
+    // fake instruction index for now
+    ELEMENT_OK_OR_RETURN(state.allocator->add(expr, 0, 0, &existing_vr));
 
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
     if (const auto* ec = expr->as<element::instruction_constant>())
-        oresult = create_virtual_constant(state, *ec, result);
+        oresult = create_virtual_constant(state, *ec);
 
     if (const auto* ei = expr->as<element::instruction_input>())
-        oresult = create_virtual_input(state, *ei, result);
+        oresult = create_virtual_input(state, *ei);
 
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
-        oresult = create_virtual_serialised_structure(state, *es, result);
+        oresult = create_virtual_serialised_structure(state, *es);
 
     if (const auto* en = expr->as<element::instruction_nullary>())
-        oresult = create_virtual_nullary(state, *en, result);
+        oresult = create_virtual_nullary(state, *en);
 
     if (const auto* eu = expr->as<element::instruction_unary>())
-        oresult = create_virtual_unary(state, *eu, result);
+        oresult = create_virtual_unary(state, *eu);
 
     if (const auto* eb = expr->as<element::instruction_binary>())
-        oresult = create_virtual_binary(state, *eb, result);
+        oresult = create_virtual_binary(state, *eb);
 
     if (const auto* ei = expr->as<element::instruction_if>())
-        oresult = create_virtual_if(state, *ei, result);
+        oresult = create_virtual_if(state, *ei);
 
     if (const auto* ef = expr->as<element::instruction_for>())
-        oresult = create_virtual_for(state, *ef, result);
+        oresult = create_virtual_for(state, *ef);
 
     if (const auto* ei = expr->as<element::instruction_indexer>())
-        oresult = create_virtual_indexer(state, *ei, result);
+        oresult = create_virtual_indexer(state, *ei);
 
     if (const auto* sel = expr->as<element::instruction_select>())
-        oresult = create_virtual_select(state, *sel, result);
+        oresult = create_virtual_select(state, *sel);
 
     if (oresult == ELEMENT_OK)
     {
-        result.stage = compilation_stage::created;
-        state.inst_indices.emplace(expr, state.virtual_results.size());
-        state.virtual_results.emplace_back(result);
+        existing_vr->stage = compilation_stage::created;
+        existing_vr->set_instruction = state.cur_instruction_index;
+        existing_vr->last_used_instruction = state.cur_instruction_index;
+        if (vr) *vr = existing_vr;
     }
 
+    ++state.cur_instruction_index;
     return oresult;
 }
 
 
 static element_result prepare_virtual_result(
     compiler_state& state,
-    const element::instruction* expr)
+    const element::instruction* expr,
+    stack_allocation** vr)
 {
-    auto it = state.inst_indices.find(expr);
-    if (it == state.inst_indices.end()) return ELEMENT_ERROR_NOT_FOUND;
+    // CSE: if this is non-null, we already did this
+    stack_allocation* existing_vr = state.allocator->get(expr);
+    if (!existing_vr) return ELEMENT_ERROR_UNKNOWN;
 
-    virtual_result& vr = state.virtual_results[it->second];
-    if (vr.stage >= compilation_stage::prepared)
+    if (existing_vr->stage >= compilation_stage::prepared)
+    {
+        if (vr) *vr = existing_vr;
         return ELEMENT_OK;
+    }
 
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
     if (const auto* ec = expr->as<element::instruction_constant>())
-        oresult = prepare_virtual_constant(state, *ec, vr);
+        oresult = prepare_virtual_constant(state, *ec);
 
     if (const auto* ei = expr->as<element::instruction_input>())
-        oresult = prepare_virtual_input(state, *ei, vr);
+        oresult = prepare_virtual_input(state, *ei);
 
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
-        oresult = prepare_virtual_serialised_structure(state, *es, vr);
+        oresult = prepare_virtual_serialised_structure(state, *es);
 
     if (const auto* en = expr->as<element::instruction_nullary>())
-        oresult = prepare_virtual_nullary(state, *en, vr);
+        oresult = prepare_virtual_nullary(state, *en);
 
     if (const auto* eu = expr->as<element::instruction_unary>())
-        oresult = prepare_virtual_unary(state, *eu, vr);
+        oresult = prepare_virtual_unary(state, *eu);
 
     if (const auto* eb = expr->as<element::instruction_binary>())
-        oresult = prepare_virtual_binary(state, *eb, vr);
+        oresult = prepare_virtual_binary(state, *eb);
 
     if (const auto* ei = expr->as<element::instruction_if>())
-        oresult = prepare_virtual_if(state, *ei, vr);
+        oresult = prepare_virtual_if(state, *ei);
 
     if (const auto* ef = expr->as<element::instruction_for>())
-        oresult = prepare_virtual_for(state, *ef, vr);
+        oresult = prepare_virtual_for(state, *ef);
 
     if (const auto* ei = expr->as<element::instruction_indexer>())
-        oresult = prepare_virtual_indexer(state, *ei, vr);
+        oresult = prepare_virtual_indexer(state, *ei);
 
     if (const auto* sel = expr->as<element::instruction_select>())
-        oresult = prepare_virtual_select(state, *sel, vr);
+        oresult = prepare_virtual_select(state, *sel);
 
     if (oresult == ELEMENT_OK)
-        vr.stage = compilation_stage::prepared;
+    {
+        existing_vr->stage = compilation_stage::prepared;
+        if (vr) *vr = existing_vr;
+    }
 
     return oresult;
 }
@@ -1050,49 +1014,55 @@ static element_result prepare_virtual_result(
 
 static element_result allocate_virtual_result(
     compiler_state& state,
-    const element::instruction* expr)
+    const element::instruction* expr,
+    stack_allocation** vr)
 {
-    auto it = state.inst_indices.find(expr);
-    if (it == state.inst_indices.end()) return ELEMENT_ERROR_NOT_FOUND;
+    stack_allocation* existing_vr = state.allocator->get(expr);
+    if (!existing_vr) return ELEMENT_ERROR_UNKNOWN;
 
-    virtual_result& vr = state.virtual_results[it->second];
-    if (vr.stage >= compilation_stage::allocated)
+    if (existing_vr->stage >= compilation_stage::allocated)
+    {
+        if (vr) *vr = existing_vr;
         return ELEMENT_OK;
+    }
 
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
     if (const auto* ec = expr->as<element::instruction_constant>())
-        oresult = allocate_virtual_constant(state, *ec, vr);
+        oresult = allocate_virtual_constant(state, *ec);
 
     if (const auto* ei = expr->as<element::instruction_input>())
-        oresult = allocate_virtual_input(state, *ei, vr);
+        oresult = allocate_virtual_input(state, *ei);
 
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
-        oresult = allocate_virtual_serialised_structure(state, *es, vr);
+        oresult = allocate_virtual_serialised_structure(state, *es);
 
     if (const auto* en = expr->as<element::instruction_nullary>())
-        oresult = allocate_virtual_nullary(state, *en, vr);
+        oresult = allocate_virtual_nullary(state, *en);
 
     if (const auto* eu = expr->as<element::instruction_unary>())
-        oresult = allocate_virtual_unary(state, *eu, vr);
+        oresult = allocate_virtual_unary(state, *eu);
 
     if (const auto* eb = expr->as<element::instruction_binary>())
-        oresult = allocate_virtual_binary(state, *eb, vr);
+        oresult = allocate_virtual_binary(state, *eb);
 
     if (const auto* ei = expr->as<element::instruction_if>())
-        oresult = allocate_virtual_if(state, *ei, vr);
+        oresult = allocate_virtual_if(state, *ei);
 
     if (const auto* ef = expr->as<element::instruction_for>())
-        oresult = allocate_virtual_for(state, *ef, vr);
+        oresult = allocate_virtual_for(state, *ef);
 
     if (const auto* ei = expr->as<element::instruction_indexer>())
-        oresult = allocate_virtual_indexer(state, *ei, vr);
+        oresult = allocate_virtual_indexer(state, *ei);
 
     if (const auto* sel = expr->as<element::instruction_select>())
-        oresult = allocate_virtual_select(state, *sel, vr);
+        oresult = allocate_virtual_select(state, *sel);
 
     if (oresult == ELEMENT_OK)
-        vr.stage = compilation_stage::allocated;
+    {
+        existing_vr->stage = compilation_stage::allocated;
+        if (vr) *vr = existing_vr;
+    }
 
     return oresult;
 }
@@ -1103,13 +1073,8 @@ static element_result compile_instruction(
     const element::instruction* expr,
     std::vector<lmnt_instruction>& output)
 {
-    auto results_it = state.inst_indices.find(expr);
-    if (results_it == state.inst_indices.end())
-        return ELEMENT_ERROR_UNKNOWN;
-
-    virtual_result& vr = state.virtual_results[results_it->second];
-    if (vr.stage >= compilation_stage::compiled)
-        return ELEMENT_OK;
+    stack_allocation* vr = state.allocator->get(expr);
+    if (!vr) return ELEMENT_ERROR_UNKNOWN;
 
     uint16_t index;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(expr, index));
@@ -1117,37 +1082,37 @@ static element_result compile_instruction(
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
     if (const auto* ec = expr->as<element::instruction_constant>())
-        oresult = compile_constant(state, *ec, vr, index, output);
+        oresult = compile_constant(state, *ec, index, output);
 
     if (const auto* ei = expr->as<element::instruction_input>())
-        oresult = compile_input(state, *ei, vr, index, output);
+        oresult = compile_input(state, *ei, index, output);
 
     if (const auto* es = expr->as<element::instruction_serialised_structure>())
-        oresult = compile_serialised_structure(state, *es, vr, index, output);
+        oresult = compile_serialised_structure(state, *es, index, output);
 
     if (const auto* en = expr->as<element::instruction_nullary>())
-        oresult = compile_nullary(state, *en, vr, index, output);
+        oresult = compile_nullary(state, *en, index, output);
 
     if (const auto* eu = expr->as<element::instruction_unary>())
-        oresult = compile_unary(state, *eu, vr, index, output);
+        oresult = compile_unary(state, *eu, index, output);
 
     if (const auto* eb = expr->as<element::instruction_binary>())
-        oresult = compile_binary(state, *eb, vr, index, output);
+        oresult = compile_binary(state, *eb, index, output);
 
     if (const auto* ei = expr->as<element::instruction_if>())
-        oresult = compile_if(state, *ei, vr, index, output);
+        oresult = compile_if(state, *ei, index, output);
 
     if (const auto* ef = expr->as<element::instruction_for>())
-        oresult = compile_for(state, *ef, vr, index, output);
+        oresult = compile_for(state, *ef, index, output);
 
     if (const auto* ei = expr->as<element::instruction_indexer>())
-        oresult = compile_indexer(state, *ei, vr, index, output);
+        oresult = compile_indexer(state, *ei, index, output);
 
     if (const auto* sel = expr->as<element::instruction_select>())
-        oresult = compile_select(state, *sel, vr, index, output);
+        oresult = compile_select(state, *sel, index, output);
 
     if (oresult == ELEMENT_OK)
-        vr.stage = compilation_stage::compiled;
+        vr->stage = compilation_stage::compiled;
 
     return oresult;
 }
@@ -1183,17 +1148,17 @@ element_result element_lmnt_compile_function(
 {
     compiler_state state { ctx, instruction.get(), constants, static_cast<uint16_t>(inputs_count) };
     // TODO: check for single constant fast path
-    virtual_result vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, instruction.get(), vr));
+    stack_allocation* vr = nullptr;
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, instruction.get(), &vr));
     // set ourselves as being an output
-    ELEMENT_OK_OR_RETURN(state.use_pinned_allocation(instruction.get(), allocation_type::output, 0, vr.count));
+    ELEMENT_OK_OR_RETURN(state.allocator->set_pinned(instruction.get(), allocation_type::output, 0, vr->count));
     // continue with compilation
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, instruction.get()));
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, instruction.get()));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, instruction.get(), output.instructions));
     output.inputs_count = inputs_count;
-    ELEMENT_OK_OR_RETURN(state.find_virtual_result(instruction.get(), vr));
-    output.outputs_count = vr.count;
-    output.local_stack_count = state.get_max_stack_usage();
+
+    output.outputs_count = vr->count;
+    output.local_stack_count = state.allocator->get_max_stack_usage();
     return ELEMENT_OK;
 }
