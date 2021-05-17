@@ -748,7 +748,7 @@ static element_result allocate_virtual_indexer(
     compiler_state& state,
     const element::instruction_indexer& ei)
 {
-    // TODO: do we need to allocate the for here?
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.for_instruction().get()));
     return state.allocator->allocate(&ei);
 }
 
@@ -758,6 +758,8 @@ static element_result compile_indexer(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
+    ELEMENT_OK_OR_RETURN(compile_instruction(state, ei.for_instruction().get(), output));
+
     uint16_t for_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(ei.for_instruction().get(), for_stack_idx));
 
@@ -1075,6 +1077,9 @@ static element_result compile_instruction(
 {
     stack_allocation* vr = state.allocator->get(expr);
     if (!vr) return ELEMENT_ERROR_UNKNOWN;
+
+    if (vr->stage >= compilation_stage::compiled)
+        return ELEMENT_OK;
 
     uint16_t index;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(expr, index));
