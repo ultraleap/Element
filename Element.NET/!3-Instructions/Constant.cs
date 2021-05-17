@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Element.AST;
 using Lexico;
+using ResultNET;
 
 namespace Element
 {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Element.AST;
+using ResultNET;
 using LinqExpression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR

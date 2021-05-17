@@ -1,4 +1,4 @@
-namespace Element
+namespace ResultNET
 {
     /// <summary>
     /// A trace at a location in source.

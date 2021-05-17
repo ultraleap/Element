@@ -1,9 +1,12 @@
+using ResultNET;
+
 namespace Element
 {
     public static class MessageExtensions
     {
         public static readonly string TypeString = "ELE";
-        public static CompilerMessage? Trace(this Context context, EleMessageCode eleMessageCode, string? contextString) => context.Trace(TypeString, (int) eleMessageCode, contextString);
+        public static ResultMessage? Trace(this ITraceContext context, EleMessageCode eleMessageCode, string? contextString) =>
+            context.Trace(ElementMessage.GetByCode((int)eleMessageCode), contextString);
         public static void Append(this ResultBuilder builder, EleMessageCode eleMessageCode, string? context)
         {
             if (builder.Context.Trace(eleMessageCode, context) is {} msg) builder.Append(msg);
@@ -13,7 +16,7 @@ namespace Element
             if (builder.Context.Trace(eleMessageCode, context) is {} msg) builder.Append(msg);
         }
     }
-    
+
     public enum EleMessageCode
     {
         // GENERAL PURPOSE

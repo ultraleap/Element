@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ResultNET;
 
 namespace Element
 {
@@ -23,14 +24,14 @@ namespace Element
 
         public override string ToString() => $"{Name} [{Manifest.Version}]";
 
-        public static Result<PackageInfo> FromManifestFilePath(string manifestFilePath, Context context) => FromManifestFile(new FileInfo(manifestFilePath), context);
+        public static Result<PackageInfo> FromManifestFilePath(string manifestFilePath, ITraceContext context) => FromManifestFile(new FileInfo(manifestFilePath), context);
 
-        public static Result<PackageInfo> FromManifestFile(FileInfo manifestFile, Context context) =>
+        public static Result<PackageInfo> FromManifestFile(FileInfo manifestFile, ITraceContext context) =>
             !manifestFile.Extension.Equals(PackageManifest.FileExtension, StringComparison.OrdinalIgnoreCase)
                 ? context.Trace(EleMessageCode.FileAccessError, $"{manifestFile.Name} is not a valid package manifest, file extension should be {PackageManifest.FileExtension}")
                 : FromDirectory(manifestFile.Directory, context);
 
-        public static Result<PackageInfo> FromDirectory(DirectoryInfo directoryInfo, Context context)
+        public static Result<PackageInfo> FromDirectory(DirectoryInfo directoryInfo, ITraceContext context)
         {
             var manifestFiles = directoryInfo.GetFiles($"*{PackageManifest.FileExtension}", SearchOption.TopDirectoryOnly);
             if (manifestFiles.Length != 1)
@@ -46,7 +47,7 @@ namespace Element
                                context);
         }
 
-        public static Result<PackageInfo> FromStreams(string packageName, Stream manifestStream, IEnumerable<(string FullName, Stream Stream, string? DisplayName)> sourceStreams, Context context)
+        public static Result<PackageInfo> FromStreams(string packageName, Stream manifestStream, IEnumerable<(string FullName, Stream Stream, string? DisplayName)> sourceStreams, ITraceContext context)
         {
             static string ReadStream(Stream stream)
             {
@@ -57,7 +58,7 @@ namespace Element
             return FromStrings(packageName, ReadStream(manifestStream), sourceStreams.Select(t => (t.FullName, ReadStream(t.Stream), t.DisplayName)).ToArray(), context);
         }
 
-        public static Result<PackageInfo> FromStrings(string packageName, string manifestString, IEnumerable<(string FullName, string Source, string? DisplayName)> sources, Context context)
+        public static Result<PackageInfo> FromStrings(string packageName, string manifestString, IEnumerable<(string FullName, string Source, string? DisplayName)> sources, ITraceContext context)
         {
             try
             {

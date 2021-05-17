@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using Element.AST;
+using ResultNET;
 using Expression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
@@ -55,7 +56,7 @@ namespace Element.CLR
             };
         }
 
-        private static event Action<Type, ElementBoundaryStructAttribute> DiscoverBoundaryStruct;
+        private static event Action<Type, ElementBoundaryStructAttribute>? DiscoverBoundaryStruct;
 
         private static readonly Dictionary<IIntrinsicStructImplementation, Type> _intrinsicTypeDictionary = new Dictionary<IIntrinsicStructImplementation, Type>
         {
@@ -129,6 +130,7 @@ namespace Element.CLR
 
         private BoundaryMap()
         {
+            // When discovering any new boundary structs we add a converter to this boundary map instance
             DiscoverBoundaryStruct += (type, attribute) => AddConverter(MakeMappingFromAttribute(type, attribute));
         }
 

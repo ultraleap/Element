@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Element;
 using CommandLine;
 using CommandLine.Text;
+using ResultNET;
 
 namespace Alchemist
 {

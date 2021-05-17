@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -25,7 +26,7 @@ namespace Element.AST
             }
         }
 
-        public static Result<TIntrinsic> Get<TIntrinsic>(Identifier name, Context context)
+        public static Result<TIntrinsic> Get<TIntrinsic>(Identifier name, ITraceContext context)
             where TIntrinsic : IIntrinsicImplementation =>
             (_intrinsics.TryGetValue(name.String, out var intrinsic), intrinsic) switch
             {

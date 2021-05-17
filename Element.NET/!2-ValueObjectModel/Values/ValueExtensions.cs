@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -13,7 +14,7 @@ namespace Element.AST
         public static bool IsCallable(this IValue value, Context context)
             => value.Call(Array.Empty<IValue>(), context)
                     .Match((_, __) => true,
-                         messages => messages.All(msg => (EleMessageCode) msg.MessageCode.GetValueOrDefault(0) != EleMessageCode.NotFunction));
+                         messages => messages.All(msg => (EleMessageCode) msg.Info.Code.GetValueOrDefault(0) != EleMessageCode.NotFunction));
         
         public static bool IsType(this IValue value) => value.ReturnConstraint == value;
         public static bool IsIntrinsic(this IValue value) => value.IsIntrinsicOfType<IIntrinsicImplementation>();

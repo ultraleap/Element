@@ -1,3 +1,5 @@
+using ResultNET;
+
 namespace Element
 {
     /// <summary>
@@ -5,6 +7,6 @@ namespace Element
     /// </summary>
     public interface IPackageRegistry
     {
-        Result<PackageInfo> LookupPackage(PackageSpecifier specifier, Context context);
+        Result<PackageInfo> LookupPackage(PackageSpecifier specifier, ITraceContext context);
     }
 }

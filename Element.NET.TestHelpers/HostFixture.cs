@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
+using ResultNET;
 
 namespace Element.NET.TestHelpers
 {

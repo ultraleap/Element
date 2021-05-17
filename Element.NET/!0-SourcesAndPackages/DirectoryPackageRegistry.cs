@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ResultNET;
 
 namespace Element
 {
@@ -20,7 +21,7 @@ namespace Element
 
         private readonly Dictionary<string, FileInfo[]> _packagesByName;
 
-        public Result<PackageInfo> LookupPackage(PackageSpecifier specifier, Context context)
+        public Result<PackageInfo> LookupPackage(PackageSpecifier specifier, ITraceContext context)
         {
             if (!_packagesByName.TryGetValue(specifier.Name, out var versions))
             {

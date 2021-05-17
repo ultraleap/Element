@@ -5,6 +5,7 @@ using System.Numerics;
 using Element.CLR;
 using Element.NET.TestHelpers;
 using NUnit.Framework;
+using ResultNET;
 
 namespace Element.NET.Tests
 {

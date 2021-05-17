@@ -1,4 +1,5 @@
 using System;
+using ResultNET;
 
 namespace Element
 {

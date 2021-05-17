@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Element.AST;
+using ResultNET;
 using Expression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
