@@ -138,6 +138,7 @@ int main(int argc, char** argv)
         printf("Usage: %s <function-definition> [<input> ...]", argv[0]);
         return 1;
     }
+
     std::vector<element_value> args;
     for (size_t i = 2; i < argc; ++i)
         args.emplace_back(std::stof(argv[i]));
@@ -146,6 +147,8 @@ int main(int argc, char** argv)
     element_evaluator_ctx* econtext = nullptr;
     element_declaration* declaration = nullptr;
     element_instruction* instruction = nullptr;
+
+    element_result result = ELEMENT_OK;
 
     ELEMENT_OK_OR_RETURN(element_interpreter_create(&context));
     element_interpreter_set_log_callback(context, log_callback, nullptr);
@@ -166,10 +169,17 @@ int main(int argc, char** argv)
     lmnt_validation_result lvresult = LMNT_VALIDATION_OK;
     const char* loperation = "nothing lol";
 
-    element_result result = element_interpreter_load_string(context, argv[1], "<input>");
+    result = element_interpreter_load_package(context, "StandardLibrary");
     if (result != ELEMENT_OK)
     {
-        printf("Output buffer too small");
+        printf("whoops, no stdlib: %d\n", result);
+        goto cleanup;
+    }
+
+    result = element_interpreter_load_string(context, argv[1], "<input>");
+    if (result != ELEMENT_OK)
+    {
+        printf("Output buffer too small\n");
         goto cleanup;
     }
 
