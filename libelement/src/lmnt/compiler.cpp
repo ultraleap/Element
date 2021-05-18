@@ -635,9 +635,9 @@ static element_result create_virtual_for(
     stack_allocation* initial_vr;
     stack_allocation* condition_vr;
     stack_allocation* body_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.dependents()[0].get(), &initial_vr));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.dependents()[1].get(), &condition_vr));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.dependents()[2].get(), &body_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.initial().get(), &initial_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.condition().get(), &condition_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.body().get(), &body_vr));
     if (condition_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
     if (initial_vr->count != body_vr->count)
@@ -650,13 +650,14 @@ static element_result prepare_virtual_for(
     compiler_state& state,
     const element::instruction_for& ef)
 {
-    const element::instruction* dep0 = ef.dependents()[0].get();
-    const element::instruction* dep1 = ef.dependents()[1].get();
-    const element::instruction* dep2 = ef.dependents()[2].get();
+    const element::instruction* dep0 = ef.initial().get();
+    const element::instruction* dep1 = ef.condition().get();
+    const element::instruction* dep2 = ef.body().get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
 
+    // these may fail if they're pinned, which is fine
     state.allocator->set_parent(dep0, &ef, 0);
     state.allocator->set_parent(dep2, &ef, 0);
 
@@ -668,9 +669,9 @@ static element_result allocate_virtual_for(
     compiler_state& state,
     const element::instruction_for& ef)
 {
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.dependents()[0].get()));
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.dependents()[1].get()));
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.dependents()[2].get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.initial().get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.condition().get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.body().get()));
     return state.allocator->allocate(&ef);
 }
 
@@ -680,13 +681,17 @@ static element_result compile_for(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    const element::instruction* initial_in = ef.dependents()[0].get();
-    const element::instruction* condition_in = ef.dependents()[1].get();
-    const element::instruction* body_in = ef.dependents()[2].get();
-    stack_allocation* initial_vr = state.allocator->get(initial_in);
-    stack_allocation* condition_vr = state.allocator->get(condition_in);
-    stack_allocation* body_vr = state.allocator->get(body_in);
+    const element::instruction* initial_in = ef.initial().get();
+    const element::instruction* condition_in = ef.condition().get();
+    const element::instruction* body_in = ef.body().get();
+    const stack_allocation* initial_vr = state.allocator->get(initial_in);
+    const stack_allocation* condition_vr = state.allocator->get(condition_in);
+    const stack_allocation* body_vr = state.allocator->get(body_in);
     if (!initial_vr || !condition_vr || !body_vr) return ELEMENT_ERROR_UNKNOWN;
+
+    std::vector<stack_allocation*> condition_inputs(condition_vr->count, nullptr);
+    std::vector<stack_allocation*> body_inputs(condition_vr->count, nullptr);
+    // TODO: figure out what the right scope is somehow?
 
     uint16_t initial_stack_idx, condition_stack_idx, body_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(initial_in, initial_stack_idx));
