@@ -5,6 +5,8 @@
 #include "jit/hosthelpers.h"
 #include "helpers.h"
 
+#include LMNT_MEMORY_HEADER
+
 #if defined(LMNT_JIT_HAS_X86_64)
 lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit_fn_data* fndata, lmnt_jit_compile_stats* stats);
 #endif

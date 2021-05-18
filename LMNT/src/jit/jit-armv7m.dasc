@@ -13,6 +13,7 @@
 #include "jit/hosthelpers.h"
 #include "jit/targethelpers-arm.h" // includes dasm_proto
 #include "jit/reghelpers-arm-vfp.h"
+#include LMNT_MEMORY_HEADER
 
 | .arch armv7m
 | .section rodata, code

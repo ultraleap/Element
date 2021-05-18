@@ -16,6 +16,7 @@
 #include "jit/hosthelpers.h"
 #include "jit/targethelpers-x86.h" // includes dasm_proto
 #include "jit/reghelpers-x86.h"
+#include LMNT_MEMORY_HEADER
 
 
 | .arch x64
