@@ -31,7 +31,8 @@ namespace Element.NET.TestHelpers
                                    : new ProcessHostInfo(name, 
                                        new []{Get<string>("build-command") ,Get<string>("additional-build-command")},
                                        Path.Combine(_elementRootDirectory.Value, Get<string>("executable-path")), 
-                                       Get<string>("working-directory"));
+                                       Get<string>("working-directory"),
+                                       Get<string>("executable-extra-args"));
         }
 
         private static readonly Lazy<string> _elementRootDirectory = new Lazy<string>(() =>
@@ -59,18 +60,20 @@ namespace Element.NET.TestHelpers
 
         private class ProcessHostInfo
         {
-            public ProcessHostInfo(string name, string[] buildCommands, string executablePath, string workingDirectory)
+            public ProcessHostInfo(string name, string[] buildCommands, string executablePath, string workingDirectory, string executableExtraArgs)
             {
                 Name = name;
                 BuildCommands = buildCommands;
                 ExecutablePath = executablePath;
                 WorkingDirectory = workingDirectory;
+                ExecutableExtraArgs = executableExtraArgs;
             }
 
             public string Name { get; }
             public string[] BuildCommands { get; }
             public string ExecutablePath { get; }
             public string WorkingDirectory { get; }
+            public string ExecutableExtraArgs { get; }
         }
 
         private static readonly ProcessHostInfo? _processHostInfo;
@@ -190,7 +193,7 @@ namespace Element.NET.TestHelpers
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = _info.ExecutablePath,
-                        Arguments = arguments,
+                        Arguments = $"{arguments} {_processHostInfo?.ExecutableExtraArgs}",
                         WorkingDirectory = Path.Combine(_elementRootDirectory.Value, _info.WorkingDirectory)
                     }
                 };
