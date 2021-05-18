@@ -130,11 +130,13 @@ static element_result prepare_virtual_input(
     compiler_state& state,
     const element::instruction_input& ei)
 {
-    if (!state.allocator->is_type(&ei, allocation_type::output)) {
+    // check if this is a top-level input (scope 0)
+    const bool top_level = (ei.scope() == 0);
+    if (top_level && !state.allocator->is_type(&ei, allocation_type::output)) {
         // just use it from the input location
         ELEMENT_OK_OR_RETURN(state.allocator->set_pinned(&ei, allocation_type::input, uint16_t(ei.index()), 1));
     }
-    // else input --> output, have to copy it
+    // else input --> output or input to local function, so have to copy it
     return ELEMENT_OK;
 }
 
@@ -151,7 +153,10 @@ static element_result compile_input(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    copy_stack_values(state.calculate_stack_index(allocation_type::input, uint16_t(ei.index())), stack_idx, 1, output);
+    const bool top_level = (ei.scope() == 0);
+    if (top_level)
+        copy_stack_values(state.calculate_stack_index(allocation_type::input, uint16_t(ei.index())), stack_idx, 1, output);
+    // else filled in wherever the local function is invoked
     return ELEMENT_OK;
 }
 
