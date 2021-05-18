@@ -154,10 +154,10 @@ int main(int argc, char** argv)
     element_interpreter_set_log_callback(context, log_callback, nullptr);
     element_interpreter_load_prelude(context);
 
-    float outputs[1];
+    float* outputs = nullptr;
 
-    element_inputs input;
-    element_outputs output;
+    element_inputs input = { nullptr, 0 };
+    element_outputs output = { nullptr, 0 };
 
     std::array<char, 2048> output_buffer_array{};
     char* output_buffer = output_buffer_array.data();
@@ -198,8 +198,8 @@ int main(int argc, char** argv)
     input.values = args.data();
     input.count = args.size();
 
-    output.values = outputs;
-    output.count = 1;
+    output.count = instruction->instruction->get_size();
+    output.values = new float[output.count];
 
     result = element_interpreter_evaluate_instruction(context, econtext, instruction, &input, &output);
     if (result != ELEMENT_OK)
@@ -297,6 +297,7 @@ cleanup:
     element_declaration_delete(&declaration);
     element_instruction_delete(&instruction);
     element_interpreter_delete(&context);
+    delete[] output.values;
     if (result != ELEMENT_OK)
     {
         printf("ELEMENT ERROR: %d\n", result);
