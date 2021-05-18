@@ -187,7 +187,7 @@ static element_result prepare_virtual_serialised_structure(
     for (const auto& d : es.dependents())
     {
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, d.get()));
-        // TODO: handle failure (copy in?)
+        // this may fail (e.g. if it's pinned), which is fine - we'll just copy it in
         state.allocator->set_parent(d.get(), &es, index);
         state.allocator->use(&es, d.get());
 
@@ -217,6 +217,12 @@ static element_result compile_serialised_structure(
     for (const auto& d : es.dependents())
     {
         ELEMENT_OK_OR_RETURN(compile_instruction(state, d.get(), output));
+
+        uint16_t d_index;
+        ELEMENT_OK_OR_RETURN(state.calculate_stack_index(d.get(), d_index));
+        const stack_allocation* d_vr = state.allocator->get(d.get());
+        if (!d_vr) return ELEMENT_ERROR_UNKNOWN;
+        copy_stack_values(d_index, stack_idx + d_vr->rel_index, d_vr->count, output);
     }
     return ELEMENT_OK;
 }
