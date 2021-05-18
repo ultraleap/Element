@@ -102,21 +102,23 @@ LMNT_ATTR_FAST static inline lmnt_result execute_instruction(lmnt_ictx* ctx, con
     return ctx->op_functions[op.opcode](ctx, op.arg1, op.arg2, op.arg3);
 }
 
+#if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
 static inline void print_execution_context(lmnt_ictx* ctx, lmnt_loffset inst_idx, const lmnt_instruction op)
 {
-    printf("Eval[%02X]: % 12s %04X %04X %04X [", inst_idx, lmnt_get_opcode_info(op.opcode)->name, op.arg1, op.arg2, op.arg3);
+    LMNT_PRINTF("Eval[%02X]: % 12s %04X %04X %04X [", inst_idx, lmnt_get_opcode_info(op.opcode)->name, op.arg1, op.arg2, op.arg3);
     const size_t count = validated_get_constants_count(&ctx->archive) + ctx->cur_def->stack_count_unaligned;
     for (size_t i = 0; i < count; ++i)
     {
         if (i) printf(", ");
-        printf("%8.3f", ctx->stack[i]);
+        LMNT_PRINTF("%8.3f", ctx->stack[i]);
     }
-    printf("] [%s %s %s %s]\n",
+    LMNT_PRINTF("] [%s %s %s %s]\n",
         (ctx->status_flags & LMNT_ISTATUS_CMP_EQ) ? "EQ" : "  ",
         (ctx->status_flags & LMNT_ISTATUS_CMP_LT) ? "LT" : "  ",
         (ctx->status_flags & LMNT_ISTATUS_CMP_GT) ? "GT" : "  ",
         (ctx->status_flags & LMNT_ISTATUS_CMP_UN) ? "UN" : "  ");
 }
+#endif
 
 // This function assumes:
 // - ctx->cur_def has been set to the def to be executed
