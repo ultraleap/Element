@@ -57,9 +57,9 @@ add_custom_command(
 target_include_directories(${CMAKE_PROJECT_NAME}
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        "${element_SOURCE_DIR}/src"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        "${element_SOURCE_DIR}/src"
 )
 
 if (ELEMENT_FORCE_FALLBACK_FS)
@@ -69,6 +69,7 @@ endif()
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
         element
+        lmnt
         CLI11::CLI11
         fmt::fmt-header-only
         toml11::toml11

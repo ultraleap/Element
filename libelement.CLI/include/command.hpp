@@ -13,6 +13,13 @@
 
 namespace libelement::cli
 {
+    enum class Target
+    {
+        Interpreter,
+        LMNT,
+        LMNTJit,
+    };
+
     struct common_command_arguments
     {
         bool no_prelude = false;
@@ -23,6 +30,12 @@ namespace libelement::cli
         message_level verbosity = message_level::Information;
         std::vector<std::string> packages{};
         std::vector<std::string> source_files{};
+        Target target = Target::Interpreter;
+        std::map<std::string, Target> target_mapping{
+            {"interpreter", Target::Interpreter},
+            {"lmnt", Target::LMNT},
+            {"lmnt-jit", Target::LMNTJit},
+        };
 
         [[nodiscard]] std::string as_string() const
         {
@@ -43,6 +56,9 @@ namespace libelement::cli
             if (verbosity != message_level::Information)
                 ss << "--verbosity " << static_cast<int>(verbosity) << " ";
 
+            if (compiletime)
+                ss << "--interpreted ";
+
             if (!packages.empty())
             {
                 ss << "--packages ";
@@ -58,6 +74,9 @@ namespace libelement::cli
                 for (const auto& source_file : source_files)
                     ss << source_file << " ";
             }
+            
+            using CLI::enums::operator<<;
+            ss << " --target " << target;
 
             return ss.str();
         }
@@ -117,10 +136,10 @@ namespace libelement::cli
         using log_callback = element_log_callback;
         static void configure(CLI::App& app, command::callback callback);
 
-        static compiler_message
-        generate_response(const element_result result, element_outputs output,
-                          bool log_json,
-                          std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
+        static compiler_message generate_response(const element_result result,
+            const element_outputs& output,
+            bool log_json,
+            std::vector<trace_site> trace_stack = std::vector<libelement::cli::trace_site>())
         {
             std::string data;
             for (auto i = 0; i < output.count; i++)
