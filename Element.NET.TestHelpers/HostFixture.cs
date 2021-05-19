@@ -124,16 +124,16 @@ namespace Element.NET.TestHelpers
                 }, messages => ExpectingSuccess(messages, false));
         
         // TODO: Remove this in favour using ExpressionEvaluation
-        protected void EvaluateExpectingElementError(CompilerInput compilerInput, EleMessageCode eleMessageCode, string expression)
+        protected void EvaluateExpectingError(CompilerInput compilerInput, MessageInfo info, string expression)
         {
             var result = new ExpressionEvaluation(expression, true).Evaluate(compilerInput, Host);
-            ExpectingError(result.Messages, result.IsSuccess, MessageExtensions.TypeString, (int)eleMessageCode);
+            ExpectingError(result.Messages, result.IsSuccess, info);
         }
         
-        protected void EvaluateExpectingElementError(CompilerInput compilerInput, EleMessageCode eleMessageCode, EvaluationBase evaluation)
+        protected void EvaluateExpectingError(CompilerInput compilerInput, MessageInfo info, EvaluationBase evaluation)
         {
             var result = evaluation.Evaluate(compilerInput, Host);
-            ExpectingError(result.Messages, result.IsSuccess, MessageExtensions.TypeString, (int)eleMessageCode);
+            ExpectingError(result.Messages, result.IsSuccess, info);
         }
     }
 }

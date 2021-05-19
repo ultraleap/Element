@@ -24,8 +24,8 @@ namespace Element
 		                                                                                            .Lookup(StructImplementation.Identifier, context)
 		                                                                                            .Bind(result => result.InnerIs<Struct>(out var @struct)
 			                                                                                                            ? new Result<Struct>(@struct)
-			                                                                                                            : context.Trace(EleMessageCode.IntrinsicNotFound, $"'{result}' is not intrinsic struct declaration for {StructImplementation.Identifier}"));
-		public virtual Result<Constant> CompileTimeConstant(Context context) => context.Trace(EleMessageCode.NotCompileConstant, $"'{this}' is not a constant");
+			                                                                                                            : context.Trace(ElementMessage.IntrinsicNotFound, $"'{result}' is not intrinsic struct declaration for {StructImplementation.Identifier}"));
+		public virtual Result<Constant> CompileTimeConstant(Context context) => context.Trace(ElementMessage.NotCompileConstant, $"'{this}' is not a constant");
 
 		public abstract IEnumerable<Instruction> Dependent { get; }
 
@@ -53,7 +53,7 @@ namespace Element
 			var result = nextValue();
 			return result.StructImplementation == StructImplementation
 				       ? new Result<IValue>(result)
-				       : context.Trace(EleMessageCode.SerializationError,
+				       : context.Trace(ElementMessage.SerializationError,
 				                       $"'{result}' deserialized to incorrect type: is '{result.StructImplementation}' - expected '{StructImplementation}'");
 		}
 	}
@@ -65,7 +65,7 @@ namespace Element
 			if (float.IsNaN(constant.Value))
 			{
 				// TODO: Return error type, not an error message
-				return context.Trace(EleMessageCode.ArgumentOutOfRange, "Constant was NaN - cannot convert to an index");
+				return context.Trace(ElementMessage.ArgumentOutOfRange, "Constant was NaN - cannot convert to an index");
 			}
 
 			var asInt = (int) constant.Value;
@@ -73,7 +73,7 @@ namespace Element
 			return inRange
 				       ? new Result<int>(asInt)
 				       // TODO: Return error type, not an error message
-				       : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index '{asInt}' not in range of [{min}, {max}]");
+				       : context.Trace(ElementMessage.ArgumentOutOfRange, $"Index '{asInt}' not in range of [{min}, {max}]");
 		}
 
 		public static Result<int> CompileTimeIndex(this Instruction instruction, int min, int max, Context context) =>

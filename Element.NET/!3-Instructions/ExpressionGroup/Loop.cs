@@ -80,7 +80,7 @@ namespace Element
 							iterationCount++;
 							if (iterationCount > 100000)
 							{
-								return context.Trace(EleMessageCode.InfiniteLoop, "Iteration count exceeded 100000, likely to be an infinite loop");
+								return context.Trace(ElementMessage.InfiniteLoop, "Iteration count exceeded 100000, likely to be an infinite loop");
 							}
 						}
 
@@ -102,7 +102,7 @@ namespace Element
 			       {
 				       // Check the condition function with non-constant dummy instructions
 				       // ReSharper disable once PossibleUnintendedReferenceComparison
-				       Constant c when c == Constant.True => context.Trace(EleMessageCode.InfiniteLoop, "Loop condition function always returns true"),
+				       Constant c when c == Constant.True => context.Trace(ElementMessage.InfiniteLoop, "Loop condition function always returns true"),
 				       // ReSharper disable once PossibleUnintendedReferenceComparison
 				       //Constant c when c == Constant.False => new BasicInstructionGroup(initialSerialized), // TODO: Implement compilation of BasicInstructionGroup and re-enable this, warn that loop is redundant
 				       _ => EvaluateLoop()

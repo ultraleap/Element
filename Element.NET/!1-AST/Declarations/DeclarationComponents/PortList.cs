@@ -24,12 +24,12 @@ namespace Element.AST
             foreach (var port in Ports.List)
             {
                 if (port.DefaultArgument != null) anyDefaultArgumentsSoFar = true;
-                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) builder.Append(EleMessageCode.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{this}' is unreachable");
+                if (anyDefaultArgumentsSoFar && port.DefaultArgument == null) builder.Append(ElementMessage.PortListDeclaresDefaultArgumentBeforeNonDefault, $"Default argument for port '{port}' in '{this}' is unreachable");
                 port.Validate(builder, context);
                 if (!(port.Identifier is { } id)) continue;
                 if (!distinctPortIdentifiers.Add(id.String))
                 {
-                    builder.Append(EleMessageCode.MultipleDefinitions, $"'{this}' has duplicate input ports named '{id}'");
+                    builder.Append(ElementMessage.MultipleDefinitions, $"'{this}' has duplicate input ports named '{id}'");
                 }
             }
         }
@@ -59,7 +59,7 @@ namespace Element.AST
             {
                 (true, false) => Array.Empty<ResolvedPort>(),
                 (_, true) => new Result<IReadOnlyList<ResolvedPort>>(new[] {ResolvedPort.VariadicPort}),
-                _ => context.Trace(EleMessageCode.MissingPorts, $"'{context.DeclarationStack.Peek().AstNode}' must have a port list")
+                _ => context.Trace(ElementMessage.MissingPorts, $"'{context.DeclarationStack.Peek().AstNode}' must have a port list")
             };
     }
 }

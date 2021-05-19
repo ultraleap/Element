@@ -85,7 +85,7 @@ namespace Element.CLR
                                  {
                                      Result<ParameterInfo> PortToParameter(ResolvedPort port, ParameterInfo? parent, IValue portDefaultValue)
                                      {
-                                         if (!port.Identifier.HasValue) return context.Trace(EleMessageCode.InvalidBoundaryFunction, "Boundary value ports must not contain discards");
+                                         if (!port.Identifier.HasValue) return context.Trace(ElementMessage.InvalidBoundaryFunction, "Boundary value ports must not contain discards");
                                          var portId = port.Identifier.Value;
                                          var argumentPath = IdStackToPath();
                                          idStack.Push(portId);
@@ -95,7 +95,7 @@ namespace Element.CLR
                                          {
                                              result = portDefaultValue.InnerIs(out Constant constant)
                                                  ? (Result<ParameterInfo>) new LeafParameterInfo(portId.String, argumentPath, parent, port.ResolvedConstraint, constant, sourceContext)
-                                                 : context.Trace(EleMessageCode.InvalidBoundaryFunction, $"Expected a {nameof(Constant)} but got {portDefaultValue}");
+                                                 : context.Trace(ElementMessage.InvalidBoundaryFunction, $"Expected a {nameof(Constant)} but got {portDefaultValue}");
                                          }
                                          else
                                          {
@@ -169,7 +169,7 @@ namespace Element.CLR
             return value.InnerIs(out Constant constant)
                 && constant.IsInstanceOfType(ParameterType, context)
                     ? SetFloat(source, constant)
-                    : context.Trace(EleMessageCode.TypeError, $"Expected {ParameterType} value but got {value} of type {value.TypeOf}");
+                    : context.Trace(ElementMessage.TypeError, $"Expected {ParameterType} value but got {value} of type {value.TypeOf}");
         }
 
         public override IEnumerable<LeafParameterInfo> FlattenedParameters()

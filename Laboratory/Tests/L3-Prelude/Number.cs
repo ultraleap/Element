@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Element;
 using NUnit.Framework;
+using ResultNET;
 
 namespace Laboratory.Tests.L3.Prelude
 {
@@ -320,26 +321,26 @@ namespace Laboratory.Tests.L3.Prelude
 		};
 
 		[DatapointSource]
-		public (string FunctionExpression, string CallExpression, EleMessageCode ExpectedError)[] FunctionCallErrorCases =
+		public (string FunctionExpression, string CallExpression, MessageInfo ExpectedError)[] FunctionCallErrorCases =
 		{
-			("_(a:Vector3):Num = Num(a)", "(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
+			("_(a:Vector3):Num = Num(a)", "(Vector3(5, 5, 5))", ElementMessage.ConstraintNotSatisfied),
 		};
 		
 		[Theory]
-		public void ErrorCases((string FunctionExpression, string CallExpression, EleMessageCode ExpectedError) args, EvaluationMode evaluationMode) =>
-			EvaluateExpectingElementError(ValidatedCompilerInput, args.ExpectedError, new FunctionEvaluation(args.FunctionExpression, args.CallExpression, evaluationMode == EvaluationMode.Interpreted));
+		public void ErrorCases((string FunctionExpression, string CallExpression, MessageInfo ExpectedError) args, EvaluationMode evaluationMode) =>
+			EvaluateExpectingError(ValidatedCompilerInput, args.ExpectedError, new FunctionEvaluation(args.FunctionExpression, args.CallExpression, evaluationMode == EvaluationMode.Interpreted));
 		
-		public static (string Expression, EleMessageCode ExpectedError)[] ArgsList =
+		public static (string Expression, MessageInfo ExpectedError)[] ArgsList =
 		{
-			("Num(list(1))", EleMessageCode.ConstraintNotSatisfied),
-			("Num(_(_) = 1)", EleMessageCode.ConstraintNotSatisfied),
-			("Num({ a = 0 })", EleMessageCode.ConstraintNotSatisfied),
+			("Num(list(1))", ElementMessage.ConstraintNotSatisfied),
+			("Num(_(_) = 1)", ElementMessage.ConstraintNotSatisfied),
+			("Num({ a = 0 })", ElementMessage.ConstraintNotSatisfied),
 		};
 
 		[Test]
-		public void NumConstructorError([ValueSource(nameof(ArgsList))] (string expression, EleMessageCode expectedError) args, [Values(EvaluationMode.Interpreted)] EvaluationMode mode)
+		public void NumConstructorError([ValueSource(nameof(ArgsList))] (string expression, MessageInfo expectedError) args, [Values(EvaluationMode.Interpreted)] EvaluationMode mode)
 		{
-			EvaluateExpectingElementError(ValidatedCompilerInput,
+			EvaluateExpectingError(ValidatedCompilerInput,
 				args.expectedError,
 				new ExpressionEvaluation(args.expression, mode));
 		}

@@ -57,7 +57,7 @@ namespace Element
                 var context = Context.CreateFromSourceContext(this);
                 if (_loadedPackages.TryGetValue(packageInfo.Name, out var loaded))
                 {
-                    return context.Trace(EleMessageCode.DuplicateSourceFile, $"Tried to load package {loaded} when {loaded} is already loaded");
+                    return context.Trace(ElementMessage.DuplicateSourceFile, $"Tried to load package {loaded} when {loaded} is already loaded");
                 }
                 
                 var builder = new ResultBuilder(context);

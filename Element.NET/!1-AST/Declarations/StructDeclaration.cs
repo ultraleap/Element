@@ -31,7 +31,7 @@ namespace Element.AST
             builder.Append(IntrinsicImplementationCache.Get<IIntrinsicStructImplementation>(Identifier, builder.Context));
             if (ReturnConstraint != null)
             {
-                builder.Append(EleMessageCode.StructCannotHaveReturnType, $"Struct '{this}' cannot have declared return type");
+                builder.Append(ElementMessage.StructCannotHaveReturnType, $"Struct '{this}' cannot have declared return type");
             }
             
             PortList?.Validate(builder, context);
@@ -43,7 +43,7 @@ namespace Element.AST
 
             if (PortList?.Ports.List.Any(port => !port.Identifier.HasValue) ?? false)
             {
-                builder.Append(EleMessageCode.PortListCannotContainDiscards, $"Struct '{this}' contains discards");
+                builder.Append(ElementMessage.PortListCannotContainDiscards, $"Struct '{this}' contains discards");
             }
         }
     }
@@ -70,12 +70,12 @@ namespace Element.AST
         {
             if (!(PortList?.Ports.List.Count > 0))
             {
-                builder.Append(EleMessageCode.MissingPorts, $"Non intrinsic '{this}' must have ports");
+                builder.Append(ElementMessage.MissingPorts, $"Non intrinsic '{this}' must have ports");
             }
             
             if (ReturnConstraint != null)
             {
-                builder.Append(EleMessageCode.StructCannotHaveReturnType, $"Struct '{this}' cannot have declared return type");
+                builder.Append(ElementMessage.StructCannotHaveReturnType, $"Struct '{this}' cannot have declared return type");
             }
             
             PortList?.Validate(builder, context);
@@ -87,7 +87,7 @@ namespace Element.AST
 
             if (PortList?.Ports.List.Any(port => !port.Identifier.HasValue) ?? false)
             {
-                builder.Append(EleMessageCode.PortListCannotContainDiscards, $"Struct '{this}' contains discards");
+                builder.Append(ElementMessage.PortListCannotContainDiscards, $"Struct '{this}' contains discards");
             }
         }
     }

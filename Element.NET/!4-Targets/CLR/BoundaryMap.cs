@@ -120,7 +120,7 @@ namespace Element.CLR
                 return context.EvaluateExpression(expr)
                               .Bind(value =>
                                {
-                                   if (!value.InnerIs(out Struct s)) return context.Trace(EleMessageCode.InvalidExpression, $"'{expr}' did not resolve to a Struct");
+                                   if (!value.InnerIs(out Struct s)) return context.Trace(ElementMessage.InvalidExpression, $"'{expr}' did not resolve to a Struct");
                                    cache._elementToClrMappings[s] = type;
                                    return Result.Success;
                                });
@@ -269,7 +269,7 @@ namespace Element.CLR
         public Result<IBoundaryConverter> GetConverter(Type type, Context context) =>
             _convertersByClrType.TryGetValue(type, out var converter)
                 ? new Result<IBoundaryConverter>(converter)
-                : context.Trace(EleMessageCode.MissingBoundaryConverter, $"No boundary converter for CLR type '{type}'");
+                : context.Trace(ElementMessage.MissingBoundaryConverter, $"No boundary converter for CLR type '{type}'");
 
         private void ResolveDeferredMappings(Context context)
         {
@@ -295,12 +295,12 @@ namespace Element.CLR
             if (_elementToClrMappings.TryGetValue(elementType, out var type))
                 return new Result<Type>(type);
             else
-                return context.Trace(EleMessageCode.UnmappedBoundaryType, $"No C# type mapped for '{elementType}'");
+                return context.Trace(ElementMessage.UnmappedBoundaryType, $"No C# type mapped for '{elementType}'");
         }
 
         public Result<Type> ElementToClr(IIntrinsicStructImplementation intrinsicElementType, Context context) =>
             _intrinsicTypeDictionary.TryGetValue(intrinsicElementType, out var clrType)
                 ? new Result<Type>(clrType)
-                : context.Trace(EleMessageCode.UnmappedBoundaryType, $"No C# type mapped for '{intrinsicElementType.Identifier}'");
+                : context.Trace(ElementMessage.UnmappedBoundaryType, $"No C# type mapped for '{intrinsicElementType.Identifier}'");
     }
 }

@@ -208,7 +208,7 @@ namespace Element.NET.TestHelpers
 
                 if (process.ExitCode != 0 && !resultBuilder.Messages.Any(m => m.Info.Level >= MessageLevel.Error))
                 {
-                    resultBuilder.Append(EleMessageCode.UnknownError, $"{_info.Name} process quit with exit code '{process.ExitCode}'.");
+                    resultBuilder.Append(ElementMessage.UnknownError, $"{_info.Name} process quit with exit code '{process.ExitCode}'.");
                 }
 
                 process.Close();
@@ -256,7 +256,7 @@ namespace Element.NET.TestHelpers
                                                    {
                                                        if (!float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
                                                        {
-                                                           resultBuilder.Append(EleMessageCode.ParseError, $"Could not parse result string '{s}' as a float");
+                                                           resultBuilder.Append(ElementMessage.ParseError, $"Could not parse result string '{s}' as a float");
                                                        }
 
                                                        return value;

@@ -44,8 +44,8 @@ namespace Laboratory.Tests.L2.Semantics
         public void NestedNamespacesInStructBody() => AssertTypeof(CompilerInput, "rootStruct.nestedNamespace", "Namespace");
 
         [Test]
-        public void LocalFunctionConstraintNotFound() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "localFuncWithConstraintError");
+        public void LocalFunctionConstraintNotFound() => EvaluateExpectingError(CompilerInput, ElementMessage.IdentifierNotFound, "localFuncWithConstraintError");
         [Test]
-        public void LocalFunctionConstraintNotFoundDoesntContinueLookup() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "localFuncWithErrorThatShadowsOuterId");
+        public void LocalFunctionConstraintNotFoundDoesntContinueLookup() => EvaluateExpectingError(CompilerInput, ElementMessage.IdentifierNotFound, "localFuncWithErrorThatShadowsOuterId");
     }
 }

@@ -96,7 +96,7 @@ namespace Element
                                                         : string.Empty;
                              return $"{value.SummaryString}{serializedString}";
                          },
-                         messages => $"<errors: {string.Join(", ", messages.Where(msg => msg.Info.Level == MessageLevel.Error).Select(msg => (EleMessageCode) msg.Info.Code.GetValueOrDefault(9999)))}>");
+                         messages => $"<errors: {string.Join(", ", messages.Where(msg => msg.Info.Level == MessageLevel.Error))}>");
 
         private void PopResult(Result<IValue> result)
         {

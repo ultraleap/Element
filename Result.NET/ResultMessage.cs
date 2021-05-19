@@ -61,7 +61,7 @@ namespace ResultNET
                     {
                         builder.AppendLine();
                         builder.AppendLine("Element source trace:");
-                        foreach (var site in TraceStack)
+                        foreach (var site in TraceStack!)
                         {
                             builder.Append("    ").AppendLine(site.ToString());
                         }

@@ -31,8 +31,8 @@ namespace Element.AST
             (_intrinsics.TryGetValue(name.String, out var intrinsic), intrinsic) switch
             {
                 (true, TIntrinsic t) => t,
-                (false, _) => context.Trace(EleMessageCode.IntrinsicNotFound, $"Intrinsic '{name}' is not implemented"),
-                (true, _) => context.Trace(EleMessageCode.TypeError, $"Found intrinsic '{name}' but it is not '{typeof(TIntrinsic)}'")
+                (false, _) => context.Trace(ElementMessage.IntrinsicNotFound, $"Intrinsic '{name}' is not implemented"),
+                (true, _) => context.Trace(ElementMessage.TypeError, $"Found intrinsic '{name}' but it is not '{typeof(TIntrinsic)}'")
             };
 
         private static readonly Dictionary<string, IIntrinsicImplementation> _intrinsics = new Dictionary<string, IIntrinsicImplementation>();

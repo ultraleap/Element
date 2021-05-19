@@ -16,6 +16,7 @@ namespace ResultNET
         public ITraceContext Context { get; }
         public IReadOnlyList<ResultMessage> Messages => _messages;
 
+        public void Append(MessageInfo messageInfo, string? context) => Append(Context.Trace(messageInfo, context));
         public void Append(ResultMessage? message)
         {
             if (message != null) _messages.Add(message);
@@ -43,7 +44,8 @@ namespace ResultNET
         public ITraceContext Context { get; }
         public T Result { get; set; }
         public IReadOnlyList<ResultMessage> Messages => _messages;
-        
+
+        public void Append(MessageInfo messageInfo, string? context) => Append(Context.Trace(messageInfo, context));
         public void Append(ResultMessage? message)
         {
             if (message != null) _messages.Add(message);

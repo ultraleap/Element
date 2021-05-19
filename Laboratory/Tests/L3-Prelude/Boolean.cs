@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using Element;
+using ResultNET;
 
 namespace Laboratory.Tests.L3.Prelude
 {
@@ -85,26 +86,26 @@ namespace Laboratory.Tests.L3.Prelude
 		};
 		
 		[DatapointSource]
-		public (string FunctionExpression, string CallExpression, EleMessageCode ExpectedError)[] FunctionCallErrorCases =
+		public (string FunctionExpression, string CallExpression, MessageInfo ExpectedError)[] FunctionCallErrorCases =
 		{
-			("_(a:Vector3):Bool = Bool(a)" ,"(Vector3(5, 5, 5))", EleMessageCode.ConstraintNotSatisfied),
+			("_(a:Vector3):Bool = Bool(a)" ,"(Vector3(5, 5, 5))", ElementMessage.ConstraintNotSatisfied),
 		};
 		
 		[Theory]
-		public void ErrorCases((string FunctionExpression, string CallExpression, EleMessageCode ExpectedError) args, EvaluationMode evaluationMode) =>
-			EvaluateExpectingElementError(ValidatedCompilerInput, args.ExpectedError, new FunctionEvaluation(args.FunctionExpression, args.CallExpression, evaluationMode));
+		public void ErrorCases((string FunctionExpression, string CallExpression, MessageInfo ExpectedError) args, EvaluationMode evaluationMode) =>
+			EvaluateExpectingError(ValidatedCompilerInput, args.ExpectedError, new FunctionEvaluation(args.FunctionExpression, args.CallExpression, evaluationMode));
 		
-		public static (string Expression, EleMessageCode ExpectedError)[] ArgsList =
+		public static (string Expression, MessageInfo ExpectedError)[] ArgsList =
 		{
-			("Bool(list(True))", EleMessageCode.ConstraintNotSatisfied),
-			("Bool(_(_) = True)", EleMessageCode.ConstraintNotSatisfied),
-			("Bool({ a = False })", EleMessageCode.ConstraintNotSatisfied),
+			("Bool(list(True))", ElementMessage.ConstraintNotSatisfied),
+			("Bool(_(_) = True)", ElementMessage.ConstraintNotSatisfied),
+			("Bool({ a = False })", ElementMessage.ConstraintNotSatisfied),
 		};
 
 		[Test]
-		public void BoolConstructorError([ValueSource(nameof(ArgsList))] (string expression, EleMessageCode expectedError) args, [Values(EvaluationMode.Interpreted)] EvaluationMode mode)
+		public void BoolConstructorError([ValueSource(nameof(ArgsList))] (string expression, MessageInfo expectedError) args, [Values(EvaluationMode.Interpreted)] EvaluationMode mode)
 		{
-			EvaluateExpectingElementError(ValidatedCompilerInput,
+			EvaluateExpectingError(ValidatedCompilerInput,
 				args.expectedError,
 				new ExpressionEvaluation(args.expression, mode));
 		}

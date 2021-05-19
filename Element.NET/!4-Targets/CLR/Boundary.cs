@@ -234,7 +234,7 @@ namespace Element.CLR
 						data.GroupCache.Add(groupElement.Group, groupList = CompileGroup(groupElement.Group, data, context));
 					}
 
-					return groupList[groupElement.Index];
+					return groupList[groupElement.GroupIndex];
 			}
 
 			throw new Exception("Unknown expression " + value);
@@ -308,7 +308,7 @@ namespace Element.CLR
 		/// </returns>
 		public static Result<(IValue CapturingValue, float[] CaptureArray)> SourceArgumentsFromSerializedArray(this IValue function, Context context)
 		{
-			if (!function.IsCallable(context)) return context.Trace(EleMessageCode.NotFunction, $"'{function}' is not a function, cannot source arguments");
+			if (!function.IsCallable(context)) return context.Trace(ElementMessage.NotFunction, $"'{function}' is not a function, cannot source arguments");
 			
 			return function.SerializeAllInputPortDefaults(context)
 			               .Bind(tuple =>
@@ -373,7 +373,7 @@ namespace Element.CLR
 		{
 			Result<Struct> ConstraintToStruct(IValue constraint) => constraint.InnerIs<Struct>(out var s)
 				                                                        ? new Result<Struct>(s)
-				                                                        : context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{constraint}' is not a struct - all top-level function ports must be serializable struct types");
+				                                                        : context.Trace(ElementMessage.InvalidBoundaryFunction, $"'{constraint}' is not a struct - all top-level function ports must be serializable struct types");
 
 			var inputStructs = value.HasInputs()
 				                   ? value.InputPorts.Select(p => ConstraintToStruct(p.ResolvedConstraint)).ToResultArray()
@@ -388,7 +388,7 @@ namespace Element.CLR
 				       false when value.InnerIs<Struct>(out var s) => s,
 				       false when value.InnerIs<StructInstance>(out var s) => ConstraintToStruct(s.DeclaringStruct),
 				       false when value.InnerIs<Instruction>(out var i) => i.LookupIntrinsicStruct(context),
-				       false => context.Trace(EleMessageCode.InvalidBoundaryFunction, $"'{value}' is not recognized as a function, struct, struct instance or primitive value, cannot deduce the return type for compiling a delegate")
+				       false => context.Trace(ElementMessage.InvalidBoundaryFunction, $"'{value}' is not recognized as a function, struct, struct instance or primitive value, cannot deduce the return type for compiling a delegate")
 			       })
 			       .Bind(types => types.Item1.Append(types.Item2).Select(context.ElementToClr)
 			                           .BindEnumerable(clrPortTypes => Compile(value, LinqExpression.GetFuncType(clrPortTypes.ToArray()), context)));
@@ -398,13 +398,13 @@ namespace Element.CLR
         {
 	        // Check return type/single out parameter of delegate
             var method = delegateType.GetMethod(nameof(Action.Invoke));
-            if (method == null) return context.Trace(EleMessageCode.InvalidBoundaryFunction, $"{delegateType} did not have invoke method");
+            if (method == null) return context.Trace(ElementMessage.InvalidBoundaryFunction, $"{delegateType} did not have invoke method");
 
             var delegateParameters = method.GetParameters();
             var delegateReturn = method.ReturnParameter;
             if (delegateParameters.Any(p => p.IsOut) || method.ReturnType == typeof(void))
             {
-                return context.Trace(EleMessageCode.InvalidBoundaryFunction, $"{delegateType} cannot have out parameters and must have non-void return type");
+                return context.Trace(ElementMessage.InvalidBoundaryFunction, $"{delegateType} cannot have out parameters and must have non-void return type");
             }
             
             // Create parameter expressions for input parameters and the functions return
@@ -414,7 +414,7 @@ namespace Element.CLR
             
             if (value.HasInputs() && value.InputPorts.Count != delegateParameters.Length)
             {
-	            return context.Trace(EleMessageCode.InvalidBoundaryFunction, $"Function being compiled expected {value.InputPorts.Count} parameters but delegate type has {delegateParameters.Length}");
+	            return context.Trace(ElementMessage.InvalidBoundaryFunction, $"Function being compiled expected {value.InputPorts.Count} parameters but delegate type has {delegateParameters.Length}");
             }
 
             var resultBuilder = new ResultBuilder<Delegate>(context, default!);
@@ -446,7 +446,7 @@ namespace Element.CLR
 			{
 				if (detectCircular.Count >= 1 && detectCircular.Peek() == nestedValue)
 				{
-					return context.Trace(EleMessageCode.RecursionNotAllowed, $"Circular dependency when compiling '{nestedValue}'");
+					return context.Trace(ElementMessage.RecursionNotAllowed, $"Circular dependency when compiling '{nestedValue}'");
 				}
 
 				// If this value is serializable then serialize and use it
@@ -494,7 +494,7 @@ namespace Element.CLR
 				               // If the default value is a single instruction then this is a primitive value (Num or Bool)
 				               ? serialized.Count == 1
 					               ? defaultValue.Deserialize(() => new Constant(serialized[0], instruction.StructImplementation), context)
-					               : context.Trace(EleMessageCode.InvalidBoundaryData, $"When converting to type {elementType} - expected {clrInstance} to serialize to 1 float but serialized to {serialized.Count} floats")
+					               : context.Trace(ElementMessage.InvalidBoundaryData, $"When converting to type {elementType} - expected {clrInstance} to serialize to 1 float but serialized to {serialized.Count} floats")
 				               : elementType.GetInputPortDefaults(context)
 				                            .Bind(fieldDefaults => fieldDefaults.SerializeAndFlattenValues(context))
 				                            .Bind(fieldDefaultsSerialized =>

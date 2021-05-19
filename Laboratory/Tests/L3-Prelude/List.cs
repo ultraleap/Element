@@ -27,7 +27,7 @@ namespace Laboratory.Tests.L3.Prelude
 
 		[Test]
 		public void CallWithListElementOfNonHomogenousList() =>
-			EvaluateExpectingElementError(ValidatedCompilerInput, EleMessageCode.ExpectedHomogenousItems, new FunctionEvaluation("_(i:Num):Num = returnVec2(list(Vector2(5, 10), Vector3(5, 10, 15)).at(i))", "(1)", false));
+			EvaluateExpectingError(ValidatedCompilerInput, ElementMessage.ExpectedHomogenousItems, new FunctionEvaluation("_(i:Num):Num = returnVec2(list(Vector2(5, 10), Vector3(5, 10, 15)).at(i))", "(1)", false));
 		
 		private static readonly (float, float)[] _factorialArguments =
 		{

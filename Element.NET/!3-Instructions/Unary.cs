@@ -53,7 +53,7 @@ namespace Element
 				? Evaluate(op, c.Value)
 				: operandValue.InnerIs<Instruction>(out var operand)
 					? new Result<IValue>(new Unary(op, operand))
-					: context.Trace(EleMessageCode.InvalidCompileTarget, $"'{operandValue}' is not an Instruction - only Instructions can be a unary operand");
+					: context.Trace(ElementMessage.InvalidCompileTarget, $"'{operandValue}' is not an Instruction - only Instructions can be a unary operand");
 
 		private Unary(Op operation, Instruction operand)
 			: base(operation switch

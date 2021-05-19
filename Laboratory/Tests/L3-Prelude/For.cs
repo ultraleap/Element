@@ -10,7 +10,7 @@ namespace Laboratory.Tests.L3.Prelude
             TestCase("for(False, _(n:Bool):Bool = True, _(n) = n)")
         ]
         public void GuaranteedInfiniteLoop(string expression) =>
-            EvaluateExpectingElementError(ValidatedCompilerInput, EleMessageCode.InfiniteLoop, expression);
+            EvaluateExpectingError(ValidatedCompilerInput, ElementMessage.InfiniteLoop, expression);
 
         public static (string FunctionExpression, string CallExpression, string ExpectedExpression)[] ImmediatelyTerminatingLoopData =
         {

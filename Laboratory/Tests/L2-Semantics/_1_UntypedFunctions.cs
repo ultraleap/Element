@@ -25,16 +25,16 @@ namespace Laboratory.Tests.L2.Semantics
 
         [TestCase("add(1)")]
         [TestCase("add(1, 3, 5)")]
-        public void CallWithIncorrectArgCountFails(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.ArgumentCountMismatch, expression);
+        public void CallWithIncorrectArgCountFails(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.ArgumentCountMismatch, expression);
 
         [Test]
-        public void RecursionDirectDisallowed() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "recurse(5)");
+        public void RecursionDirectDisallowed() => EvaluateExpectingError(CompilerInput, ElementMessage.RecursionNotAllowed, "recurse(5)");
         [Test]
-        public void RecursionIndirectDisallowed() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "recurseIndirect(5)");
+        public void RecursionIndirectDisallowed() => EvaluateExpectingError(CompilerInput, ElementMessage.RecursionNotAllowed, "recurseIndirect(5)");
         [Test]
-        public void SelfReferencingLocalWithOuter() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "selfReferencingLocalWithOuter");
+        public void SelfReferencingLocalWithOuter() => EvaluateExpectingError(CompilerInput, ElementMessage.RecursionNotAllowed, "selfReferencingLocalWithOuter");
         [Test]
-        public void SelfReferencingLocal() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, "selfReferencingLocal");
+        public void SelfReferencingLocal() => EvaluateExpectingError(CompilerInput, ElementMessage.RecursionNotAllowed, "selfReferencingLocal");
         
         [TestCase("add", "IntrinsicFunction")]
         [TestCase("addThree", "ExpressionBodiedFunction")]
@@ -44,13 +44,13 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("add")]
         [TestCase("addThree")]
         [TestCase("addFive")]
-        public void NotDeserializable(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.SerializationError, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.SerializationError, expression);
 
         [TestCase("5(10)")]
         [TestCase("pi(2)")]
-        public void CallNonFunction(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.NotFunction, expression);
+        public void CallNonFunction(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.NotFunction, expression);
         
         [Test]
-        public void LookupError() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "funcWithLookupError");
+        public void LookupError() => EvaluateExpectingError(CompilerInput, ElementMessage.IdentifierNotFound, "funcWithLookupError");
     }
 }

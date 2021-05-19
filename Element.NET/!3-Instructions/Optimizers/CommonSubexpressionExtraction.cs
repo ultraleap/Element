@@ -46,7 +46,7 @@ namespace Element
 						                        messages => throw new NotImplementedException("Error handling during CSE not implemented yet"));
 						break;
 					case InstructionGroupElement ge:
-						return new InstructionGroupElement(OptimizeGroup(cache, ge.Group), ge.Index);
+						return new InstructionGroupElement(OptimizeGroup(cache, ge.Group), ge.GroupIndex);
 					default:
 						return value;
 				}

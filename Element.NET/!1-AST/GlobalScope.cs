@@ -26,7 +26,7 @@ namespace Element.AST
         public Result<SourceBlob> GetSource(string sourceName, Context context) =>
             _sourceScopes.TryGetValue(sourceName, out var found)
                 ? new Result<SourceBlob>(found)
-                : context.Trace(EleMessageCode.ArgumentNotFound, $"No source named '{sourceName}'");
+                : context.Trace(ElementMessage.ArgumentNotFound, $"No source named '{sourceName}'");
 
         private bool RemoveSource(string sourceName)
         {
@@ -39,7 +39,7 @@ namespace Element.AST
 
         public Result AddSource(SourceInfo source, Context context) =>
             ContainsSource(source.FullName)
-                ? context.Trace(EleMessageCode.DuplicateSourceFile, $"Duplicate source '{source.FullName}'")
+                ? context.Trace(ElementMessage.DuplicateSourceFile, $"Duplicate source '{source.FullName}'")
                 : Parser.Parse<SourceBlob>(source, context, context.CompilerOptions.NoParseTrace)
                         .Bind(blob =>
                         {
@@ -55,7 +55,7 @@ namespace Element.AST
                 ? result
                 : _resolvedValueCache[id] = Declarations.FirstOrDefault(d => d.Identifier.Equals(id))
                                                         ?.Resolve(this, context) // Top-level declarations can be resolved with the global scope since outer captures are impossible!
-                                            ?? (Result<IValue>) context.Trace(EleMessageCode.IdentifierNotFound, $"'{id}' not found in global scope");
+                                            ?? (Result<IValue>) context.Trace(ElementMessage.IdentifierNotFound, $"'{id}' not found in global scope");
 
         public Result Validate(Context context)
         {
@@ -68,7 +68,7 @@ namespace Element.AST
                 decl.Validate(builder, context);
                 if (!idHashSet.Add(decl.Identifier))
                 {
-                    builder.Append(EleMessageCode.MultipleDefinitions, $"Multiple definitions for '{decl.Identifier}' defined in global scope");
+                    builder.Append(ElementMessage.MultipleDefinitions, $"Multiple definitions for '{decl.Identifier}' defined in global scope");
                 }
             }
             
