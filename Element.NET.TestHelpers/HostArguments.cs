@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using ResultNET;
 
 namespace Element.NET.TestHelpers
 {
@@ -177,7 +178,7 @@ namespace Element.NET.TestHelpers
 
             private readonly ProcessHostInfo _info;
 
-            private Result<string> RunHostProcess(Context context, string arguments)
+            private Result<string> RunHostProcess(ITraceContext context, string arguments)
             {
                 if (_hostBuildErrors.TryGetValue(_info, out var buildError))
                 {
@@ -200,14 +201,14 @@ namespace Element.NET.TestHelpers
 
                 foreach (var msg in messages)
                 {
-                    resultBuilder.Append(TryParseJson(msg, out CompilerMessage compilerMessage)
+                    resultBuilder.Append(TryParseJson(msg, out ResultMessage compilerMessage)
                                              ? compilerMessage
-                                             : new CompilerMessage(msg));
+                                             : new ResultMessage(msg));
                 }
 
-                if (process.ExitCode != 0 && !resultBuilder.Messages.Any(m => m.MessageLevel.HasValue && m.MessageLevel.Value >= MessageLevel.Error))
+                if (process.ExitCode != 0 && !resultBuilder.Messages.Any(m => m.Info.Level >= MessageLevel.Error))
                 {
-                    resultBuilder.Append(EleMessageCode.UnknownError, $"{_info.Name} process quit with exit code '{process.ExitCode}'.");
+                    resultBuilder.Append(ElementMessage.UnknownError, $"{_info.Name} process quit with exit code '{process.ExitCode}'.");
                 }
 
                 process.Close();
@@ -255,7 +256,7 @@ namespace Element.NET.TestHelpers
                                                    {
                                                        if (!float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
                                                        {
-                                                           resultBuilder.Append(EleMessageCode.ParseError, $"Could not parse result string '{s}' as a float");
+                                                           resultBuilder.Append(ElementMessage.ParseError, $"Could not parse result string '{s}' as a float");
                                                        }
 
                                                        return value;

@@ -79,7 +79,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void ConstraintChecking(string expression, bool succeeds, string type = default)
         {
             if (succeeds) AssertTypeof(CompilerInput, expression, type);
-            else EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, expression);
+            else EvaluateExpectingError(CompilerInput, ElementMessage.ConstraintNotSatisfied, expression);
         }
 
         [TestCase("lambdaChainConstant(0)(0)", "10")]
@@ -96,7 +96,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void ApplyHighOrderFunctionMultipleTimes() => AssertApproxEqual(CompilerInput, "usePartiallyAppliedFunctionMultipleTimes", "35");
 
         [Test]
-        public void NestedFunctionReturnWithIncorrectSignatureReturnsError() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, "innerFuncSignatureIncorrect(10)");
+        public void NestedFunctionReturnWithIncorrectSignatureReturnsError() => EvaluateExpectingError(CompilerInput, ElementMessage.ConstraintNotSatisfied, "innerFuncSignatureIncorrect(10)");
         
         [TestCase("Indexer", "FunctionConstraint")]
         [TestCase("Binary", "FunctionConstraint")]
@@ -104,11 +104,11 @@ namespace Laboratory.Tests.L2.Semantics
         
         [TestCase("Indexer")]
         [TestCase("Binary")]
-        public void NotDeserializable(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.SerializationError, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.SerializationError, expression);
         
         [TestCase("cyclicLocalFunction")]
         [TestCase("cyclicDefault")]
-        public void RecursionDisallowed(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.RecursionNotAllowed, expression);
+        public void RecursionDisallowed(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.RecursionNotAllowed, expression);
         
         [Test]
         public void CanResolveTupleWithSameDeclarationResolvedMultipleTimes() => AssertApproxEqual(CompilerInput, "getTuple.i", "2");

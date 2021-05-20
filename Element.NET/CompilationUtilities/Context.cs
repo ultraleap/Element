@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Element.AST;
 using Element.CLR;
+using ResultNET;
 using LExpression = System.Linq.Expressions.Expression;
 
 namespace Element
@@ -9,7 +10,7 @@ namespace Element
     /// <summary>
     /// Contains contextual information about the state of compilation including compiler flags and current trace stack, call stack etc.
     /// </summary>
-    public class Context
+    public class Context : ITraceContext
     {
         public static Context CreateFromSourceContext(SourceContext sourceContext) => new Context(sourceContext.GlobalScope, sourceContext.CompilerOptions, sourceContext.BoundaryMap, sourceContext.GeneratedStructuralTuples);
         public static Context CreateManually(IScope? rootScope, CompilerOptions? compilerOptions, BoundaryMap? boundaryMap) => new Context(rootScope, compilerOptions, boundaryMap, new List<StructuralTuple>());
@@ -66,16 +67,13 @@ namespace Element
             BoundaryMap.GetConverter(clrInstance.GetType(), this)
                        .Bind(converter => converter.SerializeClrInstance(clrInstance, floats, this));
 
-        public CompilerMessage? Trace(string messageType, int messageCode, string? contextString) =>
-            (CompilerMessage.TryGetMessageLevel(messageType, messageCode, out var level), level >= CompilerOptions.Verbosity) switch
-            {
-                (true, true) => new CompilerMessage(messageType, messageCode, contextString, TraceStack),
-                (true, false) => null, // No message should be produced
-                (false, _) => new CompilerMessage(messageType, null, MessageLevel.Error, $"Couldn't get {nameof(MessageLevel)} for {messageCode}", null),
-            };
+        // TODO: Replace usages of this function with explicit message info
+        public ResultMessage? Trace(MessageLevel messageLevel, string message, string messageTypePrefix = "") =>
+            Trace(new MessageInfo(messageTypePrefix, null, messageLevel, null), message);
 
-        public CompilerMessage? Trace(MessageLevel messageLevel, string message, string messageType = "") => messageLevel >= CompilerOptions.Verbosity
-                                                                                                                 ? new CompilerMessage(messageType, null, messageLevel, message, TraceStack)
-                                                                                                                 : null;
+        public ResultMessage? Trace(MessageInfo info, string? message) =>
+            info.Level >= CompilerOptions.Verbosity
+                ? new ResultMessage(info, message, TraceStack)
+                : null; // No message should be produced
     }
 }

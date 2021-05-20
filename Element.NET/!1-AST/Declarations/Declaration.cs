@@ -1,5 +1,6 @@
 using System;
 using Lexico;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -28,7 +29,7 @@ namespace Element.AST
             var uniqueSite = new UniqueValueSite<Declaration>(this, scope);
             if (context.DeclarationStack.Contains(uniqueSite))
             {
-                return context.Trace(EleMessageCode.RecursionNotAllowed, $"{this} has self-referencing implementation");
+                return context.Trace(ElementMessage.RecursionNotAllowed, $"{this} has self-referencing implementation");
             }
             
             context.DeclarationStack.Push(uniqueSite);

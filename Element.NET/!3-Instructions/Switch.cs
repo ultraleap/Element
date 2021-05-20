@@ -1,4 +1,5 @@
 using Element.AST;
+using ResultNET;
 
 namespace Element
 {
@@ -15,7 +16,7 @@ namespace Element
 		public static Result<Instruction> CreateAndOptimize(Instruction selector, IEnumerable<Instruction> operands, Context context)
 		{
 			var options = operands as Instruction[] ?? operands.ToArray();
-			if (options.Length < 1) return context.Trace(EleMessageCode.ArgumentCountMismatch, "Switch requires at least 1 option");
+			if (options.Length < 1) return context.Trace(ElementMessage.ArgumentCountMismatch, "Switch requires at least 1 option");
 			if (options.Length == 1 || options.All(o => o.Equals(options[0]))) return options[0];
 
 			return options[0].LookupIntrinsicStruct(context)

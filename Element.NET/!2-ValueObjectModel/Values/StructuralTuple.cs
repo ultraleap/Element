@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -58,7 +59,7 @@ namespace Element.AST
         public override Result MatchesConstraint(IValue value, Context context) =>
             value.IsInstanceOfType(this, context)
                 ? Result.Success
-                : context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected {this} instance but got {value}");
+                : context.Trace(ElementMessage.ConstraintNotSatisfied, $"Expected {this} instance but got {value}");
 
         private sealed class StructuralTupleInstance : Value
         {

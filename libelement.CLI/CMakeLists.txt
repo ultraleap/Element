@@ -39,20 +39,20 @@ add_subdirectory(${ELEMENT_LIB_DIR} "libelement")
 
 add_executable(${CMAKE_PROJECT_NAME} ${element_cli_sources})
 
-IF (WIN32)
-	set(debug_dir "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
-ELSE()
-	set(debug_dir "${CMAKE_BINARY_DIR}")
-ENDIF()
-
 set_target_properties(element_cli PROPERTIES
 	VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
 
-add_custom_command (
-	TARGET element_cli POST_BUILD 
-	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	"${CMAKE_SOURCE_DIR}/../ContentFiles"
-	"${debug_dir}")
+add_custom_command(
+    TARGET element_cli POST_BUILD 
+    COMMAND
+        ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/../ContentFiles/ElementPackages"
+        "$<TARGET_FILE_DIR:element_cli>/ElementPackages"
+    COMMAND
+        ${CMAKE_COMMAND} -E copy
+        "${CMAKE_SOURCE_DIR}/../data/Element.ElementMessage-messages.toml"
+        "$<TARGET_FILE_DIR:element_cli>/Messages-ELE.toml"
+)
 
 target_include_directories(${CMAKE_PROJECT_NAME}
     PUBLIC

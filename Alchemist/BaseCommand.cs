@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using CommandLine;
 using Newtonsoft.Json;
+using ResultNET;
 
 namespace Alchemist
 {
@@ -92,12 +93,12 @@ namespace Alchemist
 			return result.IsSuccess ? 0 : 1;
 		}
 
-		private void Log(string message, string messageType = "", MessageLevel? level = default) => Log(new CompilerMessage(message, messageType, level));
+		private void Log(string message, string messageType = "", MessageLevel? level = default) => Log(new ResultMessage(message, messageType, level));
 
-		private void Log(CompilerMessage message)
+		private void Log(ResultMessage message)
 		{
 			var msg = LogMessagesAsJson ? JsonConvert.SerializeObject(message) : message.ToString();
-			if (message.MessageLevel >= MessageLevel.Error) Console.Error.WriteLine(msg);
+			if (message.Info.Level >= MessageLevel.Error) Console.Error.WriteLine(msg);
 			else Console.WriteLine(msg);
 		}
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -37,7 +38,7 @@ namespace Element.AST
                       var (foundId, value) = resolvedValues.FirstOrDefault(m => m.Identifier.Equals(id));
                       return !foundId.Equals(default) // if we found a non-default ID then FirstOrDefault succeeded
                                  ? new Result<IValue>(value)
-                                 : context.Trace(EleMessageCode.IdentifierNotFound, $"'{id}' not found when indexing {resolvedBlock}");
+                                 : context.Trace(ElementMessage.IdentifierNotFound, $"'{id}' not found when indexing {resolvedBlock}");
                   }, parent, valueProducedFrom)
         { }
 
@@ -49,7 +50,7 @@ namespace Element.AST
         public Result<IValue> Lookup(Identifier id, Context context) => 
             Members.Any(m => m.Equals(id))
                 ? Index(id, context)
-                : Parent?.Lookup(id, context) ?? context.Trace(EleMessageCode.IdentifierNotFound, $"'{id}' not found when indexing {this}");
+                : Parent?.Lookup(id, context) ?? context.Trace(ElementMessage.IdentifierNotFound, $"'{id}' not found when indexing {this}");
 
         public override IReadOnlyList<Identifier> Members { get; }
         private IScope? Parent { get; }

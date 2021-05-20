@@ -1,3 +1,5 @@
+using ResultNET;
+
 namespace Element.AST
 {
     /// <summary>
@@ -11,7 +13,7 @@ namespace Element.AST
             Identifier = new Identifier("Nothing");
         }
         public static NothingConstraint Instance { get; } = new NothingConstraint();
-        public override Result MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.ConstraintNotSatisfied, "Nothing constraint cannot be matched");
+        public override Result MatchesConstraint(IValue value, Context context) => context.Trace(ElementMessage.ConstraintNotSatisfied, "Nothing constraint cannot be matched");
         public override Identifier Identifier { get; }
     }
 }

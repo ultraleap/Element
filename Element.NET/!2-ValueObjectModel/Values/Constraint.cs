@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -29,9 +30,9 @@ namespace Element.AST
 
         public override Result MatchesConstraint(IValue fn, Context context)
         {
-            if (!fn.IsCallable(context)) return context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected a callable function but got {fn}");
+            if (!fn.IsCallable(context)) return context.Trace(ElementMessage.ConstraintNotSatisfied, $"Expected a callable function but got {fn}");
             // Function arity must match the constraint
-            if (fn.InputPorts.Count != InputPorts.Count) return context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected function with {InputPorts.Count} parameters but has {fn.InputPorts.Count}");
+            if (fn.InputPorts.Count != InputPorts.Count) return context.Trace(ElementMessage.ConstraintNotSatisfied, $"Expected function with {InputPorts.Count} parameters but has {fn.InputPorts.Count}");
 
             StringBuilder? errorMessageBuilder = null;
 
@@ -60,7 +61,7 @@ namespace Element.AST
 
             return errorMessageBuilder == null
                 ? Result.Success
-                : context.Trace(EleMessageCode.ConstraintNotSatisfied, errorMessageBuilder.ToString());
+                : context.Trace(ElementMessage.ConstraintNotSatisfied, errorMessageBuilder.ToString());
         }
     }
 }

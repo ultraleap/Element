@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Element.AST;
+using ResultNET;
 using Expression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
@@ -50,7 +51,7 @@ namespace Element.CLR
             return value.InstanceType(context)
                         .Check(v => value.Members.Count < 1
                              // TODO: More relevant message code - this error case is always a result of API misuse (using struct converter for non-struct instance)
-                             ? context.Trace(EleMessageCode.InvalidBoundaryData, $"Expected instance of a struct with members but got '{value}'")
+                             ? context.Trace(ElementMessage.InvalidBoundaryData, $"Expected instance of a struct with members but got '{value}'")
                              : Result.Success)
                         .Bind(instanceType =>
                          {

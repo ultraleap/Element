@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lexico;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -24,13 +25,13 @@ namespace Element.AST
                 decl.Validate(builder, context);
                 if (!idHashSet.Add(decl.Identifier))
                 {
-                    builder.Append(EleMessageCode.MultipleDefinitions, $"Multiple definitions for '{this}'");
+                    builder.Append(ElementMessage.MultipleDefinitions, $"Multiple definitions for '{this}'");
                 }
             }
             
             if (this is FunctionBlock && !idHashSet.Contains(Parser.ReturnIdentifier))
             {
-                builder.Append(EleMessageCode.FunctionMissingReturn, $"Scope-bodied function '{this}' is missing return declaration");
+                builder.Append(ElementMessage.FunctionMissingReturn, $"Scope-bodied function '{this}' is missing return declaration");
             }
         }
 
@@ -46,7 +47,7 @@ namespace Element.AST
                 {
                     Result<IValue> IndexFunc(IScope scope, Identifier identifier, Context context) =>
                         Items.FirstOrDefault(d => d.Identifier.Equals(identifier))?.Resolve(scope, context)
-                        ?? (Result<IValue>) context.Trace(EleMessageCode.IdentifierNotFound, $"'{identifier}' not found when indexing {scope}");
+                        ?? (Result<IValue>) context.Trace(ElementMessage.IdentifierNotFound, $"'{identifier}' not found when indexing {scope}");
 
                     return new ResolvedBlock(Items.Select(d => d.Identifier).ToArray(),
                                              capturedValues,

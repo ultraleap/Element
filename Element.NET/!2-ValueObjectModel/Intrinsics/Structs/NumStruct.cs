@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -18,15 +19,15 @@ namespace Element.AST
                 ? (arguments[0].InnerIs(out Instruction i), i?.StructImplementation == this) switch
                 {
                     (true, true)  => new Result<IValue>(arguments[0]),
-                    (true, false) => Cast.Create(i, this),
-                    _             => context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Argument '{arguments[0]}' is not convertible to Num")
+                    (true, false) => Cast.Create(i!, this),
+                    _             => context.Trace(ElementMessage.ConstraintNotSatisfied, $"Argument '{arguments[0]}' is not convertible to Num")
                 }
-                : context.Trace(EleMessageCode.ArgumentCountMismatch, $"Expected 1 argument but got {arguments.Count}");
+                : context.Trace(ElementMessage.ArgumentCountMismatch, $"Expected 1 argument but got {arguments.Count}");
         
         public Result<IValue> DefaultValue(Context _) => Constant.Zero;
         public Result MatchesConstraint(Struct @struct, IValue value, Context context)
         {
-            Result Error() => context.Trace(EleMessageCode.ConstraintNotSatisfied, $"Expected {Identifier} instance but got {value}");
+            Result Error() => context.Trace(ElementMessage.ConstraintNotSatisfied, $"Expected {Identifier} instance but got {value}");
             return value.InstanceType(context)
                         .Match((type, _) => type.IsSpecificIntrinsic(Instance) ? Result.Success : Error(), _ => Error());
         }

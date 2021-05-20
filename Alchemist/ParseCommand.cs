@@ -1,5 +1,6 @@
 using CommandLine;
 using Element;
+using ResultNET;
 
 namespace Alchemist
 {

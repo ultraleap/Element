@@ -1,5 +1,5 @@
 using System;
-using Element.CLR;
+using ResultNET;
 
 namespace Element
 {

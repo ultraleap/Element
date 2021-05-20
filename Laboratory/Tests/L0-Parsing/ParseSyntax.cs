@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using Element;
 using Element.AST;
 using Lexico;
 using NUnit.Framework;
+using ResultNET;
 using Expression = Element.AST.Expression;
 
 namespace Laboratory.Tests.L0.Parsing
 {
     internal class ParseSyntax : SyntaxFixture
     {
-        private static IEnumerable GenerateParseTestData() => GenerateTestData("Parse", "L0-Parsing", DefaultFailingParseTestCode);
+        private static IEnumerable GenerateParseTestData() => GenerateTestData("Parse", "L0-Parsing", ElementMessage.MessagePrefix, DefaultFailingParseTestMessageInfo);
         
         private static IEnumerable PartialSyntaxTestData()
         {
@@ -54,7 +54,7 @@ namespace Laboratory.Tests.L0.Parsing
         }
 
         [TestCaseSource(nameof(GenerateParseTestData))]
-        public void Parse((FileInfo fileInfo, EleMessageCode? messageCode) info) => SyntaxTest(info, true, true);
+        public void Parse((FileInfo fileInfo, MessageInfo? messageCode) info) => SyntaxTest(info, true, true);
 
         private class PartialSyntaxTrace : UserTrace
         {

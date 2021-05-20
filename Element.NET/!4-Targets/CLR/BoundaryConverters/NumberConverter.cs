@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Element.AST;
+using ResultNET;
 using Expression = System.Linq.Expressions.Expression;
 
 namespace Element.CLR
@@ -33,7 +34,7 @@ namespace Element.CLR
             {
                 float f => new Result<float>(f),
                 bool b  => new Result<float>(b ? 1f : 0f),
-                _       => context.Trace(EleMessageCode.SerializationError, $"{nameof(NumberConverter)} doesn't support serializing '{clrInstance}'")
+                _       => context.Trace(ElementMessage.SerializationError, $"{nameof(NumberConverter)} doesn't support serializing '{clrInstance}'")
             })
            .Bind(f =>
             {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Element.CLR;
+using ResultNET;
 
 namespace Element
 {

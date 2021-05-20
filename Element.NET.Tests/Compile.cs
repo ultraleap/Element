@@ -5,6 +5,7 @@ using System.Numerics;
 using Element.CLR;
 using Element.NET.TestHelpers;
 using NUnit.Framework;
+using ResultNET;
 
 namespace Element.NET.Tests
 {
@@ -95,14 +96,14 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         public void CompileBinaryAsUnaryFails()
         {
             var fn = CompileDelegate<UnaryOp>(MakeSourceContext(), "Num.add");
-            ExpectingElementError(fn.Messages, fn.IsSuccess, EleMessageCode.InvalidBoundaryFunction);
+            ExpectingError(fn.Messages, fn.IsSuccess, ElementMessage.InvalidBoundaryFunction);
         }
         
         [Test]
         public void CompileUnaryAsBinaryFails()
         {
             var fn = CompileDelegate<BinaryOp>(MakeSourceContext(), "Num.sqr");
-            ExpectingElementError(fn.Messages, fn.IsSuccess, EleMessageCode.InvalidBoundaryFunction);
+            ExpectingError(fn.Messages, fn.IsSuccess, ElementMessage.InvalidBoundaryFunction);
         }
 
         [Test]
@@ -117,7 +118,7 @@ struct CustomNestedStruct(structField:MyCustomElementStruct, floatField:Num, vec
         public void NoObjectBoundaryConverter()
         {
             var fn = CompileDelegate<InvalidDelegate>(MakeSourceContext(), "Num.sqr");
-            ExpectingElementError(fn.Messages, fn.IsSuccess, EleMessageCode.MissingBoundaryConverter);
+            ExpectingError(fn.Messages, fn.IsSuccess, ElementMessage.MissingBoundaryConverter);
         }
 
         [Test]

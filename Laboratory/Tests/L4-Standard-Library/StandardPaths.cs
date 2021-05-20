@@ -1,4 +1,3 @@
-using System;
 using NUnit.Framework;
 
 namespace Laboratory.Tests.L4.StandardLibrary

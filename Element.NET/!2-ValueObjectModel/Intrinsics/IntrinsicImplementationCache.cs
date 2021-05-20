@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -25,13 +26,13 @@ namespace Element.AST
             }
         }
 
-        public static Result<TIntrinsic> Get<TIntrinsic>(Identifier name, Context context)
+        public static Result<TIntrinsic> Get<TIntrinsic>(Identifier name, ITraceContext context)
             where TIntrinsic : IIntrinsicImplementation =>
             (_intrinsics.TryGetValue(name.String, out var intrinsic), intrinsic) switch
             {
                 (true, TIntrinsic t) => t,
-                (false, _) => context.Trace(EleMessageCode.IntrinsicNotFound, $"Intrinsic '{name}' is not implemented"),
-                (true, _) => context.Trace(EleMessageCode.TypeError, $"Found intrinsic '{name}' but it is not '{typeof(TIntrinsic)}'")
+                (false, _) => context.Trace(ElementMessage.IntrinsicNotFound, $"Intrinsic '{name}' is not implemented"),
+                (true, _) => context.Trace(ElementMessage.TypeError, $"Found intrinsic '{name}' but it is not '{typeof(TIntrinsic)}'")
             };
 
         private static readonly Dictionary<string, IIntrinsicImplementation> _intrinsics = new Dictionary<string, IIntrinsicImplementation>();

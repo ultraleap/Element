@@ -1,3 +1,5 @@
+using ResultNET;
+
 namespace Element.AST
 {
     /// <summary>

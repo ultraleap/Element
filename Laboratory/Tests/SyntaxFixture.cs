@@ -5,14 +5,16 @@ using System.Text.RegularExpressions;
 using Element;
 using Element.NET.TestHelpers;
 using NUnit.Framework;
+using ResultNET;
 
 namespace Laboratory.Tests
 {
     internal abstract class SyntaxFixture : HostFixture
     {
-        protected static readonly EleMessageCode DefaultFailingParseTestCode = EleMessageCode.ParseError;
+        protected static readonly MessageInfo DefaultFailingParseTestMessageInfo = ElementMessage.ParseError;
         
-        protected static IEnumerable GenerateTestData(string testKind, string directory, EleMessageCode? defaultExpectedErrorCode)
+        // TODO: Get MessageTypePrefix from the test filename instead of having to pass in
+        protected static IEnumerable GenerateTestData(string testKind, string directory, string messageTypePrefix, MessageInfo? defaultExpectedError)
         {
             var files = new DirectoryInfo(directory).GetFiles("*.ele", SearchOption.AllDirectories);
             foreach (var file in files)
@@ -27,20 +29,20 @@ namespace Laboratory.Tests
                 };
 
                 var expectedMessageCode = expectedResult
-                    ? (EleMessageCode?) null
+                    ? null
                     : int.TryParse(match.Groups["value"].Value, out var code)
-                        ? (EleMessageCode)code
-                        : defaultExpectedErrorCode
-                          ?? throw new ArgumentNullException(nameof(defaultExpectedErrorCode), $"Error code must be specified explicitly for {testKind} tests");
+                        ? MessageInfo.GetByPrefixAndCode(messageTypePrefix, code)
+                        : defaultExpectedError
+                          ?? throw new ArgumentNullException(nameof(defaultExpectedError), $"Error code must be specified explicitly for {testKind} tests");
   
                 yield return new TestCaseData((file, expectedMessageCode)).SetName($"{testKind}{file.FullName.Split(directory)[1]}");
             }
         }
         
-        public void SyntaxTest((FileInfo ParseTestFile, EleMessageCode? ExpectedMessageCode) info, bool skipValidation, bool showParseTraceForErrors)
+        public void SyntaxTest((FileInfo ParseTestFile, MessageInfo? ExpectedMessageCode) info, bool skipValidation, bool showParseTraceForErrors)
         {
-            var (fileInfo, messageCode) = info;
-            var expectingError = messageCode.HasValue;
+            var (fileInfo, messageInfo) = info;
+            var expectingError = messageInfo != null;
 
             var compilationInput = new CompilerInput(TestPackageRegistry,
                                                      null,
@@ -50,7 +52,7 @@ namespace Laboratory.Tests
 
             var result = Host.Parse(compilationInput);
             if (expectingError)
-                ExpectingError(result.Messages, result.IsSuccess, MessageExtensions.TypeString, (int)messageCode!.Value);
+                ExpectingError(result.Messages, result.IsSuccess, messageInfo!);
             else
                 ExpectingSuccess(result.Messages, result.IsSuccess);
         }

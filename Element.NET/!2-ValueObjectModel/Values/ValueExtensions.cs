@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -13,7 +14,7 @@ namespace Element.AST
         public static bool IsCallable(this IValue value, Context context)
             => value.Call(Array.Empty<IValue>(), context)
                     .Match((_, __) => true,
-                         messages => messages.All(msg => (EleMessageCode) msg.MessageCode.GetValueOrDefault(0) != EleMessageCode.NotFunction));
+                         messages => messages.All(msg => msg.Info != ElementMessage.NotFunction));
         
         public static bool IsType(this IValue value) => value.ReturnConstraint == value;
         public static bool IsIntrinsic(this IValue value) => value.IsIntrinsicOfType<IIntrinsicImplementation>();
@@ -33,7 +34,7 @@ namespace Element.AST
             var members = value.Members;
             return index < members.Count
                 ? value.Index(members[index], context)
-                : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Cannot access member {index} - '{value}' has {members.Count} members");
+                : context.Trace(ElementMessage.ArgumentOutOfRange, $"Cannot access member {index} - '{value}' has {members.Count} members");
         }
 
         public static Result<IReadOnlyList<(Identifier Identifier, IValue Value)>> MemberValues(this IValue value, Context context) => value.Members.Select(m => value.Index(m, context).Map(v => (m, v))).ToResultReadOnlyList();
@@ -64,7 +65,7 @@ namespace Element.AST
                 }
                 else
                 {
-                    return context.Trace(EleMessageCode.SerializationError, $"Non-constant expression '{expr}' cannot be evaluated to a float");
+                    return context.Trace(ElementMessage.SerializationError, $"Non-constant expression '{expr}' cannot be evaluated to a float");
                 }
             }
 
@@ -95,7 +96,7 @@ namespace Element.AST
 
             return !isError
                 ? continuation()
-                : context.Trace(EleMessageCode.ExpectedHomogenousItems, errorString.ToString());
+                : context.Trace(ElementMessage.ExpectedHomogenousItems, errorString.ToString());
         }
 
         public static bool InnerIs<T>(this IValue value, out T result) where T : IValue
@@ -105,7 +106,7 @@ namespace Element.AST
                 result = t;
                 return true;
             }
-            result = default;
+            result = default!;
             return false;
         }
         

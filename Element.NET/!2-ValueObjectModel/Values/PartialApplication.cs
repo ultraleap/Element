@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -8,7 +9,7 @@ namespace Element.AST
     {
         public static Result<IValue> PartiallyApply(this IValue function, IValue[] arguments, Context context)
         {
-            if (!function.HasInputs()) return context.Trace(EleMessageCode.NotFunction, "Cannot partially apply arguments to a non-function value");
+            if (!function.HasInputs()) return context.Trace(ElementMessage.NotFunction, "Cannot partially apply arguments to a non-function value");
             var appliedFunction = function.InnerIs(out AppliedFunction af)
                                       ? new AppliedFunction(af.AppliedArguments.Concat(arguments), af.WrappedValue)
                                       : new AppliedFunction(arguments, function);

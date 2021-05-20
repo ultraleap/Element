@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -28,22 +29,22 @@ namespace Element.AST
             {
                 if (!a.HasInputs())
                 {
-                    return context.Trace(EleMessageCode.NotFunction, $"'{a}' is not a function, only functions can be uncurried");
+                    return context.Trace(ElementMessage.NotFunction, $"'{a}' is not a function, only functions can be uncurried");
                 }
                 
                 if (!b.HasInputs())
                 {
-                    return context.Trace(EleMessageCode.NotFunction, $"'{b}' is not a function, only functions can be uncurried");
+                    return context.Trace(ElementMessage.NotFunction, $"'{b}' is not a function, only functions can be uncurried");
                 }
                 
                 if (b.InputPorts.Count < 1)
                 {
-                    return context.Trace(EleMessageCode.FunctionCannotBeUncurried, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
+                    return context.Trace(ElementMessage.FunctionCannotBeUncurried, $"Function B '{b}' must have at least 1 input and where the first input must be compatible with the output of Function A");
                 }
 
                 if (a.InputPorts.Contains(ResolvedPort.VariadicPort))
                 {
-                    return context.Trace(EleMessageCode.FunctionCannotBeUncurried, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
+                    return context.Trace(ElementMessage.FunctionCannotBeUncurried, $"Function A '{a}' is variadic - variadic functions cannot be the first argument of an uncurrying operation");
                 }
                 
                 return new UncurriedFunction(a, b);

@@ -13,7 +13,7 @@ namespace Laboratory.Tests.L2.Semantics
         
         [TestCase("MyStruct")]
         [TestCase("Vector3")]
-        public void NotDeserializable(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.SerializationError, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.SerializationError, expression);
 
         [Test]
         public void ConstructInstance() => AssertTypeof(CompilerInput, "MyStruct(5)", "MyStruct");
@@ -25,10 +25,10 @@ namespace Laboratory.Tests.L2.Semantics
         public void InstanceMemberAccess() => AssertApproxEqual(CompilerInput, "MyStruct(5).a", "5");
 
         [Test]
-        public void CantIndexStructWithNoAssociatedScope() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.InvalidExpression, "MyStruct(10).invalid");
+        public void CantIndexStructWithNoAssociatedScope() => EvaluateExpectingError(CompilerInput, ElementMessage.InvalidExpression, "MyStruct(10).invalid");
         
         [Test]
-        public void MissingMemberAccess() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "Vector3(10, 10, 10).invalid");
+        public void MissingMemberAccess() => EvaluateExpectingError(CompilerInput, ElementMessage.IdentifierNotFound, "Vector3(10, 10, 10).invalid");
 
         [Test]
         public void FunctionAsMember() => AssertTypeof(CompilerInput, "MyStruct(pickSecond).a", "ExpressionBodiedFunction");
@@ -46,13 +46,13 @@ namespace Laboratory.Tests.L2.Semantics
             TestCase("Vector3(5, 10)"),
             TestCase("Vector3(20, 5, 10, 40)")
         ]
-        public void MemberCountNotCorrect(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.ArgumentCountMismatch, expression);
+        public void MemberCountNotCorrect(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.ArgumentCountMismatch, expression);
         
         [Test]
-        public void MemberConstraintsNotSatisfied() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, "Vector3(pickSecond, 5, 10)");
+        public void MemberConstraintsNotSatisfied() => EvaluateExpectingError(CompilerInput, ElementMessage.ConstraintNotSatisfied, "Vector3(pickSecond, 5, 10)");
 
         [Test]
-        public void NoImplicitConversionBetweenStructs() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, "onlyNum(NumNum(5))");
+        public void NoImplicitConversionBetweenStructs() => EvaluateExpectingError(CompilerInput, ElementMessage.ConstraintNotSatisfied, "onlyNum(NumNum(5))");
 
         [Test]
         public void IntrinsicInstanceFunction() => AssertApproxEqual(CompilerInput, "6.add(5)", "11");
@@ -64,6 +64,6 @@ namespace Laboratory.Tests.L2.Semantics
         public void CustomStructInstanceFunction() => AssertApproxEqual(CompilerInput, "Vector3(5, 5, 5).add(Vector3(10, 10, 10))", "Vector3(15, 15, 15)");
 
         [Test]
-        public void InstanceFunctionRequiresExplicitType() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.CannotBeUsedAsInstanceFunction, "5.addTen");
+        public void InstanceFunctionRequiresExplicitType() => EvaluateExpectingError(CompilerInput, ElementMessage.CannotBeUsedAsInstanceFunction, "5.addTen");
     }
 }

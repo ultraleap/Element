@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ResultNET;
 
 namespace Element
 {
@@ -20,11 +21,11 @@ namespace Element
 
         private readonly Dictionary<string, FileInfo[]> _packagesByName;
 
-        public Result<PackageInfo> LookupPackage(PackageSpecifier specifier, Context context)
+        public Result<PackageInfo> LookupPackage(PackageSpecifier specifier, ITraceContext context)
         {
             if (!_packagesByName.TryGetValue(specifier.Name, out var versions))
             {
-                return context.Trace(EleMessageCode.PackageNotFound, $"No package '{specifier.Name}' found in registry");
+                return context.Trace(ElementMessage.PackageNotFound, $"No package '{specifier.Name}' found in registry");
             }
 
             try
@@ -50,7 +51,7 @@ namespace Element
 
                                    return matchingVersionsOrdered.Length switch
                                    {
-                                       0 => context.Trace(EleMessageCode.PackageNotFound, $"No version of package '{specifier.Name}' matches specified range '{specifier.VersionRange}'"),
+                                       0 => context.Trace(ElementMessage.PackageNotFound, $"No version of package '{specifier.Name}' matches specified range '{specifier.VersionRange}'"),
                                        _ => new Result<FileInfo>(matchingVersionsOrdered.Last().fileInfo)
                                    };
                                }).Bind(manifest => PackageInfo.FromManifestFile(manifest, context));

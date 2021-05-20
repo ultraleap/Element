@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Element.AST;
 using Element.CLR;
+using ResultNET;
 
 namespace Element
 {
@@ -37,7 +38,7 @@ namespace Element
         /// Loads an element source intro the source context.
         /// Will fail if the source is a duplicate.
         /// </summary>
-        public Result LoadElementSource(SourceInfo info)
+        public ResultNET.Result LoadElementSource(SourceInfo info)
         {
             lock (_syncRoot)
             {
@@ -56,7 +57,7 @@ namespace Element
                 var context = Context.CreateFromSourceContext(this);
                 if (_loadedPackages.TryGetValue(packageInfo.Name, out var loaded))
                 {
-                    return context.Trace(EleMessageCode.DuplicateSourceFile, $"Tried to load package {loaded} when {loaded} is already loaded");
+                    return context.Trace(ElementMessage.DuplicateSourceFile, $"Tried to load package {loaded} when {loaded} is already loaded");
                 }
                 
                 var builder = new ResultBuilder(context);
@@ -66,7 +67,7 @@ namespace Element
                     builder.Append(GlobalScope.AddSource(src, context));
                 }
 
-                var anyErrors = builder.Messages.Any(msg => msg.MessageLevel >= MessageLevel.Error);
+                var anyErrors = builder.Messages.Any(msg => msg.Info.Level >= MessageLevel.Error);
                 if (anyErrors)
                 {
                     builder.AppendInfo($"Failed to load element package: {packageInfo}");

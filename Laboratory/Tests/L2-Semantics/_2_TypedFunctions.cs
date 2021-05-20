@@ -30,7 +30,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void CallWithInputConstraints(string expression, bool succeeds)
         {
             if (succeeds) AssertApproxEqual(CompilerInput, expression, "5");
-            else EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, expression);
+            else EvaluateExpectingError(CompilerInput, ElementMessage.ConstraintNotSatisfied, expression);
         }
         
         [TestCase("returnsNum(5)", true)]
@@ -40,7 +40,7 @@ namespace Laboratory.Tests.L2.Semantics
         public void CallWithReturnConstraint(string expression, bool succeeds)
         {
             if (succeeds) AssertApproxEqual(CompilerInput, expression, "5");
-            else EvaluateExpectingElementError(CompilerInput, EleMessageCode.ConstraintNotSatisfied, expression);
+            else EvaluateExpectingError(CompilerInput, ElementMessage.ConstraintNotSatisfied, expression);
         }
         
         [TestCase("Any", "IntrinsicConstraint")]
@@ -56,16 +56,16 @@ namespace Laboratory.Tests.L2.Semantics
         [TestCase("Any")]
         [TestCase("Num")]
         [TestCase("NotNum")]
-        public void NotDeserializable(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.SerializationError, expression);
+        public void NotDeserializable(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.SerializationError, expression);
 
         [TestCase("literalNumNotAConstraint(5)")]
         [TestCase("literalFunctionNotAConstraint(5)")]
-        public void ConstraintWithNonConstraint(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.NotConstraint, expression);
+        public void ConstraintWithNonConstraint(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.NotConstraint, expression);
 
         [TestCase("Any(20)")]
-        public void CallNonFunction(string expression) => EvaluateExpectingElementError(CompilerInput, EleMessageCode.NotFunction, expression);
+        public void CallNonFunction(string expression) => EvaluateExpectingError(CompilerInput, ElementMessage.NotFunction, expression);
 
         [Test]
-        public void ConstraintLookupError() => EvaluateExpectingElementError(CompilerInput, EleMessageCode.IdentifierNotFound, "constraintLookupError");
+        public void ConstraintLookupError() => EvaluateExpectingError(CompilerInput, ElementMessage.IdentifierNotFound, "constraintLookupError");
     }
 }

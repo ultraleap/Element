@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using ResultNET;
 
 namespace Element
 {
@@ -15,7 +16,7 @@ namespace Element
             Version = version;
         }
             
-        public static Result<PackageManifest> ParseFromJsonString(string json, Context context)
+        public static Result<PackageManifest> ParseFromJsonString(string json, ITraceContext context)
         {
             try
             {
@@ -23,7 +24,7 @@ namespace Element
             }
             catch (Exception e)
             {
-                return context.Trace(EleMessageCode.ParseError, e.ToString());
+                return context.Trace(ElementMessage.ParseError, e.ToString());
             }
         }
 

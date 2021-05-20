@@ -1,4 +1,5 @@
 using System.Linq;
+using ResultNET;
 
 namespace Element
 {
@@ -35,28 +36,28 @@ namespace Element
 	/// </summary>
 	public class InstructionGroupElement : Instruction
 	{
-		public InstructionGroupElement(InstructionGroup group, int index)
+		public InstructionGroupElement(InstructionGroup group, int groupIndex)
 		{
 			if (group == null) { throw new ArgumentNullException(nameof(group)); }
 
-			if (index < 0 || index >= group.Size) { throw new ArgumentOutOfRangeException(nameof(index)); }
+			if (groupIndex < 0 || groupIndex >= group.Size) { throw new ArgumentOutOfRangeException(nameof(groupIndex)); }
 
 			Group = group;
-			Index = index;
+			GroupIndex = groupIndex;
 		}
 
 		public InstructionGroup Group { get; }
-		public int Index { get; }
+		public int GroupIndex { get; }
 
 		public override IEnumerable<Instruction> Dependent => Group.Dependent;
-		public override string SummaryString => $"{Group}.{Index}";
-		public override int GetHashCode() => GetType().GetHashCode() ^ Group.GetHashCode() ^ Index;
+		public override string SummaryString => $"{Group}.{GroupIndex}";
+		public override int GetHashCode() => GetType().GetHashCode() ^ Group.GetHashCode() ^ GroupIndex;
 
 		public override bool Equals(Instruction other)
 		{
 			// ReSharper disable once PossibleUnintendedReferenceComparison
 			if (this == other) return true;
-			return other is InstructionGroupElement bOther && bOther.Index == Index && bOther.Group.Equals(Group);
+			return other is InstructionGroupElement bOther && bOther.GroupIndex == GroupIndex && bOther.Group.Equals(Group);
 		}
 	}
 }

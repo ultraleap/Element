@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -111,8 +112,8 @@ namespace Element.AST
                                                                      Func<Result<IValue>> resolveFunc,
                                                                      Context context)
         {
-            if (context.CallStack.Contains(function)) return context.Trace(EleMessageCode.RecursionNotAllowed, $"Multiple references to {function} in same call stack - recursion is not allowed");
-            if (context.CallStack.Count > context.CompilerOptions.CallStackLimit) return context.Trace(EleMessageCode.CallStackLimitReached, $"Call stack has exceeded limit of {context.CompilerOptions.CallStackLimit} - this can modified as a compiler option");
+            if (context.CallStack.Contains(function)) return context.Trace(ElementMessage.RecursionNotAllowed, $"Multiple references to {function} in same call stack - recursion is not allowed");
+            if (context.CallStack.Count > context.CompilerOptions.CallStackLimit) return context.Trace(ElementMessage.CallStackLimitReached, $"Call stack has exceeded limit of {context.CompilerOptions.CallStackLimit} - this can modified as a compiler option");
             context.CallStack.Push(function);
 
             try
@@ -137,7 +138,7 @@ namespace Element.AST
             var isVariadic = ports.Any(p => p == ResolvedPort.VariadicPort);
             if (!isVariadic && arguments.Count != ports.Count)
             {
-                resultBuilder.Append(EleMessageCode.ArgumentCountMismatch, $"Expected '{ports.Count}' arguments but got '{arguments.Count}'");
+                resultBuilder.Append(ElementMessage.ArgumentCountMismatch, $"Expected '{ports.Count}' arguments but got '{arguments.Count}'");
             }
 
             for (var i = 0; i < Math.Min(ports.Count, arguments.Count); i++)

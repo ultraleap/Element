@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json.Linq;
+using ResultNET;
 
 namespace Element
 {
@@ -29,7 +30,7 @@ namespace Element
 					}
 					else
 					{
-						builder.Append(EleMessageCode.InvalidBoundaryFunction, "Port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
+						builder.Append(ElementMessage.InvalidBoundaryFunction, "Port(s) with no identifier(s) which cannot be sourced. Boundary only supports named ports!");
 					}
 				}
 			}
@@ -47,7 +48,7 @@ namespace Element
 							arguments[idx++] = (int) value!;
 							break;
 						default:
-							builder.Append(EleMessageCode.InvalidBoundaryData, $"Expected float or integer token for element Num parameter '{fieldIdentifier}'");
+							builder.Append(ElementMessage.InvalidBoundaryData, $"Expected float or integer token for element Num parameter '{fieldIdentifier}'");
 							break;
 					}
 				}
@@ -59,7 +60,7 @@ namespace Element
 							arguments[idx++] = (bool) value! ? 1f : 0f;
 							break;
 						default:
-							builder.Append(EleMessageCode.InvalidBoundaryData, $"Expected boolean token for element Bool parameter '{fieldIdentifier}'");
+							builder.Append(ElementMessage.InvalidBoundaryData, $"Expected boolean token for element Bool parameter '{fieldIdentifier}'");
 							break;
 					}
 				}
@@ -71,13 +72,13 @@ namespace Element
 							ProvisionObject(declaredStruct.InputPorts, (JObject)value!);
 							break;
 						default:
-							builder.Append(EleMessageCode.InvalidBoundaryData, $"Expected object token for element Struct parameter '{fieldIdentifier}'");
+							builder.Append(ElementMessage.InvalidBoundaryData, $"Expected object token for element Struct parameter '{fieldIdentifier}'");
 							break;
 					}
 				}
 				else
 				{
-					builder.Append(EleMessageCode.InvalidBoundaryFunction, $"Element constraint '{type}' is not supported for JSON argument provisioning");
+					builder.Append(ElementMessage.InvalidBoundaryFunction, $"Element constraint '{type}' is not supported for JSON argument provisioning");
 				}
 			}
 
@@ -87,7 +88,7 @@ namespace Element
 
 		public static Result<JObject> ParseFromJsonFile(this string filePath, Context context)
 		{
-			if (!File.Exists(filePath)) return context.Trace(EleMessageCode.FileAccessError, $"\"{filePath}\" JSON file not found.");
+			if (!File.Exists(filePath)) return context.Trace(ElementMessage.FileAccessError, $"\"{filePath}\" JSON file not found.");
 			string fileText;
 			try
 			{
@@ -95,7 +96,7 @@ namespace Element
 			}
 			catch (Exception e)
 			{
-				return context.Trace(EleMessageCode.FileAccessError, e.ToString());
+				return context.Trace(ElementMessage.FileAccessError, e.ToString());
 			}
 			return ParseFromJsonString(fileText, context);
 		}
@@ -108,7 +109,7 @@ namespace Element
 			}
 			catch (Exception e)
 			{
-				return context.Trace(EleMessageCode.ParseError, e.ToString());
+				return context.Trace(ElementMessage.ParseError, e.ToString());
 			}
 		}
 	}

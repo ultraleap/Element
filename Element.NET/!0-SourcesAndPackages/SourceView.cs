@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Element.AST;
+using ResultNET;
 
 namespace Element
 {
@@ -51,7 +52,7 @@ namespace Element
             
             var context = Context.CreateFromSourceContext(SourceContext);
             var found = _predicatedFunctions.FirstOrDefault(lookupPredicate);
-            if (found == null) return _cache[lookup] = context.Trace(EleMessageCode.IdentifierNotFound, $"No function '{lookup}' was found");
+            if (found == null) return _cache[lookup] = context.Trace(ElementMessage.IdentifierNotFound, $"No function '{lookup}' was found");
             if (!_lookupPredicate(found)) return context.Trace(MessageLevel.Error, $"Value <{found.WrappedValue}> does not match the lookup predicate");
             
             return _cache[lookup] = found;

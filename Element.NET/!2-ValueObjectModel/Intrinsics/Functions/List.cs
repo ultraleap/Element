@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ResultNET;
 
 namespace Element.AST
 {
@@ -45,7 +46,7 @@ namespace Element.AST
             protected override Result<IValue> ResolveCall(IReadOnlyList<IValue> arguments, Context context) =>
                 arguments[0].InnerIs(out Instruction index)
                     ? HomogenousListElement.Create(index, _elements, context)
-                    : context.Trace(EleMessageCode.ConstraintNotSatisfied, "List Index must be a Num");
+                    : context.Trace(ElementMessage.ConstraintNotSatisfied, "List Index must be a Num");
         }
 
         private class HomogenousListElement : IValue
@@ -57,7 +58,7 @@ namespace Element.AST
                                 () => index.CompileTimeIndex(0, elements.Count, context)
                                            .Branch(compileConstantIndex => compileConstantIndex < elements.Count
                                                     ? new Result<IValue>(elements[compileConstantIndex])
-                                                    : context.Trace(EleMessageCode.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
+                                                    : context.Trace(ElementMessage.ArgumentOutOfRange, $"Index {compileConstantIndex} out of range - list has {elements.Count} items"),
                                                 () =>
                                                 {
                                                     var operands = new Instruction[elements.Count];
@@ -92,10 +93,10 @@ namespace Element.AST
             public IReadOnlyList<Identifier> Members => _elements[0].Members;
             public Result<IValue> Index(Identifier id, Context context) => ApplyToAllElements(e => e.Index(id, context), context);
             public Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => ApplyToAllElements(e => e.Call(arguments.ToArray(), context), context);
-            public Result MatchesConstraint(IValue value, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used as a constraint");
+            public Result MatchesConstraint(IValue value, Context context) => context.Trace(ElementMessage.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used as a constraint");
             public Result<IValue> DefaultValue(Context context) => ApplyToAllElements(e => e.DefaultValue(context), context);
-            public void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be serialized");
-            public Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => context.Trace(EleMessageCode.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used to deserialize");
+            public void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => context.Trace(ElementMessage.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be serialized");
+            public Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => context.Trace(ElementMessage.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used to deserialize");
             public Result<IValue> InstanceType(Context context) => _elements[0].InstanceType(context);
             public bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => false;
             public bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => false;
