@@ -85,5 +85,5 @@ std::shared_ptr<error> call_stack::build_recursive_error(
             trace += "\n";
     }
 
-    return build_error_and_log(context, source_info, error_message_code::recursion_detected, function->to_string(), trace);
+    return build_error_and_log<error_message_code::recursion_detected>(context, source_info, function->to_string(), trace);
 }

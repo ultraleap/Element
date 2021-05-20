@@ -20,5 +20,5 @@ indexing_expression::indexing_expression(identifier name, const expression_chain
     if (element)
         return element;
 
-    return build_error_and_log(context, source_info, error_message_code::failed_to_find_when_resolving_indexing_expr, name.value, obj->to_string());
+    return build_error_and_log<error_message_code::failed_to_find_when_resolving_indexing_expr>(context, source_info, name.value, obj->to_string());
 }

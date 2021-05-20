@@ -130,12 +130,12 @@ object_const_shared_ptr function_instance::call(
     //element doesn't allow partial application generally
     //todo: more helpful information than the number of arguments expected
     if (compiled_args.size() < declarer->inputs.size())
-        return build_error_and_log(context, source_info, error_message_code::not_enough_arguments,
+        return build_error_and_log<error_message_code::not_enough_arguments>(context, source_info,
                                    declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
     //todo: more helpful information than the number of arguments expected
     if (!is_variadic && compiled_args.size() > declarer->inputs.size())
-        return build_error_and_log(context, source_info, error_message_code::too_many_arguments,
+        return build_error_and_log<error_message_code::too_many_arguments>(context, source_info,
                                    declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
     //todo: check this works and is a useful error message (stolen from struct declaration call)

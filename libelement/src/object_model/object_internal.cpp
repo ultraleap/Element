@@ -39,19 +39,19 @@ namespace element
     object_const_shared_ptr object::index(const compilation_context& context, const identifier&,
                                           const source_information& source_info) const
     {
-        return build_error_and_log(context, source_info, error_message_code::not_indexable, to_string());
+        return build_error_and_log<error_message_code::not_indexable>(context, source_info, to_string());
     }
 
     object_const_shared_ptr object::call(const compilation_context& context, std::vector<object_const_shared_ptr>,
                                          const source_information& source_info) const
     {
-        return build_error_and_log(context, source_info, error_message_code::not_callable, to_string());
+        return build_error_and_log<error_message_code::not_callable>(context, source_info, to_string());
     }
 
     object_const_shared_ptr object::compile(const compilation_context& context,
                                             const source_information& source_info) const
     {
-        return build_error_and_log(context, source_info, error_message_code::not_compilable, to_string());
+        return build_error_and_log<error_message_code::not_compilable>(context, source_info, to_string());
     }
 
     bool valid_call(
@@ -114,7 +114,7 @@ namespace element
 
         if (compiled_args.size() != declarer->inputs.size())
         {
-            return build_error(declarer->source_info, error_message_code::argument_count_mismatch,
+            return build_error<error_message_code::argument_count_mismatch>(declarer->source_info,
                                declarer->location(), declarer->inputs.size(), compiled_args.size(), input_params, given_params);
         }
 
@@ -153,15 +153,15 @@ namespace element
             return nullptr;
 
         if (!has_inputs)
-            return build_error_and_log(context, source_info, error_message_code::instance_function_cannot_be_nullary,
+            return build_error_and_log<error_message_code::instance_function_cannot_be_nullary>(context, source_info,
                                        func->to_string(), instance->to_string());
 
         if (!has_type)
-            return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
+            return build_error_and_log<error_message_code::is_not_an_instance_function_any_type>(context, source_info,
                                        func->to_string(), instance->to_string(), func->inputs[0].get_name());
 
         if (!types_match)
-            return build_error_and_log(context, source_info, error_message_code::is_not_an_instance_function,
+            return build_error_and_log<error_message_code::is_not_an_instance_function_wrong_type>(context, source_info,
                                        func->to_string(), instance->to_string(),
                                        func->inputs[0].get_name(), func->inputs[0].get_annotation()->to_string(), type->name.value);
 

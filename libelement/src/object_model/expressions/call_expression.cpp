@@ -40,5 +40,5 @@ call_expression::call_expression(const expression_chain* parent)
     //note: we assume that the error will be contained in the returned object, and thus should never be null.
     //errors should be built where they occur, to make debugging easier and to ensure we have access to all required information
     assert(!"internal compiler error");
-    return build_error_and_log(context, source_info, error_message_code::invalid_errorless_call, parent->declarer->name.value);
+    return build_error_and_log<error_message_code::invalid_errorless_call>(context, source_info, parent->declarer->name.value);
 }

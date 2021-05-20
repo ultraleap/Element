@@ -500,9 +500,6 @@ element_result element_interpreter_ctx::expression_to_object(
 
 element_interpreter_ctx::element_interpreter_ctx()
 {
-    element::detail::register_errors();
-    element::detail::register_log_errors();
-
     // TODO: hack, remove
     global_scope = std::make_unique<element::scope>(nullptr, nullptr);
     clear();

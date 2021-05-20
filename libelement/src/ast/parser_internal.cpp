@@ -50,11 +50,10 @@ element_result element_parser_ctx::parse_identifier(element_ast& terminal, bool 
 
     if (current_token->type != ELEMENT_TOK_IDENTIFIER)
     {
-        return log_error(
+        return element::log_error<element::log_error_message_code::parse_identifier_failed>(
             logger.get(),
             src_context.get(),
             &terminal,
-            element::log_error_message_code::parse_identifier_failed,
             terminal.identifier);
     }
 
@@ -63,11 +62,10 @@ element_result element_parser_ctx::parse_identifier(element_ast& terminal, bool 
     const auto result = check_reserved_words(terminal.identifier, allow_reserved_args, allow_reserved_names);
     if (result != ELEMENT_OK)
     {
-        return log_error(
+        return element::log_error<element::log_error_message_code::parse_identifier_reserved>(
             logger.get(),
             src_context.get(),
             &terminal,
-            element::log_error_message_code::parse_identifier_reserved,
             terminal.identifier);
     }
 
@@ -82,11 +80,10 @@ element_result element_parser_ctx::parse_typename(element_ast& parent)
     if (result != ELEMENT_OK)
     {
         //todo: change error from identifier to invalid expression
-        return log_error(
+        return element::log_error<element::log_error_message_code::parse_typename_not_identifier>(
             logger.get(),
             src_context.get(),
             &typename_ast,
-            element::log_error_message_code::parse_typename_not_identifier,
             tokeniser->text(typename_ast.nearest_token));
     }
 
@@ -108,11 +105,10 @@ element_result element_parser_ctx::parse_port(element_ast& parent)
     }
     else
     {
-        return log_error(
+        return element::log_error<element::log_error_message_code::parse_port_failed>(
             logger.get(),
             src_context.get(),
             &port,
-            element::log_error_message_code::parse_port_failed,
             tokeniser->text(current_token));
     }
 
@@ -162,9 +158,9 @@ element_result element_parser_ctx::parse_exprlist(element_ast& parent)
 
     //should be '(' for previous and ')' for current
     if (current_token->type == ELEMENT_TOK_BRACKETR)
-        return log_error(logger.get(),
+        return element::log_error<element::log_error_message_code::parse_exprlist_empty>(
+            logger.get(),
             build_source_info(src_context.get(), previous_token, current_token->tok_len),
-            element::log_error_message_code::parse_exprlist_empty,
             parent.identifier);
 
     do
@@ -173,10 +169,10 @@ element_result element_parser_ctx::parse_exprlist(element_ast& parent)
     } while (current_token->type == ELEMENT_TOK_COMMA && advance() == ELEMENT_OK);
 
     if (current_token->type != ELEMENT_TOK_BRACKETR)
-        return log_error(logger.get(),
+        return element::log_error<element::log_error_message_code::parse_exprlist_missing_closing_parenthesis>(
+            logger.get(),
             src_context.get(),
             current_token,
-            element::log_error_message_code::parse_exprlist_missing_closing_parenthesis,
             parent.identifier,
             tokeniser->text(current_token));
 
@@ -225,11 +221,10 @@ element_result element_parser_ctx::parse_call(element_ast& parent)
     }
     else
     {
-        return log_error(
+        return element::log_error<element::log_error_message_code::parse_call_invalid_expression>(
             logger.get(),
             src_context.get(),
             current_token,
-            element::log_error_message_code::parse_call_invalid_expression,
             parent.identifier,
             tokeniser->text(current_token));
     }
@@ -296,11 +291,10 @@ element_result element_parser_ctx::parse_expression(element_ast& parent)
     if (current_token->type == ELEMENT_TOK_BRACEL)
         return parse_anonymous_block(parent);
 
-    return log_error(
+    return element::log_error<element::log_error_message_code::parse_expression_failed>(
         logger.get(),
         src_context.get(),
         &parent,
-        element::log_error_message_code::parse_expression_failed,
         tokeniser->text(current_token));
 }
 
@@ -356,11 +350,10 @@ element_result element_parser_ctx::parse_declaration(element_ast& parent, elemen
 
         if (current_token->type != ELEMENT_TOK_BRACKETR)
         {
-            return log_error(
+            return element::log_error<element::log_error_message_code::parse_declaration_missing_portlist_closing_parenthesis>(
                 logger.get(),
                 src_context.get(),
                 current_token,
-                element::log_error_message_code::parse_declaration_missing_portlist_closing_parenthesis,
                 tokeniser->text(current_token),
                 declaration.identifier);
         }
@@ -429,15 +422,18 @@ element_result element_parser_ctx::parse_function_body(element_ast& parent)
         return parse_expression(parent);
     }
 
-    const element::log_error_message_code code = parent.parent->type == ELEMENT_AST_NODE_FUNCTION
-                                                     ? element::log_error_message_code::parse_body_missing_body_for_function
-                                                     : element::log_error_message_code::parse_body_missing_body;
-
-    return log_error(
+    if (parent.parent->type == ELEMENT_AST_NODE_FUNCTION)
+        return element::log_error<element::log_error_message_code::parse_body_missing_body_for_function>(
+            logger.get(),
+            src_context.get(),
+            current_token,
+            parent.parent->children[ast_idx::function::declaration]->identifier,
+            tokeniser->text(current_token));
+    
+    return element::log_error<element::log_error_message_code::parse_body_missing_body>(
         logger.get(),
         src_context.get(),
         current_token,
-        code,
         parent.parent->children[ast_idx::function::declaration]->identifier,
         tokeniser->text(current_token));
 }
@@ -459,11 +455,10 @@ element_result element_parser_ctx::parse_function(element_ast& parent, element_a
     if (declaration->declaration_is_intrinsic())
         return ELEMENT_OK;
 
-    return log_error(
+    return element::log_error<element::log_error_message_code::parse_function_missing_body>(
         logger.get(),
         src_context.get(),
         declaration,
-        element::log_error_message_code::parse_function_missing_body,
         declaration->identifier);
 }
 
@@ -476,21 +471,19 @@ element_result element_parser_ctx::parse_struct(element_ast& parent, element_ast
 
     if (!declaration->declaration_is_intrinsic() && !declaration->declaration_has_portlist())
     {
-        return log_error(
+        return element::log_error<element::log_error_message_code::parse_struct_nonintrinsic_missing_portlist>(
             logger.get(),
             src_context.get(),
             declaration,
-            element::log_error_message_code::parse_struct_nonintrinsic_missing_portlist,
             declaration->identifier);
     }
     
     if (declaration->declaration_has_outputs())
     {
-        return log_error(
+        return element::log_error<element::log_error_message_code::parse_declaration_invalid_struct_return_type>(
             logger.get(),
             src_context.get(),
             declaration,
-            element::log_error_message_code::parse_declaration_invalid_struct_return_type,
             declaration->identifier);
     }
 
@@ -512,21 +505,19 @@ element_result element_parser_ctx::parse_constraint(element_ast& parent, element
 
     if (!declaration->declaration_is_intrinsic() && !declaration->declaration_has_portlist())
     {
-        return log_error(
+        return element::log_error<element::log_error_message_code::parse_constraint_nonintrinsic_missing_portlist>(
             logger.get(),
             src_context.get(),
             declaration,
-            element::log_error_message_code::parse_constraint_nonintrinsic_missing_portlist,
             declaration->identifier);
     }
 
     if (current_token->type == ELEMENT_TOK_BRACEL)
     {
-        return log_error(
+        return element::log_error<element::log_error_message_code::parse_constraint_has_body>(
             logger.get(),
             src_context.get(),
             declaration,
-            element::log_error_message_code::parse_constraint_has_body,
             declaration->identifier);
     }
 
