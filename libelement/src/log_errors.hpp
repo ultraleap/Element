@@ -179,8 +179,6 @@ namespace element
 /**
  * This macro, which should only be used in this header file, is simply a convenient way of doing a struct specialisation
  * This struct stores all the compile-time information that is later required when constructing the message, to ensure at compile-time that it is valid, rather than later throw an exception
- * format_check will attempt to do a test-run of formatting the error using default-constructed parameters, catching issues with it at compile-time even if the message itself is never used.
- *     note that it may need to be modified in the future to handle arguments that can't be default-constructed, in which case the if-constexpr statement should be extended
  */
 
 #define MAKE_LOG_ERROR_MESSAGE_INFO(c, res, stage_, s, ...) \
@@ -191,13 +189,6 @@ struct log_error_message_info<c> \
     static constexpr auto format = FMT_STRING(s); \
     static constexpr element_result result_element = res; \
     static constexpr element_stage stage = stage_; \
-    static inline const auto format_check = []() -> std::string { \
-        if constexpr(!std::is_same_v<tuple, std::tuple<>> && !std::is_same_v<tuple, void>) \
-        { \
-            return std::apply(element::build_log_error_string<c, __VA_ARGS__>, tuple{}); \
-        } \
-        return ""; \
-    }(); \
 };
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
