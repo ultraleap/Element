@@ -1,17 +1,19 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <utility>
-#include <numeric>
-#include <unordered_map>
-
 #include "../ast/ast_internal.hpp"
 #include "../ast/fwd.hpp"
 #include "instruction_tree/fwd.hpp"
 #include "typeutil.hpp"
 #include "object_model/constraints/type.hpp"
 #include "object_model/object_internal.hpp"
+
+//STD
+#include <string>
+#include <vector>
+#include <utility>
+#include <numeric>
+#include <unordered_map>
+#include <set>
 
 namespace element
 {
@@ -244,12 +246,23 @@ namespace element
     {
         DECLARE_TYPE_ID();
 
-        explicit instruction_for(instruction_const_shared_ptr initial, instruction_const_shared_ptr condition, instruction_const_shared_ptr body);
+        explicit instruction_for(instruction_const_shared_ptr initial, instruction_const_shared_ptr condition, instruction_const_shared_ptr body, std::set<std::shared_ptr<const instruction_input>> inputs);
         [[nodiscard]] const instruction_const_shared_ptr& initial() const { return m_dependents[0]; }
         [[nodiscard]] const instruction_const_shared_ptr& condition() const { return m_dependents[1]; }
         [[nodiscard]] const instruction_const_shared_ptr& body() const { return m_dependents[2]; }
 
         [[nodiscard]] size_t get_size() const override { return m_dependents[0]->get_size(); }
+
+        [[nodiscard]] bool is_input(const instruction_input& input) const
+        {
+            const auto it = std::find_if(inputs.begin(), inputs.end(), [&input](const auto& our_input) {
+                return &input == our_input.get();
+            });
+
+            return it != inputs.end();
+        }
+
+        std::set<std::shared_ptr<const instruction_input>> inputs;
     };
 
     struct instruction_fold final : public instruction
