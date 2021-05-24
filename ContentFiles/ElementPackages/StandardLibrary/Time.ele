@@ -51,26 +51,19 @@ struct TimeSpan(integer:Num, fractional:Num)
 
     mul(this:TimeSpan, x:Num):TimeSpan
     {
-        # In this encoding, multiplying positive TimeSpans by positive numbers is simple,
-        # as is negation. So, convert to positive values and convert back if needed.
-
-        resultIsPositive:Bool = this.integer.geq(0).xnor(x.geq(0))
-
-        thisUnsigned = this.abs
-        xUnsigned = x.abs
-
-        unsignedMultipliedInteger = thisUnsigned.integer.mul(xUnsigned)
-        unsignedMultipliedFractional = thisUnsigned.fractional.mul(xUnsigned)
-
-        # The multipliedInteger may have acquired a fractional component, so move this
-        # onto the newFractional component.
-        newUnsignedInteger = unsignedMultipliedInteger.floor
-        newUnsignedFractional = unsignedMultipliedFractional.add(unsignedMultipliedInteger.rem(1))
-
-        unsignedResult = TimeSpan(newUnsignedInteger, newUnsignedFractional)._regularise
-
-        signedResult = if(resultIsPositive, unsignedResult, unsignedResult.negate)
-        return = signedResult
+        mi = this.integer.mul(x)
+        mf = this.fractional.mul(x)
+        # Separate the integer and fractional parts of the originally-integer input
+        miIntegerPart = mi.roundToZero
+        miFractionalPart = mi.sub(miIntegerPart)
+        # Add both known fractional-ish parts together
+        mfTotal = mf.add(miFractionalPart)
+        # Separate the integer and fractional parts of our remaining fractional-ish value
+        mfTotalIntegerPart = mfTotal.floor
+        mfTotalFractionalPart = mfTotal.sub(mfTotalIntegerPart)
+        # Collect all the integer parts and return
+        fullIntegerPart = miIntegerPart.add(mfTotalIntegerPart)
+        return = TimeSpan(fullIntegerPart, mfTotalFractionalPart)
     }
 
     div(this:TimeSpan, x:Num):TimeSpan
