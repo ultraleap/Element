@@ -675,6 +675,22 @@ static element_result allocate_virtual_for(
     return state.allocator->allocate(&ef);
 }
 
+using input_set = std::set<std::shared_ptr<const element::instruction_input>>;
+static element_result find_input_allocations(const compiler_state& state, const element::instruction* in, const input_set& expected, std::vector<const stack_allocation*>& result)
+{
+    const auto* input = dynamic_cast<const element::instruction_input*>(in);
+    if (input && std::find_if(expected.begin(), expected.end(), [&](const auto& e) { return e.get() == input; }) != expected.end())
+    {
+        if (result.size() <= input->index())
+            result.resize(input->index() + 1, nullptr);
+        result[input->index()] = state.allocator->get(input);
+    }
+
+    for (const auto& d : in->dependents())
+        ELEMENT_OK_OR_RETURN(find_input_allocations(state, d.get(), expected, result));
+    return ELEMENT_OK;
+}
+
 static element_result compile_for(
     compiler_state& state,
     const element::instruction_for& ef,
@@ -689,9 +705,9 @@ static element_result compile_for(
     const stack_allocation* body_vr = state.allocator->get(body_in);
     if (!initial_vr || !condition_vr || !body_vr) return ELEMENT_ERROR_UNKNOWN;
 
-    std::vector<stack_allocation*> condition_inputs(condition_vr->count, nullptr);
-    std::vector<stack_allocation*> body_inputs(condition_vr->count, nullptr);
-    // TODO: figure out what the right scope is somehow?
+    std::vector<const stack_allocation*> condition_inputs, body_inputs;
+    ELEMENT_OK_OR_RETURN(find_input_allocations(state, condition_in, ef.inputs, condition_inputs));
+    ELEMENT_OK_OR_RETURN(find_input_allocations(state, body_in, ef.inputs, body_inputs));
 
     uint16_t initial_stack_idx, condition_stack_idx, body_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(initial_in, initial_stack_idx));
@@ -700,19 +716,33 @@ static element_result compile_for(
 
     // compile the initial state
     ELEMENT_OK_OR_RETURN(compile_instruction(state, initial_in, output));
-    copy_stack_values(initial_stack_idx, stack_idx, initial_vr->count, output);
-    // compile condition logic
+    copy_stack_values(initial_stack_idx, body_stack_idx, initial_vr->count, output);
+    // copy outputs to inputs before condition
     const size_t condition_index = output.size();
+    for (uint16_t i = 0; i < condition_inputs.size(); ++i) {
+        if (condition_inputs[i]) {
+            const uint16_t input_stack_idx = state.calculate_stack_index(condition_inputs[i]->type(), condition_inputs[i]->index());
+            copy_stack_values(body_stack_idx+i, input_stack_idx, 1, output);
+        }
+    }
+    // compile condition logic
     ELEMENT_OK_OR_RETURN(compile_instruction(state, condition_vr->instruction, output));
     output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, condition_stack_idx, 0, 0});
     const size_t condition_branchcle_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in at the end
+    // copy outputs to inputs before body
+    for (uint16_t i = 0; i < body_inputs.size(); ++i) {
+        if (body_inputs[i]) {
+            const uint16_t input_stack_idx = state.calculate_stack_index(body_inputs[i]->type(), body_inputs[i]->index());
+            copy_stack_values(body_stack_idx+i, input_stack_idx, 1, output);
+        }
+    }
     // compile the loop body
     ELEMENT_OK_OR_RETURN(compile_instruction(state, body_vr->instruction, output));
-    copy_stack_values(body_stack_idx, stack_idx, body_vr->count, output);
     const size_t branch_past_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, U16_LO(condition_index), U16_HI(condition_index)}); // branch --> condition
     const size_t past_idx = output.size();
+    copy_stack_values(body_stack_idx, stack_idx, body_vr->count, output);
 
     // fill in targets for the exit branch
     output[condition_branchcle_idx].arg2 = U16_LO(past_idx);
