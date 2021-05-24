@@ -309,11 +309,8 @@ static element_result create_virtual_unary(
 {
     ELEMENT_OK_OR_RETURN(state.allocator->set_count(&eu, 1));
 
-    if (eu.dependents().size() != 1)
-        return ELEMENT_ERROR_UNKNOWN;
-
     stack_allocation* arg_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eu.dependents()[0].get(), &arg_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eu.input().get(), &arg_vr));
     if (arg_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
@@ -331,7 +328,7 @@ static element_result prepare_virtual_unary(
     compiler_state& state,
     const element::instruction_unary& eu)
 {
-    const element::instruction* dep0 = eu.dependents()[0].get();
+    const element::instruction* dep0 = eu.input().get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
     state.allocator->use(&eu, dep0);
     return ELEMENT_OK;
@@ -341,7 +338,7 @@ static element_result allocate_virtual_unary(
     compiler_state& state,
     const element::instruction_unary& eu)
 {
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, eu.dependents()[0].get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, eu.input().get()));
     return state.allocator->allocate(&eu);
 }
 
@@ -351,7 +348,7 @@ static element_result compile_unary(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    const element::instruction* arg_in = eu.dependents()[0].get();
+    const element::instruction* arg_in = eu.input().get();
     // get the argument and ensure it's only 1 wide
     uint16_t arg_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(arg_in, arg_stack_idx));
@@ -410,8 +407,8 @@ static element_result create_virtual_binary(
 
     stack_allocation* arg1_vr;
     stack_allocation* arg2_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eb.dependents()[0].get(), &arg1_vr));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eb.dependents()[1].get(), &arg2_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eb.input1().get(), &arg1_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, eb.input2().get(), &arg2_vr));
     if (arg1_vr->count != 1 || arg2_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
@@ -422,8 +419,8 @@ static element_result prepare_virtual_binary(
     compiler_state& state,
     const element::instruction_binary& eb)
 {
-    const element::instruction* dep0 = eb.dependents()[0].get();
-    const element::instruction* dep1 = eb.dependents()[1].get();
+    const element::instruction* dep0 = eb.input1().get();
+    const element::instruction* dep1 = eb.input2().get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
     state.allocator->use(&eb, dep0);
@@ -435,8 +432,8 @@ static element_result allocate_virtual_binary(
     compiler_state& state,
     const element::instruction_binary& eb)
 {
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, eb.dependents()[0].get()));
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, eb.dependents()[1].get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, eb.input1().get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, eb.input2().get()));
     return state.allocator->allocate(&eb);
 }
 
@@ -446,11 +443,9 @@ static element_result compile_binary(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    if (eb.dependents().size() != 2)
-        return ELEMENT_ERROR_UNKNOWN;
     // get the arguments and ensure they're only 1 wide
-    const element::instruction* arg1_in = eb.dependents()[0].get();
-    const element::instruction* arg2_in = eb.dependents()[1].get();
+    const element::instruction* arg1_in = eb.input1().get();
+    const element::instruction* arg2_in = eb.input2().get();
     uint16_t arg1_stack_idx, arg2_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(arg1_in, arg1_stack_idx));
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(arg2_in, arg2_stack_idx));
@@ -540,20 +535,17 @@ static element_result create_virtual_if(
     compiler_state& state,
     const element::instruction_if& ei)
 {
-    if (ei.dependents().size() != 3)
-        return ELEMENT_ERROR_UNKNOWN;
-
     // ensure the predicate is only 1 wide
     stack_allocation* predicate_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.dependents()[0].get(), &predicate_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.predicate().get(), &predicate_vr));
     if (predicate_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
     // ensure both results of the if are at least the same size
     stack_allocation* true_vr;
     stack_allocation* false_vr;
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.dependents()[1].get(), &true_vr));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.dependents()[2].get(), &false_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_true().get(), &true_vr));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_false().get(), &false_vr));
     if (true_vr->count != false_vr->count)
         return ELEMENT_ERROR_UNKNOWN;
 
@@ -564,9 +556,9 @@ static element_result prepare_virtual_if(
     compiler_state& state,
     const element::instruction_if& ei)
 {
-    const element::instruction* dep0 = ei.dependents()[0].get();
-    const element::instruction* dep1 = ei.dependents()[1].get();
-    const element::instruction* dep2 = ei.dependents()[2].get();
+    const element::instruction* dep0 = ei.predicate().get();
+    const element::instruction* dep1 = ei.if_true().get();
+    const element::instruction* dep2 = ei.if_false().get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
@@ -581,9 +573,9 @@ static element_result allocate_virtual_if(
     compiler_state& state,
     const element::instruction_if& ei)
 {
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.dependents()[0].get()));
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.dependents()[1].get()));
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.dependents()[2].get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.predicate().get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_true().get()));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_false().get()));
     return state.allocator->allocate(&ei);
 }
 
@@ -593,9 +585,9 @@ static element_result compile_if(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    const element::instruction* predicate_in = ei.dependents()[0].get();
-    const element::instruction* true_in      = ei.dependents()[1].get();
-    const element::instruction* false_in     = ei.dependents()[2].get();
+    const element::instruction* predicate_in = ei.predicate().get();
+    const element::instruction* true_in      = ei.if_true().get();
+    const element::instruction* false_in     = ei.if_false().get();
     stack_allocation* true_vr = state.allocator->get(true_in);
     stack_allocation* false_vr = state.allocator->get(false_in);
     if (!true_vr || !false_vr) return ELEMENT_ERROR_UNKNOWN;
@@ -640,9 +632,6 @@ static element_result create_virtual_for(
     compiler_state& state,
     const element::instruction_for& ef)
 {
-    if (ef.dependents().size() != 3)
-        return ELEMENT_ERROR_UNKNOWN;
-
     stack_allocation* initial_vr;
     stack_allocation* condition_vr;
     stack_allocation* body_vr;
