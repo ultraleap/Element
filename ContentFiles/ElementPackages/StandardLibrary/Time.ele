@@ -51,6 +51,10 @@ struct TimeSpan(integer:Num, fractional:Num)
 
     mul(this:TimeSpan, x:Num):TimeSpan
     {
+        # When we multiply by a number, the integer component of the TimeSpan can acquire
+        # a fractional part. For this reason we need a more complicated regularisation
+        # process in this case.
+
         mi = this.integer.mul(x)
         mf = this.fractional.mul(x)
         # Separate the integer and fractional parts of the originally-integer input
@@ -100,6 +104,9 @@ struct TimeSpan(integer:Num, fractional:Num)
     {
         # Regularising a TimeSpan means ensuring that the fractional component is between 0 and 1,
         # and adjusting the integer component appropriately.
+        #
+        # NOTE: This assumes that the integer part of the TimeSpan is an integer and does not have
+        # a fractional component. 
         return = TimeSpan(this.integer.add(this.fractional.floor), this.fractional.rem(1))
     }
 }
