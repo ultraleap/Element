@@ -403,6 +403,20 @@ static void test_log(void)
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], 0.0, FLOAT_ERROR_MARGIN);
 
+    // Zero
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 10.0f, 0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isnan(rvals[0]));
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 10.0f, -0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isnan(rvals[0]));
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 3.0f, 0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_TRUE(isnan(rvals[0]));
+
     // NaN / inf
 
     TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f, 5.0f);

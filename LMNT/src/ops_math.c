@@ -118,7 +118,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_sqrtv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_log(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3] = logf(ctx->stack[arg1]) / logf(ctx->stack[arg2]);
+    ctx->stack[arg3] = ctx->stack[arg2] ? (logf(ctx->stack[arg1]) / logf(ctx->stack[arg2])) : nanf("");
     return LMNT_OK;
 }
 

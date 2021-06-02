@@ -743,11 +743,19 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | sub rsp, 16  // remain 16-byte aligned for call to logf
             | movss dword [rsp], xmm0
             | reads xmm0, in.arg2
+            // check for arg2 == 0
+            | xorps xmm1, xmm1
+            | ucomiss xmm1, xmm0
+            | je >1
             | mov64 rax, (const intptr_t)(&logf)
             | call rax
             | movss xmm1, dword [rsp]
-            | add rsp, 16
             | divss xmm1, xmm0
+            | jmp >2
+            |1:
+            | movss xmm1, dword [->nanbits]
+            |2:
+            | add rsp, 16
             if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
                 | movss xmm(reg3), xmm1
                 notifyRegisterWritten(state, reg3, 1);
