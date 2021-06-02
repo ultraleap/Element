@@ -30,7 +30,7 @@ element_result compile_instruction(
     std::vector<lmnt_instruction>& output);
 
 
-element_result copy_stack_values(const uint16_t src_index, const uint16_t dst_index, const uint16_t count, std::vector<lmnt_instruction>& output)
+static element_result copy_stack_values(const uint16_t src_index, const uint16_t dst_index, const uint16_t count, std::vector<lmnt_instruction>& output)
 {
     if (src_index != dst_index)
     {
@@ -41,6 +41,33 @@ element_result copy_stack_values(const uint16_t src_index, const uint16_t dst_in
             output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNSS, uint16_t(src_index + i), 0, uint16_t(dst_index + i)});
     }
     return ELEMENT_OK;
+}
+
+
+static const element::instruction* instruction_at(const compiler_state& state, const element::instruction* expr, size_t index, size_t count)
+{
+    if (const auto* es = expr->as<element::instruction_serialised_structure>()) {
+        size_t st_index = 0;
+        for (const auto& d : es->dependents())
+        {
+            const stack_allocation* alloc = state.allocator->get(d.get());
+            if (!alloc) return nullptr;
+
+            if (st_index >= index)
+                return instruction_at(state, d.get(), st_index - index, count);
+            st_index += alloc->count;
+        }
+        return nullptr;
+    } else if (const auto* ef = expr->as<element::instruction_for>()) {
+        return instruction_at(state, ef->body().get(), index, count);
+    } else if (const auto* ei = expr->as<element::instruction_indexer>()) {
+        return instruction_at(state, ei->for_instruction().get(), index + ei->index, count);
+    } else {
+        const stack_allocation* alloc = state.allocator->get(expr);
+        if (!alloc) return nullptr;
+
+        return (index + count <= alloc->count) ? expr : nullptr;
+    }
 }
 
 
@@ -214,15 +241,20 @@ static element_result compile_serialised_structure(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
+    uint16_t index = 0;
     for (const auto& d : es.dependents())
     {
         ELEMENT_OK_OR_RETURN(compile_instruction(state, d.get(), output));
 
-        uint16_t d_index;
-        ELEMENT_OK_OR_RETURN(state.calculate_stack_index(d.get(), d_index));
         const stack_allocation* d_vr = state.allocator->get(d.get());
-        if (!d_vr) return ELEMENT_ERROR_UNKNOWN;
-        copy_stack_values(d_index, stack_idx + d_vr->rel_index, d_vr->count, output);
+        if (!d_vr)
+            return ELEMENT_ERROR_UNKNOWN;
+        if (d_vr->pinned() && d_vr->type() != allocation_type::constant)
+            continue;
+
+        uint16_t d_index = state.calculate_stack_index(d_vr->type(), d_vr->index());
+        copy_stack_values(d_index, stack_idx + index, d_vr->count, output);
+        index += d_vr->count;
     }
     return ELEMENT_OK;
 }
@@ -772,10 +804,17 @@ static element_result prepare_virtual_indexer(
     compiler_state& state,
     const element::instruction_indexer& ei)
 {
-    ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, ei.for_instruction().get()));
-    state.allocator->use(&ei, ei.for_instruction().get());
-    // TODO: verify this is a good idea
-    state.allocator->set_parent(&ei, ei.for_instruction().get(), ei.index);
+    const element::instruction_for* ef = dynamic_cast<const element::instruction_for*>(ei.for_instruction().get());
+    if (!ef) return ELEMENT_ERROR_UNKNOWN;
+
+    stack_allocation* ef_alloc = nullptr;
+    ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, ef, &ef_alloc));
+    state.allocator->use(&ei, ef);
+
+    const element::instruction* ei_at = instruction_at(state, ef, ei.index, 1);
+    if (!ei_at) return ELEMENT_ERROR_UNKNOWN;
+
+    state.allocator->set_parent(&ei, ei_at, ei.index);
     return ELEMENT_OK;
 }
 
@@ -795,11 +834,13 @@ static element_result compile_indexer(
 {
     ELEMENT_OK_OR_RETURN(compile_instruction(state, ei.for_instruction().get(), output));
 
-    uint16_t for_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(ei.for_instruction().get(), for_stack_idx));
+    const element::instruction* ei_at = instruction_at(state, ei.for_instruction().get(), ei.index, 1);
+    if (!ei_at) return ELEMENT_ERROR_UNKNOWN;
 
-    const uint16_t for_entry_idx = static_cast<uint16_t>(for_stack_idx + ei.index);
-    copy_stack_values(for_entry_idx, stack_idx, 1, output);
+    uint16_t entry_stack_idx;
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(ei_at, entry_stack_idx));
+
+    copy_stack_values(entry_stack_idx, stack_idx, 1, output);
     return ELEMENT_OK;
 }
 

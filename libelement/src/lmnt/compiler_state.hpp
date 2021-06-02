@@ -85,7 +85,8 @@ struct compiler_state
 public:
     struct stack_allocator
     {
-        stack_allocation* get(const element::instruction* in) const;
+        stack_allocation* get(const element::instruction* in);
+        const stack_allocation* get(const element::instruction* in) const;
         element_result get_type(const element::instruction* in, allocation_type& type) const;
         bool is_type(const element::instruction* in, allocation_type type) const;
         element_result add(const element::instruction* in, size_t inst_idx, uint16_t count = 0, stack_allocation** result = nullptr);

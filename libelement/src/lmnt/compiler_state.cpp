@@ -11,7 +11,13 @@ compiler_state::compiler_state(const element_lmnt_compiler_ctx& c, const element
     allocator = std::make_unique<naive_allocator>();
 }
 
-stack_allocation* compiler_state::stack_allocator::get(const element::instruction* in) const
+stack_allocation* compiler_state::stack_allocator::get(const element::instruction* in)
+{
+    auto it = _allocations.find(in);
+    return (it != _allocations.end()) ? it->second : nullptr;
+}
+
+const stack_allocation* compiler_state::stack_allocator::get(const element::instruction* in) const
 {
     auto it = _allocations.find(in);
     return (it != _allocations.end()) ? it->second : nullptr;
@@ -73,7 +79,8 @@ element_result compiler_state::stack_allocator::set_parent(const element::instru
     if (child_it == _allocations.end()) return ELEMENT_ERROR_NOT_FOUND;
     auto parent_it = _allocations.find(parent);
     if (parent_it == _allocations.end()) return ELEMENT_ERROR_NOT_FOUND;
-    // TODO: ensure child isn't pinned
+    // if allocation is pinned we cannot move it
+    if (child_it->second->pinned()) return ELEMENT_ERROR_INVALID_OPERATION;
     // ensure we actually fit in our new parent allocation
     if (child_it->second->count > parent_it->second->count) return ELEMENT_ERROR_INVALID_OPERATION;
     child_it->second->parent = parent_it->second->shared_from_this();
