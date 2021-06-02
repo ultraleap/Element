@@ -79,6 +79,9 @@ element_result compiler_state::stack_allocator::set_parent(const element::instru
     if (child_it == _allocations.end()) return ELEMENT_ERROR_NOT_FOUND;
     auto parent_it = _allocations.find(parent);
     if (parent_it == _allocations.end()) return ELEMENT_ERROR_NOT_FOUND;
+    // cannot displace a pinned allocation
+    if (child_it->second->pinned())
+        return ELEMENT_ERROR_INVALID_OPERATION;
     // ensure we actually fit in our new parent allocation
     if (child_it->second->count > parent_it->second->count) return ELEMENT_ERROR_INVALID_OPERATION;
     child_it->second->parent = parent_it->second->shared_from_this();
