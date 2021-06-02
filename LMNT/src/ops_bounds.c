@@ -2,6 +2,10 @@
 #include <math.h>
 
 
+#define MIN(a, b) ((b) < (a) ? (b) : (a))
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
+
+
 LMNT_ATTR_FAST lmnt_result lmnt_op_abss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = fabsf(ctx->stack[arg1]);
@@ -83,48 +87,48 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_truncv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_minss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3] = fminf(ctx->stack[arg1], ctx->stack[arg2]);
+    ctx->stack[arg3] = MIN(ctx->stack[arg1], ctx->stack[arg2]);
     return LMNT_OK;
 }
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_minvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3 + 0] = fminf(ctx->stack[arg1 + 0], ctx->stack[arg2 + 0]);
-    ctx->stack[arg3 + 1] = fminf(ctx->stack[arg1 + 1], ctx->stack[arg2 + 1]);
-    ctx->stack[arg3 + 2] = fminf(ctx->stack[arg1 + 2], ctx->stack[arg2 + 2]);
-    ctx->stack[arg3 + 3] = fminf(ctx->stack[arg1 + 3], ctx->stack[arg2 + 3]);
+    ctx->stack[arg3 + 0] = MIN(ctx->stack[arg1 + 0], ctx->stack[arg2 + 0]);
+    ctx->stack[arg3 + 1] = MIN(ctx->stack[arg1 + 1], ctx->stack[arg2 + 1]);
+    ctx->stack[arg3 + 2] = MIN(ctx->stack[arg1 + 2], ctx->stack[arg2 + 2]);
+    ctx->stack[arg3 + 3] = MIN(ctx->stack[arg1 + 3], ctx->stack[arg2 + 3]);
     return LMNT_OK;
 }
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_maxss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3] = fmaxf(ctx->stack[arg1], ctx->stack[arg2]);
+    ctx->stack[arg3] = MAX(ctx->stack[arg1], ctx->stack[arg2]);
     return LMNT_OK;
 }
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_maxvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3 + 0] = fmaxf(ctx->stack[arg1 + 0], ctx->stack[arg2 + 0]);
-    ctx->stack[arg3 + 1] = fmaxf(ctx->stack[arg1 + 1], ctx->stack[arg2 + 1]);
-    ctx->stack[arg3 + 2] = fmaxf(ctx->stack[arg1 + 2], ctx->stack[arg2 + 2]);
-    ctx->stack[arg3 + 3] = fmaxf(ctx->stack[arg1 + 3], ctx->stack[arg2 + 3]);
+    ctx->stack[arg3 + 0] = MAX(ctx->stack[arg1 + 0], ctx->stack[arg2 + 0]);
+    ctx->stack[arg3 + 1] = MAX(ctx->stack[arg1 + 1], ctx->stack[arg2 + 1]);
+    ctx->stack[arg3 + 2] = MAX(ctx->stack[arg1 + 2], ctx->stack[arg2 + 2]);
+    ctx->stack[arg3 + 3] = MAX(ctx->stack[arg1 + 3], ctx->stack[arg2 + 3]);
     return LMNT_OK;
 }
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_minvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3 + 0] = fminf(ctx->stack[arg1 + 0], ctx->stack[arg2]);
-    ctx->stack[arg3 + 1] = fminf(ctx->stack[arg1 + 1], ctx->stack[arg2]);
-    ctx->stack[arg3 + 2] = fminf(ctx->stack[arg1 + 2], ctx->stack[arg2]);
-    ctx->stack[arg3 + 3] = fminf(ctx->stack[arg1 + 3], ctx->stack[arg2]);
+    ctx->stack[arg3 + 0] = MIN(ctx->stack[arg1 + 0], ctx->stack[arg2]);
+    ctx->stack[arg3 + 1] = MIN(ctx->stack[arg1 + 1], ctx->stack[arg2]);
+    ctx->stack[arg3 + 2] = MIN(ctx->stack[arg1 + 2], ctx->stack[arg2]);
+    ctx->stack[arg3 + 3] = MIN(ctx->stack[arg1 + 3], ctx->stack[arg2]);
     return LMNT_OK;
 }
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_maxvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3 + 0] = fmaxf(ctx->stack[arg1 + 0], ctx->stack[arg2]);
-    ctx->stack[arg3 + 1] = fmaxf(ctx->stack[arg1 + 1], ctx->stack[arg2]);
-    ctx->stack[arg3 + 2] = fmaxf(ctx->stack[arg1 + 2], ctx->stack[arg2]);
-    ctx->stack[arg3 + 3] = fmaxf(ctx->stack[arg1 + 3], ctx->stack[arg2]);
+    ctx->stack[arg3 + 0] = MAX(ctx->stack[arg1 + 0], ctx->stack[arg2]);
+    ctx->stack[arg3 + 1] = MAX(ctx->stack[arg1 + 1], ctx->stack[arg2]);
+    ctx->stack[arg3 + 2] = MAX(ctx->stack[arg1 + 2], ctx->stack[arg2]);
+    ctx->stack[arg3 + 3] = MAX(ctx->stack[arg1 + 3], ctx->stack[arg2]);
     return LMNT_OK;
 }
