@@ -214,7 +214,6 @@ static element_result prepare_virtual_serialised_structure(
     for (const auto& d : es.dependents())
     {
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, d.get()));
-        // this may fail (e.g. if it's pinned), which is fine - we'll just copy it in
         state.allocator->set_parent(d.get(), &es, index);
         state.allocator->use(&es, d.get());
 
@@ -249,8 +248,6 @@ static element_result compile_serialised_structure(
         const stack_allocation* d_vr = state.allocator->get(d.get());
         if (!d_vr)
             return ELEMENT_ERROR_UNKNOWN;
-        if (d_vr->pinned() && d_vr->type() != allocation_type::constant)
-            continue;
 
         uint16_t d_index = state.calculate_stack_index(d_vr->type(), d_vr->index());
         copy_stack_values(d_index, stack_idx + index, d_vr->count, output);
