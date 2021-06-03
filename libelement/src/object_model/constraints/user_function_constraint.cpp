@@ -50,8 +50,8 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
     if (!other)
         return false;
 
-    unsigned int our_input_length = declarer->inputs.size();
-    unsigned int offset = 0;
+    std::size_t our_input_length = declarer->inputs.size();
+    std::size_t offset = 0;
 
     if (applied)
     {
@@ -62,7 +62,7 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
     if (our_input_length != other->get_inputs().size())
         return false;
 
-    for (unsigned int i = 0; i < our_input_length; ++i)
+    for (std::size_t i = 0; i < our_input_length; ++i)
         if (!check_match(declarer->inputs[i + offset], other->inputs[i]))
             return false;
 

@@ -18,9 +18,9 @@ namespace element
         [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
         [[nodiscard]] const constraint* get_constraint() const override;
 
-        [[nodiscard]] virtual object_const_shared_ptr index(const compilation_context& context,
+        [[nodiscard]] object_const_shared_ptr index(const compilation_context& context,
                                                             const identifier& name,
-                                                            const source_information& source_info) const;
+                                                            const source_information& source_info) const override;
 
         [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
                                                       const source_information& source_info) const override;

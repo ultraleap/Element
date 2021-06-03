@@ -80,10 +80,11 @@ namespace element
                                        const identifier& name,
                                        const source_information& source_info);
 
-    object_const_shared_ptr compile_placeholder_expression(const compilation_context& context,
-                                                           const object& object,
-                                                           const std::vector<port>& inputs,
-                                                           const source_information& source_info,
-                                                           int placeholder_offset = 0,
-                                                           int boundary_scope = -1);
+    object_const_shared_ptr compile_placeholder_expression(
+        const compilation_context& context,
+        const object& object,
+        const std::vector<port>& inputs,
+        const source_information& source_info,
+        std::size_t placeholder_offset = 0,
+        int boundary_scope = -1);
 } // namespace element

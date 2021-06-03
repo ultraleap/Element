@@ -97,8 +97,8 @@ namespace element
     std::pair<std::vector<object_const_shared_ptr>, size_t> generate_placeholder_inputs(
         const compilation_context& compilation_context,
         const std::vector<port>& inputs,
-        int index_offset,
-        unsigned int boundary_scope);
+        std::size_t index_offset,
+        std::size_t boundary_scope);
 
     std::shared_ptr<const instruction> evaluate(const compilation_context& context, instruction_const_shared_ptr expr);
 } // namespace element

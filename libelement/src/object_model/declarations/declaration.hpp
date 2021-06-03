@@ -32,7 +32,7 @@ namespace element
 
         [[nodiscard]] virtual bool serializable(const compilation_context& context) const { return false; }
         [[nodiscard]] virtual bool deserializable(const compilation_context& context) const { return false; }
-        [[nodiscard]] virtual object_const_shared_ptr generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const;
+        [[nodiscard]] virtual object_const_shared_ptr generate_placeholder(const compilation_context& context, std::size_t& placeholder_index, std::size_t boundary_scope) const;
 
         [[nodiscard]] virtual std::string location() const;
 

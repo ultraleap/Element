@@ -121,7 +121,10 @@ bool struct_declaration::deserializable(const compilation_context& context) cons
     return true;
 }
 
-object_const_shared_ptr struct_declaration::generate_placeholder(const compilation_context& context, int& placeholder_index, unsigned int boundary_scope) const
+object_const_shared_ptr struct_declaration::generate_placeholder(
+    const compilation_context& context,
+    std::size_t& placeholder_index,
+    const std::size_t boundary_scope) const
 {
     if (inputs.empty())
     {

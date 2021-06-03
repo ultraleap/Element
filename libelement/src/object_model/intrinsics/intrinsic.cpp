@@ -124,19 +124,18 @@ intrinsic::intrinsic(const element_type_id id)
 std::pair<std::vector<object_const_shared_ptr>, size_t> element::generate_placeholder_inputs(
     const compilation_context& compilation_context,
     const std::vector<port>& inputs,
-    const int index_offset,
-    const unsigned int boundary_scope)
+    std::size_t index_offset,
+    const std::size_t boundary_scope)
 {
     std::pair<std::vector<object_const_shared_ptr>, size_t> placeholder_inputs;
-    auto placeholder_index = index_offset;
 
     for (const auto& input : inputs)
     {
-        auto placeholder = input.generate_placeholder(compilation_context, placeholder_index, boundary_scope);
+        auto placeholder = input.generate_placeholder(compilation_context, index_offset, boundary_scope);
         placeholder_inputs.first.push_back(std::move(placeholder));
     }
 
-    placeholder_inputs.second = placeholder_index;
+    placeholder_inputs.second = index_offset;
     return placeholder_inputs;
 }
 
