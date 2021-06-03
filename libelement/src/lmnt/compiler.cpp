@@ -87,7 +87,7 @@ static element_result create_virtual_constant(
     compiler_state& state,
     const element::instruction_constant& ec)
 {
-    ELEMENT_OK_OR_RETURN(state.allocator->set_count(&ec, 1));
+    ELEMENT_OK_OR_RETURN(state.allocator->add(&ec, 1));
     return add_candidate_constant(state, ec.value());
 }
 
@@ -150,7 +150,7 @@ static element_result create_virtual_input(
     compiler_state& state,
     const element::instruction_input& ei)
 {
-    return state.allocator->set_count(&ei, 1);
+    return state.allocator->add(&ei, 1);
 }
 
 static element_result prepare_virtual_input(
@@ -203,7 +203,7 @@ static element_result create_virtual_serialised_structure(
         ELEMENT_OK_OR_RETURN(create_virtual_result(state, d.get(), &vr));
         count += vr->count;
     }
-    return state.allocator->set_count(&es, count);
+    return state.allocator->add(&es, count);
 }
 
 static element_result prepare_virtual_serialised_structure(
@@ -288,7 +288,7 @@ static element_result create_virtual_nullary(
     compiler_state& state,
     const element::instruction_nullary& en)
 {
-    ELEMENT_OK_OR_RETURN(state.allocator->set_count(&en, 1));
+    ELEMENT_OK_OR_RETURN(state.allocator->add(&en, 1));
 
     // make this value eligible for hard-const
     element_value value = get_nullary_constant(en.operation());
@@ -336,7 +336,7 @@ static element_result create_virtual_unary(
     compiler_state& state,
     const element::instruction_unary& eu)
 {
-    ELEMENT_OK_OR_RETURN(state.allocator->set_count(&eu, 1));
+    ELEMENT_OK_OR_RETURN(state.allocator->add(&eu, 1));
 
     stack_allocation* arg_vr;
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, eu.input().get(), &arg_vr));
@@ -432,7 +432,7 @@ static element_result create_virtual_binary(
     compiler_state& state,
     const element::instruction_binary& eb)
 {
-    ELEMENT_OK_OR_RETURN(state.allocator->set_count(&eb, 1));
+    ELEMENT_OK_OR_RETURN(state.allocator->add(&eb, 1));
 
     stack_allocation* arg1_vr;
     stack_allocation* arg2_vr;
@@ -578,7 +578,7 @@ static element_result create_virtual_if(
     if (true_vr->count != false_vr->count)
         return ELEMENT_ERROR_UNKNOWN;
 
-    return state.allocator->set_count(&ei, true_vr->count);
+    return state.allocator->add(&ei, true_vr->count);
 }
 
 static element_result prepare_virtual_if(
@@ -672,7 +672,7 @@ static element_result create_virtual_for(
     if (initial_vr->count != body_vr->count)
         return ELEMENT_ERROR_UNKNOWN;
 
-    return state.allocator->set_count(&ef, initial_vr->count);
+    return state.allocator->add(&ef, initial_vr->count);
 }
 
 static element_result prepare_virtual_for(
@@ -794,7 +794,7 @@ static element_result create_virtual_indexer(
     if (ei.index >= for_vr->count)
         return ELEMENT_ERROR_UNKNOWN;
 
-    return state.allocator->set_count(&ei, 1);
+    return state.allocator->add(&ei, 1);
 }
 
 static element_result prepare_virtual_indexer(
@@ -871,7 +871,8 @@ static element_result create_virtual_select(
         max_count = (std::max)(max_count, static_cast<uint16_t>(option_vr->count));
     }
 
-    return state.allocator->set_count(&es, max_count);
+    // TODO: another allocation to handle this? fake instruction?
+    return state.allocator->add(&es, max_count);
 }
 
 static element_result prepare_virtual_select(
@@ -907,6 +908,9 @@ static element_result compile_select(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
+    const stack_allocation* es_vr = state.allocator->get(&es);
+    if (!es_vr) return ELEMENT_ERROR_UNKNOWN;
+
     const size_t opts_size = es.options_count();
     uint16_t zero_idx, one_idx, last_valid_idx;
     ELEMENT_OK_OR_RETURN(state.find_constant(0, zero_idx));
@@ -916,11 +920,14 @@ static element_result compile_select(
     stack_allocation* selector_vr = state.allocator->get(es.selector().get());
     if (!selector_vr) return ELEMENT_ERROR_UNKNOWN;
 
+    const uint16_t scratch_idx = es_vr->count - 1;
+
     uint16_t selector_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.selector().get(), selector_stack_idx));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, es.selector().get(), output));
     // clamp in range and ensure it's an integer
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
+    // we also can't use the result spaces since there could already be calculated results in there
     output.emplace_back(lmnt_instruction{LMNT_OP_MAXSS,  selector_stack_idx, zero_idx, stack_idx});
     output.emplace_back(lmnt_instruction{LMNT_OP_MINSS,  stack_idx, last_valid_idx, stack_idx});
     output.emplace_back(lmnt_instruction{LMNT_OP_TRUNCS, stack_idx, 0, stack_idx});
@@ -982,9 +989,6 @@ static element_result create_virtual_result(
         return ELEMENT_OK;
     }
 
-    // fake instruction index for now
-    ELEMENT_OK_OR_RETURN(state.allocator->add(expr, 0, 0, &existing_vr));
-
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
     if (const auto* ec = expr->as<element::instruction_constant>())
@@ -1019,10 +1023,15 @@ static element_result create_virtual_result(
 
     if (oresult == ELEMENT_OK)
     {
-        existing_vr->stage = compilation_stage::created;
-        existing_vr->set_instruction = state.cur_instruction_index;
-        existing_vr->last_used_instruction = state.cur_instruction_index;
-        if (vr) *vr = existing_vr;
+        if (vr) *vr = state.allocator->get(expr, 0);
+
+        for (size_t i = 0; i < state.allocator->count(expr); ++i)
+        {
+            stack_allocation* a = state.allocator->get(expr, i);
+            a->stage = compilation_stage::created;
+            a->set_instruction = state.cur_instruction_index;
+            a->last_used_instruction = state.cur_instruction_index;
+        }
     }
 
     ++state.cur_instruction_index;
@@ -1079,8 +1088,8 @@ static element_result prepare_virtual_result(
 
     if (oresult == ELEMENT_OK)
     {
-        existing_vr->stage = compilation_stage::prepared;
-        if (vr) *vr = existing_vr;
+        if (vr) *vr = state.allocator->get(expr, 0);
+        state.allocator->set_stage(expr, compilation_stage::prepared);
     }
 
     return oresult;
@@ -1135,8 +1144,8 @@ static element_result allocate_virtual_result(
 
     if (oresult == ELEMENT_OK)
     {
-        existing_vr->stage = compilation_stage::allocated;
-        if (vr) *vr = existing_vr;
+        if (vr) *vr = state.allocator->get(expr, 0);
+        state.allocator->set_stage(expr, compilation_stage::allocated);
     }
 
     return oresult;
@@ -1190,7 +1199,9 @@ static element_result compile_instruction(
         oresult = compile_select(state, *sel, index, output);
 
     if (oresult == ELEMENT_OK)
-        vr->stage = compilation_stage::compiled;
+    {
+        state.allocator->set_stage(expr, compilation_stage::compiled);
+    }
 
     return oresult;
 }

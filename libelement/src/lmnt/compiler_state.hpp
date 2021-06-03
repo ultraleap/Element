@@ -80,32 +80,41 @@ struct compiler_state
     element_result find_constant(element_value value, uint16_t& index) const;
 
     uint16_t calculate_stack_index(const allocation_type type, uint16_t index) const;
-    element_result calculate_stack_index(const element::instruction* in, uint16_t& index) const;
+    element_result calculate_stack_index(const element::instruction* in, uint16_t& index, size_t alloc_index = 0) const;
 
 public:
     struct stack_allocator
     {
-        stack_allocation* get(const element::instruction* in);
-        const stack_allocation* get(const element::instruction* in) const;
-        element_result get_type(const element::instruction* in, allocation_type& type) const;
-        bool is_type(const element::instruction* in, allocation_type type) const;
-        element_result add(const element::instruction* in, size_t inst_idx, uint16_t count = 0, stack_allocation** result = nullptr);
-        element_result set_count(const element::instruction* in, uint16_t count);
-        element_result set_pinned(const element::instruction* in, allocation_type type, uint16_t index, uint16_t count);
-        element_result set_parent(const element::instruction* child, const element::instruction* parent, uint16_t rel_index);
-        element_result erase(const element::instruction* in);
-        element_result use(const element::instruction* current_in, const element::instruction* alloc_in);
+        stack_allocation* get(const element::instruction* in, size_t alloc_index = 0);
+        const stack_allocation* get(const element::instruction* in, size_t alloc_index = 0) const;
+        size_t count(const element::instruction* in) const;
+        element_result get_type(const element::instruction* in, allocation_type& type) const { return get_type(in, 0, type); }
+        element_result get_type(const element::instruction* in, size_t alloc_index, allocation_type& type) const;
+        bool is_type(const element::instruction* in, allocation_type type) const { return is_type(in, 0, type); }
+        bool is_type(const element::instruction* in, size_t alloc_index, allocation_type type) const;
+        element_result add(const element::instruction* in, uint16_t count, stack_allocation** result = nullptr);
+        element_result set_count(const element::instruction* in, uint16_t count) { return set_count(in, 0, count); }
+        element_result set_count(const element::instruction* in, size_t alloc_index, uint16_t count);
+        element_result set_pinned(const element::instruction* in, allocation_type type, uint16_t index, uint16_t count) { return set_pinned(in, 0, type, index, count); }
+        element_result set_pinned(const element::instruction* in, size_t alloc_index, allocation_type type, uint16_t index, uint16_t count);
+        element_result set_parent(const element::instruction* child, const element::instruction* parent, uint16_t rel_index) { return set_parent(child, 0, parent, 0, rel_index); }
+        element_result set_parent(const element::instruction* child, size_t child_alloc_index, const element::instruction* parent, size_t parent_alloc_index, uint16_t rel_index);
+        element_result clear(const element::instruction* in);
+        element_result use(const element::instruction* current_in, const element::instruction* alloc_in) { return use(current_in, 0, alloc_in, 0); }
+        element_result use(const element::instruction* current_in, size_t current_index, const element::instruction* alloc_in, size_t alloc_index);
+        element_result set_stage(const element::instruction* in, compilation_stage stage);
 
         uint16_t get_max_stack_usage() const;
 
-        virtual element_result allocate(const element::instruction* in) = 0;
+        element_result allocate(const element::instruction* in) { return allocate(in, 0); }
+        virtual element_result allocate(const element::instruction* in, size_t index) = 0;
 
         // TODO: knowledge of conditional execution etc, use scopes?
 
         virtual ~stack_allocator() = default;
     protected:
         std::vector<std::shared_ptr<stack_allocation>> _alloc_storage;
-        std::unordered_map<const element::instruction*, stack_allocation*> _allocations;
+        std::unordered_map<const element::instruction*, std::vector<stack_allocation*>> _allocations;
     };
 
     std::unique_ptr<stack_allocator> allocator;
