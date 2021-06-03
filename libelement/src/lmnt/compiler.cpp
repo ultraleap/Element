@@ -871,8 +871,9 @@ static element_result create_virtual_select(
         max_count = (std::max)(max_count, static_cast<uint16_t>(option_vr->count));
     }
 
-    // TODO: another allocation to handle this? fake instruction?
-    return state.allocator->add(&es, max_count);
+    ELEMENT_OK_OR_RETURN(state.allocator->add(&es, max_count));
+    ELEMENT_OK_OR_RETURN(state.allocator->add(&es, 1)); // selector scratch space
+    return ELEMENT_OK;
 }
 
 static element_result prepare_virtual_select(
@@ -880,13 +881,13 @@ static element_result prepare_virtual_select(
     const element::instruction_select& es)
 {
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.selector().get()));
-    state.allocator->use(&es, es.selector().get());
+    state.allocator->use(&es, 1, es.selector().get(), 0);
     const size_t opts_size = es.options_count();
     for (size_t i = 0; i < opts_size; ++i)
     {
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.options_at(i).get()));
         // TODO: handle failure (copy in?)
-        state.allocator->set_parent(es.options_at(i).get(), &es, 0);
+        state.allocator->set_parent(es.options_at(i).get(), 0, &es, 0, 0);
     }
     return ELEMENT_OK;
 }
@@ -908,9 +909,6 @@ static element_result compile_select(
     const uint16_t stack_idx,
     std::vector<lmnt_instruction>& output)
 {
-    const stack_allocation* es_vr = state.allocator->get(&es);
-    if (!es_vr) return ELEMENT_ERROR_UNKNOWN;
-
     const size_t opts_size = es.options_count();
     uint16_t zero_idx, one_idx, last_valid_idx;
     ELEMENT_OK_OR_RETURN(state.find_constant(0, zero_idx));
@@ -920,7 +918,8 @@ static element_result compile_select(
     stack_allocation* selector_vr = state.allocator->get(es.selector().get());
     if (!selector_vr) return ELEMENT_ERROR_UNKNOWN;
 
-    const uint16_t scratch_idx = es_vr->count - 1;
+    uint16_t selector_scratch_idx;
+    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(&es, selector_scratch_idx, 1));
 
     uint16_t selector_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.selector().get(), selector_stack_idx));
@@ -928,16 +927,16 @@ static element_result compile_select(
     // clamp in range and ensure it's an integer
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
     // we also can't use the result spaces since there could already be calculated results in there
-    output.emplace_back(lmnt_instruction{LMNT_OP_MAXSS,  selector_stack_idx, zero_idx, stack_idx});
-    output.emplace_back(lmnt_instruction{LMNT_OP_MINSS,  stack_idx, last_valid_idx, stack_idx});
-    output.emplace_back(lmnt_instruction{LMNT_OP_TRUNCS, stack_idx, 0, stack_idx});
+    output.emplace_back(lmnt_instruction{LMNT_OP_MAXSS,  selector_stack_idx, zero_idx, selector_scratch_idx});
+    output.emplace_back(lmnt_instruction{LMNT_OP_MINSS,  selector_scratch_idx, last_valid_idx, selector_scratch_idx});
+    output.emplace_back(lmnt_instruction{LMNT_OP_TRUNCS, selector_scratch_idx, 0, selector_scratch_idx});
 
     const size_t branches_start_idx = output.size();
     for (size_t i = 0; i < opts_size; ++i)
     {
-        output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, stack_idx, 0, 0});
+        output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, selector_scratch_idx, 0, 0});
         output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCEQ, 0, 0, 0}); // target filled in later
-        output.emplace_back(lmnt_instruction{LMNT_OP_SUBSS, stack_idx, one_idx, stack_idx});
+        output.emplace_back(lmnt_instruction{LMNT_OP_SUBSS, selector_scratch_idx, one_idx, selector_scratch_idx});
     }
 
     uint16_t option0_stack_idx;

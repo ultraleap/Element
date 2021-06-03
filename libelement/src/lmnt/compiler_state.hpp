@@ -106,8 +106,14 @@ public:
 
         uint16_t get_max_stack_usage() const;
 
-        element_result allocate(const element::instruction* in) { return allocate(in, 0); }
         virtual element_result allocate(const element::instruction* in, size_t index) = 0;
+
+        element_result allocate(const element::instruction* in)
+        {
+            for (size_t i = 0; i < count(in); ++i)
+                ELEMENT_OK_OR_RETURN(allocate(in, i));
+            return ELEMENT_OK;
+        }
 
         // TODO: knowledge of conditional execution etc, use scopes?
 
