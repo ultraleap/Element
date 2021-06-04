@@ -29,6 +29,24 @@ static void test_branch(void)
 
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 
+
+    // test "one past the end" branch
+    a = create_archive_array("test", 0, 1, 1, 5, 0, 0,
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x03, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x05, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x00)
+    );
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 3.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+
+
     a = create_archive_array("test", 0, 1, 1, 16, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0xFF, 0x00, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x0C, 0x00),
@@ -57,7 +75,7 @@ static void test_branch(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 0, 0, 0, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -113,7 +131,7 @@ static void test_branchceq(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHCEQ,   0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCEQ,   0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -169,7 +187,7 @@ static void test_branchcne(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHCNE,   0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCNE,   0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -233,7 +251,7 @@ static void test_branchclt(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHCLT,   0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCLT,   0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -297,7 +315,7 @@ static void test_branchcle(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHCLE,   0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCLE,   0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -361,7 +379,7 @@ static void test_branchcgt(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHCGT,   0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCGT,   0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -425,7 +443,7 @@ static void test_branchcge(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHCGE,   0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCGE,   0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -481,7 +499,7 @@ static void test_branchcun(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHCUN,   0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCUN,   0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -533,7 +551,7 @@ static void test_branchz(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHZ,    0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHZ,    0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -585,7 +603,7 @@ static void test_branchnz(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHNZ,   0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHNZ,   0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -645,7 +663,7 @@ static void test_branchpos(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHPOS,  0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHPOS,  0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -705,7 +723,7 @@ static void test_branchneg(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHNEG,  0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHNEG,  0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
@@ -765,11 +783,295 @@ static void test_branchun(void)
 
     // TODO: separate into "invalid" test suite
     a = create_archive_array("test", 1, 0, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_BRANCHUN,   0x00, 0x01, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_BRANCHUN,   0x00, 0x02, 0x00)
     );
 
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_ACCESS_VIOLATION);
     delete_archive_array(a);
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+}
+
+
+
+static void test_branchceq_cmpz(void)
+{
+    lmnt_value rvals[1];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+
+    archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
+        LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCEQ, 0x00, 0x04, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+    );
+    test_function_data fndata = { NULL, NULL };
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -0.2f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+}
+
+static void test_branchcne_cmpz(void)
+{
+    lmnt_value rvals[1];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+
+    archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
+        LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCNE, 0x00, 0x04, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+    );
+    test_function_data fndata = { NULL, NULL };
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.1f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+}
+
+static void test_branchclt_cmpz(void)
+{
+    lmnt_value rvals[1];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+
+    archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
+        LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCLT, 0x00, 0x04, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+    );
+    test_function_data fndata = { NULL, NULL };
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -0.01f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+}
+
+static void test_branchcle_cmpz(void)
+{
+    lmnt_value rvals[1];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+
+    archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
+        LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCLE, 0x00, 0x04, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+    );
+    test_function_data fndata = { NULL, NULL };
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.3f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -0.3f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+}
+
+static void test_branchcgt_cmpz(void)
+{
+    lmnt_value rvals[1];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+
+    archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
+        LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCGT, 0x00, 0x04, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+    );
+    test_function_data fndata = { NULL, NULL };
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -3.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
+}
+
+static void test_branchcge_cmpz(void)
+{
+    lmnt_value rvals[1];
+    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
+
+    archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
+        LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_BRANCHCGE, 0x00, 0x04, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+    );
+    test_function_data fndata = { NULL, NULL };
+    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
+    delete_archive_array(a);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, 0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -0.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -3.0f);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 5.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, -INFINITY);
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
+    TEST_UPDATE_ARGS(ctx, fndata, 0, nanf(""));
+    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -788,5 +1090,11 @@ MAKE_REGISTER_SUITE_FUNCTION(branch,
     CUNIT_CI_TEST(test_branchnz),
     CUNIT_CI_TEST(test_branchpos),
     CUNIT_CI_TEST(test_branchneg),
-    CUNIT_CI_TEST(test_branchun)
+    CUNIT_CI_TEST(test_branchun),
+    CUNIT_CI_TEST(test_branchceq_cmpz),
+    CUNIT_CI_TEST(test_branchcne_cmpz),
+    CUNIT_CI_TEST(test_branchclt_cmpz),
+    CUNIT_CI_TEST(test_branchcle_cmpz),
+    CUNIT_CI_TEST(test_branchcgt_cmpz),
+    CUNIT_CI_TEST(test_branchcge_cmpz)
 );

@@ -900,6 +900,8 @@ Reads a value from the stack, adds a constant to it, and then reads from *that* 
 ## `BRANCH`
 Unconditionally branch to the given instruction; the branch target is specified by its absolute index within the current function.
 
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
+
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
 | Arg | Direction | Type       | Size       | Meaning                                   |
@@ -910,11 +912,14 @@ Unconditionally branch to the given instruction; the branch target is specified 
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     goto instructions[target]
 ```
 
 ## `BRANCHZ`
 Branch to the given instruction if the test argument is zero; the branch target is specified by its absolute index within the current function. Negative zero (`-0.0`) is counted as zero.
+
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
@@ -928,6 +933,7 @@ Branch to the given instruction if the test argument is zero; the branch target 
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (stack[arg1] == 0.0)
         goto instructions[target]
 ```
@@ -936,6 +942,8 @@ Branch to the given instruction if the test argument is zero; the branch target 
 ## `BRANCHNZ`
 Branch to the given instruction if the test argument is non-zero; the branch target is specified by its absolute index within the current function. Negative zero (`-0.0`) is counted as zero.
 
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
+
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
 **NaNs**: if the test argument is NaN, the branch is not taken.
@@ -948,12 +956,15 @@ Branch to the given instruction if the test argument is non-zero; the branch tar
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (stack[arg1] != 0.0)
         goto instructions[target]
 ```
 
 ## `BRANCHPOS`
 Branch to the given instruction if the test argument is positive; the branch target is specified by its absolute index within the current function.
+
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
@@ -967,6 +978,7 @@ Branch to the given instruction if the test argument is positive; the branch tar
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (signbit(stack[arg1]) == 0)
         goto instructions[target]
 ```
@@ -974,6 +986,8 @@ Branch to the given instruction if the test argument is positive; the branch tar
 
 ## `BRANCHNEG`
 Branch to the given instruction if the test argument is negative; the branch target is specified by its absolute index within the current function.
+
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
@@ -987,6 +1001,7 @@ Branch to the given instruction if the test argument is negative; the branch tar
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (signbit(stack[arg1]) == 1)
         goto instructions[target]
 ```
@@ -994,6 +1009,8 @@ Branch to the given instruction if the test argument is negative; the branch tar
 
 ## `BRANCHUN`
 Branch to the given instruction if the test argument is `NaN`; the branch target is specified by its absolute index within the current function.
+
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
@@ -1005,6 +1022,7 @@ Branch to the given instruction if the test argument is `NaN`; the branch target
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (isnan(stack[arg1]))
         goto instructions[target]
 ```
@@ -1033,8 +1051,34 @@ The flags stored are:
     flags.UN = (isnan(stack[arg1]) || isnan(stack[arg2]))
 ```
 
+
+## `CMPZ`
+Compares the specified input against zero, and stores the result in an internal set of flags.
+
+The flags stored are:
+* **`EQ` (equal)**: the first argument compares equal to the second argument
+* **`LT` (less-than)**: the first argument compares less than the second argument
+* **`GT` (greater-than)**: the first argument compares greater than the second argument
+* **`UN` (unordered)**: the comparison is unordered (i.e. at least one argument was `NaN`)
+
+**NaNs**: if one or both arguments are `NaN`, then `UN` will be set and no other flags will.
+
+| Arg | Direction | Type       | Size   | Meaning                                 |
+| --: | :-------- | :--------- | :----- | :-------------------------------------- |
+| 1   | Input     | Stack Loc  | Scalar | Location of the first input to compare  |
+
+```c
+    flags.EQ = (stack[arg1] == 0.0)
+    flags.LT = (stack[arg1] <  0.0)
+    flags.GT = (stack[arg1] >  0.0)
+    flags.UN = (isnan(stack[arg1]))
+```
+
+
 ## `BRANCHCEQ`
 Branch to the target instruction if the last `CMP` instruction produced an equal-to result; the branch target is specified by its absolute index within the current function.
+
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
@@ -1048,6 +1092,7 @@ Branch to the target instruction if the last `CMP` instruction produced an equal
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (flags.EQ)
         goto instructions[target]
 ```
@@ -1055,6 +1100,8 @@ Branch to the target instruction if the last `CMP` instruction produced an equal
 
 ## `BRANCHCNE`
 Branch to the target instruction if the last `CMP` instruction produced a not-equal result; the branch target is specified by its absolute index within the current function.
+
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
@@ -1070,6 +1117,7 @@ Branch to the target instruction if the last `CMP` instruction produced a not-eq
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (!flags.EQ)
         goto instructions[target]
 ```
@@ -1078,6 +1126,8 @@ Branch to the target instruction if the last `CMP` instruction produced a not-eq
 ## `BRANCHCLT`
 Branch to the target instruction if the last `CMP` instruction produced a less-than result; the branch target is specified by its absolute index within the current function.
 
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
+
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
@@ -1090,6 +1140,7 @@ Branch to the target instruction if the last `CMP` instruction produced a less-t
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (flags.LT)
         goto instructions[target]
 ```
@@ -1098,6 +1149,8 @@ Branch to the target instruction if the last `CMP` instruction produced a less-t
 ## `BRANCHCLE`
 Branch to the target instruction if the last `CMP` instruction produced a less-than or equal-to result; the branch target is specified by its absolute index within the current function.
 
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
+
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
@@ -1110,6 +1163,7 @@ Branch to the target instruction if the last `CMP` instruction produced a less-t
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (flags.LT || flags.EQ)
         goto instructions[target]
 ```
@@ -1118,6 +1172,8 @@ Branch to the target instruction if the last `CMP` instruction produced a less-t
 ## `BRANCHCGT`
 Branch to the target instruction if the last `CMP` instruction produced a greater-than result; the branch target is specified by its absolute index within the current function.
 
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
+
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
@@ -1130,6 +1186,7 @@ Branch to the target instruction if the last `CMP` instruction produced a greate
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (flags.GT)
         goto instructions[target]
 ```
@@ -1138,6 +1195,8 @@ Branch to the target instruction if the last `CMP` instruction produced a greate
 ## `BRANCHCGE`
 Branch to the target instruction if the last `CMP` instruction produced a greater-than or equal-to result; the branch target is specified by its absolute index within the current function.
 
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
+
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
@@ -1150,6 +1209,7 @@ Branch to the target instruction if the last `CMP` instruction produced a greate
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (flags.GT || flags.EQ)
         goto instructions[target]
 ```
@@ -1158,6 +1218,8 @@ Branch to the target instruction if the last `CMP` instruction produced a greate
 ## `BRANCHCUN`
 Branch to the target instruction if the last `CMP` instruction produced an unordered result; the branch target is specified by its absolute index within the current function.
 
+Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
+
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
@@ -1170,6 +1232,7 @@ Branch to the target instruction if the last `CMP` instruction produced an unord
 
 ```c
     target = (arg2 | (arg3 << sizeof(arg2)))
+    if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (flags.UN)
         goto instructions[target]
 ```

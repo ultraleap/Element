@@ -74,8 +74,9 @@ instruction_if::instruction_if(instruction_const_shared_ptr predicate, instructi
     m_dependents.emplace_back(std::move(if_false));
 }
 
-instruction_for::instruction_for(instruction_const_shared_ptr initial, instruction_const_shared_ptr condition, instruction_const_shared_ptr body)
+instruction_for::instruction_for(instruction_const_shared_ptr initial, instruction_const_shared_ptr condition, instruction_const_shared_ptr body, std::set<std::shared_ptr<const instruction_input>> inputs)
     : instruction(type_id, nullptr)
+    , inputs(std::move(inputs))
 {
     actual_type = initial->actual_type;
 

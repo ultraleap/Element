@@ -655,7 +655,7 @@ element_result element_interpreter_evaluate_call_expression(
             return eval_result;
     }
 
-    int serialised_size = 0;
+    size_t serialised_size = 0;
     for (const auto& arg : serialised_arguments)
         serialised_size += static_cast<int>(arg.size());
 

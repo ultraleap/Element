@@ -1,6 +1,10 @@
 #ifndef LMNT_PLATFORM_H
 #define LMNT_PLATFORM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(_M_X64) || defined(__x86_64) || defined(__x86_64__) || defined(__amd64__) || defined(__amd64)
 #define LMNT_ARCH_X86
 #define LMNT_ARCH_X86_64
@@ -45,6 +49,11 @@
 #endif
 #if defined(LMNT_ARCH_ARM)
 #include "lmnt/arm/platform.h"
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

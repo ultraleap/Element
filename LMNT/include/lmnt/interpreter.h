@@ -1,6 +1,10 @@
 #ifndef LMNT_INTERPRETER_H
 #define LMNT_INTERPRETER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <assert.h>
 #include <stdlib.h>
 #include "lmnt/common.h"
@@ -113,5 +117,10 @@ LMNT_ATTR_FAST lmnt_result lmnt_resume(
 // Note that there is currently no thread-safety mechanism in the library
 // This is implemented as a single pointer write, which may be atomic on the target architecture
 lmnt_result lmnt_interrupt(lmnt_ictx* ctx);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

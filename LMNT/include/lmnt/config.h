@@ -1,14 +1,16 @@
 #ifndef LMNT_CONFIG_H
 #define LMNT_CONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "lmnt/platform.h"
 
 // Header which will be included when requiring memory-related functions
 #if !defined(LMNT_MEMORY_HEADER)
 #define LMNT_MEMORY_HEADER <string.h>
 #endif
-
-#include LMNT_MEMORY_HEADER
 
 // Memory copy/move function
 #if !defined(LMNT_MEMCPY)
@@ -31,8 +33,21 @@
 
 // printf function to use for debugging output
 // Never called unless requested by the user (e.g. lmnt_archive_print) or debug flags are enabled
+#if !defined(LMNT_PRINTF_HEADER)
+#define LMNT_PRINTF_HEADER <stdio.h>
+#endif
+
 #if !defined(LMNT_PRINTF)
 #define LMNT_PRINTF printf
+#endif
+
+// Prints every instruction evaluated
+// This is, unsurprisingly, VERY spammy
+// #define LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

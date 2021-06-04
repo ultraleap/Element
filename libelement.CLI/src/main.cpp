@@ -83,14 +83,15 @@ void command_callback(command& command)
 
 int main(const int argc, char** argv)
 {
-    /*#if !defined(NDEBUG) && defined(WIN32)
+    #if !defined(NDEBUG)
     std::string args;
     for (int i = 0; i < argc; ++i)
     {
         args += argv[i];
+        args += " ";
     }
-    std::cout << args << " " << std::endl;
-    #endif*/
+    std::cout << "Raw CLI Arguments: " << args << std::endl << std::endl;
+    #endif
     
     // parse arguments and construct exactly one required command
     CLI::App app{ "CLI interface for libelement" };

@@ -132,6 +132,7 @@ object_const_shared_ptr struct_declaration::generate_placeholder(
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
         auto expr = std::make_shared<instruction_input>(boundary_scope, placeholder_index);
         expr->actual_type = intrinsic->get_type();
+        context.boundaries[boundary_scope].inputs.insert(expr);
         placeholder_index += 1; //todo: fix when we have lists, size() on intrinsic? on type?
         return expr;
     }

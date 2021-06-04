@@ -1,6 +1,10 @@
 #ifndef LMNT_X86_64_PLATFORM_H
 #define LMNT_X86_64_PLATFORM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if !defined(LMNT_MEMCPY)
     #define LMNT_MEMORY_HEADER "lmnt/x86_64/memcpy_fast.h"
     #define LMNT_MEMCPY lmnt_memcpy_fast
@@ -13,5 +17,10 @@
 
 // Allow use of non-volatile registers?
 #define LMNT_JIT_X86_64_ALLOW_NV_REGISTERS
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

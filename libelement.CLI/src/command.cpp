@@ -30,6 +30,9 @@ void command::configure(CLI::App& app, command::callback callback)
                  "parse trace if parsing fails.");
     app.add_flag("--interpreted", arguments->compiletime,
                  "");
+    app.add_option("--target", arguments->target,
+                   "Target to execute. default is 'interpreter'. must be one of 'interpreter', 'lmnt', or 'lmnt-jit'")
+        ->transform(CLI::CheckedTransformer(arguments->target_mapping, CLI::ignore_case));
 
     // not a big fan of this but it works, so leaving it for now
     parse_command::configure(app, arguments, callback);

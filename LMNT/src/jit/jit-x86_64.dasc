@@ -16,6 +16,7 @@
 #include "jit/hosthelpers.h"
 #include "jit/targethelpers-x86.h" // includes dasm_proto
 #include "jit/reghelpers-x86.h"
+#include LMNT_MEMORY_HEADER
 
 
 | .arch x64
@@ -742,11 +743,19 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | sub rsp, 16  // remain 16-byte aligned for call to logf
             | movss dword [rsp], xmm0
             | reads xmm0, in.arg2
+            // check for arg2 == 0
+            | xorps xmm1, xmm1
+            | ucomiss xmm1, xmm0
+            | je >1
             | mov64 rax, (const intptr_t)(&logf)
             | call rax
             | movss xmm1, dword [rsp]
-            | add rsp, 16
             | divss xmm1, xmm0
+            | jmp >2
+            |1:
+            | movss xmm1, dword [->nanbits]
+            |2:
+            | add rsp, 16
             if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
                 | movss xmm(reg3), xmm1
                 notifyRegisterWritten(state, reg3, 1);
@@ -1043,6 +1052,12 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | ucomiss xmm(reg1), xmm(reg2)
             break;
 
+        case LMNT_OP_CMPZ:
+            ||acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, xmmtmp1);
+            | xorps xmm(xmmtmp2), xmm(xmmtmp2)
+            | ucomiss xmm(reg1), xmm(xmmtmp2)
+            break;
+
         case LMNT_OP_BRANCHCEQ:
             platformWriteAndEvictAll(state);
             | jp >1
@@ -1176,6 +1191,18 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         if (result != LMNT_OK)
             break;
 #endif
+    }
+
+    // has someone made a branch target to the end of the function?
+    if (state->cur_in == next_target) {
+        // if we may have just jumped here, our cache status is unknown, so nuke everything
+        platformWriteAndEvictAll(state);
+        // find which label(s) we're meant to be
+        for (size_t t = 0; t < num_pc_labels; ++t) {
+            if (state->cur_in == branch_targets[t]) {
+                | =>t:
+            }
+        }
     }
 
     | ->ok_return:

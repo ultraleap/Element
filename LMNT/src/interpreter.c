@@ -7,6 +7,11 @@
 #include <math.h>
 #include <string.h>
 
+#include LMNT_MEMORY_HEADER
+#if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
+    #include LMNT_PRINTF_HEADER
+#endif
+
 extern lmnt_op_fn lmnt_op_functions[LMNT_OP_END];
 extern lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END];
 
@@ -97,6 +102,24 @@ LMNT_ATTR_FAST static inline lmnt_result execute_instruction(lmnt_ictx* ctx, con
     return ctx->op_functions[op.opcode](ctx, op.arg1, op.arg2, op.arg3);
 }
 
+#if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
+static inline void print_execution_context(lmnt_ictx* ctx, lmnt_loffset inst_idx, const lmnt_instruction op)
+{
+    LMNT_PRINTF("Eval[%02X]: % 12s %04X %04X %04X [", inst_idx, lmnt_get_opcode_info(op.opcode)->name, op.arg1, op.arg2, op.arg3);
+    const size_t count = validated_get_constants_count(&ctx->archive) + ctx->cur_def->stack_count_unaligned;
+    for (size_t i = 0; i < count; ++i)
+    {
+        if (i) printf(", ");
+        LMNT_PRINTF("%8.3f", ctx->stack[i]);
+    }
+    LMNT_PRINTF("] [%s %s %s %s]\n",
+        (ctx->status_flags & LMNT_ISTATUS_CMP_EQ) ? "EQ" : "  ",
+        (ctx->status_flags & LMNT_ISTATUS_CMP_LT) ? "LT" : "  ",
+        (ctx->status_flags & LMNT_ISTATUS_CMP_GT) ? "GT" : "  ",
+        (ctx->status_flags & LMNT_ISTATUS_CMP_UN) ? "UN" : "  ");
+}
+#endif
+
 // This function assumes:
 // - ctx->cur_def has been set to the def to be executed
 // - ctx->cur_instr is set to 0 for new execution or its previous value for resume
@@ -128,6 +151,9 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
         for (instr = ctx->cur_instr; instr < icount; ++instr)
         {
             opresult = execute_instruction(ctx, instructions[instr]);
+#if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
+            print_execution_context(ctx, instr, instructions[instr]);
+#endif
             if (LMNT_UNLIKELY(opresult != LMNT_OK)) {
                 if (opresult == LMNT_BRANCHING) {
                     // the context's instruction pointer has been updated, refresh
@@ -155,8 +181,8 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
         ctx->cur_def = NULL;
         ctx->cur_stack_count = 0;
     }
-    // If we hit a return instruction, that's an OK return
-    if (opresult == LMNT_RETURNING) {
+    // If we hit a return instruction or a branch past the function end, that's an OK return
+    if (opresult == LMNT_RETURNING || opresult == LMNT_BRANCHING) {
         opresult = LMNT_OK;
     }
 

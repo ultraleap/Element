@@ -1,6 +1,10 @@
 #ifndef LMNT_OPCODES_H
 #define LMNT_OPCODES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 typedef uint16_t lmnt_opcode;
@@ -93,6 +97,8 @@ enum
     LMNT_OP_INDEXRIR,
     // compare: stack, stack, null
     LMNT_OP_CMP,
+    // compare: stack, null, null
+    LMNT_OP_CMPZ,
     // branch: null, codelo, codehi
     LMNT_OP_BRANCH,
     LMNT_OP_BRANCHCEQ,
@@ -137,9 +143,14 @@ typedef struct
     lmnt_operand_type operand3;
 } lmnt_op_info;
 
-extern const lmnt_op_info lmnt_opcode_info[LMNT_OP_END];
+const lmnt_op_info* lmnt_get_opcode_info(lmnt_opcode op);
 
 #define LMNT_OP16(a) (char)(a & 0xFF), (char)((a >> 8) & 0xFF)
 #define LMNT_OP_BYTES(op, arg1, arg2, arg3) LMNT_OP16(op), LMNT_OP16(arg1), LMNT_OP16(arg2), LMNT_OP16(arg3)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

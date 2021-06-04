@@ -70,6 +70,7 @@ LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_indexris,
     lmnt_op_indexrir,
     lmnt_op_cmp,
+    lmnt_op_cmpz,
     lmnt_op_branch,
     lmnt_op_branchceq,
     lmnt_op_branchcne,
@@ -148,6 +149,7 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "INDEXRIS",  LMNT_OPERAND_STACKREF, LMNT_OPERAND_IMM,      LMNT_OPERAND_STACK1   },
     { "INDEXRIR",  LMNT_OPERAND_STACKREF, LMNT_OPERAND_IMM,      LMNT_OPERAND_STACKREF },
     { "CMP",       LMNT_OPERAND_STACK1,   LMNT_OPERAND_STACK1,   LMNT_OPERAND_UNUSED   },
+    { "CMPZ",      LMNT_OPERAND_STACK1,   LMNT_OPERAND_UNUSED,   LMNT_OPERAND_UNUSED   },
     { "BRANCH",    LMNT_OPERAND_UNUSED,   LMNT_OPERAND_CODEPTR,  LMNT_OPERAND_CODEPTR  },
     { "BRANCHCEQ", LMNT_OPERAND_UNUSED,   LMNT_OPERAND_CODEPTR,  LMNT_OPERAND_CODEPTR  },
     { "BRANCHCNE", LMNT_OPERAND_UNUSED,   LMNT_OPERAND_CODEPTR,  LMNT_OPERAND_CODEPTR  },
@@ -164,7 +166,13 @@ const lmnt_op_info lmnt_opcode_info[LMNT_OP_END] = {
     { "EXTCALL",   LMNT_OPERAND_DEFPTR,   LMNT_OPERAND_DEFPTR,   LMNT_OPERAND_STACKN   },
 };
 
+const lmnt_op_info* lmnt_get_opcode_info(lmnt_opcode op)
+{
+    return LMNT_LIKELY(op < LMNT_OP_END) ? &(lmnt_opcode_info[op]) : NULL;
+}
+
 lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END] = {
+    lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,
     lmnt_op_interrupt,

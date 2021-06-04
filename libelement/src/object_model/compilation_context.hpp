@@ -10,6 +10,9 @@
 //todo: move to cpp
 #include "declarations/function_declaration.hpp"
 
+//STD
+#include <set>
+
 namespace element
 {
     class compilation_context
@@ -28,6 +31,7 @@ namespace element
         struct boundary_info
         {
             size_t size = 0;
+            std::set<std::shared_ptr<const instruction_input>> inputs;
         };
 
         mutable std::vector<boundary_info> boundaries;
