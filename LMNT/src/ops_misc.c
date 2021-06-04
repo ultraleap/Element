@@ -142,7 +142,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_dseclen(lmnt_ictx* ctx, lmnt_offset arg1, lmn
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_indexris(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    if (isnan(ctx->stack[arg1]) || isinf(ctx->stack[arg1])) return LMNT_ERROR_ACCESS_VIOLATION;
+    if (LMNT_UNLIKELY(isnan(ctx->stack[arg1]) || isinf(ctx->stack[arg1]))) return LMNT_ERROR_ACCESS_VIOLATION;
     size_t arg1v = value_to_size_t(ctx->stack[arg1]);
     if (arg1v + arg2 >= ctx->cur_stack_count) return LMNT_ERROR_ACCESS_VIOLATION;
     ctx->stack[arg3] = ctx->stack[arg1v + arg2];
@@ -151,8 +151,8 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_indexris(lmnt_ictx* ctx, lmnt_offset arg1, lm
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_indexrir(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    if (isnan(ctx->stack[arg1]) || isinf(ctx->stack[arg1])) return LMNT_ERROR_ACCESS_VIOLATION;
-    if (isnan(ctx->stack[arg3]) || isinf(ctx->stack[arg3])) return LMNT_ERROR_ACCESS_VIOLATION;
+    if (LMNT_UNLIKELY(isnan(ctx->stack[arg1]) || isinf(ctx->stack[arg1]))) return LMNT_ERROR_ACCESS_VIOLATION;
+    if (LMNT_UNLIKELY(isnan(ctx->stack[arg3]) || isinf(ctx->stack[arg3]))) return LMNT_ERROR_ACCESS_VIOLATION;
     size_t arg1v = value_to_size_t(ctx->stack[arg1]);
     size_t arg3v = value_to_size_t(ctx->stack[arg3]);
     if (arg1v + arg2 >= ctx->cur_stack_count || arg3v >= ctx->cur_stack_count) return LMNT_ERROR_ACCESS_VIOLATION;

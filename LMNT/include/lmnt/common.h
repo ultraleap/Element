@@ -87,17 +87,27 @@ typedef LMNT_VALUE_TYPE lmnt_value;
 struct lmnt_ictx;
 typedef struct lmnt_ictx lmnt_ictx;
 
+// Add compiler hints to help out branch prediction
+#if defined(LMNT_COMPILER_GCC) || defined(LMNT_COMPILER_CLANG)
+#define LMNT_LIKELY(expr)    (__builtin_expect(!!(expr), 1))
+#define LMNT_UNLIKELY(expr)  (__builtin_expect(!!(expr), 0))
+#else
+#define LMNT_LIKELY(expr) (expr)
+#define LMNT_UNLIKELY(expr) (expr)
+#endif
+
+// Convenience macros for checking an operation succeeded
 #define LMNT_OK_OR_RETURN(t) \
 { \
     const lmnt_result ok_or_return_result = (t); \
-    if (ok_or_return_result != LMNT_OK) \
+    if (LMNT_UNLIKELY(ok_or_return_result != LMNT_OK)) \
         return ok_or_return_result; \
 }
 
 #define LMNT_V_OK_OR_RETURN(t) \
 { \
     const lmnt_validation_result ok_or_return_result = (t); \
-    if (ok_or_return_result != LMNT_VALIDATION_OK) \
+    if (LMNT_UNLIKELY(ok_or_return_result != LMNT_VALIDATION_OK)) \
         return ok_or_return_result; \
 }
 
@@ -108,14 +118,6 @@ typedef struct lmnt_ictx lmnt_ictx;
 // MSVC does not currently include the C11-standard _Static_assert, only the C++-style variant
 #if defined(_MSC_VER)
 #define _Static_assert static_assert
-#endif
-
-#if defined(LMNT_COMPILER_GCC) || defined(LMNT_COMPILER_CLANG)
-#define LMNT_LIKELY(expr)    (__builtin_expect(!!(expr), 1))
-#define LMNT_UNLIKELY(expr)  (__builtin_expect(!!(expr), 0))
-#else
-#define LMNT_LIKELY(expr) (expr)
-#define LMNT_UNLIKELY(expr) (expr)
 #endif
 
 
