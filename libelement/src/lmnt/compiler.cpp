@@ -9,21 +9,28 @@
 #define U16_HI(x) static_cast<uint16_t>(((x) >> 16) & 0xFFFF)
 
 
+// create an allocation for this instruction and its dependents
+// must know what size the allocation is
 element_result create_virtual_result(
     compiler_state& state,
     const element::instruction* expr,
     stack_allocation** result = nullptr);
 
+// determine relationships between this instruction and its dependents
+// pinned and parenting statuses get set here
+// also take note of which instructions use data from other instructions
 element_result prepare_virtual_result(
     compiler_state& state,
     const element::instruction* expr,
     stack_allocation** result = nullptr);
 
+// decide how stack space is allocated for this instruction and its dependents
 element_result allocate_virtual_result(
     compiler_state& state,
     const element::instruction* expr,
     stack_allocation** result = nullptr);
 
+// generate LMNT bytecode for instruction and its dependents
 element_result compile_instruction(
     compiler_state& state,
     const element::instruction* expr,
@@ -43,7 +50,7 @@ static element_result copy_stack_values(const uint16_t src_index, const uint16_t
     return ELEMENT_OK;
 }
 
-
+// determine what leaf instruction owns the allocation at index N within the given instruction
 static const element::instruction* instruction_at(const compiler_state& state, const element::instruction* expr, size_t index, size_t count)
 {
     if (const auto* es = expr->as<element::instruction_serialised_structure>()) {
@@ -249,6 +256,9 @@ static element_result compile_serialised_structure(
         if (!d_vr)
             return ELEMENT_ERROR_UNKNOWN;
 
+        // in most cases this will be a no-op
+        // however if the dependent is pinned, this will copy it into the struct's memory block
+        // this is to ensure that structs always contain the values they're meant to
         uint16_t d_index = state.calculate_stack_index(d_vr->type(), d_vr->index());
         copy_stack_values(d_index, stack_idx + index, d_vr->count, output);
         index += d_vr->count;
