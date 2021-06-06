@@ -717,7 +717,7 @@ static element_result allocate_virtual_for(
 using input_set = std::set<std::shared_ptr<const element::instruction_input>>;
 static element_result find_input_allocations(const compiler_state& state, const element::instruction* in, const input_set& expected, std::vector<const stack_allocation*>& result)
 {
-    const auto* input = dynamic_cast<const element::instruction_input*>(in);
+    const auto* input = in->as<element::instruction_input>();
     if (input && std::find_if(expected.begin(), expected.end(), [&](const auto& e) { return e.get() == input; }) != expected.end())
     {
         if (result.size() <= input->index())
@@ -811,7 +811,7 @@ static element_result prepare_virtual_indexer(
     compiler_state& state,
     const element::instruction_indexer& ei)
 {
-    const element::instruction_for* ef = dynamic_cast<const element::instruction_for*>(ei.for_instruction().get());
+    const element::instruction_for* ef = ei.for_instruction()->as<element::instruction_for>();
     if (!ef) return ELEMENT_ERROR_UNKNOWN;
 
     stack_allocation* ef_alloc = nullptr;
