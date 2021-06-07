@@ -222,7 +222,7 @@ static element_result prepare_virtual_serialised_structure(
     {
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, d.get()));
         state.allocator->set_parent(d.get(), &es, index);
-        state.allocator->use(&es, d.get());
+        state.use(&es, d.get());
 
         stack_allocation* d_vr = state.allocator->get(d.get());
         if (!d_vr) return ELEMENT_ERROR_UNKNOWN;
@@ -369,7 +369,7 @@ static element_result prepare_virtual_unary(
 {
     const element::instruction* dep0 = eu.input().get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
-    state.allocator->use(&eu, dep0);
+    state.use(&eu, dep0);
     return ELEMENT_OK;
 }
 
@@ -462,8 +462,8 @@ static element_result prepare_virtual_binary(
     const element::instruction* dep1 = eb.input2().get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
-    state.allocator->use(&eb, dep0);
-    state.allocator->use(&eb, dep1);
+    state.use(&eb, dep0);
+    state.use(&eb, dep1);
     return ELEMENT_OK;
 }
 
@@ -583,8 +583,15 @@ static element_result create_virtual_if(
     // ensure both results of the if are at least the same size
     stack_allocation* true_vr;
     stack_allocation* false_vr;
+
+    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), execution_type::conditional));
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_true().get(), &true_vr));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
+    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), execution_type::conditional));
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_false().get(), &false_vr));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
     if (true_vr->count != false_vr->count)
         return ELEMENT_ERROR_UNKNOWN;
 
@@ -599,9 +606,19 @@ static element_result prepare_virtual_if(
     const element::instruction* dep1 = ei.if_true().get();
     const element::instruction* dep2 = ei.if_false().get();
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
+
+    ELEMENT_OK_OR_RETURN(state.push_context(dep1, execution_type::conditional));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
+    ELEMENT_OK_OR_RETURN(state.push_context(dep2, execution_type::conditional));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
-    state.allocator->use(&ei, dep0);
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
+    // TODO: identify any subtrees appearing in both branches and mark them as unconditional *if* current context is
+    // TODO: hoist anything unconditional in branch scopes out to our scope
+
+    state.use(&ei, dep0);
     // TODO: account for failure (copy in?)
     state.allocator->set_parent(dep1, &ei, 0);
     state.allocator->set_parent(dep2, &ei, 0);
@@ -613,8 +630,15 @@ static element_result allocate_virtual_if(
     const element::instruction_if& ei)
 {
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.predicate().get()));
+
+    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), execution_type::conditional));
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_true().get()));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
+    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), execution_type::conditional));
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_false().get()));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
     return state.allocator->allocate(&ei);
 }
 
@@ -636,20 +660,26 @@ static element_result compile_if(
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(true_in, true_stack_idx));
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(false_in, false_stack_idx));
 
+    // TODO: find anything unconditional in the true/false branches and compile it in case we're the first use
+
     // compile the predicate
     ELEMENT_OK_OR_RETURN(compile_instruction(state, predicate_in, output));
     // make branch logic
     output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, predicate_stack_idx, 0, 0});
     const size_t predicate_branchcle_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in at the end
-    // compile the true/false branches
-    // TODO: hoist out anything in the true/false branches that's required elsewhere?
+    // compile the true branch
+    ELEMENT_OK_OR_RETURN(state.push_context(true_in, execution_type::conditional));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
     copy_stack_values(true_stack_idx, stack_idx, true_vr->count, output);
     const size_t branch_past_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, 0, 0}); // target filled in at the end
+    // compile the false branch
     const size_t false_idx = output.size();
+    ELEMENT_OK_OR_RETURN(state.push_context(false_in, execution_type::conditional));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, false_in, output));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
     copy_stack_values(false_stack_idx, stack_idx, false_vr->count, output);
     const size_t past_idx = output.size();
 
@@ -674,9 +704,17 @@ static element_result create_virtual_for(
     stack_allocation* initial_vr;
     stack_allocation* condition_vr;
     stack_allocation* body_vr;
+
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.initial().get(), &initial_vr));
+
+    ELEMENT_OK_OR_RETURN(state.push_context(ef.condition().get(), execution_type::unconditional));
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.condition().get(), &condition_vr));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
+    ELEMENT_OK_OR_RETURN(state.push_context(ef.body().get(), execution_type::conditional));
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.body().get(), &body_vr));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
     if (condition_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
     if (initial_vr->count != body_vr->count)
@@ -692,15 +730,24 @@ static element_result prepare_virtual_for(
     const element::instruction* dep0 = ef.initial().get();
     const element::instruction* dep1 = ef.condition().get();
     const element::instruction* dep2 = ef.body().get();
+
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
+
+    ELEMENT_OK_OR_RETURN(state.push_context(dep1, execution_type::unconditional));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
+    ELEMENT_OK_OR_RETURN(state.push_context(dep2, execution_type::conditional));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
+    // TODO: hoist out anything unconditional
 
     // these may fail if they're pinned, which is fine
     state.allocator->set_parent(dep0, &ef, 0);
     state.allocator->set_parent(dep2, &ef, 0);
 
-    state.allocator->use(&ef, dep1);
+    state.use(&ef, dep1);
     return ELEMENT_OK;
 }
 
@@ -709,8 +756,15 @@ static element_result allocate_virtual_for(
     const element::instruction_for& ef)
 {
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.initial().get()));
+
+    ELEMENT_OK_OR_RETURN(state.push_context(ef.condition().get(), execution_type::unconditional));
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.condition().get()));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
+    ELEMENT_OK_OR_RETURN(state.push_context(ef.body().get(), execution_type::conditional));
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.body().get()));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
+
     return state.allocator->allocate(&ef);
 }
 
@@ -764,8 +818,11 @@ static element_result compile_for(
             copy_stack_values(body_stack_idx+i, input_stack_idx, 1, output);
         }
     }
+
     // compile condition logic
+    ELEMENT_OK_OR_RETURN(state.push_context(ef.condition().get(), execution_type::unconditional));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, condition_vr->instruction, output));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
     output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, condition_stack_idx, 0, 0});
     const size_t condition_branchcle_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in at the end
@@ -776,8 +833,11 @@ static element_result compile_for(
             copy_stack_values(body_stack_idx+i, input_stack_idx, 1, output);
         }
     }
+
     // compile the loop body
+    ELEMENT_OK_OR_RETURN(state.push_context(ef.body().get(), execution_type::conditional));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, body_vr->instruction, output));
+    ELEMENT_OK_OR_RETURN(state.pop_context());
     const size_t branch_past_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, U16_LO(condition_index), U16_HI(condition_index)}); // branch --> condition
     const size_t past_idx = output.size();
@@ -816,7 +876,7 @@ static element_result prepare_virtual_indexer(
 
     stack_allocation* ef_alloc = nullptr;
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, ef, &ef_alloc));
-    state.allocator->use(&ei, ef);
+    state.use(&ei, ef);
 
     const element::instruction* ei_at = instruction_at(state, ef, ei.index, 1);
     if (!ei_at) return ELEMENT_ERROR_UNKNOWN;
@@ -877,7 +937,9 @@ static element_result create_virtual_select(
     for (size_t i = 0; i < es.options_count(); ++i)
     {
         stack_allocation* option_vr;
+        ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
         ELEMENT_OK_OR_RETURN(create_virtual_result(state, es.options_at(i).get(), &option_vr));
+        ELEMENT_OK_OR_RETURN(state.pop_context());
         max_count = (std::max)(max_count, static_cast<uint16_t>(option_vr->count));
     }
 
@@ -891,11 +953,13 @@ static element_result prepare_virtual_select(
     const element::instruction_select& es)
 {
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.selector().get()));
-    state.allocator->use(&es, 1, es.selector().get(), 0);
+    state.use(&es, 1, es.selector().get(), 0);
     const size_t opts_size = es.options_count();
     for (size_t i = 0; i < opts_size; ++i)
     {
+        ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.options_at(i).get()));
+        ELEMENT_OK_OR_RETURN(state.pop_context());
         // TODO: handle failure (copy in?)
         state.allocator->set_parent(es.options_at(i).get(), 0, &es, 0, 0);
     }
@@ -909,7 +973,11 @@ static element_result allocate_virtual_select(
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, es.selector().get()));
     const size_t opts_size = es.options_count();
     for (size_t i = 0; i < opts_size; ++i)
+    {
+        ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
         ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, es.options_at(i).get()));
+        ELEMENT_OK_OR_RETURN(state.pop_context());
+    }
     return state.allocator->allocate(&es);
 }
 
@@ -967,7 +1035,11 @@ static element_result compile_select(
         // fill in the target index for this branch option
         output[branches_start_idx + i*3 + 1].arg2 = U16_LO(option_idx);
         output[branches_start_idx + i*3 + 1].arg3 = U16_HI(option_idx);
+
+        ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
         ELEMENT_OK_OR_RETURN(compile_instruction(state, es.options_at(i).get(), output));
+        ELEMENT_OK_OR_RETURN(state.pop_context());
+
         copy_stack_values(option_stack_idx, stack_idx, option_vr->count, output);
         option_branch_indexes[i] = output.size();
         output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, 0, 0}); // target filled in later
@@ -1053,11 +1125,15 @@ static element_result prepare_virtual_result(
     const element::instruction* expr,
     stack_allocation** vr)
 {
+    // whatever happens, note that this subtree is used in this context
+    state.use_in_context(expr);
+
     // CSE: if this is non-null, we already did this
     stack_allocation* existing_vr = state.allocator->get(expr);
     if (!existing_vr) return ELEMENT_ERROR_UNKNOWN;
 
-    if (existing_vr->stage >= compilation_stage::prepared)
+    // TODO: is it necessary to re-prepare something previously conditional?
+    if (existing_vr->stage >= compilation_stage::prepared && existing_vr->executed_in == execution_type::unconditional)
     {
         if (vr) *vr = existing_vr;
         return ELEMENT_OK;
@@ -1169,7 +1245,8 @@ static element_result compile_instruction(
     stack_allocation* vr = state.allocator->get(expr);
     if (!vr) return ELEMENT_ERROR_UNKNOWN;
 
-    if (vr->stage >= compilation_stage::compiled)
+    // only skip re-emitting bytecode if we've definitely already executed it
+    if (vr->stage >= compilation_stage::compiled && vr->executed_in == execution_type::unconditional)
         return ELEMENT_OK;
 
     uint16_t index;

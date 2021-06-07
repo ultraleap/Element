@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
+#include <type_traits>
 
 #include "instruction_tree/instructions.hpp"
 #include "lmnt/compiler.hpp"
@@ -25,6 +27,13 @@ enum class allocation_type
     local
 };
 
+enum class execution_type
+{
+    none,
+    conditional,
+    unconditional
+};
+
 struct stack_allocation : std::enable_shared_from_this<stack_allocation>
 {
     stack_allocation(const element::instruction* in, uint16_t count, size_t set_in, size_t last_in)
@@ -41,6 +50,7 @@ struct stack_allocation : std::enable_shared_from_this<stack_allocation>
     size_t last_used_instruction;
 
     compilation_stage stage = compilation_stage::none;
+    execution_type executed_in = execution_type::none;
 
     std::shared_ptr<stack_allocation> parent = nullptr;
     allocation_type rel_type = allocation_type::local;
@@ -61,6 +71,23 @@ struct stack_allocation : std::enable_shared_from_this<stack_allocation>
     {
         return rel_index + (parent ? parent->index() : 0);
     }
+
+    void set_executed_in(execution_type type)
+    {
+        executed_in = (std::max)(type, executed_in);
+    }
+};
+
+
+struct execution_context
+{
+    execution_context(execution_context* p, execution_type t) : parent(p), rel_type(t) {}
+
+    execution_context* const parent;
+    const execution_type rel_type;
+    std::unordered_set<const stack_allocation*> allocations;
+
+    execution_type type() const { return (parent ? (std::min)(rel_type, parent->type()) : rel_type); }
 };
 
 
@@ -82,6 +109,19 @@ struct compiler_state
     uint16_t calculate_stack_index(const allocation_type type, uint16_t index) const;
     element_result calculate_stack_index(const element::instruction* in, uint16_t& index, size_t alloc_index = 0) const;
 
+    // context stack
+    std::unordered_map<const element::instruction*, execution_context> contexts;
+    execution_context* current_context;
+
+    element_result push_context(const element::instruction* in, execution_type type);
+    element_result pop_context();
+    const execution_context* get_context(const element::instruction* in) const;
+    element_result use_in_context(const element::instruction* in);
+
+    element_result use(const element::instruction* current_in, const element::instruction* alloc_in) { return use(current_in, 0, alloc_in, 0); }
+    element_result use(const element::instruction* current_in, size_t current_index, const element::instruction* alloc_in, size_t alloc_index);
+
+    // allocator
 public:
     struct stack_allocator
     {
@@ -100,7 +140,6 @@ public:
         element_result set_parent(const element::instruction* child, const element::instruction* parent, uint16_t rel_index) { return set_parent(child, 0, parent, 0, rel_index); }
         element_result set_parent(const element::instruction* child, size_t child_alloc_index, const element::instruction* parent, size_t parent_alloc_index, uint16_t rel_index);
         element_result clear(const element::instruction* in);
-        element_result use(const element::instruction* current_in, const element::instruction* alloc_in) { return use(current_in, 0, alloc_in, 0); }
         element_result use(const element::instruction* current_in, size_t current_index, const element::instruction* alloc_in, size_t alloc_index);
         element_result set_stage(const element::instruction* in, compilation_stage stage);
 
