@@ -86,6 +86,7 @@ struct execution_context
     execution_context* const parent;
     const execution_type rel_type;
     std::unordered_set<const stack_allocation*> allocations;
+    std::unordered_set<const element::instruction*> compiled_instructions;
 
     execution_type type() const { return (parent ? (std::min)(rel_type, parent->type()) : rel_type); }
 };

@@ -1246,8 +1246,11 @@ static element_result compile_instruction(
     if (!vr) return ELEMENT_ERROR_UNKNOWN;
 
     // only skip re-emitting bytecode if we've definitely already executed it
-    if (vr->stage >= compilation_stage::compiled && vr->executed_in == execution_type::unconditional)
+    if (vr->stage >= compilation_stage::compiled
+        && (vr->executed_in == execution_type::unconditional || state.current_context->compiled_instructions.count(expr)))
+    {
         return ELEMENT_OK;
+    }
 
     uint16_t index;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(expr, index));
@@ -1287,6 +1290,7 @@ static element_result compile_instruction(
     if (oresult == ELEMENT_OK)
     {
         state.allocator->set_stage(expr, compilation_stage::compiled);
+        state.current_context->compiled_instructions.emplace(expr);
     }
 
     return oresult;
