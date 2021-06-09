@@ -706,10 +706,7 @@ static element_result create_virtual_for(
     stack_allocation* body_vr;
 
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.initial().get(), &initial_vr));
-
-    ELEMENT_OK_OR_RETURN(state.push_context(ef.condition().get(), execution_type::unconditional));
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.condition().get(), &condition_vr));
-    ELEMENT_OK_OR_RETURN(state.pop_context());
 
     ELEMENT_OK_OR_RETURN(state.push_context(ef.body().get(), execution_type::conditional));
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ef.body().get(), &body_vr));
@@ -732,10 +729,7 @@ static element_result prepare_virtual_for(
     const element::instruction* dep2 = ef.body().get();
 
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
-
-    ELEMENT_OK_OR_RETURN(state.push_context(dep1, execution_type::unconditional));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
-    ELEMENT_OK_OR_RETURN(state.pop_context());
 
     ELEMENT_OK_OR_RETURN(state.push_context(dep2, execution_type::conditional));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
@@ -756,10 +750,7 @@ static element_result allocate_virtual_for(
     const element::instruction_for& ef)
 {
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.initial().get()));
-
-    ELEMENT_OK_OR_RETURN(state.push_context(ef.condition().get(), execution_type::unconditional));
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.condition().get()));
-    ELEMENT_OK_OR_RETURN(state.pop_context());
 
     ELEMENT_OK_OR_RETURN(state.push_context(ef.body().get(), execution_type::conditional));
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ef.body().get()));
@@ -820,9 +811,7 @@ static element_result compile_for(
     }
 
     // compile condition logic
-    ELEMENT_OK_OR_RETURN(state.push_context(ef.condition().get(), execution_type::unconditional));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, condition_vr->instruction, output));
-    ELEMENT_OK_OR_RETURN(state.pop_context());
     output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, condition_stack_idx, 0, 0});
     const size_t condition_branchcle_idx = output.size();
     output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in at the end
