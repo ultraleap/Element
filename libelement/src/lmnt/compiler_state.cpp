@@ -6,6 +6,8 @@ compiler_state::compiler_state(const element_lmnt_compiler_ctx& c, const element
     , return_instruction(in)
     , constants(v)
     , inputs_count(icount)
+    , contexts({{ in, execution_context(nullptr, execution_type::unconditional) }})
+    , current_context(&contexts.at(in))
 {
     // TODO: better allocators
     allocator = std::make_unique<naive_allocator>();
@@ -187,4 +189,41 @@ uint16_t compiler_state::stack_allocator::get_max_stack_usage() const
         }
     }
     return cur;
+}
+
+element_result compiler_state::push_context(const element::instruction* in, execution_type type)
+{
+    auto it = contexts.try_emplace(in, current_context, type).first;
+    if (it->second.rel_type != type)
+        return ELEMENT_ERROR_UNKNOWN;
+    current_context = &it->second;
+    return ELEMENT_OK;
+}
+
+element_result compiler_state::pop_context()
+{
+    if (!current_context || !current_context->parent)
+        return ELEMENT_ERROR_UNKNOWN;
+    current_context = current_context->parent;
+    return ELEMENT_OK;
+}
+
+element_result compiler_state::use_in_context(const element::instruction* in)
+{
+    for (size_t i = 0; i < allocator->count(in); ++i)
+    {
+        stack_allocation* a = allocator->get(in, i);
+        a->set_executed_in(current_context->type());
+        current_context->allocations.emplace(a);
+    }
+    return ELEMENT_OK;
+}
+
+element_result compiler_state::use(const element::instruction* current_in, size_t current_index, const element::instruction* alloc_in, size_t alloc_index)
+{
+    stack_allocation* alloc = allocator->get(alloc_in, alloc_index);
+    if (!alloc) return ELEMENT_ERROR_UNKNOWN;
+    current_context->allocations.emplace(alloc);
+
+    return allocator->use(current_in, current_index, alloc_in, alloc_index);
 }
