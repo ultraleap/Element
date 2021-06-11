@@ -95,12 +95,19 @@ enum
     LMNT_OP_INDEXRIS,
     // indexing: stackref, immediate, stackref
     LMNT_OP_INDEXRIR,
+    // branch: null, codelo, codehi
+    LMNT_OP_BRANCH,
+    // branch: stack, codelo, codehi
+    LMNT_OP_BRANCHZ,
+    LMNT_OP_BRANCHNZ,
+    LMNT_OP_BRANCHPOS,
+    LMNT_OP_BRANCHNEG,
+    LMNT_OP_BRANCHUN,
     // compare: stack, stack, null
     LMNT_OP_CMP,
     // compare: stack, null, null
     LMNT_OP_CMPZ,
     // branch: null, codelo, codehi
-    LMNT_OP_BRANCH,
     LMNT_OP_BRANCHCEQ,
     LMNT_OP_BRANCHCNE,
     LMNT_OP_BRANCHCLT,
@@ -108,12 +115,14 @@ enum
     LMNT_OP_BRANCHCGT,
     LMNT_OP_BRANCHCGE,
     LMNT_OP_BRANCHCUN,
-    // branch: stack, codelo, codehi
-    LMNT_OP_BRANCHZ,
-    LMNT_OP_BRANCHNZ,
-    LMNT_OP_BRANCHPOS,
-    LMNT_OP_BRANCHNEG,
-    LMNT_OP_BRANCHUN,
+    // conditional assign: immediate, immediate, stack
+    LMNT_OP_ASSIGNCEQ,
+    LMNT_OP_ASSIGNCNE,
+    LMNT_OP_ASSIGNCLT,
+    LMNT_OP_ASSIGNCLE,
+    LMNT_OP_ASSIGNCGT,
+    LMNT_OP_ASSIGNCGE,
+    LMNT_OP_ASSIGNCUN,
     // extern call: deflo, defhi, stack
     LMNT_OP_EXTCALL,
     // placeholder end operation

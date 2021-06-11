@@ -1076,13 +1076,13 @@ The flags stored are:
 
 
 ## `BRANCHCEQ`
-Branch to the target instruction if the last `CMP` instruction produced an equal-to result; the branch target is specified by its absolute index within the current function.
+Branch to the target instruction if the last `CMP` or `CMPZ` instruction produced an equal-to result; the branch target is specified by its absolute index within the current function.
 
 Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
-**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type       | Size       | Meaning                                   |
 | --: | :-------- | :--------- | :--------- | :---------------------------------------- |
@@ -1099,13 +1099,13 @@ Note that the branch target is permitted to be equal to the instruction count (i
 
 
 ## `BRANCHCNE`
-Branch to the target instruction if the last `CMP` instruction produced a not-equal result; the branch target is specified by its absolute index within the current function.
+Branch to the target instruction if the last `CMP` or `CMPZ` instruction produced a not-equal result; the branch target is specified by its absolute index within the current function.
 
 Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
-**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 **NaNs**: if one or both of the prior comparison's arguments are `NaN`, the branch will be taken (since `EQ` will not be set)
 
@@ -1124,13 +1124,13 @@ Note that the branch target is permitted to be equal to the instruction count (i
 
 
 ## `BRANCHCLT`
-Branch to the target instruction if the last `CMP` instruction produced a less-than result; the branch target is specified by its absolute index within the current function.
+Branch to the target instruction if the last `CMP` or `CMPZ` instruction produced a less-than result; the branch target is specified by its absolute index within the current function.
 
 Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
-**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type       | Size       | Meaning                                   |
 | --: | :-------- | :--------- | :--------- | :---------------------------------------- |
@@ -1147,13 +1147,13 @@ Note that the branch target is permitted to be equal to the instruction count (i
 
 
 ## `BRANCHCLE`
-Branch to the target instruction if the last `CMP` instruction produced a less-than or equal-to result; the branch target is specified by its absolute index within the current function.
+Branch to the target instruction if the last `CMP` or `CMPZ` instruction produced a less-than or equal-to result; the branch target is specified by its absolute index within the current function.
 
 Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
-**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type       | Size       | Meaning                                   |
 | --: | :-------- | :--------- | :--------- | :---------------------------------------- |
@@ -1170,13 +1170,13 @@ Note that the branch target is permitted to be equal to the instruction count (i
 
 
 ## `BRANCHCGT`
-Branch to the target instruction if the last `CMP` instruction produced a greater-than result; the branch target is specified by its absolute index within the current function.
+Branch to the target instruction if the last `CMP` or `CMPZ` instruction produced a greater-than result; the branch target is specified by its absolute index within the current function.
 
 Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
-**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type       | Size       | Meaning                                   |
 | --: | :-------- | :--------- | :--------- | :---------------------------------------- |
@@ -1193,13 +1193,13 @@ Note that the branch target is permitted to be equal to the instruction count (i
 
 
 ## `BRANCHCGE`
-Branch to the target instruction if the last `CMP` instruction produced a greater-than or equal-to result; the branch target is specified by its absolute index within the current function.
+Branch to the target instruction if the last `CMP` or `CMPZ` instruction produced a greater-than or equal-to result; the branch target is specified by its absolute index within the current function.
 
 Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
-**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type       | Size       | Meaning                                   |
 | --: | :-------- | :--------- | :--------- | :---------------------------------------- |
@@ -1216,13 +1216,13 @@ Note that the branch target is permitted to be equal to the instruction count (i
 
 
 ## `BRANCHCUN`
-Branch to the target instruction if the last `CMP` instruction produced an unordered result; the branch target is specified by its absolute index within the current function.
+Branch to the target instruction if the last `CMP` or `CMPZ` instruction produced an unordered result; the branch target is specified by its absolute index within the current function.
 
 Note that the branch target is permitted to be equal to the instruction count (i.e. "one past the end"); this is effectively equivalent to a `RETURN`.
 
 **Halting**: if a branch's target is not later than the branch instruction in the function, halting cannot be guaranteed and execution time cannot be easily predicted.
 
-**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a `CMP` instruction, or if the only intervening instructions are other `BRANCHCxx` instructions.
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type       | Size       | Meaning                                   |
 | --: | :-------- | :--------- | :--------- | :---------------------------------------- |
@@ -1235,6 +1235,139 @@ Note that the branch target is permitted to be equal to the instruction count (i
     if (target > len(instructions)) error(LMNT_ERROR_ACCESS_VIOLATION)
     if (flags.UN)
         goto instructions[target]
+```
+
+
+## `ASSIGNCEQ`
+Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced an equal result.
+
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
+
+| Arg | Direction | Type      | Size   | Meaning                                                |
+| --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
+| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
+| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 3   | Output    | Stack Loc | Scalar | Stack location to assign the result to                 |
+
+```c
+    if (flags.EQ)
+        stack[arg3] = signed_value_cast(arg1)
+    else
+        stack[arg3] = signed_value_cast(arg2)
+```
+
+
+## `ASSIGNCNE`
+Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a not-equal result.
+
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
+
+| Arg | Direction | Type      | Size   | Meaning                                                |
+| --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
+| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
+| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 3   | Output    | Stack Loc | Scalar | Stack location to assign the result to                 |
+
+```c
+    if (!flags.EQ)
+        stack[arg3] = signed_value_cast(arg1)
+    else
+        stack[arg3] = signed_value_cast(arg2)
+```
+
+
+## `ASSIGNCLT`
+Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a less-than result.
+
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
+
+| Arg | Direction | Type      | Size   | Meaning                                                |
+| --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
+| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
+| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 3   | Output    | Stack Loc | Scalar | Stack location to assign the result to                 |
+
+```c
+    if (flags.LT)
+        stack[arg3] = signed_value_cast(arg1)
+    else
+        stack[arg3] = signed_value_cast(arg2)
+```
+
+
+## `ASSIGNCLE`
+Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a less-than or equal result.
+
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
+
+| Arg | Direction | Type      | Size   | Meaning                                                |
+| --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
+| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
+| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 3   | Output    | Stack Loc | Scalar | Stack location to assign the result to                 |
+
+```c
+    if (flags.LT || flags.EQ)
+        stack[arg3] = signed_value_cast(arg1)
+    else
+        stack[arg3] = signed_value_cast(arg2)
+```
+
+
+## `ASSIGNCGT`
+Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a greater-than result.
+
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
+
+| Arg | Direction | Type      | Size   | Meaning                                                |
+| --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
+| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
+| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 3   | Input     | Stack Loc | Scalar | Stack location to assign the result to                 |
+
+```c
+    if (flags.GT)
+        stack[arg3] = signed_value_cast(arg1)
+    else
+        stack[arg3] = signed_value_cast(arg2)
+```
+
+
+## `ASSIGNCGE`
+Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a greater-than or equal result.
+
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
+
+| Arg | Direction | Type      | Size   | Meaning                                                |
+| --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
+| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
+| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 3   | Input     | Stack Loc | Scalar | Stack location to assign the result to                 |
+
+```c
+    if (flags.GT || flags.EQ)
+        stack[arg3] = signed_value_cast(arg1)
+    else
+        stack[arg3] = signed_value_cast(arg2)
+```
+
+
+## `ASSIGNCUN`
+Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced an unordered result.
+
+**Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
+
+| Arg | Direction | Type      | Size   | Meaning                                                |
+| --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
+| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
+| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 3   | Input     | Stack Loc | Scalar | Stack location to assign the result to                 |
+
+```c
+    if (flags.UN)
+        stack[arg3] = signed_value_cast(arg1)
+    else
+        stack[arg3] = signed_value_cast(arg2)
 ```
 
 

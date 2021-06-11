@@ -30,6 +30,14 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_branchpos(lmnt_ictx* ctx, lmnt_offset arg1, l
 LMNT_ATTR_FAST lmnt_result lmnt_op_branchneg(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 LMNT_ATTR_FAST lmnt_result lmnt_op_branchun(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
 
+LMNT_ATTR_FAST lmnt_result lmnt_op_assignceq(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_assigncne(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_assignclt(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_assigncle(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_assigncgt(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_assigncge(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+LMNT_ATTR_FAST lmnt_result lmnt_op_assigncun(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3);
+
 
 #ifdef __cplusplus
 }
