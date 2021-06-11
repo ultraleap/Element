@@ -203,3 +203,5 @@ MAKE_ERROR_MESSAGE_INFO(
     "the call to '{}' caused an internal compiler error.",
     std::string
 );
+
+#undef MAKE_ERROR_MESSAGE_INFO

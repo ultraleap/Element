@@ -200,7 +200,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_identifier_reserved,
+    element::log_error_message_code::parse_identifier_reserved,
     element_result::ELEMENT_ERROR_RESERVED_IDENTIFIER,
     element_stage::ELEMENT_STAGE_PARSER,
     "identifier '{}' is reserved",
@@ -208,7 +208,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_typename_not_identifier,
+    element::log_error_message_code::parse_typename_not_identifier,
     element_result::ELEMENT_ERROR_INVALID_TYPENAME,
     element_stage::ELEMENT_STAGE_PARSER,
     "found '{}' when a type was expected."
@@ -217,7 +217,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_port_failed,
+    element::log_error_message_code::parse_port_failed,
     element_result::ELEMENT_ERROR_INVALID_PORT,
     element_stage::ELEMENT_STAGE_PARSER,
     "found '{}' when a port was expected."
@@ -226,7 +226,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_exprlist_empty,
+    element::log_error_message_code::parse_exprlist_empty,
     element_result::ELEMENT_ERROR_MISSING_CONTENTS_FOR_CALL,
     element_stage::ELEMENT_STAGE_PARSER,
     "expected to find something in the contents of the call to '{}', but nothing is contained within the parenthesis."
@@ -235,7 +235,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_exprlist_missing_closing_parenthesis,
+    element::log_error_message_code::parse_exprlist_missing_closing_parenthesis,
     element_result::ELEMENT_ERROR_MISSING_PARENTHESIS_FOR_CALL,
     element_stage::ELEMENT_STAGE_PARSER,
     "expected to find a ')' at the end of the call to '{}', but found '{}' instead.",
@@ -243,7 +243,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_call_invalid_expression,
+    element::log_error_message_code::parse_call_invalid_expression,
     element_result::ELEMENT_ERROR_INVALID_CONTENTS_FOR_CALL,
     element_stage::ELEMENT_STAGE_PARSER,
     "expected to find an identifier or number in the contents of the call to '{}', but found '{}' instead.",
@@ -251,7 +251,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_expression_failed,
+    element::log_error_message_code::parse_expression_failed,
     element_result::ELEMENT_ERROR_INVALID_EXPRESSION,
     element_stage::ELEMENT_STAGE_PARSER,
     "failed to parse the expression '{}'."
@@ -260,7 +260,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_declaration_invalid_identifier,
+    element::log_error_message_code::parse_declaration_invalid_identifier,
     element_result::ELEMENT_ERROR_INVALID_IDENTIFIER,
     element_stage::ELEMENT_STAGE_PARSER,
     "failed to parse the expression '{}'."
@@ -269,7 +269,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_declaration_missing_portlist_closing_parenthesis,
+    element::log_error_message_code::parse_declaration_missing_portlist_closing_parenthesis,
     element_result::ELEMENT_ERROR_MISSING_CLOSING_PARENTHESIS_FOR_PORTLIST,
     element_stage::ELEMENT_STAGE_PARSER,
     "found '{}' at the end of the declaration for '{}' with a portlist. expected ')'",
@@ -277,7 +277,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_declaration_invalid_struct_return_type,
+    element::log_error_message_code::parse_declaration_invalid_struct_return_type,
     element_result::ELEMENT_ERROR_STRUCT_CANNOT_HAVE_RETURN_TYPE,
     element_stage::ELEMENT_STAGE_PARSER,
     "the struct '{}' has a return type declared."
@@ -286,7 +286,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_body_missing_semicolon,
+    element::log_error_message_code::parse_body_missing_semicolon,
     element_result::ELEMENT_ERROR_MISSING_SEMICOLON,
     element_stage::ELEMENT_STAGE_PARSER,
     "expected to find a ';' at the end of the expression for '{}', but found '{}' instead.",
@@ -294,7 +294,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_body_missing_body_for_function,
+    element::log_error_message_code::parse_body_missing_body_for_function,
     element_result::ELEMENT_ERROR_MISSING_FUNCTION_BODY,
     element_stage::ELEMENT_STAGE_PARSER,
     "expected to find a body for the non-intrinsic function '{}' but found '{}' instead.",
@@ -302,7 +302,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_body_missing_body,
+    element::log_error_message_code::parse_body_missing_body,
     element_result::ELEMENT_ERROR_MISSING_BODY,
     element_stage::ELEMENT_STAGE_PARSER,
     "expected to find a body for '{}' but found '{}' instead.",
@@ -310,7 +310,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_function_missing_body,
+    element::log_error_message_code::parse_function_missing_body,
     element_result::ELEMENT_ERROR_MISSING_FUNCTION_BODY,
     element_stage::ELEMENT_STAGE_PARSER,
     "non-intrinsic function '{}' is missing a body.",
@@ -318,7 +318,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_struct_missing_identifier,
+    element::log_error_message_code::parse_struct_missing_identifier,
     element_result::ELEMENT_ERROR_INVALID_IDENTIFIER,
     element_stage::ELEMENT_STAGE_PARSER,
     "expected to find an identifier for a struct, but found '{}' instead.",
@@ -326,7 +326,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_struct_nonintrinsic_missing_portlist,
+    element::log_error_message_code::parse_struct_nonintrinsic_missing_portlist,
     element_result::ELEMENT_ERROR_MISSING_PORTS,
     element_stage::ELEMENT_STAGE_PARSER,
     "portlist for struct '{}' is required as it is not intrinsic.",
@@ -334,7 +334,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_struct_invalid_body,
+    element::log_error_message_code::parse_struct_invalid_body,
     element_result::ELEMENT_ERROR_STRUCT_INVALID_BODY,
     element_stage::ELEMENT_STAGE_PARSER,
     "expected to find '{{' or '=' before the body of the struct '{}' but found '{}' instead.",
@@ -342,7 +342,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_constraint_invalid_identifier,
+    element::log_error_message_code::parse_constraint_invalid_identifier,
     element_result::ELEMENT_ERROR_INVALID_IDENTIFIER,
     element_stage::ELEMENT_STAGE_PARSER,
     "found '{}' when parsing a constraint, expected a valid identifier.",
@@ -350,7 +350,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_constraint_nonintrinsic_missing_portlist,
+    element::log_error_message_code::parse_constraint_nonintrinsic_missing_portlist,
     element_result::ELEMENT_ERROR_MISSING_PORTS,
     element_stage::ELEMENT_STAGE_PARSER,
     "portlist for constraint '{}' is required as it is not intrinsic.",
@@ -358,7 +358,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_constraint_has_body,
+    element::log_error_message_code::parse_constraint_has_body,
     element_result::ELEMENT_ERROR_CONSTRAINT_HAS_BODY,
     element_stage::ELEMENT_STAGE_PARSER,
     "a body was found for constraint '{}', but constraints cannot have bodies.",
@@ -366,7 +366,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::parse_constraint_invalid_body,
+    element::log_error_message_code::parse_constraint_invalid_body,
     element_result::ELEMENT_ERROR_CONSTRAINT_INVALID_BODY,
     element_stage::ELEMENT_STAGE_PARSER,
     "expected to find '{{' or '=' before the body of the constraint '{}' but found '{}' instead.",
@@ -374,7 +374,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::intrinsic_not_implemented,
+    element::log_error_message_code::intrinsic_not_implemented,
     element_result::ELEMENT_ERROR_INTRINSIC_NOT_IMPLEMENTED,
     element_stage::ELEMENT_STAGE_PARSER,
     "intrinsic {} not implemented.",
@@ -382,7 +382,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::invalid_type_annotation,
+    element::log_error_message_code::invalid_type_annotation,
     element_result::ELEMENT_ERROR_TYPE_ERROR,
     element_stage::ELEMENT_STAGE_PARSER,
     "type annotation was invalid."
@@ -391,7 +391,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::intrinsic_type_mismatch,
+    element::log_error_message_code::intrinsic_type_mismatch,
     element_result::ELEMENT_ERROR_TYPE_ERROR,
     element_stage::ELEMENT_STAGE_PARSER,
     "intrinsic '{}' type mismatch",
@@ -400,7 +400,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::invalid_grammar_in_portlist,
+    element::log_error_message_code::invalid_grammar_in_portlist,
     element_result::ELEMENT_ERROR_UNKNOWN,
     element_stage::ELEMENT_STAGE_PARSER,
     "portlist for '{}' contains invalid grammar",
@@ -409,7 +409,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::failed_to_build_declaration,
+    element::log_error_message_code::failed_to_build_declaration,
     element_result::ELEMENT_ERROR_UNKNOWN,
     element_stage::ELEMENT_STAGE_PARSER,
     "failed to build declaration '{}'",
@@ -418,7 +418,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::failed_to_build_root,
+    element::log_error_message_code::failed_to_build_root,
     element_result::ELEMENT_ERROR_UNKNOWN,
     element_stage::ELEMENT_STAGE_PARSER,
     "failed to build global scope for '{}'",
@@ -427,7 +427,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::internal_compiler_error,
+    element::log_error_message_code::internal_compiler_error,
     element_result::ELEMENT_ERROR_UNKNOWN,
     element_stage::ELEMENT_STAGE_PARSER,
     "internal compiler error",
@@ -436,7 +436,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::missing_declaration_scope,
+    element::log_error_message_code::missing_declaration_scope,
     element_result::ELEMENT_ERROR_INVALID_EXPRESSION,
     element_stage::ELEMENT_STAGE_PARSER,
     "'{}' must have a scope",
@@ -445,7 +445,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::expression_chain_cannot_be_empty,
+    element::log_error_message_code::expression_chain_cannot_be_empty,
     element_result::ELEMENT_ERROR_INVALID_EXPRESSION,
     element_stage::ELEMENT_STAGE_PARSER,
     "the expression chain belonging to function '{}' cannot be empty",
@@ -454,7 +454,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::invalid_function_declaration,
+    element::log_error_message_code::invalid_function_declaration,
     element_result::ELEMENT_ERROR_UNKNOWN,
     element_stage::ELEMENT_STAGE_PARSER,
     "invalid function declaration '{}'",
@@ -463,7 +463,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::invalid_call_expression_placement,
+    element::log_error_message_code::invalid_call_expression_placement,
     element_result::ELEMENT_ERROR_UNKNOWN,
     element_stage::ELEMENT_STAGE_PARSER,
     "call expression cannot appear as the first item in an expression chain",
@@ -472,7 +472,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::invalid_literal_expression_placement,
+    element::log_error_message_code::invalid_literal_expression_placement,
     element_result::ELEMENT_ERROR_UNKNOWN,
     element_stage::ELEMENT_STAGE_PARSER,
     "literal expression cannot appear as anything other than the first item in an expression chain",
@@ -481,7 +481,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 
 //todo: element_result
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::empty_expression,
+    element::log_error_message_code::empty_expression,
     element_result::ELEMENT_ERROR_UNKNOWN,
     element_stage::ELEMENT_STAGE_PARSER,
     "no expression found",
@@ -489,7 +489,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::function_missing_return,
+    element::log_error_message_code::function_missing_return,
     element_result::ELEMENT_ERROR_MISSING_FUNCTION_RETURN,
     element_stage::ELEMENT_STAGE_PARSER,
     "non-intrinsic scope-bodied function '{}' is missing a return declaration.",
@@ -497,7 +497,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::multiple_definition_with_parameter,
+    element::log_error_message_code::multiple_definition_with_parameter,
     element_result::ELEMENT_ERROR_MULTIPLE_DEFINITIONS,
     element_stage::ELEMENT_STAGE_PARSER,
     "declaration '{}' within function '{}' has the same name as a parameter.",
@@ -505,7 +505,7 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::default_argument_not_at_end,
+    element::log_error_message_code::default_argument_not_at_end,
     element_result::ELEMENT_ERROR_DEFAULT_ARGUMENT_NOT_AT_END,
     element_stage::ELEMENT_STAGE_PARSER,
     "argument '{}' for function '{}' has a default, but parameters with defaults must be defined at the end of the portlist.",
@@ -513,9 +513,11 @@ MAKE_LOG_ERROR_MESSAGE_INFO(
 );
 
 MAKE_LOG_ERROR_MESSAGE_INFO(
-   element::log_error_message_code::struct_portlist_cannot_contain_discards,
+    element::log_error_message_code::struct_portlist_cannot_contain_discards,
     element_result::ELEMENT_ERROR_STRUCT_PORTLIST_CONTAINS_DISCARDS,
     element_stage::ELEMENT_STAGE_PARSER,
     "the port for the struct declaration '{}' contains a discarded('_') parameter, which isn't allowed here",
     std::string
 );
+
+#undef MAKE_LOG_ERROR_MESSAGE_INFO
