@@ -545,18 +545,15 @@ static element_result compile_binary(
             return ELEMENT_OK;
 
         //comparison
-        case element::instruction_binary::op::eq:  op = LMNT_OP_BRANCHCEQ; goto cmp_operation;
-        case element::instruction_binary::op::neq: op = LMNT_OP_BRANCHCNE; goto cmp_operation;
-        case element::instruction_binary::op::lt:  op = LMNT_OP_BRANCHCLT; goto cmp_operation;
-        case element::instruction_binary::op::leq: op = LMNT_OP_BRANCHCLE; goto cmp_operation;
-        case element::instruction_binary::op::gt:  op = LMNT_OP_BRANCHCGT; goto cmp_operation;
-        case element::instruction_binary::op::geq: op = LMNT_OP_BRANCHCGE; goto cmp_operation;
+        case element::instruction_binary::op::eq:  op = LMNT_OP_ASSIGNCEQ; goto cmp_operation;
+        case element::instruction_binary::op::neq: op = LMNT_OP_ASSIGNCNE; goto cmp_operation;
+        case element::instruction_binary::op::lt:  op = LMNT_OP_ASSIGNCLT; goto cmp_operation;
+        case element::instruction_binary::op::leq: op = LMNT_OP_ASSIGNCLE; goto cmp_operation;
+        case element::instruction_binary::op::gt:  op = LMNT_OP_ASSIGNCGT; goto cmp_operation;
+        case element::instruction_binary::op::geq: op = LMNT_OP_ASSIGNCGE; goto cmp_operation;
     cmp_operation:
-            output.emplace_back(lmnt_instruction{LMNT_OP_CMP, arg1_stack_idx, arg2_stack_idx, 0});                  // + 0
-            output.emplace_back(lmnt_instruction{op, 0, U16_LO(start_idx + 4), U16_HI(start_idx + 4)});             // + 1
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNIIS, 0, 0, stack_idx});                              // + 2
-            output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, U16_LO(start_idx + 5), U16_HI(start_idx + 5)}); // + 3
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNIIS, 1, 0, stack_idx});                              // + 4
+            output.emplace_back(lmnt_instruction{LMNT_OP_CMP, arg1_stack_idx, arg2_stack_idx, 0});
+            output.emplace_back(lmnt_instruction{op, 1, 0, stack_idx});
             return ELEMENT_OK;
 
         default:
