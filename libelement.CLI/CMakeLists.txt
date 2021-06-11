@@ -40,7 +40,7 @@ add_subdirectory(${ELEMENT_LIB_DIR} "libelement")
 add_executable(${CMAKE_PROJECT_NAME} ${element_cli_sources})
 
 set_target_properties(element_cli PROPERTIES
-	VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
+	VS_DEBUGGER_WORKING_DIRECTORY       "$<TARGET_FILE_DIR:element_cli>")
 
 add_custom_command(
     TARGET element_cli POST_BUILD 
