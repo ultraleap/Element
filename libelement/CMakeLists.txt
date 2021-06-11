@@ -275,7 +275,7 @@ if (UNIX AND NOT APPLE)
 endif ()
 
 # TODO: this, nicer
-add_subdirectory("${CMAKE_SOURCE_DIR}/../LMNT" "${CMAKE_BINARY_DIR}/lmnt" EXCLUDE_FROM_ALL)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../LMNT" "${CMAKE_CURRENT_BINARY_DIR}/lmnt" EXCLUDE_FROM_ALL)
 target_link_libraries(element PRIVATE lmnt)
 
 ## A C project to ensure our C API is correct
