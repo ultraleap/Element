@@ -129,7 +129,7 @@ enum
     LMNT_OP_END,
 };
 
-#define LMNT_IS_BRANCH_OP(opcode) ((opcode) >= LMNT_OP_BRANCH && (opcode) <= LMNT_OP_BRANCHUN)
+#define LMNT_IS_BRANCH_OP(op) (((op) >= LMNT_OP_BRANCH && (op) <= LMNT_OP_BRANCHUN) || ((op) >= LMNT_OP_BRANCHCEQ && ((op) <= LMNT_OP_BRANCHCUN)))
 
 
 typedef enum
