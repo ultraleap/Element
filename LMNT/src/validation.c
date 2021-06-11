@@ -99,7 +99,12 @@ static inline lmnt_validation_result validate_operand_stack_write(const lmnt_arc
     return (arg + count <= constants_count + rw_stack_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
-static inline lmnt_validation_result validate_operand_immediate(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, size_t constants_count, size_t rw_stack_count)
+static inline lmnt_validation_result validate_operand_immediate32(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, size_t constants_count, size_t rw_stack_count)
+{
+    return LMNT_VALIDATION_OK;
+}
+
+static inline lmnt_validation_result validate_operand_immediate16(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg, size_t constants_count, size_t rw_stack_count)
 {
     return LMNT_VALIDATION_OK;
 }
@@ -165,12 +170,12 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     // immlo, immhi, stack
     case LMNT_OP_ASSIGNIIS:
     case LMNT_OP_ASSIGNIBS:
-        LMNT_V_OK_OR_RETURN(validate_operand_immediate(archive, def, arg1, arg2, constants_count, rw_stack_count));
+        LMNT_V_OK_OR_RETURN(validate_operand_immediate32(archive, def, arg1, arg2, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
     case LMNT_OP_ASSIGNIIV:
     case LMNT_OP_ASSIGNIBV:
-        LMNT_V_OK_OR_RETURN(validate_operand_immediate(archive, def, arg1, arg2, constants_count, rw_stack_count));
+        LMNT_V_OK_OR_RETURN(validate_operand_immediate32(archive, def, arg1, arg2, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 4, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
     case LMNT_OP_DLOADIIS:
@@ -306,6 +311,17 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_BRANCHCGE:
     case LMNT_OP_BRANCHCUN:
         return validate_operand_codeptr(archive, def, arg2, arg3, constants_count, rw_stack_count);
+    case LMNT_OP_ASSIGNCEQ:
+    case LMNT_OP_ASSIGNCNE:
+    case LMNT_OP_ASSIGNCLT:
+    case LMNT_OP_ASSIGNCLE:
+    case LMNT_OP_ASSIGNCGT:
+    case LMNT_OP_ASSIGNCGE:
+    case LMNT_OP_ASSIGNCUN:
+        LMNT_V_OK_OR_RETURN(validate_operand_immediate16(archive, def, arg1, constants_count, rw_stack_count));
+        LMNT_V_OK_OR_RETURN(validate_operand_immediate16(archive, def, arg2, constants_count, rw_stack_count));
+        LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
+        return LMNT_VALIDATION_OK;
     // extern call: deflo, defhi, imm
     case LMNT_OP_EXTCALL:
         return validate_operand_defptr(archive, def, arg1, arg2, arg3, constants_count, rw_stack_count, defstack, defstack_count);

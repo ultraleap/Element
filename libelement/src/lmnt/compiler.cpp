@@ -545,18 +545,15 @@ static element_result compile_binary(
             return ELEMENT_OK;
 
         //comparison
-        case element::instruction_binary::op::eq:  op = LMNT_OP_BRANCHCEQ; goto cmp_operation;
-        case element::instruction_binary::op::neq: op = LMNT_OP_BRANCHCNE; goto cmp_operation;
-        case element::instruction_binary::op::lt:  op = LMNT_OP_BRANCHCLT; goto cmp_operation;
-        case element::instruction_binary::op::leq: op = LMNT_OP_BRANCHCLE; goto cmp_operation;
-        case element::instruction_binary::op::gt:  op = LMNT_OP_BRANCHCGT; goto cmp_operation;
-        case element::instruction_binary::op::geq: op = LMNT_OP_BRANCHCGE; goto cmp_operation;
+        case element::instruction_binary::op::eq:  op = LMNT_OP_ASSIGNCEQ; goto cmp_operation;
+        case element::instruction_binary::op::neq: op = LMNT_OP_ASSIGNCNE; goto cmp_operation;
+        case element::instruction_binary::op::lt:  op = LMNT_OP_ASSIGNCLT; goto cmp_operation;
+        case element::instruction_binary::op::leq: op = LMNT_OP_ASSIGNCLE; goto cmp_operation;
+        case element::instruction_binary::op::gt:  op = LMNT_OP_ASSIGNCGT; goto cmp_operation;
+        case element::instruction_binary::op::geq: op = LMNT_OP_ASSIGNCGE; goto cmp_operation;
     cmp_operation:
-            output.emplace_back(lmnt_instruction{LMNT_OP_CMP, arg1_stack_idx, arg2_stack_idx, 0});                  // + 0
-            output.emplace_back(lmnt_instruction{op, 0, U16_LO(start_idx + 4), U16_HI(start_idx + 4)});             // + 1
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNIIS, 0, 0, stack_idx});                              // + 2
-            output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, U16_LO(start_idx + 5), U16_HI(start_idx + 5)}); // + 3
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNIIS, 1, 0, stack_idx});                              // + 4
+            output.emplace_back(lmnt_instruction{LMNT_OP_CMP, arg1_stack_idx, arg2_stack_idx, 0});
+            output.emplace_back(lmnt_instruction{op, 1, 0, stack_idx});
             return ELEMENT_OK;
 
         default:
@@ -917,7 +914,6 @@ static element_result create_virtual_select(
     if (es.options_count() == 0)
         return ELEMENT_ERROR_UNKNOWN;
 
-    ELEMENT_OK_OR_RETURN(state.add_constant(0));
     ELEMENT_OK_OR_RETURN(state.add_constant(1));
     ELEMENT_OK_OR_RETURN(state.add_constant(element_value(es.options_count() - 1)));
 
@@ -977,8 +973,7 @@ static element_result compile_select(
     std::vector<lmnt_instruction>& output)
 {
     const size_t opts_size = es.options_count();
-    uint16_t zero_idx, one_idx, last_valid_idx;
-    ELEMENT_OK_OR_RETURN(state.find_constant(0, zero_idx));
+    uint16_t one_idx, last_valid_idx;
     ELEMENT_OK_OR_RETURN(state.find_constant(1, one_idx));
     ELEMENT_OK_OR_RETURN(state.find_constant(element_value(opts_size - 1), last_valid_idx));
 
@@ -991,18 +986,18 @@ static element_result compile_select(
     uint16_t selector_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.selector().get(), selector_stack_idx));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, es.selector().get(), output));
-    // clamp in range and ensure it's an integer
+    // clamp to the maximum valid index and truncate
+    // we just check <= 0 for each condition so we don't care if it's already < 0
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
     // we also can't use the result spaces since there could already be calculated results in there
-    output.emplace_back(lmnt_instruction{LMNT_OP_MAXSS,  selector_stack_idx, zero_idx, selector_scratch_idx});
-    output.emplace_back(lmnt_instruction{LMNT_OP_MINSS,  selector_scratch_idx, last_valid_idx, selector_scratch_idx});
+    output.emplace_back(lmnt_instruction{LMNT_OP_MINSS,  selector_stack_idx, last_valid_idx, selector_scratch_idx});
     output.emplace_back(lmnt_instruction{LMNT_OP_TRUNCS, selector_scratch_idx, 0, selector_scratch_idx});
 
     const size_t branches_start_idx = output.size();
     for (size_t i = 0; i < opts_size; ++i)
     {
         output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, selector_scratch_idx, 0, 0});
-        output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCEQ, 0, 0, 0}); // target filled in later
+        output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in later
         output.emplace_back(lmnt_instruction{LMNT_OP_SUBSS, selector_scratch_idx, one_idx, selector_scratch_idx});
     }
 
