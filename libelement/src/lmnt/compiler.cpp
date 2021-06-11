@@ -917,7 +917,6 @@ static element_result create_virtual_select(
     if (es.options_count() == 0)
         return ELEMENT_ERROR_UNKNOWN;
 
-    ELEMENT_OK_OR_RETURN(state.add_constant(0));
     ELEMENT_OK_OR_RETURN(state.add_constant(1));
     ELEMENT_OK_OR_RETURN(state.add_constant(element_value(es.options_count() - 1)));
 
@@ -977,8 +976,7 @@ static element_result compile_select(
     std::vector<lmnt_instruction>& output)
 {
     const size_t opts_size = es.options_count();
-    uint16_t zero_idx, one_idx, last_valid_idx;
-    ELEMENT_OK_OR_RETURN(state.find_constant(0, zero_idx));
+    uint16_t one_idx, last_valid_idx;
     ELEMENT_OK_OR_RETURN(state.find_constant(1, one_idx));
     ELEMENT_OK_OR_RETURN(state.find_constant(element_value(opts_size - 1), last_valid_idx));
 
@@ -991,18 +989,18 @@ static element_result compile_select(
     uint16_t selector_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.selector().get(), selector_stack_idx));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, es.selector().get(), output));
-    // clamp in range and ensure it's an integer
+    // clamp to the maximum valid index and truncate
+    // we just check <= 0 for each condition so we don't care if it's already < 0
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
     // we also can't use the result spaces since there could already be calculated results in there
-    output.emplace_back(lmnt_instruction{LMNT_OP_MAXSS,  selector_stack_idx, zero_idx, selector_scratch_idx});
-    output.emplace_back(lmnt_instruction{LMNT_OP_MINSS,  selector_scratch_idx, last_valid_idx, selector_scratch_idx});
+    output.emplace_back(lmnt_instruction{LMNT_OP_MINSS,  selector_stack_idx, last_valid_idx, selector_scratch_idx});
     output.emplace_back(lmnt_instruction{LMNT_OP_TRUNCS, selector_scratch_idx, 0, selector_scratch_idx});
 
     const size_t branches_start_idx = output.size();
     for (size_t i = 0; i < opts_size; ++i)
     {
         output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, selector_scratch_idx, 0, 0});
-        output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCEQ, 0, 0, 0}); // target filled in later
+        output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in later
         output.emplace_back(lmnt_instruction{LMNT_OP_SUBSS, selector_scratch_idx, one_idx, selector_scratch_idx});
     }
 
