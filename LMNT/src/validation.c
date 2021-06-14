@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #define DEFSTACK_LIMIT 16
 static lmnt_validation_result check_defstack(lmnt_offset* defstack, size_t defstack_count, lmnt_offset next)
@@ -340,9 +341,28 @@ static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, l
     if (code_index + chdr->instructions_count * sizeof(lmnt_instruction) > hdr->code_length)
         return LMNT_VERROR_CODE_SIZE;
 
+    // validate instructions
     const lmnt_instruction* instrs = (const lmnt_instruction*)(get_code_segment(archive) + code_index);
     for (size_t i = 0; i < chdr->instructions_count; ++i)
         LMNT_V_OK_OR_RETURN(validate_instruction(archive, def, instrs[i].opcode, instrs[i].arg1, instrs[i].arg2, instrs[i].arg3, constants_count, rw_stack_count, defstack, defstack_count));
+
+    // check for backbranches
+    bool has_backbranches = false;
+    for (lmnt_loffset i = 0; i < chdr->instructions_count; ++i)
+    {
+        if (LMNT_IS_BRANCH_OP(instrs[i].opcode))
+        {
+            const lmnt_loffset target = LMNT_COMBINE_OFFSET(instrs[i].arg2, instrs[i].arg3);
+            if (target == i)
+                return LMNT_VERROR_DEF_CYCLIC;
+            else if (target < i)
+                has_backbranches = true;
+        }
+    }
+    const bool def_backbranches = (def->flags & LMNT_DEFFLAG_HAS_BACKBRANCHES) != 0;
+    if (has_backbranches != def_backbranches)
+        return LMNT_VERROR_DEF_FLAGS;
+
     return sizeof(lmnt_code) + (chdr->instructions_count * sizeof(lmnt_instruction));
 }
 
