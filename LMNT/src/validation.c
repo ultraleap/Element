@@ -75,7 +75,7 @@ static int32_t validate_def_inner(const lmnt_archive* archive, lmnt_offset def_i
 
     // If interface/extern, check we have zero locals
     const lmnt_offset computed_stack_count = dhdr->args_count + dhdr->rvals_count;
-    if ((dhdr->flags | (LMNT_DEFFLAG_EXTERN & LMNT_DEFFLAG_INTERFACE)) != 0 && dhdr->stack_count_unaligned != computed_stack_count)
+    if ((dhdr->flags & (LMNT_DEFFLAG_EXTERN | LMNT_DEFFLAG_INTERFACE)) != 0 && dhdr->stack_count_unaligned != computed_stack_count)
         return LMNT_VERROR_DEF_HEADER;
     return sizeof(lmnt_def);
 }
