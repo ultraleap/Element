@@ -1,6 +1,7 @@
 include(FetchCUnit)
 
 set(test_headers
+    "test_archive.h"
     "test_bounds.h"
     "test_branch.h"
     "test_fncall.h"
