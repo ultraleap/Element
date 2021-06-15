@@ -16,6 +16,7 @@
 #define TEST_NAME_PREFIX ""
 #define TEST_NAME_SUFFIX ""
 #define TEST_LOAD_ARCHIVE(ctx, name, a, fndata)
+#define TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, name, a, fndata, code, vcode)
 #define TEST_UNLOAD_ARCHIVE(ctx, a, fndata)
 #define TEST_EXECUTE(ctx, fndata, rvals, rvals_count) (-1)
 
@@ -76,7 +77,7 @@ static void delete_interpreter(lmnt_ictx* ictx)
     free(ictx);
 }
 
-static archive create_archive_array(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t data_count, uint32_t consts_count, ...)
+static archive v_create_archive_array(const char* def_name, uint16_t def_flags, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t data_count, uint32_t consts_count, va_list args)
 {
     const size_t name_len = strlen(def_name);
     const size_t name_len_padded = LMNT_ROUND_UP(0x02 + name_len + 1, 4) - 2;
@@ -119,7 +120,7 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
 
     const char def[] = {
         0x00, 0x00, // defs[0].name
-        0x00, 0x00, // defs[0].flags
+        def_flags & 0xFF, (def_flags >> 8) & 0xFF, // defs[0].flags
         0x00, 0x00, 0x00, 0x00, // defs[0].code
         stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_unaligned
         stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_aligned
@@ -132,8 +133,6 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
     memcpy(buf + idx, (const char*)(&instr_count), sizeof(uint32_t));
     idx += sizeof(uint32_t);
 
-    va_list args;
-    va_start(args, consts_count);
     for (size_t i = 0; i < instr_count; ++i) {
         for (size_t j = 0; j < 8; ++j) {
             buf[idx++] = va_arg(args, int); // actually char, but va_arg requires int
@@ -164,6 +163,28 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
     assert(idx == total_size);
 
     archive a = {buf, total_size};
+    return a;
+}
+
+static archive create_archive_array(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t data_count, uint32_t consts_count, ...)
+{
+    va_list args;
+
+    va_start(args, consts_count);
+    archive a = v_create_archive_array(def_name, LMNT_DEFFLAG_NONE, args_count, rvals_count, stack_count, instr_count, data_count, consts_count, args);
+    va_end(args);
+
+    return a;
+}
+
+static archive create_archive_array_with_flags(const char* def_name, uint16_t def_flags, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t data_count, uint32_t consts_count, ...)
+{
+    va_list args;
+
+    va_start(args, consts_count);
+    archive a = v_create_archive_array(def_name, def_flags, args_count, rvals_count, stack_count, instr_count, data_count, consts_count, args);
+    va_end(args);
+
     return a;
 }
 

@@ -1,5 +1,6 @@
 #include "testsetup_jit_native.h"
 
+#include "test_archive.h"
 #include "test_maths_scalar.h"
 #include "test_maths_vector.h"
 #include "test_bounds.h"
@@ -11,6 +12,7 @@
 
 int main(int argc, char** argv)
 {
+    register_suite_archive();
     register_suite_maths_scalar();
     register_suite_maths_vector();
     register_suite_bounds();

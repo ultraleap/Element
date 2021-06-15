@@ -292,7 +292,8 @@ namespace libelement::cli
             uint16_t rvals_count,
             uint16_t stack_count,
             const std::vector<lmnt_value>& constants,
-            const std::vector<lmnt_instruction>& function)
+            const std::vector<lmnt_instruction>& function,
+            const lmnt_def_flags flags)
         {
             const size_t name_len = strlen(def_name);
             const size_t name_len_padded = LMNT_ROUND_UP(0x02 + name_len + 1, 4) - 2;
@@ -338,7 +339,7 @@ namespace libelement::cli
 
             const char def[] = {
                 0x00, 0x00,                                    // defs[0].name
-                0x00, 0x00,                                    // defs[0].flags
+                flags & 0xFF, (flags >> 8) & 0xFF,             // defs[0].flags
                 0x00, 0x00, 0x00, 0x00,                        // defs[0].code
                 stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_unaligned
                 stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_aligned
@@ -394,7 +395,7 @@ namespace libelement::cli
             }
 
             {
-                auto lmnt_archive_data = create_archive("evaluate", uint16_t(input.count), uint16_t(output.count), uint16_t(lmnt_output.total_stack_count()), constants, lmnt_output.instructions);
+                auto lmnt_archive_data = create_archive("evaluate", uint16_t(input.count), uint16_t(output.count), uint16_t(lmnt_output.total_stack_count()), constants, lmnt_output.instructions, lmnt_output.flags);
 
                 std::vector<char> lmnt_stack(32768);
                 lmnt_ictx lctx;

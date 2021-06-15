@@ -44,10 +44,10 @@ typedef struct lmnt_archive_header
 typedef uint16_t lmnt_def_flags;
 enum
 {
-    LMNT_DEFFLAG_NONE      = (0U << 0),
-    LMNT_DEFFLAG_INTERFACE = (1U << 0),
-    LMNT_DEFFLAG_EXTERN    = (1U << 1),
-    LMNT_DEFFLAG_LAMBDA    = (1U << 2),
+    LMNT_DEFFLAG_NONE             = (0U << 0),
+    LMNT_DEFFLAG_INTERFACE        = (1U << 0),
+    LMNT_DEFFLAG_EXTERN           = (1U << 1),
+    LMNT_DEFFLAG_HAS_BACKBRANCHES = (1U << 2),
 };
 
 typedef struct lmnt_def

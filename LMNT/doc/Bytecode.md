@@ -87,6 +87,11 @@ struct {
 
 The table consists of a set of these entries, with no intermediate padding.
 
+The set of flags which may apply to a function definition are:
+
+* `LMNT_DEFFLAG_EXTERN`: the function has an external definition which the LMNT host may have knowledge of
+* `LMNT_DEFFLAG_INTERFACE`: the function has no body, and thus to be callable it must have a valid external definition
+* `LMNT_DEFFLAG_HAS_BACKBRANCHES`: the function contains backward-facing branches (e.g. looping) and thus has no guarantee of halting
 
 ### Code Table
 
