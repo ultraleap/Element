@@ -41,6 +41,11 @@ extern "C" {
 #define LMNT_PRINTF printf
 #endif
 
+// sincosf function available on the target system
+// this function should be available in <math.h>
+// if left undefined, falls back to separate calls to sinf and cosf
+// LMNT_SINCOSF sincosf
+
 // Prints every instruction evaluated
 // This is, unsurprisingly, VERY spammy
 // #define LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS

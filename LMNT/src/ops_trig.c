@@ -1,7 +1,4 @@
-#if defined(__GNUC__)
-    #define _GNU_SOURCE
-    #define USE_GNU_SINCOS
-#endif
+#include "lmnt/config.h"
 #include "lmnt/ops_trig.h"
 #include <math.h>
 
@@ -49,8 +46,8 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_atan2(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
 
 LMNT_ATTR_FAST lmnt_result lmnt_op_sincos(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-#if defined(USE_GNU_SINCOS)
-    sincosf(ctx->stack[arg1], &(ctx->stack[arg2]), &(ctx->stack[arg3]));
+#if defined(LMNT_SINCOSF)
+    LMNT_SINCOSF(ctx->stack[arg1], &(ctx->stack[arg2]), &(ctx->stack[arg3]));
 #else
     ctx->stack[arg2] = sinf(ctx->stack[arg1]);
     ctx->stack[arg3] = cosf(ctx->stack[arg1]);

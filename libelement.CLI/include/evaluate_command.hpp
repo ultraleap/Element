@@ -341,10 +341,10 @@ namespace libelement::cli
                 0x00, 0x00,                                    // defs[0].name
                 flags & 0xFF, (flags >> 8) & 0xFF,             // defs[0].flags
                 0x00, 0x00, 0x00, 0x00,                        // defs[0].code
-                stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_unaligned
-                stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_aligned
-                args_count & 0xFF, (args_count >> 8) & 0xFF,   // defs[0].args_count
-                rvals_count & 0xFF, (rvals_count >> 8) & 0xFF, // defs[0].rvals_count
+                char(stack_count & 0xFF), char((stack_count >> 8) & 0xFF), // defs[0].stack_count_unaligned
+                char(stack_count & 0xFF), char((stack_count >> 8) & 0xFF), // defs[0].stack_count_aligned
+                char(args_count & 0xFF), char((args_count >> 8) & 0xFF),   // defs[0].args_count
+                char(rvals_count & 0xFF), char((rvals_count >> 8) & 0xFF), // defs[0].rvals_count
             };
             memcpy(buf.data() + idx, def, sizeof(def));
             idx += sizeof(def);

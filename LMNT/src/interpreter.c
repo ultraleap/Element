@@ -136,7 +136,7 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
         return LMNT_ERROR_RVALS_MISMATCH;
 
     lmnt_result opresult = LMNT_OK;
-    if ((def->flags & LMNT_DEFFLAG_EXTERN) == 0)
+    if (LMNT_LIKELY(!(def->flags & LMNT_DEFFLAG_EXTERN)))
     {
         // Get code
         const lmnt_code* defcode = validated_get_code(&ctx->archive, def->code);
