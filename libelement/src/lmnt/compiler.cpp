@@ -11,7 +11,7 @@
 
 // create an allocation for this instruction and its dependents
 // must know what size the allocation is
-element_result create_virtual_result(
+static element_result create_virtual_result(
     compiler_state& state,
     const element::instruction* expr,
     stack_allocation** result = nullptr);
@@ -19,19 +19,19 @@ element_result create_virtual_result(
 // determine relationships between this instruction and its dependents
 // pinned and parenting statuses get set here
 // also take note of which instructions use data from other instructions
-element_result prepare_virtual_result(
+static element_result prepare_virtual_result(
     compiler_state& state,
     const element::instruction* expr,
     stack_allocation** result = nullptr);
 
 // decide how stack space is allocated for this instruction and its dependents
-element_result allocate_virtual_result(
+static element_result allocate_virtual_result(
     compiler_state& state,
     const element::instruction* expr,
     stack_allocation** result = nullptr);
 
 // generate LMNT bytecode for instruction and its dependents
-element_result compile_instruction(
+static element_result compile_instruction(
     compiler_state& state,
     const element::instruction* expr,
     std::vector<lmnt_instruction>& output);
