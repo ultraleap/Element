@@ -239,19 +239,12 @@ source_group(TREE ${CMAKE_CURRENT_BINARY_DIR} FILES "${CMAKE_CURRENT_BINARY_DIR}
 # Don't rely on compiler extensions
 set_property(TARGET element PROPERTY CMAKE_CXX_EXTENSIONS OFF)
 
-#todo: probably not good enough
-IF (WIN32)
-    set(debug_dir "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
-ELSE()
-    set(debug_dir "${CMAKE_CURRENT_BINARY_DIR}")
-ENDIF()
-
 # Copy prelude alongside built library
 add_custom_command (
 	TARGET element POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	"${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
-	"${debug_dir}")
+	"$<TARGET_FILE_DIR:element>")
 
 target_include_directories(element
     PUBLIC
@@ -283,12 +276,12 @@ add_executable(element_app_c "${CMAKE_CURRENT_SOURCE_DIR}/test/main.c")
 target_link_libraries(element_app_c PRIVATE element)
 target_include_directories(element_app_c PRIVATE "${element_SOURCE_DIR}/include")
 set_target_properties(element_app_c PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
+    VS_DEBUGGER_WORKING_DIRECTORY       "$<TARGET_FILE_DIR:element_app_c>")
 add_custom_command (
         TARGET element_app_c POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
-        "${debug_dir}")
+        "$<TARGET_FILE_DIR:element_app_c>")
 
 if (ELEMENT_BUILD_TESTING)
     include(CTest)
@@ -312,14 +305,14 @@ if (ELEMENT_BUILD_TESTING)
             COMMAND element_tests -r junit -o ${CMAKE_BINARY_DIR}/libemelement_test_app_details.xml)
 
     set_target_properties(element_tests PROPERTIES
-        VS_DEBUGGER_WORKING_DIRECTORY       "${debug_dir}")
+        VS_DEBUGGER_WORKING_DIRECTORY       "$<TARGET_FILE_DIR:element_tests>")
 
     # Copy prelude alongside built library
     add_custom_command (
             TARGET element_tests POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
-            "${debug_dir}")
+            "$<TARGET_FILE_DIR:element_tests>")
 
     if (ELEMENT_CODE_COVERAGE)
         # Add an OR exit 0 in case tests fail but still want coverage of tests ran
@@ -357,7 +350,9 @@ if (ELEMENT_BUILD_TESTING)
             TARGET element_lmnt_testapp POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_CURRENT_SOURCE_DIR}/../ContentFiles"
-            "${debug_dir}")
+            "$<TARGET_FILE_DIR:element_lmnt_testapp>")
+    set_target_properties(element_lmnt_testapp PROPERTIES
+        VS_DEBUGGER_WORKING_DIRECTORY       "$<TARGET_FILE_DIR:element_lmnt_testapp>")
 endif()
 
 find_program(CLANG_FORMAT clang-format)
