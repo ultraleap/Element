@@ -129,8 +129,7 @@ std::pair<std::vector<object_const_shared_ptr>, size_t> element::generate_placeh
 {
     std::pair<std::vector<object_const_shared_ptr>, size_t> placeholder_inputs;
 
-    for (const auto& input : inputs)
-    {
+    for (const auto& input : inputs) {
         auto placeholder = input.generate_placeholder(compilation_context, index_offset, boundary_scope);
         placeholder_inputs.first.push_back(std::move(placeholder));
     }
@@ -143,29 +142,26 @@ std::shared_ptr<const instruction> element::evaluate(const compilation_context& 
 {
     float output = 0;
     std::size_t output_count = 1;
-    
+
     element_evaluator_ctx evaluator;
     const auto result = element_evaluate(evaluator, expr, nullptr, nullptr, 0, &output, output_count);
 
     //the tree was fully evaluated, so it has been constant folded
-    if (result == ELEMENT_OK)
-    {
+    if (result == ELEMENT_OK) {
         auto new_expr = std::make_shared<const instruction_constant>(output);
         new_expr->actual_type = expr->actual_type;
         return new_expr;
     }
-    
+
     //we failed to fully evaluate the tree, likely due to boundary inputs (whose value are not known), so try and optimise it differently
 
-    if (const auto* binary = expr->as<const instruction_binary>())
-    {
+    if (const auto* binary = expr->as<const instruction_binary>()) {
         auto optimised = optimise_binary(*binary);
         if (optimised)
             return optimised;
     }
 
-    if (const auto* selector = expr->as<const instruction_select>())
-    {
+    if (const auto* selector = expr->as<const instruction_select>()) {
         //if there's only one option to pick from then we're guaranteed to pick it, so we can just treat it as that option
         if (selector->options_count() == 1)
             return selector->options_at(0);

@@ -40,8 +40,7 @@ std::string constraint_declaration::typeof_info() const
 
 std::string function_declaration::typeof_info() const
 {
-    switch (function_kind)
-    {
+    switch (function_kind) {
     case kind::intrinsic:
         return "IntrinsicFunction";
     case kind::scope_bodied:
@@ -103,9 +102,7 @@ std::string instruction::typeof_info() const
 
 std::string port::typeof_info() const
 {
-    if (!has_annotation() ||
-        annotation->to_string().empty())
-    {
+    if (!has_annotation() || annotation->to_string().empty()) {
         return name.value;
     }
 
@@ -136,8 +133,7 @@ std::string struct_declaration::to_code(const int depth) const
     for (auto i = 0; i < depth; ++i)
         result += offset;
 
-    if (has_inputs())
-    {
+    if (has_inputs()) {
         static auto accumulate = [depth](std::string accumulator, const port& port) {
             return std::move(accumulator) + ", " + port.typeof_info() + port.to_code(depth);
         };
@@ -162,8 +158,7 @@ std::string constraint_declaration::to_code(const int depth) const
     for (auto i = 0; i < depth; ++i)
         result += offset;
 
-    if (has_inputs())
-    {
+    if (has_inputs()) {
         static auto accumulate = [depth](std::string accumulator, const port& port) {
             return std::move(accumulator) + ", " + port.typeof_info() + port.to_code(depth);
         };
@@ -188,10 +183,9 @@ std::string function_declaration::to_code(const int depth) const
 
     for (auto i = 0; i < depth; ++i)
         result += offset;
-    
+
     std::string ports;
-    if (has_inputs())
-    {
+    if (has_inputs()) {
         static constexpr auto accumulate = [](std::string accumulator, const port& port) {
             return std::move(accumulator) + ", " + port.typeof_info();
         };

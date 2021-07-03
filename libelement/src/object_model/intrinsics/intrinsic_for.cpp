@@ -12,10 +12,10 @@
 using namespace element;
 
 object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_object,
-                                         const std::shared_ptr<const function_instance>& predicate_function,
-                                         const std::shared_ptr<const function_instance>& body_function,
-                                         const source_information& source_info,
-                                         const compilation_context& context)
+    const std::shared_ptr<const function_instance>& predicate_function,
+    const std::shared_ptr<const function_instance>& body_function,
+    const source_information& source_info,
+    const compilation_context& context)
 {
     const auto is_constant = initial_object->is_constant();
     if (!is_constant)
@@ -27,8 +27,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     const auto continue_loop = [&predicate_evaluated_to_constant, &predicate_function, &context, &source_info](const std::vector<object_const_shared_ptr>& input) -> bool {
         const auto ret = predicate_function->call(context, input, source_info);
 
-        if (ret->is_error())
-        {
+        if (ret->is_error()) {
             ret->log_any_error(context.get_logger());
             return false;
         }
@@ -36,8 +35,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
         //todo: one day we'll use the fast RTTI instead of the language one
         //the return value is going to be a bool (of some kind), and bools are expressions
         const auto ret_as_expression = std::dynamic_pointer_cast<const instruction>(ret);
-        if (!ret_as_expression || !ret_as_expression->is_constant())
-        {
+        if (!ret_as_expression || !ret_as_expression->is_constant()) {
             predicate_evaluated_to_constant = false;
             return false;
         }
@@ -45,8 +43,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
         const auto ret_evaluated = evaluate(context, ret_as_expression);
         assert(ret_evaluated);
         const auto ret_as_constant = std::dynamic_pointer_cast<const element::instruction_constant>(ret_evaluated);
-        if (!ret_as_constant)
-        {
+        if (!ret_as_constant) {
             predicate_evaluated_to_constant = false;
             return false;
         }
@@ -59,8 +56,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
         if (!ret->is_constant())
             return nullptr;
 
-        if (ret->is_error())
-        {
+        if (ret->is_error()) {
             ret->log_any_error(context.get_logger());
             return ret;
         }
@@ -81,8 +77,7 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
     //todo: make this user configurable
     constexpr auto max_loop_iterations = 10'000;
     auto current_loop_iteration = 0;
-    while (continue_loop(arguments))
-    {
+    while (continue_loop(arguments)) {
         if (current_loop_iteration > max_loop_iterations)
             return std::make_shared<const error>(
                 fmt::format("Compile time loop didn't finish after max iteration count of {}", max_loop_iterations),
@@ -103,10 +98,10 @@ object_const_shared_ptr compile_time_for(const object_const_shared_ptr& initial_
 }
 
 object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_object,
-                                    const std::shared_ptr<const function_instance>& predicate_function,
-                                    const std::shared_ptr<const function_instance>& body_function,
-                                    const source_information& source_info,
-                                    const compilation_context& context)
+    const std::shared_ptr<const function_instance>& predicate_function,
+    const std::shared_ptr<const function_instance>& body_function,
+    const source_information& source_info,
+    const compilation_context& context)
 {
     //ensure that these are boundary functions as we'll need to compile them like any other boundary function
     const auto predicate_is_boundary = predicate_function->valid_at_boundary(context);
@@ -165,8 +160,8 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
     const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
 
     auto indexing_expression_filler = [&for_expression](const std::string&,
-                                                        const std::shared_ptr<const instruction>& field,
-                                                        int index) -> std::shared_ptr<const instruction> {
+                                          const std::shared_ptr<const instruction>& field,
+                                          int index) -> std::shared_ptr<const instruction> {
         return std::make_shared<element::instruction_indexer>(for_expression, index, field->actual_type);
     };
 
@@ -179,7 +174,7 @@ intrinsic_for::intrinsic_for()
 }
 
 object_const_shared_ptr intrinsic_for::compile(const compilation_context& context,
-                                               const source_information& source_info) const
+    const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
     const auto& declarer = *static_cast<const declaration*>(frame.function->declarer);

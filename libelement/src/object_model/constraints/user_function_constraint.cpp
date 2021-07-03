@@ -53,8 +53,7 @@ bool user_function_constraint::matches_constraint(const compilation_context& con
     std::size_t our_input_length = declarer->inputs.size();
     std::size_t offset = 0;
 
-    if (applied)
-    {
+    if (applied) {
         our_input_length--;
         offset++;
     }

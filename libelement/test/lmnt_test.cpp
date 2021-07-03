@@ -20,17 +20,14 @@ void log_callback(const element_log_message* msg, void* user_data)
     buffer[0] = '^';
     buffer[1] = '\0';
     const char* buffer_str = nullptr;
-    if (msg->character - 1 >= 0)
-    {
+    if (msg->character - 1 >= 0) {
         const auto padding_count = msg->character - 1;
-        for (auto i = 0; i < padding_count; ++i)
-        {
+        for (auto i = 0; i < padding_count; ++i) {
             buffer[i] = ' ';
         }
 
         const auto end = padding_count + msg->length;
-        for (auto i = padding_count; i < end; ++i)
-        {
+        for (auto i = padding_count; i < end; ++i) {
             buffer[i] = '^';
         }
 
@@ -44,17 +41,16 @@ void log_callback(const element_log_message* msg, void* user_data)
     auto* const output_buffer = output_buffer_array.data();
 
     sprintf(output_buffer, "\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
-            msg->message_code,
-            msg->filename,
-            msg->line,
-            msg->line_in_source ? msg->line_in_source : "",
-            msg->line,
-            buffer_str,
-            msg->message);
+        msg->message_code,
+        msg->filename,
+        msg->line,
+        msg->line_in_source ? msg->line_in_source : "",
+        msg->line,
+        buffer_str,
+        msg->message);
 
     printf("%s", output_buffer);
 }
-
 
 static std::vector<char> create_archive(const char* def_name, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, const std::vector<lmnt_value>& constants, const std::vector<lmnt_instruction>& function, const lmnt_def_flags flags)
 {
@@ -129,8 +125,6 @@ static std::vector<char> create_archive(const char* def_name, uint16_t args_coun
     return buf;
 }
 
-
-
 int main(int argc, char** argv)
 {
     if (argc < 2) {
@@ -170,15 +164,13 @@ int main(int argc, char** argv)
     const char* loperation = "nothing lol";
 
     result = element_interpreter_load_package(context, "StandardLibrary");
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         printf("whoops, no stdlib: %d\n", result);
         goto cleanup;
     }
 
     result = element_interpreter_load_string(context, argv[1], "<input>");
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         printf("Output buffer too small\n");
         goto cleanup;
     }
@@ -206,11 +198,9 @@ int main(int argc, char** argv)
         goto cleanup;
 
     sprintf(output_buffer + strlen(output_buffer), "Element: %s -> {", argv[1]);
-    for (int i = 0; i < output.count; ++i)
-    {
+    for (int i = 0; i < output.count; ++i) {
         sprintf(output_buffer + strlen(output_buffer), "%f", output.values[i]);
-        if (i != output.count - 1)
-        {
+        if (i != output.count - 1) {
             sprintf(output_buffer + strlen(output_buffer), ", ");
         }
     }
@@ -219,8 +209,7 @@ int main(int argc, char** argv)
     printf("%s", output_buffer);
 
     result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, constants, args.size(), lmnt_output);
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         printf("RUH ROH: %d\n", result);
         goto cleanup;
     }
@@ -244,7 +233,7 @@ int main(int argc, char** argv)
         lresult = lmnt_init(&lctx, lmnt_stack.data(), lmnt_stack.size());
         if (lresult != LMNT_OK)
             goto lmnt_error;
-            
+
         loperation = "archive load";
         printf("lmnt: doing %s\n", loperation);
         lresult = lmnt_load_archive(&lctx, lmnt_archive_data.data(), lmnt_archive_data.size());
@@ -254,8 +243,7 @@ int main(int argc, char** argv)
         loperation = "archive prepare";
         printf("lmnt: doing %s\n", loperation);
         lresult = lmnt_prepare_archive(&lctx, &lvresult);
-        if (lresult != LMNT_OK)
-        {
+        if (lresult != LMNT_OK) {
             printf("LMNT validation error: %d\n", lvresult);
             goto lmnt_error;
         }
@@ -288,8 +276,7 @@ int main(int argc, char** argv)
     }
 
 lmnt_error:
-    if (lresult != LMNT_OK)
-    {
+    if (lresult != LMNT_OK) {
         printf("LMNT ERROR during %s: %d\n", loperation, lresult);
     }
 
@@ -298,8 +285,7 @@ cleanup:
     element_instruction_delete(&instruction);
     element_interpreter_delete(&context);
     delete[] output.values;
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         printf("ELEMENT ERROR: %d\n", result);
     }
     return result;

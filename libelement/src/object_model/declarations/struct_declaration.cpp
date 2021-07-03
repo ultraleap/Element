@@ -45,8 +45,7 @@ object_const_shared_ptr struct_declaration::call(
     const source_information& source_info) const
 {
     //this function handles construction of an intrinsic struct instance (get_intrinsic(...)->call(...)) or a user struct instance (make_shared<struct_instance>(...))
-    if (is_intrinsic())
-    {
+    if (is_intrinsic()) {
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
         if (intrinsic)
             return intrinsic->call(context, compiled_args, source_info);
@@ -63,8 +62,7 @@ object_const_shared_ptr struct_declaration::call(
 
 bool struct_declaration::matches_constraint(const compilation_context& context, const constraint* constraint) const
 {
-    if (is_intrinsic())
-    {
+    if (is_intrinsic()) {
         const auto* const intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
         if (!intrinsic)
             return type->matches_constraint(context, constraint);
@@ -97,8 +95,7 @@ bool struct_declaration::deserializable(const compilation_context& context) cons
 {
     //todo: cache deserializabilit
 
-    if (inputs.empty())
-    {
+    if (inputs.empty()) {
         assert(is_intrinsic());
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
         assert(intrinsic);
@@ -109,8 +106,7 @@ bool struct_declaration::deserializable(const compilation_context& context) cons
         return false;
     }
 
-    for (const auto& input : get_inputs())
-    {
+    for (const auto& input : get_inputs()) {
         //todo: we can cache all of the resolving annotation things everywhere
         const auto& type = get_scope()->find(input.get_annotation()->to_string(), context.interpreter->caches, true);
         assert(type);
@@ -126,8 +122,7 @@ object_const_shared_ptr struct_declaration::generate_placeholder(
     std::size_t& placeholder_index,
     const std::size_t boundary_scope) const
 {
-    if (inputs.empty())
-    {
+    if (inputs.empty()) {
         assert(is_intrinsic());
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
         auto expr = std::make_shared<instruction_input>(boundary_scope, placeholder_index);
@@ -138,13 +133,11 @@ object_const_shared_ptr struct_declaration::generate_placeholder(
     }
 
     std::vector<object_const_shared_ptr> placeholder_inputs;
-    for (const auto& input : get_inputs())
-    {
+    for (const auto& input : get_inputs()) {
         const auto& type = get_scope()->find(input.get_annotation()->to_string(), context.interpreter->caches, true);
         auto placeholder = type->generate_placeholder(context, placeholder_index, boundary_scope);
 
-        if (!placeholder)
-        {
+        if (!placeholder) {
             return std::make_shared<const error>(
                 fmt::format("The type '{}' can't be deserialised.", to_string()),
                 ELEMENT_ERROR_SERIALISATION,

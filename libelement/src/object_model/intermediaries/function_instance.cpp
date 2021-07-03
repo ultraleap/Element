@@ -46,12 +46,11 @@ std::string function_instance::to_string() const
         return declarer->name.value;
 
     std::string input_string;
-    for (std::size_t i = 0; i < declarer->inputs.size(); ++i)
-    {
+    for (std::size_t i = 0; i < declarer->inputs.size(); ++i) {
         input_string += fmt::format("{}{}{}",
-                                    declarer->inputs[i].get_name(),
-                                    declarer->inputs[i].has_annotation() ? ":" + declarer->inputs[i].get_annotation()->to_string() : "",
-                                    i < provided_arguments.size() ? " = " + provided_arguments[i]->to_string() : "");
+            declarer->inputs[i].get_name(),
+            declarer->inputs[i].has_annotation() ? ":" + declarer->inputs[i].get_annotation()->to_string() : "",
+            i < provided_arguments.size() ? " = " + provided_arguments[i]->to_string() : "");
 
         if (i < static_cast<int>(declarer->inputs.size()) - 1)
             input_string += ", ";
@@ -72,8 +71,7 @@ const constraint* function_instance::get_constraint() const
 
 bool has_defaults(const function_instance* instance)
 {
-    for (const auto& input : instance->declarer->inputs)
-    {
+    for (const auto& input : instance->declarer->inputs) {
         if (input.has_default())
             return true;
     }
@@ -91,27 +89,22 @@ object_const_shared_ptr function_instance::call(
     //todo: error checks
 
     const auto check_defaults = has_defaults(this) && !declarer->is_variadic();
-    if (check_defaults)
-    {
+    if (check_defaults) {
         const auto unfilled_args = declarer->inputs.size() - compiled_args.size() > 0;
-        if (unfilled_args)
-        {
-            for (auto i = compiled_args.size(); i < declarer->inputs.size(); i++)
-            {
+        if (unfilled_args) {
+            for (auto i = compiled_args.size(); i < declarer->inputs.size(); i++) {
                 compiled_args.push_back(declarer->inputs[i].get_default()->compile(context, source_info));
             }
         }
     }
 
-    if constexpr (should_log_compilation_step())
-    {
+    if constexpr (should_log_compilation_step()) {
         std::string input_string;
-        for (std::size_t i = 0; i < declarer->inputs.size(); ++i)
-        {
+        for (std::size_t i = 0; i < declarer->inputs.size(); ++i) {
             input_string += fmt::format("{}{}{}",
-                                        declarer->inputs[i].get_name(),
-                                        declarer->inputs[i].has_annotation() ? ":" + declarer->inputs[i].get_annotation()->to_string() : "",
-                                        i < compiled_args.size() ? " = " + compiled_args[i]->to_string() : "");
+                declarer->inputs[i].get_name(),
+                declarer->inputs[i].has_annotation() ? ":" + declarer->inputs[i].get_annotation()->to_string() : "",
+                i < compiled_args.size() ? " = " + compiled_args[i]->to_string() : "");
 
             if (i < static_cast<int>(declarer->inputs.size()) - 1)
                 input_string += ", ";
@@ -131,12 +124,12 @@ object_const_shared_ptr function_instance::call(
     //todo: more helpful information than the number of arguments expected
     if (compiled_args.size() < declarer->inputs.size())
         return build_error_and_log<error_message_code::not_enough_arguments>(context, source_info,
-                                   declarer->name.value, compiled_args.size(), declarer->inputs.size());
+            declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
     //todo: more helpful information than the number of arguments expected
     if (!is_variadic && compiled_args.size() > declarer->inputs.size())
         return build_error_and_log<error_message_code::too_many_arguments>(context, source_info,
-                                   declarer->name.value, compiled_args.size(), declarer->inputs.size());
+            declarer->name.value, compiled_args.size(), declarer->inputs.size());
 
     //todo: check this works and is a useful error message (stolen from struct declaration call)
     if (!is_variadic && !valid_call(context, declarer, compiled_args))
@@ -167,11 +160,10 @@ object_const_shared_ptr function_instance::call(
 
     captures.pop();
     context.calls.pop();
-    if constexpr (should_log_compilation_step())
-    {
+    if constexpr (should_log_compilation_step()) {
         context.get_logger()->log_step_unindent();
         context.get_logger()->log_step("{} - returned '{}'\n",
-                                       declarer->name.value, element->to_string());
+            declarer->name.value, element->to_string());
     }
 
     if (!element)
@@ -193,14 +185,14 @@ object_const_shared_ptr function_instance::call(
     if (!element->matches_constraint(context, constraint))
         return std::make_shared<error>(
             fmt::format("the return of '{}' was '{}' which doesn't match the constraint '{}'",
-                        declarer->name.value, element->to_string(), constraint ? type->name.value : "Any"),
+                declarer->name.value, element->to_string(), constraint ? type->name.value : "Any"),
             ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
 
     return element;
 }
 
 object_const_shared_ptr function_instance::compile(const compilation_context& context,
-                                                   const source_information& source_info) const
+    const source_information& source_info) const
 {
     const bool variadic = declarer->is_variadic();
 

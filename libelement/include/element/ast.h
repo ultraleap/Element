@@ -1,18 +1,17 @@
 #if !defined(ELEMENT_AST_H)
-#define ELEMENT_AST_H
+    #define ELEMENT_AST_H
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 extern "C" {
-#endif
+    #endif
 
-#include "element/common.h"
-#include "element/token.h"
+    #include "element/common.h"
+    #include "element/token.h"
 
 /**
  * @brief ast node type
  */
-typedef enum
-{
+typedef enum {
     ELEMENT_AST_NODE_NONE = 0,
     ELEMENT_AST_NODE_ROOT,
     ELEMENT_AST_NODE_FUNCTION,
@@ -222,7 +221,7 @@ element_result element_ast_to_string(
     char* output_buffer,
     int output_buffer_size);
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 }
-#endif
+    #endif
 #endif

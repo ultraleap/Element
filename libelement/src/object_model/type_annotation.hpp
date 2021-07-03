@@ -10,21 +10,21 @@
 
 namespace element
 {
-    class type_annotation final
+class type_annotation final
+{
+public:
+    //TODO: This should be an expression, not an identifier
+    explicit type_annotation(identifier name)
+        : name{ std::move(name) }
     {
-    public:
-        //TODO: This should be an expression, not an identifier
-        explicit type_annotation(identifier name)
-            : name{ std::move(name) }
-        {
-        }
+    }
 
-        [[nodiscard]] std::string to_code(const int depth) const;
-        [[nodiscard]] const std::string& to_string() const { return name.value; }
+    [[nodiscard]] std::string to_code(const int depth) const;
+    [[nodiscard]] const std::string& to_string() const { return name.value; }
 
-        source_information source_info;
+    source_information source_info;
 
-    private:
-        identifier name;
-    };
+private:
+    identifier name;
+};
 } // namespace element

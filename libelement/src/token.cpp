@@ -84,21 +84,16 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
 
     std::string message = msg ? msg : "";
 
-    if (index >= tokeniser->tokens.size())
-    {
+    if (index >= tokeniser->tokens.size()) {
 
-        if (message.empty())
-        {
+        if (message.empty()) {
             message = fmt::format("tried to access token at index {} but there are only {} tokens.",
-                                  index, tokeniser->tokens.size());
+                index, tokeniser->tokens.size());
 
             //if the token requested is only one after the end
-            if (!tokeniser->tokens.empty() && index == tokeniser->tokens.size())
-            {
+            if (!tokeniser->tokens.empty() && index == tokeniser->tokens.size()) {
                 message += "\nnote: perhaps your source code is incomplete.";
-            }
-            else
-            {
+            } else {
                 message += "\nnote: perhaps an internal compiler error.";
             }
         }
@@ -107,8 +102,7 @@ element_result element_tokeniser_get_token(const element_tokeniser_ctx* tokenise
         if (tokeniser->tokens.empty())
             return tokeniser->log(ELEMENT_ERROR_ACCESSED_TOKEN_PAST_END, msg ? msg : "");
 
-        if (tokeniser->logger)
-        {
+        if (tokeniser->logger) {
             const auto& last_token = tokeniser->tokens[tokeniser->tokens.size() - 1];
             element_log_message log_msg;
             const std::string line_in_source = tokeniser->text_on_line(last_token.line);

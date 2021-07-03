@@ -11,17 +11,14 @@ void log_callback(const element_log_message* msg, void* user_data)
     buffer[0] = '^';
     buffer[1] = '\0';
     const char* buffer_str = nullptr;
-    if (msg->character - 1 >= 0)
-    {
+    if (msg->character - 1 >= 0) {
         const auto padding_count = msg->character - 1;
-        for (auto i = 0; i < padding_count; ++i)
-        {
+        for (auto i = 0; i < padding_count; ++i) {
             buffer[i] = ' ';
         }
 
         const auto end = padding_count + msg->length;
-        for (auto i = padding_count; i < end; ++i)
-        {
+        for (auto i = padding_count; i < end; ++i) {
             buffer[i] = '^';
         }
 
@@ -35,13 +32,13 @@ void log_callback(const element_log_message* msg, void* user_data)
     auto* const output_buffer = output_buffer_array.data();
 
     sprintf(output_buffer, "\n----------ELE%d %s\n%d| %s\n%d| %s\n\n%s\n----------\n\n",
-            msg->message_code,
-            msg->filename,
-            msg->line,
-            msg->line_in_source ? msg->line_in_source : "",
-            msg->line,
-            buffer_str,
-            msg->message);
+        msg->message_code,
+        msg->filename,
+        msg->line,
+        msg->line_in_source ? msg->line_in_source : "",
+        msg->line,
+        buffer_str,
+        msg->message);
 
     printf("%s", output_buffer);
     UNSCOPED_INFO(output_buffer);

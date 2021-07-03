@@ -53,8 +53,7 @@ element_log_message error::get_log_message() const
 
 element_result error::log_once(const element_log_ctx* logger) const
 {
-    if (!logged)
-    {
+    if (!logged) {
         logged = true;
         if (logger)
             logger->log(get_log_message());

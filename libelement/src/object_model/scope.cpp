@@ -20,8 +20,7 @@ element_result scope::merge(std::unique_ptr<scope>&& other)
     if (!other->is_root())
         return ELEMENT_ERROR_UNKNOWN;
 
-    for (auto& [identifier, declaration] : other->declarations)
-    {
+    for (auto& [identifier, declaration] : other->declarations) {
         if (declarations.count(identifier))
             return ELEMENT_ERROR_MULTIPLE_DEFINITIONS;
 
@@ -98,7 +97,6 @@ const std::map<identifier, std::unique_ptr<declaration>>& scope::get_declaration
     return declarations;
 }
 
-
 std::string scope::get_name() const
 {
     return "";
@@ -111,8 +109,7 @@ std::vector<std::string> split(const std::string& full_string, char delimiter = 
     size_t start = 0;
     auto end = full_string.find(delimiter);
     //find all but last string
-    while (end != std::string::npos)
-    {
+    while (end != std::string::npos) {
         const auto identifier = full_string.substr(start, end - start);
         split_strings.push_back(identifier);
 
@@ -148,15 +145,14 @@ const declaration* scope::find(const identifier& name, scope_caches& caches, con
 
     const auto* scope = this;
     const declaration* found_decl = nullptr;
-    for (const auto& ident : split_path)
-    {
+    for (const auto& ident : split_path) {
         found_decl = scope->find_identifier(ident, caches, recurse);
         if (!found_decl)
             return nullptr;
 
         scope = found_decl->our_scope.get();
     }
-    
+
     cache[name.value] = found_decl;
     return found_decl;
 }

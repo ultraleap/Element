@@ -12,8 +12,7 @@ void print_token(const element_tokeniser_ctx* context, const element_token* near
 {
     std::array<char, 2048> output_buffer{};
     const auto result = element_tokeniser_to_string(context, nearest_token, output_buffer.data(), static_cast<int>(output_buffer.size()));
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         printf("Output buffer too small");
         return;
     }

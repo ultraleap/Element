@@ -18,11 +18,9 @@ std::string tokens_to_string(const element_tokeniser_ctx* context, const element
 {
     std::string string;
 
-    for (const auto& token : context->tokens)
-    {
+    for (const auto& token : context->tokens) {
         std::string c;
-        switch (token.type)
-        {
+        switch (token.type) {
             PRINTCASE(ELEMENT_TOK_NONE)
             PRINTCASE(ELEMENT_TOK_NUMBER)
             PRINTCASE(ELEMENT_TOK_IDENTIFIER)
@@ -41,8 +39,7 @@ std::string tokens_to_string(const element_tokeniser_ctx* context, const element
 
         string += c;
 
-        if (token.tok_pos >= 0 && token.tok_len >= 0)
-        {
+        if (token.tok_pos >= 0 && token.tok_len >= 0) {
             //Align the token text using tabs (with tabs = 4 spaces), so that they start at character 24 (4*6)
             auto chunks = c.length() / 4;
             for (auto i = chunks; chunks < 6; chunks++)
@@ -51,8 +48,7 @@ std::string tokens_to_string(const element_tokeniser_ctx* context, const element
             auto text = context->text(&token);
             string += text;
 
-            if (token_to_mark == &token)
-            {
+            if (token_to_mark == &token) {
                 string += " <--- HERE";
             }
         }
@@ -70,59 +66,37 @@ std::string ast_to_string(const element_ast* ast, int depth, const element_ast* 
     for (int i = 0; i < depth; ++i)
         string += "  ";
 
-    if (ast->type == ELEMENT_AST_NODE_LITERAL)
-    {
+    if (ast->type == ELEMENT_AST_NODE_LITERAL) {
         string += fmt::format("LITERAL: {}", ast->literal);
-    }
-    else if (ast->type == ELEMENT_AST_NODE_IDENTIFIER)
-    {
+    } else if (ast->type == ELEMENT_AST_NODE_IDENTIFIER) {
         string += fmt::format("IDENTIFIER: {}", ast->identifier);
-    }
-    else if (ast->type == ELEMENT_AST_NODE_DECLARATION)
-    {
+    } else if (ast->type == ELEMENT_AST_NODE_DECLARATION) {
         const auto intrinsic = ast->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
         intrinsic
             ? string += fmt::format("INTRINSIC DECLARATION: {}", ast->identifier)
             : string += fmt::format("DECLARATION: {}", ast->identifier);
-    }
-    else if (ast->type == ELEMENT_AST_NODE_NAMESPACE)
-    {
+    } else if (ast->type == ELEMENT_AST_NODE_NAMESPACE) {
         string += fmt::format("NAMESPACE: {}", ast->identifier);
-    }
-    else if (ast->type == ELEMENT_AST_NODE_CALL)
-    {
+    } else if (ast->type == ELEMENT_AST_NODE_CALL) {
         string += fmt::format("CALL: {}", ast->identifier);
-    }
-    else if (ast->type == ELEMENT_AST_NODE_PORT)
-    {
+    } else if (ast->type == ELEMENT_AST_NODE_PORT) {
         string += fmt::format("PORT: {}", ast->identifier);
-    }
-    else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_PORT)
-    {
+    } else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_PORT) {
         string += "IMPLICIT TYPE";
-    }
-    else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_DECLARATION)
-    {
+    } else if (ast->type == ELEMENT_AST_NODE_UNSPECIFIED_TYPE && ast->parent && ast->parent->type == ELEMENT_AST_NODE_DECLARATION) {
         string += "IMPLICIT RETURN";
-    }
-    else if (ast->type == ELEMENT_AST_NODE_NO_BODY)
-    {
+    } else if (ast->type == ELEMENT_AST_NODE_NO_BODY) {
         string += "NO BODY";
-    }
-    else if (ast->type == ELEMENT_AST_NODE_NONE)
-    {
+    } else if (ast->type == ELEMENT_AST_NODE_NONE) {
         if (ast->has_flag(ELEMENT_AST_FLAG_DECL_EMPTY_INPUT))
             string += "EMPTY INPUT";
         else if (ast->flags == 0)
             string += "NONE";
         else
             string += "UNKNOWN FLAGS";
-    }
-    else
-    {
+    } else {
         const char* c;
-        switch (ast->type)
-        {
+        switch (ast->type) {
             PRINTCASE(ELEMENT_AST_NODE_ROOT)
             PRINTCASE(ELEMENT_AST_NODE_SCOPE)
             PRINTCASE(ELEMENT_AST_NODE_CONSTRAINT)
@@ -161,24 +135,20 @@ std::string instruction_to_string(const element::instruction& expression, std::s
     std::string string(depth, ' ');
     string += prefix;
 
-    if (expression.is<element::instruction_constant>())
-    {
+    if (expression.is<element::instruction_constant>()) {
         const auto& constant = expression.as<element::instruction_constant>();
         string += "CONSTANT: " + std::to_string(constant->value());
     }
 
-    if (expression.is<element::instruction_input>())
-    {
+    if (expression.is<element::instruction_input>()) {
         const auto& input = expression.as<element::instruction_input>();
         string += "INPUT: scope = " + std::to_string(input->scope()) + "; index = " + std::to_string(input->index());
     }
 
-    if (expression.is<element::instruction_serialised_structure>())
-    {
+    if (expression.is<element::instruction_serialised_structure>()) {
         const auto& structure = expression.as<element::instruction_serialised_structure>();
         string += fmt::format("STRUCTURE: {}", structure->get_type_name());
-        if (!structure->get_field_names().empty())
-        {
+        if (!structure->get_field_names().empty()) {
             string += "(";
             for (int i = 0; i < static_cast<int>(structure->get_field_names().size() - 1); ++i)
                 string += structure->get_field_names()[i] + ", ";
@@ -186,13 +156,11 @@ std::string instruction_to_string(const element::instruction& expression, std::s
         }
     }
 
-    if (expression.is<element::instruction_nullary>())
-    {
+    if (expression.is<element::instruction_nullary>()) {
         const auto& nullary = expression.as<element::instruction_nullary>();
         string += "NULLARY: ";
         const char* c = nullptr;
-        switch (nullary->operation())
-        {
+        switch (nullary->operation()) {
             //num
             PRINTCASE(element_nullary_op::nan)
             PRINTCASE(element_nullary_op::positive_infinity)
@@ -205,13 +173,11 @@ std::string instruction_to_string(const element::instruction& expression, std::s
         string += c;
     }
 
-    if (expression.is<element::instruction_unary>())
-    {
+    if (expression.is<element::instruction_unary>()) {
         const auto& unary = expression.as<element::instruction_unary>();
         string += "UNARY: ";
         const char* c = nullptr;
-        switch (unary->operation())
-        {
+        switch (unary->operation()) {
             //num
             PRINTCASE(element_unary_op::sin)
             PRINTCASE(element_unary_op::cos)
@@ -230,13 +196,11 @@ std::string instruction_to_string(const element::instruction& expression, std::s
         string += c;
     }
 
-    if (expression.is<element::instruction_binary>())
-    {
+    if (expression.is<element::instruction_binary>()) {
         const auto& binary = expression.as<element::instruction_binary>();
         string += "BINARY: ";
         const char* c = nullptr;
-        switch (binary->operation())
-        {
+        switch (binary->operation()) {
             //num
             PRINTCASE(element_binary_op::add)
             PRINTCASE(element_binary_op::sub)
@@ -264,8 +228,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
         string += c;
     }
 
-    if (expression.is<element::instruction_if>())
-    {
+    if (expression.is<element::instruction_if>()) {
         const auto& if_instruction = expression.as<element::instruction_if>();
         string += "IF:" + fmt::format(" [{}]\n", fmt::ptr(&expression));
         string += std::string(depth + 1, ' ') + "PREDICATE:\n" + instruction_to_string(*if_instruction->predicate().get(), depth + 2);
@@ -274,8 +237,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
         return string;
     }
 
-    if (expression.is<element::instruction_for>())
-    {
+    if (expression.is<element::instruction_for>()) {
         const auto& for_instruction = expression.as<element::instruction_for>();
         string += "FOR:" + fmt::format(" [{}]\n", fmt::ptr(&expression));
         string += std::string(depth + 1, ' ') + "INITIAL:\n" + instruction_to_string(*for_instruction->initial().get(), depth + 2);
@@ -284,8 +246,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
         return string;
     }
 
-    if (expression.is<element::instruction_select>())
-    {
+    if (expression.is<element::instruction_select>()) {
         const auto& select_instruction = expression.as<element::instruction_select>();
         string += "SELECT:" + fmt::format(" [{}]\n", fmt::ptr(&expression));
         string += std::string(depth + 1, ' ') + "SELECTOR:\n" + instruction_to_string(*select_instruction->selector().get(), depth + 2);
@@ -298,8 +259,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
         return string;
     }
 
-    if (expression.is<element::instruction_indexer>())
-    {
+    if (expression.is<element::instruction_indexer>()) {
         const auto& indexer_instruction = expression.as<element::instruction_indexer>();
         string += "INDEXER" + fmt::format(" [{}]\n", fmt::ptr(&expression));
         string += instruction_to_string(*indexer_instruction->for_instruction(), depth + 1);
@@ -319,44 +279,30 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent)
 {
     std::string string;
 
-    if (node->type == ELEMENT_AST_NODE_LITERAL)
-    {
-        if (parent->type == ELEMENT_AST_NODE_FUNCTION || parent->type == ELEMENT_AST_NODE_LAMBDA)
-        {
+    if (node->type == ELEMENT_AST_NODE_LITERAL) {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION || parent->type == ELEMENT_AST_NODE_LAMBDA) {
             string += " = ";
         }
         string += fmt::format("{}", node->literal);
-    }
-    else if (node->type == ELEMENT_AST_NODE_IDENTIFIER)
-    {
+    } else if (node->type == ELEMENT_AST_NODE_IDENTIFIER) {
         string += node->identifier;
-    }
-    else if (node->type == ELEMENT_AST_NODE_TYPENAME)
-    {
+    } else if (node->type == ELEMENT_AST_NODE_TYPENAME) {
         string += ":";
-    }
-    else if (node->type == ELEMENT_AST_NODE_DECLARATION)
-    {
-        if (node->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC))
-        {
+    } else if (node->type == ELEMENT_AST_NODE_DECLARATION) {
+        if (node->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC)) {
             string += "intrinsic ";
         }
-        if (parent->type == ELEMENT_AST_NODE_CONSTRAINT)
-        {
+        if (parent->type == ELEMENT_AST_NODE_CONSTRAINT) {
             string += "constraint ";
         }
         string += node->identifier;
-    }
-    else if (node->type == ELEMENT_AST_NODE_PORTLIST || node->type == ELEMENT_AST_NODE_EXPRLIST)
-    {
+    } else if (node->type == ELEMENT_AST_NODE_PORTLIST || node->type == ELEMENT_AST_NODE_EXPRLIST) {
         // Create string for port list
         std::string port_string = "(";
 
-        for (int i = 0; i <= node->children.size() - 1; i++)
-        {
+        for (int i = 0; i <= node->children.size() - 1; i++) {
             port_string += ast_to_code(node->children[i].get(), node);
-            if (i != node->children.size() - 1)
-            {
+            if (i != node->children.size() - 1) {
                 port_string += ", ";
             }
         }
@@ -364,63 +310,39 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent)
         // Add closing brace
         port_string += ")";
         string += port_string;
-    }
-    else if (node->type == ELEMENT_AST_NODE_PORT)
-    {
-        if (!node->identifier.empty())
-        {
+    } else if (node->type == ELEMENT_AST_NODE_PORT) {
+        if (!node->identifier.empty()) {
             string += node->identifier;
-        }
-        else if (node->nearest_token->type == ELEMENT_TOK_UNDERSCORE)
-        {
+        } else if (node->nearest_token->type == ELEMENT_TOK_UNDERSCORE) {
             string += "_";
         }
-    }
-    else if (node->type == ELEMENT_AST_NODE_STRUCT)
-    {
+    } else if (node->type == ELEMENT_AST_NODE_STRUCT) {
         string += "struct ";
-    }
-    else if (node->type == ELEMENT_AST_NODE_CALL)
-    {
-        if (parent->type == ELEMENT_AST_NODE_FUNCTION)
-        {
+    } else if (node->type == ELEMENT_AST_NODE_CALL) {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION) {
             string += " = ";
-        }
-        else if (parent->type == ELEMENT_AST_NODE_CALL)
-        {
+        } else if (parent->type == ELEMENT_AST_NODE_CALL) {
             string += ".";
         }
         string += node->identifier;
-    }
-    else if (node->type == ELEMENT_AST_NODE_LAMBDA)
-    {
-        if (parent->type == ELEMENT_AST_NODE_FUNCTION)
-        {
+    } else if (node->type == ELEMENT_AST_NODE_LAMBDA) {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION) {
             string += " = ";
         }
         string += "_";
-    }
-    else if (node->type == ELEMENT_AST_NODE_NAMESPACE)
-    {
+    } else if (node->type == ELEMENT_AST_NODE_NAMESPACE) {
         string += fmt::format("namespace {} ", node->identifier);
-    }
-    else if (node->type == ELEMENT_AST_NODE_SCOPE)
-    {
+    } else if (node->type == ELEMENT_AST_NODE_SCOPE) {
         std::string scope_string;
 
-        if (parent->type == ELEMENT_AST_NODE_FUNCTION)
-        {
+        if (parent->type == ELEMENT_AST_NODE_FUNCTION) {
             scope_string = " { ";
-        }
-        else
-        {
+        } else {
             scope_string = "{ ";
         }
 
-        if (!node->children.empty())
-        {
-            for (int i = 0; i <= node->children.size() - 1; i++)
-            {
+        if (!node->children.empty()) {
+            for (int i = 0; i <= node->children.size() - 1; i++) {
                 scope_string += ast_to_code(node->children[i].get(), node) + " ";
             }
         }
@@ -431,8 +353,7 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent)
     }
 
     for (const auto& child : node->children)
-        if (child.get()->type != ELEMENT_AST_NODE_PORT && node->type != ELEMENT_AST_NODE_EXPRLIST && node->type != ELEMENT_AST_NODE_SCOPE)
-        {
+        if (child.get()->type != ELEMENT_AST_NODE_PORT && node->type != ELEMENT_AST_NODE_EXPRLIST && node->type != ELEMENT_AST_NODE_SCOPE) {
             string += ast_to_code(child.get(), node);
         }
 
@@ -463,7 +384,6 @@ void element_log_ctx::log(const element_tokeniser_ctx& context, element_result c
 
     log(msg);
 }
-
 
 void element_log_ctx::log(const element_interpreter_ctx& context, element_result code, const std::string& message) const
 {
@@ -520,8 +440,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     assert(context.tokeniser);
 
     const bool starts_with_prelude = std::string(context.tokeniser->raw_source_name).rfind("Prelude/", 0) == 0;
-    if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude))
-    {
+    if (starts_with_prelude && !flag_set(logging_bitmask, log_flags::debug | log_flags::output_prelude)) {
         return; //early out if prelude logging disabled
     }
 
@@ -536,8 +455,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
 
     std::string new_log_message = message;
     std::string source_line;
-    if (nearest_ast && nearest_ast->nearest_token)
-    {
+    if (nearest_ast && nearest_ast->nearest_token) {
         msg.line = nearest_ast->nearest_token->line;
         msg.character = nearest_ast->nearest_token->character;
         msg.length = nearest_ast->nearest_token->tok_len;
@@ -547,8 +465,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
     }
 
     //Only print ast/token prelude info if it's forced on or if a non-zero code is being logged
-    if (code != ELEMENT_OK)
-    {
+    if (code != ELEMENT_OK) {
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens))
             new_log_message += "\n\nTOKENS\n------\n" + tokens_to_string(context.tokeniser, nearest_ast ? nearest_ast->nearest_token : nullptr);
 
@@ -566,7 +483,7 @@ void element_log_ctx::log(const element_parser_ctx& context, element_result code
 }
 
 void element_log_ctx::log(const element_compiler_ctx& context, element_result code, const std::string& message,
-                          const element_ast* nearest_ast) const
+    const element_ast* nearest_ast) const
 {
     auto msg = element_log_message();
     msg.message = message.c_str();
@@ -581,22 +498,18 @@ void element_log_ctx::log(const element_compiler_ctx& context, element_result co
     msg.line_in_source = nullptr;
 
     std::string new_log_message;
-    if (nearest_ast && nearest_ast->nearest_token)
-    {
+    if (nearest_ast && nearest_ast->nearest_token) {
         msg.line = nearest_ast->nearest_token->line;
         msg.character = nearest_ast->nearest_token->character;
         msg.length = nearest_ast->nearest_token->tok_len;
 
         //todo: print source code/use james debug recreation
         new_log_message = message;
-    }
-    else
-    {
+    } else {
         new_log_message = message;
     }
 
-    if (code != ELEMENT_OK)
-    {
+    if (code != ELEMENT_OK) {
         if (flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast))
             new_log_message += "\n\nAST\n---\n" + ast_to_string(nearest_ast ? nearest_ast->get_root() : nullptr, 0, nearest_ast);
     }

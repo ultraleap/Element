@@ -57,8 +57,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     ELEMENT_OK_OR_RETURN(element_tokeniser_run(tokeniser, str, info.file_name.get()->data()));
     const auto total_lines_parsed = tokeniser->line;
 
-    for (auto i = 0; i < total_lines_parsed; ++i)
-    {
+    for (auto i = 0; i < total_lines_parsed; ++i) {
         //lines start at 1
         info.source_lines.emplace_back(std::make_unique<std::string>(tokeniser->text_on_line(i + 1)));
     }
@@ -70,8 +69,7 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
                                 ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
                                 : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
 
-    if (log_tokens)
-    {
+    if (log_tokens) {
         log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
     }
 
@@ -87,15 +85,13 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
                              ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
                              : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
 
-    if (log_ast)
-    {
+    if (log_ast) {
         log("\n---\nAST\n---\n" + ast_to_string(parser.root));
     }
 
     //parse only enabled, skip object model generation to avoid error codes with positive values
     //i.e. errors returned other than ELEMENT_ERROR_PARSE
-    if (parse_only)
-    {
+    if (parse_only) {
         element_ast_delete(&parser.root);
         return ELEMENT_OK;
     }
@@ -103,15 +99,13 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     auto object_model = element::build_root_scope(this, parser.root, result);
     element_ast_delete(&parser.root);
 
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         log(result, fmt::format("building object model failed with element_result {}", result), filename);
         return result;
     }
 
     result = src_scope->merge(std::move(object_model));
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         log(result, fmt::format("merging object models failed with element_result {}", result), filename);
         return result;
     }
@@ -127,8 +121,7 @@ element_result element_interpreter_ctx::load(const char* str, const char* filena
 element_result element_interpreter_ctx::load_file(const std::string& file)
 {
     const auto extension = fs::path(file).extension().string();
-    if (extension != ".ele")
-    {
+    if (extension != ".ele") {
         std::string msg = fmt::format("Invalid file type in 'load_file'. Expected '.ele' and got '{}'", extension);
         element_result result = ELEMENT_ERROR_INVALID_FILE_TYPE;
         log(result, msg, file);
@@ -137,8 +130,7 @@ element_result element_interpreter_ctx::load_file(const std::string& file)
 
     const auto abs = fs::absolute(fs::path(file)).string();
 
-    if (!file_exists(abs))
-    {
+    if (!file_exists(abs)) {
         std::string msg = fmt::format("File not file:  {} was not found at path {}\n", file, abs.c_str());
         element_result result = ELEMENT_ERROR_FILE_NOT_FOUND;
         log(result, msg, file);
@@ -161,8 +153,7 @@ element_result element_interpreter_ctx::load_files(const std::vector<std::string
 {
     element_result ret = ELEMENT_OK;
 
-    for (const auto& filename : files)
-    {
+    for (const auto& filename : files) {
         const element_result result = load_file(filename);
         if (result != ELEMENT_OK && ret == ELEMENT_OK) //todo: only returns first error
             ret = result;
@@ -179,11 +170,10 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
         actual_package_name = package.substr(0, last_dash);
 
     auto package_path = "ElementPackages/" + actual_package_name;
-    if (!directory_exists(package_path))
-    {
+    if (!directory_exists(package_path)) {
         auto abs = fs::absolute(fs::path(package_path)).string();
         std::string msg = fmt::format("package '{}' does not exist at path '{}'\n",
-                                      package_path, abs);
+            package_path, abs);
         element_result result = ELEMENT_ERROR_DIRECTORY_NOT_FOUND;
         log(result, msg);
         return result;
@@ -191,26 +181,21 @@ element_result element_interpreter_ctx::load_package(const std::string& package)
 
     element_result ret = ELEMENT_OK;
 
-    for (const auto& file : fs::recursive_directory_iterator(package_path))
-    {
+    for (const auto& file : fs::recursive_directory_iterator(package_path)) {
         const auto filename = file.path().string();
         const auto extension = file.path().extension().string();
 
-        if (extension == ".ele")
-        {
+        if (extension == ".ele") {
             const element_result result = load_file(file.path().string());
-            if (result != ELEMENT_OK && ret == ELEMENT_OK)
-            {
+            if (result != ELEMENT_OK && ret == ELEMENT_OK) {
                 std::string msg = fmt::format("Error when loading '.ele' file '{}' in package '{}'.\n",
                     package_path, filename);
                 log(msg);
                 ret = result;
             }
-        }
-        else if (extension != ".bond")
-        {
+        } else if (extension != ".bond") {
             std::string msg = fmt::format("Unexpected file in package '{}'. File '{}' has extension '{}' instead of '.ele' or '.bond'\n",
-                                          package_path, filename, extension);
+                package_path, filename, extension);
             log(msg);
         }
     }
@@ -222,8 +207,7 @@ element_result element_interpreter_ctx::load_packages(const std::vector<std::str
 {
     element_result ret = ELEMENT_OK;
 
-    for (const auto& package : packages)
-    {
+    for (const auto& package : packages) {
         auto package_path = "ElementPackages/" + package;
         const auto result = load_package(package);
         if (result != ELEMENT_OK && ret != ELEMENT_OK) //todo: only returns first error
@@ -256,7 +240,7 @@ void element_interpreter_ctx::log(element_result code, const std::string& messag
         logger->log(*this, code, message, filename);
 }
 
-void element_interpreter_ctx::log(element_result code, const std::string & message) const
+void element_interpreter_ctx::log(element_result code, const std::string& message) const
 {
     if (logger)
         logger->log(*this, code, message);
@@ -341,8 +325,7 @@ element_result element_interpreter_ctx::call_expression_to_objects(
 
     //parse only enabled, skip object model generation to avoid error codes with positive values
     //i.e. errors returned other than ELEMENT_ERROR_PARSE
-    if (parse_only)
-    {
+    if (parse_only) {
         root.children.clear();
         return ELEMENT_OK;
     }
@@ -356,8 +339,7 @@ element_result element_interpreter_ctx::call_expression_to_objects(
 
     root.children.clear();
 
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         log(result, fmt::format("building object model failed with element_result {}", result), src_context->file_info[data].file_name->data());
         return result;
     }
@@ -452,8 +434,7 @@ element_result element_interpreter_ctx::expression_to_object(
 
     //parse only enabled, skip object model generation to avoid error codes with positive values
     //i.e. errors returned other than ELEMENT_ERROR_PARSE
-    if (parse_only)
-    {
+    if (parse_only) {
         root.children.clear();
         return ELEMENT_OK;
     }
@@ -467,15 +448,13 @@ element_result element_interpreter_ctx::expression_to_object(
 
     root.children.clear();
 
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         log(result, fmt::format("building object model failed with element_result {}", result), info.file_name->data());
         return result;
     }
 
     bool success = global_scope->add_declaration(std::move(dummy_declaration), caches);
-    if (!success)
-    {
+    if (!success) {
         (*object)->obj = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
@@ -484,8 +463,7 @@ element_result element_interpreter_ctx::expression_to_object(
     assert(found_dummy_decl);
     auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
 
-    if (!compiled)
-    {
+    if (!compiled) {
         (*object)->obj = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
@@ -515,5 +493,3 @@ element_result element_interpreter_ctx::clear()
 
     return ELEMENT_OK;
 }
-
-

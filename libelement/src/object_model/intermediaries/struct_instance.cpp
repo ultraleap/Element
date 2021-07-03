@@ -23,12 +23,11 @@ struct_instance::struct_instance(const struct_declaration* declarer)
 std::string struct_instance::to_string() const
 {
     std::string input_string;
-    for (std::size_t i = 0; i < declarer->inputs.size(); ++i)
-    {
+    for (std::size_t i = 0; i < declarer->inputs.size(); ++i) {
         input_string += fmt::format("{}{} = {}",
-                                    declarer->inputs[i].get_name(),
-                                    declarer->inputs[i].has_annotation() ? ":" + declarer->inputs[i].get_annotation()->to_string() : "",
-                                    fields.at(declarer->inputs[i].get_name())->to_string());
+            declarer->inputs[i].get_name(),
+            declarer->inputs[i].has_annotation() ? ":" + declarer->inputs[i].get_annotation()->to_string() : "",
+            fields.at(declarer->inputs[i].get_name())->to_string());
 
         if (i < static_cast<int>(declarer->inputs.size()) - 1)
             input_string += ", ";
@@ -52,14 +51,13 @@ struct_instance::struct_instance(const struct_declaration* declarer, const std::
 {
     //TODO: JM - variadics
     assert(declarer->inputs.size() == expressions.size());
-    for (size_t i = 0; i < declarer->inputs.size(); ++i)
-    {
+    for (size_t i = 0; i < declarer->inputs.size(); ++i) {
         fields.emplace(declarer->inputs[i].get_name(), expressions[i]);
     }
 }
 
 object_const_shared_ptr struct_instance::index(const compilation_context& context, const identifier& name,
-                                               const source_information& source_info) const
+    const source_information& source_info) const
 {
     const auto found_field = fields.find(name.value);
 
@@ -71,7 +69,7 @@ object_const_shared_ptr struct_instance::index(const compilation_context& contex
 }
 
 object_const_shared_ptr struct_instance::compile(const compilation_context& context,
-                                                 const source_information& source_info) const
+    const source_information& source_info) const
 {
     return shared_from_this();
 }
@@ -81,8 +79,7 @@ std::shared_ptr<const instruction> struct_instance::to_instruction() const
     std::vector<instruction_const_shared_ptr> dependents;
     std::vector<std::string> dependents_names;
 
-    for (const auto& input : declarer->inputs)
-    {
+    for (const auto& input : declarer->inputs) {
         assert(fields.count(input.get_name()));
         const auto field = fields.at(input.get_name());
         assert(field);

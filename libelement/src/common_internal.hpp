@@ -23,13 +23,12 @@ struct element_ast;
 
 namespace element
 {
-    struct instruction;
-    class log_message;
-}
+struct instruction;
+class log_message;
+} // namespace element
 
 #define ENSURE_NOT_NULL(t)                \
-    if (t == nullptr)                     \
-    {                                     \
+    if (t == nullptr) {                   \
         return ELEMENT_ERROR_INVALID_PTR; \
     }
 
@@ -52,16 +51,11 @@ struct element_log_ctx
     template <typename String, typename... Args>
     void log_step(String&& str, Args&&... args) const
     {
-        try
-        {
+        try {
             fmt::print(std::string(compilation_step_indent_level, '\t') + std::forward<String>(str), std::forward<Args>(args)...);
-        }
-        catch (std::exception& e)
-        {
+        } catch (std::exception& e) {
             fmt::print(std::string("Failed to log_step - ") + e.what());
-        }
-        catch (...)
-        {
+        } catch (...) {
             std::cout << "Failed to log_step\n";
         }
     }
@@ -92,47 +86,47 @@ std::string ast_to_code(const element_ast* node, const element_ast* parent = nul
 
 namespace element
 {
-    class log_message
+class log_message
+{
+public:
+    log_message(element_log_message log_msg, std::string msg)
+        : result(log_msg.message_code)
+        , log_msg(std::move(log_msg))
+        , msg(std::move(msg))
     {
-    public:
-        log_message(element_log_message log_msg, std::string msg)
-            : result(log_msg.message_code)
-            , log_msg(std::move(log_msg))
-            , msg(std::move(msg))
-        {
-            this->log_msg.message = this->msg.c_str();
-            this->log_msg.message_length = static_cast<int>(this->msg.length());
-        }
+        this->log_msg.message = this->msg.c_str();
+        this->log_msg.message_length = static_cast<int>(this->msg.length());
+    }
 
-        [[nodiscard]] const element_log_message& get_log_message() const
-        {
-            return log_msg;
-        }
-
-        void append_text(std::string txt)
-        {
-            msg += txt;
-            this->log_msg.message = this->msg.c_str();
-            this->log_msg.message_length = static_cast<int>(this->msg.length());
-        }
-
-        const element_result result;
-
-    private:
-        element_log_message log_msg;
-        std::string msg;
-    };
-
-    struct file_information
+    [[nodiscard]] const element_log_message& get_log_message() const
     {
-        //note: unique_ptr so it's on the heap and the memory address doesn't change
-        std::vector<std::unique_ptr<std::string>> source_lines;
-        std::unique_ptr<std::string> file_name;
-    };
+        return log_msg;
+    }
 
-    //after talking to james we can/should change this around, something to discuss another time
-    struct source_context
+    void append_text(std::string txt)
     {
-        std::map<const char*, file_information> file_info;
-    };
+        msg += txt;
+        this->log_msg.message = this->msg.c_str();
+        this->log_msg.message_length = static_cast<int>(this->msg.length());
+    }
+
+    const element_result result;
+
+private:
+    element_log_message log_msg;
+    std::string msg;
+};
+
+struct file_information
+{
+    //note: unique_ptr so it's on the heap and the memory address doesn't change
+    std::vector<std::unique_ptr<std::string>> source_lines;
+    std::unique_ptr<std::string> file_name;
+};
+
+//after talking to james we can/should change this around, something to discuss another time
+struct source_context
+{
+    std::map<const char*, file_information> file_info;
+};
 } // namespace element

@@ -37,8 +37,7 @@ element_result eval(const char* evaluate)
     char* output_buffer = output_buffer_array.data();
 
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         printf("Output buffer too small");
         goto cleanup;
     }
@@ -62,11 +61,9 @@ element_result eval(const char* evaluate)
         goto cleanup;
 
     sprintf(output_buffer + strlen(output_buffer), "%s -> {", evaluate);
-    for (int i = 0; i < output.count; ++i)
-    {
+    for (int i = 0; i < output.count; ++i) {
         sprintf(output_buffer + strlen(output_buffer), "%f", output.values[i]);
-        if (i != output.count - 1)
-        {
+        if (i != output.count - 1) {
             sprintf(output_buffer + strlen(output_buffer), ", ");
         }
     }
@@ -102,8 +99,7 @@ element_result eval_with_source(const char* source, const char* evaluate)
     char* output_buffer = output_buffer_array.data();
 
     element_result result = element_interpreter_load_string(context, source, "<source>");
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         printf("Output buffer too small");
         goto cleanup;
     }
@@ -131,11 +127,9 @@ element_result eval_with_source(const char* source, const char* evaluate)
         goto cleanup;
 
     sprintf(output_buffer + strlen(output_buffer), "%s -> {", evaluate);
-    for (int i = 0; i < output.count; ++i)
-    {
+    for (int i = 0; i < output.count; ++i) {
         sprintf(output_buffer + strlen(output_buffer), "%f", output.values[i]);
-        if (i != output.count - 1)
-        {
+        if (i != output.count - 1) {
             sprintf(output_buffer + strlen(output_buffer), ", ");
         }
     }
@@ -161,8 +155,7 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     element_interpreter_set_log_callback(context, log_callback, nullptr);
     element_interpreter_load_prelude(context);
 
-    if (!package.empty())
-    {
+    if (!package.empty()) {
         auto result = element_interpreter_load_package(context, package.c_str());
         if (result != ELEMENT_OK)
             return result;
@@ -172,8 +165,7 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
     char* output_buffer = output_buffer_array.data();
 
     element_result result = element_interpreter_load_string(context, evaluate, "<input>");
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         printf("Output buffer too small");
         goto cleanup;
     }
@@ -191,11 +183,9 @@ element_result eval_with_inputs(const char* evaluate, element_inputs* inputs, el
         goto cleanup;
 
     sprintf(output_buffer + strlen(output_buffer), "%s -> {", evaluate);
-    for (int i = 0; i < outputs->count; ++i)
-    {
+    for (int i = 0; i < outputs->count; ++i) {
         sprintf(output_buffer + strlen(output_buffer), "%f", outputs->values[i]);
-        if (i != outputs->count - 1)
-        {
+        if (i != outputs->count - 1) {
             sprintf(output_buffer + strlen(output_buffer), ", ");
         }
     }
@@ -860,8 +850,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                         SECTION("Valid Constant Index")
                         {
-                            for (int i = 0; i < 3; ++i)
-                            {
+                            for (int i = 0; i < 3; ++i) {
                                 auto new_src = fmt::format(src, i);
                                 result = eval_with_inputs(new_src.c_str(), &input, &output);
 
@@ -944,8 +933,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                                 SECTION("Valid Index")
                                 {
-                                    for (int i = 0; i < 3; ++i)
-                                    {
+                                    for (int i = 0; i < 3; ++i) {
                                         inputs[6] = static_cast<float>(i);
                                         result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                                         REQUIRE(result == ELEMENT_OK);
@@ -985,8 +973,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                                 SECTION("Valid Index")
                                 {
-                                    for (int i = 0; i < 3; ++i)
-                                    {
+                                    for (int i = 0; i < 3; ++i) {
                                         inputs[7] = static_cast<float>(i);
                                         result = eval_with_inputs(src, &input, &output, "StandardLibrary");
                                         REQUIRE(result != ELEMENT_OK);
@@ -1028,8 +1015,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                                 SECTION("Valid Index")
                                 {
-                                    for (int i = 0; i < 3; ++i)
-                                    {
+                                    for (int i = 0; i < 3; ++i) {
                                         std::string new_src = fmt::format(src, i);
                                         result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
                                         REQUIRE(result == ELEMENT_OK);
@@ -1070,8 +1056,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                                 SECTION("Valid Index")
                                 {
-                                    for (int i = 0; i < 3; ++i)
-                                    {
+                                    for (int i = 0; i < 3; ++i) {
                                         std::string new_src = fmt::format(src, i);
                                         result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
                                         REQUIRE(result == ELEMENT_OK);
@@ -1108,8 +1093,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                             SECTION("Valid Index")
                             {
-                                for (int i = 0; i < 3; ++i)
-                                {
+                                for (int i = 0; i < 3; ++i) {
                                     inputs[3] = static_cast<float>(i);
 
                                     result = eval_with_inputs(src, &input, &output, "StandardLibrary");
@@ -1146,8 +1130,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                             SECTION("Valid Index")
                             {
-                                for (int i = 0; i < 3; ++i)
-                                {
+                                for (int i = 0; i < 3; ++i) {
                                     std::string new_src = fmt::format(src, i);
                                     result = eval_with_inputs(new_src.c_str(), &input, &output, "StandardLibrary");
                                     REQUIRE(result == ELEMENT_OK);
@@ -1172,8 +1155,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 3> inputs = { 4, 2, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size())};
-                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size())};
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const char* src = "evaluate(a:Num, b:Num, idx:Num):Num = list(1, 2, a).map(_(n:Num) = n.mul(b)).at(idx)";
 
@@ -1385,8 +1368,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 1, 2, 3, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size())};
-                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size())};
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const auto* src = "evaluate(a:Num, b:Num, c:Num, idx:Num):Num = List.zip(list(a, b, c), list(3, 2, 1), Num.add).at(idx)";
 
@@ -1556,8 +1539,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                             SECTION("Valid Index")
                             {
-                                for (int i = 0; i < static_cast<int>(inputs[0]); ++i)
-                                {
+                                for (int i = 0; i < static_cast<int>(inputs[0]); ++i) {
                                     inputs[1] = static_cast<float>(i);
                                     result = eval_with_inputs(src, &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
@@ -2365,8 +2347,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                             SECTION("Valid Index")
                             {
-                                for (int i = 0; i < 3; ++i)
-                                {
+                                for (int i = 0; i < 3; ++i) {
                                     inputs[3] = static_cast<float>(i);
                                     result = eval_with_inputs(src, &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
@@ -2628,8 +2609,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                             SECTION("Valid Index")
                             {
-                                for (int i = 0; i < 2; ++i)
-                                {
+                                for (int i = 0; i < 2; ++i) {
                                     inputs[3] = static_cast<float>(i);
                                     result = eval_with_inputs(src, &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
@@ -2817,8 +2797,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                             SECTION("Valid Index")
                             {
-                                for (int i = 0; i < 3; ++i)
-                                {
+                                for (int i = 0; i < 3; ++i) {
                                     inputs[0] = static_cast<float>(i);
                                     result = eval_with_inputs(new_src.c_str(), &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
@@ -2871,8 +2850,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
 
                             SECTION("Valid Index")
                             {
-                                for (int i = 0; i < 3; ++i)
-                                {
+                                for (int i = 0; i < 3; ++i) {
                                     auto new_src = fmt::format(src, i);
                                     result = eval_with_inputs(new_src.c_str(), &input, &output);
                                     REQUIRE(result == ELEMENT_OK);
@@ -3105,8 +3083,8 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     {
                         std::array<float, 4> inputs = { 0, 0, 0, 0 };
                         std::array<float, 1> outputs = { 0 };
-                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size())};
-                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size())};
+                        element_inputs input{ inputs.data(), static_cast<int>(inputs.size()) };
+                        element_outputs output{ outputs.data(), static_cast<int>(outputs.size()) };
 
                         const char* src = "evaluate(a:Bool, b:Bool, c:Bool, start:Bool):Bool = list(a, b, c).fold(start, Bool.or)";
 

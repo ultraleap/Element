@@ -33,8 +33,7 @@ object_const_shared_ptr anonymous_block_expression::resolve(const compilation_co
     for (const auto& [identifier, declaration] : our_scope->get_declarations())
         compiled_declarations.emplace(identifier, declaration->compile(context, source_info));
 
-    for (const auto& [identifier, obj] : compiled_declarations)
-    {
+    for (const auto& [identifier, obj] : compiled_declarations) {
         if (obj->is_error())
             return obj;
     }

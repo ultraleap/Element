@@ -15,7 +15,7 @@
 using namespace element;
 
 port::port()
-    : port(nullptr, identifier{ "" }, std::make_shared<const type_annotation>(identifier{""}), nullptr)
+    : port(nullptr, identifier{ "" }, std::make_shared<const type_annotation>(identifier{ "" }), nullptr)
 {
 }
 
@@ -44,8 +44,7 @@ object_const_shared_ptr port::generate_placeholder(
     const std::size_t boundary_scope) const
 {
     const auto* type = resolve_annotation(context);
-    if (!type)
-    {
+    if (!type) {
         return std::make_shared<const error>(
             fmt::format("Failed to resolve annotation '{}'", annotation ? annotation->to_string() : ""),
             ELEMENT_ERROR_UNKNOWN,
@@ -73,8 +72,7 @@ void port::validate(const compilation_context& context) const
         return;
 
     const auto* decl = resolve_annotation(context);
-    if (!decl)
-    {
+    if (!decl) {
         auto e = error(
             fmt::format("constraint '{}' could not be found", annotation->to_string()),
             ELEMENT_ERROR_NOT_A_CONSTRAINT,
@@ -86,8 +84,7 @@ void port::validate(const compilation_context& context) const
 
     const auto* struct_decl = dynamic_cast<const struct_declaration*>(decl);
     const auto* constraint_decl = dynamic_cast<const constraint_declaration*>(decl);
-    if (!struct_decl && !constraint_decl)
-    {
+    if (!struct_decl && !constraint_decl) {
         auto e = error(
             fmt::format("'{}' is not a struct nor a constraint", annotation->to_string()),
             ELEMENT_ERROR_NOT_A_CONSTRAINT,

@@ -13,181 +13,176 @@
 
 namespace element
 {
-    bool object::is_error() const
-    {
+bool object::is_error() const
+{
+    return false;
+}
+
+element_result object::log_any_error(const element_log_ctx* logger) const
+{
+    return ELEMENT_OK;
+}
+
+bool object::is_constant() const
+{
+    return false;
+}
+
+bool object::matches_constraint(const compilation_context& context, const constraint* constraint) const
+{
+    if (!constraint || constraint == constraint::any.get())
+        return true;
+
+    return false;
+}
+
+object_const_shared_ptr object::index(const compilation_context& context, const identifier&,
+    const source_information& source_info) const
+{
+    return build_error_and_log<error_message_code::not_indexable>(context, source_info, to_string());
+}
+
+object_const_shared_ptr object::call(const compilation_context& context, std::vector<object_const_shared_ptr>,
+    const source_information& source_info) const
+{
+    return build_error_and_log<error_message_code::not_callable>(context, source_info, to_string());
+}
+
+object_const_shared_ptr object::compile(const compilation_context& context,
+    const source_information& source_info) const
+{
+    return build_error_and_log<error_message_code::not_compilable>(context, source_info, to_string());
+}
+
+bool valid_call(
+    const compilation_context& context,
+    const declaration* declarer,
+    const std::vector<object_const_shared_ptr>& compiled_args)
+{
+    if (compiled_args.size() != declarer->inputs.size())
         return false;
-    }
 
-    element_result object::log_any_error(const element_log_ctx* logger) const
-    {
-        return ELEMENT_OK;
-    }
+    for (unsigned int i = 0; i < compiled_args.size(); ++i) {
+        const auto& arg = compiled_args[i];
+        const auto& input = declarer->inputs[i];
 
-    bool object::is_constant() const
-    {
-        return false;
-    }
-
-    bool object::matches_constraint(const compilation_context& context, const constraint* constraint) const
-    {
-        if (!constraint || constraint == constraint::any.get())
+        //no annotation always matches
+        if (!input.has_annotation())
             return true;
 
-        return false;
-    }
-
-    object_const_shared_ptr object::index(const compilation_context& context, const identifier&,
-                                          const source_information& source_info) const
-    {
-        return build_error_and_log<error_message_code::not_indexable>(context, source_info, to_string());
-    }
-
-    object_const_shared_ptr object::call(const compilation_context& context, std::vector<object_const_shared_ptr>,
-                                         const source_information& source_info) const
-    {
-        return build_error_and_log<error_message_code::not_callable>(context, source_info, to_string());
-    }
-
-    object_const_shared_ptr object::compile(const compilation_context& context,
-                                            const source_information& source_info) const
-    {
-        return build_error_and_log<error_message_code::not_compilable>(context, source_info, to_string());
-    }
-
-    bool valid_call(
-        const compilation_context& context,
-        const declaration* declarer,
-        const std::vector<object_const_shared_ptr>& compiled_args)
-    {
-        if (compiled_args.size() != declarer->inputs.size())
+        const auto* const type = input.resolve_annotation(context);
+        if (!type) {
+            auto error_msg = fmt::format("typename '{}' for port {}({}) of {} could not be found",
+                input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value);
+            auto e = error(std::move(error_msg), ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, declarer->source_info, context.get_logger());
             return false;
-
-        for (unsigned int i = 0; i < compiled_args.size(); ++i)
-        {
-            const auto& arg = compiled_args[i];
-            const auto& input = declarer->inputs[i];
-
-            //no annotation always matches
-            if (!input.has_annotation())
-                return true;
-
-            const auto* const type = input.resolve_annotation(context);
-            if (!type)
-            {
-                auto error_msg = fmt::format("typename '{}' for port {}({}) of {} could not be found",
-                                             input.get_annotation()->to_string(), input.get_name(), i, declarer->name.value);
-                auto e = error(std::move(error_msg), ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, declarer->source_info, context.get_logger());
-                return false;
-            }
-
-            if (!arg->matches_constraint(context, type->get_constraint()))
-                return false;
         }
 
-        return true;
+        if (!arg->matches_constraint(context, type->get_constraint()))
+            return false;
     }
 
-    std::shared_ptr<const error> build_error_for_invalid_call(
-        const compilation_context& context,
-        const declaration* declarer,
-        const std::vector<object_const_shared_ptr>& compiled_args)
-    {
-        assert(!valid_call(context, declarer, compiled_args));
+    return true;
+}
 
-        std::string input_params;
-        for (unsigned i = 0; i < declarer->inputs.size(); ++i)
-        {
-            const auto& input = declarer->inputs[i];
-            input_params += fmt::format("({}) {}{}", i, input.get_name(), input.has_annotation() ? ":" + input.get_annotation()->to_string() : "");
-            if (i != declarer->inputs.size() - 1)
-                input_params += ", ";
-        }
+std::shared_ptr<const error> build_error_for_invalid_call(
+    const compilation_context& context,
+    const declaration* declarer,
+    const std::vector<object_const_shared_ptr>& compiled_args)
+{
+    assert(!valid_call(context, declarer, compiled_args));
 
-        std::string given_params;
-        for (unsigned i = 0; i < compiled_args.size(); ++i)
-        {
-            const auto& input = compiled_args[i];
-            given_params += fmt::format("({}) _:{}", i, input->to_string());
-            if (i != compiled_args.size() - 1)
-                given_params += ", ";
-        }
-
-        if (compiled_args.size() != declarer->inputs.size())
-        {
-            return build_error<error_message_code::argument_count_mismatch>(declarer->source_info,
-                               declarer->location(), declarer->inputs.size(), compiled_args.size(), input_params, given_params);
-        }
-
-        auto error_string = fmt::format("constraint not satisfied for function {}\nfunction has {} inputs\nfunction parameters = {}\narguments passed = {}",
-                                        declarer->name.value, declarer->inputs.size(), input_params, given_params);
-
-        return std::make_shared<error>(std::move(error_string), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
+    std::string input_params;
+    for (unsigned i = 0; i < declarer->inputs.size(); ++i) {
+        const auto& input = declarer->inputs[i];
+        input_params += fmt::format("({}) {}{}", i, input.get_name(), input.has_annotation() ? ":" + input.get_annotation()->to_string() : "");
+        if (i != declarer->inputs.size() - 1)
+            input_params += ", ";
     }
 
-    object_const_shared_ptr index_type(const declaration* type,
-                                       object_const_shared_ptr instance,
-                                       const compilation_context& context,
-                                       const identifier& name,
-                                       const source_information& source_info)
-    {
-        if (type->our_scope->is_empty())
-            return std::make_shared<const error>(
-                "Structs with empty scopes cannot be indexed",
-                ELEMENT_ERROR_INVALID_EXPRESSION,
-                source_info,
-                context.get_logger());
+    std::string given_params;
+    for (unsigned i = 0; i < compiled_args.size(); ++i) {
+        const auto& input = compiled_args[i];
+        given_params += fmt::format("({}) _:{}", i, input->to_string());
+        if (i != compiled_args.size() - 1)
+            given_params += ", ";
+    }
 
-        const auto* func = dynamic_cast<const function_declaration*>(type->our_scope->find(name, context.interpreter->caches, false));
+    if (compiled_args.size() != declarer->inputs.size()) {
+        return build_error<error_message_code::argument_count_mismatch>(declarer->source_info,
+            declarer->location(), declarer->inputs.size(), compiled_args.size(), input_params, given_params);
+    }
 
-        //todo: not exactly working type checking, good enough for now though
-        const bool has_inputs = func && func->has_inputs();
-        const bool has_type = has_inputs && func->inputs[0].get_annotation();
-        const bool types_match = has_type && func->inputs[0].get_annotation()->to_string() == type->name.value;
+    auto error_string = fmt::format("constraint not satisfied for function {}\nfunction has {} inputs\nfunction parameters = {}\narguments passed = {}",
+        declarer->name.value, declarer->inputs.size(), input_params, given_params);
 
-        //call as instance function, filling in first argument
-        if (types_match)
-            return func->call(context, { std::move(instance) }, source_info);
+    return std::make_shared<error>(std::move(error_string), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, declarer->source_info);
+}
 
-        //todo: instead of relying on generic error handling for nullptr, build a specific error
-        if (!func)
-            return nullptr;
+object_const_shared_ptr index_type(const declaration* type,
+    object_const_shared_ptr instance,
+    const compilation_context& context,
+    const identifier& name,
+    const source_information& source_info)
+{
+    if (type->our_scope->is_empty())
+        return std::make_shared<const error>(
+            "Structs with empty scopes cannot be indexed",
+            ELEMENT_ERROR_INVALID_EXPRESSION,
+            source_info,
+            context.get_logger());
 
-        if (!has_inputs)
-            return build_error_and_log<error_message_code::instance_function_cannot_be_nullary>(context, source_info,
-                                       func->to_string(), instance->to_string());
+    const auto* func = dynamic_cast<const function_declaration*>(type->our_scope->find(name, context.interpreter->caches, false));
 
-        if (!has_type)
-            return build_error_and_log<error_message_code::is_not_an_instance_function_any_type>(context, source_info,
-                                       func->to_string(), instance->to_string(), func->inputs[0].get_name());
+    //todo: not exactly working type checking, good enough for now though
+    const bool has_inputs = func && func->has_inputs();
+    const bool has_type = has_inputs && func->inputs[0].get_annotation();
+    const bool types_match = has_type && func->inputs[0].get_annotation()->to_string() == type->name.value;
 
-        if (!types_match)
-            return build_error_and_log<error_message_code::is_not_an_instance_function_wrong_type>(context, source_info,
-                                       func->to_string(), instance->to_string(),
-                                       func->inputs[0].get_name(), func->inputs[0].get_annotation()->to_string(), type->name.value);
+    //call as instance function, filling in first argument
+    if (types_match)
+        return func->call(context, { std::move(instance) }, source_info);
 
-        //did we miss an error that we need to handle?
-        assert(false);
+    //todo: instead of relying on generic error handling for nullptr, build a specific error
+    if (!func)
         return nullptr;
-    }
 
-    object_const_shared_ptr compile_placeholder_expression(const compilation_context& context,
-                                                           const object& object,
-                                                           const std::vector<port>& inputs,
-                                                           const source_information& source_info,
-                                                           const std::size_t placeholder_offset,
-                                                           const int boundary_scope)
-    {
-        assert(!context.boundaries.empty());
-        const std::size_t boundary = boundary_scope < 0 ? context.boundaries.size() - 1 : boundary_scope;
-        auto [placeholders, size] = generate_placeholder_inputs(context, inputs, placeholder_offset, boundary);
-        context.boundaries[boundary].size = size;
+    if (!has_inputs)
+        return build_error_and_log<error_message_code::instance_function_cannot_be_nullary>(context, source_info,
+            func->to_string(), instance->to_string());
 
-        context.boundaries.push_back({});
-        auto compiled = object.call(context, std::move(placeholders), source_info);
-        context.boundaries.pop_back();
+    if (!has_type)
+        return build_error_and_log<error_message_code::is_not_an_instance_function_any_type>(context, source_info,
+            func->to_string(), instance->to_string(), func->inputs[0].get_name());
 
-        compiled->log_any_error(context.get_logger());
-        return compiled;
-    }
+    if (!types_match)
+        return build_error_and_log<error_message_code::is_not_an_instance_function_wrong_type>(context, source_info,
+            func->to_string(), instance->to_string(),
+            func->inputs[0].get_name(), func->inputs[0].get_annotation()->to_string(), type->name.value);
+
+    //did we miss an error that we need to handle?
+    assert(false);
+    return nullptr;
+}
+
+object_const_shared_ptr compile_placeholder_expression(const compilation_context& context,
+    const object& object,
+    const std::vector<port>& inputs,
+    const source_information& source_info,
+    const std::size_t placeholder_offset,
+    const int boundary_scope)
+{
+    assert(!context.boundaries.empty());
+    const std::size_t boundary = boundary_scope < 0 ? context.boundaries.size() - 1 : boundary_scope;
+    auto [placeholders, size] = generate_placeholder_inputs(context, inputs, placeholder_offset, boundary);
+    context.boundaries[boundary].size = size;
+
+    context.boundaries.push_back({});
+    auto compiled = object.call(context, std::move(placeholders), source_info);
+    context.boundaries.pop_back();
+
+    compiled->log_any_error(context.get_logger());
+    return compiled;
+}
 
 } // namespace element

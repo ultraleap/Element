@@ -30,16 +30,14 @@ std::shared_ptr<const object> instruction::index(
     const identifier& name,
     const source_information& source_info) const
 {
-    if (!actual_type)
-    {
+    if (!actual_type) {
         assert(false);
         return nullptr;
     }
 
     //find the declaration of the type that we are
     const auto* const actual_type_decl = context.get_global_scope()->find(actual_type->get_identifier(), context.interpreter->caches, false);
-    if (!actual_type_decl)
-    {
+    if (!actual_type_decl) {
         //TODO: Handle as error
         assert(!"failed to find declaration of our actual type, did the user declare the intrinsic?");
         return nullptr;
@@ -62,8 +60,7 @@ object_const_shared_ptr instruction_constant::call(const compilation_context& co
 instruction_if::instruction_if(instruction_const_shared_ptr predicate, instruction_const_shared_ptr if_true, instruction_const_shared_ptr if_false)
     : instruction(type_id, nullptr)
 {
-    if (if_true->actual_type != if_false->actual_type)
-    {
+    if (if_true->actual_type != if_false->actual_type) {
         assert(!"the resulting type of the two branches of an if-instruction must be the same");
     }
 

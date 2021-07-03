@@ -89,8 +89,7 @@ element_result element_interpreter_load_files(element_interpreter_ctx* interpret
 
     std::vector<std::string> actual_files;
     actual_files.resize(files_count);
-    for (auto i = 0; i < files_count; ++i)
-    {
+    for (auto i = 0; i < files_count; ++i) {
         //std::cout << fmt::format("load_file {}\n", files[i]); //todo: proper logging
         actual_files[i] = files[i];
     }
@@ -124,8 +123,7 @@ element_result element_interpreter_load_packages(element_interpreter_ctx* interp
 
     std::vector<std::string> actual_packages;
     actual_packages.resize(packages_count);
-    for (auto i = 0; i < packages_count; ++i)
-    {
+    for (auto i = 0; i < packages_count; ++i) {
         //std::cout << fmt::format("load_packages {}\n", packages[i]); //todo: proper logging
         actual_packages[i] = packages[i];
     }
@@ -225,22 +223,20 @@ element_result element_instruction_to_string(
 
     if (!buffer_size)
         return ELEMENT_ERROR_API_INVALID_INPUT;
-    
+
     const auto string = instruction_to_string(*instruction->instruction);
     const auto required_buffer_size = string.size() + 1;
 
-    if (!buffer)
-    {
+    if (!buffer) {
         *buffer_size = required_buffer_size;
         return ELEMENT_OK;
     }
 
-    if (*buffer_size < required_buffer_size)
-    {
+    if (*buffer_size < required_buffer_size) {
         *buffer_size = required_buffer_size;
         return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
     }
-    
+
     *buffer_size = required_buffer_size;
     strncpy(buffer, string.c_str(), string.size());
     buffer[string.size()] = '\0';
@@ -260,8 +256,7 @@ element_result element_interpreter_find(element_interpreter_ctx* interpreter, co
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
     const auto* decl = interpreter->global_scope->find(element::identifier(path), interpreter->caches, false);
-    if (!decl)
-    {
+    if (!decl) {
         *declaration = nullptr;
         interpreter->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("API - failed to find '{}'.", path));
         return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND;
@@ -311,11 +306,9 @@ element_result element_interpreter_compile_declaration(
 
     const bool declaration_is_nullary = declaration->decl->get_inputs().empty();
     const bool check_boundary = declaration_is_nullary ? options->check_valid_boundary_function_when_nullary : options->check_valid_boundary_function;
-    if (check_boundary)
-    {
+    if (check_boundary) {
         const auto result = valid_boundary_function(interpreter, compilation_context, options, declaration);
-        if (result != ELEMENT_OK)
-        {
+        if (result != ELEMENT_OK) {
             interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
             *instruction = nullptr;
             return result;
@@ -325,16 +318,14 @@ element_result element_interpreter_compile_declaration(
     const element_result result = ELEMENT_OK;
     const auto compiled = compile_placeholder_expression(compilation_context, *declaration->decl, declaration->decl->get_inputs(), {});
 
-    if (!compiled || compiled->is_error())
-    {
+    if (!compiled || compiled->is_error()) {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
         *instruction = nullptr;
         return result;
     }
 
     auto instr = compiled->to_instruction();
-    if (!instr)
-    {
+    if (!instr) {
         interpreter->log(result, "Failed to compile declaration to an instruction tree.");
         *instruction = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
@@ -357,7 +348,7 @@ element_result element_interpreter_evaluate_instruction(
 
     if (!instruction || !instruction->instruction)
         return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
-    
+
     if (!evaluator)
         return ELEMENT_ERROR_API_EVALUATOR_CTX_IS_NULL;
 
@@ -368,8 +359,7 @@ element_result element_interpreter_evaluate_instruction(
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
     //if it's just a constant then handle it quickly.
-    if (const auto* ic = instruction->instruction->as<element::instruction_constant>())
-    {
+    if (const auto* ic = instruction->instruction->as<element::instruction_constant>()) {
         outputs->count = 1;
         outputs->values[0] = ic->value();
         return ELEMENT_OK;
@@ -420,8 +410,7 @@ element_result element_interpreter_compile_expression(
 
     *instruction = new element_instruction();
 
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
         (*instruction)->instruction = nullptr;
         element_object_delete(&object_ptr);
@@ -429,12 +418,10 @@ element_result element_interpreter_compile_expression(
     }
 
     const auto* function_instance = dynamic_cast<const element::function_instance*>(object_ptr->obj.get());
-    if (!function_instance)
-    {
+    if (!function_instance) {
         interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
         auto instr = object_ptr->obj->to_instruction();
-        if (!instr)
-        {
+        if (!instr) {
             (*instruction)->instruction = nullptr;
             element_object_delete(&object_ptr);
             return ELEMENT_ERROR_UNKNOWN;
@@ -448,21 +435,19 @@ element_result element_interpreter_compile_expression(
     const element::compilation_context compilation_context(interpreter->global_scope.get(), interpreter);
     element_declaration declaration{ function_instance->declarer };
     result = valid_boundary_function(interpreter, compilation_context, options, &declaration);
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
         interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
         *instruction = nullptr;
         element_object_delete(&object_ptr);
         return result;
     }
-    
+
     result = ELEMENT_OK;
     const auto compiled = compile_placeholder_expression(compilation_context, *function_instance, function_instance->get_inputs(), {});
 
     interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
-    if (!compiled || compiled->is_error())
-    {
+    if (!compiled || compiled->is_error()) {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
         *instruction = nullptr;
         element_object_delete(&object_ptr);
@@ -470,8 +455,7 @@ element_result element_interpreter_compile_expression(
     }
 
     auto instr = compiled->to_instruction();
-    if (!instr)
-    {
+    if (!instr) {
         interpreter->log(result, "Failed to compile declaration to an instruction tree.");
         *instruction = nullptr;
         element_object_delete(&object_ptr);
@@ -549,8 +533,7 @@ element_result element_interpreter_evaluate_expression(
     element_instruction instruction;
     auto* instruction_ptr = &instruction;
     auto result = element_interpreter_compile_expression(interpreter, nullptr, expression_string, &instruction_ptr);
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         outputs->count = 0;
         return result;
     }
@@ -588,8 +571,7 @@ element_result element_interpreter_typeof_expression(
     const auto result = interpreter->expression_to_object(nullptr, expression_string, &object_ptr);
     interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
 
-    if (result != ELEMENT_OK)
-    {
+    if (result != ELEMENT_OK) {
         //todo:
         interpreter->log(result, "tried to get typeof an expression that failed to compile");
         element_object_delete(&object_ptr);
@@ -597,8 +579,7 @@ element_result element_interpreter_typeof_expression(
     }
 
     const auto typeof = object_ptr->obj->typeof_info();
-    if (buffer_size < static_cast<int>(typeof.size()))
-    {
+    if (buffer_size < static_cast<int>(typeof.size())) {
         //todo:
         interpreter->log(ELEMENT_ERROR_API_INSUFFICIENT_BUFFER, fmt::format("buffer size of {} isn't sufficient for string of {} characters", buffer_size, typeof.size()));
         element_object_delete(&object_ptr);
@@ -634,8 +615,7 @@ element_result element_interpreter_evaluate_call_expression(
         return result;
 
     std::vector<std::vector<element_value>> serialised_arguments;
-    for (const auto& arg : arguments)
-    {
+    for (const auto& arg : arguments) {
         if (arg->is_error())
             return arg->log_any_error(interpreter->logger.get());
 
@@ -664,8 +644,7 @@ element_result element_interpreter_evaluate_call_expression(
 
     outputs->count = 0;
 
-    for (const auto& arg : serialised_arguments)
-    {
+    for (const auto& arg : serialised_arguments) {
         std::copy_n(arg.data(), arg.size(), outputs->values + outputs->count);
         outputs->count += static_cast<int>(arg.size());
     }

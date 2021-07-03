@@ -37,8 +37,7 @@ object_const_shared_ptr compile_time_fold(
 
     auto aggregate = initial;
     const auto list_at = list->index(context, identifier::list_at_identifier, source_info);
-    for (int i = 0; i < list_count_constant->value(); ++i)
-    {
+    for (int i = 0; i < list_count_constant->value(); ++i) {
         indexer_arguments[0] = std::make_shared<const instruction_constant>(static_cast<element_value>(i));
         auto list_element = list_at->call(context, indexer_arguments, source_info);
         if (!list_element->is_constant())
