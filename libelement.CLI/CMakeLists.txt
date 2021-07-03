@@ -84,3 +84,19 @@ endif()
 if (CODE_COVERAGE)
     add_test(NAME test_cli COMMAND element_cli)
 endif()
+
+find_program(CLANG_FORMAT clang-format)
+if (CLANG_FORMAT)
+    find_package(Python)
+    add_custom_target(element_cli_clang_check
+            COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../libelement/scripts/run-clang-format.py -r
+                ${CMAKE_CURRENT_SOURCE_DIR}/src
+                ${CMAKE_CURRENT_SOURCE_DIR}/include
+            COMMENT "Checking element CLI sources against clang format styling.")
+
+    add_custom_target(element_cli_clang_format
+            COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../libelement/scripts/run-clang-format.py -i -r
+                ${CMAKE_CURRENT_SOURCE_DIR}/src
+                ${CMAKE_CURRENT_SOURCE_DIR}/include
+            COMMENT "Formatting element CLI sources to match clang format styling.")
+endif()
