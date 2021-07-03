@@ -323,13 +323,13 @@ private:
             buf[idx++] = '\0';
 
         const char def[] = {
-            0x00, 0x00,                                                // defs[0].name
-            flags & 0xFF, (flags >> 8) & 0xFF,                         // defs[0].flags
-            0x00, 0x00, 0x00, 0x00,                                    // defs[0].code
-            char(stack_count & 0xFF), char((stack_count >> 8) & 0xFF), // defs[0].stack_count_unaligned
-            char(stack_count & 0xFF), char((stack_count >> 8) & 0xFF), // defs[0].stack_count_aligned
-            char(args_count & 0xFF), char((args_count >> 8) & 0xFF),   // defs[0].args_count
-            char(rvals_count & 0xFF), char((rvals_count >> 8) & 0xFF), // defs[0].rvals_count
+            0x00, 0x00,                                                                          // defs[0].name
+            static_cast<char>(flags & 0xFF), static_cast<char>((flags >> 8) & 0xFF),             // defs[0].flags
+            0x00, 0x00, 0x00, 0x00,                                                              // defs[0].code
+            static_cast<char>(stack_count & 0xFF), static_cast<char>((stack_count >> 8) & 0xFF), // defs[0].stack_count_unaligned
+            static_cast<char>(stack_count & 0xFF), static_cast<char>((stack_count >> 8) & 0xFF), // defs[0].stack_count_aligned
+            static_cast<char>(args_count & 0xFF), static_cast<char>((args_count >> 8) & 0xFF),   // defs[0].args_count
+            static_cast<char>(rvals_count & 0xFF), static_cast<char>((rvals_count >> 8) & 0xFF), // defs[0].rvals_count
         };
         memcpy(buf.data() + idx, def, sizeof(def));
         idx += sizeof(def);
