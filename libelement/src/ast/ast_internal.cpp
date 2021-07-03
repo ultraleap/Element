@@ -18,7 +18,6 @@ element_ast::element_ast(element_ast* ast_parent)
     : type(ELEMENT_AST_NODE_NONE)
     , parent(ast_parent)
 {
-    children.reserve(20);
 }
 
 void element_ast::move(element_ast* from, element_ast* to, bool reparent)

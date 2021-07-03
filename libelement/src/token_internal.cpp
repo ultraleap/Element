@@ -54,7 +54,6 @@ void advance_to_end_of_line(std::string::const_iterator& it, const std::string::
 
 element_tokeniser_ctx::element_tokeniser_ctx()
 {
-    tokens.reserve(512);
     cur_token.type = ELEMENT_TOK_NONE;
     cur_token.post_pos = -1;
     cur_token.post_len = -1;
