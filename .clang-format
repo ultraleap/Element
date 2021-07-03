@@ -1,6 +1,6 @@
 Language:        Cpp
 AccessModifierOffset: -4
-AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: DontAlign
 #AlignConsecutiveMacros: false
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
@@ -22,19 +22,19 @@ AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: true
 BinPackArguments: true
 BinPackParameters: true
-BraceWrapping:
-  AfterCaseLabel:  true
+BraceWrapping:   
+#  AfterCaseLabel:  false
   AfterClass:      true
-  AfterControlStatement: true
-  AfterEnum:       true
+  AfterControlStatement: false
+  AfterEnum:       false
   AfterFunction:   true
   AfterNamespace:  true
-  AfterObjCDeclaration: true
+  AfterObjCDeclaration: false
   AfterStruct:     true
-  AfterUnion:      true
+  AfterUnion:      false
   AfterExternBlock: false
-  BeforeCatch:     true
-  BeforeElse:      true
+  BeforeCatch:     false
+  BeforeElse:      false
   IndentBraces:    false
   SplitEmptyFunction: false
   SplitEmptyRecord: false
@@ -60,12 +60,12 @@ DerivePointerAlignment: false
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
-ForEachMacros:
+ForEachMacros:   
   - foreach
   - Q_FOREACH
   - BOOST_FOREACH
 IncludeBlocks:   Preserve
-IncludeCategories:
+IncludeCategories: 
   - Regex:           '^(<|")(rapidtest|gtest|gmock)'
     Priority:        -1
   - Regex:           '^<Q[^/]*>'
@@ -78,8 +78,7 @@ IncludeCategories:
     Priority:        1
 IncludeIsMainRegex: '(\.test)?$'
 IndentCaseLabels: false
-#IndentExternBlock: NoIndent
-IndentPPDirectives: None
+IndentPPDirectives: BeforeHash
 IndentWidth:     4
 IndentWrappedFunctionNames: false
 JavaScriptQuotes: Leave
@@ -88,7 +87,7 @@ KeepEmptyLinesAtTheStartOfBlocks: true
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
 MaxEmptyLinesToKeep: 1
-NamespaceIndentation: All
+NamespaceIndentation: None
 ObjCBlockIndentWidth: 4
 ObjCSpaceAfterProperty: true
 ObjCSpaceBeforeProtocolList: true
@@ -100,7 +99,7 @@ PenaltyBreakString: 1000
 PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 60
 PointerAlignment: Left
-#RawStringFormats:
+#RawStringFormats: 
 #  - Delimiter:       pb
 #    Language:        TextProto
 #    BasedOnStyle:    google
