@@ -58,6 +58,29 @@ struct element_evaluator_ctx
     element_evaluator_options options;
 };
 
+class instruction_nullary_cache
+{
+public:
+    using nullary_map = std::unordered_map<element_nullary_op, std::shared_ptr<const element::instruction_nullary>>;
+    
+    auto cache(element_nullary_op operation, element::type_const_ptr type)
+    {
+        return m_cache.emplace(operation, std::make_shared<const element::instruction_nullary>(operation, type));
+    };
+
+    std::shared_ptr<const element::instruction_nullary> get(element_nullary_op operation, element::type_const_ptr type)
+    {
+        if (!m_cache.count(operation))
+            cache(operation, type);
+
+        assert(m_cache[operation]->actual_type == type);
+        return m_cache[operation];
+    }
+
+private:
+    nullary_map m_cache;
+};
+
 struct element_interpreter_ctx
 {
 public:
@@ -96,4 +119,5 @@ public:
     std::unique_ptr<element::scope> global_scope;
 
     mutable element::scope_caches cache_scope_find;
+    mutable instruction_nullary_cache cache_instruction_nullary;
 };

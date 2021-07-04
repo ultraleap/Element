@@ -14,6 +14,5 @@ intrinsic_nullary::intrinsic_nullary(const element_nullary_op operation, type_co
 object_const_shared_ptr intrinsic_nullary::compile(const compilation_context& context,
     const source_information& source_info) const
 {
-    return std::make_unique<element::instruction_nullary>(
-        operation, return_type);
+    return context.interpreter->cache_instruction_nullary.get(operation, return_type);
 }
