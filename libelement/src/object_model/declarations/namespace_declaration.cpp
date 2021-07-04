@@ -19,7 +19,7 @@ object_const_shared_ptr namespace_declaration::index(
     const source_information& source_info) const
 {
     if (our_scope) {
-        const auto* found = our_scope->find(name, context.interpreter->caches, false);
+        const auto* found = our_scope->find(name, context.interpreter->cache_scope_find, false);
         if (found)
             return found->compile(context, source_info);
 

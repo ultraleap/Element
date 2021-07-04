@@ -35,7 +35,7 @@ const declaration* port::resolve_annotation(const compilation_context& context) 
     if (!annotation || !declarer)
         return nullptr;
 
-    return declarer->get_scope()->find(annotation->to_string(), context.interpreter->caches, true);
+    return declarer->get_scope()->find(annotation->to_string(), context.interpreter->cache_scope_find, true);
 }
 
 object_const_shared_ptr port::generate_placeholder(

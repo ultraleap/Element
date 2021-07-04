@@ -17,7 +17,7 @@ object_const_shared_ptr intrinsic_constructor_list::call(
     std::vector<object_const_shared_ptr> compiled_args,
     const source_information& source_info) const
 {
-    const auto* list_decl = context.get_global_scope()->find(identifier{ "List" }, context.interpreter->caches, false);
+    const auto* list_decl = context.get_global_scope()->find(identifier{ "List" }, context.interpreter->cache_scope_find, false);
     assert(list_decl);
     const auto* list_struct = static_cast<const struct_declaration*>(list_decl);
     assert(list_struct);

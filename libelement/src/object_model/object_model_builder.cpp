@@ -208,7 +208,7 @@ std::unique_ptr<declaration> build_lambda_declaration(const element_interpreter_
     if (lambda_body->type == ELEMENT_AST_NODE_SCOPE) {
         build_scope(context, lambda_body, *lambda_function_decl, output_result);
 
-        const auto* return_func = lambda_function_decl->our_scope->find(identifier::return_identifier, context->caches, false);
+        const auto* return_func = lambda_function_decl->our_scope->find(identifier::return_identifier, context->cache_scope_find, false);
         if (!return_func) {
             output_result = log_error<log_error_message_code::function_missing_return>(context, context->src_context.get(), expression, lambda_function_decl->name.value);
             return nullptr;
@@ -247,7 +247,7 @@ std::unique_ptr<declaration> build_function_declaration(const element_interprete
         assert(!intrinsic);
         build_scope(context, body, *function_decl, output_result);
 
-        const auto* return_func = function_decl->our_scope->find(identifier::return_identifier, context->caches, false);
+        const auto* return_func = function_decl->our_scope->find(identifier::return_identifier, context->cache_scope_find, false);
         if (!return_func) {
             output_result = log_error<log_error_message_code::function_missing_return>(context, context->src_context.get(), decl, function_decl->name.value);
             return nullptr;
@@ -283,7 +283,7 @@ std::unique_ptr<declaration> build_function_declaration(const element_interprete
 
     bool had_default = false;
     for (const auto& input : function_decl->inputs) {
-        if (function_decl->our_scope->find(identifier{ input.get_name() }, context->caches, false))
+        if (function_decl->our_scope->find(identifier{ input.get_name() }, context->cache_scope_find, false))
             output_result = log_error<log_error_message_code::multiple_definition_with_parameter>(context, context->src_context.get(), decl, input.get_name(), function_decl->name.value);
 
         if (input.has_default()) {
@@ -492,7 +492,7 @@ void build_scope(const element_interpreter_ctx* context, const element_ast* ast,
         }
 
         assert(decl);
-        const bool success = our_scope->add_declaration(std::move(decl), context->caches);
+        const bool success = our_scope->add_declaration(std::move(decl), context->cache_scope_find);
         if (!success) {
             if (output_result == ELEMENT_OK)
                 output_result = ELEMENT_ERROR_UNKNOWN;

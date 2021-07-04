@@ -95,5 +95,5 @@ public:
     std::shared_ptr<element::source_context> src_context;
     std::unique_ptr<element::scope> global_scope;
 
-    mutable element::scope_caches caches;
+    mutable element::scope_caches cache_scope_find;
 };

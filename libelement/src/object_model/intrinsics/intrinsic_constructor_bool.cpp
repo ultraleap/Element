@@ -16,8 +16,8 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
     std::vector<object_const_shared_ptr> compiled_args,
     const source_information& source_info) const
 {
-    auto& true_decl = *context.get_global_scope()->find(identifier("True"), context.interpreter->caches, false);
-    auto& false_decl = *context.get_global_scope()->find(identifier("False"), context.interpreter->caches, false);
+    auto& true_decl = *context.get_global_scope()->find(identifier("True"), context.interpreter->cache_scope_find, false);
+    auto& false_decl = *context.get_global_scope()->find(identifier("False"), context.interpreter->cache_scope_find, false);
 
     const auto true_expr = get_intrinsic(context.interpreter, true_decl)->compile(context, source_info);
     const auto false_expr = get_intrinsic(context.interpreter, false_decl)->compile(context, source_info);

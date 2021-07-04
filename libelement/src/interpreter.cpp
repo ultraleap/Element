@@ -255,7 +255,7 @@ element_result element_interpreter_find(element_interpreter_ctx* interpreter, co
     if (!declaration)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    const auto* decl = interpreter->global_scope->find(element::identifier(path), interpreter->caches, false);
+    const auto* decl = interpreter->global_scope->find(element::identifier(path), interpreter->cache_scope_find, false);
     if (!decl) {
         *declaration = nullptr;
         interpreter->log(ELEMENT_ERROR_IDENTIFIER_NOT_FOUND, fmt::format("API - failed to find '{}'.", path));
@@ -411,7 +411,7 @@ element_result element_interpreter_compile_expression(
     *instruction = new element_instruction();
 
     if (result != ELEMENT_OK) {
-        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
+        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->cache_scope_find);
         (*instruction)->instruction = nullptr;
         element_object_delete(&object_ptr);
         return result;
@@ -419,7 +419,7 @@ element_result element_interpreter_compile_expression(
 
     const auto* function_instance = dynamic_cast<const element::function_instance*>(object_ptr->obj.get());
     if (!function_instance) {
-        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
+        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->cache_scope_find);
         auto instr = object_ptr->obj->to_instruction();
         if (!instr) {
             (*instruction)->instruction = nullptr;
@@ -436,7 +436,7 @@ element_result element_interpreter_compile_expression(
     element_declaration declaration{ function_instance->declarer };
     result = valid_boundary_function(interpreter, compilation_context, options, &declaration);
     if (result != ELEMENT_OK) {
-        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
+        interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->cache_scope_find);
         interpreter->log(result, "Tried to compile a function but it failed as it is not valid on the boundary");
         *instruction = nullptr;
         element_object_delete(&object_ptr);
@@ -446,7 +446,7 @@ element_result element_interpreter_compile_expression(
     result = ELEMENT_OK;
     const auto compiled = compile_placeholder_expression(compilation_context, *function_instance, function_instance->get_inputs(), {});
 
-    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->cache_scope_find);
     if (!compiled || compiled->is_error()) {
         interpreter->log(result, "Tried to compile placeholders but it failed.");
         *instruction = nullptr;
@@ -569,7 +569,7 @@ element_result element_interpreter_typeof_expression(
 
     element_object* object_ptr;
     const auto result = interpreter->expression_to_object(nullptr, expression_string, &object_ptr);
-    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->caches);
+    interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->cache_scope_find);
 
     if (result != ELEMENT_OK) {
         //todo:

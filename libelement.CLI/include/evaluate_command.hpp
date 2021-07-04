@@ -67,7 +67,7 @@ public:
         element_object* expression_object;
         result = context->expression_to_object(nullptr, expression.c_str(), &expression_object);
         if (result != ELEMENT_OK) {
-            context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
+            context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->cache_scope_find);
             return compiler_message(error_conversion(result),
                 "Failed to convert expression to object: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                 compilation_input.get_log_json());
@@ -79,7 +79,7 @@ public:
             result = context->call_expression_to_objects(nullptr, custom_arguments.arguments.c_str(), objs);
 
             if (result != ELEMENT_OK) {
-                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
+                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->cache_scope_find);
                 return compiler_message(error_conversion(result),
                     "Failed to convert call expression to objects: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                     compilation_input.get_log_json());
@@ -99,7 +99,7 @@ public:
             delete[] call_objects;
 
             if (result != ELEMENT_OK) {
-                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
+                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->cache_scope_find);
                 return compiler_message(error_conversion(result),
                     "Failed to call object with arguments: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                     compilation_input.get_log_json());
@@ -107,7 +107,7 @@ public:
         } else {
             result = element_object_simplify(expression_object, compilation_context, &result_object);
             if (result != ELEMENT_OK) {
-                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
+                context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->cache_scope_find);
                 return compiler_message(error_conversion(result),
                     "Failed to compile object: " + expression + " at compile-time with element_result " + std::to_string(result),
                     compilation_input.get_log_json());
@@ -117,7 +117,7 @@ public:
         element_instruction* result_instruction;
         result = element_object_to_instruction(result_object, &result_instruction);
         if (result != ELEMENT_OK) {
-            context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
+            context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->cache_scope_find);
             return compiler_message(error_conversion(result),
                 "Failed to convert object to instruction: " + expression + " called with " + custom_arguments.arguments + " at compile-time with element_result " + std::to_string(result),
                 compilation_input.get_log_json());
@@ -163,7 +163,7 @@ public:
         if (common_arguments.target == Target::LMNTJit)
             response = execute_lmnt(compilation_input, result_instruction, input, output, true);
 
-        context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->caches);
+        context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->cache_scope_find);
 
         return response;
     }
