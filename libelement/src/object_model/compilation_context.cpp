@@ -26,7 +26,7 @@ compilation_context::compilation_context(const scope* const scope, element_inter
     if (!body)
         throw; //todo
     list_indexer->set_body(body);
-    success = compiler_scope->add_declaration(std::move(list_indexer), interpreter->caches);
+    success = compiler_scope->add_declaration(std::move(list_indexer), interpreter->cache_scope_find);
     if (!success)
         throw; //todo
 
