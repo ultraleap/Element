@@ -81,6 +81,37 @@ private:
     nullary_map m_cache;
 };
 
+class instruction_constant_cache
+{
+public:
+    using constant_map = std::unordered_map<element_value, std::shared_ptr<const element::instruction_constant>>;
+    
+    auto cache(element_value value, element::type_const_ptr type)
+    {
+        if (type == element::type::num.get())
+            return m_cache_num.emplace(value, std::make_shared<const element::instruction_constant>(value));
+
+        return m_cache_bool.emplace(value, std::make_shared<const element::instruction_constant>(value));
+    };
+
+    std::shared_ptr<const element::instruction_constant> get(element_value value, element::type_const_ptr type)
+    {
+        if (type == element::type::num.get()) {
+            if (!m_cache_num.count(value))
+                cache(value, type);
+            return m_cache_num[value];
+        }
+        
+        if (!m_cache_bool.count(value))
+            cache(value, type);
+        return m_cache_bool[value];
+    }
+
+private:
+    constant_map m_cache_num;
+    constant_map m_cache_bool;
+};
+
 struct element_interpreter_ctx
 {
 public:
@@ -120,4 +151,5 @@ public:
 
     mutable element::scope_caches cache_scope_find;
     mutable instruction_nullary_cache cache_instruction_nullary;
+    mutable instruction_constant_cache cache_instruction_constant;
 };

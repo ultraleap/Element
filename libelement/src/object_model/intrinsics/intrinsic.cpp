@@ -148,7 +148,7 @@ std::shared_ptr<const instruction> element::evaluate(const compilation_context& 
 
     //the tree was fully evaluated, so it has been constant folded
     if (result == ELEMENT_OK) {
-        auto new_expr = std::make_shared<const instruction_constant>(output);
+        auto new_expr = context.interpreter->cache_instruction_constant.get(output, expr->actual_type);
         new_expr->actual_type = expr->actual_type;
         return new_expr;
     }
