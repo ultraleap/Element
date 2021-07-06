@@ -178,16 +178,19 @@ element_result element_object_index(
     return ELEMENT_OK;
 }
 
-element_result element_object_to_instruction(const element_object* object, element_instruction** output)
+element_result element_object_to_instruction(const element_object* object, element_interpreter_ctx* interpreter, element_instruction** output)
 {
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+    
+    if (!interpreter)
+        return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
 
     if (!output)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
     *output = new element_instruction;
-    auto instr = object->obj->to_instruction();
+    auto instr = object->obj->to_instruction(*interpreter);
 
     if (!instr) {
         (*output)->instruction = nullptr;

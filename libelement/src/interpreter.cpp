@@ -324,7 +324,7 @@ element_result element_interpreter_compile_declaration(
         return result;
     }
 
-    auto instr = compiled->to_instruction();
+    auto instr = compiled->to_instruction(*interpreter);
     if (!instr) {
         interpreter->log(result, "Failed to compile declaration to an instruction tree.");
         *instruction = nullptr;
@@ -420,7 +420,7 @@ element_result element_interpreter_compile_expression(
     const auto* function_instance = dynamic_cast<const element::function_instance*>(object_ptr->obj.get());
     if (!function_instance) {
         interpreter->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, interpreter->cache_scope_find);
-        auto instr = object_ptr->obj->to_instruction();
+        auto instr = object_ptr->obj->to_instruction(*interpreter);
         if (!instr) {
             (*instruction)->instruction = nullptr;
             element_object_delete(&object_ptr);
@@ -454,7 +454,7 @@ element_result element_interpreter_compile_expression(
         return result;
     }
 
-    auto instr = compiled->to_instruction();
+    auto instr = compiled->to_instruction(*interpreter);
     if (!instr) {
         interpreter->log(result, "Failed to compile declaration to an instruction tree.");
         *instruction = nullptr;
@@ -619,7 +619,7 @@ element_result element_interpreter_evaluate_call_expression(
         if (arg->is_error())
             return arg->log_any_error(interpreter->logger.get());
 
-        const auto instruction = arg->to_instruction();
+        const auto instruction = arg->to_instruction(*interpreter);
 
         serialised_arguments.emplace_back();
         serialised_arguments.back().resize(1024);

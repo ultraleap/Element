@@ -159,6 +159,7 @@ element_result element_object_index(
  * @brief converts an object to an instruction tree
  *
  * @param[in] object            object to convert
+ * @param[in] object            object to convertTODO
  * @param[out] output           result instruction tree
  *
  * @return ELEMENT_OK object converted to an instruction tree successfully
@@ -168,6 +169,7 @@ element_result element_object_index(
  */
 element_result element_object_to_instruction(
     const element_object* object,
+    element_interpreter_ctx* interpereter,
     element_instruction** output);
 
 /**

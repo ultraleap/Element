@@ -72,7 +72,7 @@ object_const_shared_ptr runtime_fold(
     if (!accumulator_compiled)
         return std::make_shared<const error>("accumulator failed to compile", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
-    const auto accumulator_expression = accumulator_compiled->to_instruction();
+    const auto accumulator_expression = accumulator_compiled->to_instruction(*context.interpreter);
     if (!accumulator_expression)
         return std::make_shared<const error>(
             "accumulator failed to compile to an instruction tree",

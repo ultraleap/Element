@@ -136,11 +136,11 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
     if (!body_compiled)
         return std::make_shared<const error>("body failed to compile", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
-    auto predicate_expression = predicate_compiled->to_instruction();
+    auto predicate_expression = predicate_compiled->to_instruction(*context.interpreter);
     if (!predicate_expression)
         return std::make_shared<const error>("predicate failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info, context.get_logger());
 
-    auto body_expression = body_compiled->to_instruction();
+    auto body_expression = body_compiled->to_instruction(*context.interpreter);
     if (!body_expression)
         return std::make_shared<const error>("body failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, body_function->source_info, context.get_logger());
 
@@ -151,7 +151,7 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
 
     //if it wasn't an instruction, let's convert it in to one.
     //if we can't then this for-loop can't be done at runtime, since it can't be represented in the instruction tree
-    initial_expression = initial_object->to_instruction();
+    initial_expression = initial_object->to_instruction(*context.interpreter);
     if (!initial_expression)
         return std::make_shared<const error>("tried to create a runtime for but a non-serializable initial value was given", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 

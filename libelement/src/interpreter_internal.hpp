@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <map>
 
 //SELF
 #include "element/interpreter.h"
@@ -112,6 +113,42 @@ private:
     constant_map m_cache_bool;
 };
 
+class instruction_serialised_structure_cache
+{
+public:
+    using structure_field_instructions = std::vector<element::instruction_const_shared_ptr>;
+    using structure_field_names = std::vector<std::string>;
+    struct structure_key
+    {
+        structure_field_instructions instructions;
+        structure_field_names names;
+        std::string struct_name;
+        bool operator<(const structure_key& other) const noexcept
+        {
+            return struct_name < other.struct_name
+                && instructions < other.instructions
+                && names < other.names;
+        }
+    };
+    using structure_map = std::map<structure_key, std::shared_ptr<const element::instruction_serialised_structure>>;
+
+    //todo: I really should just set up the instructions properly and use std::set or something
+    std::shared_ptr<const element::instruction_serialised_structure> get(
+        structure_field_instructions field_instructions,
+        structure_field_names field_names,
+        std::string struct_name)
+    {
+        structure_key key{field_instructions, field_names, struct_name};
+        auto serialised_structure = std::make_shared<const element::instruction_serialised_structure>(std::move(field_instructions), std::move(field_names), std::move(struct_name));
+
+        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(serialised_structure));
+        return cached_value_iterator->second;
+    }
+
+private:
+    structure_map m_cache;
+};
+
 struct element_interpreter_ctx
 {
 public:
@@ -152,4 +189,5 @@ public:
     mutable element::scope_caches cache_scope_find;
     mutable instruction_nullary_cache cache_instruction_nullary;
     mutable instruction_constant_cache cache_instruction_constant;
+    mutable instruction_serialised_structure_cache cache_instruction_serialised_structure;
 };

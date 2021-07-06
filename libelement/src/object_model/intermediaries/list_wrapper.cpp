@@ -161,12 +161,12 @@ object_const_shared_ptr list_wrapper::compile(const compilation_context& context
     return create_or_optimise(selector, new_options, source_info);
 }
 
-std::shared_ptr<const instruction> list_wrapper::to_instruction() const
+std::shared_ptr<const instruction> list_wrapper::to_instruction(const element_interpreter_ctx& interpreter) const
 {
     std::vector<object_const_shared_ptr> new_options;
     new_options.reserve(options.size());
     for (const auto& option : options)
-        new_options.push_back(option->to_instruction());
+        new_options.push_back(option->to_instruction(interpreter));
 
     auto result = create_or_optimise(selector, new_options, {});
     return std::dynamic_pointer_cast<const instruction>(std::move(result));
