@@ -42,7 +42,7 @@ struct element_port
 
 struct element_ports
 {
-    using port_deleter = void(*)(element_port*);
+    using port_deleter = void (*)(element_port*);
     std::vector<std::unique_ptr<element_port, port_deleter>> ports;
 };
 

@@ -19,8 +19,7 @@ anonymous_block_instance::anonymous_block_instance(const anonymous_block_express
     assert(declarer->our_scope.get());
 
     auto* our_scope = declarer->our_scope.get();
-    for (const auto& [identifier, expression] : named_expressions)
-    {
+    for (const auto& [identifier, expression] : named_expressions) {
         fields.emplace(identifier.value, expression);
     }
 }
@@ -48,8 +47,8 @@ const constraint* anonymous_block_instance::get_constraint() const
 }
 
 object_const_shared_ptr anonymous_block_instance::index(const compilation_context& context,
-                                                        const identifier& name,
-                                                        const source_information& source_info) const
+    const identifier& name,
+    const source_information& source_info) const
 {
     const auto found_field = fields.find(name.value);
 
@@ -62,7 +61,7 @@ object_const_shared_ptr anonymous_block_instance::index(const compilation_contex
 }
 
 object_const_shared_ptr anonymous_block_instance::compile(const compilation_context& context,
-                                                          const source_information& source_info) const
+    const source_information& source_info) const
 {
     return shared_from_this();
 }

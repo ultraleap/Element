@@ -6,8 +6,7 @@
 //SELF
 #include "common_internal.hpp"
 
-enum class element_nullary_op
-{
+enum class element_nullary_op {
     //num
     nan,
     positive_infinity,
@@ -18,8 +17,7 @@ enum class element_nullary_op
     false_value,
 };
 
-enum class element_unary_op
-{
+enum class element_unary_op {
     //num
     sin,
     cos,
@@ -36,8 +34,7 @@ enum class element_unary_op
     not_, //reserved keyword
 };
 
-enum class element_binary_op
-{
+enum class element_binary_op {
     //num
     add,
     sub,

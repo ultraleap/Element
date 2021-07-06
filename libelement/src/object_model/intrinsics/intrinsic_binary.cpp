@@ -8,8 +8,8 @@
 using namespace element;
 
 intrinsic_binary::intrinsic_binary(const element_binary_op operation, type_const_ptr return_type = type::num.get(),
-                                   type_const_ptr first_argument_type = type::num.get(),
-                                   type_const_ptr second_argument_type = type::num.get())
+    type_const_ptr first_argument_type = type::num.get(),
+    type_const_ptr second_argument_type = type::num.get())
     : intrinsic_function(type_id, return_type)
     , operation(operation)
     , first_argument_type{ first_argument_type }
@@ -18,7 +18,7 @@ intrinsic_binary::intrinsic_binary(const element_binary_op operation, type_const
 }
 
 object_const_shared_ptr intrinsic_binary::compile(const compilation_context& context,
-                                                  const source_information& source_info) const
+    const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
     const auto& declarer = *static_cast<const declaration*>(frame.function->declarer);

@@ -32,8 +32,7 @@ TEST_CASE("ObjectModel", "[API]")
         element_interpreter_set_log_callback(interpreter, log_callback, nullptr);
         element_interpreter_load_prelude(interpreter);
 
-        if (!package.empty())
-        {
+        if (!package.empty()) {
             const auto result = element_interpreter_load_package(interpreter, package.c_str());
             REQUIRE(result == ELEMENT_OK);
         }
@@ -42,10 +41,10 @@ TEST_CASE("ObjectModel", "[API]")
         auto* output_buffer = output_buffer_array.data();
 
         const auto* input_element = "const_int = 5\n"
-                            "struct my_struct(a:Num)\n"
-                            "{\n"
-                            "func(thing:my_struct, val:Num) = thing.a.mul(val)\n"
-                            "}\n";
+                                    "struct my_struct(a:Num)\n"
+                                    "{\n"
+                                    "func(thing:my_struct, val:Num) = thing.a.mul(val)\n"
+                                    "}\n";
 
         constexpr auto args_count = 1;
         element_object* args[args_count];
@@ -55,8 +54,7 @@ TEST_CASE("ObjectModel", "[API]")
         std::shared_ptr<const element::instruction_constant> constant;
 
         auto result = element_interpreter_load_string(interpreter, input_element, "<input>");
-        if (result != ELEMENT_OK)
-        {
+        if (result != ELEMENT_OK) {
             printf("Output buffer too small");
             goto cleanup;
         }

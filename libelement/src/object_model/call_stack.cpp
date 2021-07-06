@@ -34,8 +34,7 @@ unsigned int call_stack::recursive_calls(const function_instance* function) cons
     if (!check_recursion)
         return count;
 
-    for (auto it = frames.rbegin(); it != frames.rend(); ++it)
-    {
+    for (auto it = frames.rbegin(); it != frames.rend(); ++it) {
         if (it->function->declarer == function->declarer)
             count++;
     }
@@ -50,18 +49,16 @@ std::shared_ptr<error> call_stack::build_recursive_error(
 {
     std::string trace;
 
-    for (auto it = context.calls.frames.rbegin(); it < context.calls.frames.rend(); ++it)
-    {
+    for (auto it = context.calls.frames.rbegin(); it < context.calls.frames.rend(); ++it) {
         auto& func = it->function;
 
         std::string params;
-        for (unsigned i = 0; i < func->declarer->inputs.size(); ++i)
-        {
+        for (unsigned i = 0; i < func->declarer->inputs.size(); ++i) {
             const auto& input = func->declarer->inputs[i];
             params += fmt::format("{}{} = {}",
-                                  input.get_name(),
-                                  input.has_annotation() ? ":" + input.get_annotation()->to_string() : "",
-                                  it->compiled_arguments[i]->to_string());
+                input.get_name(),
+                input.has_annotation() ? ":" + input.get_annotation()->to_string() : "",
+                it->compiled_arguments[i]->to_string());
 
             if (i != func->declarer->inputs.size() - 1)
                 params += ", ";
@@ -72,11 +69,11 @@ std::shared_ptr<error> call_stack::build_recursive_error(
             ret = ":" + func->declarer->output.get_annotation()->to_string();
 
         trace += fmt::format("{}:{} at {}({}){}",
-                             func->source_info.filename,
-                             func->source_info.line,
-                             func->declarer->name.value,
-                             params,
-                             ret);
+            func->source_info.filename,
+            func->source_info.line,
+            func->declarer->name.value,
+            params,
+            ret);
 
         if (func->declarer == function->declarer)
             trace += " <-- here";

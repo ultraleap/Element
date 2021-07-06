@@ -9,8 +9,8 @@
 using namespace element;
 
 intrinsic_unary::intrinsic_unary(element_unary_op operation,
-                                 type_const_ptr return_type = type::num.get(),
-                                 type_const_ptr argument_type = type::num.get())
+    type_const_ptr return_type = type::num.get(),
+    type_const_ptr argument_type = type::num.get())
     : intrinsic_function(type_id, return_type)
     , operation(operation)
     , argument_type{ argument_type }
@@ -18,7 +18,7 @@ intrinsic_unary::intrinsic_unary(element_unary_op operation,
 }
 
 object_const_shared_ptr intrinsic_unary::compile(const compilation_context& context,
-                                                 const source_information& source_info) const
+    const source_information& source_info) const
 {
     const auto& frame = context.calls.frames.back();
     const auto& declarer = *static_cast<const declaration*>(frame.function->declarer);

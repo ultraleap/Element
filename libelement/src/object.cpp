@@ -63,9 +63,9 @@ element_result element_declaration_to_object(
 }
 
 element_result element_object_simplify(
-        const element_object* object,
-        element_object_model_ctx* context,
-        element_object** output)
+    const element_object* object,
+    element_object_model_ctx* context,
+    element_object** output)
 {
     if (!context || !context->ctx)
         return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
@@ -152,10 +152,10 @@ element_result element_object_call_with_placeholders(
 }
 
 element_result element_object_index(
-        const element_object* object,
-        element_object_model_ctx* context,
-        const char* index,
-        element_object** output)
+    const element_object* object,
+    element_object_model_ctx* context,
+    const char* index,
+    element_object** output)
 {
     if (!context || !context->ctx)
         return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
@@ -189,10 +189,9 @@ element_result element_object_to_instruction(const element_object* object, eleme
     *output = new element_instruction;
     auto instr = object->obj->to_instruction();
 
-    if (!instr)
-    {
+    if (!instr) {
         (*output)->instruction = nullptr;
-        (*output)->cache = { };
+        (*output)->cache = {};
         return ELEMENT_ERROR_SERIALISATION;
     }
 
@@ -211,8 +210,7 @@ element_result element_object_to_log_message(const element_object* object, eleme
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
     const auto* err = dynamic_cast<const element::error*>(object->obj.get());
-    if (err)
-    {
+    if (err) {
         *output = err->get_log_message();
         return ELEMENT_OK;
     }
@@ -285,15 +283,12 @@ element_result element_object_get_inputs(const element_object* object, element_p
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
     *inputs = new element_ports();
-    for (const auto& input : object->obj->get_inputs())
-    {
+    for (const auto& input : object->obj->get_inputs()) {
         auto port = std::unique_ptr<element_port, element_ports::port_deleter>(
-            new element_port{&input},
-            [](element_port* port)
-            {
+            new element_port{ &input },
+            [](element_port* port) {
                 element_port_delete(&port);
-            }
-        );
+            });
 
         (*inputs)->ports.push_back(std::move(port));
     }

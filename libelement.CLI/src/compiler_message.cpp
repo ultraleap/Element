@@ -12,8 +12,7 @@ message_level compiler_message::get_level() const
 
 std::string compiler_message::serialize() const
 {
-    if (serialize_to_json)
-    {
+    if (serialize_to_json) {
         rapidjson::StringBuffer buffer;
         rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
@@ -22,13 +21,11 @@ std::string compiler_message::serialize() const
         writer.String(key_message_type);
         writer.String(key_message_value);
 
-        if (type.has_value())
-        {
+        if (type.has_value()) {
             writer.String(key_message_code);
             writer.Int(static_cast<int>(type.value()));
         }
-        if (level.has_value())
-        {
+        if (level.has_value()) {
             writer.String(key_message_level);
             writer.Int(static_cast<int>(level.value()));
         }
@@ -36,8 +33,7 @@ std::string compiler_message::serialize() const
         writer.String(context.c_str());
         writer.String(key_trace_stack);
         writer.StartArray();
-        for (auto& stack_item : trace_stack)
-        {
+        for (auto& stack_item : trace_stack) {
             writer.String(stack_item.get_message().c_str());
         }
         writer.EndArray();

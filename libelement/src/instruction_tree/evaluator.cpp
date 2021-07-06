@@ -12,30 +12,26 @@ using namespace element;
 
 static void add_to_cache(instruction_cache_value* cache_value, element_value value)
 {
-    if (cache_value)
-    {
+    if (cache_value) {
         cache_value->value = value;
         cache_value->present = true;
     }
 }
 
 static element_result do_evaluate(element_evaluator_ctx& context, const element::instruction_const_shared_ptr& expr,
-                                  instruction_cache* cache, element_value* outputs, size_t outputs_count, size_t& outputs_written)
+    instruction_cache* cache, element_value* outputs, size_t outputs_count, size_t& outputs_written)
 {
     // Don't cache constants, faster to grab the value
-    if (const auto* ec = expr->as<element::instruction_constant>())
-    {
+    if (const auto* ec = expr->as<element::instruction_constant>()) {
         assert(outputs_count > outputs_written);
         outputs[outputs_written++] = ec->value();
         return ELEMENT_OK;
     }
 
     // Don't check the cache for multi-valued objects, just check their individual values.
-    if (const auto* es = expr->as<element::instruction_serialised_structure>())
-    {
+    if (const auto* es = expr->as<element::instruction_serialised_structure>()) {
         const auto& deps = es->dependents();
-        for (const auto& dep : deps)
-        {
+        for (const auto& dep : deps) {
             ELEMENT_OK_OR_RETURN(do_evaluate(context, dep, cache, outputs, outputs_count, outputs_written));
         }
         return ELEMENT_OK;
@@ -43,8 +39,7 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
 
     // Don't do any caching or cache checking for for loops. This is because during evaluation of the for loop,
     // the evaluation_ctx boundaries change, so caching can be invalid.
-    if (const auto* eb = expr->as<element::instruction_for>())
-    {
+    if (const auto* eb = expr->as<element::instruction_for>()) {
         assert(outputs_count > outputs_written);
         assert(eb->condition()->get_size() == 1);
         assert(eb->initial()->get_size() >= 1);
@@ -66,12 +61,10 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
     }
 
     // Don't cache inputs, faster to grab the value
-    if (const auto* ei = expr->as<element::instruction_input>())
-    {
+    if (const auto* ei = expr->as<element::instruction_input>()) {
         if (context.boundaries.size() <= ei->scope()
             || context.boundaries[ei->scope()].inputs_count <= ei->index()
-            || outputs_count <= outputs_written)
-        {
+            || outputs_count <= outputs_written) {
             //occurs during constant folding to check if it can be evaluated
             outputs_written = 0;
             return ELEMENT_ERROR_UNKNOWN;
@@ -82,8 +75,7 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         return ELEMENT_OK;
     }
 
-    if (const auto* sel = expr->as<element::instruction_select>())
-    {
+    if (const auto* sel = expr->as<element::instruction_select>()) {
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
         element_value selector;
@@ -97,15 +89,13 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
 
     // Everything below this point only returns a single value
     instruction_cache_value* cache_entry = cache ? cache->find(expr.get()) : nullptr;
-    if (cache_entry && cache_entry->present)
-    {
+    if (cache_entry && cache_entry->present) {
         // Value is in the cache, use it!
         outputs[outputs_written++] = cache_entry->value;
         return ELEMENT_OK;
     }
 
-    if (const auto* eu = expr->as<element::instruction_nullary>())
-    {
+    if (const auto* eu = expr->as<element::instruction_nullary>()) {
         assert(outputs_count > outputs_written);
         assert(eu->get_size() == 1);
 
@@ -115,8 +105,7 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         return ELEMENT_OK;
     }
 
-    if (const auto* eu = expr->as<element::instruction_unary>())
-    {
+    if (const auto* eu = expr->as<element::instruction_unary>()) {
         assert(outputs_count > outputs_written);
         assert(eu->input()->get_size() == 1);
         size_t intermediate_written = 0;
@@ -129,8 +118,7 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         return ELEMENT_OK;
     }
 
-    if (const auto* eb = expr->as<element::instruction_binary>())
-    {
+    if (const auto* eb = expr->as<element::instruction_binary>()) {
         assert(outputs_count > outputs_written);
         assert(eb->input1()->get_size() == 1);
         assert(eb->input2()->get_size() == 1);
@@ -147,8 +135,7 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
     }
 
     //TODO: Needs to be handled via list with dynamic indexing, this will be insufficient for when we have user input
-    if (const auto* eb = expr->as<element::instruction_if>())
-    {
+    if (const auto* eb = expr->as<element::instruction_if>()) {
         assert(outputs_count > outputs_written);
         assert(eb->predicate()->get_size() == 1);
         assert(eb->if_true()->get_size() == 1);
@@ -167,8 +154,7 @@ static element_result do_evaluate(element_evaluator_ctx& context, const element:
         return ELEMENT_OK;
     }
 
-    if (const auto* eb = expr->as<element::instruction_indexer>())
-    {
+    if (const auto* eb = expr->as<element::instruction_indexer>()) {
         assert(outputs_count > outputs_written);
         size_t intermediate_written = 0;
         size_t size = eb->for_instruction()->get_size();
@@ -221,8 +207,7 @@ element_result element_evaluate(
 
 element_value element_evaluate_nullary(element::instruction_nullary::op op)
 {
-    switch (op)
-    {
+    switch (op) {
     //num
     case element::instruction_nullary::op::positive_infinity:
         return std::numeric_limits<float>::infinity();
@@ -244,8 +229,7 @@ element_value element_evaluate_nullary(element::instruction_nullary::op op)
 
 element_value element_evaluate_unary(element::instruction_unary::op op, element_value a)
 {
-    switch (op)
-    {
+    switch (op) {
     //num
     case element::instruction_unary::op::abs:
         return std::fabs(a);
@@ -279,8 +263,7 @@ element_value element_evaluate_unary(element::instruction_unary::op op, element_
 
 element_value element_evaluate_binary(element::instruction_binary::op op, element_value a, element_value b)
 {
-    switch (op)
-    {
+    switch (op) {
         //num
     case element::instruction_binary::op::add:
         return a + b;

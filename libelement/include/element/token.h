@@ -1,19 +1,18 @@
 #if !defined(ELEMENT_TOKEN_H)
-#define ELEMENT_TOKEN_H
+    #define ELEMENT_TOKEN_H
 
-#include "element/common.h"
+    #include "element/common.h"
 
-#include <stddef.h>
+    #include <stddef.h>
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 extern "C" {
-#endif
+    #endif
 
 /**
  * @brief token type
  */
-typedef enum
-{
+typedef enum {
     ELEMENT_TOK_NONE = 0,
     ELEMENT_TOK_NUMBER,
     ELEMENT_TOK_IDENTIFIER,
@@ -207,7 +206,7 @@ element_result element_tokeniser_to_string(
     char* output_buffer,
     int output_buffer_size);
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 }
-#endif
+    #endif
 #endif

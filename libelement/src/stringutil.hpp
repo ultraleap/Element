@@ -22,5 +22,5 @@ std::vector<std::string> split(std::string input_str)
 {
     std::istringstream iss(input_str);
     return { std::istream_iterator<WordDelimitedBy<delimiter>>(iss),
-             std::istream_iterator<WordDelimitedBy<delimiter>>() };
+        std::istream_iterator<WordDelimitedBy<delimiter>>() };
 }

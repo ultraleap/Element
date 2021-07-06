@@ -9,16 +9,16 @@
 
 namespace element
 {
-    class anonymous_block_expression final : public expression
-    {
-    public:
-        anonymous_block_expression(const expression_chain* parent);
+class anonymous_block_expression final : public expression
+{
+public:
+    anonymous_block_expression(const expression_chain* parent);
 
-        [[nodiscard]] std::string to_code(const int depth = 0) const override;
-        [[nodiscard]] object_const_shared_ptr resolve(const compilation_context& context, const object* obj) override;
+    [[nodiscard]] std::string to_code(const int depth = 0) const override;
+    [[nodiscard]] object_const_shared_ptr resolve(const compilation_context& context, const object* obj) override;
 
-        std::unique_ptr<scope> our_scope;
+    std::unique_ptr<scope> our_scope;
 
-    private:
-    };
+private:
+};
 } // namespace element

@@ -1,12 +1,12 @@
 #if !defined(ELEMENT_COMMON_H)
-#define ELEMENT_COMMON_H
+    #define ELEMENT_COMMON_H
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 extern "C" {
-#endif
+    #endif
 
-#include <stdint.h>
-#include <stdbool.h>
+    #include <stdint.h>
+    #include <stdbool.h>
 
 /**
  * @brief value type
@@ -16,8 +16,7 @@ typedef float element_value;
 /**
  * @brief result type
  */
-typedef enum element_result
-{
+typedef enum element_result {
     //ELEMENT
     ELEMENT_OK = 0,
     ELEMENT_ERROR_SERIALISATION = 1,
@@ -115,8 +114,7 @@ typedef enum element_result
 /**
  * @brief compilation stage
  */
-typedef enum element_stage
-{
+typedef enum element_stage {
     ELEMENT_STAGE_INVALID = -1,
     ELEMENT_STAGE_MISC,
     ELEMENT_STAGE_TOKENISER,
@@ -159,15 +157,14 @@ struct element_log_message
 
 typedef void (*element_log_callback)(const element_log_message*, void*);
 
-#define ELEMENT_OK_OR_RETURN(t)                         \
-    do                                                  \
-    {                                                   \
-        const element_result ok_or_return_result = (t); \
-        if (ok_or_return_result != ELEMENT_OK)          \
-            return ok_or_return_result;                 \
-    } while (0)
+    #define ELEMENT_OK_OR_RETURN(t)                         \
+        do {                                                \
+            const element_result ok_or_return_result = (t); \
+            if (ok_or_return_result != ELEMENT_OK)          \
+                return ok_or_return_result;                 \
+        } while (0)
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 }
-#endif
+    #endif
 #endif

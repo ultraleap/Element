@@ -1,12 +1,12 @@
 #if !defined(ELEMENT_INTERPRETER_OBJECT_H)
-#define ELEMENT_INTERPRETER_OBJECT_H
+    #define ELEMENT_INTERPRETER_OBJECT_H
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 extern "C" {
-#endif
+    #endif
 
-#include "element/common.h"
-#include "element/interpreter.h"
+    #include "element/common.h"
+    #include "element/interpreter.h"
 
 /**
  * @brief object type
@@ -114,8 +114,7 @@ element_result element_object_call(
     unsigned int arguments_count,
     element_object** output);
 
-
- /**
+/**
  * @brief call a callable object with placeholder arguments
  *
  * if result was not OK but output object exists, call element_object_to_log_message for more info or assign a log callback to the interpreter
@@ -303,7 +302,7 @@ element_result element_port_get_constraint_annotation(
  */
 element_result element_port_get_constraint_object(
     element_port* port,
-    element_object_model_ctx* object_model_context, 
+    element_object_model_ctx* object_model_context,
     element_object** object);
 
 /**
@@ -319,7 +318,7 @@ element_result element_port_get_default_object(
  */
 void element_port_delete(element_port** port);
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 }
-#endif
+    #endif
 #endif

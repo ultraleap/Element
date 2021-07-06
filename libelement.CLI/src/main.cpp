@@ -7,7 +7,7 @@
 #include <element/common.h>
 #include <CLI/CLI.hpp>
 #ifdef WIN32
-#include "Windows.h"
+    #include "Windows.h"
 #endif
 //SELF
 #include "command.hpp"
@@ -20,20 +20,18 @@ void log_callback(const element_log_message* const msg, void* user_data)
     auto message_code = msg->message_code;
 
     std::string formatted_error = fmt::format("ELE {} ------------- {}\n{}\n\n",
-                                              msg->message_code,
-                                              msg->filename ? msg->filename : "<no filename>",
-                                              msg->message ? msg->message : "<no message>");
+        msg->message_code,
+        msg->filename ? msg->filename : "<no filename>",
+        msg->message ? msg->message : "<no message>");
 
-    if (msg->line > 0)
-    {
+    if (msg->line > 0) {
         formatted_error += fmt::format("{}|{}\n", msg->line, msg->line_in_source ? msg->line_in_source : "<no source line>");
 
-        if (msg->character > 0)
-        {
+        if (msg->character > 0) {
             const auto digits = std::to_string(msg->line).size();
             formatted_error += fmt::format("{}{}",
-                                           std::string(digits + msg->character, ' '),
-                                           std::string(msg->length, '^'));
+                std::string(digits + msg->character, ' '),
+                std::string(msg->length, '^'));
         }
     }
 
@@ -50,20 +48,19 @@ void log_callback(const element_log_message* const msg, void* user_data)
 
 void command_callback(command& command)
 {
-    #if !defined(NDEBUG) && defined(WIN32)
-          //TODO: JM - TEMPORARY - Remove me later
-          SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX |
-  SEM_NOOPENFILEERRORBOX);
+#if !defined(NDEBUG) && defined(WIN32)
+    //TODO: JM - TEMPORARY - Remove me later
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
 
-          _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
-          _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+    _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
 
-          _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
-          _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
+    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+    _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
 
-          _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
-          _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
-  #endif
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+#endif
 
     // set a log callback, so that when we get errors, messages are logged
     command.set_log_callback(log_callback, static_cast<void*>(&command));
@@ -83,16 +80,16 @@ void command_callback(command& command)
 
 int main(const int argc, char** argv)
 {
-    #if !defined(NDEBUG)
+#if !defined(NDEBUG)
     std::string args;
-    for (int i = 0; i < argc; ++i)
-    {
+    for (int i = 0; i < argc; ++i) {
         args += argv[i];
         args += " ";
     }
-    std::cout << "Raw CLI Arguments: " << args << std::endl << std::endl;
-    #endif
-    
+    std::cout << "Raw CLI Arguments: " << args << std::endl
+              << std::endl;
+#endif
+
     // parse arguments and construct exactly one required command
     CLI::App app{ "CLI interface for libelement" };
     app.set_help_all_flag("--help-all", "Expand all help");

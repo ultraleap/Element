@@ -9,9 +9,7 @@
 #include "instruction_tree/instructions.hpp"
 #include "lmnt/compiler.hpp"
 
-
-enum class compilation_stage
-{
+enum class compilation_stage {
     none,
     created,
     prepared,
@@ -19,16 +17,14 @@ enum class compilation_stage
     compiled
 };
 
-enum class allocation_type
-{
+enum class allocation_type {
     constant,
     input,
     output,
     local
 };
 
-enum class execution_type
-{
+enum class execution_type {
     none,
     conditional,
     unconditional
@@ -78,10 +74,12 @@ struct stack_allocation : std::enable_shared_from_this<stack_allocation>
     }
 };
 
-
 struct execution_context
 {
-    execution_context(execution_context* p, execution_type t) : parent(p), rel_type(t) {}
+    execution_context(execution_context* p, execution_type t)
+        : parent(p)
+        , rel_type(t)
+    {}
 
     execution_context* const parent;
     const execution_type rel_type;
@@ -90,7 +88,6 @@ struct execution_context
 
     execution_type type() const { return (parent ? (std::min)(rel_type, parent->type()) : rel_type); }
 };
-
 
 struct compiler_state
 {
@@ -158,6 +155,7 @@ public:
         // TODO: knowledge of conditional execution etc, use scopes?
 
         virtual ~stack_allocator() = default;
+
     protected:
         std::vector<std::shared_ptr<stack_allocation>> _alloc_storage;
         std::unordered_map<const element::instruction*, std::vector<stack_allocation*>> _allocations;

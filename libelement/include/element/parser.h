@@ -1,13 +1,13 @@
 #if !defined(ELEMENT_PARSER_H)
-#define ELEMENT_PARSER_H
+    #define ELEMENT_PARSER_H
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 extern "C" {
-#endif
+    #endif
 
-#include "element/ast.h"
-#include "element/common.h"
-#include "element/token.h"
+    #include "element/ast.h"
+    #include "element/common.h"
+    #include "element/token.h"
 
 /**
  * @brief opaque pointer to element_parser_ctx
@@ -61,7 +61,7 @@ element_result element_parser_get_ast(
 element_result element_parser_build_ast(
     element_parser_ctx* parser);
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 }
-#endif
+    #endif
 #endif

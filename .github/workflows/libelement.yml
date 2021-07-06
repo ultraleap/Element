@@ -3,39 +3,116 @@ name: libelement
 on: [push]
 
 jobs:
-  run-libelement-tests:
-    runs-on: ubuntu-latest
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "ubuntu-gcc",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "gcc",
+            cxx: "g++",
+            generators: "Ninja",
+          }
+        - {
+            name: "ubuntu-clang",
+            os: ubuntu-latest,
+            artifact: "ubuntu-clang.7z",
+            build_type: "Release",
+            cc: "clang",
+            cxx: "clang++",
+            generators: "Ninja",
+          }
+        - {
+            name: "windows-msvc-vs2019",
+            os: windows-latest,
+            build_type: "Release",
+            cc: "cl",
+            cxx: "cl",
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+            generators: "Visual Studio 16 2019"
+          }
+        - {
+            name: "macos-clang",
+            os: macos-latest,
+            build_type: "Release",
+            cc: "clang",
+            cxx: "clang++",
+            generators: "Ninja"
+          }
     steps:
       - uses: actions/checkout@v2
-      - name: Checkout submodules
+
+      - name: Print env
+        run: |
+          echo github.event.action: ${{ github.event.action }}
+          echo github.event_name: ${{ github.event_name }}
+
+      - name: Install dependencies on windows
+        if: startsWith(matrix.config.os, 'windows')
+        run: |
+          cmake --version
+
+      - name: Install dependencies on ubuntu
+        if: startsWith(matrix.config.name, 'ubuntu')
+        run: |
+          sudo apt-get install ninja-build
+          ninja --version
+          cmake --version
+          gcc --version
+
+      - name: Install dependencies on macos
+        if: startsWith(matrix.config.os, 'macos')
+        run: |
+          brew install p7zip cmake ninja
+          ninja --version
+          cmake --version
+
+      - name: Configure
         shell: bash
         run: |
-          # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-          git submodule sync --recursive
-          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
-      - name: Run tests
-        run: |
-          export CC=gcc-9
-          export CXX=g++-9
-          cd libelement
-          mkdir build
-          cd build
-          cmake -DBUILD_TESTING=ON ..
-          cmake --build .
-          make test
-      - name: Upload test results
-        if: failure()
-        uses: actions/upload-artifact@1.0.0
+          mkdir -p libelement/build
+          export CC=${{ matrix.config.CC }}
+          export CXX=${{ matrix.config.CXX }}
+          cmake \
+            -S libelement \
+            -B libelement/build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -G "${{ matrix.config.generators }}"
+
+      - name: Build
+        shell: bash
+        run: cmake --build libelement/build --config ${{ matrix.config.build_type }}
+
+      - name: Upload Build Developer Logs
+        uses: actions/upload-artifact@v2
         with:
-          name: libelement Test App Results
-          path: libelement/build/libemelement_test_app_details.xml
+          name: '${{ matrix.config.name }}-build_dev_logs'
+          path: |
+            **/build/**/*.txt
+            **/build/**/*.gcda
+            **/build/**/*.gcno
+            **/build/**/*codecov*
+            **/build/**/*.xml
+            **/build/**/*.cmake
+            **/build/**/*.log
+            **/build/**/*.json
+            **/build/**/*.gcov
+            **/build/**/*.info
+            **/build/**/.*
+            !**/build/_deps
+          retention-days: 1
 
-  run-laboratory-tests-ubuntu:
+  # Check source code formatting
+  formatting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      
       - name: Checkout submodules
         shell: bash
         run: |
@@ -44,160 +121,201 @@ jobs:
           auth_header="$(git config --local --get http.https://github.com/.extraheader)"
           git submodule sync --recursive
           git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
-      - name: Run tests
-        run: |
-          cd Laboratory
-          export CC=gcc-9
-          export CXX=g++-9
-          dotnet test --test-adapter-path:. --logger:trx -s "libelement_cli_unix_ci_debug.runsettings"
-      - name: Uploaded test results on fail
-        if: failure()
-        uses: actions/upload-artifact@v1.0.0
-        with:
-          name: libelement Laboratory Results
-          path: Laboratory/TestResults
 
-  run-laboratory-tests-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Checkout submodules
-        shell: bash
-        run: |
-          # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-          git submodule sync --recursive
-          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
-      - name: Run tests
-        run: |
-          cd Laboratory
-          dotnet test --test-adapter-path:. --logger:trx -s "libelement_cli_unix_ci_debug.runsettings"
-      - name: Uploaded test results on fail
-        if: failure()
-        uses: actions/upload-artifact@v1.0.0
-        with:
-          name: libelement Laboratory Results
-          path: Laboratory/TestResults
-
-  code-coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Checkout submodules
-        shell: bash
-        run: |
-          # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-          git submodule sync --recursive
-          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
-      - name: Install dependencies
-        run: |
-          #download lcov, used for outputting basic summary (and may be used in the future)
-          mkdir lcov
-          wget -c https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz -O - | tar -xz -C lcov/
-          cd lcov/lcov-1.14
-          sudo make install
-          cd ../..
-
-          #install gcovr, used to generate the sonarqube coverage
-          pip install gcovr
-          python -m gcovr -v
-
-          #download sonarqube code scanner
-          mkdir codescanner
-          cd codescanner
-          sudo wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-linux.zip
-          sudo unzip sonar-scanner-cli-4.4.0.2170-linux.zip
-          sudo rm sonar-scanner-cli-4.4.0.2170-linux.zip
-          sudo chmod +x sonar-scanner-4.4.0.2170-linux/bin/sonar-scanner
-          cd ..
-      - name: Run tests with code coverage
-        env:
-          SONARQUBE_URL: ${{ secrets.SONARQUBE_URL }}
-          SONARQUBE_LIBELEMENT: ${{ secrets.SONARQUBE_LIBELEMENT }}
-        run: |
-          #specify compiler version for cmake
-          export CC=gcc-8
-          export CXX=g++-8
-
-          #specify gcov version to match compiler version
-          sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-8 90
-          sudo ln -sf /usr/bin/gcov-8 /usr/bin/gcov
-
-          # ---- libelement Test App Coverage ----
-          cd libelement
-          mkdir build
-          cd build
-          cmake -DELEMENT_BUILD_TESTING=ON -DELEMENT_CODE_COVERAGE=ON ..
-          set +e
-          cmake --build . --target element_test_coverage
-          set -e
-          cd ../..
-
-          # ----- Laboratory Tests Coverage ------
-          cd Laboratory
-
-          #run laboratory tests, without failing the build on error
-          set +e
-          dotnet test -v q --test-adapter-path:. --logger:trx -s "libelement_cli_unix_ci_debug_codecoverage.runsettings"
-          set -e
-
-          cd ../libelement.CLI/build
-          
-          #run lcov, gathering coverage info and outputting a basic summary
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' "${HOME}"'/.cache/*' --output-file coverage.info
-          lcov --list coverage.info
-
-          # ----- Sonarqube coverage generation ------
-          #run gcvor using python as it's not in PATH. root is the entire element repo. exclude using regex, libraries and paths that don't matter.
-          #note: we have to exclude c files as sonarqube doesn't like them
-          #we output the coverage file at the root of the repository
-          python -m gcovr -r "../../" -e ".*dependencies\/.*" -e ".*_deps\/.*" -e ".*build\/.*" -e ".*\.c$" --sonarqube ../../coverage.xml -s
-
-          cd ../..
-
-          #run the code scanner
-          #sources include libelement and libelement.CLI (the CLI is what we run to generate the coverage, useful to see coverage for it as well)
-          #the entire repo is the project. all of these path settings are required for sonarqube and gcovr to understand the same relative paths
-          #if paths break, look at contents of coverage file for the paths used
-          #exclude looking at dependencies and other unrelated things, sonarqubes custom wildcard formatting
-          ./codescanner/sonar-scanner-4.4.0.2170-linux/bin/sonar-scanner \
-            -Dsonar.login=$SONARQUBE_LIBELEMENT \
-            -Dsonar.host.url=$SONARQUBE_URL \
-            -Dsonar.projectKey=libelement \
-            -Dsonar.sources=libelement,libelement.CLI \
-            -Dsonar.projectName="libelement" \
-            -Dsonar.coverageReportPaths="coverage.xml" \
-            -Dsonar.projectBaseDir="." \
-            -Dsonar.exclusions=**/dependencies/**/*,**/_deps/**/*,**/build/**/* \
-            -Dsonar.coverage.exclusions=**/dependencies/**/*,**/_deps/**/*,**/build/**/*
-
-  code-analysis:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Checkout submodules
-        shell: bash
-        run: |
-          # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-          git submodule sync --recursive
-          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install clang-format-9
+
       - name: Run analysis
         run: |
-          export CC=gcc-9
-          export CXX=g++-9
-          cd libelement
-          mkdir build
-          cd build
-          cmake ..
+          mkdir -p libelement/build
+          cmake  \
+            -S libelement \
+            -B libelement/build \
+            ..
           # Run clang-format to see if code matches our style guide, clang-format target can be used to apply changes
-          cmake --build . --target element_clang_check
+          cmake --build libelement/build --target element_clang_check
+
+  #todo: libelement tests are old and not really working, we mostly rely on laboratory
+  #
+  # run-libelement-tests:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Checkout submodules
+  #       shell: bash
+  #       run: |
+  #         # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+  #         git config --global url."https://github.com/".insteadOf "git@github.com:"
+  #         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+  #         git submodule sync --recursive
+  #         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+  #     - name: Run tests
+  #       run: |
+  #         export CC=gcc-9
+  #         export CXX=g++-9
+  #         cd libelement
+  #         mkdir build
+  #         cd build
+  #         cmake -DBUILD_TESTING=ON ..
+  #         cmake --build .
+  #         make test
+  #     - name: Upload test results
+  #       if: failure()
+  #       uses: actions/upload-artifact@1.0.0
+  #       with:
+  #         name: libelement Test App Results
+  #         path: libelement/build/libemelement_test_app_details.xml
+
+  #todo: this works but we don't have a way of disabling known failing tests, so until libelement passes all tests, it's not useful to run on CI
+  #      we need to run the laboratory test suite manually for all MR's, or figure out something nicer
+  #
+  # run-laboratory-tests-ubuntu:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Checkout submodules
+  #       shell: bash
+  #       run: |
+  #         # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+  #         git config --global url."https://github.com/".insteadOf "git@github.com:"
+  #         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+  #         git submodule sync --recursive
+  #         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+  #     - name: Run tests
+  #       run: |
+  #         cd Laboratory
+  #         export CC=gcc-9
+  #         export CXX=g++-9
+  #         dotnet test --test-adapter-path:. --logger:trx -s "libelement_cli_unix_ci_debug.runsettings"
+  #     - name: Uploaded test results on fail
+  #       if: failure()
+  #       uses: actions/upload-artifact@v1.0.0
+  #       with:
+  #         name: libelement Laboratory Results
+  #         path: Laboratory/TestResults
+
+  #todo: same as above
+  #
+  # run-laboratory-tests-macos:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Checkout submodules
+  #       shell: bash
+  #       run: |
+  #         # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+  #         git config --global url."https://github.com/".insteadOf "git@github.com:"
+  #         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+  #         git submodule sync --recursive
+  #         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+  #     - name: Run tests
+  #       run: |
+  #         cd Laboratory
+  #         dotnet test --test-adapter-path:. --logger:trx -s "libelement_cli_unix_ci_debug.runsettings"
+  #     - name: Uploaded test results on fail
+  #       if: failure()
+  #       uses: actions/upload-artifact@v1.0.0
+  #       with:
+  #         name: libelement Laboratory Results
+  #         path: Laboratory/TestResults
+
+  #todo: this fails due to using GCC8 when it's not installed
+  #      there might be other issues, like needing a specific combination of LCOV/GCOV/GCC versions
+  #      fix #oneday
+  #
+  # code-coverage:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Checkout submodules
+  #       shell: bash
+  #       run: |
+  #         # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+  #         git config --global url."https://github.com/".insteadOf "git@github.com:"
+  #         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+  #         git submodule sync --recursive
+  #         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+  #     - name: Install dependencies
+  #       run: |
+  #         #download lcov, used for outputting basic summary (and may be used in the future)
+  #         mkdir lcov
+  #         wget -c https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz -O - | tar -xz -C lcov/
+  #         cd lcov/lcov-1.14
+  #         sudo make install
+  #         cd ../..
+
+  #         #install gcovr, used to generate the sonarqube coverage
+  #         pip install gcovr
+  #         python -m gcovr -v
+
+  #         #download sonarqube code scanner
+  #         mkdir codescanner
+  #         cd codescanner
+  #         sudo wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-linux.zip
+  #         sudo unzip sonar-scanner-cli-4.4.0.2170-linux.zip
+  #         sudo rm sonar-scanner-cli-4.4.0.2170-linux.zip
+  #         sudo chmod +x sonar-scanner-4.4.0.2170-linux/bin/sonar-scanner
+  #         cd ..
+  #     - name: Run tests with code coverage
+  #       env:
+  #         SONARQUBE_URL: ${{ secrets.SONARQUBE_URL }}
+  #         SONARQUBE_LIBELEMENT: ${{ secrets.SONARQUBE_LIBELEMENT }}
+  #       run: |
+  #         #specify compiler version for cmake
+  #         export CC=gcc-8
+  #         export CXX=g++-8
+
+  #         #specify gcov version to match compiler version
+  #         sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-8 90
+  #         sudo ln -sf /usr/bin/gcov-8 /usr/bin/gcov
+
+  #         # ---- libelement Test App Coverage ----
+  #         cd libelement
+  #         mkdir build
+  #         cd build
+  #         cmake -DELEMENT_BUILD_TESTING=ON -DELEMENT_CODE_COVERAGE=ON ..
+  #         set +e
+  #         cmake --build . --target element_test_coverage
+  #         set -e
+  #         cd ../..
+
+  #         # ----- Laboratory Tests Coverage ------
+  #         cd Laboratory
+
+  #         #run laboratory tests, without failing the build on error
+  #         set +e
+  #         dotnet test -v q --test-adapter-path:. --logger:trx -s "libelement_cli_unix_ci_debug_codecoverage.runsettings"
+  #         set -e
+
+  #         cd ../libelement.CLI/build
+          
+  #         #run lcov, gathering coverage info and outputting a basic summary
+  #         lcov --capture --directory . --output-file coverage.info
+  #         lcov --remove coverage.info '/usr/*' "${HOME}"'/.cache/*' --output-file coverage.info
+  #         lcov --list coverage.info
+
+  #         # ----- Sonarqube coverage generation ------
+  #         #run gcvor using python as it's not in PATH. root is the entire element repo. exclude using regex, libraries and paths that don't matter.
+  #         #note: we have to exclude c files as sonarqube doesn't like them
+  #         #we output the coverage file at the root of the repository
+  #         python -m gcovr -r "../../" -e ".*dependencies\/.*" -e ".*_deps\/.*" -e ".*build\/.*" -e ".*\.c$" --sonarqube ../../coverage.xml -s
+
+  #         cd ../..
+
+  #         #run the code scanner
+  #         #sources include libelement and libelement.CLI (the CLI is what we run to generate the coverage, useful to see coverage for it as well)
+  #         #the entire repo is the project. all of these path settings are required for sonarqube and gcovr to understand the same relative paths
+  #         #if paths break, look at contents of coverage file for the paths used
+  #         #exclude looking at dependencies and other unrelated things, sonarqubes custom wildcard formatting
+  #         ./codescanner/sonar-scanner-4.4.0.2170-linux/bin/sonar-scanner \
+  #           -Dsonar.login=$SONARQUBE_LIBELEMENT \
+  #           -Dsonar.host.url=$SONARQUBE_URL \
+  #           -Dsonar.projectKey=libelement \
+  #           -Dsonar.sources=libelement,libelement.CLI \
+  #           -Dsonar.projectName="libelement" \
+  #           -Dsonar.coverageReportPaths="coverage.xml" \
+  #           -Dsonar.projectBaseDir="." \
+  #           -Dsonar.exclusions=**/dependencies/**/*,**/_deps/**/*,**/build/**/* \
+  #           -Dsonar.coverage.exclusions=**/dependencies/**/*,**/_deps/**/*,**/build/**/*

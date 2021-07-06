@@ -19,8 +19,7 @@ function_declaration::function_declaration(identifier name, const scope* parent_
 
 bool function_declaration::is_variadic() const
 {
-    if (!is_variadic_cached)
-    {
+    if (!is_variadic_cached) {
         constexpr auto visitor = [](const auto& body) {
             const auto* body_intrinsic = dynamic_cast<const intrinsic_function*>(&*body);
             return body_intrinsic && body_intrinsic->is_variadic();
@@ -55,7 +54,7 @@ object_const_shared_ptr function_declaration::call(
 }
 
 object_const_shared_ptr function_declaration::compile(const compilation_context& context,
-                                                      const source_information& source_info) const
+    const source_information& source_info) const
 {
     if (!ports_validated)
         validate_ports(context);
@@ -91,10 +90,9 @@ bool function_declaration::valid_at_boundary(const compilation_context& context)
 
     //outputs must be serializable
     const auto* return_type = output.resolve_annotation(context);
-    if (!return_type || !return_type->serializable(context))
-    {
+    if (!return_type || !return_type->serializable(context)) {
         error err(
-            fmt::format("output '{}' of function '{}' is not deserializable, so it's not valid on the boundary", output.typeof_info(), name.value), 
+            fmt::format("output '{}' of function '{}' is not deserializable, so it's not valid on the boundary", output.typeof_info(), name.value),
             ELEMENT_ERROR_UNKNOWN,
             source_info,
             context.get_logger());
@@ -102,11 +100,9 @@ bool function_declaration::valid_at_boundary(const compilation_context& context)
     }
 
     //inputs must be deserializable
-    for (const auto& input : inputs)
-    {
+    for (const auto& input : inputs) {
         const auto& type = input.resolve_annotation(context);
-        if (!type || !type->deserializable(context))
-        {
+        if (!type || !type->deserializable(context)) {
             error err(
                 fmt::format("input '{}' of function '{}' is not deserializable, so it's not valid on the boundary", input.typeof_info(), name.value),
                 ELEMENT_ERROR_UNKNOWN,
@@ -140,8 +136,7 @@ void function_declaration::validate_ports(const compilation_context& context) co
     ports_validated = true;
     valid_ports = true;
 
-    for (const auto& port : inputs)
-    {
+    for (const auto& port : inputs) {
         if (!port.is_valid(context))
             valid_ports = false;
     }

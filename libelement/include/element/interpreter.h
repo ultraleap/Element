@@ -1,12 +1,12 @@
 #if !defined(ELEMENT_INTERPRETER_H)
-#define ELEMENT_INTERPRETER_H
+    #define ELEMENT_INTERPRETER_H
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 extern "C" {
-#endif
+    #endif
 
-#include <stddef.h>
-#include "element/common.h"
+    #include <stddef.h>
+    #include "element/common.h"
 
 /**
  * @brief compiler options definition
@@ -328,23 +328,18 @@ typedef struct element_evaluator_ctx element_evaluator_ctx;
 
 element_result element_evaluator_create(
     element_interpreter_ctx* interpreter,
-    element_evaluator_ctx** evaluator
-);
+    element_evaluator_ctx** evaluator);
 
 element_result element_evaluator_set_options(
     element_evaluator_ctx* evaluator,
-    element_evaluator_options options
-);
+    element_evaluator_options options);
 
 element_result element_evaluator_get_options(
     element_evaluator_ctx* evaluator,
-    element_evaluator_options* options
-);
+    element_evaluator_options* options);
 
 void element_evaluator_delete(
-    element_evaluator_ctx** evaluator
-);
-
+    element_evaluator_ctx** evaluator);
 
 /**
  * @brief evaluates an instruction tree with the provided (boundary) inputs
@@ -429,7 +424,7 @@ element_result element_interpreter_typeof_expression(
     char* buffer,
     int buffer_size);
 
-#if defined(__cplusplus)
+    #if defined(__cplusplus)
 }
-#endif
+    #endif
 #endif

@@ -7,7 +7,7 @@ struct element_compiler_ctx;
 
 namespace element
 {
-    struct instruction;
+struct instruction;
 
-    using instruction_const_shared_ptr = std::shared_ptr<const instruction>;
+using instruction_const_shared_ptr = std::shared_ptr<const instruction>;
 } // namespace element

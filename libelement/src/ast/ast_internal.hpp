@@ -56,8 +56,7 @@ public:
     [[nodiscard]] element_ast* get_root();
     [[nodiscard]] const element_ast* get_root() const;
 
-    union
-    {
+    union {
         element_value literal = 0; // active for AST_NODE_LITERAL
         element_ast_flags flags;   // active for all other node types
     };

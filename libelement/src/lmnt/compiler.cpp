@@ -5,9 +5,8 @@
 #include <vector>
 #include <unordered_map>
 
-#define U16_LO(x) static_cast<uint16_t>((x) & 0xFFFF)
+#define U16_LO(x) static_cast<uint16_t>((x)&0xFFFF)
 #define U16_HI(x) static_cast<uint16_t>(((x) >> 16) & 0xFFFF)
-
 
 // create an allocation for this instruction and its dependents
 // must know what size the allocation is
@@ -37,16 +36,14 @@ static element_result compile_instruction(
     std::vector<lmnt_instruction>& output,
     lmnt_def_flags& flags);
 
-
 static element_result copy_stack_values(const uint16_t src_index, const uint16_t dst_index, const uint16_t count, std::vector<lmnt_instruction>& output)
 {
-    if (src_index != dst_index)
-    {
-        const uint16_t countm4 = (count/4)*4;
+    if (src_index != dst_index) {
+        const uint16_t countm4 = (count / 4) * 4;
         for (uint16_t i = 0; i < countm4; i += 4)
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNVV, uint16_t(src_index + i), 0, uint16_t(dst_index + i)});
+            output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNVV, uint16_t(src_index + i), 0, uint16_t(dst_index + i) });
         for (uint16_t i = countm4; i < count; ++i)
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNSS, uint16_t(src_index + i), 0, uint16_t(dst_index + i)});
+            output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNSS, uint16_t(src_index + i), 0, uint16_t(dst_index + i) });
     }
     return ELEMENT_OK;
 }
@@ -56,10 +53,10 @@ static const element::instruction* instruction_at(const compiler_state& state, c
 {
     if (const auto* es = expr->as<element::instruction_serialised_structure>()) {
         size_t st_index = 0;
-        for (const auto& d : es->dependents())
-        {
+        for (const auto& d : es->dependents()) {
             const stack_allocation* alloc = state.allocator->get(d.get());
-            if (!alloc) return nullptr;
+            if (!alloc)
+                return nullptr;
 
             if (st_index >= index)
                 return instruction_at(state, d.get(), st_index - index, count);
@@ -72,12 +69,12 @@ static const element::instruction* instruction_at(const compiler_state& state, c
         return instruction_at(state, ei->for_instruction().get(), index + ei->index, count);
     } else {
         const stack_allocation* alloc = state.allocator->get(expr);
-        if (!alloc) return nullptr;
+        if (!alloc)
+            return nullptr;
 
         return (index + count <= alloc->count) ? expr : nullptr;
     }
 }
-
 
 //
 // Constant
@@ -136,7 +133,7 @@ static element_result compile_constant_value(
         uint32_t arg;
         assert(sizeof(arg) == sizeof(value));
         std::memcpy(&arg, &value, sizeof(value));
-        output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNIBS, U16_LO(arg), U16_HI(arg), stack_idx});
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIBS, U16_LO(arg), U16_HI(arg), stack_idx });
     }
     return ELEMENT_OK;
 }
@@ -150,7 +147,6 @@ static element_result compile_constant(
 {
     return compile_constant_value(state, ec.value(), outidx, output, flags);
 }
-
 
 //
 // Input
@@ -198,7 +194,6 @@ static element_result compile_input(
     return ELEMENT_OK;
 }
 
-
 //
 // Serialised structure
 //
@@ -208,8 +203,7 @@ static element_result create_virtual_serialised_structure(
     const element::instruction_serialised_structure& es)
 {
     uint16_t count = 0;
-    for (const auto& d : es.dependents())
-    {
+    for (const auto& d : es.dependents()) {
         stack_allocation* vr;
         ELEMENT_OK_OR_RETURN(create_virtual_result(state, d.get(), &vr));
         count += vr->count;
@@ -222,14 +216,14 @@ static element_result prepare_virtual_serialised_structure(
     const element::instruction_serialised_structure& es)
 {
     uint16_t index = 0;
-    for (const auto& d : es.dependents())
-    {
+    for (const auto& d : es.dependents()) {
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, d.get()));
         state.allocator->set_parent(d.get(), &es, index);
         state.use(&es, d.get());
 
         stack_allocation* d_vr = state.allocator->get(d.get());
-        if (!d_vr) return ELEMENT_ERROR_UNKNOWN;
+        if (!d_vr)
+            return ELEMENT_ERROR_UNKNOWN;
         index += d_vr->count;
     }
 
@@ -253,8 +247,7 @@ static element_result compile_serialised_structure(
     lmnt_def_flags& flags)
 {
     uint16_t index = 0;
-    for (const auto& d : es.dependents())
-    {
+    for (const auto& d : es.dependents()) {
         ELEMENT_OK_OR_RETURN(compile_instruction(state, d.get(), output, flags));
 
         const stack_allocation* d_vr = state.allocator->get(d.get());
@@ -271,15 +264,13 @@ static element_result compile_serialised_structure(
     return ELEMENT_OK;
 }
 
-
 //
 // Nullary
 //
 
 static element_value get_nullary_constant(element::instruction_nullary::op op)
 {
-    switch (op)
-    {
+    switch (op) {
     //num
     case element::instruction_nullary::op::positive_infinity:
         return std::numeric_limits<float>::infinity();
@@ -343,7 +334,6 @@ static element_result compile_nullary(
     return compile_constant_value(state, value, stack_idx, output, flags);
 }
 
-
 //
 // Unary
 //
@@ -360,8 +350,7 @@ static element_result create_virtual_unary(
         return ELEMENT_ERROR_UNKNOWN;
 
     // if we're doing boolean not we need to bring a couple of constants along
-    if (eu.operation() == element::instruction_unary::op::not_)
-    {
+    if (eu.operation() == element::instruction_unary::op::not_) {
         ELEMENT_OK_OR_RETURN(state.add_constant(-1));
         ELEMENT_OK_OR_RETURN(state.add_constant(1));
     }
@@ -401,8 +390,7 @@ static element_result compile_unary(
     // compile the argument
     ELEMENT_OK_OR_RETURN(compile_instruction(state, arg_in, output, flags));
 
-    if (eu.operation() == element::instruction_unary::op::not_)
-    {
+    if (eu.operation() == element::instruction_unary::op::not_) {
         // boolean value is defined as >0 being true and <=0 as being false
         // this requires a bit of creative logic to ensure correctness for all inputs
         // ceil --> min(1) --> mul(-1) --> add(1)
@@ -413,33 +401,51 @@ static element_result compile_unary(
         uint16_t const_minus1, const_plus1;
         ELEMENT_OK_OR_RETURN(state.find_constant(-1, const_minus1));
         ELEMENT_OK_OR_RETURN(state.find_constant(1, const_plus1));
-        output.emplace_back(lmnt_instruction{LMNT_OP_CEILS, arg_stack_idx, 0, stack_idx});
-        output.emplace_back(lmnt_instruction{LMNT_OP_MINSS, stack_idx, const_plus1, stack_idx});
-        output.emplace_back(lmnt_instruction{LMNT_OP_MULSS, stack_idx, const_minus1, stack_idx});
-        output.emplace_back(lmnt_instruction{LMNT_OP_ADDSS, stack_idx, const_plus1, stack_idx});
-    }
-    else
-    {
+        output.emplace_back(lmnt_instruction{ LMNT_OP_CEILS, arg_stack_idx, 0, stack_idx });
+        output.emplace_back(lmnt_instruction{ LMNT_OP_MINSS, stack_idx, const_plus1, stack_idx });
+        output.emplace_back(lmnt_instruction{ LMNT_OP_MULSS, stack_idx, const_minus1, stack_idx });
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ADDSS, stack_idx, const_plus1, stack_idx });
+    } else {
         lmnt_opcode op;
-        switch (eu.operation())
-        {
-        case element::instruction_unary::op::abs:   op = LMNT_OP_ABSS;   break;
-        case element::instruction_unary::op::acos:  op = LMNT_OP_ACOS;   break;
-        case element::instruction_unary::op::asin:  op = LMNT_OP_ASIN;   break;
-        case element::instruction_unary::op::atan:  op = LMNT_OP_ATAN;   break;
-        case element::instruction_unary::op::ceil:  op = LMNT_OP_CEILS;  break;
-        case element::instruction_unary::op::cos:   op = LMNT_OP_COS;    break;
-        case element::instruction_unary::op::floor: op = LMNT_OP_FLOORS; break;
-        case element::instruction_unary::op::ln:    op = LMNT_OP_LN;     break;
-        case element::instruction_unary::op::sin:   op = LMNT_OP_SIN;    break;
-        case element::instruction_unary::op::tan:   op = LMNT_OP_TAN;    break;
-        default: assert(false); return ELEMENT_ERROR_UNKNOWN;
+        switch (eu.operation()) {
+        case element::instruction_unary::op::abs:
+            op = LMNT_OP_ABSS;
+            break;
+        case element::instruction_unary::op::acos:
+            op = LMNT_OP_ACOS;
+            break;
+        case element::instruction_unary::op::asin:
+            op = LMNT_OP_ASIN;
+            break;
+        case element::instruction_unary::op::atan:
+            op = LMNT_OP_ATAN;
+            break;
+        case element::instruction_unary::op::ceil:
+            op = LMNT_OP_CEILS;
+            break;
+        case element::instruction_unary::op::cos:
+            op = LMNT_OP_COS;
+            break;
+        case element::instruction_unary::op::floor:
+            op = LMNT_OP_FLOORS;
+            break;
+        case element::instruction_unary::op::ln:
+            op = LMNT_OP_LN;
+            break;
+        case element::instruction_unary::op::sin:
+            op = LMNT_OP_SIN;
+            break;
+        case element::instruction_unary::op::tan:
+            op = LMNT_OP_TAN;
+            break;
+        default:
+            assert(false);
+            return ELEMENT_ERROR_UNKNOWN;
         }
-        output.emplace_back(lmnt_instruction{op, arg_stack_idx, 0, stack_idx});
+        output.emplace_back(lmnt_instruction{ op, arg_stack_idx, 0, stack_idx });
     }
     return ELEMENT_OK;
 }
-
 
 //
 // Binary
@@ -501,75 +507,102 @@ static element_result compile_binary(
     ELEMENT_OK_OR_RETURN(compile_instruction(state, arg2_in, output, flags));
 
     lmnt_opcode op;
-    switch (eb.operation())
-    {
-        //num
-        case element::instruction_binary::op::add:   op = LMNT_OP_ADDSS; goto num_operation;
-        case element::instruction_binary::op::atan2: op = LMNT_OP_ATAN2; goto num_operation;
-        case element::instruction_binary::op::div:   op = LMNT_OP_DIVSS; goto num_operation;
-        case element::instruction_binary::op::max:   op = LMNT_OP_MAXSS; goto num_operation;
-        case element::instruction_binary::op::min:   op = LMNT_OP_MINSS; goto num_operation;
-        case element::instruction_binary::op::mul:   op = LMNT_OP_MULSS; goto num_operation;
-        case element::instruction_binary::op::pow:   op = LMNT_OP_POWSS; goto num_operation;
-        case element::instruction_binary::op::rem:   op = LMNT_OP_MODSS; goto num_operation;
-        case element::instruction_binary::op::sub:   op = LMNT_OP_SUBSS; goto num_operation;
+    switch (eb.operation()) {
+    //num
+    case element::instruction_binary::op::add:
+        op = LMNT_OP_ADDSS;
+        goto num_operation;
+    case element::instruction_binary::op::atan2:
+        op = LMNT_OP_ATAN2;
+        goto num_operation;
+    case element::instruction_binary::op::div:
+        op = LMNT_OP_DIVSS;
+        goto num_operation;
+    case element::instruction_binary::op::max:
+        op = LMNT_OP_MAXSS;
+        goto num_operation;
+    case element::instruction_binary::op::min:
+        op = LMNT_OP_MINSS;
+        goto num_operation;
+    case element::instruction_binary::op::mul:
+        op = LMNT_OP_MULSS;
+        goto num_operation;
+    case element::instruction_binary::op::pow:
+        op = LMNT_OP_POWSS;
+        goto num_operation;
+    case element::instruction_binary::op::rem:
+        op = LMNT_OP_MODSS;
+        goto num_operation;
+    case element::instruction_binary::op::sub:
+        op = LMNT_OP_SUBSS;
+        goto num_operation;
     num_operation:
-            output.emplace_back(lmnt_instruction{op, arg1_stack_idx, arg2_stack_idx, stack_idx});
-            return ELEMENT_OK;
+        output.emplace_back(lmnt_instruction{ op, arg1_stack_idx, arg2_stack_idx, stack_idx });
+        return ELEMENT_OK;
 
-        case element::instruction_binary::op::log:
-            // TODO: check if we've got a constant base we can work with
-            output.emplace_back(lmnt_instruction{LMNT_OP_LOG, arg1_stack_idx, arg2_stack_idx, stack_idx});
-            return ELEMENT_OK;
+    case element::instruction_binary::op::log:
+        // TODO: check if we've got a constant base we can work with
+        output.emplace_back(lmnt_instruction{ LMNT_OP_LOG, arg1_stack_idx, arg2_stack_idx, stack_idx });
+        return ELEMENT_OK;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     const uint32_t start_idx = static_cast<uint32_t>(output.size()); // index of the next op
 
-    switch (eb.operation())
-    {
-        //boolean
-        case element::instruction_binary::op::and_:
-            // (arg1 > 0.0 && arg2 > 0.0)
-            output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, arg1_stack_idx, 0, 0});                                 // + 0
-            output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6)}); // + 1
-            output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, arg2_stack_idx, 0, 0});                                 // + 2
-            output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6)}); // + 3
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNIIS, 1, 0, stack_idx});                                 // + 4
-            output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH,    0, U16_LO(start_idx + 7), U16_HI(start_idx + 7)}); // + 5
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNIIS, 0, 0, stack_idx});                                 // + 6
-            return ELEMENT_OK;
-        case element::instruction_binary::op::or_:
-            // (arg1 > 0.0 || arg2 > 0.0)
-            output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, arg1_stack_idx, 0, 0});                                 // + 0
-            output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCGT, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6)}); // + 1
-            output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, arg2_stack_idx, 0, 0});                                 // + 2
-            output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCGT, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6)}); // + 3
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNIIS, 0, 0, stack_idx});                                 // + 4
-            output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, U16_LO(start_idx + 7), U16_HI(start_idx + 7)});    // + 5
-            output.emplace_back(lmnt_instruction{LMNT_OP_ASSIGNIIS, 1, 0, stack_idx});                                 // + 6
-            return ELEMENT_OK;
+    switch (eb.operation()) {
+    //boolean
+    case element::instruction_binary::op::and_:
+        // (arg1 > 0.0 && arg2 > 0.0)
+        output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, arg1_stack_idx, 0, 0 });                                 // + 0
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6) }); // + 1
+        output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, arg2_stack_idx, 0, 0 });                                 // + 2
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6) }); // + 3
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIIS, 1, 0, stack_idx });                                 // + 4
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, U16_LO(start_idx + 7), U16_HI(start_idx + 7) });    // + 5
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIIS, 0, 0, stack_idx });                                 // + 6
+        return ELEMENT_OK;
+    case element::instruction_binary::op::or_:
+        // (arg1 > 0.0 || arg2 > 0.0)
+        output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, arg1_stack_idx, 0, 0 });                                 // + 0
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCGT, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6) }); // + 1
+        output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, arg2_stack_idx, 0, 0 });                                 // + 2
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCGT, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6) }); // + 3
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIIS, 0, 0, stack_idx });                                 // + 4
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, U16_LO(start_idx + 7), U16_HI(start_idx + 7) });    // + 5
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIIS, 1, 0, stack_idx });                                 // + 6
+        return ELEMENT_OK;
 
-        //comparison
-        case element::instruction_binary::op::eq:  op = LMNT_OP_ASSIGNCEQ; goto cmp_operation;
-        case element::instruction_binary::op::neq: op = LMNT_OP_ASSIGNCNE; goto cmp_operation;
-        case element::instruction_binary::op::lt:  op = LMNT_OP_ASSIGNCLT; goto cmp_operation;
-        case element::instruction_binary::op::leq: op = LMNT_OP_ASSIGNCLE; goto cmp_operation;
-        case element::instruction_binary::op::gt:  op = LMNT_OP_ASSIGNCGT; goto cmp_operation;
-        case element::instruction_binary::op::geq: op = LMNT_OP_ASSIGNCGE; goto cmp_operation;
+    //comparison
+    case element::instruction_binary::op::eq:
+        op = LMNT_OP_ASSIGNCEQ;
+        goto cmp_operation;
+    case element::instruction_binary::op::neq:
+        op = LMNT_OP_ASSIGNCNE;
+        goto cmp_operation;
+    case element::instruction_binary::op::lt:
+        op = LMNT_OP_ASSIGNCLT;
+        goto cmp_operation;
+    case element::instruction_binary::op::leq:
+        op = LMNT_OP_ASSIGNCLE;
+        goto cmp_operation;
+    case element::instruction_binary::op::gt:
+        op = LMNT_OP_ASSIGNCGT;
+        goto cmp_operation;
+    case element::instruction_binary::op::geq:
+        op = LMNT_OP_ASSIGNCGE;
+        goto cmp_operation;
     cmp_operation:
-            output.emplace_back(lmnt_instruction{LMNT_OP_CMP, arg1_stack_idx, arg2_stack_idx, 0});
-            output.emplace_back(lmnt_instruction{op, 1, 0, stack_idx});
-            return ELEMENT_OK;
+        output.emplace_back(lmnt_instruction{ LMNT_OP_CMP, arg1_stack_idx, arg2_stack_idx, 0 });
+        output.emplace_back(lmnt_instruction{ op, 1, 0, stack_idx });
+        return ELEMENT_OK;
 
-        default:
-            assert(false);
-            return ELEMENT_ERROR_UNKNOWN;
+    default:
+        assert(false);
+        return ELEMENT_ERROR_UNKNOWN;
     }
 }
-
 
 //
 // If
@@ -655,11 +688,12 @@ static element_result compile_if(
     lmnt_def_flags& flags)
 {
     const element::instruction* predicate_in = ei.predicate().get();
-    const element::instruction* true_in      = ei.if_true().get();
-    const element::instruction* false_in     = ei.if_false().get();
+    const element::instruction* true_in = ei.if_true().get();
+    const element::instruction* false_in = ei.if_false().get();
     stack_allocation* true_vr = state.allocator->get(true_in);
     stack_allocation* false_vr = state.allocator->get(false_in);
-    if (!true_vr || !false_vr) return ELEMENT_ERROR_UNKNOWN;
+    if (!true_vr || !false_vr)
+        return ELEMENT_ERROR_UNKNOWN;
 
     uint16_t predicate_stack_idx, true_stack_idx, false_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(predicate_in, predicate_stack_idx));
@@ -671,16 +705,16 @@ static element_result compile_if(
     // compile the predicate
     ELEMENT_OK_OR_RETURN(compile_instruction(state, predicate_in, output, flags));
     // make branch logic
-    output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, predicate_stack_idx, 0, 0});
+    output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, predicate_stack_idx, 0, 0 });
     const size_t predicate_branchcle_idx = output.size();
-    output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in at the end
+    output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in at the end
     // compile the true branch
     ELEMENT_OK_OR_RETURN(state.push_context(true_in, execution_type::conditional));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output, flags));
     ELEMENT_OK_OR_RETURN(state.pop_context());
     copy_stack_values(true_stack_idx, stack_idx, true_vr->count, output);
     const size_t branch_past_idx = output.size();
-    output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, 0, 0}); // target filled in at the end
+    output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, 0, 0 }); // target filled in at the end
     // compile the false branch
     const size_t false_idx = output.size();
     ELEMENT_OK_OR_RETURN(state.push_context(false_in, execution_type::conditional));
@@ -697,7 +731,6 @@ static element_result compile_if(
 
     return ELEMENT_OK;
 }
-
 
 //
 // For
@@ -769,8 +802,7 @@ using input_set = std::set<std::shared_ptr<const element::instruction_input>>;
 static element_result find_input_allocations(const compiler_state& state, const element::instruction* in, const input_set& expected, std::vector<const stack_allocation*>& result)
 {
     const auto* input = in->as<element::instruction_input>();
-    if (input && std::find_if(expected.begin(), expected.end(), [&](const auto& e) { return e.get() == input; }) != expected.end())
-    {
+    if (input && std::find_if(expected.begin(), expected.end(), [&](const auto& e) { return e.get() == input; }) != expected.end()) {
         if (result.size() <= input->index())
             result.resize(input->index() + 1, nullptr);
         result[input->index()] = state.allocator->get(input);
@@ -794,7 +826,8 @@ static element_result compile_for(
     const stack_allocation* initial_vr = state.allocator->get(initial_in);
     const stack_allocation* condition_vr = state.allocator->get(condition_in);
     const stack_allocation* body_vr = state.allocator->get(body_in);
-    if (!initial_vr || !condition_vr || !body_vr) return ELEMENT_ERROR_UNKNOWN;
+    if (!initial_vr || !condition_vr || !body_vr)
+        return ELEMENT_ERROR_UNKNOWN;
 
     // if we're looping, we have backbranches in the function so set that flag
     flags |= LMNT_DEFFLAG_HAS_BACKBRANCHES;
@@ -816,20 +849,20 @@ static element_result compile_for(
     for (uint16_t i = 0; i < condition_inputs.size(); ++i) {
         if (condition_inputs[i]) {
             const uint16_t input_stack_idx = state.calculate_stack_index(condition_inputs[i]->type(), condition_inputs[i]->index());
-            copy_stack_values(body_stack_idx+i, input_stack_idx, 1, output);
+            copy_stack_values(body_stack_idx + i, input_stack_idx, 1, output);
         }
     }
 
     // compile condition logic
     ELEMENT_OK_OR_RETURN(compile_instruction(state, condition_vr->instruction, output, flags));
-    output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, condition_stack_idx, 0, 0});
+    output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, condition_stack_idx, 0, 0 });
     const size_t condition_branchcle_idx = output.size();
-    output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in at the end
+    output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in at the end
     // copy outputs to inputs before body
     for (uint16_t i = 0; i < body_inputs.size(); ++i) {
         if (body_inputs[i]) {
             const uint16_t input_stack_idx = state.calculate_stack_index(body_inputs[i]->type(), body_inputs[i]->index());
-            copy_stack_values(body_stack_idx+i, input_stack_idx, 1, output);
+            copy_stack_values(body_stack_idx + i, input_stack_idx, 1, output);
         }
     }
 
@@ -838,7 +871,7 @@ static element_result compile_for(
     ELEMENT_OK_OR_RETURN(compile_instruction(state, body_vr->instruction, output, flags));
     ELEMENT_OK_OR_RETURN(state.pop_context());
     const size_t branch_past_idx = output.size();
-    output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, U16_LO(condition_index), U16_HI(condition_index)}); // branch --> condition
+    output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, U16_LO(condition_index), U16_HI(condition_index) }); // branch --> condition
     const size_t past_idx = output.size();
     copy_stack_values(body_stack_idx, stack_idx, body_vr->count, output);
 
@@ -848,7 +881,6 @@ static element_result compile_for(
 
     return ELEMENT_OK;
 }
-
 
 //
 // Indexer
@@ -871,14 +903,16 @@ static element_result prepare_virtual_indexer(
     const element::instruction_indexer& ei)
 {
     const element::instruction_for* ef = ei.for_instruction()->as<element::instruction_for>();
-    if (!ef) return ELEMENT_ERROR_UNKNOWN;
+    if (!ef)
+        return ELEMENT_ERROR_UNKNOWN;
 
     stack_allocation* ef_alloc = nullptr;
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, ef, &ef_alloc));
     state.use(&ei, ef);
 
     const element::instruction* ei_at = instruction_at(state, ef, ei.index, 1);
-    if (!ei_at) return ELEMENT_ERROR_UNKNOWN;
+    if (!ei_at)
+        return ELEMENT_ERROR_UNKNOWN;
 
     state.allocator->set_parent(&ei, ei_at, ei.index);
     return ELEMENT_OK;
@@ -902,7 +936,8 @@ static element_result compile_indexer(
     ELEMENT_OK_OR_RETURN(compile_instruction(state, ei.for_instruction().get(), output, flags));
 
     const element::instruction* ei_at = instruction_at(state, ei.for_instruction().get(), ei.index, 1);
-    if (!ei_at) return ELEMENT_ERROR_UNKNOWN;
+    if (!ei_at)
+        return ELEMENT_ERROR_UNKNOWN;
 
     uint16_t entry_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(ei_at, entry_stack_idx));
@@ -910,7 +945,6 @@ static element_result compile_indexer(
     copy_stack_values(entry_stack_idx, stack_idx, 1, output);
     return ELEMENT_OK;
 }
-
 
 //
 // Select
@@ -933,8 +967,7 @@ static element_result create_virtual_select(
 
     uint16_t max_count = 0;
     uint16_t index = 0;
-    for (size_t i = 0; i < es.options_count(); ++i)
-    {
+    for (size_t i = 0; i < es.options_count(); ++i) {
         stack_allocation* option_vr;
         ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
         ELEMENT_OK_OR_RETURN(create_virtual_result(state, es.options_at(i).get(), &option_vr));
@@ -954,8 +987,7 @@ static element_result prepare_virtual_select(
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.selector().get()));
     state.use(&es, 1, es.selector().get(), 0);
     const size_t opts_size = es.options_count();
-    for (size_t i = 0; i < opts_size; ++i)
-    {
+    for (size_t i = 0; i < opts_size; ++i) {
         ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
         ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, es.options_at(i).get()));
         ELEMENT_OK_OR_RETURN(state.pop_context());
@@ -971,8 +1003,7 @@ static element_result allocate_virtual_select(
 {
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, es.selector().get()));
     const size_t opts_size = es.options_count();
-    for (size_t i = 0; i < opts_size; ++i)
-    {
+    for (size_t i = 0; i < opts_size; ++i) {
         ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
         ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, es.options_at(i).get()));
         ELEMENT_OK_OR_RETURN(state.pop_context());
@@ -993,7 +1024,8 @@ static element_result compile_select(
     ELEMENT_OK_OR_RETURN(state.find_constant(element_value(opts_size - 1), last_valid_idx));
 
     stack_allocation* selector_vr = state.allocator->get(es.selector().get());
-    if (!selector_vr) return ELEMENT_ERROR_UNKNOWN;
+    if (!selector_vr)
+        return ELEMENT_ERROR_UNKNOWN;
 
     uint16_t selector_scratch_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(&es, selector_scratch_idx, 1));
@@ -1005,15 +1037,14 @@ static element_result compile_select(
     // we just check <= 0 for each condition so we don't care if it's already < 0
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
     // we also can't use the result spaces since there could already be calculated results in there
-    output.emplace_back(lmnt_instruction{LMNT_OP_MINSS,  selector_stack_idx, last_valid_idx, selector_scratch_idx});
-    output.emplace_back(lmnt_instruction{LMNT_OP_TRUNCS, selector_scratch_idx, 0, selector_scratch_idx});
+    output.emplace_back(lmnt_instruction{ LMNT_OP_MINSS, selector_stack_idx, last_valid_idx, selector_scratch_idx });
+    output.emplace_back(lmnt_instruction{ LMNT_OP_TRUNCS, selector_scratch_idx, 0, selector_scratch_idx });
 
     const size_t branches_start_idx = output.size();
-    for (size_t i = 0; i < opts_size; ++i)
-    {
-        output.emplace_back(lmnt_instruction{LMNT_OP_CMPZ, selector_scratch_idx, 0, 0});
-        output.emplace_back(lmnt_instruction{LMNT_OP_BRANCHCLE, 0, 0, 0}); // target filled in later
-        output.emplace_back(lmnt_instruction{LMNT_OP_SUBSS, selector_scratch_idx, one_idx, selector_scratch_idx});
+    for (size_t i = 0; i < opts_size; ++i) {
+        output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, selector_scratch_idx, 0, 0 });
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in later
+        output.emplace_back(lmnt_instruction{ LMNT_OP_SUBSS, selector_scratch_idx, one_idx, selector_scratch_idx });
     }
 
     uint16_t option0_stack_idx;
@@ -1022,18 +1053,18 @@ static element_result compile_select(
 
     std::vector<size_t> option_branch_indexes(opts_size);
 
-    for (size_t i = 0; i < opts_size; ++i)
-    {
+    for (size_t i = 0; i < opts_size; ++i) {
         stack_allocation* option_vr = state.allocator->get(es.options_at(i).get());
-        if (!option_vr) return ELEMENT_ERROR_UNKNOWN;
+        if (!option_vr)
+            return ELEMENT_ERROR_UNKNOWN;
 
         uint16_t option_stack_idx;
         ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(i).get(), option_stack_idx));
 
         const size_t option_idx = output.size();
         // fill in the target index for this branch option
-        output[branches_start_idx + i*3 + 1].arg2 = U16_LO(option_idx);
-        output[branches_start_idx + i*3 + 1].arg3 = U16_HI(option_idx);
+        output[branches_start_idx + i * 3 + 1].arg2 = U16_LO(option_idx);
+        output[branches_start_idx + i * 3 + 1].arg3 = U16_HI(option_idx);
 
         ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
         ELEMENT_OK_OR_RETURN(compile_instruction(state, es.options_at(i).get(), output, flags));
@@ -1041,20 +1072,17 @@ static element_result compile_select(
 
         copy_stack_values(option_stack_idx, stack_idx, option_vr->count, output);
         option_branch_indexes[i] = output.size();
-        output.emplace_back(lmnt_instruction{LMNT_OP_BRANCH, 0, 0, 0}); // target filled in later
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, 0, 0 }); // target filled in later
     }
 
     const size_t past_idx = output.size();
-    for (size_t i = 0; i < opts_size; ++i)
-    {
+    for (size_t i = 0; i < opts_size; ++i) {
         output[option_branch_indexes[i]].arg2 = U16_LO(past_idx);
         output[option_branch_indexes[i]].arg3 = U16_HI(past_idx);
     }
 
     return ELEMENT_OK;
 }
-
-
 
 static element_result create_virtual_result(
     compiler_state& state,
@@ -1063,9 +1091,9 @@ static element_result create_virtual_result(
 {
     // CSE: if this is non-null, we already did this
     stack_allocation* existing_vr = state.allocator->get(expr);
-    if (existing_vr)
-    {
-        if (vr) *vr = existing_vr;
+    if (existing_vr) {
+        if (vr)
+            *vr = existing_vr;
         return ELEMENT_OK;
     }
 
@@ -1101,12 +1129,11 @@ static element_result create_virtual_result(
     if (const auto* sel = expr->as<element::instruction_select>())
         oresult = create_virtual_select(state, *sel);
 
-    if (oresult == ELEMENT_OK)
-    {
-        if (vr) *vr = state.allocator->get(expr, 0);
+    if (oresult == ELEMENT_OK) {
+        if (vr)
+            *vr = state.allocator->get(expr, 0);
 
-        for (size_t i = 0; i < state.allocator->count(expr); ++i)
-        {
+        for (size_t i = 0; i < state.allocator->count(expr); ++i) {
             stack_allocation* a = state.allocator->get(expr, i);
             a->stage = compilation_stage::created;
             a->set_instruction = state.cur_instruction_index;
@@ -1118,7 +1145,6 @@ static element_result create_virtual_result(
     return oresult;
 }
 
-
 static element_result prepare_virtual_result(
     compiler_state& state,
     const element::instruction* expr,
@@ -1129,12 +1155,13 @@ static element_result prepare_virtual_result(
 
     // CSE: if this is non-null, we already did this
     stack_allocation* existing_vr = state.allocator->get(expr);
-    if (!existing_vr) return ELEMENT_ERROR_UNKNOWN;
+    if (!existing_vr)
+        return ELEMENT_ERROR_UNKNOWN;
 
     // TODO: is it necessary to re-prepare something previously conditional?
-    if (existing_vr->stage >= compilation_stage::prepared && existing_vr->executed_in == execution_type::unconditional)
-    {
-        if (vr) *vr = existing_vr;
+    if (existing_vr->stage >= compilation_stage::prepared && existing_vr->executed_in == execution_type::unconditional) {
+        if (vr)
+            *vr = existing_vr;
         return ELEMENT_OK;
     }
 
@@ -1170,15 +1197,14 @@ static element_result prepare_virtual_result(
     if (const auto* sel = expr->as<element::instruction_select>())
         oresult = prepare_virtual_select(state, *sel);
 
-    if (oresult == ELEMENT_OK)
-    {
-        if (vr) *vr = state.allocator->get(expr, 0);
+    if (oresult == ELEMENT_OK) {
+        if (vr)
+            *vr = state.allocator->get(expr, 0);
         state.allocator->set_stage(expr, compilation_stage::prepared);
     }
 
     return oresult;
 }
-
 
 static element_result allocate_virtual_result(
     compiler_state& state,
@@ -1186,11 +1212,12 @@ static element_result allocate_virtual_result(
     stack_allocation** vr)
 {
     stack_allocation* existing_vr = state.allocator->get(expr);
-    if (!existing_vr) return ELEMENT_ERROR_UNKNOWN;
+    if (!existing_vr)
+        return ELEMENT_ERROR_UNKNOWN;
 
-    if (existing_vr->stage >= compilation_stage::allocated)
-    {
-        if (vr) *vr = existing_vr;
+    if (existing_vr->stage >= compilation_stage::allocated) {
+        if (vr)
+            *vr = existing_vr;
         return ELEMENT_OK;
     }
 
@@ -1226,15 +1253,14 @@ static element_result allocate_virtual_result(
     if (const auto* sel = expr->as<element::instruction_select>())
         oresult = allocate_virtual_select(state, *sel);
 
-    if (oresult == ELEMENT_OK)
-    {
-        if (vr) *vr = state.allocator->get(expr, 0);
+    if (oresult == ELEMENT_OK) {
+        if (vr)
+            *vr = state.allocator->get(expr, 0);
         state.allocator->set_stage(expr, compilation_stage::allocated);
     }
 
     return oresult;
 }
-
 
 static element_result compile_instruction(
     compiler_state& state,
@@ -1243,12 +1269,12 @@ static element_result compile_instruction(
     lmnt_def_flags& flags)
 {
     stack_allocation* vr = state.allocator->get(expr);
-    if (!vr) return ELEMENT_ERROR_UNKNOWN;
+    if (!vr)
+        return ELEMENT_ERROR_UNKNOWN;
 
     // only skip re-emitting bytecode if we've definitely already executed it
     if (vr->stage >= compilation_stage::compiled
-        && (vr->executed_in == execution_type::unconditional || state.current_context->compiled_instructions.count(expr)))
-    {
+        && (vr->executed_in == execution_type::unconditional || state.current_context->compiled_instructions.count(expr))) {
         return ELEMENT_OK;
     }
 
@@ -1287,8 +1313,7 @@ static element_result compile_instruction(
     if (const auto* sel = expr->as<element::instruction_select>())
         oresult = compile_select(state, *sel, index, output, flags);
 
-    if (oresult == ELEMENT_OK)
-    {
+    if (oresult == ELEMENT_OK) {
         state.allocator->set_stage(expr, compilation_stage::compiled);
         state.current_context->compiled_instructions.emplace(expr);
     }
@@ -1296,14 +1321,12 @@ static element_result compile_instruction(
     return oresult;
 }
 
-
 element_result element_lmnt_find_constants(
     const element_lmnt_compiler_ctx& ctx,
     const element::instruction_const_shared_ptr& expr,
     std::unordered_map<element_value, size_t>& candidates)
 {
-    if (const auto* ec = expr->as<element::instruction_constant>())
-    {
+    if (const auto* ec = expr->as<element::instruction_constant>()) {
         const element_value value = ec->value();
         auto it = candidates.find(value);
         if (it != candidates.end())
@@ -1311,8 +1334,7 @@ element_result element_lmnt_find_constants(
         else
             candidates.emplace(value, 1);
     }
-    for (const auto& dep : expr->dependents())
-    {
+    for (const auto& dep : expr->dependents()) {
         ELEMENT_OK_OR_RETURN(element_lmnt_find_constants(ctx, dep, candidates));
     }
     return ELEMENT_OK;
@@ -1325,7 +1347,7 @@ element_result element_lmnt_compile_function(
     const size_t inputs_count,
     element_lmnt_compiled_function& output)
 {
-    compiler_state state { ctx, instruction.get(), constants, static_cast<uint16_t>(inputs_count) };
+    compiler_state state{ ctx, instruction.get(), constants, static_cast<uint16_t>(inputs_count) };
     // TODO: check for single constant fast path
     stack_allocation* vr = nullptr;
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, instruction.get(), &vr));
