@@ -86,7 +86,12 @@ class instruction_constant_cache
 {
 public:
     using constant_map = std::unordered_map<element_value, std::shared_ptr<const element::instruction_constant>>;
-    
+    instruction_constant_cache()
+        : m_cached_nan(std::make_shared<const element::instruction_constant>(NAN))
+    {
+        
+    }
+
     auto cache(element_value value, element::type_const_ptr type)
     {
         if (type == element::type::num.get())
@@ -97,6 +102,9 @@ public:
 
     std::shared_ptr<const element::instruction_constant> get(element_value value, element::type_const_ptr type)
     {
+        if (std::isnan(value))
+            return m_cached_nan;
+
         if (type == element::type::num.get()) {
             if (!m_cache_num.count(value))
                 cache(value, type);
@@ -111,6 +119,7 @@ public:
 private:
     constant_map m_cache_num;
     constant_map m_cache_bool;
+    std::shared_ptr<const element::instruction_constant> m_cached_nan;
 };
 
 class instruction_serialised_structure_cache
