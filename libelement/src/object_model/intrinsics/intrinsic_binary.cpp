@@ -40,11 +40,13 @@ object_const_shared_ptr intrinsic_binary::compile(const compilation_context& con
     assert(expr1);
     assert(expr2);
 
-    auto new_expr = std::make_unique<element::instruction_binary>(
+    auto new_expr = std::make_shared<element::instruction_binary>(
         operation,
         std::move(expr1),
         std::move(expr2),
         return_type);
 
-    return evaluate(context, std::move(new_expr));
+    auto element = evaluate(context, std::move(new_expr));
+    assert(element->actual_type == return_type);
+    return element;
 }

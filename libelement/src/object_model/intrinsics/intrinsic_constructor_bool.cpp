@@ -23,9 +23,11 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
     const auto false_expr = get_intrinsic(context.interpreter, false_decl)->compile(context, source_info);
 
     auto expr = std::dynamic_pointer_cast<const instruction>(compiled_args[0]);
-
-    if (!expr)
-        return std::make_shared<const element::error>(fmt::format("Argument to Bool was '{}' which is invalid. Must be Num or Bool.", compiled_args[0]->to_string()), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
+    if (!expr) {
+        return std::make_shared<const element::error>(
+            fmt::format("Argument to intrinsic 'Bool' was '{}' which is invalid. Must be of type 'Num' or 'Bool'",
+                compiled_args[0]->to_string()), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
+    }
 
     assert(std::dynamic_pointer_cast<const instruction>(true_expr));
     assert(std::dynamic_pointer_cast<const instruction>(false_expr));
@@ -35,7 +37,11 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
         std::dynamic_pointer_cast<const instruction>(true_expr),
         std::dynamic_pointer_cast<const instruction>(false_expr));
 
-    return evaluate(context, std::move(new_expr));
+    auto element = evaluate(context, std::move(new_expr));
+    if (element->actual_type != type::boolean.get())
+        throw;
+
+    return element;
 }
 
 std::string intrinsic_constructor_bool::get_name() const

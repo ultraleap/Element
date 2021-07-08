@@ -46,10 +46,12 @@ std::shared_ptr<const object> instruction::index(
     return index_type(actual_type_decl, shared_from_this(), context, name, source_info);
 }
 
-instruction_constant::instruction_constant(element_value val)
-    : instruction(type_id, type::num.get())
+instruction_constant::instruction_constant(element_value val, type_const_ptr type)
+    : instruction(type_id, type)
     , m_value(val)
 {
+    if (type != type::num.get() && type != type::boolean.get())
+        throw;
 }
 
 object_const_shared_ptr instruction_constant::call(const compilation_context& context, std::vector<object_const_shared_ptr> compiled_args, const source_information& source_info) const
@@ -108,4 +110,6 @@ instruction_select::instruction_select(instruction_const_shared_ptr selector, st
     for (auto&& o : options) {
         m_dependents.emplace_back(std::move(o));
     }
+
+    actual_type = options_at(0)->actual_type;
 }

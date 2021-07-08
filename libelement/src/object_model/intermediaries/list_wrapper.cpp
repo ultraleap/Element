@@ -73,10 +73,8 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
         for (const auto& option : option_objects) {
             options.push_back(std::dynamic_pointer_cast<const instruction>(option));
         }
-
-        auto select = std::make_shared<const element::instruction_select>(std::move(selector), std::move(options));
-        select->actual_type = select->options_at(0)->actual_type;
-        return select;
+        
+        return std::make_shared<const element::instruction_select>(std::move(selector), std::move(options));
     }
 
     return std::make_shared<const list_wrapper>(std::move(selector), option_objects);

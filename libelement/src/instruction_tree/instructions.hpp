@@ -55,9 +55,8 @@ public:
     [[nodiscard]] std::string get_name() const override { return actual_type->get_name(); }
     [[nodiscard]] std::string typeof_info() const override;
     [[nodiscard]] std::shared_ptr<const instruction> to_instruction(const element_interpreter_ctx&) const final { return shared_from_this(); }
-
-    //todo: this is changed by the num constructor, but it should actually copy the instruction with the new type
-    mutable type_const_ptr actual_type;
+    
+    type_const_ptr actual_type;
 
 protected:
     explicit instruction(element_type_id t, type_const_ptr actual_type)
@@ -85,7 +84,7 @@ struct instruction_constant final : public instruction
 {
     DECLARE_TYPE_ID();
 
-    explicit instruction_constant(element_value val);
+    explicit instruction_constant(element_value val, type_const_ptr type = type::num.get());
 
     [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,
         std::vector<object_const_shared_ptr> compiled_args,

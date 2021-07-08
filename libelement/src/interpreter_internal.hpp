@@ -95,9 +95,9 @@ public:
     auto cache(element_value value, element::type_const_ptr type)
     {
         if (type == element::type::num.get())
-            return m_cache_num.emplace(value, std::make_shared<const element::instruction_constant>(value));
+            return m_cache_num.emplace(value, std::make_shared<const element::instruction_constant>(value, type));
 
-        return m_cache_bool.emplace(value, std::make_shared<const element::instruction_constant>(value));
+        return m_cache_bool.emplace(value, std::make_shared<const element::instruction_constant>(value, type));
     };
 
     std::shared_ptr<const element::instruction_constant> get(element_value value, element::type_const_ptr type)
@@ -110,10 +110,14 @@ public:
                 cache(value, type);
             return m_cache_num[value];
         }
-        
-        if (!m_cache_bool.count(value))
-            cache(value, type);
-        return m_cache_bool[value];
+
+        if (type == element::type::boolean.get()) {
+            if (!m_cache_bool.count(value))
+                cache(value, type);
+            return m_cache_bool[value];
+        }
+
+        throw;
     }
 
 private:
