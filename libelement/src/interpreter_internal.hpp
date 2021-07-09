@@ -276,6 +276,51 @@ private:
     indexer_map m_cache;
 };
 
+//don't think this is necessary (since they should all be identical per design) but... let's do it anyway :shrug:
+class instruction_for_cache
+{
+public:
+    struct for_key
+    {
+        element::instruction_const_shared_ptr initial;
+        element::instruction_const_shared_ptr condition;
+        element::instruction_const_shared_ptr body;
+        std::set<std::shared_ptr<const element::instruction_input>> inputs;
+
+        bool operator<(const for_key& other) const noexcept
+        {
+            if (initial == other.initial) {
+                if (condition == other.condition) {
+                    if (body == other.body) {
+                        return inputs < other.inputs;
+                    }
+                    return body < other.body;
+                }
+                return condition < other.condition;
+            }
+            return initial < other.initial;
+        }
+    };
+    using for_map = std::map<for_key, std::shared_ptr<const element::instruction_for>>;
+
+    //todo: I really should just set up the instructions properly and use std::set or something
+    std::shared_ptr<const element::instruction_for> get(
+        element::instruction_const_shared_ptr initial,
+        element::instruction_const_shared_ptr condition,
+        element::instruction_const_shared_ptr body,
+        std::set<std::shared_ptr<const element::instruction_input>> inputs)
+    {
+        for_key key{initial, condition, body, inputs};
+        auto value = std::make_shared<const element::instruction_for>(std::move(initial), std::move(condition), std::move(body), std::move(inputs));
+
+        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
+        return cached_value_iterator->second;
+    }
+
+private:
+    for_map m_cache;
+};
+
 struct element_interpreter_ctx
 {
 public:
@@ -320,4 +365,5 @@ public:
     mutable instruction_select_cache cache_instruction_select;
     mutable instruction_if_cache cache_instruction_if;
     mutable instruction_indexer_cache cache_instruction_indexer;
+    mutable instruction_for_cache cache_instruction_for;
 };
