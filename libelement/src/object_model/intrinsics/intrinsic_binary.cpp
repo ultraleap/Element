@@ -3,6 +3,7 @@
 //SELF
 #include "object_model/constraints/type.hpp"
 #include "object_model/intermediaries/function_instance.hpp"
+#include "object_model/declarations//function_declaration.hpp"
 #include "object_model/error.hpp"
 
 using namespace element;

@@ -12,6 +12,7 @@
 #include "object_model/error_map.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/constraints/user_function_constraint.hpp"
+#include "configuration.hpp"
 
 using namespace element;
 

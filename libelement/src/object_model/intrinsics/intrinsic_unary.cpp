@@ -5,6 +5,7 @@
 #include "object_model/compilation_context.hpp"
 #include "object_model/intermediaries/function_instance.hpp"
 #include "instruction_tree/instructions.hpp"
+#include "object_model/declarations//function_declaration.hpp"
 
 using namespace element;
 

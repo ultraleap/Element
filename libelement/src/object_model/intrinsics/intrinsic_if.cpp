@@ -4,6 +4,7 @@
 #include "object_model/intermediaries/function_instance.hpp"
 #include "object_model/error.hpp"
 #include "object_model/intermediaries/list_wrapper.hpp"
+#include "object_model/declarations//function_declaration.hpp"
 
 using namespace element;
 
