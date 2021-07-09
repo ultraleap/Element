@@ -169,7 +169,7 @@ element_result element_object_index(
  */
 element_result element_object_to_instruction(
     const element_object* object,
-    element_interpreter_ctx* interpereter,
+    element_object_model_ctx* context,
     element_instruction** output);
 
 /**
