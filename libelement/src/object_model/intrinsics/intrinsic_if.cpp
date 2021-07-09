@@ -43,5 +43,5 @@ object_const_shared_ptr intrinsic_if::compile(const compilation_context& context
         throw;
 
     //todo: this flips the true/false branch so as not to modify the predicate, and we're not using the if expression, we probably want a different solution for niceties but this will work for now
-    return list_wrapper::create_or_optimise(std::move(maybe_constant_wrapped_pre_expr), { frame.compiled_arguments[2], frame.compiled_arguments[1] }, source_info);
+    return list_wrapper::create_or_optimise(*context.interpreter, std::move(maybe_constant_wrapped_pre_expr), { frame.compiled_arguments[2], frame.compiled_arguments[1] }, source_info);
 }

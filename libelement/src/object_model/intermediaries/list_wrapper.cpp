@@ -8,10 +8,12 @@
 #include "object_model/error.hpp"
 #include "object_model/constraints/constraint.hpp"
 #include "instruction_tree/instructions.hpp"
+#include "object_model/compilation_context.hpp"
 
 using namespace element;
 
-object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shared_ptr& selector_object,
+object_const_shared_ptr list_wrapper::create_or_optimise(const element_interpreter_ctx& interpreter,
+    const object_const_shared_ptr& selector_object,
     const std::vector<object_const_shared_ptr>& option_objects,
     const source_information& source_info)
 {
@@ -74,7 +76,7 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
             options.push_back(std::dynamic_pointer_cast<const instruction>(option));
         }
         
-        return std::make_shared<const element::instruction_select>(std::move(selector), std::move(options));
+        return interpreter.cache_instruction_select.get(std::move(selector), std::move(options));
     }
 
     return std::make_shared<const list_wrapper>(std::move(selector), option_objects);
@@ -133,7 +135,7 @@ object_const_shared_ptr list_wrapper::call(const compilation_context& context,
     for (const auto& option : options)
         new_options.push_back(option->call(context, compiled_args, source_info));
 
-    return create_or_optimise(selector, new_options, source_info);
+    return create_or_optimise(*context.interpreter, selector, new_options, source_info);
 }
 
 object_const_shared_ptr list_wrapper::index(const compilation_context& context,
@@ -145,7 +147,7 @@ object_const_shared_ptr list_wrapper::index(const compilation_context& context,
     for (const auto& option : options)
         new_options.push_back(option->index(context, name, source_info));
 
-    return create_or_optimise(selector, new_options, source_info);
+    return create_or_optimise(*context.interpreter, selector, new_options, source_info);
 }
 
 object_const_shared_ptr list_wrapper::compile(const compilation_context& context,
@@ -156,7 +158,7 @@ object_const_shared_ptr list_wrapper::compile(const compilation_context& context
     for (const auto& option : options)
         new_options.push_back(option->compile(context, source_info));
 
-    return create_or_optimise(selector, new_options, source_info);
+    return create_or_optimise(*context.interpreter, selector, new_options, source_info);
 }
 
 std::shared_ptr<const instruction> list_wrapper::to_instruction(const element_interpreter_ctx& interpreter) const
@@ -166,6 +168,6 @@ std::shared_ptr<const instruction> list_wrapper::to_instruction(const element_in
     for (const auto& option : options)
         new_options.push_back(option->to_instruction(interpreter));
 
-    auto result = create_or_optimise(selector, new_options, {});
+    auto result = create_or_optimise(interpreter, selector, new_options, {});
     return std::dynamic_pointer_cast<const instruction>(std::move(result));
 }

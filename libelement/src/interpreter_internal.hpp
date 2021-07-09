@@ -166,6 +166,41 @@ private:
     structure_map m_cache;
 };
 
+
+class instruction_select_cache
+{
+public:
+    struct select_key
+    {
+        element::instruction_const_shared_ptr selector;
+        std::vector<element::instruction_const_shared_ptr> options;
+        std::string struct_name;
+        bool operator<(const select_key& other) const noexcept
+        {
+            if (selector == other.selector)
+                return options < other.options;
+
+            return selector < other.selector;
+        }
+    };
+    using selector_map = std::map<select_key, std::shared_ptr<const element::instruction_select>>;
+
+    //todo: I really should just set up the instructions properly and use std::set or something
+    std::shared_ptr<const element::instruction_select> get(
+        element::instruction_const_shared_ptr selector,
+        std::vector<element::instruction_const_shared_ptr> options)
+    {
+        select_key key{selector, options};
+        auto select = std::make_shared<const element::instruction_select>(std::move(selector), std::move(options));
+
+        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(select));
+        return cached_value_iterator->second;
+    }
+
+private:
+    selector_map m_cache;
+};
+
 struct element_interpreter_ctx
 {
 public:
@@ -207,4 +242,5 @@ public:
     mutable instruction_nullary_cache cache_instruction_nullary;
     mutable instruction_constant_cache cache_instruction_constant;
     mutable instruction_serialised_structure_cache cache_instruction_serialised_structure;
+    mutable instruction_select_cache cache_instruction_select;
 };

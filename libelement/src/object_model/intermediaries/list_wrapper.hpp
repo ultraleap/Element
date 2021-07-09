@@ -10,7 +10,7 @@ namespace element
 class list_wrapper final : public object, public std::enable_shared_from_this<list_wrapper>
 {
 public:
-    static object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& selector_object, const std::vector<object_const_shared_ptr>& option_objects, const source_information& source_info);
+    static object_const_shared_ptr create_or_optimise(const element_interpreter_ctx& interpreter, const object_const_shared_ptr& selector_object, const std::vector<object_const_shared_ptr>& option_objects, const source_information& source_info);
 
     explicit list_wrapper(std::shared_ptr<const instruction> selector, std::vector<object_const_shared_ptr> options);
 
