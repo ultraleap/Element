@@ -40,7 +40,7 @@ object_const_shared_ptr intrinsic_binary::compile(const compilation_context& con
     assert(expr1);
     assert(expr2);
 
-    auto new_expr = std::make_shared<element::instruction_binary>(
+    auto new_expr = context.interpreter->cache_instruction_binary.get(
         operation,
         std::move(expr1),
         std::move(expr2),

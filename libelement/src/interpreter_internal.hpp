@@ -360,6 +360,50 @@ private:
     unary_map m_cache;
 };
 
+class instruction_binary_cache
+{
+public:
+    struct binary_key
+    {
+        element_binary_op op;
+        element::instruction_const_shared_ptr input1;
+        element::instruction_const_shared_ptr input2;
+        element::type_const_ptr actual_type;
+
+        bool operator<(const binary_key& other) const noexcept
+        {
+            if (op == other.op) {
+                if (input1 == other.input1) {
+                    if (input2 == other.input2) {
+                        return actual_type < other.actual_type;
+                    }
+                    return input2 < other.input2;
+                }
+                return input1 < other.input1;
+            }
+            return op < other.op;
+        }
+    };
+    using binary_map = std::map<binary_key, std::shared_ptr<const element::instruction_binary>>;
+
+    //todo: I really should just set up the instructions properly and use std::set or something
+    std::shared_ptr<const element::instruction_binary> get(
+        element_binary_op op,
+        element::instruction_const_shared_ptr input1,
+        element::instruction_const_shared_ptr input2,
+        element::type_const_ptr actual_type)
+    {
+        binary_key key{op, input1, input2, actual_type};
+        auto value = std::make_shared<const element::instruction_binary>(op, std::move(input1), std::move(input2), std::move(actual_type));
+
+        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
+        return cached_value_iterator->second;
+    }
+
+private:
+    binary_map m_cache;
+};
+
 struct element_interpreter_ctx
 {
 public:
@@ -406,4 +450,5 @@ public:
     mutable instruction_indexer_cache cache_instruction_indexer;
     mutable instruction_for_cache cache_instruction_for;
     mutable instruction_unary_cache cache_instruction_unary;
+    mutable instruction_binary_cache cache_instruction_binary;
 };
