@@ -42,7 +42,7 @@ public:
 
     const struct_declaration* const declarer;
     std::map<std::string, object_const_shared_ptr> fields;
-    mutable bool instruction_cached;
+    mutable bool instruction_cached = false;
     mutable std::shared_ptr<const instruction> cached_instruction;
 
 private:

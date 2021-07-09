@@ -138,9 +138,13 @@ public:
         std::string struct_name;
         bool operator<(const structure_key& other) const noexcept
         {
-            return struct_name < other.struct_name
-                && instructions < other.instructions
-                && names < other.names;
+            if (struct_name == other.struct_name) {
+                if (instructions == other.instructions) {
+                    return names < other.names;
+                }
+                return instructions < other.instructions;
+            }
+            return struct_name < other.struct_name;
         }
     };
     using structure_map = std::map<structure_key, std::shared_ptr<const element::instruction_serialised_structure>>;
