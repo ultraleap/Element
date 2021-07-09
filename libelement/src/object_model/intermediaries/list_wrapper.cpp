@@ -27,9 +27,9 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const object_const_shar
     }
 
     auto selector = std::dynamic_pointer_cast<const instruction>(selector_object);
-    if (!selector || selector->actual_type != type::num.get()) {
+    if (!selector || (selector->actual_type != type::num.get() && selector->actual_type != type::boolean.get())) {
         return std::make_shared<const error>(
-            "Tried to create a selector but it must be of type 'Num'\nnote: selector is \"" + selector_object->to_string() + "\"",
+            "Tried to create a selector but it must be of type 'Num' or 'Bool'\nnote: selector is \"" + selector_object->to_string() + "\"",
             ELEMENT_ERROR_UNKNOWN,
             source_info); //todo: pass logger from context
     }
