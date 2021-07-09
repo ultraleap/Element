@@ -33,7 +33,7 @@ object_const_shared_ptr intrinsic_if::compile(const compilation_context& context
     const auto true_expr = get_intrinsic(context.interpreter, true_decl)->compile(context, source_info);
     const auto false_expr = get_intrinsic(context.interpreter, false_decl)->compile(context, source_info);
 
-    auto wrapped_pre_expr = std::make_shared<const element::instruction_if>(
+    auto wrapped_pre_expr = context.interpreter->cache_instruction_if.get(
         std::move(pred_expr),
         std::dynamic_pointer_cast<const instruction>(true_expr),
         std::dynamic_pointer_cast<const instruction>(false_expr));

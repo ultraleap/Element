@@ -166,7 +166,6 @@ private:
     structure_map m_cache;
 };
 
-
 class instruction_select_cache
 {
 public:
@@ -199,6 +198,44 @@ public:
 
 private:
     selector_map m_cache;
+};
+
+class instruction_if_cache
+{
+public:
+    struct if_key
+    {
+        element::instruction_const_shared_ptr predicate;
+        element::instruction_const_shared_ptr if_true;
+        element::instruction_const_shared_ptr if_false;
+        bool operator<(const if_key& other) const noexcept
+        {
+            if (predicate == other.predicate) {
+                if (if_true == other.if_true) {
+                    return if_false < other.if_false;
+                }
+                return if_true < other.if_true;
+            }
+            return predicate < other.predicate;
+        }
+    };
+    using if_map = std::map<if_key, std::shared_ptr<const element::instruction_if>>;
+
+    //todo: I really should just set up the instructions properly and use std::set or something
+    std::shared_ptr<const element::instruction_if> get(
+        element::instruction_const_shared_ptr predicate,
+        element::instruction_const_shared_ptr if_true,
+        element::instruction_const_shared_ptr if_false)
+    {
+        if_key key{predicate, if_true, if_false};
+        auto value = std::make_shared<const element::instruction_if>(std::move(predicate), std::move(if_true), std::move(if_false));
+
+        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
+        return cached_value_iterator->second;
+    }
+
+private:
+    if_map m_cache;
 };
 
 struct element_interpreter_ctx
@@ -243,4 +280,5 @@ public:
     mutable instruction_constant_cache cache_instruction_constant;
     mutable instruction_serialised_structure_cache cache_instruction_serialised_structure;
     mutable instruction_select_cache cache_instruction_select;
+    mutable instruction_if_cache cache_instruction_if;
 };

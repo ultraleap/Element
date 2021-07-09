@@ -32,7 +32,7 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
     assert(std::dynamic_pointer_cast<const instruction>(true_expr));
     assert(std::dynamic_pointer_cast<const instruction>(false_expr));
 
-    auto new_expr = std::make_unique<element::instruction_if>(
+    auto new_expr = context.interpreter->cache_instruction_if.get(
         expr,
         std::dynamic_pointer_cast<const instruction>(true_expr),
         std::dynamic_pointer_cast<const instruction>(false_expr));

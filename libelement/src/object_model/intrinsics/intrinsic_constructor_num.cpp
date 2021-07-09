@@ -31,7 +31,7 @@ object_const_shared_ptr intrinsic_constructor_num::call(
 
     //If it's a bool, we can wrap it in a IF to convert it to a number
     if (expr->actual_type == type::boolean.get()) {
-        auto new_expr = std::make_shared<element::instruction_if>(
+        auto new_expr = context.interpreter->cache_instruction_if.get(
             expr,
             context.interpreter->cache_instruction_constant.get(1, type::num.get()),
             context.interpreter->cache_instruction_constant.get(0, type::num.get()));
