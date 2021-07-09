@@ -3,7 +3,7 @@
 //SELF
 #include "call_stack.hpp"
 #include "capture_stack.hpp"
-#include "interpreter_internal.hpp"
+#include "../interpreter_internal.hpp"
 #include "configuration.hpp"
 #include "scope_caches.hpp"
 
