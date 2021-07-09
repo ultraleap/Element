@@ -32,7 +32,7 @@ object_const_shared_ptr intrinsic_unary::compile(const compilation_context& cont
     auto expr = std::dynamic_pointer_cast<const instruction>(frame.compiled_arguments[0]);
     assert(expr);
 
-    auto new_expr = std::make_unique<element::instruction_unary>(
+    auto new_expr = context.interpreter->cache_instruction_unary.get(
         operation,
         std::move(expr),
         return_type);

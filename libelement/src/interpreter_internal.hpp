@@ -321,6 +321,45 @@ private:
     for_map m_cache;
 };
 
+class instruction_unary_cache
+{
+public:
+    struct unary_key
+    {
+        element_unary_op op;
+        element::instruction_const_shared_ptr input;
+        element::type_const_ptr actual_type;
+
+        bool operator<(const unary_key& other) const noexcept
+        {
+            if (op == other.op) {
+                if (input == other.input) {
+                    return actual_type < other.actual_type;
+                }
+                return input < other.input;
+            }
+            return op < other.op;
+        }
+    };
+    using unary_map = std::map<unary_key, std::shared_ptr<const element::instruction_unary>>;
+
+    //todo: I really should just set up the instructions properly and use std::set or something
+    std::shared_ptr<const element::instruction_unary> get(
+        element_unary_op op,
+        element::instruction_const_shared_ptr input,
+        element::type_const_ptr actual_type)
+    {
+        unary_key key{op, input, actual_type};
+        auto value = std::make_shared<const element::instruction_unary>(op, std::move(input), std::move(actual_type));
+
+        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
+        return cached_value_iterator->second;
+    }
+
+private:
+    unary_map m_cache;
+};
+
 struct element_interpreter_ctx
 {
 public:
@@ -366,4 +405,5 @@ public:
     mutable instruction_if_cache cache_instruction_if;
     mutable instruction_indexer_cache cache_instruction_indexer;
     mutable instruction_for_cache cache_instruction_for;
+    mutable instruction_unary_cache cache_instruction_unary;
 };
