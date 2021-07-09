@@ -159,10 +159,10 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
     const auto for_expression = std::make_shared<element::instruction_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression), context.boundaries.back().inputs);
     const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
 
-    auto indexing_expression_filler = [&for_expression](const std::string&,
+    auto indexing_expression_filler = [&for_expression, &context](const std::string&,
                                           const std::shared_ptr<const instruction>& field,
                                           int index) -> std::shared_ptr<const instruction> {
-        return std::make_shared<element::instruction_indexer>(for_expression, index, field->actual_type);
+        return context.interpreter->cache_instruction_indexer.get(for_expression, index, field->actual_type);
     };
 
     return initial_struct->clone_and_fill_with_expressions(context, std::move(indexing_expression_filler));

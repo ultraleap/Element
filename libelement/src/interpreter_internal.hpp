@@ -238,6 +238,44 @@ private:
     if_map m_cache;
 };
 
+class instruction_indexer_cache
+{
+public:
+    struct indexer_key
+    {
+        std::shared_ptr<const element::instruction_for> for_instruction;
+        int index;
+        element::type_const_ptr type;
+        bool operator<(const indexer_key& other) const noexcept
+        {
+            if (for_instruction == other.for_instruction) {
+                if (index == other.index) {
+                    return type < other.type;
+                }
+                return index < other.index;
+            }
+            return for_instruction < other.for_instruction;
+        }
+    };
+    using indexer_map = std::map<indexer_key, std::shared_ptr<const element::instruction_indexer>>;
+
+    //todo: I really should just set up the instructions properly and use std::set or something
+    std::shared_ptr<const element::instruction_indexer> get(
+        std::shared_ptr<const element::instruction_for> for_instruction,
+        int index,
+        element::type_const_ptr type)
+    {
+        indexer_key key{for_instruction, index, type};
+        auto value = std::make_shared<const element::instruction_indexer>(std::move(for_instruction), index, type);
+
+        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
+        return cached_value_iterator->second;
+    }
+
+private:
+    indexer_map m_cache;
+};
+
 struct element_interpreter_ctx
 {
 public:
@@ -281,4 +319,5 @@ public:
     mutable instruction_serialised_structure_cache cache_instruction_serialised_structure;
     mutable instruction_select_cache cache_instruction_select;
     mutable instruction_if_cache cache_instruction_if;
+    mutable instruction_indexer_cache cache_instruction_indexer;
 };
