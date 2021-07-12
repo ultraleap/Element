@@ -108,8 +108,8 @@ struct instruction_input final : public instruction
 {
     DECLARE_TYPE_ID();
 
-    explicit instruction_input(size_t scope, size_t input_index)
-        : instruction(type_id, nullptr)
+    explicit instruction_input(size_t scope, size_t input_index, type_const_ptr type)
+        : instruction(type_id, type)
         , m_scope(scope)
         , m_index(input_index)
     {
