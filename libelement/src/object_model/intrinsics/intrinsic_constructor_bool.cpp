@@ -30,7 +30,7 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
         return expr;
     
     //If it's a Num, we can wrap it in a IF to convert it to a Num
-    if (expr->actual_type == type::boolean.get()) {
+    if (expr->actual_type == type::num.get()) {
         auto new_expr = context.interpreter->cache_instruction_if.get(
             expr,
             context.interpreter->cache_instruction_nullary.get(element_nullary_op::true_value, type::boolean.get()),
