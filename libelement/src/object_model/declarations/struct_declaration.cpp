@@ -125,48 +125,7 @@ object_const_shared_ptr struct_declaration::generate_placeholder(
     if (inputs.empty()) {
         assert(is_intrinsic());
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
-
-        /*
-         * the assumption we make then doing "type checks/conversions" (i.e num/bool constructor) vs user input is interesting
-         *
-         * for Num, we assume that all Bool instruction types are wrong, So we force them to be 0/1 even if they already are 0/1.
-         *    This is mainly a side effect of not being able to just change the type of something, we'd need a Cast instruction or something
-         * for Bool, we assume the opposite. All bool instructions are correct, so we don't need to force them to be 0/1
-         *
-         * The problem is leaving input instructions untouched.
-         *    e.g. calling "_(a:Bool) = Num(a)" with "10", would return 10 (assuming run-time, it would be a type error at compile time)
-         *    Due to not constraining those inputs in the instruction tree
-         *
-         * If we assume all inputs are of type Num, then passing it through a Num constructor does nothing, which is a bug
-         *     and if we passed it through a Bool constructor, it would force it to be 0/1, which is a weird (as we're forcing a bool to be a bool only when it goes through Bool)
-         *
-         * If we assume that bool inputs are of type Bool, then when those pass through a Num constructor it would force it to be 0/1
-         *     and if we passed it through a Bool constructor, it would do nothing
-         *
-         * Of course, in the bool case we also need to make sure that we're handling that correctly, by not assuming we can take the raw value of a bool as an index, or something similar
-         *    we always need to check whether a bool is or isn't a bool when we want to use it, the value of it is unsafe.
-         *    this is handled in the interpreter by "to_bool"
-         *
-         * There are two issues with all of this:
-         *    the num constructor will add a branch for all bools passed to it, even if we know they're safe (e.g. instrinsic "and" always returns 0/1)
-         *        to fix that, we'd need some way of safely changing the type of an instruction to Num
-         *    The bool/num conversions don't exist in the instruction tree, unless the user has manually passed it through a constructor
-         *        inputs of type bool are not wrapped in a conversion to 0/1
-         *        we need to make sure we use "to_bool" everywhere, or we'll create bugs
-         *        e.g. LMNT doesn't see the conversions within the instruction tree, so it needs to see that user input could be of Bool type, and then handle it correctly
-         *
-         * An alternative solution is to wrap inputs of type bool in a conversion to 0/1
-         *     Num constructors would then wrap that bool again to 0/1, resulting in two nested conversions for the same value, which is a waste
-         *         But if we're wrapping inputs, then we could remove that conversion from the Num constructor, as long as we had some way of "casting" from Bool to Num without converting its value
-         *         Since all other generated bool types are safe, assuming the compiler has no bugs
-         *             we can probably add some extra (debug?) checks to make sure instructions of type bool get compiled to 0/1 values
-         *     Bool constructors wouldn't do anything, which is what we want
-         *     LMNT wouldn't need to do anything special, as it exists in the instruction tree
-         *     Other targets might be awkward, e.g. transpiling to C or Lua, where that input of type Bool can be generated as a Bool type in those languages
-         *         then the conversion is unecessary, and it would need to be special cased to ignore it
-         *         we could split num/bool inputs to different instructions, then "instruction_input_bool" can be treated as a conversion or as a type, in the targets that care
-         */
-
+        //todo: in the future we'll want to wrap bool inputs here, and have the Num constructor be smarter about how to handle "bools which may not be 0/1"
         auto expr = context.interpreter->cache_instruction_input.get(boundary_scope, placeholder_index, intrinsic->get_type());
         context.boundaries[boundary_scope].inputs.insert(expr);
         placeholder_index += 1; //todo: fix when we have lists, size() on intrinsic? on type?
