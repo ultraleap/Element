@@ -99,6 +99,14 @@ struct instruction_constant final : public instruction
         return fmt::format("Num = {:g}", m_value);
     }
 
+    bool operator<(const instruction_constant& other) const noexcept
+    {
+        if (actual_type != other.actual_type)
+            return actual_type < other.actual_type;
+        
+        return m_value < other.m_value;
+    }
+
 private:
     element_value m_value;
 };
@@ -189,6 +197,7 @@ struct instruction_nullary final : public instruction
         : instruction(type_id, std::move(actual_type))
         , m_op(t)
     {
+
     }
 
     [[nodiscard]] op operation() const { return m_op; }
@@ -196,7 +205,7 @@ struct instruction_nullary final : public instruction
 
     bool operator<(const instruction_nullary& other) const noexcept
     {
-        if (m_op != other.m_op) 
+        if (m_op != other.m_op)
             return m_op < other.m_op;
 
         return actual_type < other.actual_type;

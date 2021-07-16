@@ -33,8 +33,8 @@ object_const_shared_ptr intrinsic_constructor_num::call(
     if (expr->actual_type == type::boolean.get()) {
         auto new_expr = context.interpreter->cache_instruction_if.get(
             expr,
-            context.interpreter->cache_instruction_constant.get(1, type::num.get()),
-            context.interpreter->cache_instruction_constant.get(0, type::num.get()));
+            context.interpreter->cache_instruction_constant.get(1.0f, type::num.get()),
+            context.interpreter->cache_instruction_constant.get(0.0f, type::num.get()));
         
         return evaluate(context, std::move(new_expr));
     }
