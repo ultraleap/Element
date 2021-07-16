@@ -32,7 +32,7 @@ namespace ResultNET
         }
         private string? _message;
 
-        public MessageInfo Info;
+        public readonly MessageInfo Info;
         public string? Context { get; }
         public IReadOnlyCollection<TraceSite>? TraceStack { get; }
 

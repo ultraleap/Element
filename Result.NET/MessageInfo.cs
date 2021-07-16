@@ -11,8 +11,15 @@ namespace ResultNET
         Error,
     }
     
-    public record MessageInfo(string TypePrefix, string? Name, MessageLevel Level, int? Code)
+    public class MessageInfo // TODO: Change to record type when supported everywhere
     {
+        public MessageInfo(string typePrefix, string? name, MessageLevel level, int? code)
+        {
+            TypePrefix = typePrefix;
+            Name = name;
+            Level = level;
+            Code = code;
+        }
         public static Dictionary<string, Func<int, MessageInfo>> GetFuncsByPrefix { get; } = new();
 
         public static MessageInfo GetByPrefixAndCode(string prefix, int code)
@@ -23,6 +30,11 @@ namespace ResultNET
         public string NameOrUnknown => (string.IsNullOrEmpty(Name)
             ? "Unknown"
             : Name)!;
+
+        public string TypePrefix { get; }
+        public string? Name { get; }
+        public MessageLevel Level { get; }
+        public int? Code { get; }
 
         public override string ToString() =>
             string.IsNullOrEmpty(TypePrefix) && string.IsNullOrEmpty(Code.ToString()) // Avoid the leading space if there's no prefix/code
@@ -40,6 +52,14 @@ namespace ResultNET
 
         public static MessageInfo CustomVerbose(string message, string? typePrefix = null, string? messageName = null) =>
             new(typePrefix ?? string.Empty, messageName, MessageLevel.Verbose, null);
+
+        public void Deconstruct(out string typePrefix, out string? name, out MessageLevel level, out int? code)
+        {
+            typePrefix = TypePrefix;
+            name = Name;
+            level = Level;
+            code = Code;
+        }
     }
 
     
