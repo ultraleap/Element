@@ -103,6 +103,12 @@ struct instruction_constant final : public instruction
     {
         if (actual_type != other.actual_type)
             return actual_type < other.actual_type;
+
+        const bool me_nan = std::isnan(m_value);
+        const bool ya_nan = std::isnan(other.m_value);
+
+        if (me_nan != ya_nan)
+            return me_nan < ya_nan;
         
         return m_value < other.m_value;
     }
