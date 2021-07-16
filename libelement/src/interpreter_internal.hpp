@@ -6,6 +6,7 @@
 #include <memory>
 #include <unordered_map>
 #include <map>
+#include <unordered_set>
 
 //SELF
 #include "element/interpreter.h"
@@ -59,29 +60,6 @@ struct element_evaluator_ctx
     element_evaluator_options options;
 };
 
-class instruction_nullary_cache
-{
-public:
-    using nullary_map = std::unordered_map<element_nullary_op, std::shared_ptr<const element::instruction_nullary>>;
-    
-    auto cache(element_nullary_op operation, element::type_const_ptr type)
-    {
-        return m_cache.emplace(operation, std::make_shared<const element::instruction_nullary>(operation, type));
-    };
-
-    std::shared_ptr<const element::instruction_nullary> get(element_nullary_op operation, element::type_const_ptr type)
-    {
-        if (!m_cache.count(operation))
-            cache(operation, type);
-
-        assert(m_cache[operation]->actual_type == type);
-        return m_cache[operation];
-    }
-
-private:
-    nullary_map m_cache;
-};
-
 class instruction_constant_cache
 {
 public:
@@ -126,282 +104,36 @@ private:
     std::shared_ptr<const element::instruction_constant> m_cached_nan;
 };
 
-class instruction_serialised_structure_cache
+template <typename Instruction>
+class compiletime_instruction_cache
 {
 public:
-    using structure_field_instructions = std::vector<element::instruction_const_shared_ptr>;
-    using structure_field_names = std::vector<std::string>;
-    struct structure_key
+    class compare_instruction
     {
-        structure_field_instructions instructions;
-        structure_field_names names;
-        std::string struct_name;
-        bool operator<(const structure_key& other) const noexcept
+    public:
+        constexpr bool operator()(const std::shared_ptr<const Instruction>& a, const std::shared_ptr<const Instruction>& b) const
         {
-            if (struct_name == other.struct_name) {
-                if (instructions == other.instructions) {
-                    return names < other.names;
-                }
-                return instructions < other.instructions;
-            }
-            return struct_name < other.struct_name;
+            if (a && b && a != b)
+                return *a < *b;
+
+            return a < b;
         }
     };
-    using structure_map = std::map<structure_key, std::shared_ptr<const element::instruction_serialised_structure>>;
-
-    //todo: I really should just set up the instructions properly and use std::set or something
-    std::shared_ptr<const element::instruction_serialised_structure> get(
-        structure_field_instructions field_instructions,
-        structure_field_names field_names,
-        std::string struct_name)
+    
+    using cache = std::set<std::shared_ptr<const Instruction>, compare_instruction>;
+    
+    template <typename... Args>
+    std::shared_ptr<const Instruction> get(Args&&... args)
     {
-        structure_key key{field_instructions, field_names, struct_name};
-        auto serialised_structure = std::make_shared<const element::instruction_serialised_structure>(std::move(field_instructions), std::move(field_names), std::move(struct_name));
+        static_assert(std::is_base_of_v<element::instruction, Instruction>, "This cache is meant to be used for instructions only");
 
-        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(serialised_structure));
-        return cached_value_iterator->second;
+        auto instruction = std::make_shared<const Instruction>(std::forward<Args&&>(args)...);
+        auto [iterator, inserted] = m_cache.emplace(std::move(instruction));
+        return *iterator;
     }
 
 private:
-    structure_map m_cache;
-};
-
-class instruction_select_cache
-{
-public:
-    struct select_key
-    {
-        element::instruction_const_shared_ptr selector;
-        std::vector<element::instruction_const_shared_ptr> options;
-        std::string struct_name;
-        bool operator<(const select_key& other) const noexcept
-        {
-            if (selector == other.selector)
-                return options < other.options;
-
-            return selector < other.selector;
-        }
-    };
-    using selector_map = std::map<select_key, std::shared_ptr<const element::instruction_select>>;
-
-    //todo: I really should just set up the instructions properly and use std::set or something
-    std::shared_ptr<const element::instruction_select> get(
-        element::instruction_const_shared_ptr selector,
-        std::vector<element::instruction_const_shared_ptr> options)
-    {
-        select_key key{selector, options};
-        auto select = std::make_shared<const element::instruction_select>(std::move(selector), std::move(options));
-
-        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(select));
-        return cached_value_iterator->second;
-    }
-
-private:
-    selector_map m_cache;
-};
-
-class instruction_if_cache
-{
-public:
-    struct if_key
-    {
-        element::instruction_const_shared_ptr predicate;
-        element::instruction_const_shared_ptr if_true;
-        element::instruction_const_shared_ptr if_false;
-        bool operator<(const if_key& other) const noexcept
-        {
-            if (predicate == other.predicate) {
-                if (if_true == other.if_true) {
-                    return if_false < other.if_false;
-                }
-                return if_true < other.if_true;
-            }
-            return predicate < other.predicate;
-        }
-    };
-    using if_map = std::map<if_key, std::shared_ptr<const element::instruction_if>>;
-
-    //todo: I really should just set up the instructions properly and use std::set or something
-    std::shared_ptr<const element::instruction_if> get(
-        element::instruction_const_shared_ptr predicate,
-        element::instruction_const_shared_ptr if_true,
-        element::instruction_const_shared_ptr if_false)
-    {
-        if_key key{predicate, if_true, if_false};
-        auto value = std::make_shared<const element::instruction_if>(std::move(predicate), std::move(if_true), std::move(if_false));
-
-        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
-        return cached_value_iterator->second;
-    }
-
-private:
-    if_map m_cache;
-};
-
-class instruction_indexer_cache
-{
-public:
-    struct indexer_key
-    {
-        std::shared_ptr<const element::instruction_for> for_instruction;
-        int index;
-        element::type_const_ptr type;
-        bool operator<(const indexer_key& other) const noexcept
-        {
-            if (for_instruction == other.for_instruction) {
-                if (index == other.index) {
-                    return type < other.type;
-                }
-                return index < other.index;
-            }
-            return for_instruction < other.for_instruction;
-        }
-    };
-    using indexer_map = std::map<indexer_key, std::shared_ptr<const element::instruction_indexer>>;
-
-    //todo: I really should just set up the instructions properly and use std::set or something
-    std::shared_ptr<const element::instruction_indexer> get(
-        std::shared_ptr<const element::instruction_for> for_instruction,
-        int index,
-        element::type_const_ptr type)
-    {
-        indexer_key key{for_instruction, index, type};
-        auto value = std::make_shared<const element::instruction_indexer>(std::move(for_instruction), index, type);
-
-        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
-        return cached_value_iterator->second;
-    }
-
-private:
-    indexer_map m_cache;
-};
-
-//don't think this is necessary (since they should all be identical per design) but... let's do it anyway :shrug:
-class instruction_for_cache
-{
-public:
-    struct for_key
-    {
-        element::instruction_const_shared_ptr initial;
-        element::instruction_const_shared_ptr condition;
-        element::instruction_const_shared_ptr body;
-        std::set<std::shared_ptr<const element::instruction_input>> inputs;
-
-        bool operator<(const for_key& other) const noexcept
-        {
-            if (initial == other.initial) {
-                if (condition == other.condition) {
-                    if (body == other.body) {
-                        return inputs < other.inputs;
-                    }
-                    return body < other.body;
-                }
-                return condition < other.condition;
-            }
-            return initial < other.initial;
-        }
-    };
-    using for_map = std::map<for_key, std::shared_ptr<const element::instruction_for>>;
-
-    //todo: I really should just set up the instructions properly and use std::set or something
-    std::shared_ptr<const element::instruction_for> get(
-        element::instruction_const_shared_ptr initial,
-        element::instruction_const_shared_ptr condition,
-        element::instruction_const_shared_ptr body,
-        std::set<std::shared_ptr<const element::instruction_input>> inputs)
-    {
-        for_key key{initial, condition, body, inputs};
-        auto value = std::make_shared<const element::instruction_for>(std::move(initial), std::move(condition), std::move(body), std::move(inputs));
-
-        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
-        return cached_value_iterator->second;
-    }
-
-private:
-    for_map m_cache;
-};
-
-class instruction_unary_cache
-{
-public:
-    struct unary_key
-    {
-        element_unary_op op;
-        element::instruction_const_shared_ptr input;
-        element::type_const_ptr actual_type;
-
-        bool operator<(const unary_key& other) const noexcept
-        {
-            if (op == other.op) {
-                if (input == other.input) {
-                    return actual_type < other.actual_type;
-                }
-                return input < other.input;
-            }
-            return op < other.op;
-        }
-    };
-    using unary_map = std::map<unary_key, std::shared_ptr<const element::instruction_unary>>;
-
-    //todo: I really should just set up the instructions properly and use std::set or something
-    std::shared_ptr<const element::instruction_unary> get(
-        element_unary_op op,
-        element::instruction_const_shared_ptr input,
-        element::type_const_ptr actual_type)
-    {
-        unary_key key{op, input, actual_type};
-        auto value = std::make_shared<const element::instruction_unary>(op, std::move(input), std::move(actual_type));
-
-        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
-        return cached_value_iterator->second;
-    }
-
-private:
-    unary_map m_cache;
-};
-
-class instruction_binary_cache
-{
-public:
-    struct binary_key
-    {
-        element_binary_op op;
-        element::instruction_const_shared_ptr input1;
-        element::instruction_const_shared_ptr input2;
-        element::type_const_ptr actual_type;
-
-        bool operator<(const binary_key& other) const noexcept
-        {
-            if (op == other.op) {
-                if (input1 == other.input1) {
-                    if (input2 == other.input2) {
-                        return actual_type < other.actual_type;
-                    }
-                    return input2 < other.input2;
-                }
-                return input1 < other.input1;
-            }
-            return op < other.op;
-        }
-    };
-    using binary_map = std::map<binary_key, std::shared_ptr<const element::instruction_binary>>;
-
-    //todo: I really should just set up the instructions properly and use std::set or something
-    std::shared_ptr<const element::instruction_binary> get(
-        element_binary_op op,
-        element::instruction_const_shared_ptr input1,
-        element::instruction_const_shared_ptr input2,
-        element::type_const_ptr actual_type)
-    {
-        binary_key key{op, input1, input2, actual_type};
-        auto value = std::make_shared<const element::instruction_binary>(op, std::move(input1), std::move(input2), std::move(actual_type));
-
-        auto [cached_value_iterator, inserted] = m_cache.try_emplace(std::move(key), std::move(value));
-        return cached_value_iterator->second;
-    }
-
-private:
-    binary_map m_cache;
+    cache m_cache;
 };
 
 struct element_interpreter_ctx
@@ -442,13 +174,13 @@ public:
     std::unique_ptr<element::scope> global_scope;
 
     mutable element::scope_caches cache_scope_find;
-    mutable instruction_nullary_cache cache_instruction_nullary;
+    mutable compiletime_instruction_cache<element::instruction_nullary> cache_instruction_nullary;
     mutable instruction_constant_cache cache_instruction_constant;
-    mutable instruction_serialised_structure_cache cache_instruction_serialised_structure;
-    mutable instruction_select_cache cache_instruction_select;
-    mutable instruction_if_cache cache_instruction_if;
-    mutable instruction_indexer_cache cache_instruction_indexer;
-    mutable instruction_for_cache cache_instruction_for;
-    mutable instruction_unary_cache cache_instruction_unary;
-    mutable instruction_binary_cache cache_instruction_binary;
+    mutable compiletime_instruction_cache<element::instruction_serialised_structure> cache_instruction_serialised_structure;
+    mutable compiletime_instruction_cache<element::instruction_select> cache_instruction_select;
+    mutable compiletime_instruction_cache<element::instruction_if> cache_instruction_if;
+    mutable compiletime_instruction_cache<element::instruction_indexer> cache_instruction_indexer;
+    mutable compiletime_instruction_cache<element::instruction_for> cache_instruction_for;
+    mutable compiletime_instruction_cache<element::instruction_unary> cache_instruction_unary;
+    mutable compiletime_instruction_cache<element::instruction_binary> cache_instruction_binary;
 };
