@@ -129,6 +129,17 @@ struct instruction_input final : public instruction
     [[nodiscard]] bool is_constant() const override { return false; }
     [[nodiscard]] std::string to_string() const override { return fmt::format("<scope {}, index {}>", m_scope, m_index); }
 
+    bool operator<(const instruction_input& other) const noexcept
+    {
+        if (m_scope != other.m_scope)
+            return m_scope < other.m_scope;
+        
+        if (m_index != other.m_index)
+            return m_index < other.m_index;
+
+        return actual_type < other.actual_type;
+    }
+
 private:
     size_t m_scope;
     size_t m_index;

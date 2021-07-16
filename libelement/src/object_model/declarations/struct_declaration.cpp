@@ -167,7 +167,7 @@ object_const_shared_ptr struct_declaration::generate_placeholder(
          *         we could split num/bool inputs to different instructions, then "instruction_input_bool" can be treated as a conversion or as a type, in the targets that care
          */
 
-        auto expr = std::make_shared<const instruction_input>(boundary_scope, placeholder_index, intrinsic->get_type());
+        auto expr = context.interpreter->cache_instruction_input.get(boundary_scope, placeholder_index, intrinsic->get_type());
         context.boundaries[boundary_scope].inputs.insert(expr);
         placeholder_index += 1; //todo: fix when we have lists, size() on intrinsic? on type?
         return expr;

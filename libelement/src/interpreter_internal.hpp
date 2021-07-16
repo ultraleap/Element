@@ -130,13 +130,14 @@ public:
     std::unique_ptr<element::scope> global_scope;
 
     mutable element::scope_caches cache_scope_find;
-    mutable compiletime_instruction_cache<element::instruction_nullary> cache_instruction_nullary;
     mutable compiletime_instruction_cache<element::instruction_constant> cache_instruction_constant;
-    mutable compiletime_instruction_cache<element::instruction_serialised_structure> cache_instruction_serialised_structure;
-    mutable compiletime_instruction_cache<element::instruction_select> cache_instruction_select;
-    mutable compiletime_instruction_cache<element::instruction_if> cache_instruction_if;
-    mutable compiletime_instruction_cache<element::instruction_indexer> cache_instruction_indexer;
-    mutable compiletime_instruction_cache<element::instruction_for> cache_instruction_for;
+    mutable compiletime_instruction_cache<element::instruction_nullary> cache_instruction_nullary;
     mutable compiletime_instruction_cache<element::instruction_unary> cache_instruction_unary;
     mutable compiletime_instruction_cache<element::instruction_binary> cache_instruction_binary;
+    mutable compiletime_instruction_cache<element::instruction_input> cache_instruction_input;
+    mutable compiletime_instruction_cache<element::instruction_serialised_structure> cache_instruction_serialised_structure;
+    mutable compiletime_instruction_cache<element::instruction_if> cache_instruction_if;
+    mutable compiletime_instruction_cache<element::instruction_select> cache_instruction_select;
+    mutable compiletime_instruction_cache<element::instruction_for> cache_instruction_for;
+    mutable compiletime_instruction_cache<element::instruction_indexer> cache_instruction_indexer;
 };
