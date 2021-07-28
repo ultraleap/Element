@@ -31,6 +31,15 @@ extern "C" {
 #define LMNT_ATTR_FAST
 #endif
 
+// If defined and enabled, allows the interpreter to use the GNU C "computed gotos"/"labels-as-values" extension
+// This allows a <TODO> performance boost
+// By default this is auto-enabled for GNU C builds
+#if !defined(LMNT_USE_COMPUTED_GOTOS)
+#if defined(__GNUC__)
+#define LMNT_USE_COMPUTED_GOTOS 1
+#endif
+#endif
+
 // printf function to use for debugging output
 // Never called unless requested by the user (e.g. lmnt_archive_print) or debug flags are enabled
 #if !defined(LMNT_PRINTF_HEADER)

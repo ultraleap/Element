@@ -1,12 +1,12 @@
 #include "lmnt/opcodes.h"
 
 #include "lmnt/interpreter.h"
-#include "lmnt/ops_bounds.h"
-#include "lmnt/ops_branch.h"
-#include "lmnt/ops_fncall.h"
-#include "lmnt/ops_math.h"
-#include "lmnt/ops_misc.h"
-#include "lmnt/ops_trig.h"
+#include "ops_bounds_impl.h"
+#include "ops_branch_impl.h"
+#include "ops_fncall_impl.h"
+#include "ops_math_impl.h"
+#include "ops_misc_impl.h"
+#include "ops_trig_impl.h"
 
 LMNT_ATTR_FAST lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_noop,

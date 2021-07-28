@@ -6,12 +6,13 @@ set(lmnt_sources
     "extcalls.c"
     "interpreter.c"
     "opcodes.c"
-    "ops_bounds.c"
-    "ops_branch.c"
-    "ops_fncall.c"
-    "ops_math.c"
-    "ops_misc.c"
-    "ops_trig.c"
+
+    "ops_bounds_impl.h"
+    "ops_branch_impl.h"
+    "ops_fncall_impl.h"
+    "ops_math_impl.h"
+    "ops_misc_impl.h"
+    "ops_trig_impl.h"
 
     "helpers.h"
 )

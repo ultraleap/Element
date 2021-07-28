@@ -1,18 +1,18 @@
-#include "lmnt/ops_bounds.h"
-#include <math.h>
+#ifndef LMNT_OPS_BOUNDS_IMPL_H
+#define LMNT_OPS_BOUNDS_IMPL_H
 
+#include <math.h>
 
 #define MIN(a, b) ((b) < (a) ? (b) : (a))
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
-
-LMNT_ATTR_FAST lmnt_result lmnt_op_abss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_abss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = fabsf(ctx->stack[arg1]);
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_absv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_absv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = fabsf(ctx->stack[arg1 + 0]);
     ctx->stack[arg3 + 1] = fabsf(ctx->stack[arg1 + 1]);
@@ -21,13 +21,13 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_absv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_o
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_floors(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_floors(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = floorf(ctx->stack[arg1]);
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_floorv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_floorv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = floorf(ctx->stack[arg1 + 0]);
     ctx->stack[arg3 + 1] = floorf(ctx->stack[arg1 + 1]);
@@ -36,7 +36,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_floorv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_rounds(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_rounds(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     // roundf does not use round-to-even, rintf and nearbyintf do
     // we assume nobody's doing weird things with the FP environment
@@ -44,7 +44,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_rounds(lmnt_ictx* ctx, lmnt_offset arg1, lmnt
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_roundv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_roundv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     // roundf does not use round-to-even, rintf and nearbyintf do
     // we assume nobody's doing weird things with the FP environment
@@ -55,13 +55,13 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_roundv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_ceils(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_ceils(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = ceilf(ctx->stack[arg1]);
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_ceilv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_ceilv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = ceilf(ctx->stack[arg1 + 0]);
     ctx->stack[arg3 + 1] = ceilf(ctx->stack[arg1 + 1]);
@@ -70,13 +70,13 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_ceilv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_truncs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_truncs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = truncf(ctx->stack[arg1]);
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_truncv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_truncv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = truncf(ctx->stack[arg1 + 0]);
     ctx->stack[arg3 + 1] = truncf(ctx->stack[arg1 + 1]);
@@ -85,13 +85,13 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_truncv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_minss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_minss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = MIN(ctx->stack[arg1], ctx->stack[arg2]);
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_minvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_minvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = MIN(ctx->stack[arg1 + 0], ctx->stack[arg2 + 0]);
     ctx->stack[arg3 + 1] = MIN(ctx->stack[arg1 + 1], ctx->stack[arg2 + 1]);
@@ -100,13 +100,13 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_minvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_maxss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_maxss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = MAX(ctx->stack[arg1], ctx->stack[arg2]);
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_maxvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_maxvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = MAX(ctx->stack[arg1 + 0], ctx->stack[arg2 + 0]);
     ctx->stack[arg3 + 1] = MAX(ctx->stack[arg1 + 1], ctx->stack[arg2 + 1]);
@@ -115,7 +115,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_maxvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_minvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_minvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = MIN(ctx->stack[arg1 + 0], ctx->stack[arg2]);
     ctx->stack[arg3 + 1] = MIN(ctx->stack[arg1 + 1], ctx->stack[arg2]);
@@ -124,7 +124,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_minvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_maxvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_maxvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = MAX(ctx->stack[arg1 + 0], ctx->stack[arg2]);
     ctx->stack[arg3 + 1] = MAX(ctx->stack[arg1 + 1], ctx->stack[arg2]);
@@ -132,3 +132,8 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_maxvs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_
     ctx->stack[arg3 + 3] = MAX(ctx->stack[arg1 + 3], ctx->stack[arg2]);
     return LMNT_OK;
 }
+
+#undef MAX
+#undef MIN
+
+#endif

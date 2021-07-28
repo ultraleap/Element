@@ -1,4 +1,5 @@
-#include "lmnt/ops_fncall.h"
+#ifndef LMNT_OPS_FNCALL_IMPL_H
+#define LMNT_OPS_FNCALL_IMPL_H
 
 #include <string.h>
 #include <assert.h>
@@ -6,7 +7,7 @@
 #include "lmnt/common.h"
 #include "helpers.h"
 
-LMNT_ATTR_FAST lmnt_result lmnt_op_extcall(lmnt_ictx* ctx, lmnt_offset deflo, lmnt_offset defhi, lmnt_offset stack_pos)
+LMNT_ATTR_FAST static inline lmnt_result lmnt_op_extcall(lmnt_ictx* ctx, lmnt_offset deflo, lmnt_offset defhi, lmnt_offset stack_pos)
 {
     const lmnt_loffset def_offset = LMNT_COMBINE_OFFSET(deflo, defhi);
     // Get code
@@ -20,3 +21,5 @@ LMNT_ATTR_FAST lmnt_result lmnt_op_extcall(lmnt_ictx* ctx, lmnt_offset deflo, lm
     lmnt_value* const ervals = &ctx->stack[stack_pos + extcall->args_count];
     return extcall->function(ctx, extcall, eargs, ervals);
 }
+
+#endif
