@@ -16,10 +16,12 @@ typedef lmnt_result(*lmnt_op_fn)(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset a
 
 enum
 {
-    LMNT_ISTATUS_CMP_EQ = (1 << 0),  // equal
-    LMNT_ISTATUS_CMP_LT = (1 << 1),  // less than
-    LMNT_ISTATUS_CMP_GT = (1 << 2),  // greater than
-    LMNT_ISTATUS_CMP_UN = (1 << 7),  // unordered (i.e. NaNs present)
+    LMNT_ISTATUS_CMP_EQ = (1U << 0),       // equal
+    LMNT_ISTATUS_CMP_LT = (1U << 1),       // less than
+    LMNT_ISTATUS_CMP_GT = (1U << 2),       // greater than
+    LMNT_ISTATUS_CMP_UN = (1U << 7),       // unordered (i.e. NaNs present)
+
+    LMNT_ISTATUS_INTERRUPTED = (1U << 31), // function is being interrupted (not used by all dispatch methods)
 };
 
 // Main interpreter context struct

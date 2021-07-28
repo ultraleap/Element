@@ -5,7 +5,7 @@ set(lmnt_sources
     "validation.c"
     "extcalls.c"
     "interpreter.c"
-    "opcodes.c"
+    "opcode_info.c"
 
     "ops_bounds_impl.h"
     "ops_branch_impl.h"
@@ -13,6 +13,10 @@ set(lmnt_sources
     "ops_math_impl.h"
     "ops_misc_impl.h"
     "ops_trig_impl.h"
+
+    "dispatch_jumptable.h"
+    "dispatch_switch.h"
+    "dispatch_computed_goto.h"
 
     "helpers.h"
 )

@@ -123,6 +123,15 @@ typedef struct lmnt_ictx lmnt_ictx;
 #define _Static_assert static_assert
 #endif
 
+// Specify force-inline
+#if defined(_MSC_VER) && !defined(__clang__)
+#define LMNT_FORCEINLINE __forceinline
+#elif defined(__GNUC__) || defined(__clang__) || defined(__GNUC_MINOR__)
+#define LMNT_FORCEINLINE __attribute__((always_inline))
+#else
+#warning Unknown platform, no force-inline support
+#define LMNT_FORCEINLINE
+#endif
 
 #ifdef __cplusplus
 }

@@ -5,9 +5,15 @@
 #include <assert.h>
 #include <limits.h>
 #include "lmnt/common.h"
+#include "lmnt/interpreter.h"
 #include "helpers.h"
 
-LMNT_ATTR_FAST static inline lmnt_result lmnt_op_extcall(lmnt_ictx* ctx, lmnt_offset deflo, lmnt_offset defhi, lmnt_offset stack_pos)
+#if !defined(LMNT_INLINE_OP)
+#define LMNT_INLINE_OP
+#endif
+
+
+LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_extcall(lmnt_ictx* ctx, lmnt_offset deflo, lmnt_offset defhi, lmnt_offset stack_pos)
 {
     const lmnt_loffset def_offset = LMNT_COMBINE_OFFSET(deflo, defhi);
     // Get code
