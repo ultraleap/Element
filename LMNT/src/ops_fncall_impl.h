@@ -13,7 +13,7 @@
 #endif
 
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_extcall(lmnt_ictx* ctx, lmnt_offset deflo, lmnt_offset defhi, lmnt_offset stack_pos)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_extcall(lmnt_ictx* ctx, lmnt_offset deflo, lmnt_offset defhi, lmnt_offset stack_pos)
 {
     const lmnt_loffset def_offset = LMNT_COMBINE_OFFSET(deflo, defhi);
     // Get code

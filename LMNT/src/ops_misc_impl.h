@@ -15,18 +15,18 @@
 #endif
 
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_noop(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_noop(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assignss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assignss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3] = ctx->stack[arg1];
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assignvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assignvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = ctx->stack[arg1 + 0];
     ctx->stack[arg3 + 1] = ctx->stack[arg1 + 1];
@@ -35,7 +35,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assignvv(lmnt_ic
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assignsv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assignsv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     ctx->stack[arg3 + 0] = ctx->stack[arg1];
     ctx->stack[arg3 + 1] = ctx->stack[arg1];
@@ -44,7 +44,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assignsv(lmnt_ic
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assigniis(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assigniis(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     LMNT_STATIC_ASSERT(sizeof(lmnt_loffset) == sizeof(lmnt_value) && sizeof(lmnt_loffset) == sizeof(int32_t),
         "lmnt_loffset, lmnt_value and int32_t must be the same size or ASSIGNI* must be reworked");
@@ -54,7 +54,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assigniis(lmnt_i
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assignibs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assignibs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     LMNT_STATIC_ASSERT(sizeof(lmnt_offset) * 2 == sizeof(lmnt_value),
         "lmnt_offset * 2 must be the same size as lmnt_value or ASSIGNI* must be reworked");
@@ -65,7 +65,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assignibs(lmnt_i
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assigniiv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assigniiv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     LMNT_STATIC_ASSERT(sizeof(lmnt_loffset) == sizeof(lmnt_value) && sizeof(lmnt_loffset) == sizeof(int32_t),
         "lmnt_loffset, lmnt_value and int32_t must be the same size or ASSIGNI* must be reworked");
@@ -78,7 +78,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assigniiv(lmnt_i
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assignibv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assignibv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     LMNT_STATIC_ASSERT(sizeof(lmnt_offset) * 2 == sizeof(lmnt_value),
         "lmnt_offset * 2 must be the same size as lmnt_value or ASSIGNI* must be reworked");
@@ -92,7 +92,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_assignibv(lmnt_i
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_dloadiis(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_dloadiis(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
     const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
@@ -100,7 +100,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_dloadiis(lmnt_ic
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_dloadiiv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_dloadiiv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
     const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
@@ -111,7 +111,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_dloadiiv(lmnt_ic
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_dloadirs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_dloadirs(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
     const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
@@ -124,7 +124,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_dloadirs(lmnt_ic
     }
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_dloadirv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_dloadirv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
     const lmnt_value* values = validated_get_data_block(&ctx->archive, sec->offset);
@@ -140,14 +140,14 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_dloadirv(lmnt_ic
     }
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_dseclen(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_dseclen(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, arg1);
     ctx->stack[arg3] = (lmnt_value)(sec->count);
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_indexris(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_indexris(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     if (LMNT_UNLIKELY(isnan(ctx->stack[arg1]) || isinf(ctx->stack[arg1]))) return LMNT_ERROR_ACCESS_VIOLATION;
     size_t arg1v = value_to_size_t(ctx->stack[arg1]);
@@ -156,7 +156,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_indexris(lmnt_ic
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_indexrir(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_indexrir(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     if (LMNT_UNLIKELY(isnan(ctx->stack[arg1]) || isinf(ctx->stack[arg1]))) return LMNT_ERROR_ACCESS_VIOLATION;
     if (LMNT_UNLIKELY(isnan(ctx->stack[arg3]) || isinf(ctx->stack[arg3]))) return LMNT_ERROR_ACCESS_VIOLATION;
@@ -167,7 +167,7 @@ LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_indexrir(lmnt_ic
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static LMNT_INLINE_OP inline lmnt_result lmnt_op_interrupt(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_interrupt(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
     return LMNT_INTERRUPTED;
 }
