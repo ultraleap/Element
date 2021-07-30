@@ -27,6 +27,10 @@ LMNT_ATTR_FAST static inline lmnt_result interrupt_function(lmnt_ictx* ctx);
 
 lmnt_result lmnt_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
 {
+    // sanity checks
+    // a few hot-path optimisations rely on LMNT_OK being zero
+    LMNT_STATIC_ASSERT(LMNT_OK == 0, "LMNT_OK must be equal to zero");
+
     memset(ctx, 0, sizeof(lmnt_ictx));
 
     ctx->memory_area = mem;

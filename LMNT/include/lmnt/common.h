@@ -118,9 +118,15 @@ typedef struct lmnt_ictx lmnt_ictx;
 
 #define LMNT_ROUND_UP(n, d) ((n) + ((d) - ((n) % (d))))
 
+// Define hopefully-static asserts that fall back to runtime asserts on pre-C11
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 // MSVC does not currently include the C11-standard _Static_assert, only the C++-style variant
 #if defined(_MSC_VER)
 #define _Static_assert static_assert
+#endif
+#define LMNT_STATIC_ASSERT(expr,message) _Static_assert((expr), message)
+#else
+#define LMNT_STATIC_ASSERT(expr,message) assert((expr) && (message))
 #endif
 
 // Specify force-inline
