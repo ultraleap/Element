@@ -22,11 +22,10 @@ LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_
     // Grab the current instruction as a local rather than updating the ctx every time - faster
     lmnt_loffset instr = ctx->cur_instr;
     const lmnt_loffset icount = defcode->instructions_count;
-    lmnt_instruction op;
 
     for (; instr < icount; ++instr)
     {
-        op = instructions[instr];
+        const lmnt_instruction op = instructions[instr];
         switch (op.opcode)
         {
         case LMNT_OP_NOOP:      opresult = lmnt_op_noop(ctx, op.arg1, op.arg2, op.arg3); break;
@@ -115,7 +114,10 @@ LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_
         default:                opresult = LMNT_ERROR_INTERNAL; break;
         }
 
-        if (LMNT_UNLIKELY(opresult != LMNT_OK || (ctx->status_flags & LMNT_ISTATUS_INTERRUPTED))) {
+#if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
+        print_execution_context(ctx, instr, instructions[instr]);
+#endif
+        if (LMNT_UNLIKELY(opresult | (ctx->status_flags & LMNT_ISTATUS_INTERRUPTED))) {
             if (opresult == LMNT_BRANCHING) {
                 // the context's instruction pointer has been updated, refresh
                 instr = ctx->cur_instr - 1; // will be incremented in the next iteration

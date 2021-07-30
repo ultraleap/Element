@@ -109,9 +109,14 @@ LMNT_ATTR_FAST static lmnt_result execute_function(lmnt_ictx* ctx, const lmnt_co
     lmnt_loffset instr = ctx->cur_instr - 1; // incremented at start of dispatch
     const lmnt_loffset icount = defcode->instructions_count;
     lmnt_instruction op;
+    goto start;
 
 dispatch:
-    if (LMNT_UNLIKELY(opresult != LMNT_OK || (ctx->status_flags & LMNT_ISTATUS_INTERRUPTED))) {
+#if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
+        print_execution_context(ctx, instr, instructions[instr]);
+#endif
+start:
+    if (LMNT_UNLIKELY(opresult | (ctx->status_flags & LMNT_ISTATUS_INTERRUPTED))) {
         if (opresult == LMNT_BRANCHING) {
             // the context's instruction pointer has been updated, refresh
             instr = ctx->cur_instr - 1; // will be incremented momentarily
