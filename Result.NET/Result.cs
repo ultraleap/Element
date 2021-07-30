@@ -67,6 +67,12 @@ namespace ResultNET
         public bool IsError => !IsSuccess;
         public IReadOnlyCollection<ResultMessage> Messages { get; }
         private readonly T _value;
+
+        public bool TryGetValue(out T value)
+        {
+            value = _value;
+            return IsSuccess;
+        }
         
         public void Switch(Action<T, IReadOnlyCollection<ResultMessage>> onResult, Action<IReadOnlyCollection<ResultMessage>> onError)
         {
