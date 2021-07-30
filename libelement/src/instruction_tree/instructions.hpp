@@ -55,10 +55,9 @@ public:
     [[nodiscard]] const constraint* get_constraint() const final { return actual_type; }
     [[nodiscard]] std::string get_name() const override { return actual_type->get_name(); }
     [[nodiscard]] std::string typeof_info() const override;
-    [[nodiscard]] std::shared_ptr<const instruction> to_instruction() const final { return shared_from_this(); }
-
-    //todo: this is changed by the num constructor, but it should actually copy the instruction with the new type
-    mutable type_const_ptr actual_type;
+    [[nodiscard]] std::shared_ptr<const instruction> to_instruction(const element_interpreter_ctx&) const final { return shared_from_this(); }
+    
+    type_const_ptr actual_type;
 
 protected:
     explicit instruction(element_type_id t, type_const_ptr actual_type)
@@ -86,7 +85,7 @@ struct instruction_constant final : public instruction
 {
     DECLARE_TYPE_ID();
 
-    explicit instruction_constant(element_value val);
+    explicit instruction_constant(element_value val, type_const_ptr type = type::num.get());
 
     [[nodiscard]] object_const_shared_ptr call(const compilation_context& context,
         std::vector<object_const_shared_ptr> compiled_args,
@@ -108,6 +107,20 @@ struct instruction_constant final : public instruction
         return fmt::format("Num = {:g}", m_value);
     }
 
+    bool operator<(const instruction_constant& other) const noexcept
+    {
+        if (actual_type != other.actual_type)
+            return actual_type < other.actual_type;
+
+        const bool ma_nan = std::isnan(m_value);
+        const bool yer_nan = std::isnan(other.m_value);
+
+        if (ma_nan != yer_nan)
+            return ma_nan < yer_nan;
+        
+        return m_value < other.m_value;
+    }
+
 private:
     element_value m_value;
 };
@@ -117,8 +130,8 @@ struct instruction_input final : public instruction
 {
     DECLARE_TYPE_ID();
 
-    explicit instruction_input(size_t scope, size_t input_index)
-        : instruction(type_id, nullptr)
+    explicit instruction_input(size_t scope, size_t input_index, type_const_ptr type)
+        : instruction(type_id, type)
         , m_scope(scope)
         , m_index(input_index)
     {
@@ -130,6 +143,17 @@ struct instruction_input final : public instruction
     [[nodiscard]] bool is_constant() const override { return false; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
     [[nodiscard]] std::string to_string() const override { return fmt::format("<scope {}, index {}>", m_scope, m_index); }
+
+    bool operator<(const instruction_input& other) const noexcept
+    {
+        if (m_scope != other.m_scope)
+            return m_scope < other.m_scope;
+        
+        if (m_index != other.m_index)
+            return m_index < other.m_index;
+
+        return actual_type < other.actual_type;
+    }
 
 private:
     size_t m_scope;
@@ -173,6 +197,21 @@ struct instruction_serialised_structure final : public instruction
     {
         return m_debug_dependents_names;
     }
+    
+    bool operator<(const instruction_serialised_structure& other) const noexcept
+    {
+        if (m_dependents != other.m_dependents)
+            return m_dependents < other.m_dependents;
+        
+        //the debug information doesn't matter for correctness, but it does for debugging
+        //so two different struct types with the same values are different trees
+        //even though they could be represented as one tree
+
+        if (m_debug_type_name != other.m_debug_type_name)
+            return m_debug_type_name < other.m_debug_type_name;
+
+        return m_debug_dependents_names < other.m_debug_dependents_names;
+    }
 
 private:
     std::vector<std::string> m_debug_dependents_names;
@@ -189,6 +228,7 @@ struct instruction_nullary final : public instruction
         : instruction(type_id, std::move(actual_type))
         , m_op(t)
     {
+
     }
 
     [[nodiscard]] op operation() const { return m_op; }
@@ -196,6 +236,14 @@ struct instruction_nullary final : public instruction
 
     [[nodiscard]] bool is_constant() const override { return true; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
+    
+    [[nodiscard]] bool operator<(const instruction_nullary& other) const noexcept
+    {
+        if (m_op != other.m_op)
+            return m_op < other.m_op;
+
+        return actual_type < other.actual_type;
+    }
 
 private:
     op m_op;
@@ -219,6 +267,17 @@ struct instruction_unary final : public instruction
 
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
+
+    bool operator<(const instruction_unary& other) const noexcept
+    {
+        if (m_op != other.m_op) 
+            return m_op < other.m_op;
+        
+        if (input() != other.input())
+            return input() < other.input();
+
+        return actual_type < other.actual_type;
+    }
 
 private:
     op m_op;
@@ -245,6 +304,20 @@ struct instruction_binary final : public instruction
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
 
+    bool operator<(const instruction_binary& other) const noexcept
+    {
+        if (operation() != other.operation())
+            return operation() < other.operation();
+
+        if (input1() != other.input1())
+            return input1() < other.input1();
+
+        if (input2() != other.input2())
+            return input2() < other.input2();
+
+        return actual_type < other.actual_type;
+    }
+
 private:
     op m_op;
 };
@@ -260,6 +333,17 @@ struct instruction_if final : public instruction
 
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
+
+    [[nodiscard]] bool operator<(const instruction_if& other) const noexcept
+    {
+        if (predicate() != other.predicate())
+            return predicate() < other.predicate();
+
+        if (if_true() != other.if_true())
+            return if_true() < other.if_true();
+
+        return if_false() < other.if_false();
+    }
 };
 
 struct instruction_for final : public instruction
@@ -281,6 +365,21 @@ struct instruction_for final : public instruction
         });
 
         return it != inputs.end();
+    }
+
+    bool operator<(const instruction_for& other) const noexcept
+    {
+        if (initial() != other.initial())
+            return initial() < other.initial();
+
+        if (condition() != other.condition())
+            return condition() < other.condition();
+
+        if (body() != other.body())
+            return body() < other.body();
+
+        //in theory these shouldn't be different if the others are the same, but just in case
+        return inputs < other.inputs;
     }
 
     std::set<std::shared_ptr<const instruction_input>> inputs;
@@ -309,6 +408,18 @@ struct instruction_indexer final : public instruction
     [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
 
     [[nodiscard]] const instruction_const_shared_ptr& for_instruction() const { return m_dependents[0]; }
+
+    bool operator<(const instruction_indexer& other) const noexcept
+    {
+        if (for_instruction() != other.for_instruction())
+            return for_instruction() < other.for_instruction();
+
+        if (index != other.index)
+            return index < other.index;
+
+        return actual_type < other.actual_type;
+    }
+
     int index;
 };
 
@@ -323,6 +434,14 @@ struct instruction_select final : public instruction
     [[nodiscard]] size_t options_count() const { return m_dependents.size() - 1; };
     [[nodiscard]] const instruction_const_shared_ptr& selector() const { return m_dependents[0]; };
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
+
+    [[nodiscard]] bool operator<(const instruction_select& other) const noexcept
+    {
+        if (selector() != other.selector())
+            return selector() < other.selector();
+
+        return m_dependents < other.m_dependents;
+    }
 };
 
 //do some additional peephole optimisations based on known operations and operands

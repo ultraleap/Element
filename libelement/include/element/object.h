@@ -159,15 +159,18 @@ element_result element_object_index(
  * @brief converts an object to an instruction tree
  *
  * @param[in] object            object to convert
+ * @param[in] context           object-model context 
  * @param[out] output           result instruction tree
  *
  * @return ELEMENT_OK object converted to an instruction tree successfully
  * @return ELEMENT_ERROR_API_OBJECT_IS_NULL object pointer is null
+ * @return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL context pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL output pointer is null
  * @return ELEMENT_ERROR_SERIALISATION object cannot be serialized to an instruction tree
  */
 element_result element_object_to_instruction(
     const element_object* object,
+    element_object_model_ctx* context,
     element_instruction** output);
 
 /**

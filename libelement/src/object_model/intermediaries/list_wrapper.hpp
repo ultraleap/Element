@@ -10,13 +10,13 @@ namespace element
 class list_wrapper final : public object, public std::enable_shared_from_this<list_wrapper>
 {
 public:
-    static object_const_shared_ptr create_or_optimise(const object_const_shared_ptr& selector_object, const std::vector<object_const_shared_ptr>& option_objects, const source_information& source_info);
+    static object_const_shared_ptr create_or_optimise(const element_interpreter_ctx& interpreter, const object_const_shared_ptr& selector_object, const std::vector<object_const_shared_ptr>& option_objects, const source_information& source_info);
 
     explicit list_wrapper(std::shared_ptr<const instruction> selector, std::vector<object_const_shared_ptr> options);
 
     [[nodiscard]] std::string get_name() const override;
     [[nodiscard]] std::string typeof_info() const override;
-    [[nodiscard]] std::string to_code(const int depth = 0) const override;
+    [[nodiscard]] std::string to_code(int depth = 0) const override;
 
     [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
     [[nodiscard]] const constraint* get_constraint() const override;
@@ -32,7 +32,7 @@ public:
     [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
         const source_information& source_info) const override;
 
-    [[nodiscard]] std::shared_ptr<const instruction> to_instruction() const final;
+    [[nodiscard]] std::shared_ptr<const instruction> to_instruction(const element_interpreter_ctx& interpreter) const override;
 
     const std::shared_ptr<const instruction> selector;
     const std::vector<object_const_shared_ptr> options;

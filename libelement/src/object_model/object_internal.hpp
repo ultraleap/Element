@@ -64,7 +64,7 @@ public:
         return empty;
     };
 
-    [[nodiscard]] virtual std::shared_ptr<const instruction> to_instruction() const { return nullptr; };
+    [[nodiscard]] virtual std::shared_ptr<const instruction> to_instruction(const element_interpreter_ctx&) const { return nullptr; };
 
     source_information source_info;
 

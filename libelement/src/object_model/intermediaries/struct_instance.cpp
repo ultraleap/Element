@@ -7,6 +7,7 @@
 #include "object_model/declarations/struct_declaration.hpp"
 #include "object_model/constraints/constraint.hpp"
 #include "instruction_tree/instructions.hpp"
+#include "interpreter_internal.hpp"
 
 using namespace element;
 
@@ -74,7 +75,7 @@ object_const_shared_ptr struct_instance::compile(const compilation_context& cont
     return shared_from_this();
 }
 
-std::shared_ptr<const instruction> struct_instance::to_instruction() const
+std::shared_ptr<const instruction> struct_instance::to_instruction(const element_interpreter_ctx& interpreter) const
 {
     std::vector<instruction_const_shared_ptr> dependents;
     std::vector<std::string> dependents_names;
@@ -84,7 +85,7 @@ std::shared_ptr<const instruction> struct_instance::to_instruction() const
         const auto field = fields.at(input.get_name());
         assert(field);
 
-        auto expr = field->to_instruction();
+        auto expr = field->to_instruction(interpreter);
         if (!expr)
             return nullptr;
 
@@ -92,5 +93,5 @@ std::shared_ptr<const instruction> struct_instance::to_instruction() const
         dependents_names.push_back(input.get_name());
     }
 
-    return std::make_shared<element::instruction_serialised_structure>(std::move(dependents), std::move(dependents_names), declarer->get_name());
+    return interpreter.cache_instruction_serialised_structure.get(std::move(dependents), std::move(dependents_names), declarer->get_name());
 }

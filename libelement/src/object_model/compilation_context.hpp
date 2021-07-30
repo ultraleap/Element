@@ -4,11 +4,6 @@
 #include "call_stack.hpp"
 #include "capture_stack.hpp"
 #include "interpreter_internal.hpp"
-#include "configuration.hpp"
-#include "scope_caches.hpp"
-
-//todo: move to cpp
-#include "declarations/function_declaration.hpp"
 
 //STD
 #include <set>

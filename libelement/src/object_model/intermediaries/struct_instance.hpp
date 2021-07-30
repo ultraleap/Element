@@ -26,7 +26,7 @@ public:
     [[nodiscard]] object_const_shared_ptr compile(const compilation_context& context,
         const source_information& source_info) const override;
 
-    [[nodiscard]] std::shared_ptr<const instruction> to_instruction() const final;
+    [[nodiscard]] std::shared_ptr<const instruction> to_instruction(const element_interpreter_ctx& interpreter) const override;
 
     [[nodiscard]] bool is_constant() const override
     {

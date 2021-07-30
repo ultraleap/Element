@@ -22,6 +22,7 @@
 #include "object_model/error_map.hpp"
 #include "object_model/expressions/expression_chain.hpp"
 #include "object_model/expressions/call_expression.hpp"
+#include "object_model/declarations/function_declaration.hpp"
 #include "filesystem.hpp"
 
 static bool file_exists(const std::string& file)

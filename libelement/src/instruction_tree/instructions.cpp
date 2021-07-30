@@ -7,6 +7,9 @@
 #include "object_model/compilation_context.hpp"
 #include "object_model/error.hpp"
 
+//STD
+#include <cassert>
+
 using namespace element;
 
 DEFINE_TYPE_ID(element::instruction_constant, 1U << 0);
@@ -47,10 +50,14 @@ std::shared_ptr<const object> instruction::index(
     return index_type(actual_type_decl, shared_from_this(), context, name, source_info);
 }
 
-instruction_constant::instruction_constant(element_value val)
-    : instruction(type_id, type::num.get())
+instruction_constant::instruction_constant(element_value val, type_const_ptr type)
+    : instruction(type_id, type)
     , m_value(val)
 {
+    if (type != type::num.get() && type != type::boolean.get()) {
+        assert(!"instruction_constants must be either num or bool, they are the only two types supported at this level");
+        throw;
+    }
 }
 
 object_const_shared_ptr instruction_constant::call(const compilation_context& context, std::vector<object_const_shared_ptr> compiled_args, const source_information& source_info) const
@@ -109,6 +116,9 @@ instruction_select::instruction_select(instruction_const_shared_ptr selector, st
     for (auto&& o : options) {
         m_dependents.emplace_back(std::move(o));
     }
+    
+    // Both branches must be the same type, and that represents the output type of this instruction
+    actual_type = options_at(0)->actual_type;
 }
 
 bool instruction_nullary::get_constant_value(element_value& result) const

@@ -115,7 +115,7 @@ public:
         }
 
         element_instruction* result_instruction;
-        result = element_object_to_instruction(result_object, &result_instruction);
+        result = element_object_to_instruction(result_object, compilation_context, &result_instruction);
         if (result != ELEMENT_OK) {
             context->global_scope->remove_declaration(element::identifier{ "<REMOVE>" }, context->cache_scope_find);
             return compiler_message(error_conversion(result),

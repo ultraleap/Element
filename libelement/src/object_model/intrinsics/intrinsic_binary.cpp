@@ -3,7 +3,7 @@
 //SELF
 #include "object_model/constraints/type.hpp"
 #include "object_model/intermediaries/function_instance.hpp"
-#include "object_model/error.hpp"
+#include "object_model/declarations/function_declaration.hpp"
 
 using namespace element;
 
@@ -40,11 +40,13 @@ object_const_shared_ptr intrinsic_binary::compile(const compilation_context& con
     assert(expr1);
     assert(expr2);
 
-    auto new_expr = std::make_unique<element::instruction_binary>(
+    auto new_expr = context.interpreter->cache_instruction_binary.get(
         operation,
         std::move(expr1),
         std::move(expr2),
         return_type);
 
-    return evaluate(context, std::move(new_expr));
+    auto element = evaluate(context, std::move(new_expr));
+    assert(element->actual_type == return_type);
+    return element;
 }
