@@ -77,6 +77,9 @@ object_const_shared_ptr struct_instance::compile(const compilation_context& cont
 
 std::shared_ptr<const instruction> struct_instance::to_instruction(const element_interpreter_ctx& interpreter) const
 {
+    if (instruction_cached)
+        return cached_instruction;
+
     std::vector<instruction_const_shared_ptr> dependents;
     std::vector<std::string> dependents_names;
 
@@ -86,12 +89,17 @@ std::shared_ptr<const instruction> struct_instance::to_instruction(const element
         assert(field);
 
         auto expr = field->to_instruction(interpreter);
-        if (!expr)
-            return nullptr;
+        if (!expr) {
+            instruction_cached = true;
+            return cached_instruction;
+        }
 
         dependents.push_back(std::move(expr));
         dependents_names.push_back(input.get_name());
     }
 
-    return interpreter.cache_instruction_serialised_structure.get(std::move(dependents), std::move(dependents_names), declarer->get_name());
+    cached_instruction = interpreter.cache_instruction_serialised_structure.get(std::move(dependents), std::move(dependents_names), declarer->get_name());
+    instruction_cached = true;
+
+    return cached_instruction;
 }
