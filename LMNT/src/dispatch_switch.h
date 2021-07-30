@@ -26,6 +26,7 @@ LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_
     for (; instr < icount; ++instr)
     {
         const lmnt_instruction op = instructions[instr];
+        assert(op.opcode < LMNT_OP_END);
         switch (op.opcode)
         {
         case LMNT_OP_NOOP:      opresult = lmnt_op_noop(ctx, op.arg1, op.arg2, op.arg3); break;
@@ -111,7 +112,7 @@ LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_
         case LMNT_OP_ASSIGNCGE: opresult = lmnt_op_assigncge(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_ASSIGNCUN: opresult = lmnt_op_assigncun(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_EXTCALL:   opresult = lmnt_op_extcall(ctx, op.arg1, op.arg2, op.arg3); break;
-        default:                opresult = LMNT_ERROR_INTERNAL; break;
+        default:                LMNT_UNREACHABLE(); opresult = LMNT_ERROR_INTERNAL; break;
         }
 
 #if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)

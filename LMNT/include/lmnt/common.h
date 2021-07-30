@@ -140,6 +140,14 @@ typedef struct lmnt_ictx lmnt_ictx;
 #define LMNT_FORCEINLINE
 #endif
 
+#if defined(__GNUC__)
+#define LMNT_UNREACHABLE() __builtin_unreachable()
+#elif defined(_MSC_VER)
+#define LMNT_UNREACHABLE() __assume(0)
+#else
+#define LMNT_UNREACHABLE()
+#endif
+
 #ifdef __cplusplus
 }
 #endif
