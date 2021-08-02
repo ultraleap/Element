@@ -29,12 +29,11 @@ namespace Element.AST
         public static Result<int> ConstantCount(StructInstance listInstance, Context context) =>
             listInstance.DeclaringStruct.IsIntrinsicOfType<ListStruct>()
                 ? listInstance.Index(CountId, context)
-                              .Bind(countValue => countValue switch
-                              {
-                                  Constant c => new Result<int>((int) c),
-                                  Instruction e => context.Trace(ElementMessage.NotCompileConstant, $"List count '{e}' is not a compile-time constant expression"),
-                                  _ => throw new InternalCompilerException($"Couldn't get List.'{CountId}' from '{listInstance}'. Count must be an expression.")
-                              })
+                              .Bind(countValue => countValue.InnerIs(out Constant constant)
+                                   ? new Result<int>((int) constant)
+                                   : countValue.InnerIs(out Instruction instruction)
+                                       ? context.Trace(ElementMessage.NotCompileConstant, $"List count '{instruction}' is not a compile-time constant expression")
+                                       : throw new InternalCompilerException($"Couldn't get List.'{CountId}' from '{listInstance}'. Count must be an expression."))
                 : context.Trace(ElementMessage.TypeError, "Struct instance is not a List");
 
         public static Result<IValue[]> EvaluateElements(StructInstance listInstance, Context context) =>
