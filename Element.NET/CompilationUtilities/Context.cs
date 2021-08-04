@@ -30,17 +30,27 @@ namespace Element
             StructuralTuples = structuralTuples;
             RootScope = rootScope ?? new NoScope(this);
             CompilerOptions = compilerOptions ?? new CompilerOptions(MessageLevel.Information);
-            Aspect = CompilerOptions.CompilationAspectFunc?.Invoke(this);
             BoundaryMap = boundaryMap ?? BoundaryMap.CreateDefault();
         }
-        
+
         public static Context None { get; } = CreateManually(null, null, null);
 
         public IScope RootScope { get; }
         public CompilerOptions CompilerOptions { get; }
         
         public BoundaryMap BoundaryMap { get; }
-        public ICompilationAspect? Aspect { get; }
+
+        public bool AddAspect(ICompilationAspect aspect)
+        {
+            if (_aspect.Aspects.Contains(aspect)) return false;
+            _aspect.Aspects.Add(aspect);
+            return true;
+        }
+
+        public bool RemoveAspect(ICompilationAspect aspect) => _aspect.Aspects.Remove(aspect);
+
+        public ICompilationAspect Aspect => _aspect;
+        private readonly AggregateCompilationAspect _aspect = new AggregateCompilationAspect();
         public Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
         public Stack<IValue> CallStack { get; } = new Stack<IValue>();
         public Stack<UniqueValueSite<Declaration>> DeclarationStack { get; } = new Stack<UniqueValueSite<Declaration>>();

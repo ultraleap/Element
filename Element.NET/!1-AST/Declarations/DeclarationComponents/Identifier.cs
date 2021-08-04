@@ -24,7 +24,8 @@ namespace Element.AST
         {
             context.Aspect?.BeforeLookup(expressionChain, this, scope);
             var lookupResult = scope.Lookup(this, context);
-            return context.Aspect?.Lookup(expressionChain, this, scope, lookupResult) ?? lookupResult;
+            context.Aspect?.Lookup(expressionChain, this, scope, lookupResult);
+            return lookupResult;
         }
         
         public string TraceString => String;

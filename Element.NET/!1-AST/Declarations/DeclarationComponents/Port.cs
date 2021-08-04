@@ -31,14 +31,16 @@ namespace Element.AST
             {
                 context.Aspect?.BeforeInputPort(this, PortConstraint?.Expression, scope);
                 var resolvedConstraint = PortConstraint.ResolvePortConstraint(scope, context);
-                return context.Aspect?.InputPort(this, PortConstraint?.Expression, scope, resolvedConstraint) ?? resolvedConstraint;
+                context.Aspect?.InputPort(this, PortConstraint?.Expression, scope, resolvedConstraint);
+                return resolvedConstraint;
             }
 
             Result<IValue> ResolveDefaultArgument()
             {
                 context.Aspect?.BeforeDefaultArgument(this, DefaultArgument, scope);
                 var resolvedDefaultArg = DefaultArgument.Expression.ResolveExpression(scope, context);
-                return context.Aspect?.DefaultArgument(this, DefaultArgument, scope, resolvedDefaultArg) ?? resolvedDefaultArg;
+                context.Aspect?.DefaultArgument(this, DefaultArgument, scope, resolvedDefaultArg);
+                return resolvedDefaultArg;
             }
 
             Result<ResolvedPort> WithDefaultArgument()

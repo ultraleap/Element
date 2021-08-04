@@ -84,7 +84,8 @@ namespace Element.AST
         {
             context.Aspect?.BeforeExpressionBody(_expressionBody, _parent);
             var result = _expressionBody.Expression.ResolveExpression(new ResolvedBlock(MakeNamedArgumentList(arguments), _parent, () => this), context);
-            return context.Aspect?.ExpressionBody(_expressionBody, _parent, result) ?? result;
+            context.Aspect?.ExpressionBody(_expressionBody, _parent, result);
+            return result;
         }
     }
     
@@ -101,7 +102,8 @@ namespace Element.AST
             context.Aspect?.BeforeScopeBody(_scopeBody, _parent);
             var result = _scopeBody.ResolveBlockWithCaptures(_parent, MakeNamedArgumentList(arguments), context, () => this)
                                    .Bind(localScope => localScope.Index(Parser.ReturnIdentifier, context));
-            return context.Aspect?.ScopeBody(_scopeBody, _parent, result) ?? result;
+            context.Aspect?.ScopeBody(_scopeBody, _parent, result);
+            return result;
         }
     }
 

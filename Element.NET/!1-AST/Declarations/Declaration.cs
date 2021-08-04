@@ -39,7 +39,8 @@ namespace Element.AST
                          {
                              context.Aspect?.BeforeDeclaration(this, scope);
                              var resolveResult = ResolveImpl(scope, context);
-                             return context.Aspect?.Declaration(this, scope, resolveResult) ?? resolveResult;
+                             context.Aspect?.Declaration(this, scope, resolveResult);
+                             return resolveResult;
                          });
             context.TraceStack.Pop();
             context.DeclarationStack.Pop();

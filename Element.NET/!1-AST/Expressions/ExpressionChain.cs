@@ -89,14 +89,16 @@ namespace Element.AST
                                var port = portIdx < previous.InputPorts.Count ? previous.InputPorts[portIdx] : null;
                                context.Aspect?.BeforeCallArgument(previous, argExpr, port, scope);
                                var argExpressionResult = argExpr.ResolveExpression(scope, context);
-                               return context.Aspect?.CallArgument(previous, argExpr, port, scope, argExpressionResult) ?? argExpressionResult;
+                               context.Aspect?.CallArgument(previous, argExpr, port, scope, argExpressionResult);
+                               return argExpressionResult;
                            })
                            .ToResultReadOnlyList()
                            .Bind(args =>
                            {
                                context.Aspect?.BeforeCall(chain, previous, scope, this, args);
                                var callResult = previous.Call(args.ToArray(), context);
-                               return context.Aspect?.Call(chain, previous, scope, this, args, callResult) ?? callResult;
+                               context.Aspect?.Call(chain, previous, scope, this, args, callResult);
+                               return callResult;
                            });
         }
 
@@ -110,11 +112,12 @@ namespace Element.AST
 
             public override string ToString() => $".{Identifier}";
             protected override void ValidateImpl(ResultBuilder builder, Context context) => Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
-            protected override Result<IValue> SubExpressionImpl(ExpressionChain chain, IValue previous, IScope _, Context context)
+            protected override Result<IValue> SubExpressionImpl(ExpressionChain chain, IValue previous, IScope scope, Context context)
             {
-                context.Aspect?.BeforeIndex(chain, previous, _, this);
+                context.Aspect?.BeforeIndex(chain, previous, scope, this);
                 var indexResult = previous.Index(Identifier, context);
-                return context.Aspect?.Index(chain, previous, _, this, indexResult) ?? indexResult;
+                context.Aspect?.Index(chain, previous, scope, this, indexResult);
+                return indexResult;
             }
         }
     }

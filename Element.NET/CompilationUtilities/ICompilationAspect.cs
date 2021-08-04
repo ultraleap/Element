@@ -9,67 +9,188 @@ namespace Element
     public interface ICompilationAspect
     {
         void BeforeDeclaration(Declaration declaration, IScope scope);
-        Result<IValue> Declaration(Declaration declaration, IScope scope, Result<IValue> result);
+        void Declaration(Declaration declaration, IScope scope, Result<IValue> result);
         void BeforeExpression(Expression expression, IScope scope);
-        Result<IValue> Expression(Expression expression, IScope scope, Result<IValue> result);
-        Result<IValue> Literal(ExpressionChain expressionChain, IScope scope, Constant constant);
+        void Expression(Expression expression, IScope scope, Result<IValue> result);
+        void Literal(ExpressionChain expressionChain, IScope scope, Constant constant);
         void BeforeLookup(ExpressionChain expressionChain, Identifier id, IScope scope);
-        Result<IValue> Lookup(ExpressionChain expressionChain, Identifier id, IScope scope, Result<IValue> result);
+        void Lookup(ExpressionChain expressionChain, Identifier id, IScope scope, Result<IValue> result);
         void BeforeIndex(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr);
-        Result<IValue> Index(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result);
+        void Index(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result);
         void BeforeCall(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments);
-        Result<IValue> Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result);
+        void Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result);
         void BeforeCallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope);
-        Result<IValue> CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result);
+        void CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result);
         void BeforeExpressionBody(ExpressionBody expression, IScope scope);
-        Result<IValue> ExpressionBody(ExpressionBody expression, IScope scope, Result<IValue> result);
+        void ExpressionBody(ExpressionBody expression, IScope scope, Result<IValue> result);
         void BeforeScopeBody(FunctionBlock functionBlock, IScope scope);
-        Result<IValue> ScopeBody(FunctionBlock functionBlock, IScope scope, Result<IValue> result);
+        void ScopeBody(FunctionBlock functionBlock, IScope scope, Result<IValue> result);
         void BeforeInputPort(Port port, Expression? constraintExpression, IScope scope);
-        Result<IValue> InputPort(Port port, Expression? constraintExpression, IScope scope, Result<IValue> result);
+        void InputPort(Port port, Expression? constraintExpression, IScope scope, Result<IValue> result);
         void BeforeDefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope);
-        Result<IValue> DefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope, Result<IValue> result);
+        void DefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope, Result<IValue> result);
         void BeforeReturnConstraint(PortConstraint? constraint, IScope scope);
-        Result<IValue> ReturnConstraint(PortConstraint? constraint, IScope scope, Result<IValue> result);
+        void ReturnConstraint(PortConstraint? constraint, IScope scope, Result<IValue> result);
+    }
+    
+    public class AggregateCompilationAspect : ICompilationAspect
+    {
+        public IList<ICompilationAspect> Aspects { get; } = new List<ICompilationAspect>();
+
+        public void BeforeDeclaration(Declaration declaration, IScope scope)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeDeclaration(declaration, scope);
+        }
+
+        public void Declaration(Declaration declaration, IScope scope, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.Declaration(declaration, scope, result);
+        }
+
+        public void BeforeExpression(Expression expression, IScope scope)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeExpression(expression, scope);
+        }
+
+        public void Expression(Expression expression, IScope scope, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.Expression(expression, scope, result);
+        }
+
+        public void Literal(ExpressionChain expressionChain, IScope scope, Constant constant)
+        {
+            foreach (var aspect in Aspects) aspect.Literal(expressionChain, scope, constant);
+        }
+
+        public void BeforeLookup(ExpressionChain expressionChain, Identifier id, IScope scope)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeLookup(expressionChain, id, scope);
+        }
+
+        public void Lookup(ExpressionChain expressionChain, Identifier id, IScope scope, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.Lookup(expressionChain, id, scope, result);
+        }
+
+        public void BeforeIndex(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeIndex(expressionChain, valueBeingIndexed, scope, expr);
+        }
+
+        public void Index(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.Index(expressionChain, valueBeingIndexed, scope, expr, result);
+        }
+
+        public void BeforeCall(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeCall(expressionChain, function, scope, expression, arguments);
+        }
+
+        public void Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.Call(expressionChain, function, scope, expression, arguments, result);
+        }
+
+        public void BeforeCallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeCallArgument(function, argumentExpression, port, scope);
+        }
+
+        public void CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.CallArgument(function, argumentExpression, port, scope, result);
+        }
+
+        public void BeforeExpressionBody(ExpressionBody expression, IScope scope)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeExpressionBody(expression, scope);
+        }
+
+        public void ExpressionBody(ExpressionBody expression, IScope scope, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.ExpressionBody(expression, scope, result);
+        }
+
+        public void BeforeScopeBody(FunctionBlock functionBlock, IScope scope)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeScopeBody(functionBlock, scope);
+        }
+
+        public void ScopeBody(FunctionBlock functionBlock, IScope scope, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.ScopeBody(functionBlock, scope, result);
+        }
+
+        public void BeforeInputPort(Port port, Expression? constraintExpression, IScope scope)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeInputPort(port, constraintExpression, scope);
+        }
+
+        public void InputPort(Port port, Expression? constraintExpression, IScope scope, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.InputPort(port, constraintExpression, scope, result);
+        }
+
+        public void BeforeDefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeDefaultArgument(port, expressionBody, scope);
+        }
+
+        public void DefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.DefaultArgument(port, expressionBody, scope, result);
+        }
+
+        public void BeforeReturnConstraint(PortConstraint? constraint, IScope scope)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeReturnConstraint(constraint, scope);
+        }
+
+        public void ReturnConstraint(PortConstraint? constraint, IScope scope, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.ReturnConstraint(constraint, scope, result);
+        }
     }
 
     public abstract class CompilationAspectBase : ICompilationAspect
     {
-        protected CompilationAspectBase(Context context) => _context = context;
-
-        protected readonly Context _context;
-
-        public virtual void BeforeDeclaration(Declaration declaration, IScope scope) {}
-        public virtual Result<IValue> Declaration(Declaration declaration, IScope scope, Result<IValue> result) => result;
+        public virtual void BeforeDeclaration(Declaration declaration, IScope scope) { }
+        public virtual void Declaration(Declaration declaration, IScope scope, Result<IValue> result) { }
         public virtual void BeforeExpression(Expression expression, IScope scope) { }
-        public virtual Result<IValue> Expression(Expression expression, IScope scope, Result<IValue> result) => result;
-        public virtual Result<IValue> Literal(ExpressionChain expressionChain, IScope scope, Constant constant) => constant;
+        public virtual void Expression(Expression expression, IScope scope, Result<IValue> result) { }
+        public virtual void Literal(ExpressionChain expressionChain, IScope scope, Constant constant) { }
         public virtual void BeforeLookup(ExpressionChain expressionChain, Identifier id, IScope scope) { }
-        public virtual Result<IValue> Lookup(ExpressionChain expressionChain, Identifier id, IScope scope, Result<IValue> result) => result;
+        public virtual void Lookup(ExpressionChain expressionChain, Identifier id, IScope scope, Result<IValue> result) { }
         public virtual void BeforeIndex(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr) { }
-        public virtual Result<IValue> Index(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result) => result;
+        public virtual void Index(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result) { }
         public virtual void BeforeCall(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments) { }
-        public virtual Result<IValue> Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result) => result;
+        public virtual void Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result) { }
         public virtual void BeforeCallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope) { }
-        public virtual Result<IValue> CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result) => result;
+        public virtual void CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result) { }
         public virtual void BeforeExpressionBody(ExpressionBody expression, IScope scope) { }
-        public virtual Result<IValue> ExpressionBody(ExpressionBody expression, IScope scope, Result<IValue> result) => result;
+        public virtual void ExpressionBody(ExpressionBody expression, IScope scope, Result<IValue> result) { }
         public virtual void BeforeScopeBody(FunctionBlock functionBlock, IScope scope) { }
-        public virtual Result<IValue> ScopeBody(FunctionBlock functionBlock, IScope scope, Result<IValue> result) => result;
+        public virtual void ScopeBody(FunctionBlock functionBlock, IScope scope, Result<IValue> result) { }
         public virtual void BeforeInputPort(Port port, Expression? constraintExpression, IScope scope) { }
-        public virtual Result<IValue> InputPort(Port port, Expression? constraintExpression, IScope scope, Result<IValue> result) => result;
+        public virtual void InputPort(Port port, Expression? constraintExpression, IScope scope, Result<IValue> result) { }
         public virtual void BeforeDefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope) { }
-        public virtual Result<IValue> DefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope, Result<IValue> result) => result;
+        public virtual void DefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope, Result<IValue> result) { }
         public virtual void BeforeReturnConstraint(PortConstraint? constraint, IScope scope) { }
-        public virtual Result<IValue> ReturnConstraint(PortConstraint? constraint, IScope scope, Result<IValue> result) => result;
+        public virtual void ReturnConstraint(PortConstraint? constraint, IScope scope, Result<IValue> result) { }
     }
 
     public class SummaryLinesAspect : CompilationAspectBase
     {
         private readonly Action<string> _lineCallback;
+        private readonly Context _context;
         private int _indent;
 
-        public SummaryLinesAspect(Action<string> lineCallback, Context context) : base(context) => _lineCallback = lineCallback;
+        public SummaryLinesAspect(Action<string> lineCallback, Context context)
+        {
+            _lineCallback = lineCallback;
+            _context = context;
+        }
 
         private void CallbackLine(string line) => _lineCallback(line.PadLeft(_indent * 4 + line.Length));
 
@@ -120,12 +241,8 @@ namespace Element
             return result;
         }*/
 
-        public override Result<IValue> Literal(ExpressionChain expressionChain, IScope scope, Constant constant)
-        {
-            CallbackLine(ResultToString(constant));
-            return constant;
-        }
-        
+        public override void Literal(ExpressionChain expressionChain, IScope scope, Constant constant) => CallbackLine(ResultToString(constant));
+
         /*
         public override void BeforeLookup(ExpressionChain expressionChain, Identifier id, IScope scope) => Push($"{id} <lookup>", expressionChain);
         public override Result<IValue> Lookup(ExpressionChain expressionChain, Identifier id, IScope scope, Result<IValue> result)
@@ -143,34 +260,18 @@ namespace Element
         }*/
         
         public override void BeforeCall(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments) => Push($"{expression} in {expressionChain}", expression);
-        public override Result<IValue> Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result)
-        {
-            PopResult(result);
-            return result;
-        }
+        public override void Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result) => PopResult(result);
 
         public override void BeforeCallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope) => Push($"{port?.Identifier} <call argument>", argumentExpression);
-        public override Result<IValue> CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result)
-        {
-            PopResult(result);
-            return result;
-        }
-        
+        public override void CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result) => PopResult(result);
+
         public override void BeforeExpressionBody(ExpressionBody expression, IScope scope) => Push("<call expression body>", expression.Expression);
-        public override Result<IValue> ExpressionBody(ExpressionBody expression, IScope scope, Result<IValue> result)
-        {
-            PopResult(result);
-            return result;
-        }
+        public override void ExpressionBody(ExpressionBody expression, IScope scope, Result<IValue> result) => PopResult(result);
 
         public override void BeforeScopeBody(FunctionBlock functionBlock, IScope scope) => Push("<call scope body>", functionBlock);
 
-        public override Result<IValue> ScopeBody(FunctionBlock functionBlock, IScope scope, Result<IValue> result)
-        {
-            PopResult(result);
-            return result;
-        }
-        
+        public override void ScopeBody(FunctionBlock functionBlock, IScope scope, Result<IValue> result) => PopResult(result);
+
         /*
         public override void BeforeDefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope)
         {

@@ -48,7 +48,8 @@ namespace Element.AST
                          {
                              context.Aspect?.BeforeReturnConstraint(returnConstraint, scope);
                              var resolvedReturnConstraint = returnConstraint.ResolvePortConstraint(scope, context);
-                             return context.Aspect?.ReturnConstraint(returnConstraint, scope, resolvedReturnConstraint) ?? resolvedReturnConstraint;
+                             context.Aspect?.ReturnConstraint(returnConstraint, scope, resolvedReturnConstraint);
+                             return resolvedReturnConstraint;
                          });
 
         public static Result<IReadOnlyList<ResolvedPort>> ResolveFunctionPortList(this PortList? inputPortList, IScope scope, bool areInputPortsOptional, bool canInputsBeVariadic, Context context) =>
