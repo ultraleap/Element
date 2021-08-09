@@ -62,14 +62,16 @@ namespace Element.AST
 
     public class CustomStruct : Struct
     {
+        private Result<IValue>? _cachedDefaultValue;
+        
         public CustomStruct(Identifier identifier, IReadOnlyList<ResolvedPort> fields, ResolvedBlock? associatedBlock, IScope parent)
             : base(identifier, fields, associatedBlock, parent) { }
 
         public override Result<IValue> Call(IReadOnlyList<IValue> arguments, Context context) => StructInstance.Create(this, arguments, context).Cast<IValue>();
         public override Result MatchesConstraint(IValue value, Context context) => IsInstanceOfStruct(value, context) ? Result.Success : context.Trace(ElementMessage.ConstraintNotSatisfied, $"Expected {this} instance but got {value}");
         public override Result<IValue> DefaultValue(Context context) =>
-            InputPorts.Select(field => field.DefaultValue(context))
-                      .BindEnumerable(defaults => Call(defaults.ToArray(), context).Cast<IValue>());
+            _cachedDefaultValue ??= InputPorts.Select(field => field.DefaultValue(context))
+                                              .BindEnumerable(defaults => Call(defaults.ToArray(), context).Cast<IValue>());
     }
     
     public sealed class StructInstance : Value
@@ -109,7 +111,7 @@ namespace Element.AST
             _resolvedBlock.Serialize(resultBuilder, context);
         }
 
-        public override Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) =>
+        public override Result<IValue> Deserialize(Func<IIntrinsicStructImplementation, Instruction> nextValue, Context context) =>
             _resolvedBlock.DeserializeMembers(nextValue, context)
                           .Bind(deserializedFields => DeclaringStruct.Call(deserializedFields.ToArray(), context));
     }

@@ -48,9 +48,9 @@ namespace Element
 
 		public override void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => resultBuilder.Result.Add(this);
 
-		public override Result<IValue> Deserialize(Func<Instruction> nextValue, Context context)
+		public override Result<IValue> Deserialize(Func<IIntrinsicStructImplementation, Instruction> nextValue, Context context)
 		{
-			var result = nextValue();
+			var result = nextValue(StructImplementation);
 			return result.StructImplementation == StructImplementation
 				       ? new Result<IValue>(result)
 				       : context.Trace(ElementMessage.SerializationError,

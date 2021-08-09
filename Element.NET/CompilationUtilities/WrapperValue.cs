@@ -20,7 +20,7 @@ namespace Element
         public virtual Result MatchesConstraint(IValue value, Context context) => WrappedValue.MatchesConstraint(value, context);
         public virtual Result<IValue> DefaultValue(Context context) => WrappedValue.DefaultValue(context);
         public virtual void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => WrappedValue.Serialize(resultBuilder, context);
-        public virtual Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => WrappedValue.Deserialize(nextValue, context);
+        public virtual Result<IValue> Deserialize(Func<IIntrinsicStructImplementation, Instruction> nextValue, Context context) => WrappedValue.Deserialize(nextValue, context);
         public Result<IValue> InstanceType(Context context) => WrappedValue.InstanceType(context);
         public virtual bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => WrappedValue.IsIntrinsicOfType<TIntrinsicImplementation>();
         public virtual bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => WrappedValue.IsSpecificIntrinsic(intrinsic);

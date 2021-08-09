@@ -48,6 +48,9 @@ namespace Element.AST
 
         public static bool IsSerializable(this IValue value, Context context) => value.Serialize(context).IsSuccess;
 
+        public static Result<IValue> Deserialize(this IValue value, Func<Instruction> nextInstruction, Context context) =>
+            value.Deserialize(_ => nextInstruction(), context);
+
         public static Result<IValue> Deserialize(this IValue value, IEnumerable<Instruction> expressions, Context context) =>
             value.Deserialize(new Queue<Instruction>(expressions).Dequeue, context);
 

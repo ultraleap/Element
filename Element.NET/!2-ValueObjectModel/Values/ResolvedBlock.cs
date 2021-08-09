@@ -64,11 +64,11 @@ namespace Element.AST
             }
         }
 
-        public override Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) =>
+        public override Result<IValue> Deserialize(Func<IIntrinsicStructImplementation, Instruction> nextValue, Context context) =>
             DeserializeMembers(nextValue, context)
                 .Map(memberValues => (IValue)new ResolvedBlock(memberValues.Zip(Members, (value, identifier) => (identifier, value)).ToArray(), null));
 
-        public Result<IEnumerable<IValue>> DeserializeMembers(Func<Instruction> nextValue, Context context) =>
+        public Result<IEnumerable<IValue>> DeserializeMembers(Func<IIntrinsicStructImplementation, Instruction> nextValue, Context context) =>
             Members.Select(m => Index(m, context))
                    .BindEnumerable(resolvedMembers => resolvedMembers.Select(m => m.Deserialize(nextValue, context)).ToResultEnumerable());
     }
