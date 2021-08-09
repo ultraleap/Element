@@ -140,12 +140,19 @@ namespace Element.CLR
         public ParameterInfo? Parent { get; }
         public IValue ParameterType { get; }
         public IValue Default { get; }
+        public abstract int? ConstantSize { get; }
+        public bool IsDynamicallySized => !ConstantSize.HasValue;
         public SourceContext SourceContext { get; }
         public abstract IEnumerable<LeafParameterInfo> FlattenedParameters();
         
-        // TODO: Implement generic get/set on interface instead of here. Can't make use of implementation-specific optimizations from here, will always do lookup by path of all numbers.
         public Result<TValue> GetValue<TValue>(IBoundaryFunctionArguments source) => GetValue(source).Bind(v => v.CompileInstance<TValue>(SourceContext.MakeContext()));
-        public Result SetValue<TValue>(IBoundaryFunctionArguments source, TValue value) => ParameterType.ClrToElement(value!, SourceContext.MakeContext()).Bind(v => SetValue(source, v));
+        public Result SetValue<TValue>(IBoundaryFunctionArguments source, TValue value)
+        {
+            var serialized = ConstantSize.HasValue ? new List<float>(ConstantSize.Value) : new List<float>();
+            return SourceContext.MakeContext()
+                                .SerializeClrInstance(value, serialized)
+                                .And(() => source.SetMultiple(FullPath, serialized));
+        }
 
         public abstract Result<IValue> GetValue(IBoundaryFunctionArguments source);
         public abstract Result SetValue(IBoundaryFunctionArguments source, IValue value);
@@ -157,7 +164,8 @@ namespace Element.CLR
             : base(name, path, parent, parameterType, @default, sourceContext)
             => Default = @default;
         public new Constant Default { get; }
-        
+        public override int? ConstantSize => 1;
+
         public Result<float> GetFloat(IBoundaryFunctionArguments source) => source.GetSingle(FullPath);
         public Result SetFloat(IBoundaryFunctionArguments source, float value) => source.SetSingle(FullPath, value);
         
@@ -181,8 +189,13 @@ namespace Element.CLR
     public class StructuredParameterInfo : ParameterInfo
     {
         public StructuredParameterInfo(string name, string path, ParameterInfo? parent, IValue parameterType, IValue @default, SourceContext sourceContext, IReadOnlyList<ParameterInfo> fields)
-            : base(name, path, parent, parameterType, @default, sourceContext) =>
+            : base(name, path, parent, parameterType, @default, sourceContext)
+        {
             Fields = fields;
+            ConstantSize = Fields.All(f => f.ConstantSize.HasValue)
+                ? Fields.Sum(f => f.ConstantSize)
+                : null;
+        }
 
         public IReadOnlyList<ParameterInfo> Fields { get; }
         
@@ -219,6 +232,7 @@ namespace Element.CLR
                                                  }));
         }
 
+        public override int? ConstantSize { get; }
         public override IEnumerable<LeafParameterInfo> FlattenedParameters() => Fields.SelectMany(f => f.FlattenedParameters());
     }
 }

@@ -96,7 +96,7 @@ namespace Element.AST
             public Result MatchesConstraint(IValue value, Context context) => context.Trace(ElementMessage.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used as a constraint");
             public Result<IValue> DefaultValue(Context context) => ApplyToAllElements(e => e.DefaultValue(context), context);
             public void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => context.Trace(ElementMessage.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be serialized");
-            public Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => context.Trace(ElementMessage.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used to deserialize");
+            public Result<IValue> Deserialize(Func<IIntrinsicStructImplementation, Instruction> nextValue, Context context) => context.Trace(ElementMessage.NotCompileConstant, "ListElement index is unknown at compile time - it cannot be used to deserialize");
             public Result<IValue> InstanceType(Context context) => _elements[0].InstanceType(context);
             public bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => false;
             public bool IsSpecificIntrinsic(IIntrinsicImplementation intrinsic) => false;

@@ -21,7 +21,7 @@ namespace Element.AST
         public virtual Result MatchesConstraint(IValue value, Context context) => context.Trace(ElementMessage.NotConstraint, $"'{this}' is not a constraint");
         public virtual Result<IValue> DefaultValue(Context context) => context.Trace(ElementMessage.ConstraintNotSatisfied, $"'{this}' cannot produce a default value, only serializable types can produce default values");
         public virtual void Serialize(ResultBuilder<List<Instruction>> resultBuilder, Context context) => resultBuilder.Append(ElementMessage.SerializationError, $"'{this}' is not serializable");
-        public virtual Result<IValue> Deserialize(Func<Instruction> nextValue, Context context) => context.Trace(ElementMessage.SerializationError, $"'{this}' cannot be deserialized");
+        public virtual Result<IValue> Deserialize(Func<IIntrinsicStructImplementation, Instruction> nextValue, Context context) => context.Trace(ElementMessage.SerializationError, $"'{this}' cannot be deserialized");
         public virtual Result<IValue> InstanceType(Context context) => context.Trace(ElementMessage.TypeError, $"'{this}' is not an instance of a type");
 
         public virtual bool IsIntrinsicOfType<TIntrinsicImplementation>() where TIntrinsicImplementation : IIntrinsicImplementation => false;

@@ -84,7 +84,7 @@ namespace Element.AST
         /// Deserialize a copy of this value using the instruction providing function.
         /// Will error if this value is not serializable (cannot be represented at the host boundary).
         /// </summary>
-        Result<IValue> Deserialize(Func<Instruction> nextValue, Context context);
+        Result<IValue> Deserialize(Func<IIntrinsicStructImplementation, Instruction> nextValue, Context context);
 
         /// <summary>
         /// Retrieve the type this value is an instance of.

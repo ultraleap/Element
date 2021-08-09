@@ -488,21 +488,10 @@ namespace Element.CLR
 		public static Result<IValue> ClrToElement(this IValue elementType, object clrInstance, Context context)
 		{
 			var serialized = new List<float>();
+			var index = 0;
 			return context.SerializeClrInstance(clrInstance, serialized)
 			              .Bind(() => elementType.DefaultValue(context))
-			              .Bind(defaultValue => defaultValue.InnerIs(out Instruction instruction)
-				               // If the default value is a single instruction then this is a primitive value (Num or Bool)
-				               ? serialized.Count == 1
-					               ? defaultValue.Deserialize(() => new Constant(serialized[0], instruction.StructImplementation), context)
-					               : context.Trace(ElementMessage.InvalidBoundaryData, $"When converting to type {elementType} - expected {clrInstance} to serialize to 1 float but serialized to {serialized.Count} floats")
-				               : elementType.GetInputPortDefaults(context)
-				                            .Bind(fieldDefaults => fieldDefaults.SerializeAndFlattenValues(context))
-				                            .Bind(fieldDefaultsSerialized =>
-				                             {
-					                             static Constant MakeConstant(float f, Instruction instruction) => new Constant(f, instruction.StructImplementation);
-					                             var fieldQueue = new Queue<Instruction>(serialized.Zip(fieldDefaultsSerialized, MakeConstant));
-					                             return defaultValue.Deserialize(fieldQueue.Dequeue, context);
-				                             }));
+			              .Bind(defaultValue => defaultValue.Deserialize(type => new Constant(serialized[index++], type), context));
 		}
 	}
 }

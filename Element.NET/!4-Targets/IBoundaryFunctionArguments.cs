@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ResultNET;
 
 namespace Element
@@ -5,9 +6,8 @@ namespace Element
     public interface IBoundaryFunctionArguments
     {
         Result SetSingle(string path, float value);
+        Result SetMultiple(string path, IReadOnlyList<float> values);
         Result<float> GetSingle(string path);
-        //Result Set<TValue>(string path, TValue value);
-        //Result<TValue> Get<TValue>(string path);
         void ApplyArgumentChanges();
     }
 }
