@@ -148,7 +148,7 @@ namespace Element.CLR
         public Result<TValue> GetValue<TValue>(IBoundaryFunctionArguments source) => GetValue(source).Bind(v => v.CompileInstance<TValue>(SourceContext.MakeContext()));
         public Result SetValue<TValue>(IBoundaryFunctionArguments source, TValue value)
         {
-            var serialized = new List<float>();
+            var serialized = ConstantSize.HasValue ? new List<float>(ConstantSize.Value) : new List<float>();
             return SourceContext.MakeContext()
                                 .SerializeClrInstance(value, serialized)
                                 .And(() => source.SetMultiple(FullPath, serialized));
