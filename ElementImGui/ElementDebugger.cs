@@ -14,11 +14,12 @@ namespace ElementImGui
 {
     public class ElementDebugger
     {
-        public class ImGuiDebugAspect : CompilationAspectBase
+        public class ImGuiDebugAspect : ICompilationAspect
         {
             public class GuiState
             {
                 public readonly Dictionary<UniqueValueSite<ExpressionChain>, ValueImGui.ExpressionChainDrawer> ExpressionChainDrawers = new Dictionary<UniqueValueSite<ExpressionChain>, ValueImGui.ExpressionChainDrawer>();
+                
                 public object? Selected { get; set; }
                 public bool GuiStateMenu = false;
                 public bool IndentExpressionChains = false;
@@ -41,43 +42,42 @@ namespace ElementImGui
 
             public abstract class ValueImGui
             {
-                protected ValueImGui(ImGuiDebugAspect aspect, IValue result)
-                {
-                    _aspect = aspect;
-                    _result = result;
-                }
-
-                public abstract void DoGui(GuiState state, Context context);
+                public abstract void Draw(GuiState state, Context context);
+                public Result<IValue> Result { get; set; }
+                public ValueImGui? Parent { get; set; }
+                public List<ValueImGui> Dependents { get; } = new List<ValueImGui>();
 
                 protected abstract ISourceLocation? SelectionObject { get; }
 
-
-                private readonly ImGuiDebugAspect _aspect;
-                protected readonly IValue _result;
-
-                protected bool TryGetGuiByValue(IValue value, out ValueImGui gui) => _aspect._guisByResult.TryGetValue(value, out gui);
-                protected bool TryGetGuiByLocation(ISourceLocation location, out ValueImGui gui) => _aspect._guisByLocation.TryGetValue(location, out gui);
+                protected void DrawDependents(GuiState state, Context context)
+                {
+                    foreach (var dependent in Dependents)
+                    {
+                        dependent.Draw(state, context);
+                    }
+                }
                 
+
                 private string? _uniqueSourceLocationString;
                 protected static string UniqueLabel(ValueImGui @this, string label) => $"{label}##{nameof(ValueImGui)}{@this._uniqueSourceLocationString ??= @this.SelectionObject?.MakeTraceSite(label).ToString()}";
                 protected string UniqueLabel(string label) => UniqueLabel(this, label);
 
-                protected void SelectionText(GuiState state, string text, IValue? valueHint, Context context)
+                protected void SelectionText(GuiState state, string text, in Result<IValue> valueHint, Context context)
                 {
                     ImGui.Text(text);
                     if (ImGui.IsItemClicked()) { state.Selected = SelectionObject; }
 
-                    if (valueHint != null) AppendValueHints(valueHint, context);
+                    AppendValueHints(in valueHint, context);
                 }
 
-                protected void TreeNode(GuiState state, string label, Action guiWhenOpen, IValue? valueHint, Context context)
+                protected void TreeNode(GuiState state, string label, Action guiWhenOpen, in Result<IValue> valueHint, Context context)
                 {
                     var flags = ImGuiTreeNodeFlags.OpenOnArrow;
                     if (state.Selected == SelectionObject) flags |= ImGuiTreeNodeFlags.Selected;
                     var open = ImGui.TreeNodeEx(UniqueLabel(label), flags);
                     if (ImGui.IsItemClicked()) { state.Selected = SelectionObject; }
 
-                    if (valueHint != null) AppendValueHints(valueHint, context);
+                    AppendValueHints(in valueHint, context);
 
                     if (open)
                     {
@@ -89,12 +89,12 @@ namespace ElementImGui
                 public class ExpressionChainDrawer
                 {
                     private readonly GuiState _state;
-                    private readonly IValue _expressionChainResult;
+                    private readonly Result<IValue> _expressionChainResult;
                     private readonly Context _context;
                     private readonly bool _headerOpen;
                     private int _itemIndex;
 
-                    public ExpressionChainDrawer(GuiState state, ExpressionChain chain, ValueImGui caller, IValue expressionChainResult, Context context)
+                    public ExpressionChainDrawer(GuiState state, ExpressionChain chain, ValueImGui caller, Result<IValue> expressionChainResult, Context context)
                     {
                         _state = state;
                         _expressionChainResult = expressionChainResult;
@@ -153,8 +153,10 @@ namespace ElementImGui
                     }
                 }
 
-                protected static void AppendValueHints(IValue value, Context context)
+                protected static void AppendValueHints(in Result<IValue> result, Context context)
                 {
+                    if (!result.TryGetValue(out var value)) return;
+                    
                     ImGui.SameLine();
                     ImGui.TextColored(new Vector4(0.8f), $" <{value.TypeOf}>");
                     ImGui.SameLine();
@@ -170,44 +172,7 @@ namespace ElementImGui
                                                               .Match(FormatSerialized,
                                                                    FormatFunctionOrEmpty));
                 }
-
-                protected void DoConstraintsGui(GuiState state, Context context)
-                {
-                    if (state.ShowConstraintAnnotationGui)
-                    {
-                        ImGui.Text("Declaration Input Ports");
-                        foreach (var port in _result.InputPorts)
-                        {
-                            DoChildGui(port, state, context);
-                        }
-
-                        ImGui.Text("Declaration Return Constraint");
-                        DoChildGui(_result.ReturnConstraint, state, context);
-                        ImGui.Separator();
-                    }
-                }
-
-                protected void DoExpressionGui(GuiState state, Expression expression, Context context)
-                {
-                    switch (expression)
-                    {
-                    case ExpressionChain c:
-                        DoChildGui(_result, state, context); // Expression chain gui is handled entirely by items in the chain
-                        break;
-                    case Lambda l:
-                        SelectionText(state, "<lambda>", _result, context);
-                        DoConstraintsGui(state, context);
-                        break;
-                    case AnonymousBlock b:
-                        TreeNode(state, "<anonymous block>", () =>
-                        {
-                            // TODO: Expand block member guis
-                        }, _result, context);
-
-                        break;
-                    default: throw new ArgumentOutOfRangeException(nameof(expression));
-                    }
-                }
+                
             }
 
             private abstract class ExpressionChainItemImGui : ValueImGui
@@ -217,7 +182,7 @@ namespace ElementImGui
                 protected IScope ScopeBeingResolvedIn { get; }
                 private readonly UniqueValueSite<ExpressionChain> _uniqueChainKey;
 
-                protected ExpressionChainItemImGui(ExpressionChain chain, IValue? resultOfPreviousInChain, IScope scopeBeingResolvedIn, IValue result) : base(result)
+                protected ExpressionChainItemImGui(ExpressionChain chain, IValue? resultOfPreviousInChain, IScope scopeBeingResolvedIn)
                 {
                     Chain = chain;
                     ResultOfPreviousInChain = resultOfPreviousInChain;
@@ -225,11 +190,11 @@ namespace ElementImGui
                     _uniqueChainKey = new UniqueValueSite<ExpressionChain>(Chain, scopeBeingResolvedIn);
                 }
 
-                public override void DoGui(GuiState state, Context context)
+                public override void Draw(GuiState state, Context context)
                 {
                     void DoGuiForPreviousInChain()
                     {
-                        if (ResultOfPreviousInChain != null) DoChildGui(ResultOfPreviousInChain, state, context);
+                        if (ResultOfPreviousInChain != null) DrawDependents(state, context);
                     }
 
                     var chainHasSubexpressions = Chain.SubExpressions?.Count > 0;
@@ -238,7 +203,7 @@ namespace ElementImGui
                     {
                         if (!state.ExpressionChainDrawers.TryGetValue(_uniqueChainKey, out ExpressionChainDrawer drawer))
                         {
-                            drawer = state.ExpressionChainDrawers[_uniqueChainKey] = new ExpressionChainDrawer(state, Chain, this, _result, context);
+                            drawer = state.ExpressionChainDrawers[_uniqueChainKey] = new ExpressionChainDrawer(state, Chain, this, Result, context);
                         }
 
                         DoGuiForPreviousInChain();
@@ -262,8 +227,8 @@ namespace ElementImGui
             {
                 private readonly Constant _literal;
 
-                public LiteralImGui(ExpressionChain expressionChain, IScope scope, Constant literal, IValue result)
-                    : base(expressionChain, null, scope, result) =>
+                public LiteralImGui(ExpressionChain expressionChain, IScope scope, Constant literal)
+                    : base(expressionChain, null, scope) =>
                     _literal = literal;
 
                 protected override void DoChainItemGui(GuiState state, Context context)
@@ -282,11 +247,11 @@ namespace ElementImGui
             {
                 private readonly Identifier _id;
 
-                public LookupImGui(ExpressionChain chain, Identifier id, IScope startScope, IValue result)
-                    : base(chain, null, startScope, result) =>
+                public LookupImGui(ExpressionChain chain, Identifier id, IScope startScope)
+                    : base(chain, null, startScope) =>
                     _id = id;
 
-                protected override void DoChainItemGui(GuiState state, Context context) => DoChildGui(_result, state, context);
+                protected override void DoChainItemGui(GuiState state, Context context) => DrawDependents(state, context);
                 protected override string Label => _id.TraceString;
                 protected override ISourceLocation? SelectionObject => Chain;
             }
@@ -295,14 +260,15 @@ namespace ElementImGui
             {
                 private readonly ExpressionChain.IndexingExpression _indexingExpression;
 
-                public IndexImGui(ExpressionChain chain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression indexingExpression, IValue result)
-                    : base(chain, valueBeingIndexed, scope, result) =>
+                public IndexImGui(ExpressionChain chain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression indexingExpression)
+                    : base(chain, valueBeingIndexed, scope) =>
                     _indexingExpression = indexingExpression;
 
                 protected override void DoChainItemGui(GuiState state, Context context)
                 {
                     // TODO: Evaluate all of the members of the previous indexed value here?
-                    DoChildGui(_result, state, context);
+                    //DrawGuiByValue(state, Result, context);
+                    DrawDependents(state, context);
                 }
 
                 protected override string Label => _indexingExpression.ToString();
@@ -314,8 +280,8 @@ namespace ElementImGui
                 private readonly ExpressionChain.CallExpression _callExpression;
                 private readonly IReadOnlyList<IValue> _arguments;
 
-                public CallImGui(ExpressionChain chain, IValue function, IScope scope, ExpressionChain.CallExpression callExpression, IReadOnlyList<IValue> arguments, IValue result)
-                    : base(chain, function, scope, result)
+                public CallImGui(ExpressionChain chain, IValue function, IScope scope, ExpressionChain.CallExpression callExpression, IReadOnlyList<IValue> arguments)
+                    : base(chain, function, scope)
                 {
                     _callExpression = callExpression;
                     _arguments = arguments;
@@ -325,35 +291,27 @@ namespace ElementImGui
                 {
                     var functionValue = ResultOfPreviousInChain!.Inner();
 
-                    if (functionValue is Struct)
+                    if (functionValue is Struct type) // This is a constructor call
                     {
-                        ImGui.Text("Struct Instance Fields");
-                        foreach (var arg in _arguments)
-                        {
-                            DoChildGui(arg, state, context);
-                        }
+                        ImGui.Text($"{type.SummaryString} Constructor");
+                        DrawDependents(state, context);
 
                         return;
                     }
 
                     if (functionValue.HasInputs())
                     {
-                        ImGui.Text("Call Arguments");
-                        foreach (var arg in _arguments)
-                        {
-                            DoChildGui(arg, state, context);
-                        }
-
                         if (!functionValue.IsIntrinsic())
                         {
-                            ImGui.Text("Call Body");
-                            DoChildGui(_result, state, context);
+                            ImGui.Text($"Function Call '{functionValue.SummaryString}'");
                         }
                         else
                         {
                             var intrinsicId = (functionValue as IIntrinsicValue)?.Implementation.Identifier.String ?? "<unknown intrinsic>";
                             ImGui.Text($"Intrinsic Call '{intrinsicId}'");
                         }
+                        
+                        DrawDependents(state, context);
 
                         return;
                     }
@@ -373,7 +331,7 @@ namespace ElementImGui
                 private readonly ResolvedPort? _port;
                 private readonly IScope _scope;
 
-                public CallArgumentImGui(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, IValue result) : base(result)
+                public CallArgumentImGui(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope)
                 {
                     _function = function;
                     _argumentExpression = argumentExpression;
@@ -381,15 +339,15 @@ namespace ElementImGui
                     _scope = scope;
                 }
 
-                public override void DoGui(GuiState state, Context context) =>
+                public override void Draw(GuiState state, Context context) =>
                     TreeNode(state, _port == null
                         ? "<variadic argument>"
                         : _port.Identifier.HasValue
                             ? _port.Identifier.Value.String
                             : "<discarded port>", () =>
                     {
-                        DoChildGui(_result, state, context);
-                    }, _result, context);
+                        DrawDependents(state, context);
+                    }, Result, context);
 
                 protected override ISourceLocation? SelectionObject => _argumentExpression;
             }
@@ -399,24 +357,16 @@ namespace ElementImGui
                 private readonly Declaration _declaration;
                 private readonly IScope _declaringScope;
 
-                public DeclarationImGui(Declaration declaration, IScope declaringScope, IValue result) : base(result)
+                public DeclarationImGui(Declaration declaration, IScope declaringScope)
                 {
                     _declaration = declaration;
                     _declaringScope = declaringScope;
                 }
 
-                public override void DoGui(GuiState state, Context context)
+                public override void Draw(GuiState state, Context context)
                 {
-                    if (_result is ValueImGui)
-                    {
-                        DoConstraintsGui(state, context);
-                        DoChildGui(_result, state, context);
-                    }
-                    else
-                    {
-                        SelectionText(state, _declaration.Identifier.String, _result, context);
-                        DoConstraintsGui(state, context);
-                    }
+                    SelectionText(state, _declaration.Identifier.String, Result, context);
+                    DrawDependents(state, context);
                 }
 
                 protected override ISourceLocation? SelectionObject => _declaration;
@@ -427,13 +377,36 @@ namespace ElementImGui
                 private readonly Expression _expression;
                 private readonly IScope _scopeResolvedIn;
 
-                public ExpressionImGui(Expression expression, IScope scopeResolvedIn, IValue result) : base(result)
+                public ExpressionImGui(Expression expression, IScope scopeResolvedIn)
                 {
                     _expression = expression;
                     _scopeResolvedIn = scopeResolvedIn;
                 }
 
-                public override void DoGui(GuiState state, Context context) => DoExpressionGui(state, _expression, context);
+                public override void Draw(GuiState state, Context context)
+                {
+                    switch (_expression)
+                    {
+                    case ExpressionChain c:
+                        DrawDependents(state, context); // Expression chain gui is handled entirely by items in the chain
+                        break;
+                    case Lambda l:
+                        TreeNode(state, "<lambda>", () =>
+                        {
+                            DrawDependents(state, context);
+                        }, Result, context);
+                        break;
+                    case AnonymousBlock b:
+                        TreeNode(state, "<anonymous block>", () =>
+                        {
+                            DrawDependents(state, context);
+                            // TODO: Expand block member guis
+                        }, Result, context);
+
+                        break;
+                    default: throw new ArgumentOutOfRangeException(nameof(_expression));
+                    }
+                }
 
                 protected override ISourceLocation? SelectionObject => _expression;
             }
@@ -443,59 +416,35 @@ namespace ElementImGui
                 private readonly FunctionBlock _block;
                 private readonly IScope _scope;
 
-                public ScopeBodyImGui(FunctionBlock block, IScope scope, IValue result) : base(result)
+                public ScopeBodyImGui(FunctionBlock block, IScope scope)
                 {
                     _block = block;
                     _scope = scope;
                 }
 
-                public override void DoGui(GuiState state, Context context) => DoChildGui(_result, state, context);
+                public override void Draw(GuiState state, Context context) => TreeNode(state, "<scope body>", () => DrawDependents(state, context), Result, context);
 
                 protected override ISourceLocation? SelectionObject => _block;
-            }
-
-            private class ErrorImGui : ValueImGui
-            {
-                private readonly IReadOnlyCollection<ResultMessage> _messages;
-
-                public ErrorImGui(ISourceLocation? errorLocation, IReadOnlyCollection<ResultMessage> messages) : base(ErrorValue.Instance)
-                {
-                    SelectionObject = errorLocation;
-                    _messages = messages;
-                }
-
-                public override void DoGui(GuiState state, Context context)
-                {
-                    ImGui.Text("Error occured - hover this text for details.");
-                    if (ImGui.IsItemHovered())
-                    {
-                        foreach (var msg in _messages)
-                        {
-                            ImGui.TextWrapped(msg.ToString());
-                        }
-                    }
-                }
-
-                protected override ISourceLocation? SelectionObject { get; }
             }
 
             private class NyiImGui : ValueImGui
             {
                 private readonly string _txt;
 
-                public NyiImGui(string txt, ISourceLocation? sourceLocation, IValue result) : base(result)
+                public NyiImGui(string txt, ISourceLocation? sourceLocation)
                 {
                     _txt = txt;
                     SelectionObject = sourceLocation;
                 }
 
-                public override void DoGui(GuiState state, Context context)
+                public override void Draw(GuiState state, Context context)
                 {
                     if (state.ShowNyiGui)
                     {
                         ImGui.TextDisabled($"Gui for {_txt} is not implemented yet");
                         if (ImGui.IsItemClicked()) state.Selected = SelectionObject;
                     }
+                    DrawDependents(state, context);
                 }
 
                 protected override ISourceLocation? SelectionObject { get; }
@@ -503,36 +452,91 @@ namespace ElementImGui
 
             #endregion
 
-            private readonly Dictionary<IValue, ValueImGui> _guisByResult = new Dictionary<IValue, ValueImGui>();
-            private readonly Dictionary<ISourceLocation, ValueImGui> _guisByLocation = new Dictionary<ISourceLocation, ValueImGui>();
-            
-            private void PushGui(Func<IValue, ValueImGui> createValueImGui, ISourceLocation? sourceLocation, Result<IValue> result) =>
-                result.Switch((value, messages) =>
-                    {
-                        var gui = createValueImGui(value);
-                        _guisByResult[value] = gui;
-                        if (sourceLocation != null) _guisByLocation[sourceLocation] = gui;
-                    },
-                    messages =>
-                    {
-                        if (sourceLocation != null) _guisByLocation[sourceLocation] = new ErrorImGui(sourceLocation, messages);
-                    });
+            public GuiState State { get; } = new GuiState();
+            public List<ValueImGui> RootGuis { get; } = new List<ValueImGui>();
 
-            public override void Declaration(Declaration declaration, IScope scope, Result<IValue> result) => PushGui(value => new DeclarationImGui(declaration, scope, value), declaration, result);
-            public override void Expression(Expression expression, IScope scope, Result<IValue> result) => PushGui(value => new ExpressionImGui(expression, scope, value), expression, result);
-            public override void Literal(ExpressionChain expressionChain, IScope scope, Constant constant) => PushGui(_ => new LiteralImGui(expressionChain, scope, constant, constant), expressionChain, new Result<IValue>(constant));
-            public override void Lookup(ExpressionChain expressionChain, Identifier id, IScope scope, Result<IValue> result) => PushGui(value => new LookupImGui(expressionChain, id, scope, value), expressionChain, result);
-            public override void Index(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result) => PushGui(value => new IndexImGui(expressionChain, valueBeingIndexed, scope, expr, value), expr, result);
-            public override void Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result) => PushGui(value => new CallImGui(expressionChain, function, scope, expression, arguments, value), expression, result);
-            public override void CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result) => PushGui(value => new CallArgumentImGui(function, argumentExpression, port, scope, value), argumentExpression, result);
-            public override void ExpressionBody(ExpressionBody expression, IScope scope, Result<IValue> result) => PushGui(value => new ExpressionImGui(expression.Expression, scope, value), expression.Expression, result);
-            public override void ScopeBody(FunctionBlock functionBlock, IScope scope, Result<IValue> result) => PushGui(value => new ScopeBodyImGui(functionBlock, scope, value), functionBlock, result);
-            public override void InputPort(Port port, Expression? constraintExpression, IScope scope, Result<IValue> result) => PushGui(value => new NyiImGui(nameof(InputPort), constraintExpression, value), constraintExpression, result);
-            public override void DefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope, Result<IValue> result) => PushGui(value => new NyiImGui(nameof(DefaultArgument), expressionBody?.Expression, value), expressionBody?.Expression, result);
-            public override void ReturnConstraint(PortConstraint? constraint, IScope scope, Result<IValue> result) => PushGui(value => new NyiImGui(nameof(ReturnConstraint), constraint, value), constraint, result);
-        } 
-        
-        private readonly ImGuiDebugAspect.GuiState _guiState = new ImGuiDebugAspect.GuiState();
+            private Stack<ValueImGui> GuiStack { get; } = new Stack<ValueImGui>();
+
+            public void ClearGui()
+            {
+                RootGuis.Clear();
+                GuiStack.Clear();
+            }
+
+            public void Draw(Context context)
+            {
+                foreach (var valueImGui in RootGuis)
+                {
+                    valueImGui.Draw(State, context);
+                }
+            }
+
+            private void Push(ValueImGui gui)
+            {
+                switch (GuiStack.Count)
+                {
+                case 0: RootGuis.Add(gui);
+                    break;
+                case > 0:
+                {
+                    var peeked = GuiStack.Peek();
+                    peeked.Dependents.Add(gui);
+                    gui.Parent = peeked;
+                    break;
+                }
+                }
+
+                GuiStack.Push(gui);
+            }
+
+            private void Pop(in Result<IValue> result) => GuiStack.Pop().Result = result;
+
+            public void BeforeDeclaration(Declaration declaration, IScope scope) => Push(new DeclarationImGui(declaration, scope));
+            public void Declaration(Declaration declaration, IScope scope, Result<IValue> result) => Pop(in result);
+
+            public void BeforeExpression(Expression expression, IScope scope) => Push(new ExpressionImGui(expression, scope));
+            public void Expression(Expression expression, IScope scope, Result<IValue> result) => Pop(in result);
+            
+            public void Literal(ExpressionChain expressionChain, IScope scope, Constant constant)
+            {
+                if (GuiStack.Count > 0)
+                {
+                    var peeked = GuiStack.Peek();
+                    var literalGui = new LiteralImGui(expressionChain, scope, constant);
+                    peeked.Dependents.Add(literalGui);
+                    literalGui.Parent = peeked;
+                }
+            }
+
+            public void BeforeLookup(ExpressionChain expressionChain, Identifier id, IScope scope) => Push(new LookupImGui(expressionChain, id, scope));
+            public void Lookup(ExpressionChain expressionChain, Identifier id, IScope scope, Result<IValue> result) => Pop(in result);
+            
+            public void BeforeIndex(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr) => Push(new IndexImGui(expressionChain, valueBeingIndexed, scope, expr));
+            public void Index(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result) => Pop(in result);
+
+            public void BeforeCall(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments) => Push(new CallImGui(expressionChain, function, scope, expression, arguments));
+            public void Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result) => Pop(in result);
+
+            public void BeforeCallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope) => Push(new CallArgumentImGui(function, argumentExpression, port, scope));
+            public void CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result) => Pop(in result);
+
+            public void BeforeExpressionBody(ExpressionBody expression, IScope scope) => Push(new ExpressionImGui(expression.Expression, scope));
+            public void ExpressionBody(ExpressionBody expression, IScope scope, Result<IValue> result) => Pop(in result);
+
+            public void BeforeScopeBody(FunctionBlock functionBlock, IScope scope) => Push(new ScopeBodyImGui(functionBlock, scope));
+            public void ScopeBody(FunctionBlock functionBlock, IScope scope, Result<IValue> result) => Pop(in result);
+            
+            public void BeforeInputPort(Port port, Expression? constraintExpression, IScope scope) => Push(new NyiImGui(nameof(InputPort), constraintExpression));
+            public void InputPort(Port port, Expression? constraintExpression, IScope scope, Result<IValue> result) => Pop(in result);
+            
+            public void BeforeDefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope) => Push(new NyiImGui(nameof(DefaultArgument), expressionBody?.Expression));
+            public void DefaultArgument(Port port, ExpressionBody? expressionBody, IScope scope, Result<IValue> result) => Pop(in result);
+            
+            public void BeforeReturnConstraint(PortConstraint? constraint, IScope scope) => Push(new NyiImGui(nameof(ReturnConstraint), constraint));
+            public void ReturnConstraint(PortConstraint? constraint, IScope scope, Result<IValue> result) => Pop(in result);
+        }
+
+        private readonly ImGuiDebugAspect _debugAspect = new ImGuiDebugAspect();
         
         private bool _hasInputChanged = true;
         private double _time;
@@ -632,7 +636,8 @@ namespace ElementImGui
         {
             var boundaryFunction = arguments.BoundaryFunction;
             var debugContext = Context.CreateFromSourceContext(boundaryFunction.SourceContext);
-            _guiState.DoStateGui();
+            debugContext.AddAspect(_debugAspect);
+            _debugAspect.State.DoStateGui();
 
             var dimensions = ImGui.GetWindowSize();
             
@@ -640,7 +645,7 @@ namespace ElementImGui
             {
                 if (ImGui.BeginMenu("Menu"))
                 {
-                    ImGui.MenuItem("Flags", null, ref _guiState.GuiStateMenu);
+                    ImGui.MenuItem("Flags", null, ref _debugAspect.State.GuiStateMenu);
                     ImGui.EndMenu();
                 }
                 ImGui.EndMenuBar();
@@ -656,7 +661,7 @@ namespace ElementImGui
                            .Switch((b, messages) =>
                             {
                                 if (b) _hasInputChanged = true;
-                            }, DisplayMessages);
+                            }, ImGuiExtensions.DisplayAsImGuiText);
                     }
                     else
                     {
@@ -681,39 +686,37 @@ namespace ElementImGui
             
             void DebugTree(IValue[] currentInputValues, IReadOnlyCollection<ResultMessage> messages)
             {
-                ImGui.BeginChild("Debug Tree", new Vector2(dimensions.X / (_guiState.Selected != null ? 2f : 1f), 0f), true, ImGuiWindowFlags.HorizontalScrollbar);
+                var guiState = _debugAspect.State;
+                
+                ImGui.BeginChild("Debug Tree", new Vector2(dimensions.X / (guiState.Selected != null ? 2f : 1f), 0f), true, ImGuiWindowFlags.HorizontalScrollbar);
 
                 if (_hasInputChanged || _resolvedValue == null)
                 {
                     arguments.ApplyArgumentChanges();
                     var timespan = new Element.CLR.TimeSpan(_time);
+                    _debugAspect.ClearGui();
                     _resolvedValue = resolveFunction(boundaryFunction.Value, timespan, currentInputValues, debugContext);
                     _hasInputChanged = false;
                 }
 
-                _resolvedValue.Value.Switch((result, _) => // TODO: Don't throw away info messages, display them somewhere
-                {
-                    if (result is ImGuiDebugAspect.ValueImGui wrapper)
-                        wrapper.DoGui(_guiState, debugContext);
-                    else
-                        ImGui.TextColored(_errorTextColor, "Value is not a Gui wrapper. This is an error in the debugger itself!");
-                }, DisplayMessages);
+                _debugAspect.Draw(debugContext);
 
                 ImGui.EndChild();
-                if (_guiState.Selected != null)
+                
+                if (guiState.Selected != null)
                 {
                     ImGui.SameLine();
                     ImGui.BeginChild("Debug Trace", new Vector2(dimensions.X / 2f, 0f), true, ImGuiWindowFlags.HorizontalScrollbar);
                     if (ImGui.Button("Close"))
                     {
-                        _guiState.Selected = null;
+                        guiState.Selected = null;
                         ImGui.EndChild();
                         return;
                     }
 
-                    var stringified = _guiState.Selected.ToString();
+                    var stringified = guiState.Selected.ToString();
 
-                    if (_guiState.Selected is ISourceLocation location)
+                    if (guiState.Selected is ISourceLocation location)
                     {
                         // TODO: Don't allocate tonnes of strings every frame
                         var (lineToHighlight, _, indexOnHighlightedLine) = location.SourceInfo.CalculateLineAndColumnFromIndex(location.IndexInSource);
@@ -769,7 +772,7 @@ namespace ElementImGui
                     else
                     {
                         ImGui.Text($"String: {stringified}");
-                        ImGui.Text($"Type: {_guiState.Selected.GetType()}");
+                        ImGui.Text($"Type: {guiState.Selected.GetType()}");
                     }
 
                     ImGui.EndChild();
@@ -779,15 +782,7 @@ namespace ElementImGui
             boundaryFunction.Parameters
                      .Select(p => p.GetValue(arguments))
                      .ToResultArray()
-                     .Switch(DebugTree, DisplayMessages);
-        }
-        
-        private static void DisplayMessages(IEnumerable<ResultMessage> messages)
-        {
-            foreach (var msg in messages)
-            {
-                ImGui.Text(msg.ToString());
-            }
+                     .Switch(DebugTree, ImGuiExtensions.DisplayAsImGuiText);
         }
 
         private static readonly Vector4 _errorTextColor = new Vector4(1.0f, 0f, 0f, 1.0f);

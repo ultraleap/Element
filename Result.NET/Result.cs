@@ -156,13 +156,20 @@ namespace ResultNET
 
         private Result<TResult> Merge<TResult>(in Result<TResult> newResult) => new Result<TResult>(newResult._value, Messages.Combine(newResult.Messages));
         
-        public bool Equals(Result<T> other) => IsSuccess && EqualityComparer<T>.Default.Equals(_value, other._value);
+        public bool Equals(Result<T> other) => IsSuccess == other.IsSuccess
+            && EqualityComparer<T>.Default.Equals(_value, other._value)
+            && Messages.SequenceEqual(other.Messages);
 
-        public override bool Equals(object obj) =>
-            !ReferenceEquals(null, obj)
-            && obj.GetType() == GetType()
-            && Equals((Result<T>) obj);
+        public override bool Equals(object obj) => obj is Result<T> other && Equals(other);
 
-        public override int GetHashCode() => _value == null ? 0 : EqualityComparer<T>.Default.GetHashCode(_value);
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return _value == null
+                    ? Messages.GetSequenceHashCode()
+                    : EqualityComparer<T>.Default.GetHashCode(_value) * 397 + Messages.GetSequenceHashCode();
+            }
+        }
     }
 }

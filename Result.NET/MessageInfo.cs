@@ -11,7 +11,7 @@ namespace ResultNET
         Error,
     }
     
-    public class MessageInfo // TODO: Change to record type when supported everywhere
+    public class MessageInfo : IEquatable<MessageInfo> // TODO: Change to record type when supported everywhere
     {
         public MessageInfo(string typePrefix, string? name, MessageLevel level, int? code)
         {
@@ -60,7 +60,38 @@ namespace ResultNET
             level = Level;
             code = Code;
         }
-    }
 
-    
+        public bool Equals(MessageInfo? other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return TypePrefix == other.TypePrefix
+                && Name == other.Name
+                && Level == other.Level
+                && Code == other.Code;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MessageInfo) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = TypePrefix.GetHashCode();
+                hashCode = (hashCode * 397)
+                    ^ (Name != null
+                        ? Name.GetHashCode()
+                        : 0);
+                hashCode = (hashCode * 397) ^ (int) Level;
+                hashCode = (hashCode * 397) ^ Code.GetHashCode();
+                return hashCode;
+            }
+        }
+    }
 }

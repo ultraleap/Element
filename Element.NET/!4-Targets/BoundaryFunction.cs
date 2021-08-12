@@ -60,12 +60,12 @@ namespace Element.CLR
 
     public static class BoundaryFunctionExtensions
     {
-        public static Result<BoundaryFunction> ToBoundaryFunction(this ValueWithLocation valueWithLocation, SourceContext sourceContext)
+        public static Result<IBoundaryFunction> ToBoundaryFunction(this ValueWithLocation valueWithLocation, SourceContext sourceContext)
             => valueWithLocation.ToBoundaryFunction(valueWithLocation.Identifier.String, valueWithLocation.FullPath, valueWithLocation, sourceContext);
         
-        public static Result<BoundaryFunction> ToBoundaryFunction(this IValue value, string name, string path, ISourceLocation sourceLocation, SourceContext sourceContext)
+        public static Result<IBoundaryFunction> ToBoundaryFunction(this IValue value, string name, string path, ISourceLocation sourceLocation, SourceContext sourceContext)
             => value.InputPortsToParameterInfos(sourceContext)
-                    .Map(parameterInfos => new BoundaryFunction(name, path, value, sourceLocation.SourceInfo, sourceContext, parameterInfos));
+                    .Map(parameterInfos => (IBoundaryFunction)new BoundaryFunction(name, path, value, sourceLocation.SourceInfo, sourceContext, parameterInfos));
 
         
         public static Result<IReadOnlyList<ParameterInfo>> InputPortsToParameterInfos(this IValue value, SourceContext sourceContext) =>

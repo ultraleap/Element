@@ -42,15 +42,14 @@ namespace Element
 
         public bool AddAspect(ICompilationAspect aspect)
         {
-            if (_aspect.Aspects.Contains(aspect)) return false;
-            _aspect.Aspects.Add(aspect);
+            if (Aspect.Aspects.Contains(aspect)) return false;
+            Aspect.Aspects.Add(aspect);
             return true;
         }
 
-        public bool RemoveAspect(ICompilationAspect aspect) => _aspect.Aspects.Remove(aspect);
-
-        public ICompilationAspect Aspect => _aspect;
-        private readonly AggregateCompilationAspect _aspect = new AggregateCompilationAspect();
+        public bool RemoveAspect(ICompilationAspect aspect) => Aspect.Aspects.Remove(aspect);
+        
+        public AggregateCompilationAspect Aspect { get; } = new AggregateCompilationAspect();
         public Stack<TraceSite> TraceStack { get; } = new Stack<TraceSite>();
         public Stack<IValue> CallStack { get; } = new Stack<IValue>();
         public Stack<UniqueValueSite<Declaration>> DeclarationStack { get; } = new Stack<UniqueValueSite<Declaration>>();

@@ -76,5 +76,17 @@ namespace ResultNET
             MapEnumerable(enumerable, e => e as TResult[] ?? e.ToArray());
         public static Result<IReadOnlyList<TResult>> ToResultReadOnlyList<TResult>(this IEnumerable<Result<TResult>> enumerable) =>
             MapEnumerable(enumerable, e => (IReadOnlyList<TResult>)(e as TResult[] ?? e.ToArray()));
+        
+        public static int GetSequenceHashCode<T>(this IEnumerable<T> sequence)
+        {
+            const int seed = 487;
+            const int modifier = 31;
+
+            unchecked
+            {
+                return sequence.Aggregate(seed, (current, item) =>
+                    (current*modifier) + item.GetHashCode());
+            }            
+        }
     }
 }

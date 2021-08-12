@@ -6,7 +6,7 @@ using Veldrid.StartupUtilities;
 
 namespace ElementImGui
 {
-    public class ImGuiWindow : IDisposable
+    public class VeldridImGuiWindow : IDisposable
     {
         public Sdl2Window Window => _window;
         public ImGuiRenderer Renderer => _renderer;
@@ -17,7 +17,7 @@ namespace ElementImGui
         private readonly CommandList _cl;
         private static readonly Vector3 _clearColor = new Vector3(0.45f, 0.55f, 0.6f);
 
-        public ImGuiWindow(string title)
+        public VeldridImGuiWindow(string title)
         {
             VeldridStartup.CreateWindowAndGraphicsDevice(new WindowCreateInfo(50, 50, 1280, 720, WindowState.Normal, title),
                 new GraphicsDeviceOptions(true, null, true),
