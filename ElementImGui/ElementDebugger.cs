@@ -536,7 +536,22 @@ namespace ElementImGui
             public void ReturnConstraint(PortConstraint? constraint, IScope scope, Result<IValue> result) => Pop(in result);
         }
 
-        private readonly ImGuiDebugAspect _debugAspect = new ImGuiDebugAspect();
+        private readonly Dictionary<IBoundaryFunctionArguments, DebugState> _debugStates = new Dictionary<IBoundaryFunctionArguments, DebugState>();
+
+        private readonly struct DebugState
+        {
+            public DebugState(SourceContext sourceContext)
+            {
+                DebugContext = Context.CreateFromSourceContext(sourceContext);
+                DebugContext.AddAspect(DebugAspect = new ImGuiDebugAspect());
+            }
+            
+            public Context DebugContext { get; }
+            public ImGuiDebugAspect DebugAspect { get; }
+
+            public void Draw() => DebugAspect.Draw(DebugContext);
+            public void RefreshGui() => DebugAspect.ClearGui();
+        };
         
         private bool _hasInputChanged = true;
         private double _time;
@@ -635,9 +650,11 @@ namespace ElementImGui
         public void Draw(IBoundaryFunctionArguments arguments, Resolve resolveFunction)
         {
             var boundaryFunction = arguments.BoundaryFunction;
-            var debugContext = Context.CreateFromSourceContext(boundaryFunction.SourceContext);
-            debugContext.AddAspect(_debugAspect);
-            _debugAspect.State.DoStateGui();
+            if (!_debugStates.TryGetValue(arguments, out var debugState))
+            {
+                debugState = _debugStates[arguments] = new DebugState(boundaryFunction.SourceContext);
+            }
+            debugState.DebugAspect.State.DoStateGui();
 
             var dimensions = ImGui.GetWindowSize();
             
@@ -645,7 +662,7 @@ namespace ElementImGui
             {
                 if (ImGui.BeginMenu("Menu"))
                 {
-                    ImGui.MenuItem("Flags", null, ref _debugAspect.State.GuiStateMenu);
+                    ImGui.MenuItem("Flags", null, ref debugState.DebugAspect.State.GuiStateMenu);
                     ImGui.EndMenu();
                 }
                 ImGui.EndMenuBar();
@@ -686,7 +703,7 @@ namespace ElementImGui
             
             void DebugTree(IValue[] currentInputValues, IReadOnlyCollection<ResultMessage> messages)
             {
-                var guiState = _debugAspect.State;
+                var guiState = debugState.DebugAspect.State;
                 
                 ImGui.BeginChild("Debug Tree", new Vector2(dimensions.X / (guiState.Selected != null ? 2f : 1f), 0f), true, ImGuiWindowFlags.HorizontalScrollbar);
 
@@ -694,12 +711,12 @@ namespace ElementImGui
                 {
                     arguments.ApplyArgumentChanges();
                     var timespan = new Element.CLR.TimeSpan(_time);
-                    _debugAspect.ClearGui();
-                    _resolvedValue = resolveFunction(boundaryFunction.Value, timespan, currentInputValues, debugContext);
+                    debugState.RefreshGui();
+                    _resolvedValue = resolveFunction(boundaryFunction.Value, timespan, currentInputValues, debugState.DebugContext);
                     _hasInputChanged = false;
                 }
 
-                _debugAspect.Draw(debugContext);
+                debugState.Draw();
 
                 ImGui.EndChild();
                 
