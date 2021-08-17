@@ -85,8 +85,8 @@ namespace Element
             return result;
         }*/
         
-        public override void BeforeCall(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments) => Push($"{expression} in {expressionChain}", expression);
-        public override void Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result) => PopResult(result);
+        public override void BeforeCallExpression(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments) => Push($"{expression} in {expressionChain}", expression);
+        public override void CallExpression(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result) => PopResult(result);
 
         public override void BeforeCallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope) => Push($"{port?.Identifier} <call argument>", argumentExpression);
         public override void CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result) => PopResult(result);

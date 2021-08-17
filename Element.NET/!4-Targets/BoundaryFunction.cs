@@ -202,7 +202,7 @@ namespace Element.CLR
         public override Result<IValue> GetValue(IBoundaryFunctionArguments source)
         {
             var context = Context.CreateFromSourceContext(SourceContext);
-            Result<IValue> GetStructValue(StructuredParameterInfo spi) => spi.Fields.Select(FieldToValue).BindEnumerable(fieldsValues => ParameterType.Call(fieldsValues.ToArray(), context));
+            Result<IValue> GetStructValue(StructuredParameterInfo spi) => spi.Fields.Select(FieldToValue).BindEnumerable(fieldsValues => spi.ParameterType.Call(fieldsValues.ToArray(), context));
             Result<IValue> FieldToValue(ParameterInfo pi) =>
                 pi switch
                 {

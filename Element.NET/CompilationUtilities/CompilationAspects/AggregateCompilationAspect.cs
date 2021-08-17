@@ -43,24 +43,34 @@ namespace Element
             foreach (var aspect in Aspects) aspect.Lookup(expressionChain, id, scope, result);
         }
 
-        public void BeforeIndex(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr)
+        public void BeforeIndexExpression(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr)
         {
-            foreach (var aspect in Aspects) aspect.BeforeIndex(expressionChain, valueBeingIndexed, scope, expr);
+            foreach (var aspect in Aspects) aspect.BeforeIndexExpression(expressionChain, valueBeingIndexed, scope, expr);
         }
 
-        public void Index(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result)
+        public void IndexExpression(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result)
         {
-            foreach (var aspect in Aspects) aspect.Index(expressionChain, valueBeingIndexed, scope, expr, result);
+            foreach (var aspect in Aspects) aspect.IndexExpression(expressionChain, valueBeingIndexed, scope, expr, result);
         }
 
-        public void BeforeCall(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments)
+        public void BeforeCallExpression(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments)
         {
-            foreach (var aspect in Aspects) aspect.BeforeCall(expressionChain, function, scope, expression, arguments);
+            foreach (var aspect in Aspects) aspect.BeforeCallExpression(expressionChain, function, scope, expression, arguments);
         }
 
-        public void Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result)
+        public void CallExpression(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result)
         {
-            foreach (var aspect in Aspects) aspect.Call(expressionChain, function, scope, expression, arguments, result);
+            foreach (var aspect in Aspects) aspect.CallExpression(expressionChain, function, scope, expression, arguments, result);
+        }
+
+        public void BeforeCall(IValue function, IReadOnlyList<IValue> arguments)
+        {
+            foreach (var aspect in Aspects) aspect.BeforeCall(function, arguments);
+        }
+
+        public void Call(IValue function, IReadOnlyList<IValue> arguments, Result<IValue> result)
+        {
+            foreach (var aspect in Aspects) aspect.Call(function, arguments, result);
         }
 
         public void BeforeCallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope)

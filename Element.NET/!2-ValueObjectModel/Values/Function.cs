@@ -35,6 +35,8 @@ namespace Element.AST
         public abstract override IReadOnlyList<ResolvedPort> InputPorts { get; }
         public abstract override IValue ReturnConstraint { get; }
 
+        public virtual ISourceLocation? BodySourceLocation => null;
+
         public override string SummaryString => $"({InputPortsJoined}):{ReturnConstraint.SummaryString}";
     }
     
@@ -76,6 +78,8 @@ namespace Element.AST
     {
         private readonly ExpressionBody _expressionBody;
 
+        public override ISourceLocation? BodySourceLocation => _expressionBody.Expression;
+
         public ExpressionBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, ExpressionBody expressionBody, IScope parent)
             : base(inputPorts, returnConstraint, parent) =>
             _expressionBody = expressionBody;
@@ -92,6 +96,8 @@ namespace Element.AST
     public class ScopeBodiedFunction : CustomFunction
     {
         private readonly FunctionBlock _scopeBody;
+
+        public override ISourceLocation? BodySourceLocation => _scopeBody;
 
         public ScopeBodiedFunction(IReadOnlyList<ResolvedPort> inputPorts, IValue returnConstraint, FunctionBlock scopeBody, IScope parent)
             : base(inputPorts, returnConstraint, parent) =>
@@ -110,7 +116,7 @@ namespace Element.AST
     public static class FunctionExtensions
     {
         public static Result<IValue> VerifyArgumentsAndApplyFunction(this IValue function,
-                                                                     IEnumerable<IValue> arguments,
+                                                                     IReadOnlyList<IValue> arguments,
                                                                      Func<Result<IValue>> resolveFunc,
                                                                      Context context)
         {
@@ -121,10 +127,12 @@ namespace Element.AST
             try
             {
                 Result ResultMatchesReturnConstraint(IValue result) => function.ReturnConstraint.MatchesConstraint(result, context);
-
-                return CheckInputConstraints(function.InputPorts, arguments as IValue[] ?? arguments.ToArray(), context)
-                      .Bind(resolveFunc)
-                      .Check(ResultMatchesReturnConstraint);
+                context.Aspect.BeforeCall(function, arguments);
+                var result = CheckInputConstraints(function.InputPorts, arguments, context)
+                            .Bind(resolveFunc)
+                            .Check(ResultMatchesReturnConstraint);
+                context.Aspect.Call(function, arguments, result);
+                return result;
             }
             finally
             {

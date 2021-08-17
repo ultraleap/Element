@@ -95,9 +95,9 @@ namespace Element.AST
                            .ToResultReadOnlyList()
                            .Bind(args =>
                            {
-                               context.Aspect?.BeforeCall(chain, previous, scope, this, args);
+                               context.Aspect?.BeforeCallExpression(chain, previous, scope, this, args);
                                var callResult = previous.Call(args.ToArray(), context);
-                               context.Aspect?.Call(chain, previous, scope, this, args, callResult);
+                               context.Aspect?.CallExpression(chain, previous, scope, this, args, callResult);
                                return callResult;
                            });
         }
@@ -114,9 +114,9 @@ namespace Element.AST
             protected override void ValidateImpl(ResultBuilder builder, Context context) => Identifier.Validate(builder, Array.Empty<Identifier>(), Array.Empty<Identifier>());
             protected override Result<IValue> SubExpressionImpl(ExpressionChain chain, IValue previous, IScope scope, Context context)
             {
-                context.Aspect?.BeforeIndex(chain, previous, scope, this);
+                context.Aspect?.BeforeIndexExpression(chain, previous, scope, this);
                 var indexResult = previous.Index(Identifier, context);
-                context.Aspect?.Index(chain, previous, scope, this, indexResult);
+                context.Aspect?.IndexExpression(chain, previous, scope, this, indexResult);
                 return indexResult;
             }
         }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Element.CLR;
 using ResultNET;
@@ -11,5 +12,6 @@ namespace Element
         Result SetMultiple(string path, IReadOnlyList<float> values);
         Result<float> GetSingle(string path);
         void ApplyArgumentChanges();
+        event Action ArgumentChangesApplied;
     }
 }

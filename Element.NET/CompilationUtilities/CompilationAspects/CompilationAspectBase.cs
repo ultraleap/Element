@@ -13,10 +13,12 @@ namespace Element
         public virtual void Literal(ExpressionChain expressionChain, IScope scope, Constant constant) { }
         public virtual void BeforeLookup(ExpressionChain expressionChain, Identifier id, IScope scope) { }
         public virtual void Lookup(ExpressionChain expressionChain, Identifier id, IScope scope, Result<IValue> result) { }
-        public virtual void BeforeIndex(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr) { }
-        public virtual void Index(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result) { }
-        public virtual void BeforeCall(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments) { }
-        public virtual void Call(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result) { }
+        public virtual void BeforeIndexExpression(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr) { }
+        public virtual void IndexExpression(ExpressionChain expressionChain, IValue valueBeingIndexed, IScope scope, ExpressionChain.IndexingExpression expr, Result<IValue> result) { }
+        public virtual void BeforeCallExpression(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments) { }
+        public virtual void CallExpression(ExpressionChain expressionChain, IValue function, IScope scope, ExpressionChain.CallExpression expression, IReadOnlyList<IValue> arguments, Result<IValue> result) { }
+        public virtual void BeforeCall(IValue function, IReadOnlyList<IValue> arguments) { }
+        public virtual void Call(IValue function, IReadOnlyList<IValue> arguments, Result<IValue> result) { }
         public virtual void BeforeCallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope) { }
         public virtual void CallArgument(IValue function, Expression argumentExpression, ResolvedPort? port, IScope scope, Result<IValue> result) { }
         public virtual void BeforeExpressionBody(ExpressionBody expression, IScope scope) { }
