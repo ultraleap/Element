@@ -5,21 +5,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define DEFSTACK_LIMIT 16
-static lmnt_validation_result check_defstack(lmnt_offset* defstack, size_t defstack_count, lmnt_offset next)
-{
-    if (defstack_count == 0)
-        return LMNT_VALIDATION_OK;
-    if (defstack_count >= DEFSTACK_LIMIT)
-        return LMNT_VERROR_STACK_DEPTH;
-    for (size_t i = 0; i < defstack_count - 1; ++i)
-    {
-        if (defstack[i] == next)
-            return LMNT_VERROR_DEF_CYCLIC;
-    }
-    return LMNT_VALIDATION_OK;
-}
-
 static int32_t validate_string(const lmnt_archive* archive, lmnt_offset str_index)
 {
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
@@ -44,13 +29,10 @@ static int32_t validate_string(const lmnt_archive* archive, lmnt_offset str_inde
     return sizeof(archive_string_header) + shdr->size;
 }
 
-static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset code_index, size_t constants_count, size_t rw_stack_count, lmnt_offset* defstack, size_t defstack_count);
+static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset code_index, size_t constants_count, size_t rw_stack_count);
 
-static int32_t validate_def_inner(const lmnt_archive* archive, lmnt_offset def_index, size_t constants_count, size_t rw_stack_count, lmnt_offset* defstack, size_t defstack_count)
+static int32_t validate_def_with_flags(const lmnt_archive* archive, lmnt_offset def_index, size_t constants_count, size_t rw_stack_count, lmnt_def_flags required_flags)
 {
-    // Ensure we have no cycles and we're not going beyond our depth limit
-    LMNT_V_OK_OR_RETURN(check_defstack(defstack, defstack_count, def_index));
-    defstack[defstack_count] = def_index;
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
     // Do we have space?
     if (def_index + sizeof(lmnt_def) > hdr->defs_length)
@@ -66,25 +48,29 @@ static int32_t validate_def_inner(const lmnt_archive* archive, lmnt_offset def_i
     if (dhdr->stack_count_unaligned > rw_stack_count)
         return LMNT_VERROR_STACK_SIZE;
 
-    if (!(dhdr->flags & LMNT_DEFFLAG_EXTERN))
-    {
-        // Is our code ref valid?
-        int32_t cvresult = validate_code(archive, dhdr, dhdr->code, constants_count, dhdr->stack_count_unaligned, defstack, defstack_count);
-        if (cvresult < 0)
-            return cvresult;
-    }
-
     // If interface/extern, check we have zero locals
     const lmnt_offset computed_stack_count = dhdr->args_count + dhdr->rvals_count;
     if ((dhdr->flags & (LMNT_DEFFLAG_EXTERN | LMNT_DEFFLAG_INTERFACE)) != 0 && dhdr->stack_count_unaligned != computed_stack_count)
         return LMNT_VERROR_DEF_HEADER;
+
+    // Check we have the required flags specified
+    if ((dhdr->flags & required_flags) != required_flags)
+        return LMNT_VERROR_DEF_FLAGS;
+
+    if (!(dhdr->flags & LMNT_DEFFLAG_EXTERN))
+    {
+        // Is our code ref valid?
+        int32_t cvresult = validate_code(archive, dhdr, dhdr->code, constants_count, dhdr->stack_count_unaligned);
+        if (cvresult < 0)
+            return cvresult;
+    }
+
     return sizeof(lmnt_def);
 }
 
 static int32_t validate_def(const lmnt_archive* archive, lmnt_offset def_index, size_t constants_count, size_t rw_stack_count)
 {
-    lmnt_offset defstack[DEFSTACK_LIMIT];
-    return validate_def_inner(archive, def_index, constants_count, rw_stack_count, defstack, 0);
+    return validate_def_with_flags(archive, def_index, constants_count, rw_stack_count, LMNT_DEFFLAG_NONE);
 }
 
 static inline lmnt_validation_result validate_operand_stack_read(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg, lmnt_offset count, size_t constants_count, size_t rw_stack_count)
@@ -123,17 +109,15 @@ static inline lmnt_validation_result validate_operand_dataload_imm(const lmnt_ar
     return ((lmnt_loffset)arg2 + (lmnt_loffset)size <= sec->count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
-static inline lmnt_validation_result validate_operand_defptr(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, lmnt_offset stack, size_t constants_count, size_t rw_stack_count, lmnt_offset* defstack, size_t defstack_count)
+static inline lmnt_validation_result validate_operand_defptr(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, lmnt_offset stack, size_t constants_count, size_t rw_stack_count)
 {
     const lmnt_loffset target_offset = LMNT_COMBINE_OFFSET(arglo, arghi);
-    lmnt_validation_result dvresult = validate_def_inner(archive, target_offset, constants_count, rw_stack_count, defstack, defstack_count + 1);
+    // validate that the def being pointed to is valid, and that it's an extern function
+    lmnt_validation_result dvresult = validate_def_with_flags(archive, target_offset, constants_count, rw_stack_count, LMNT_DEFFLAG_EXTERN);
     if (dvresult < 0) return dvresult;
     const lmnt_def* target = validated_get_def(archive, target_offset);
     // We can't call an interface
     if (target->flags & LMNT_DEFFLAG_INTERFACE)
-        return LMNT_VERROR_DEF_FLAGS;
-    // We can't call another local function, it has to be extern
-    if (!(target->flags & LMNT_DEFFLAG_EXTERN))
         return LMNT_VERROR_DEF_FLAGS;
     LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, target, stack, target->args_count, constants_count, rw_stack_count));
     LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, target, stack + target->args_count, target->rvals_count, constants_count, rw_stack_count));
@@ -148,7 +132,7 @@ static inline lmnt_validation_result validate_operand_codeptr(const lmnt_archive
     return (target_offset <= code->instructions_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
 }
 
-static lmnt_validation_result validate_instruction(const lmnt_archive* archive, const lmnt_def* def, lmnt_opcode code, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3, size_t constants_count, size_t rw_stack_count, lmnt_offset* defstack, size_t defstack_count)
+static lmnt_validation_result validate_instruction(const lmnt_archive* archive, const lmnt_def* def, lmnt_opcode code, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3, size_t constants_count, size_t rw_stack_count)
 {
     switch (code)
     {
@@ -325,13 +309,13 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         return LMNT_VALIDATION_OK;
     // extern call: deflo, defhi, imm
     case LMNT_OP_EXTCALL:
-        return validate_operand_defptr(archive, def, arg1, arg2, arg3, constants_count, rw_stack_count, defstack, defstack_count);
+        return validate_operand_defptr(archive, def, arg1, arg2, arg3, constants_count, rw_stack_count);
     default:
         return LMNT_VERROR_BAD_INSTRUCTION;
     }
 }
 
-static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset code_index, size_t constants_count, size_t rw_stack_count, lmnt_offset* defstack, size_t defstack_count)
+static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset code_index, size_t constants_count, size_t rw_stack_count)
 {
     const lmnt_archive_header* hdr = (const lmnt_archive_header*)archive->data;
     if (code_index + sizeof(lmnt_code) > hdr->code_length)
@@ -344,7 +328,7 @@ static int32_t validate_code(const lmnt_archive* archive, const lmnt_def* def, l
     // validate instructions
     const lmnt_instruction* instrs = (const lmnt_instruction*)(get_code_segment(archive) + code_index);
     for (size_t i = 0; i < chdr->instructions_count; ++i)
-        LMNT_V_OK_OR_RETURN(validate_instruction(archive, def, instrs[i].opcode, instrs[i].arg1, instrs[i].arg2, instrs[i].arg3, constants_count, rw_stack_count, defstack, defstack_count));
+        LMNT_V_OK_OR_RETURN(validate_instruction(archive, def, instrs[i].opcode, instrs[i].arg1, instrs[i].arg2, instrs[i].arg3, constants_count, rw_stack_count));
 
     // check for backbranches
     bool has_backbranches = false;

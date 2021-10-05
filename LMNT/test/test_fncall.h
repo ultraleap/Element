@@ -256,7 +256,7 @@ static void test_extcall_recursion(void)
         LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x00, 0x00, 0x02)
     );
     test_function_data fndata = { NULL, NULL };
-    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_DEF_CYCLIC);
+    TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_DEF_FLAGS);
     delete_archive_array(a);
 
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
