@@ -48,17 +48,18 @@ enum
     LMNT_DEFFLAG_INTERFACE        = (1U << 0),
     LMNT_DEFFLAG_EXTERN           = (1U << 1),
     LMNT_DEFFLAG_HAS_BACKBRANCHES = (1U << 2),
+    LMNT_DEFFLAG_HAS_DEFAULT_ARGS = (1U << 3),
 };
 
 typedef struct lmnt_def
 {
-    lmnt_offset name; // string
+    lmnt_offset name; // string offset
     lmnt_def_flags flags;
-    lmnt_loffset code; // code
-    uint16_t stack_count_unaligned;
-    uint16_t stack_count_aligned;
+    lmnt_loffset code; // code offset
+    uint16_t stack_count;
     uint16_t args_count;
     uint16_t rvals_count;
+    uint16_t default_args_index; // data section index
 } lmnt_def;
 
 typedef struct lmnt_instruction

@@ -31,7 +31,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_jit_execute(
     ctx->cur_def = def;
     ctx->cur_instr = (lmnt_loffset)-1;
     lmnt_offset consts_count = validated_get_constants_count(&ctx->archive);
-    ctx->cur_stack_count = (size_t)consts_count + def->stack_count_unaligned;
+    ctx->cur_stack_count = (size_t)consts_count + def->stack_count;
 
     if (LMNT_UNLIKELY(rvals && rvals_count < def->rvals_count))
         return LMNT_ERROR_RVALS_MISMATCH;

@@ -77,7 +77,7 @@ static void delete_interpreter(lmnt_ictx* ictx)
     free(ictx);
 }
 
-static archive v_create_archive_array(const char* def_name, uint16_t def_flags, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t data_count, uint32_t consts_count, va_list args)
+static archive v_create_archive_array(const char* def_name, uint16_t def_flags, uint16_t args_count, uint16_t rvals_count, uint16_t stack_count, uint32_t instr_count, uint32_t data_count, uint32_t consts_count, va_list* args)
 {
     const size_t name_len = strlen(def_name);
     const size_t name_len_padded = LMNT_ROUND_UP(0x02 + name_len + 1, 4) - 2;
@@ -89,7 +89,7 @@ static archive v_create_archive_array(const char* def_name, uint16_t def_flags, 
     const size_t strings_len = 0x02 + name_len_padded;
     const size_t defs_len = 0x10;
     const uint32_t code_len = 0x04 + instr_count * sizeof(lmnt_instruction);
-    const lmnt_loffset data_sec_count = (data_count > 0);
+    const lmnt_loffset data_sec_count = (data_count > 0) ? 1 : 0;
     uint32_t data_len = 0x04 + data_sec_count * (0x08 + 0x04 * data_count);
     const uint32_t consts_len = consts_count * sizeof(lmnt_value);
 
@@ -122,10 +122,10 @@ static archive v_create_archive_array(const char* def_name, uint16_t def_flags, 
         0x00, 0x00, // defs[0].name
         def_flags & 0xFF, (def_flags >> 8) & 0xFF, // defs[0].flags
         0x00, 0x00, 0x00, 0x00, // defs[0].code
-        stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_unaligned
-        stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_aligned
+        stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count
         args_count & 0xFF, (args_count >> 8) & 0xFF, // defs[0].args_count
-        rvals_count & 0xFF, (rvals_count >> 8) & 0xFF // defs[0].rvals_count
+        rvals_count & 0xFF, (rvals_count >> 8) & 0xFF, // defs[0].rvals_count
+        0x00, 0x00, // defs[0].default_args_index
     };
     memcpy(buf + idx, def, sizeof(def));
     idx += sizeof(def);
@@ -135,7 +135,7 @@ static archive v_create_archive_array(const char* def_name, uint16_t def_flags, 
 
     for (size_t i = 0; i < instr_count; ++i) {
         for (size_t j = 0; j < 8; ++j) {
-            buf[idx++] = va_arg(args, int); // actually char, but va_arg requires int
+            buf[idx++] = va_arg(*args, int); // actually char, but va_arg requires int
         }
     }
 
@@ -147,7 +147,7 @@ static archive v_create_archive_array(const char* def_name, uint16_t def_flags, 
         idx += sizeof(lmnt_data_section);
 
         for (size_t i = 0; i < data_count; ++i) {
-            lmnt_value val = (lmnt_value)va_arg(args, double); // actually lmnt_value, but va_arg requires double
+            lmnt_value val = (lmnt_value)va_arg(*args, double); // actually lmnt_value, but va_arg requires double
             memcpy(buf + idx, (const char*)(&val), sizeof(val));
             idx += sizeof(val);
         }
@@ -155,7 +155,7 @@ static archive v_create_archive_array(const char* def_name, uint16_t def_flags, 
 
     for (size_t i = 0; i < consts_count; ++i) {
         // TODO: handle lmnt_value not being float
-        lmnt_value val = (lmnt_value)va_arg(args, double); // actually lmnt_value, but va_arg requires double
+        lmnt_value val = (lmnt_value)va_arg(*args, double); // actually lmnt_value, but va_arg requires double
         memcpy(buf + idx, (const char*)(&val), sizeof(val));
         idx += sizeof(val);
     }
@@ -171,7 +171,7 @@ static archive create_archive_array(const char* def_name, uint16_t args_count, u
     va_list args;
 
     va_start(args, consts_count);
-    archive a = v_create_archive_array(def_name, LMNT_DEFFLAG_NONE, args_count, rvals_count, stack_count, instr_count, data_count, consts_count, args);
+    archive a = v_create_archive_array(def_name, LMNT_DEFFLAG_NONE, args_count, rvals_count, stack_count, instr_count, data_count, consts_count, &args);
     va_end(args);
 
     return a;
@@ -182,7 +182,7 @@ static archive create_archive_array_with_flags(const char* def_name, uint16_t de
     va_list args;
 
     va_start(args, consts_count);
-    archive a = v_create_archive_array(def_name, def_flags, args_count, rvals_count, stack_count, instr_count, data_count, consts_count, args);
+    archive a = v_create_archive_array(def_name, def_flags, args_count, rvals_count, stack_count, instr_count, data_count, consts_count, &args);
     va_end(args);
 
     return a;

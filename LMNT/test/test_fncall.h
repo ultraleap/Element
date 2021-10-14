@@ -77,10 +77,10 @@ static archive create_archive_array_with_extcall(const char* def_name, uint16_t 
         0x00, 0x00, // defs[0].name
         0x00, 0x00, // defs[0].flags
         0x00, 0x00, 0x00, 0x00, // defs[0].code
-        stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_unaligned
-        stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count_aligned
+        stack_count & 0xFF, (stack_count >> 8) & 0xFF, // defs[0].stack_count
         args_count & 0xFF, (args_count >> 8) & 0xFF, // defs[0].args_count
         rvals_count & 0xFF, (rvals_count >> 8) & 0xFF, // defs[0].rvals_count
+        0x00, 0x00, // defs[0].default_args_index
     };
     memcpy(buf + idx, def, sizeof(def));
     idx += sizeof(def);
@@ -89,10 +89,10 @@ static archive create_archive_array_with_extcall(const char* def_name, uint16_t 
         (uint8_t)(0x02 + name_len_padded), 0x00, // defs[1].name
         LMNT_DEFFLAG_EXTERN, 0x00, // defs[1].flags
         0x00, 0x00, 0x00, 0x00, // defs[1].code
-        0x02, 0x00, // defs[1].stack_count_unaligned
-        0x02, 0x00, // defs[1].stack_count_aligned
+        0x02, 0x00, // defs[1].stack_count
         0x01, 0x00, // defs[1].args_count
         0x01, 0x00, // defs[1].rvals_count
+        0x00, 0x00, // defs[0].default_args_index
     };
     memcpy(buf + idx, extcall, sizeof(extcall));
     idx += sizeof(extcall);

@@ -45,22 +45,30 @@ static int32_t validate_def_with_flags(const lmnt_archive* archive, lmnt_offset 
         return svresult;
 
     // Check we have enough stack space
-    if (dhdr->stack_count_unaligned > rw_stack_count)
+    if (dhdr->stack_count > rw_stack_count)
         return LMNT_VERROR_STACK_SIZE;
 
     // If interface/extern, check we have zero locals
     const lmnt_offset computed_stack_count = dhdr->args_count + dhdr->rvals_count;
-    if ((dhdr->flags & (LMNT_DEFFLAG_EXTERN | LMNT_DEFFLAG_INTERFACE)) != 0 && dhdr->stack_count_unaligned != computed_stack_count)
+    if ((dhdr->flags & (LMNT_DEFFLAG_EXTERN | LMNT_DEFFLAG_INTERFACE)) != 0 && dhdr->stack_count != computed_stack_count)
         return LMNT_VERROR_DEF_HEADER;
 
     // Check we have the required flags specified
     if ((dhdr->flags & required_flags) != required_flags)
         return LMNT_VERROR_DEF_FLAGS;
 
+    // If our flags say we have default args, check that they're valid
+    // We've already validated the data sections by the time we get here, so just check it's a valid index
+    if (dhdr->flags & LMNT_DEFFLAG_HAS_DEFAULT_ARGS)
+    {
+        if (dhdr->default_args_index >= validated_get_data_sections_count(archive))
+            return LMNT_VERROR_DEF_DEFAULT_ARGS;
+    }
+
     if (!(dhdr->flags & LMNT_DEFFLAG_EXTERN))
     {
         // Is our code ref valid?
-        int32_t cvresult = validate_code(archive, dhdr, dhdr->code, constants_count, dhdr->stack_count_unaligned);
+        int32_t cvresult = validate_code(archive, dhdr, dhdr->code, constants_count, dhdr->stack_count);
         if (cvresult < 0)
             return cvresult;
     }
@@ -383,18 +391,21 @@ lmnt_validation_result lmnt_archive_validate(lmnt_archive* archive, size_t memor
             return svresult;
     }
 
+    // Verify we have *something* in the data section
+    if (hdr->data_length < sizeof(lmnt_data_header))
+        return LMNT_VERROR_DATA_HEADER;
     // Data - use validated functions as we know we can read *some* data from here
     lmnt_offset data_section_count = validated_get_data_sections_count(archive);
     if (sizeof(lmnt_data_header) + data_section_count * sizeof(lmnt_data_section) > hdr->data_length)
-        return LMNT_VERROR_ACCESS_VIOLATION;
+        return LMNT_VERROR_DATA_HEADER;
 
     for (lmnt_offset s = 0; s < data_section_count; ++s)
     {
         const lmnt_data_section* section = validated_get_data_section(archive, s);
         if (section->offset < sizeof(lmnt_data_header) + sizeof(lmnt_data_section) * data_section_count)
-            return LMNT_VERROR_ACCESS_VIOLATION;
+            return LMNT_VERROR_DATA_SIZE;
         if ((size_t)section->offset + (size_t)section->count >= hdr->data_length)
-            return LMNT_VERROR_ACCESS_VIOLATION;
+            return LMNT_VERROR_DATA_SIZE;
     }
 
     // Defs

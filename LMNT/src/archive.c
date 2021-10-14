@@ -193,7 +193,7 @@ lmnt_result lmnt_archive_print(const lmnt_archive* archive)
         if (strlen(name) == 0) name = "<anonymous>";
         LMNT_PRINTF("    [0x%04X] %s (%s)\n", offset, name, (dhdr->flags & LMNT_DEFFLAG_EXTERN) ? "extern" : ((dhdr->flags & LMNT_DEFFLAG_INTERFACE) ? "interface" : "function"));
         LMNT_PRINTF("                 Code offset: 0x%04X\n", (uint32_t)dhdr->code);
-        LMNT_PRINTF("                 Stack count: %u / %u\n", (uint32_t)dhdr->stack_count_unaligned, (uint32_t)dhdr->stack_count_aligned);
+        LMNT_PRINTF("                 Stack count: %u\n", (uint32_t)dhdr->stack_count);
         LMNT_PRINTF("                 Args count: %u\n", (uint32_t)dhdr->args_count);
         LMNT_PRINTF("                 RVals count: %u\n", (uint32_t)dhdr->rvals_count);
         offset += sizeof(lmnt_def);

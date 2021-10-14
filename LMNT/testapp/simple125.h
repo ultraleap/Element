@@ -12,10 +12,10 @@ static const char filedata_simple125[] = {
     0x00, 0x00, // defs[0].name
     0x00, 0x00, // defs[0].flags
     0x00, 0x00, 0x00, 0x00, // defs[0].code
-    0x03, 0x00, // defs[0].stack_count_unaligned
-    0x03, 0x00, // defs[0].stack_count_aligned
+    0x03, 0x00, // defs[0].stack_count
     0x02, 0x00, // defs[0].args_count
     0x01, 0x00, // defs[0].rvals_count
+    0x00, 0x00, // defs[0].default_args_index
     // code
     0x7D, 0x00, 0x00, 0x00, // ops_count
     LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x00, 0x01, 0x02),

@@ -49,6 +49,7 @@ enum
     LMNT_VERROR_DEF_FLAGS        = -0x21,
     LMNT_VERROR_DEF_SIZE         = -0x22,
     LMNT_VERROR_DEF_CYCLIC       = -0x23,
+    LMNT_VERROR_DEF_DEFAULT_ARGS = -0x24,
     LMNT_VERROR_ACCESS_VIOLATION = -0x30,
     LMNT_VERROR_BAD_INSTRUCTION  = -0x31,
     LMNT_VERROR_CODE_HEADER      = -0x40,
@@ -58,6 +59,8 @@ enum
     LMNT_VERROR_SEGMENTS_ALIGN   = -0x52,
     LMNT_VERROR_STACK_SIZE       = -0x60,
     LMNT_VERROR_STACK_DEPTH      = -0x61,
+    LMNT_VERROR_DATA_HEADER      = -0x70,
+    LMNT_VERROR_DATA_SIZE        = -0x71,
     LMNT_VERROR_NO_IMPL          = -0xF1, // get rid of this at some point
 };
 
