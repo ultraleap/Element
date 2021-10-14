@@ -14,10 +14,10 @@ static const char filedata_circle[] = {
     0x00, 0x00, // defs[0].name
     0x00, 0x00, // defs[0].flags
     0x00, 0x00, 0x00, 0x00, // defs[0].code
-    0x08, 0x00, // defs[0].stack_count_unaligned
-    0x08, 0x00, // defs[0].stack_count_aligned
+    0x08, 0x00, // defs[0].stack_count
     0x04, 0x00, // defs[0].args_count
     0x04, 0x00, // defs[0].rvals_count
+    0x00, 0x00, // defs[0].default_args_index
     // code
     0x09, 0x00, 0x00, 0x00, // ops_count
     // stack: [tau, 1.0 | t, i, radius, interval | pos_x, pos_y, pos_z, intens]

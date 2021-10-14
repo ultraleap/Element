@@ -95,6 +95,18 @@ lmnt_result lmnt_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* vresult
     return LMNT_OK;
 }
 
+lmnt_result lmnt_get_default_args(lmnt_ictx* ctx, const lmnt_def* def, const lmnt_value** args, lmnt_loffset* count)
+{
+    assert(ctx && def);
+    LMNT_ENSURE_VALIDATED(&ctx->archive);
+    if (!(def->flags & LMNT_DEFFLAG_HAS_DEFAULT_ARGS))
+        return LMNT_ERROR_NOT_FOUND;
+    const lmnt_data_section* section = validated_get_data_section(&ctx->archive, def->default_args_index);
+    *args = validated_get_data_block(&ctx->archive, section->offset);
+    *count = (section->count <= def->args_count) ? section->count : def->args_count; // don't report more args than the def actually has
+    return LMNT_OK;
+}
+
 LMNT_ATTR_FAST static inline lmnt_result execute_instruction(lmnt_ictx* ctx, const lmnt_instruction op)
 {
     assert(op.opcode < LMNT_OP_END);
@@ -106,7 +118,7 @@ LMNT_ATTR_FAST static inline lmnt_result execute_instruction(lmnt_ictx* ctx, con
 static inline void print_execution_context(lmnt_ictx* ctx, lmnt_loffset inst_idx, const lmnt_instruction op)
 {
     LMNT_PRINTF("Eval[%02X]: % 12s %04X %04X %04X [", inst_idx, lmnt_get_opcode_info(op.opcode)->name, op.arg1, op.arg2, op.arg3);
-    const size_t count = validated_get_constants_count(&ctx->archive) + ctx->cur_def->stack_count_unaligned;
+    const size_t count = validated_get_constants_count(&ctx->archive) + ctx->cur_def->stack_count;
     for (size_t i = 0; i < count; ++i)
     {
         if (i) printf(", ");
@@ -205,7 +217,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_execute(
     // Set our current instruction to be the start of the requested def
     ctx->cur_def = def;
     ctx->cur_instr = 0;
-    ctx->cur_stack_count = (size_t)validated_get_constants_count(&ctx->archive) + (size_t)def->stack_count_unaligned;
+    ctx->cur_stack_count = (size_t)validated_get_constants_count(&ctx->archive) + (size_t)def->stack_count;
     // Run main execute loop
     return execute(ctx, rvals, rvals_count);
 }

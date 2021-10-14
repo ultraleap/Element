@@ -84,10 +84,16 @@ lmnt_result lmnt_prepare_archive(lmnt_ictx* ctx, lmnt_validation_result* validat
 // Convenience function for lmnt_archive_find_def
 lmnt_result lmnt_find_def(const lmnt_ictx* ctx, const char* name, const lmnt_def** def);
 
+// Gets the default arguments associated with a def
+// Either returns LMNT_OK having populated args and count, or LMNT_ERROR_NOT_FOUND if the def has no default args
+lmnt_result lmnt_get_default_args(lmnt_ictx* ctx, const lmnt_def* def, const lmnt_value** args, lmnt_loffset* count);
+
+// Updates the current args for use with the specified def
 LMNT_ATTR_FAST lmnt_result lmnt_update_args(
     lmnt_ictx* ctx, const lmnt_def* def,
     const lmnt_offset offset, const lmnt_value* args, const lmnt_offset count);
 
+// Updates a specific arg for use with the specified def
 static lmnt_result lmnt_update_arg(
     lmnt_ictx* ctx, const lmnt_def* def,
     const lmnt_offset offset, const lmnt_value arg)
