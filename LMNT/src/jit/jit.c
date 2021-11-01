@@ -22,12 +22,13 @@ lmnt_result lmnt_jit_arm64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit
 
 
 LMNT_ATTR_FAST lmnt_result lmnt_jit_execute(
-    lmnt_ictx* ctx, const lmnt_def* def, const lmnt_jit_fn_data* fndata,
+    lmnt_ictx* ctx, const lmnt_jit_fn_data* fndata,
     lmnt_value* rvals, const lmnt_offset rvals_count)
 {
     assert(ctx && ctx->archive.data);
     assert(ctx->stack && ctx->stack_count);
 
+    const lmnt_def* const def = fndata->def;
     ctx->cur_def = def;
     ctx->cur_instr = (lmnt_loffset)-1;
     lmnt_offset consts_count = validated_get_constants_count(&ctx->archive);

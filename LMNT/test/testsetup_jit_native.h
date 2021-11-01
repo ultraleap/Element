@@ -45,7 +45,7 @@
 
 #undef  TEST_EXECUTE
 #define TEST_EXECUTE(ctx, fndata, rvals, rvals_count) \
-    lmnt_jit_execute(ctx, (fndata).def, (lmnt_jit_fn_data*)((fndata).data), (rvals), (lmnt_offset)(rvals_count))
+    lmnt_jit_execute(ctx, (lmnt_jit_fn_data*)((fndata).data), (rvals), (lmnt_offset)(rvals_count))
 
 CU_TEST_SETUP()
 {
