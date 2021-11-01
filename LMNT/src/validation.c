@@ -88,10 +88,13 @@ static inline lmnt_validation_result validate_operand_stack_read(const lmnt_arch
 
 static inline lmnt_validation_result validate_operand_stack_write(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arg, lmnt_offset count, size_t constants_count, size_t rw_stack_count)
 {
-    // Old: ensure we're not writing to a constant
-    // return (arg >= constants_count && arg + count <= constants_count + rw_stack_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
-    // New: allow this since this space also now includes persisted variables
+#if defined(LMNT_ALLOW_MODIFYING_STACK_CONSTANTS)
+    // Allow writing to constants as this space also now includes persisted variables
     return (arg + count <= constants_count + rw_stack_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
+#else
+    // Ensure we're not writing to anything in the constants part of the stack
+    return (arg >= constants_count && arg + count <= constants_count + rw_stack_count) ? LMNT_VALIDATION_OK : LMNT_VERROR_ACCESS_VIOLATION;
+#endif
 }
 
 static inline lmnt_validation_result validate_operand_immediate32(const lmnt_archive* archive, const lmnt_def* def, lmnt_offset arglo, lmnt_offset arghi, size_t constants_count, size_t rw_stack_count)

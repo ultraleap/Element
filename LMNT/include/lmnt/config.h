@@ -44,7 +44,12 @@ extern "C" {
 // sincosf function available on the target system
 // this function should be available in <math.h>
 // if left undefined, falls back to separate calls to sinf and cosf
-// LMNT_SINCOSF sincosf
+// #define LMNT_SINCOSF sincosf
+
+// Defines whether to allow entries in the constants section of the stack to be modified
+// This was intended to be used to add persistent state between execution runs
+// However, current versions of Element/LMNT do not make use of it
+// #define LMNT_ALLOW_MODIFYING_STACK_CONSTANTS
 
 // Prints every instruction evaluated
 // This is, unsurprisingly, VERY spammy

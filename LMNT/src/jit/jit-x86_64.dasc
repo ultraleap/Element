@@ -1370,7 +1370,9 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // Ensure our return values or any updated constants are flushed to stack
     const lmnt_offset constants_count = validated_get_constants_count(&ctx->archive);
     const lmnt_offset rvals_start = constants_count + def->args_count;
+#if defined(LMNT_ALLOW_MODIFYING_STACK_CONSTANTS)
     platformWriteAndEvictByStack(state, 0, constants_count);
+#endif
     platformWriteAndEvictByStack(state, rvals_start, rvals_start + def->rvals_count);
     | mov rax, LMNT_OK
     | ->return:
