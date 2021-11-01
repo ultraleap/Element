@@ -432,7 +432,7 @@ private:
 
                 loperation = "jit execute";
                 lmnt_results.resize(output.count);
-                lresult = lmnt_jit_execute(&lctx, def, &fndata, lmnt_results.data(), lmnt_offset(lmnt_results.size()));
+                lresult = lmnt_jit_execute(&lctx, &fndata, lmnt_results.data(), lmnt_offset(lmnt_results.size()));
                 if (lresult != lmnt_results.size())
                     goto lmnt_error;
 

@@ -398,6 +398,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     | .code
     | ->lmnt_main:
     | prologue, use_nv
+    | ->exec_start:
 
     // store LMNT stack base
     const size_t ctx_stack_offset = offsetof(lmnt_ictx, stack);
@@ -1386,7 +1387,9 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // Ensure our return values or any updated constants are flushed to stack
     const lmnt_offset constants_count = validated_get_constants_count(&ctx->archive);
     const lmnt_offset rvals_start = constants_count + def->args_count;
+#if defined(LMNT_ALLOW_MODIFYING_STACK_CONSTANTS)
     platformWriteAndEvictByStack(state, 0, constants_count);
+#endif
     platformWriteAndEvictByStack(state, rvals_start, rvals_start + def->rvals_count);
     | mov r0, #LMNT_OK
     | ->return:
@@ -1395,12 +1398,19 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // can't use a negative immediate with mov
     | mvn r0, #((-LMNT_ERROR_ACCESS_VIOLATION) - 1)
     | b ->return
+    | -> lmnt_interrupt:
+    | mvn r0, #((-LMNT_INTERRUPTED) - 1)
+    | b -> return
 
     if (result == LMNT_OK) {
+        fndata->def = def;
         result = targetLinkAndEncode(&state->dasm_state, &fndata->buffer, &fndata->codesize);
         if (result == LMNT_OK) {
             // + 1 to indicate the function is THUMB not ARM
-            fndata->function = (lmnt_jit_fn)((intptr_t)labels[lbl_lmnt_main] + 1);
+            fndata->function = (lmnt_jit_fn)((uintptr_t)labels[lbl_lmnt_main] + 1);
+            fndata->interrupt = (void*)((uintptr_t)labels[lbl_lmnt_interrupt] + 1);
+            fndata->interruptible_start = (void*)((uintptr_t)labels[lbl_exec_start] + 1);
+            fndata->interruptible_end = (void*)((uintptr_t)labels[lbl_return] + 1);
         }
     }
     dasm_free(&state->dasm_state);

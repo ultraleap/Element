@@ -224,7 +224,7 @@ int main(int argc, char** argv)
         lmnt_update_args(&ctx, def, 0, c_args, sizeof(c_args) / sizeof(lmnt_value));
 
         // lmnt_result er = lmnt_execute(&ctx, def, c_rvals, sizeof(c_rvals)/sizeof(lmnt_value));
-        // lmnt_result er = lmnt_jit_execute(&ctx, def, fn, c_rvals, sizeof(c_rvals) / sizeof(lmnt_value));
+        // lmnt_result er = lmnt_jit_execute(&ctx, fn, c_rvals, sizeof(c_rvals) / sizeof(lmnt_value));
         // lmnt_result er = hardcoded_circle_ht(ctx.writable_stack, sizeof(c_args) / sizeof(lmnt_value), c_rvals, sizeof(c_rvals) / sizeof(lmnt_value));
         // assert(er >= THE_TEST_RVALS_SIZE);
         // position = [c_rvals[0], c_rvals[1], c_rvals[2]]
@@ -254,7 +254,7 @@ int main(int argc, char** argv)
             t1 = get_current_usec();
             for (size_t i = 0; i < itercount; ++i)
             {
-                lmnt_result er = lmnt_jit_execute(&ctx, def, &fndata, c_rvals, sizeof(c_rvals) / sizeof(lmnt_value));
+                lmnt_result er = lmnt_jit_execute(&ctx, &fndata, c_rvals, sizeof(c_rvals) / sizeof(lmnt_value));
                 assert(er >= THE_TEST_RVALS_SIZE);
                 c_args[0] += 1.0f / 10000.0f;
                 lmnt_update_args(&ctx, def, 0, c_args, sizeof(c_args) / sizeof(lmnt_value));

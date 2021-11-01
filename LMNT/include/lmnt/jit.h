@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -15,9 +16,13 @@ typedef lmnt_result(*lmnt_jit_fn)(lmnt_ictx* ctx);
 
 typedef struct
 {
+    const lmnt_def* def;
     lmnt_jit_fn function;
     void* buffer;
     size_t codesize;
+    void* interrupt;
+    void* interruptible_start;
+    void* interruptible_end;
 } lmnt_jit_fn_data;
 
 typedef struct
@@ -46,9 +51,10 @@ lmnt_result lmnt_jit_compile_with_stats(lmnt_ictx* ctx, const lmnt_def* def, lmn
 lmnt_result lmnt_jit_delete_function(lmnt_jit_fn_data* fndata);
 
 LMNT_ATTR_FAST lmnt_result lmnt_jit_execute(
-    lmnt_ictx* ctx, const lmnt_def* def, const lmnt_jit_fn_data* fndata,
+    lmnt_ictx* ctx, const lmnt_jit_fn_data* fndata,
     lmnt_value* rvals, const lmnt_offset rvals_count);
 
+bool lmnt_jit_is_interruptible(const lmnt_jit_fn_data* fndata, void* inst_pointer);
 
 #ifdef __cplusplus
 }
