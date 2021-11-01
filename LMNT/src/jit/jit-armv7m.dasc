@@ -398,6 +398,7 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     | .code
     | ->lmnt_main:
     | prologue, use_nv
+    | ->exec_start:
 
     // store LMNT stack base
     const size_t ctx_stack_offset = offsetof(lmnt_ictx, stack);
@@ -1406,8 +1407,10 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         result = targetLinkAndEncode(&state->dasm_state, &fndata->buffer, &fndata->codesize);
         if (result == LMNT_OK) {
             // + 1 to indicate the function is THUMB not ARM
-            fndata->function = (lmnt_jit_fn)((intptr_t)labels[lbl_lmnt_main] + 1);
-            fndata->interrupt = (void*)((intptr_t)labels[lbl_lmnt_interrupt] + 1);
+            fndata->function = (lmnt_jit_fn)((uintptr_t)labels[lbl_lmnt_main] + 1);
+            fndata->interrupt = (void*)((uintptr_t)labels[lbl_lmnt_interrupt] + 1);
+            fndata->interruptible_start = (void*)((uintptr_t)labels[lbl_exec_start] + 1);
+            fndata->interruptible_end = (void*)((uintptr_t)labels[lbl_return] + 1);
         }
     }
     dasm_free(&state->dasm_state);

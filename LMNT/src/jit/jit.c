@@ -121,3 +121,11 @@ lmnt_result lmnt_jit_delete_function(lmnt_jit_fn_data* fndata)
     LMNT_JIT_FREE_CFN_MEMORY(fndata->buffer, fndata->codesize);
     return LMNT_OK;
 }
+
+bool lmnt_jit_is_interruptible(const lmnt_jit_fn_data* fndata, void* inst_pointer)
+{
+    if (!fndata) return false;
+    return (
+        (uintptr_t)fndata->interruptible_start <= (uintptr_t)inst_pointer
+        && (uintptr_t)inst_pointer <= (uintptr_t)fndata->interruptible_end);
+}
