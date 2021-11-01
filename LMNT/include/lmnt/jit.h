@@ -19,6 +19,7 @@ typedef struct
     lmnt_jit_fn function;
     void* buffer;
     size_t codesize;
+    void* interrupt;
 } lmnt_jit_fn_data;
 
 typedef struct

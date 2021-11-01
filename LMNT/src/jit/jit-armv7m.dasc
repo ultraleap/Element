@@ -1395,12 +1395,17 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     // can't use a negative immediate with mov
     | mvn r0, #((-LMNT_ERROR_ACCESS_VIOLATION) - 1)
     | b ->return
+    | -> lmnt_interrupt:
+    | mvn r0, #((-LMNT_INTERRUPTED) - 1)
+    | b -> return
 
     if (result == LMNT_OK) {
+        fndata->def = def;
         result = targetLinkAndEncode(&state->dasm_state, &fndata->buffer, &fndata->codesize);
         if (result == LMNT_OK) {
             // + 1 to indicate the function is THUMB not ARM
             fndata->function = (lmnt_jit_fn)((intptr_t)labels[lbl_lmnt_main] + 1);
+            fndata->interrupt = (void*)((intptr_t)labels[lbl_lmnt_interrupt] + 1);
         }
     }
     dasm_free(&state->dasm_state);

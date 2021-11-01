@@ -1378,11 +1378,16 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
     | ->invalid_access:
     | mov rax, LMNT_ERROR_ACCESS_VIOLATION
     | jmp ->return
+    | ->lmnt_interrupt:
+    | mov rax, LMNT_INTERRUPTED
+    | jmp ->return
 
     if (result == LMNT_OK) {
+        fndata->def = def;
         result = targetLinkAndEncode(&state->dasm_state, &fndata->buffer, &fndata->codesize);
         if (result == LMNT_OK) {
             fndata->function = (lmnt_jit_fn)labels[lbl_lmnt_main];
+            fndata->interrupt = labels[lbl_lmnt_interrupt];
         }
     }
     dasm_free(&state->dasm_state);
