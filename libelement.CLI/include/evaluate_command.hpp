@@ -327,9 +327,9 @@ private:
             static_cast<char>(flags & 0xFF), static_cast<char>((flags >> 8) & 0xFF),             // defs[0].flags
             0x00, 0x00, 0x00, 0x00,                                                              // defs[0].code
             static_cast<char>(stack_count & 0xFF), static_cast<char>((stack_count >> 8) & 0xFF), // defs[0].stack_count_unaligned
-            static_cast<char>(stack_count & 0xFF), static_cast<char>((stack_count >> 8) & 0xFF), // defs[0].stack_count_aligned
             static_cast<char>(args_count & 0xFF), static_cast<char>((args_count >> 8) & 0xFF),   // defs[0].args_count
             static_cast<char>(rvals_count & 0xFF), static_cast<char>((rvals_count >> 8) & 0xFF), // defs[0].rvals_count
+            0x00, 0x00,                                                                          // defs[0].default_args_index
         };
         memcpy(buf.data() + idx, def, sizeof(def));
         idx += sizeof(def);
@@ -373,6 +373,9 @@ private:
             goto cleanup;
         }
 
+        for (size_t i = 0; i < constants.size(); ++i) {
+            printf("Constant[%04zX]: %f\n", i, constants[i]);
+        }
         for (const auto& in : lmnt_output.instructions) {
             printf("Instruction: %s %04X %04X %04X\n", lmnt_get_opcode_info(in.opcode)->name, in.arg1, in.arg2, in.arg3);
         }
