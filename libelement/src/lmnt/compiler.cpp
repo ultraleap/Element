@@ -547,8 +547,7 @@ static element_result compile_binary(
         output.emplace_back(lmnt_instruction{ op, arg1_stack_idx, arg2_stack_idx, stack_idx });
         return ELEMENT_OK;
 
-    case element::instruction_binary::op::log:
-    {
+    case element::instruction_binary::op::log: {
         // check if we've got a constant base we can work with
         element_value base_value = 0.0f;
         if (arg2_in->get_constant_value(base_value)) {
