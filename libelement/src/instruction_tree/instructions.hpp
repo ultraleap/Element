@@ -39,6 +39,7 @@ public:
 
         return is_constant;
     }
+    [[nodiscard]] virtual bool get_constant_value(element_value& result) const = 0;
 
     [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const final
     {
@@ -92,6 +93,13 @@ struct instruction_constant final : public instruction
         const source_information& source_info) const override;
     [[nodiscard]] element_value value() const { return m_value; }
     [[nodiscard]] size_t get_size() const override { return 1; }
+
+    [[nodiscard]] bool get_constant_value(element_value& result) const override
+    {
+        result = value();
+        return true;
+    }
+
     [[nodiscard]] std::string to_string() const override
     {
         if (actual_type == type::boolean.get())
@@ -120,6 +128,7 @@ struct instruction_input final : public instruction
     [[nodiscard]] size_t index() const { return m_index; }
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool is_constant() const override { return false; }
+    [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
     [[nodiscard]] std::string to_string() const override { return fmt::format("<scope {}, index {}>", m_scope, m_index); }
 
 private:
@@ -148,6 +157,11 @@ struct instruction_serialised_structure final : public instruction
     {
         return std::accumulate(m_dependents.begin(), m_dependents.end(), size_t(0),
             [](size_t c, const auto& d) { return c + d->get_size(); });
+    }
+
+    [[nodiscard]] bool get_constant_value(element_value& result) const override
+    {
+        return (is_constant() && get_size() == 1) ? m_dependents[0]->get_constant_value(result) : false;
     }
 
     [[nodiscard]] std::string get_type_name() const
@@ -180,6 +194,9 @@ struct instruction_nullary final : public instruction
     [[nodiscard]] op operation() const { return m_op; }
     [[nodiscard]] size_t get_size() const override { return 1; }
 
+    [[nodiscard]] bool is_constant() const override { return true; }
+    [[nodiscard]] bool get_constant_value(element_value& result) const override;
+
 private:
     op m_op;
 };
@@ -201,6 +218,7 @@ struct instruction_unary final : public instruction
     [[nodiscard]] const instruction_const_shared_ptr& input() const { return m_dependents[0]; }
 
     [[nodiscard]] size_t get_size() const override { return 1; }
+    [[nodiscard]] bool get_constant_value(element_value& result) const override;
 
 private:
     op m_op;
@@ -225,6 +243,7 @@ struct instruction_binary final : public instruction
     [[nodiscard]] const instruction_const_shared_ptr& input2() const { return m_dependents[1]; }
 
     [[nodiscard]] size_t get_size() const override { return 1; }
+    [[nodiscard]] bool get_constant_value(element_value& result) const override;
 
 private:
     op m_op;
@@ -240,6 +259,7 @@ struct instruction_if final : public instruction
     [[nodiscard]] const instruction_const_shared_ptr& if_false() const { return m_dependents[2]; }
 
     [[nodiscard]] size_t get_size() const override { return 1; }
+    [[nodiscard]] bool get_constant_value(element_value& result) const override;
 };
 
 struct instruction_for final : public instruction
@@ -252,6 +272,7 @@ struct instruction_for final : public instruction
     [[nodiscard]] const instruction_const_shared_ptr& body() const { return m_dependents[2]; }
 
     [[nodiscard]] size_t get_size() const override { return m_dependents[0]->get_size(); }
+    [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
 
     [[nodiscard]] bool is_input(const instruction_input& input) const
     {
@@ -275,6 +296,7 @@ struct instruction_fold final : public instruction
     [[nodiscard]] const instruction_const_shared_ptr& accumulator() const { return m_dependents[2]; }
 
     [[nodiscard]] size_t get_size() const override { return m_dependents[1]->get_size(); }
+    [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
 };
 
 struct instruction_indexer final : public instruction
@@ -284,6 +306,7 @@ struct instruction_indexer final : public instruction
     explicit instruction_indexer(std::shared_ptr<const instruction_for> for_instruction, int index, type_const_ptr type);
 
     [[nodiscard]] size_t get_size() const override { return 1; }
+    [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
 
     [[nodiscard]] const instruction_const_shared_ptr& for_instruction() const { return m_dependents[0]; }
     int index;
@@ -299,6 +322,7 @@ struct instruction_select final : public instruction
     [[nodiscard]] const instruction_const_shared_ptr& options_at(size_t idx) const { return m_dependents[idx + 1]; }
     [[nodiscard]] size_t options_count() const { return m_dependents.size() - 1; };
     [[nodiscard]] const instruction_const_shared_ptr& selector() const { return m_dependents[0]; };
+    [[nodiscard]] bool get_constant_value(element_value& result) const override;
 };
 
 //do some additional peephole optimisations based on known operations and operands
