@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
+#include <cmath>
 
 #define U16_LO(x) static_cast<uint16_t>((x)&0xFFFF)
 #define U16_HI(x) static_cast<uint16_t>(((x) >> 16) & 0xFFFF)
@@ -556,6 +557,9 @@ static element_result compile_binary(
                 return ELEMENT_OK;
             } else if (base_value == 10.0f) {
                 output.emplace_back(lmnt_instruction{ LMNT_OP_LOG10, arg1_stack_idx, 0, stack_idx });
+                return ELEMENT_OK;
+            } else if (base_value == std::exp(1.0f)) {
+                output.emplace_back(lmnt_instruction{ LMNT_OP_LN, arg1_stack_idx, 0, stack_idx });
                 return ELEMENT_OK;
             }
         }
