@@ -48,9 +48,12 @@ static int32_t validate_def_with_flags(const lmnt_archive* archive, lmnt_offset 
     if (dhdr->stack_count > rw_stack_count)
         return LMNT_VERROR_STACK_SIZE;
 
+    const lmnt_offset inouts_count = dhdr->args_count + dhdr->rvals_count;
+    // Check the stack count vs args/rvals makes sense
+    if (dhdr->stack_count < inouts_count)
+        return LMNT_VERROR_DEF_HEADER;
     // If interface/extern, check we have zero locals
-    const lmnt_offset computed_stack_count = dhdr->args_count + dhdr->rvals_count;
-    if ((dhdr->flags & (LMNT_DEFFLAG_EXTERN | LMNT_DEFFLAG_INTERFACE)) != 0 && dhdr->stack_count != computed_stack_count)
+    if ((dhdr->flags & (LMNT_DEFFLAG_EXTERN | LMNT_DEFFLAG_INTERFACE)) != 0 && dhdr->stack_count != inouts_count)
         return LMNT_VERROR_DEF_HEADER;
 
     // Check we have the required flags specified
