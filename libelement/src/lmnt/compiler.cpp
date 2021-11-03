@@ -88,21 +88,26 @@ static element_result add_candidate_constant(compiler_state& state, element_valu
     return ELEMENT_OK;
 }
 
+// these virtual constant functions take any type of instruction
+// this is so if any operations can be optimised down to a constant,
+// they can be used in place of an actual constant instruction
 static element_result create_virtual_constant(
     compiler_state& state,
-    const element::instruction_constant& ec)
+    const element::instruction& ec,
+    element_value value)
 {
     ELEMENT_OK_OR_RETURN(state.allocator->add(&ec, 1));
-    return add_candidate_constant(state, ec.value());
+    return add_candidate_constant(state, value);
 }
 
 static element_result prepare_virtual_constant(
     compiler_state& state,
-    const element::instruction_constant& ec)
+    const element::instruction& ec,
+    element_value value)
 {
     const bool is_output = state.allocator->is_type(&ec, allocation_type::output);
     uint16_t index;
-    if (!is_output && state.find_constant(ec.value(), index) == ELEMENT_OK) {
+    if (!is_output && state.find_constant(value, index) == ELEMENT_OK) {
         // hard-constant, just use it as-is
         ELEMENT_OK_OR_RETURN(state.allocator->set_pinned(&ec, allocation_type::constant, index, 1));
     }
@@ -112,7 +117,8 @@ static element_result prepare_virtual_constant(
 
 static element_result allocate_virtual_constant(
     compiler_state& state,
-    const element::instruction_constant& ec)
+    const element::instruction& ec,
+    element_value value)
 {
     return state.allocator->allocate(&ec);
 }
@@ -140,12 +146,13 @@ static element_result compile_constant_value(
 
 static element_result compile_constant(
     compiler_state& state,
-    const element::instruction_constant& ec,
+    const element::instruction& ec,
+    element_value value,
     const uint16_t outidx,
     std::vector<lmnt_instruction>& output,
     lmnt_def_flags& flags)
 {
-    return compile_constant_value(state, ec.value(), outidx, output, flags);
+    return compile_constant_value(state, value, outidx, output, flags);
 }
 
 //
@@ -540,10 +547,21 @@ static element_result compile_binary(
         output.emplace_back(lmnt_instruction{ op, arg1_stack_idx, arg2_stack_idx, stack_idx });
         return ELEMENT_OK;
 
-    case element::instruction_binary::op::log:
-        // TODO: check if we've got a constant base we can work with
+    case element::instruction_binary::op::log: {
+        // check if we've got a constant base we can work with
+        element_value base_value = 0.0f;
+        if (arg2_in->get_constant_value(base_value)) {
+            if (base_value == 2.0f) {
+                output.emplace_back(lmnt_instruction{ LMNT_OP_LOG2, arg1_stack_idx, 0, stack_idx });
+                return ELEMENT_OK;
+            } else if (base_value == 10.0f) {
+                output.emplace_back(lmnt_instruction{ LMNT_OP_LOG10, arg1_stack_idx, 0, stack_idx });
+                return ELEMENT_OK;
+            }
+        }
         output.emplace_back(lmnt_instruction{ LMNT_OP_LOG, arg1_stack_idx, arg2_stack_idx, stack_idx });
         return ELEMENT_OK;
+    }
 
     default:
         break;
@@ -1099,34 +1117,27 @@ static element_result create_virtual_result(
 
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
-    if (const auto* ec = expr->as<element::instruction_constant>())
-        oresult = create_virtual_constant(state, *ec);
-
-    if (const auto* ei = expr->as<element::instruction_input>())
+    // check if this instruction can be folded into a single constant
+    element_value value = 0.0f;
+    if (expr->get_constant_value(value))
+        oresult = create_virtual_constant(state, *expr, value);
+    else if (const auto* ei = expr->as<element::instruction_input>())
         oresult = create_virtual_input(state, *ei);
-
-    if (const auto* es = expr->as<element::instruction_serialised_structure>())
+    else if (const auto* es = expr->as<element::instruction_serialised_structure>())
         oresult = create_virtual_serialised_structure(state, *es);
-
-    if (const auto* en = expr->as<element::instruction_nullary>())
+    else if (const auto* en = expr->as<element::instruction_nullary>())
         oresult = create_virtual_nullary(state, *en);
-
-    if (const auto* eu = expr->as<element::instruction_unary>())
+    else if (const auto* eu = expr->as<element::instruction_unary>())
         oresult = create_virtual_unary(state, *eu);
-
-    if (const auto* eb = expr->as<element::instruction_binary>())
+    else if (const auto* eb = expr->as<element::instruction_binary>())
         oresult = create_virtual_binary(state, *eb);
-
-    if (const auto* ei = expr->as<element::instruction_if>())
+    else if (const auto* ei = expr->as<element::instruction_if>())
         oresult = create_virtual_if(state, *ei);
-
-    if (const auto* ef = expr->as<element::instruction_for>())
+    else if (const auto* ef = expr->as<element::instruction_for>())
         oresult = create_virtual_for(state, *ef);
-
-    if (const auto* ei = expr->as<element::instruction_indexer>())
+    else if (const auto* ei = expr->as<element::instruction_indexer>())
         oresult = create_virtual_indexer(state, *ei);
-
-    if (const auto* sel = expr->as<element::instruction_select>())
+    else if (const auto* sel = expr->as<element::instruction_select>())
         oresult = create_virtual_select(state, *sel);
 
     if (oresult == ELEMENT_OK) {
@@ -1167,34 +1178,27 @@ static element_result prepare_virtual_result(
 
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
-    if (const auto* ec = expr->as<element::instruction_constant>())
-        oresult = prepare_virtual_constant(state, *ec);
-
-    if (const auto* ei = expr->as<element::instruction_input>())
+    // check if this instruction can be folded into a single constant
+    element_value value = 0.0f;
+    if (expr->get_constant_value(value))
+        oresult = prepare_virtual_constant(state, *expr, value);
+    else if (const auto* ei = expr->as<element::instruction_input>())
         oresult = prepare_virtual_input(state, *ei);
-
-    if (const auto* es = expr->as<element::instruction_serialised_structure>())
+    else if (const auto* es = expr->as<element::instruction_serialised_structure>())
         oresult = prepare_virtual_serialised_structure(state, *es);
-
-    if (const auto* en = expr->as<element::instruction_nullary>())
+    else if (const auto* en = expr->as<element::instruction_nullary>())
         oresult = prepare_virtual_nullary(state, *en);
-
-    if (const auto* eu = expr->as<element::instruction_unary>())
+    else if (const auto* eu = expr->as<element::instruction_unary>())
         oresult = prepare_virtual_unary(state, *eu);
-
-    if (const auto* eb = expr->as<element::instruction_binary>())
+    else if (const auto* eb = expr->as<element::instruction_binary>())
         oresult = prepare_virtual_binary(state, *eb);
-
-    if (const auto* ei = expr->as<element::instruction_if>())
+    else if (const auto* ei = expr->as<element::instruction_if>())
         oresult = prepare_virtual_if(state, *ei);
-
-    if (const auto* ef = expr->as<element::instruction_for>())
+    else if (const auto* ef = expr->as<element::instruction_for>())
         oresult = prepare_virtual_for(state, *ef);
-
-    if (const auto* ei = expr->as<element::instruction_indexer>())
+    else if (const auto* ei = expr->as<element::instruction_indexer>())
         oresult = prepare_virtual_indexer(state, *ei);
-
-    if (const auto* sel = expr->as<element::instruction_select>())
+    else if (const auto* sel = expr->as<element::instruction_select>())
         oresult = prepare_virtual_select(state, *sel);
 
     if (oresult == ELEMENT_OK) {
@@ -1223,34 +1227,27 @@ static element_result allocate_virtual_result(
 
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
-    if (const auto* ec = expr->as<element::instruction_constant>())
-        oresult = allocate_virtual_constant(state, *ec);
-
-    if (const auto* ei = expr->as<element::instruction_input>())
+    // check if this instruction can be folded into a single constant
+    element_value value = 0.0f;
+    if (expr->get_constant_value(value))
+        oresult = allocate_virtual_constant(state, *expr, value);
+    else if (const auto* ei = expr->as<element::instruction_input>())
         oresult = allocate_virtual_input(state, *ei);
-
-    if (const auto* es = expr->as<element::instruction_serialised_structure>())
+    else if (const auto* es = expr->as<element::instruction_serialised_structure>())
         oresult = allocate_virtual_serialised_structure(state, *es);
-
-    if (const auto* en = expr->as<element::instruction_nullary>())
+    else if (const auto* en = expr->as<element::instruction_nullary>())
         oresult = allocate_virtual_nullary(state, *en);
-
-    if (const auto* eu = expr->as<element::instruction_unary>())
+    else if (const auto* eu = expr->as<element::instruction_unary>())
         oresult = allocate_virtual_unary(state, *eu);
-
-    if (const auto* eb = expr->as<element::instruction_binary>())
+    else if (const auto* eb = expr->as<element::instruction_binary>())
         oresult = allocate_virtual_binary(state, *eb);
-
-    if (const auto* ei = expr->as<element::instruction_if>())
+    else if (const auto* ei = expr->as<element::instruction_if>())
         oresult = allocate_virtual_if(state, *ei);
-
-    if (const auto* ef = expr->as<element::instruction_for>())
+    else if (const auto* ef = expr->as<element::instruction_for>())
         oresult = allocate_virtual_for(state, *ef);
-
-    if (const auto* ei = expr->as<element::instruction_indexer>())
+    else if (const auto* ei = expr->as<element::instruction_indexer>())
         oresult = allocate_virtual_indexer(state, *ei);
-
-    if (const auto* sel = expr->as<element::instruction_select>())
+    else if (const auto* sel = expr->as<element::instruction_select>())
         oresult = allocate_virtual_select(state, *sel);
 
     if (oresult == ELEMENT_OK) {
@@ -1283,34 +1280,27 @@ static element_result compile_instruction(
 
     element_result oresult = ELEMENT_ERROR_NO_IMPL;
 
-    if (const auto* ec = expr->as<element::instruction_constant>())
-        oresult = compile_constant(state, *ec, index, output, flags);
-
-    if (const auto* ei = expr->as<element::instruction_input>())
+    // check if this instruction can be folded into a single constant
+    element_value value = 0.0f;
+    if (expr->get_constant_value(value))
+        oresult = compile_constant(state, *expr, value, index, output, flags);
+    else if (const auto* ei = expr->as<element::instruction_input>())
         oresult = compile_input(state, *ei, index, output, flags);
-
-    if (const auto* es = expr->as<element::instruction_serialised_structure>())
+    else if (const auto* es = expr->as<element::instruction_serialised_structure>())
         oresult = compile_serialised_structure(state, *es, index, output, flags);
-
-    if (const auto* en = expr->as<element::instruction_nullary>())
+    else if (const auto* en = expr->as<element::instruction_nullary>())
         oresult = compile_nullary(state, *en, index, output, flags);
-
-    if (const auto* eu = expr->as<element::instruction_unary>())
+    else if (const auto* eu = expr->as<element::instruction_unary>())
         oresult = compile_unary(state, *eu, index, output, flags);
-
-    if (const auto* eb = expr->as<element::instruction_binary>())
+    else if (const auto* eb = expr->as<element::instruction_binary>())
         oresult = compile_binary(state, *eb, index, output, flags);
-
-    if (const auto* ei = expr->as<element::instruction_if>())
+    else if (const auto* ei = expr->as<element::instruction_if>())
         oresult = compile_if(state, *ei, index, output, flags);
-
-    if (const auto* ef = expr->as<element::instruction_for>())
+    else if (const auto* ef = expr->as<element::instruction_for>())
         oresult = compile_for(state, *ef, index, output, flags);
-
-    if (const auto* ei = expr->as<element::instruction_indexer>())
+    else if (const auto* ei = expr->as<element::instruction_indexer>())
         oresult = compile_indexer(state, *ei, index, output, flags);
-
-    if (const auto* sel = expr->as<element::instruction_select>())
+    else if (const auto* sel = expr->as<element::instruction_select>())
         oresult = compile_select(state, *sel, index, output, flags);
 
     if (oresult == ELEMENT_OK) {

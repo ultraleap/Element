@@ -3,6 +3,7 @@
 #include <utility>
 
 //SELF
+#include "instruction_tree/evaluator.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/error.hpp"
 
@@ -108,4 +109,50 @@ instruction_select::instruction_select(instruction_const_shared_ptr selector, st
     for (auto&& o : options) {
         m_dependents.emplace_back(std::move(o));
     }
+}
+
+bool instruction_nullary::get_constant_value(element_value& result) const
+{
+    result = element_evaluate_nullary(operation());
+    return true;
+}
+
+bool instruction_unary::get_constant_value(element_value& result) const
+{
+    element_value input_value = 0.0f;
+    if (!input()->get_constant_value(input_value))
+        return false;
+    result = element_evaluate_unary(operation(), input_value);
+    return true;
+}
+
+bool instruction_binary::get_constant_value(element_value& result) const
+{
+    element_value input1_value = 0.0f, input2_value = 0.0f;
+    if (!input1()->get_constant_value(input1_value))
+        return false;
+    if (!input2()->get_constant_value(input2_value))
+        return false;
+    result = element_evaluate_binary(operation(), input1_value, input2_value);
+    return true;
+}
+
+bool instruction_if::get_constant_value(element_value& result) const
+{
+    element_value predicate_value = 0.0f;
+    if (!predicate()->get_constant_value(predicate_value))
+        return false;
+    if (to_bool(predicate_value))
+        return if_true()->get_constant_value(result);
+    else
+        return if_false()->get_constant_value(result);
+}
+
+bool instruction_select::get_constant_value(element_value& result) const
+{
+    element_value selector_value = 0.0f;
+    if (!selector()->get_constant_value(selector_value))
+        return false;
+    size_t index = element_evaluate_select(selector_value, options_count());
+    return options_at(index)->get_constant_value(result);
 }
