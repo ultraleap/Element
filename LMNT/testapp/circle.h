@@ -7,7 +7,7 @@ static const char filedata_circle[] = {
     0x00, 0x00, 0x00, 0x00,
     0x0C, 0x00, 0x00, 0x00, // strings length
     0x10, 0x00, 0x00, 0x00, // defs length
-    0x4C, 0x00, 0x00, 0x00, // code length
+    0x44, 0x00, 0x00, 0x00, // code length
     0x04, 0x00, 0x00, 0x00, // data length
     0x08, 0x00, 0x00, 0x00, // constants_length
     0x0A, 0x00, 'C', 'i', 'r', 'c', 'l', 'e', '\0', 0x00, 0x00, 0x00, // strings[0]
@@ -19,7 +19,7 @@ static const char filedata_circle[] = {
     0x04, 0x00, // defs[0].rvals_count
     0x00, 0x00, // defs[0].default_args_index
     // code
-    0x09, 0x00, 0x00, 0x00, // ops_count
+    0x08, 0x00, 0x00, 0x00, // ops_count
     // stack: [tau, 1.0 | t, i, radius, interval | pos_x, pos_y, pos_z, intens]
     //temp7 = t / interval
     LMNT_OP_BYTES(LMNT_OP_DIVSS, 0x02, 0x05, 0x07),
@@ -27,12 +27,10 @@ static const char filedata_circle[] = {
     LMNT_OP_BYTES(LMNT_OP_MODSS, 0x07, 0x01, 0x07),
     //temp7 = mul(temp7, tau)
     LMNT_OP_BYTES(LMNT_OP_MULSS, 0x07, 0x00, 0x07),
-    //pos_x = cos(temp7)
-    LMNT_OP_BYTES(LMNT_OP_COS, 0x07, 0x00, 0x06),
+    //pos_x = cos(temp7), pos_y = sin(temp7)
+    LMNT_OP_BYTES(LMNT_OP_SINCOS, 0x07, 0x06, 0x07),
     //pos_x = mul(pos_x, radius)
     LMNT_OP_BYTES(LMNT_OP_MULSS, 0x06, 0x04, 0x06),
-    //pos_y = sin(temp7)
-    LMNT_OP_BYTES(LMNT_OP_SIN, 0x07, 0x00, 0x07),
     //pos_y = mul(pos_y, radius)
     LMNT_OP_BYTES(LMNT_OP_MULSS, 0x07, 0x04, 0x07),
     //stack[8] = 0.15
