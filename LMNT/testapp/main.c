@@ -126,20 +126,22 @@ lmnt_result hardcoded_circle_ht(float* args, size_t args_count, float* rvals, si
 }
 
 
-/*
-int main(int argc, char** argv)
+static void print_archive_hex(const char* archive, size_t size, size_t width)
 {
-    float v = 0.15f;
-
-    printf("%02X %02X %02X %02X\n",
-        ((*(uint32_t*)&v) & 0xFF),
-        (((*(uint32_t*)&v) >> 8) & 0xFF),
-        (((*(uint32_t*)&v) >> 16) & 0xFF),
-        (((*(uint32_t*)&v) >> 24) & 0xFF));
-
-    return 0;
+    for (size_t i = 0; i < size / width; ++i) {
+        LMNT_PRINTF("%04zX  |  ", i*width);
+        for (size_t j = 0; j < width; ++j)
+            LMNT_PRINTF("%02X ", (unsigned char)archive[i*width + j]);
+        LMNT_PRINTF("\n");
+    }
+    if (size - (size/width)*width) {
+        LMNT_PRINTF("%04zX  |  ", (size/width)*width);
+        for (size_t j = 0; j < (size - (size/width)*width); ++j)
+            LMNT_PRINTF("%02X ", (unsigned char)archive[(size/width)*width + j]);
+        LMNT_PRINTF("\n");
+    }
 }
-*/
+
 
 #define THE_TEST filedata_circle_ht
 #define THE_TEST_NAME "circle_ht"
@@ -171,7 +173,7 @@ int main(int argc, char** argv)
         printf("VALIDATION FAILED: %u\n", lvr);
         return 1;
     }
-    
+
     const lmnt_def* def;
     lmnt_result dr = lmnt_find_def(&ctx, THE_TEST_DEF, &def);
     assert(dr == LMNT_OK);
