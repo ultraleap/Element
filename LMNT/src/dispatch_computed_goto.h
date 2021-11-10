@@ -125,16 +125,14 @@ dispatch:
             goto end;
         }
     }
-dispatchok:
-#if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
-    print_execution_context(ctx, instr, instructions[instr]);
-#endif
-    if (++instr >= icount) {
-        goto end;
-    }
 
-    op = instructions[instr];
+#define GENERATE_DISPATCHOK() \
+    if (++instr >= icount)\
+        goto end;\
+    op = instructions[instr];\
     goto *jump_targets[op.opcode];
+
+    GENERATE_DISPATCHOK();
 
 #define GENERATE_OP(name, nextstop) \
 op_##name: \
@@ -143,10 +141,10 @@ op_##name: \
 #define GENERATE_OP_NOFAIL(name) \
 op_##name: \
     lmnt_op_##name(ctx, op.arg1, op.arg2, op.arg3); \
-    goto dispatchok;
+    GENERATE_DISPATCHOK();
 
 op_noop:
-    goto dispatch;
+    GENERATE_DISPATCHOK();
 op_return:
     opresult = LMNT_RETURNING;
     goto end;
@@ -232,6 +230,7 @@ GENERATE_OP_NOFAIL(assigncge);
 GENERATE_OP_NOFAIL(assigncun);
 GENERATE_OP(extcall, dispatch);
 
+#undef GENERATE_DISPATCHOK
 #undef GENERATE_OP_NOFAIL
 #undef GENERATE_OP
 
