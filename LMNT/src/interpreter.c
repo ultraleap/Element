@@ -7,16 +7,27 @@
 #include <math.h>
 #include <string.h>
 
+
+// We include exactly one dispatch_* header to execute functions
+// Computed GOTOs are faster but only available where GNU C is
+// Each header defines these functions with the same signatures:
+LMNT_ATTR_FAST static inline lmnt_result execute_function(lmnt_ictx* ctx, const lmnt_code* defcode, const lmnt_instruction* instructions);
+LMNT_ATTR_FAST static inline lmnt_result interrupt_function(lmnt_ictx* ctx);
+static const char* const dispatch_method(void);
+// Include the header
+#include LMNT_DISPATCH_HEADER
+
 #include LMNT_MEMORY_HEADER
 #if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
     #include LMNT_PRINTF_HEADER
 #endif
 
-extern lmnt_op_fn lmnt_op_functions[LMNT_OP_END];
-extern lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END];
-
 lmnt_result lmnt_init(lmnt_ictx* ctx, char* mem, size_t mem_size)
 {
+    // sanity checks
+    // a few hot-path optimisations rely on LMNT_OK being zero
+    LMNT_STATIC_ASSERT(LMNT_OK == 0, "LMNT_OK must be equal to zero");
+
     memset(ctx, 0, sizeof(lmnt_ictx));
 
     ctx->memory_area = mem;
@@ -107,13 +118,6 @@ lmnt_result lmnt_get_default_args(lmnt_ictx* ctx, const lmnt_def* def, const lmn
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static inline lmnt_result execute_instruction(lmnt_ictx* ctx, const lmnt_instruction op)
-{
-    assert(op.opcode < LMNT_OP_END);
-    assert(ctx->op_functions[op.opcode]);
-    return ctx->op_functions[op.opcode](ctx, op.arg1, op.arg2, op.arg3);
-}
-
 #if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
 static inline void print_execution_context(lmnt_ictx* ctx, lmnt_loffset inst_idx, const lmnt_instruction op)
 {
@@ -131,6 +135,7 @@ static inline void print_execution_context(lmnt_ictx* ctx, lmnt_loffset inst_idx
         (ctx->status_flags & LMNT_ISTATUS_CMP_UN) ? "UN" : "  ");
 }
 #endif
+
 
 // This function assumes:
 // - ctx->cur_def has been set to the def to be executed
@@ -154,29 +159,8 @@ LMNT_ATTR_FAST static lmnt_result execute(lmnt_ictx* ctx, lmnt_value* rvals, con
         const lmnt_code* defcode = validated_get_code(&ctx->archive, def->code);
         const lmnt_instruction* instructions = validated_get_code_instructions(&ctx->archive, def->code);
 
-        // Make sure the context is set up to use the real ops
-        ctx->op_functions = lmnt_op_functions;
-
-        // Grab the current instruction as a local rather than updating the ctx every time - faster
-        lmnt_loffset instr;
-        const lmnt_loffset icount = defcode->instructions_count;
-        for (instr = ctx->cur_instr; instr < icount; ++instr)
-        {
-            opresult = execute_instruction(ctx, instructions[instr]);
-#if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
-            print_execution_context(ctx, instr, instructions[instr]);
-#endif
-            if (LMNT_UNLIKELY(opresult != LMNT_OK)) {
-                if (opresult == LMNT_BRANCHING) {
-                    // the context's instruction pointer has been updated, refresh
-                    instr = ctx->cur_instr - 1; // will be incremented by loop
-                    continue;
-                } else {
-                    break;
-                }
-            }
-        }
-        ctx->cur_instr = instr;
+        // Execute using function defined in dispatch_*.h
+        opresult = execute_function(ctx, defcode, instructions);
     }
     else
     {
@@ -238,8 +222,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_resume(
 lmnt_result lmnt_interrupt(lmnt_ictx* ctx)
 {
     assert(ctx);
-    ctx->op_functions = lmnt_interrupt_functions;
-    return LMNT_OK;
+    return interrupt_function(ctx);
 }
 
 lmnt_result lmnt_update_args(
@@ -262,4 +245,9 @@ lmnt_result lmnt_update_args(
 lmnt_result lmnt_find_def(const lmnt_ictx* ctx, const char* name, const lmnt_def** def)
 {
     return lmnt_archive_find_def(&ctx->archive, name, def);
+}
+
+const char* lmnt_get_dispatch_method(void)
+{
+    return dispatch_method();
 }

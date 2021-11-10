@@ -12,6 +12,9 @@ set(LMNT_JIT_ARCHITECTURES "NATIVE" CACHE STRING "List of architectures to build
 list(TRANSFORM LMNT_JIT_ARCHITECTURES REPLACE "NATIVE" "${LMNT_TARGET_ARCH}")
 list(REMOVE_DUPLICATES LMNT_JIT_ARCHITECTURES)
 
+# Enable ASAN if requested
+option(LMNT_BUILD_WITH_ASAN "Build with the GCC/Clang address sanitizer enabled" OFF)
+
 # Add main library
 add_subdirectory("src")
 add_subdirectory("include")
@@ -24,3 +27,4 @@ if (BUILD_TESTING)
     add_subdirectory("test")
     add_subdirectory("testapp")
 endif ()
+

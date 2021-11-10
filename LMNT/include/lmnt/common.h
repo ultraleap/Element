@@ -123,6 +123,30 @@ typedef struct lmnt_ictx lmnt_ictx;
 #define _Static_assert static_assert
 #endif
 
+// Define hopefully-static asserts that fall back to runtime asserts on pre-C11
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define LMNT_STATIC_ASSERT(expr,message) _Static_assert((expr), message)
+#else
+#define LMNT_STATIC_ASSERT(expr,message) assert((expr) && (message))
+#endif
+
+// Specify force-inline
+#if defined(_MSC_VER) && !defined(__clang__)
+#define LMNT_FORCEINLINE __forceinline
+#elif defined(__GNUC__) || defined(__clang__) || defined(__GNUC_MINOR__)
+#define LMNT_FORCEINLINE __attribute__((always_inline))
+#else
+#warning Unknown platform, no force-inline support
+#define LMNT_FORCEINLINE
+#endif
+
+#if defined(__GNUC__)
+#define LMNT_UNREACHABLE() __builtin_unreachable()
+#elif defined(_MSC_VER)
+#define LMNT_UNREACHABLE() __assume(0)
+#else
+#define LMNT_UNREACHABLE()
+#endif
 
 #ifdef __cplusplus
 }

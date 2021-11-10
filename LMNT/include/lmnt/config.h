@@ -31,6 +31,20 @@ extern "C" {
 #define LMNT_ATTR_FAST
 #endif
 
+// Configures which mechanism the interpreter should use to dispatch instructions
+// dispatch_jumptable.h: uses a jump table of function pointers to call the instruction's function
+// dispatch_switch.h: uses a big switch statement to execute the instruction's code directly
+// dispatch_computed_goto.h: uses the GNU C "computed gotos" extension to execute the instruction's code directly
+// Computed gotos typically provide a 20-30% performance boost but are not universally available
+// By default computed gotos are used for GNU C builds, and jump tables elsewhere
+#if !defined(LMNT_DISPATCH_HEADER)
+#if defined(__GNUC__)
+#define LMNT_DISPATCH_HEADER "dispatch_computed_goto.h"
+#else
+#define LMNT_DISPATCH_HEADER "dispatch_jumptable.h"
+#endif
+#endif
+
 // printf function to use for debugging output
 // Never called unless requested by the user (e.g. lmnt_archive_print) or debug flags are enabled
 #if !defined(LMNT_PRINTF_HEADER)
