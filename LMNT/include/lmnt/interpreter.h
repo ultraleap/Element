@@ -21,7 +21,7 @@ enum
     LMNT_ISTATUS_CMP_GT = (1U << 2),       // greater than
     LMNT_ISTATUS_CMP_UN = (1U << 7),       // unordered (i.e. NaNs present)
 
-    LMNT_ISTATUS_INTERRUPTED = (1U << 31), // function is being interrupted (not used by all dispatch methods)
+    LMNT_ISTATUS_INTERRUPTED = (1U << 31), // function is being interrupted
 };
 
 // Main interpreter context struct
@@ -42,7 +42,6 @@ struct lmnt_ictx
     const lmnt_def* cur_def;
     lmnt_loffset cur_instr;
     size_t cur_stack_count;
-    const lmnt_op_fn* op_functions;
     uint32_t status_flags;
 };
 
