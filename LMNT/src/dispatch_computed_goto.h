@@ -13,6 +13,10 @@
 #include "ops_misc_impl.h"
 #include "ops_trig_impl.h"
 
+static const char* const dispatch_method(void)
+{
+    return "computed gotos";
+}
 
 // cannot be inlined due to static table
 LMNT_ATTR_FAST static lmnt_result execute_function(lmnt_ictx* ctx, const lmnt_code* defcode, const lmnt_instruction* instructions)

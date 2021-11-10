@@ -15,6 +15,11 @@
 #include "ops_misc_impl.h"
 #include "ops_trig_impl.h"
 
+static const char* const dispatch_method(void)
+{
+    return "switch statement";
+}
+
 
 LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_ictx* ctx, const lmnt_code* defcode, const lmnt_instruction* instructions)
 {

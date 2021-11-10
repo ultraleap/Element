@@ -14,6 +14,11 @@
 #include "ops_misc_impl.h"
 #include "ops_trig_impl.h"
 
+static const char* const dispatch_method(void)
+{
+    return "jump table";
+}
+
 LMNT_ATTR_FAST static lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_noop,
     lmnt_op_return,

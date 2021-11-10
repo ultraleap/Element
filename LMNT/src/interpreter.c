@@ -13,6 +13,7 @@
 // Each header defines these functions with the same signatures:
 LMNT_ATTR_FAST static inline lmnt_result execute_function(lmnt_ictx* ctx, const lmnt_code* defcode, const lmnt_instruction* instructions);
 LMNT_ATTR_FAST static inline lmnt_result interrupt_function(lmnt_ictx* ctx);
+static const char* const dispatch_method(void);
 // Include the header
 #if defined(LMNT_USE_COMPUTED_GOTOS) && LMNT_USE_COMPUTED_GOTOS
 #include "dispatch_computed_goto.h"
@@ -248,4 +249,9 @@ lmnt_result lmnt_update_args(
 lmnt_result lmnt_find_def(const lmnt_ictx* ctx, const char* name, const lmnt_def** def)
 {
     return lmnt_archive_find_def(&ctx->archive, name, def);
+}
+
+const char* lmnt_get_dispatch_method(void)
+{
+    return dispatch_method();
 }

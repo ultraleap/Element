@@ -150,7 +150,8 @@ static void print_archive_hex(const char* archive, size_t size, size_t width)
 #define THE_TEST_RVALS_SIZE 4
 int main(int argc, char** argv)
 {
-    LMNT_PRINTF("size = %zu\n", sizeof(THE_TEST));
+    LMNT_PRINTF("interpreter dispatch method: %s\n", lmnt_get_dispatch_method());
+    LMNT_PRINTF("archive size: %zu\n", sizeof(THE_TEST));
 
     lmnt_ictx ctx;
     char mem[8192];

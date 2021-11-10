@@ -126,6 +126,8 @@ LMNT_ATTR_FAST lmnt_result lmnt_resume(
 // This is implemented as a single pointer write, which may be atomic on the target architecture
 lmnt_result lmnt_interrupt(lmnt_ictx* ctx);
 
+// Returns a string describing the mechanism used by the interpreter to dispatch instructions
+const char* lmnt_get_dispatch_method(void);
 
 #ifdef __cplusplus
 }
