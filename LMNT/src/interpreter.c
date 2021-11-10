@@ -15,11 +15,7 @@ LMNT_ATTR_FAST static inline lmnt_result execute_function(lmnt_ictx* ctx, const 
 LMNT_ATTR_FAST static inline lmnt_result interrupt_function(lmnt_ictx* ctx);
 static const char* const dispatch_method(void);
 // Include the header
-#if defined(LMNT_USE_COMPUTED_GOTOS) && LMNT_USE_COMPUTED_GOTOS
-#include "dispatch_computed_goto.h"
-#else
-#include "dispatch_jumptable.h"
-#endif
+#include LMNT_DISPATCH_HEADER
 
 #include LMNT_MEMORY_HEADER
 #if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
