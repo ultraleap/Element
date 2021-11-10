@@ -120,15 +120,13 @@ dispatch:
             // the context's instruction pointer has been updated, refresh
             instr = ctx->cur_instr - 1; // will be incremented momentarily
         } else {
-            if (opresult == LMNT_OK && (ctx->status_flags & LMNT_ISTATUS_INTERRUPTED))
-                opresult = LMNT_INTERRUPTED;
-            goto end;
+            goto endcheck;
         }
     }
 
 #define GENERATE_DISPATCHOK() \
-    if (++instr >= icount)\
-        goto end;\
+    if (++instr >= icount || (ctx->status_flags & LMNT_ISTATUS_INTERRUPTED))\
+        goto endcheck;\
     op = instructions[instr];\
     goto *jump_targets[op.opcode];
 
@@ -234,6 +232,9 @@ GENERATE_OP(extcall, dispatch);
 #undef GENERATE_OP_NOFAIL
 #undef GENERATE_OP
 
+endcheck:
+    if (opresult == LMNT_OK && (ctx->status_flags & LMNT_ISTATUS_INTERRUPTED))
+        opresult = LMNT_INTERRUPTED;
 end:
     ctx->cur_instr = instr;
     return opresult;
