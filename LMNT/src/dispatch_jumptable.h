@@ -19,7 +19,7 @@ static const char* const dispatch_method(void)
     return "jump table";
 }
 
-LMNT_ATTR_FAST static lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
+LMNT_ATTR_FAST static const lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_noop,
     lmnt_op_return,
     lmnt_op_assignss,
@@ -105,104 +105,15 @@ LMNT_ATTR_FAST static lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_extcall,
 };
 
-static lmnt_op_fn lmnt_interrupt_functions[LMNT_OP_END] = {
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-    lmnt_op_interrupt,
-};
-
 LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_instruction(lmnt_ictx* ctx, const lmnt_instruction op)
 {
     assert(op.opcode < LMNT_OP_END);
-    assert(ctx->op_functions[op.opcode]);
-    return ctx->op_functions[op.opcode](ctx, op.arg1, op.arg2, op.arg3);
+    return lmnt_op_functions[op.opcode](ctx, op.arg1, op.arg2, op.arg3);
 }
 
 LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_ictx* ctx, const lmnt_code* defcode, const lmnt_instruction* instructions)
 {
     lmnt_result opresult = LMNT_OK;
-    // Make sure the context is set up to use the real ops
-    ctx->op_functions = lmnt_op_functions;
     // Grab the current instruction as a local rather than updating the ctx every time - faster
     lmnt_loffset instr;
     const lmnt_loffset icount = defcode->instructions_count;
@@ -212,7 +123,7 @@ LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_
 #if defined(LMNT_DEBUG_PRINT_EVALUATED_INSTRUCTIONS)
         print_execution_context(ctx, instr, instructions[instr]);
 #endif
-        if (LMNT_UNLIKELY(opresult != LMNT_OK)) {
+        if (LMNT_UNLIKELY(opresult | (ctx->status_flags & LMNT_ISTATUS_INTERRUPTED))) {
             if (opresult == LMNT_BRANCHING) {
                 // the context's instruction pointer has been updated, refresh
                 instr = ctx->cur_instr - 1; // will be incremented by loop
@@ -228,7 +139,7 @@ LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_
 
 LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result interrupt_function(lmnt_ictx* ctx)
 {
-    ctx->op_functions = lmnt_interrupt_functions;
+    ctx->status_flags |= LMNT_ISTATUS_INTERRUPTED;
     return LMNT_OK;
 }
 
