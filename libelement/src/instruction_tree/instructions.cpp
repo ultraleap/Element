@@ -202,6 +202,9 @@ instruction_const_shared_ptr element::optimise_binary(element_interpreter_ctx* i
         if (input2_as_const && input2_as_const->value() == 0.0f)
             return binary.input1();
 
+        if (binary.input1() == binary.input2())
+            return interpreter->cache_instruction_constant.get(0.0f);
+
         break;
     }
 
@@ -229,7 +232,38 @@ instruction_const_shared_ptr element::optimise_binary(element_interpreter_ctx* i
         if (input2_as_const && input2_as_const->value() == 0.0f)
             return interpreter->cache_instruction_constant.get(INFINITY);
 
-        // todo: could transform divs to muls if that's faster
+        if (binary.input1() == binary.input2())
+            return interpreter->cache_instruction_constant.get(1.0f);
+
+        // transform divs to muls
+        if (input2_as_const)
+        {
+            auto constant = interpreter->cache_instruction_constant.get(1.0f / input2_as_const->value());
+            return interpreter->cache_instruction_binary.get(instruction_binary::op::mul, binary.input1(), std::move(constant), binary.actual_type);
+        }
+
+        break;
+    }
+
+    case element_binary_op::rem: {
+        if (input1_as_const && input1_as_const->value() == 0.0f)
+            return binary.input1();
+
+        if (binary.input1() == binary.input2())
+            return interpreter->cache_instruction_constant.get(0.0f);
+
+        break;
+    }
+
+    case element_binary_op::pow: {
+        if (input2_as_const && input2_as_const->value() == 0.0f)
+            return interpreter->cache_instruction_constant.get(1.0f);
+
+        if (input2_as_const && input2_as_const->value() == 1.0f)
+            return binary.input1();
+
+        if (input2_as_const && input2_as_const->value() == 2.0f)
+            return interpreter->cache_instruction_binary.get(instruction_binary::op::mul, binary.input1(), binary.input1(), binary.actual_type);
 
         break;
     }
