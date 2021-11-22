@@ -212,7 +212,12 @@ instruction_const_shared_ptr element::optimise_binary(element_interpreter_ctx* i
         if (input2_as_const && input2_as_const->value() == 1.0f)
             return binary.input1();
 
-        // NaN or Inf * 0 = NaN, and since that is valid user input, we can't do that optimisation
+        // Allow N*0 == 0 even though it's technically incorrect for NaNs
+        if (input1_as_const && input1_as_const->value() == 0.0f)
+            return binary.input1();
+
+        if (input2_as_const && input2_as_const->value() == 0.0f)
+            return binary.input2();
 
         break;
     }
@@ -221,7 +226,8 @@ instruction_const_shared_ptr element::optimise_binary(element_interpreter_ctx* i
         if (input2_as_const && input2_as_const->value() == 1.0f)
             return binary.input1();
 
-        // We can't optimise for division by 0
+        if (input2_as_const && input2_as_const->value() == 0.0f)
+            return interpreter->cache_instruction_constant.get(INFINITY);
 
         // todo: could transform divs to muls if that's faster
 
