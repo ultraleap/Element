@@ -153,7 +153,7 @@ std::shared_ptr<const instruction> element::evaluate(const compilation_context& 
     //we failed to fully evaluate the tree, likely due to boundary inputs (whose value are not known), so try and optimise it differently
 
     if (const auto* binary = expr->as<const instruction_binary>()) {
-        auto optimised = optimise_binary(*binary);
+        auto optimised = optimise_binary(context.interpreter, *binary);
         if (optimised)
             return optimised;
     }
