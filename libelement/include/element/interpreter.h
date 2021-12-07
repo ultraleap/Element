@@ -246,6 +246,13 @@ element_result element_instruction_get_size(
     size_t* size);
 
 /**
+ * @brief gets the total size of all inputs to the instruction
+ */
+element_result element_instruction_get_inputs_size(
+    element_instruction* instruction,
+    size_t* size);
+
+/**
  * @brief whether the instruction is a constant (i.e. a literal number) or not
  */
 element_result element_instruction_is_constant(
