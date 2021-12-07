@@ -18,19 +18,21 @@ namespace libelement::cli
 {
 struct compile_command_arguments
 {
-    std::string expression;
-    std::string arguments;
-    std::string output_path;
     std::string name;
+    std::string parameters;
+    std::string return_type;
+    std::string expression;
+    std::string output_path;
 
     [[nodiscard]] std::string as_string() const
     {
         std::stringstream ss;
-        ss  << "command --expression \"" << expression
-            << "\" --output-path \"" << output_path
-            << "\" --name \"" << name << "\"";
-        if (!arguments.empty())
-            ss << " --arguments \"" << arguments << "\"";
+        ss  << "compile --name \"" << name
+            << "\" --return-type \"" << return_type
+            << "\" --expression \"" << expression
+            << "\" --output-path \"" << output_path << "\"";
+        if (!parameters.empty())
+            ss << " --parameters \"" << parameters << "\"";
         return ss.str();
     }
 };
@@ -57,71 +59,60 @@ public:
 
     [[nodiscard]] compiler_message compile(const compilation_input& compilation_input) const
     {
-        // TODO: construct expression using object model to reconstruct function's arguments
-
-        const auto expression = custom_arguments.expression;
-
-        constexpr auto max_output_size = 512;
-
-        element_instruction* compiled_function;
-        element_result result = element_interpreter_compile_expression(context, nullptr, expression.c_str(), &compiled_function);
+        const auto def = fmt::format("{}{}:{} = {}",
+            custom_arguments.name,
+            custom_arguments.parameters,
+            custom_arguments.return_type,
+            custom_arguments.expression);
+        element_result result = element_interpreter_load_string(context, def.c_str(), "<cli>");
         if (result != ELEMENT_OK) {
-            element_instruction_delete(&compiled_function);
             return compiler_message(error_conversion(result),
-                "Failed to compile: " + expression + " at runtime with element_result " + std::to_string(result),
+                "Failed to load: " + def + " at runtime with element_result " + std::to_string(result),
                 compilation_input.get_log_json());
         }
 
-        element_outputs call_output;
-        std::array<element_value, max_output_size> call_outputs_buffer;
-        call_output.values = call_outputs_buffer.data();
-        call_output.count = max_output_size;
+        constexpr auto max_output_size = 512;
 
-        element_inputs input;
-        input.values = nullptr;
-        input.count = 0;
-
-        if (!custom_arguments.arguments.empty()) {
-            element_evaluator_ctx* evaluator;
-            element_evaluator_create(context, &evaluator);
-            result = element_interpreter_evaluate_call_expression(context, evaluator, custom_arguments.arguments.c_str(), &call_output);
-            element_evaluator_delete(&evaluator);
-
-            if (result != ELEMENT_OK) {
-                element_instruction_delete(&compiled_function);
-                return compiler_message(error_conversion(result),
-                    "Failed to evaluate: " + expression + " called with " + custom_arguments.arguments + " at runtime with element_result " + std::to_string(result),
-                    compilation_input.get_log_json());
-            }
-
-            input.values = call_output.values;
-            input.count = call_output.count;
+        element_declaration* decl = nullptr;
+        result = element_interpreter_find(context, custom_arguments.name.c_str(), &decl);
+        if (result != ELEMENT_OK) {
+            return compiler_message(error_conversion(result),
+                "Failed to find: " + custom_arguments.name + " with element_result " + std::to_string(result),
+                compilation_input.get_log_json());
         }
 
-        element_value outputs_buffer[max_output_size];
-        element_outputs output;
-        output.values = outputs_buffer;
-        output.count = max_output_size;
-
-        element_evaluator_ctx* evaluator;
-        element_evaluator_create(context, &evaluator);
-        element_interpreter_evaluate_instruction(context, evaluator, compiled_function, &input, &output);
-        element_evaluator_delete(&evaluator);
-
-        std::string interpreter_result_string = fmt::format("Element: {} -> {{", custom_arguments.expression + custom_arguments.arguments);
-        for (int i = 0; i < output.count - 1; ++i) {
-            interpreter_result_string += fmt::format("{}, ", output.values[i]);
+        element_instruction* compiled_function = nullptr;
+        result = element_interpreter_compile_declaration(context, nullptr, decl, &compiled_function);
+        if (result != ELEMENT_OK) {
+            return compiler_message(error_conversion(result),
+                "Failed to compile: " + custom_arguments.name + " at runtime with element_result " + std::to_string(result),
+                compilation_input.get_log_json());
         }
-        interpreter_result_string += fmt::format("{}}}\n", output.values[output.count - 1]);
-        std::cout << interpreter_result_string;
+
+        size_t inputs_size = 0;
+        result = element_instruction_get_inputs_size(compiled_function, &inputs_size);
+        if (result != ELEMENT_OK) {
+            return compiler_message(error_conversion(result),
+                "Failed to get inputs size of: " + custom_arguments.name + " with element_result " + std::to_string(result),
+                compilation_input.get_log_json());
+        }
+
+        size_t outputs_size = 0;
+        result = element_instruction_get_size(compiled_function, &outputs_size);
+        if (result != ELEMENT_OK) {
+            return compiler_message(error_conversion(result),
+                "Failed to get outputs size of: " + custom_arguments.name + " with element_result " + std::to_string(result),
+                compilation_input.get_log_json());
+        }
+
 
         auto response = generate_response(ELEMENT_ERROR_UNKNOWN, element_outputs{}, compilation_input.get_log_json());
 
         if (common_arguments.target == Target::LMNT)
-            response = compile_lmnt(compilation_input, compiled_function, input, output, custom_arguments.output_path);
+            response = compile_lmnt(compilation_input, compiled_function, inputs_size, outputs_size, custom_arguments.output_path);
 
         if (common_arguments.target == Target::LMNTJit)
-            response = compile_lmnt(compilation_input, compiled_function, input, output, custom_arguments.output_path);
+            response = compile_lmnt(compilation_input, compiled_function, inputs_size, outputs_size, custom_arguments.output_path);
 
         element_instruction_delete(&compiled_function);
 
@@ -143,18 +134,21 @@ public:
 
         auto* command = app.add_subcommand("compile")->fallthrough();
 
+        command->add_option("-n,--name", arguments->name,
+                    "Name of the resulting LMNT function.")
+            ->required();
+        command->add_option("-r,--return-type", arguments->return_type,
+                    "Return type of the resulting LMNT function.")
+            ->required();
         command->add_option("-e,--expression", arguments->expression,
                     "Expression to evaluate.")
             ->required();
         command->add_option("-o,--output-path", arguments->output_path,
                     "Path to output generated file to.")
             ->required();
-        command->add_option("-n,--name", arguments->name,
-                    "Name of the resulting LMNT function.")
-            ->required();
 
-        command->add_option("-a,--arguments", arguments->arguments,
-            "Arguments for performing call expression to given expression.");
+        command->add_option("-p,--parameters", arguments->parameters,
+            "Parameters to the resulting LMNT function.");
 
         command->callback([callback, common_arguments, arguments]() {
             compile_command cmd(*common_arguments, *arguments);
@@ -246,15 +240,15 @@ private:
     compiler_message compile_lmnt(
         const compilation_input& compilation_input,
         element_instruction* instruction,
-        element_inputs input,
-        element_outputs output,
+        size_t inputs_size,
+        size_t outputs_size,
         std::string output_path) const
     {
         element_lmnt_compiler_ctx lmnt_ctx;
         element_lmnt_compiled_function lmnt_output;
         std::vector<element_value> constants;
 
-        auto result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, constants, input.count, lmnt_output);
+        auto result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, constants, inputs_size, lmnt_output);
         if (result != ELEMENT_OK) {
             printf("RUH ROH: %d\n", result);
             return generate_response(result, "failed to compile LMNT function", compilation_input.get_log_json());
@@ -269,8 +263,8 @@ private:
 
         auto lmnt_archive_data = create_archive(
             custom_arguments.name.c_str(),
-            uint16_t(input.count),
-            uint16_t(output.count),
+            uint16_t(inputs_size),
+            uint16_t(outputs_size),
             uint16_t(lmnt_output.total_stack_count()),
             constants,
             lmnt_output.instructions,
