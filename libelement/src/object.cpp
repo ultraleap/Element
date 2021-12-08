@@ -285,17 +285,14 @@ element_result element_object_get_inputs(const element_object* object, element_p
     if (!inputs)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    *inputs = new element_ports();
-    for (const auto& input : object->obj->get_inputs()) {
-        auto port = std::unique_ptr<element_port, element_ports::port_deleter>(
-            new element_port{ &input },
-            [](element_port* port) {
-                element_port_delete(&port);
-            });
-
-        (*inputs)->ports.push_back(std::move(port));
+    if (!object->inputs_populated) {
+        for (const auto& input : object->obj->get_inputs()) {
+            object->inputs.ports.emplace_back(element_port { &input });
+        }
+        object->inputs_populated = true;
     }
 
+    *inputs = &object->inputs;
     return ELEMENT_OK;
 }
 
@@ -307,11 +304,16 @@ element_result element_object_get_output(const element_object* object, element_p
     if (!output)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    *output = new element_port{ &object->obj->get_output() };
+    if (!object->output_populated) {
+        object->output = { &object->obj->get_output() };
+        object->output_populated = true;
+    }
+
+    *output = &object->output;
     return ELEMENT_OK;
 }
 
-element_result element_ports_get_port(const element_ports* ports, size_t index, element_port** port)
+element_result element_ports_get_port(const element_ports* ports, size_t index, const element_port** port)
 {
     if (!ports)
         return ELEMENT_ERROR_API_PORTS_IS_NULL;
@@ -322,7 +324,7 @@ element_result element_ports_get_port(const element_ports* ports, size_t index, 
     if (index >= ports->ports.size())
         return ELEMENT_ERROR_API_INVALID_INPUT;
 
-    *port = ports->ports[index].get();
+    *port = &ports->ports[index];
     return ELEMENT_OK;
 }
 
@@ -336,15 +338,6 @@ element_result element_ports_get_count(const element_ports* ports, size_t* count
 
     *count = ports->ports.size();
     return ELEMENT_OK;
-}
-
-void element_ports_delete(element_ports** ports)
-{
-    if (!ports)
-        return;
-
-    delete *ports;
-    *ports = nullptr;
 }
 
 element_result element_port_get_name(const element_port* port, const char** name)
@@ -415,13 +408,4 @@ element_result element_port_get_default_object(const element_port* port, element
     (*object)->obj = default_chain->compile(*object_model_context->ctx, {});
 
     return ELEMENT_OK;
-}
-
-void element_port_delete(element_port** port)
-{
-    if (!port)
-        return;
-
-    delete *port;
-    *port = nullptr;
 }

@@ -20,9 +20,23 @@ struct element_declaration
     const element::declaration* decl = nullptr;
 };
 
+struct element_port
+{
+    const element::port* port = nullptr;
+};
+
+struct element_ports
+{
+    std::vector<element_port> ports;
+};
+
 struct element_object
 {
     std::shared_ptr<const element::object> obj;
+    mutable element_ports inputs;
+    mutable bool inputs_populated = false;
+    mutable element_port output;
+    mutable bool output_populated = false;
 };
 
 struct element_instruction
@@ -34,17 +48,6 @@ struct element_instruction
 struct element_object_model_ctx
 {
     std::unique_ptr<element::compilation_context> ctx;
-};
-
-struct element_port
-{
-    const element::port* port = nullptr;
-};
-
-struct element_ports
-{
-    using port_deleter = void (*)(element_port*);
-    std::vector<std::unique_ptr<element_port, port_deleter>> ports;
 };
 
 //todo: move somewhere else and add a logger so we don't need to pass interpreter in the C API

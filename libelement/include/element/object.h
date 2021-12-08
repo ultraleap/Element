@@ -311,11 +311,6 @@ element_result element_port_get_default_object(
     element_object_model_ctx* object_model_context,
     element_object** object);
 
-/**
- * @brief deletes a port
- */
-void element_port_delete(element_port** port);
-
     #if defined(__cplusplus)
 }
     #endif
