@@ -384,19 +384,6 @@ struct instruction_for final : public instruction
     std::set<std::shared_ptr<const instruction_input>> inputs;
 };
 
-struct instruction_fold final : public instruction
-{
-    DECLARE_TYPE_ID();
-
-    explicit instruction_fold(instruction_const_shared_ptr list, instruction_const_shared_ptr initial, instruction_const_shared_ptr accumulator);
-    [[nodiscard]] const instruction_const_shared_ptr& list() const { return m_dependents[0]; }
-    [[nodiscard]] const instruction_const_shared_ptr& initial() const { return m_dependents[1]; }
-    [[nodiscard]] const instruction_const_shared_ptr& accumulator() const { return m_dependents[2]; }
-
-    [[nodiscard]] size_t get_size() const override { return m_dependents[1]->get_size(); }
-    [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
-};
-
 struct instruction_indexer final : public instruction
 {
     DECLARE_TYPE_ID();

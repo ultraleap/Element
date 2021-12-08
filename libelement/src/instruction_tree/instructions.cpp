@@ -23,7 +23,6 @@ DEFINE_TYPE_ID(element::instruction_if, 1U << 6);
 DEFINE_TYPE_ID(element::instruction_select, 1U << 7);
 DEFINE_TYPE_ID(element::instruction_indexer, 1U << 8);
 DEFINE_TYPE_ID(element::instruction_for, 1U << 9);
-DEFINE_TYPE_ID(element::instruction_fold, 1U << 10);
 
 std::shared_ptr<const object> instruction::compile(const compilation_context& context, const source_information& source_info) const
 {
@@ -89,16 +88,6 @@ instruction_for::instruction_for(instruction_const_shared_ptr initial, instructi
     m_dependents.emplace_back(std::move(initial));
     m_dependents.emplace_back(std::move(condition));
     m_dependents.emplace_back(std::move(body));
-}
-
-instruction_fold::instruction_fold(instruction_const_shared_ptr list, instruction_const_shared_ptr initial, instruction_const_shared_ptr accumulator)
-    : instruction(type_id, nullptr)
-{
-    actual_type = initial->actual_type;
-
-    m_dependents.emplace_back(std::move(list));
-    m_dependents.emplace_back(std::move(initial));
-    m_dependents.emplace_back(std::move(accumulator));
 }
 
 instruction_indexer::instruction_indexer(std::shared_ptr<const element::instruction_for> for_instruction, int index, type_const_ptr type)
