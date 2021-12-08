@@ -347,7 +347,7 @@ void element_ports_delete(element_ports** ports)
     *ports = nullptr;
 }
 
-element_result element_port_get_name(element_port* port, const char** name)
+element_result element_port_get_name(const element_port* port, const char** name)
 {
     if (!port)
         return ELEMENT_ERROR_API_PORT_IS_NULL;
@@ -359,7 +359,7 @@ element_result element_port_get_name(element_port* port, const char** name)
     return ELEMENT_OK;
 }
 
-element_result element_port_get_constraint_annotation(element_port* port, const char** annotation)
+element_result element_port_get_constraint_annotation(const element_port* port, const char** annotation)
 {
     if (!port)
         return ELEMENT_ERROR_API_PORT_IS_NULL;
@@ -375,7 +375,7 @@ element_result element_port_get_constraint_annotation(element_port* port, const 
     return ELEMENT_OK;
 }
 
-element_result element_port_get_constraint_object(element_port* port, element_object_model_ctx* object_model_context, element_object** object)
+element_result element_port_get_constraint_object(const element_port* port, element_object_model_ctx* object_model_context, element_object** object)
 {
     if (!port)
         return ELEMENT_ERROR_API_PORT_IS_NULL;
@@ -396,7 +396,7 @@ element_result element_port_get_constraint_object(element_port* port, element_ob
     return ELEMENT_OK;
 }
 
-element_result element_port_get_default_object(element_port* port, element_object_model_ctx* object_model_context, element_object** object)
+element_result element_port_get_default_object(const element_port* port, element_object_model_ctx* object_model_context, element_object** object)
 {
     if (!port)
         return ELEMENT_ERROR_API_PORT_IS_NULL;

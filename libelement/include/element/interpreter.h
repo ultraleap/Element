@@ -242,21 +242,21 @@ void element_instruction_delete(
  * @brief gets the size of the instruction (number of element_value's it represents), including the size of any children
  */
 element_result element_instruction_get_size(
-    element_instruction* instruction,
+    const element_instruction* instruction,
     size_t* size);
 
 /**
  * @brief gets the total size of all inputs to the instruction
  */
 element_result element_instruction_get_inputs_size(
-    element_instruction* instruction,
+    const element_instruction* instruction,
     size_t* size);
 
 /**
  * @brief whether the instruction is a constant (i.e. a literal number) or not
  */
 element_result element_instruction_is_constant(
-    element_instruction* instruction,
+    const element_instruction* instruction,
     bool* constant);
 
 /**
@@ -271,7 +271,7 @@ element_result element_instruction_is_constant(
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
 */
 element_result element_instruction_to_string(
-    element_instruction* instruction,
+    const element_instruction* instruction,
     char* buffer,
     size_t* buffer_size);
 
@@ -287,7 +287,7 @@ element_result element_instruction_to_string(
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
 */
 element_result element_instruction_to_code(
-    element_instruction* instruction,
+    const element_instruction* instruction,
     char* buffer,
     size_t* buffer_size);
 
@@ -305,7 +305,7 @@ element_result element_instruction_to_code(
  * @return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND path was invalid as nothing was found
  */
 element_result element_interpreter_find(
-    element_interpreter_ctx* interpreter,
+    const element_interpreter_ctx* interpreter,
     const char* path,
     element_declaration** declaration);
 

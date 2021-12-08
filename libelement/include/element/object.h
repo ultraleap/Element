@@ -267,12 +267,12 @@ element_result element_object_get_output(
     element_port** output);
 
 /**
- * @brief gets a port from a list of ports. do not delete
+ * @brief gets a port from a list of ports
  */
 element_result element_ports_get_port(
     const element_ports* ports,
     size_t index,
-    element_port** port);
+    const element_port** port);
 
 /**
  * @brief gets the number of ports in the list
@@ -282,29 +282,24 @@ element_result element_ports_get_count(
     size_t* count);
 
 /**
- * @brief deletes all of the ports
- */
-void element_ports_delete(element_ports** ports);
-
-/**
  * @brief gets the name of the port if it has one (such as the parameter name), otherwise empty string
  */
 element_result element_port_get_name(
-    element_port* port,
+    const element_port* port,
     const char** name);
 
 /**
  * @brief gets the string in source of the type, e.g. func(a:MyNamespace.MyStruct) returns "MyNamespace.MyStruct"
  */
 element_result element_port_get_constraint_annotation(
-    element_port* port,
+    const element_port* port,
     const char** annotation);
 
 /**
  * @brief gets the constraint after interpreting the annotation, e,g. func(a:MyNamespace.MyStruct) returns an object that is the "MyStruct" struct
  */
 element_result element_port_get_constraint_object(
-    element_port* port,
+    const element_port* port,
     element_object_model_ctx* object_model_context,
     element_object** object);
 
@@ -312,7 +307,7 @@ element_result element_port_get_constraint_object(
  * @brief gets the default after interpreting, e,g. func(a:Num = 5.add(2)) returns an object that is a "Num" with the value "7"
  */
 element_result element_port_get_default_object(
-    element_port* port,
+    const element_port* port,
     element_object_model_ctx* object_model_context,
     element_object** object);
 
