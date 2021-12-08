@@ -9,9 +9,8 @@
 using namespace element;
 
 scope::scope(const scope* parent_scope, const object* const declaration_or_expression)
-    : /*declaration_or_expression(declaration_or_expression)
-    ,*/
-    parent_scope(parent_scope)
+    : parent_scope(parent_scope)
+    , name(declaration_or_expression ? declaration_or_expression->get_name() : "")
 {
 }
 
@@ -99,7 +98,18 @@ const std::map<identifier, std::unique_ptr<declaration>>& scope::get_declaration
 
 std::string scope::get_name() const
 {
-    return "";
+    return name;
+}
+
+std::string scope::get_qualified_name() const
+{
+    std::string n = get_name();
+    const scope* s = parent_scope;
+    while (s && !s->is_root()) {
+        n = s->get_name() + "." + n;
+        s = s->parent_scope;
+    }
+    return n;
 }
 
 std::vector<std::string> split(const std::string& full_string, char delimiter = '.')

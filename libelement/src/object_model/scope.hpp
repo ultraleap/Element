@@ -19,6 +19,7 @@ public:
     scope(const scope* parent_scope, const object* declaration_or_expression);
 
     [[nodiscard]] std::string get_name() const override;
+    [[nodiscard]] std::string get_qualified_name() const;
     [[nodiscard]] const declaration* find(const identifier& name, scope_caches& caches, bool recurse) const;
     [[nodiscard]] bool is_root() const { return parent_scope == nullptr; }
     [[nodiscard]] bool is_empty() const { return declarations.empty(); }
@@ -42,6 +43,7 @@ private:
     const declaration* find_identifier(const identifier& name, scope_caches& caches, bool recurse) const;
 
     const scope* parent_scope = nullptr;
+    std::string name;
     std::map<identifier, std::unique_ptr<declaration>> declarations;
 };
 } // namespace element
