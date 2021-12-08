@@ -20,6 +20,9 @@
 #include "instruction_tree/instructions.hpp"
 #include "expressions/anonymous_block_expression.hpp"
 
+#include <fmt/format.h>
+#include <sstream>
+
 using namespace element;
 
 //to_string
@@ -258,7 +261,7 @@ std::string indexing_expression::to_code(const int depth) const
 
 std::string anonymous_block_expression::to_code(const int depth) const
 {
-    return "todo";
+    return "<TODO>";
 }
 
 std::string port::to_code(const int depth) const
@@ -295,4 +298,127 @@ std::string type_annotation::to_code(const int depth) const
         return {};
 
     return ":" + name.value;
+}
+
+// instructions
+
+std::string instruction_constant::to_code(const int depth) const
+{
+    if (actual_type == type::boolean.get())
+        return to_bool(m_value) ? "true" : "false";
+
+    return fmt::format("{:g}", m_value);
+}
+
+std::string instruction_input::to_code(const int depth) const
+{
+    // TODO: ???
+    return to_string();
+}
+
+std::string instruction_serialised_structure::to_code(const int depth) const
+{
+    std::stringstream ss;
+    ss << m_debug_type_name;
+    if (!m_dependents.empty()) {
+        ss << "(";
+        for (size_t i = 0; i < m_dependents.size(); ++i) {
+            if (i) ss << ",";
+            ss << m_dependents[i]->to_code(depth);
+        }
+        ss << ")";
+    }
+    return ss.str();
+}
+
+// TODO: not have all these symbol names hard-coded in here :(
+std::string instruction_nullary::to_code(const int depth) const
+{
+    switch (operation()) {
+        case op::true_value: return "true";
+        case op::false_value: return "false";
+        case op::nan: return "NaN";
+        case op::positive_infinity: return "PositiveInfinity";
+        case op::negative_infinity: return "NegativeInfinity";
+        default: return "<INVALID>";
+    }
+}
+
+// TODO: not have all these symbol names hard-coded in here :(
+std::string instruction_unary::to_code(const int depth) const
+{
+    std::string opname;
+    switch (operation()) {
+        case op::abs: opname = "abs"; break;
+        case op::acos: opname = "acos"; break;
+        case op::asin: opname = "asin"; break;
+        case op::atan: opname = "atan"; break;
+        case op::ceil: opname = "ceil"; break;
+        case op::cos: opname = "cos"; break;
+        case op::floor: opname = "floor"; break;
+        case op::ln: opname = "ln"; break;
+        case op::not_: opname = "not"; break;
+        case op::sin: opname = "sin"; break;
+        case op::tan: opname = "tan"; break;
+        default: return "<INVALID>";
+    }
+
+    return fmt::format("{}({})", opname, input()->to_code(depth));
+}
+
+// TODO: not have all these symbol names hard-coded in here :(
+std::string instruction_binary::to_code(const int depth) const
+{
+    std::string opname;
+    switch (operation()) {
+        case op::add: opname = "add"; break;
+        case op::sub: opname = "sub"; break;
+        case op::mul: opname = "mul"; break;
+        case op::div: opname = "div"; break;
+        case op::rem: opname = "rem"; break;
+        case op::pow: opname = "pow"; break;
+        case op::min: opname = "min"; break;
+        case op::max: opname = "max"; break;
+        case op::log: opname = "log"; break;
+        case op::atan2: opname = "atan2"; break;
+        case op::and_: opname = "and"; break;
+        case op::or_: opname = "or"; break;
+        case op::eq: opname = "eq"; break;
+        case op::neq: opname = "neq"; break;
+        case op::lt: opname = "lt"; break;
+        case op::leq: opname = "leq"; break;
+        case op::gt: opname = "gt"; break;
+        case op::geq: opname = "geq"; break;
+        default: return "<INVALID>";
+    }
+
+    return fmt::format("{}({},{})", opname, input1()->to_code(depth), input2()->to_code(depth));
+}
+
+std::string instruction_if::to_code(const int depth) const
+{
+    return fmt::format("if({},{},{})",
+        predicate()->to_code(depth),
+        if_true()->to_code(depth),
+        if_false()->to_code(depth));
+}
+
+std::string instruction_for::to_code(const int depth) const
+{
+    return fmt::format("for({},{},{})",
+        initial()->to_code(depth),
+        condition()->to_code(depth),
+        body()->to_code(depth));
+}
+
+std::string instruction_indexer::to_code(const int depth) const
+{
+    // TODO: ???
+    return "<TODO>";
+}
+
+std::string instruction_select::to_code(const int depth) const
+{
+    // TODO: ???
+    return "<TODO>";
 }

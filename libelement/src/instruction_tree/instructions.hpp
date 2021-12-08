@@ -101,11 +101,10 @@ struct instruction_constant final : public instruction
 
     [[nodiscard]] std::string to_string() const override
     {
-        if (actual_type == type::boolean.get())
-            return to_bool(m_value) ? "Bool = true" : "Bool = false";
-
-        return fmt::format("Num = {:g}", m_value);
+        return fmt::format("{} = {}", actual_type->get_name(), to_code(0));
     }
+
+    [[nodiscard]] std::string to_code(const int depth) const override;
 
     bool operator<(const instruction_constant& other) const noexcept
     {
@@ -143,6 +142,7 @@ struct instruction_input final : public instruction
     [[nodiscard]] bool is_constant() const override { return false; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
     [[nodiscard]] std::string to_string() const override { return fmt::format("<scope {}, index {}>", m_scope, m_index); }
+    [[nodiscard]] std::string to_code(const int depth) const override;
 
     bool operator<(const instruction_input& other) const noexcept
     {
@@ -198,6 +198,8 @@ struct instruction_serialised_structure final : public instruction
         return m_debug_dependents_names;
     }
 
+    [[nodiscard]] std::string to_code(const int depth) const override;
+
     bool operator<(const instruction_serialised_structure& other) const noexcept
     {
         if (m_dependents != other.m_dependents)
@@ -236,6 +238,8 @@ struct instruction_nullary final : public instruction
     [[nodiscard]] bool is_constant() const override { return true; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
 
+    [[nodiscard]] std::string to_code(const int depth) const override;
+
     [[nodiscard]] bool operator<(const instruction_nullary& other) const noexcept
     {
         if (m_op != other.m_op)
@@ -266,6 +270,8 @@ struct instruction_unary final : public instruction
 
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
+
+    [[nodiscard]] std::string to_code(const int depth) const override;
 
     bool operator<(const instruction_unary& other) const noexcept
     {
@@ -303,6 +309,8 @@ struct instruction_binary final : public instruction
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
 
+    [[nodiscard]] std::string to_code(const int depth) const override;
+
     bool operator<(const instruction_binary& other) const noexcept
     {
         if (operation() != other.operation())
@@ -333,6 +341,8 @@ struct instruction_if final : public instruction
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
 
+    [[nodiscard]] std::string to_code(const int depth) const override;
+
     [[nodiscard]] bool operator<(const instruction_if& other) const noexcept
     {
         if (predicate() != other.predicate())
@@ -356,6 +366,8 @@ struct instruction_for final : public instruction
 
     [[nodiscard]] size_t get_size() const override { return m_dependents[0]->get_size(); }
     [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
+
+    [[nodiscard]] std::string to_code(const int depth) const override;
 
     [[nodiscard]] bool is_input(const instruction_input& input) const
     {
@@ -393,6 +405,8 @@ struct instruction_indexer final : public instruction
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
 
+    [[nodiscard]] std::string to_code(const int depth) const override;
+
     [[nodiscard]] const instruction_const_shared_ptr& for_instruction() const { return m_dependents[0]; }
 
     bool operator<(const instruction_indexer& other) const noexcept
@@ -420,6 +434,8 @@ struct instruction_select final : public instruction
     [[nodiscard]] size_t options_count() const { return m_dependents.size() - 1; };
     [[nodiscard]] const instruction_const_shared_ptr& selector() const { return m_dependents[0]; };
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
+
+    [[nodiscard]] std::string to_code(const int depth) const override;
 
     [[nodiscard]] bool operator<(const instruction_select& other) const noexcept
     {
