@@ -20,11 +20,14 @@ namespace libelement::cli
 struct declaration_command_arguments
 {
     std::string name;
+    bool definition = false;
 
     [[nodiscard]] std::string as_string() const
     {
         std::stringstream ss;
         ss  << "declaration --name \"" << name << "\"";
+        if (definition)
+            ss << " --definition";
         return ss.str();
     }
 };
@@ -59,31 +62,23 @@ public:
                 compilation_input.get_log_json());
         }
 
-        element_object_model_ctx* octx = nullptr;
-        result = element_object_model_ctx_create(context, &octx);
+        size_t code_size = 0;
+        result = element_declaration_to_code(decl, custom_arguments.definition, nullptr, &code_size);
         if (result != ELEMENT_OK) {
             return compiler_message(error_conversion(result),
-                "Failed to create object model with element_result " + std::to_string(result),
+                "Failed to convert declaration to code with element_result " + std::to_string(result),
                 compilation_input.get_log_json());
         }
-
-        element_object* object = nullptr;
-        result = element_declaration_to_object(decl, &object);
+        std::string code(code_size, '\0');
+        result = element_declaration_to_code(decl, custom_arguments.definition, code.data(), &code_size);
         if (result != ELEMENT_OK) {
             return compiler_message(error_conversion(result),
-                "Failed to create object with element_result " + std::to_string(result),
+                "Failed to convert declaration to code with element_result " + std::to_string(result),
                 compilation_input.get_log_json());
         }
+        code.resize(code_size-1);
 
-        std::string declstr;
-        result = get_declaration_string(octx, decl, object, declstr);
-        if (result != ELEMENT_OK) {
-            return compiler_message(error_conversion(result),
-                "Failed to generate declaration string with element_result " + std::to_string(result),
-                compilation_input.get_log_json());
-        }
-
-        return compiler_message(declstr, compilation_input.get_log_json());
+        return compiler_message(code, compilation_input.get_log_json());
     }
 
     [[nodiscard]] std::string as_string() const override
@@ -104,6 +99,8 @@ public:
         command->add_option("-n,--name", arguments->name,
                     "Name of the Element declaration to print.")
             ->required();
+        command->add_flag("--definition", arguments->definition,
+                    "Gets the full function definition rather than just the declaration.");
 
         command->callback([callback, common_arguments, arguments]() {
             declaration_command cmd(*common_arguments, *arguments);
@@ -113,63 +110,5 @@ public:
 
 private:
     declaration_command_arguments custom_arguments;
-
-    element_result get_declaration_string(element_object_model_ctx* octx, element_declaration* decl, element_object* object, std::string& declstring) const
-    {
-        std::string name(512, '\0');
-        size_t size = name.size();
-        ELEMENT_OK_OR_RETURN(element_declaration_get_qualified_name(decl, name.data(), &size));
-        name.resize(name.find_first_of('\0'));
-        element_ports* inputs = nullptr;
-        ELEMENT_OK_OR_RETURN(element_object_get_inputs(object, &inputs));
-        size_t inputs_count = 0;
-        ELEMENT_OK_OR_RETURN(element_ports_get_count(inputs, &inputs_count));
-        element_port* output = nullptr;
-        ELEMENT_OK_OR_RETURN(element_object_get_output(object, &output));
-
-        std::stringstream ss;
-        ss << name;
-        if (inputs_count) ss << "(";
-        for (size_t i = 0; i < inputs_count; ++i) {
-            const element_port* input_i = nullptr;
-            ELEMENT_OK_OR_RETURN(element_ports_get_port(inputs, i, &input_i));
-            // name
-            const char* input_name = nullptr;
-            ELEMENT_OK_OR_RETURN(element_port_get_name(input_i, &input_name));
-            // constraint annotation
-            const char* input_constraint = nullptr;
-            if (element_port_get_constraint_annotation(input_i, &input_constraint) != ELEMENT_OK)
-                input_constraint = "any";
-            // default value, if present
-            std::string default_object_value;
-            element_object* default_object = nullptr;
-            if (element_port_get_default_object(input_i, octx, &default_object) == ELEMENT_OK) {
-                // does it have a name?
-                default_object_value.resize(512, '\0');
-                // if (element_object_get_name(default_object, default_object_value.data(), default_object_value.size()) != ELEMENT_OK) {
-                    // no name, get it as a constant
-                    element_instruction* default_object_instr;
-                    ELEMENT_OK_OR_RETURN(element_object_to_instruction(default_object, &default_object_instr));
-                    size_t bufsize = default_object_value.size();
-                    ELEMENT_OK_OR_RETURN(element_instruction_to_code(default_object_instr, default_object_value.data(), &bufsize));
-                // }
-                default_object_value.resize(default_object_value.find_first_of('\0'));
-            }
-
-            if (i) ss << ", ";
-            ss << input_name << ":" << input_constraint;
-            if (!default_object_value.empty())
-                ss << " = " << default_object_value;
-        }
-        if (inputs_count) ss << "):";
-
-        const char* output_constraint = nullptr;
-        if (element_port_get_constraint_annotation(output, &output_constraint) != ELEMENT_OK)
-            output_constraint = "any";
-        ss << output_constraint;
-
-        declstring = ss.str();
-        return ELEMENT_OK;
-    }
 };
 } // namespace libelement::cli
