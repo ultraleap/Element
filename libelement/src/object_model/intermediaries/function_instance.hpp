@@ -15,6 +15,7 @@ public:
     [[nodiscard]] std::string get_name() const override;
     [[nodiscard]] std::string typeof_info() const override;
     [[nodiscard]] std::string to_string() const override;
+    [[nodiscard]] std::string to_code(const int depth) const override;
 
     [[nodiscard]] bool matches_constraint(const compilation_context& context, const constraint* constraint) const override;
     [[nodiscard]] const constraint* get_constraint() const override;

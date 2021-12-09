@@ -258,37 +258,6 @@ element_result element_instruction_to_string(
     return ELEMENT_OK;
 }
 
-element_result element_instruction_to_code(
-    const element_instruction* instruction,
-    char* buffer,
-    size_t* buffer_size)
-{
-    if (!instruction || !instruction->instruction)
-        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
-
-    if (!buffer_size)
-        return ELEMENT_ERROR_API_INVALID_INPUT;
-
-    const auto string = instruction->instruction->to_code(0);
-    const auto required_buffer_size = string.size() + 1;
-
-    if (!buffer) {
-        *buffer_size = required_buffer_size;
-        return ELEMENT_OK;
-    }
-
-    if (*buffer_size < required_buffer_size) {
-        *buffer_size = required_buffer_size;
-        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
-    }
-
-    *buffer_size = required_buffer_size;
-    strncpy(buffer, string.c_str(), string.size());
-    buffer[string.size()] = '\0';
-
-    return ELEMENT_OK;
-}
-
 element_result element_interpreter_find(const element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
 {
     if (!interpreter)
