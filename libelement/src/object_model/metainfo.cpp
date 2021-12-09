@@ -179,6 +179,11 @@ std::string constraint_declaration::to_code(const int depth) const
 
 std::string function_declaration::to_code(const int depth) const
 {
+    return to_code(depth, true);
+}
+
+std::string function_declaration::to_code(const int depth, bool include_body) const
+{
     auto declaration = name.value;
 
     const std::string offset = "    ";
@@ -190,7 +195,7 @@ std::string function_declaration::to_code(const int depth) const
     std::string ports;
     if (has_inputs()) {
         static constexpr auto accumulate = [](std::string accumulator, const port& port) {
-            return std::move(accumulator) + ", " + port.typeof_info();
+            return std::move(accumulator) + ", " + port.typeof_info() + (port.has_default() ? " = " + port.get_default()->to_code() : "");
         };
 
         const auto input_ports = std::accumulate(
@@ -206,7 +211,11 @@ std::string function_declaration::to_code(const int depth) const
 
     //intrinsic declaration
     if (is_intrinsic())
-        return result + "intrinsic " + name.value + ports;
+        result += "intrinsic ";
+
+    // if we're just returning the declaration, do that
+    if (!include_body)
+        return result + name.value + ports;
 
     //scope-bodied
     if (has_scope())
