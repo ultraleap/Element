@@ -326,6 +326,24 @@ element_result element_declaration_get_qualified_name(
     size_t* bufsize);
 
 /**
+ * @brief converts a declaration into a code fragment that represents it
+ *
+ * @param[in] declaration       declaration to represent as a code fragment
+ * @param[in] include_body      for functions, whether to return the whole function or just its declaration
+ * @param[out] buffer           output buffer. if a non-NULL buffer is passed and ELEMENT_OK is returned, the buffer will be null-terminated.
+ * @param[in,out] buffer_size   output buffer size. this is always modified to be the size required to contain the null-terminated string.
+ * @return ELEMENT_OK either buffer was NULL or buffer was not NULL and buffer_size was sufficiently large
+ * @return ELEMENT_ERROR_API_DECLARATION_IS_NULL the declaration is NULL
+ * @return ELEMENT_ERROR_API_INVALID_INPUT the buffer_size is NULL
+ * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
+*/
+element_result element_declaration_to_code(
+    const element_declaration* declaration,
+    bool include_body,
+    char* buffer,
+    size_t* buffer_size);
+
+/**
  * @brief compiles a declaration into an instruction tree
  *
  * @param[in] interpreter       interpreter context

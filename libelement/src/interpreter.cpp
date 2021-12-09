@@ -26,6 +26,7 @@
 #include "log_errors.hpp"
 #include "element/ast.h"
 #include "ast/parser_internal.hpp"
+#include "object_model/declarations/function_declaration.hpp"
 #include "object_model/intrinsics/intrinsic.hpp"
 #include "object_model/expressions/expression_chain.hpp"
 #include "object_model/expressions/call_expression.hpp"
@@ -331,6 +332,45 @@ element_result element_declaration_get_qualified_name(const element_declaration*
     }
 
     *bufsize = required_buffer_size;
+    strncpy(buffer, string.c_str(), string.size());
+    buffer[string.size()] = '\0';
+
+    return ELEMENT_OK;
+}
+
+
+element_result element_declaration_to_code(
+    const element_declaration* declaration,
+    bool include_body,
+    char* buffer,
+    size_t* buffer_size)
+{
+    if (!declaration || !declaration->decl)
+        return ELEMENT_ERROR_API_DECLARATION_IS_NULL;
+
+    if (!buffer_size)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    std::string string;
+    auto fdecl = dynamic_cast<const element::function_declaration*>(declaration->decl);
+    if (fdecl)
+        string = fdecl->to_code(0, include_body);
+    else
+        string = declaration->decl->to_code(0);
+
+    const auto required_buffer_size = string.size() + 1;
+
+    if (!buffer) {
+        *buffer_size = required_buffer_size;
+        return ELEMENT_OK;
+    }
+
+    if (*buffer_size < required_buffer_size) {
+        *buffer_size = required_buffer_size;
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+    }
+
+    *buffer_size = required_buffer_size;
     strncpy(buffer, string.c_str(), string.size());
     buffer[string.size()] = '\0';
 
