@@ -277,6 +277,37 @@ element_result element_object_get_typeof(const element_object* object, char* buf
     return ELEMENT_OK;
 }
 
+element_result element_object_to_code(
+    const element_object* object,
+    char* buffer,
+    size_t* buffer_size)
+{
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+
+    if (!buffer_size)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    const auto string = object->obj->to_code(0);
+    const auto required_buffer_size = string.size() + 1;
+
+    if (!buffer) {
+        *buffer_size = required_buffer_size;
+        return ELEMENT_OK;
+    }
+
+    if (*buffer_size < required_buffer_size) {
+        *buffer_size = required_buffer_size;
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+    }
+
+    *buffer_size = required_buffer_size;
+    strncpy(buffer, string.c_str(), string.size());
+    buffer[string.size()] = '\0';
+
+    return ELEMENT_OK;
+}
+
 element_result element_object_get_inputs(const element_object* object, element_ports** inputs)
 {
     if (!object || !object->obj)

@@ -253,6 +253,22 @@ element_result element_object_get_typeof(
     int buffer_size);
 
 /**
+ * @brief converts an object into a code fragment that represents it
+ *
+ * @param[in] object       object to represent as a code fragment
+ * @param[out] buffer           output buffer. if a non-NULL buffer is passed and ELEMENT_OK is returned, the buffer will be null-terminated.
+ * @param[in,out] buffer_size   output buffer size. this is always modified to be the size required to contain the null-terminated string.
+ * @return ELEMENT_OK either buffer was NULL or buffer was not NULL and buffer_size was sufficiently large
+ * @return ELEMENT_ERROR_API_OBJECT_IS_NULL the object is NULL
+ * @return ELEMENT_ERROR_API_INVALID_INPUT the buffer_size is NULL
+ * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
+*/
+element_result element_object_to_code(
+    const element_object* object,
+    char* buffer,
+    size_t* buffer_size);
+
+/**
  * @brief gets any and all inputs of an object, such as the parameters of a function
  */
 element_result element_object_get_inputs(
