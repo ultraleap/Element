@@ -9,7 +9,13 @@ include(DetectTargetArch)
 
 option(LMNT_BUILD_JIT "Build the DynASM-based JIT" ON)
 set(LMNT_JIT_ARCHITECTURES "NATIVE" CACHE STRING "List of architectures to build the JIT for")
-list(TRANSFORM LMNT_JIT_ARCHITECTURES REPLACE "NATIVE" "${LMNT_TARGET_ARCH}")
+# check if a JIT for the current native architecture exists
+# if so, set that arch as a JIT target if specified; if not, just remove native as a JIT target
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/jit/jit-${LMNT_TARGET_ARCH}.dasc")
+    list(TRANSFORM LMNT_JIT_ARCHITECTURES REPLACE "NATIVE" "${LMNT_TARGET_ARCH}")
+else ()
+    list(TRANSFORM LMNT_JIT_ARCHITECTURES REMOVE_ITEM "NATIVE")
+endif ()
 list(REMOVE_DUPLICATES LMNT_JIT_ARCHITECTURES)
 
 # Enable ASAN if requested
