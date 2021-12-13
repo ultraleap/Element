@@ -37,9 +37,9 @@ typedef struct
 
 typedef enum
 {
-    LMNT_JIT_TARGET_CURRENT = 0,
-    LMNT_JIT_TARGET_X86_64 = 1,
-    LMNT_JIT_TARGET_ARMV7A = 2,
+    LMNT_JIT_TARGET_NONE = 0,
+    LMNT_JIT_TARGET_CURRENT = 1,
+    LMNT_JIT_TARGET_X86_64 = 2,
     LMNT_JIT_TARGET_ARMV7M = 3,
 } lmnt_jit_target;
 
