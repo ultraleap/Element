@@ -33,6 +33,10 @@ foreach (arch IN LISTS LMNT_JIT_ARCHITECTURES)
     set(jit_input "${CMAKE_CURRENT_SOURCE_DIR}/jit-${arch_lower}.dasc")
     set(jit_output "${CMAKE_CURRENT_BINARY_DIR}/jit-${arch_lower}.c")
 
+    if (NOT EXISTS "${jit_input}")
+        message(FATAL_ERROR "There is no LMNT JIT implementation for specified architecture ${arch}!")
+    endif ()
+
     set (jit_flags "TARGET_${arch}" "HOST_${LMNT_TARGET_ARCH}")
     if (WIN32)
         list (APPEND jit_flags "TARGET_WIN" "HOST_WIN")
