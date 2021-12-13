@@ -182,7 +182,7 @@ element_result element_object_to_instruction(const element_object* object, eleme
 {
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
-    
+
     if (!context || !context->ctx)
         return ELEMENT_ERROR_API_OBJECT_MODEL_CTX_IS_NULL;
 

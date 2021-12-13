@@ -117,7 +117,7 @@ instruction_select::instruction_select(instruction_const_shared_ptr selector, st
     for (auto&& o : options) {
         m_dependents.emplace_back(std::move(o));
     }
-    
+
     // Both branches must be the same type, and that represents the output type of this instruction
     actual_type = options_at(0)->actual_type;
 }
@@ -236,8 +236,7 @@ instruction_const_shared_ptr element::optimise_binary(element_interpreter_ctx* i
             return interpreter->cache_instruction_constant.get(1.0f);
 
         // transform divs to muls
-        if (input2_as_const)
-        {
+        if (input2_as_const) {
             auto constant = interpreter->cache_instruction_constant.get(1.0f / input2_as_const->value());
             return interpreter->cache_instruction_binary.get(instruction_binary::op::mul, binary.input1(), std::move(constant), binary.actual_type);
         }

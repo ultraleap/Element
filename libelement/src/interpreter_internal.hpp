@@ -76,9 +76,9 @@ public:
             return a < b;
         }
     };
-    
+
     using cache = std::set<std::shared_ptr<const Instruction>, compare_instruction>;
-    
+
     template <typename... Args>
     std::shared_ptr<const Instruction> get(Args&&... args)
     {

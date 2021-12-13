@@ -27,7 +27,7 @@ public:
         const identifier& name,
         const compilation_context& context,
         const source_information& source_info) const;
-    
+
     [[nodiscard]] capture_stack filter_captures_from_scope(const scope* local_scope,
         const compilation_context& context,
         const source_information& source_info) const;

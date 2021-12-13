@@ -56,7 +56,7 @@ public:
     [[nodiscard]] std::string get_name() const override { return actual_type->get_name(); }
     [[nodiscard]] std::string typeof_info() const override;
     [[nodiscard]] std::shared_ptr<const instruction> to_instruction(const element_interpreter_ctx&) const final { return shared_from_this(); }
-    
+
     type_const_ptr actual_type;
 
 protected:
@@ -117,7 +117,7 @@ struct instruction_constant final : public instruction
 
         if (ma_nan != yer_nan)
             return ma_nan < yer_nan;
-        
+
         return m_value < other.m_value;
     }
 
@@ -148,7 +148,7 @@ struct instruction_input final : public instruction
     {
         if (m_scope != other.m_scope)
             return m_scope < other.m_scope;
-        
+
         if (m_index != other.m_index)
             return m_index < other.m_index;
 
@@ -197,12 +197,12 @@ struct instruction_serialised_structure final : public instruction
     {
         return m_debug_dependents_names;
     }
-    
+
     bool operator<(const instruction_serialised_structure& other) const noexcept
     {
         if (m_dependents != other.m_dependents)
             return m_dependents < other.m_dependents;
-        
+
         //the debug information doesn't matter for correctness, but it does for debugging
         //so two different struct types with the same values are different trees
         //even though they could be represented as one tree
@@ -228,7 +228,6 @@ struct instruction_nullary final : public instruction
         : instruction(type_id, std::move(actual_type))
         , m_op(t)
     {
-
     }
 
     [[nodiscard]] op operation() const { return m_op; }
@@ -236,7 +235,7 @@ struct instruction_nullary final : public instruction
 
     [[nodiscard]] bool is_constant() const override { return true; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
-    
+
     [[nodiscard]] bool operator<(const instruction_nullary& other) const noexcept
     {
         if (m_op != other.m_op)
@@ -270,9 +269,9 @@ struct instruction_unary final : public instruction
 
     bool operator<(const instruction_unary& other) const noexcept
     {
-        if (m_op != other.m_op) 
+        if (m_op != other.m_op)
             return m_op < other.m_op;
-        
+
         if (input() != other.input())
             return input() < other.input();
 

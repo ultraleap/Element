@@ -25,7 +25,8 @@ object_const_shared_ptr intrinsic_if::compile(const compilation_context& context
     if (!pred_expr) {
         return std::make_shared<const element::error>(
             fmt::format("First argument to intrinsic 'if' was '{}' which is invalid.",
-                frame.compiled_arguments[0]->to_string()), ELEMENT_ERROR_UNKNOWN, source_info);
+                frame.compiled_arguments[0]->to_string()),
+            ELEMENT_ERROR_UNKNOWN, source_info);
     }
 
     auto& true_decl = *context.get_global_scope()->find(identifier("True"), context.interpreter->cache_scope_find, false);

@@ -75,7 +75,7 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const element_interpret
         for (const auto& option : option_objects) {
             options.push_back(std::dynamic_pointer_cast<const instruction>(option));
         }
-        
+
         return interpreter.cache_instruction_select.get(std::move(selector), std::move(options));
     }
 

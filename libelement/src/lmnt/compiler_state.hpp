@@ -81,7 +81,7 @@ struct execution_context
         : instruction(i)
         , rel_type(t)
     {}
-    
+
     const element::instruction* const instruction;
     const execution_type rel_type;
     std::unordered_set<const stack_allocation*> allocations;
@@ -117,7 +117,7 @@ struct compiler_state
     {
         return contexts.back();
     }
-    
+
     [[nodiscard]] execution_type current_context_type() const;
 
     element_result push_context(const element::instruction* in, execution_type type);

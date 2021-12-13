@@ -22,13 +22,14 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
     if (!expr || !expr->actual_type) {
         return std::make_shared<const element::error>(
             fmt::format("Argument to intrinsic 'Bool' was '{}' which is invalid. Must be of type 'Num' or 'Bool'",
-                compiled_args[0]->to_string()), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
+                compiled_args[0]->to_string()),
+            ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
     }
 
     //If it's already a Bool, we don't need to do anything
     if (expr->actual_type == type::boolean.get())
         return expr;
-    
+
     //If it's a Num, we can wrap it in a IF to convert it to a Num
     if (expr->actual_type == type::num.get()) {
         auto new_expr = context.interpreter->cache_instruction_if.get(
@@ -42,7 +43,8 @@ object_const_shared_ptr intrinsic_constructor_bool::call(
     //If we really screwed up somewhere, the type info might be wrong
     return std::make_shared<const element::error>(
         fmt::format("Argument to intrinsic 'Bool' was '{}' which has unknown type information. Report to developers",
-            expr->to_string()), ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
+            expr->to_string()),
+        ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED, source_info);
 }
 
 std::string intrinsic_constructor_bool::get_name() const
