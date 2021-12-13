@@ -1275,7 +1275,7 @@ static element_result compile_instruction(
 
     // only skip re-emitting bytecode if we've definitely already executed it
     if (vr->stage >= compilation_stage::compiled
-        && (vr->executed_in == execution_type::unconditional || state.current_context->compiled_instructions.count(expr))) {
+        && (vr->executed_in == execution_type::unconditional || state.current_context().compiled_instructions.count(expr))) {
         return ELEMENT_OK;
     }
 
@@ -1309,7 +1309,7 @@ static element_result compile_instruction(
 
     if (oresult == ELEMENT_OK) {
         state.allocator->set_stage(expr, compilation_stage::compiled);
-        state.current_context->compiled_instructions.emplace(expr);
+        state.current_context().compiled_instructions.emplace(expr);
     }
 
     return oresult;

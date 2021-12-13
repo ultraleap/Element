@@ -3926,7 +3926,7 @@ TEST_CASE("Interpreter", "[Evaluate]")
         std::vector<element_value> inputs = { 1 };
         std::vector<element_value> outputs = { 0, 0 };
 
-        auto selector = std::make_shared<element::instruction_input>(0, 0);
+        auto selector = std::make_shared<element::instruction_input>(0, 0, element::type::num.get());
         std::vector<element::instruction_const_shared_ptr> options{
             std::make_shared<const element::instruction_constant>(0.0f),
             std::make_shared<const element::instruction_constant>(1.0f)

@@ -136,33 +136,33 @@ object_const_shared_ptr runtime_for(const object_const_shared_ptr& initial_objec
     if (!body_compiled)
         return std::make_shared<const error>("body failed to compile", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
-    auto predicate_expression = predicate_compiled->to_instruction();
+    auto predicate_expression = predicate_compiled->to_instruction(*context.interpreter);
     if (!predicate_expression)
         return std::make_shared<const error>("predicate failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, predicate_function->source_info, context.get_logger());
 
-    auto body_expression = body_compiled->to_instruction();
+    auto body_expression = body_compiled->to_instruction(*context.interpreter);
     if (!body_expression)
         return std::make_shared<const error>("body failed to compile to an instruction tree", ELEMENT_ERROR_UNKNOWN, body_function->source_info, context.get_logger());
 
     //everything is an instruction, so make a for instruction. note: initial_object is either Num or Bool.
     auto initial_expression = std::dynamic_pointer_cast<const instruction>(initial_object);
     if (initial_expression)
-        return std::make_shared<instruction_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression), context.boundaries.back().inputs);
+        return context.interpreter->cache_instruction_for.get(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression), context.boundaries.back().inputs);
 
     //if it wasn't an instruction, let's convert it in to one.
     //if we can't then this for-loop can't be done at runtime, since it can't be represented in the instruction tree
-    initial_expression = initial_object->to_instruction();
+    initial_expression = initial_object->to_instruction(*context.interpreter);
     if (!initial_expression)
         return std::make_shared<const error>("tried to create a runtime for but a non-serializable initial value was given", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
     //initial_object should be a struct, so the output of the for loop is going to be the same type of struct, except all the fields (flattened struct) are instructions referring to the for loop
-    const auto for_expression = std::make_shared<element::instruction_for>(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression), context.boundaries.back().inputs);
+    const auto for_expression = context.interpreter->cache_instruction_for.get(std::move(initial_expression), std::move(predicate_expression), std::move(body_expression), context.boundaries.back().inputs);
     const auto initial_struct = std::dynamic_pointer_cast<const struct_instance>(initial_object);
 
-    auto indexing_expression_filler = [&for_expression](const std::string&,
+    auto indexing_expression_filler = [&for_expression, &context](const std::string&,
                                           const std::shared_ptr<const instruction>& field,
                                           int index) -> std::shared_ptr<const instruction> {
-        return std::make_shared<element::instruction_indexer>(for_expression, index, field->actual_type);
+        return context.interpreter->cache_instruction_indexer.get(for_expression, index, field->actual_type);
     };
 
     return initial_struct->clone_and_fill_with_expressions(context, std::move(indexing_expression_filler));

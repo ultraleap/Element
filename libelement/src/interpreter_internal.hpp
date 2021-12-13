@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 //SELF
 #include "element/interpreter.h"
@@ -58,6 +59,40 @@ struct element_evaluator_ctx
     element_evaluator_options options;
 };
 
+template <typename Instruction>
+class compiletime_instruction_cache
+{
+public:
+    class compare_instruction
+    {
+    public:
+        constexpr bool operator()(const std::shared_ptr<const Instruction>& a, const std::shared_ptr<const Instruction>& b) const
+        {
+            // When comparing shared_ptr's of instructions, we want to go through the instructions' operator `<`, as each one will have its own specific way of comparing
+            if (a && b && a != b)
+                return *a < *b;
+
+            // Comparing the shared_ptr compares the underlying raw pointer
+            return a < b;
+        }
+    };
+
+    using cache = std::set<std::shared_ptr<const Instruction>, compare_instruction>;
+
+    template <typename... Args>
+    std::shared_ptr<const Instruction> get(Args&&... args)
+    {
+        static_assert(std::is_base_of_v<element::instruction, Instruction>, "This cache is meant to be used for element::instruction only");
+
+        auto instruction = std::make_shared<const Instruction>(std::forward<Args&&>(args)...);
+        auto&& [iterator, inserted] = m_cache.emplace(std::move(instruction));
+        return *iterator;
+    }
+
+private:
+    cache m_cache;
+};
+
 struct element_interpreter_ctx
 {
 public:
@@ -95,5 +130,15 @@ public:
     std::shared_ptr<element::source_context> src_context;
     std::unique_ptr<element::scope> global_scope;
 
-    mutable element::scope_caches caches;
+    mutable element::scope_caches cache_scope_find;
+    mutable compiletime_instruction_cache<element::instruction_constant> cache_instruction_constant;
+    mutable compiletime_instruction_cache<element::instruction_nullary> cache_instruction_nullary;
+    mutable compiletime_instruction_cache<element::instruction_unary> cache_instruction_unary;
+    mutable compiletime_instruction_cache<element::instruction_binary> cache_instruction_binary;
+    mutable compiletime_instruction_cache<element::instruction_input> cache_instruction_input;
+    mutable compiletime_instruction_cache<element::instruction_serialised_structure> cache_instruction_serialised_structure;
+    mutable compiletime_instruction_cache<element::instruction_if> cache_instruction_if;
+    mutable compiletime_instruction_cache<element::instruction_select> cache_instruction_select;
+    mutable compiletime_instruction_cache<element::instruction_for> cache_instruction_for;
+    mutable compiletime_instruction_cache<element::instruction_indexer> cache_instruction_indexer;
 };

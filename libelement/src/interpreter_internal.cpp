@@ -22,6 +22,7 @@
 #include "object_model/error_map.hpp"
 #include "object_model/expressions/expression_chain.hpp"
 #include "object_model/expressions/call_expression.hpp"
+#include "object_model/declarations/function_declaration.hpp"
 #include "filesystem.hpp"
 
 static bool file_exists(const std::string& file)
@@ -453,13 +454,13 @@ element_result element_interpreter_ctx::expression_to_object(
         return result;
     }
 
-    bool success = global_scope->add_declaration(std::move(dummy_declaration), caches);
+    bool success = global_scope->add_declaration(std::move(dummy_declaration), cache_scope_find);
     if (!success) {
         (*object)->obj = nullptr;
         return ELEMENT_ERROR_UNKNOWN;
     }
 
-    const auto* found_dummy_decl = global_scope->find(dummy_identifier, caches, false);
+    const auto* found_dummy_decl = global_scope->find(dummy_identifier, cache_scope_find, false);
     assert(found_dummy_decl);
     auto compiled = found_dummy_decl->compile(compilation_context, found_dummy_decl->source_info);
 

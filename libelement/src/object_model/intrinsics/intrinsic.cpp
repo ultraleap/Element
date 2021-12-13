@@ -147,16 +147,13 @@ std::shared_ptr<const instruction> element::evaluate(const compilation_context& 
     const auto result = element_evaluate(evaluator, expr, nullptr, nullptr, 0, &output, output_count);
 
     //the tree was fully evaluated, so it has been constant folded
-    if (result == ELEMENT_OK) {
-        auto new_expr = std::make_shared<const instruction_constant>(output);
-        new_expr->actual_type = expr->actual_type;
-        return new_expr;
-    }
+    if (result == ELEMENT_OK)
+        return context.interpreter->cache_instruction_constant.get(output, expr->actual_type);
 
     //we failed to fully evaluate the tree, likely due to boundary inputs (whose value are not known), so try and optimise it differently
 
     if (const auto* binary = expr->as<const instruction_binary>()) {
-        auto optimised = optimise_binary(*binary);
+        auto optimised = optimise_binary(context.interpreter, *binary);
         if (optimised)
             return optimised;
     }

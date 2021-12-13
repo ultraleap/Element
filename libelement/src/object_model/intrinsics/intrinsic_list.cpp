@@ -21,11 +21,11 @@ object_const_shared_ptr intrinsic_list::compile(const compilation_context& conte
 
     assert(count != 0); //todo
 
-    const auto* list_decl = context.get_global_scope()->find(identifier{ "List" }, context.interpreter->caches, false);
+    const auto* list_decl = context.get_global_scope()->find(identifier{ "List" }, context.interpreter->cache_scope_find, false);
     assert(list_decl);
     const auto* list_constructor = intrinsic::get_intrinsic(context.interpreter, *list_decl);
 
-    const auto* list_indexer_decl = context.get_compiler_scope()->find(identifier{ "@list_indexer" }, context.interpreter->caches, false);
+    const auto* list_indexer_decl = context.get_compiler_scope()->find(identifier{ "@list_indexer" }, context.interpreter->cache_scope_find, false);
     assert(list_indexer_decl);
     const auto* list_indexer_func = static_cast<const function_declaration*>(list_indexer_decl);
     assert(list_indexer_func);
@@ -35,6 +35,6 @@ object_const_shared_ptr intrinsic_list::compile(const compilation_context& conte
     std::vector<object_const_shared_ptr> compiled_arguments;
     compiled_arguments.reserve(2);
     compiled_arguments.push_back(std::move(list_indexer));
-    compiled_arguments.push_back(std::make_shared<const element::instruction_constant>(static_cast<element_value>(count)));
+    compiled_arguments.push_back(context.interpreter->cache_instruction_constant.get(static_cast<element_value>(count), element::type::num.get()));
     return list_constructor->call(context, compiled_arguments, source_info);
 }

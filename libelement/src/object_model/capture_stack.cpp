@@ -38,7 +38,7 @@ object_const_shared_ptr capture_stack::find(const scope* local_scope,
 
     while (current_scope) {
         //check the scope and see if it's in there
-        const auto* found = current_scope->find(name, context.interpreter->caches, false);
+        const auto* found = current_scope->find(name, context.interpreter->cache_scope_find, false);
         if (found)
             return found->compile(context, source_info);
 
@@ -62,4 +62,30 @@ object_const_shared_ptr capture_stack::find(const scope* local_scope,
     }
 
     return nullptr;
+}
+
+capture_stack capture_stack::filter_captures_from_scope(const scope* local_scope, const compilation_context& context, const source_information& source_info) const
+{
+    // Usually a capture stack just contains the entire callstack and then when finding a capture, it filters as it goes
+    // This function filters a capture stack so that it only contains the callstack, and thus captures, of any functions that a scope is nested within
+    capture_stack captures;
+
+    const scope* current_scope = local_scope;
+
+    while (current_scope) {
+        //find the scope in the stack
+        auto found_it = std::find_if(std::rbegin(frames), std::rend(frames),
+            [current_scope](const auto& frame) {
+                return current_scope == frame.current_scope;
+            });
+
+        //if the scope is in our stack then we're capturing all of its arguments, if it has any
+        if (found_it != frames.rend()) {
+            captures.frames.emplace_back(*found_it);
+        }
+
+        current_scope = current_scope->get_parent_scope();
+    }
+
+    return captures;
 }

@@ -6,6 +6,10 @@
 #include "instruction_tree/evaluator.hpp"
 #include "object_model/compilation_context.hpp"
 #include "object_model/error.hpp"
+#include "interpreter_internal.hpp"
+
+//STD
+#include <cassert>
 
 using namespace element;
 
@@ -37,7 +41,7 @@ std::shared_ptr<const object> instruction::index(
     }
 
     //find the declaration of the type that we are
-    const auto* const actual_type_decl = context.get_global_scope()->find(actual_type->get_identifier(), context.interpreter->caches, false);
+    const auto* const actual_type_decl = context.get_global_scope()->find(actual_type->get_identifier(), context.interpreter->cache_scope_find, false);
     if (!actual_type_decl) {
         //TODO: Handle as error
         assert(!"failed to find declaration of our actual type, did the user declare the intrinsic?");
@@ -47,10 +51,14 @@ std::shared_ptr<const object> instruction::index(
     return index_type(actual_type_decl, shared_from_this(), context, name, source_info);
 }
 
-instruction_constant::instruction_constant(element_value val)
-    : instruction(type_id, type::num.get())
+instruction_constant::instruction_constant(element_value val, type_const_ptr type)
+    : instruction(type_id, type)
     , m_value(val)
 {
+    if (type != type::num.get() && type != type::boolean.get()) {
+        assert(!"instruction_constants must be either num or bool, they are the only two types supported at this level");
+        throw;
+    }
 }
 
 object_const_shared_ptr instruction_constant::call(const compilation_context& context, std::vector<object_const_shared_ptr> compiled_args, const source_information& source_info) const
@@ -109,6 +117,9 @@ instruction_select::instruction_select(instruction_const_shared_ptr selector, st
     for (auto&& o : options) {
         m_dependents.emplace_back(std::move(o));
     }
+
+    // Both branches must be the same type, and that represents the output type of this instruction
+    actual_type = options_at(0)->actual_type;
 }
 
 bool instruction_nullary::get_constant_value(element_value& result) const
@@ -155,4 +166,112 @@ bool instruction_select::get_constant_value(element_value& result) const
         return false;
     size_t index = element_evaluate_select(selector_value, options_count());
     return options_at(index)->get_constant_value(result);
+}
+
+//do some additional peephole optimisations based on known operations and operands
+instruction_const_shared_ptr element::optimise_binary(element_interpreter_ctx* interpreter, const instruction_binary& binary)
+{
+    const auto* input1_as_const = binary.input1()->as<const instruction_constant>();
+    const auto* input2_as_const = binary.input2()->as<const instruction_constant>();
+
+    //if it's a numerical op and one of the operands is NaN, then the result is NaN
+    //todo: can we also optimise for +/- Inf?
+    if (binary.operation() < element_binary_op::and_) {
+        if (input1_as_const && std::isnan(input1_as_const->value()))
+            return binary.input1();
+
+        if (input2_as_const && std::isnan(input2_as_const->value()))
+            return binary.input2();
+    }
+
+    switch (binary.operation()) {
+    case element_binary_op::add: {
+        if (input1_as_const && input1_as_const->value() == 0.0f)
+            return binary.input2();
+
+        if (input2_as_const && input2_as_const->value() == 0.0f)
+            return binary.input1();
+
+        //todo: could transform identical adds to mul(input, 2) if that's faster?
+        //probably machine architecture dependent, should be an optimisation done by the target (e.g. LMNT)
+
+        break;
+    }
+
+    case element_binary_op::sub: {
+        if (input2_as_const && input2_as_const->value() == 0.0f)
+            return binary.input1();
+
+        if (binary.input1() == binary.input2())
+            return interpreter->cache_instruction_constant.get(0.0f);
+
+        break;
+    }
+
+    case element_binary_op::mul: {
+        if (input1_as_const && input1_as_const->value() == 1.0f)
+            return binary.input2();
+
+        if (input2_as_const && input2_as_const->value() == 1.0f)
+            return binary.input1();
+
+        // Allow N*0 == 0 even though it's technically incorrect for NaNs
+        if (input1_as_const && input1_as_const->value() == 0.0f)
+            return binary.input1();
+
+        if (input2_as_const && input2_as_const->value() == 0.0f)
+            return binary.input2();
+
+        break;
+    }
+
+    case element_binary_op::div: {
+        if (input2_as_const && input2_as_const->value() == 1.0f)
+            return binary.input1();
+
+        if (input2_as_const && input2_as_const->value() == 0.0f)
+            return interpreter->cache_instruction_constant.get(INFINITY);
+
+        if (binary.input1() == binary.input2())
+            return interpreter->cache_instruction_constant.get(1.0f);
+
+        // transform divs to muls
+        if (input2_as_const) {
+            auto constant = interpreter->cache_instruction_constant.get(1.0f / input2_as_const->value());
+            return interpreter->cache_instruction_binary.get(instruction_binary::op::mul, binary.input1(), std::move(constant), binary.actual_type);
+        }
+
+        break;
+    }
+
+    case element_binary_op::rem: {
+        if (input1_as_const && input1_as_const->value() == 0.0f)
+            return binary.input1();
+
+        if (binary.input1() == binary.input2())
+            return interpreter->cache_instruction_constant.get(0.0f);
+
+        break;
+    }
+
+    case element_binary_op::pow: {
+        if (input2_as_const && input2_as_const->value() == 0.0f)
+            return interpreter->cache_instruction_constant.get(1.0f);
+
+        if (input2_as_const && input2_as_const->value() == 1.0f)
+            return binary.input1();
+
+        if (input2_as_const && input2_as_const->value() == 2.0f)
+            return interpreter->cache_instruction_binary.get(instruction_binary::op::mul, binary.input1(), binary.input1(), binary.actual_type);
+
+        break;
+    }
+
+    default: {
+        //todo: optimise other operators
+        break;
+    }
+    }
+
+    return nullptr;
 }

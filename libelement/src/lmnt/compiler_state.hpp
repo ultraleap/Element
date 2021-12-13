@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <type_traits>
+#include <deque>
 
 #include "instruction_tree/instructions.hpp"
 #include "lmnt/compiler.hpp"
@@ -76,17 +77,15 @@ struct stack_allocation : std::enable_shared_from_this<stack_allocation>
 
 struct execution_context
 {
-    execution_context(execution_context* p, execution_type t)
-        : parent(p)
+    execution_context(const element::instruction* i, execution_type t)
+        : instruction(i)
         , rel_type(t)
     {}
 
-    execution_context* const parent;
+    const element::instruction* const instruction;
     const execution_type rel_type;
     std::unordered_set<const stack_allocation*> allocations;
     std::unordered_set<const element::instruction*> compiled_instructions;
-
-    execution_type type() const { return (parent ? (std::min)(rel_type, parent->type()) : rel_type); }
 };
 
 struct compiler_state
@@ -108,8 +107,18 @@ struct compiler_state
     element_result calculate_stack_index(const element::instruction* in, uint16_t& index, size_t alloc_index = 0) const;
 
     // context stack
-    std::unordered_map<const element::instruction*, execution_context> contexts;
-    execution_context* current_context;
+    std::vector<execution_context> contexts;
+    execution_context& current_context()
+    {
+        return contexts.back();
+    }
+
+    const execution_context& current_context() const
+    {
+        return contexts.back();
+    }
+
+    [[nodiscard]] execution_type current_context_type() const;
 
     element_result push_context(const element::instruction* in, execution_type type);
     element_result pop_context();

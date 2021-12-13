@@ -98,7 +98,7 @@ TEST_CASE("ObjectModel", "[API]")
             output.values = outputs;
             output.count = 1;
             element_instruction* instruction;
-            result = element_object_to_instruction(my_struct_instance_a, &instruction);
+            result = element_object_to_instruction(my_struct_instance_a, compilation_ctx, &instruction);
             CHECK(result == ELEMENT_OK);
             result = element_interpreter_evaluate_instruction(interpreter, nullptr, instruction, &input, &output);
             CHECK(result == ELEMENT_OK);

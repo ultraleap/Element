@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     if (result != ELEMENT_OK)
         goto cleanup;
 
-    result = element_object_to_instruction(my_struct_instance_a, &instruction);
+    result = element_object_to_instruction(my_struct_instance_a, compilation_ctx, &instruction);
     if (result != ELEMENT_OK)
         goto cleanup;
 

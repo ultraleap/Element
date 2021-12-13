@@ -32,7 +32,7 @@ object_const_shared_ptr struct_declaration::index(
             source_info,
             context.get_logger());
 
-    const auto* found = our_scope->find(name, context.interpreter->caches, false);
+    const auto* found = our_scope->find(name, context.interpreter->cache_scope_find, false);
     if (!found)
         return build_error_and_log<error_message_code::failed_to_find_when_resolving_indexing_expr>(context, source_info, name.value, to_string());
 
@@ -108,7 +108,7 @@ bool struct_declaration::deserializable(const compilation_context& context) cons
 
     for (const auto& input : get_inputs()) {
         //todo: we can cache all of the resolving annotation things everywhere
-        const auto& type = get_scope()->find(input.get_annotation()->to_string(), context.interpreter->caches, true);
+        const auto& type = get_scope()->find(input.get_annotation()->to_string(), context.interpreter->cache_scope_find, true);
         assert(type);
         if (!type->deserializable(context))
             return false;
@@ -125,8 +125,8 @@ object_const_shared_ptr struct_declaration::generate_placeholder(
     if (inputs.empty()) {
         assert(is_intrinsic());
         const auto* intrinsic = intrinsic::get_intrinsic(context.interpreter, *this);
-        auto expr = std::make_shared<instruction_input>(boundary_scope, placeholder_index);
-        expr->actual_type = intrinsic->get_type();
+        //todo: in the future we'll want to wrap bool inputs here, and have the Num constructor be smarter about how to handle "bools which may not be 0/1"
+        auto expr = context.interpreter->cache_instruction_input.get(boundary_scope, placeholder_index, intrinsic->get_type());
         context.boundaries[boundary_scope].inputs.insert(expr);
         placeholder_index += 1; //todo: fix when we have lists, size() on intrinsic? on type?
         return expr;
@@ -134,7 +134,7 @@ object_const_shared_ptr struct_declaration::generate_placeholder(
 
     std::vector<object_const_shared_ptr> placeholder_inputs;
     for (const auto& input : get_inputs()) {
-        const auto& type = get_scope()->find(input.get_annotation()->to_string(), context.interpreter->caches, true);
+        const auto& type = get_scope()->find(input.get_annotation()->to_string(), context.interpreter->cache_scope_find, true);
         auto placeholder = type->generate_placeholder(context, placeholder_index, boundary_scope);
 
         if (!placeholder) {

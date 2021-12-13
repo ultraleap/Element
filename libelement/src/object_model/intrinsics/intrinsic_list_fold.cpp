@@ -72,7 +72,7 @@ object_const_shared_ptr runtime_fold(
     if (!accumulator_compiled)
         return std::make_shared<const error>("accumulator failed to compile", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
-    const auto accumulator_expression = accumulator_compiled->to_instruction();
+    const auto accumulator_expression = accumulator_compiled->to_instruction(*context.interpreter);
     if (!accumulator_expression)
         return std::make_shared<const error>(
             "accumulator failed to compile to an instruction tree",
@@ -80,7 +80,7 @@ object_const_shared_ptr runtime_fold(
             accumulator_function->source_info,
             context.get_logger());
 
-    const auto* listfold = context.get_compiler_scope()->find(identifier{ "@list_fold" }, context.interpreter->caches, false);
+    const auto* listfold = context.get_compiler_scope()->find(identifier{ "@list_fold" }, context.interpreter->cache_scope_find, false);
     if (!listfold)
         return std::make_shared<const error>("failed to find @list_fold", ELEMENT_ERROR_UNKNOWN, source_info, context.get_logger());
 
