@@ -51,6 +51,9 @@ extern "C" {
 #include "lmnt/arm/platform.h"
 #endif
 
+#if !defined(LMNT_JIT_TARGET_NATIVE)
+#define LMNT_JIT_TARGET_NATIVE LMNT_JIT_TARGET_NONE
+#endif
 
 #ifdef __cplusplus
 }

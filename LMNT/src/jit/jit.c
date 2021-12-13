@@ -10,14 +10,8 @@
 #if defined(LMNT_JIT_HAS_X86_64)
 lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit_fn_data* fndata, lmnt_jit_compile_stats* stats);
 #endif
-#if defined(LMNT_JIT_HAS_ARMV7A)
-lmnt_result lmnt_jit_armv7a_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit_fn_data* fndata, lmnt_jit_compile_stats* stats);
-#endif
 #if defined(LMNT_JIT_HAS_ARMV7M)
 lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit_fn_data* fndata, lmnt_jit_compile_stats* stats);
-#endif
-#if defined(LMNT_JIT_HAS_ARM64)
-lmnt_result lmnt_jit_arm64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit_fn_data* fndata, lmnt_jit_compile_stats* stats);
 #endif
 
 
@@ -79,14 +73,8 @@ lmnt_result lmnt_jit_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_jit_targe
 #if defined(LMNT_JIT_HAS_X86_64)
     case LMNT_JIT_TARGET_X86_64: return lmnt_jit_x86_64_compile(ctx, def, fndata, NULL);
 #endif
-#if defined(LMNT_JIT_HAS_ARMV7A)
-    case LMNT_JIT_TARGET_ARMV7A: return lmnt_jit_armv7a_compile(ctx, def, fndata, NULL);
-#endif
 #if defined(LMNT_JIT_HAS_ARMV7M)
     case LMNT_JIT_TARGET_ARMV7M: return lmnt_jit_armv7m_compile(ctx, def, fndata, NULL);
-#endif
-#if defined(LMNT_JIT_HAS_ARM64)
-    case LMNT_JIT_TARGET_ARM64:  return lmnt_jit_arm64_compile(ctx, def, fndata, NULL);
 #endif
     default: return LMNT_ERROR_NO_IMPL;
     }
@@ -102,14 +90,8 @@ lmnt_result lmnt_jit_compile_with_stats(lmnt_ictx* ctx, const lmnt_def* def, lmn
 #if defined(LMNT_JIT_HAS_X86_64)
     case LMNT_JIT_TARGET_X86_64: return lmnt_jit_x86_64_compile(ctx, def, fndata, stats);
 #endif
-#if defined(LMNT_JIT_HAS_ARMV7A)
-    case LMNT_JIT_TARGET_ARMV7A: return lmnt_jit_armv7a_compile(ctx, def, fndata, stats);
-#endif
 #if defined(LMNT_JIT_HAS_ARMV7M)
     case LMNT_JIT_TARGET_ARMV7M: return lmnt_jit_armv7m_compile(ctx, def, fndata, stats);
-#endif
-#if defined(LMNT_JIT_HAS_ARM64)
-    case LMNT_JIT_TARGET_ARM64:  return lmnt_jit_arm64_compile(ctx, def, fndata, stats);
 #endif
     default: return LMNT_ERROR_NO_IMPL;
     }
