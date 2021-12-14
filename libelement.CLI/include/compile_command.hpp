@@ -26,14 +26,14 @@ struct compile_command_arguments
 
     [[nodiscard]] std::string as_string() const
     {
-        std::stringstream ss;
-        ss  << "compile --name \"" << name
+        std::stringstream sst;
+        sst << "compile --name \"" << name
             << "\" --return-type \"" << return_type
             << "\" --expression \"" << expression
             << "\" --output-path \"" << output_path << "\"";
         if (!parameters.empty())
-            ss << " --parameters \"" << parameters << "\"";
-        return ss.str();
+            sst << " --parameters \"" << parameters << "\"";
+        return sst.str();
     }
 };
 
@@ -71,8 +71,6 @@ public:
                 compilation_input.get_log_json());
         }
 
-        constexpr auto max_output_size = 512;
-
         element_declaration* decl = nullptr;
         result = element_interpreter_find(context, custom_arguments.name.c_str(), &decl);
         if (result != ELEMENT_OK) {
@@ -105,13 +103,9 @@ public:
                 compilation_input.get_log_json());
         }
 
-
         auto response = generate_response(ELEMENT_ERROR_UNKNOWN, element_outputs{}, compilation_input.get_log_json());
 
-        if (common_arguments.target == Target::LMNT)
-            response = compile_lmnt(compilation_input, compiled_function, inputs_size, outputs_size, custom_arguments.output_path);
-
-        if (common_arguments.target == Target::LMNTJit)
+        if (common_arguments.target == Target::LMNT || common_arguments.target == Target::LMNTJit)
             response = compile_lmnt(compilation_input, compiled_function, inputs_size, outputs_size, custom_arguments.output_path);
 
         element_instruction_delete(&compiled_function);
@@ -134,21 +128,16 @@ public:
 
         auto* command = app.add_subcommand("compile")->fallthrough();
 
-        command->add_option("-n,--name", arguments->name,
-                    "Name of the resulting LMNT function.")
+        command->add_option("-n,--name", arguments->name, "Name of the resulting LMNT function.")
             ->required();
-        command->add_option("-r,--return-type", arguments->return_type,
-                    "Return type of the resulting LMNT function.")
+        command->add_option("-r,--return-type", arguments->return_type, "Return type of the resulting LMNT function.")
             ->required();
-        command->add_option("-e,--expression", arguments->expression,
-                    "Expression to evaluate.")
+        command->add_option("-e,--expression", arguments->expression, "Expression to evaluate.")
             ->required();
-        command->add_option("-o,--output-path", arguments->output_path,
-                    "Path to output generated file to.")
+        command->add_option("-o,--output-path", arguments->output_path, "Path to output generated file to.")
             ->required();
 
-        command->add_option("-p,--parameters", arguments->parameters,
-            "Parameters to the resulting LMNT function.");
+        command->add_option("-p,--parameters", arguments->parameters, "Parameters to the resulting LMNT function.");
 
         command->callback([callback, common_arguments, arguments]() {
             compile_command cmd(*common_arguments, *arguments);

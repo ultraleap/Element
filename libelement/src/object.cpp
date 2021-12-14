@@ -318,7 +318,7 @@ element_result element_object_get_inputs(const element_object* object, element_p
 
     if (!object->inputs_populated) {
         for (const auto& input : object->obj->get_inputs()) {
-            object->inputs.ports.emplace_back(element_port { &input });
+            object->inputs.ports.emplace_back(element_port{ &input });
         }
         object->inputs_populated = true;
     }

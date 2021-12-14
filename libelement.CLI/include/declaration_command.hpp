@@ -25,7 +25,7 @@ struct declaration_command_arguments
     [[nodiscard]] std::string as_string() const
     {
         std::stringstream ss;
-        ss  << "declaration --name \"" << name << "\"";
+        ss << "declaration --name \"" << name << "\"";
         if (definition)
             ss << " --definition";
         return ss.str();
@@ -76,7 +76,7 @@ public:
                 "Failed to convert declaration to code with element_result " + std::to_string(result),
                 compilation_input.get_log_json());
         }
-        code.resize(code_size-1);
+        code.resize(code_size - 1);
 
         return compiler_message(code, compilation_input.get_log_json());
     }
@@ -96,11 +96,9 @@ public:
 
         auto* command = app.add_subcommand("declaration")->fallthrough();
 
-        command->add_option("-n,--name", arguments->name,
-                    "Name of the Element declaration to print.")
+        command->add_option("-n,--name", arguments->name, "Name of the Element declaration to print.")
             ->required();
-        command->add_flag("--definition", arguments->definition,
-                    "Gets the full function definition rather than just the declaration.");
+        command->add_flag("--definition", arguments->definition, "Gets the full function definition rather than just the declaration.");
 
         command->callback([callback, common_arguments, arguments]() {
             declaration_command cmd(*common_arguments, *arguments);

@@ -338,7 +338,6 @@ element_result element_declaration_get_qualified_name(const element_declaration*
     return ELEMENT_OK;
 }
 
-
 element_result element_declaration_to_code(
     const element_declaration* declaration,
     bool include_body,

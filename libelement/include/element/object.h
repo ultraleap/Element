@@ -270,6 +270,8 @@ element_result element_object_to_code(
 
 /**
  * @brief gets any and all inputs of an object, such as the parameters of a function
+ *
+ * The lifetime of the returned ports object is the same as that of the object it is retrieved from.
  */
 element_result element_object_get_inputs(
     const element_object* object,
@@ -277,6 +279,8 @@ element_result element_object_get_inputs(
 
 /**
  * @brief gets the output of an object, such as the return of a function
+ *
+ * The lifetime of the returned port is the same as that of the object it is retrieved from.
  */
 element_result element_object_get_output(
     const element_object* object,
@@ -284,6 +288,8 @@ element_result element_object_get_output(
 
 /**
  * @brief gets a port from a list of ports
+ *
+ * The lifetime of the returned port is the same as that of the ports structure it is retrieved from.
  */
 element_result element_ports_get_port(
     const element_ports* ports,

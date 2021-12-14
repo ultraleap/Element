@@ -24,7 +24,7 @@ namespace element
     return value > element_value{ 0 };
 }
 
-struct instruction : public object, rtti_type<instruction>, std::enable_shared_from_this<instruction>
+struct instruction : public object, public rtti_type<instruction>, public std::enable_shared_from_this<instruction>
 {
 public:
     [[nodiscard]] const std::vector<instruction_const_shared_ptr>& dependents() const { return m_dependents; }
