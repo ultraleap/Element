@@ -275,7 +275,7 @@ element_result element_object_to_code(
  */
 element_result element_object_get_inputs(
     const element_object* object,
-    element_ports** inputs);
+    const element_ports** inputs);
 
 /**
  * @brief gets the output of an object, such as the return of a function
@@ -284,7 +284,7 @@ element_result element_object_get_inputs(
  */
 element_result element_object_get_output(
     const element_object* object,
-    element_port** output);
+    const element_port** output);
 
 /**
  * @brief gets a port from a list of ports

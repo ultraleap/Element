@@ -308,7 +308,7 @@ element_result element_object_to_code(
     return ELEMENT_OK;
 }
 
-element_result element_object_get_inputs(const element_object* object, element_ports** inputs)
+element_result element_object_get_inputs(const element_object* object, const element_ports** inputs)
 {
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
@@ -327,7 +327,7 @@ element_result element_object_get_inputs(const element_object* object, element_p
     return ELEMENT_OK;
 }
 
-element_result element_object_get_output(const element_object* object, element_port** output)
+element_result element_object_get_output(const element_object* object, const element_port** output)
 {
     if (!object || !object->obj)
         return ELEMENT_ERROR_API_OBJECT_IS_NULL;
