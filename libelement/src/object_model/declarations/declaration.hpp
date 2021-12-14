@@ -21,6 +21,7 @@ public:
     explicit declaration(identifier name, const scope* parent);
 
     [[nodiscard]] std::string get_name() const final;
+    [[nodiscard]] std::string get_qualified_name() const;
     [[nodiscard]] bool has_inputs() const { return !inputs.empty(); }
     [[nodiscard]] bool has_constraint() const { return false; } //TODO: JM - nonsense, this needs to be a constraint::something OR constraint::any
     [[nodiscard]] bool has_scope() const;

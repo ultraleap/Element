@@ -277,6 +277,37 @@ element_result element_object_get_typeof(const element_object* object, char* buf
     return ELEMENT_OK;
 }
 
+element_result element_object_to_code(
+    const element_object* object,
+    char* buffer,
+    size_t* buffer_size)
+{
+    if (!object || !object->obj)
+        return ELEMENT_ERROR_API_OBJECT_IS_NULL;
+
+    if (!buffer_size)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    const auto string = object->obj->to_code(0);
+    const auto required_buffer_size = string.size() + 1;
+
+    if (!buffer) {
+        *buffer_size = required_buffer_size;
+        return ELEMENT_OK;
+    }
+
+    if (*buffer_size < required_buffer_size) {
+        *buffer_size = required_buffer_size;
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+    }
+
+    *buffer_size = required_buffer_size;
+    strncpy(buffer, string.c_str(), string.size());
+    buffer[string.size()] = '\0';
+
+    return ELEMENT_OK;
+}
+
 element_result element_object_get_inputs(const element_object* object, element_ports** inputs)
 {
     if (!object || !object->obj)
@@ -285,17 +316,14 @@ element_result element_object_get_inputs(const element_object* object, element_p
     if (!inputs)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    *inputs = new element_ports();
-    for (const auto& input : object->obj->get_inputs()) {
-        auto port = std::unique_ptr<element_port, element_ports::port_deleter>(
-            new element_port{ &input },
-            [](element_port* port) {
-                element_port_delete(&port);
-            });
-
-        (*inputs)->ports.push_back(std::move(port));
+    if (!object->inputs_populated) {
+        for (const auto& input : object->obj->get_inputs()) {
+            object->inputs.ports.emplace_back(element_port{ &input });
+        }
+        object->inputs_populated = true;
     }
 
+    *inputs = &object->inputs;
     return ELEMENT_OK;
 }
 
@@ -307,11 +335,16 @@ element_result element_object_get_output(const element_object* object, element_p
     if (!output)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    *output = new element_port{ &object->obj->get_output() };
+    if (!object->output_populated) {
+        object->output = { &object->obj->get_output() };
+        object->output_populated = true;
+    }
+
+    *output = &object->output;
     return ELEMENT_OK;
 }
 
-element_result element_ports_get_port(const element_ports* ports, size_t index, element_port** port)
+element_result element_ports_get_port(const element_ports* ports, size_t index, const element_port** port)
 {
     if (!ports)
         return ELEMENT_ERROR_API_PORTS_IS_NULL;
@@ -322,7 +355,7 @@ element_result element_ports_get_port(const element_ports* ports, size_t index, 
     if (index >= ports->ports.size())
         return ELEMENT_ERROR_API_INVALID_INPUT;
 
-    *port = ports->ports[index].get();
+    *port = &ports->ports[index];
     return ELEMENT_OK;
 }
 
@@ -338,16 +371,7 @@ element_result element_ports_get_count(const element_ports* ports, size_t* count
     return ELEMENT_OK;
 }
 
-void element_ports_delete(element_ports** ports)
-{
-    if (!ports)
-        return;
-
-    delete *ports;
-    *ports = nullptr;
-}
-
-element_result element_port_get_name(element_port* port, const char** name)
+element_result element_port_get_name(const element_port* port, const char** name)
 {
     if (!port)
         return ELEMENT_ERROR_API_PORT_IS_NULL;
@@ -359,7 +383,7 @@ element_result element_port_get_name(element_port* port, const char** name)
     return ELEMENT_OK;
 }
 
-element_result element_port_get_constraint_annotation(element_port* port, const char** annotation)
+element_result element_port_get_constraint_annotation(const element_port* port, const char** annotation)
 {
     if (!port)
         return ELEMENT_ERROR_API_PORT_IS_NULL;
@@ -375,7 +399,7 @@ element_result element_port_get_constraint_annotation(element_port* port, const 
     return ELEMENT_OK;
 }
 
-element_result element_port_get_constraint_object(element_port* port, element_object_model_ctx* object_model_context, element_object** object)
+element_result element_port_get_constraint_object(const element_port* port, element_object_model_ctx* object_model_context, element_object** object)
 {
     if (!port)
         return ELEMENT_ERROR_API_PORT_IS_NULL;
@@ -396,7 +420,7 @@ element_result element_port_get_constraint_object(element_port* port, element_ob
     return ELEMENT_OK;
 }
 
-element_result element_port_get_default_object(element_port* port, element_object_model_ctx* object_model_context, element_object** object)
+element_result element_port_get_default_object(const element_port* port, element_object_model_ctx* object_model_context, element_object** object)
 {
     if (!port)
         return ELEMENT_ERROR_API_PORT_IS_NULL;
@@ -415,13 +439,4 @@ element_result element_port_get_default_object(element_port* port, element_objec
     (*object)->obj = default_chain->compile(*object_model_context->ctx, {});
 
     return ELEMENT_OK;
-}
-
-void element_port_delete(element_port** port)
-{
-    if (!port)
-        return;
-
-    delete *port;
-    *port = nullptr;
 }

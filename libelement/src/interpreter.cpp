@@ -26,6 +26,7 @@
 #include "log_errors.hpp"
 #include "element/ast.h"
 #include "ast/parser_internal.hpp"
+#include "object_model/declarations/function_declaration.hpp"
 #include "object_model/intrinsics/intrinsic.hpp"
 #include "object_model/expressions/expression_chain.hpp"
 #include "object_model/expressions/call_expression.hpp"
@@ -189,7 +190,7 @@ void element_instruction_delete(element_instruction** instruction)
     *instruction = nullptr;
 }
 
-element_result element_instruction_get_size(element_instruction* instruction, size_t* size)
+element_result element_instruction_get_size(const element_instruction* instruction, size_t* size)
 {
     if (!instruction || !instruction->instruction)
         return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
@@ -201,7 +202,21 @@ element_result element_instruction_get_size(element_instruction* instruction, si
     return ELEMENT_OK;
 }
 
-element_result element_instruction_is_constant(element_instruction* instruction, bool* constant)
+element_result element_instruction_get_inputs_size(const element_instruction* instruction, size_t* size)
+{
+    if (!instruction || !instruction->instruction)
+        return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
+
+    if (!size)
+        return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
+
+    *size = 0;
+    for (const auto& d : instruction->instruction->dependents())
+        *size += d->get_size();
+    return ELEMENT_OK;
+}
+
+element_result element_instruction_is_constant(const element_instruction* instruction, bool* constant)
 {
     if (!instruction || !instruction->instruction)
         return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
@@ -214,7 +229,7 @@ element_result element_instruction_is_constant(element_instruction* instruction,
 }
 
 element_result element_instruction_to_string(
-    element_instruction* instruction,
+    const element_instruction* instruction,
     char* buffer,
     size_t* buffer_size)
 {
@@ -244,7 +259,7 @@ element_result element_instruction_to_string(
     return ELEMENT_OK;
 }
 
-element_result element_interpreter_find(element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
+element_result element_interpreter_find(const element_interpreter_ctx* interpreter, const char* path, element_declaration** declaration)
 {
     if (!interpreter)
         return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
@@ -264,6 +279,100 @@ element_result element_interpreter_find(element_interpreter_ctx* interpreter, co
 
     //todo: don't need to new
     *declaration = new element_declaration{ decl };
+    return ELEMENT_OK;
+}
+
+element_result element_declaration_get_name(const element_declaration* decl, char* buffer, size_t* bufsize)
+{
+    if (!decl || !decl->decl)
+        return ELEMENT_ERROR_API_DECLARATION_IS_NULL;
+
+    if (!bufsize)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    const auto string = decl->decl->get_name();
+    const auto required_buffer_size = string.size() + 1;
+
+    if (!buffer) {
+        *bufsize = required_buffer_size;
+        return ELEMENT_OK;
+    }
+
+    if (*bufsize < required_buffer_size) {
+        *bufsize = required_buffer_size;
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+    }
+
+    *bufsize = required_buffer_size;
+    strncpy(buffer, string.c_str(), string.size());
+    buffer[string.size()] = '\0';
+
+    return ELEMENT_OK;
+}
+
+element_result element_declaration_get_qualified_name(const element_declaration* decl, char* buffer, size_t* bufsize)
+{
+    if (!decl || !decl->decl)
+        return ELEMENT_ERROR_API_DECLARATION_IS_NULL;
+
+    if (!bufsize)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    const auto string = decl->decl->get_qualified_name();
+    const auto required_buffer_size = string.size() + 1;
+
+    if (!buffer) {
+        *bufsize = required_buffer_size;
+        return ELEMENT_OK;
+    }
+
+    if (*bufsize < required_buffer_size) {
+        *bufsize = required_buffer_size;
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+    }
+
+    *bufsize = required_buffer_size;
+    strncpy(buffer, string.c_str(), string.size());
+    buffer[string.size()] = '\0';
+
+    return ELEMENT_OK;
+}
+
+element_result element_declaration_to_code(
+    const element_declaration* declaration,
+    bool include_body,
+    char* buffer,
+    size_t* buffer_size)
+{
+    if (!declaration || !declaration->decl)
+        return ELEMENT_ERROR_API_DECLARATION_IS_NULL;
+
+    if (!buffer_size)
+        return ELEMENT_ERROR_API_INVALID_INPUT;
+
+    std::string string;
+    auto fdecl = dynamic_cast<const element::function_declaration*>(declaration->decl);
+    if (fdecl)
+        string = fdecl->to_code(0, include_body);
+    else
+        string = declaration->decl->to_code(0);
+
+    const auto required_buffer_size = string.size() + 1;
+
+    if (!buffer) {
+        *buffer_size = required_buffer_size;
+        return ELEMENT_OK;
+    }
+
+    if (*buffer_size < required_buffer_size) {
+        *buffer_size = required_buffer_size;
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+    }
+
+    *buffer_size = required_buffer_size;
+    strncpy(buffer, string.c_str(), string.size());
+    buffer[string.size()] = '\0';
+
     return ELEMENT_OK;
 }
 

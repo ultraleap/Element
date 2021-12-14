@@ -24,6 +24,11 @@ std::string declaration::get_name() const
     return name.value;
 }
 
+std::string declaration::get_qualified_name() const
+{
+    return our_scope->get_qualified_name();
+}
+
 bool declaration::has_scope() const
 {
     return !our_scope->is_empty();

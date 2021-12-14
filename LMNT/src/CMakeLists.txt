@@ -27,8 +27,8 @@ target_include_directories(lmnt
         "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-if (UNIX)
-    target_link_libraries(lmnt PRIVATE "m")
+if (LMNT_MATH_LIBRARIES)
+    target_link_libraries(lmnt PRIVATE ${LMNT_MATH_LIBRARIES})
 endif ()
 
 if (LMNT_BUILD_WITH_ASAN)

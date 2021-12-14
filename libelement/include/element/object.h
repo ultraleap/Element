@@ -253,7 +253,25 @@ element_result element_object_get_typeof(
     int buffer_size);
 
 /**
+ * @brief converts an object into a code fragment that represents it
+ *
+ * @param[in] object       object to represent as a code fragment
+ * @param[out] buffer           output buffer. if a non-NULL buffer is passed and ELEMENT_OK is returned, the buffer will be null-terminated.
+ * @param[in,out] buffer_size   output buffer size. this is always modified to be the size required to contain the null-terminated string.
+ * @return ELEMENT_OK either buffer was NULL or buffer was not NULL and buffer_size was sufficiently large
+ * @return ELEMENT_ERROR_API_OBJECT_IS_NULL the object is NULL
+ * @return ELEMENT_ERROR_API_INVALID_INPUT the buffer_size is NULL
+ * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
+*/
+element_result element_object_to_code(
+    const element_object* object,
+    char* buffer,
+    size_t* buffer_size);
+
+/**
  * @brief gets any and all inputs of an object, such as the parameters of a function
+ *
+ * The lifetime of the returned ports object is the same as that of the object it is retrieved from.
  */
 element_result element_object_get_inputs(
     const element_object* object,
@@ -261,18 +279,22 @@ element_result element_object_get_inputs(
 
 /**
  * @brief gets the output of an object, such as the return of a function
+ *
+ * The lifetime of the returned port is the same as that of the object it is retrieved from.
  */
 element_result element_object_get_output(
     const element_object* object,
     element_port** output);
 
 /**
- * @brief gets a port from a list of ports. do not delete
+ * @brief gets a port from a list of ports
+ *
+ * The lifetime of the returned port is the same as that of the ports structure it is retrieved from.
  */
 element_result element_ports_get_port(
     const element_ports* ports,
     size_t index,
-    element_port** port);
+    const element_port** port);
 
 /**
  * @brief gets the number of ports in the list
@@ -282,29 +304,24 @@ element_result element_ports_get_count(
     size_t* count);
 
 /**
- * @brief deletes all of the ports
- */
-void element_ports_delete(element_ports** ports);
-
-/**
  * @brief gets the name of the port if it has one (such as the parameter name), otherwise empty string
  */
 element_result element_port_get_name(
-    element_port* port,
+    const element_port* port,
     const char** name);
 
 /**
  * @brief gets the string in source of the type, e.g. func(a:MyNamespace.MyStruct) returns "MyNamespace.MyStruct"
  */
 element_result element_port_get_constraint_annotation(
-    element_port* port,
+    const element_port* port,
     const char** annotation);
 
 /**
  * @brief gets the constraint after interpreting the annotation, e,g. func(a:MyNamespace.MyStruct) returns an object that is the "MyStruct" struct
  */
 element_result element_port_get_constraint_object(
-    element_port* port,
+    const element_port* port,
     element_object_model_ctx* object_model_context,
     element_object** object);
 
@@ -312,14 +329,9 @@ element_result element_port_get_constraint_object(
  * @brief gets the default after interpreting, e,g. func(a:Num = 5.add(2)) returns an object that is a "Num" with the value "7"
  */
 element_result element_port_get_default_object(
-    element_port* port,
+    const element_port* port,
     element_object_model_ctx* object_model_context,
     element_object** object);
-
-/**
- * @brief deletes a port
- */
-void element_port_delete(element_port** port);
 
     #if defined(__cplusplus)
 }

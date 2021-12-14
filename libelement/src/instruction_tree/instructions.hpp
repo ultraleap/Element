@@ -24,7 +24,7 @@ namespace element
     return value > element_value{ 0 };
 }
 
-struct instruction : object, rtti_type<instruction>, std::enable_shared_from_this<instruction>
+struct instruction : public object, public rtti_type<instruction>, public std::enable_shared_from_this<instruction>
 {
 public:
     [[nodiscard]] const std::vector<instruction_const_shared_ptr>& dependents() const { return m_dependents; }
@@ -102,8 +102,7 @@ struct instruction_constant final : public instruction
     [[nodiscard]] std::string to_string() const override
     {
         if (actual_type == type::boolean.get())
-            return to_bool(m_value) ? "Bool = true" : "Bool = false";
-
+            return fmt::format("Bool = {}", to_bool(m_value));
         return fmt::format("Num = {:g}", m_value);
     }
 
@@ -382,19 +381,6 @@ struct instruction_for final : public instruction
     }
 
     std::set<std::shared_ptr<const instruction_input>> inputs;
-};
-
-struct instruction_fold final : public instruction
-{
-    DECLARE_TYPE_ID();
-
-    explicit instruction_fold(instruction_const_shared_ptr list, instruction_const_shared_ptr initial, instruction_const_shared_ptr accumulator);
-    [[nodiscard]] const instruction_const_shared_ptr& list() const { return m_dependents[0]; }
-    [[nodiscard]] const instruction_const_shared_ptr& initial() const { return m_dependents[1]; }
-    [[nodiscard]] const instruction_const_shared_ptr& accumulator() const { return m_dependents[2]; }
-
-    [[nodiscard]] size_t get_size() const override { return m_dependents[1]->get_size(); }
-    [[nodiscard]] bool get_constant_value(element_value& result) const override { return false; }
 };
 
 struct instruction_indexer final : public instruction

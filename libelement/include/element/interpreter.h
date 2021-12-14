@@ -242,18 +242,25 @@ void element_instruction_delete(
  * @brief gets the size of the instruction (number of element_value's it represents), including the size of any children
  */
 element_result element_instruction_get_size(
-    element_instruction* instruction,
+    const element_instruction* instruction,
+    size_t* size);
+
+/**
+ * @brief gets the total size of all inputs to the instruction
+ */
+element_result element_instruction_get_inputs_size(
+    const element_instruction* instruction,
     size_t* size);
 
 /**
  * @brief whether the instruction is a constant (i.e. a literal number) or not
  */
 element_result element_instruction_is_constant(
-    element_instruction* instruction,
+    const element_instruction* instruction,
     bool* constant);
 
 /**
- * @brief converts an instruction in to a human-readable string
+ * @brief converts an instruction into a human-readable string
  *
  * @param[in] instruction       instruction to represent as a string
  * @param[out] buffer           output buffer. if a non-NULL buffer is passed and ELEMENT_OK is returned, the buffer will be null-terminated.
@@ -264,7 +271,7 @@ element_result element_instruction_is_constant(
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
 */
 element_result element_instruction_to_string(
-    element_instruction* instruction,
+    const element_instruction* instruction,
     char* buffer,
     size_t* buffer_size);
 
@@ -282,9 +289,59 @@ element_result element_instruction_to_string(
  * @return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND path was invalid as nothing was found
  */
 element_result element_interpreter_find(
-    element_interpreter_ctx* interpreter,
+    const element_interpreter_ctx* interpreter,
     const char* path,
     element_declaration** declaration);
+
+/**
+ * @brief gets the name of a declaration
+ *
+ * @param[in]  decl       the declaration to get the name of
+ * @param[inout] buffer   the buffer to populate with the declaration's name
+ * @param[inout] bufsize  the size available to write to the buffer; set to bytes written on success
+ * @return ELEMENT_OK found declaration successfully
+ * @return ELEMENT_ERROR_API_DECLARATION_IS_NULL declaration pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL result object pointer is null
+ * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER buffer size is too small
+ */
+element_result element_declaration_get_name(
+    const element_declaration* decl,
+    char* buffer,
+    size_t* bufsize);
+
+/**
+ * @brief gets the fully-qualified name of a declaration
+ *
+ * @param[in]  decl       the declaration to get the name of
+ * @param[inout] buffer   the buffer to populate with the declaration's name
+ * @param[inout] bufsize  the size available to write to the buffer; set to bytes written on success
+ * @return ELEMENT_OK found declaration successfully
+ * @return ELEMENT_ERROR_API_DECLARATION_IS_NULL declaration pointer is null
+ * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL result object pointer is null
+ * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER buffer size is too small
+ */
+element_result element_declaration_get_qualified_name(
+    const element_declaration* decl,
+    char* buffer,
+    size_t* bufsize);
+
+/**
+ * @brief converts a declaration into a code fragment that represents it
+ *
+ * @param[in] declaration       declaration to represent as a code fragment
+ * @param[in] include_body      for functions, whether to return the whole function or just its declaration
+ * @param[out] buffer           output buffer. if a non-NULL buffer is passed and ELEMENT_OK is returned, the buffer will be null-terminated.
+ * @param[in,out] buffer_size   output buffer size. this is always modified to be the size required to contain the null-terminated string.
+ * @return ELEMENT_OK either buffer was NULL or buffer was not NULL and buffer_size was sufficiently large
+ * @return ELEMENT_ERROR_API_DECLARATION_IS_NULL the declaration is NULL
+ * @return ELEMENT_ERROR_API_INVALID_INPUT the buffer_size is NULL
+ * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
+*/
+element_result element_declaration_to_code(
+    const element_declaration* declaration,
+    bool include_body,
+    char* buffer,
+    size_t* buffer_size);
 
 /**
  * @brief compiles a declaration into an instruction tree

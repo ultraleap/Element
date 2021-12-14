@@ -1,6 +1,8 @@
 #include <CLI/CLI.hpp>
 
 #include "command.hpp"
+#include "compile_command.hpp"
+#include "declaration_command.hpp"
 #include "evaluate_command.hpp"
 #include "parse_command.hpp"
 #include "typeof_command.hpp"
@@ -37,5 +39,7 @@ void command::configure(CLI::App& app, command::callback callback)
     // not a big fan of this but it works, so leaving it for now
     parse_command::configure(app, arguments, callback);
     evaluate_command::configure(app, arguments, callback);
+    compile_command::configure(app, arguments, callback);
+    declaration_command::configure(app, arguments, callback);
     typeof_command::configure(app, arguments, callback);
 }

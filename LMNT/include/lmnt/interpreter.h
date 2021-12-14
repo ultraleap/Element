@@ -21,7 +21,7 @@ enum
     LMNT_ISTATUS_CMP_GT = (1U << 2),       // greater than
     LMNT_ISTATUS_CMP_UN = (1U << 7),       // unordered (i.e. NaNs present)
 
-    LMNT_ISTATUS_INTERRUPTED = (1U << 31), // function is being interrupted
+    LMNT_ISTATUS_INTERRUPTED = (1U << 30), // function is being interrupted
 };
 
 // Main interpreter context struct
@@ -95,7 +95,7 @@ LMNT_ATTR_FAST lmnt_result lmnt_update_args(
     const lmnt_offset offset, const lmnt_value* args, const lmnt_offset count);
 
 // Updates a specific arg for use with the specified def
-static lmnt_result lmnt_update_arg(
+static inline lmnt_result lmnt_update_arg(
     lmnt_ictx* ctx, const lmnt_def* def,
     const lmnt_offset offset, const lmnt_value arg)
 {

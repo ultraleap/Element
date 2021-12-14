@@ -21,6 +21,13 @@ list(REMOVE_DUPLICATES LMNT_JIT_ARCHITECTURES)
 # Enable ASAN if requested
 option(LMNT_BUILD_WITH_ASAN "Build with the GCC/Clang address sanitizer enabled" OFF)
 
+# Configure linking to a math library
+set (DEFAULT_MATH_LIBS)
+if (UNIX)
+    set (DEFAULT_MATH_LIBS "m")
+endif ()
+set(LMNT_MATH_LIBRARIES "${DEFAULT_MATH_LIBS}" CACHE STRING "Math libraries to link against (e.g. m on Unix-likes)")
+
 # Add main library
 add_subdirectory("src")
 add_subdirectory("include")

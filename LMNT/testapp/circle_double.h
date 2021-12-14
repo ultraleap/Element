@@ -5,7 +5,7 @@ static const char filedata_circle_double[] = {
     0x00, 0x00, 0x00, 0x00,
     0x18, 0x00, 0x00, 0x00, // strings length
     0x20, 0x00, 0x00, 0x00, // defs length
-    0x64, 0x00, 0x00, 0x00, // code length
+    0x7C, 0x00, 0x00, 0x00, // code length
     0x04, 0x00, 0x00, 0x00, // data length
     0x08, 0x00, 0x00, 0x00, // constants_length
     0x0A, 0x00, 'd', 'o', 'u', 'b', 'l', 'e', '\0', 0x00, 0x00, 0x00, // strings[0]
@@ -20,13 +20,13 @@ static const char filedata_circle_double[] = {
     0x09, 0x00, // defs[1].name
     0x00, 0x00, // defs[1].flags
     0x00, 0x00, 0x00, 0x00, // defs[1].code
-    0x08, 0x00, // defs[1].stack_count
+    0x0B, 0x00, // defs[1].stack_count
     0x04, 0x00, // defs[1].args_count
-    0x04, 0x00, // defs[1].rvals_count
+    0x07, 0x00, // defs[1].rvals_count
     0x00, 0x00, // defs[1].default_args_index
     // code
-    0x0C, 0x00, 0x00, 0x00, // ops_count
-    // stack: [tau, 1.0 | t, i, radius, interval | pos_x, pos_y, pos_z, intens]
+    0x0F, 0x00, 0x00, 0x00, // ops_count
+    // stack: [tau, 1.0 | t, i, radius, interval | pos_x, pos_y, pos_z, dir_x, dir_y, dir_z, intens]
     //temp7 = ((time_i % interval) + time_f) % interval
     LMNT_OP_BYTES(LMNT_OP_MODSS, 0x02, 0x05, 0x07),
     LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x07, 0x03, 0x07),
@@ -47,8 +47,14 @@ static const char filedata_circle_double[] = {
     LMNT_OP_BYTES(LMNT_OP_EXTCALL, 0x00, 0x00, 0x08),
     //stack[8] = stack[9]
     LMNT_OP_BYTES(LMNT_OP_ASSIGNSS, 0x09, 0x00, 0x08),
-    //stack[9] = 1.0
-    LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x09),
+    //stack[9] = 0.0
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x0000, 0x09),
+    //stack[A] = 0.0
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x0000, 0x0A),
+    //stack[B] = 1.0
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x0B),
+    //stack[C] = 1.0
+    LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x0C),
     // data
     0x00, 0x00, 0x00, 0x00,
     // constants
