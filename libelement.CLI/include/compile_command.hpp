@@ -106,7 +106,7 @@ public:
         auto response = generate_response(ELEMENT_ERROR_UNKNOWN, element_outputs{}, compilation_input.get_log_json());
 
         if (common_arguments.target == Target::LMNT || common_arguments.target == Target::LMNTJit)
-            response = compile_lmnt(compilation_input, compiled_function, inputs_size, outputs_size, custom_arguments.output_path);
+            response = compile_lmnt(compilation_input, compiled_function, custom_arguments.name, inputs_size, outputs_size, custom_arguments.output_path);
 
         element_instruction_delete(&compiled_function);
 
@@ -237,7 +237,7 @@ private:
         element_lmnt_compiled_function lmnt_output;
         std::vector<element_value> constants;
 
-        auto result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, constants, inputs_size, lmnt_output);
+        auto result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, custom_arguments.name, constants, inputs_size, lmnt_output);
         if (result != ELEMENT_OK) {
             printf("RUH ROH: %d\n", result);
             return generate_response(result, "failed to compile LMNT function", compilation_input.get_log_json());

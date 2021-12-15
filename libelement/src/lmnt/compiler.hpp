@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include "instruction_tree/instructions.hpp"
 #include "lmnt/archive.h"
@@ -19,6 +20,7 @@ struct element_lmnt_compiler_ctx
 
 struct element_lmnt_compiled_function
 {
+    std::string name;
     std::vector<lmnt_instruction> instructions;
     size_t local_stack_count = 0;
     size_t inputs_count = 0;
@@ -36,6 +38,7 @@ element_result element_lmnt_find_constants(
 element_result element_lmnt_compile_function(
     const element_lmnt_compiler_ctx& ctx,
     const element::instruction_const_shared_ptr instruction,
+    std::string name,
     std::vector<element_value>& constants,
     const size_t inputs_count,
     element_lmnt_compiled_function& output);

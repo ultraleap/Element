@@ -1337,6 +1337,7 @@ element_result element_lmnt_find_constants(
 element_result element_lmnt_compile_function(
     const element_lmnt_compiler_ctx& ctx,
     const element::instruction_const_shared_ptr instruction,
+    std::string name,
     std::vector<element_value>& constants,
     const size_t inputs_count,
     element_lmnt_compiled_function& output)
@@ -1355,5 +1356,6 @@ element_result element_lmnt_compile_function(
 
     output.outputs_count = vr->count;
     output.local_stack_count = state.allocator->get_max_stack_usage();
+    output.name = std::move(name);
     return ELEMENT_OK;
 }
