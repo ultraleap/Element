@@ -200,6 +200,7 @@ set(element_sources
     "src/lmnt/compiler.hpp"
     "src/lmnt/compiler_state.cpp"
     "src/lmnt/compiler_state.hpp"
+    "src/lmnt/exporter.cpp"
 
     #Util
     "src/stringutil.hpp"
