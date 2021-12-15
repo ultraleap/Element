@@ -54,7 +54,7 @@ typedef struct element_interpreter_ctx element_interpreter_ctx;
  * @return ELEMENT_OK created an interpreter successfully
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL interpreter pointer is null
  */
-element_result element_interpreter_create(
+ELEMENT_API element_result element_interpreter_create(
     element_interpreter_ctx** interpreter);
 
 /**
@@ -62,7 +62,7 @@ element_result element_interpreter_create(
  *
  * @param[in,out] interpreter   interpreter context
  */
-void element_interpreter_delete(
+ELEMENT_API void element_interpreter_delete(
     element_interpreter_ctx** interpreter);
 
 /**
@@ -76,7 +76,7 @@ void element_interpreter_delete(
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
  * @return ELEMENT_ERROR_API_STRING_IS_NULL string and/or filename pointer is null
  */
-element_result element_interpreter_load_string(
+ELEMENT_API element_result element_interpreter_load_string(
     element_interpreter_ctx* interpreter,
     const char* string,
     const char* filename);
@@ -91,7 +91,7 @@ element_result element_interpreter_load_string(
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter is null
  * @return ELEMENT_ERROR_API_STRING_IS_NULL file name pointer is null
  */
-element_result element_interpreter_load_file(
+ELEMENT_API element_result element_interpreter_load_file(
     element_interpreter_ctx* interpreter,
     const char* file);
 
@@ -106,7 +106,7 @@ element_result element_interpreter_load_file(
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT file names pointer is null
  */
-element_result element_interpreter_load_files(
+ELEMENT_API element_result element_interpreter_load_files(
     element_interpreter_ctx* interpreter,
     const char** files,
     int files_count);
@@ -122,7 +122,7 @@ element_result element_interpreter_load_files(
  * @return ELEMENT_ERROR_API_STRING_IS_NULL package path pointer is null
  * @return ELEMENT_ERROR_DIRECTORY_NOT_FOUND directory not found
 */
-element_result element_interpreter_load_package(
+ELEMENT_API element_result element_interpreter_load_package(
     element_interpreter_ctx* interpreter,
     const char* package);
 
@@ -138,7 +138,7 @@ element_result element_interpreter_load_package(
  * @return ELEMENT_ERROR_API_INVALID_INPUT package paths pointer is null
  * @return ELEMENT_ERROR_DIRECTORY_NOT_FOUND directory not found
  */
-element_result element_interpreter_load_packages(
+ELEMENT_API element_result element_interpreter_load_packages(
     element_interpreter_ctx* interpreter,
     const char** packages,
     int packages_count);
@@ -153,7 +153,7 @@ element_result element_interpreter_load_packages(
  * @return ELEMENT_ERROR_PRELUDE_ALREADY_LOADED prelude already loaded
  * @return ELEMENT_ERROR_DIRECTORY_NOT_FOUND prelude cannot be found
  */
-element_result element_interpreter_load_prelude(
+ELEMENT_API element_result element_interpreter_load_prelude(
     element_interpreter_ctx* interpreter);
 
 /**
@@ -163,7 +163,7 @@ element_result element_interpreter_load_prelude(
  *
  * @return ELEMENT_OK interpreter context cleared successfully
  */
-element_result element_interpreter_clear(
+ELEMENT_API element_result element_interpreter_clear(
     element_interpreter_ctx* interpreter);
 
 /**
@@ -176,7 +176,7 @@ element_result element_interpreter_clear(
  * @return ELEMENT_OK set log callback successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
  */
-element_result element_interpreter_set_log_callback(
+ELEMENT_API element_result element_interpreter_set_log_callback(
     element_interpreter_ctx* interpreter,
     element_log_callback log_callback,
     void* user_data);
@@ -190,7 +190,7 @@ element_result element_interpreter_set_log_callback(
  * @return ELEMENT_OK parse only flag set successfully
  * @return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL interpreter pointer is null
  */
-element_result element_interpreter_set_parse_only(
+ELEMENT_API element_result element_interpreter_set_parse_only(
     element_interpreter_ctx* interpreter,
     bool parse_only);
 
@@ -227,7 +227,7 @@ typedef struct element_instruction element_instruction;
  *
  * @param[in,out] declaration   declaration to delete
  */
-void element_declaration_delete(
+ELEMENT_API void element_declaration_delete(
     element_declaration** declaration);
 
 /**
@@ -235,27 +235,27 @@ void element_declaration_delete(
  *
  * @param[in] instruction       instruction to delete
  */
-void element_instruction_delete(
+ELEMENT_API void element_instruction_delete(
     element_instruction** instruction);
 
 /**
  * @brief gets the size of the instruction (number of element_value's it represents), including the size of any children
  */
-element_result element_instruction_get_size(
+ELEMENT_API element_result element_instruction_get_size(
     const element_instruction* instruction,
     size_t* size);
 
 /**
  * @brief gets the total size of all inputs to the instruction
  */
-element_result element_instruction_get_inputs_size(
+ELEMENT_API element_result element_instruction_get_inputs_size(
     const element_instruction* instruction,
     size_t* size);
 
 /**
  * @brief whether the instruction is a constant (i.e. a literal number) or not
  */
-element_result element_instruction_is_constant(
+ELEMENT_API element_result element_instruction_is_constant(
     const element_instruction* instruction,
     bool* constant);
 
@@ -270,7 +270,7 @@ element_result element_instruction_is_constant(
  * @return ELEMENT_ERROR_API_INVALID_INPUT the buffer_size is NULL
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
 */
-element_result element_instruction_to_string(
+ELEMENT_API element_result element_instruction_to_string(
     const element_instruction* instruction,
     char* buffer,
     size_t* buffer_size);
@@ -288,7 +288,7 @@ element_result element_instruction_to_string(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL result object pointer is null
  * @return ELEMENT_ERROR_IDENTIFIER_NOT_FOUND path was invalid as nothing was found
  */
-element_result element_interpreter_find(
+ELEMENT_API element_result element_interpreter_find(
     const element_interpreter_ctx* interpreter,
     const char* path,
     element_declaration** declaration);
@@ -304,7 +304,7 @@ element_result element_interpreter_find(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL result object pointer is null
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER buffer size is too small
  */
-element_result element_declaration_get_name(
+ELEMENT_API element_result element_declaration_get_name(
     const element_declaration* decl,
     char* buffer,
     size_t* bufsize);
@@ -320,7 +320,7 @@ element_result element_declaration_get_name(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL result object pointer is null
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER buffer size is too small
  */
-element_result element_declaration_get_qualified_name(
+ELEMENT_API element_result element_declaration_get_qualified_name(
     const element_declaration* decl,
     char* buffer,
     size_t* bufsize);
@@ -337,7 +337,7 @@ element_result element_declaration_get_qualified_name(
  * @return ELEMENT_ERROR_API_INVALID_INPUT the buffer_size is NULL
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER the buffer_size is insufficient and a non-NULL buffer was passed
 */
-element_result element_declaration_to_code(
+ELEMENT_API element_result element_declaration_to_code(
     const element_declaration* declaration,
     bool include_body,
     char* buffer,
@@ -356,7 +356,7 @@ element_result element_declaration_to_code(
  * @return ELEMENT_ERROR_API_DECLARATION_IS_NULL declaration pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL result object pointer is null
  */
-element_result element_interpreter_compile_declaration(
+ELEMENT_API element_result element_interpreter_compile_declaration(
     element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
     const element_declaration* declaration,
@@ -375,7 +375,7 @@ element_result element_interpreter_compile_declaration(
  * @return ELEMENT_ERROR_API_STRING_IS_NULL expression_string is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL instruction is null
  */
-element_result element_interpreter_compile_expression(
+ELEMENT_API element_result element_interpreter_compile_expression(
     element_interpreter_ctx* interpreter,
     const element_compiler_options* options,
     const char* expression_string,
@@ -383,15 +383,15 @@ element_result element_interpreter_compile_expression(
 
 typedef struct element_evaluator_ctx element_evaluator_ctx;
 
-element_result element_evaluator_create(
+ELEMENT_API element_result element_evaluator_create(
     element_interpreter_ctx* interpreter,
     element_evaluator_ctx** evaluator);
 
-element_result element_evaluator_set_options(
+ELEMENT_API element_result element_evaluator_set_options(
     element_evaluator_ctx* evaluator,
     element_evaluator_options options);
 
-element_result element_evaluator_get_options(
+ELEMENT_API element_result element_evaluator_get_options(
     element_evaluator_ctx* evaluator,
     element_evaluator_options* options);
 
@@ -414,7 +414,7 @@ void element_evaluator_delete(
  * @return ELEMENT_ERROR_API_INVALID_INPUT inputs pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL outputs pointer is null
  */
-element_result element_interpreter_evaluate_instruction(
+ELEMENT_API element_result element_interpreter_evaluate_instruction(
     element_interpreter_ctx* interpreter,
     element_evaluator_ctx* evaluator,
     const element_instruction* instruction,
@@ -435,7 +435,7 @@ element_result element_interpreter_evaluate_instruction(
  * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL instruction pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT outputs pointer is null
  */
-element_result element_interpreter_evaluate_expression(
+ELEMENT_API element_result element_interpreter_evaluate_expression(
     element_interpreter_ctx* interpreter,
     element_evaluator_ctx* evaluator,
     const char* expression_string,
@@ -455,7 +455,7 @@ element_result element_interpreter_evaluate_expression(
  * @return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL instruction pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT outputs pointer is null
  */
-element_result element_interpreter_evaluate_call_expression(
+ELEMENT_API element_result element_interpreter_evaluate_call_expression(
     element_interpreter_ctx* interpreter,
     element_evaluator_ctx* evaluator,
     const char* call_expression,
@@ -475,7 +475,7 @@ element_result element_interpreter_evaluate_call_expression(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL buffer pointer is null
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER buffer size is too small
  */
-element_result element_interpreter_typeof_expression(
+ELEMENT_API element_result element_interpreter_typeof_expression(
     element_interpreter_ctx* interpreter,
     const char* expression_string,
     char* buffer,

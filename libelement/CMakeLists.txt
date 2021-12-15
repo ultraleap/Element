@@ -228,8 +228,9 @@ if (ELEMENT_FORCE_FALLBACK_FS)
     add_definitions(-DELEMENT_FORCE_FALLBACK_FS)
 endif()
 
-add_library(element STATIC ${element_sources})
+add_library(element ${element_sources})
 set_property(TARGET element PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_compile_definitions(element PRIVATE "ELEMENT_EXPORT")
 add_library(element::element ALIAS element)
 
 # For VS

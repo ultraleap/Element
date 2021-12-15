@@ -60,7 +60,7 @@ typedef struct element_ast element_ast;
  *
  * @param[in,out] ast           ast node to be deleted, assigns nullptr on deletion
  */
-void element_ast_delete(
+ELEMENT_API void element_ast_delete(
     element_ast** ast);
 
 /**
@@ -71,7 +71,7 @@ void element_ast_delete(
  *
  * @return ELEMENT_OK success
  */
-element_result element_ast_get_flags(
+ELEMENT_API element_result element_ast_get_flags(
     const element_ast* ast,
     element_ast_flags* flags);
 
@@ -83,7 +83,7 @@ element_result element_ast_get_flags(
  *
  * @return ELEMENT_OK success
  */
-element_result element_ast_get_nearest_token(
+ELEMENT_API element_result element_ast_get_nearest_token(
     const element_ast* ast,
     const element_token** token);
 
@@ -95,7 +95,7 @@ element_result element_ast_get_nearest_token(
  *
  * @return ELEMENT_OK success
  */
-element_result element_ast_get_type(
+ELEMENT_API element_result element_ast_get_type(
     const element_ast* ast,
     element_ast_node_type* type);
 
@@ -110,7 +110,7 @@ element_result element_ast_get_type(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL value is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT value is not an identifier
  */
-element_result element_ast_get_value_as_identifier(
+ELEMENT_API element_result element_ast_get_value_as_identifier(
     const element_ast* ast,
     const char** value);
 
@@ -125,7 +125,7 @@ element_result element_ast_get_value_as_identifier(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL value pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT value is not a literal
  */
-element_result element_ast_get_value_as_literal(
+ELEMENT_API element_result element_ast_get_value_as_literal(
     const element_ast* ast,
     element_value* value);
 
@@ -139,7 +139,7 @@ element_result element_ast_get_value_as_literal(
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL ast node has no parent
  */
-element_result element_ast_get_parent(
+ELEMENT_API element_result element_ast_get_parent(
     const element_ast* ast,
     element_ast** parent);
 
@@ -153,7 +153,7 @@ element_result element_ast_get_parent(
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL count pointer is null
  */
-element_result element_ast_get_child_count(
+ELEMENT_API element_result element_ast_get_child_count(
     const element_ast* ast,
     size_t* count);
 
@@ -169,7 +169,7 @@ element_result element_ast_get_child_count(
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL child pointer is null
  * @return ELEMENT_ERROR_API_INVALID_INPUT index exceeds child count
  */
-element_result element_ast_get_child(
+ELEMENT_API element_result element_ast_get_child(
     const element_ast* ast,
     size_t index,
     element_ast** child);
@@ -184,7 +184,7 @@ element_result element_ast_get_child(
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node pointer is null
  */
-element_result element_ast_get_root(
+ELEMENT_API element_result element_ast_get_root(
     element_ast* ast,
     element_ast** root);
 
@@ -198,7 +198,7 @@ element_result element_ast_get_root(
  * @return ELEMENT_ERROR_API_AST_IS_NULL ast node pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL root node pointer is null
  */
-element_result element_ast_get_root_const(
+ELEMENT_API element_result element_ast_get_root_const(
     const element_ast* ast,
     const element_ast** root);
 
@@ -215,7 +215,7 @@ element_result element_ast_get_root_const(
  * @return ELEMENT_ERROR_API_INVALID_INPUT output_buffer pointer is null
  * @return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER result size exceeds output_buffer_size
  */
-element_result element_ast_to_string(
+ELEMENT_API element_result element_ast_to_string(
     const element_ast* ast,
     const element_ast* ast_to_mark,
     char* output_buffer,

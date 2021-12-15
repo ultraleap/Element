@@ -1,6 +1,20 @@
 #if !defined(ELEMENT_COMMON_H)
     #define ELEMENT_COMMON_H
 
+    // shared library export attributes
+    #ifdef _WIN32
+        #ifdef ELEMENT_EXPORT
+            #define ELEMENT_API __declspec(dllexport)
+            #define ELEMENT_API_CLASS
+        #else
+            #define ELEMENT_API __declspec(dllimport)
+            #define ELEMENT_API_CLASS
+        #endif
+    #else
+        #define ELEMENT_API __attribute__((visibility("default")))
+        #define ELEMENT_API_CLASS __attribute__((visibility("default")))
+    #endif
+
     #if defined(__cplusplus)
 extern "C" {
     #endif
