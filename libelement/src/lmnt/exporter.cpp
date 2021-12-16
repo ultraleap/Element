@@ -153,7 +153,7 @@ element_result element_interpreter_export_lmnt(element_interpreter_ctx* context,
 
     for (size_t i = 0; i < functions.size(); ++i) {
         size_t inputs_size = 0;
-        ELEMENT_OK_OR_RETURN(element_instruction_get_inputs_size(functions[i].get(), &inputs_size));
+        ELEMENT_OK_OR_RETURN(element_instruction_get_function_inputs_size(functions[i].get(), &inputs_size));
 
         size_t outputs_size = 0;
         ELEMENT_OK_OR_RETURN(element_instruction_get_size(functions[i].get(), &outputs_size));

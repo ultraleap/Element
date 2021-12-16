@@ -246,9 +246,9 @@ ELEMENT_API element_result element_instruction_get_size(
     size_t* size);
 
 /**
- * @brief gets the total size of all inputs to the instruction
+ * @brief gets the total size of all top-level inputs used by the instruction
  */
-ELEMENT_API element_result element_instruction_get_inputs_size(
+ELEMENT_API element_result element_instruction_get_function_inputs_size(
     const element_instruction* instruction,
     size_t* size);
 
