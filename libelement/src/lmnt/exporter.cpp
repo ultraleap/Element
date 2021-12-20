@@ -160,20 +160,22 @@ element_result element_interpreter_export_lmnt(
     for (size_t i = 0; i < functions.size(); ++i) {
         size_t inputs_size = 0;
         ELEMENT_OK_OR_RETURN(element_instruction_get_function_inputs_size(functions[i].get(), &inputs_size));
-
         size_t outputs_size = 0;
         ELEMENT_OK_OR_RETURN(element_instruction_get_size(functions[i].get(), &outputs_size));
 
-        std::string name = decls[i]->decl->get_name(); // get_qualified_name() ?
-        ELEMENT_OK_OR_RETURN(element_lmnt_compile_function(lmnt_ctx, functions[i]->instruction, name, constants, inputs_size, lmnt_functions[i]));
+        ELEMENT_OK_OR_RETURN(element_lmnt_compile_function(lmnt_ctx, functions[i]->instruction, funcnames[i], constants, inputs_size, lmnt_functions[i]));
     }
 
     auto lmnt_archive_data = create_archive(lmnt_functions, constants);
 
-    if (buffer && lmnt_archive_data.size() > *bufsize)
-        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
-
+    size_t current_bufsize = *bufsize;
     *bufsize = lmnt_archive_data.size();
+
+    if (buffer && lmnt_archive_data.size() > current_bufsize) {
+        *bufsize = lmnt_archive_data.size();
+        return ELEMENT_ERROR_API_INSUFFICIENT_BUFFER;
+    }
+
     if (buffer)
         memcpy(buffer, lmnt_archive_data.data(), lmnt_archive_data.size());
 
