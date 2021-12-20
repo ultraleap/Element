@@ -113,11 +113,17 @@ struct instruction_deleter
     }
 };
 
-element_result element_interpreter_export_lmnt(element_interpreter_ctx* context, const element_declaration** decls, size_t decls_count, char* buffer, size_t* bufsize)
+element_result element_interpreter_export_lmnt(
+    element_interpreter_ctx* context,
+    const element_declaration** decls,
+    const char** funcnames,
+    size_t decls_count,
+    char* buffer,
+    size_t* bufsize)
 {
     if (!context)
         return ELEMENT_ERROR_API_INTERPRETER_CTX_IS_NULL;
-    if (!decls)
+    if (!decls || !funcnames)
         return ELEMENT_ERROR_API_DECLARATION_IS_NULL;
     if (decls_count == 0)
         return ELEMENT_ERROR_API_INVALID_INPUT;

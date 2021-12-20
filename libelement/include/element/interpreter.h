@@ -485,6 +485,7 @@ ELEMENT_API element_result element_interpreter_typeof_expression(
 ELEMENT_API element_result element_interpreter_export_lmnt(
     element_interpreter_ctx* context,
     const element_declaration** decls,
+    const char** funcnames,
     size_t decls_count,
     char* buffer,
     size_t* bufsize);
