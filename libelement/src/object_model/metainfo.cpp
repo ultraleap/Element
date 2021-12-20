@@ -176,10 +176,10 @@ std::string constraint_declaration::to_code(const int depth) const
 
 std::string function_declaration::to_code(const int depth) const
 {
-    return to_code(depth, true);
+    return to_code(depth, true, true);
 }
 
-std::string function_declaration::to_code(const int depth, bool include_body) const
+std::string function_declaration::to_code(const int depth, bool include_defaults, bool include_body) const
 {
     auto declaration = name.value;
 
@@ -191,8 +191,8 @@ std::string function_declaration::to_code(const int depth, bool include_body) co
 
     std::string ports;
     if (has_inputs()) {
-        static constexpr auto accumulate = [](std::string accumulator, const port& port) {
-            return std::move(accumulator) + ", " + port.typeof_info() + (port.has_default() ? " = " + port.get_default()->to_code() : "");
+        static const auto accumulate = [include_defaults](std::string accumulator, const port& port) {
+            return std::move(accumulator) + ", " + port.typeof_info() + (include_defaults && port.has_default() ? " = " + port.get_default()->to_code() : "");
         };
 
         const auto input_ports = std::accumulate(

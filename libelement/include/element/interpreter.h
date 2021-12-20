@@ -339,6 +339,7 @@ ELEMENT_API element_result element_declaration_get_qualified_name(
 */
 ELEMENT_API element_result element_declaration_to_code(
     const element_declaration* declaration,
+    bool include_defaults,
     bool include_body,
     char* buffer,
     size_t* buffer_size);

@@ -355,6 +355,7 @@ element_result element_declaration_get_qualified_name(const element_declaration*
 
 element_result element_declaration_to_code(
     const element_declaration* declaration,
+    bool include_defaults,
     bool include_body,
     char* buffer,
     size_t* buffer_size)
@@ -368,7 +369,7 @@ element_result element_declaration_to_code(
     std::string string;
     auto fdecl = dynamic_cast<const element::function_declaration*>(declaration->decl);
     if (fdecl)
-        string = fdecl->to_code(0, include_body);
+        string = fdecl->to_code(0, include_defaults, include_body);
     else
         string = declaration->decl->to_code(0);
 
