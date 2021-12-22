@@ -11,10 +11,18 @@ struct element_lmnt_compiler_optimisers
     size_t constant_reuse_threshold = 1;
     bool minimise_moves = true;
     bool stack_reuse = true;
+    bool allow_dynamic = true;
+};
+
+struct element_lmnt_compiler_settings
+{
+    bool allow_backbranches = true;
+    bool allow_dynamic = true;
 };
 
 struct element_lmnt_compiler_ctx
 {
+    element_lmnt_compiler_settings settings;
     element_lmnt_compiler_optimisers optimise;
 };
 

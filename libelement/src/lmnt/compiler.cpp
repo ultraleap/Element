@@ -798,6 +798,10 @@ static element_result create_virtual_for(
     compiler_state& state,
     const element::instruction_for& ef)
 {
+    // if backbranches aren't allowed we cannot compile a for
+    if (!state.ctx.settings.allow_backbranches)
+        return ELEMENT_ERROR_CANNOT_COMPILE_WITH_CURRENT_SETTINGS;
+
     stack_allocation* initial_vr;
     stack_allocation* condition_vr;
     stack_allocation* body_vr;
