@@ -88,7 +88,7 @@ public:
         }
 
         size_t inputs_size = 0;
-        result = element_instruction_get_inputs_size(compiled_function, &inputs_size);
+        result = element_instruction_get_function_inputs_size(compiled_function, &inputs_size);
         if (result != ELEMENT_OK) {
             return compiler_message(error_conversion(result),
                 "Failed to get inputs size of: " + custom_arguments.name + " with element_result " + std::to_string(result),
@@ -229,6 +229,7 @@ private:
     compiler_message compile_lmnt(
         const compilation_input& compilation_input,
         element_instruction* instruction,
+        std::string name,
         size_t inputs_size,
         size_t outputs_size,
         std::string output_path) const
@@ -237,7 +238,7 @@ private:
         element_lmnt_compiled_function lmnt_output;
         std::vector<element_value> constants;
 
-        auto result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, custom_arguments.name, constants, inputs_size, lmnt_output);
+        auto result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, name, constants, inputs_size, lmnt_output);
         if (result != ELEMENT_OK) {
             printf("RUH ROH: %d\n", result);
             return generate_response(result, "failed to compile LMNT function", compilation_input.get_log_json());
