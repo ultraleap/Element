@@ -472,6 +472,11 @@ static element_result create_virtual_binary(
     if (arg1_vr->count != 1 || arg2_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
+    if (eb.is_comparison_operation()) {
+        ELEMENT_OK_OR_RETURN(state.add_constant(0.0f));
+        ELEMENT_OK_OR_RETURN(state.add_constant(1.0f));
+    }
+
     return ELEMENT_OK;
 }
 
@@ -616,8 +621,12 @@ static element_result compile_binary(
         op = LMNT_OP_ASSIGNCGE;
         goto cmp_operation;
     cmp_operation:
+        uint16_t zero_idx, one_idx;
+        ELEMENT_OK_OR_RETURN(state.find_constant(0.0f, zero_idx));
+        ELEMENT_OK_OR_RETURN(state.find_constant(1.0f, one_idx));
+
         output.emplace_back(lmnt_instruction{ LMNT_OP_CMP, arg1_stack_idx, arg2_stack_idx, 0 });
-        output.emplace_back(lmnt_instruction{ op, 1, 0, stack_idx });
+        output.emplace_back(lmnt_instruction{ op, one_idx, zero_idx, stack_idx });
         return ELEMENT_OK;
 
     default:

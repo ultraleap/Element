@@ -299,6 +299,11 @@ struct instruction_binary final : public instruction
     [[nodiscard]] const instruction_const_shared_ptr& input1() const { return m_dependents[0]; }
     [[nodiscard]] const instruction_const_shared_ptr& input2() const { return m_dependents[1]; }
 
+    [[nodiscard]] bool is_comparison_operation() const
+    {
+        return (m_op == op::eq || m_op == op::neq || m_op == op::geq || m_op == op::gt || m_op == op::leq || m_op == op::lt);
+    }
+
     [[nodiscard]] size_t get_size() const override { return 1; }
     [[nodiscard]] bool get_constant_value(element_value& result) const override;
 
